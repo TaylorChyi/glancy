@@ -1,4 +1,4 @@
-name: 更新错误页面
+name: Upload Website Error Page
 
 on:
   workflow_dispatch:
@@ -7,14 +7,13 @@ jobs:
   upload_error:
     runs-on: ubuntu-latest
     steps:
-      - name: 检出代码
+      - name: Checkout code
         uses: actions/checkout@v3
-      - name: 上传错误页面
+      - name: Upload error page
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: "glancy-site/public/error.html"
-          target: ${{ secrets.DEPLOY_PATH }}
-
+          source: 'website/glancy-site/public/error.html'
+          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
