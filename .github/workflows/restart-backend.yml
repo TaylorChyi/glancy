@@ -21,4 +21,3 @@ jobs:
                       else
                           sudo systemctl enable --now glancy-backend.service
                       fi
-
