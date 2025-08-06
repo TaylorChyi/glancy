@@ -1,0 +1,101 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AuthForm submits valid credentials 1`] = `
+<DocumentFragment>
+  <div
+    class="auth-page"
+  >
+    <a
+      class="auth-close"
+      href="/"
+    >
+      ×
+    </a>
+    <div
+      class="auth-brand"
+    >
+      Glancy
+    </div>
+    <h1
+      class="auth-title"
+    >
+      Login
+    </h1>
+    <form
+      class="auth-form"
+    >
+      <input
+        class="auth-input"
+        placeholder="Username"
+        value="alice"
+      />
+      <div
+        class="password-row"
+      >
+        <input
+          class="auth-input"
+          placeholder="Password"
+          type="password"
+          value="secret"
+        />
+      </div>
+      <button
+        class="button auth-primary-btn"
+        type="submit"
+      >
+        Continue
+      </button>
+    </form>
+    <div
+      class="auth-switch"
+    >
+      Have account? 
+      <a
+        href="/register"
+      >
+        Sign up
+      </a>
+    </div>
+    <div
+      class="divider"
+    >
+      <span>
+        OR
+      </span>
+    </div>
+    <div
+      class="login-options"
+    />
+    <div
+      class="auth-footer"
+    >
+      <div
+        class="footer-links"
+      >
+        <a
+          href="#"
+        >
+          Terms of Use
+        </a>
+         | 
+        <a
+          href="#"
+        >
+          Privacy Policy
+        </a>
+      </div>
+      <div
+        class="icp"
+      >
+        <a
+          href="https://beian.miit.gov.cn/"
+          rel="noopener"
+          target="_blank"
+        >
+          京ICP备2025135702号-1
+        </a>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

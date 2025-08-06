@@ -1,0 +1,31 @@
+@import url('@/theme/spacing.css');
+@import url('@/theme/variables.css');
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  position: relative;
+  cursor: pointer;
+}
+
+.item:hover {
+  background-color: rgb(0 0 0 / 5%);
+}
+
+:root[data-theme='dark'] .item:hover {
+  background-color: rgb(255 255 255 / 10%);
+}
+
+.text {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: relative;
+}

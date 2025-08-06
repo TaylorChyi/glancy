@@ -1,0 +1,56 @@
+.toolbar-section {
+  margin-right: 0.5rem;
+}
+
+.toolbar-section select {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--app-bg);
+  color: var(--app-color);
+}
+
+.model-selector {
+  position: relative;
+}
+
+.model-selector .model-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--app-bg);
+  color: var(--app-color);
+  cursor: pointer;
+}
+
+.model-selector .model-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--app-bg);
+  color: var(--app-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.model-selector .model-menu button {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.model-selector .model-menu button:hover {
+  background: rgb(0 0 0 / 5%);
+}
+
+:root[data-theme='dark'] .model-selector .model-menu button:hover {
+  background: rgb(255 255 255 / 10%);
+}

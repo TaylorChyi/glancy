@@ -1,0 +1,25 @@
+/* central color tokens */
+:root {
+  /* highlight colors */
+  --hl-light: #fff;
+  --hl-dark: #000;
+
+  /* system colors */
+  --sys-text-light: #213547;
+  --sys-text-dark: rgb(255 255 255 / 87%);
+  --sys-bg-light: #fff;
+  --sys-bg-dark: #242424;
+  --sys-border-light: #ccc;
+  --sys-border-dark: #333;
+  --sys-muted: #aaa;
+  --accent-color: #facc15;
+  --brand-color: orange;
+
+  /* surface tones */
+  --surface-light: #f7f7f7;
+  --surface-dark: #1b1b1b;
+
+  /* text scales */
+  --text-primary-light: #1a1a1a;
+  --text-primary-dark: #f5f5f5;
+}

@@ -1,0 +1,45 @@
+@import url('./ModalContent.module.css');
+
+.auth-modal {
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-modal .app {
+  width: 100%;
+}
+
+.auth-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.auth-modal form > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-modal label {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.auth-modal input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--app-bg);
+  color: var(--app-color);
+}
+
+.auth-modal button[type='submit'] {
+  width: 100%;
+}

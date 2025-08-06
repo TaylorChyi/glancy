@@ -1,0 +1,23 @@
+.field {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 6px;
+}
+
+.input {
+  flex: 1;
+  text-align: left;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+.edit-btn {
+  border: 1px solid var(--primary-bg);
+  background: transparent;
+  color: var(--primary-bg);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}

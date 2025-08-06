@@ -1,0 +1,61 @@
+.back-btn,
+.more-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.back-btn {
+  width: 32px;
+  text-align: center;
+}
+
+.term-text {
+  font-weight: bold;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.favorite-toggle {
+  margin-right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+.more-menu {
+  position: relative;
+}
+
+.more-menu .menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--app-bg);
+  color: var(--app-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 0;
+  width: 100px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.more-menu .menu button {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.more-menu .menu .icon {
+  margin-right: 4px;
+}

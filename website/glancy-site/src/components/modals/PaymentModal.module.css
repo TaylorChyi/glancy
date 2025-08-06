@@ -1,0 +1,17 @@
+@import url('./ModalContent.module.css');
+
+.payment-modal {
+  width: 300px;
+  max-width: 90%;
+  text-align: center;
+}
+
+.methods {
+  display: flex;
+  justify-content: space-around;
+  margin: 1rem 0;
+}
+
+.close-btn {
+  width: 100%;
+}

@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`displays fallback UI on error 1`] = `
+<DocumentFragment>
+  <div
+    class="error-boundary"
+  >
+    <div>
+      Fallback
+    </div>
+  </div>
+</DocumentFragment>
+`;

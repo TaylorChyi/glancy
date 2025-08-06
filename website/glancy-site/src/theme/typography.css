@@ -1,0 +1,28 @@
+:root {
+  --font-family-base: system-ui, avenir, helvetica, arial, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-bold: 700;
+}
+
+body {
+  font-family: var(--font-family-base);
+}
+
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.font-light { font-weight: var(--font-light); }
+.font-normal { font-weight: var(--font-normal); }
+.font-medium { font-weight: var(--font-medium); }
+.font-bold { font-weight: var(--font-bold); }

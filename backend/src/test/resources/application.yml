@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.schema: debug
+
+oss:
+  endpoint: https://oss-cn-beijing.aliyuncs.com
+  bucket: glancy-avatar-bucket
+  avatar-dir: avatars/
+  public-read: true
+  signed-url-expiration-minutes: 60
+  verify-location: true
+  access-key-id:
+  access-key-secret:
+
+llm:
+  default-client: deepseek
+  temperature: 0.7
+  prompt-path: prompts/english_to_chinese.txt

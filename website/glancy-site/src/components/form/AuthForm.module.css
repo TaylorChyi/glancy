@@ -1,0 +1,246 @@
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 40px 20px;
+  font-family: system-ui, Arial, sans-serif;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.auth-logo {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 8px;
+}
+
+.auth-brand {
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--app-color);
+  margin-bottom: 8px;
+}
+
+.auth-title {
+  font-size: 24px;
+  color: var(--app-color);
+  margin-bottom: 32px;
+}
+
+.auth-input {
+  width: 100%;
+  max-width: 360px;
+  padding: 12px 16px;
+  height: 48px;
+  line-height: 24px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--app-color);
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--highlight-color);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-primary-btn {
+  width: 100%;
+  background: var(--primary-bg);
+  color: var(--primary-color);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+:root[data-theme='dark'] .auth-primary-btn {
+  color: var(--primary-color);
+}
+
+:root[data-theme='system'] .auth-primary-btn {
+  color: var(--primary-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] .auth-primary-btn {
+    color: var(--primary-color);
+  }
+}
+
+.auth-switch {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.auth-switch a {
+  color: var(--highlight-color);
+  text-decoration: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.divider span {
+  margin: 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.oauth-buttons button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.oauth-buttons img {
+  width: 24px;
+  height: 24px;
+}
+
+.login-options img {
+  width: 24px;
+  height: 24px;
+}
+
+:root[data-theme='dark'] .oauth-buttons img {
+  filter: invert(1);
+}
+
+:root[data-theme='system'] .oauth-buttons img {
+  filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] .oauth-buttons img {
+    filter: invert(1);
+  }
+}
+
+.login-options {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.login-options button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+}
+
+
+.password-row {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.password-row .auth-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.code-btn {
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--app-color);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  width: 96px;
+  cursor: pointer;
+}
+
+.code-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:root[data-theme='dark'] .login-options img {
+  filter: invert(1);
+}
+
+:root[data-theme='system'] .login-options img {
+  filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] .login-options img {
+    filter: invert(1);
+  }
+}
+
+.auth-footer {
+  margin-top: auto;
+  text-align: center;
+}
+
+.footer-links {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.footer-links a {
+  color: var(--highlight-color);
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+
+.auth-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 24px;
+}
+

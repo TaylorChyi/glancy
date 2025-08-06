@@ -1,0 +1,23 @@
+.close-btn {
+  margin-top: var(--space-3);
+}
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background: var(--app-bg);
+  color: var(--app-color);
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 300px;
+  width: 90%;
+  text-align: center;
+}

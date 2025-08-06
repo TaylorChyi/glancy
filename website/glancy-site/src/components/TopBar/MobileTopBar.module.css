@@ -1,0 +1,32 @@
+.visible {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.topbar-btn {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.term-text {
+  margin-left: 4px;
+}
+
+.mobile-topbar {
+  height: var(--bar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+

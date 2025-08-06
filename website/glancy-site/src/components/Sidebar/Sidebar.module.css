@@ -1,0 +1,123 @@
+.sidebar-section {
+  margin-bottom: 1rem;
+}
+
+.sidebar-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-section select {
+  padding: 0.25rem;
+}
+
+.sidebar-user {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: var(--bar-height);
+  padding: 0 20px;
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  border-top: 1px solid transparent;
+}
+
+/* adapt header components used inside sidebar */
+.sidebar-user :global(.header-section) {
+  display: block;
+  margin-right: 0;
+  width: var(--user-menu-width);
+}
+
+.sidebar-user .user-menu button.with-name {
+  width: var(--user-menu-width);
+  justify-content: flex-start;
+  padding: 8px 0;
+  color: inherit;
+}
+
+/* dropdown style inside sidebar */
+.sidebar-user :global(.user-menu) {
+  position: relative;
+  width: 100%;
+}
+
+.sidebar-user :global(.user-menu .menu) {
+  inset: auto 0 calc(100% + 0.5rem);
+  width: var(--user-menu-width);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+
+.sidebar-functions {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.history-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  padding-left: 8px;
+  position: relative;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.history-list li:hover {
+  background-color: rgb(0 0 0 / 5%);
+}
+
+.sidebar-user .user-menu li:hover {
+  background-color: rgb(0 0 0 / 5%);
+}
+
+:root[data-theme='dark'] .history-list li:hover {
+  background-color: rgb(255 255 255 / 10%);
+}
+
+:root[data-theme='dark'] .sidebar-user .user-menu li:hover {
+  background-color: rgb(255 255 255 / 10%);
+}
+
+.sidebar-user .user-menu button.with-name:hover {
+background-color: rgb(255 255 255 / 10%);
+border-radius: 4px;
+}
+
+.favorites-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.collection-button {
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+  padding-left: 8px;
+  border-radius: 4px;
+}
+
+.collection-button:hover {
+  background-color: rgb(0 0 0 / 5%);
+}
+
+:root[data-theme='dark'] .collection-button:hover {
+  background-color: rgb(255 255 255 / 10%);
+}

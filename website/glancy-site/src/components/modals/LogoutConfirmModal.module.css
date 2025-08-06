@@ -1,0 +1,44 @@
+@import url('./ModalContent.module.css');
+
+.logout-modal {
+  width: 320px;
+  max-width: 90%;
+  text-align: center;
+}
+
+.logout-modal h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.logout-modal .message {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.logout-btn {
+  background: var(--highlight-color);
+  color: var(--primary-bg);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.cancel-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--app-color);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: 100%;
+}
