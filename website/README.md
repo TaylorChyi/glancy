@@ -25,7 +25,7 @@ npm ci
 - `DEPLOY_HOST`：服务器地址
 - `DEPLOY_USER`：登录用户名
 - `DEPLOY_KEY`：对应用户的私钥
-- `DEPLOY_PATH`：文件同步到服务器上的目标目录
+- `WEBSITE_DEPLOY_PATH`：网站文件同步到服务器上的目标目录
 
 每次向 `main` 分支或以 `feature-` 开头的分支推送代码时，`部署到云服务器` 工作流程都会自动执行。
 
