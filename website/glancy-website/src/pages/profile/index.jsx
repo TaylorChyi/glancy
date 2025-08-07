@@ -11,6 +11,7 @@ import { useApi } from '@/hooks'
 import { useUser } from '@/context'
 import { cacheBust } from '@/utils/url.js'
 import ThemeIcon from '@/components/ui/Icon'
+import Tooltip from '@/components/ui/Tooltip'
 
 function Profile({ onCancel }) {
   const { t } = useLanguage()
@@ -133,17 +134,13 @@ function Profile({ onCancel }) {
             <ThemeIcon name="cake" className={styles.icon} width={20} height={20} />
             <span>{t.ageLabel}</span>
             <AgeStepper value={age} onChange={setAge} />
-            <span className={styles.tooltip}>
-              ?<span className={styles['tooltip-text']}>{t.ageHelp}</span>
-            </span>
+            <Tooltip text={t.ageHelp}>?</Tooltip>
           </div>
           <div className={styles.item}>
             <ThemeIcon name="user" className={styles.icon} width={20} height={20} />
             <span>{t.genderLabel}</span>
             <GenderSelect value={gender} onChange={setGender} />
-            <span className={styles.tooltip}>
-              ?<span className={styles['tooltip-text']}>{t.genderHelp}</span>
-            </span>
+            <Tooltip text={t.genderHelp}>?</Tooltip>
           </div>
           <div className={styles.item}>
             <ThemeIcon name="star-outline" className={styles.icon} width={20} height={20} />
@@ -153,9 +150,7 @@ function Profile({ onCancel }) {
               onChange={(e) => setInterests(e.target.value)}
               placeholder={t.interestsPlaceholder}
             />
-            <span className={styles.tooltip}>
-              ?<span className={styles['tooltip-text']}>{t.interestsHelp}</span>
-            </span>
+            <Tooltip text={t.interestsHelp}>?</Tooltip>
           </div>
           <div className={styles.item}>
             <ThemeIcon name="target" className={styles.icon} width={20} height={20} />
@@ -165,9 +160,7 @@ function Profile({ onCancel }) {
               onChange={(e) => setGoal(e.target.value)}
               placeholder={t.goalPlaceholder}
             />
-            <span className={styles.tooltip}>
-              ?<span className={styles['tooltip-text']}>{t.goalHelp}</span>
-            </span>
+            <Tooltip text={t.goalHelp}>?</Tooltip>
           </div>
         </div>
         <div className={styles.actions}>
