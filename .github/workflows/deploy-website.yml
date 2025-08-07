@@ -54,6 +54,6 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/glancy-site/dist'
+          source: 'website/glancy-site/dist/*'
           target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
           strip_components: 2
