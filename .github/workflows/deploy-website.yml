@@ -53,6 +53,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/glancy-site/dist/*'    # 匹配 dist 目录下所有文件
-          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}  # 例如 /var/www/glancy-website
-          strip_components: 2                     # 去掉 website/ 和 glancy-site/
+          # 只匹配 dist 目录下的所有文件和子目录
+          source: 'website/glancy-site/dist/*'
+          # 直接放到远端的 dist 目录下
+          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}/dist
