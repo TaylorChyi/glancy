@@ -47,13 +47,12 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: rm -rf ${{ secrets.WEBSITE_DEPLOY_PATH }}/dist/*
 
-      # 7. 上传 dist 目录，并剥离前两级本地路径
       - name: Sync dist to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/glancy-site/dist/*'
-          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
-          strip_components: 2
+          source: 'website/glancy-site/dist/*'    # 匹配 dist 目录下所有文件
+          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}  # 例如 /var/www/glancy-website
+          strip_components: 2                     # 去掉 website/ 和 glancy-site/
