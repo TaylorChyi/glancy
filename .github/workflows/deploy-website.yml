@@ -11,6 +11,11 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website/glancy-website
+    env:
+      WEBSITE_DIR: website/glancy-website
     steps:
       # 1. 拉取仓库
       - uses: actions/checkout@v3
@@ -23,19 +28,16 @@ jobs:
 
       # 3. 安装前端依赖
       - name: Install dependencies
-        working-directory: glancy-website
         run: npm ci
 
       # 4. 代码规范校验
       - name: Lint code
-        working-directory: glancy-website
         run: |
           npm run lint
           npm run lint:css
 
       # 5. 构建项目
       - name: Build project
-        working-directory: glancy-website
         run: npm run build
 
       # 6. 清空服务器上旧的 dist 目录
@@ -54,6 +56,6 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           # 只匹配 dist 目录下的所有文件和子目录
-          source: 'glancy-website'
+          source: '${{ env.WEBSITE_DIR }}/dist/*'
           # 直接放到远端的 dist 目录下
           target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
