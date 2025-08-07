@@ -4,11 +4,10 @@ import { useHistory, useUser, useFavorites } from '@/context'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@/context'
 import DictionaryEntry from '@/components/ui/DictionaryEntry'
-import ThemeIcon from '@/components/ui/Icon'
 import { useLanguage } from '@/context'
 import { useFetchWord } from '@/hooks'
 import './App.css'
-import styles from './App.module.css'
+import ChatInput from '@/components/ui/ChatInput'
 import Layout from '@/components/Layout'
 import HistoryDisplay from '@/components/ui/HistoryDisplay'
 import { useModelStore } from '@/store'
@@ -155,23 +154,13 @@ function App() {
           canFavorite: !!entry && !showFavorites && !showHistory
         }}
         bottomContent={(
-          <form className="chatbox" onSubmit={handleSend}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={t.inputPlaceholder}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className={styles['rounded-input']}
-            />
-            <button type="submit">
-              {text.trim() === '' ? (
-                <ThemeIcon name="voice-button" alt="voice" />
-              ) : (
-                <ThemeIcon name="send-button" alt="send" />
-              )}
-            </button>
-          </form>
+          <ChatInput
+            inputRef={inputRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onSubmit={handleSend}
+            placeholder={t.inputPlaceholder}
+          />
         )}
       >
         <div className="display">
