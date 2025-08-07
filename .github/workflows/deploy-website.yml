@@ -6,42 +6,54 @@ on:
       - main
       - 'feature-*'
     paths:
-      - 'website/**'
+      - 'website/glancy-site/**'
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # 1. 拉取仓库
+      - uses: actions/checkout@v3
+
+      # 2. 安装 Node.js (节点.js) v20
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: '20'
+
+      # 3. 安装前端依赖
       - name: Install dependencies
+        working-directory: website/glancy-site
         run: npm ci
-        working-directory: glancy-website
+
+      # 4. 代码规范校验
       - name: Lint code
+        working-directory: website/glancy-site
         run: |
           npm run lint
           npm run lint:css
-        working-directory: glancy-website
+
+      # 5. 构建项目
       - name: Build project
+        working-directory: website/glancy-site
         run: npm run build
-        working-directory: glancy-website
+
+      # 6. 清空服务器上旧的 dist 目录
       - name: Clean server directory
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: rm -rf ${{ secrets.WEBSITE_DEPLOY_PATH }}/*
-      - name: Sync to server
+          script: rm -rf ${{ secrets.WEBSITE_DEPLOY_PATH }}/dist/*
+
+      # 7. 上传 dist 目录，并剥离前两级本地路径
+      - name: Sync dist to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'glancy-website/dist/*'
+          source: 'website/glancy-site/dist'
           target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
-          strip_components: 3
+          strip_components: 2
