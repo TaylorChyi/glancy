@@ -40,7 +40,6 @@
   font-size: 1.25rem;
 }
 
-
 .avatar img {
   width: 32px;
   height: 32px;
@@ -73,43 +72,6 @@
 .display-term {
   margin-bottom: 1rem;
 }
-
-
-.chatbox {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  gap: 16px;
-  background: var(--app-bg);
-}
-
-.chatbox input {
-  flex: 1;
-  border: none;
-  border-radius: 20px;
-  padding: 12px 20px;
-  outline: none;
-  font-size: 1rem;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
-}
-
-.chatbox button {
-  border: none;
-  background: none;
-  padding: 8px;
-  cursor: pointer;
-}
-
-.chatbox button + button {
-  margin-left: 16px;
-}
-
-.chatbox button img {
-  width: 36px;
-  height: 36px;
-}
-
 
 @media (width <= 600px) {
   .sidebar {
