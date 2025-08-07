@@ -11,8 +11,10 @@ import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -147,9 +149,8 @@ class DeepSeekClientTest {
         }
 
         // 读取 PROMPT_CN.md 文件内容
-        String prompt = java.nio.file.Files.readString(
-            java.nio.file.Paths.get("src/main/resources/prompts/english_to_chinese.txt")
-        );
+        String prompt = new ClassPathResource("prompts/english_to_chinese.txt")
+            .getContentAsString(StandardCharsets.UTF_8);
 
         String body = String.format(
             """
