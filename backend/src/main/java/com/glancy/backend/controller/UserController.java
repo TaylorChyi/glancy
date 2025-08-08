@@ -40,9 +40,7 @@ public class UserController {
      */
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRegistrationRequest req) {
-        log.info("Registering user with username '{}'", req.getUsername());
         UserResponse resp = userService.register(req);
-        log.info("Registered user {}", resp.getId());
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -51,7 +49,6 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        log.info("Deleting user {}", id);
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
@@ -61,7 +58,6 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable Long id) {
-        log.info("Fetching user {}", id);
         User user = userService.getUserRaw(id);
         return ResponseEntity.ok(user);
     }
@@ -71,9 +67,7 @@ public class UserController {
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
-        log.info("User login attempt with account '{}'", req.getAccount());
         LoginResponse resp = userService.login(req);
-        log.info("User {} logged in", resp.getId());
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }
 
@@ -82,7 +76,6 @@ public class UserController {
      */
     @PostMapping("/{id}/logout")
     public ResponseEntity<Void> logout(@AuthenticatedUser User user) {
-        log.info("User {} logging out", user.getId());
         userService.logout(user.getId(), user.getLoginToken());
         return ResponseEntity.noContent().build();
     }
@@ -95,9 +88,7 @@ public class UserController {
         @PathVariable Long id,
         @Valid @RequestBody ThirdPartyAccountRequest req
     ) {
-        log.info("Binding third-party account '{}' for user {}", req.getProvider(), id);
         ThirdPartyAccountResponse resp = userService.bindThirdPartyAccount(id, req);
-        log.info("Bound third-party account {} for user {}", resp.getId(), id);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -106,7 +97,6 @@ public class UserController {
      */
     @GetMapping("/{id}/avatar")
     public ResponseEntity<AvatarResponse> getAvatar(@PathVariable Long id) {
-        log.info("Fetching avatar for user {}", id);
         AvatarResponse resp = userService.getAvatar(id);
         return ResponseEntity.ok(resp);
     }
@@ -116,7 +106,6 @@ public class UserController {
      */
     @PutMapping("/{id}/avatar")
     public ResponseEntity<AvatarResponse> updateAvatar(@PathVariable Long id, @Valid @RequestBody AvatarRequest req) {
-        log.info("Updating avatar for user {}", id);
         AvatarResponse resp = userService.updateAvatar(id, req.getAvatar());
         return ResponseEntity.ok(resp);
     }
@@ -129,7 +118,6 @@ public class UserController {
         @PathVariable Long id,
         @RequestParam("file") MultipartFile file
     ) {
-        log.info("Uploading avatar file for user {}", id);
         AvatarResponse resp = userService.uploadAvatar(id, file);
         return ResponseEntity.ok(resp);
     }
@@ -142,7 +130,6 @@ public class UserController {
         @PathVariable Long id,
         @Valid @RequestBody UsernameRequest req
     ) {
-        log.info("Updating username for user {}", id);
         UsernameResponse resp = userService.updateUsername(id, req.getUsername());
         return ResponseEntity.ok(resp);
     }
@@ -152,9 +139,7 @@ public class UserController {
      */
     @GetMapping("/count")
     public ResponseEntity<Long> countUsers() {
-        log.info("Counting active users");
         long count = userService.countActiveUsers();
-        log.info("Active user count: {}", count);
         return ResponseEntity.ok(count);
     }
 }

@@ -24,9 +24,7 @@ public class LlmController {
 
     @GetMapping("/models")
     public ResponseEntity<List<String>> getModels() {
-        log.info("Received request for available LLM models");
         List<String> models = modelService.getModelNames();
-        log.info("Returning {} models: {}", models.size(), models);
         return ResponseEntity.ok(models);
     }
 }

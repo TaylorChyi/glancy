@@ -26,7 +26,6 @@ public class LocaleController {
     @GetMapping("/locale")
     public ResponseEntity<LocaleResponse> getLocale(HttpServletRequest request) {
         String header = request.getHeader("Accept-Language");
-        log.info("Determining locale from header: {}", header);
         String country = "US";
         String lang = "en";
         if (header != null && !header.isBlank()) {
@@ -42,7 +41,6 @@ public class LocaleController {
             }
         }
         lang = COUNTRY_TO_LANG.getOrDefault(country, lang);
-        log.info("Resolved locale - country: {}, language: {}", country, lang);
         return ResponseEntity.ok(new LocaleResponse(country, lang));
     }
 }

@@ -30,9 +30,7 @@ public class ContactController {
      */
     @PostMapping
     public ResponseEntity<ContactResponse> submit(@Valid @RequestBody ContactRequest req) {
-        log.info("Submitting contact message from '{}'", req.getEmail());
         ContactResponse resp = contactService.submit(req);
-        log.info("Stored contact message {}", resp.getId());
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 }

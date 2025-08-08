@@ -35,9 +35,7 @@ public class SearchRecordController {
         @AuthenticatedUser Long userId,
         @Valid @RequestBody SearchRecordRequest req
     ) {
-        log.info("Recording search term '{}' for user {}", req.getTerm(), userId);
         SearchRecordResponse resp = searchRecordService.saveRecord(userId, req);
-        log.info("Created search record {} for user {}", resp.getId(), userId);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -46,9 +44,7 @@ public class SearchRecordController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
-        log.info("Fetching search records for user {}", userId);
         List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
-        log.info("Returning {} search records for user {}", resp.size(), userId);
         return ResponseEntity.ok(resp);
     }
 
@@ -57,7 +53,6 @@ public class SearchRecordController {
      */
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<Void> clear(@AuthenticatedUser Long userId) {
-        log.info("Clearing search records for user {}", userId);
         searchRecordService.clearRecords(userId);
         return ResponseEntity.noContent().build();
     }
@@ -67,7 +62,6 @@ public class SearchRecordController {
      */
     @PostMapping("/user/{userId}/{recordId}/favorite")
     public ResponseEntity<SearchRecordResponse> favorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        log.info("Marking search record {} as favorite for user {}", recordId, userId);
         SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
         return ResponseEntity.ok(resp);
     }
@@ -77,7 +71,6 @@ public class SearchRecordController {
      */
     @DeleteMapping("/user/{userId}/{recordId}/favorite")
     public ResponseEntity<Void> unfavorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        log.info("Unfavoriting search record {} for user {}", recordId, userId);
         searchRecordService.unfavoriteRecord(userId, recordId);
         return ResponseEntity.noContent().build();
     }
@@ -87,7 +80,6 @@ public class SearchRecordController {
      */
     @DeleteMapping("/user/{userId}/{recordId}")
     public ResponseEntity<Void> delete(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        log.info("Deleting search record {} for user {}", recordId, userId);
         searchRecordService.deleteRecord(userId, recordId);
         return ResponseEntity.noContent().build();
     }

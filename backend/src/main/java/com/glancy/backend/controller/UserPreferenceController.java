@@ -31,7 +31,6 @@ public class UserPreferenceController {
         @PathVariable Long userId,
         @Valid @RequestBody UserPreferenceRequest req
     ) {
-        log.info("Saving preferences for user {}", userId);
         UserPreferenceResponse resp = userPreferenceService.savePreference(userId, req);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
@@ -41,7 +40,6 @@ public class UserPreferenceController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserPreferenceResponse> getPreference(@PathVariable Long userId) {
-        log.info("Retrieving preferences for user {}", userId);
         UserPreferenceResponse resp = userPreferenceService.getPreference(userId);
         return ResponseEntity.ok(resp);
     }

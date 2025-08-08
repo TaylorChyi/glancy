@@ -30,9 +30,7 @@ public class UserProfileController {
         @PathVariable Long userId,
         @RequestBody UserProfileRequest req
     ) {
-        log.info("Saving profile for user {}", userId);
         UserProfileResponse resp = userProfileService.saveProfile(userId, req);
-        log.info("Saved profile for user {}", userId);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -41,7 +39,6 @@ public class UserProfileController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserProfileResponse> getProfile(@PathVariable Long userId) {
-        log.info("Retrieving profile for user {}", userId);
         UserProfileResponse resp = userProfileService.getProfile(userId);
         return ResponseEntity.ok(resp);
     }
