@@ -31,9 +31,7 @@ public class FaqController {
      */
     @PostMapping
     public ResponseEntity<FaqResponse> create(@Valid @RequestBody FaqRequest req) {
-        log.info("Creating FAQ with question '{}'", req.getQuestion());
         FaqResponse resp = faqService.createFaq(req);
-        log.info("Created FAQ {}", resp.getId());
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -42,9 +40,7 @@ public class FaqController {
      */
     @GetMapping
     public ResponseEntity<List<FaqResponse>> list() {
-        log.info("Retrieving all FAQs");
         List<FaqResponse> resp = faqService.getAllFaqs();
-        log.info("Returning {} FAQs", resp.size());
         return ResponseEntity.ok(resp);
     }
 }

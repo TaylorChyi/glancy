@@ -41,19 +41,11 @@ public class WordController {
         @RequestParam Language language,
         @RequestParam(required = false) String model
     ) {
-        log.info(
-            "Received getWord request from user {} with term '{}' and language {} using model {}",
-            userId,
-            term,
-            language,
-            model
-        );
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
         searchRecordService.saveRecord(userId, req);
         WordResponse resp = wordService.findWordForUser(userId, term, language, model);
-        log.info("Returning word response for term '{}': {}", term, resp);
         return ResponseEntity.ok(resp);
     }
 
@@ -62,9 +54,7 @@ public class WordController {
      */
     @GetMapping(value = "/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getAudio(@RequestParam String term, @RequestParam Language language) {
-        log.info("Fetching audio for term '{}' in language {}", term, language);
         byte[] data = wordService.getAudio(term, language);
-        log.info("Returning audio for term '{}' with {} bytes", term, data.length);
         return ResponseEntity.ok(data);
     }
 }
