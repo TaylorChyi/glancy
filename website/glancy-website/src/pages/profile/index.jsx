@@ -7,6 +7,7 @@ import MessagePopup from '@/components/ui/MessagePopup'
 import AgeStepper from '@/components/form/AgeStepper/AgeStepper.jsx'
 import GenderSelect from '@/components/form/GenderSelect/GenderSelect.jsx'
 import EditableField from '@/components/form/EditableField/EditableField.jsx'
+import FormField from '@/components/form/FormField.jsx'
 import { useApi } from '@/hooks'
 import { useUser } from '@/context'
 import { cacheBust } from '@/utils/url.js'
@@ -130,38 +131,82 @@ function Profile({ onCancel }) {
           buttonText={t.editButton}
         />
         <div className={styles.basic}>
-          <div className={styles.item}>
-            <ThemeIcon name="cake" className={styles.icon} width={20} height={20} />
-            <span>{t.ageLabel}</span>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="cake"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.ageLabel}
+                <Tooltip text={t.ageHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-age"
+          >
             <AgeStepper value={age} onChange={setAge} />
-            <Tooltip text={t.ageHelp}>?</Tooltip>
-          </div>
-          <div className={styles.item}>
-            <ThemeIcon name="user" className={styles.icon} width={20} height={20} />
-            <span>{t.genderLabel}</span>
+          </FormField>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="user"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.genderLabel}
+                <Tooltip text={t.genderHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-gender"
+          >
             <GenderSelect value={gender} onChange={setGender} />
-            <Tooltip text={t.genderHelp}>?</Tooltip>
-          </div>
-          <div className={styles.item}>
-            <ThemeIcon name="star-outline" className={styles.icon} width={20} height={20} />
-            <span>{t.interestsLabel}</span>
+          </FormField>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="star-outline"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.interestsLabel}
+                <Tooltip text={t.interestsHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-interests"
+          >
             <input
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
               placeholder={t.interestsPlaceholder}
             />
-            <Tooltip text={t.interestsHelp}>?</Tooltip>
-          </div>
-          <div className={styles.item}>
-            <ThemeIcon name="target" className={styles.icon} width={20} height={20} />
-            <span>{t.goalLabel}</span>
+          </FormField>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="target"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.goalLabel}
+                <Tooltip text={t.goalHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-goal"
+          >
             <input
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder={t.goalPlaceholder}
             />
-            <Tooltip text={t.goalHelp}>?</Tooltip>
-          </div>
+          </FormField>
         </div>
         <div className={styles.actions}>
           <button type="submit" className={styles['save-btn']}>

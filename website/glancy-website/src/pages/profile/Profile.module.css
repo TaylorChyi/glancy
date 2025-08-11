@@ -76,13 +76,7 @@
   font-size: 0.9rem;
 }
 
-.basic .item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.basic .item .icon {
+.basic .icon {
   width: 20px;
   height: 20px;
 }
