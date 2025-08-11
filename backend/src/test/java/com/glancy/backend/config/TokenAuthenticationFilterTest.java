@@ -9,18 +9,14 @@ import com.glancy.backend.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(com.glancy.backend.controller.SearchRecordController.class)
 @Import(
-    {
-        SecurityConfig.class,
-        WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
+    { SecurityConfig.class, WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class }
 )
 class TokenAuthenticationFilterTest {
 
