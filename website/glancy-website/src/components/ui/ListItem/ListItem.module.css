@@ -12,11 +12,11 @@
 }
 
 .item:hover {
-  background-color: rgb(0 0 0 / 5%);
+  background-color: var(--color-overlay-weak);
 }
 
 :root[data-theme='dark'] .item:hover {
-  background-color: rgb(255 255 255 / 10%);
+  background-color: var(--color-overlay-inverse);
 }
 
 .text {

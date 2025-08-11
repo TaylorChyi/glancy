@@ -59,7 +59,7 @@
   bottom: calc(100% + 0.5rem);
   background: var(--app-bg);
   color: var(--app-color);
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5rem;
   width: var(--user-menu-width);
@@ -77,7 +77,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #ddd;
+  background: var(--color-surface-alt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,7 +95,7 @@
 }
 
 .user-menu .email {
-  color: gray;
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
 }
 
@@ -117,11 +117,11 @@
 }
 
 .user-menu li:hover {
-  background-color: rgb(0 0 0 / 5%);
+  background-color: var(--color-overlay-weak);
 }
 
 :root[data-theme='dark'] .user-menu li:hover {
-  background-color: rgb(255 255 255 / 10%);
+  background-color: var(--color-overlay-inverse);
 }
 
 .user-menu li .icon {
@@ -134,7 +134,7 @@
 
 .user-menu ul + ul {
   margin-top: 0.5rem;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid var(--border-color);
   padding-top: 0.5rem;
 }
 

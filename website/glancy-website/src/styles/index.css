@@ -15,6 +15,10 @@
   --vh: 100vh;
   --highlight-color: var(--hl-dark);
   --shadow-color: rgb(0 0 0 / 15%);
+  --color-overlay: color-mix(in srgb, var(--color-overlay-base), transparent 50%);
+  --color-overlay-strong: color-mix(in srgb, var(--color-overlay-base), transparent 25%);
+  --color-overlay-weak: color-mix(in srgb, var(--color-overlay-base), transparent 95%);
+  --color-overlay-inverse: color-mix(in srgb, var(--color-overlay-inverse-base), transparent 90%);
 }
 
 @supports (height: 100dvh) {
@@ -51,6 +55,12 @@
   --shadow-color: rgb(0 0 0 / 40%);
   --primary-bg: #f2f2f2;
   --primary-color: #121212;
+  --color-text: var(--text-primary-dark);
+  --color-text-inverse: var(--text-inverse-dark);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-alt: var(--surface-alt);
 }
 
 :root[data-theme='light'] {
@@ -75,6 +85,12 @@
   --shadow-color: rgb(0 0 0 / 15%);
   --primary-bg: #121212;
   --primary-color: #f2f2f2;
+  --color-text: var(--text-primary-light);
+  --color-text-inverse: var(--text-inverse-light);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-alt: var(--surface-alt);
 }
 
 :root[data-theme='system'] {
@@ -83,6 +99,12 @@
   --primary-bg: Canvas;
   --primary-color: CanvasText;
   --shadow-color: rgb(0 0 0 / 15%);
+  --color-text: var(--text-primary-light);
+  --color-text-inverse: var(--text-inverse-light);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-alt: var(--surface-alt);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -105,6 +127,8 @@
     --text-muted: var(--sys-muted);
     --brand-color: var(--brand-color);
     --shadow-color: rgb(0 0 0 / 40%);
+    --color-text: var(--text-primary-dark);
+    --color-text-inverse: var(--text-inverse-dark);
   }
 }
 
@@ -128,6 +152,8 @@
     --text-muted: var(--sys-muted);
     --brand-color: var(--brand-color);
     --shadow-color: rgb(0 0 0 / 15%);
+    --color-text: var(--text-primary-light);
+    --color-text-inverse: var(--text-inverse-light);
   }
 }
 
