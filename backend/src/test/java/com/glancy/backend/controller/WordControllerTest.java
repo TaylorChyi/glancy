@@ -16,19 +16,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(WordController.class)
-@Import(
-    {
-        com.glancy.backend.config.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({com.glancy.backend.config.SecurityConfig.class, com.glancy.backend.config.WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class})
 class WordControllerTest {
 
     @Autowired
