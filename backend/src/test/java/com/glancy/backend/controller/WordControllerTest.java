@@ -22,7 +22,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(WordController.class)
-@Import({com.glancy.backend.config.SecurityConfig.class, com.glancy.backend.config.WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class})
+@Import(
+    {
+        com.glancy.backend.config.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class WordControllerTest {
 
     @Autowired

@@ -15,7 +15,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(LlmController.class)
-@Import({com.glancy.backend.config.SecurityConfig.class, com.glancy.backend.config.WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class})
+@Import(
+    {
+        com.glancy.backend.config.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class LlmControllerTest {
 
     @Autowired

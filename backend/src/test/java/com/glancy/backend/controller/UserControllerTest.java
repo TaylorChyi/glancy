@@ -22,7 +22,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(UserController.class)
-@Import({com.glancy.backend.config.SecurityConfig.class, com.glancy.backend.config.WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class})
+@Import(
+    {
+        com.glancy.backend.config.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class UserControllerTest {
 
     @Autowired

@@ -15,7 +15,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(com.glancy.backend.controller.SearchRecordController.class)
-@Import({SecurityConfig.class, WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class})
+@Import(
+    { SecurityConfig.class, WebConfig.class, com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class }
+)
 class TokenAuthenticationFilterTest {
 
     @Autowired
