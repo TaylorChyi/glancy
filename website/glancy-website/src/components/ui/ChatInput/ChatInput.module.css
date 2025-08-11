@@ -14,7 +14,7 @@
   padding: 12px 20px;
   outline: none;
   font-size: 1rem;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
+  box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .button {

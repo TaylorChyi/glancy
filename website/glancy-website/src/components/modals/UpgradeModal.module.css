@@ -20,14 +20,14 @@
 }
 
 .plan.current {
-  /* highlight current plan using custom black */
-  border-color: color-mix(in srgb, #121212, transparent 20%);
+  /* highlight current plan using theme overlay base */
+  border-color: color-mix(in srgb, var(--color-overlay-base), transparent 20%);
 }
 
 .plan.selected {
-  /* highlight selected plan with semi-transparent black */
-  border-color: color-mix(in srgb, #121212, transparent 20%);
-  background: color-mix(in srgb, #121212, transparent 90%);
+  /* highlight selected plan with semi-transparent overlay */
+  border-color: color-mix(in srgb, var(--color-overlay-base), transparent 20%);
+  background: color-mix(in srgb, var(--color-overlay-base), transparent 90%);
 }
 
 .actions {

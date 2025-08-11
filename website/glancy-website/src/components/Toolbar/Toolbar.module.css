@@ -48,9 +48,9 @@
 }
 
 .model-selector .model-menu button:hover {
-  background: rgb(0 0 0 / 5%);
+  background: var(--color-overlay-weak);
 }
 
 :root[data-theme='dark'] .model-selector .model-menu button:hover {
-  background: rgb(255 255 255 / 10%);
+  background: var(--color-overlay-inverse);
 }

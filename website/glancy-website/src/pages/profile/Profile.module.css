@@ -37,8 +37,8 @@
   right: 0;
   bottom: 0;
   height: 30%;
-  background: rgb(0 0 0 / 50%);
-  color: #fff;
+  background: var(--color-overlay);
+  color: var(--color-text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;

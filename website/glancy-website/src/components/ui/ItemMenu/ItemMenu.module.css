@@ -19,7 +19,7 @@
   color: var(--sidebar-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+  box-shadow: 0 2px 8px var(--shadow-color);
   z-index: var(--z-index-popover);
 }
 
@@ -35,11 +35,11 @@
 }
 
 .menu button:hover {
-  background: rgb(255 255 255 / 10%);
+  background: var(--color-overlay-inverse);
 }
 
 .delete-btn {
-  color: #e34343;
+  color: var(--color-danger);
 }
 
 .icon {
