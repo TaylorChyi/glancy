@@ -6,7 +6,8 @@ import { useTheme } from '@/context'
 import { useUser } from '@/context'
 import { API_PATHS } from '@/config/api.js'
 import MessagePopup from '@/components/ui/MessagePopup'
-import FormField from '@/components/form/FormField.jsx'
+import SelectField from '@/components/form/SelectField.jsx'
+import FormRow from '@/components/form/FormRow.jsx'
 import { useApi } from '@/hooks'
 import { useModelStore } from '@/store'
 
@@ -79,47 +80,45 @@ function Preferences() {
     <div className="app">
       <h2>{t.prefTitle}</h2>
       <form className={styles['preferences-form']} onSubmit={handleSave}>
-        <FormField label={t.prefLanguage} id="source-lang">
-          <select
+        <FormRow label={t.prefLanguage} id="source-lang">
+          <SelectField
             value={sourceLang}
-            onChange={(e) => setSourceLang(e.target.value)}
-          >
-            <option value="auto">{t.autoDetect}</option>
-            <option value="CHINESE">CHINESE</option>
-            <option value="ENGLISH">ENGLISH</option>
-          </select>
-        </FormField>
-        <FormField label={t.prefSearchLanguage} id="target-lang">
-          <select
+            onChange={setSourceLang}
+            options={[
+              { value: 'auto', label: t.autoDetect },
+              { value: 'CHINESE', label: 'CHINESE' },
+              { value: 'ENGLISH', label: 'ENGLISH' }
+            ]}
+          />
+        </FormRow>
+        <FormRow label={t.prefSearchLanguage} id="target-lang">
+          <SelectField
             value={targetLang}
-            onChange={(e) => setTargetLang(e.target.value)}
-          >
-            <option value="CHINESE">CHINESE</option>
-            <option value="ENGLISH">ENGLISH</option>
-          </select>
-        </FormField>
-        <FormField label={t.prefDictionaryModel} id="dictionary-model">
-          <select
+            onChange={setTargetLang}
+            options={[
+              { value: 'CHINESE', label: 'CHINESE' },
+              { value: 'ENGLISH', label: 'ENGLISH' }
+            ]}
+          />
+        </FormRow>
+        <FormRow label={t.prefDictionaryModel} id="dictionary-model">
+          <SelectField
             value={defaultModel}
-            onChange={(e) => setDefaultModel(e.target.value)}
-          >
-            {models.map((m) => (
-              <option key={m} value={m}>
-                {t[m] || m}
-              </option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label={t.prefTheme} id="theme-select">
-          <select
+            onChange={setDefaultModel}
+            options={models.map((m) => ({ value: m, label: t[m] || m }))}
+          />
+        </FormRow>
+        <FormRow label={t.prefTheme} id="theme-select">
+          <SelectField
             value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-          >
-            <option value="light">light</option>
-            <option value="dark">dark</option>
-            <option value="system">system</option>
-          </select>
-        </FormField>
+            onChange={setTheme}
+            options={[
+              { value: 'light', label: 'light' },
+              { value: 'dark', label: 'dark' },
+              { value: 'system', label: 'system' }
+            ]}
+          />
+        </FormRow>
         <button type="submit">{t.saveButton}</button>
       </form>
       <MessagePopup
