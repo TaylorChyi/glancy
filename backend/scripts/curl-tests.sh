@@ -74,30 +74,30 @@ section "Upload avatar"
 curl -i -F "file=@avatar.jpg" "$BASE_URL/api/users/1/avatar-file"
 
 section "Add search record"
-curl -i -H "Content-Type: application/json" \
+curl -i -H "X-USER-TOKEN: TOKEN" -H "Content-Type: application/json" \
     -d '{"term":"hello","language":"ENGLISH"}' \
     "$BASE_URL/api/search-records/user/1"
 
 section "List search records"
-curl -i "$BASE_URL/api/search-records/user/1"
+curl -i -H "X-USER-TOKEN: TOKEN" "$BASE_URL/api/search-records/user/1"
 
 section "Favorite search record"
-curl -i -X POST "$BASE_URL/api/search-records/user/1/1/favorite"
+curl -i -H "X-USER-TOKEN: TOKEN" -X POST "$BASE_URL/api/search-records/user/1/1/favorite"
 
 section "Unfavorite search record"
-curl -i -X DELETE "$BASE_URL/api/search-records/user/1/1/favorite"
+curl -i -H "X-USER-TOKEN: TOKEN" -X DELETE "$BASE_URL/api/search-records/user/1/1/favorite"
 
 section "Delete one search record"
-curl -i -X DELETE "$BASE_URL/api/search-records/user/1/1"
+curl -i -H "X-USER-TOKEN: TOKEN" -X DELETE "$BASE_URL/api/search-records/user/1/1"
 
 section "Lookup word (default model)"
-curl -i "$BASE_URL/api/words?userId=1&term=hello&language=ENGLISH"
+curl -i -H "X-USER-TOKEN: TOKEN" "$BASE_URL/api/words?userId=1&term=hello&language=ENGLISH"
 
 section "Lookup word (doubao model)"
-curl -i "$BASE_URL/api/words?userId=1&term=hello&language=ENGLISH&model=doubao"
+curl -i -H "X-USER-TOKEN: TOKEN" "$BASE_URL/api/words?userId=1&term=hello&language=ENGLISH&model=doubao"
 
 section "Clear search records"
-curl -i -X DELETE "$BASE_URL/api/search-records/user/1"
+curl -i -H "X-USER-TOKEN: TOKEN" -X DELETE "$BASE_URL/api/search-records/user/1"
 
 
 

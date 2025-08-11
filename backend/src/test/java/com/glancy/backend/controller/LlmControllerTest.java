@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
     {
         com.glancy.backend.config.SecurityConfig.class,
         com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.TokenAuthenticationInterceptor.class,
         com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
     }
 )
@@ -30,6 +29,9 @@ class LlmControllerTest {
 
     @MockitoBean
     private LlmModelService modelService;
+
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
 
     @Test
     void getModels() throws Exception {

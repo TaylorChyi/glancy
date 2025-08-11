@@ -27,6 +27,9 @@ class ContactControllerTest {
     @MockitoBean
     private ContactService contactService;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     @Autowired
     private ObjectMapper objectMapper;
 

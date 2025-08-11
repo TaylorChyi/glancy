@@ -26,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
     {
         com.glancy.backend.config.SecurityConfig.class,
         com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.TokenAuthenticationInterceptor.class,
         com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
     }
 )
