@@ -10,8 +10,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import io.github.cdimascio.dotenv.Dotenv;
-import java.util.List;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -149,8 +149,9 @@ class DeepSeekClientTest {
         }
 
         // 读取 PROMPT_CN.md 文件内容
-        String prompt = new ClassPathResource("prompts/english_to_chinese.txt")
-            .getContentAsString(StandardCharsets.UTF_8);
+        String prompt = new ClassPathResource("prompts/english_to_chinese.txt").getContentAsString(
+            StandardCharsets.UTF_8
+        );
 
         String body = String.format(
             """
