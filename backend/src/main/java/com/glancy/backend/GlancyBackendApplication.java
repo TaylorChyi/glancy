@@ -1,6 +1,7 @@
 package com.glancy.backend;
 
 import com.glancy.backend.util.EnvLoader;
+import java.time.Clock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -31,5 +32,15 @@ public class GlancyBackendApplication {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    /**
+     * Provide a system UTC clock for time-based services. Keeping this
+     * as a bean allows tests to supply a deterministic clock while the
+     * application defaults to the system clock.
+     */
+    @Bean
+    public Clock systemClock() {
+        return Clock.systemUTC();
     }
 }

@@ -16,7 +16,7 @@ public interface TtsService {
      * @param request synthesis parameters
      * @return optional response; empty when cache miss and shortcut is true
      */
-    Optional<TtsResponse> synthesizeWord(Long userId, TtsRequest request);
+    Optional<TtsResponse> synthesizeWord(Long userId, String ip, TtsRequest request);
 
     /**
      * Synthesize audio for a sentence or arbitrary text.
@@ -25,7 +25,7 @@ public interface TtsService {
      * @param request synthesis parameters
      * @return optional response; empty when cache miss and shortcut is true
      */
-    Optional<TtsResponse> synthesizeSentence(Long userId, TtsRequest request);
+    Optional<TtsResponse> synthesizeSentence(Long userId, String ip, TtsRequest request);
 
     /**
      * Retrieve voice options available for the given language.

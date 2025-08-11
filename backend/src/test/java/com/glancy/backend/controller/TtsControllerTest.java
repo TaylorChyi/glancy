@@ -1,6 +1,7 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -55,7 +56,7 @@ class TtsControllerTest {
     @Test
     void synthesizeWordReturnsAudio() throws Exception {
         TtsResponse resp = new TtsResponse("url", 1000L, "mp3", true, "obj");
-        when(ttsService.synthesizeWord(eq(1L), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         doNothing().when(userService).validateToken(1L, "tkn");
 
         mockMvc
@@ -77,7 +78,7 @@ class TtsControllerTest {
      */
     @Test
     void synthesizeWordCacheMissReturns204() throws Exception {
-        when(ttsService.synthesizeWord(eq(1L), any(TtsRequest.class))).thenReturn(Optional.empty());
+        when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.empty());
         doNothing().when(userService).validateToken(1L, "tkn");
 
         mockMvc
