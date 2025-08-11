@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
     member BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NOT NULL,
     lastLoginAt DATETIME,
     loginToken VARCHAR(64)
 );
@@ -26,7 +27,9 @@ CREATE TABLE IF NOT EXISTS search_records (
     user_id BIGINT NOT NULL,
     term VARCHAR(100) NOT NULL,
     language VARCHAR(10) NOT NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NOT NULL,
     favorite BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_search_record_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -39,6 +42,7 @@ CREATE TABLE IF NOT EXISTS words (
     example VARCHAR(255),
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt DATETIME NOT NULL,
+    updatedAt DATETIME NOT NULL,
     CONSTRAINT uk_words_term_language UNIQUE (term, language)
 );
 
