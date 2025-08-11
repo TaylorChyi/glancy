@@ -48,7 +48,7 @@ class TtsStorageServiceImplTest {
     @Test
     void saveUploadsAndPersistsMetadata() {
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
-        byte[] audio = new byte[] {1, 2, 3};
+        byte[] audio = new byte[] { 1, 2, 3 };
         String hash = "hash";
         service.save(hash, "en", "v1", "mp3", 500L, audio, TtsScope.WORD, 30);
 
@@ -63,10 +63,7 @@ class TtsStorageServiceImplTest {
         assertEquals("v1", saved.getVoiceId());
         assertEquals(500L, saved.getDurationMs());
         assertEquals(TtsScope.WORD, saved.getScope());
-        assertEquals(
-            LocalDateTime.of(2024, 1, 2, 3, 4, 5).plusDays(30),
-            saved.getExpiredAt()
-        );
+        assertEquals(LocalDateTime.of(2024, 1, 2, 3, 4, 5).plusDays(30), saved.getExpiredAt());
     }
 
     /**

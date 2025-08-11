@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class TtsRateLimiter {
 
     private static class Bucket {
+
         int tokens;
         long windowStart;
         long cooldownUntil;
@@ -50,36 +51,21 @@ public class TtsRateLimiter {
             log.warn("User {} hit rate limit, retry after {}s", userId, retryUser);
             throw new RateLimitExceededException("请" + retryUser + "秒后重试");
         }
-        long retryIp = checkBucket(
-            ipBuckets,
-            ip,
-            cfg.getIpPerMinute(),
-            cfg.getBurst(),
-            cfg.getCooldownSeconds()
-        );
+        long retryIp = checkBucket(ipBuckets, ip, cfg.getIpPerMinute(), cfg.getBurst(), cfg.getCooldownSeconds());
         if (retryIp > 0) {
             log.warn("IP {} hit rate limit, retry after {}s", maskIp(ip), retryIp);
             throw new RateLimitExceededException("请" + retryIp + "秒后重试");
         }
     }
 
-    private long checkBucket(
-        Map<String, Bucket> buckets,
-        String key,
-        int perMinute,
-        int burst,
-        int cooldownSeconds
-    ) {
+    private long checkBucket(Map<String, Bucket> buckets, String key, int perMinute, int burst, int cooldownSeconds) {
         long now = clock.millis();
-        Bucket bucket = buckets.computeIfAbsent(
-            key,
-            k -> {
-                Bucket b = new Bucket();
-                b.tokens = perMinute + burst;
-                b.windowStart = now;
-                return b;
-            }
-        );
+        Bucket bucket = buckets.computeIfAbsent(key, k -> {
+            Bucket b = new Bucket();
+            b.tokens = perMinute + burst;
+            b.windowStart = now;
+            return b;
+        });
         synchronized (bucket) {
             if (now < bucket.cooldownUntil) {
                 return (bucket.cooldownUntil - now + 999) / 1000;

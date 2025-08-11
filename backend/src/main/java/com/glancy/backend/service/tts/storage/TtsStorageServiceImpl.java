@@ -22,11 +22,7 @@ public class TtsStorageServiceImpl implements TtsStorageService {
     private final ObjectStorageClient storageClient;
     private final Clock clock;
 
-    public TtsStorageServiceImpl(
-        TtsAudioRepository repository,
-        ObjectStorageClient storageClient,
-        Clock clock
-    ) {
+    public TtsStorageServiceImpl(TtsAudioRepository repository, ObjectStorageClient storageClient, Clock clock) {
         this.repository = repository;
         this.storageClient = storageClient;
         this.clock = clock;

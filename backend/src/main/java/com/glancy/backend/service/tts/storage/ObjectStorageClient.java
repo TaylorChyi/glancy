@@ -8,7 +8,6 @@ import java.time.Duration;
  * particular vendor SDK.
  */
 public interface ObjectStorageClient {
-
     /** Persist the given payload under the specified key. */
     void putObject(String key, byte[] content);
 

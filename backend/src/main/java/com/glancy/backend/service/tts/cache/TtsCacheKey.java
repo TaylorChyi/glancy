@@ -19,14 +19,7 @@ public final class TtsCacheKey {
     /**
      * Generate a SHA-256 hash over the normalised synthesis parameters.
      */
-    public static String compute(
-        String text,
-        String lang,
-        String voice,
-        String format,
-        double speed,
-        TtsScope scope
-    ) {
+    public static String compute(String text, String lang, String voice, String format, double speed, TtsScope scope) {
         String normalised = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
         String raw = String.join("|", normalised, lang, voice, format, String.valueOf(speed), scope.name());
         try {

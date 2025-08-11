@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  * that daily quotas can be enforced efficiently.
  */
 @Entity
-@Table(name = "tts_usage", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "date"}))
+@Table(name = "tts_usage", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "date" }))
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)

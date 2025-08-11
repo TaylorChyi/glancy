@@ -10,7 +10,6 @@ import java.util.Optional;
  * for the actual binary payload.
  */
 public interface TtsStorageService {
-
     /** Lookup audio metadata by its cache hash. */
     Optional<TtsAudio> find(String hashKey);
 

@@ -8,5 +8,5 @@ package com.glancy.backend.entity;
  */
 public enum TtsScope {
     WORD,
-    SENTENCE
+    SENTENCE,
 }
