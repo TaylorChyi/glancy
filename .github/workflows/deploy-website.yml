@@ -63,8 +63,7 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          # 这里是相对“仓库根”的路径，不能写成 ./dist/**
-          source: 'website/glancy-website/dist/**'
+          source: 'website/glancy-website/dist/*'   # 关键：用 * 只选 dist 直接子项
           target: '/var/www/glancy-website/dist/'
 
       - name: Verify remote files
