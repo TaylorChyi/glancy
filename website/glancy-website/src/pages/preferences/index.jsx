@@ -6,6 +6,7 @@ import { useTheme } from '@/context'
 import { useUser } from '@/context'
 import { API_PATHS } from '@/config/api.js'
 import MessagePopup from '@/components/ui/MessagePopup'
+import FormField from '@/components/form/FormField.jsx'
 import { useApi } from '@/hooks'
 import { useModelStore } from '@/store'
 
@@ -78,10 +79,8 @@ function Preferences() {
     <div className="app">
       <h2>{t.prefTitle}</h2>
       <form className={styles['preferences-form']} onSubmit={handleSave}>
-        <div>
-          <label htmlFor="source-lang">{t.prefLanguage}</label>
+        <FormField label={t.prefLanguage} id="source-lang">
           <select
-            id="source-lang"
             value={sourceLang}
             onChange={(e) => setSourceLang(e.target.value)}
           >
@@ -89,22 +88,18 @@ function Preferences() {
             <option value="CHINESE">CHINESE</option>
             <option value="ENGLISH">ENGLISH</option>
           </select>
-        </div>
-        <div>
-          <label htmlFor="target-lang">{t.prefSearchLanguage}</label>
+        </FormField>
+        <FormField label={t.prefSearchLanguage} id="target-lang">
           <select
-            id="target-lang"
             value={targetLang}
             onChange={(e) => setTargetLang(e.target.value)}
           >
             <option value="CHINESE">CHINESE</option>
             <option value="ENGLISH">ENGLISH</option>
           </select>
-        </div>
-        <div>
-          <label htmlFor="dictionary-model">{t.prefDictionaryModel}</label>
+        </FormField>
+        <FormField label={t.prefDictionaryModel} id="dictionary-model">
           <select
-            id="dictionary-model"
             value={defaultModel}
             onChange={(e) => setDefaultModel(e.target.value)}
           >
@@ -114,11 +109,9 @@ function Preferences() {
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label htmlFor="theme-select">{t.prefTheme}</label>
+        </FormField>
+        <FormField label={t.prefTheme} id="theme-select">
           <select
-            id="theme-select"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
           >
@@ -126,7 +119,7 @@ function Preferences() {
             <option value="dark">dark</option>
             <option value="system">system</option>
           </select>
-        </div>
+        </FormField>
         <button type="submit">{t.saveButton}</button>
       </form>
       <MessagePopup
