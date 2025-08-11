@@ -5,10 +5,10 @@ import { MemoryRouter } from 'react-router-dom'
 import { jest } from '@jest/globals'
 
 jest.unstable_mockModule('@/context', () => ({
-  useTheme: () => ({ resolvedTheme: 'light' })
-}))
-
-jest.unstable_mockModule('@/context', () => ({
+  // Provide minimal implementations for all hooks consumed by AuthForm
+  useTheme: () => ({ resolvedTheme: 'light' }),
+  useLocale: () => ({ locale: 'en-US' }),
+  useApiContext: () => ({ request: async () => {} }),
   useLanguage: () => ({
     t: {
       continueButton: 'Continue',
@@ -23,9 +23,18 @@ jest.unstable_mockModule('@/context', () => ({
   })
 }))
 
+jest.unstable_mockModule('@/assets/icons.js', () => ({
+  // Bypass Vite-specific import.meta.glob during tests
+  default: {}
+}))
+
 const { default: AuthForm } = await import('@/components/form/AuthForm.jsx')
 
 describe('AuthForm', () => {
+  /**
+   * Simulates a successful form submission and ensures the payload
+   * matches the provided credentials while the UI renders as expected.
+   */
   test('submits valid credentials', async () => {
     const handleSubmit = jest.fn().mockResolvedValue(undefined)
     const { asFragment } = render(
@@ -58,6 +67,10 @@ describe('AuthForm', () => {
     expect(asFragment()).toMatchSnapshot()
   })
 
+  /**
+   * Triggers validation failure and verifies that the appropriate
+   * error message is presented to the user.
+   */
   test('shows error when validation fails', async () => {
     const handleSubmit = jest.fn()
     const validateAccount = () => false

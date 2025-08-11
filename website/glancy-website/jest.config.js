@@ -4,7 +4,7 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^.+\\.css$': 'identity-obj-proxy',
-    '^.+\\.(svg)$': '<rootDir>/test/__mocks__/fileMock.js'
+    '^.+\\.(svg)$': '<rootDir>/test/__mocks__/fileMock.cjs'
   },
   extensionsToTreatAsEsm: ['.jsx', '.ts', '.tsx'],
   transform: {
