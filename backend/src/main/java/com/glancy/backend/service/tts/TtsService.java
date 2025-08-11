@@ -9,7 +9,6 @@ import java.util.Optional;
  * Contracts for text to speech synthesis operations.
  */
 public interface TtsService {
-
     /**
      * Synthesize audio for a single word.
      *

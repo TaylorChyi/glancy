@@ -27,63 +27,60 @@ class TtsConfigManagerTest {
         Files.writeString(
             file,
             """
-                voices:
-                  zh-CN:
-                    default: zh_female_cancan_mars_bigtts
-                    options:
-                      - id: zh_female_cancan_mars_bigtts
-                        label: A
-                        plan: all
-                quota:
-                  daily: { pro: 100, free: 5 }
-                cache:
-                  ttlDays: { pro: 90, free: 30 }
-                  audioSampleRate: 48000
-                ratelimit:
-                  userPerMinute: 30
-                  ipPerMinute: 120
-                  burst: 20
-                  cooldownSeconds: 60
-                features:
-                  hotReload: false
-                  useCdn: true
-                  returnUrl: true
-                  countCachedAsUsage: false
-                """
+            voices:
+              zh-CN:
+                default: zh_female_cancan_mars_bigtts
+                options:
+                  - id: zh_female_cancan_mars_bigtts
+                    label: A
+                    plan: all
+            quota:
+              daily: { pro: 100, free: 5 }
+            cache:
+              ttlDays: { pro: 90, free: 30 }
+              audioSampleRate: 48000
+            ratelimit:
+              userPerMinute: 30
+              ipPerMinute: 120
+              burst: 20
+              cooldownSeconds: 60
+            features:
+              hotReload: false
+              useCdn: true
+              returnUrl: true
+              countCachedAsUsage: false
+            """
         );
         TtsConfigManager mgr = new TtsConfigManager(file.toString());
         mgr.reload();
-        assertEquals(
-            "zh_female_cancan_mars_bigtts",
-            mgr.current().getVoices().get("zh-CN").getDefaultVoice()
-        );
+        assertEquals("zh_female_cancan_mars_bigtts", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
 
         Files.writeString(
             file,
             """
-                voices:
-                  zh-CN:
-                    default: zh_male_new_voice
-                    options:
-                      - id: zh_male_new_voice
-                        label: B
-                        plan: all
-                quota:
-                  daily: { pro: 100, free: 5 }
-                cache:
-                  ttlDays: { pro: 90, free: 30 }
-                  audioSampleRate: 48000
-                ratelimit:
-                  userPerMinute: 30
-                  ipPerMinute: 120
-                  burst: 20
-                  cooldownSeconds: 60
-                features:
-                  hotReload: false
-                  useCdn: true
-                  returnUrl: true
-                  countCachedAsUsage: false
-                """
+            voices:
+              zh-CN:
+                default: zh_male_new_voice
+                options:
+                  - id: zh_male_new_voice
+                    label: B
+                    plan: all
+            quota:
+              daily: { pro: 100, free: 5 }
+            cache:
+              ttlDays: { pro: 90, free: 30 }
+              audioSampleRate: 48000
+            ratelimit:
+              userPerMinute: 30
+              ipPerMinute: 120
+              burst: 20
+              cooldownSeconds: 60
+            features:
+              hotReload: false
+              useCdn: true
+              returnUrl: true
+              countCachedAsUsage: false
+            """
         );
         mgr.reload();
         assertEquals("zh_male_new_voice", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
@@ -100,29 +97,29 @@ class TtsConfigManagerTest {
         Files.writeString(
             file,
             """
-                voices:
-                  zh-CN:
-                    default: voice1
-                    options:
-                      - id: voice1
-                        label: A
-                        plan: all
-                quota:
-                  daily: { pro: 100, free: 5 }
-                cache:
-                  ttlDays: { pro: 90, free: 30 }
-                  audioSampleRate: 48000
-                ratelimit:
-                  userPerMinute: 30
-                  ipPerMinute: 120
-                  burst: 20
-                  cooldownSeconds: 60
-                features:
-                  hotReload: false
-                  useCdn: true
-                  returnUrl: true
-                  countCachedAsUsage: false
-                """
+            voices:
+              zh-CN:
+                default: voice1
+                options:
+                  - id: voice1
+                    label: A
+                    plan: all
+            quota:
+              daily: { pro: 100, free: 5 }
+            cache:
+              ttlDays: { pro: 90, free: 30 }
+              audioSampleRate: 48000
+            ratelimit:
+              userPerMinute: 30
+              ipPerMinute: 120
+              burst: 20
+              cooldownSeconds: 60
+            features:
+              hotReload: false
+              useCdn: true
+              returnUrl: true
+              countCachedAsUsage: false
+            """
         );
         TtsConfigManager mgr = new TtsConfigManager(file.toString());
         mgr.reload();
@@ -131,29 +128,29 @@ class TtsConfigManagerTest {
         Files.writeString(
             file,
             """
-                voices:
-                  zh-CN:
-                    default: missing
-                    options:
-                      - id: voice1
-                        label: A
-                        plan: all
-                quota:
-                  daily: { pro: 100, free: 5 }
-                cache:
-                  ttlDays: { pro: 90, free: 30 }
-                  audioSampleRate: 48000
-                ratelimit:
-                  userPerMinute: 30
-                  ipPerMinute: 120
-                  burst: 20
-                  cooldownSeconds: 60
-                features:
-                  hotReload: false
-                  useCdn: true
-                  returnUrl: true
-                  countCachedAsUsage: false
-                """
+            voices:
+              zh-CN:
+                default: missing
+                options:
+                  - id: voice1
+                    label: A
+                    plan: all
+            quota:
+              daily: { pro: 100, free: 5 }
+            cache:
+              ttlDays: { pro: 90, free: 30 }
+              audioSampleRate: 48000
+            ratelimit:
+              userPerMinute: 30
+              ipPerMinute: 120
+              burst: 20
+              cooldownSeconds: 60
+            features:
+              hotReload: false
+              useCdn: true
+              returnUrl: true
+              countCachedAsUsage: false
+            """
         );
         mgr.reload();
         assertEquals(

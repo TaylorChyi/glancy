@@ -61,10 +61,7 @@ public class TtsController {
      * vary depending on the user's subscription plan.
      */
     @GetMapping("/voices")
-    public ResponseEntity<VoiceResponse> listVoices(
-        @AuthenticatedUser Long userId,
-        @RequestParam String lang
-    ) {
+    public ResponseEntity<VoiceResponse> listVoices(@AuthenticatedUser Long userId, @RequestParam String lang) {
         VoiceResponse resp = ttsService.listVoices(userId, lang);
         return ResponseEntity.ok(resp);
     }

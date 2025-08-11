@@ -25,14 +25,17 @@ public class TtsConfig {
      */
     @Data
     public static class VoiceGroup {
+
         @JsonProperty("default")
         private String defaultVoice;
+
         private List<VoiceOption> options = List.of();
     }
 
     /** Describes a single voice option. */
     @Data
     public static class VoiceOption {
+
         private String id;
         private String label;
         private String plan;
@@ -41,10 +44,12 @@ public class TtsConfig {
     /** Configuration for synthesis quota. */
     @Data
     public static class Quota {
+
         private Daily daily = new Daily();
 
         @Data
         public static class Daily {
+
             private int pro;
             private int free;
         }
@@ -53,11 +58,13 @@ public class TtsConfig {
     /** Cache related settings. */
     @Data
     public static class Cache {
+
         private TtlDays ttlDays = new TtlDays();
         private int audioSampleRate;
 
         @Data
         public static class TtlDays {
+
             private int pro;
             private int free;
         }
@@ -66,6 +73,7 @@ public class TtsConfig {
     /** Parameters for rate limiting. */
     @Data
     public static class RateLimit {
+
         private int userPerMinute;
         private int ipPerMinute;
         private int burst;
@@ -75,6 +83,7 @@ public class TtsConfig {
     /** Feature toggles. */
     @Data
     public static class Features {
+
         private boolean hotReload;
         private boolean useCdn;
         private boolean returnUrl;

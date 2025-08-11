@@ -93,17 +93,17 @@ public class TtsConfigManager implements Closeable {
     }
 
     private void validate(TtsConfig cfg) {
-        cfg.getVoices()
-            .forEach(
-                (lang, group) -> {
-                    boolean exists =
-                        group.getOptions().stream().anyMatch(v -> v.getId().equals(group.getDefaultVoice()));
-                    if (!exists) {
-                        throw new IllegalArgumentException(
-                            "Default voice for " + lang + " not present in options");
-                    }
+        cfg
+            .getVoices()
+            .forEach((lang, group) -> {
+                boolean exists = group
+                    .getOptions()
+                    .stream()
+                    .anyMatch(v -> v.getId().equals(group.getDefaultVoice()));
+                if (!exists) {
+                    throw new IllegalArgumentException("Default voice for " + lang + " not present in options");
                 }
-            );
+            });
     }
 
     private void startWatcher(Path path) {
@@ -111,29 +111,24 @@ public class TtsConfigManager implements Closeable {
             watchService = FileSystems.getDefault().newWatchService();
             Path dir = path.getParent();
             dir.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
-            watchExecutor =
-                Executors.newSingleThreadExecutor(
-                    r -> {
-                        Thread t = new Thread(r, "tts-config-watcher");
-                        t.setDaemon(true);
-                        return t;
-                    }
-                );
-            watchExecutor.submit(
-                () -> {
-                    while (!Thread.currentThread().isInterrupted()) {
-                        WatchKey key = watchService.take();
-                        for (WatchEvent<?> event : key.pollEvents()) {
-                            Path changed = dir.resolve((Path) event.context());
-                            if (Files.isRegularFile(changed) && changed.getFileName().equals(path.getFileName())) {
-                                log.info("Detected TTS config change");
-                                reload();
-                            }
+            watchExecutor = Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "tts-config-watcher");
+                t.setDaemon(true);
+                return t;
+            });
+            watchExecutor.submit(() -> {
+                while (!Thread.currentThread().isInterrupted()) {
+                    WatchKey key = watchService.take();
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        Path changed = dir.resolve((Path) event.context());
+                        if (Files.isRegularFile(changed) && changed.getFileName().equals(path.getFileName())) {
+                            log.info("Detected TTS config change");
+                            reload();
                         }
-                        key.reset();
                     }
+                    key.reset();
                 }
-            );
+            });
             log.info("Watching {} for TTS config changes", path.toAbsolutePath());
         } catch (IOException | RuntimeException ex) {
             log.warn("Failed to watch TTS config file", ex);
@@ -148,8 +143,7 @@ public class TtsConfigManager implements Closeable {
         if (watchService != null) {
             try {
                 watchService.close();
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
         }
     }
 }
