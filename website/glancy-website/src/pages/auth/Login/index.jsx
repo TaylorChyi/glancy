@@ -4,6 +4,7 @@ import { API_PATHS } from '@/config/api.js'
 import { useUser } from '@/context'
 import { useApi } from '@/hooks'
 import { useLanguage } from '@/context'
+import { validateAccount } from '@/utils/validators.js'
 import { useAuthFormConfig } from '../useAuthFormConfig.js'
 
 function Login() {
@@ -40,6 +41,7 @@ function Login() {
           : t.passwordOrCodePlaceholder
       }
       showCodeButton={(m) => m !== 'username'}
+      validateAccount={validateAccount}
     />
   )
 }
