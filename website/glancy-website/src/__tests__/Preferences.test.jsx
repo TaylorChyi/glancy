@@ -24,12 +24,9 @@ const mockT = {
 }
 
 jest.unstable_mockModule('@/context', () => ({
-  useLanguage: () => ({ t: mockT })
-}))
-jest.unstable_mockModule('@/context', () => ({
-  useTheme: () => ({ theme: 'light', setTheme: mockSetTheme })
-}))
-jest.unstable_mockModule('@/context', () => ({
+  // Aggregate all required context hooks for clarity
+  useLanguage: () => ({ t: mockT }),
+  useTheme: () => ({ theme: 'light', setTheme: mockSetTheme }),
   useUser: () => ({ user: { id: '1', token: 't' } })
 }))
 jest.unstable_mockModule('@/hooks', () => ({
@@ -37,7 +34,8 @@ jest.unstable_mockModule('@/hooks', () => ({
     request: mockRequest,
     jsonRequest: mockRequest,
     llm: { fetchModels: mockFetchModels }
-  })
+  }),
+  useEscapeKey: () => ({ on: () => {}, off: () => {} })
 }))
 jest.unstable_mockModule('@/store', () => ({
   useModelStore: () => ({ model: 'M1', setModel: mockSetModel })
@@ -49,6 +47,10 @@ beforeEach(() => {
   localStorage.clear()
 })
 
+/**
+ * Ensures user preference changes trigger API requests and persist through
+ * the mocked backend service.
+ */
 test('saves preferences via api', async () => {
   render(<Preferences />)
   await waitFor(() => expect(mockFetchModels).toHaveBeenCalled())
