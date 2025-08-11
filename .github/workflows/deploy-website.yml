@@ -2,9 +2,7 @@ name: Deploy Website
 
 on:
   push:
-    branches:
-      - main
-      - 'feature-*'
+    branches: [main, 'feature-*']
     paths:
       - 'website/glancy-website/**'
 
@@ -13,47 +11,57 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WEBSITE_DIR: ${{ github.workspace }}/website/glancy-website
+      TARGET_DIR: ${{ secrets.WEBSITE_DEPLOY_PATH }}glancy-website/dist
     steps:
-      # 1. 拉取仓库
       - uses: actions/checkout@v3
 
-      # 2. 安装 Node.js (节点.js) v20
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      # 3. 安装前端依赖
       - name: Install dependencies
         run: npm ci
         working-directory: ${{ env.WEBSITE_DIR }}
 
-      # 4. 代码规范校验
       - name: Lint code
         run: |
           npm run lint
           npm run lint:css
         working-directory: ${{ env.WEBSITE_DIR }}
 
-      # 5. 构建项目
       - name: Build project
         run: npm run build
         working-directory: ${{ env.WEBSITE_DIR }}
 
-      # 6. 清空服务器上旧的 dist 目录
-      - name: Clean server directory
+      # 仅创建/清空目标 dist 目录，别再删整个 /var/www
+      - name: Prepare remote dir
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: rm -rf ${{ secrets.WEBSITE_DEPLOY_PATH }}
+          script: |
+            mkdir -p ${{ env.TARGET_DIR }}
+            rm -rf ${{ env.TARGET_DIR }}/*
 
+      # 把本地 dist 内容上传到远端 dist 目录
       - name: Sync dist to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: '${{ env.WEBSITE_DIR }}/dist/*'
-          target: ${{ secrets.WEBSITE_DEPLOY_PATH }}
+          source: 'website/glancy-website/dist/**'
+          target: ${{ env.TARGET_DIR }}/
+
+      # 可选：上线后核对一下
+      - name: Verify remote files
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            ls -lah ${{ env.TARGET_DIR }}
+            test -f ${{ env.TARGET_DIR }}/index.html
