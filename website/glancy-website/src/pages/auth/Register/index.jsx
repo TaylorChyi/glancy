@@ -4,6 +4,7 @@ import { API_PATHS } from '@/config/api.js'
 import { useApi } from '@/hooks'
 import { useUser } from '@/context'
 import { useLanguage } from '@/context'
+import { validateAccount } from '@/utils/validators.js'
 import { useAuthFormConfig } from '../useAuthFormConfig.js'
 
 function Register() {
@@ -11,16 +12,6 @@ function Register() {
   const { setUser } = useUser()
   const navigate = useNavigate()
   const { t } = useLanguage()
-
-  const validateAccount = (account, method) => {
-    if (method === 'email') {
-      return /.+@.+\..+/.test(account)
-    }
-    if (method === 'phone') {
-      return /^\+?\d{6,15}$/.test(account)
-    }
-    return true
-  }
 
   const handleRegister = async ({ account, password, method }) => {
     await api.jsonRequest(API_PATHS.register, {
