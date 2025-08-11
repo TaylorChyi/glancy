@@ -1,21 +1,55 @@
 # Node dependencies
 node_modules/
 dist/
+dist-ssr/
 build/
 
 # IDE configuration
 .vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+out/
+bin/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # Operating system files
 .DS_Store
 Thumbs.db
 
 # Logs
+logs/
 *.log
+*.log.*
 
 # Temporary files
 *.tmp
-*.swp
+*.bak
+*.sw?
+*.ctxt
+*.local
+
+# Java artifacts
+*.class
+
+# Backend - Maven build files
+/backend/target/
+/backend/.mvn/timing.properties
+/backend/pom.xml.tag
+/backend/pom.xml.releaseBackup
+/backend/pom.xml.versionsBackup
+/backend/pom.xml.next
+/backend/release.properties
+/backend/dependency-reduced-pom.xml
+/backend/buildNumber.properties
+/backend/.spring-boot-devtools.properties
 
 # Environment files
 .env
