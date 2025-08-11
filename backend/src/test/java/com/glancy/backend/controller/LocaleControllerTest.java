@@ -18,6 +18,9 @@ class LocaleControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     /**
      * 测试带有 Accept-Language 头部时返回的语言信息
      */

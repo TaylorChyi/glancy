@@ -28,6 +28,9 @@ class UserProfileControllerTest {
     @MockitoBean
     private UserProfileService userProfileService;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     @Autowired
     private ObjectMapper objectMapper;
 

@@ -17,6 +17,9 @@ class PingControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     /**
      * 测试 ping 接口
      */

@@ -29,6 +29,9 @@ class UserPreferenceControllerTest {
     @MockitoBean
     private UserPreferenceService userPreferenceService;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     @Autowired
     private ObjectMapper objectMapper;
 

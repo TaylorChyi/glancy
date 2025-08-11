@@ -28,6 +28,9 @@ class FaqControllerTest {
     @MockitoBean
     private FaqService faqService;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     @Autowired
     private ObjectMapper objectMapper;
 

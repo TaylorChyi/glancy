@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -15,14 +14,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    private final TokenAuthenticationInterceptor tokenAuthenticationInterceptor;
     private final AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
-    public WebConfig(
-        TokenAuthenticationInterceptor tokenAuthenticationInterceptor,
-        AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver
-    ) {
-        this.tokenAuthenticationInterceptor = tokenAuthenticationInterceptor;
+    public WebConfig(AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver) {
         this.authenticatedUserArgumentResolver = authenticatedUserArgumentResolver;
     }
 
@@ -34,11 +28,6 @@ public class WebConfig implements WebMvcConfigurer {
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true);
-    }
-
-    @Override
-    public void addInterceptors(@NonNull InterceptorRegistry registry) {
-        registry.addInterceptor(tokenAuthenticationInterceptor).addPathPatterns("/api/search-records/**", "/api/words");
     }
 
     @Override

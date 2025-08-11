@@ -8,9 +8,23 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.glancy.backend.service.UserService;
 
 @Configuration
 public class SecurityConfig {
+
+    private final UserService userService;
+
+    public SecurityConfig(UserService userService) {
+        this.userService = userService;
+    }
+
+    @Bean
+    public TokenAuthenticationFilter tokenAuthenticationFilter() {
+        return new TokenAuthenticationFilter(userService);
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -20,6 +34,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/notifications/system").authenticated().anyRequest().permitAll()
             )
+            .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .httpBasic(httpBasic -> {}); // 显式启用 httpBasic 认证
         return http.build();
     }

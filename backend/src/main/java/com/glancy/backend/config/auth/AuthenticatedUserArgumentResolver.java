@@ -1,16 +1,13 @@
 package com.glancy.backend.config.auth;
 
-import com.glancy.backend.config.auth.TokenResolver;
-import com.glancy.backend.config.auth.UserIdResolver;
 import com.glancy.backend.entity.User;
-import com.glancy.backend.exception.BusinessException;
-import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -47,23 +44,11 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
         @NonNull NativeWebRequest webRequest,
         @Nullable WebDataBinderFactory binderFactory
     ) throws Exception {
-        HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
-        String token = TokenResolver.resolveToken(request);
-        if (token == null) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) {
             throw new UnauthorizedException("Missing authentication token");
         }
-
-        String userIdStr = UserIdResolver.resolveUserId(request);
-        if (userIdStr == null) {
-            throw new InvalidRequestException("Missing userId");
-        }
-        Long userId = Long.valueOf(userIdStr);
-        try {
-            userService.validateToken(userId, token);
-        } catch (BusinessException ex) {
-            throw new UnauthorizedException("Invalid token");
-        }
-
+        Long userId = (Long) authentication.getPrincipal();
         if (Long.class.equals(parameter.getParameterType())) {
             return userId;
         }

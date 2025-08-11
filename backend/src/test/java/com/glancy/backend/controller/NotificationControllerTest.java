@@ -30,6 +30,9 @@ class NotificationControllerTest {
     @MockitoBean
     private NotificationService notificationService;
 
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
+
     @Autowired
     private ObjectMapper objectMapper;
 
