@@ -116,22 +116,29 @@ public class TtsConfigManager implements Closeable {
                 t.setDaemon(true);
                 return t;
             });
-            watchExecutor.submit(() -> {
-                while (!Thread.currentThread().isInterrupted()) {
-                    WatchKey key = watchService.take();
-                    for (WatchEvent<?> event : key.pollEvents()) {
-                        Path changed = dir.resolve((Path) event.context());
-                        if (Files.isRegularFile(changed) && changed.getFileName().equals(path.getFileName())) {
-                            log.info("Detected TTS config change");
-                            reload();
-                        }
-                    }
-                    key.reset();
-                }
-            });
+            watchExecutor.submit(() -> watchLoop(dir, path));
             log.info("Watching {} for TTS config changes", path.toAbsolutePath());
         } catch (IOException | RuntimeException ex) {
             log.warn("Failed to watch TTS config file", ex);
+        }
+    }
+
+    private void watchLoop(Path dir, Path path) {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                WatchKey key = watchService.take();
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    Path changed = dir.resolve((Path) event.context());
+                    if (Files.isRegularFile(changed) && changed.getFileName().equals(path.getFileName())) {
+                        log.info("Detected TTS config change");
+                        reload();
+                    }
+                }
+                key.reset();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                return;
+            }
         }
     }
 
