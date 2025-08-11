@@ -3,7 +3,6 @@ package com.glancy.backend.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.dto.ChatCompletionResponse;
-import com.glancy.backend.entity.LlmModel;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Client for Doubao LLM using simple HTTP calls.
