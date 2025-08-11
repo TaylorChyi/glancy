@@ -5,57 +5,68 @@ on:
     branches: [main, 'feature-*']
     paths:
       - 'website/glancy-website/**'
+  workflow_dispatch: {}
+
+concurrency:
+  group: website-deploy
+  cancel-in-progress: true
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    env:
-      WEBSITE_DIR: ${{ github.workspace }}/website/glancy-website
-      TARGET_DIR: ${{ secrets.WEBSITE_DEPLOY_PATH }}glancy-website/dist
+
+    # 所有 run 步骤默认在前端目录执行（字面值，不能用表达式）
+    defaults:
+      run:
+        working-directory: website/glancy-website
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: Preflight - 目录与文件健全性检查
+        run: |
+          set -euxo pipefail
+          pwd
+          test -d . && test -f package.json && test -f vite.config.js
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
-        working-directory: ${{ env.WEBSITE_DIR }}
 
-      - name: Lint code
+      - name: Lint
         run: |
           npm run lint
           npm run lint:css
-        working-directory: ${{ env.WEBSITE_DIR }}
 
-      - name: Build project
+      - name: Build
         run: npm run build
-        working-directory: ${{ env.WEBSITE_DIR }}
 
-      # 仅创建/清空目标 dist 目录，别再删整个 /var/www
-      - name: Prepare remote dir
+      - name: Prepare remote dist dir
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            mkdir -p ${{ env.TARGET_DIR }}
-            rm -rf ${{ env.TARGET_DIR }}/*
+            set -euxo pipefail
+            sudo mkdir -p /var/www/glancy-website/dist
+            sudo chown -R $USER:$USER /var/www/glancy-website
+            rm -rf /var/www/glancy-website/dist/*
 
-      # 把本地 dist 内容上传到远端 dist 目录
-      - name: Sync dist to server
+      - name: Upload dist
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          # 这里是相对“仓库根”的路径，不能写成 ./dist/**
           source: 'website/glancy-website/dist/**'
-          target: ${{ env.TARGET_DIR }}/
+          target: '/var/www/glancy-website/dist/'
 
-      # 可选：上线后核对一下
       - name: Verify remote files
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -63,5 +74,6 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            ls -lah ${{ env.TARGET_DIR }}
-            test -f ${{ env.TARGET_DIR }}/index.html
+            set -euxo pipefail
+            ls -lah /var/www/glancy-website/dist
+            test -f /var/www/glancy-website/dist/index.html
