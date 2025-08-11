@@ -1,0 +1,26 @@
+voices:
+  zh-CN:
+    default: zh_female_cancan_mars_bigtts
+    options:
+      - id: zh_female_cancan_mars_bigtts
+        label: "CanCan·女声"
+        plan: all
+quota:
+  daily:
+    pro: 100
+    free: 5
+cache:
+  ttlDays:
+    pro: 90
+    free: 30
+  audioSampleRate: 48000
+ratelimit:
+  userPerMinute: 30
+  ipPerMinute: 120
+  burst: 20
+  cooldownSeconds: 60
+features:
+  hotReload: true
+  useCdn: true
+  returnUrl: true
+  countCachedAsUsage: false
