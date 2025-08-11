@@ -57,14 +57,16 @@ jobs:
             sudo chown -R $USER:$USER /var/www/glancy-website
             rm -rf /var/www/glancy-website/dist/*
 
-      - name: Upload dist
-        uses: appleboy/scp-action@v0.1.4
+      - name: Upload dist (strip prefix)
+        uses: appleboy/scp-action@v0.1.7   # ← 改这里：使用存在的 tag
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/glancy-website/dist/*'   # 关键：用 * 只选 dist 直接子项
+          source: 'website/glancy-website/dist/**'
           target: '/var/www/glancy-website/dist/'
+          strip_components: 3              # 剥掉 website/ glancy-website/ dist/ 三层
+          debug: true                      # 打开调试日志
 
       - name: Verify remote files
         uses: appleboy/ssh-action@v0.1.8
