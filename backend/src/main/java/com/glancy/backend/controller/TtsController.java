@@ -5,6 +5,7 @@ import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.tts.TtsService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +39,11 @@ public class TtsController {
     @PostMapping("/word")
     public ResponseEntity<TtsResponse> synthesizeWord(
         @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
     ) {
-        Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, request);
+        String ip = httpRequest.getRemoteAddr();
+        Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, request);
         return resp.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
@@ -50,9 +53,11 @@ public class TtsController {
     @PostMapping("/sentence")
     public ResponseEntity<TtsResponse> synthesizeSentence(
         @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
     ) {
-        Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, request);
+        String ip = httpRequest.getRemoteAddr();
+        Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, request);
         return resp.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
