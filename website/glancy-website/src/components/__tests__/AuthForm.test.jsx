@@ -5,10 +5,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { jest } from '@jest/globals'
 
 jest.unstable_mockModule('@/context', () => ({
-  useTheme: () => ({ resolvedTheme: 'light' })
-}))
-
-jest.unstable_mockModule('@/context', () => ({
+  useTheme: () => ({ resolvedTheme: 'light' }),
+  useApiContext: () => ({}),
+  useLocale: () => ({ locale: 'en-US' }),
   useLanguage: () => ({
     t: {
       continueButton: 'Continue',
@@ -21,6 +20,16 @@ jest.unstable_mockModule('@/context', () => ({
       privacyPolicy: 'Privacy Policy'
     }
   })
+}))
+
+jest.unstable_mockModule('@/hooks', () => ({
+  useEscapeKey: () => {}
+}))
+
+jest.unstable_mockModule('@/components/ui/Icon', () => ({
+  __esModule: true,
+  default: () => null,
+  ThemeIcon: () => null
 }))
 
 const { default: AuthForm } = await import('@/components/form/AuthForm.jsx')

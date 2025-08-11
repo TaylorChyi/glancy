@@ -24,12 +24,8 @@ const mockT = {
 }
 
 jest.unstable_mockModule('@/context', () => ({
-  useLanguage: () => ({ t: mockT })
-}))
-jest.unstable_mockModule('@/context', () => ({
-  useTheme: () => ({ theme: 'light', setTheme: mockSetTheme })
-}))
-jest.unstable_mockModule('@/context', () => ({
+  useLanguage: () => ({ t: mockT }),
+  useTheme: () => ({ theme: 'light', setTheme: mockSetTheme }),
   useUser: () => ({ user: { id: '1', token: 't' } })
 }))
 jest.unstable_mockModule('@/hooks', () => ({
@@ -37,7 +33,8 @@ jest.unstable_mockModule('@/hooks', () => ({
     request: mockRequest,
     jsonRequest: mockRequest,
     llm: { fetchModels: mockFetchModels }
-  })
+  }),
+  useEscapeKey: () => {}
 }))
 jest.unstable_mockModule('@/store', () => ({
   useModelStore: () => ({ model: 'M1', setModel: mockSetModel })
