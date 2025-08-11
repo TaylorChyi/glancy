@@ -51,6 +51,30 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<ErrorResponse> handleQuota(QuotaExceededException ex) {
+        log.error("Quota exceeded: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @ExceptionHandler(TtsFailedException.class)
+    public ResponseEntity<ErrorResponse> handleTtsFailure(TtsFailedException ex) {
+        log.error("TTS failed: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FAILED_DEPENDENCY);
+    }
+
+    @ExceptionHandler(ServiceDegradedException.class)
+    public ResponseEntity<ErrorResponse> handleServiceDegraded(ServiceDegradedException ex) {
+        log.error("Service degraded: {}", ex.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
         log.error("Missing request parameter: {}", ex.getParameterName());
