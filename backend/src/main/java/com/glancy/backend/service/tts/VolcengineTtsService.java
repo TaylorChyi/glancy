@@ -7,6 +7,7 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
 import java.util.List;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
  * call and shapes the response for higher layers.
  */
 @Service
+@Slf4j
 public class VolcengineTtsService implements TtsService {
 
     private final VolcengineTtsClient client;
@@ -27,12 +29,40 @@ public class VolcengineTtsService implements TtsService {
 
     @Override
     public Optional<TtsResponse> synthesizeWord(Long userId, String ip, TtsRequest request) {
-        return Optional.of(client.synthesize(request));
+        log.debug(
+            "Delegating word synthesis to client for user={}, ip={}, lang={}, voice={}",
+            userId,
+            ip,
+            request.getLang(),
+            request.getVoice()
+        );
+        TtsResponse resp = client.synthesize(request);
+        log.debug(
+            "Client returned audio for user={}, durationMs={}, fromCache={}",
+            userId,
+            resp.getDurationMs(),
+            resp.isFromCache()
+        );
+        return Optional.of(resp);
     }
 
     @Override
     public Optional<TtsResponse> synthesizeSentence(Long userId, String ip, TtsRequest request) {
-        return Optional.of(client.synthesize(request));
+        log.debug(
+            "Delegating sentence synthesis to client for user={}, ip={}, lang={}, voice={}",
+            userId,
+            ip,
+            request.getLang(),
+            request.getVoice()
+        );
+        TtsResponse resp = client.synthesize(request);
+        log.debug(
+            "Client returned audio for user={}, durationMs={}, fromCache={}",
+            userId,
+            resp.getDurationMs(),
+            resp.isFromCache()
+        );
+        return Optional.of(resp);
     }
 
     @Override
