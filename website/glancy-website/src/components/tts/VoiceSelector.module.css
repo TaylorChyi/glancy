@@ -1,0 +1,11 @@
+.select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 6px;
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #333);
+}
+
+.disabled {
+  color: #aaa;
+}
