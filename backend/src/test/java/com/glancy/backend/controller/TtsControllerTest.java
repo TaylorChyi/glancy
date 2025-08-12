@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.glancy.backend.dto.TtsRequest;
@@ -107,5 +108,27 @@ class TtsControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.default").value("v1"))
             .andExpect(jsonPath("$.options[0].id").value("v1"));
+    }
+
+    /**
+     * GET variant for sentence synthesis should redirect to the audio URL
+     * provided by the service.
+     */
+    @Test
+    void streamSentenceRedirectsToAudio() throws Exception {
+        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
+        when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        doNothing().when(userService).validateToken(1L, "tkn");
+
+        mockMvc
+            .perform(
+                get("/api/tts/sentence")
+                    .param("userId", "1")
+                    .param("text", "hello world")
+                    .param("lang", "en")
+                    .header("X-USER-TOKEN", "tkn")
+            )
+            .andExpect(status().isFound())
+            .andExpect(header().string("Location", "http://audio/url"));
     }
 }

@@ -7,8 +7,10 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.tts.TtsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,23 @@ public class TtsController {
 
     public TtsController(TtsService ttsService) {
         this.ttsService = ttsService;
+    }
+
+    /**
+     * Build a {@link TtsRequest} from query parameters. GET requests cannot
+     * submit JSON bodies so this helper translates the expected parameters
+     * into the common request object used by the POST endpoints.
+     */
+    private TtsRequest buildRequest(String text, String lang, String voice, String format, double speed) {
+        TtsRequest request = new TtsRequest();
+        request.setText(text);
+        request.setLang(lang);
+        request.setVoice(voice);
+        request.setFormat(format);
+        request.setSpeed(speed);
+        // shortcut disabled for GET so that the backend always returns audio
+        request.setShortcut(false);
+        return request;
     }
 
     /**
@@ -68,6 +87,30 @@ public class TtsController {
     }
 
     /**
+     * Convenience GET endpoint allowing clients such as the native HTML audio
+     * element to fetch word pronunciations without crafting a JSON payload. The
+     * request is translated into a {@link TtsRequest} and on success a 302
+     * redirect to the temporary audio URL is returned.
+     */
+    @GetMapping("/word")
+    public ResponseEntity<Void> streamWord(
+        @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
+        @RequestParam String text,
+        @RequestParam String lang,
+        @RequestParam(required = false) String voice,
+        @RequestParam(defaultValue = "mp3") String format,
+        @RequestParam(defaultValue = "1.0") double speed
+    ) {
+        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        String ip = httpRequest.getRemoteAddr();
+        Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
+        return resp
+            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).build())
+            .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
      * Synthesize pronunciation for a sentence or example phrase.
      */
     @PostMapping("/sentence")
@@ -98,6 +141,28 @@ public class TtsController {
         }
         log.info("Sentence synthesis returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET variant for sentence synthesis used when the client cannot easily
+     * issue a POST request. Behaves similarly to {@link #streamWord}.
+     */
+    @GetMapping("/sentence")
+    public ResponseEntity<Void> streamSentence(
+        @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
+        @RequestParam String text,
+        @RequestParam String lang,
+        @RequestParam(required = false) String voice,
+        @RequestParam(defaultValue = "mp3") String format,
+        @RequestParam(defaultValue = "1.0") double speed
+    ) {
+        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        String ip = httpRequest.getRemoteAddr();
+        Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
+        return resp
+            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).build())
+            .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**
