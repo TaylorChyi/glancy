@@ -23,19 +23,25 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
     return () => audio.removeEventListener('ended', handleEnd)
   }, [])
 
+  const fetchAudio = useCallback(
+    async (payload) => {
+      const fn = scope === 'sentence' ? tts.speakSentence : tts.speakWord
+      let resp = await fn({ ...payload, shortcut: true })
+      if (resp instanceof Response && resp.status === 204) {
+        resp = await fn({ ...payload, shortcut: false })
+      }
+      return resp instanceof Response ? await resp.json() : resp
+    },
+    [tts, scope],
+  )
+
   const play = useCallback(
     async ({ text, lang, voice, speed = 1.0, format = 'mp3' }) => {
       if (!text || !lang) return
       setLoading(true)
       setError(null)
       try {
-        const body = { text, lang, voice, speed, format, shortcut: true }
-        const fn = scope === 'sentence' ? tts.speakSentence : tts.speakWord
-        let resp = await fn(body)
-        if (resp instanceof Response && resp.status === 204) {
-          resp = await fn({ ...body, shortcut: false })
-        }
-        const data = resp.url ? resp : await resp.json()
+        const data = await fetchAudio({ text, lang, voice, speed, format })
         const audio = audioRef.current
         if (audio) {
           audio.src = data.url
@@ -45,6 +51,9 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
       } catch (err) {
         if (err instanceof ApiError) {
           switch (err.status) {
+            case 401:
+              setError('请登录后重试')
+              break
             case 403:
               setError('升级以继续使用或切换可用音色')
               break
@@ -67,7 +76,7 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         setLoading(false)
       }
     },
-    [tts, scope],
+    [fetchAudio],
   )
 
   return { play, audio: audioRef.current, loading, error, playing }
