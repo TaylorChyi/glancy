@@ -104,14 +104,7 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
-        log.info(
-            "Streaming word for user={}, ip={}, lang={}, voice={}, text={}",
-            userId,
-            ip,
-            lang,
-            voice,
-            text
-        );
+        log.info("Streaming word for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         if (resp.isPresent()) {
             TtsResponse body = resp.get();
@@ -177,14 +170,7 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
-        log.info(
-            "Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}",
-            userId,
-            ip,
-            lang,
-            voice,
-            text
-        );
+        log.info("Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
         if (resp.isPresent()) {
             TtsResponse body = resp.get();
