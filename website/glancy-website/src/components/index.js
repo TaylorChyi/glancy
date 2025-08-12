@@ -9,6 +9,7 @@ export { default as HistoryDisplay } from './ui/HistoryDisplay'
 export { default as ICP } from './ui/ICP'
 export { default as Loader } from './ui/Loader'
 export { default as MessagePopup } from './ui/MessagePopup'
+export { default as Toast } from './ui/Toast'
 export { default as VoiceSelector } from './tts/VoiceSelector.jsx'
 export { default as TtsButton } from './tts/TtsButton.jsx'
 

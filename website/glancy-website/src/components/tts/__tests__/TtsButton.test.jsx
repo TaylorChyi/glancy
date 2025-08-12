@@ -11,13 +11,46 @@ const useTtsPlayer = jest.fn(() => ({
   stop,
   loading: false,
   playing: false,
+  error: null,
 }))
 
 jest.unstable_mockModule('@/hooks/useTtsPlayer.js', () => ({ useTtsPlayer }))
 
+const navigate = jest.fn()
+jest.unstable_mockModule('react-router-dom', () => ({ useNavigate: () => navigate }))
+
+jest.unstable_mockModule('@/context', () => ({
+  useLanguage: () => ({ t: { upgrade: '升级' } }),
+  useApiContext: () => ({}),
+  useTheme: () => ({ resolvedTheme: 'light' }),
+  useLocale: () => ({ locale: 'en-US' }),
+  useAppContext: () => ({}),
+}))
+
 jest.unstable_mockModule('@/components/ui/Icon', () => ({
   __esModule: true,
   default: () => <span data-testid="icon" />,
+}))
+
+jest.unstable_mockModule('@/components/ui/MessagePopup', () => ({
+  __esModule: true,
+  default: ({ open, message, children }) =>
+    open ? (
+      <div>
+        <span>{message}</span>
+        {children}
+      </div>
+    ) : null,
+}))
+
+jest.unstable_mockModule('@/components/ui/Toast', () => ({
+  __esModule: true,
+  default: ({ open, message }) => (open ? <div>{message}</div> : null),
+}))
+
+jest.unstable_mockModule('@/components/modals/UpgradeModal.jsx', () => ({
+  __esModule: true,
+  default: () => null,
 }))
 
 const { default: TtsButton } = await import('@/components/tts/TtsButton.jsx')
@@ -42,10 +75,41 @@ describe('TtsButton', () => {
    * When already playing, clicking triggers stop instead of play.
    */
   test('stops when playing', () => {
-    useTtsPlayer.mockReturnValueOnce({ play, stop, loading: false, playing: true })
+    useTtsPlayer.mockReturnValueOnce({ play, stop, loading: false, playing: true, error: null })
     const { getByRole } = render(<TtsButton text="hi" lang="en" />)
     fireEvent.click(getByRole('button'))
     expect(stop).toHaveBeenCalled()
     expect(play).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Shows upgrade prompt on forbidden errors.
+   */
+  test('renders upgrade popup on 403 error', async () => {
+    useTtsPlayer.mockReturnValueOnce({
+      play,
+      stop,
+      loading: false,
+      playing: false,
+      error: { code: 403, message: 'Pro only' },
+    })
+    const { findByText } = render(<TtsButton text="hi" lang="en" />)
+    expect(await findByText('Pro only')).toBeInTheDocument()
+    expect(await findByText('升级')).toBeInTheDocument()
+  })
+
+  /**
+   * Displays toast on rate limit errors.
+   */
+  test('renders toast on 429 error', async () => {
+    useTtsPlayer.mockReturnValueOnce({
+      play,
+      stop,
+      loading: false,
+      playing: false,
+      error: { code: 429, message: 'Too many' },
+    })
+    const { findByText } = render(<TtsButton text="hi" lang="en" />)
+    expect(await findByText('Too many')).toBeInTheDocument()
   })
 })

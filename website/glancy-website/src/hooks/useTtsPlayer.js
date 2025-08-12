@@ -72,25 +72,28 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         if (err instanceof ApiError) {
           switch (err.status) {
             case 401:
-              setError('请登录后重试')
+              setError({ code: 401, message: '请登录后重试' })
               break
             case 403:
-              setError('升级以继续使用或切换可用音色')
+              setError({ code: 403, message: '升级以继续使用或切换可用音色' })
               break
             case 429: {
               const retry = err.headers?.get('Retry-After')
-              setError(`请求过于频繁，请在${retry || '稍后'}秒后重试`)
+              setError({
+                code: 429,
+                message: `请求过于频繁，请在${retry || '稍后'}秒后重试`,
+              })
               break
             }
             case 424:
             case 503:
-              setError('服务繁忙，请稍后再试')
+              setError({ code: err.status, message: '服务繁忙，请稍后再试' })
               break
             default:
-              setError(err.message)
+              setError({ code: err.status, message: err.message })
           }
         } else {
-          setError('网络错误')
+          setError({ code: 0, message: '网络错误' })
         }
       } finally {
         setLoading(false)
