@@ -1,8 +1,9 @@
 import { useLanguage } from '@/context'
+import { TtsButton } from '@/components'
 import styles from './DictionaryEntry.module.css'
 
 function DictionaryEntry({ entry }) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   if (!entry) return null
 
   // new format detected by the presence of Chinese keys
@@ -33,7 +34,10 @@ function DictionaryEntry({ entry }) {
         {example && (
           <section className={styles.example} aria-labelledby="ex-title">
             <h2 id="ex-title" className={styles['section-title']}>【{t.exampleLabel}】</h2>
-            <blockquote>{example}</blockquote>
+            <blockquote>
+              {example}
+              <TtsButton text={example} lang={lang} scope="sentence" />
+            </blockquote>
           </section>
         )}
       </article>
@@ -60,7 +64,12 @@ function DictionaryEntry({ entry }) {
 
   return (
     <article className={styles['dictionary-entry']}>
-      {term && <h2 className={styles['section-title']}>{term}</h2>}
+      {term && (
+        <h2 className={styles['section-title']}>
+          {term}
+          <TtsButton text={term} lang={lang} scope="word" />
+        </h2>
+      )}
       {phoneticText && (
         <section className={styles['phonetic-section']} aria-labelledby="phon-title">
           <h2 id="phon-title" className={styles['section-title']}>【{t.phoneticLabel}】</h2>
@@ -110,7 +119,14 @@ function DictionaryEntry({ entry }) {
                   <ul className={styles.examples}>
                     {d.例句.map((ex, j) => (
                       <li key={j}>
-                        <blockquote>{ex.源语言}</blockquote>
+                        <blockquote>
+                          {ex.源语言}
+                          <TtsButton
+                            text={ex.源语言}
+                            lang={lang}
+                            scope="sentence"
+                          />
+                        </blockquote>
                         <blockquote>{ex.翻译}</blockquote>
                       </li>
                     ))}
