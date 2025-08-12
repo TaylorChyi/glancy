@@ -24,9 +24,9 @@ public interface TtsStorageService {
      * @param audio binary audio payload
      * @param scope word or sentence context
      * @param ttlDays days until the cache entry expires
-     * @return persisted metadata entity
+     * @return persisted metadata entity, or {@link Optional#empty()} if the operation fails
      */
-    TtsAudio save(
+    Optional<TtsAudio> save(
         String hashKey,
         String lang,
         String voiceId,
