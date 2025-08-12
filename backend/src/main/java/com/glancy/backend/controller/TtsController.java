@@ -10,7 +10,9 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Endpoints for text to speech synthesis. The controller exposes
@@ -30,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class TtsController {
 
     private final TtsService ttsService;
+    private final RestTemplate restTemplate;
 
-    public TtsController(TtsService ttsService) {
+    public TtsController(TtsService ttsService, RestTemplate restTemplate) {
         this.ttsService = ttsService;
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -184,6 +189,51 @@ public class TtsController {
             return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(body.getUrl())).build();
         }
         log.info("Sentence stream returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Directly streams synthesized audio data for a sentence. This helper is useful
+     * for clients like the native HTML audio element which cannot easily follow
+     * redirects or add headers during playback.
+     */
+    @GetMapping(value = "/sentence/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> streamSentenceAudio(
+        @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
+        @RequestParam String text,
+        @RequestParam String lang,
+        @RequestParam(required = false) String voice,
+        @RequestParam(defaultValue = "mp3") String format,
+        @RequestParam(defaultValue = "1.0") double speed
+    ) {
+        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Streaming sentence audio for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            lang,
+            voice,
+            text
+        );
+        Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            byte[] data = restTemplate.getForObject(body.getUrl(), byte[].class);
+            log.info(
+                "Sentence audio stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity
+                .ok()
+                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
+                .body(data);
+        }
+        log.info("Sentence audio stream returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
     }
 

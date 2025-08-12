@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
@@ -19,6 +20,7 @@ import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.TtsService;
 import java.util.List;
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Tests for {@link TtsController}. The focus is on verifying the
@@ -49,6 +52,9 @@ class TtsControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private RestTemplate restTemplate;
 
     /**
      * Verify that a successful word synthesis returns the payload
@@ -130,5 +136,27 @@ class TtsControllerTest {
             )
             .andExpect(status().isFound())
             .andExpect(header().string("Location", "http://audio/url"));
+    }
+
+    /**
+     * Direct streaming endpoint should return raw audio data.
+     */
+    @Test
+    void streamSentenceAudioReturnsBytes() throws Exception {
+        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
+        when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn("data".getBytes(StandardCharsets.UTF_8));
+        doNothing().when(userService).validateToken(1L, "tkn");
+
+        mockMvc
+            .perform(
+                get("/api/tts/sentence/audio")
+                    .param("userId", "1")
+                    .param("text", "hello world")
+                    .param("lang", "en")
+                    .header("X-USER-TOKEN", "tkn")
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
     }
 }
