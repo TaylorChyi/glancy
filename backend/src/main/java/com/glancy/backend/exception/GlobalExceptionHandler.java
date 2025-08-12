@@ -1,6 +1,7 @@
 package com.glancy.backend.exception;
 
 import com.glancy.backend.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -105,8 +106,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ NoHandlerFoundException.class, NoResourceFoundException.class })
-    public ResponseEntity<ErrorResponse> handleSpringNotFound(Exception ex) {
-        log.error("Resource not found: {}", ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleSpringNotFound(Exception ex, HttpServletRequest request) {
+        log.error(
+            "Resource not found: method={}, path={}, msg={}",
+            request.getMethod(),
+            request.getRequestURI(),
+            ex.getMessage()
+        );
         return new ResponseEntity<>(new ErrorResponse("未找到资源"), HttpStatus.NOT_FOUND);
     }
 
