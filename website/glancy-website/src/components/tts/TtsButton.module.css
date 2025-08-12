@@ -32,6 +32,20 @@
   cursor: not-allowed;
 }
 
+.upgrade-btn {
+  margin-top: var(--space-3);
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upgrade-btn:hover {
+  opacity: 0.9;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);

@@ -84,7 +84,7 @@ describe('useTtsPlayer', () => {
       await result.current.play({ text: 'hi', lang: 'en' })
     })
 
-    expect(result.current.error).toBe('请登录后重试')
+    expect(result.current.error).toEqual({ code: 401, message: '请登录后重试' })
   })
 
   /**

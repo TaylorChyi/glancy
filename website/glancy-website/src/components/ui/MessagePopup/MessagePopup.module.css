@@ -21,3 +21,7 @@
   width: 90%;
   text-align: center;
 }
+
+.actions {
+  margin-top: var(--space-3);
+}
