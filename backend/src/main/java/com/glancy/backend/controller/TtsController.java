@@ -104,10 +104,28 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Streaming word for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            lang,
+            voice,
+            text
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
-        return resp
-            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).<Void>build())
-            .orElseGet(() -> ResponseEntity.noContent().build());
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            log.info(
+                "Word stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(body.getUrl())).build();
+        }
+        log.info("Word stream returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -159,10 +177,28 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            lang,
+            voice,
+            text
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
-        return resp
-            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).<Void>build())
-            .orElseGet(() -> ResponseEntity.noContent().build());
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            log.info(
+                "Sentence stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(body.getUrl())).build();
+        }
+        log.info("Sentence stream returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
