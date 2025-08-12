@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
  * handling deterministic and testable.
  */
 @Service
+@Slf4j
 public class TtsStorageServiceImpl implements TtsStorageService {
 
     private final TtsAudioRepository repository;
@@ -34,7 +36,7 @@ public class TtsStorageServiceImpl implements TtsStorageService {
     }
 
     @Override
-    public TtsAudio save(
+    public Optional<TtsAudio> save(
         String hashKey,
         String lang,
         String voiceId,
@@ -45,7 +47,12 @@ public class TtsStorageServiceImpl implements TtsStorageService {
         int ttlDays
     ) {
         String objectKey = buildObjectKey(scope, lang, hashKey, format);
-        storageClient.putObject(objectKey, audio);
+        try {
+            storageClient.putObject(objectKey, audio);
+        } catch (Exception e) {
+            log.warn("Failed to upload TTS audio {}, skipping cache: {}", objectKey, e.getMessage());
+            return Optional.empty();
+        }
 
         TtsAudio entity = new TtsAudio();
         entity.setHashKey(hashKey);
@@ -55,7 +62,13 @@ public class TtsStorageServiceImpl implements TtsStorageService {
         entity.setDurationMs(durationMs);
         entity.setScope(scope);
         entity.setExpiredAt(LocalDateTime.now(clock).plusDays(ttlDays));
-        return repository.save(entity);
+
+        try {
+            return Optional.of(repository.save(entity));
+        } catch (Exception e) {
+            log.warn("Failed to persist TTS audio metadata for {}: {}", objectKey, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
