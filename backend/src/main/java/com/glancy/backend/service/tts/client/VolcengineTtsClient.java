@@ -4,6 +4,7 @@ import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
  * service layer components.
  */
 @Component
+@Slf4j
 public class VolcengineTtsClient {
 
     private final RestTemplate restTemplate;
@@ -53,7 +55,21 @@ public class VolcengineTtsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+        log.debug(
+            "POST {} voice={} lang={} format={} speed={}",
+            props.getApiUrl(),
+            voice,
+            request.getLang(),
+            request.getFormat(),
+            request.getSpeed()
+        );
         ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(props.getApiUrl(), entity, TtsResponse.class);
+        log.debug(
+            "Received response from {} status={} durationMs={}",
+            props.getApiUrl(),
+            resp.getStatusCode(),
+            resp.getBody() != null ? resp.getBody().getDurationMs() : null
+        );
         return resp.getBody();
     }
 

@@ -43,8 +43,28 @@ public class TtsController {
         @Valid @RequestBody TtsRequest request
     ) {
         String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Synthesizing word for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            request.getLang(),
+            request.getVoice(),
+            request.getText()
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, request);
-        return resp.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            log.info(
+                "Word synthesis succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity.ok(body);
+        }
+        log.info("Word synthesis returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -57,8 +77,27 @@ public class TtsController {
         @Valid @RequestBody TtsRequest request
     ) {
         String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Synthesizing sentence for user={}, ip={}, lang={}, voice={}",
+            userId,
+            ip,
+            request.getLang(),
+            request.getVoice()
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, request);
-        return resp.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            log.info(
+                "Sentence synthesis succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity.ok(body);
+        }
+        log.info("Sentence synthesis returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**

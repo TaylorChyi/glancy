@@ -3,6 +3,8 @@ import { useApi } from '@/hooks/useApi.js'
 import { ApiError } from '@/api/client.js'
 import { audioManager } from '@/utils/audioManager.js'
 
+/* global process */
+
 /**
  * Hook that encapsulates TTS playback logic with cache-first strategy.
  * It first tries a shortcut request which may return 204 when cache misses.
@@ -46,11 +48,21 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
   const fetchAudio = useCallback(
     async (payload) => {
       const fn = scope === 'sentence' ? tts.speakSentence : tts.speakWord
+      const isDev =
+        (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
+        (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+      if (isDev) {
+        console.debug('TTS fetch start', { scope, payload })
+      }
       let resp = await fn({ ...payload, shortcut: true })
       if (resp instanceof Response && resp.status === 204) {
         resp = await fn({ ...payload, shortcut: false })
       }
-      return resp instanceof Response ? await resp.json() : resp
+      const data = resp instanceof Response ? await resp.json() : resp
+      if (isDev) {
+        console.debug('TTS fetch success', { scope, payload, data })
+      }
+      return data
     },
     [tts, scope],
   )
@@ -61,14 +73,29 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
       setLoading(true)
       setError(null)
       try {
+        const isDev =
+          (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
+          (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+        if (isDev) {
+          console.info('TTS play request', { scope, text, lang, voice, speed, format })
+        }
         const data = await fetchAudio({ text, lang, voice, speed, format })
         const audio = audioRef.current
         if (audio) {
           audio.src = data.url
           await audioManager.play(audio)
           setPlaying(true)
+          if (isDev) {
+            console.info('TTS play started', { url: data.url })
+          }
         }
       } catch (err) {
+        const isDev =
+          (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
+          (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+        if (isDev) {
+          console.warn('TTS play failed', err)
+        }
         if (err instanceof ApiError) {
           switch (err.status) {
             case 401:
@@ -99,7 +126,7 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         setLoading(false)
       }
     },
-    [fetchAudio],
+    [fetchAudio, scope],
   )
 
   const stop = useCallback(() => {
