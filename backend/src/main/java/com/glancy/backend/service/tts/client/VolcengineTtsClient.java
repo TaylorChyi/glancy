@@ -20,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
  */
 @Component
 public class VolcengineTtsClient {
+
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
 

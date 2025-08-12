@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class VolcengineTtsService implements TtsService {
+
     private final VolcengineTtsClient client;
 
     public VolcengineTtsService(VolcengineTtsClient client) {

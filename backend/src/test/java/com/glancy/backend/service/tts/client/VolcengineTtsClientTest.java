@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
  * containing mandatory credentials required by the provider.
  */
 class VolcengineTtsClientTest {
+
     private MockRestServiceServer server;
     private VolcengineTtsClient client;
 

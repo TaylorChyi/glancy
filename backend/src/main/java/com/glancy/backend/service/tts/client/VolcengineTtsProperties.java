@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "tts.volcengine")
 public class VolcengineTtsProperties {
+
     /** Application identifier issued by Volcengine. */
     private String appId;
     /** Access token for authenticating requests. */
