@@ -1,0 +1,104 @@
+package com.glancy.backend.service.tts;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+
+import com.glancy.backend.dto.TtsRequest;
+import com.glancy.backend.entity.User;
+import com.glancy.backend.exception.ForbiddenException;
+import com.glancy.backend.exception.InvalidRequestException;
+import com.glancy.backend.service.tts.config.TtsConfig;
+import com.glancy.backend.service.tts.config.TtsConfigManager;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+/**
+ * Tests for {@link TtsRequestValidator}. These verify that request
+ * parameters are checked against configuration and user permissions.
+ */
+class TtsRequestValidatorTest {
+
+    @Mock
+    private TtsConfigManager configManager;
+
+    private TtsRequestValidator validator;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        validator = new TtsRequestValidator(configManager);
+
+        TtsConfig cfg = new TtsConfig();
+        TtsConfig.VoiceGroup group = new TtsConfig.VoiceGroup();
+        group.setDefaultVoice("basic");
+        TtsConfig.VoiceOption basic = new TtsConfig.VoiceOption();
+        basic.setId("basic");
+        basic.setPlan("all");
+        TtsConfig.VoiceOption pro = new TtsConfig.VoiceOption();
+        pro.setId("pro");
+        pro.setPlan("pro");
+        group.setOptions(List.of(basic, pro));
+        cfg.setVoices(Map.of("en-US", group));
+        when(configManager.current()).thenReturn(cfg);
+    }
+
+    /**
+     * resolveVoice should throw when language is not configured.
+     */
+    @Test
+    void rejectUnknownLanguage() {
+        User user = new User();
+        user.setMember(false);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("fr-FR");
+        assertThrows(InvalidRequestException.class, () -> validator.resolveVoice(user, req));
+    }
+
+    /**
+     * resolveVoice should throw when specified voice is missing.
+     */
+    @Test
+    void rejectUnknownVoice() {
+        User user = new User();
+        user.setMember(false);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en-US");
+        req.setVoice("x");
+        assertThrows(InvalidRequestException.class, () -> validator.resolveVoice(user, req));
+    }
+
+    /**
+     * resolveVoice should enforce plan restrictions.
+     */
+    @Test
+    void rejectProVoiceForFreeUser() {
+        User user = new User();
+        user.setMember(false);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en-US");
+        req.setVoice("pro");
+        assertThrows(ForbiddenException.class, () -> validator.resolveVoice(user, req));
+    }
+
+    /**
+     * resolveVoice should return default voice when none provided and user has access.
+     */
+    @Test
+    void resolveDefaultVoice() {
+        User user = new User();
+        user.setMember(false);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en-US");
+        String voice = validator.resolveVoice(user, req);
+        assertEquals("basic", voice);
+    }
+}

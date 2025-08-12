@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Handles application exceptions and logs them.
@@ -36,7 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException ex) {
         log.error("Invalid request: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -51,9 +53,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(QuotaExceededException.class)
-    public ResponseEntity<ErrorResponse> handleQuota(QuotaExceededException ex) {
-        log.error("Quota exceeded: {}", ex.getMessage());
+    @ExceptionHandler({ MethodArgumentNotValidException.class, ConstraintViolationException.class })
+    public ResponseEntity<ErrorResponse> handleValidation(Exception ex) {
+        String msg = "请求参数不合法";
+        log.error(msg, ex);
+        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler({ QuotaExceededException.class, ForbiddenException.class })
+    public ResponseEntity<ErrorResponse> handleForbidden(BusinessException ex) {
+        log.error("Forbidden: {}", ex.getMessage());
         return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
     }
 
