@@ -12,7 +12,7 @@
 .select:focus {
   outline: none;
   border-color: var(--color-primary, #646cff);
-  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.2);
+  box-shadow: 0 0 0 3px rgb(100 108 255 / 20%);
 }
 
 .disabled {
