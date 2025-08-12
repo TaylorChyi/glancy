@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import ThemeIcon from '@/components/ui/Icon'
 import { useTtsPlayer } from '@/hooks/useTtsPlayer.js'
+import { useVoiceStore } from '@/store'
 import styles from './TtsButton.module.css'
 
 /**
@@ -27,7 +28,8 @@ export default function TtsButton({
       stop()
       return
     }
-    await play({ text, lang, voice })
+    const selectedVoice = voice ?? useVoiceStore.getState().getVoice(lang)
+    await play({ text, lang, voice: selectedVoice })
   }
 
   const btnClass = [
