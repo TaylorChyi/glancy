@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useApi } from '@/hooks/useApi.js'
 import { ApiError } from '@/api/client.js'
+import { audioManager } from '@/utils/audioManager.js'
 
 /**
  * Hook that encapsulates TTS playback logic with cache-first strategy.
@@ -10,17 +11,36 @@ import { ApiError } from '@/api/client.js'
 export function useTtsPlayer({ scope = 'word' } = {}) {
   const api = useApi()
   const tts = api.tts
-  const audioRef = useRef(typeof Audio !== 'undefined' ? new Audio() : null)
+  const audioRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [playing, setPlaying] = useState(false)
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    const handleEnd = () => setPlaying(false)
+    if (typeof Audio === 'undefined') return
+    const audio = new Audio()
+    if (audio.style) audio.style.display = 'none'
+    if (typeof document !== 'undefined' && audio instanceof HTMLElement) {
+      document.body.appendChild(audio)
+    }
+    audioRef.current = audio
+
+    const handlePause = () => setPlaying(false)
+    const handleEnd = () => {
+      setPlaying(false)
+      audioManager.stop(audio)
+    }
+    audio.addEventListener('pause', handlePause)
     audio.addEventListener('ended', handleEnd)
-    return () => audio.removeEventListener('ended', handleEnd)
+
+    return () => {
+      audio.removeEventListener('pause', handlePause)
+      audio.removeEventListener('ended', handleEnd)
+      audioManager.stop(audio)
+      if (typeof document !== 'undefined' && audio instanceof HTMLElement) {
+        document.body.removeChild(audio)
+      }
+    }
   }, [])
 
   const fetchAudio = useCallback(
@@ -45,7 +65,7 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         const audio = audioRef.current
         if (audio) {
           audio.src = data.url
-          await audio.play()
+          await audioManager.play(audio)
           setPlaying(true)
         }
       } catch (err) {
@@ -79,5 +99,12 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
     [fetchAudio],
   )
 
-  return { play, audio: audioRef.current, loading, error, playing }
+  const stop = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audioManager.stop(audio)
+    setPlaying(false)
+  }, [])
+
+  return { play, stop, loading, error, playing }
 }

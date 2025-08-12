@@ -15,7 +15,7 @@ export default function TtsButton({
   size,
   disabled = false,
 }) {
-  const { play, audio, loading, playing } = useTtsPlayer({ scope })
+  const { play, stop, loading, playing } = useTtsPlayer({ scope })
   const tooltip = useMemo(
     () => (scope === 'sentence' ? '播放例句发音' : '播放发音'),
     [scope],
@@ -23,8 +23,8 @@ export default function TtsButton({
 
   const handleClick = async () => {
     if (disabled || loading) return
-    if (playing && audio) {
-      audio.pause()
+    if (playing) {
+      stop()
       return
     }
     await play({ text, lang, voice })

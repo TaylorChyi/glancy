@@ -2,9 +2,11 @@
 import { renderHook, act } from '@testing-library/react'
 import { jest } from '@jest/globals'
 import { ApiError } from '@/api/client.js'
+import { audioManager } from '@/utils/audioManager.js'
 
-// mock global Audio element
+// mock global Audio element with basic event system
 const playSpy = jest.fn().mockResolvedValue()
+const pauseSpies = []
 beforeAll(() => {
   class MockResponse {
     constructor(_body, init = {}) {
@@ -12,12 +14,21 @@ beforeAll(() => {
     }
   }
   global.Response = MockResponse
-  global.Audio = jest.fn().mockImplementation(() => ({
-    play: playSpy,
-    pause: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-  }))
+  global.Audio = jest.fn().mockImplementation(() => {
+    const handlers = {}
+    const pause = jest.fn(() => handlers.pause?.())
+    pauseSpies.push(pause)
+    return {
+      play: playSpy,
+      pause,
+      addEventListener: jest.fn((e, cb) => {
+        handlers[e] = cb
+      }),
+      removeEventListener: jest.fn((e) => {
+        delete handlers[e]
+      }),
+    }
+  })
 })
 
 // mock useApi to supply tts methods
@@ -32,6 +43,7 @@ describe('useTtsPlayer', () => {
   afterEach(() => {
     speakWord.mockReset()
     playSpy.mockClear()
+    pauseSpies.length = 0
   })
 
   /**
@@ -74,5 +86,41 @@ describe('useTtsPlayer', () => {
     })
 
     expect(result.current.error).toBe('请登录后重试')
+  })
+
+  /**
+   * Verifies stop pauses audio and resets playing flag.
+   */
+  test('stop halts playback', async () => {
+    speakWord.mockResolvedValueOnce({ url: 'audio.mp3' })
+    const { result } = renderHook(() => useTtsPlayer())
+
+    await act(async () => {
+      await result.current.play({ text: 'hi', lang: 'en' })
+    })
+    expect(result.current.playing).toBe(true)
+
+    await act(() => {
+      result.current.stop()
+    })
+    expect(pauseSpies[0]).toHaveBeenCalled()
+    expect(result.current.playing).toBe(false)
+  })
+
+  /**
+   * Ensures a new play request pauses the previous audio element.
+   */
+  test('new play pauses previous audio', async () => {
+    speakWord.mockResolvedValue({ url: 'audio.mp3' })
+    const first = renderHook(() => useTtsPlayer())
+    await act(async () => {
+      await first.result.current.play({ text: 'a', lang: 'en' })
+    })
+
+    const second = renderHook(() => useTtsPlayer())
+    await act(async () => {
+      await second.result.current.play({ text: 'b', lang: 'en' })
+    })
+    expect(pauseSpies[0]).toHaveBeenCalled()
   })
 })
