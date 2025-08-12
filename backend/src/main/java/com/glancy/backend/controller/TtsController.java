@@ -106,7 +106,7 @@ public class TtsController {
         String ip = httpRequest.getRemoteAddr();
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         return resp
-            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).build())
+            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).<Void>build())
             .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
@@ -161,7 +161,7 @@ public class TtsController {
         String ip = httpRequest.getRemoteAddr();
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
         return resp
-            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).build())
+            .map(r -> ResponseEntity.status(HttpStatus.FOUND).location(URI.create(r.getUrl())).<Void>build())
             .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
