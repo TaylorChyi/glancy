@@ -14,5 +14,8 @@ export const API_PATHS = {
   contact: `${API_BASE}/contact`,
   faqs: `${API_BASE}/faqs`,
   searchRecords: `${API_BASE}/search-records`,
-  llmModels: `${API_BASE}/llm/models`
+  llmModels: `${API_BASE}/llm/models`,
+  ttsWord: `${API_BASE}/tts/word`,
+  ttsSentence: `${API_BASE}/tts/sentence`,
+  ttsVoices: `${API_BASE}/tts/voices`
 }

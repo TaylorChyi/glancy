@@ -1,6 +1,19 @@
 import { extractMessage } from '@/utils/json.js'
 
 /**
+ * Error thrown by the API client for non-ok HTTP responses.
+ * Exposes the HTTP status code and response headers so callers can make
+ * decisions based on them.
+ */
+export class ApiError extends Error {
+  constructor(status, message, headers) {
+    super(message)
+    this.status = status
+    this.headers = headers
+  }
+}
+
+/**
  * Create a new API client instance with optional default headers and token.
  *
  * @param {Object} [config]
@@ -31,7 +44,8 @@ export function createApiClient({ token, headers: defaultHeaders = {}, onUnautho
         console.error(err)
         return ''
       })
-      throw new Error(extractMessage(text) || 'Request failed')
+      const message = extractMessage(text) || 'Request failed'
+      throw new ApiError(resp.status, message, resp.headers)
     }
     const contentType = resp.headers.get('content-type') || ''
     if (contentType.includes('application/json')) {

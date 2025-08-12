@@ -1,6 +1,6 @@
 /* eslint-env jest */
 import { jest } from "@jest/globals"
-import { createApiClient } from '@/api/client.js'
+import { createApiClient, ApiError } from '@/api/client.js'
 
 describe('apiRequest error handling', () => {
   afterEach(() => {
@@ -28,6 +28,18 @@ describe('apiRequest error handling', () => {
     global.fetch = jest.fn().mockResolvedValue(resp)
     const apiRequest = createApiClient()
     await expect(apiRequest('/api')).rejects.toThrow('Server error')
+  })
+
+  test('includes status code in thrown error', async () => {
+    const resp = {
+      ok: false,
+      status: 403,
+      text: jest.fn().mockResolvedValue('Forbidden'),
+      headers: { get: () => 'text/plain' }
+    }
+    global.fetch = jest.fn().mockResolvedValue(resp)
+    const apiRequest = createApiClient()
+    await expect(apiRequest('/api')).rejects.toMatchObject({ status: 403 })
   })
 
   test('throws unified message on network failure', async () => {

@@ -1,6 +1,7 @@
 export { useApi } from './useApi.js'
 export { useAppShortcuts } from './useAppShortcuts.js'
 export { useFetchWord } from './useFetchWord.js'
+export { useTtsPlayer } from './useTtsPlayer.js'
 export { default as useEscapeKey } from './useEscapeKey.js'
 export { default as useMediaQuery } from './useMediaQuery.js'
 export { default as useOutsideToggle } from './useOutsideToggle.js'

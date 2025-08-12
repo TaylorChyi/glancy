@@ -6,6 +6,7 @@ import { createSearchRecordsApi } from './searchRecords.js'
 import { createUsersApi } from './users.js'
 import { createProfilesApi } from './profiles.js'
 import { createLlmApi } from './llm.js'
+import { createTtsApi } from './tts.js'
 
 export function createApi(config) {
   const request = createApiClient(config)
@@ -19,7 +20,8 @@ export function createApi(config) {
     searchRecords: createSearchRecordsApi(request),
     users: createUsersApi(request),
     profiles: createProfilesApi(request),
-    llm: createLlmApi(request)
+    llm: createLlmApi(request),
+    tts: createTtsApi(request)
   }
 }
 
