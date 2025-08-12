@@ -1,9 +1,18 @@
 .select {
-  padding: 4px 8px;
-  border: 1px solid var(--color-border, #ccc);
-  border-radius: 6px;
+  padding: 6px 24px 6px 12px;
+  border: 1px solid var(--color-border, #d0d5dd);
+  border-radius: 8px;
   background: var(--color-bg, #fff);
   color: var(--color-text, #333);
+  font-size: 14px;
+  line-height: 1.4;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary, #646cff);
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.2);
 }
 
 .disabled {

@@ -10,6 +10,7 @@ import SelectField from '@/components/form/SelectField.jsx'
 import FormRow from '@/components/form/FormRow.jsx'
 import { useApi } from '@/hooks'
 import { useModelStore } from '@/store'
+import { VoiceSelector } from '@/components'
 
 function Preferences() {
   const { t } = useLanguage()
@@ -107,6 +108,12 @@ function Preferences() {
             onChange={setDefaultModel}
             options={models.map((m) => ({ value: m, label: t[m] || m }))}
           />
+        </FormRow>
+        <FormRow label={t.prefVoiceEn} id="voice-en">
+          <VoiceSelector lang="en" />
+        </FormRow>
+        <FormRow label={t.prefVoiceZh} id="voice-zh">
+          <VoiceSelector lang="zh" />
         </FormRow>
         <FormRow label={t.prefTheme} id="theme-select">
           <SelectField

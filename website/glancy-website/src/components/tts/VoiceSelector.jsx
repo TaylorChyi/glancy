@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useApi } from '@/hooks'
-import { useUserStore } from '@/store/userStore.ts'
+import { useLanguage } from '@/context'
+import { useUserStore, useVoiceStore } from '@/store'
 import styles from './VoiceSelector.module.css'
 
 /**
  * Dropdown for selecting available voices for a given language.
  * Voices requiring Pro plan are disabled for non-pro users.
  */
-export default function VoiceSelector({ lang, value, onChange }) {
+export default function VoiceSelector({ lang }) {
   const api = useApi()
+  const { t } = useLanguage()
   const user = useUserStore((s) => s.user)
   const [voices, setVoices] = useState([])
+  const selected = useVoiceStore((s) => s.getVoice(lang))
+  const setVoice = useVoiceStore((s) => s.setVoice)
 
   useEffect(() => {
     let cancelled = false
@@ -26,20 +30,32 @@ export default function VoiceSelector({ lang, value, onChange }) {
     }
   }, [lang, api])
 
-  const isPro = !!(user?.member || user?.isPro || (user?.plan && user.plan !== 'free'))
+  const isPro = !!(
+    user?.member ||
+    user?.isPro ||
+    (user?.plan && user.plan !== 'free')
+  )
 
   return (
-    <select className={styles.select} value={value} onChange={(e) => onChange?.(e.target.value)}>
-      {voices.map((v) => (
-        <option
-          key={v.id}
-          value={v.id}
-          disabled={v.plan === 'pro' && !isPro}
-          className={!isPro && v.plan === 'pro' ? styles.disabled : undefined}
-        >
-          {v.label}
-        </option>
-      ))}
+    <select
+      className={styles.select}
+      value={selected || ''}
+      onChange={(e) => setVoice(lang, e.target.value)}
+    >
+      {voices.map((v) => {
+        const disabled = v.plan === 'pro' && !isPro
+        const label = disabled ? `${v.label} (${t.upgradeAvailable})` : v.label
+        return (
+          <option
+            key={v.id}
+            value={v.id}
+            disabled={disabled}
+            className={disabled ? styles.disabled : undefined}
+          >
+            {label}
+          </option>
+        )
+      })}
     </select>
   )
 }

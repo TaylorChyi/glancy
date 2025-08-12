@@ -2,7 +2,6 @@
 import { renderHook, act } from '@testing-library/react'
 import { jest } from '@jest/globals'
 import { ApiError } from '@/api/client.js'
-import { audioManager } from '@/utils/audioManager.js'
 
 // mock global Audio element with basic event system
 const playSpy = jest.fn().mockResolvedValue()
