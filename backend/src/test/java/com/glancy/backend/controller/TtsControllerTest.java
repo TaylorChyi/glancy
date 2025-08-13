@@ -161,4 +161,29 @@ class TtsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
     }
+
+    /**
+     * Direct streaming endpoint for single word pronunciations should
+     * return raw audio data without a redirect.
+     */
+    @Test
+    void streamWordAudioReturnsBytes() throws Exception {
+        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", true, "obj");
+        when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
+            "data".getBytes(StandardCharsets.UTF_8)
+        );
+        doNothing().when(userService).validateToken(1L, "tkn");
+
+        mockMvc
+            .perform(
+                get("/api/tts/word/audio")
+                    .param("userId", "1")
+                    .param("text", "hello")
+                    .param("lang", "en")
+                    .header("X-USER-TOKEN", "tkn")
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
+    }
 }
