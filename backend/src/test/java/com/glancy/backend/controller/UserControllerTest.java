@@ -24,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 @WebMvcTest(UserController.class)
 @Import(
     {
-        com.glancy.backend.config.SecurityConfig.class,
+        com.glancy.backend.config.security.SecurityConfig.class,
         com.glancy.backend.config.WebConfig.class,
         com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
     }

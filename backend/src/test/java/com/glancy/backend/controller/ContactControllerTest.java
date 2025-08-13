@@ -18,7 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ContactController.class)
-@Import(com.glancy.backend.config.SecurityConfig.class)
+@Import(com.glancy.backend.config.security.SecurityConfig.class)
 class ContactControllerTest {
 
     @Autowired
