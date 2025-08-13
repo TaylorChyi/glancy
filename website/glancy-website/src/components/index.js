@@ -12,6 +12,7 @@ export { default as MessagePopup } from './ui/MessagePopup'
 export { default as Toast } from './ui/Toast'
 export { default as VoiceSelector } from './tts/VoiceSelector.jsx'
 export { default as TtsButton } from './tts/TtsButton.jsx'
+export { default as PronounceableWord } from './tts/PronounceableWord.jsx'
 
 export { default as AuthForm } from './form/AuthForm.jsx'
 export { default as AgeStepper } from './form/AgeStepper/AgeStepper.jsx'

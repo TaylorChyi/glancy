@@ -1,0 +1,54 @@
+.word {
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+.word::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentcolor;
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.word:hover,
+.word:focus {
+  color: var(--accent-color);
+}
+
+.word:hover::after,
+.word:focus::after {
+  transform: scaleX(1);
+}
+
+.playing {
+  color: var(--accent-color);
+}
+
+.playing::after {
+  transform: scaleX(1);
+}
+
+.loading {
+  opacity: 0.6;
+}
+
+.upgrade-btn {
+  margin-top: var(--space-3);
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upgrade-btn:hover {
+  opacity: 0.9;
+}
