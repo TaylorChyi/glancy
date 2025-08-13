@@ -1,5 +1,5 @@
 import { useLanguage } from '@/context'
-import { TtsButton } from '@/components'
+import { TtsButton, PronounceableWord } from '@/components'
 import styles from './DictionaryEntry.module.css'
 
 function DictionaryEntry({ entry }) {
@@ -66,8 +66,7 @@ function DictionaryEntry({ entry }) {
     <article className={styles['dictionary-entry']}>
       {term && (
         <h2 className={styles['section-title']}>
-          {term}
-          <TtsButton text={term} lang={lang} scope="word" />
+          <PronounceableWord text={term} lang={lang} />
         </h2>
       )}
       {phoneticText && (
