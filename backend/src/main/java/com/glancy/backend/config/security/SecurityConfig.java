@@ -2,6 +2,9 @@ package com.glancy.backend.config.security;
 
 import com.glancy.backend.config.TokenAuthenticationFilter;
 import com.glancy.backend.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +19,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * 安全配置（Spring Security，全拼 Security Framework）。
@@ -52,9 +51,8 @@ public class SecurityConfig {
             .addFilterBefore(new TokenTraceFilter(), AnonymousAuthenticationFilter.class)
             .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             // 异常处理：未认证与拒绝访问均打印原因；响应仍按现有策略使用 404
-            .exceptionHandling(e -> e
-                .authenticationEntryPoint(authEntryPoint())
-                .accessDeniedHandler(accessDeniedHandler())
+            .exceptionHandling(e ->
+                e.authenticationEntryPoint(authEntryPoint()).accessDeniedHandler(accessDeniedHandler())
             )
             .httpBasic(httpBasic -> {}); // 显式启用 httpBasic 认证
 
@@ -64,13 +62,22 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationEntryPoint authEntryPoint() {
-        return (HttpServletRequest req, HttpServletResponse resp, org.springframework.security.core.AuthenticationException ex) -> {
+        return (
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            org.springframework.security.core.AuthenticationException ex
+        ) -> {
             String rid = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_REQUEST_ID));
             String tokenStatus = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_TOKEN_STATUS));
-            log.warn("RID={}, auth-failed, mappedTo=404, reason={}, tokenStatus={}", rid, ex.getClass().getSimpleName(), tokenStatus);
+            log.warn(
+                "RID={}, auth-failed, mappedTo=404, reason={}, tokenStatus={}",
+                rid,
+                ex.getClass().getSimpleName(),
+                tokenStatus
+            );
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND); // 维持既有“伪装 404”策略
             resp.setContentType("application/json;charset=UTF-8");
-            resp.getWriter().write("{\"message\":\"未找到资源\",\"rid\":\""+rid+"\"}");
+            resp.getWriter().write("{\"message\":\"未找到资源\",\"rid\":\"" + rid + "\"}");
         };
     }
 
@@ -79,10 +86,15 @@ public class SecurityConfig {
         return (HttpServletRequest req, HttpServletResponse resp, AccessDeniedException ex) -> {
             String rid = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_REQUEST_ID));
             String tokenStatus = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_TOKEN_STATUS));
-            log.warn("RID={}, access-denied, mappedTo=404, reason={}, tokenStatus={}", rid, ex.getClass().getSimpleName(), tokenStatus);
+            log.warn(
+                "RID={}, access-denied, mappedTo=404, reason={}, tokenStatus={}",
+                rid,
+                ex.getClass().getSimpleName(),
+                tokenStatus
+            );
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND); // 维持既有“伪装 404”策略
             resp.setContentType("application/json;charset=UTF-8");
-            resp.getWriter().write("{\"message\":\"未找到资源\",\"rid\":\""+rid+"\"}");
+            resp.getWriter().write("{\"message\":\"未找到资源\",\"rid\":\"" + rid + "\"}");
         };
     }
 

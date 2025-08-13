@@ -4,6 +4,7 @@ import com.glancy.backend.config.security.TokenTraceFilter;
 import com.glancy.backend.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import java.util.Map;
 
 /**
  * Handles application exceptions and logs them.
@@ -111,9 +111,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleNoHandler(NoHandlerFoundException ex, HttpServletRequest req) {
         String rid = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_REQUEST_ID));
         String tokenStatus = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_TOKEN_STATUS));
-        log.warn("RID={}, real-404, path={}, method={}, tokenStatus={}", rid, ex.getRequestURL(), ex.getHttpMethod(), tokenStatus);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "未找到资源", "rid", rid));
+        log.warn(
+            "RID={}, real-404, path={}, method={}, tokenStatus={}",
+            rid,
+            ex.getRequestURL(),
+            ex.getHttpMethod(),
+            tokenStatus
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "未找到资源", "rid", rid));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

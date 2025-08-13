@@ -4,12 +4,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.UUID;
 
 /**
  * 令牌追踪过滤器：只负责记录令牌状态与请求标识，不改变既有鉴权结果。
@@ -27,15 +26,20 @@ public class TokenTraceFilter extends OncePerRequestFilter {
     public static final String ATTR_REQUEST_ID = "req.id";
 
     /** 令牌状态枚举，用于日志标注 */
-    public enum TokenStatus { MISSING, MALFORMED, EXPIRED, REVOKED, OK }
+    public enum TokenStatus {
+        MISSING,
+        MALFORMED,
+        EXPIRED,
+        REVOKED,
+        OK,
+    }
 
     /** 令牌校验结果载体 */
     public record TokenCheckResult(TokenStatus status, String subject) {}
 
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
-            throws ServletException, IOException {
-
+        throws ServletException, IOException {
         // 生成请求链路标识（Request ID，请求标识），用于串联单次请求的日志
         String rid = UUID.randomUUID().toString();
         MDC.put("rid", rid);
@@ -63,8 +67,14 @@ public class TokenTraceFilter extends OncePerRequestFilter {
         }
 
         // 入口汇总日志：记录方法、路径、令牌状态与主体（如可判定）
-        log.info("RID={}, method={}, path={}, tokenStatus={}, subject={}",
-                rid, req.getMethod(), req.getRequestURI(), status, subject);
+        log.info(
+            "RID={}, method={}, path={}, tokenStatus={}, subject={}",
+            rid,
+            req.getMethod(),
+            req.getRequestURI(),
+            status,
+            subject
+        );
 
         try {
             chain.doFilter(req, resp);
@@ -75,12 +85,18 @@ public class TokenTraceFilter extends OncePerRequestFilter {
 
     // 简单格式校验：示例按 UUID（Universally Unique Identifier，通用唯一标识符）形态校验
     private boolean looksLikeUuid(String token) {
-        try { UUID.fromString(token); return true; } catch (Exception e) { return false; }
+        try {
+            UUID.fromString(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // 示例校验：请替换为真实逻辑（签名、过期时间、吊销状态等）
     private TokenCheckResult checkToken(String token) {
-        if (token.startsWith("98ef")) { // 示例：以 98ef 开头视为有效
+        if (token.startsWith("98ef")) {
+            // 示例：以 98ef 开头视为有效
             return new TokenCheckResult(TokenStatus.OK, "u-unknown");
         }
         return new TokenCheckResult(TokenStatus.EXPIRED, null);

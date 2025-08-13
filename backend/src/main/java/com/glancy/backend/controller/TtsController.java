@@ -140,7 +140,7 @@ public class TtsController {
     @GetMapping(value = "/word/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> streamWordAudio(
         @AuthenticatedUser Long userId,
-       HttpServletRequest httpRequest,
+        HttpServletRequest httpRequest,
         @RequestParam String text,
         @RequestParam String lang,
         @RequestParam(required = false) String voice,
