@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,8 +32,9 @@ public class VolcengineTtsClient {
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
 
-    public VolcengineTtsClient(VolcengineTtsProperties props) {
-        this(new RestTemplate(), props);
+    @Autowired
+    public VolcengineTtsClient(RestTemplateBuilder builder, VolcengineTtsProperties props) {
+        this(builder.build(), props);
     }
 
     VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
