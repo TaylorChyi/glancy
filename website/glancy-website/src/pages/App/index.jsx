@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@/context'
 import DictionaryEntry from '@/components/ui/DictionaryEntry'
 import { useLanguage } from '@/context'
-import { useFetchWord } from '@/hooks'
+import { useFetchWord, useSpeechInput } from '@/hooks'
 import './App.css'
 import ChatInput from '@/components/ui/ChatInput'
 import Layout from '@/components/Layout'
@@ -34,6 +34,7 @@ function App() {
   const navigate = useNavigate()
   const { fetchWordWithHandling } = useFetchWord()
   const { model } = useModelStore()
+  const { start: startSpeech } = useSpeechInput({ onResult: setText })
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -70,6 +71,11 @@ function App() {
     setShowFavorites(true)
     setFromFavorites(false)
     setEntry(null)
+  }
+
+  const handleVoice = () => {
+    const locale = lang === 'en' ? 'en-US' : 'zh-CN'
+    startSpeech(locale)
   }
 
   const handleSend = async (e) => {
@@ -159,6 +165,7 @@ function App() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onSubmit={handleSend}
+            onVoice={handleVoice}
             placeholder={t.inputPlaceholder}
           />
         )}
