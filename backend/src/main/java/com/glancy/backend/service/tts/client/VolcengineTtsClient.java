@@ -61,14 +61,26 @@ public class VolcengineTtsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-        ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(props.getApiUrl(), entity, TtsResponse.class);
-        log.debug(
-            "Received response from {} status={} durationMs={}",
-            props.getApiUrl(),
-            resp.getStatusCode(),
-            resp.getBody() != null ? resp.getBody().getDurationMs() : null
-        );
-        return resp.getBody();
+        try {
+            ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(props.getApiUrl(), entity, TtsResponse.class);
+            TtsResponse body = resp.getBody();
+
+            if (!resp.getStatusCode().is2xxSuccessful() || body == null) {
+                log.warn("Volcengine TTS returned unexpected response: status={}, bodyNull={}", resp.getStatusCode(), body == null);
+                throw new IllegalStateException("Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode());
+            }
+
+            log.debug(
+                "Received response from {} status={} durationMs={}",
+                props.getApiUrl(),
+                resp.getStatusCode(),
+                body.getDurationMs()
+            );
+            return body;
+        } catch (org.springframework.web.client.RestClientException ex) {
+            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), ex.getMessage(), ex);
+            throw ex;
+        }
     }
 
     private void logPayload(Map<String, Object> payload) {
