@@ -1,18 +1,16 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useApi } from '@/hooks/useApi.js'
-import { ApiError } from '@/api/client.js'
+import { ApiError, apiRequest } from '@/api/client.js'
+import { API_PATHS } from '@/config/api.js'
 import { audioManager } from '@/utils/audioManager.js'
 
 /* global process */
 
 /**
- * Hook that encapsulates TTS playback logic with cache-first strategy.
- * It first tries a shortcut request which may return 204 when cache misses.
- * In that case it retries without shortcut and plays the resulting audio.
+ * Hook that streams TTS audio through backend endpoints. It builds a query
+ * to either the word or sentence audio route and handles playback lifecycle
+ * including error reporting and resource cleanup.
  */
 export function useTtsPlayer({ scope = 'word' } = {}) {
-  const api = useApi()
-  const tts = api.tts
   const audioRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -45,28 +43,6 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
     }
   }, [])
 
-  const fetchAudio = useCallback(
-    async (payload) => {
-      const fn = scope === 'sentence' ? tts.speakSentence : tts.speakWord
-      const isDev =
-        (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
-        (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
-      if (isDev) {
-        console.debug('TTS fetch start', { scope, payload })
-      }
-      let resp = await fn({ ...payload, shortcut: true })
-      if (resp instanceof Response && resp.status === 204) {
-        resp = await fn({ ...payload, shortcut: false })
-      }
-      const data = resp instanceof Response ? await resp.json() : resp
-      if (isDev) {
-        console.debug('TTS fetch success', { scope, payload, data })
-      }
-      return data
-    },
-    [tts, scope],
-  )
-
   const play = useCallback(
     async ({ text, lang, voice, speed = 1.0, format = 'mp3' }) => {
       if (!text || !lang) return
@@ -76,17 +52,23 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         const isDev =
           (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
           (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+        const base = scope === 'sentence' ? API_PATHS.ttsSentence : API_PATHS.ttsWord
+        const params = new URLSearchParams({ text, lang, format, speed })
+        if (voice) params.set('voice', voice)
+        const url = `${base}/audio?${params.toString()}`
         if (isDev) {
-          console.info('TTS play request', { scope, text, lang, voice, speed, format })
+          console.info('TTS play request', { scope, url })
         }
-        const data = await fetchAudio({ text, lang, voice, speed, format })
+        const resp = await apiRequest(url)
+        const blob = await resp.blob()
         const audio = audioRef.current
         if (audio) {
-          audio.src = data.url
+          if (audio.src && audio.src.startsWith('blob:')) URL.revokeObjectURL(audio.src)
+          audio.src = URL.createObjectURL(blob)
           await audioManager.play(audio)
           setPlaying(true)
           if (isDev) {
-            console.info('TTS play started', { url: data.url })
+            console.info('TTS play started', { url })
           }
         }
       } catch (err) {
@@ -126,12 +108,16 @@ export function useTtsPlayer({ scope = 'word' } = {}) {
         setLoading(false)
       }
     },
-    [fetchAudio, scope],
+    [scope],
   )
 
   const stop = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
+    if (audio.src && audio.src.startsWith('blob:')) {
+      URL.revokeObjectURL(audio.src)
+      audio.src = ''
+    }
     audioManager.stop(audio)
     setPlaying(false)
   }, [])
