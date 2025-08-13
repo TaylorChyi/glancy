@@ -127,6 +127,51 @@ public class TtsController {
     }
 
     /**
+     * Directly streams synthesized audio for a single word. This avoids the
+     * 302 redirect used by {@link #streamWord} and is suited for clients
+     * that cannot easily follow redirects or set headers during playback.
+     */
+    @GetMapping(value = "/word/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> streamWordAudio(
+        @AuthenticatedUser Long userId,
+        HttpServletRequest httpRequest,
+        @RequestParam String text,
+        @RequestParam String lang,
+        @RequestParam(required = false) String voice,
+        @RequestParam(defaultValue = "mp3") String format,
+        @RequestParam(defaultValue = "1.0") double speed
+    ) {
+        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        String ip = httpRequest.getRemoteAddr();
+        log.info(
+            "Streaming word audio for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            lang,
+            voice,
+            text
+        );
+        Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
+        if (resp.isPresent()) {
+            TtsResponse body = resp.get();
+            byte[] data = restTemplate.getForObject(body.getUrl(), byte[].class);
+            log.info(
+                "Word audio stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                userId,
+                body.getDurationMs(),
+                body.getFormat(),
+                body.isFromCache()
+            );
+            return ResponseEntity
+                .ok()
+                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
+                .body(data);
+        }
+        log.info("Word audio stream returned no content for user={}", userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Synthesize pronunciation for a sentence or example phrase.
      */
     @PostMapping("/sentence")
