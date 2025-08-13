@@ -75,16 +75,14 @@ public class VolcengineTtsClient {
         List<String> required = List.of("appid", "access_token", "voice_type", "text", "lang");
         List<String> missing = new ArrayList<>();
         Map<String, Object> sanitized = new LinkedHashMap<>();
-        payload.forEach(
-            (k, v) -> {
-                boolean hasValue = v != null && (!(v instanceof String) || StringUtils.hasText((String) v));
-                if (required.contains(k) && !hasValue) {
-                    missing.add(k);
-                } else {
-                    sanitized.put(k, sanitize(k, v));
-                }
+        payload.forEach((k, v) -> {
+            boolean hasValue = v != null && (!(v instanceof String) || StringUtils.hasText((String) v));
+            if (required.contains(k) && !hasValue) {
+                missing.add(k);
+            } else {
+                sanitized.put(k, sanitize(k, v));
             }
-        );
+        });
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);
         } else {

@@ -7,10 +7,10 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
@@ -18,9 +18,9 @@ import com.glancy.backend.dto.VoiceOption;
 import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.TtsService;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -145,7 +145,9 @@ class TtsControllerTest {
     void streamSentenceAudioReturnsBytes() throws Exception {
         TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn("data".getBytes(StandardCharsets.UTF_8));
+        when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn(
+            "data".getBytes(StandardCharsets.UTF_8)
+        );
         doNothing().when(userService).validateToken(1L, "tkn");
 
         mockMvc

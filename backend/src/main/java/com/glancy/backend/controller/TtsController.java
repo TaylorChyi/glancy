@@ -228,10 +228,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .body(data);
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat()).body(data);
         }
         log.info("Sentence audio stream returned no content for user={}", userId);
         return ResponseEntity.noContent().build();

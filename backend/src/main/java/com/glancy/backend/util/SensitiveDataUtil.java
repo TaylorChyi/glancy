@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
  * Utility methods for masking or previewing sensitive data before logging.
  */
 public final class SensitiveDataUtil {
+
     private SensitiveDataUtil() {}
 
     /**
