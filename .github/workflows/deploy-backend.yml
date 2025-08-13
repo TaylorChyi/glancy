@@ -34,7 +34,7 @@ jobs:
           source: backend/target/glancy-backend.jar
           target: ${{ secrets.BACKEND_DEPLOY_PATH }}/target/
           overwrite: true
-          strip_components: 1
+          strip_components: 2   # <<<< 从 1 改为 2
           debug: true
       - name: Upload service unit
         uses: appleboy/scp-action@v1.0.0
