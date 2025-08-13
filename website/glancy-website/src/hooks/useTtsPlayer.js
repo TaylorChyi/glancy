@@ -1,7 +1,8 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
-import { useApi } from '@/hooks/useApi.js'
-import { ApiError } from '@/api/client.js'
-import { audioManager } from '@/utils/audioManager.js'
+import { useRef, useState, useEffect, useCallback } from "react";
+import { useApi } from "@/hooks/useApi.js";
+import { ApiError } from "@/api/client.js";
+import { audioManager } from "@/utils/audioManager.js";
+import { useUserStore } from "@/store";
 
 /* global process */
 
@@ -10,131 +11,145 @@ import { audioManager } from '@/utils/audioManager.js'
  * It first tries a shortcut request which may return 204 when cache misses.
  * In that case it retries without shortcut and plays the resulting audio.
  */
-export function useTtsPlayer({ scope = 'word' } = {}) {
-  const api = useApi()
-  const tts = api.tts
-  const audioRef = useRef(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [playing, setPlaying] = useState(false)
+export function useTtsPlayer({ scope = "word" } = {}) {
+  const api = useApi();
+  const tts = api.tts;
+  const userId = useUserStore((s) => s.user?.id);
+  const audioRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    if (typeof Audio === 'undefined') return
-    const audio = new Audio()
-    if (audio.style) audio.style.display = 'none'
-    if (typeof document !== 'undefined' && audio instanceof HTMLElement) {
-      document.body.appendChild(audio)
+    if (typeof Audio === "undefined") return;
+    const audio = new Audio();
+    if (audio.style) audio.style.display = "none";
+    if (typeof document !== "undefined" && audio instanceof HTMLElement) {
+      document.body.appendChild(audio);
     }
-    audioRef.current = audio
+    audioRef.current = audio;
 
-    const handlePause = () => setPlaying(false)
+    const handlePause = () => setPlaying(false);
     const handleEnd = () => {
-      setPlaying(false)
-      audioManager.stop(audio)
-    }
-    audio.addEventListener('pause', handlePause)
-    audio.addEventListener('ended', handleEnd)
+      setPlaying(false);
+      audioManager.stop(audio);
+    };
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("ended", handleEnd);
 
     return () => {
-      audio.removeEventListener('pause', handlePause)
-      audio.removeEventListener('ended', handleEnd)
-      audioManager.stop(audio)
-      if (typeof document !== 'undefined' && audio instanceof HTMLElement) {
-        document.body.removeChild(audio)
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("ended", handleEnd);
+      audioManager.stop(audio);
+      if (typeof document !== "undefined" && audio instanceof HTMLElement) {
+        document.body.removeChild(audio);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const fetchAudio = useCallback(
     async (payload) => {
-      const fn = scope === 'sentence' ? tts.speakSentence : tts.speakWord
+      const fn = scope === "sentence" ? tts.speakSentence : tts.speakWord;
       const isDev =
-        (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
-        (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+        (typeof process !== "undefined" &&
+          process.env.NODE_ENV !== "production") ||
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.MODE !== "production");
       if (isDev) {
-        console.debug('TTS fetch start', { scope, payload })
+        console.debug("TTS fetch start", { scope, payload });
       }
-      let resp = await fn({ ...payload, shortcut: true })
+      let resp = await fn({ userId, ...payload, shortcut: true });
       if (resp instanceof Response && resp.status === 204) {
-        resp = await fn({ ...payload, shortcut: false })
+        resp = await fn({ userId, ...payload, shortcut: false });
       }
-      const data = resp instanceof Response ? await resp.json() : resp
+      const data = resp instanceof Response ? await resp.json() : resp;
       if (isDev) {
-        console.debug('TTS fetch success', { scope, payload, data })
+        console.debug("TTS fetch success", { scope, payload, data });
       }
-      return data
+      return data;
     },
-    [tts, scope],
-  )
+    [tts, scope, userId],
+  );
 
   const play = useCallback(
-    async ({ text, lang, voice, speed = 1.0, format = 'mp3' }) => {
-      if (!text || !lang) return
-      setLoading(true)
-      setError(null)
+    async ({ text, lang, voice, speed = 1.0, format = "mp3" }) => {
+      if (!text || !lang || !userId) return;
+      setLoading(true);
+      setError(null);
       try {
         const isDev =
-          (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
-          (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+          (typeof process !== "undefined" &&
+            process.env.NODE_ENV !== "production") ||
+          (typeof import.meta !== "undefined" &&
+            import.meta.env?.MODE !== "production");
         if (isDev) {
-          console.info('TTS play request', { scope, text, lang, voice, speed, format })
+          console.info("TTS play request", {
+            scope,
+            text,
+            lang,
+            voice,
+            speed,
+            format,
+          });
         }
-        const data = await fetchAudio({ text, lang, voice, speed, format })
-        const audio = audioRef.current
+        const data = await fetchAudio({ text, lang, voice, speed, format });
+        const audio = audioRef.current;
         if (audio) {
-          audio.src = data.url
-          await audioManager.play(audio)
-          setPlaying(true)
+          audio.src = data.url;
+          await audioManager.play(audio);
+          setPlaying(true);
           if (isDev) {
-            console.info('TTS play started', { url: data.url })
+            console.info("TTS play started", { url: data.url });
           }
         }
       } catch (err) {
         const isDev =
-          (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
-          (typeof import.meta !== 'undefined' && import.meta.env?.MODE !== 'production')
+          (typeof process !== "undefined" &&
+            process.env.NODE_ENV !== "production") ||
+          (typeof import.meta !== "undefined" &&
+            import.meta.env?.MODE !== "production");
         if (isDev) {
-          console.warn('TTS play failed', err)
+          console.warn("TTS play failed", err);
         }
         if (err instanceof ApiError) {
           switch (err.status) {
             case 401:
-              setError({ code: 401, message: '请登录后重试' })
-              break
+              setError({ code: 401, message: "请登录后重试" });
+              break;
             case 403:
-              setError({ code: 403, message: '升级以继续使用或切换可用音色' })
-              break
+              setError({ code: 403, message: "升级以继续使用或切换可用音色" });
+              break;
             case 429: {
-              const retry = err.headers?.get('Retry-After')
+              const retry = err.headers?.get("Retry-After");
               setError({
                 code: 429,
-                message: `请求过于频繁，请在${retry || '稍后'}秒后重试`,
-              })
-              break
+                message: `请求过于频繁，请在${retry || "稍后"}秒后重试`,
+              });
+              break;
             }
             case 424:
             case 503:
-              setError({ code: err.status, message: '服务繁忙，请稍后再试' })
-              break
+              setError({ code: err.status, message: "服务繁忙，请稍后再试" });
+              break;
             default:
-              setError({ code: err.status, message: err.message })
+              setError({ code: err.status, message: err.message });
           }
         } else {
-          setError({ code: 0, message: '网络错误' })
+          setError({ code: 0, message: "网络错误" });
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     },
-    [fetchAudio, scope],
-  )
+    [fetchAudio, scope, userId],
+  );
 
   const stop = useCallback(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    audioManager.stop(audio)
-    setPlaying(false)
-  }, [])
+    const audio = audioRef.current;
+    if (!audio) return;
+    audioManager.stop(audio);
+    setPlaying(false);
+  }, []);
 
-  return { play, stop, loading, error, playing }
+  return { play, stop, loading, error, playing };
 }

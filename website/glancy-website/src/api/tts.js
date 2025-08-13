@@ -1,5 +1,5 @@
-import { API_PATHS } from '@/config/api.js'
-import { apiRequest } from './client.js'
+import { API_PATHS } from "@/config/api.js";
+import { apiRequest } from "./client.js";
 
 /**
  * Create TTS API helpers.
@@ -7,19 +7,24 @@ import { apiRequest } from './client.js'
  * content type, allowing callers to handle 204 responses gracefully.
  */
 export function createTtsApi(request = apiRequest) {
-  const post = (path, body) =>
-    request(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
+  const post = (path, { userId, token, ...body }) => {
+    const params = new URLSearchParams({ userId });
+    return request(`${path}?${params.toString()}`, {
+      token,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  };
 
-  const speakWord = (body) => post(API_PATHS.ttsWord, body)
-  const speakSentence = (body) => post(API_PATHS.ttsSentence, body)
-  const fetchVoices = ({ lang }) => request(`${API_PATHS.ttsVoices}?lang=${encodeURIComponent(lang)}`)
+  const speakWord = (opts) => post(API_PATHS.ttsWord, opts);
+  const speakSentence = (opts) => post(API_PATHS.ttsSentence, opts);
+  const fetchVoices = ({ userId, lang, token }) => {
+    const params = new URLSearchParams({ userId, lang });
+    return request(`${API_PATHS.ttsVoices}?${params.toString()}`, { token });
+  };
 
-  return { speakWord, speakSentence, fetchVoices }
+  return { speakWord, speakSentence, fetchVoices };
 }
 
-export const { speakWord, speakSentence, fetchVoices } = createTtsApi(
-)
+export const { speakWord, speakSentence, fetchVoices } = createTtsApi();
