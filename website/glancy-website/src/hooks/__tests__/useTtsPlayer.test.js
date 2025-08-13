@@ -1,18 +1,28 @@
 /* eslint-env jest */
 import { renderHook, act } from '@testing-library/react'
 import { jest } from '@jest/globals'
-import { ApiError } from '@/api/client.js'
 
-// mock global Audio element with basic event system
+// mock apiRequest and ApiError
+class ApiError extends Error {
+  constructor(status, message, headers) {
+    super(message)
+    this.status = status
+    this.headers = headers
+  }
+}
+const apiRequest = jest.fn()
+
+jest.unstable_mockModule('@/api/client.js', () => ({ ApiError, apiRequest }))
+jest.unstable_mockModule('@/config/api.js', () => ({
+  API_PATHS: { ttsWord: '/api/tts/word', ttsSentence: '/api/tts/sentence' },
+}))
+
+// mock global Audio element
 const playSpy = jest.fn().mockResolvedValue()
 const pauseSpies = []
 beforeAll(() => {
-  class MockResponse {
-    constructor(_body, init = {}) {
-      this.status = init.status
-    }
-  }
-  global.Response = MockResponse
+  global.URL.createObjectURL = jest.fn(() => 'blob:mock')
+  global.URL.revokeObjectURL = jest.fn()
   global.Audio = jest.fn().mockImplementation(() => {
     const handlers = {}
     const pause = jest.fn(() => handlers.pause?.())
@@ -30,75 +40,47 @@ beforeAll(() => {
   })
 })
 
-// mock useApi to supply tts methods
-const speakWord = jest.fn()
-jest.unstable_mockModule('@/hooks/useApi.js', () => ({
-  useApi: () => ({ tts: { speakWord } }),
-}))
+afterEach(() => {
+  apiRequest.mockReset()
+  playSpy.mockClear()
+  pauseSpies.length = 0
+})
 
 const { useTtsPlayer } = await import('@/hooks/useTtsPlayer.js')
 
 describe('useTtsPlayer', () => {
-  afterEach(() => {
-    speakWord.mockReset()
-    playSpy.mockClear()
-    pauseSpies.length = 0
-  })
-
-  /**
-   * Ensures shortcut request retries with shortcut=false when server responds 204
-   * and that all parameters are forwarded correctly.
-   */
-  test('retries with fallback when cache miss', async () => {
-    speakWord.mockResolvedValueOnce(new Response(null, { status: 204 }))
-    speakWord.mockResolvedValueOnce({ url: 'audio.mp3' })
-
+  test('plays audio when request succeeds', async () => {
+    apiRequest.mockResolvedValueOnce({ blob: () => Promise.resolve(new Blob()) })
     const { result } = renderHook(() => useTtsPlayer())
-
+    await act(async () => {})
     await act(async () => {
       await result.current.play({ text: 'hi', lang: 'en', voice: 'v1' })
     })
-
-    const payload = {
-      text: 'hi',
-      lang: 'en',
-      voice: 'v1',
-      speed: 1,
-      format: 'mp3',
-      shortcut: true,
-    }
-    expect(speakWord).toHaveBeenNthCalledWith(1, payload)
-    expect(speakWord).toHaveBeenNthCalledWith(2, { ...payload, shortcut: false })
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/api/tts/word/audio?text=hi&lang=en&format=mp3&speed=1&voice=v1',
+    )
     expect(playSpy).toHaveBeenCalled()
+    expect(result.current.playing).toBe(true)
   })
 
-  /**
-   * Confirms 401 errors prompt login feedback.
-   */
   test('handles unauthorized error', async () => {
-    speakWord.mockRejectedValueOnce(new ApiError(401, 'Unauthorized'))
-
+    apiRequest.mockRejectedValueOnce(new ApiError(401, 'Unauthorized'))
     const { result } = renderHook(() => useTtsPlayer())
-
+    await act(async () => {})
     await act(async () => {
       await result.current.play({ text: 'hi', lang: 'en' })
     })
-
     expect(result.current.error).toEqual({ code: 401, message: '请登录后重试' })
   })
 
-  /**
-   * Verifies stop pauses audio and resets playing flag.
-   */
   test('stop halts playback', async () => {
-    speakWord.mockResolvedValueOnce({ url: 'audio.mp3' })
+    apiRequest.mockResolvedValueOnce({ blob: () => Promise.resolve(new Blob()) })
     const { result } = renderHook(() => useTtsPlayer())
-
+    await act(async () => {})
     await act(async () => {
       await result.current.play({ text: 'hi', lang: 'en' })
     })
     expect(result.current.playing).toBe(true)
-
     await act(() => {
       result.current.stop()
     })
@@ -106,20 +88,19 @@ describe('useTtsPlayer', () => {
     expect(result.current.playing).toBe(false)
   })
 
-  /**
-   * Ensures a new play request pauses the previous audio element.
-   */
   test('new play pauses previous audio', async () => {
-    speakWord.mockResolvedValue({ url: 'audio.mp3' })
+    apiRequest.mockResolvedValue({ blob: () => Promise.resolve(new Blob()) })
     const first = renderHook(() => useTtsPlayer())
+    await act(async () => {})
     await act(async () => {
       await first.result.current.play({ text: 'a', lang: 'en' })
     })
-
     const second = renderHook(() => useTtsPlayer())
+    await act(async () => {})
     await act(async () => {
       await second.result.current.play({ text: 'b', lang: 'en' })
     })
     expect(pauseSpies[0]).toHaveBeenCalled()
   })
 })
+
