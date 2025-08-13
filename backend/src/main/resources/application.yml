@@ -25,6 +25,11 @@ spring:
             hibernate:
                 dialect: org.hibernate.dialect.MySQLDialect
                 format_sql: true
+    mvc:
+        throw-exception-if-no-handler-found: true
+    web:
+        resources:
+            add-mappings: false
 
 management:
     endpoints:
@@ -34,7 +39,9 @@ management:
 
 logging:
     level:
+        org.springframework.security: DEBUG
         com.glancy.backend: DEBUG
+        org.springframework.web: INFO
 
 search:
     limit:

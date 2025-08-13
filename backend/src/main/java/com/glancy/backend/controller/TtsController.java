@@ -66,6 +66,9 @@ public class TtsController {
         HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
     ) {
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "synthesizeWord", tokenStatus);
         String ip = httpRequest.getRemoteAddr();
         log.info(
             "Synthesizing word for user={}, ip={}, lang={}, voice={}, text={}",
@@ -109,6 +112,9 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamWord", tokenStatus);
         log.info("Streaming word for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         if (resp.isPresent()) {
@@ -134,7 +140,7 @@ public class TtsController {
     @GetMapping(value = "/word/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> streamWordAudio(
         @AuthenticatedUser Long userId,
-        HttpServletRequest httpRequest,
+       HttpServletRequest httpRequest,
         @RequestParam String text,
         @RequestParam String lang,
         @RequestParam(required = false) String voice,
@@ -143,6 +149,9 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamWordAudio", tokenStatus);
         log.info("Streaming word audio for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         if (resp.isPresent()) {
@@ -170,6 +179,9 @@ public class TtsController {
         HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
     ) {
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "synthesizeSentence", tokenStatus);
         String ip = httpRequest.getRemoteAddr();
         log.info(
             "Synthesizing sentence for user={}, ip={}, lang={}, voice={}",
@@ -210,6 +222,9 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamSentence", tokenStatus);
         log.info("Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
         if (resp.isPresent()) {
@@ -244,6 +259,9 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
+        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
+        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
+        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamSentenceAudio", tokenStatus);
         log.info(
             "Streaming sentence audio for user={}, ip={}, lang={}, voice={}, text={}",
             userId,
