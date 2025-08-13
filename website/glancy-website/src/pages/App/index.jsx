@@ -147,11 +147,12 @@ function App() {
         }}
         topBarProps={{
           term: entry?.term || '',
+          lang,
           showBack: !showFavorites && fromFavorites,
           onBack: handleBackFromFavorite,
           favorited: favorites.includes(entry?.term),
           onToggleFavorite: toggleFavoriteEntry,
-          canFavorite: !!entry && !showFavorites && !showHistory
+          canFavorite: !!entry && !showFavorites && !showHistory,
         }}
         bottomContent={(
           <ChatInput

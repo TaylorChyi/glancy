@@ -19,6 +19,13 @@
 
 .term-text {
   margin-left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.term-label {
+  line-height: 1;
 }
 
 .mobile-topbar {

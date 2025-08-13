@@ -1,20 +1,20 @@
-import { useLanguage } from '@/context'
 import ThemeIcon from '@/components/ui/Icon'
 import TopBarActions from './TopBarActions.jsx'
 import common from './TopBarCommon.module.css'
 import styles from './MobileTopBar.module.css'
 import { getBrandText } from '@/utils'
+import { TtsButton } from '@/components'
 
 function MobileTopBar({
   term = '',
+  lang,
   showBack = false,
   onBack,
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
-  onOpenSidebar
+  onOpenSidebar,
 }) {
-  const { lang } = useLanguage()
   const brandText = getBrandText(lang)
 
   return (
@@ -29,7 +29,10 @@ function MobileTopBar({
       >
         ←
       </button>
-      <div className={`${common['term-text']} ${styles['term-text']}`}>{term || brandText}</div>
+      <div className={`${common['term-text']} ${styles['term-text']}`}>
+        <span className={styles['term-label']}>{term || brandText}</span>
+        {term && <TtsButton text={term} lang={lang} size={20} />}
+      </div>
       <TopBarActions
         favorited={favorited}
         onToggleFavorite={onToggleFavorite}
