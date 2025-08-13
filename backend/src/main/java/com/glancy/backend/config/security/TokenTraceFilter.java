@@ -39,8 +39,11 @@ public class TokenTraceFilter extends OncePerRequestFilter {
     public record TokenCheckResult(TokenStatus status, String subject) {}
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest req, @NonNull HttpServletResponse resp, @NonNull FilterChain chain)
-        throws ServletException, IOException {
+    protected void doFilterInternal(
+        @NonNull HttpServletRequest req,
+        @NonNull HttpServletResponse resp,
+        @NonNull FilterChain chain
+    ) throws ServletException, IOException {
         // 生成请求链路标识（Request ID，请求标识），用于串联单次请求的日志
         String rid = UUID.randomUUID().toString();
         MDC.put("rid", rid);
