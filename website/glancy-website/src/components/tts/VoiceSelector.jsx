@@ -1,50 +1,50 @@
-import { useEffect, useState } from 'react'
-import { useApi } from '@/hooks'
-import { useLanguage } from '@/context'
-import { useUserStore, useVoiceStore } from '@/store'
-import styles from './VoiceSelector.module.css'
+import { useEffect, useState } from "react";
+import { useApi } from "@/hooks";
+import { useLanguage } from "@/context";
+import { useUserStore, useVoiceStore } from "@/store";
+import styles from "./VoiceSelector.module.css";
 
 /**
  * Dropdown for selecting available voices for a given language.
  * Voices requiring Pro plan are disabled for non-pro users.
  */
 export default function VoiceSelector({ lang }) {
-  const api = useApi()
-  const { t } = useLanguage()
-  const user = useUserStore((s) => s.user)
-  const [voices, setVoices] = useState([])
-  const selected = useVoiceStore((s) => s.getVoice(lang))
-  const setVoice = useVoiceStore((s) => s.setVoice)
+  const api = useApi();
+  const { t } = useLanguage();
+  const user = useUserStore((s) => s.user);
+  const [voices, setVoices] = useState([]);
+  const selected = useVoiceStore((s) => s.getVoice(lang));
+  const setVoice = useVoiceStore((s) => s.setVoice);
 
   useEffect(() => {
-    let cancelled = false
-    if (!lang) return
+    let cancelled = false;
+    if (!lang || !user?.id) return;
     api.tts
-      .fetchVoices({ lang })
+      .fetchVoices({ lang, userId: user.id })
       .then((list) => {
-        if (!cancelled) setVoices(list)
+        if (!cancelled) setVoices(list);
       })
-      .catch((err) => console.error(err))
+      .catch((err) => console.error(err));
     return () => {
-      cancelled = true
-    }
-  }, [lang, api])
+      cancelled = true;
+    };
+  }, [lang, api, user?.id]);
 
   const isPro = !!(
     user?.member ||
     user?.isPro ||
-    (user?.plan && user.plan !== 'free')
-  )
+    (user?.plan && user.plan !== "free")
+  );
 
   return (
     <select
       className={styles.select}
-      value={selected || ''}
+      value={selected || ""}
       onChange={(e) => setVoice(lang, e.target.value)}
     >
       {voices.map((v) => {
-        const disabled = v.plan === 'pro' && !isPro
-        const label = disabled ? `${v.label} (${t.upgradeAvailable})` : v.label
+        const disabled = v.plan === "pro" && !isPro;
+        const label = disabled ? `${v.label} (${t.upgradeAvailable})` : v.label;
         return (
           <option
             key={v.id}
@@ -54,8 +54,8 @@ export default function VoiceSelector({ lang }) {
           >
             {label}
           </option>
-        )
+        );
       })}
     </select>
-  )
+  );
 }
