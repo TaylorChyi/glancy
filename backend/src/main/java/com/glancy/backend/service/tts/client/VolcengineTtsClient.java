@@ -66,8 +66,14 @@ public class VolcengineTtsClient {
             TtsResponse body = resp.getBody();
 
             if (!resp.getStatusCode().is2xxSuccessful() || body == null) {
-                log.warn("Volcengine TTS returned unexpected response: status={}, bodyNull={}", resp.getStatusCode(), body == null);
-                throw new IllegalStateException("Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode());
+                log.warn(
+                    "Volcengine TTS returned unexpected response: status={}, bodyNull={}",
+                    resp.getStatusCode(),
+                    body == null
+                );
+                throw new IllegalStateException(
+                    "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()
+                );
             }
 
             log.debug(
@@ -78,7 +84,12 @@ public class VolcengineTtsClient {
             );
             return body;
         } catch (org.springframework.web.client.RestClientException ex) {
-            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), ex.getMessage(), ex);
+            log.error(
+                "HTTP (HyperText Transfer Protocol) request to {} failed: {}",
+                props.getApiUrl(),
+                ex.getMessage(),
+                ex
+            );
             throw ex;
         }
     }
