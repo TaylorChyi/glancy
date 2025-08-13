@@ -143,14 +143,7 @@ public class TtsController {
     ) {
         TtsRequest req = buildRequest(text, lang, voice, format, speed);
         String ip = httpRequest.getRemoteAddr();
-        log.info(
-            "Streaming word audio for user={}, ip={}, lang={}, voice={}, text={}",
-            userId,
-            ip,
-            lang,
-            voice,
-            text
-        );
+        log.info("Streaming word audio for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         if (resp.isPresent()) {
             TtsResponse body = resp.get();
@@ -162,10 +155,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .body(data);
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat()).body(data);
         }
         log.info("Word audio stream returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
