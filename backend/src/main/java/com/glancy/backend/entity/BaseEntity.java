@@ -25,10 +25,18 @@ public abstract class BaseEntity {
     private Boolean deleted = false;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(
+        nullable = false,
+        updatable = false,
+        columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)"
+    )
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(
+        nullable = false,
+        columnDefinition =
+            "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)"
+    )
     private LocalDateTime updatedAt;
 }
