@@ -4,7 +4,10 @@ import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.dto.VoiceOption;
 import com.glancy.backend.dto.VoiceResponse;
+import com.glancy.backend.entity.User;
+import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
+import com.glancy.backend.service.tts.TtsRequestValidator;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -22,19 +25,30 @@ import org.springframework.stereotype.Service;
 public class VolcengineTtsService implements TtsService {
 
     private final VolcengineTtsClient client;
+    private final TtsRequestValidator validator;
+    private final UserService userService;
 
-    public VolcengineTtsService(VolcengineTtsClient client) {
+    public VolcengineTtsService(
+        VolcengineTtsClient client,
+        TtsRequestValidator validator,
+        UserService userService
+    ) {
         this.client = client;
+        this.validator = validator;
+        this.userService = userService;
     }
 
     @Override
     public Optional<TtsResponse> synthesizeWord(Long userId, String ip, TtsRequest request) {
+        User user = userService.getUserRaw(userId);
+        String voice = validator.resolveVoice(user, request);
+        request.setVoice(voice);
         log.debug(
             "Delegating word synthesis to client for user={}, ip={}, lang={}, voice={}",
             userId,
             ip,
             request.getLang(),
-            request.getVoice()
+            voice
         );
         TtsResponse resp = client.synthesize(request);
         log.debug(
@@ -48,12 +62,15 @@ public class VolcengineTtsService implements TtsService {
 
     @Override
     public Optional<TtsResponse> synthesizeSentence(Long userId, String ip, TtsRequest request) {
+        User user = userService.getUserRaw(userId);
+        String voice = validator.resolveVoice(user, request);
+        request.setVoice(voice);
         log.debug(
             "Delegating sentence synthesis to client for user={}, ip={}, lang={}, voice={}",
             userId,
             ip,
             request.getLang(),
-            request.getVoice()
+            voice
         );
         TtsResponse resp = client.synthesize(request);
         log.debug(
