@@ -3,18 +3,16 @@ package com.glancy.backend.service;
 import com.aliyun.oss.ClientException;
 import com.aliyun.oss.HttpMethod;
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.OSSException;
 import com.aliyun.oss.model.CannedAccessControlList;
 import com.aliyun.oss.model.GeneratePresignedUrlRequest;
 import com.glancy.backend.config.OssProperties;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
 import java.util.UUID;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,82 +24,32 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class OssAvatarStorage implements AvatarStorage {
 
-    private String endpoint;
+    private final OSS ossClient;
     private final String bucket;
-    private final String accessKeyId;
-    private final String accessKeySecret;
     private final String securityToken;
     private final String avatarDir;
     private final boolean publicRead;
     private final long signedUrlExpirationMinutes;
-    private final boolean verifyLocation;
-    private String urlPrefix;
+    private final String urlPrefix;
 
-    private OSS ossClient;
-
-    public OssAvatarStorage(OssProperties properties) {
-        this.endpoint = properties.getEndpoint();
+    public OssAvatarStorage(OSS ossClient, OssProperties properties) {
+        this.ossClient = Objects.requireNonNull(ossClient, "OSS client must not be null");
         this.bucket = properties.getBucket();
-        this.accessKeyId = properties.getAccessKeyId();
-        this.accessKeySecret = properties.getAccessKeySecret();
+        this.securityToken = properties.getSecurityToken();
         this.avatarDir = properties.getAvatarDir();
         this.publicRead = properties.isPublicRead();
-        this.verifyLocation = properties.isVerifyLocation();
         this.signedUrlExpirationMinutes = properties.getSignedUrlExpirationMinutes();
-        this.securityToken = properties.getSecurityToken();
-        this.urlPrefix = String.format("https://%s.%s/", bucket, removeProtocol(endpoint));
-    }
-
-    @PostConstruct
-    public void init() {
-        if (accessKeyId != null && !accessKeyId.isEmpty() && accessKeySecret != null && !accessKeySecret.isEmpty()) {
-            if (securityToken != null && !securityToken.isEmpty()) {
-                this.ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret, securityToken);
-            } else {
-                this.ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
-            }
-            if (verifyLocation) {
-                try {
-                    String location = ossClient.getBucketLocation(bucket);
-                    String expected = formatEndpoint(location);
-                    String configured = removeProtocol(endpoint);
-                    if (!configured.contains(location)) {
-                        ossClient.shutdown();
-                        if (securityToken != null && !securityToken.isEmpty()) {
-                            this.ossClient = new OSSClientBuilder().build(
-                                expected,
-                                accessKeyId,
-                                accessKeySecret,
-                                securityToken
-                            );
-                        } else {
-                            this.ossClient = new OSSClientBuilder().build(expected, accessKeyId, accessKeySecret);
-                        }
-                        this.endpoint = expected;
-                        this.urlPrefix = String.format("https://%s.%s/", bucket, removeProtocol(expected));
-                    }
-                } catch (Exception e) {
-                    // log and continue with configured endpoint
-                    log.warn("Failed to verify OSS endpoint: {}", e.getMessage());
-                }
-            }
-        }
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (ossClient != null) {
-            ossClient.shutdown();
-        }
+        this.urlPrefix = String.format(
+            "https://%s.%s/",
+            bucket,
+            removeProtocol(properties.getEndpoint())
+        );
     }
 
     /**
      * Upload the avatar and return the public URL.
      */
     public String upload(MultipartFile file) throws IOException {
-        if (ossClient == null) {
-            throw new IllegalStateException("OSS client not configured");
-        }
         String original = file.getOriginalFilename();
         String ext = "";
         if (original != null && original.contains(".")) {
@@ -155,13 +103,5 @@ public class OssAvatarStorage implements AvatarStorage {
 
     private static String removeProtocol(String url) {
         return url.replaceFirst("https?://", "");
-    }
-
-    private static String formatEndpoint(String location) {
-        String loc = location.startsWith("http") ? removeProtocol(location) : location;
-        if (!loc.startsWith("oss-")) {
-            loc = "oss-" + loc;
-        }
-        return "https://" + loc + ".aliyuncs.com";
     }
 }
