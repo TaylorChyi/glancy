@@ -67,10 +67,9 @@ public class VolcengineTtsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-        String url =
-            UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-                .queryParam("Action", props.getAction())
-                .toUriString();
+        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
+            .queryParam("Action", props.getAction())
+            .toUriString();
         try {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
             TtsResponse body = resp.getBody();
