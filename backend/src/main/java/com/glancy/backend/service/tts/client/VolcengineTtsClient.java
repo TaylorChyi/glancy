@@ -3,8 +3,8 @@ package com.glancy.backend.service.tts.client;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.util.SensitiveDataUtil;
+import com.glancy.backend.service.tts.client.VolcengineTtsPayload;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,24 +52,28 @@ public class VolcengineTtsClient {
      * @return response from remote service
      */
     public TtsResponse synthesize(TtsRequest request) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("appid", props.getAppId());
-        payload.put("access_token", props.getAccessToken());
         String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
-        payload.put("voice_type", voice);
-        payload.put("text", request.getText());
-        payload.put("lang", request.getLang());
-        payload.put("format", request.getFormat());
-        payload.put("speed", request.getSpeed());
+        VolcengineTtsPayload payload =
+            VolcengineTtsPayload
+                .builder()
+                .appId(props.getAppId())
+                .accessToken(props.getAccessToken())
+                .voiceType(voice)
+                .text(request.getText())
+                .lang(request.getLang())
+                .format(request.getFormat())
+                .speed(request.getSpeed())
+                .build();
 
         logPayload(payload);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-            .queryParam("Action", props.getAction())
-            .toUriString();
+        HttpEntity<VolcengineTtsPayload> entity = new HttpEntity<>(payload, headers);
+        String url =
+            UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
+                .queryParam("Action", props.getAction())
+                .toUriString();
         try {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
             TtsResponse body = resp.getBody();
@@ -108,19 +112,39 @@ public class VolcengineTtsClient {
         }
     }
 
-    private void logPayload(Map<String, Object> payload) {
-        List<String> required = List.of("appid", "access_token", "voice_type", "text", "lang");
+    private void logPayload(VolcengineTtsPayload payload) {
         List<String> missing = new ArrayList<>();
         Map<String, Object> sanitized = new LinkedHashMap<>();
-        payload.forEach((k, v) -> {
-            boolean hasValue = v != null && (!(v instanceof String) || StringUtils.hasText((String) v));
-            if (required.contains(k) && !hasValue) {
-                missing.add(k);
-            } else {
-                sanitized.put(k, sanitize(k, v));
-            }
-        });
+
+        if (!StringUtils.hasText(payload.getAppId())) {
+            missing.add("appid");
+        }
+        sanitized.put("appid", sanitize("appid", payload.getAppId()));
+
+        if (!StringUtils.hasText(payload.getAccessToken())) {
+            missing.add("access_token");
+        }
+        sanitized.put("access_token", sanitize("access_token", payload.getAccessToken()));
+
+        if (!StringUtils.hasText(payload.getVoiceType())) {
+            missing.add("voice_type");
+        }
+        sanitized.put("voice_type", sanitize("voice_type", payload.getVoiceType()));
+
+        if (!StringUtils.hasText(payload.getText())) {
+            missing.add("text");
+        }
+        sanitized.put("text", sanitize("text", payload.getText()));
+
+        if (!StringUtils.hasText(payload.getLang())) {
+            missing.add("lang");
+        }
+        sanitized.put("lang", sanitize("lang", payload.getLang()));
+
+        sanitized.put("format", sanitize("format", payload.getFormat()));
+        sanitized.put("speed", sanitize("speed", payload.getSpeed()));
         sanitized.put("action", sanitize("action", props.getAction()));
+
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);
         } else {

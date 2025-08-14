@@ -57,6 +57,8 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.appid").value("app"))
             .andExpect(jsonPath("$.access_token").value("token"))
             .andExpect(jsonPath("$.voice_type").value("v2"))
+            .andExpect(jsonPath("$.format").value("mp3"))
+            .andExpect(jsonPath("$.speed").value(1.0))
             .andRespond(
                 withSuccess(
                     "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false,\"object_key\":\"k\"}",
