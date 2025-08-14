@@ -6,6 +6,7 @@ import com.glancy.backend.exception.ForbiddenException;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -33,6 +34,19 @@ public class TtsRequestValidator {
     public String resolveVoice(User user, TtsRequest request) {
         Map<String, TtsConfig.VoiceGroup> voices = configManager.current().getVoices();
         TtsConfig.VoiceGroup group = voices.get(request.getLang());
+        if (group == null) {
+            Locale locale = Locale.forLanguageTag(request.getLang());
+            String prefix = locale.getLanguage();
+            if (StringUtils.hasText(prefix)) {
+                group = voices
+                    .entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().startsWith(prefix + "-"))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .orElse(null);
+            }
+        }
         if (group == null) {
             throw new InvalidRequestException("不支持的语言");
         }

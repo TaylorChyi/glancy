@@ -103,6 +103,21 @@ class TtsRequestValidatorTest {
     }
 
     /**
+     * resolveVoice should fall back to the first group matching the language prefix
+     * when an exact locale match is absent.
+     */
+    @Test
+    void resolveDefaultVoiceWithLanguagePrefix() {
+        User user = new User();
+        user.setMember(false);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+        String voice = validator.resolveVoice(user, req);
+        assertEquals("basic", voice);
+    }
+  
+    /**
      * Using the classpath configuration, an English request without a voice
      * specified should return the group's configured default voice.
      */
