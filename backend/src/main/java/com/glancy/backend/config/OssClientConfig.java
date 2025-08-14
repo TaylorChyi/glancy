@@ -37,7 +37,12 @@ public class OssClientConfig {
     private OSS buildClient(String endpoint, OssProperties props) {
         OSSClientBuilder builder = new OSSClientBuilder();
         if (props.getSecurityToken() != null && !props.getSecurityToken().isEmpty()) {
-            return builder.build(endpoint, props.getAccessKeyId(), props.getAccessKeySecret(), props.getSecurityToken());
+            return builder.build(
+                endpoint,
+                props.getAccessKeyId(),
+                props.getAccessKeySecret(),
+                props.getSecurityToken()
+            );
         }
         return builder.build(endpoint, props.getAccessKeyId(), props.getAccessKeySecret());
     }

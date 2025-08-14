@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
-import java.util.UUID;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,11 +39,7 @@ public class OssAvatarStorage implements AvatarStorage {
         this.avatarDir = properties.getAvatarDir();
         this.publicRead = properties.isPublicRead();
         this.signedUrlExpirationMinutes = properties.getSignedUrlExpirationMinutes();
-        this.urlPrefix = String.format(
-            "https://%s.%s/",
-            bucket,
-            removeProtocol(properties.getEndpoint())
-        );
+        this.urlPrefix = String.format("https://%s.%s/", bucket, removeProtocol(properties.getEndpoint()));
     }
 
     /**
