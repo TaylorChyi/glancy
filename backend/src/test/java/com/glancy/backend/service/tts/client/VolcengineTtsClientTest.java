@@ -1,10 +1,13 @@
 package com.glancy.backend.service.tts.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.glancy.backend.dto.TtsRequest;
@@ -15,6 +18,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+
+import com.glancy.backend.exception.TtsFailedException;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests
@@ -59,6 +64,52 @@ class VolcengineTtsClientTest {
         req.setVoice("v2");
         TtsResponse resp = client.synthesize(req);
         assertThat(resp.getUrl()).isEqualTo("u");
+        server.verify();
+    }
+
+    @Test
+    void wrapsClientErrorsFromProvider() {
+        server
+            .expect(requestTo("http://localhost/tts"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withBadRequest()
+                    .body("{\"code\":\"E400\",\"message\":\"bad request\"}")
+                    .contentType(MediaType.APPLICATION_JSON)
+            );
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> client.synthesize(req))
+            .isInstanceOf(TtsFailedException.class)
+            .hasMessageContaining("status=400")
+            .hasMessageContaining("E400");
+
+        server.verify();
+    }
+
+    @Test
+    void wrapsServerErrorsFromProvider() {
+        server
+            .expect(requestTo("http://localhost/tts"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withServerError()
+                    .body("{\"code\":\"E500\",\"message\":\"boom\"}")
+                    .contentType(MediaType.APPLICATION_JSON)
+            );
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> client.synthesize(req))
+            .isInstanceOf(TtsFailedException.class)
+            .hasMessageContaining("status=500")
+            .hasMessageContaining("E500");
+
         server.verify();
     }
 }

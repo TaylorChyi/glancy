@@ -17,6 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -86,14 +88,19 @@ public class VolcengineTtsClient {
                 body.getDurationMs()
             );
             return body;
-        } catch (org.springframework.web.client.RestClientException ex) {
-            log.error(
-                "HTTP (HyperText Transfer Protocol) request to {} failed: {}",
-                props.getApiUrl(),
-                ex.getMessage(),
-                ex
-            );
-            throw ex;
+        } catch (RestClientException ex) {
+            String msg = "Upstream TTS (Text-To-Speech) request failed";
+            if (ex instanceof HttpStatusCodeException statusEx) {
+                msg += " status=" + statusEx.getStatusCode().value();
+                String body = statusEx.getResponseBodyAsString();
+                if (StringUtils.hasText(body)) {
+                    msg += " body=" + SensitiveDataUtil.previewText(body);
+                }
+            } else if (StringUtils.hasText(ex.getMessage())) {
+                msg += " msg=" + ex.getMessage();
+            }
+            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
+            throw new com.glancy.backend.exception.TtsFailedException(msg);
         }
     }
 
