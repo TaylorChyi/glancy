@@ -49,9 +49,7 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("good")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc
-            .perform(get("/api/search-records/user").header("X-USER-TOKEN", "good"))
-            .andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user").header("X-USER-TOKEN", "good")).andExpect(status().isOk());
     }
 
     /**
@@ -74,8 +72,6 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("tkn")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc
-            .perform(get("/api/search-records/user").param("token", "tkn"))
-            .andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user").param("token", "tkn")).andExpect(status().isOk());
     }
 }
