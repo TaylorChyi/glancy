@@ -77,8 +77,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TtsFailedException.class)
     public ResponseEntity<ErrorResponse> handleTtsFailure(TtsFailedException ex) {
-        log.error("TTS failed: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FAILED_DEPENDENCY);
+        String msg = "TTS provider error: " + ex.getMessage();
+        log.error(msg, ex);
+        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.FAILED_DEPENDENCY);
     }
 
     @ExceptionHandler(ServiceDegradedException.class)
