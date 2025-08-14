@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Low level HTTP client for interacting with Volcengine TTS service.
@@ -54,7 +55,6 @@ public class VolcengineTtsClient {
         Map<String, Object> payload = new HashMap<>();
         payload.put("appid", props.getAppId());
         payload.put("access_token", props.getAccessToken());
-        payload.put("action", props.getAction());
         String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
         payload.put("voice_type", voice);
         payload.put("text", request.getText());
@@ -67,8 +67,12 @@ public class VolcengineTtsClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+        String url =
+            UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
+                .queryParam("Action", props.getAction())
+                .toUriString();
         try {
-            ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(props.getApiUrl(), entity, TtsResponse.class);
+            ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
             TtsResponse body = resp.getBody();
 
             if (!resp.getStatusCode().is2xxSuccessful() || body == null) {
@@ -84,7 +88,7 @@ public class VolcengineTtsClient {
 
             log.debug(
                 "Received response from {} status={} durationMs={}",
-                props.getApiUrl(),
+                url,
                 resp.getStatusCode(),
                 body.getDurationMs()
             );
@@ -100,13 +104,13 @@ public class VolcengineTtsClient {
             } else if (StringUtils.hasText(ex.getMessage())) {
                 msg += " msg=" + ex.getMessage();
             }
-            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
+            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", url, msg, ex);
             throw new com.glancy.backend.exception.TtsFailedException(msg);
         }
     }
 
     private void logPayload(Map<String, Object> payload) {
-        List<String> required = List.of("appid", "access_token", "action", "voice_type", "text", "lang");
+        List<String> required = List.of("appid", "access_token", "voice_type", "text", "lang");
         List<String> missing = new ArrayList<>();
         Map<String, Object> sanitized = new LinkedHashMap<>();
         payload.forEach((k, v) -> {
@@ -117,6 +121,7 @@ public class VolcengineTtsClient {
                 sanitized.put(k, sanitize(k, v));
             }
         });
+        sanitized.put("action", sanitize("action", props.getAction()));
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);
         } else {

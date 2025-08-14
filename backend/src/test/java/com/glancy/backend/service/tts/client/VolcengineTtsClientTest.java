@@ -23,7 +23,8 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
  * mandatory credentials required by the provider. The test ensures that the
- * default action parameter is forwarded alongside authentication data.
+ * default {@code Action} parameter is transmitted as a query parameter along with
+ * authentication data.
  */
 class VolcengineTtsClientTest {
 
@@ -44,17 +45,17 @@ class VolcengineTtsClientTest {
 
     /**
      * Ensures {@link VolcengineTtsClient#synthesize} sends authentication,
-     * configuration (voice) and the default action parameter in the JSON payload.
+     * configuration (voice) and the default action parameter as a query
+     * parameter.
      */
     @Test
-    void includesCredentialsInPayload() {
+    void includesCredentialsInRequest() {
         server
-            .expect(requestTo("http://localhost/tts"))
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.appid").value("app"))
             .andExpect(jsonPath("$.access_token").value("token"))
-            .andExpect(jsonPath("$.action").value("text_to_speech"))
             .andExpect(jsonPath("$.voice_type").value("v2"))
             .andRespond(
                 withSuccess(
@@ -75,7 +76,7 @@ class VolcengineTtsClientTest {
     @Test
     void wrapsClientErrorsFromProvider() {
         server
-            .expect(requestTo("http://localhost/tts"))
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withBadRequest()
@@ -98,7 +99,7 @@ class VolcengineTtsClientTest {
     @Test
     void wrapsServerErrorsFromProvider() {
         server
-            .expect(requestTo("http://localhost/tts"))
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withServerError()
