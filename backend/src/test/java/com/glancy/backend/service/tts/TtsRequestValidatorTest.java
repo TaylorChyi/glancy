@@ -101,4 +101,22 @@ class TtsRequestValidatorTest {
         String voice = validator.resolveVoice(user, req);
         assertEquals("basic", voice);
     }
+
+    /**
+     * Using the classpath configuration, an English request without a voice
+     * specified should return the group's configured default voice.
+     */
+    @Test
+    void resolveEnglishDefaultVoiceFromConfig() {
+        try (TtsConfigManager mgr = new TtsConfigManager("")) {
+            TtsRequestValidator realValidator = new TtsRequestValidator(mgr);
+            User user = new User();
+            user.setMember(false);
+            TtsRequest req = new TtsRequest();
+            req.setText("hi");
+            req.setLang("en-US");
+            String voice = realValidator.resolveVoice(user, req);
+            assertEquals("en_male_will", voice);
+        }
+    }
 }
