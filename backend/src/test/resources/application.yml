@@ -34,3 +34,8 @@ llm:
   default-client: deepseek
   temperature: 0.7
   prompt-path: prompts/english_to_chinese.txt
+
+tts:
+  volcengine:
+    # API version for Volcengine TTS requests used during tests.
+    version: 2020-06-09

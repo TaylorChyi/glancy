@@ -70,6 +70,7 @@ public class VolcengineTtsClient {
         HttpEntity<VolcengineTtsPayload> entity = new HttpEntity<>(payload, headers);
         String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
             .queryParam("Action", props.getAction())
+            .queryParam("Version", props.getVersion())
             .toUriString();
         try {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
@@ -141,6 +142,10 @@ public class VolcengineTtsClient {
         sanitized.put("format", sanitize("format", payload.getFormat()));
         sanitized.put("speed", sanitize("speed", payload.getSpeed()));
         sanitized.put("action", sanitize("action", props.getAction()));
+        if (!StringUtils.hasText(props.getVersion())) {
+            missing.add("version");
+        }
+        sanitized.put("version", sanitize("version", props.getVersion()));
 
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);

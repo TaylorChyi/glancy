@@ -1,73 +1,78 @@
 spring:
-    application:
-        name: glancy
-    messages:
-        basename: messages
-    mail:
-        host: localhost
-        port: 1025
-    datasource:
-        url: jdbc:mysql://localhost:3306/glancy_db?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
-        username: glancy_user
-        password: ${DB_PASSWORD}
-        driver-class-name: com.mysql.cj.jdbc.Driver
+  application:
+    name: glancy
+  messages:
+    basename: messages
+  mail:
+    host: localhost
+    port: 1025
+  datasource:
+    url: jdbc:mysql://localhost:3306/glancy_db?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    username: glancy_user
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
-    servlet:
-        multipart:
-            max-file-size: 5MB
-            max-request-size: 5MB
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
-    jpa:
-        hibernate:
-            ddl-auto: update
-        show-sql: true
-        properties:
-            hibernate:
-                dialect: org.hibernate.dialect.MySQLDialect
-                format_sql: true
-    mvc:
-        throw-exception-if-no-handler-found: true
-    web:
-        resources:
-            add-mappings: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 
 management:
-    endpoints:
-        web:
-            exposure:
-                include: health,info
+  endpoints:
+    web:
+      exposure:
+        include: health,info
 
 logging:
-    level:
-        org.springframework.security: DEBUG
-        com.glancy.backend: DEBUG
-        org.springframework.web: INFO
+  level:
+    org.springframework.security: DEBUG
+    com.glancy.backend: DEBUG
+    org.springframework.web: INFO
 
 search:
-    limit:
-        nonMember: 10
+  limit:
+    nonMember: 10
 
 llm:
-    default-client: deepseek
-    temperature: 0.7
-    prompt-path: prompts/english_to_chinese.txt
+  default-client: deepseek
+  temperature: 0.7
+  prompt-path: prompts/english_to_chinese.txt
 
 thirdparty:
-    deepseek:
-        base-url: https://api.deepseek.com
-        api-key: ''
+  deepseek:
+    base-url: https://api.deepseek.com
+    api-key: ""
 
-    doubao:
-        base-url: https://ark.cn-beijing.volces.com
-        chat-path: /api/v3/chat/completions
-        api-key: ''
+  doubao:
+    base-url: https://ark.cn-beijing.volces.com
+    chat-path: /api/v3/chat/completions
+    api-key: ""
 oss:
-    endpoint: https://oss-cn-beijing.aliyuncs.com
-    bucket: glancy-avatar-bucket
-    avatar-dir: avatars/
-    public-read: true
-    signed-url-expiration-minutes: 10080
-    verify-location: true
-    access-key-id: ${OSS_ACCESS_KEY_ID:}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
-    security-token: ${OSS_SECURITY_TOKEN:}
+  endpoint: https://oss-cn-beijing.aliyuncs.com
+  bucket: glancy-avatar-bucket
+  avatar-dir: avatars/
+  public-read: true
+  signed-url-expiration-minutes: 10080
+  verify-location: true
+  access-key-id: ${OSS_ACCESS_KEY_ID:}
+  access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+  security-token: ${OSS_SECURITY_TOKEN:}
+
+tts:
+  volcengine:
+    # API version for Volcengine TTS requests. Override if provider releases newer stable version.
+    version: 2020-06-09
