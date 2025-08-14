@@ -1,5 +1,6 @@
 package com.glancy.backend.controller;
 
+import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
 import com.glancy.backend.service.UserPreferenceService;
@@ -26,9 +27,9 @@ public class UserPreferenceController {
     /**
      * Persist UI and language preferences for a user.
      */
-    @PostMapping("/user/{userId}")
+    @PostMapping("/user")
     public ResponseEntity<UserPreferenceResponse> savePreference(
-        @PathVariable Long userId,
+        @AuthenticatedUser Long userId,
         @Valid @RequestBody UserPreferenceRequest req
     ) {
         UserPreferenceResponse resp = userPreferenceService.savePreference(userId, req);
@@ -38,8 +39,8 @@ public class UserPreferenceController {
     /**
      * Retrieve preferences previously saved for the user.
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<UserPreferenceResponse> getPreference(@PathVariable Long userId) {
+    @GetMapping("/user")
+    public ResponseEntity<UserPreferenceResponse> getPreference(@AuthenticatedUser Long userId) {
         UserPreferenceResponse resp = userPreferenceService.getPreference(userId);
         return ResponseEntity.ok(resp);
     }

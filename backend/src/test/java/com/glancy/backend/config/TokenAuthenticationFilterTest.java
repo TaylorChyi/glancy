@@ -38,7 +38,7 @@ class TokenAuthenticationFilterTest {
      */
     @Test
     void missingTokenReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/search-records/user/7")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/search-records/user")).andExpect(status().isUnauthorized());
     }
 
     /**
@@ -49,7 +49,7 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("good")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/search-records/user/7").header("X-USER-TOKEN", "good")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user").header("X-USER-TOKEN", "good")).andExpect(status().isOk());
     }
 
     /**
@@ -60,7 +60,7 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("bad")).thenThrow(new IllegalArgumentException("invalid"));
 
         mockMvc
-            .perform(get("/api/search-records/user/7").header("X-USER-TOKEN", "bad"))
+            .perform(get("/api/search-records/user").header("X-USER-TOKEN", "bad"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -72,6 +72,6 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("tkn")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/search-records/user/7").param("token", "tkn")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user").param("token", "tkn")).andExpect(status().isOk());
     }
 }

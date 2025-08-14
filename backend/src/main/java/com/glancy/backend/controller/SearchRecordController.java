@@ -30,7 +30,7 @@ public class SearchRecordController {
      * Record a search term for a user. Non-members are limited to
      * 10 searches per day as enforced in the service layer.
      */
-    @PostMapping("/user/{userId}")
+    @PostMapping("/user")
     public ResponseEntity<SearchRecordResponse> create(
         @AuthenticatedUser Long userId,
         @Valid @RequestBody SearchRecordRequest req
@@ -42,7 +42,7 @@ public class SearchRecordController {
     /**
      * Get a user's search history ordered by latest first.
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user")
     public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
         List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
         return ResponseEntity.ok(resp);
@@ -51,7 +51,7 @@ public class SearchRecordController {
     /**
      * Clear all search records for a user.
      */
-    @DeleteMapping("/user/{userId}")
+    @DeleteMapping("/user")
     public ResponseEntity<Void> clear(@AuthenticatedUser Long userId) {
         searchRecordService.clearRecords(userId);
         return ResponseEntity.noContent().build();
@@ -60,7 +60,7 @@ public class SearchRecordController {
     /**
      * Mark a search record as favorite for the user.
      */
-    @PostMapping("/user/{userId}/{recordId}/favorite")
+    @PostMapping("/user/{recordId}/favorite")
     public ResponseEntity<SearchRecordResponse> favorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
         return ResponseEntity.ok(resp);
@@ -69,7 +69,7 @@ public class SearchRecordController {
     /**
      * Cancel favorite for a specific search record of the user.
      */
-    @DeleteMapping("/user/{userId}/{recordId}/favorite")
+    @DeleteMapping("/user/{recordId}/favorite")
     public ResponseEntity<Void> unfavorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         searchRecordService.unfavoriteRecord(userId, recordId);
         return ResponseEntity.noContent().build();
@@ -78,7 +78,7 @@ public class SearchRecordController {
     /**
      * Delete a specific search record of a user.
      */
-    @DeleteMapping("/user/{userId}/{recordId}")
+    @DeleteMapping("/user/{recordId}")
     public ResponseEntity<Void> delete(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         searchRecordService.deleteRecord(userId, recordId);
         return ResponseEntity.noContent().build();
