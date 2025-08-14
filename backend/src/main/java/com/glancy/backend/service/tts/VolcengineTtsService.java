@@ -7,8 +7,8 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.UserService;
-import com.glancy.backend.service.tts.client.VolcengineTtsClient;
 import com.glancy.backend.service.tts.TtsRequestValidator;
+import com.glancy.backend.service.tts.client.VolcengineTtsClient;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -30,11 +30,7 @@ public class VolcengineTtsService implements TtsService {
     private final TtsRequestValidator validator;
     private final UserService userService;
 
-    public VolcengineTtsService(
-        VolcengineTtsClient client,
-        TtsRequestValidator validator,
-        UserService userService
-    ) {
+    public VolcengineTtsService(VolcengineTtsClient client, TtsRequestValidator validator, UserService userService) {
         this.client = client;
         this.validator = validator;
         this.userService = userService;

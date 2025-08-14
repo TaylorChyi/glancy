@@ -12,14 +12,13 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
+import com.glancy.backend.exception.TtsFailedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
-
-import com.glancy.backend.exception.TtsFailedException;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
