@@ -1,7 +1,6 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -55,7 +54,7 @@ class SearchRecordControllerTest {
         );
         when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class))).thenReturn(resp);
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -84,7 +83,7 @@ class SearchRecordControllerTest {
         );
         when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(get("/api/search-records/user/1").header("X-USER-TOKEN", "tkn"))

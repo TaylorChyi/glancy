@@ -1,7 +1,6 @@
 package com.glancy.backend.config;
 
 import com.glancy.backend.config.auth.TokenResolver;
-import com.glancy.backend.config.auth.UserIdResolver;
 import com.glancy.backend.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -40,14 +39,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String userIdStr = UserIdResolver.resolveUserId(request);
-        if (userIdStr == null) {
-            response.sendError(HttpStatus.BAD_REQUEST.value(), "Missing userId");
-            return;
-        }
         try {
-            Long userId = Long.valueOf(userIdStr);
-            userService.validateToken(userId, token);
+            Long userId = userService.authenticateToken(token);
             Authentication authentication = new UsernamePasswordAuthenticationToken(userId, token, List.of());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
