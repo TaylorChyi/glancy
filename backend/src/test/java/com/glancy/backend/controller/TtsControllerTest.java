@@ -125,10 +125,7 @@ class TtsControllerTest {
 
         mockMvc
             .perform(
-                get("/api/tts/sentence")
-                    .param("text", "hello world")
-                    .param("lang", "en")
-                    .header("X-USER-TOKEN", "tkn")
+                get("/api/tts/sentence").param("text", "hello world").param("lang", "en").header("X-USER-TOKEN", "tkn")
             )
             .andExpect(status().isFound())
             .andExpect(header().string("Location", "http://audio/url"));
@@ -172,10 +169,7 @@ class TtsControllerTest {
 
         mockMvc
             .perform(
-                get("/api/tts/word/audio")
-                    .param("text", "hello")
-                    .param("lang", "en")
-                    .header("X-USER-TOKEN", "tkn")
+                get("/api/tts/word/audio").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn")
             )
             .andExpect(status().isOk())
             .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));

@@ -6,11 +6,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
+import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import java.util.Collections;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -49,9 +49,7 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("good")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc
-            .perform(get("/api/search-records/user/7").header("X-USER-TOKEN", "good"))
-            .andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user/7").header("X-USER-TOKEN", "good")).andExpect(status().isOk());
     }
 
     /**
@@ -74,8 +72,6 @@ class TokenAuthenticationFilterTest {
         when(userService.authenticateToken("tkn")).thenReturn(7L);
         when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
 
-        mockMvc
-            .perform(get("/api/search-records/user/7").param("token", "tkn"))
-            .andExpect(status().isOk());
+        mockMvc.perform(get("/api/search-records/user/7").param("token", "tkn")).andExpect(status().isOk());
     }
 }

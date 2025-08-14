@@ -152,10 +152,7 @@ class WordControllerTest {
 
         mockMvc
             .perform(
-                get("/api/words")
-                    .header("X-USER-TOKEN", "tkn")
-                    .param("term", "hello")
-                    .param("language", "INVALID")
+                get("/api/words").header("X-USER-TOKEN", "tkn").param("term", "hello").param("language", "INVALID")
             )
             .andDo(print())
             .andExpect(status().isBadRequest())
