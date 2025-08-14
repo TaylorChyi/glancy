@@ -1,7 +1,6 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -55,11 +54,11 @@ class SearchRecordControllerTest {
         );
         when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class))).thenReturn(resp);
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
-                post("/api/search-records/user/1")
+                post("/api/search-records/user")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")
@@ -84,10 +83,10 @@ class SearchRecordControllerTest {
         );
         when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/search-records/user/1").header("X-USER-TOKEN", "tkn"))
+            .perform(get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(1))
             .andExpect(jsonPath("$[0].term").value("hello"));

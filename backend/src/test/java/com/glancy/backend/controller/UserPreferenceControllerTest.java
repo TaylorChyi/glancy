@@ -42,6 +42,7 @@ class UserPreferenceControllerTest {
     void savePreference() throws Exception {
         UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DEEPSEEK);
         when(userPreferenceService.savePreference(eq(2L), any(UserPreferenceRequest.class))).thenReturn(resp);
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         UserPreferenceRequest req = new UserPreferenceRequest();
         req.setTheme("dark");
@@ -51,7 +52,8 @@ class UserPreferenceControllerTest {
 
         mockMvc
             .perform(
-                post("/api/preferences/user/2")
+                post("/api/preferences/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -66,9 +68,10 @@ class UserPreferenceControllerTest {
     void getPreference() throws Exception {
         UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DEEPSEEK);
         when(userPreferenceService.getPreference(2L)).thenReturn(resp);
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         mockMvc
-            .perform(get("/api/preferences/user/2"))
+            .perform(get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(2L));
     }

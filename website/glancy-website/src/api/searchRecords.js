@@ -1,48 +1,42 @@
-import { API_PATHS } from '@/config/api.js'
-import { apiRequest, createJsonRequest } from './client.js'
-import { useApi } from '@/hooks'
+import { API_PATHS } from "@/config/api.js";
+import { apiRequest, createJsonRequest } from "./client.js";
+import { useApi } from "@/hooks";
 
 export function createSearchRecordsApi(request = apiRequest) {
-  const jsonRequest = createJsonRequest(request)
-  const fetchSearchRecords = ({ userId, token }) =>
-    request(`${API_PATHS.searchRecords}/user/${userId}`, { token })
+  const jsonRequest = createJsonRequest(request);
+  const fetchSearchRecords = ({ token }) =>
+    request(`${API_PATHS.searchRecords}/user`, { token });
 
-  const saveSearchRecord = ({ userId, token, term, language }) =>
-    jsonRequest(`${API_PATHS.searchRecords}/user/${userId}`, {
-      method: 'POST',
+  const saveSearchRecord = ({ token, term, language }) =>
+    jsonRequest(`${API_PATHS.searchRecords}/user`, {
+      method: "POST",
       token,
-      body: { term, language }
-    })
+      body: { term, language },
+    });
 
-  const clearSearchRecords = ({ userId, token }) =>
-    request(`${API_PATHS.searchRecords}/user/${userId}`, {
-      method: 'DELETE',
-      token
-    })
+  const clearSearchRecords = ({ token }) =>
+    request(`${API_PATHS.searchRecords}/user`, {
+      method: "DELETE",
+      token,
+    });
 
-  const deleteSearchRecord = ({ userId, recordId, token }) =>
-    request(`${API_PATHS.searchRecords}/user/${userId}/${recordId}`, {
-      method: 'DELETE',
-      token
-    })
+  const deleteSearchRecord = ({ recordId, token }) =>
+    request(`${API_PATHS.searchRecords}/user/${recordId}`, {
+      method: "DELETE",
+      token,
+    });
 
-  const favoriteSearchRecord = ({ userId, token, recordId }) =>
-    request(
-      `${API_PATHS.searchRecords}/user/${userId}/${recordId}/favorite`,
-      {
-        method: 'POST',
-        token
-      }
-    )
+  const favoriteSearchRecord = ({ recordId, token }) =>
+    request(`${API_PATHS.searchRecords}/user/${recordId}/favorite`, {
+      method: "POST",
+      token,
+    });
 
-  const unfavoriteSearchRecord = ({ userId, token, recordId }) =>
-    request(
-      `${API_PATHS.searchRecords}/user/${userId}/${recordId}/favorite`,
-      {
-        method: 'DELETE',
-        token
-      }
-    )
+  const unfavoriteSearchRecord = ({ recordId, token }) =>
+    request(`${API_PATHS.searchRecords}/user/${recordId}/favorite`, {
+      method: "DELETE",
+      token,
+    });
 
   return {
     fetchSearchRecords,
@@ -50,8 +44,8 @@ export function createSearchRecordsApi(request = apiRequest) {
     clearSearchRecords,
     deleteSearchRecord,
     favoriteSearchRecord,
-    unfavoriteSearchRecord
-  }
+    unfavoriteSearchRecord,
+  };
 }
 
 export const {
@@ -60,9 +54,9 @@ export const {
   clearSearchRecords,
   deleteSearchRecord,
   favoriteSearchRecord,
-  unfavoriteSearchRecord
-} = createSearchRecordsApi()
+  unfavoriteSearchRecord,
+} = createSearchRecordsApi();
 
 export function useSearchRecordsApi() {
-  return useApi().searchRecords
+  return useApi().searchRecords;
 }

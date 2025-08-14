@@ -1,6 +1,7 @@
 package com.glancy.backend.config;
 
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,7 +41,7 @@ class TokenAuthenticationFilterTest {
     void missingTokenReturnsUnauthorized() throws Exception {
         mockMvc
             .perform(
-                post("/api/search-records/user/1")
+                post("/api/search-records/user")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")
             )
@@ -52,11 +53,11 @@ class TokenAuthenticationFilterTest {
      */
     @Test
     void invalidTokenReturnsUnauthorized() throws Exception {
-        doThrow(new IllegalArgumentException("invalid")).when(userService).validateToken(1L, "bad");
+        doThrow(new IllegalArgumentException("invalid")).when(userService).validateToken("bad");
 
         mockMvc
             .perform(
-                post("/api/search-records/user/1")
+                post("/api/search-records/user")
                     .header("X-USER-TOKEN", "bad")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")
@@ -69,9 +70,11 @@ class TokenAuthenticationFilterTest {
      */
     @Test
     void tokenQueryParamAccepted() throws Exception {
+        when(userService.validateToken("tkn")).thenReturn(1L);
+
         mockMvc
             .perform(
-                post("/api/search-records/user/1")
+                post("/api/search-records/user")
                     .param("token", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")

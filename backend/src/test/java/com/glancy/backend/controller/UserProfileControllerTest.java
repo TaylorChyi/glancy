@@ -41,6 +41,7 @@ class UserProfileControllerTest {
     void saveProfile() throws Exception {
         UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         UserProfileRequest req = new UserProfileRequest();
         req.setAge(20);
@@ -51,7 +52,8 @@ class UserProfileControllerTest {
 
         mockMvc
             .perform(
-                post("/api/profiles/user/2")
+                post("/api/profiles/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -66,9 +68,10 @@ class UserProfileControllerTest {
     void getProfile() throws Exception {
         UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
         when(userProfileService.getProfile(2L)).thenReturn(resp);
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         mockMvc
-            .perform(get("/api/profiles/user/2"))
+            .perform(get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(2L));
     }

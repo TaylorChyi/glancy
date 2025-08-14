@@ -1,7 +1,6 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -62,13 +61,11 @@ class WordControllerTest {
             List.of()
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
-
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "ENGLISH")
@@ -99,13 +96,11 @@ class WordControllerTest {
             List.of()
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
-
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "ENGLISH")
@@ -136,10 +131,10 @@ class WordControllerTest {
      */
     @Test
     void testGetWordMissingTerm() throws Exception {
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/words").param("userId", "1").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
+            .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Missing required parameter: term"));
@@ -150,12 +145,11 @@ class WordControllerTest {
      */
     @Test
     void testGetWordInvalidLanguage() throws Exception {
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.validateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "INVALID")
@@ -185,10 +179,11 @@ class WordControllerTest {
         );
         when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
+        when(userService.validateToken("tkn")).thenReturn(1L);
+
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .param("token", "tkn")
                     .param("term", "hi")
                     .param("language", "ENGLISH")

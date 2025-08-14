@@ -65,13 +65,15 @@ class NotificationControllerTest {
     void createUserNotification() throws Exception {
         NotificationResponse resp = new NotificationResponse(1L, "msg", false, 2L);
         when(notificationService.createUserNotification(eq(2L), any(NotificationRequest.class))).thenReturn(resp);
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         NotificationRequest req = new NotificationRequest();
         req.setMessage("msg");
 
         mockMvc
             .perform(
-                post("/api/notifications/user/2")
+                post("/api/notifications/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -87,9 +89,10 @@ class NotificationControllerTest {
         NotificationResponse uresp = new NotificationResponse(1L, "user", false, 2L);
         NotificationResponse sresp = new NotificationResponse(2L, "sys", true, null);
         when(notificationService.getNotificationsForUser(2L)).thenReturn(List.of(uresp, sresp));
+        when(userService.validateToken("tkn")).thenReturn(2L);
 
         mockMvc
-            .perform(get("/api/notifications/user/2"))
+            .perform(get("/api/notifications/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].message").value("user"))
             .andExpect(jsonPath("$[1].message").value("sys"));

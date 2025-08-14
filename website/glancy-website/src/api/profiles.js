@@ -1,24 +1,24 @@
-import { API_PATHS } from '@/config/api.js'
-import { apiRequest, createJsonRequest } from './client.js'
-import { useApi } from '@/hooks'
+import { API_PATHS } from "@/config/api.js";
+import { apiRequest, createJsonRequest } from "./client.js";
+import { useApi } from "@/hooks";
 
 export function createProfilesApi(request = apiRequest) {
-  const jsonRequest = createJsonRequest(request)
-  const fetchProfile = ({ userId, token }) =>
-    request(`${API_PATHS.profiles}/user/${userId}`, { token })
+  const jsonRequest = createJsonRequest(request);
+  const fetchProfile = ({ token }) =>
+    request(`${API_PATHS.profiles}/user`, { token });
 
-  const saveProfile = ({ userId, token, profile }) =>
-    jsonRequest(`${API_PATHS.profiles}/user/${userId}`, {
-      method: 'POST',
+  const saveProfile = ({ token, profile }) =>
+    jsonRequest(`${API_PATHS.profiles}/user`, {
+      method: "POST",
       token,
-      body: profile
-    })
+      body: profile,
+    });
 
-  return { fetchProfile, saveProfile }
+  return { fetchProfile, saveProfile };
 }
 
-export const { fetchProfile, saveProfile } = createProfilesApi()
+export const { fetchProfile, saveProfile } = createProfilesApi();
 
 export function useProfilesApi() {
-  return useApi().profiles
+  return useApi().profiles;
 }

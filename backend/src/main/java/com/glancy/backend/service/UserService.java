@@ -263,9 +263,17 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public void validateToken(Long userId, String token) {
-        userRepository
-            .findById(userId)
-            .filter(u -> token != null && token.equals(u.getLoginToken()))
+        Long actualUserId = validateToken(token);
+        if (!actualUserId.equals(userId)) {
+            throw new InvalidRequestException("无效的用户令牌");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Long validateToken(String token) {
+        return userRepository
+            .findByLoginToken(token)
+            .map(User::getId)
             .orElseThrow(() -> new InvalidRequestException("无效的用户令牌"));
     }
 
