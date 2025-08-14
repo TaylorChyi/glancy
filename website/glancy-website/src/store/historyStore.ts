@@ -1,53 +1,58 @@
-import api from '@/api/index.js'
-import { createPersistentStore } from './createPersistentStore.ts'
-import { pickState } from './persistUtils.ts'
-import type { User } from './userStore.ts'
+import api from "@/api/index.js";
+import { createPersistentStore } from "./createPersistentStore.ts";
+import { pickState } from "./persistUtils.ts";
+import type { User } from "./userStore.ts";
 
 interface HistoryState {
-  history: string[]
-  recordMap: Record<string, string>
-  error: string | null
-  loadHistory: (user?: User | null) => Promise<void>
-  addHistory: (term: string, user?: User | null, language?: string) => Promise<void>
-  clearHistory: (user?: User | null) => Promise<void>
-  removeHistory: (term: string, user?: User | null) => Promise<void>
-  favoriteHistory: (term: string, user?: User | null) => Promise<void>
-  unfavoriteHistory: (term: string, user?: User | null) => Promise<void>
+  history: string[];
+  recordMap: Record<string, string>;
+  error: string | null;
+  loadHistory: (user?: User | null) => Promise<void>;
+  addHistory: (
+    term: string,
+    user?: User | null,
+    language?: string,
+  ) => Promise<void>;
+  clearHistory: (user?: User | null) => Promise<void>;
+  removeHistory: (term: string, user?: User | null) => Promise<void>;
+  favoriteHistory: (term: string, user?: User | null) => Promise<void>;
+  unfavoriteHistory: (term: string, user?: User | null) => Promise<void>;
 }
 
 type SetState = (
-  partial: Partial<HistoryState> | ((state: HistoryState) => Partial<HistoryState>),
-  replace?: boolean
-) => void
+  partial:
+    | Partial<HistoryState>
+    | ((state: HistoryState) => Partial<HistoryState>),
+  replace?: boolean,
+) => void;
 
 function handleApiError(err: unknown, set: SetState) {
-  console.error(err)
-  const message = err instanceof Error ? err.message : String(err)
-  set({ error: message })
+  console.error(err);
+  const message = err instanceof Error ? err.message : String(err);
+  set({ error: message });
 }
 
 export const useHistoryStore = createPersistentStore<HistoryState>({
-  key: 'searchHistory',
+  key: "searchHistory",
   initializer: (set, get) => {
     async function refreshHistory(user: User) {
       try {
         const records = await api.searchRecords.fetchSearchRecords({
-          userId: user.id,
-          token: user.token
-        })
-        const terms = records.map((r) => r.term)
-        const map: Record<string, string> = {}
+          token: user.token,
+        });
+        const terms = records.map((r) => r.term);
+        const map: Record<string, string> = {};
         records.forEach((r) => {
-          if (r.id) map[r.term] = r.id
-        })
-        const existing = get().history
-        const combined = Array.from(new Set([...terms, ...existing]))
+          if (r.id) map[r.term] = r.id;
+        });
+        const existing = get().history;
+        const combined = Array.from(new Set([...terms, ...existing]));
         set((state) => ({
           history: combined,
-          recordMap: { ...state.recordMap, ...map }
-        }))
+          recordMap: { ...state.recordMap, ...map },
+        }));
       } catch (err) {
-        handleApiError(err, set)
+        handleApiError(err, set);
       }
     }
 
@@ -57,74 +62,80 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       error: null,
       loadHistory: async (user?: User | null) => {
         if (user) {
-          await refreshHistory(user)
+          await refreshHistory(user);
         } else {
-          set({ recordMap: {}, error: null })
+          set({ recordMap: {}, error: null });
         }
       },
-      addHistory: async (term: string, user?: User | null, language?: string) => {
+      addHistory: async (
+        term: string,
+        user?: User | null,
+        language?: string,
+      ) => {
         if (user) {
           try {
             const record = await api.searchRecords.saveSearchRecord({
-              userId: user.id,
               token: user.token,
               term,
-              language
-            })
+              language,
+            });
             set((state) => ({
-              recordMap: { ...state.recordMap, [term]: record.id }
-            }))
-            refreshHistory(user)
+              recordMap: { ...state.recordMap, [term]: record.id },
+            }));
+            refreshHistory(user);
           } catch (err) {
-            handleApiError(err, set)
+            handleApiError(err, set);
           }
         }
-        const unique = Array.from(new Set([term, ...get().history])).slice(0, 20)
-        set({ history: unique })
+        const unique = Array.from(new Set([term, ...get().history])).slice(
+          0,
+          20,
+        );
+        set({ history: unique });
       },
       clearHistory: async (user?: User | null) => {
         if (user) {
           api.searchRecords
-            .clearSearchRecords({ userId: user.id, token: user.token })
-            .catch((err) => handleApiError(err, set))
+            .clearSearchRecords({ token: user.token })
+            .catch((err) => handleApiError(err, set));
         }
-        set({ history: [], recordMap: {} })
+        set({ history: [], recordMap: {} });
       },
       removeHistory: async (term: string, user?: User | null) => {
         if (user) {
-          const id = get().recordMap[term]
+          const id = get().recordMap[term];
           if (id) {
             api.searchRecords
-              .deleteSearchRecord({ userId: user.id, recordId: id, token: user.token })
-              .catch((err) => handleApiError(err, set))
+              .deleteSearchRecord({ recordId: id, token: user.token })
+              .catch((err) => handleApiError(err, set));
           }
         }
-        const updated = get().history.filter((t) => t !== term)
+        const updated = get().history.filter((t) => t !== term);
         set((state) => {
-          const map = { ...state.recordMap }
-          delete map[term]
-          return { history: updated, recordMap: map }
-        })
+          const map = { ...state.recordMap };
+          delete map[term];
+          return { history: updated, recordMap: map };
+        });
       },
       favoriteHistory: async (term: string, user?: User | null) => {
-        const id = get().recordMap[term]
+        const id = get().recordMap[term];
         if (user && id) {
           api.searchRecords
-            .favoriteSearchRecord({ userId: user.id, token: user.token, recordId: id })
-            .catch((err) => handleApiError(err, set))
+            .favoriteSearchRecord({ token: user.token, recordId: id })
+            .catch((err) => handleApiError(err, set));
         }
       },
       unfavoriteHistory: async (term: string, user?: User | null) => {
-        const id = get().recordMap[term]
+        const id = get().recordMap[term];
         if (user && id) {
           api.searchRecords
-            .unfavoriteSearchRecord({ userId: user.id, token: user.token, recordId: id })
-            .catch((err) => handleApiError(err, set))
+            .unfavoriteSearchRecord({ token: user.token, recordId: id })
+            .catch((err) => handleApiError(err, set));
         }
-      }
-    }
+      },
+    };
   },
   persistOptions: {
-    partialize: pickState(['history'])
-  }
-})
+    partialize: pickState(["history"]),
+  },
+});

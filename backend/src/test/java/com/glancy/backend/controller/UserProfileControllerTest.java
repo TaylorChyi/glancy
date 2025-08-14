@@ -19,7 +19,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserProfileController.class)
-@Import(com.glancy.backend.config.security.SecurityConfig.class)
+@Import(
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class UserProfileControllerTest {
 
     @Autowired
@@ -49,9 +55,12 @@ class UserProfileControllerTest {
         req.setInterest("code");
         req.setGoal("learn");
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
             .perform(
-                post("/api/profiles/user/2")
+                post("/api/profiles/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -67,8 +76,10 @@ class UserProfileControllerTest {
         UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
         when(userProfileService.getProfile(2L)).thenReturn(resp);
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
-            .perform(get("/api/profiles/user/2"))
+            .perform(get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(2L));
     }

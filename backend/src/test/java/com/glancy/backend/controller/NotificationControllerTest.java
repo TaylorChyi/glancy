@@ -21,7 +21,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(NotificationController.class)
-@Import(com.glancy.backend.config.security.SecurityConfig.class)
+@Import(
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class NotificationControllerTest {
 
     @Autowired
@@ -69,9 +75,12 @@ class NotificationControllerTest {
         NotificationRequest req = new NotificationRequest();
         req.setMessage("msg");
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
             .perform(
-                post("/api/notifications/user/2")
+                post("/api/notifications/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -88,8 +97,10 @@ class NotificationControllerTest {
         NotificationResponse sresp = new NotificationResponse(2L, "sys", true, null);
         when(notificationService.getNotificationsForUser(2L)).thenReturn(List.of(uresp, sresp));
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
-            .perform(get("/api/notifications/user/2"))
+            .perform(get("/api/notifications/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].message").value("user"))
             .andExpect(jsonPath("$[1].message").value("sys"));

@@ -20,7 +20,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserPreferenceController.class)
-@Import(com.glancy.backend.config.security.SecurityConfig.class)
+@Import(
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class UserPreferenceControllerTest {
 
     @Autowired
@@ -49,9 +55,12 @@ class UserPreferenceControllerTest {
         req.setSearchLanguage("en");
         req.setDictionaryModel(DictionaryModel.DEEPSEEK);
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
             .perform(
-                post("/api/preferences/user/2")
+                post("/api/preferences/user")
+                    .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
@@ -67,8 +76,10 @@ class UserPreferenceControllerTest {
         UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DEEPSEEK);
         when(userPreferenceService.getPreference(2L)).thenReturn(resp);
 
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
         mockMvc
-            .perform(get("/api/preferences/user/2"))
+            .perform(get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(2L));
     }

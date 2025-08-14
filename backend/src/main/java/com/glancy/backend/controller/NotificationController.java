@@ -1,5 +1,6 @@
 package com.glancy.backend.controller;
 
+import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.NotificationRequest;
 import com.glancy.backend.dto.NotificationResponse;
 import com.glancy.backend.service.NotificationService;
@@ -38,9 +39,9 @@ public class NotificationController {
      * Create a notification for a specific user. This serves the
      * requirement of user targeted messages.
      */
-    @PostMapping("/user/{userId}")
+    @PostMapping("/user")
     public ResponseEntity<NotificationResponse> createUser(
-        @PathVariable Long userId,
+        @AuthenticatedUser Long userId,
         @Valid @RequestBody NotificationRequest req
     ) {
         NotificationResponse resp = notificationService.createUserNotification(userId, req);
@@ -51,8 +52,8 @@ public class NotificationController {
      * Retrieve all notifications available to a user including
      * system announcements.
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<NotificationResponse>> getForUser(@PathVariable Long userId) {
+    @GetMapping("/user")
+    public ResponseEntity<List<NotificationResponse>> getForUser(@AuthenticatedUser Long userId) {
         List<NotificationResponse> resp = notificationService.getNotificationsForUser(userId);
         return ResponseEntity.ok(resp);
     }
