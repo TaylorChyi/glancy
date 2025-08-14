@@ -8,6 +8,7 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
+import com.glancy.backend.service.tts.TtsRequestValidator;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +42,15 @@ public class VolcengineTtsService implements TtsService {
 
     @Override
     public Optional<TtsResponse> synthesizeWord(Long userId, String ip, TtsRequest request) {
+        User user = userService.getUserRaw(userId);
+        String voice = validator.resolveVoice(user, request);
+        request.setVoice(voice);
         log.debug(
             "Delegating word synthesis to client for user={}, ip={}, lang={}, voice={}",
             userId,
             ip,
             request.getLang(),
-            request.getVoice()
+            voice
         );
         resolveVoice(userId, request);
         TtsResponse resp = client.synthesize(request);
@@ -61,12 +65,15 @@ public class VolcengineTtsService implements TtsService {
 
     @Override
     public Optional<TtsResponse> synthesizeSentence(Long userId, String ip, TtsRequest request) {
+        User user = userService.getUserRaw(userId);
+        String voice = validator.resolveVoice(user, request);
+        request.setVoice(voice);
         log.debug(
             "Delegating sentence synthesis to client for user={}, ip={}, lang={}, voice={}",
             userId,
             ip,
             request.getLang(),
-            request.getVoice()
+            voice
         );
         resolveVoice(userId, request);
         TtsResponse resp = client.synthesize(request);
