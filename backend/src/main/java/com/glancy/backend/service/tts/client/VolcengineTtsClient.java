@@ -52,6 +52,7 @@ public class VolcengineTtsClient {
         Map<String, Object> payload = new HashMap<>();
         payload.put("appid", props.getAppId());
         payload.put("access_token", props.getAccessToken());
+        payload.put("action", props.getAction());
         String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
         payload.put("voice_type", voice);
         payload.put("text", request.getText());
@@ -98,7 +99,7 @@ public class VolcengineTtsClient {
     }
 
     private void logPayload(Map<String, Object> payload) {
-        List<String> required = List.of("appid", "access_token", "voice_type", "text", "lang");
+        List<String> required = List.of("appid", "access_token", "action", "voice_type", "text", "lang");
         List<String> missing = new ArrayList<>();
         Map<String, Object> sanitized = new LinkedHashMap<>();
         payload.forEach((k, v) -> {
