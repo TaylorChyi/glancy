@@ -4,11 +4,15 @@ import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.dto.VoiceOption;
 import com.glancy.backend.dto.VoiceResponse;
+import com.glancy.backend.entity.User;
+import com.glancy.backend.exception.InvalidRequestException;
+import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * TTS service backed by Volcengine large model API.
@@ -22,9 +26,17 @@ import org.springframework.stereotype.Service;
 public class VolcengineTtsService implements TtsService {
 
     private final VolcengineTtsClient client;
+    private final TtsRequestValidator validator;
+    private final UserService userService;
 
-    public VolcengineTtsService(VolcengineTtsClient client) {
+    public VolcengineTtsService(
+        VolcengineTtsClient client,
+        TtsRequestValidator validator,
+        UserService userService
+    ) {
         this.client = client;
+        this.validator = validator;
+        this.userService = userService;
     }
 
     @Override
@@ -36,6 +48,7 @@ public class VolcengineTtsService implements TtsService {
             request.getLang(),
             request.getVoice()
         );
+        resolveVoice(userId, request);
         TtsResponse resp = client.synthesize(request);
         log.debug(
             "Client returned audio for user={}, durationMs={}, fromCache={}",
@@ -55,6 +68,7 @@ public class VolcengineTtsService implements TtsService {
             request.getLang(),
             request.getVoice()
         );
+        resolveVoice(userId, request);
         TtsResponse resp = client.synthesize(request);
         log.debug(
             "Client returned audio for user={}, durationMs={}, fromCache={}",
@@ -70,5 +84,14 @@ public class VolcengineTtsService implements TtsService {
         String voice = client.getDefaultVoice();
         VoiceOption option = new VoiceOption(voice, voice, "all");
         return new VoiceResponse(voice, List.of(option));
+    }
+
+    private void resolveVoice(Long userId, TtsRequest request) {
+        User user = userService.getUserRaw(userId);
+        String voice = validator.resolveVoice(user, request);
+        if (!StringUtils.hasText(voice)) {
+            throw new InvalidRequestException("无效的音色配置");
+        }
+        request.setVoice(voice);
     }
 }
