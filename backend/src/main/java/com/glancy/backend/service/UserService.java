@@ -261,6 +261,17 @@ public class UserService {
         return userRepository.countByDeletedFalse();
     }
 
+    /**
+     * Authenticate a login token and return the associated user ID.
+     */
+    @Transactional(readOnly = true)
+    public Long authenticateToken(String token) {
+        return userRepository
+            .findByLoginToken(token)
+            .map(User::getId)
+            .orElseThrow(() -> new InvalidRequestException("无效的用户令牌"));
+    }
+
     @Transactional(readOnly = true)
     public void validateToken(Long userId, String token) {
         userRepository

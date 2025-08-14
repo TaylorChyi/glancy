@@ -63,12 +63,11 @@ class WordControllerTest {
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "ENGLISH")
@@ -100,12 +99,11 @@ class WordControllerTest {
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
 
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "ENGLISH")
@@ -136,10 +134,10 @@ class WordControllerTest {
      */
     @Test
     void testGetWordMissingTerm() throws Exception {
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/words").param("userId", "1").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
+            .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
             .andDo(print())
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("Missing required parameter: term"));
@@ -150,12 +148,11 @@ class WordControllerTest {
      */
     @Test
     void testGetWordInvalidLanguage() throws Exception {
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .param("term", "hello")
                     .param("language", "INVALID")
@@ -188,7 +185,6 @@ class WordControllerTest {
         mockMvc
             .perform(
                 get("/api/words")
-                    .param("userId", "1")
                     .param("token", "tkn")
                     .param("term", "hi")
                     .param("language", "ENGLISH")

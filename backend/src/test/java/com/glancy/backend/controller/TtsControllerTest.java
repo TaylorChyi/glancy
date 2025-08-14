@@ -3,7 +3,6 @@ package com.glancy.backend.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,12 +63,11 @@ class TtsControllerTest {
     void synthesizeWordReturnsAudio() throws Exception {
         TtsResponse resp = new TtsResponse("url", 1000L, "mp3", true, "obj");
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 post("/api/tts/word")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"text\":\"hello\",\"lang\":\"en\"}")
@@ -86,12 +84,11 @@ class TtsControllerTest {
     @Test
     void synthesizeWordCacheMissReturns204() throws Exception {
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.empty());
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 post("/api/tts/word")
-                    .param("userId", "1")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"text\":\"hello\",\"lang\":\"en\"}")
@@ -107,10 +104,10 @@ class TtsControllerTest {
     void listVoicesReturnsOptions() throws Exception {
         VoiceResponse resp = new VoiceResponse("v1", List.of(new VoiceOption("v1", "label", "all")));
         when(ttsService.listVoices(eq(1L), eq("en"))).thenReturn(resp);
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/tts/voices").param("userId", "1").header("X-USER-TOKEN", "tkn").param("lang", "en"))
+            .perform(get("/api/tts/voices").header("X-USER-TOKEN", "tkn").param("lang", "en"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.default").value("v1"))
             .andExpect(jsonPath("$.options[0].id").value("v1"));
@@ -124,12 +121,11 @@ class TtsControllerTest {
     void streamSentenceRedirectsToAudio() throws Exception {
         TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/tts/sentence")
-                    .param("userId", "1")
                     .param("text", "hello world")
                     .param("lang", "en")
                     .header("X-USER-TOKEN", "tkn")
@@ -148,12 +144,11 @@ class TtsControllerTest {
         when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn(
             "data".getBytes(StandardCharsets.UTF_8)
         );
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/tts/sentence/audio")
-                    .param("userId", "1")
                     .param("text", "hello world")
                     .param("lang", "en")
                     .header("X-USER-TOKEN", "tkn")
@@ -173,12 +168,11 @@ class TtsControllerTest {
         when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
             "data".getBytes(StandardCharsets.UTF_8)
         );
-        doNothing().when(userService).validateToken(1L, "tkn");
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/tts/word/audio")
-                    .param("userId", "1")
                     .param("text", "hello")
                     .param("lang", "en")
                     .header("X-USER-TOKEN", "tkn")
