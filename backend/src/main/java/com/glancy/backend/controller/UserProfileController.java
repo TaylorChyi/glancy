@@ -1,5 +1,6 @@
 package com.glancy.backend.controller;
 
+import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.UserProfileRequest;
 import com.glancy.backend.dto.UserProfileResponse;
 import com.glancy.backend.service.UserProfileService;
@@ -25,9 +26,9 @@ public class UserProfileController {
     /**
      * Save profile for a user.
      */
-    @PostMapping("/user/{userId}")
+    @PostMapping("/user")
     public ResponseEntity<UserProfileResponse> saveProfile(
-        @PathVariable Long userId,
+        @AuthenticatedUser Long userId,
         @RequestBody UserProfileRequest req
     ) {
         UserProfileResponse resp = userProfileService.saveProfile(userId, req);
@@ -37,8 +38,8 @@ public class UserProfileController {
     /**
      * Retrieve profile for a user.
      */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<UserProfileResponse> getProfile(@PathVariable Long userId) {
+    @GetMapping("/user")
+    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticatedUser Long userId) {
         UserProfileResponse resp = userProfileService.getProfile(userId);
         return ResponseEntity.ok(resp);
     }
