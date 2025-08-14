@@ -2,8 +2,8 @@ package com.glancy.backend.service.tts.client;
 
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
-import com.glancy.backend.util.SensitiveDataUtil;
 import com.glancy.backend.service.tts.client.VolcengineTtsPayload;
+import com.glancy.backend.util.SensitiveDataUtil;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,27 +53,24 @@ public class VolcengineTtsClient {
      */
     public TtsResponse synthesize(TtsRequest request) {
         String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
-        VolcengineTtsPayload payload =
-            VolcengineTtsPayload
-                .builder()
-                .appId(props.getAppId())
-                .accessToken(props.getAccessToken())
-                .voiceType(voice)
-                .text(request.getText())
-                .lang(request.getLang())
-                .format(request.getFormat())
-                .speed(request.getSpeed())
-                .build();
+        VolcengineTtsPayload payload = VolcengineTtsPayload.builder()
+            .appId(props.getAppId())
+            .accessToken(props.getAccessToken())
+            .voiceType(voice)
+            .text(request.getText())
+            .lang(request.getLang())
+            .format(request.getFormat())
+            .speed(request.getSpeed())
+            .build();
 
         logPayload(payload);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<VolcengineTtsPayload> entity = new HttpEntity<>(payload, headers);
-        String url =
-            UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-                .queryParam("Action", props.getAction())
-                .toUriString();
+        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
+            .queryParam("Action", props.getAction())
+            .toUriString();
         try {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
             TtsResponse body = resp.getBody();
