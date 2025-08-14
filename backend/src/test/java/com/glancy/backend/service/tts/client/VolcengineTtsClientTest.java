@@ -17,8 +17,9 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Verify that {@link VolcengineTtsClient} constructs requests
- * containing mandatory credentials required by the provider.
+ * Verify that {@link VolcengineTtsClient} constructs requests containing
+ * mandatory credentials required by the provider. The test ensures that the
+ * default action parameter is forwarded alongside authentication data.
  */
 class VolcengineTtsClientTest {
 
@@ -37,6 +38,10 @@ class VolcengineTtsClientTest {
         server = MockRestServiceServer.createServer(restTemplate);
     }
 
+    /**
+     * Ensures {@link VolcengineTtsClient#synthesize} sends authentication,
+     * configuration (voice) and the default action parameter in the JSON payload.
+     */
     @Test
     void includesCredentialsInPayload() {
         server
@@ -45,6 +50,7 @@ class VolcengineTtsClientTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.appid").value("app"))
             .andExpect(jsonPath("$.access_token").value("token"))
+            .andExpect(jsonPath("$.action").value("text_to_speech"))
             .andExpect(jsonPath("$.voice_type").value("v2"))
             .andRespond(
                 withSuccess(
