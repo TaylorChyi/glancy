@@ -5,6 +5,15 @@ voices:
       - id: zh_female_cancan_mars_bigtts
         label: "CanCan·女声"
         plan: all
+  en-US:
+    default: en_male_will
+    options:
+      - id: en_male_will
+        label: "William·男声"
+        plan: all
+      - id: en_female_julia
+        label: "Julia·女声"
+        plan: pro
 quota:
   daily:
     pro: 100
