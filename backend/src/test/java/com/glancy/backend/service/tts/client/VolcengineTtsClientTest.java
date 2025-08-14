@@ -22,9 +22,9 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
- * mandatory credentials required by the provider. The test ensures that the
- * default {@code Action} parameter is transmitted as a query parameter along with
- * authentication data.
+ * mandatory credentials required by the provider. Tests cover presence of query
+ * parameters such as {@code Action} and {@code Version} alongside authentication
+ * data.
  */
 class VolcengineTtsClientTest {
 
@@ -45,13 +45,13 @@ class VolcengineTtsClientTest {
 
     /**
      * Ensures {@link VolcengineTtsClient#synthesize} sends authentication,
-     * configuration (voice) and the default action parameter as a query
-     * parameter.
+     * configuration (voice) and required query parameters including {@code Action}
+     * and {@code Version}.
      */
     @Test
     void includesCredentialsInRequest() {
         server
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech&Version=2020-06-09"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.appid").value("app"))
@@ -73,6 +73,42 @@ class VolcengineTtsClientTest {
         TtsResponse resp = client.synthesize(req);
         assertThat(resp.getUrl()).isEqualTo("u");
         server.verify();
+    }
+
+    /**
+     * Simulates missing {@code Version} configuration to ensure error messages
+     * from the provider are surfaced to callers.
+     */
+    @Test
+    void missingVersionProducesClearError() {
+        RestTemplate restTemplate = new RestTemplate();
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setAccessToken("token");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        props.setVersion(null); // simulate missing
+        VolcengineTtsClient localClient = new VolcengineTtsClient(restTemplate, props);
+        MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
+
+        localServer
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech&Version="))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withBadRequest()
+                    .body("{\"code\":\"E400\",\"message\":\"Version is required\"}")
+                    .contentType(MediaType.APPLICATION_JSON)
+            );
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> localClient.synthesize(req))
+            .isInstanceOf(TtsFailedException.class)
+            .hasMessageContaining("Version is required");
+
+        localServer.verify();
     }
 
     @Test
