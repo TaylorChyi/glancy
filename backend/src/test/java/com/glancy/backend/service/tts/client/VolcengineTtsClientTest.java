@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
@@ -175,8 +175,9 @@ class VolcengineTtsClientTest {
         props.setAccessToken("token");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
-        when(restTemplate.postForEntity(anyString(), any(), eq(TtsResponse.class)))
-            .thenThrow(new ResourceAccessException("timeout"));
+        when(restTemplate.postForEntity(anyString(), any(), eq(TtsResponse.class))).thenThrow(
+            new ResourceAccessException("timeout")
+        );
         VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
 
         TtsRequest req = new TtsRequest();
