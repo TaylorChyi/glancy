@@ -6,13 +6,13 @@ voices:
         label: "CanCan·女声"
         plan: all
   en-US:
-    default: en_male_will
+    default: en_male_corey_emo_v2_mars_bigtts
     options:
-      - id: en_male_will
-        label: "William·男声"
+      - id: en_male_corey_emo_v2_mars_bigtts
+        label: "Corey·男声"
         plan: all
-      - id: en_female_julia
-        label: "Julia·女声"
+      - id: en_female_nadia_tips_emo_v2_mars_bigtts
+        label: "Nadia·女声"
         plan: pro
 quota:
   daily:

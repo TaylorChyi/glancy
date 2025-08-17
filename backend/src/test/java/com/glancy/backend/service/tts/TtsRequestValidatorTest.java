@@ -131,7 +131,7 @@ class TtsRequestValidatorTest {
             req.setText("hi");
             req.setLang("en-US");
             String voice = realValidator.resolveVoice(user, req);
-            assertEquals("en_male_will", voice);
+            assertEquals("en_male_corey_emo_v2_mars_bigtts", voice);
         }
     }
 }
