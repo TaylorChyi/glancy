@@ -6,15 +6,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Response payload containing synthesized audio metadata.
+ * Encapsulates synthesized audio bytes and related metadata.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class TtsResponse {
 
-    /** Temporary URL for the audio file. */
-    private String url;
+    /** Raw audio data. */
+    @JsonProperty("data")
+    private byte[] data;
 
     /** Audio duration in milliseconds. */
     @JsonProperty("duration_ms")

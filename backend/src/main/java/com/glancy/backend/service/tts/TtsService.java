@@ -14,7 +14,7 @@ public interface TtsService {
      *
      * @param userId authenticated user performing the request
      * @param request synthesis parameters
-     * @return optional response; empty when cache miss and shortcut is true
+     * @return optional response containing raw audio bytes and metadata; empty when cache miss and shortcut is true
      */
     Optional<TtsResponse> synthesizeWord(Long userId, String ip, TtsRequest request);
 
@@ -23,7 +23,7 @@ public interface TtsService {
      *
      * @param userId authenticated user performing the request
      * @param request synthesis parameters
-     * @return optional response; empty when cache miss and shortcut is true
+     * @return optional response containing raw audio bytes and metadata; empty when cache miss and shortcut is true
      */
     Optional<TtsResponse> synthesizeSentence(Long userId, String ip, TtsRequest request);
 

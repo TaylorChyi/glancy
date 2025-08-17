@@ -18,6 +18,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.exception.TtsFailedException;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -67,7 +68,7 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.speed").value(1.0))
             .andRespond(
                 withSuccess(
-                    "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
+                    "{\"data\":\"ZGF0YQ==\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
                     MediaType.APPLICATION_JSON
                 )
             );
@@ -78,6 +79,7 @@ class VolcengineTtsClientTest {
         req.setVoice("v2");
         TtsResponse resp = client.synthesize(req);
         assertThat(resp.getFormat()).isEqualTo("mp3");
+        assertThat(new String(resp.getData(), StandardCharsets.UTF_8)).isEqualTo("data");
         server.verify();
     }
 
