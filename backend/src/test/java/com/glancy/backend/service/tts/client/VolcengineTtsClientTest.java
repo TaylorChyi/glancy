@@ -19,6 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
@@ -61,7 +62,7 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.speed").value(1.0))
             .andRespond(
                 withSuccess(
-                    "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false,\"object_key\":\"k\"}",
+                    "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
                     MediaType.APPLICATION_JSON
                 )
             );
@@ -153,6 +154,31 @@ class VolcengineTtsClientTest {
             .isInstanceOf(TtsFailedException.class)
             .hasMessageContaining("status=500")
             .hasMessageContaining("E500");
+
+        server.verify();
+    }
+
+    /**
+     * Simulates a network level failure to ensure the resulting
+     * {@link TtsFailedException} contains the underlying cause
+     * message for easier troubleshooting.
+     */
+    @Test
+    void networkFailureProducesClearMessage() {
+        server
+            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(r -> {
+                throw new RestClientException("connection reset");
+            });
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> client.synthesize(req))
+            .isInstanceOf(TtsFailedException.class)
+            .hasMessageContaining("connection reset");
 
         server.verify();
     }

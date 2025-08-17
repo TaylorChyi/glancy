@@ -174,4 +174,29 @@ class TtsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
     }
+
+    /**
+     * The controller should stream audio even when the service response
+     * contains no object storage key, indicating the audio was not
+     * persisted to OSS.
+     */
+    @Test
+    void streamSentenceAudioReturnsBytesWithoutObjectKey() throws Exception {
+        TtsResponse resp = new TtsResponse("http://audio/direct", 600L, "mp3", false, null);
+        when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        when(restTemplate.getForObject("http://audio/direct", byte[].class)).thenReturn(
+            "raw".getBytes(StandardCharsets.UTF_8)
+        );
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
+
+        mockMvc
+            .perform(
+                get("/api/tts/sentence/audio")
+                    .param("text", "hello world")
+                    .param("lang", "en")
+                    .header("X-USER-TOKEN", "tkn")
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().bytes("raw".getBytes(StandardCharsets.UTF_8)));
+    }
 }

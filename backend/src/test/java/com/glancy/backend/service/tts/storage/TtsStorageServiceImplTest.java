@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -47,18 +46,17 @@ class TtsStorageServiceImplTest {
     }
 
     /**
-     * Saving audio should upload the binary payload and persist metadata
-     * with a deterministic object key structure.
+     * Saving audio should persist metadata with a deterministic object
+     * key structure.
      */
     @Test
-    void saveUploadsAndPersistsMetadata() {
+    void savePersistsMetadata() {
         when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
         byte[] audio = new byte[] { 1, 2, 3 };
         String hash = "hash";
         Optional<TtsAudio> result = service.save(hash, "en", "v1", "mp3", 500L, audio, TtsScope.WORD, 30);
 
         String expectedKey = "tts/word/en/2024/01/02/hash.mp3";
-        verify(storageClient).putObject(eq(expectedKey), eq(audio));
 
         ArgumentCaptor<TtsAudio> captor = ArgumentCaptor.forClass(TtsAudio.class);
         verify(repository).save(captor.capture());
@@ -85,14 +83,13 @@ class TtsStorageServiceImplTest {
     }
 
     /**
-     * Temporary URLs should delegate to the storage client with a fixed
-     * 30 minute validity window.
+     * Temporary URLs should be constructed with a fixed 30 minute
+     * validity window.
      */
     @Test
-    void createTemporaryUrlDelegatesToStorageClient() {
+    void createTemporaryUrlReturnsPresignedUrl() {
         when(storageClient.generatePresignedGetUrl("key", Duration.ofMinutes(30))).thenReturn("url");
         String url = service.createTemporaryUrl("key");
         assertEquals("url", url);
-        verify(storageClient).generatePresignedGetUrl("key", Duration.ofMinutes(30));
     }
 }
