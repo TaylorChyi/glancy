@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -18,6 +16,7 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.TtsService;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -53,11 +52,12 @@ class TtsControllerTest {
 
 
     /**
-     * Verify that a successful word synthesis returns audio bytes and headers.
+     * Verify that a successful word synthesis returns a structured payload with audio data.
      */
     @Test
-    void synthesizeWordReturnsAudio() throws Exception {
+    void synthesizeWordReturnsPayload() throws Exception {
         byte[] data = "data".getBytes(StandardCharsets.UTF_8);
+        String encoded = Base64.getEncoder().encodeToString(data);
         TtsResponse resp = new TtsResponse(data, 1000L, "mp3", true, "obj");
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
@@ -70,8 +70,10 @@ class TtsControllerTest {
                     .content("{\"text\":\"hello\",\"lang\":\"en\"}")
             )
             .andExpect(status().isOk())
-            .andExpect(header().string("X-From-Cache", "true"))
-            .andExpect(content().bytes(data));
+            .andExpect(jsonPath("$.audio").value(encoded))
+            .andExpect(jsonPath("$.duration_ms").value(1000))
+            .andExpect(jsonPath("$.format").value("mp3"))
+            .andExpect(jsonPath("$.from_cache").value(true));
     }
 
     /**
@@ -111,11 +113,12 @@ class TtsControllerTest {
     }
 
     /**
-     * GET variant for sentence synthesis should return audio bytes.
+     * GET variant for sentence synthesis should return a payload containing audio.
      */
     @Test
-    void streamSentenceReturnsBytes() throws Exception {
+    void streamSentenceReturnsPayload() throws Exception {
         byte[] data = "data".getBytes(StandardCharsets.UTF_8);
+        String encoded = Base64.getEncoder().encodeToString(data);
         TtsResponse resp = new TtsResponse(data, 800L, "mp3", false, "obj");
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
@@ -128,22 +131,27 @@ class TtsControllerTest {
                     .header("X-USER-TOKEN", "tkn")
             )
             .andExpect(status().isOk())
-            .andExpect(content().bytes(data));
+            .andExpect(jsonPath("$.audio").value(encoded))
+            .andExpect(jsonPath("$.from_cache").value(false));
     }
 
     /**
-     * GET endpoint for single word pronunciations returns audio bytes.
+     * GET endpoint for single word pronunciations returns audio payload.
      */
     @Test
-    void streamWordReturnsBytes() throws Exception {
+    void streamWordReturnsPayload() throws Exception {
         byte[] data = "data".getBytes(StandardCharsets.UTF_8);
+        String encoded = Base64.getEncoder().encodeToString(data);
         TtsResponse resp = new TtsResponse(data, 500L, "mp3", true, "obj");
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/tts/word").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn"))
+            .perform(
+                get("/api/tts/word").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn")
+            )
             .andExpect(status().isOk())
-            .andExpect(content().bytes(data));
+            .andExpect(jsonPath("$.audio").value(encoded))
+            .andExpect(jsonPath("$.from_cache").value(true));
     }
 }

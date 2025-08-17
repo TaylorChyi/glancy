@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,8 +54,8 @@ public class TtsController {
     /**
      * Synthesize pronunciation for a word.
      */
-    @PostMapping(value = "/word", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> synthesizeWord(
+    @PostMapping(value = "/word", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> synthesizeWord(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
@@ -83,12 +82,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .header("X-Duration-Ms", String.valueOf(body.getDurationMs()))
-                .header("X-From-Cache", String.valueOf(body.isFromCache()))
-                .body(body.getAudio());
+            return ResponseEntity.ok(body);
         }
         log.info("Word synthesis returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
@@ -100,8 +94,8 @@ public class TtsController {
      * request is translated into a {@link TtsRequest} and on success the audio
      * bytes are returned directly.
      */
-    @GetMapping(value = "/word", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> streamWord(
+    @GetMapping(value = "/word", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> streamWord(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @RequestParam String text,
@@ -126,12 +120,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .header("X-Duration-Ms", String.valueOf(body.getDurationMs()))
-                .header("X-From-Cache", String.valueOf(body.isFromCache()))
-                .body(body.getAudio());
+            return ResponseEntity.ok(body);
         }
         log.info("Word stream returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
@@ -140,8 +129,8 @@ public class TtsController {
     /**
      * Synthesize pronunciation for a sentence or example phrase.
      */
-    @PostMapping(value = "/sentence", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> synthesizeSentence(
+    @PostMapping(value = "/sentence", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> synthesizeSentence(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @Valid @RequestBody TtsRequest request
@@ -167,12 +156,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .header("X-Duration-Ms", String.valueOf(body.getDurationMs()))
-                .header("X-From-Cache", String.valueOf(body.isFromCache()))
-                .body(body.getAudio());
+            return ResponseEntity.ok(body);
         }
         log.info("Sentence synthesis returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
@@ -182,8 +166,8 @@ public class TtsController {
      * GET variant for sentence synthesis used when the client cannot easily
      * issue a POST request.
      */
-    @GetMapping(value = "/sentence", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> streamSentence(
+    @GetMapping(value = "/sentence", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> streamSentence(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @RequestParam String text,
@@ -208,12 +192,7 @@ public class TtsController {
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity
-                .ok()
-                .header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat())
-                .header("X-Duration-Ms", String.valueOf(body.getDurationMs()))
-                .header("X-From-Cache", String.valueOf(body.isFromCache()))
-                .body(body.getAudio());
+            return ResponseEntity.ok(body);
         }
         log.info("Sentence stream returned no content for user={}", userId);
         return ResponseEntity.noContent().build();
