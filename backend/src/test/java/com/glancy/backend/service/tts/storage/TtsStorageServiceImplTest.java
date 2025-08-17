@@ -14,7 +14,6 @@ import com.glancy.backend.entity.TtsAudio;
 import com.glancy.backend.entity.TtsScope;
 import com.glancy.backend.repository.TtsAudioRepository;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -84,15 +83,4 @@ class TtsStorageServiceImplTest {
         verify(repository, never()).save(any());
     }
 
-    /**
-     * Temporary URLs should delegate to the storage client with a fixed
-     * 30 minute validity window.
-     */
-    @Test
-    void createTemporaryUrlDelegatesToStorageClient() {
-        when(storageClient.generatePresignedGetUrl("key", Duration.ofMinutes(30))).thenReturn("url");
-        String url = service.createTemporaryUrl("key");
-        assertEquals("url", url);
-        verify(storageClient).generatePresignedGetUrl("key", Duration.ofMinutes(30));
-    }
 }

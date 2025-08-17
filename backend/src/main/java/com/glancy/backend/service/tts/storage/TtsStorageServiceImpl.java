@@ -4,7 +4,6 @@ import com.glancy.backend.entity.TtsAudio;
 import com.glancy.backend.entity.TtsScope;
 import com.glancy.backend.repository.TtsAudioRepository;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -69,11 +68,6 @@ public class TtsStorageServiceImpl implements TtsStorageService {
             log.warn("Failed to persist TTS audio metadata for {}: {}", objectKey, e.getMessage());
             return Optional.empty();
         }
-    }
-
-    @Override
-    public String createTemporaryUrl(String objectKey) {
-        return storageClient.generatePresignedGetUrl(objectKey, Duration.ofMinutes(30));
     }
 
     private String buildObjectKey(TtsScope scope, String lang, String hashKey, String format) {

@@ -36,7 +36,4 @@ public interface TtsStorageService {
         TtsScope scope,
         int ttlDays
     );
-
-    /** Generate a temporary access URL for the stored object. */
-    String createTemporaryUrl(String objectKey);
 }

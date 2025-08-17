@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TtsResponse {
 
-    /** Temporary URL for the audio file. */
-    private String url;
+    /** Raw audio payload returned by the synthesis provider. */
+    private byte[] audio;
 
     /** Audio duration in milliseconds. */
     @JsonProperty("duration_ms")
