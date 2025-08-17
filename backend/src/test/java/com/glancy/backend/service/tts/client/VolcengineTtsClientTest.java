@@ -61,7 +61,7 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.speed").value(1.0))
             .andRespond(
                 withSuccess(
-                    "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false,\"object_key\":\"k\"}",
+                    "{\"url\":\"u\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
                     MediaType.APPLICATION_JSON
                 )
             );

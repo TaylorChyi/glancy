@@ -61,7 +61,7 @@ class TtsControllerTest {
      */
     @Test
     void synthesizeWordReturnsAudio() throws Exception {
-        TtsResponse resp = new TtsResponse("url", 1000L, "mp3", true, "obj");
+        TtsResponse resp = new TtsResponse("url", 1000L, "mp3", true);
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -119,7 +119,7 @@ class TtsControllerTest {
      */
     @Test
     void streamSentenceRedirectsToAudio() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
+        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false);
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -136,7 +136,7 @@ class TtsControllerTest {
      */
     @Test
     void streamSentenceAudioReturnsBytes() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false, "obj");
+        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false);
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn(
             "data".getBytes(StandardCharsets.UTF_8)
@@ -160,7 +160,7 @@ class TtsControllerTest {
      */
     @Test
     void streamWordAudioReturnsBytes() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", true, "obj");
+        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", true);
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
             "data".getBytes(StandardCharsets.UTF_8)
