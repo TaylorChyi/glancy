@@ -121,7 +121,9 @@ class TtsControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/tts/sentence").param("text", "hello world").param("lang", "en").header("X-USER-TOKEN", "tkn"))
+            .perform(
+                get("/api/tts/sentence").param("text", "hello world").param("lang", "en").header("X-USER-TOKEN", "tkn")
+            )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.format").value("mp3"))
             .andExpect(jsonPath("$.data").value(java.util.Base64.getEncoder().encodeToString(data)));
