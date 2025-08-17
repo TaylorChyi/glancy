@@ -174,4 +174,26 @@ class TtsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
     }
+
+    /**
+     * The streaming endpoint should set the audio content type when returning
+     * raw bytes, demonstrating that no intermediate object storage is used.
+     */
+    @Test
+    void streamWordAudioSetsContentType() throws Exception {
+        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", false);
+        when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
+        when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
+            "bytes".getBytes(StandardCharsets.UTF_8)
+        );
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
+
+        mockMvc
+            .perform(
+                get("/api/tts/word/audio").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn")
+            )
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Type", "audio/mp3"))
+            .andExpect(content().bytes("bytes".getBytes(StandardCharsets.UTF_8)));
+    }
 }
