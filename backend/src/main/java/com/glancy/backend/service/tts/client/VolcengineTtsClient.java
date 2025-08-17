@@ -115,20 +115,23 @@ public class VolcengineTtsClient {
         List<String> missing = new ArrayList<>();
         Map<String, Object> sanitized = new LinkedHashMap<>();
 
+        Object sanitizedAppId = sanitize("appid", payload.getAppId());
         if (!StringUtils.hasText(payload.getAppId())) {
             missing.add("appid");
         }
-        sanitized.put("appid", sanitize("appid", payload.getAppId()));
+        sanitized.put("appid", sanitizedAppId);
 
+        Object sanitizedToken = sanitize("access_token", payload.getAccessToken());
         if (!StringUtils.hasText(payload.getAccessToken())) {
             missing.add("access_token");
         }
-        sanitized.put("access_token", sanitize("access_token", payload.getAccessToken()));
+        sanitized.put("access_token", sanitizedToken);
 
+        Object sanitizedVoice = sanitize("voice_type", payload.getVoiceType());
         if (!StringUtils.hasText(payload.getVoiceType())) {
             missing.add("voice_type");
         }
-        sanitized.put("voice_type", sanitize("voice_type", payload.getVoiceType()));
+        sanitized.put("voice_type", sanitizedVoice);
 
         if (!StringUtils.hasText(payload.getText())) {
             missing.add("text");
@@ -147,6 +150,13 @@ public class VolcengineTtsClient {
             missing.add("version");
         }
         sanitized.put("version", sanitize("version", props.getVersion()));
+
+        log.info(
+            "Resolved TTS parameters appid={}, access_token={}, voice_type={}",
+            sanitizedAppId,
+            sanitizedToken,
+            sanitizedVoice
+        );
 
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);
