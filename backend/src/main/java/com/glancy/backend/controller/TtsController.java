@@ -7,11 +7,8 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.service.tts.TtsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Endpoints for text to speech synthesis. The controller exposes
@@ -33,11 +29,9 @@ import org.springframework.web.client.RestTemplate;
 public class TtsController {
 
     private final TtsService ttsService;
-    private final RestTemplate restTemplate;
 
-    public TtsController(TtsService ttsService, RestTemplate restTemplate) {
+    public TtsController(TtsService ttsService) {
         this.ttsService = ttsService;
-        this.restTemplate = restTemplate;
     }
 
     /**
@@ -60,7 +54,7 @@ public class TtsController {
     /**
      * Synthesize pronunciation for a word.
      */
-    @PostMapping("/word")
+    @PostMapping(value = "/word", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TtsResponse> synthesizeWord(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
@@ -79,29 +73,16 @@ public class TtsController {
             request.getText()
         );
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, request);
-        if (resp.isPresent()) {
-            TtsResponse body = resp.get();
-            log.info(
-                "Word synthesis succeeded for user={}, durationMs={}, format={}, fromCache={}",
-                userId,
-                body.getDurationMs(),
-                body.getFormat(),
-                body.isFromCache()
-            );
-            return ResponseEntity.ok(body);
-        }
-        log.info("Word synthesis returned no content for user={}", userId);
-        return ResponseEntity.noContent().build();
+        return buildResponse(userId, "Word synthesis", resp);
     }
 
     /**
-     * Convenience GET endpoint allowing clients such as the native HTML audio
-     * element to fetch word pronunciations without crafting a JSON payload. The
-     * request is translated into a {@link TtsRequest} and on success a 302
-     * redirect to the temporary audio URL is returned.
+     * Convenience GET endpoint allowing clients to fetch word pronunciations
+     * without crafting a JSON payload. Returns encoded audio bytes and metadata
+     * as JSON.
      */
-    @GetMapping("/word")
-    public ResponseEntity<Void> streamWord(
+    @GetMapping(value = "/word", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> streamWord(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @RequestParam String text,
@@ -117,63 +98,13 @@ public class TtsController {
         log.info("RID={}, entering {}, tokenStatus={}", rid, "streamWord", tokenStatus);
         log.info("Streaming word for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
-        if (resp.isPresent()) {
-            TtsResponse body = resp.get();
-            log.info(
-                "Word stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
-                userId,
-                body.getDurationMs(),
-                body.getFormat(),
-                body.isFromCache()
-            );
-            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(body.getUrl())).build();
-        }
-        log.info("Word stream returned no content for user={}", userId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Directly streams synthesized audio for a single word. This avoids the
-     * 302 redirect used by {@link #streamWord} and is suited for clients
-     * that cannot easily follow redirects or set headers during playback.
-     */
-    @GetMapping(value = "/word/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> streamWordAudio(
-        @AuthenticatedUser Long userId,
-        HttpServletRequest httpRequest,
-        @RequestParam String text,
-        @RequestParam String lang,
-        @RequestParam(required = false) String voice,
-        @RequestParam(defaultValue = "mp3") String format,
-        @RequestParam(defaultValue = "1.0") double speed
-    ) {
-        TtsRequest req = buildRequest(text, lang, voice, format, speed);
-        String ip = httpRequest.getRemoteAddr();
-        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
-        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
-        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamWordAudio", tokenStatus);
-        log.info("Streaming word audio for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
-        Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
-        if (resp.isPresent()) {
-            TtsResponse body = resp.get();
-            byte[] data = restTemplate.getForObject(body.getUrl(), byte[].class);
-            log.info(
-                "Word audio stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
-                userId,
-                body.getDurationMs(),
-                body.getFormat(),
-                body.isFromCache()
-            );
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat()).body(data);
-        }
-        log.info("Word audio stream returned no content for user={}", userId);
-        return ResponseEntity.noContent().build();
+        return buildResponse(userId, "Word stream", resp);
     }
 
     /**
      * Synthesize pronunciation for a sentence or example phrase.
      */
-    @PostMapping("/sentence")
+    @PostMapping(value = "/sentence", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TtsResponse> synthesizeSentence(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
@@ -191,27 +122,15 @@ public class TtsController {
             request.getVoice()
         );
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, request);
-        if (resp.isPresent()) {
-            TtsResponse body = resp.get();
-            log.info(
-                "Sentence synthesis succeeded for user={}, durationMs={}, format={}, fromCache={}",
-                userId,
-                body.getDurationMs(),
-                body.getFormat(),
-                body.isFromCache()
-            );
-            return ResponseEntity.ok(body);
-        }
-        log.info("Sentence synthesis returned no content for user={}", userId);
-        return ResponseEntity.noContent().build();
+        return buildResponse(userId, "Sentence synthesis", resp);
     }
 
     /**
      * GET variant for sentence synthesis used when the client cannot easily
-     * issue a POST request. Behaves similarly to {@link #streamWord}.
+     * issue a POST request. Returns encoded audio bytes and metadata as JSON.
      */
-    @GetMapping("/sentence")
-    public ResponseEntity<Void> streamSentence(
+    @GetMapping(value = "/sentence", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<TtsResponse> streamSentence(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
         @RequestParam String text,
@@ -227,63 +146,23 @@ public class TtsController {
         log.info("RID={}, entering {}, tokenStatus={}", rid, "streamSentence", tokenStatus);
         log.info("Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
-        if (resp.isPresent()) {
-            TtsResponse body = resp.get();
-            log.info(
-                "Sentence stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
-                userId,
-                body.getDurationMs(),
-                body.getFormat(),
-                body.isFromCache()
-            );
-            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(body.getUrl())).build();
-        }
-        log.info("Sentence stream returned no content for user={}", userId);
-        return ResponseEntity.noContent().build();
+        return buildResponse(userId, "Sentence stream", resp);
     }
 
-    /**
-     * Directly streams synthesized audio data for a sentence. This helper is useful
-     * for clients like the native HTML audio element which cannot easily follow
-     * redirects or add headers during playback.
-     */
-    @GetMapping(value = "/sentence/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> streamSentenceAudio(
-        @AuthenticatedUser Long userId,
-        HttpServletRequest httpRequest,
-        @RequestParam String text,
-        @RequestParam String lang,
-        @RequestParam(required = false) String voice,
-        @RequestParam(defaultValue = "mp3") String format,
-        @RequestParam(defaultValue = "1.0") double speed
-    ) {
-        TtsRequest req = buildRequest(text, lang, voice, format, speed);
-        String ip = httpRequest.getRemoteAddr();
-        String rid = String.valueOf(httpRequest.getAttribute("req.id"));
-        String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
-        log.info("RID={}, entering {}, tokenStatus={}", rid, "streamSentenceAudio", tokenStatus);
-        log.info(
-            "Streaming sentence audio for user={}, ip={}, lang={}, voice={}, text={}",
-            userId,
-            ip,
-            lang,
-            voice,
-            text
-        );
-        Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
+    private ResponseEntity<TtsResponse> buildResponse(Long userId, String action, Optional<TtsResponse> resp) {
         if (resp.isPresent()) {
             TtsResponse body = resp.get();
-            byte[] data = restTemplate.getForObject(body.getUrl(), byte[].class);
             log.info(
-                "Sentence audio stream succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                "{} succeeded for user={}, durationMs={}, format={}, fromCache={}",
+                action,
                 userId,
                 body.getDurationMs(),
                 body.getFormat(),
                 body.isFromCache()
             );
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_TYPE, "audio/" + body.getFormat()).body(data);
+            return ResponseEntity.ok(body);
         }
-        log.info("Sentence audio stream returned no content for user={}", userId);
+        log.info("{} returned no content for user={}", action, userId);
         return ResponseEntity.noContent().build();
     }
 

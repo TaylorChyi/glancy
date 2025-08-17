@@ -76,11 +76,12 @@ public class VolcengineTtsClient {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
             TtsResponse body = resp.getBody();
 
-            if (!resp.getStatusCode().is2xxSuccessful() || body == null) {
+            if (!resp.getStatusCode().is2xxSuccessful() || body == null || body.getData() == null) {
                 log.warn(
-                    "Volcengine TTS returned unexpected response: status={}, bodyNull={}",
+                    "Volcengine TTS returned unexpected response: status={}, bodyNull={}, dataNull={}",
                     resp.getStatusCode(),
-                    body == null
+                    body == null,
+                    body != null && body.getData() == null
                 );
                 throw new IllegalStateException(
                     "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()

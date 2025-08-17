@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,7 +25,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Tests for {@link TtsController}. The focus is on verifying the
@@ -52,16 +49,14 @@ class TtsControllerTest {
     @MockitoBean
     private UserService userService;
 
-    @MockitoBean
-    private RestTemplate restTemplate;
-
     /**
      * Verify that a successful word synthesis returns the payload
      * from the service layer.
      */
     @Test
     void synthesizeWordReturnsAudio() throws Exception {
-        TtsResponse resp = new TtsResponse("url", 1000L, "mp3", true);
+        byte[] data = "audio".getBytes(StandardCharsets.UTF_8);
+        TtsResponse resp = new TtsResponse(data, 1000L, "mp3", true);
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -73,8 +68,10 @@ class TtsControllerTest {
                     .content("{\"text\":\"hello\",\"lang\":\"en\"}")
             )
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.url").value("url"))
-            .andExpect(jsonPath("$.from_cache").value(true));
+            .andExpect(jsonPath("$.duration_ms").value(1000))
+            .andExpect(jsonPath("$.format").value("mp3"))
+            .andExpect(jsonPath("$.from_cache").value(true))
+            .andExpect(jsonPath("$.data").value(java.util.Base64.getEncoder().encodeToString(data)));
     }
 
     /**
@@ -114,86 +111,36 @@ class TtsControllerTest {
     }
 
     /**
-     * GET variant for sentence synthesis should redirect to the audio URL
-     * provided by the service.
+     * GET variant for sentence synthesis should return encoded audio bytes and metadata.
      */
     @Test
-    void streamSentenceRedirectsToAudio() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false);
+    void streamSentenceReturnsPayload() throws Exception {
+        byte[] data = "sentence".getBytes(StandardCharsets.UTF_8);
+        TtsResponse resp = new TtsResponse(data, 800L, "mp3", false);
         when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(
-                get("/api/tts/sentence").param("text", "hello world").param("lang", "en").header("X-USER-TOKEN", "tkn")
-            )
-            .andExpect(status().isFound())
-            .andExpect(header().string("Location", "http://audio/url"));
-    }
-
-    /**
-     * Direct streaming endpoint should return raw audio data.
-     */
-    @Test
-    void streamSentenceAudioReturnsBytes() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/url", 800L, "mp3", false);
-        when(ttsService.synthesizeSentence(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        when(restTemplate.getForObject("http://audio/url", byte[].class)).thenReturn(
-            "data".getBytes(StandardCharsets.UTF_8)
-        );
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
-
-        mockMvc
-            .perform(
-                get("/api/tts/sentence/audio")
-                    .param("text", "hello world")
-                    .param("lang", "en")
-                    .header("X-USER-TOKEN", "tkn")
-            )
+            .perform(get("/api/tts/sentence").param("text", "hello world").param("lang", "en").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
-            .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
+            .andExpect(jsonPath("$.format").value("mp3"))
+            .andExpect(jsonPath("$.data").value(java.util.Base64.getEncoder().encodeToString(data)));
     }
 
     /**
-     * Direct streaming endpoint for single word pronunciations should
-     * return raw audio data without a redirect.
+     * GET variant for word synthesis should return encoded audio bytes.
      */
     @Test
-    void streamWordAudioReturnsBytes() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", true);
+    void streamWordReturnsPayload() throws Exception {
+        byte[] data = "word".getBytes(StandardCharsets.UTF_8);
+        TtsResponse resp = new TtsResponse(data, 500L, "mp3", true);
         when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
-            "data".getBytes(StandardCharsets.UTF_8)
-        );
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(
-                get("/api/tts/word/audio").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn")
-            )
+            .perform(get("/api/tts/word").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
-            .andExpect(content().bytes("data".getBytes(StandardCharsets.UTF_8)));
-    }
-
-    /**
-     * The streaming endpoint should set the audio content type when returning
-     * raw bytes, demonstrating that no intermediate object storage is used.
-     */
-    @Test
-    void streamWordAudioSetsContentType() throws Exception {
-        TtsResponse resp = new TtsResponse("http://audio/word", 500L, "mp3", false);
-        when(ttsService.synthesizeWord(eq(1L), anyString(), any(TtsRequest.class))).thenReturn(Optional.of(resp));
-        when(restTemplate.getForObject("http://audio/word", byte[].class)).thenReturn(
-            "bytes".getBytes(StandardCharsets.UTF_8)
-        );
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
-
-        mockMvc
-            .perform(
-                get("/api/tts/word/audio").param("text", "hello").param("lang", "en").header("X-USER-TOKEN", "tkn")
-            )
-            .andExpect(status().isOk())
-            .andExpect(header().string("Content-Type", "audio/mp3"))
-            .andExpect(content().bytes("bytes".getBytes(StandardCharsets.UTF_8)));
+            .andExpect(jsonPath("$.from_cache").value(true))
+            .andExpect(jsonPath("$.data").value(java.util.Base64.getEncoder().encodeToString(data)));
     }
 }
