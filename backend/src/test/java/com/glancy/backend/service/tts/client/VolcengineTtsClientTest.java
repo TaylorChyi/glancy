@@ -2,6 +2,11 @@ package com.glancy.backend.service.tts.client;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -19,6 +24,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.ResourceAccessException;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
@@ -71,7 +77,7 @@ class VolcengineTtsClientTest {
         req.setLang("en");
         req.setVoice("v2");
         TtsResponse resp = client.synthesize(req);
-        assertThat(resp.getUrl()).isEqualTo("u");
+        assertThat(resp.getFormat()).isEqualTo("mp3");
         server.verify();
     }
 
@@ -155,5 +161,30 @@ class VolcengineTtsClientTest {
             .hasMessageContaining("E500");
 
         server.verify();
+    }
+
+    /**
+     * Network failures should surface underlying messages so that operators
+     * can quickly diagnose upstream issues.
+     */
+    @Test
+    void networkFailureContainsCauseMessage() {
+        RestTemplate restTemplate = mock(RestTemplate.class);
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setAccessToken("token");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        when(restTemplate.postForEntity(anyString(), any(), eq(TtsResponse.class)))
+            .thenThrow(new ResourceAccessException("timeout"));
+        VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> failingClient.synthesize(req))
+            .isInstanceOf(TtsFailedException.class)
+            .hasMessageContaining("timeout");
     }
 }
