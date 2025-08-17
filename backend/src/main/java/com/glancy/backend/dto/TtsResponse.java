@@ -26,8 +26,4 @@ public class TtsResponse {
     /** Indicates whether the result was served from cache. */
     @JsonProperty("from_cache")
     private boolean fromCache;
-
-    /** Object storage key for the audio file. */
-    @JsonProperty("object_key")
-    private String objectKey;
 }
