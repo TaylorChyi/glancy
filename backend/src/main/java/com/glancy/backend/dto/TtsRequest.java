@@ -3,6 +3,7 @@ package com.glancy.backend.dto;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
@@ -41,4 +42,24 @@ public class TtsRequest {
      * the client to decide whether to trigger synthesis.
      */
     private boolean shortcut = true;
+
+    /**
+     * Operation mode for the upstream API. {@code QUERY} performs a
+     * synchronous HTTP request while {@code SUBMIT} enables streaming.
+     */
+    @NotNull
+    private Operation operation = Operation.QUERY;
+
+    /**
+     * Supported operations understood by the Volcengine API.
+     */
+    public enum Operation {
+        QUERY,
+        SUBMIT;
+
+        /** Returns lowercase API representation. */
+        public String apiValue() {
+            return name().toLowerCase();
+        }
+    }
 }
