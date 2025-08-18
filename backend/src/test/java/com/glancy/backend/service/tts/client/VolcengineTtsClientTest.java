@@ -126,13 +126,7 @@ class VolcengineTtsClientTest {
         MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
 
         localServer
-            .expect(
-                requestTo(
-                    "http://localhost/tts?Action=" +
-                    VolcengineTtsProperties.DEFAULT_ACTION +
-                    "&Version="
-                )
-            )
+            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION + "&Version="))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withBadRequest()
