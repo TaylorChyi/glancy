@@ -38,9 +38,7 @@ public class VolcengineTtsProperties {
 
     public static final String DEFAULT_REGION = "cn-north-1";
     public static final String DEFAULT_SERVICE = "speech_saas_prod";
-    public static final String DEFAULT_ACTION = "TextToSpeech";
-    public static final String DEFAULT_VERSION = "2024-01-01";
-    public static final String DEFAULT_API_URL = "https://open.volcengineapi.com";
+    public static final String DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v1/tts";
 
     /** Region targeted by the remote API. */
     private String region = DEFAULT_REGION;
@@ -49,16 +47,10 @@ public class VolcengineTtsProperties {
     private String service = DEFAULT_SERVICE;
     /** Default voice type used when request does not specify one. */
     private String voiceType;
-    /** Operation name required by Volcengine API, e.g. {@code TextToSpeech}. */
-    private String action = DEFAULT_ACTION;
-    /**
-     * Version of the Volcengine API to target.
-     * <p>
-     * The provider mandates an explicit version parameter for every request. This
-     * default reflects the stable release as of 2024-01-01 and can be overridden via
-     * configuration.
-     */
-    private String version = DEFAULT_VERSION;
+    /** Token issued by Volcengine for authentication. */
+    private String token;
+    /** Cluster hint used by Volcengine routing. */
+    private String cluster;
     /** Base URL of the TTS endpoint. */
     private String apiUrl = DEFAULT_API_URL;
 

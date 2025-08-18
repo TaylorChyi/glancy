@@ -2,6 +2,7 @@ package com.glancy.backend.service.tts;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,6 @@ class VolcengineTtsServiceTest {
         when(validator.resolveVoice(user, req)).thenReturn(null);
 
         assertThrows(InvalidRequestException.class, () -> service.synthesizeWord(1L, "127.0.0.1", req));
-        verify(client, never()).synthesize(any());
+        verify(client, never()).synthesize(anyLong(), any());
     }
 }

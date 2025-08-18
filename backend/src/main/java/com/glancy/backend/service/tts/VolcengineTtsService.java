@@ -49,7 +49,7 @@ public class VolcengineTtsService implements TtsService {
             voice
         );
         resolveVoice(userId, request);
-        TtsResponse resp = client.synthesize(request);
+        TtsResponse resp = client.synthesize(userId, request);
         log.debug(
             "Client returned audio for user={}, durationMs={}, fromCache={}",
             userId,
@@ -72,7 +72,7 @@ public class VolcengineTtsService implements TtsService {
             voice
         );
         resolveVoice(userId, request);
-        TtsResponse resp = client.synthesize(request);
+        TtsResponse resp = client.synthesize(userId, request);
         log.debug(
             "Client returned audio for user={}, durationMs={}, fromCache={}",
             userId,
