@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 /**
  * Configuration for Volcengine TTS API credentials.
  * <p>
- * Remote API parameters are case-sensitive; ensure values like action names
+ * Remote API parameters are case-sensitive; ensure configured values
  * match the exact casing required by Volcengine.
  */
 @Data
@@ -39,6 +39,7 @@ public class VolcengineTtsProperties {
     public static final String DEFAULT_REGION = "cn-north-1";
     public static final String DEFAULT_SERVICE = "speech_saas_prod";
     public static final String DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v1/tts";
+    public static final String DEFAULT_CLUSTER = "volcano_tts";
 
     /** Region targeted by the remote API. */
     private String region = DEFAULT_REGION;
@@ -50,7 +51,7 @@ public class VolcengineTtsProperties {
     /** Token issued by Volcengine for authentication. */
     private String token;
     /** Cluster hint used by Volcengine routing. */
-    private String cluster;
+    private String cluster = DEFAULT_CLUSTER;
     /** Base URL of the TTS endpoint. */
     private String apiUrl = DEFAULT_API_URL;
 

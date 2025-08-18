@@ -61,14 +61,14 @@ public class VolcengineTtsClient {
 
         Map<String, Object> audio = new LinkedHashMap<>();
         audio.put("voice_type", voice);
-        audio.put("format", request.getFormat());
+        audio.put("encoding", request.getFormat());
         audio.put("speed_ratio", request.getSpeed());
+        audio.put("explicit_language", request.getLang());
         body.put("audio", audio);
 
         Map<String, Object> req = new LinkedHashMap<>();
         req.put("reqid", reqId);
         req.put("text", request.getText());
-        req.put("lang", request.getLang());
         body.put("request", req);
 
         logPayload(body);
@@ -136,7 +136,8 @@ public class VolcengineTtsClient {
         sanitized.put("voice_type", sanitize("voice_type", voiceType));
         Object uid = ((Map<?, ?>) payload.get("user")).get("uid");
         sanitized.put("uid", sanitize("uid", uid));
-        sanitized.put("lang", sanitize("lang", ((Map<?, ?>) payload.get("request")).get("lang")));
+        Object lang = ((Map<?, ?>) payload.get("audio")).get("explicit_language");
+        sanitized.put("lang", sanitize("lang", lang));
         log.info("Resolved TTS parameters {}", sanitized);
     }
 

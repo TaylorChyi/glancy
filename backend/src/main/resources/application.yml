@@ -74,10 +74,11 @@ oss:
 
 tts:
   volcengine:
-    # API action and version for Volcengine TTS requests.
-    action: TextToSpeech
-    version: 2024-01-01
-    # Base URL of Volcengine TTS endpoint. Override to point at staging or mock servers.
-    api-url: https://open.volcengineapi.com
+    # Credentials and routing for Volcengine TTS service.
+    app-id: ${VOLCENGINE_APP_ID:}
+    token: ${VOLCENGINE_TOKEN:}
+    cluster: volcano_tts
+    # Base URL of Volcengine TTS endpoint. Override for staging or mocks.
+    api-url: https://openspeech.bytedance.com/api/v1/tts
     # Interval for proactive health checks to Volcengine TTS.
     health-interval: PT10M

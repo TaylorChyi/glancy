@@ -37,10 +37,11 @@ llm:
 
 tts:
   volcengine:
-    # API action and version for Volcengine TTS requests used during tests.
-    action: TextToSpeech
-    version: 2024-01-01
-    # Base URL used during tests; points to mock server.
-    api-url: https://open.volcengineapi.com
+    # Credentials and routing for Volcengine TTS service during tests.
+    app-id:
+    token:
+    cluster: volcano_tts
+    # Base URL used during tests; points to mock server or real endpoint.
+    api-url: https://openspeech.bytedance.com/api/v1/tts
     # Interval for proactive health checks during tests.
     health-interval: PT1M
