@@ -13,6 +13,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 
 /** Utility to compute Volcengine authorization headers. */
 final class VolcengineSigner {
@@ -28,6 +29,9 @@ final class VolcengineSigner {
         String contentSha256 = sha256Hex(body);
         headers.set("X-Date", xDate);
         headers.set("X-Content-Sha256", contentSha256);
+        if (StringUtils.hasText(props.getSecurityToken())) {
+            headers.set("X-Security-Token", props.getSecurityToken());
+        }
 
         String canonicalQuery = canonicalQuery(uri);
         String canonicalHeaders =
