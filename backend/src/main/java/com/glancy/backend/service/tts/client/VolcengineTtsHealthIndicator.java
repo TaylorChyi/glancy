@@ -3,7 +3,6 @@ package com.glancy.backend.service.tts.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.util.SensitiveDataUtil;
-import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -17,7 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Proactively verifies connectivity to Volcengine TTS.
@@ -52,31 +53,40 @@ public class VolcengineTtsHealthIndicator implements HealthIndicator {
     }
 
     private Health probe() {
-        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-            .queryParam("Action", props.getAction())
-            .queryParam("Version", props.getVersion())
-            .toUriString();
+        String url = props.getApiUrl();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + props.getToken());
 
-        VolcengineTtsPayload payload = VolcengineTtsPayload.builder()
-            .appId(props.getAppId())
-            .voiceType(props.getVoiceType())
-            .text("ping")
-            .lang("en")
-            .format("mp3")
-            .speed(1.0)
-            .build();
+        Map<String, Object> body = new LinkedHashMap<>();
+        Map<String, Object> app = new LinkedHashMap<>();
+        app.put("token", props.getToken());
+        app.put("cluster", props.getCluster());
+        app.put("appid", props.getAppId());
+        body.put("app", app);
 
-        String body;
+        body.put("user", Map.of("uid", "health"));
+
+        Map<String, Object> audio = new LinkedHashMap<>();
+        audio.put("voice_type", props.getVoiceType());
+        audio.put("format", "mp3");
+        audio.put("speed_ratio", 1.0);
+        body.put("audio", audio);
+
+        Map<String, Object> req = new LinkedHashMap<>();
+        req.put("reqid", UUID.randomUUID().toString());
+        req.put("text", "ping");
+        req.put("lang", "en");
+        body.put("request", req);
+
+        String json;
         try {
-            body = new ObjectMapper().writeValueAsString(payload);
+            json = new ObjectMapper().writeValueAsString(body);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize health payload", e);
             return Health.down(e).build();
         }
-        VolcengineSigner.sign(headers, URI.create(url), body, props);
-        HttpEntity<String> entity = new HttpEntity<>(body, headers);
+        HttpEntity<String> entity = new HttpEntity<>(json, headers);
 
         try {
             restTemplate.postForEntity(url, entity, String.class);

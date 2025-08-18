@@ -2,15 +2,14 @@ package com.glancy.backend.service.tts.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.util.SensitiveDataUtil;
-import java.net.URI;
-import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -19,11 +18,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Low level HTTP client for interacting with Volcengine TTS service.
@@ -35,157 +32,115 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Slf4j
 public class VolcengineTtsClient {
 
-    private static final Pattern VERSION_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
-
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
-    private final VolcengineCredentialRefresher credentialRefresher;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    public VolcengineTtsClient(
-        RestTemplateBuilder builder,
-        VolcengineTtsProperties props,
-        VolcengineCredentialRefresher credentialRefresher
-    ) {
-        this(builder.build(), props, credentialRefresher);
+    public VolcengineTtsClient(RestTemplateBuilder builder, VolcengineTtsProperties props) {
+        this(builder.build(), props);
     }
 
-    VolcengineTtsClient(
-        RestTemplate restTemplate,
-        VolcengineTtsProperties props,
-        VolcengineCredentialRefresher credentialRefresher
-    ) {
+    VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
         this.restTemplate = restTemplate;
         this.props = props;
-        this.credentialRefresher = credentialRefresher;
     }
 
     /**
      * Perform a synthesis request.
      *
+     * @param userId  identifier of the requesting user
      * @param request synthesis parameters
      * @return response from remote service
      */
-    public TtsResponse synthesize(TtsRequest request) {
-        String version = props.getVersion();
-        if (!StringUtils.hasText(version) || !VERSION_PATTERN.matcher(version).matches()) {
-            String msg = "Unsupported Volcengine API version: " + version;
-            log.error(msg);
-            throw new com.glancy.backend.exception.TtsFailedException(msg);
-        }
+    public TtsResponse synthesize(Long userId, TtsRequest request) {
+        String voice = request.getVoice() != null ? request.getVoice() : props.getVoiceType();
+        String reqId = UUID.randomUUID().toString();
 
-        String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
-        VolcengineTtsPayload payload = VolcengineTtsPayload.builder()
-            .appId(props.getAppId())
-            .voiceType(voice)
-            .text(request.getText())
-            .lang(request.getLang())
-            .format(request.getFormat())
-            .speed(request.getSpeed())
-            .build();
+        Map<String, Object> body = new LinkedHashMap<>();
+        Map<String, Object> app = new LinkedHashMap<>();
+        app.put("token", props.getToken());
+        app.put("cluster", props.getCluster());
+        app.put("appid", props.getAppId());
+        body.put("app", app);
 
-        logPayload(payload);
+        body.put("user", Map.of("uid", String.valueOf(userId)));
 
-        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-            .queryParam("Action", props.getAction())
-            .queryParam("Version", version)
-            .toUriString();
-        log.debug("Invoking Volcengine TTS url={} action={} version={}", url, props.getAction(), version);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, Object> audio = new LinkedHashMap<>();
+        audio.put("voice_type", voice);
+        audio.put("format", request.getFormat());
+        audio.put("speed_ratio", request.getSpeed());
+        body.put("audio", audio);
+
+        Map<String, Object> req = new LinkedHashMap<>();
+        req.put("reqid", reqId);
+        req.put("text", request.getText());
+        req.put("lang", request.getLang());
+        body.put("request", req);
+
+        logPayload(body);
 
         String bodyJson;
         try {
-            bodyJson = new ObjectMapper().writeValueAsString(payload);
+            bodyJson = mapper.writeValueAsString(body);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize TTS payload", e);
         }
-        VolcengineSigner.sign(headers, URI.create(url), bodyJson, props);
-        HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
-        try {
-            ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
-            TtsResponse body = resp.getBody();
 
-            if (!resp.getStatusCode().is2xxSuccessful() || body == null || body.getData() == null) {
-                log.warn(
-                    "Volcengine TTS returned unexpected response: status={}, bodyNull={}, dataNull={}",
-                    resp.getStatusCode(),
-                    body == null,
-                    body != null && body.getData() == null
-                );
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + props.getToken());
+        HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
+
+        try {
+            ResponseEntity<ObjectNode> resp = restTemplate.postForEntity(props.getApiUrl(), entity, ObjectNode.class);
+            ObjectNode node = resp.getBody();
+
+            if (!resp.getStatusCode().is2xxSuccessful() || node == null) {
+                log.warn("Volcengine TTS returned unexpected response: status={} bodyNull={}", resp.getStatusCode(), node == null);
                 throw new IllegalStateException(
                     "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()
                 );
             }
 
+            String dataB64 = node.path("data").asText();
+            byte[] audioBytes = Base64.getDecoder().decode(dataB64);
+            long duration = node.path("addition").path("duration").asLong();
+            TtsResponse result = new TtsResponse(audioBytes, duration, request.getFormat(), false);
+
             log.debug(
                 "Received response from {} status={} durationMs={}",
-                url,
+                props.getApiUrl(),
                 resp.getStatusCode(),
-                body.getDurationMs()
+                duration
             );
-            return body;
+            return result;
         } catch (RestClientException ex) {
             String msg = "Upstream TTS (Text-To-Speech) request failed";
             if (ex instanceof HttpStatusCodeException statusEx) {
                 msg += " status=" + statusEx.getStatusCode().value();
-                String body = statusEx.getResponseBodyAsString();
-                if (StringUtils.hasText(body)) {
-                    msg += " body=" + SensitiveDataUtil.previewText(body);
-                    if (body.contains("InvalidCredential")) {
-                        log.warn("Volcengine credential rejected; refreshing and retrying next call");
-                        credentialRefresher.refresh();
-                    }
+                String bodyResp = statusEx.getResponseBodyAsString();
+                if (bodyResp != null && !bodyResp.isBlank()) {
+                    msg += " body=" + SensitiveDataUtil.previewText(bodyResp);
                 }
-            } else if (StringUtils.hasText(ex.getMessage())) {
+            } else if (ex.getMessage() != null) {
                 msg += " msg=" + ex.getMessage();
             }
-            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", url, msg, ex);
+            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
             throw new com.glancy.backend.exception.TtsFailedException(msg);
         }
     }
 
-    private void logPayload(VolcengineTtsPayload payload) {
-        List<String> missing = new ArrayList<>();
+    private void logPayload(Map<String, Object> payload) {
         Map<String, Object> sanitized = new LinkedHashMap<>();
-
-        Object sanitizedAppId = sanitize("appid", payload.getAppId());
-        if (!StringUtils.hasText(payload.getAppId())) {
-            missing.add("appid");
-        }
-        sanitized.put("appid", sanitizedAppId);
-
-        Object sanitizedVoice = sanitize("voice_type", payload.getVoiceType());
-        if (!StringUtils.hasText(payload.getVoiceType())) {
-            missing.add("voice_type");
-        }
-        sanitized.put("voice_type", sanitizedVoice);
-
-        if (!StringUtils.hasText(payload.getText())) {
-            missing.add("text");
-        }
-        sanitized.put("text", sanitize("text", payload.getText()));
-
-        if (!StringUtils.hasText(payload.getLang())) {
-            missing.add("lang");
-        }
-        sanitized.put("lang", sanitize("lang", payload.getLang()));
-
-        sanitized.put("format", sanitize("format", payload.getFormat()));
-        sanitized.put("speed", sanitize("speed", payload.getSpeed()));
-        sanitized.put("action", sanitize("action", props.getAction()));
-        if (!StringUtils.hasText(props.getVersion())) {
-            missing.add("version");
-        }
-        sanitized.put("version", sanitize("version", props.getVersion()));
-
-        log.info("Resolved TTS parameters appid={}, voice_type={}", sanitizedAppId, sanitizedVoice);
-
-        if (!missing.isEmpty()) {
-            log.warn("Missing required parameters for TTS model call: {}", missing);
-        } else {
-            log.debug("Calling TTS model with parameters {}", sanitized);
-        }
+        Object appid = ((Map<?, ?>) payload.get("app")).get("appid");
+        sanitized.put("appid", sanitize("appid", appid));
+        Object voiceType = ((Map<?, ?>) payload.get("audio")).get("voice_type");
+        sanitized.put("voice_type", sanitize("voice_type", voiceType));
+        Object uid = ((Map<?, ?>) payload.get("user")).get("uid");
+        sanitized.put("uid", sanitize("uid", uid));
+        sanitized.put("lang", sanitize("lang", ((Map<?, ?>) payload.get("request")).get("lang")));
+        log.info("Resolved TTS parameters {}", sanitized);
     }
 
     private Object sanitize(String key, Object value) {
@@ -193,14 +148,12 @@ public class VolcengineTtsClient {
             return null;
         }
         String str = String.valueOf(value);
-        switch (key) {
-            case "appid":
-                return SensitiveDataUtil.maskCredential(str);
-            case "text":
-                return SensitiveDataUtil.previewText(str);
-            default:
-                return str;
-        }
+        return switch (key) {
+            case "appid" -> SensitiveDataUtil.maskCredential(str);
+            case "uid" -> SensitiveDataUtil.maskCredential(str);
+            case "text" -> SensitiveDataUtil.previewText(str);
+            default -> str;
+        };
     }
 
     /** Returns default voice configured for the service. */
