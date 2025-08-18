@@ -134,7 +134,6 @@ public class VolcengineTtsClient {
         }
     }
 
-
     private void logPayload(Map<String, Object> payload) {
         Map<String, Object> sanitized = new LinkedHashMap<>();
         Object appid = ((Map<?, ?>) payload.get("app")).get("appid");
