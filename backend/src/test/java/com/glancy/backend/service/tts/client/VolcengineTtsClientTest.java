@@ -54,6 +54,7 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.user.uid").value("123"))
             .andExpect(jsonPath("$.audio.voice_type").value("v2"))
             .andExpect(jsonPath("$.request.text").value("hi"))
+            .andExpect(jsonPath("$.request.operation").value("query"))
             .andRespond(
                 withSuccess("{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON)
             );
