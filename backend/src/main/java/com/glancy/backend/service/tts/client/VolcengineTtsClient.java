@@ -11,8 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,12 +34,7 @@ public class VolcengineTtsClient {
     private final VolcengineTtsProperties props;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Autowired
-    public VolcengineTtsClient(RestTemplateBuilder builder, VolcengineTtsProperties props) {
-        this(builder.build(), props);
-    }
-
-    VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
+    public VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
         this.restTemplate = restTemplate;
         this.props = props;
     }
