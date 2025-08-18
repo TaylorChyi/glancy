@@ -36,6 +36,10 @@ final class VolcengineSigner {
         }
 
         String canonicalQuery = canonicalQuery(uri);
+        String path = uri.getPath();
+        if (!StringUtils.hasText(path)) {
+            path = "/";
+        }
         String canonicalHeaders =
             "content-type:" +
             MediaType.APPLICATION_JSON_VALUE +
@@ -52,7 +56,7 @@ final class VolcengineSigner {
         String signedHeaders = "content-type;host;x-content-sha256;x-date";
         String canonicalRequest =
             "POST\n" +
-            uri.getPath() +
+            path +
             "\n" +
             canonicalQuery +
             "\n" +
@@ -61,6 +65,7 @@ final class VolcengineSigner {
             signedHeaders +
             "\n" +
             contentSha256;
+        log.debug("Volcengine canonical request path={} query={}", path, canonicalQuery);
 
         String date = xDate.substring(0, 8);
         String credentialScope = String.join(
