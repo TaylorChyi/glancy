@@ -17,8 +17,9 @@ import org.springframework.http.MediaType;
 /** Utility to compute Volcengine authorization headers. */
 final class VolcengineSigner {
 
-    private static final DateTimeFormatter X_DATE_FORMAT =
-        DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter X_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(
+        ZoneOffset.UTC
+    );
 
     private VolcengineSigner() {}
 
@@ -30,47 +31,56 @@ final class VolcengineSigner {
 
         String canonicalQuery = canonicalQuery(uri);
         String canonicalHeaders =
-            "content-type:" + MediaType.APPLICATION_JSON_VALUE + "\n" +
-            "host:" + uri.getHost() + "\n" +
-            "x-content-sha256:" + contentSha256 + "\n" +
-            "x-date:" + xDate + "\n";
+            "content-type:" +
+            MediaType.APPLICATION_JSON_VALUE +
+            "\n" +
+            "host:" +
+            uri.getHost() +
+            "\n" +
+            "x-content-sha256:" +
+            contentSha256 +
+            "\n" +
+            "x-date:" +
+            xDate +
+            "\n";
         String signedHeaders = "content-type;host;x-content-sha256;x-date";
         String canonicalRequest =
             "POST\n" +
-            uri.getPath() + "\n" +
-            canonicalQuery + "\n" +
-            canonicalHeaders + "\n" +
-            signedHeaders + "\n" +
+            uri.getPath() +
+            "\n" +
+            canonicalQuery +
+            "\n" +
+            canonicalHeaders +
+            "\n" +
+            signedHeaders +
+            "\n" +
             contentSha256;
 
         String date = xDate.substring(0, 8);
-        String credentialScope = String.join("/", Arrays.asList(date, props.getRegion(), props.getService(), "request"));
-        String stringToSign =
-            "HMAC-SHA256\n" +
-            xDate + "\n" +
-            credentialScope + "\n" +
-            sha256Hex(canonicalRequest);
+        String credentialScope = String.join(
+            "/",
+            Arrays.asList(date, props.getRegion(), props.getService(), "request")
+        );
+        String stringToSign = "HMAC-SHA256\n" + xDate + "\n" + credentialScope + "\n" + sha256Hex(canonicalRequest);
 
-        byte[] signingKey =
+        byte[] signingKey = hmacSha256(
             hmacSha256(
                 hmacSha256(
-                    hmacSha256(
-                        hmacSha256(("VOLC" + props.getSecretKey()).getBytes(StandardCharsets.UTF_8), date),
-                        props.getRegion()
-                    ),
-                    props.getService()
+                    hmacSha256(("VOLC" + props.getSecretKey()).getBytes(StandardCharsets.UTF_8), date),
+                    props.getRegion()
                 ),
-                "request"
-            );
+                props.getService()
+            ),
+            "request"
+        );
         String signature = bytesToHex(hmacSha256(signingKey, stringToSign));
-        String authorization =
-            String.format(
-                "HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
-                props.getAccessKeyId(),
-                credentialScope,
-                signedHeaders,
-                signature
-            );
+        String authorization = String.format(
+            "HMAC-SHA256 Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+            props.getAccessKeyId(),
+            credentialScope,
+            signedHeaders,
+            signature
+        );
         headers.set(HttpHeaders.AUTHORIZATION, authorization);
     }
 

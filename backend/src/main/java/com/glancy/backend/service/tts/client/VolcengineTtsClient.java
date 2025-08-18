@@ -168,11 +168,7 @@ public class VolcengineTtsClient {
         }
         sanitized.put("version", sanitize("version", props.getVersion()));
 
-        log.info(
-            "Resolved TTS parameters appid={}, voice_type={}",
-            sanitizedAppId,
-            sanitizedVoice
-        );
+        log.info("Resolved TTS parameters appid={}, voice_type={}", sanitizedAppId, sanitizedVoice);
 
         if (!missing.isEmpty()) {
             log.warn("Missing required parameters for TTS model call: {}", missing);
