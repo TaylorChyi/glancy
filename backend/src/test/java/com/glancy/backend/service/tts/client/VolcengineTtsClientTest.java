@@ -20,6 +20,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.exception.TtsFailedException;
+import com.glancy.backend.service.tts.client.VolcengineTtsProperties;
 import java.nio.charset.StandardCharsets;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +64,14 @@ class VolcengineTtsClientTest {
     @Test
     void includesCredentialsInRequest() {
         server
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech&Version=2020-06-09"))
+            .expect(
+                requestTo(
+                    "http://localhost/tts?Action=" +
+                    VolcengineTtsProperties.DEFAULT_ACTION +
+                    "&Version=" +
+                    VolcengineTtsProperties.DEFAULT_VERSION
+                )
+            )
             .andExpect(method(HttpMethod.POST))
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.appid").value("app"))
@@ -71,6 +79,18 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.format").value("mp3"))
             .andExpect(jsonPath("$.speed").value(1.0))
             .andExpect(header(HttpHeaders.AUTHORIZATION, Matchers.notNullValue()))
+            .andExpect(
+                header(
+                    HttpHeaders.AUTHORIZATION,
+                    Matchers.containsString(
+                        "/" +
+                        VolcengineTtsProperties.DEFAULT_REGION +
+                        "/" +
+                        VolcengineTtsProperties.DEFAULT_SERVICE +
+                        "/request"
+                    )
+                )
+            )
             .andRespond(
                 withSuccess(
                     "{\"data\":\"ZGF0YQ==\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
@@ -106,7 +126,13 @@ class VolcengineTtsClientTest {
         MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
 
         localServer
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech&Version="))
+            .expect(
+                requestTo(
+                    "http://localhost/tts?Action=" +
+                    VolcengineTtsProperties.DEFAULT_ACTION +
+                    "&Version="
+                )
+            )
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withBadRequest()
@@ -128,7 +154,7 @@ class VolcengineTtsClientTest {
     @Test
     void wrapsClientErrorsFromProvider() {
         server
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
+            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withBadRequest()
@@ -151,7 +177,7 @@ class VolcengineTtsClientTest {
     @Test
     void wrapsServerErrorsFromProvider() {
         server
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
+            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withServerError()
@@ -185,7 +211,7 @@ class VolcengineTtsClientTest {
         MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
 
         localServer
-            .expect(requestTo("http://localhost/tts?Action=TextToSpeech"))
+            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION))
             .andExpect(method(HttpMethod.POST))
             .andRespond(
                 withBadRequest()
