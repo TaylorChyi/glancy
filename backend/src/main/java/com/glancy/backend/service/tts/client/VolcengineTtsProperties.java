@@ -5,6 +5,7 @@ import java.time.Instant;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration for Volcengine TTS API credentials.
@@ -50,6 +51,8 @@ public class VolcengineTtsProperties {
     private String voiceType;
     /** Token issued by Volcengine for authentication. */
     private String token;
+    /** Placeholder token used when none configured. */
+    public static final String FAKE_TOKEN = "FAKE";
     /** Cluster hint used by Volcengine routing. */
     private String cluster = DEFAULT_CLUSTER;
     /** Base URL of the TTS endpoint. */
@@ -57,4 +60,12 @@ public class VolcengineTtsProperties {
 
     /** Interval between proactive health checks. */
     private Duration healthInterval = Duration.ofMinutes(10);
+
+    /**
+     * Returns configured token or a placeholder when missing.
+     * Volcengine accepts any non-empty value for token.
+     */
+    public String resolveToken() {
+        return StringUtils.hasText(token) ? token : FAKE_TOKEN;
+    }
 }

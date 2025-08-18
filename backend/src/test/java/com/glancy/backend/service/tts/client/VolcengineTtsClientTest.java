@@ -133,7 +133,7 @@ class VolcengineTtsClientTest {
     }
 
     @Test
-    void failsWhenTokenMissing() {
+    void usesPlaceholderTokenWhenMissing() {
         RestTemplate restTemplate = new RestTemplate();
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
@@ -141,13 +141,22 @@ class VolcengineTtsClientTest {
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
         VolcengineTtsClient noTokenClient = new VolcengineTtsClient(restTemplate, props);
+        MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
+
+        localServer
+            .expect(requestTo("http://localhost/tts"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer; " + VolcengineTtsProperties.FAKE_TOKEN))
+            .andRespond(
+                withSuccess("{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON)
+            );
 
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("en");
 
-        assertThatThrownBy(() -> noTokenClient.synthesize(1L, req))
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("token");
+        TtsResponse resp = noTokenClient.synthesize(1L, req);
+        assertThat(resp.getDurationMs()).isEqualTo(1);
+        localServer.verify();
     }
 }
