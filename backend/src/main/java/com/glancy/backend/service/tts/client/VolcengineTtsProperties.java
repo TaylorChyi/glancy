@@ -39,8 +39,8 @@ public class VolcengineTtsProperties {
     public static final String DEFAULT_REGION = "cn-north-1";
     public static final String DEFAULT_SERVICE = "speech_saas_prod";
     public static final String DEFAULT_ACTION = "TextToSpeech";
-    public static final String DEFAULT_VERSION = "2020-06-09";
-    public static final String DEFAULT_API_URL = "https://open.volcengineapi.com/v1/tts";
+    public static final String DEFAULT_VERSION = "2024-01-01";
+    public static final String DEFAULT_API_URL = "https://open.volcengineapi.com";
 
     /** Region targeted by the remote API. */
     private String region = DEFAULT_REGION;
@@ -55,7 +55,7 @@ public class VolcengineTtsProperties {
      * Version of the Volcengine API to target.
      * <p>
      * The provider mandates an explicit version parameter for every request. This
-     * default reflects the stable release as of 2020-06-09 and can be overridden via
+     * default reflects the stable release as of 2024-01-01 and can be overridden via
      * configuration.
      */
     private String version = DEFAULT_VERSION;

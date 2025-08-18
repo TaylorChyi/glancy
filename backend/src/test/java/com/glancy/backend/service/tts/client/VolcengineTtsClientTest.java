@@ -109,11 +109,11 @@ class VolcengineTtsClientTest {
     }
 
     /**
-     * Simulates missing {@code Version} configuration to ensure error messages
-     * from the provider are surfaced to callers.
+     * Simulates invalid {@code Version} configuration to ensure clear error
+     * messages are surfaced to callers without invoking the remote service.
      */
     @Test
-    void missingVersionProducesClearError() {
+    void invalidVersionProducesClearError() {
         RestTemplate restTemplate = new RestTemplate();
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
@@ -121,18 +121,8 @@ class VolcengineTtsClientTest {
         props.setSecretKey("sk");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
-        props.setVersion(null); // simulate missing
+        props.setVersion("bad-version"); // simulate invalid format
         VolcengineTtsClient localClient = new VolcengineTtsClient(restTemplate, props, () -> {});
-        MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
-
-        localServer
-            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION + "&Version="))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withBadRequest()
-                    .body("{\"code\":\"E400\",\"message\":\"Version is required\"}")
-                    .contentType(MediaType.APPLICATION_JSON)
-            );
 
         TtsRequest req = new TtsRequest();
         req.setText("hi");
@@ -140,9 +130,7 @@ class VolcengineTtsClientTest {
 
         assertThatThrownBy(() -> localClient.synthesize(req))
             .isInstanceOf(TtsFailedException.class)
-            .hasMessageContaining("Version is required");
-
-        localServer.verify();
+            .hasMessageContaining("Unsupported Volcengine API version");
     }
 
     @Test
