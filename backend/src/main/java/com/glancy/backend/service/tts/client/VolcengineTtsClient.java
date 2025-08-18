@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -50,9 +51,11 @@ public class VolcengineTtsClient {
         String voice = request.getVoice() != null ? request.getVoice() : props.getVoiceType();
         String reqId = UUID.randomUUID().toString();
 
+        String token = requireToken();
+
         Map<String, Object> body = new LinkedHashMap<>();
         Map<String, Object> app = new LinkedHashMap<>();
-        app.put("token", props.getToken());
+        app.put("token", token);
         app.put("cluster", props.getCluster());
         app.put("appid", props.getAppId());
         body.put("app", app);
@@ -83,7 +86,7 @@ public class VolcengineTtsClient {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + props.getToken());
+        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + token);
         HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
 
         try {
@@ -127,6 +130,14 @@ public class VolcengineTtsClient {
             log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
             throw new com.glancy.backend.exception.TtsFailedException(msg);
         }
+    }
+
+    private String requireToken() {
+        String token = props.getToken();
+        if (!StringUtils.hasText(token)) {
+            throw new IllegalStateException("Volcengine TTS token must not be blank");
+        }
+        return token;
     }
 
     private void logPayload(Map<String, Object> payload) {

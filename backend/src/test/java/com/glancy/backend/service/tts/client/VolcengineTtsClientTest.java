@@ -131,4 +131,23 @@ class VolcengineTtsClientTest {
             .isInstanceOf(TtsFailedException.class)
             .hasMessageContaining("timeout");
     }
+
+    @Test
+    void failsWhenTokenMissing() {
+        RestTemplate restTemplate = new RestTemplate();
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setCluster("cluster");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        VolcengineTtsClient noTokenClient = new VolcengineTtsClient(restTemplate, props);
+
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+
+        assertThatThrownBy(() -> noTokenClient.synthesize(1L, req))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("token");
+    }
 }
