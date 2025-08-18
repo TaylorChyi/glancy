@@ -3,6 +3,9 @@ package com.glancy.backend.service.tts.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.util.SensitiveDataUtil;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -16,9 +19,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Proactively verifies connectivity to Volcengine TTS.

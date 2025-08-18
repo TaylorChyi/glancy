@@ -10,11 +10,11 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.exception.TtsFailedException;
 import java.nio.charset.StandardCharsets;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -54,7 +54,9 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.user.uid").value("123"))
             .andExpect(jsonPath("$.audio.voice_type").value("v2"))
             .andExpect(jsonPath("$.request.text").value("hi"))
-            .andRespond(withSuccess("{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON));
+            .andRespond(
+                withSuccess("{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON)
+            );
 
         TtsRequest req = new TtsRequest();
         req.setText("hi");
@@ -111,15 +113,13 @@ class VolcengineTtsClientTest {
         props.setCluster("cluster");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
-        org.mockito.Mockito
-            .when(
-                restTemplate.postForEntity(
-                    org.mockito.ArgumentMatchers.anyString(),
-                    org.mockito.ArgumentMatchers.any(),
-                    org.mockito.ArgumentMatchers.eq(ObjectNode.class)
-                )
+        org.mockito.Mockito.when(
+            restTemplate.postForEntity(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq(ObjectNode.class)
             )
-            .thenThrow(new ResourceAccessException("timeout"));
+        ).thenThrow(new ResourceAccessException("timeout"));
         VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
 
         TtsRequest req = new TtsRequest();

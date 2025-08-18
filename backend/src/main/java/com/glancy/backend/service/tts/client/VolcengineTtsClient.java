@@ -90,7 +90,11 @@ public class VolcengineTtsClient {
             ObjectNode node = resp.getBody();
 
             if (!resp.getStatusCode().is2xxSuccessful() || node == null) {
-                log.warn("Volcengine TTS returned unexpected response: status={} bodyNull={}", resp.getStatusCode(), node == null);
+                log.warn(
+                    "Volcengine TTS returned unexpected response: status={} bodyNull={}",
+                    resp.getStatusCode(),
+                    node == null
+                );
                 throw new IllegalStateException(
                     "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()
                 );
