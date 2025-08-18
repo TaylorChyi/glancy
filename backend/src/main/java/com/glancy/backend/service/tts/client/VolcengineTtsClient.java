@@ -16,7 +16,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -51,7 +50,10 @@ public class VolcengineTtsClient {
         String voice = request.getVoice() != null ? request.getVoice() : props.getVoiceType();
         String reqId = UUID.randomUUID().toString();
 
-        String token = requireToken();
+        String token = props.resolveToken();
+        if (VolcengineTtsProperties.FAKE_TOKEN.equals(token)) {
+            log.warn("Volcengine TTS token not configured; using placeholder token");
+        }
 
         Map<String, Object> body = new LinkedHashMap<>();
         Map<String, Object> app = new LinkedHashMap<>();
@@ -132,13 +134,6 @@ public class VolcengineTtsClient {
         }
     }
 
-    private String requireToken() {
-        String token = props.getToken();
-        if (!StringUtils.hasText(token)) {
-            throw new IllegalStateException("Volcengine TTS token must not be blank");
-        }
-        return token;
-    }
 
     private void logPayload(Map<String, Object> payload) {
         Map<String, Object> sanitized = new LinkedHashMap<>();
