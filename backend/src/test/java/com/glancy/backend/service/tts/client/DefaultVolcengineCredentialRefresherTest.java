@@ -16,8 +16,9 @@ class DefaultVolcengineCredentialRefresherTest {
      */
     @Test
     void refreshIsNoOp() {
-        DefaultVolcengineCredentialRefresher refresher =
-            new DefaultVolcengineCredentialRefresher(new VolcengineTtsProperties());
+        DefaultVolcengineCredentialRefresher refresher = new DefaultVolcengineCredentialRefresher(
+            new VolcengineTtsProperties()
+        );
         assertDoesNotThrow(refresher::refresh);
     }
 
