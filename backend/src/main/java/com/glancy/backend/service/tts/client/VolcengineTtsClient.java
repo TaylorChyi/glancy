@@ -33,6 +33,8 @@ public class VolcengineTtsClient {
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
     private final ObjectMapper mapper = new ObjectMapper();
+    /** Operation used for HTTP synthesis. */
+    private static final String OPERATION_QUERY = "query";
 
     public VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
         this.restTemplate = restTemplate;
@@ -69,6 +71,7 @@ public class VolcengineTtsClient {
         Map<String, Object> req = new LinkedHashMap<>();
         req.put("reqid", reqId);
         req.put("text", request.getText());
+        req.put("operation", OPERATION_QUERY);
         body.put("request", req);
 
         logPayload(body);
