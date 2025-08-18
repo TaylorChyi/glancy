@@ -6,10 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -22,10 +20,8 @@ import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.exception.TtsFailedException;
 import com.glancy.backend.service.tts.client.VolcengineTtsProperties;
 import java.nio.charset.StandardCharsets;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -34,9 +30,8 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Verify that {@link VolcengineTtsClient} constructs requests containing
- * mandatory credentials required by the provider. Tests cover presence of query
- * parameters such as {@code Action} and {@code Version} alongside authentication
- * data.
+ * mandatory parameters required by the provider. Tests cover presence of query
+ * parameters such as {@code Action} and {@code Version} alongside payload data.
  */
 class VolcengineTtsClientTest {
 
@@ -48,11 +43,9 @@ class VolcengineTtsClientTest {
         RestTemplate restTemplate = new RestTemplate();
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
-        props.setAccessKeyId("ak");
-        props.setSecretKey("sk");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
-        client = new VolcengineTtsClient(restTemplate, props, () -> {});
+        client = new VolcengineTtsClient(restTemplate, props);
         server = MockRestServiceServer.createServer(restTemplate);
     }
 
@@ -62,7 +55,7 @@ class VolcengineTtsClientTest {
      * and {@code Version}.
      */
     @Test
-    void includesCredentialsInRequest() {
+    void includesParametersInRequest() {
         server
             .expect(
                 requestTo(
@@ -78,19 +71,6 @@ class VolcengineTtsClientTest {
             .andExpect(jsonPath("$.voice_type").value("v2"))
             .andExpect(jsonPath("$.format").value("mp3"))
             .andExpect(jsonPath("$.speed").value(1.0))
-            .andExpect(header(HttpHeaders.AUTHORIZATION, Matchers.notNullValue()))
-            .andExpect(
-                header(
-                    HttpHeaders.AUTHORIZATION,
-                    Matchers.containsString(
-                        "/" +
-                        VolcengineTtsProperties.DEFAULT_REGION +
-                        "/" +
-                        VolcengineTtsProperties.DEFAULT_SERVICE +
-                        "/request"
-                    )
-                )
-            )
             .andRespond(
                 withSuccess(
                     "{\"data\":\"ZGF0YQ==\",\"duration_ms\":1,\"format\":\"mp3\",\"from_cache\":false}",
@@ -117,12 +97,10 @@ class VolcengineTtsClientTest {
         RestTemplate restTemplate = new RestTemplate();
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
-        props.setAccessKeyId("ak");
-        props.setSecretKey("sk");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
         props.setVersion("bad-version"); // simulate invalid format
-        VolcengineTtsClient localClient = new VolcengineTtsClient(restTemplate, props, () -> {});
+        VolcengineTtsClient localClient = new VolcengineTtsClient(restTemplate, props);
 
         TtsRequest req = new TtsRequest();
         req.setText("hi");
@@ -179,38 +157,6 @@ class VolcengineTtsClientTest {
         server.verify();
     }
 
-    @Test
-    void refreshesCredentialsOnInvalidCredential() {
-        VolcengineCredentialRefresher refresher = mock(VolcengineCredentialRefresher.class);
-        RestTemplate restTemplate = new RestTemplate();
-        VolcengineTtsProperties props = new VolcengineTtsProperties();
-        props.setAppId("app");
-        props.setAccessKeyId("ak");
-        props.setSecretKey("sk");
-        props.setVoiceType("v1");
-        props.setApiUrl("http://localhost/tts");
-        VolcengineTtsClient localClient = new VolcengineTtsClient(restTemplate, props, refresher);
-        MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
-
-        localServer
-            .expect(requestTo("http://localhost/tts?Action=" + VolcengineTtsProperties.DEFAULT_ACTION))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withBadRequest()
-                    .body("{\"ResponseMetadata\":{\"Error\":{\"Code\":\"InvalidCredential\"}}}")
-                    .contentType(MediaType.APPLICATION_JSON)
-            );
-
-        TtsRequest req = new TtsRequest();
-        req.setText("hi");
-        req.setLang("en");
-
-        assertThatThrownBy(() -> localClient.synthesize(req)).isInstanceOf(TtsFailedException.class);
-
-        localServer.verify();
-        verify(refresher).refresh();
-    }
-
     /**
      * Network failures should surface underlying messages so that operators
      * can quickly diagnose upstream issues.
@@ -220,14 +166,12 @@ class VolcengineTtsClientTest {
         RestTemplate restTemplate = mock(RestTemplate.class);
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
-        props.setAccessKeyId("ak");
-        props.setSecretKey("sk");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
         when(restTemplate.postForEntity(anyString(), any(), eq(TtsResponse.class))).thenThrow(
             new ResourceAccessException("timeout")
         );
-        VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props, () -> {});
+        VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
 
         TtsRequest req = new TtsRequest();
         req.setText("hi");

@@ -3,7 +3,6 @@ package com.glancy.backend.service.tts.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.util.SensitiveDataUtil;
-import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -75,7 +74,6 @@ public class VolcengineTtsHealthIndicator implements HealthIndicator {
             log.error("Failed to serialize health payload", e);
             return Health.down(e).build();
         }
-        VolcengineSigner.sign(headers, URI.create(url), body, props);
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
         try {

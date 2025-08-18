@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.util.SensitiveDataUtil;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,8 +26,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Low level HTTP client for interacting with Volcengine TTS service.
- * Credentials and endpoint are provided via {@link VolcengineTtsProperties}.
- * The client is intentionally lean, delegating higher level concerns to
+ * Endpoint and defaults are provided via {@link VolcengineTtsProperties}.
+ * The client remains intentionally lean, delegating higher level concerns to
  * service layer components.
  */
 @Component
@@ -39,25 +38,15 @@ public class VolcengineTtsClient {
 
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
-    private final VolcengineCredentialRefresher credentialRefresher;
 
     @Autowired
-    public VolcengineTtsClient(
-        RestTemplateBuilder builder,
-        VolcengineTtsProperties props,
-        VolcengineCredentialRefresher credentialRefresher
-    ) {
-        this(builder.build(), props, credentialRefresher);
+    public VolcengineTtsClient(RestTemplateBuilder builder, VolcengineTtsProperties props) {
+        this(builder.build(), props);
     }
 
-    VolcengineTtsClient(
-        RestTemplate restTemplate,
-        VolcengineTtsProperties props,
-        VolcengineCredentialRefresher credentialRefresher
-    ) {
+    VolcengineTtsClient(RestTemplate restTemplate, VolcengineTtsProperties props) {
         this.restTemplate = restTemplate;
         this.props = props;
-        this.credentialRefresher = credentialRefresher;
     }
 
     /**
@@ -100,7 +89,6 @@ public class VolcengineTtsClient {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize TTS payload", e);
         }
-        VolcengineSigner.sign(headers, URI.create(url), bodyJson, props);
         HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
         try {
             ResponseEntity<TtsResponse> resp = restTemplate.postForEntity(url, entity, TtsResponse.class);
@@ -133,8 +121,7 @@ public class VolcengineTtsClient {
                 if (StringUtils.hasText(body)) {
                     msg += " body=" + SensitiveDataUtil.previewText(body);
                     if (body.contains("InvalidCredential")) {
-                        log.warn("Volcengine credential rejected; refreshing and retrying next call");
-                        credentialRefresher.refresh();
+                        log.warn("Volcengine credential rejected");
                     }
                 }
             } else if (StringUtils.hasText(ex.getMessage())) {
