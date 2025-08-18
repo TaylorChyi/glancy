@@ -19,11 +19,6 @@ public class VolcengineTtsPayload {
     @JsonProperty("appid")
     String appId;
 
-    /** Access token for authentication. */
-    @NotBlank
-    @JsonProperty("access_token")
-    String accessToken;
-
     /** Voice preset to synthesize. */
     @NotBlank
     @JsonProperty("voice_type")

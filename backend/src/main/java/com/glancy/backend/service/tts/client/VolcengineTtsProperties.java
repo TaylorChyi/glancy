@@ -17,8 +17,17 @@ public class VolcengineTtsProperties {
 
     /** Application identifier issued by Volcengine. */
     private String appId;
-    /** Access token for authenticating requests. */
-    private String accessToken;
+    /** Access key used for request signing. */
+    private String accessKeyId;
+
+    /** Secret key paired with {@link #accessKeyId}. */
+    private String secretKey;
+
+    /** Region targeted by the remote API. */
+    private String region = "cn-north-1";
+
+    /** Service name required for signature scope. */
+    private String service = "ml_ark_aeolus_speech";
     /** Default voice type used when request does not specify one. */
     private String voiceType;
     /** Operation name required by Volcengine API, e.g. {@code TextToSpeech}. */
