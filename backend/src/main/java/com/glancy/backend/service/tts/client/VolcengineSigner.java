@@ -11,11 +11,13 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 
 /** Utility to compute Volcengine authorization headers. */
+@Slf4j
 final class VolcengineSigner {
 
     private static final DateTimeFormatter X_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(
@@ -65,6 +67,7 @@ final class VolcengineSigner {
             "/",
             Arrays.asList(date, props.getRegion(), props.getService(), "request")
         );
+        log.debug("Volcengine credential scope {}", credentialScope);
         String stringToSign = "HMAC-SHA256\n" + xDate + "\n" + credentialScope + "\n" + sha256Hex(canonicalRequest);
 
         byte[] signingKey = hmacSha256(

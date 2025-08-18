@@ -39,3 +39,5 @@ tts:
   volcengine:
     # API version for Volcengine TTS requests used during tests.
     version: 2020-06-09
+    # Interval for proactive health checks during tests.
+    health-interval: PT1M

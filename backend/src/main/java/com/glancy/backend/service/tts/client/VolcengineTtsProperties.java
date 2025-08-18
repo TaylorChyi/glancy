@@ -1,5 +1,6 @@
 package com.glancy.backend.service.tts.client;
 
+import java.time.Duration;
 import java.time.Instant;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -54,4 +55,7 @@ public class VolcengineTtsProperties {
     private String version = "2020-06-09";
     /** Base URL of the TTS endpoint. */
     private String apiUrl = "https://open.volcengineapi.com/v1/tts";
+
+    /** Interval between proactive health checks. */
+    private Duration healthInterval = Duration.ofMinutes(10);
 }
