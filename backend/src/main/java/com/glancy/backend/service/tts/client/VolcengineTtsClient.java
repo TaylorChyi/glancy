@@ -69,6 +69,7 @@ public class VolcengineTtsClient {
         Map<String, Object> req = new LinkedHashMap<>();
         req.put("reqid", reqId);
         req.put("text", request.getText());
+        req.put("operation", request.getOperation().apiValue());
         body.put("request", req);
 
         logPayload(body);
