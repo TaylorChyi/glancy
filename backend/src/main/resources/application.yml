@@ -74,7 +74,10 @@ oss:
 
 tts:
   volcengine:
-    # API version for Volcengine TTS requests. Override if provider releases newer stable version.
-    version: 2020-06-09
+    # API action and version for Volcengine TTS requests.
+    action: TextToSpeech
+    version: 2024-01-01
+    # Base URL of Volcengine TTS endpoint. Override to point at staging or mock servers.
+    api-url: https://open.volcengineapi.com
     # Interval for proactive health checks to Volcengine TTS.
     health-interval: PT10M

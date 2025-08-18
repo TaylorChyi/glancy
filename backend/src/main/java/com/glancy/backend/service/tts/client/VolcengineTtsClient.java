@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -33,6 +34,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 @Slf4j
 public class VolcengineTtsClient {
+
+    private static final Pattern VERSION_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     private final RestTemplate restTemplate;
     private final VolcengineTtsProperties props;
@@ -64,6 +67,13 @@ public class VolcengineTtsClient {
      * @return response from remote service
      */
     public TtsResponse synthesize(TtsRequest request) {
+        String version = props.getVersion();
+        if (!StringUtils.hasText(version) || !VERSION_PATTERN.matcher(version).matches()) {
+            String msg = "Unsupported Volcengine API version: " + version;
+            log.error(msg);
+            throw new com.glancy.backend.exception.TtsFailedException(msg);
+        }
+
         String voice = StringUtils.hasText(request.getVoice()) ? request.getVoice() : props.getVoiceType();
         VolcengineTtsPayload payload = VolcengineTtsPayload.builder()
             .appId(props.getAppId())
@@ -76,10 +86,18 @@ public class VolcengineTtsClient {
 
         logPayload(payload);
 
-        String url = UriComponentsBuilder.fromHttpUrl(props.getApiUrl())
-            .queryParam("Action", props.getAction())
-            .queryParam("Version", props.getVersion())
-            .toUriString();
+        String url =
+            UriComponentsBuilder
+                .fromHttpUrl(props.getApiUrl())
+                .queryParam("Action", props.getAction())
+                .queryParam("Version", version)
+                .toUriString();
+        log.debug(
+            "Invoking Volcengine TTS url={} action={} version={}",
+            url,
+            props.getAction(),
+            version
+        );
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
