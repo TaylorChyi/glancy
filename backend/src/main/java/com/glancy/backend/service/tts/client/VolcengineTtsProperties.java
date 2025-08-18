@@ -1,5 +1,6 @@
 package com.glancy.backend.service.tts.client;
 
+import java.time.Instant;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,17 @@ public class VolcengineTtsProperties {
 
     /** Secret key paired with {@link #accessKeyId}. */
     private String secretKey;
+
+    /**
+     * Temporary session token issued alongside short lived credentials.
+     * <p>
+     * Only populated when integrating with STS based authentication. When
+     * present the signer will include it as {@code X-Security-Token} header.
+     */
+    private String securityToken;
+
+    /** Expiration timestamp for temporary credentials. */
+    private Instant expiration;
 
     /** Region targeted by the remote API. */
     private String region = "cn-north-1";
