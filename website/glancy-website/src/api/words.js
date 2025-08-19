@@ -34,10 +34,46 @@ export function createWordsApi(request = apiRequest) {
     ({ term, language }) => `${language}:${term}`,
   );
 
-  return { fetchWord, fetchWordAudio };
+  async function* streamWord({ userId, term, language, model, token, signal }) {
+    const params = new URLSearchParams({ userId, term, language });
+    if (model) params.append("model", model);
+    const url = `${API_PATHS.words}/stream?${params.toString()}`;
+    const headers = token ? { "X-USER-TOKEN": token } : {};
+    let response;
+    try {
+      response = await fetch(url, { headers, signal });
+    } catch (err) {
+      console.info("streamWord error", err);
+      throw err;
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop();
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data:")) continue;
+          const text = line.replace(/^data:\s*/, "");
+          console.info("streamWord chunk", text);
+          yield text;
+        }
+      }
+    } catch (err) {
+      console.info("streamWord error", err);
+      throw err;
+    }
+  }
+
+  return { fetchWord, fetchWordAudio, streamWord };
 }
 
-export const { fetchWord, fetchWordAudio } = createWordsApi();
+export const { fetchWord, fetchWordAudio, streamWord } = createWordsApi();
 
 export function useWordsApi() {
   return useApi().words;
