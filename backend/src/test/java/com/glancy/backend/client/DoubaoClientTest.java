@@ -44,21 +44,17 @@ class DoubaoClientTest {
     void chatUnauthorizedThrowsException() {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new SseStreamDecoder());
-        assertThrows(
-            com.glancy.backend.exception.UnauthorizedException.class,
-            () -> client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
+        assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
+            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
         );
     }
 
     private Mono<ClientResponse> successResponse(ClientRequest request) {
         assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
-        String body =
-            "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n" +
-            "data: [DONE]\n\n";
+        String body = "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n" + "data: [DONE]\n\n";
         return Mono.just(
-            ClientResponse
-                .create(HttpStatus.OK)
+            ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
                 .body(body)
                 .build()

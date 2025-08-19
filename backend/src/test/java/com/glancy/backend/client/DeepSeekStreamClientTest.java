@@ -25,12 +25,7 @@ class DeepSeekStreamClientTest {
         server = new MockWebServer();
         server.start();
         WebClient.Builder builder = WebClient.builder();
-        client = new DeepSeekStreamClient(
-            builder,
-            server.url("/").toString(),
-            "key",
-            new StreamDecoder()
-        );
+        client = new DeepSeekStreamClient(builder, server.url("/").toString(), "key", new StreamDecoder());
     }
 
     @AfterEach
@@ -59,9 +54,7 @@ class DeepSeekStreamClientTest {
     @Test
     void streamChatHandlesMalformedJson() {
         String body =
-            "data: {\"choices\":[{\"delta\":{\"content\":\"a\"}}]}\n\n" +
-            "data: {bad json}\n\n" +
-            "data: [DONE]\n\n";
+            "data: {\"choices\":[{\"delta\":{\"content\":\"a\"}}]}\n\n" + "data: {bad json}\n\n" + "data: [DONE]\n\n";
         server.enqueue(new MockResponse().addHeader("Content-Type", "text/event-stream").setBody(body));
 
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("user", "hi")), 0.5);

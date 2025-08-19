@@ -10,7 +10,6 @@ import reactor.core.publisher.Flux;
  * 基于流式结果聚合字符串，便于在传统阻塞场景下复用同一实现。
  */
 public interface LLMClient {
-
     /**
      * 以流式方式与模型交互，返回内容片段的 {@link Flux}。调用方可以逐段消费，
      * 也可以聚合为完整字符串。

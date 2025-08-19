@@ -32,10 +32,7 @@ public class DeepSeekStreamClient implements StreamingLLMClient {
         @Value("${thirdparty.deepseek.api-key:}") String apiKey,
         StreamDecoder decoder
     ) {
-        this.webClient = builder
-            .baseUrl(baseUrl)
-            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-            .build();
+        this.webClient = builder.baseUrl(baseUrl).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey).build();
         this.decoder = decoder;
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("DeepSeek API key is empty");
