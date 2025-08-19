@@ -7,7 +7,6 @@ import com.glancy.backend.dto.VoiceResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.UserService;
-import com.glancy.backend.service.tts.TtsRequestValidator;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
 import java.util.List;
 import java.util.Optional;
