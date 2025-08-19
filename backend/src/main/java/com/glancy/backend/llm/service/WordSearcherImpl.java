@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -62,5 +63,24 @@ public class WordSearcherImpl implements WordSearcher {
         String content = client.chat(messages, config.getTemperature());
         log.info("LLM client '{}' returned content: {}", name, content);
         return parser.parse(content, term, language);
+    }
+
+    /**
+     * 面向实时场景的搜索接口，直接返回模型的流式输出。
+     */
+    public Flux<String> streamSearch(String term, Language language, String clientName) {
+        log.info("WordSearcher streaming for '{}' using client {}", term, clientName);
+        String cleanInput = searchContentManager.normalize(term);
+        String prompt = promptManager.loadPrompt(config.getPromptPath());
+        String name = clientName != null ? clientName : config.getDefaultClient();
+        LLMClient client = clientFactory.get(name);
+        if (client == null) {
+            log.warn("LLM client '{}' not found, falling back to default", name);
+            client = clientFactory.get(config.getDefaultClient());
+        }
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(new ChatMessage("system", prompt));
+        messages.add(new ChatMessage("user", cleanInput));
+        return client.streamChat(messages, config.getTemperature());
     }
 }
