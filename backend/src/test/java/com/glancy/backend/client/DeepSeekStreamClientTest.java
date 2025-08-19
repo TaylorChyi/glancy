@@ -1,7 +1,5 @@
 package com.glancy.backend.client;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.StreamDecoder;
 import java.io.IOException;

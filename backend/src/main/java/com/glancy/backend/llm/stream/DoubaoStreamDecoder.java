@@ -35,7 +35,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .bufferUntil(String::isEmpty)
             .map(this::toEvent)
             .takeUntil(evt -> "end".equals(evt.type))
-            .flatMap(evt -> handlers.getOrDefault(evt.type, d -> Flux.empty()).apply(evt.data));
+            .flatMap(evt -> handlers.getOrDefault(evt.type, d -> Flux.empty()).apply(evt.data.toString()));
     }
 
     private Event toEvent(List<String> lines) {
