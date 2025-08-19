@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -28,7 +29,11 @@ public class DoubaoClient implements LLMClient {
     private final String apiKey;
     private final String model;
 
-    public DoubaoClient(WebClient.Builder builder, DoubaoProperties properties, StreamDecoder decoder) {
+    public DoubaoClient(
+        WebClient.Builder builder,
+        DoubaoProperties properties,
+        @Qualifier("doubaoStreamDecoder") StreamDecoder decoder
+    ) {
         this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
         this.decoder = decoder;
         this.chatPath = ensureLeadingSlash(properties.getChatPath());
@@ -63,6 +68,7 @@ public class DoubaoClient implements LLMClient {
             .post()
             .uri(chatPath)
             .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.TEXT_EVENT_STREAM)
             .headers(h -> {
                 if (apiKey != null && !apiKey.isEmpty()) {
                     h.setBearerAuth(apiKey);
@@ -76,7 +82,9 @@ public class DoubaoClient implements LLMClient {
     private Flux<String> handleResponse(ClientResponse resp) {
         if (resp.statusCode().is4xxClientError()) {
             if (resp.statusCode().value() == 401) {
-                return Flux.error(new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key"));
+                return Flux.error(
+                    new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key")
+                );
             }
             return Flux.error(
                 new com.glancy.backend.exception.BusinessException(
@@ -110,3 +118,4 @@ public class DoubaoClient implements LLMClient {
         return key.substring(0, 4) + "****" + key.substring(end);
     }
 }
+
