@@ -7,3 +7,4 @@ export { clientNameFromModel } from "./model.js";
 export { getBrandText, BRAND_TEXT } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";
 export { audioManager } from "./audioManager.js";
+export { decodeTtsAudio } from "./audio.js";
