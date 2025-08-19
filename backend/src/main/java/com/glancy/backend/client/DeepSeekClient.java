@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Flux;
 
 @Slf4j
 @Component("deepSeekClient")
@@ -57,6 +58,11 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
     @Override
     public String name() {
         return "deepseek";
+    }
+
+    @Override
+    public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
+        return Flux.just(chat(messages, temperature));
     }
 
     private String loadPrompt(String path) {

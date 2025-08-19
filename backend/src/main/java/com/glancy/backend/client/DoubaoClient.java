@@ -1,35 +1,36 @@
 package com.glancy.backend.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.DoubaoProperties;
-import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.stream.StreamDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
 /**
- * Client for Doubao LLM using simple HTTP calls.
+ * 针对抖宝模型的客户端实现，基于 WebClient 支持流式响应。
  */
 @Slf4j
 @Component("doubaoClient")
 public class DoubaoClient implements LLMClient {
 
-    private final RestTemplate restTemplate;
-    private final String baseUrl;
+    private final WebClient webClient;
+    private final StreamDecoder decoder;
     private final String chatPath;
     private final String apiKey;
     private final String model;
 
-    public DoubaoClient(RestTemplate restTemplate, DoubaoProperties properties) {
-        this.restTemplate = restTemplate;
-        this.baseUrl = trimTrailingSlash(properties.getBaseUrl());
+    public DoubaoClient(WebClient.Builder builder, DoubaoProperties properties, StreamDecoder decoder) {
+        this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
+        this.decoder = decoder;
         this.chatPath = ensureLeadingSlash(properties.getChatPath());
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
@@ -46,19 +47,11 @@ public class DoubaoClient implements LLMClient {
     }
 
     @Override
-    public String chat(List<ChatMessage> messages, double temperature) {
-        String url = baseUrl + chatPath;
-        log.debug("Doubao request URL: {}", url);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (apiKey != null && !apiKey.isEmpty()) {
-            headers.setBearerAuth(apiKey);
-        }
-
+    public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("temperature", temperature);
-        body.put("stream", false);
+        body.put("stream", true);
 
         List<Map<String, String>> reqMessages = new ArrayList<>();
         for (ChatMessage m : messages) {
@@ -66,25 +59,33 @@ public class DoubaoClient implements LLMClient {
         }
         body.put("messages", reqMessages);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-            ObjectMapper mapper = new ObjectMapper();
-            ChatCompletionResponse resp = mapper.readValue(response.getBody(), ChatCompletionResponse.class);
-            return resp.getChoices().get(0).getMessage().getContent();
-        } catch (org.springframework.web.client.HttpClientErrorException.Unauthorized ex) {
-            log.error("Doubao API unauthorized", ex);
-            throw new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key");
-        } catch (org.springframework.web.client.HttpClientErrorException ex) {
-            log.error("Doubao API error: {}", ex.getStatusCode());
-            throw new com.glancy.backend.exception.BusinessException(
-                "Failed to call Doubao API: " + ex.getStatusCode(),
-                ex
+        return webClient
+            .post()
+            .uri(chatPath)
+            .contentType(MediaType.APPLICATION_JSON)
+            .headers(h -> {
+                if (apiKey != null && !apiKey.isEmpty()) {
+                    h.setBearerAuth(apiKey);
+                }
+            })
+            .bodyValue(body)
+            .exchangeToFlux(this::handleResponse)
+            .transform(decoder::decode);
+    }
+
+    private Flux<String> handleResponse(ClientResponse resp) {
+        if (resp.statusCode().is4xxClientError()) {
+            if (resp.statusCode().value() == 401) {
+                return Flux.error(new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key"));
+            }
+            return Flux.error(
+                new com.glancy.backend.exception.BusinessException(
+                    "Failed to call Doubao API: " + resp.statusCode(),
+                    null
+                )
             );
-        } catch (Exception e) {
-            log.warn("Failed to parse Doubao response", e);
-            return "";
         }
+        return resp.bodyToFlux(String.class);
     }
 
     private String trimTrailingSlash(String url) {
