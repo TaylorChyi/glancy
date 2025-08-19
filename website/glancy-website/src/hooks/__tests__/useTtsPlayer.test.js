@@ -6,6 +6,7 @@ import { ApiError } from "@/api/client.js";
 // mock global Audio element with basic event system
 const playSpy = jest.fn().mockResolvedValue();
 const pauseSpies = [];
+let audioB64;
 beforeAll(() => {
   class MockResponse {
     constructor(_body, init = {}) {
@@ -13,6 +14,9 @@ beforeAll(() => {
     }
   }
   global.Response = MockResponse;
+  global.URL.createObjectURL = jest.fn(() => "blob:mock");
+  global.URL.revokeObjectURL = jest.fn();
+  audioB64 = btoa("audio");
   global.Audio = jest.fn().mockImplementation(() => {
     const handlers = {};
     const pause = jest.fn(() => handlers.pause?.());
@@ -46,6 +50,8 @@ describe("useTtsPlayer", () => {
     speakWord.mockReset();
     playSpy.mockClear();
     pauseSpies.length = 0;
+    global.URL.createObjectURL.mockClear();
+    global.URL.revokeObjectURL.mockClear();
   });
 
   /**
@@ -54,7 +60,7 @@ describe("useTtsPlayer", () => {
    */
   test("retries with fallback when cache miss", async () => {
     speakWord.mockResolvedValueOnce(new Response(null, { status: 204 }));
-    speakWord.mockResolvedValueOnce({ url: "audio.mp3" });
+    speakWord.mockResolvedValueOnce({ data: audioB64, format: "mp3" });
 
     const { result } = renderHook(() => useTtsPlayer());
 
@@ -101,7 +107,7 @@ describe("useTtsPlayer", () => {
    * Verifies stop pauses audio and resets playing flag.
    */
   test("stop halts playback", async () => {
-    speakWord.mockResolvedValueOnce({ url: "audio.mp3" });
+    speakWord.mockResolvedValueOnce({ data: audioB64, format: "mp3" });
     const { result } = renderHook(() => useTtsPlayer());
 
     await act(async () => {
@@ -113,6 +119,7 @@ describe("useTtsPlayer", () => {
       result.current.stop();
     });
     expect(pauseSpies[0]).toHaveBeenCalled();
+    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
     expect(result.current.playing).toBe(false);
   });
 
@@ -120,7 +127,7 @@ describe("useTtsPlayer", () => {
    * Ensures a new play request pauses the previous audio element.
    */
   test("new play pauses previous audio", async () => {
-    speakWord.mockResolvedValue({ url: "audio.mp3" });
+    speakWord.mockResolvedValue({ data: audioB64, format: "mp3" });
     const first = renderHook(() => useTtsPlayer());
     await act(async () => {
       await first.result.current.play({ text: "a", lang: "en" });

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { useApi } from "@/hooks/useApi.js";
 import { ApiError } from "@/api/client.js";
 import { audioManager } from "@/utils/audioManager.js";
+import { decodeTtsAudio } from "@/utils/audio.js";
 import { useUserStore } from "@/store";
 
 /* global process */
@@ -16,6 +17,17 @@ export function useTtsPlayer({ scope = "word" } = {}) {
   const tts = api.tts;
   const userId = useUserStore((s) => s.user?.id);
   const audioRef = useRef(null);
+  const urlRef = useRef("");
+  const releaseUrl = useCallback(() => {
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = "";
+    }
+    const audio = audioRef.current;
+    if (audio) {
+      audio.src = "";
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [playing, setPlaying] = useState(false);
@@ -33,6 +45,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
     const handleEnd = () => {
       setPlaying(false);
       audioManager.stop(audio);
+      releaseUrl();
     };
     audio.addEventListener("pause", handlePause);
     audio.addEventListener("ended", handleEnd);
@@ -41,11 +54,12 @@ export function useTtsPlayer({ scope = "word" } = {}) {
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnd);
       audioManager.stop(audio);
+      releaseUrl();
       if (typeof document !== "undefined" && audio instanceof HTMLElement) {
         document.body.removeChild(audio);
       }
     };
-  }, []);
+  }, [releaseUrl]);
 
   const fetchAudio = useCallback(
     async (payload) => {
@@ -95,11 +109,14 @@ export function useTtsPlayer({ scope = "word" } = {}) {
         const data = await fetchAudio({ text, lang, voice, speed, format });
         const audio = audioRef.current;
         if (audio) {
-          audio.src = data.url;
+          releaseUrl();
+          const url = decodeTtsAudio(data);
+          audio.src = url;
+          urlRef.current = url;
           await audioManager.play(audio);
           setPlaying(true);
           if (isDev) {
-            console.info("TTS play started", { url: data.url });
+            console.info("TTS play started", { url });
           }
         }
       } catch (err) {
@@ -141,15 +158,16 @@ export function useTtsPlayer({ scope = "word" } = {}) {
         setLoading(false);
       }
     },
-    [fetchAudio, scope, userId],
+    [fetchAudio, scope, userId, releaseUrl],
   );
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     audioManager.stop(audio);
+    releaseUrl();
     setPlaying(false);
-  }, []);
+  }, [releaseUrl]);
 
   return { play, stop, loading, error, playing };
 }

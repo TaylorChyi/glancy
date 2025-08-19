@@ -4,7 +4,7 @@
  */
 class AudioManager {
   constructor() {
-    this.current = null
+    this.current = null;
   }
 
   /**
@@ -13,10 +13,10 @@ class AudioManager {
    */
   async play(audio) {
     if (this.current && this.current !== audio) {
-      this.current.pause()
+      this.current.pause();
     }
-    this.current = audio
-    return audio.play()
+    this.current = audio;
+    return audio.play();
   }
 
   /**
@@ -24,12 +24,13 @@ class AudioManager {
    * @param {HTMLAudioElement} audio
    */
   stop(audio) {
-    if (!audio) return
-    audio.pause()
+    if (!audio) return;
+    audio.pause();
+    audio.src = "";
     if (this.current === audio) {
-      this.current = null
+      this.current = null;
     }
   }
 }
 
-export const audioManager = new AudioManager()
+export const audioManager = new AudioManager();
