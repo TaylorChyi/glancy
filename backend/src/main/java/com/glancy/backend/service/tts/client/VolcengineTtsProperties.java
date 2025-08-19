@@ -49,8 +49,8 @@ public class VolcengineTtsProperties {
     private String service = DEFAULT_SERVICE;
     /** Default voice type used when request does not specify one. */
     private String voiceType;
-    /** Token issued by Volcengine for authentication. */
-    private String token;
+    /** Access token issued by Volcengine for authentication. */
+    private String accessToken;
     /** Placeholder token used when none configured. */
     public static final String FAKE_TOKEN = "FAKE";
     /** Cluster hint used by Volcengine routing. */
@@ -62,10 +62,10 @@ public class VolcengineTtsProperties {
     private Duration healthInterval = Duration.ofMinutes(10);
 
     /**
-     * Returns configured token or a placeholder when missing.
+     * Returns configured access token or a placeholder when missing.
      * Volcengine accepts any non-empty value for token.
      */
-    public String resolveToken() {
-        return StringUtils.hasText(token) ? token : FAKE_TOKEN;
+    public String resolveAccessToken() {
+        return StringUtils.hasText(accessToken) ? accessToken : FAKE_TOKEN;
     }
 }

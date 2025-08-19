@@ -50,7 +50,7 @@ public class VolcengineTtsClient {
         String voice = request.getVoice() != null ? request.getVoice() : props.getVoiceType();
         String reqId = UUID.randomUUID().toString();
 
-        String token = props.resolveToken();
+        String token = props.resolveAccessToken();
         if (VolcengineTtsProperties.FAKE_TOKEN.equals(token)) {
             log.warn("Volcengine TTS token not configured; using placeholder token");
         }
