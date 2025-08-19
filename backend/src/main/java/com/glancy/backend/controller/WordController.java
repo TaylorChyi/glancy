@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
 /**
  * Provides dictionary lookup functionality. Each request also
@@ -56,5 +58,26 @@ public class WordController {
     public ResponseEntity<byte[]> getAudio(@RequestParam String term, @RequestParam Language language) {
         byte[] data = wordService.getAudio(term, language);
         return ResponseEntity.ok(data);
+    }
+
+    /**
+     * Stream word search results via SSE.
+     */
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> streamWord(
+        @AuthenticatedUser Long userId,
+        @RequestParam String term,
+        @RequestParam Language language,
+        @RequestParam(required = false) String model
+    ) {
+        return wordService
+            .streamWordForUser(userId, term, language, model)
+            .map(data -> ServerSentEvent.builder(data).build())
+            .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
+            .onErrorResume(e -> {
+                log.error("Streaming error for user {} term '{}'", userId, term, e);
+                return Flux.just(ServerSentEvent.builder("ERROR").event("error").build());
+            })
+            .doFinally(sig -> log.info("Streaming finished with signal {} for user {} term '{}'", sig, userId, term));
     }
 }

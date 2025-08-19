@@ -2,6 +2,7 @@ package com.glancy.backend.service;
 
 import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.UserPreference;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 /**
  * Performs dictionary lookups via the configured third-party client.
@@ -25,17 +27,20 @@ public class WordService {
     private final WordSearcher wordSearcher;
     private final WordRepository wordRepository;
     private final UserPreferenceRepository userPreferenceRepository;
+    private final SearchRecordService searchRecordService;
 
     public WordService(
         @Qualifier("deepSeekClient") DictionaryClient dictionaryClient,
         WordSearcher wordSearcher,
         WordRepository wordRepository,
-        UserPreferenceRepository userPreferenceRepository
+        UserPreferenceRepository userPreferenceRepository,
+        SearchRecordService searchRecordService
     ) {
         this.dictionaryClient = dictionaryClient;
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
         this.userPreferenceRepository = userPreferenceRepository;
+        this.searchRecordService = searchRecordService;
     }
 
     /**
@@ -71,6 +76,38 @@ public class WordService {
                 saveWord(term, resp, language);
                 return resp;
             });
+    }
+
+    /**
+     * Stream search results for a word and persist the search record.
+     */
+    @Transactional
+    public Flux<String> streamWordForUser(Long userId, String term, Language language, String model) {
+        log.info(
+            "Streaming word '{}' for user {} in language {} using model {}",
+            term,
+            userId,
+            language,
+            model
+        );
+        SearchRecordRequest req = new SearchRecordRequest();
+        req.setTerm(term);
+        req.setLanguage(language);
+        try {
+            searchRecordService.saveRecord(userId, req);
+        } catch (Exception e) {
+            log.error("Failed to save search record for user {}", userId, e);
+            return Flux.error(e);
+        }
+        try {
+            return wordSearcher
+                .streamSearch(term, language, model)
+                .doOnNext(chunk -> log.info("Streaming chunk for term '{}': {}", term, chunk))
+                .doOnError(err -> log.error("Error streaming term '{}': {}", term, err.getMessage(), err));
+        } catch (Exception e) {
+            log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
+            return Flux.error(e);
+        }
     }
 
     private void saveWord(String requestedTerm, WordResponse resp, Language language) {
