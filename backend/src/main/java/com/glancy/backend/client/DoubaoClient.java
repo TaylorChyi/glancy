@@ -5,6 +5,7 @@ import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.util.UrlUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +30,8 @@ public class DoubaoClient implements LLMClient {
 
     public DoubaoClient(RestTemplate restTemplate, DoubaoProperties properties) {
         this.restTemplate = restTemplate;
-        this.baseUrl = trimTrailingSlash(properties.getBaseUrl());
-        this.chatPath = ensureLeadingSlash(properties.getChatPath());
+        this.baseUrl = UrlUtils.trimTrailingSlash(properties.getBaseUrl());
+        this.chatPath = UrlUtils.ensureLeadingSlash(properties.getChatPath());
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
         if (apiKey == null || apiKey.isBlank()) {
@@ -85,20 +86,6 @@ public class DoubaoClient implements LLMClient {
             log.warn("Failed to parse Doubao response", e);
             return "";
         }
-    }
-
-    private String trimTrailingSlash(String url) {
-        if (url == null || url.isBlank()) {
-            return "";
-        }
-        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-    }
-
-    private String ensureLeadingSlash(String path) {
-        if (path == null || path.isBlank()) {
-            return "";
-        }
-        return path.startsWith("/") ? path : "/" + path;
     }
 
     private String maskKey(String key) {
