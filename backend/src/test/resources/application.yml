@@ -13,36 +13,36 @@ spring:
       ddl-auto: update
     show-sql: true
     properties:
-      hibernate.dialect: org.hibernate.dialect.H2Dialect
+      "hibernate.dialect": org.hibernate.dialect.H2Dialect
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.schema: debug
+    "org.hibernate.SQL": debug
+    "org.hibernate.orm.schema": debug
 
 oss:
   endpoint: https://oss-cn-beijing.aliyuncs.com
   bucket: glancy-avatar-bucket
-  avatar-dir: avatars/
+  "avatar-dir": avatars/
   public-read: true
-  signed-url-expiration-minutes: 60
-  verify-location: true
-  access-key-id:
-  access-key-secret:
+  "signed-url-expiration-minutes": 60
+  "verify-location": true
+  "access-key-id":
+  "access-key-secret":
 
 llm:
-  default-client: deepseek
+  "default-client": deepseek
   temperature: 0.7
-  prompt-path: prompts/english_to_chinese.txt
+  "prompt-path": prompts/english_to_chinese.txt
 
 tts:
   volcengine:
     # Credentials and routing for Volcengine TTS service during tests.
-    app-id:
+    "app-id":
     # Access token issued by Volcengine for authentication.
-    access-token: ${VOLCENGINE_ACCESS_TOKEN:}
+    "access-token": ${VOLCENGINE_ACCESS_TOKEN:}
     cluster: volcano_tts
     # Base URL used during tests; points to mock server or real endpoint.
-    api-url: https://openspeech.bytedance.com/api/v1/tts
+    "api-url": https://openspeech.bytedance.com/api/v1/tts
     # Interval for proactive health checks during tests.
-    health-interval: PT1M
+    "health-interval": PT1M
