@@ -1,8 +1,8 @@
 package com.glancy.backend.service;
 
 import com.glancy.backend.client.DictionaryClient;
-import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.dto.SearchRecordRequest;
+import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.UserPreference;
@@ -83,13 +83,7 @@ public class WordService {
      */
     @Transactional
     public Flux<String> streamWordForUser(Long userId, String term, Language language, String model) {
-        log.info(
-            "Streaming word '{}' for user {} in language {} using model {}",
-            term,
-            userId,
-            language,
-            model
-        );
+        log.info("Streaming word '{}' for user {} in language {} using model {}", term, userId, language, model);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);

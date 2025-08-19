@@ -25,11 +25,13 @@ import reactor.test.StepVerifier;
  * 3. 发送请求并验证 SSE 响应序列。
  */
 @WebFluxTest(controllers = WordController.class)
-@Import({
-    com.glancy.backend.config.security.SecurityConfig.class,
-    com.glancy.backend.config.WebConfig.class,
-    com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-})
+@Import(
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class WordControllerStreamingTest {
 
     @Autowired
@@ -46,13 +48,20 @@ class WordControllerStreamingTest {
 
     @Test
     void testStreamWord() {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null)))
-            .thenReturn(Flux.just("part1", "part2"));
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
+            Flux.just("part1", "part2")
+        );
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         Flux<String> body = webTestClient
             .get()
-            .uri(uriBuilder -> uriBuilder.path("/api/words/stream").queryParam("term", "hello").queryParam("language", "ENGLISH").build())
+            .uri(uriBuilder ->
+                uriBuilder
+                    .path("/api/words/stream")
+                    .queryParam("term", "hello")
+                    .queryParam("language", "ENGLISH")
+                    .build()
+            )
             .header("X-USER-TOKEN", "tkn")
             .accept(MediaType.TEXT_EVENT_STREAM)
             .exchange()
