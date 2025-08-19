@@ -76,7 +76,8 @@ tts:
   volcengine:
     # Credentials and routing for Volcengine TTS service.
     app-id: ${VOLCENGINE_APP_ID:}
-    token: ${VOLCENGINE_TOKEN:}
+    # Access token issued by Volcengine for authentication.
+    access-token: ${VOLCENGINE_ACCESS_TOKEN:}
     cluster: volcano_tts
     # Base URL of Volcengine TTS endpoint. Override for staging or mocks.
     api-url: https://openspeech.bytedance.com/api/v1/tts

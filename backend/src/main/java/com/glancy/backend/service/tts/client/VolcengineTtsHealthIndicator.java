@@ -56,11 +56,12 @@ public class VolcengineTtsHealthIndicator implements HealthIndicator {
         String url = props.getApiUrl();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + props.getToken());
+        String token = props.resolveAccessToken();
+        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + token);
 
         Map<String, Object> body = new LinkedHashMap<>();
         Map<String, Object> app = new LinkedHashMap<>();
-        app.put("token", props.getToken());
+        app.put("token", token);
         app.put("cluster", props.getCluster());
         app.put("appid", props.getAppId());
         body.put("app", app);
