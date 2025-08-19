@@ -74,8 +74,8 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private static class Event {
+
         String type;
         StringBuilder data = new StringBuilder();
     }
 }
-

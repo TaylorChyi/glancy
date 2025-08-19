@@ -37,7 +37,9 @@ class ChatControllerIT {
             LLMClient stub = new LLMClient() {
                 @Override
                 public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
-                    return Flux.interval(Duration.ofMillis(5)).map(i -> "chunk-" + i).take(50);
+                    return Flux.interval(Duration.ofMillis(5))
+                        .map(i -> "chunk-" + i)
+                        .take(50);
                 }
 
                 @Override

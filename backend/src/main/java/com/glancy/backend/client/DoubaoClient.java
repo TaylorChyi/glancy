@@ -82,9 +82,7 @@ public class DoubaoClient implements LLMClient {
     private Flux<String> handleResponse(ClientResponse resp) {
         if (resp.statusCode().is4xxClientError()) {
             if (resp.statusCode().value() == 401) {
-                return Flux.error(
-                    new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key")
-                );
+                return Flux.error(new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key"));
             }
             return Flux.error(
                 new com.glancy.backend.exception.BusinessException(
@@ -118,4 +116,3 @@ public class DoubaoClient implements LLMClient {
         return key.substring(0, 4) + "****" + key.substring(end);
     }
 }
-

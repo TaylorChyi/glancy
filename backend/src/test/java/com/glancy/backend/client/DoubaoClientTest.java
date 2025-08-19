@@ -49,9 +49,8 @@ class DoubaoClientTest {
     void chatUnauthorizedThrowsException() {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new DoubaoStreamDecoder());
-        assertThrows(
-            com.glancy.backend.exception.UnauthorizedException.class,
-            () -> client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
+        assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
+            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
         );
     }
 
@@ -76,14 +75,13 @@ class DoubaoClientTest {
     private Mono<ClientResponse> successResponse(ClientRequest request) {
         assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
-        String body =
-            """
+        String body = """
             event: message
             data: {"choices":[{"delta":{"content":"hi"}}]}
-            
+
             event: end
             data: {"code":0}
-            
+
             """;
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
@@ -94,17 +92,16 @@ class DoubaoClientTest {
     }
 
     private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
-        String body =
-            """
+        String body = """
             event: message
             data: {"choices":[{"delta":{"content":"he"}}]}
-            
+
             event: message
             data: {"choices":[{"delta":{"content":"llo"}}]}
-            
+
             event: end
             data: {"code":0}
-            
+
             """;
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
@@ -115,14 +112,13 @@ class DoubaoClientTest {
     }
 
     private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
-        String body =
-            """
+        String body = """
             event: message
             data: {"choices":[{"delta":{"content":"hi"}}]}
-            
+
             event: error
             data: {"message":"boom"}
-            
+
             """;
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
@@ -132,4 +128,3 @@ class DoubaoClientTest {
         );
     }
 }
-

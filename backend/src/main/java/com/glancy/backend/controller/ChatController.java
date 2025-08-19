@@ -38,12 +38,10 @@ public class ChatController {
             .streamChat(request.getMessages(), request.getTemperature())
             .map(data -> ServerSentEvent.builder(data).build())
             .doOnCancel(() -> log.info("SSE connection cancelled: model={}", request.getModel()))
-            .onErrorResume(
-                ex -> {
-                    log.error("SSE streaming failed: model={}", request.getModel(), ex);
-                    return Flux.just(ServerSentEvent.builder("[ERROR] stream terminated").event("error").build());
-                }
-            )
+            .onErrorResume(ex -> {
+                log.error("SSE streaming failed: model={}", request.getModel(), ex);
+                return Flux.just(ServerSentEvent.builder("[ERROR] stream terminated").event("error").build());
+            })
             .doFinally(signal -> log.info("SSE stream terminated: {}", signal));
     }
 }
