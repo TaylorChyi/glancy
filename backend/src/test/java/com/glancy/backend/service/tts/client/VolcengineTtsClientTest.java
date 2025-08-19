@@ -34,7 +34,7 @@ class VolcengineTtsClientTest {
         RestTemplate restTemplate = new RestTemplate();
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
-        props.setToken("tok");
+        props.setAccessToken("tok");
         props.setCluster("cluster");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
@@ -110,7 +110,7 @@ class VolcengineTtsClientTest {
         RestTemplate restTemplate = org.mockito.Mockito.mock(RestTemplate.class);
         VolcengineTtsProperties props = new VolcengineTtsProperties();
         props.setAppId("app");
-        props.setToken("tok");
+        props.setAccessToken("tok");
         props.setCluster("cluster");
         props.setVoiceType("v1");
         props.setApiUrl("http://localhost/tts");
