@@ -1,40 +1,42 @@
-import { useState, useEffect, useRef } from 'react'
-import MessagePopup from '@/components/ui/MessagePopup'
-import { useHistory, useUser, useFavorites } from '@/context'
-import { useNavigate } from 'react-router-dom'
-import { useTheme } from '@/context'
-import DictionaryEntry from '@/components/ui/DictionaryEntry'
-import { useLanguage } from '@/context'
-import { useFetchWord, useSpeechInput } from '@/hooks'
-import './App.css'
-import ChatInput from '@/components/ui/ChatInput'
-import Layout from '@/components/Layout'
-import HistoryDisplay from '@/components/ui/HistoryDisplay'
-import { useModelStore } from '@/store'
-import ICP from '@/components/ui/ICP'
-import FavoritesView from './FavoritesView.jsx'
-import { useAppShortcuts } from '@/hooks'
+import { useState, useEffect, useRef } from "react";
+import MessagePopup from "@/components/ui/MessagePopup";
+import { useHistory, useUser, useFavorites } from "@/context";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "@/context";
+import DictionaryEntry from "@/components/ui/DictionaryEntry";
+import { useLanguage } from "@/context";
+import { useStreamWord, useSpeechInput } from "@/hooks";
+import "./App.css";
+import ChatInput from "@/components/ui/ChatInput";
+import Layout from "@/components/Layout";
+import HistoryDisplay from "@/components/ui/HistoryDisplay";
+import { useModelStore } from "@/store";
+import ICP from "@/components/ui/ICP";
+import FavoritesView from "./FavoritesView.jsx";
+import { useAppShortcuts } from "@/hooks";
 
 function App() {
-  const [text, setText] = useState('')
-  const [entry, setEntry] = useState(null)
-  const { t, lang, setLang } = useLanguage()
-  const placeholder = t.searchPlaceholder
-  const [loading, setLoading] = useState(false)
-  const [popupOpen, setPopupOpen] = useState(false)
-  const [popupMsg, setPopupMsg] = useState('')
-  const { user } = useUser()
-  const { loadHistory, addHistory, unfavoriteHistory } = useHistory()
-  const { theme, setTheme } = useTheme()
-  const inputRef = useRef(null)
-  const [showFavorites, setShowFavorites] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
-  const [fromFavorites, setFromFavorites] = useState(false)
-  const { favorites, toggleFavorite } = useFavorites()
-  const navigate = useNavigate()
-  const { fetchWordWithHandling } = useFetchWord()
-  const { model } = useModelStore()
-  const { start: startSpeech } = useSpeechInput({ onResult: setText })
+  const [text, setText] = useState("");
+  const [entry, setEntry] = useState(null);
+  const { t, lang, setLang } = useLanguage();
+  const placeholder = t.searchPlaceholder;
+  const [loading, setLoading] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupMsg, setPopupMsg] = useState("");
+  const { user } = useUser();
+  const { loadHistory, addHistory, unfavoriteHistory } = useHistory();
+  const { theme, setTheme } = useTheme();
+  const inputRef = useRef(null);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [fromFavorites, setFromFavorites] = useState(false);
+  const [streamText, setStreamText] = useState("");
+  const abortRef = useRef(null);
+  const { favorites, toggleFavorite } = useFavorites();
+  const navigate = useNavigate();
+  const streamWord = useStreamWord();
+  const { model } = useModelStore();
+  const { start: startSpeech } = useSpeechInput({ onResult: setText });
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -45,114 +47,168 @@ function App() {
     entry,
     showFavorites,
     showHistory,
-    toggleFavorite
-  })
+    toggleFavorite,
+  });
 
   const handleToggleFavorites = () => {
     // always show favorites when invoked
-    setShowFavorites(true)
-    setShowHistory(false)
-    setFromFavorites(false)
-  }
-
+    setShowFavorites(true);
+    setShowHistory(false);
+    setFromFavorites(false);
+  };
 
   const handleUnfavorite = (term) => {
-    unfavoriteHistory(term, user)
-    toggleFavorite(term)
-  }
+    unfavoriteHistory(term, user);
+    toggleFavorite(term);
+  };
 
   const handleSelectFavorite = async (term) => {
-    await handleSelectHistory(term)
-    setShowFavorites(false)
-    setFromFavorites(true)
-  }
+    await handleSelectHistory(term);
+    setShowFavorites(false);
+    setFromFavorites(true);
+  };
 
   const handleBackFromFavorite = () => {
-    setShowFavorites(true)
-    setFromFavorites(false)
-    setEntry(null)
-  }
+    setShowFavorites(true);
+    setFromFavorites(false);
+    setEntry(null);
+  };
 
   const handleVoice = () => {
-    const locale = lang === 'en' ? 'en-US' : 'zh-CN'
-    startSpeech(locale)
-  }
+    const locale = lang === "en" ? "en-US" : "zh-CN";
+    startSpeech(locale);
+  };
 
   const handleSend = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!user) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
-    if (!text.trim()) return
-    // ensure result view is shown when searching from favorites or history
-    setShowFavorites(false)
-    setShowHistory(false)
-    const input = text.trim()
-    setText('')
-    setLoading(true)
-    const { data, error, language } = await fetchWordWithHandling({
-      user,
-      term: input,
-      model
-    })
-    if (error) {
-      setPopupMsg(error.message)
-      setPopupOpen(true)
-    } else {
-      setEntry(data)
-      addHistory(input, user, language)
+    if (!text.trim()) return;
+    setShowFavorites(false);
+    setShowHistory(false);
+    const input = text.trim();
+    setText("");
+    console.info("[App] search start", input);
+    if (abortRef.current) {
+      console.info("[App] search cancel previous");
+      abortRef.current.abort();
     }
-    setLoading(false)
-  }
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
+    setEntry(null);
+    setStreamText("");
+    let detected;
+    try {
+      let acc = "";
+      for await (const { chunk, language } of streamWord({
+        user,
+        term: input,
+        model,
+        signal: controller.signal,
+      })) {
+        if (!detected) detected = language;
+        acc += chunk;
+        setStreamText((prev) => prev + chunk);
+        try {
+          const parsed = JSON.parse(acc);
+          setEntry(parsed);
+        } catch {
+          // ignore parse errors until JSON is complete
+        }
+      }
+      addHistory(input, user, detected);
+      setStreamText("");
+      console.info("[App] search complete", input);
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.info("[App] search cancelled", input);
+      } else {
+        console.info("[App] search error", error);
+        setPopupMsg(error.message);
+        setPopupOpen(true);
+      }
+    } finally {
+      setLoading(false);
+      abortRef.current = null;
+    }
+  };
 
   const handleSelectHistory = async (term) => {
     if (!user) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
-    // hide favorites or history display when showing a selected entry
-    setShowFavorites(false)
-    setShowHistory(false)
-    setLoading(true)
-    const { data, error } = await fetchWordWithHandling({
-      user,
-      term,
-      model
-    })
-    if (error) {
-      setPopupMsg(error.message)
-      setPopupOpen(true)
-    } else {
-      setEntry(data)
-      // selecting from history should not reorder records
+    setShowFavorites(false);
+    setShowHistory(false);
+    console.info("[App] search start", term);
+    if (abortRef.current) {
+      console.info("[App] search cancel previous");
+      abortRef.current.abort();
     }
-    setLoading(false)
-  }
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
+    setEntry(null);
+    setStreamText("");
+    try {
+      let acc = "";
+      for await (const { chunk } of streamWord({
+        user,
+        term,
+        model,
+        signal: controller.signal,
+      })) {
+        acc += chunk;
+        setStreamText((prev) => prev + chunk);
+        try {
+          const parsed = JSON.parse(acc);
+          setEntry(parsed);
+        } catch {
+          // ignore parse errors until JSON is complete
+        }
+      }
+      setStreamText("");
+      console.info("[App] search complete", term);
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.info("[App] search cancelled", term);
+      } else {
+        console.info("[App] search error", error);
+        setPopupMsg(error.message);
+        setPopupOpen(true);
+      }
+    } finally {
+      setLoading(false);
+      abortRef.current = null;
+    }
+  };
 
   useEffect(() => {
-    loadHistory(user)
-  }, [user, loadHistory])
+    loadHistory(user);
+  }, [user, loadHistory]);
 
   useEffect(() => {
     if (!user) {
-      setEntry(null)
-      setText('')
-      setShowFavorites(false)
-      setShowHistory(false)
-      setFromFavorites(false)
+      setEntry(null);
+      setText("");
+      setShowFavorites(false);
+      setShowHistory(false);
+      setFromFavorites(false);
     }
-  }, [user])
+  }, [user]);
 
   return (
     <>
       <Layout
         sidebarProps={{
           onToggleFavorites: handleToggleFavorites,
-          onSelectHistory: handleSelectHistory
+          onSelectHistory: handleSelectHistory,
         }}
         topBarProps={{
-          term: entry?.term || '',
+          term: entry?.term || "",
           lang,
           showBack: !showFavorites && fromFavorites,
           onBack: handleBackFromFavorite,
@@ -160,7 +216,7 @@ function App() {
           onToggleFavorite: toggleFavoriteEntry,
           canFavorite: !!entry && !showFavorites && !showHistory,
         }}
-        bottomContent={(
+        bottomContent={
           <ChatInput
             inputRef={inputRef}
             value={text}
@@ -169,7 +225,7 @@ function App() {
             onVoice={handleVoice}
             placeholder={t.inputPlaceholder}
           />
-        )}
+        }
       >
         <div className="display">
           {showFavorites ? (
@@ -182,7 +238,7 @@ function App() {
           ) : showHistory ? (
             <HistoryDisplay />
           ) : loading ? (
-            '...'
+            streamText || "..."
           ) : entry ? (
             <DictionaryEntry entry={entry} />
           ) : (
@@ -199,7 +255,7 @@ function App() {
         onClose={() => setPopupOpen(false)}
       />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
