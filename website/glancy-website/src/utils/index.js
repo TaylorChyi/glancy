@@ -8,3 +8,4 @@ export { getBrandText, BRAND_TEXT } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";
 export { audioManager } from "./audioManager.js";
 export { decodeTtsAudio } from "./audio.js";
+export { createCachedFetcher } from "./cache.js";
