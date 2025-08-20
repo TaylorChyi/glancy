@@ -42,6 +42,7 @@ export function createWordsApi(request = apiRequest) {
     let response;
     try {
       response = await fetch(url, { headers, signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       console.info("streamWord error", err);
       throw err;
