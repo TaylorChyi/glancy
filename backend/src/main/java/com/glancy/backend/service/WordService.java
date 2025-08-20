@@ -98,7 +98,17 @@ public class WordService {
             return wordSearcher
                 .streamSearch(term, language, model)
                 .doOnNext(chunk -> log.info("Streaming chunk for term '{}': {}", term, chunk))
-                .doOnError(err -> log.error("Error streaming term '{}': {}", term, err.getMessage(), err));
+                .doOnError(err ->
+                    log.error(
+                        "Streaming error for user {} term '{}' in language {} using model {}: {}",
+                        userId,
+                        term,
+                        language,
+                        model,
+                        err.getMessage(),
+                        err
+                    )
+                );
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
