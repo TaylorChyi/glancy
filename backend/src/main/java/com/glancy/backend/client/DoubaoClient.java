@@ -91,7 +91,19 @@ public class DoubaoClient implements LLMClient {
                 )
             );
         }
-        return resp.bodyToFlux(String.class);
+        return resp
+            .bodyToFlux(String.class)
+            .doOnNext(raw -> log.debug("SSE event [{}]: {}", extractEventType(raw), raw));
+    }
+
+    private String extractEventType(String raw) {
+        for (String line : raw.split("\n")) {
+            line = line.trim();
+            if (line.startsWith("event:")) {
+                return line.substring(6).trim();
+            }
+        }
+        return "message";
     }
 
     private String trimTrailingSlash(String url) {
