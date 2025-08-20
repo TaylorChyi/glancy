@@ -6,6 +6,7 @@ import { useTheme } from "@/context";
 import DictionaryEntry from "@/components/ui/DictionaryEntry";
 import { useLanguage } from "@/context";
 import { useStreamWord, useSpeechInput } from "@/hooks";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
@@ -238,7 +239,7 @@ function App() {
           ) : showHistory ? (
             <HistoryDisplay />
           ) : loading ? (
-            streamText || "..."
+            <ReactMarkdown>{streamText || "..."}</ReactMarkdown>
           ) : entry ? (
             <DictionaryEntry entry={entry} />
           ) : (

@@ -23,30 +23,3 @@ export function useFetchWord() {
 
   return { fetchWordWithHandling };
 }
-
-export function useStreamWord() {
-  const api = useApi();
-  const { streamWord } = api.words;
-
-  return async function* ({ user, term, model, signal }) {
-    const language = detectWordLanguage(term);
-    console.info("[useStreamWord] start", term);
-    try {
-      for await (const chunk of streamWord({
-        userId: user.id,
-        term,
-        language,
-        model: clientNameFromModel(model),
-        token: user.token,
-        signal,
-      })) {
-        console.info("[useStreamWord] chunk", chunk);
-        yield { chunk, language };
-      }
-      console.info("[useStreamWord] end", term);
-    } catch (error) {
-      console.info("[useStreamWord] error", error);
-      throw error;
-    }
-  };
-}
