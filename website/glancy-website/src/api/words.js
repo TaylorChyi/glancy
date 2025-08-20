@@ -34,19 +34,26 @@ export function createWordsApi(request = apiRequest) {
     ({ term, language }) => `${language}:${term}`,
   );
 
+  /**
+   * 流式获取词汇释义并输出统一格式日志。
+   * 日志格式:
+   *   console.info("[streamWord] <阶段>", { userId, term, chunk?, error? })
+   */
   async function* streamWord({ userId, term, language, model, token, signal }) {
     const params = new URLSearchParams({ userId, term, language });
     if (model) params.append("model", model);
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
     const headers = token ? { "X-USER-TOKEN": token } : {};
+    const logCtx = { userId, term };
     let response;
     try {
       response = await fetch(url, { headers, signal });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (err) {
-      console.info("streamWord error", err);
+      console.info("[streamWord] error", { ...logCtx, error: err });
       throw err;
     }
+    console.info("[streamWord] start", logCtx);
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -69,17 +76,18 @@ export function createWordsApi(request = apiRequest) {
             }
           }
           if (event === "error") {
-            console.info("streamWord error", data);
+            console.info("[streamWord] error", { ...logCtx, error: data });
             throw new Error(data);
           }
           if (data) {
-            console.info("streamWord chunk", data);
+            console.info("[streamWord] chunk", { ...logCtx, chunk: data });
             yield data;
           }
         }
       }
+      console.info("[streamWord] end", logCtx);
     } catch (err) {
-      console.info("streamWord error", err);
+      console.info("[streamWord] error", { ...logCtx, error: err });
       throw err;
     }
   }
