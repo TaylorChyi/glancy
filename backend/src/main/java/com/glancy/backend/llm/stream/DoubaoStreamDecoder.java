@@ -17,13 +17,13 @@ import reactor.core.publisher.Flux;
 public class DoubaoStreamDecoder implements StreamDecoder {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Map<String, Function<String, Flux<String>>> handlers;
+    private final Map<DoubaoEventType, Function<String, Flux<String>>> handlers;
 
     public DoubaoStreamDecoder() {
-        Map<String, Function<String, Flux<String>>> map = new HashMap<>();
-        map.put("message", this::handleMessage);
-        map.put("error", this::handleError);
-        map.put("end", data -> Flux.empty());
+        Map<DoubaoEventType, Function<String, Flux<String>>> map = new HashMap<>();
+        map.put(DoubaoEventType.MESSAGE, this::handleMessage);
+        map.put(DoubaoEventType.ERROR, this::handleError);
+        map.put(DoubaoEventType.END, data -> Flux.empty());
         this.handlers = Map.copyOf(map);
     }
 
@@ -34,15 +34,17 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .map(String::trim)
             .bufferUntil(String::isEmpty)
             .map(this::toEvent)
-            .takeUntil(evt -> "end".equals(evt.type))
-            .flatMap(evt -> handlers.getOrDefault(evt.type, d -> Flux.empty()).apply(evt.data.toString()));
+            .takeUntil(evt -> evt.type == DoubaoEventType.END)
+            .flatMap(
+                evt -> handlers.getOrDefault(evt.type, d -> Flux.empty()).apply(evt.data.toString())
+            );
     }
 
     private Event toEvent(List<String> lines) {
         Event evt = new Event();
         for (String line : lines) {
             if (line.startsWith("event:")) {
-                evt.type = line.substring(6).trim();
+                evt.type = DoubaoEventType.from(line.substring(6).trim());
             } else if (line.startsWith("data:")) {
                 if (evt.data.length() > 0) {
                     evt.data.append('\n');
@@ -75,7 +77,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
     private static class Event {
 
-        String type;
+        DoubaoEventType type = DoubaoEventType.MESSAGE;
         StringBuilder data = new StringBuilder();
     }
 }

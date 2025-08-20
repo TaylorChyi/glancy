@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.stream.DoubaoEventType;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,13 +77,13 @@ class DoubaoClientTest {
         assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
         String body = """
-            event: message
+            event: %s
             data: {"choices":[{"delta":{"content":"hi"}}]}
 
-            event: end
+            event: %s
             data: {"code":0}
 
-            """;
+            """.formatted(DoubaoEventType.MESSAGE.value(), DoubaoEventType.END.value());
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -93,16 +94,20 @@ class DoubaoClientTest {
 
     private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
         String body = """
-            event: message
+            event: %s
             data: {"choices":[{"delta":{"content":"he"}}]}
 
-            event: message
+            event: %s
             data: {"choices":[{"delta":{"content":"llo"}}]}
 
-            event: end
+            event: %s
             data: {"code":0}
 
-            """;
+            """.formatted(
+                DoubaoEventType.MESSAGE.value(),
+                DoubaoEventType.MESSAGE.value(),
+                DoubaoEventType.END.value()
+            );
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -113,13 +118,13 @@ class DoubaoClientTest {
 
     private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
         String body = """
-            event: message
+            event: %s
             data: {"choices":[{"delta":{"content":"hi"}}]}
 
-            event: error
+            event: %s
             data: {"message":"boom"}
 
-            """;
+            """.formatted(DoubaoEventType.MESSAGE.value(), DoubaoEventType.ERROR.value());
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
