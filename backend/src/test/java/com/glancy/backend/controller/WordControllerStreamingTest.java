@@ -12,10 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.core.ParameterizedTypeReference;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -80,8 +80,9 @@ class WordControllerStreamingTest {
      */
     @Test
     void testStreamWordError() {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null)))
-            .thenReturn(Flux.error(new IllegalStateException("boom")));
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
+            Flux.error(new IllegalStateException("boom"))
+        );
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         Flux<ServerSentEvent<String>> body = webTestClient
@@ -101,8 +102,7 @@ class WordControllerStreamingTest {
             .returnResult(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
             .getResponseBody();
 
-        StepVerifier
-            .create(body)
+        StepVerifier.create(body)
             .expectNextMatches(evt -> "error".equals(evt.event()) && "boom".equals(evt.data()))
             .verifyComplete();
     }

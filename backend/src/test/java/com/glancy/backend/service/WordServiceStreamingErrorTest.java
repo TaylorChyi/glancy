@@ -40,20 +40,21 @@ class WordServiceStreamingErrorTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        wordService =
-            new WordService(
-                dictionaryClient,
-                wordSearcher,
-                wordRepository,
-                userPreferenceRepository,
-                searchRecordService
-            );
+        wordService = new WordService(
+            dictionaryClient,
+            wordSearcher,
+            wordRepository,
+            userPreferenceRepository,
+            searchRecordService
+        );
     }
 
     @Test
     void wrapsExceptionFromSearcher() {
         when(wordSearcher.streamSearch(any(), any(), any())).thenThrow(new RuntimeException("boom"));
         Flux<String> result = wordService.streamWordForUser(1L, "hello", Language.ENGLISH, null);
-        StepVerifier.create(result).expectErrorMatches(e -> e instanceof IllegalStateException && e.getMessage().contains("boom")).verify();
+        StepVerifier.create(result)
+            .expectErrorMatches(e -> e instanceof IllegalStateException && e.getMessage().contains("boom"))
+            .verify();
     }
 }
