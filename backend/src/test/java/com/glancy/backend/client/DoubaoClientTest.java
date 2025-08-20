@@ -3,6 +3,7 @@ package com.glancy.backend.client;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
@@ -39,7 +40,11 @@ class DoubaoClientTest {
     @Test
     void chatReturnsContent() {
         ExchangeFunction ef = this::successResponse;
-        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new DoubaoStreamDecoder());
+        client = new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef),
+            properties,
+            new DoubaoStreamDecoder(new ObjectMapper())
+        );
         String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
         assertEquals("hi", result);
     }
@@ -48,7 +53,11 @@ class DoubaoClientTest {
     @Test
     void chatUnauthorizedThrowsException() {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
-        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new DoubaoStreamDecoder());
+        client = new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef),
+            properties,
+            new DoubaoStreamDecoder(new ObjectMapper())
+        );
         assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
             client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
         );
@@ -58,7 +67,11 @@ class DoubaoClientTest {
     @Test
     void streamChatEmitsSegments() {
         ExchangeFunction ef = this::streamSuccessResponse;
-        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new DoubaoStreamDecoder());
+        client = new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef),
+            properties,
+            new DoubaoStreamDecoder(new ObjectMapper())
+        );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
         StepVerifier.create(flux).expectNext("he").expectNext("llo").verifyComplete();
     }
@@ -67,7 +80,11 @@ class DoubaoClientTest {
     @Test
     void streamChatErrorEvent() {
         ExchangeFunction ef = this::streamErrorResponse;
-        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties, new DoubaoStreamDecoder());
+        client = new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef),
+            properties,
+            new DoubaoStreamDecoder(new ObjectMapper())
+        );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
         StepVerifier.create(flux).expectNext("hi").expectErrorMessage("boom").verify();
     }

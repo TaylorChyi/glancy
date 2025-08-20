@@ -16,10 +16,11 @@ import reactor.core.publisher.Flux;
 @Component("doubaoStreamDecoder")
 public class DoubaoStreamDecoder implements StreamDecoder {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
     private final Map<String, Function<String, Flux<String>>> handlers;
 
-    public DoubaoStreamDecoder() {
+    public DoubaoStreamDecoder(ObjectMapper mapper) {
+        this.mapper = mapper;
         Map<String, Function<String, Flux<String>>> map = new HashMap<>();
         map.put("message", this::handleMessage);
         map.put("error", this::handleError);
