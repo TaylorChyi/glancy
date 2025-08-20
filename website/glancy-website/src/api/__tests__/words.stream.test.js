@@ -16,7 +16,9 @@ test("streamWord yields chunks with logging", async () => {
   });
 
   const originalFetch = global.fetch;
-  global.fetch = jest.fn().mockResolvedValue({ body: stream });
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ body: stream, ok: true, status: 200 });
   const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
 
   const chunks = [];
@@ -37,8 +39,16 @@ test("streamWord yields chunks with logging", async () => {
     }),
   );
   expect(chunks).toEqual(["part1", "part2"]);
-  expect(infoSpy).toHaveBeenCalledWith("streamWord chunk", "part1");
-  expect(infoSpy).toHaveBeenCalledWith("streamWord chunk", "part2");
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] chunk", {
+    userId: "u",
+    term: "hello",
+    chunk: "part1",
+  });
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] chunk", {
+    userId: "u",
+    term: "hello",
+    chunk: "part2",
+  });
 
   infoSpy.mockRestore();
   global.fetch = originalFetch;
@@ -58,7 +68,9 @@ test("streamWord throws on error event", async () => {
   });
 
   const originalFetch = global.fetch;
-  global.fetch = jest.fn().mockResolvedValue({ body: stream });
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ body: stream, ok: true, status: 200 });
   const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
 
   await expect(
@@ -73,7 +85,11 @@ test("streamWord throws on error event", async () => {
     })(),
   ).rejects.toThrow("boom");
 
-  expect(infoSpy).toHaveBeenCalledWith("streamWord error", "boom");
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] error", {
+    userId: "u",
+    term: "hello",
+    error: "boom",
+  });
 
   infoSpy.mockRestore();
   global.fetch = originalFetch;
