@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -13,6 +14,7 @@ import reactor.core.publisher.Flux;
  * 针对抖宝流式事件格式的解析器。通过事件类型与处理器映射，
  * 保持协议扩展的开放性，同时对常见事件进行内聚处理。
  */
+@Slf4j
 @Component("doubaoStreamDecoder")
 public class DoubaoStreamDecoder implements StreamDecoder {
 
@@ -65,9 +67,17 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     private Flux<String> handleMessage(String json) {
         try {
             JsonNode node = mapper.readTree(json);
-            String content = node.path("choices").path(0).path("delta").path("content").asText();
-            return content.isEmpty() ? Flux.empty() : Flux.just(content);
+            JsonNode contentNode = node.path("choices").path(0).path("delta").path("content");
+            String content = contentNode.isArray()
+                ? contentNode.path(0).path("text").asText()
+                : contentNode.asText();
+            if (content == null || content.isEmpty()) {
+                log.warn("Failed to parse Doubao message: {}", json);
+                return Flux.empty();
+            }
+            return Flux.just(content);
         } catch (Exception e) {
+            log.warn("Error decoding Doubao message", e);
             return Flux.empty();
         }
     }
