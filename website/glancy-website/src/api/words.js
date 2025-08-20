@@ -1,7 +1,7 @@
 import { API_PATHS } from "@/config/api.js";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks";
-import { createCachedFetcher } from "@/utils";
+import { createCachedFetcher, logStream } from "@/utils";
 
 /**
  * Query a word definition
@@ -34,16 +34,28 @@ export function createWordsApi(request = apiRequest) {
     ({ term, language }) => `${language}:${term}`,
   );
 
-  async function* streamWord({ userId, term, language, model, token, signal }) {
+  /**
+   * Stream word definition via SSE with structured logging.
+   * Logs: [streamWord] start|chunk|end|error with { term, userId, chunk? }.
+   */
+  async function* streamWordWithHandling({
+    userId,
+    term,
+    language,
+    model,
+    token,
+    signal,
+  }) {
     const params = new URLSearchParams({ userId, term, language });
     if (model) params.append("model", model);
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
     const headers = token ? { "X-USER-TOKEN": token } : {};
+    logStream("streamWord", "start", { term, userId });
     let response;
     try {
       response = await fetch(url, { headers, signal });
     } catch (err) {
-      console.info("streamWord error", err);
+      logStream("streamWord", "error", { term, userId, error: err });
       throw err;
     }
     const reader = response.body.getReader();
@@ -60,20 +72,22 @@ export function createWordsApi(request = apiRequest) {
           const line = part.trim();
           if (!line.startsWith("data:")) continue;
           const text = line.replace(/^data:\s*/, "");
-          console.info("streamWord chunk", text);
+          logStream("streamWord", "chunk", { term, userId, chunk: text });
           yield text;
         }
       }
+      logStream("streamWord", "end", { term, userId });
     } catch (err) {
-      console.info("streamWord error", err);
+      logStream("streamWord", "error", { term, userId, error: err });
       throw err;
     }
   }
 
-  return { fetchWord, fetchWordAudio, streamWord };
+  return { fetchWord, fetchWordAudio, streamWordWithHandling };
 }
 
-export const { fetchWord, fetchWordAudio, streamWord } = createWordsApi();
+export const { fetchWord, fetchWordAudio, streamWordWithHandling } =
+  createWordsApi();
 
 export function useWordsApi() {
   return useApi().words;

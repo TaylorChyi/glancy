@@ -1,11 +1,11 @@
-import { streamWord } from "@/api/words.js";
+import { streamWordWithHandling } from "@/api/words.js";
 import { API_PATHS } from "@/config/api.js";
 import { jest } from "@jest/globals";
 
 /**
  * 验证流式接口能够解析 SSE 并输出日志。
  */
-test("streamWord yields chunks with logging", async () => {
+test("streamWordWithHandling yields chunks with logging", async () => {
   const encoder = new TextEncoder();
   const sse = "data: part1\n\ndata: part2\n\n";
   const stream = new ReadableStream({
@@ -20,7 +20,7 @@ test("streamWord yields chunks with logging", async () => {
   const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
 
   const chunks = [];
-  for await (const chunk of streamWord({
+  for await (const chunk of streamWordWithHandling({
     userId: "u",
     term: "hello",
     language: "ENGLISH",
@@ -37,8 +37,24 @@ test("streamWord yields chunks with logging", async () => {
     }),
   );
   expect(chunks).toEqual(["part1", "part2"]);
-  expect(infoSpy).toHaveBeenCalledWith("streamWord chunk", "part1");
-  expect(infoSpy).toHaveBeenCalledWith("streamWord chunk", "part2");
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] start", {
+    term: "hello",
+    userId: "u",
+  });
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] chunk", {
+    term: "hello",
+    userId: "u",
+    chunk: "part1",
+  });
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] chunk", {
+    term: "hello",
+    userId: "u",
+    chunk: "part2",
+  });
+  expect(infoSpy).toHaveBeenCalledWith("[streamWord] end", {
+    term: "hello",
+    userId: "u",
+  });
 
   infoSpy.mockRestore();
   global.fetch = originalFetch;
