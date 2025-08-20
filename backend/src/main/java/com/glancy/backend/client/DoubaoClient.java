@@ -91,7 +91,9 @@ public class DoubaoClient implements LLMClient {
                 )
             );
         }
-        return resp.bodyToFlux(String.class);
+        return resp
+            .bodyToFlux(String.class)
+            .doOnNext(data -> log.debug("Doubao raw event: type={} raw={}", "response", data));
     }
 
     private String trimTrailingSlash(String url) {
