@@ -91,7 +91,8 @@ public class WordService {
             searchRecordService.saveRecord(userId, req);
         } catch (Exception e) {
             log.error("Failed to save search record for user {}", userId, e);
-            return Flux.error(e);
+            String msg = "Failed to save search record: " + e.getMessage();
+            return Flux.error(new IllegalStateException(msg, e));
         }
         try {
             return wordSearcher
@@ -100,7 +101,8 @@ public class WordService {
                 .doOnError(err -> log.error("Error streaming term '{}': {}", term, err.getMessage(), err));
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
-            return Flux.error(e);
+            String msg = "Failed to initiate streaming search: " + e.getMessage();
+            return Flux.error(new IllegalStateException(msg, e));
         }
     }
 

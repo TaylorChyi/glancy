@@ -76,7 +76,12 @@ public class WordController {
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
             .onErrorResume(e -> {
                 log.error("Streaming error for user {} term '{}'", userId, term, e);
-                return Flux.just(ServerSentEvent.builder("ERROR").event("error").build());
+                return Flux.just(
+                    ServerSentEvent
+                        .<String>builder(e.getMessage())
+                        .event("error")
+                        .build()
+                );
             })
             .doFinally(sig -> log.info("Streaming finished with signal {} for user {} term '{}'", sig, userId, term));
     }

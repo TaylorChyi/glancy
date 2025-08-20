@@ -43,3 +43,38 @@ test("streamWord yields chunks with logging", async () => {
   infoSpy.mockRestore();
   global.fetch = originalFetch;
 });
+
+/**
+ * 验证收到 error 事件时抛出异常并记录日志。
+ */
+test("streamWord throws on error event", async () => {
+  const encoder = new TextEncoder();
+  const sse = "event: error\ndata: boom\n\n";
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse));
+      controller.close();
+    },
+  });
+
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ body: stream });
+  const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
+
+  await expect(
+    (async () => {
+      for await (const _chunk of streamWord({
+        userId: "u",
+        term: "hello",
+        language: "ENGLISH",
+      })) {
+        // consume stream
+      }
+    })(),
+  ).rejects.toThrow("boom");
+
+  expect(infoSpy).toHaveBeenCalledWith("streamWord error", "boom");
+
+  infoSpy.mockRestore();
+  global.fetch = originalFetch;
+});
