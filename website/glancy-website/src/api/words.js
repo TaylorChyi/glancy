@@ -57,11 +57,24 @@ export function createWordsApi(request = apiRequest) {
         const parts = buffer.split("\n\n");
         buffer = parts.pop();
         for (const part of parts) {
-          const line = part.trim();
-          if (!line.startsWith("data:")) continue;
-          const text = line.replace(/^data:\s*/, "");
-          console.info("streamWord chunk", text);
-          yield text;
+          const lines = part.split("\n");
+          let event = "message";
+          let data = "";
+          for (const line of lines) {
+            if (line.startsWith("event:")) {
+              event = line.replace(/^event:\s*/, "");
+            } else if (line.startsWith("data:")) {
+              data += line.replace(/^data:\s*/, "");
+            }
+          }
+          if (event === "error") {
+            console.info("streamWord error", data);
+            throw new Error(data);
+          }
+          if (data) {
+            console.info("streamWord chunk", data);
+            yield data;
+          }
         }
       }
     } catch (err) {
