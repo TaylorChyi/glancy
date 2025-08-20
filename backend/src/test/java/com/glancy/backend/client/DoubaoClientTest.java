@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.stream.DoubaoEventType;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,14 +76,16 @@ class DoubaoClientTest {
     private Mono<ClientResponse> successResponse(ClientRequest request) {
         assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
-        String body = """
-            event: message
-            data: {"choices":[{"delta":{"content":"hi"}}]}
+        String body =
+            """
+                event: %s
+                data: {"choices":[{"delta":{"content":"hi"}}]}
 
-            event: end
-            data: {"code":0}
+                event: %s
+                data: {"code":0}
 
-            """;
+                """
+                .formatted(DoubaoEventType.MESSAGE, DoubaoEventType.END);
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -92,17 +95,23 @@ class DoubaoClientTest {
     }
 
     private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
-        String body = """
-            event: message
-            data: {"choices":[{"delta":{"content":"he"}}]}
+        String body =
+            """
+                event: %s
+                data: {"choices":[{"delta":{"content":"he"}}]}
 
-            event: message
-            data: {"choices":[{"delta":{"content":"llo"}}]}
+                event: %s
+                data: {"choices":[{"delta":{"content":"llo"}}]}
 
-            event: end
-            data: {"code":0}
+                event: %s
+                data: {"code":0}
 
-            """;
+                """
+                .formatted(
+                    DoubaoEventType.MESSAGE,
+                    DoubaoEventType.MESSAGE,
+                    DoubaoEventType.END
+                );
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -112,14 +121,16 @@ class DoubaoClientTest {
     }
 
     private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
-        String body = """
-            event: message
-            data: {"choices":[{"delta":{"content":"hi"}}]}
+        String body =
+            """
+                event: %s
+                data: {"choices":[{"delta":{"content":"hi"}}]}
 
-            event: error
-            data: {"message":"boom"}
+                event: %s
+                data: {"message":"boom"}
 
-            """;
+                """
+                .formatted(DoubaoEventType.MESSAGE, DoubaoEventType.ERROR);
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
