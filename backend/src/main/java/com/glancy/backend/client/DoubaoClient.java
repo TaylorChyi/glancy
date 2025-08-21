@@ -64,11 +64,8 @@ public class DoubaoClient implements LLMClient {
         for (ChatMessage m : messages) {
             reqMessages.add(Map.of("role", m.getRole(), "content", m.getContent()));
         }
-        log.debug(
-            "Prepared {} request messages: roles={}",
-            reqMessages.size(),
-            messages.stream().map(ChatMessage::getRole).toList()
-        );
+        List<String> roles = messages.stream().map(ChatMessage::getRole).toList();
+        log.info("Prepared {} request messages with roles {}", reqMessages.size(), roles);
         body.put("messages", reqMessages);
 
         log.info("Request body prepared for Doubao API: {}", body);
@@ -101,7 +98,7 @@ public class DoubaoClient implements LLMClient {
         }
         return resp
             .bodyToFlux(String.class)
-            .doOnNext(raw -> log.debug("SSE event [{}]: {}", extractEventType(raw), raw));
+            .doOnNext(raw -> log.info("SSE event [{}]: {}", extractEventType(raw), raw));
     }
 
     private String extractEventType(String raw) {

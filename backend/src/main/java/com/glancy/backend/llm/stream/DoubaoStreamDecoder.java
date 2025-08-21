@@ -35,7 +35,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     public Flux<String> decode(Flux<String> rawStream) {
         return splitEvents(rawStream)
             .map(this::toEvent)
-            .doOnNext(evt -> log.debug("Event [{}]: {}", evt.type, evt.data))
+            .doOnNext(evt -> log.info("Event [{}]: {}", evt.type, evt.data))
             .takeUntil(evt -> "end".equals(evt.type))
             .flatMap(evt -> {
                 if (evt.type == null || !handlers.containsKey(evt.type)) {
@@ -101,7 +101,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private Flux<String> handleMessage(String json) {
-        log.debug("Handle message event: {}", json);
+        log.info("Handle message event: {}", json);
         if (json == null || json.trim().isEmpty()) {
             log.warn("Empty message event data, ignoring event: raw={}", SensitiveDataUtil.previewText(json));
             return Flux.empty();
@@ -117,6 +117,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
                 log.warn("Message event missing content: {}", SensitiveDataUtil.previewText(json));
                 return Flux.empty();
             }
+            log.info("Decoded message chunk: {}", SensitiveDataUtil.previewText(content));
             return Flux.just(content);
         } catch (Exception e) {
             log.warn("Failed to decode message event, raw={}", SensitiveDataUtil.previewText(json), e);
@@ -125,7 +126,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private Flux<String> handleError(String json) {
-        log.debug("Handle error event: {}", json);
+        log.info("Handle error event: {}", json);
         try {
             JsonNode node = mapper.readTree(json);
             String msg = node.path("message").asText("Stream error");
