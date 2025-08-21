@@ -4,14 +4,18 @@ import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.stream.StreamDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -98,7 +102,12 @@ public class DoubaoClient implements LLMClient {
             );
         }
         return resp
-            .bodyToFlux(String.class)
+            .body(BodyExtractors.toFlux(DataBuffer.class))
+            .map(buf -> {
+                String raw = buf.toString(StandardCharsets.UTF_8);
+                DataBufferUtils.release(buf);
+                return raw;
+            })
             .doOnNext(raw -> log.info("SSE event [{}]: {}", extractEventType(raw), raw));
     }
 
