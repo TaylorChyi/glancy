@@ -33,10 +33,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
     @Override
     public Flux<String> decode(Flux<String> rawStream) {
-        return rawStream
-            .flatMap(s -> Flux.fromArray(s.split("\n")))
-            .map(String::trim)
-            .bufferUntil(String::isEmpty)
+        return splitEvents(rawStream)
             .map(this::toEvent)
             .doOnNext(evt -> log.debug("Event [{}]: {}", evt.type, evt.data))
             .takeUntil(evt -> "end".equals(evt.type))
@@ -46,6 +43,43 @@ public class DoubaoStreamDecoder implements StreamDecoder {
                 }
                 return handlers.get(evt.type).apply(evt.data.toString());
             });
+    }
+
+    /**
+     * 将原始 SSE 文本流按照空行分割成事件片段，
+     * 以兼容网络分片导致的事件跨 chunk 问题。
+     */
+    private Flux<List<String>> splitEvents(Flux<String> source) {
+        return Flux.create(
+            sink -> {
+                StringBuilder buffer = new StringBuilder();
+                source.subscribe(
+                    chunk -> {
+                        buffer.append(chunk);
+                        int idx;
+                        while ((idx = buffer.indexOf("\n\n")) >= 0) {
+                            String event = buffer.substring(0, idx);
+                            buffer.delete(0, idx + 2);
+                            sink.next(lines(event));
+                        }
+                    },
+                    sink::error,
+                    () -> {
+                        if (buffer.length() > 0) {
+                            sink.next(lines(buffer.toString()));
+                        }
+                        sink.complete();
+                    }
+                );
+            }
+        );
+    }
+
+    private List<String> lines(String event) {
+        return event
+            .lines()
+            .map(String::trim)
+            .toList();
     }
 
     private Event toEvent(List<String> lines) {
