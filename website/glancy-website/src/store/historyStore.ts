@@ -2,6 +2,7 @@ import api from "@/api/index.js";
 import { createPersistentStore } from "./createPersistentStore.ts";
 import { pickState } from "./persistUtils.ts";
 import type { User } from "./userStore.ts";
+import { detectWordLanguage } from "@/utils";
 
 interface HistoryState {
   history: string[];
@@ -72,12 +73,13 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         user?: User | null,
         language?: string,
       ) => {
+        const langToSave = language ?? detectWordLanguage(term);
         if (user) {
           try {
             const record = await api.searchRecords.saveSearchRecord({
               token: user.token,
               term,
-              language,
+              language: langToSave,
             });
             set((state) => ({
               recordMap: { ...state.recordMap, [term]: record.id },
