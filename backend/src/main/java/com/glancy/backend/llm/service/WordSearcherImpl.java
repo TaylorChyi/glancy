@@ -69,18 +69,28 @@ public class WordSearcherImpl implements WordSearcher {
      * 面向实时场景的搜索接口，直接返回模型的流式输出。
      */
     public Flux<String> streamSearch(String term, Language language, String clientName) {
-        log.info("WordSearcher streaming for '{}' using client {}", term, clientName);
+        log.info("WordSearcher streaming for '{}' using client '{}'", term, clientName);
         String cleanInput = searchContentManager.normalize(term);
+        log.info("Normalized input term='{}'", cleanInput);
+
         String prompt = promptManager.loadPrompt(config.getPromptPath());
+        log.info("Loaded prompt from path='{}', length='{}'", config.getPromptPath(), prompt != null ? prompt.length() : 0);
+
         String name = clientName != null ? clientName : config.getDefaultClient();
         LLMClient client = clientFactory.get(name);
         if (client == null) {
             log.warn("LLM client '{}' not found, falling back to default", name);
             client = clientFactory.get(config.getDefaultClient());
         }
+        log.info("Using LLM client '{}'", name);
+
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage("system", prompt));
         messages.add(new ChatMessage("user", cleanInput));
+        log.info("Using LLM client '{}'", name);
+        log.info("Prepared '{}' request messages: roles='{}'", messages.size(), messages.stream().map(ChatMessage::getRole).toList());
+
+        log.info("Sending streaming request to LLM client '{}' for term='{}'", name, term);
         return client.streamChat(messages, config.getTemperature());
     }
 }

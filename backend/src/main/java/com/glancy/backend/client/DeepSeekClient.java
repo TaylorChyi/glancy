@@ -77,6 +77,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
 
     @Override
     public String chat(List<ChatMessage> messages, double temperature) {
+        log.info("DeepSeekClient.chat called with {} messages, temperature={}", messages.size(), temperature);
+
         String url = UriComponentsBuilder.fromUriString(baseUrl).path("/v1/chat/completions").toUriString();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -93,11 +95,15 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
         for (ChatMessage m : messages) {
             messageList.add(Map.of("role", m.getRole(), "content", m.getContent()));
         }
+        log.info("Prepared {} request messages: roles={}", messageList.size(), messages.stream().map(ChatMessage::getRole).toList());
         body.put("messages", messageList);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
         try {
+            log.info("Sending request to DeepSeek API: url={}, body={}", url, body);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            log.info("DeepSeek API responded with status: {}", response.getStatusCode());
+            log.info("DeepSeek API raw response body: {}", response.getBody());
             ObjectMapper mapper = new ObjectMapper();
             ChatCompletionResponse chat = mapper.readValue(response.getBody(), ChatCompletionResponse.class);
             return chat.getChoices().get(0).getMessage().getContent();
