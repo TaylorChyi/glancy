@@ -64,7 +64,11 @@ public class DoubaoClient implements LLMClient {
         for (ChatMessage m : messages) {
             reqMessages.add(Map.of("role", m.getRole(), "content", m.getContent()));
         }
-        log.debug("Prepared {} request messages: roles={}", reqMessages.size(), messages.stream().map(ChatMessage::getRole).toList());
+        log.debug(
+            "Prepared {} request messages: roles={}",
+            reqMessages.size(),
+            messages.stream().map(ChatMessage::getRole).toList()
+        );
         body.put("messages", reqMessages);
 
         log.info("Request body prepared for Doubao API: {}", body);

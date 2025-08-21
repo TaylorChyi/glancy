@@ -95,7 +95,11 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
         for (ChatMessage m : messages) {
             messageList.add(Map.of("role", m.getRole(), "content", m.getContent()));
         }
-        log.info("Prepared {} request messages: roles={}", messageList.size(), messages.stream().map(ChatMessage::getRole).toList());
+        log.info(
+            "Prepared {} request messages: roles={}",
+            messageList.size(),
+            messages.stream().map(ChatMessage::getRole).toList()
+        );
         body.put("messages", messageList);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);

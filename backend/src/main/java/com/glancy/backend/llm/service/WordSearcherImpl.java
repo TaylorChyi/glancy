@@ -74,7 +74,11 @@ public class WordSearcherImpl implements WordSearcher {
         log.info("Normalized input term='{}'", cleanInput);
 
         String prompt = promptManager.loadPrompt(config.getPromptPath());
-        log.info("Loaded prompt from path='{}', length='{}'", config.getPromptPath(), prompt != null ? prompt.length() : 0);
+        log.info(
+            "Loaded prompt from path='{}', length='{}'",
+            config.getPromptPath(),
+            prompt != null ? prompt.length() : 0
+        );
 
         String name = clientName != null ? clientName : config.getDefaultClient();
         LLMClient client = clientFactory.get(name);
@@ -88,7 +92,11 @@ public class WordSearcherImpl implements WordSearcher {
         messages.add(new ChatMessage("system", prompt));
         messages.add(new ChatMessage("user", cleanInput));
         log.info("Using LLM client '{}'", name);
-        log.info("Prepared '{}' request messages: roles='{}'", messages.size(), messages.stream().map(ChatMessage::getRole).toList());
+        log.info(
+            "Prepared '{}' request messages: roles='{}'",
+            messages.size(),
+            messages.stream().map(ChatMessage::getRole).toList()
+        );
 
         log.info("Sending streaming request to LLM client '{}' for term='{}'", name, term);
         return client.streamChat(messages, config.getTemperature());
