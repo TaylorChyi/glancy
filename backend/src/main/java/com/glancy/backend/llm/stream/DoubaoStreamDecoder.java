@@ -106,10 +106,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     private Flux<String> handleMessage(String json) {
         log.info("Handle message event: {}", json);
         if (json == null || json.trim().isEmpty()) {
-            log.warn(
-                "Empty message event data, ignoring event: raw={}",
-                SensitiveDataUtil.previewText(json)
-            );
+            log.warn("Empty message event data, ignoring event: raw={}", SensitiveDataUtil.previewText(json));
             return Flux.empty();
         }
         if ("[DONE]".equals(json.trim())) {
