@@ -59,7 +59,7 @@ public class DoubaoClient implements LLMClient {
         body.put("model", model);
         body.put("temperature", temperature);
         body.put("stream", true);
-        body.put("think", Map.of("type", "disabled"));
+        body.put("thinking", Map.of("type", "disabled"));
 
         List<Map<String, String>> reqMessages = new ArrayList<>();
         for (ChatMessage m : messages) {
