@@ -22,8 +22,7 @@ class DoubaoStreamDecoderTest {
     /** 验证标准 message 事件片段能够解析出文本内容。 */
     @Test
     void decodeValidMessageChunk() {
-        String body =
-            """
+        String body = """
             event: message
             data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
 
@@ -42,8 +41,7 @@ class DoubaoStreamDecoderTest {
         appender.start();
         logger.addAppender(appender);
 
-        String body =
-            """
+        String body = """
             event: message
             data: {"foo":"bar"}
 
@@ -54,11 +52,13 @@ class DoubaoStreamDecoderTest {
 
         StepVerifier.create(decoder.decode(Flux.just(body))).verifyComplete();
 
-        boolean warned = appender.list.stream()
-            .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("Message event missing content"));
+        boolean warned = appender.list
+            .stream()
+            .anyMatch(
+                e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("Message event missing content")
+            );
         assertTrue(warned);
 
         logger.detachAppender(appender);
     }
 }
-
