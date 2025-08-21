@@ -72,6 +72,9 @@ public class WordController {
     ) {
         return wordService
             .streamWordForUser(userId, term, language, model)
+            .doOnNext(chunk ->
+                log.info("Controller streaming chunk for user {} term '{}': {}", userId, term, chunk)
+            )
             .map(data -> ServerSentEvent.builder(data).build())
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
             .onErrorResume(e -> {

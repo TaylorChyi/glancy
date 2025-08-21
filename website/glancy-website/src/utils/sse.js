@@ -1,17 +1,24 @@
 export async function* parseSse(stream) {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
+  const dev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
+  const log = (...args) => {
+    if (dev) console.info("[parseSse]", ...args);
+  };
   let buffer = "";
   try {
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+      log("chunk", preview(chunk));
+      buffer += chunk;
       while (true) {
         const separatorIndex = buffer.indexOf("\n\n");
         if (separatorIndex === -1) break;
         const rawEvent = buffer.slice(0, separatorIndex);
         buffer = buffer.slice(separatorIndex + 2);
+        log("event raw", preview(rawEvent));
         const event = { event: "message", data: "" };
         for (const line of rawEvent.split(/\r?\n/)) {
           const colonIndex = line.indexOf(":");
@@ -25,6 +32,7 @@ export async function* parseSse(stream) {
           }
         }
         if (event.data || event.event !== "message") {
+          log("event parsed", event);
           yield event;
         }
       }
@@ -43,10 +51,15 @@ export async function* parseSse(stream) {
         }
       }
       if (event.data) {
+        log("event parsed", event);
         yield event;
       }
     }
   } finally {
     reader.releaseLock();
   }
+}
+
+function preview(str, len = 100) {
+  return str.length > len ? `${str.slice(0, len)}…` : str;
 }
