@@ -108,4 +108,10 @@ class DoubaoStreamDecoderTest {
 
         StepVerifier.create(decoder.decode(chunks)).expectNext("hi").verifyComplete();
     }
+
+    /** 验证单独的 [DONE] 事件能够正常结束流且不抛异常。 */
+    @Test
+    void decodeDoneEvent() {
+        StepVerifier.create(decoder.decode(Flux.just("data: [DONE]\\n\\n"))).verifyComplete();
+    }
 }

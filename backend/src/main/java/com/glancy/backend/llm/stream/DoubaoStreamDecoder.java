@@ -59,18 +59,26 @@ public class DoubaoStreamDecoder implements StreamDecoder {
                     while ((idx = buffer.indexOf("\n\n")) >= 0) {
                         String event = buffer.substring(0, idx);
                         buffer.delete(0, idx + 2);
-                        sink.next(lines(event));
+                        sink.next(normalize(event));
                     }
                 },
                 sink::error,
                 () -> {
                     if (buffer.length() > 0) {
-                        sink.next(lines(buffer.toString()));
+                        sink.next(normalize(buffer.toString()));
                     }
                     sink.complete();
                 }
             );
         });
+    }
+
+    private List<String> normalize(String event) {
+        List<String> lines = lines(event);
+        if (lines.size() == 1 && "data: [DONE]".equals(lines.get(0))) {
+            return List.of("event: end");
+        }
+        return lines;
     }
 
     private List<String> lines(String event) {
@@ -98,7 +106,13 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     private Flux<String> handleMessage(String json) {
         log.info("Handle message event: {}", json);
         if (json == null || json.trim().isEmpty()) {
-            log.warn("Empty message event data, ignoring event: raw={}", SensitiveDataUtil.previewText(json));
+            log.warn(
+                "Empty message event data, ignoring event: raw={}",
+                SensitiveDataUtil.previewText(json)
+            );
+            return Flux.empty();
+        }
+        if ("[DONE]".equals(json.trim())) {
             return Flux.empty();
         }
         try {
