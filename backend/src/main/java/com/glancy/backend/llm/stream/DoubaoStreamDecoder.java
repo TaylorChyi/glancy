@@ -68,6 +68,13 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
     private Flux<String> handleMessage(String json) {
         log.debug("Handle message event: {}", json);
+        if (json == null || json.trim().isEmpty()) {
+            log.warn(
+                "Empty message event data, ignoring event: raw={}",
+                SensitiveDataUtil.previewText(json)
+            );
+            return Flux.empty();
+        }
         try {
             JsonNode node = mapper.readTree(json);
             JsonNode delta = node.path("choices").path(0).path("delta");
@@ -81,7 +88,11 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             }
             return Flux.just(content);
         } catch (Exception e) {
-            log.warn("Failed to decode message event: {}", SensitiveDataUtil.previewText(json), e);
+            log.warn(
+                "Failed to decode message event, raw={}",
+                SensitiveDataUtil.previewText(json),
+                e
+            );
             return Flux.empty();
         }
     }

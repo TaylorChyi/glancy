@@ -61,4 +61,40 @@ class DoubaoStreamDecoderTest {
 
         logger.detachAppender(appender);
     }
+
+    /**
+     * 验证空数据的 message 事件不会终止后续解析，并记录 WARN 日志。
+     */
+    @Test
+    void ignoreEmptyMessageEvent() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DoubaoStreamDecoder.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        String body = """
+            event: message
+            data:
+
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
+
+            event: end
+            data: {"code":0}
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(body))).expectNext("hi").verifyComplete();
+
+        boolean warned = appender.list
+            .stream()
+            .anyMatch(
+                e ->
+                    e.getLevel() == Level.WARN
+                        && e.getFormattedMessage().contains("Empty message event data")
+            );
+        assertTrue(warned);
+
+        logger.detachAppender(appender);
+    }
 }
