@@ -239,9 +239,11 @@ function App() {
           ) : showHistory ? (
             <HistoryDisplay />
           ) : loading ? (
-            <ReactMarkdown>{streamText || "..."}</ReactMarkdown>
+            <pre>{streamText || "..."}</pre>
           ) : entry ? (
             <DictionaryEntry entry={entry} />
+          ) : streamText ? (
+            <ReactMarkdown>{streamText}</ReactMarkdown>
           ) : (
             <div className="display-content">
               <div className="display-term">{placeholder}</div>

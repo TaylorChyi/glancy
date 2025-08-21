@@ -11,7 +11,7 @@ jest.unstable_mockModule("@/components/Layout", () => ({
   ),
 }));
 jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
-  default: () => null,
+  default: ({ entry }) => <div data-testid="entry">{entry.term}</div>,
 }));
 jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
   default: () => null,
@@ -57,38 +57,72 @@ jest.unstable_mockModule("@/context", () => ({
 jest.unstable_mockModule("@/store", () => ({
   useModelStore: () => ({ model: "m" }),
 }));
+const streamMock = jest.fn();
 jest.unstable_mockModule("@/hooks", () => ({
-  useStreamWord: () =>
-    async function* () {
-      yield { chunk: "foo" };
-      await new Promise((r) => setTimeout(r, 10));
-      yield { chunk: "bar" };
-      await new Promise((r) => setTimeout(r, 10));
-    },
+  useStreamWord: streamMock,
   useSpeechInput: () => ({ start: jest.fn() }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: jest.fn() }),
   useApi: () => ({ words: {} }),
 }));
 
 const { default: App } = await import("@/pages/App");
+const { useStreamWord } = await import("@/hooks");
+
+beforeEach(() => {
+  useStreamWord.mockReset();
+});
 
 /**
- * 验证 App 在流式词汇查询时能够逐步渲染 Markdown 内容。
+ * 验证流式内容在 <pre> 标签中逐字呈现，并在完成后恢复默认界面。
  */
-test("renders streaming chunks incrementally", async () => {
+test("streams text in pre incrementally", async () => {
+  useStreamWord.mockImplementation(
+    () =>
+      async function* () {
+        const chunks = ["f", "o", "o", "b", "a", "r"];
+        for (const c of chunks) {
+          yield { chunk: c };
+          await new Promise((r) => setTimeout(r, 10));
+        }
+      },
+  );
+
   render(<App />);
 
   const input = screen.getByPlaceholderText("input");
   fireEvent.change(input, { target: { value: "hello" } });
   fireEvent.submit(input.closest("form"));
 
-  const first = await screen.findByText("foo");
-  expect(first.tagName).toBe("P");
-
-  const second = await screen.findByText("foobar");
-  expect(second.tagName).toBe("P");
+  await screen.findByText("f");
+  await screen.findByText("fo");
+  const pre = await screen.findByText("foobar");
+  expect(pre.tagName).toBe("PRE");
 
   await waitFor(() => {
     expect(screen.queryByText("foobar")).not.toBeInTheDocument();
   });
+  expect(screen.getByText("search")).toBeInTheDocument();
+});
+
+/**
+ * 确认流完成后仍能使用现有组件呈现最终结果。
+ */
+test("renders dictionary entry after streaming completes", async () => {
+  useStreamWord.mockImplementation(
+    () =>
+      async function* () {
+        yield { chunk: '{"term":"hel' };
+        await new Promise((r) => setTimeout(r, 10));
+        yield { chunk: 'lo"}' };
+      },
+  );
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText("input");
+  fireEvent.change(input, { target: { value: "hello" } });
+  fireEvent.submit(input.closest("form"));
+
+  const entry = await screen.findByTestId("entry");
+  expect(entry).toHaveTextContent("hello");
 });
