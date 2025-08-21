@@ -93,4 +93,19 @@ class DoubaoStreamDecoderTest {
 
         logger.detachAppender(appender);
     }
+
+    /**
+     * 验证跨 chunk 的事件能够被正确拼接解析。
+     */
+    @Test
+    void decodeChunkedEvent() {
+        Flux<String> chunks = Flux.just(
+            "event: message\n",
+            "data: {\"choices\":[{\"delta\":{\"messages\":[{\"content\":\"hi\"}]}}]}\n\n",
+            "event: end\n",
+            "data: {\"code\":0}\n\n"
+        );
+
+        StepVerifier.create(decoder.decode(chunks)).expectNext("hi").verifyComplete();
+    }
 }
