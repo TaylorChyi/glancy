@@ -88,11 +88,7 @@ class DoubaoStreamDecoderTest {
 
         boolean warned = appender.list
             .stream()
-            .anyMatch(
-                e ->
-                    e.getLevel() == Level.WARN
-                        && e.getFormattedMessage().contains("Empty message event data")
-            );
+            .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("Empty message event data"));
         assertTrue(warned);
 
         logger.detachAppender(appender);
