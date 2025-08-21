@@ -70,12 +70,19 @@ public class DoubaoStreamDecoder implements StreamDecoder {
         log.debug("Handle message event: {}", json);
         try {
             JsonNode node = mapper.readTree(json);
-            String content = node.path("choices").path(0).path("delta").path("content").asText();
-            return content.isEmpty() ? Flux.empty() : Flux.just(content);
+            JsonNode delta = node.path("choices").path(0).path("delta");
+            String content = delta.path("messages").path(0).path("content").asText();
+            if (content.isEmpty()) {
+                content = delta.path("content").asText();
+            }
+            if (content.isEmpty()) {
+                log.warn("Message event missing content: {}", SensitiveDataUtil.previewText(json));
+                return Flux.empty();
+            }
+            return Flux.just(content);
         } catch (Exception e) {
-            StreamDecodeException ex = new StreamDecodeException("message", json, e);
             log.warn("Failed to decode message event: {}", SensitiveDataUtil.previewText(json), e);
-            return Flux.error(ex);
+            return Flux.empty();
         }
     }
 

@@ -94,7 +94,7 @@ class DoubaoClientTest {
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
         String body = """
             event: message
-            data: {"choices":[{"delta":{"content":"hi"}}]}
+            data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
 
             event: end
             data: {"code":0}
@@ -111,10 +111,10 @@ class DoubaoClientTest {
     private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
         String body = """
             event: message
-            data: {"choices":[{"delta":{"content":"he"}}]}
+            data: {"choices":[{"delta":{"messages":[{"content":"he"}]}}]}
 
             event: message
-            data: {"choices":[{"delta":{"content":"llo"}}]}
+            data: {"choices":[{"delta":{"messages":[{"content":"llo"}]}}]}
 
             event: end
             data: {"code":0}
@@ -131,7 +131,7 @@ class DoubaoClientTest {
     private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
         String body = """
             event: message
-            data: {"choices":[{"delta":{"content":"hi"}}]}
+            data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
 
             event: error
             data: {"message":"boom"}
