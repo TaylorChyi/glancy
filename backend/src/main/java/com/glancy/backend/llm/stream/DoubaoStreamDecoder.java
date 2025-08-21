@@ -2,6 +2,7 @@ package com.glancy.backend.llm.stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.util.SensitiveDataUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .map(String::trim)
             .bufferUntil(String::isEmpty)
             .map(this::toEvent)
+            .doOnNext(evt -> log.debug("Event [{}]: {}", evt.type, evt.data))
             .takeUntil(evt -> "end".equals(evt.type))
             .flatMap(evt -> {
                 if (evt.type == null || !handlers.containsKey(evt.type)) {
@@ -65,25 +67,27 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private Flux<String> handleMessage(String json) {
+        log.debug("Handle message event: {}", json);
         try {
             JsonNode node = mapper.readTree(json);
             String content = node.path("choices").path(0).path("delta").path("content").asText();
             return content.isEmpty() ? Flux.empty() : Flux.just(content);
         } catch (Exception e) {
             StreamDecodeException ex = new StreamDecodeException("message", json, e);
-            log.error("Failed to decode message event: {}", json, e);
+            log.warn("Failed to decode message event: {}", SensitiveDataUtil.previewText(json), e);
             return Flux.error(ex);
         }
     }
 
     private Flux<String> handleError(String json) {
+        log.debug("Handle error event: {}", json);
         try {
             JsonNode node = mapper.readTree(json);
             String msg = node.path("message").asText("Stream error");
             return Flux.error(new IllegalStateException(msg));
         } catch (Exception e) {
             StreamDecodeException ex = new StreamDecodeException("error", json, e);
-            log.error("Failed to decode error event: {}", json, e);
+            log.warn("Failed to decode error event: {}", SensitiveDataUtil.previewText(json), e);
             return Flux.error(ex);
         }
     }
