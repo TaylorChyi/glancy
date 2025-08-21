@@ -43,11 +43,18 @@ export function createWordsApi(request = apiRequest) {
     const params = new URLSearchParams({ userId, term, language });
     if (model) params.append("model", model);
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
-    const headers = token ? { "X-USER-TOKEN": token } : {};
+    const headers = {
+      Accept: "text/event-stream",
+      ...(token ? { "X-USER-TOKEN": token } : {}),
+    };
     const logCtx = { userId, term };
     let response;
     try {
-      response = await fetch(url, { headers, signal });
+      response = await fetch(url, {
+        headers,
+        cache: "no-store",
+        signal,
+      });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (err) {
       console.info("[streamWord] error", { ...logCtx, error: err });
