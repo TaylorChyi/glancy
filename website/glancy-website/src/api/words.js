@@ -1,7 +1,7 @@
 import { API_PATHS } from "@/config/api.js";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks";
-import { createCachedFetcher } from "@/utils";
+import { createCachedFetcher, parseSse } from "@/utils";
 
 /**
  * Query a word definition
@@ -54,35 +54,15 @@ export function createWordsApi(request = apiRequest) {
       throw err;
     }
     console.info("[streamWord] start", logCtx);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
     try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop();
-        for (const part of parts) {
-          const lines = part.split("\n");
-          let event = "message";
-          let data = "";
-          for (const line of lines) {
-            if (line.startsWith("event:")) {
-              event = line.replace(/^event:\s*/, "");
-            } else if (line.startsWith("data:")) {
-              data += line.replace(/^data:\s*/, "");
-            }
-          }
-          if (event === "error") {
-            console.info("[streamWord] error", { ...logCtx, error: data });
-            throw new Error(data);
-          }
-          if (data) {
-            console.info("[streamWord] chunk", { ...logCtx, chunk: data });
-            yield data;
-          }
+      for await (const { event, data } of parseSse(response.body)) {
+        if (event === "error") {
+          console.info("[streamWord] error", { ...logCtx, error: data });
+          throw new Error(data);
+        }
+        if (data) {
+          console.info("[streamWord] chunk", { ...logCtx, chunk: data });
+          yield data;
         }
       }
       console.info("[streamWord] end", logCtx);

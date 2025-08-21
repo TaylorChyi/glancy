@@ -1,6 +1,7 @@
 import { API_PATHS } from "@/config/api.js";
 import { apiRequest, createJsonRequest } from "./client.js";
 import { useApi } from "@/hooks";
+import { parseSse } from "@/utils";
 
 export function createChatApi(request = apiRequest) {
   const jsonRequest = createJsonRequest(request);
@@ -24,28 +25,18 @@ export function createChatApi(request = apiRequest) {
       console.info("[streamChatMessage] error", { ...logCtx, error });
       throw error;
     }
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
     try {
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop();
-        for (const part of parts) {
-          const line = part.trim();
-          if (!line || line === "data: [DONE]") continue;
-          const json = JSON.parse(line.replace(/^data: /, ""));
-          const content = json?.choices?.[0]?.delta?.content;
-          if (content) {
-            console.info("[streamChatMessage] chunk", {
-              ...logCtx,
-              chunk: content,
-            });
-            yield content;
-          }
+      for await (const { data } of parseSse(response.body)) {
+        if (data === "[DONE]") continue;
+        if (!data) continue;
+        const json = JSON.parse(data);
+        const content = json?.choices?.[0]?.delta?.content;
+        if (content) {
+          console.info("[streamChatMessage] chunk", {
+            ...logCtx,
+            chunk: content,
+          });
+          yield content;
         }
       }
       console.info("[streamChatMessage] end", logCtx);
