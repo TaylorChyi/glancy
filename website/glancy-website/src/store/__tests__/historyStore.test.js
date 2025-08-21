@@ -1,41 +1,52 @@
-import { jest } from '@jest/globals'
-import { act } from '@testing-library/react'
-import api from '@/api/index.js'
-import { useHistoryStore } from '@/store'
+import { jest } from "@jest/globals";
+import { act } from "@testing-library/react";
+import api from "@/api/index.js";
+import { useHistoryStore } from "@/store";
 
-const mockApi = api
+const mockApi = api;
 mockApi.searchRecords = {
   fetchSearchRecords: jest.fn().mockResolvedValue([]),
-  saveSearchRecord: jest.fn().mockResolvedValue({ id: 'r1' }),
+  saveSearchRecord: jest.fn().mockResolvedValue({ id: "r1" }),
   clearSearchRecords: jest.fn().mockResolvedValue(undefined),
   deleteSearchRecord: jest.fn().mockResolvedValue(undefined),
   favoriteSearchRecord: jest.fn().mockResolvedValue(undefined),
-  unfavoriteSearchRecord: jest.fn().mockResolvedValue(undefined)
-}
+  unfavoriteSearchRecord: jest.fn().mockResolvedValue(undefined),
+};
 
-const user = { id: 'u1', token: 't' }
+const user = { id: "u1", token: "t" };
 
-describe('historyStore', () => {
+describe("historyStore", () => {
   beforeEach(() => {
-    localStorage.clear()
-    jest.clearAllMocks()
-  })
+    localStorage.clear();
+    jest.clearAllMocks();
+  });
 
-  test('addHistory stores term and calls api', async () => {
+  test("addHistory stores term and calls api", async () => {
     await act(async () => {
-      await useHistoryStore.getState().addHistory('test', user, 'ENGLISH')
-    })
-    expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled()
-    expect(useHistoryStore.getState().history[0]).toBe('test')
-  })
+      await useHistoryStore.getState().addHistory("test", user, "ENGLISH");
+    });
+    expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled();
+    expect(useHistoryStore.getState().history[0]).toBe("test");
+  });
 
-  test('clearHistory empties store', async () => {
+  test("addHistory infers language when missing", async () => {
     await act(async () => {
-      await useHistoryStore.getState().addHistory('a', user)
-    })
+      await useHistoryStore.getState().addHistory("word", user);
+    });
+    expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalledWith({
+      token: user.token,
+      term: "word",
+      language: "ENGLISH",
+    });
+  });
+
+  test("clearHistory empties store", async () => {
     await act(async () => {
-      await useHistoryStore.getState().clearHistory(user)
-    })
-    expect(useHistoryStore.getState().history).toHaveLength(0)
-  })
-})
+      await useHistoryStore.getState().addHistory("a", user);
+    });
+    await act(async () => {
+      await useHistoryStore.getState().clearHistory(user);
+    });
+    expect(useHistoryStore.getState().history).toHaveLength(0);
+  });
+});
