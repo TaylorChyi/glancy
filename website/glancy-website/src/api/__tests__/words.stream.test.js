@@ -55,6 +55,39 @@ test("streamWord yields chunks with logging", async () => {
 });
 
 /**
+ * 验证收到 [DONE] 后停止产出 chunk。
+ */
+test("streamWord stops on DONE marker", async () => {
+  const encoder = new TextEncoder();
+  const done = String.fromCharCode(91) + "DONE" + String.fromCharCode(93);
+  const sse = "data: part1\n\ndata: " + done + "\n\ndata: part2\n\n";
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse));
+      controller.close();
+    },
+  });
+
+  const originalFetch = global.fetch;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ body: stream, ok: true, status: 200 });
+
+  const chunks = [];
+  for await (const chunk of streamWord({
+    userId: "u",
+    term: "hello",
+    language: "ENGLISH",
+  })) {
+    chunks.push(chunk);
+  }
+
+  expect(chunks).toEqual(["part1"]);
+
+  global.fetch = originalFetch;
+});
+
+/**
  * 验证收到 error 事件时抛出异常并记录日志。
  */
 test("streamWord throws on error event", async () => {

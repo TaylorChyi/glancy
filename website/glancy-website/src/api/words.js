@@ -60,6 +60,7 @@ export function createWordsApi(request = apiRequest) {
           console.info("[streamWord] error", { ...logCtx, error: data });
           throw new Error(data);
         }
+        if (data === "[DONE]") break;
         if (data) {
           console.info("[streamWord] chunk", { ...logCtx, chunk: data });
           yield data;
