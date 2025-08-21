@@ -50,36 +50,31 @@ public class DoubaoStreamDecoder implements StreamDecoder {
      * 以兼容网络分片导致的事件跨 chunk 问题。
      */
     private Flux<List<String>> splitEvents(Flux<String> source) {
-        return Flux.create(
-            sink -> {
-                StringBuilder buffer = new StringBuilder();
-                source.subscribe(
-                    chunk -> {
-                        buffer.append(chunk);
-                        int idx;
-                        while ((idx = buffer.indexOf("\n\n")) >= 0) {
-                            String event = buffer.substring(0, idx);
-                            buffer.delete(0, idx + 2);
-                            sink.next(lines(event));
-                        }
-                    },
-                    sink::error,
-                    () -> {
-                        if (buffer.length() > 0) {
-                            sink.next(lines(buffer.toString()));
-                        }
-                        sink.complete();
+        return Flux.create(sink -> {
+            StringBuilder buffer = new StringBuilder();
+            source.subscribe(
+                chunk -> {
+                    buffer.append(chunk);
+                    int idx;
+                    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+                        String event = buffer.substring(0, idx);
+                        buffer.delete(0, idx + 2);
+                        sink.next(lines(event));
                     }
-                );
-            }
-        );
+                },
+                sink::error,
+                () -> {
+                    if (buffer.length() > 0) {
+                        sink.next(lines(buffer.toString()));
+                    }
+                    sink.complete();
+                }
+            );
+        });
     }
 
     private List<String> lines(String event) {
-        return event
-            .lines()
-            .map(String::trim)
-            .toList();
+        return event.lines().map(String::trim).toList();
     }
 
     private Event toEvent(List<String> lines) {
