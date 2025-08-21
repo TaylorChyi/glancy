@@ -12,7 +12,7 @@ export async function* parseSse(stream) {
       if (done) break;
       const chunk = decoder.decode(value, { stream: true });
       log("chunk", preview(chunk));
-      buffer += chunk;
+      buffer = normalizeNewlines(buffer + chunk);
       while (true) {
         const separatorIndex = buffer.indexOf("\n\n");
         if (separatorIndex === -1) break;
@@ -37,6 +37,7 @@ export async function* parseSse(stream) {
         }
       }
     }
+    buffer = normalizeNewlines(buffer);
     if (buffer.trim()) {
       const event = { event: "message", data: "" };
       for (const line of buffer.split(/\r?\n/)) {
@@ -58,6 +59,10 @@ export async function* parseSse(stream) {
   } finally {
     reader.releaseLock();
   }
+}
+
+function normalizeNewlines(str) {
+  return str.replace(/\r\n?/g, "\n");
 }
 
 function preview(str, len = 100) {
