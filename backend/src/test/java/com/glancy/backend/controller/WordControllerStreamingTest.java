@@ -30,86 +30,76 @@ import reactor.core.publisher.Flux;
  */
 @WebMvcTest(controllers = WordController.class)
 @Import(
-  {
-    com.glancy.backend.config.security.SecurityConfig.class,
-    com.glancy.backend.config.WebConfig.class,
-    com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-  }
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
 )
 class WordControllerStreamingTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @MockBean
-  private WordService wordService;
+    @MockBean
+    private WordService wordService;
 
-  @MockBean
-  private SearchRecordService searchRecordService;
+    @MockBean
+    private SearchRecordService searchRecordService;
 
-  @MockBean
-  private UserService userService;
+    @MockBean
+    private UserService userService;
 
-  @Test
-  void testStreamWord() throws Exception {
-    when(
-      wordService.streamWordForUser(
-        eq(1L),
-        eq("hello"),
-        eq(Language.ENGLISH),
-        eq(null)
-      )
-    ).thenReturn(Flux.just("part1", "part2"));
-    when(userService.authenticateToken("tkn")).thenReturn(1L);
+    @Test
+    void testStreamWord() throws Exception {
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
+            Flux.just("part1", "part2")
+        );
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-    MvcResult result = mockMvc
-      .perform(
-        get("/api/words/stream")
-          .header("X-USER-TOKEN", "tkn")
-          .param("term", "hello")
-          .param("language", "ENGLISH")
-          .accept(MediaType.TEXT_EVENT_STREAM)
-      )
-      .andExpect(request().asyncStarted())
-      .andReturn();
+        MvcResult result = mockMvc
+            .perform(
+                get("/api/words/stream")
+                    .header("X-USER-TOKEN", "tkn")
+                    .param("term", "hello")
+                    .param("language", "ENGLISH")
+                    .accept(MediaType.TEXT_EVENT_STREAM)
+            )
+            .andExpect(request().asyncStarted())
+            .andReturn();
 
-    mockMvc
-      .perform(asyncDispatch(result))
-      .andExpect(status().isOk())
-      .andExpect(content().string(containsString("data:part1")))
-      .andExpect(content().string(containsString("data:part2")));
-  }
+        mockMvc
+            .perform(asyncDispatch(result))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("data:part1")))
+            .andExpect(content().string(containsString("data:part2")));
+    }
 
-  /**
-   * 测试流式接口在服务抛出错误时能够返回错误事件。
-   */
-  @Test
-  void testStreamWordError() throws Exception {
-    when(
-      wordService.streamWordForUser(
-        eq(1L),
-        eq("hello"),
-        eq(Language.ENGLISH),
-        eq(null)
-      )
-    ).thenReturn(Flux.error(new IllegalStateException("boom")));
-    when(userService.authenticateToken("tkn")).thenReturn(1L);
+    /**
+     * 测试流式接口在服务抛出错误时能够返回错误事件。
+     */
+    @Test
+    void testStreamWordError() throws Exception {
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
+            Flux.error(new IllegalStateException("boom"))
+        );
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-    MvcResult result = mockMvc
-      .perform(
-        get("/api/words/stream")
-          .header("X-USER-TOKEN", "tkn")
-          .param("term", "hello")
-          .param("language", "ENGLISH")
-          .accept(MediaType.TEXT_EVENT_STREAM)
-      )
-      .andExpect(request().asyncStarted())
-      .andReturn();
+        MvcResult result = mockMvc
+            .perform(
+                get("/api/words/stream")
+                    .header("X-USER-TOKEN", "tkn")
+                    .param("term", "hello")
+                    .param("language", "ENGLISH")
+                    .accept(MediaType.TEXT_EVENT_STREAM)
+            )
+            .andExpect(request().asyncStarted())
+            .andReturn();
 
-    mockMvc
-      .perform(asyncDispatch(result))
-      .andExpect(status().isOk())
-      .andExpect(content().string(containsString("event:error")))
-      .andExpect(content().string(containsString("data:boom")));
-  }
+        mockMvc
+            .perform(asyncDispatch(result))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("event:error")))
+            .andExpect(content().string(containsString("data:boom")));
+    }
 }

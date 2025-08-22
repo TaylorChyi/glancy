@@ -30,6 +30,7 @@ class GlobalExceptionHandlerSseTest {
     @RestController
     @RequestMapping("/dummy")
     static class DummyController {
+
         @GetMapping("/boom")
         String boom() {
             throw new ResourceNotFoundException("missing");
