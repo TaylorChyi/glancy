@@ -13,22 +13,21 @@ export default function ChatView({ streamFn = streamChatMessage }) {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
-    let acc = "";
+    let firstChunk = true;
     for await (const chunk of streamFn({
       model: "default",
       messages: [...messages, userMessage],
     })) {
-      acc += chunk;
-      setMessages((prev) => {
-        const next = [...prev];
-        const last = next[next.length - 1];
-        if (last?.role === "assistant") {
-          next[next.length - 1] = { ...last, content: acc };
-        } else {
-          next.push({ role: "assistant", content: acc });
-        }
-        return next;
-      });
+      if (firstChunk) {
+        setMessages((prev) => [...prev, { role: "assistant", content: chunk }]);
+        firstChunk = false;
+      } else {
+        setMessages((prev) => {
+          const last = { ...prev.at(-1) };
+          last.content += chunk;
+          return [...prev.slice(0, -1), last];
+        });
+      }
     }
   };
 
