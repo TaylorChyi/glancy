@@ -23,8 +23,10 @@ export function useStreamWord() {
         model: clientNameFromModel(model),
         token: user.token,
         signal,
+        onChunk: (chunk) => {
+          console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
+        },
       })) {
-        console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
         yield { chunk, language };
       }
       console.info("[streamWordWithHandling] end", logCtx);
