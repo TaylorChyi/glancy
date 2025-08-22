@@ -39,7 +39,15 @@ export function createWordsApi(request = apiRequest) {
    * 日志格式:
    *   console.info("[streamWord] <阶段>", { userId, term, chunk?, error? })
    */
-  async function* streamWord({ userId, term, language, model, token, signal }) {
+  async function* streamWord({
+    userId,
+    term,
+    language,
+    model,
+    token,
+    signal,
+    onChunk,
+  }) {
     const params = new URLSearchParams({ userId, term, language });
     if (model) params.append("model", model);
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
@@ -70,6 +78,7 @@ export function createWordsApi(request = apiRequest) {
         if (data === "[DONE]") break;
         if (data) {
           console.info("[streamWord] chunk", { ...logCtx, chunk: data });
+          if (onChunk) onChunk(data);
           yield data;
         }
       }
