@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
 
 /**
@@ -113,5 +114,36 @@ class DoubaoStreamDecoderTest {
     @Test
     void decodeDoneEvent() {
         StepVerifier.create(decoder.decode(Flux.just("data: [DONE]\\n\\n"))).verifyComplete();
+    }
+
+    /**
+     * 模拟分块 SSE 传输，验证第一事件在后续事件推送前即可被消费。
+     * 流程：先推送未完整的 message 事件，再推送其结尾分隔符，
+     * StepVerifier 立即收到内容后，再发送下一事件。
+     */
+    @Test
+    void emitFirstChunkBeforeNextArrives() {
+        Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
+        Flux<String> decoded = decoder.decode(sink.asFlux());
+
+        StepVerifier
+            .create(decoded)
+            .then(() ->
+                sink.tryEmitNext(
+                    "event: message\n" +
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"A\"}}]}"
+                )
+            )
+            .then(() -> sink.tryEmitNext("\n\n"))
+            .expectNext("A")
+            .then(() ->
+                sink.tryEmitNext(
+                    "event: message\n" +
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"B\"}}]}\n\n"
+                )
+            )
+            .expectNext("B")
+            .then(() -> sink.tryEmitNext("event: end\n\n"))
+            .verifyComplete();
     }
 }

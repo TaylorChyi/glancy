@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
-/**
- * 针对抖宝流式事件格式的解析器。通过事件类型与处理器映射，
- * 保持协议扩展的开放性，同时对常见事件进行内聚处理。
- */
+/** 使用 Reactor 原语按块解析抖宝 SSE 事件。 */
 @Slf4j
 @Component("doubaoStreamDecoder")
 public class DoubaoStreamDecoder implements StreamDecoder {
@@ -37,39 +34,26 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .map(this::toEvent)
             .doOnNext(evt -> log.info("Event [{}]: {}", evt.type, evt.data))
             .takeUntil(evt -> "end".equals(evt.type))
-            .flatMap(evt -> {
-                if (evt.type == null || !handlers.containsKey(evt.type)) {
-                    return Flux.empty();
-                }
-                return handlers.get(evt.type).apply(evt.data.toString());
-            });
+            .flatMap(evt ->
+                handlers.containsKey(evt.type)
+                    ? handlers.get(evt.type).apply(evt.data.toString())
+                    : Flux.empty()
+            );
     }
 
-    /**
-     * 将原始 SSE 文本流按照空行分割成事件片段，
-     * 以兼容网络分片导致的事件跨 chunk 问题。
-     */
+    /** 通过 bufferUntil 检测 \n\n 分隔符，逐事件输出并保留剩余数据。 */
     private Flux<List<String>> splitEvents(Flux<String> source) {
-        return Flux.create(sink -> {
-            StringBuilder buffer = new StringBuilder();
-            source.subscribe(
-                chunk -> {
-                    buffer.append(chunk);
-                    int idx;
-                    while ((idx = buffer.indexOf("\n\n")) >= 0) {
-                        String event = buffer.substring(0, idx);
-                        buffer.delete(0, idx + 2);
-                        sink.next(normalize(event));
-                    }
-                },
-                sink::error,
-                () -> {
-                    if (buffer.length() > 0) {
-                        sink.next(normalize(buffer.toString()));
-                    }
-                    sink.complete();
-                }
-            );
+        return Flux.defer(() -> {
+            StringBuilder buf = new StringBuilder();
+            return source
+                .map(buf::append)
+                .bufferUntil(sb -> sb.indexOf("\n\n") >= 0)
+                .map(list -> {
+                    int idx = buf.indexOf("\n\n");
+                    String event = buf.substring(0, idx);
+                    buf.delete(0, idx + 2);
+                    return normalize(event);
+                });
         });
     }
 
@@ -105,11 +89,8 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
     private Flux<String> handleMessage(String json) {
         log.info("Handle message event: {}", json);
-        if (json == null || json.trim().isEmpty()) {
+        if (json == null || json.trim().isEmpty() || "[DONE]".equals(json.trim())) {
             log.warn("Empty message event data, ignoring event: raw={}", SensitiveDataUtil.previewText(json));
-            return Flux.empty();
-        }
-        if ("[DONE]".equals(json.trim())) {
             return Flux.empty();
         }
         try {
@@ -145,7 +126,6 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private static class Event {
-
         String type;
         StringBuilder data = new StringBuilder();
     }

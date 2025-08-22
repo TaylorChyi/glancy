@@ -15,7 +15,6 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -102,7 +101,7 @@ public class DoubaoClient implements LLMClient {
             );
         }
         return resp
-            .body(BodyExtractors.toFlux(DataBuffer.class))
+            .bodyToFlux(DataBuffer.class)
             .map(buf -> {
                 String raw = buf.toString(StandardCharsets.UTF_8);
                 DataBufferUtils.release(buf);
