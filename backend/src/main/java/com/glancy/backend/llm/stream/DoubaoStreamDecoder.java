@@ -35,9 +35,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .doOnNext(evt -> log.info("Event [{}]: {}", evt.type, evt.data))
             .takeUntil(evt -> "end".equals(evt.type))
             .flatMap(evt ->
-                handlers.containsKey(evt.type)
-                    ? handlers.get(evt.type).apply(evt.data.toString())
-                    : Flux.empty()
+                handlers.containsKey(evt.type) ? handlers.get(evt.type).apply(evt.data.toString()) : Flux.empty()
             );
     }
 
@@ -126,6 +124,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     }
 
     private static class Event {
+
         String type;
         StringBuilder data = new StringBuilder();
     }

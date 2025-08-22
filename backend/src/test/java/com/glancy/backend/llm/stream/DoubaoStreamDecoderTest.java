@@ -126,21 +126,12 @@ class DoubaoStreamDecoderTest {
         Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
         Flux<String> decoded = decoder.decode(sink.asFlux());
 
-        StepVerifier
-            .create(decoded)
-            .then(() ->
-                sink.tryEmitNext(
-                    "event: message\n" +
-                    "data: {\"choices\":[{\"delta\":{\"content\":\"A\"}}]}"
-                )
-            )
+        StepVerifier.create(decoded)
+            .then(() -> sink.tryEmitNext("event: message\n" + "data: {\"choices\":[{\"delta\":{\"content\":\"A\"}}]}"))
             .then(() -> sink.tryEmitNext("\n\n"))
             .expectNext("A")
             .then(() ->
-                sink.tryEmitNext(
-                    "event: message\n" +
-                    "data: {\"choices\":[{\"delta\":{\"content\":\"B\"}}]}\n\n"
-                )
+                sink.tryEmitNext("event: message\n" + "data: {\"choices\":[{\"delta\":{\"content\":\"B\"}}]}\n\n")
             )
             .expectNext("B")
             .then(() -> sink.tryEmitNext("event: end\n\n"))
