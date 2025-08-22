@@ -10,6 +10,9 @@ export function createChatApi(request = apiRequest) {
    * 流式获取聊天回复并输出统一格式日志。
    * 日志格式:
    *   console.info("[streamChatMessage] <阶段>", { model, messages: <数量>, chunk?, error? })
+   *
+   * @param {{model: string, messages: Array}} options
+   * @returns {AsyncGenerator<string>}
    */
   async function* streamChatMessage({ model, messages }) {
     const logCtx = { model, messages: messages.length };
