@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.http.CacheControl;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,10 +70,13 @@ public class WordController {
         @AuthenticatedUser Long userId,
         @RequestParam String term,
         @RequestParam Language language,
-        @RequestParam(required = false) String model
+        @RequestParam(required = false) String model,
+        ServerHttpResponse response
     ) {
+        response.getHeaders().setCacheControl(CacheControl.noStore());
         return wordService
             .streamWordForUser(userId, term, language, model)
+            .doOnSubscribe(sub -> response.getHeaders().add("X-Accel-Buffering", "no"))
             .doOnNext(chunk -> log.info("Controller streaming chunk for user {} term '{}': {}", userId, term, chunk))
             .map(data -> ServerSentEvent.builder(data).build())
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
