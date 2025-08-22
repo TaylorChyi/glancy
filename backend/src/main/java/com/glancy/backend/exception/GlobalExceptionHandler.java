@@ -1,17 +1,23 @@
 package com.glancy.backend.exception;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.security.TokenTraceFilter;
 import com.glancy.backend.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -24,92 +30,119 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    public GlobalExceptionHandler() {}
+    private final ObjectMapper mapper;
+
+    public GlobalExceptionHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
+    private boolean isSseRequest() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) {
+            return false;
+        }
+        String accept = attrs.getRequest().getHeader(HttpHeaders.ACCEPT);
+        return accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE);
+    }
+
+    private ResponseEntity<?> buildResponse(Object body, HttpStatus status) {
+        if (isSseRequest()) {
+            try {
+                String json = mapper.writeValueAsString(body);
+                String event = "event: error\n" + "data: " + json + "\n\n";
+                return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(event);
+            } catch (JsonProcessingException e) {
+                String fallback = "event: error\ndata: {\"message\":\"serialization error\"}\n\n";
+                return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(fallback);
+            }
+        }
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<?> handleNotFound(ResourceNotFoundException ex) {
         log.error("Resource not found: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateResourceException ex) {
+    public ResponseEntity<?> handleDuplicate(DuplicateResourceException ex) {
         log.error("Duplicate resource: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.CONFLICT);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InvalidRequestException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException ex) {
+    public ResponseEntity<?> handleInvalidRequest(InvalidRequestException ex) {
         log.error("Invalid request: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+    public ResponseEntity<?> handleUnauthorized(UnauthorizedException ex) {
         log.error("Unauthorized access: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException ex) {
+    public ResponseEntity<?> handleBusiness(BusinessException ex) {
         log.error("Business exception: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler({ MethodArgumentNotValidException.class, ConstraintViolationException.class })
-    public ResponseEntity<ErrorResponse> handleValidation(Exception ex) {
+    public ResponseEntity<?> handleValidation(Exception ex) {
         String msg = "请求参数不合法";
         log.error(msg, ex);
-        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.UNPROCESSABLE_ENTITY);
+        return buildResponse(new ErrorResponse(msg), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler({ QuotaExceededException.class, ForbiddenException.class })
-    public ResponseEntity<ErrorResponse> handleForbidden(BusinessException ex) {
+    public ResponseEntity<?> handleForbidden(BusinessException ex) {
         log.error("Forbidden: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitExceededException ex) {
+    public ResponseEntity<?> handleRateLimit(RateLimitExceededException ex) {
         log.warn("Rate limit exceeded: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler(TtsFailedException.class)
-    public ResponseEntity<ErrorResponse> handleTtsFailure(TtsFailedException ex) {
+    public ResponseEntity<?> handleTtsFailure(TtsFailedException ex) {
         String msg = "TTS provider error: " + ex.getMessage();
         log.error(msg, ex);
-        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.FAILED_DEPENDENCY);
+        return buildResponse(new ErrorResponse(msg), HttpStatus.FAILED_DEPENDENCY);
     }
 
     @ExceptionHandler(ServiceDegradedException.class)
-    public ResponseEntity<ErrorResponse> handleServiceDegraded(ServiceDegradedException ex) {
+    public ResponseEntity<?> handleServiceDegraded(ServiceDegradedException ex) {
         log.error("Service degraded: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(ex.getMessage()), HttpStatus.SERVICE_UNAVAILABLE);
+        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
+    public ResponseEntity<?> handleMissingParam(MissingServletRequestParameterException ex) {
         log.error("Missing request parameter: {}", ex.getParameterName());
         String msg = "Missing required parameter: " + ex.getParameterName();
-        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
+        return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ResponseEntity<?> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.error("Invalid parameter: {}", ex.getName());
         String msg = "Invalid value for parameter: " + ex.getName();
-        return new ResponseEntity<>(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
+        return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxSize(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<?> handleMaxSize(MaxUploadSizeExceededException ex) {
         log.error("File upload too large: {}", ex.getMessage());
-        return new ResponseEntity<>(new ErrorResponse("上传文件过大"), HttpStatus.PAYLOAD_TOO_LARGE);
+        return buildResponse(new ErrorResponse("上传文件过大"), HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNoHandler(NoHandlerFoundException ex, HttpServletRequest req) {
+    public ResponseEntity<?> handleNoHandler(NoHandlerFoundException ex, HttpServletRequest req) {
         String rid = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_REQUEST_ID));
         String tokenStatus = String.valueOf(req.getAttribute(TokenTraceFilter.ATTR_TOKEN_STATUS));
         log.warn(
@@ -119,23 +152,23 @@ public class GlobalExceptionHandler {
             ex.getHttpMethod(),
             tokenStatus
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "未找到资源", "rid", rid));
+        return buildResponse(Map.of("message", "未找到资源", "rid", rid), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ErrorResponse> handleSpringNotFound(NoResourceFoundException ex, HttpServletRequest request) {
+    public ResponseEntity<?> handleSpringNotFound(NoResourceFoundException ex, HttpServletRequest request) {
         log.error(
             "Resource not found: method={}, path={}, msg={}",
             request.getMethod(),
             request.getRequestURI(),
             ex.getMessage()
         );
-        return new ResponseEntity<>(new ErrorResponse("未找到资源"), HttpStatus.NOT_FOUND);
+        return buildResponse(new ErrorResponse("未找到资源"), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+    public ResponseEntity<?> handleException(Exception ex) {
         log.error("Unhandled exception", ex);
-        return new ResponseEntity<>(new ErrorResponse("内部服务器错误"), HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildResponse(new ErrorResponse("内部服务器错误"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
