@@ -6,6 +6,7 @@ import { useTheme } from "@/context";
 import DictionaryEntry from "@/components/ui/DictionaryEntry";
 import { useLanguage } from "@/context";
 import { useStreamWord, useSpeechInput } from "@/hooks";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
@@ -31,6 +32,7 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [fromFavorites, setFromFavorites] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [finalText, setFinalText] = useState("");
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -100,6 +102,7 @@ function App() {
     setLoading(true);
     setEntry(null);
     setStreamText("");
+    setFinalText("");
     let detected;
     try {
       let acc = "";
@@ -120,7 +123,13 @@ function App() {
         }
       }
       addHistory(input, user, detected);
-      setStreamText("");
+      try {
+        const parsed = JSON.parse(acc);
+        setEntry(parsed);
+        setFinalText("");
+      } catch {
+        setFinalText(acc);
+      }
       console.info("[App] search complete", input);
     } catch (error) {
       if (error.name === "AbortError") {
@@ -170,7 +179,13 @@ function App() {
           // ignore parse errors until JSON is complete
         }
       }
-      setStreamText("");
+      try {
+        const parsed = JSON.parse(acc);
+        setEntry(parsed);
+        setFinalText("");
+      } catch {
+        setFinalText(acc);
+      }
       console.info("[App] search complete", term);
     } catch (error) {
       if (error.name === "AbortError") {
@@ -197,6 +212,8 @@ function App() {
       setShowFavorites(false);
       setShowHistory(false);
       setFromFavorites(false);
+      setStreamText("");
+      setFinalText("");
     }
   }, [user]);
 
@@ -241,8 +258,8 @@ function App() {
             <pre className="stream-text">{streamText || "..."}</pre>
           ) : entry ? (
             <DictionaryEntry entry={entry} />
-          ) : streamText ? (
-            <pre className="stream-text">{streamText}</pre>
+          ) : finalText ? (
+            <ReactMarkdown>{finalText}</ReactMarkdown>
           ) : (
             <div className="display-content">
               <div className="display-term">{placeholder}</div>

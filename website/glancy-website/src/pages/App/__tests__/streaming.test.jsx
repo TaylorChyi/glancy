@@ -75,7 +75,7 @@ beforeEach(() => {
 /**
  * 验证流式内容在 <pre> 标签中逐字呈现，并在完成后恢复默认界面。
  */
-test("streams text in pre incrementally", async () => {
+test("streams text and retains final markdown", async () => {
   useStreamWord.mockImplementation(
     () =>
       async function* () {
@@ -99,9 +99,9 @@ test("streams text in pre incrementally", async () => {
   expect(pre.tagName).toBe("PRE");
 
   await waitFor(() => {
-    expect(screen.queryByText("foobar")).not.toBeInTheDocument();
+    const final = screen.getByText("foobar");
+    expect(final.tagName).toBe("P");
   });
-  expect(screen.getByText("search")).toBeInTheDocument();
 });
 
 /**
