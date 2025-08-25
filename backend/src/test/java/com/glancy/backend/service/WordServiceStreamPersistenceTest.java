@@ -67,7 +67,9 @@ class WordServiceStreamPersistenceTest {
         word.setTerm("cached");
         word.setLanguage(Language.ENGLISH);
         word.setDefinitions(List.of("def"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("cached", Language.ENGLISH)).thenReturn(Optional.of(word));
+        when(wordRepository.findByTermAndLanguageAndDeletedFalse("cached", Language.ENGLISH)).thenReturn(
+            Optional.of(word)
+        );
 
         Flux<String> flux = wordService.streamWordForUser(1L, "cached", Language.ENGLISH, null);
 
@@ -82,13 +84,25 @@ class WordServiceStreamPersistenceTest {
     void savesAfterStreaming() {
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
         when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(Flux.just("{\"term\":\"hi\"}", ""));
-        WordResponse resp = new WordResponse(null, "hi", List.of("greet"), Language.ENGLISH, null, null, List.of(), List.of(), List.of(), List.of(), List.of());
+        WordResponse resp = new WordResponse(
+            null,
+            "hi",
+            List.of("greet"),
+            Language.ENGLISH,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of()
+        );
         when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(resp);
         when(wordRepository.save(any())).thenAnswer(invocation -> {
-            Word w = invocation.getArgument(0);
-            w.setId(1L);
-            return w;
-        });
+                Word w = invocation.getArgument(0);
+                w.setId(1L);
+                return w;
+            });
 
         Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
 

@@ -1,5 +1,7 @@
 package com.glancy.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.WordResponse;
@@ -7,8 +9,6 @@ import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.entity.Word;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
