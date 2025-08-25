@@ -3,8 +3,14 @@ import { jest } from "@jest/globals";
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({
-  default: ({ bottomContent, children }) => (
+  default: ({ bottomContent, children, sidebarProps }) => (
     <div>
+      {sidebarProps && (
+        <button
+          data-testid="history-select"
+          onClick={() => sidebarProps.onSelectHistory("foo")}
+        />
+      )}
       <div>{children}</div>
       {bottomContent}
     </div>
@@ -73,9 +79,9 @@ beforeEach(() => {
 });
 
 /**
- * 验证流式内容在 Markdown 容器中逐字呈现，并在完成后恢复默认界面。
+ * 验证流式内容在 Markdown 容器中逐字呈现，解析失败时最终文本仍会保留。
  */
-test("streams text with markdown incrementally", async () => {
+test("streams text with markdown and preserves final output", async () => {
   useStreamWord.mockImplementation(
     () =>
       async function* () {
@@ -99,9 +105,8 @@ test("streams text with markdown incrementally", async () => {
   expect(paragraph.tagName).toBe("P");
 
   await waitFor(() => {
-    expect(screen.queryByText("foobar")).not.toBeInTheDocument();
+    expect(screen.getByText("foobar")).toBeInTheDocument();
   });
-  expect(screen.getByText("search")).toBeInTheDocument();
 });
 
 /**
@@ -125,4 +130,23 @@ test("renders dictionary entry after streaming completes", async () => {
 
   const entry = await screen.findByTestId("entry");
   expect(entry).toHaveTextContent("hello");
+});
+
+/**
+ * 验证选择历史记录时解析失败的内容仍然会展示。
+ */
+test("shows markdown when history item cannot be parsed", async () => {
+  useStreamWord.mockImplementation(
+    () =>
+      async function* () {
+        yield { chunk: "hello" };
+      },
+  );
+
+  render(<App />);
+
+  fireEvent.click(screen.getByTestId("history-select"));
+
+  const paragraph = await screen.findByText("hello");
+  expect(paragraph.tagName).toBe("P");
 });
