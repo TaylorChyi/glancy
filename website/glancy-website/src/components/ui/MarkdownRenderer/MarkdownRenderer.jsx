@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
  * 可作为统一的 Markdown 渲染入口，便于未来扩展。
  */
 function MarkdownRenderer({ children, ...props }) {
+  if (!children) return null;
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm]} {...props}>
       {children}

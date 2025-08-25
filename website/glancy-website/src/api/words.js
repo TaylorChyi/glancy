@@ -1,7 +1,13 @@
 import { API_PATHS } from "@/config/api.js";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks";
-import { createCachedFetcher, parseSse } from "@/utils";
+import { createCachedFetcher, parseSse, clientNameFromModel } from "@/utils";
+import { useWordStore } from "@/store/wordStore.js";
+
+export const WORD_CACHE_VERSION = "md1";
+
+export const wordCacheKey = ({ term, language, model }) =>
+  `${language}:${term}:${model ?? ""}:${WORD_CACHE_VERSION}`;
 
 /**
  * Query a word definition
@@ -12,16 +18,26 @@ import { createCachedFetcher, parseSse } from "@/utils";
  * @param {string} [opts.token] user token for auth header
  */
 export function createWordsApi(request = apiRequest) {
+  const store = useWordStore;
+
+  const resolveKey = ({ term, language, model }) =>
+    wordCacheKey({ term, language, model: clientNameFromModel(model) });
+
   const fetchWordImpl = async ({ userId, term, language, model, token }) => {
+    const key = resolveKey({ term, language, model });
+    const cached = store.getState().getEntry(key);
+    if (cached) return cached;
     const params = new URLSearchParams({ userId, term, language });
-    if (model) params.append("model", model);
-    return request(`${API_PATHS.words}?${params.toString()}`, { token });
+    const clientModel = clientNameFromModel(model);
+    if (clientModel) params.append("model", clientModel);
+    const result = await request(`${API_PATHS.words}?${params.toString()}`, {
+      token,
+    });
+    store.getState().setEntry(key, result);
+    return result;
   };
 
-  const fetchWord = createCachedFetcher(
-    fetchWordImpl,
-    ({ term, language, model }) => `${language}:${term}:${model ?? ""}`,
-  );
+  const fetchWord = createCachedFetcher(fetchWordImpl, resolveKey);
 
   const fetchWordAudioImpl = async ({ userId, term, language }) => {
     const params = new URLSearchParams({ userId, term, language });

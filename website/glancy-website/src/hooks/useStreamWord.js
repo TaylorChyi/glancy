@@ -1,5 +1,7 @@
 import { useApi } from "@/hooks/useApi.js";
 import { detectWordLanguage, clientNameFromModel } from "@/utils";
+import { wordCacheKey } from "@/api/words.js";
+import { useWordStore } from "@/store/wordStore.js";
 
 /**
  * 提供基于 SSE 的词汇查询流式接口，并输出统一格式日志。
@@ -10,10 +12,17 @@ import { detectWordLanguage, clientNameFromModel } from "@/utils";
 export function useStreamWord() {
   const api = useApi();
   const { streamWord } = api.words;
+  const store = useWordStore;
 
   return async function* streamWordWithHandling({ user, term, model, signal }) {
     const language = detectWordLanguage(term);
     const logCtx = { userId: user.id, term };
+    const key = wordCacheKey({
+      term,
+      language,
+      model: clientNameFromModel(model),
+    });
+    let acc = "";
     console.info("[streamWordWithHandling] start", logCtx);
     try {
       for await (const chunk of streamWord({
@@ -27,8 +36,21 @@ export function useStreamWord() {
           console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
         },
       })) {
+        acc += chunk;
         yield { chunk, language };
       }
+      let entry;
+      try {
+        entry = JSON.parse(acc);
+        if (entry && typeof entry === "object") {
+          entry.markdown = entry.markdown ?? acc;
+        } else {
+          entry = { markdown: acc };
+        }
+      } catch {
+        entry = { term, language, markdown: acc };
+      }
+      store.getState().setEntry(key, entry);
       console.info("[streamWordWithHandling] end", logCtx);
     } catch (error) {
       console.info("[streamWordWithHandling] error", { ...logCtx, error });
