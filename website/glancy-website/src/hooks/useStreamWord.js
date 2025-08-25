@@ -41,9 +41,9 @@ export function useStreamWord() {
       }
       let entry;
       try {
-        entry = JSON.parse(acc);
-        if (entry && typeof entry === "object") {
-          entry.markdown = entry.markdown ?? acc;
+        const parsed = JSON.parse(acc);
+        if (parsed && typeof parsed === "object") {
+          entry = parsed;
         } else {
           entry = { markdown: acc };
         }
