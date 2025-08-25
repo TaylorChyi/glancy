@@ -12,6 +12,9 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  flyway:
+    baseline-on-migrate: true
+
   servlet:
     multipart:
       max-file-size: 5MB
