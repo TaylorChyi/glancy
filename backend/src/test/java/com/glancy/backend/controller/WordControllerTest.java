@@ -58,7 +58,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            "# md"
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
@@ -75,7 +76,8 @@ class WordControllerTest {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("1"))
-            .andExpect(jsonPath("$.term").value("hello"));
+            .andExpect(jsonPath("$.term").value("hello"))
+            .andExpect(jsonPath("$.markdown").value("# md"));
     }
 
     /**
@@ -94,7 +96,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            "# md"
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
 
@@ -111,7 +114,8 @@ class WordControllerTest {
             )
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"));
+            .andExpect(jsonPath("$.id").value("1"))
+            .andExpect(jsonPath("$.markdown").value("# md"));
     }
 
     /**
@@ -174,7 +178,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            "# md"
         );
         when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
@@ -187,6 +192,7 @@ class WordControllerTest {
                     .accept(MediaType.APPLICATION_JSON)
             )
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.term").value("hi"));
+            .andExpect(jsonPath("$.term").value("hi"))
+            .andExpect(jsonPath("$.markdown").value("# md"));
     }
 }

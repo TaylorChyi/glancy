@@ -58,7 +58,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 synonyms,
                 antonyms,
                 related,
-                phrases
+                phrases,
+                content
             );
         } catch (Exception e) {
             log.warn("Failed to parse word response", e);
@@ -73,7 +74,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                content
             );
         }
     }

@@ -163,6 +163,7 @@ public class WordService {
         word.setTerm(term);
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
         word.setLanguage(lang);
+        word.setMarkdown(resp.getMarkdown());
         word.setDefinitions(resp.getDefinitions());
         word.setVariations(resp.getVariations());
         word.setSynonyms(resp.getSynonyms());
@@ -190,7 +191,8 @@ public class WordService {
             word.getSynonyms(),
             word.getAntonyms(),
             word.getRelated(),
-            word.getPhrases()
+            word.getPhrases(),
+            word.getMarkdown()
         );
     }
 }
