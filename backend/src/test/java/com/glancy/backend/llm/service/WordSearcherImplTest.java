@@ -9,6 +9,7 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
+import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
@@ -48,7 +49,6 @@ class WordSearcherImplTest {
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
         when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
-
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
 
