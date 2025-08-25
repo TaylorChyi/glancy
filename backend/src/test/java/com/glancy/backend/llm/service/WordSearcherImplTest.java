@@ -13,6 +13,7 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
+import com.glancy.backend.llm.parser.ParsedWord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,8 +47,8 @@ class WordSearcherImplTest {
         when(searchContentManager.normalize("hello")).thenReturn("hello");
         when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, null));
-
+        expected.setMarkdown("content");
+        when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
 

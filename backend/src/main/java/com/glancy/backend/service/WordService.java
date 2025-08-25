@@ -81,7 +81,7 @@ public class WordService {
                 log.info("Word '{}' not found locally, searching via LLM", term);
                 WordResponse resp = wordSearcher.search(term, language, model);
                 log.info("LLM search result: {}", resp);
-                saveWord(term, resp, language, null);
+                saveWord(term, resp, language);
                 return resp;
             });
     }
@@ -145,7 +145,7 @@ public class WordService {
                 if (signal == SignalType.ON_COMPLETE) {
                     try {
                         ParsedWord parsed = parser.parse(buffer.toString(), term, language);
-                        saveWord(term, parsed.parsed(), language, parsed.markdown());
+                        saveWord(term, parsed.parsed(), language);
                     } catch (Exception e) {
                         log.error("Failed to persist streamed word '{}'", term, e);
                     }
@@ -158,8 +158,9 @@ public class WordService {
         return mapper.writeValueAsString(toResponse(word));
     }
 
-    private void saveWord(String requestedTerm, WordResponse resp, Language language, String markdown) {
+    private void saveWord(String requestedTerm, WordResponse resp, Language language) {
         Word word = new Word();
+        word.setMarkdown(resp.getMarkdown());
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
         word.setTerm(term);
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
@@ -172,12 +173,12 @@ public class WordService {
         word.setPhrases(resp.getPhrases());
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
-        word.setMarkdown(markdown);
         log.info("Persisting new word '{}' with language {}", term, lang);
         Word saved = wordRepository.save(word);
         resp.setId(String.valueOf(saved.getId()));
         resp.setLanguage(lang);
         resp.setTerm(term);
+        resp.setMarkdown(word.getMarkdown());
     }
 
     private WordResponse toResponse(Word word) {
@@ -192,7 +193,8 @@ public class WordService {
             word.getSynonyms(),
             word.getAntonyms(),
             word.getRelated(),
-            word.getPhrases()
+            word.getPhrases(),
+            word.getMarkdown()
         );
     }
 }

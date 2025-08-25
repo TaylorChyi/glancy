@@ -58,7 +58,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            null
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
@@ -94,7 +95,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            null
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
 
@@ -174,7 +176,8 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            null
         );
         when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
 
