@@ -96,7 +96,8 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            "{\"term\":\"hi\"}"
         );
         when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH))
             .thenReturn(new ParsedWord(resp, "{\"term\":\"hi\"}"));

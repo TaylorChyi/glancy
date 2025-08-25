@@ -34,6 +34,7 @@ class JacksonWordResponseParserTest {
         ParsedWord parsed = parser.parse(json, "glow", Language.ENGLISH);
         assertEquals(json, parsed.markdown());
         var resp = parsed.parsed();
+        assertEquals(json, resp.getMarkdown());
         assertEquals("glow", resp.getTerm());
         assertFalse(resp.getDefinitions().isEmpty());
         assertNotNull(resp.getPhonetic());
