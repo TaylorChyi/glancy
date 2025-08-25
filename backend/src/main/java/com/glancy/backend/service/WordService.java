@@ -9,6 +9,7 @@ import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.entity.Word;
+import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
@@ -80,7 +81,7 @@ public class WordService {
                 log.info("Word '{}' not found locally, searching via LLM", term);
                 WordResponse resp = wordSearcher.search(term, language, model);
                 log.info("LLM search result: {}", resp);
-                saveWord(term, resp, language);
+                saveWord(term, resp, language, null);
                 return resp;
             });
     }
@@ -143,8 +144,8 @@ public class WordService {
                 log.info("Streaming finished for term '{}' with signal {}", term, signal);
                 if (signal == SignalType.ON_COMPLETE) {
                     try {
-                        WordResponse resp = parser.parse(buffer.toString(), term, language);
-                        saveWord(term, resp, language);
+                        ParsedWord parsed = parser.parse(buffer.toString(), term, language);
+                        saveWord(term, parsed.parsed(), language, parsed.markdown());
                     } catch (Exception e) {
                         log.error("Failed to persist streamed word '{}'", term, e);
                     }
@@ -157,7 +158,7 @@ public class WordService {
         return mapper.writeValueAsString(toResponse(word));
     }
 
-    private void saveWord(String requestedTerm, WordResponse resp, Language language) {
+    private void saveWord(String requestedTerm, WordResponse resp, Language language, String markdown) {
         Word word = new Word();
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
         word.setTerm(term);
@@ -171,6 +172,7 @@ public class WordService {
         word.setPhrases(resp.getPhrases());
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
+        word.setMarkdown(markdown);
         log.info("Persisting new word '{}' with language {}", term, lang);
         Word saved = wordRepository.save(word);
         resp.setId(String.valueOf(saved.getId()));

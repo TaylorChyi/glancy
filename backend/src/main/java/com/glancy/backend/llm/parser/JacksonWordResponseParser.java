@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 public class JacksonWordResponseParser implements WordResponseParser {
 
     @Override
-    public WordResponse parse(String content, String term, Language language) {
+    public ParsedWord parse(String content, String term, Language language) {
+        String markdown = content;
         String json = extractJson(content);
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -47,7 +48,7 @@ public class JacksonWordResponseParser implements WordResponseParser {
 
             String phonetic = parsePhonetic(node);
 
-            return new WordResponse(
+            WordResponse response = new WordResponse(
                 id,
                 parsedTerm,
                 definitions,
@@ -60,9 +61,10 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 related,
                 phrases
             );
+            return new ParsedWord(response, markdown);
         } catch (Exception e) {
             log.warn("Failed to parse word response", e);
-            return new WordResponse(
+            WordResponse response = new WordResponse(
                 null,
                 term,
                 new ArrayList<>(),
@@ -75,6 +77,7 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 new ArrayList<>(),
                 new ArrayList<>()
             );
+            return new ParsedWord(response, markdown);
         }
     }
 
