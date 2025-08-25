@@ -64,11 +64,13 @@ class WordServiceTest {
         word.setTerm("cached");
         word.setLanguage(Language.ENGLISH);
         word.setDefinitions(List.of("store"));
+        word.setMarkdown("md");
         wordRepository.save(word);
 
         WordResponse result = wordService.findWordForUser(1L, "cached", Language.ENGLISH, null);
 
         assertEquals(String.valueOf(word.getId()), result.getId());
+        assertEquals("md", result.getMarkdown());
     }
 
     /**

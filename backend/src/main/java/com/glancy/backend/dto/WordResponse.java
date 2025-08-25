@@ -22,4 +22,5 @@ public class WordResponse {
     private List<String> antonyms;
     private List<String> related;
     private List<String> phrases;
+    private String markdown;
 }

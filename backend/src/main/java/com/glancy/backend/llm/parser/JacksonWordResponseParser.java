@@ -59,7 +59,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 synonyms,
                 antonyms,
                 related,
-                phrases
+                phrases,
+                markdown
             );
             return new ParsedWord(response, markdown);
         } catch (Exception e) {
@@ -75,7 +76,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                markdown
             );
             return new ParsedWord(response, markdown);
         }

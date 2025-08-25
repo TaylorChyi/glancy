@@ -6,6 +6,7 @@ import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
@@ -62,7 +63,8 @@ public class WordSearcherImpl implements WordSearcher {
         messages.add(new ChatMessage("user", cleanInput));
         String content = client.chat(messages, config.getTemperature());
         log.info("LLM client '{}' returned content: {}", name, content);
-        return parser.parse(content, term, language);
+        ParsedWord parsed = parser.parse(content, term, language);
+        return parsed.parsed();
     }
 
     /**
