@@ -98,8 +98,9 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             "{\"term\":\"hi\"}"
         );
-        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH))
-            .thenReturn(new ParsedWord(resp, "{\"term\":\"hi\"}"));
+        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(
+            new ParsedWord(resp, "{\"term\":\"hi\"}")
+        );
         when(wordRepository.save(any())).thenAnswer(invocation -> {
                 Word w = invocation.getArgument(0);
                 w.setId(1L);
