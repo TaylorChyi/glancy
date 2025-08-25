@@ -1,22 +1,23 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import CodeButton from './CodeButton.jsx'
-import PhoneInput from './PhoneInput.jsx'
-import Button from '@/components/ui/Button'
-import styles from './AuthForm.module.css'
-import MessagePopup from '@/components/ui/MessagePopup'
-import ThemeIcon from '@/components/ui/Icon'
-import ICP from '@/components/ui/ICP'
-import { useLanguage } from '@/context'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import CodeButton from "./CodeButton.jsx";
+import PhoneInput from "./PhoneInput.jsx";
+import Button from "@/components/ui/Button";
+import MultiLineText from "@/components/ui/MultiLineText.jsx";
+import styles from "./AuthForm.module.css";
+import MessagePopup from "@/components/ui/MessagePopup";
+import ThemeIcon from "@/components/ui/Icon";
+import ICP from "@/components/ui/ICP";
+import { useLanguage } from "@/context";
 
 const defaultIcons = {
-  username: 'user',
-  email: 'email',
-  phone: 'phone',
-  wechat: 'wechat',
-  apple: 'apple',
-  google: 'google'
-}
+  username: "user",
+  email: "email",
+  phone: "phone",
+  wechat: "wechat",
+  apple: "apple",
+  google: "google",
+};
 
 function AuthForm({
   title,
@@ -27,109 +28,112 @@ function AuthForm({
   formMethods = [],
   methodOrder = [],
   validateAccount = () => true,
-  passwordPlaceholder = 'Password',
+  passwordPlaceholder = "Password",
   showCodeButton = () => false,
-  icons = defaultIcons
+  icons = defaultIcons,
 }) {
-  const [account, setAccount] = useState('')
-  const [password, setPassword] = useState('')
-  const [method, setMethod] = useState(formMethods[0])
-  const [showNotice, setShowNotice] = useState(false)
-  const [noticeMsg, setNoticeMsg] = useState('')
-  const { t } = useLanguage()
-  const handleSendCode = () => {}
+  const [account, setAccount] = useState("");
+  const [password, setPassword] = useState("");
+  const [method, setMethod] = useState(formMethods[0]);
+  const [showNotice, setShowNotice] = useState(false);
+  const [noticeMsg, setNoticeMsg] = useState("");
+  const { t } = useLanguage();
+  const handleSendCode = () => {};
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setNoticeMsg('')
+    e.preventDefault();
+    setNoticeMsg("");
     if (!validateAccount(account, method)) {
-      setNoticeMsg(t.invalidAccount || 'Invalid account')
-      setShowNotice(true)
-      return
+      setNoticeMsg(t.invalidAccount || "Invalid account");
+      setShowNotice(true);
+      return;
     }
     try {
-      await onSubmit({ account, password, method })
+      await onSubmit({ account, password, method });
     } catch (err) {
-      setNoticeMsg(err.message)
-      setShowNotice(true)
+      setNoticeMsg(err.message);
+      setShowNotice(true);
     }
-  }
+  };
 
   const renderForm = () => {
-    if (!formMethods.includes(method)) return null
+    if (!formMethods.includes(method)) return null;
     const passHolder =
-      typeof passwordPlaceholder === 'function'
+      typeof passwordPlaceholder === "function"
         ? passwordPlaceholder(method)
-        : passwordPlaceholder
+        : passwordPlaceholder;
     return (
-      <form onSubmit={handleSubmit} className={styles['auth-form']}>
-        {method === 'phone' ? (
+      <form onSubmit={handleSubmit} className={styles["auth-form"]}>
+        {method === "phone" ? (
           <PhoneInput value={account} onChange={setAccount} />
         ) : (
           <input
-            className={styles['auth-input']}
+            className={styles["auth-input"]}
             placeholder={placeholders[method]}
             value={account}
             onChange={(e) => setAccount(e.target.value)}
           />
         )}
-        <div className={styles['password-row']}>
+        <div className={styles["password-row"]}>
           <input
-            className={styles['auth-input']}
-            type={showCodeButton(method) ? 'text' : 'password'}
+            className={styles["auth-input"]}
+            type={showCodeButton(method) ? "text" : "password"}
             placeholder={passHolder}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           {showCodeButton(method) && <CodeButton onClick={handleSendCode} />}
         </div>
-        <Button type="submit" className={styles['auth-primary-btn']}>
+        <Button type="submit" className={styles["auth-primary-btn"]}>
           {t.continueButton}
         </Button>
       </form>
-    )
-  }
+    );
+  };
 
   return (
-    <div className={styles['auth-page']}>
-      <Link to="/" className={styles['auth-close']}>
+    <div className={styles["auth-page"]}>
+      <Link to="/" className={styles["auth-close"]}>
         ×
       </Link>
-      <ThemeIcon name="glancy-web" className={styles['auth-logo']} />
-      <div className={styles['auth-brand']}>Glancy</div>
-      <h1 className={styles['auth-title']}>{title}</h1>
+      <ThemeIcon name="glancy-web" className={styles["auth-logo"]} />
+      <div className={styles["auth-brand"]}>Glancy</div>
+      <MultiLineText as="h1" className={styles["auth-title"]} text={title} />
       {renderForm()}
-      <div className={styles['auth-switch']}>
-        {switchText} <Link to={switchLink}>{switchLink.includes('login') ? t.loginButton : t.registerButton}</Link>
+      <div className={styles["auth-switch"]}>
+        {switchText}{" "}
+        <Link to={switchLink}>
+          {switchLink.includes("login") ? t.loginButton : t.registerButton}
+        </Link>
       </div>
       <div className={styles.divider}>
         <span>{t.or}</span>
       </div>
-      <div className={styles['login-options']}>
+      <div className={styles["login-options"]}>
         {methodOrder
           .filter((m) => m !== method)
           .map((m) => {
-            const iconName = icons[m]
+            const iconName = icons[m];
             return (
               <Button
                 key={m}
                 type="button"
                 onClick={() => {
                   if (formMethods.includes(m)) {
-                    setMethod(m)
+                    setMethod(m);
                   } else {
-                    setNoticeMsg(t.notImplementedYet || 'Not implemented yet')
-                    setShowNotice(true)
+                    setNoticeMsg(t.notImplementedYet || "Not implemented yet");
+                    setShowNotice(true);
                   }
                 }}
               >
                 <ThemeIcon name={iconName} alt={m} />
               </Button>
-            )
+            );
           })}
       </div>
-      <div className={styles['auth-footer']}>
-        <div className={styles['footer-links']}>
+      <div className={styles["auth-footer"]}>
+        <div className={styles["footer-links"]}>
           <a href="#">{t.termsOfUse}</a> | <a href="#">{t.privacyPolicy}</a>
         </div>
         <ICP />
@@ -140,7 +144,7 @@ function AuthForm({
         onClose={() => setShowNotice(false)}
       />
     </div>
-  )
+  );
 }
 
-export default AuthForm
+export default AuthForm;
