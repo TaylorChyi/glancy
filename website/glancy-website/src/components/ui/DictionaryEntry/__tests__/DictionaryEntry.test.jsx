@@ -25,9 +25,19 @@ jest.mock("@/components", () => ({
 }));
 
 /**
- * 确认 DictionaryEntry 能解析释义中的 Markdown。
+ * 确认当存在 markdown 字段时优先渲染其内容。
  */
-test("renders markdown in definitions", () => {
+test("renders top-level markdown when present", () => {
+  const entry = { markdown: "# Title" };
+  render(<DictionaryEntry entry={entry} />);
+  const heading = screen.getByText("Title");
+  expect(heading.tagName).toBe("H1");
+});
+
+/**
+ * 没有 markdown 字段时回退到 definitions 渲染。
+ */
+test("falls back to definitions", () => {
   const entry = {
     词条: "test",
     发音解释: [{ 释义: [{ 定义: "**bold**" }] }],

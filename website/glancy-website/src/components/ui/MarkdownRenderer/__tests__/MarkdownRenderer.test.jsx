@@ -10,3 +10,8 @@ test("renders GFM syntax", () => {
   const del = screen.getByText("gone");
   expect(del.tagName).toBe("DEL");
 });
+
+test("returns null for empty content", () => {
+  const { container } = render(<MarkdownRenderer>{""}</MarkdownRenderer>);
+  expect(container).toBeEmptyDOMElement();
+});

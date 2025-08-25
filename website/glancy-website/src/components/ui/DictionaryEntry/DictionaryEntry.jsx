@@ -7,6 +7,14 @@ function DictionaryEntry({ entry }) {
   const { t, lang } = useLanguage();
   if (!entry) return null;
 
+  if (entry.markdown) {
+    return (
+      <article className={styles["dictionary-entry"]}>
+        <MarkdownRenderer>{entry.markdown}</MarkdownRenderer>
+      </article>
+    );
+  }
+
   // new format detected by the presence of Chinese keys
   const isNew = Object.prototype.hasOwnProperty.call(entry, "发音解释");
 
