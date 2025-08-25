@@ -33,6 +33,7 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [fromFavorites, setFromFavorites] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [finalText, setFinalText] = useState("");
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -102,9 +103,11 @@ function App() {
     setLoading(true);
     setEntry(null);
     setStreamText("");
+    setFinalText("");
     let detected;
     try {
       let acc = "";
+      let parsedEntry = null;
       for await (const { chunk, language } of streamWord({
         user,
         term: input,
@@ -115,14 +118,16 @@ function App() {
         acc += chunk;
         setStreamText((prev) => prev + chunk);
         try {
-          const parsed = JSON.parse(acc);
-          setEntry(parsed);
+          parsedEntry = JSON.parse(acc);
+          setEntry(parsedEntry);
         } catch {
           // ignore parse errors until JSON is complete
         }
       }
+      if (!parsedEntry) {
+        setFinalText(acc);
+      }
       addHistory(input, user, detected);
-      setStreamText("");
       console.info("[App] search complete", input);
     } catch (error) {
       if (error.name === "AbortError") {
@@ -155,8 +160,10 @@ function App() {
     setLoading(true);
     setEntry(null);
     setStreamText("");
+    setFinalText("");
     try {
       let acc = "";
+      let parsedEntry = null;
       for await (const { chunk } of streamWord({
         user,
         term,
@@ -166,13 +173,15 @@ function App() {
         acc += chunk;
         setStreamText((prev) => prev + chunk);
         try {
-          const parsed = JSON.parse(acc);
-          setEntry(parsed);
+          parsedEntry = JSON.parse(acc);
+          setEntry(parsedEntry);
         } catch {
           // ignore parse errors until JSON is complete
         }
       }
-      setStreamText("");
+      if (!parsedEntry) {
+        setFinalText(acc);
+      }
       console.info("[App] search complete", term);
     } catch (error) {
       if (error.name === "AbortError") {
@@ -199,6 +208,8 @@ function App() {
       setShowFavorites(false);
       setShowHistory(false);
       setFromFavorites(false);
+      setStreamText("");
+      setFinalText("");
     }
   }, [user]);
 
@@ -246,6 +257,8 @@ function App() {
             />
           ) : entry ? (
             <DictionaryEntry entry={entry} />
+          ) : finalText ? (
+            <ReactMarkdown className="stream-text">{finalText}</ReactMarkdown>
           ) : streamText ? (
             <MarkdownStream text={streamText} renderer={ReactMarkdown} />
           ) : (
