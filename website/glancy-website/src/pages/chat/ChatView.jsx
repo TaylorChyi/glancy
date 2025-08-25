@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { streamChatMessage } from "@/api/chat.js";
 import styles from "./ChatView.module.css";
 
@@ -39,7 +39,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
             key={i}
             className={`${styles.message} ${m.role === "user" ? styles.user : styles.assistant}`}
           >
-            <ReactMarkdown>{m.content}</ReactMarkdown>
+            <MarkdownRenderer>{m.content}</MarkdownRenderer>
           </div>
         ))}
       </div>

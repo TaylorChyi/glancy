@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
+jest.mock("remark-gfm", () => () => {});
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({

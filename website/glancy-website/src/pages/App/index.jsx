@@ -14,7 +14,7 @@ import { useModelStore } from "@/store";
 import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import MarkdownStream from "@/components/ui/MarkdownStream";
 
 function App() {
@@ -251,16 +251,15 @@ function App() {
           ) : showHistory ? (
             <HistoryDisplay />
           ) : loading ? (
-            <MarkdownStream
-              text={streamText || "..."}
-              renderer={ReactMarkdown}
-            />
+            <MarkdownStream text={streamText || "..."} />
           ) : entry ? (
             <DictionaryEntry entry={entry} />
           ) : finalText ? (
-            <ReactMarkdown className="stream-text">{finalText}</ReactMarkdown>
+            <MarkdownRenderer className="stream-text">
+              {finalText}
+            </MarkdownRenderer>
           ) : streamText ? (
-            <MarkdownStream text={streamText} renderer={ReactMarkdown} />
+            <MarkdownStream text={streamText} />
           ) : (
             <div className="display-content">
               <div className="display-term">{placeholder}</div>
