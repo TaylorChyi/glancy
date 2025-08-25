@@ -36,6 +36,7 @@ public class SearchRecordController {
         @Valid @RequestBody SearchRecordRequest req
     ) {
         SearchRecordResponse resp = searchRecordService.saveRecord(userId, req);
+        log.info("Create search record response: {}", resp);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
     }
 
@@ -45,6 +46,7 @@ public class SearchRecordController {
     @GetMapping("/user")
     public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
         List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
+        log.info("List search records response for user {}: {}", userId, resp);
         return ResponseEntity.ok(resp);
     }
 
@@ -54,6 +56,7 @@ public class SearchRecordController {
     @DeleteMapping("/user")
     public ResponseEntity<Void> clear(@AuthenticatedUser Long userId) {
         searchRecordService.clearRecords(userId);
+        log.info("Cleared search records for user {}", userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -63,6 +66,7 @@ public class SearchRecordController {
     @PostMapping("/user/{recordId}/favorite")
     public ResponseEntity<SearchRecordResponse> favorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
+        log.info("Favorite search record response: {}", resp);
         return ResponseEntity.ok(resp);
     }
 
@@ -72,6 +76,7 @@ public class SearchRecordController {
     @DeleteMapping("/user/{recordId}/favorite")
     public ResponseEntity<Void> unfavorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         searchRecordService.unfavoriteRecord(userId, recordId);
+        log.info("Unfavorited record {} for user {}", recordId, userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -81,6 +86,7 @@ public class SearchRecordController {
     @DeleteMapping("/user/{recordId}")
     public ResponseEntity<Void> delete(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
         searchRecordService.deleteRecord(userId, recordId);
+        log.info("Deleted record {} for user {}", recordId, userId);
         return ResponseEntity.noContent().build();
     }
 }
