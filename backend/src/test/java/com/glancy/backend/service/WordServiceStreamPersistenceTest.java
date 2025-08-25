@@ -1,13 +1,14 @@
 package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
+import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
@@ -97,7 +98,8 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             List.of()
         );
-        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(resp);
+        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH))
+            .thenReturn(new ParsedWord(resp, "{\"term\":\"hi\"}"));
         when(wordRepository.save(any())).thenAnswer(invocation -> {
                 Word w = invocation.getArgument(0);
                 w.setId(1L);
@@ -107,7 +109,7 @@ class WordServiceStreamPersistenceTest {
         Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
 
         StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").expectNext("\"").verifyComplete();
-        verify(wordRepository).save(any());
+        verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
     }
 
     /** 验证异常时不会写库。 */

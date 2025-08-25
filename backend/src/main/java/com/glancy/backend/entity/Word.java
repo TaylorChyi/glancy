@@ -59,4 +59,7 @@ public class Word extends BaseEntity {
 
     @Column
     private String example;
+
+    @Column(name = "markdown", columnDefinition = "TEXT")
+    private String markdown;
 }

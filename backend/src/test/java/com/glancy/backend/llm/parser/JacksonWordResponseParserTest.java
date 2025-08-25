@@ -2,7 +2,6 @@ package com.glancy.backend.llm.parser;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +31,9 @@ class JacksonWordResponseParserTest {
             "}";
 
         JacksonWordResponseParser parser = new JacksonWordResponseParser();
-        WordResponse resp = parser.parse(json, "glow", Language.ENGLISH);
+        ParsedWord parsed = parser.parse(json, "glow", Language.ENGLISH);
+        assertEquals(json, parsed.markdown());
+        var resp = parsed.parsed();
         assertEquals("glow", resp.getTerm());
         assertFalse(resp.getDefinitions().isEmpty());
         assertNotNull(resp.getPhonetic());
