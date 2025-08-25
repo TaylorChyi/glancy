@@ -7,6 +7,9 @@ import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.entity.Word;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.SignalType;
 
 /**
  * Performs dictionary lookups via the configured third-party client.
@@ -28,19 +32,22 @@ public class WordService {
     private final WordRepository wordRepository;
     private final UserPreferenceRepository userPreferenceRepository;
     private final SearchRecordService searchRecordService;
+    private final WordResponseParser parser;
 
     public WordService(
         @Qualifier("deepSeekClient") DictionaryClient dictionaryClient,
         WordSearcher wordSearcher,
         WordRepository wordRepository,
         UserPreferenceRepository userPreferenceRepository,
-        SearchRecordService searchRecordService
+        SearchRecordService searchRecordService,
+        WordResponseParser parser
     ) {
         this.dictionaryClient = dictionaryClient;
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
         this.userPreferenceRepository = userPreferenceRepository;
         this.searchRecordService = searchRecordService;
+        this.parser = parser;
     }
 
     /**
@@ -94,26 +101,60 @@ public class WordService {
             String msg = "Failed to save search record: " + e.getMessage();
             return Flux.error(new IllegalStateException(msg, e));
         }
+
+        var existing = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
+        if (existing.isPresent()) {
+            log.info("Found cached word '{}' in language {}", term, language);
+            try {
+                return Flux.just(serialize(existing.get()));
+            } catch (Exception e) {
+                log.error("Failed to serialize cached word '{}'", term, e);
+                return Flux.error(new IllegalStateException("Failed to serialize cached word", e));
+            }
+        }
+
+        StringBuilder buffer = new StringBuilder();
+        Flux<String> stream;
         try {
-            return wordSearcher
-                .streamSearch(term, language, model)
-                .doOnNext(chunk -> log.info("Streaming chunk for term '{}': {}", term, chunk))
-                .doOnError(err ->
-                    log.error(
-                        "Streaming error for user {} term '{}' in language {} using model {}: {}",
-                        userId,
-                        term,
-                        language,
-                        model,
-                        err.getMessage(),
-                        err
-                    )
-                );
+            stream = wordSearcher.streamSearch(term, language, model);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
             return Flux.error(new IllegalStateException(msg, e));
         }
+
+        return stream
+            .doOnNext(chunk -> {
+                log.info("Streaming chunk for term '{}': {}", term, chunk);
+                buffer.append(chunk);
+            })
+            .doOnError(err ->
+                log.error(
+                    "Streaming error for user {} term '{}' in language {} using model {}: {}",
+                    userId,
+                    term,
+                    language,
+                    model,
+                    err.getMessage(),
+                    err
+                )
+            )
+            .doFinally(signal -> {
+                log.info("Streaming finished for term '{}' with signal {}", term, signal);
+                if (signal == SignalType.ON_COMPLETE) {
+                    try {
+                        WordResponse resp = parser.parse(buffer.toString(), term, language);
+                        saveWord(term, resp, language);
+                    } catch (Exception e) {
+                        log.error("Failed to persist streamed word '{}'", term, e);
+                    }
+                }
+            });
+    }
+
+    private String serialize(Word word) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(toResponse(word));
     }
 
     private void saveWord(String requestedTerm, WordResponse resp, Language language) {

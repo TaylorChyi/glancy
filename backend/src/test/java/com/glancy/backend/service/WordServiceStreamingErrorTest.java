@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
@@ -37,6 +38,9 @@ class WordServiceStreamingErrorTest {
     @Mock
     private SearchRecordService searchRecordService;
 
+    @Mock
+    private WordResponseParser parser;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -45,7 +49,8 @@ class WordServiceStreamingErrorTest {
             wordSearcher,
             wordRepository,
             userPreferenceRepository,
-            searchRecordService
+            searchRecordService,
+            parser
         );
     }
 
