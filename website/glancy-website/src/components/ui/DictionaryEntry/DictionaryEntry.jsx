@@ -3,11 +3,25 @@ import { TtsButton, PronounceableWord } from "@/components";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import styles from "./DictionaryEntry.module.css";
 
+function tryParseJson(text) {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+}
+
 function DictionaryEntry({ entry }) {
   const { t, lang } = useLanguage();
   if (!entry) return null;
 
   if (entry.markdown) {
+    const parsed = tryParseJson(entry.markdown);
+    if (parsed) {
+      return <DictionaryEntry entry={parsed} />;
+    }
     return (
       <article className={styles["dictionary-entry"]}>
         <MarkdownRenderer>{entry.markdown}</MarkdownRenderer>
