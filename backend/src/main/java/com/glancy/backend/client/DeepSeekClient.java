@@ -6,6 +6,7 @@ import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -135,7 +136,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
         messages.add(new ChatMessage("user", term));
         String content = chat(messages, 0.7);
         log.info("DeepSeek response content: {}", content);
-        WordResponse response = parser.parse(content, term, language);
+        ParsedWord parsed = parser.parse(content, term, language);
+        WordResponse response = parsed.parsed();
         log.info("Parsed word response: {}", response);
         return response;
     }
