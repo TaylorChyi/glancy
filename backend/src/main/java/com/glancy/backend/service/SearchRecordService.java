@@ -66,9 +66,13 @@ public class SearchRecordService {
             request.getLanguage()
         );
         if (existing != null) {
+            log.info("Existing record found: {}", describeRecord(existing));
             existing.setCreatedAt(LocalDateTime.now());
             SearchRecord updated = searchRecordRepository.save(existing);
-            return searchRecordMapper.toResponse(updated);
+            log.info("Updated record persisted: {}", describeRecord(updated));
+            SearchRecordResponse response = searchRecordMapper.toResponse(updated);
+            log.info("Returning record response: {}", describeResponse(response));
+            return response;
         }
 
         if (Boolean.FALSE.equals(user.getMember())) {
@@ -85,7 +89,10 @@ public class SearchRecordService {
         record.setTerm(request.getTerm());
         record.setLanguage(request.getLanguage());
         SearchRecord saved = searchRecordRepository.save(record);
-        return searchRecordMapper.toResponse(saved);
+        log.info("Persisted new search record: {}", describeRecord(saved));
+        SearchRecordResponse response = searchRecordMapper.toResponse(saved);
+        log.info("Returning record response: {}", describeResponse(response));
+        return response;
     }
 
     /**
@@ -99,7 +106,10 @@ public class SearchRecordService {
             .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
         record.setFavorite(true);
         SearchRecord saved = searchRecordRepository.save(record);
-        return searchRecordMapper.toResponse(saved);
+        log.info("Record after favoriting: {}", describeRecord(saved));
+        SearchRecordResponse response = searchRecordMapper.toResponse(saved);
+        log.info("Favorite response: {}", describeResponse(response));
+        return response;
     }
 
     /**
@@ -108,11 +118,15 @@ public class SearchRecordService {
     @Transactional(readOnly = true)
     public List<SearchRecordResponse> getRecords(Long userId) {
         log.info("Fetching search records for user {}", userId);
-        return searchRecordRepository
-            .findByUserIdOrderByCreatedAtDesc(userId)
+        List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        log.info("Retrieved {} records from database for user {}", records.size(), userId);
+        records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
+        List<SearchRecordResponse> responses = records
             .stream()
             .map(searchRecordMapper::toResponse)
             .collect(Collectors.toList());
+        responses.forEach(r -> log.debug("Record response: {}", describeResponse(r)));
+        return responses;
     }
 
     /**
@@ -120,7 +134,8 @@ public class SearchRecordService {
      */
     @Transactional
     public void clearRecords(Long userId) {
-        log.info("Clearing search records for user {}", userId);
+        List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        log.info("Clearing {} search records for user {}", records.size(), userId);
         searchRecordRepository.deleteByUserId(userId);
     }
 
@@ -134,7 +149,8 @@ public class SearchRecordService {
             .findByIdAndUserId(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
         record.setFavorite(false);
-        searchRecordRepository.save(record);
+        SearchRecord saved = searchRecordRepository.save(record);
+        log.info("Record after unfavoriting: {}", describeRecord(saved));
     }
 
     /**
@@ -150,5 +166,37 @@ public class SearchRecordService {
             throw new ResourceNotFoundException("搜索记录不存在");
         }
         searchRecordRepository.delete(record);
+        log.info("Deleted search record: {}", describeRecord(record));
+    }
+
+    private String describeRecord(SearchRecord record) {
+        if (record == null) {
+            return "null";
+        }
+        Long uid = record.getUser() != null ? record.getUser().getId() : null;
+        return String.format(
+            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s",
+            record.getId(),
+            uid,
+            record.getTerm(),
+            record.getLanguage(),
+            record.getFavorite(),
+            record.getCreatedAt()
+        );
+    }
+
+    private String describeResponse(SearchRecordResponse response) {
+        if (response == null) {
+            return "null";
+        }
+        return String.format(
+            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s",
+            response.getId(),
+            response.getUserId(),
+            response.getTerm(),
+            response.getLanguage(),
+            response.getFavorite(),
+            response.getCreatedAt()
+        );
     }
 }
