@@ -153,13 +153,9 @@
                                 <version>2.43.0</version>
                                 <configuration>
                                         <java>
-                                                <prettier>
-                                                       <devDependencies>
-                                                               <prettier>${prettier.version}</prettier>
-                                                               <prettier-plugin-java>${prettier-plugin-java.version}</prettier-plugin-java>
-                                                       </devDependencies>
-                                                        <configFile>${project.basedir}/spotless-config.json</configFile>
-                                                </prettier>
+                                                <googleJavaFormat>
+                                                        <style>GOOGLE</style>
+                                                </googleJavaFormat>
                                         </java>
                                         <format>
                                                 <name>yaml</name>
@@ -167,13 +163,9 @@
                                                         <include>**/*.yml</include>
                                                         <include>**/*.yaml</include>
                                                 </includes>
-                                                <prettier>
-                                                        <devDependencies>
-                                                                <prettier>${prettier.version}</prettier>
-                                                        </devDependencies>
-                                                        <parser>yaml</parser>
-                                                        <configFile>${project.basedir}/spotless-config.json</configFile>
-                                                </prettier>
+                                                <trimTrailingWhitespace/>
+                                                <endWithNewline/>
+                                                <indentWithSpaces/>
                                         </format>
                                 </configuration>
                         </plugin>
