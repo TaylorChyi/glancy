@@ -67,7 +67,7 @@ public class TtsConfigManager implements Closeable {
     }
 
     private void loadFromClasspath() {
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream("tts-config.yml")) {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("config/tts-config.yml")) {
             if (in == null) {
                 log.warn("Default TTS config resource not found");
                 return;
