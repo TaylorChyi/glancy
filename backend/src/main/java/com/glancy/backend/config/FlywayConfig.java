@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Ensures failed Flyway migrations do not prevent application startup
- * by repairing the schema history before running migrations.
+ * Ensures failed Flyway migrations do not prevent application startup by repairing the schema
+ * history before running migrations.
  */
 @Configuration
 public class FlywayConfig {

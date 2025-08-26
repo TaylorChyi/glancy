@@ -8,9 +8,7 @@ import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
-/**
- * 测试逻辑：验证迁移策略会在执行迁移前先修复 Flyway 的历史记录。
- */
+/** 测试逻辑：验证迁移策略会在执行迁移前先修复 Flyway 的历史记录。 */
 class FlywayConfigTest {
 
   @Test
