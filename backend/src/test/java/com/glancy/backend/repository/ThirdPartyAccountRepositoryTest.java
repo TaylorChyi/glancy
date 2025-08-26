@@ -12,20 +12,19 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 class ThirdPartyAccountRepositoryTest {
 
-    @Autowired
-    private ThirdPartyAccountRepository thirdPartyAccountRepository;
+  @Autowired private ThirdPartyAccountRepository thirdPartyAccountRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+  @Autowired private UserRepository userRepository;
 
-    @Test
-    void findByProviderAndExternalId() {
-        User user = userRepository.save(TestEntityFactory.user(50));
-        ThirdPartyAccount tpa = TestEntityFactory.thirdPartyAccount(user, "google", "ext123");
-        thirdPartyAccountRepository.save(tpa);
+  @Test
+  void findByProviderAndExternalId() {
+    User user = userRepository.save(TestEntityFactory.user(50));
+    ThirdPartyAccount tpa = TestEntityFactory.thirdPartyAccount(user, "google", "ext123");
+    thirdPartyAccountRepository.save(tpa);
 
-        Optional<ThirdPartyAccount> found = thirdPartyAccountRepository.findByProviderAndExternalId("google", "ext123");
-        assertTrue(found.isPresent());
-        assertEquals(user.getId(), found.get().getUser().getId());
-    }
+    Optional<ThirdPartyAccount> found =
+        thirdPartyAccountRepository.findByProviderAndExternalId("google", "ext123");
+    assertTrue(found.isPresent());
+    assertEquals(user.getId(), found.get().getUser().getId());
+  }
 }

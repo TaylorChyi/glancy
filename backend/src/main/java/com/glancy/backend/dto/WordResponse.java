@@ -11,16 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WordResponse {
 
-    private String id;
-    private String term;
-    private List<String> definitions;
-    private Language language;
-    private String example;
-    private String phonetic;
-    private List<String> variations;
-    private List<String> synonyms;
-    private List<String> antonyms;
-    private List<String> related;
-    private List<String> phrases;
-    private String markdown;
+  private String id;
+  private String term;
+  private List<String> definitions;
+  private Language language;
+  private String example;
+  private String phonetic;
+  private List<String> variations;
+  private List<String> synonyms;
+  private List<String> antonyms;
+  private List<String> related;
+  private List<String> phrases;
+  private String markdown;
 }

@@ -21,33 +21,26 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(WordController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class WordControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private WordService wordService;
+  @MockitoBean private WordService wordService;
 
-    @MockitoBean
-    private SearchRecordService searchRecordService;
+  @MockitoBean private SearchRecordService searchRecordService;
 
-    @MockitoBean
-    private UserService userService;
+  @MockitoBean private UserService userService;
 
-    /**
-     * 测试 testGetWord 接口
-     */
-    @Test
-    void testGetWord() throws Exception {
-        WordResponse resp = new WordResponse(
+  /** 测试 testGetWord 接口 */
+  @Test
+  void testGetWord() throws Exception {
+    WordResponse resp =
+        new WordResponse(
             "1",
             "hello",
             List.of("g"),
@@ -59,32 +52,30 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
-        );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+            null);
+    when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null)))
+        .thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(
-                get("/api/words")
-                    .header("X-USER-TOKEN", "tkn")
-                    .param("term", "hello")
-                    .param("language", "ENGLISH")
-                    .accept(MediaType.APPLICATION_JSON)
-            )
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"))
-            .andExpect(jsonPath("$.term").value("hello"));
-    }
+    mockMvc
+        .perform(
+            get("/api/words")
+                .header("X-USER-TOKEN", "tkn")
+                .param("term", "hello")
+                .param("language", "ENGLISH")
+                .accept(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value("1"))
+        .andExpect(jsonPath("$.term").value("hello"));
+  }
 
-    /**
-     * 测试携带模型参数时接口正常工作
-     */
-    @Test
-    void testGetWordWithModel() throws Exception {
-        WordResponse resp = new WordResponse(
+  /** 测试携带模型参数时接口正常工作 */
+  @Test
+  void testGetWordWithModel() throws Exception {
+    WordResponse resp =
+        new WordResponse(
             "1",
             "hello",
             List.of("g"),
@@ -96,76 +87,70 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
-        );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
+            null);
+    when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao")))
+        .thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(
-                get("/api/words")
-                    .header("X-USER-TOKEN", "tkn")
-                    .param("term", "hello")
-                    .param("language", "ENGLISH")
-                    .param("model", "doubao")
-                    .accept(MediaType.APPLICATION_JSON)
-            )
-            .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"));
-    }
+    mockMvc
+        .perform(
+            get("/api/words")
+                .header("X-USER-TOKEN", "tkn")
+                .param("term", "hello")
+                .param("language", "ENGLISH")
+                .param("model", "doubao")
+                .accept(MediaType.APPLICATION_JSON))
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value("1"));
+  }
 
-    /**
-     * 测试 testGetAudio 接口
-     */
-    @Test
-    void testGetAudio() throws Exception {
-        byte[] data = new byte[] { 1, 2, 3 };
-        when(wordService.getAudio(eq("hello"), eq(Language.ENGLISH))).thenReturn(data);
+  /** 测试 testGetAudio 接口 */
+  @Test
+  void testGetAudio() throws Exception {
+    byte[] data = new byte[] {1, 2, 3};
+    when(wordService.getAudio(eq("hello"), eq(Language.ENGLISH))).thenReturn(data);
 
-        mockMvc
-            .perform(get("/api/words/audio").param("term", "hello").param("language", "ENGLISH"))
-            .andDo(print())
-            .andExpect(status().isOk());
-    }
+    mockMvc
+        .perform(get("/api/words/audio").param("term", "hello").param("language", "ENGLISH"))
+        .andDo(print())
+        .andExpect(status().isOk());
+  }
 
-    /**
-     * 测试 testGetWordMissingTerm 接口
-     */
-    @Test
-    void testGetWordMissingTerm() throws Exception {
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+  /** 测试 testGetWordMissingTerm 接口 */
+  @Test
+  void testGetWordMissingTerm() throws Exception {
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
-            .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Missing required parameter: term"));
-    }
+    mockMvc
+        .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Missing required parameter: term"));
+  }
 
-    /**
-     * 测试 testGetWordInvalidLanguage 接口
-     */
-    @Test
-    void testGetWordInvalidLanguage() throws Exception {
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+  /** 测试 testGetWordInvalidLanguage 接口 */
+  @Test
+  void testGetWordInvalidLanguage() throws Exception {
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(
-                get("/api/words").header("X-USER-TOKEN", "tkn").param("term", "hello").param("language", "INVALID")
-            )
-            .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Invalid value for parameter: language"));
-    }
+    mockMvc
+        .perform(
+            get("/api/words")
+                .header("X-USER-TOKEN", "tkn")
+                .param("term", "hello")
+                .param("language", "INVALID"))
+        .andDo(print())
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.message").value("Invalid value for parameter: language"));
+  }
 
-    /**
-     * Test access with token query parameter.
-     */
-    @Test
-    void testGetWordTokenQueryParam() throws Exception {
-        WordResponse resp = new WordResponse(
+  /** Test access with token query parameter. */
+  @Test
+  void testGetWordTokenQueryParam() throws Exception {
+    WordResponse resp =
+        new WordResponse(
             "1",
             "hi",
             List.of("g"),
@@ -177,19 +162,18 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
-        );
-        when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+            null);
+    when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null)))
+        .thenReturn(resp);
 
-        mockMvc
-            .perform(
-                get("/api/words")
-                    .param("token", "tkn")
-                    .param("term", "hi")
-                    .param("language", "ENGLISH")
-                    .accept(MediaType.APPLICATION_JSON)
-            )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.term").value("hi"));
-    }
+    mockMvc
+        .perform(
+            get("/api/words")
+                .param("token", "tkn")
+                .param("term", "hi")
+                .param("language", "ENGLISH")
+                .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.term").value("hi"));
+  }
 }

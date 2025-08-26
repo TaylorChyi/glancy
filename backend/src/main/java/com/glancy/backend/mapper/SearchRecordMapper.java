@@ -7,6 +7,6 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface SearchRecordMapper {
-    @Mapping(source = "user.id", target = "userId")
-    SearchRecordResponse toResponse(SearchRecord record);
+  @Mapping(source = "user.id", target = "userId")
+  SearchRecordResponse toResponse(SearchRecord record);
 }

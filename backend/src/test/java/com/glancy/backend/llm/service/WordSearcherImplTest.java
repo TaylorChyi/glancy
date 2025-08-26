@@ -18,50 +18,54 @@ import org.junit.jupiter.api.Test;
 
 class WordSearcherImplTest {
 
-    private LLMClientFactory factory;
-    private LLMConfig config;
-    private PromptManager promptManager;
-    private SearchContentManager searchContentManager;
-    private WordResponseParser parser;
-    private LLMClient defaultClient;
+  private LLMClientFactory factory;
+  private LLMConfig config;
+  private PromptManager promptManager;
+  private SearchContentManager searchContentManager;
+  private WordResponseParser parser;
+  private LLMClient defaultClient;
 
-    @BeforeEach
-    void setUp() {
-        factory = mock(LLMClientFactory.class);
-        config = new LLMConfig();
-        config.setDefaultClient("deepseek");
-        config.setTemperature(0.5);
-        config.setPromptPath("path");
-        promptManager = mock(PromptManager.class);
-        searchContentManager = mock(SearchContentManager.class);
-        parser = mock(WordResponseParser.class);
-        defaultClient = mock(LLMClient.class);
-    }
+  @BeforeEach
+  void setUp() {
+    factory = mock(LLMClientFactory.class);
+    config = new LLMConfig();
+    config.setDefaultClient("deepseek");
+    config.setTemperature(0.5);
+    config.setPromptPath("path");
+    promptManager = mock(PromptManager.class);
+    searchContentManager = mock(SearchContentManager.class);
+    parser = mock(WordResponseParser.class);
+    defaultClient = mock(LLMClient.class);
+  }
 
-    @Test
-    void searchFallsBackToDefaultWhenClientMissing() {
-        when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(defaultClient);
-        when(promptManager.loadPrompt(anyString())).thenReturn("prompt");
-        when(searchContentManager.normalize("hello")).thenReturn("hello");
-        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
-        WordResponse expected = new WordResponse();
-        expected.setMarkdown("content");
-        when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
+  @Test
+  void searchFallsBackToDefaultWhenClientMissing() {
+    when(factory.get("invalid")).thenReturn(null);
+    when(factory.get("deepseek")).thenReturn(defaultClient);
+    when(promptManager.loadPrompt(anyString())).thenReturn("prompt");
+    when(searchContentManager.normalize("hello")).thenReturn("hello");
+    when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
+    WordResponse expected = new WordResponse();
+    expected.setMarkdown("content");
+    when(parser.parse("content", "hello", Language.ENGLISH))
+        .thenReturn(new ParsedWord(expected, "content"));
+    WordSearcherImpl searcher =
+        new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+    WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
 
-        assertSame(expected, result);
-        verify(factory).get("invalid");
-        verify(factory).get("deepseek");
-        verify(defaultClient).chat(anyList(), eq(0.5));
-    }
+    assertSame(expected, result);
+    verify(factory).get("invalid");
+    verify(factory).get("deepseek");
+    verify(defaultClient).chat(anyList(), eq(0.5));
+  }
 
-    @Test
-    void searchThrowsWhenDefaultMissing() {
-        when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(null);
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        assertThrows(IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
-    }
+  @Test
+  void searchThrowsWhenDefaultMissing() {
+    when(factory.get("invalid")).thenReturn(null);
+    when(factory.get("deepseek")).thenReturn(null);
+    WordSearcherImpl searcher =
+        new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+    assertThrows(
+        IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
+  }
 }

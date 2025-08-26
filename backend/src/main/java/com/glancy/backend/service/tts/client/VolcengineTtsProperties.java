@@ -9,63 +9,69 @@ import org.springframework.util.StringUtils;
 
 /**
  * Configuration for Volcengine TTS API credentials.
- * <p>
- * Remote API parameters are case-sensitive; ensure configured values
- * match the exact casing required by Volcengine.
+ *
+ * <p>Remote API parameters are case-sensitive; ensure configured values match the exact casing
+ * required by Volcengine.
  */
 @Data
 @Component
 @ConfigurationProperties(prefix = "tts.volcengine")
 public class VolcengineTtsProperties {
 
-    /** Application identifier issued by Volcengine. */
-    private String appId;
-    /** Access key used for request signing. */
-    private String accessKeyId;
+  /** Application identifier issued by Volcengine. */
+  private String appId;
 
-    /** Secret key paired with {@link #accessKeyId}. */
-    private String secretKey;
+  /** Access key used for request signing. */
+  private String accessKeyId;
 
-    /**
-     * Temporary session token issued alongside short lived credentials.
-     * <p>
-     * Only populated when integrating with STS based authentication. When
-     * present the signer will include it as {@code X-Security-Token} header.
-     */
-    private String securityToken;
+  /** Secret key paired with {@link #accessKeyId}. */
+  private String secretKey;
 
-    /** Expiration timestamp for temporary credentials. */
-    private Instant expiration;
+  /**
+   * Temporary session token issued alongside short lived credentials.
+   *
+   * <p>Only populated when integrating with STS based authentication. When present the signer will
+   * include it as {@code X-Security-Token} header.
+   */
+  private String securityToken;
 
-    public static final String DEFAULT_REGION = "cn-north-1";
-    public static final String DEFAULT_SERVICE = "speech_saas_prod";
-    public static final String DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v1/tts";
-    public static final String DEFAULT_CLUSTER = "volcano_tts";
+  /** Expiration timestamp for temporary credentials. */
+  private Instant expiration;
 
-    /** Region targeted by the remote API. */
-    private String region = DEFAULT_REGION;
+  public static final String DEFAULT_REGION = "cn-north-1";
+  public static final String DEFAULT_SERVICE = "speech_saas_prod";
+  public static final String DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v1/tts";
+  public static final String DEFAULT_CLUSTER = "volcano_tts";
 
-    /** Service name required for signature scope. */
-    private String service = DEFAULT_SERVICE;
-    /** Default voice type used when request does not specify one. */
-    private String voiceType;
-    /** Access token issued by Volcengine for authentication. */
-    private String accessToken;
-    /** Placeholder token used when none configured. */
-    public static final String FAKE_TOKEN = "FAKE";
-    /** Cluster hint used by Volcengine routing. */
-    private String cluster = DEFAULT_CLUSTER;
-    /** Base URL of the TTS endpoint. */
-    private String apiUrl = DEFAULT_API_URL;
+  /** Region targeted by the remote API. */
+  private String region = DEFAULT_REGION;
 
-    /** Interval between proactive health checks. */
-    private Duration healthInterval = Duration.ofMinutes(10);
+  /** Service name required for signature scope. */
+  private String service = DEFAULT_SERVICE;
 
-    /**
-     * Returns configured access token or a placeholder when missing.
-     * Volcengine accepts any non-empty value for token.
-     */
-    public String resolveAccessToken() {
-        return StringUtils.hasText(accessToken) ? accessToken : FAKE_TOKEN;
-    }
+  /** Default voice type used when request does not specify one. */
+  private String voiceType;
+
+  /** Access token issued by Volcengine for authentication. */
+  private String accessToken;
+
+  /** Placeholder token used when none configured. */
+  public static final String FAKE_TOKEN = "FAKE";
+
+  /** Cluster hint used by Volcengine routing. */
+  private String cluster = DEFAULT_CLUSTER;
+
+  /** Base URL of the TTS endpoint. */
+  private String apiUrl = DEFAULT_API_URL;
+
+  /** Interval between proactive health checks. */
+  private Duration healthInterval = Duration.ofMinutes(10);
+
+  /**
+   * Returns configured access token or a placeholder when missing. Volcengine accepts any non-empty
+   * value for token.
+   */
+  public String resolveAccessToken() {
+    return StringUtils.hasText(accessToken) ? accessToken : FAKE_TOKEN;
+  }
 }

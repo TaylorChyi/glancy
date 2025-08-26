@@ -6,24 +6,22 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/**
- * Repository for {@link User} entities with helpers to check unique fields.
- */
+/** Repository for {@link User} entities with helpers to check unique fields. */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsernameAndDeletedFalse(String username);
+  Optional<User> findByUsernameAndDeletedFalse(String username);
 
-    Optional<User> findByEmailAndDeletedFalse(String email);
+  Optional<User> findByEmailAndDeletedFalse(String email);
 
-    Optional<User> findByPhoneAndDeletedFalse(String phone);
+  Optional<User> findByPhoneAndDeletedFalse(String phone);
 
-    long countByDeletedTrue();
+  long countByDeletedTrue();
 
-    long countByDeletedFalse();
+  long countByDeletedFalse();
 
-    long countByDeletedFalseAndMemberTrue();
+  long countByDeletedFalseAndMemberTrue();
 
-    long countByDeletedFalseAndLastLoginAtAfter(LocalDateTime time);
+  long countByDeletedFalseAndLastLoginAtAfter(LocalDateTime time);
 
-    Optional<User> findByLoginToken(String loginToken);
+  Optional<User> findByLoginToken(String loginToken);
 }

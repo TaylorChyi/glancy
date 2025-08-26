@@ -15,17 +15,16 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(com.glancy.backend.config.security.SecurityConfig.class)
 class PingControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private com.glancy.backend.service.UserService userService;
+  @MockitoBean private com.glancy.backend.service.UserService userService;
 
-    /**
-     * 测试 ping 接口
-     */
-    @Test
-    void ping() throws Exception {
-        mockMvc.perform(get("/api/ping")).andExpect(status().isOk()).andExpect(content().string("pong"));
-    }
+  /** 测试 ping 接口 */
+  @Test
+  void ping() throws Exception {
+    mockMvc
+        .perform(get("/api/ping"))
+        .andExpect(status().isOk())
+        .andExpect(content().string("pong"));
+  }
 }

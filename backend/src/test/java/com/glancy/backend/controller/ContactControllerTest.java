@@ -21,38 +21,31 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(com.glancy.backend.config.security.SecurityConfig.class)
 class ContactControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private ContactService contactService;
+  @MockitoBean private ContactService contactService;
 
-    @MockitoBean
-    private com.glancy.backend.service.UserService userService;
+  @MockitoBean private com.glancy.backend.service.UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    /**
-     * 测试 submitContact 接口
-     */
-    @Test
-    void submitContact() throws Exception {
-        ContactResponse resp = new ContactResponse(1L, "n", "e", "m");
-        when(contactService.submit(any(ContactRequest.class))).thenReturn(resp);
+  /** 测试 submitContact 接口 */
+  @Test
+  void submitContact() throws Exception {
+    ContactResponse resp = new ContactResponse(1L, "n", "e", "m");
+    when(contactService.submit(any(ContactRequest.class))).thenReturn(resp);
 
-        ContactRequest req = new ContactRequest();
-        req.setName("n");
-        req.setEmail("test@example.com");
-        req.setMessage("m");
+    ContactRequest req = new ContactRequest();
+    req.setName("n");
+    req.setEmail("test@example.com");
+    req.setMessage("m");
 
-        mockMvc
-            .perform(
-                post("/api/contact")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req))
-            )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1L));
-    }
+    mockMvc
+        .perform(
+            post("/api/contact")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(1L));
+  }
 }

@@ -24,75 +24,76 @@ import reactor.test.StepVerifier;
 /** 集成测试，覆盖抖宝客户端的流式解析与异常处理。 */
 class DoubaoClientTest {
 
-    private DoubaoClient client;
-    private DoubaoProperties properties;
+  private DoubaoClient client;
+  private DoubaoProperties properties;
 
-    @BeforeEach
-    void setUp() {
-        properties = new DoubaoProperties();
-        properties.setBaseUrl("http://mock");
-        properties.setChatPath("/api/v3/chat/completions");
-        properties.setApiKey(" key ");
-        properties.setModel("test-model");
-    }
+  @BeforeEach
+  void setUp() {
+    properties = new DoubaoProperties();
+    properties.setBaseUrl("http://mock");
+    properties.setChatPath("/api/v3/chat/completions");
+    properties.setApiKey(" key ");
+    properties.setModel("test-model");
+  }
 
-    /** 验证同步调用在收到完整流后聚合内容。 */
-    @Test
-    void chatReturnsContent() {
-        ExchangeFunction ef = this::successResponse;
-        client = new DoubaoClient(
+  /** 验证同步调用在收到完整流后聚合内容。 */
+  @Test
+  void chatReturnsContent() {
+    ExchangeFunction ef = this::successResponse;
+    client =
+        new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
-        assertEquals("hi", result);
-    }
+            new DoubaoStreamDecoder(new ObjectMapper()));
+    String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
+    assertEquals("hi", result);
+  }
 
-    /** 验证 401 响应会抛出未授权异常。 */
-    @Test
-    void chatUnauthorizedThrowsException() {
-        ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
-        client = new DoubaoClient(
+  /** 验证 401 响应会抛出未授权异常。 */
+  @Test
+  void chatUnauthorizedThrowsException() {
+    ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
+    client =
+        new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
-            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
-        );
-    }
+            new DoubaoStreamDecoder(new ObjectMapper()));
+    assertThrows(
+        com.glancy.backend.exception.UnauthorizedException.class,
+        () -> client.chat(List.of(new ChatMessage("user", "hi")), 0.5));
+  }
 
-    /** 验证流式接口逐片段输出并在 end 事件后结束。 */
-    @Test
-    void streamChatEmitsSegments() {
-        ExchangeFunction ef = this::streamSuccessResponse;
-        client = new DoubaoClient(
+  /** 验证流式接口逐片段输出并在 end 事件后结束。 */
+  @Test
+  void streamChatEmitsSegments() {
+    ExchangeFunction ef = this::streamSuccessResponse;
+    client =
+        new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("he").expectNext("llo").verifyComplete();
-    }
+            new DoubaoStreamDecoder(new ObjectMapper()));
+    Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
+    StepVerifier.create(flux).expectNext("he").expectNext("llo").verifyComplete();
+  }
 
-    /** 验证 error 事件会终止流并抛出异常。 */
-    @Test
-    void streamChatErrorEvent() {
-        ExchangeFunction ef = this::streamErrorResponse;
-        client = new DoubaoClient(
+  /** 验证 error 事件会终止流并抛出异常。 */
+  @Test
+  void streamChatErrorEvent() {
+    ExchangeFunction ef = this::streamErrorResponse;
+    client =
+        new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("hi").expectErrorMessage("boom").verify();
-    }
+            new DoubaoStreamDecoder(new ObjectMapper()));
+    Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
+    StepVerifier.create(flux).expectNext("hi").expectErrorMessage("boom").verify();
+  }
 
-    private Mono<ClientResponse> successResponse(ClientRequest request) {
-        assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
-        assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
-        String body = """
+  private Mono<ClientResponse> successResponse(ClientRequest request) {
+    assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
+    assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
+    String body =
+        """
             event: message
             data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
 
@@ -100,16 +101,16 @@ class DoubaoClientTest {
             data: {"code":0}
 
             """;
-        return Mono.just(
-            ClientResponse.create(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
-                .body(body)
-                .build()
-        );
-    }
+    return Mono.just(
+        ClientResponse.create(HttpStatus.OK)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
+            .body(body)
+            .build());
+  }
 
-    private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
-        String body = """
+  private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
+    String body =
+        """
             event: message
             data: {"choices":[{"delta":{"messages":[{"content":"he"}]}}]}
 
@@ -120,16 +121,16 @@ class DoubaoClientTest {
             data: {"code":0}
 
             """;
-        return Mono.just(
-            ClientResponse.create(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
-                .body(body)
-                .build()
-        );
-    }
+    return Mono.just(
+        ClientResponse.create(HttpStatus.OK)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
+            .body(body)
+            .build());
+  }
 
-    private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
-        String body = """
+  private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
+    String body =
+        """
             event: message
             data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
 
@@ -137,11 +138,10 @@ class DoubaoClientTest {
             data: {"message":"boom"}
 
             """;
-        return Mono.just(
-            ClientResponse.create(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
-                .body(body)
-                .build()
-        );
-    }
+    return Mono.just(
+        ClientResponse.create(HttpStatus.OK)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
+            .body(body)
+            .build());
+  }
 }

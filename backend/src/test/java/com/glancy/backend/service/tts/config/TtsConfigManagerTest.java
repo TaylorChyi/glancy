@@ -8,25 +8,21 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * Tests for {@link TtsConfigManager} focused on reload behaviour and validation
- * mechanics.
- */
+/** Tests for {@link TtsConfigManager} focused on reload behaviour and validation mechanics. */
 class TtsConfigManagerTest {
 
-    @TempDir
-    Path tempDir;
+  @TempDir Path tempDir;
 
-    /**
-     * A valid YAML file should replace the in-memory snapshot when reloaded.
-     * Flow: write initial config -> load -> modify -> reload -> verify update.
-     */
-    @Test
-    void reloadReplacesSnapshotOnValidConfig() throws IOException {
-        Path file = tempDir.resolve("tts.yml");
-        Files.writeString(
-            file,
-            """
+  /**
+   * A valid YAML file should replace the in-memory snapshot when reloaded. Flow: write initial
+   * config -> load -> modify -> reload -> verify update.
+   */
+  @Test
+  void reloadReplacesSnapshotOnValidConfig() throws IOException {
+    Path file = tempDir.resolve("tts.yml");
+    Files.writeString(
+        file,
+        """
             voices:
               zh-CN:
                 default: zh_female_cancan_mars_bigtts
@@ -49,15 +45,15 @@ class TtsConfigManagerTest {
               useCdn: true
               returnUrl: true
               countCachedAsUsage: false
-            """
-        );
-        TtsConfigManager mgr = new TtsConfigManager(file.toString());
-        mgr.reload();
-        assertEquals("zh_female_cancan_mars_bigtts", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
+            """);
+    TtsConfigManager mgr = new TtsConfigManager(file.toString());
+    mgr.reload();
+    assertEquals(
+        "zh_female_cancan_mars_bigtts", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
 
-        Files.writeString(
-            file,
-            """
+    Files.writeString(
+        file,
+        """
             voices:
               zh-CN:
                 default: zh_male_new_voice
@@ -80,23 +76,22 @@ class TtsConfigManagerTest {
               useCdn: true
               returnUrl: true
               countCachedAsUsage: false
-            """
-        );
-        mgr.reload();
-        assertEquals("zh_male_new_voice", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
-        mgr.close();
-    }
+            """);
+    mgr.reload();
+    assertEquals("zh_male_new_voice", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
+    mgr.close();
+  }
 
-    /**
-     * When the configuration is invalid the previous snapshot should remain
-     * active. Flow: load valid config -> write invalid -> reload -> unchanged.
-     */
-    @Test
-    void reloadRejectsInvalidConfig() throws IOException {
-        Path file = tempDir.resolve("tts.yml");
-        Files.writeString(
-            file,
-            """
+  /**
+   * When the configuration is invalid the previous snapshot should remain active. Flow: load valid
+   * config -> write invalid -> reload -> unchanged.
+   */
+  @Test
+  void reloadRejectsInvalidConfig() throws IOException {
+    Path file = tempDir.resolve("tts.yml");
+    Files.writeString(
+        file,
+        """
             voices:
               zh-CN:
                 default: voice1
@@ -119,15 +114,14 @@ class TtsConfigManagerTest {
               useCdn: true
               returnUrl: true
               countCachedAsUsage: false
-            """
-        );
-        TtsConfigManager mgr = new TtsConfigManager(file.toString());
-        mgr.reload();
-        assertEquals("voice1", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
+            """);
+    TtsConfigManager mgr = new TtsConfigManager(file.toString());
+    mgr.reload();
+    assertEquals("voice1", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
 
-        Files.writeString(
-            file,
-            """
+    Files.writeString(
+        file,
+        """
             voices:
               zh-CN:
                 default: missing
@@ -150,14 +144,12 @@ class TtsConfigManagerTest {
               useCdn: true
               returnUrl: true
               countCachedAsUsage: false
-            """
-        );
-        mgr.reload();
-        assertEquals(
-            "voice1",
-            mgr.current().getVoices().get("zh-CN").getDefaultVoice(),
-            "Invalid config should not replace snapshot"
-        );
-        mgr.close();
-    }
+            """);
+    mgr.reload();
+    assertEquals(
+        "voice1",
+        mgr.current().getVoices().get("zh-CN").getDefaultVoice(),
+        "Invalid config should not replace snapshot");
+    mgr.close();
+  }
 }

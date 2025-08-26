@@ -5,6 +5,7 @@ import java.util.List;
 import reactor.core.publisher.Flux;
 
 public interface StreamingLLMClient {
-    Flux<String> streamChat(List<ChatMessage> messages, double temperature);
-    String name();
+  Flux<String> streamChat(List<ChatMessage> messages, double temperature);
+
+  String name();
 }

@@ -22,48 +22,44 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(com.glancy.backend.config.security.SecurityConfig.class)
 class FaqControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private FaqService faqService;
+  @MockitoBean private FaqService faqService;
 
-    @MockitoBean
-    private com.glancy.backend.service.UserService userService;
+  @MockitoBean private com.glancy.backend.service.UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    /**
-     * 测试 createFaq 接口
-     */
-    @Test
-    void createFaq() throws Exception {
-        FaqResponse resp = new FaqResponse(1L, "Q", "A");
-        when(faqService.createFaq(any(FaqRequest.class))).thenReturn(resp);
+  /** 测试 createFaq 接口 */
+  @Test
+  void createFaq() throws Exception {
+    FaqResponse resp = new FaqResponse(1L, "Q", "A");
+    when(faqService.createFaq(any(FaqRequest.class))).thenReturn(resp);
 
-        FaqRequest req = new FaqRequest();
-        req.setQuestion("Q");
-        req.setAnswer("A");
+    FaqRequest req = new FaqRequest();
+    req.setQuestion("Q");
+    req.setAnswer("A");
 
-        mockMvc
-            .perform(
-                post("/api/faqs").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req))
-            )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1L))
-            .andExpect(jsonPath("$.question").value("Q"))
-            .andExpect(jsonPath("$.answer").value("A"));
-    }
+    mockMvc
+        .perform(
+            post("/api/faqs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(1L))
+        .andExpect(jsonPath("$.question").value("Q"))
+        .andExpect(jsonPath("$.answer").value("A"));
+  }
 
-    /**
-     * 测试 listFaqs 接口
-     */
-    @Test
-    void listFaqs() throws Exception {
-        FaqResponse resp = new FaqResponse(1L, "Q", "A");
-        when(faqService.getAllFaqs()).thenReturn(List.of(resp));
+  /** 测试 listFaqs 接口 */
+  @Test
+  void listFaqs() throws Exception {
+    FaqResponse resp = new FaqResponse(1L, "Q", "A");
+    when(faqService.getAllFaqs()).thenReturn(List.of(resp));
 
-        mockMvc.perform(get("/api/faqs")).andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(1L));
-    }
+    mockMvc
+        .perform(get("/api/faqs"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(1L));
+  }
 }

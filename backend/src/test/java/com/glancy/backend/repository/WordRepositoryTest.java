@@ -12,16 +12,16 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 class WordRepositoryTest {
 
-    @Autowired
-    private WordRepository wordRepository;
+  @Autowired private WordRepository wordRepository;
 
-    @Test
-    void findByTermAndLanguageAndDeletedFalse() {
-        Word word = TestEntityFactory.word("hello", Language.ENGLISH);
-        wordRepository.save(word);
+  @Test
+  void findByTermAndLanguageAndDeletedFalse() {
+    Word word = TestEntityFactory.word("hello", Language.ENGLISH);
+    wordRepository.save(word);
 
-        Optional<Word> found = wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH);
-        assertTrue(found.isPresent());
-        assertEquals("hello", found.get().getTerm());
-    }
+    Optional<Word> found =
+        wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH);
+    assertTrue(found.isPresent());
+    assertEquals("hello", found.get().getTerm());
+  }
 }

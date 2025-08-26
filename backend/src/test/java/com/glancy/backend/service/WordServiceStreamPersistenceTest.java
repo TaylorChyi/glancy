@@ -21,70 +21,62 @@ import org.mockito.MockitoAnnotations;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
-/**
- * WordService streamWordForUser 相关行为测试。
- */
+/** WordService streamWordForUser 相关行为测试。 */
 class WordServiceStreamPersistenceTest {
 
-    private WordService wordService;
+  private WordService wordService;
 
-    @Mock
-    private DictionaryClient dictionaryClient;
+  @Mock private DictionaryClient dictionaryClient;
 
-    @Mock
-    private WordSearcher wordSearcher;
+  @Mock private WordSearcher wordSearcher;
 
-    @Mock
-    private WordRepository wordRepository;
+  @Mock private WordRepository wordRepository;
 
-    @Mock
-    private UserPreferenceRepository userPreferenceRepository;
+  @Mock private UserPreferenceRepository userPreferenceRepository;
 
-    @Mock
-    private SearchRecordService searchRecordService;
+  @Mock private SearchRecordService searchRecordService;
 
-    @Mock
-    private WordResponseParser parser;
+  @Mock private WordResponseParser parser;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        wordService = new WordService(
+  @BeforeEach
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+    wordService =
+        new WordService(
             dictionaryClient,
             wordSearcher,
             wordRepository,
             userPreferenceRepository,
             searchRecordService,
-            parser
-        );
-    }
+            parser);
+  }
 
-    /** 验证已缓存词条时不调用模型。 */
-    @Test
-    void returnsCachedWord() {
-        Word word = new Word();
-        word.setId(1L);
-        word.setTerm("cached");
-        word.setLanguage(Language.ENGLISH);
-        word.setDefinitions(List.of("def"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("cached", Language.ENGLISH)).thenReturn(
-            Optional.of(word)
-        );
+  /** 验证已缓存词条时不调用模型。 */
+  @Test
+  void returnsCachedWord() {
+    Word word = new Word();
+    word.setId(1L);
+    word.setTerm("cached");
+    word.setLanguage(Language.ENGLISH);
+    word.setDefinitions(List.of("def"));
+    when(wordRepository.findByTermAndLanguageAndDeletedFalse("cached", Language.ENGLISH))
+        .thenReturn(Optional.of(word));
 
-        Flux<String> flux = wordService.streamWordForUser(1L, "cached", Language.ENGLISH, null);
+    Flux<String> flux = wordService.streamWordForUser(1L, "cached", Language.ENGLISH, null);
 
-        StepVerifier.create(flux)
-            .expectNextMatches(s -> s.contains("cached"))
-            .verifyComplete();
-        verify(wordSearcher, never()).streamSearch(any(), any(), any());
-    }
+    StepVerifier.create(flux).expectNextMatches(s -> s.contains("cached")).verifyComplete();
+    verify(wordSearcher, never()).streamSearch(any(), any(), any());
+  }
 
-    /** 验证流式结束后会持久化。 */
-    @Test
-    void savesAfterStreaming() {
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(Flux.just("{\"term\":\"hi\"}", ""));
-        WordResponse resp = new WordResponse(
+  /** 验证流式结束后会持久化。 */
+  @Test
+  void savesAfterStreaming() {
+    when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH))
+        .thenReturn(Optional.empty());
+    when(wordSearcher.streamSearch("hi", Language.ENGLISH, null))
+        .thenReturn(Flux.just("{\"term\":\"hi\"}", ""));
+    WordResponse resp =
+        new WordResponse(
             null,
             "hi",
             List.of("greet"),
@@ -96,35 +88,35 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             List.of(),
             List.of(),
-            "{\"term\":\"hi\"}"
-        );
-        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(
-            new ParsedWord(resp, "{\"term\":\"hi\"}")
-        );
-        when(wordRepository.save(any())).thenAnswer(invocation -> {
-                Word w = invocation.getArgument(0);
-                w.setId(1L);
-                return w;
+            "{\"term\":\"hi\"}");
+    when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH))
+        .thenReturn(new ParsedWord(resp, "{\"term\":\"hi\"}"));
+    when(wordRepository.save(any()))
+        .thenAnswer(
+            invocation -> {
+              Word w = invocation.getArgument(0);
+              w.setId(1L);
+              return w;
             });
 
-        Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
+    Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
 
-        StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").expectNext("\"").verifyComplete();
-        verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
-    }
+    StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").expectNext("\"").verifyComplete();
+    verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
+  }
 
-    /** 验证异常时不会写库。 */
-    @Test
-    void doesNotSaveOnError() {
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(
-            Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom")))
-        );
+  /** 验证异常时不会写库。 */
+  @Test
+  void doesNotSaveOnError() {
+    when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH))
+        .thenReturn(Optional.empty());
+    when(wordSearcher.streamSearch("hi", Language.ENGLISH, null))
+        .thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
 
-        Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
+    Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
 
-        StepVerifier.create(flux).expectNext("part").expectError().verify();
-        verify(wordRepository, never()).save(any());
-        verify(parser, never()).parse(any(), any(), any());
-    }
+    StepVerifier.create(flux).expectNext("part").expectError().verify();
+    verify(wordRepository, never()).save(any());
+    verify(parser, never()).parse(any(), any(), any());
+  }
 }

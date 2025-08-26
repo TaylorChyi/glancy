@@ -21,74 +21,53 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(SearchRecordController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class SearchRecordControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private SearchRecordService searchRecordService;
+  @MockitoBean private SearchRecordService searchRecordService;
 
-    @MockitoBean
-    private UserService userService;
+  @MockitoBean private UserService userService;
 
-    /**
-     * 测试 testCreate 接口
-     */
-    @Test
-    void testCreate() throws Exception {
-        SearchRecordResponse resp = new SearchRecordResponse(
-            1L,
-            1L,
-            "hello",
-            Language.ENGLISH,
-            LocalDateTime.now(),
-            false
-        );
-        when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class))).thenReturn(resp);
+  /** 测试 testCreate 接口 */
+  @Test
+  void testCreate() throws Exception {
+    SearchRecordResponse resp =
+        new SearchRecordResponse(1L, 1L, "hello", Language.ENGLISH, LocalDateTime.now(), false);
+    when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class)))
+        .thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(
-                post("/api/search-records/user")
-                    .header("X-USER-TOKEN", "tkn")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")
-            )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.term").value("hello"));
-    }
+    mockMvc
+        .perform(
+            post("/api/search-records/user")
+                .header("X-USER-TOKEN", "tkn")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.term").value("hello"));
+  }
 
-    /**
-     * 测试 testList 接口
-     */
-    @Test
-    void testList() throws Exception {
-        SearchRecordResponse resp = new SearchRecordResponse(
-            1L,
-            1L,
-            "hello",
-            Language.ENGLISH,
-            LocalDateTime.now(),
-            true
-        );
-        when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
+  /** 测试 testList 接口 */
+  @Test
+  void testList() throws Exception {
+    SearchRecordResponse resp =
+        new SearchRecordResponse(1L, 1L, "hello", Language.ENGLISH, LocalDateTime.now(), true);
+    when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+    when(userService.authenticateToken("tkn")).thenReturn(1L);
 
-        mockMvc
-            .perform(get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].term").value("hello"));
-    }
+    mockMvc
+        .perform(get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(1))
+        .andExpect(jsonPath("$[0].term").value("hello"));
+  }
 }
