@@ -10,24 +10,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class LLMClientFactory {
 
-    private final Map<String, LLMClient> clientMap = new HashMap<>();
+  private final Map<String, LLMClient> clientMap = new HashMap<>();
 
-    public LLMClientFactory(List<LLMClient> clients) {
-        for (LLMClient client : clients) {
-            clientMap.put(client.name(), client);
-        }
+  public LLMClientFactory(List<LLMClient> clients) {
+    for (LLMClient client : clients) {
+      clientMap.put(client.name(), client);
     }
+  }
 
-    public LLMClient get(String name) {
-        return clientMap.get(name);
-    }
+  public LLMClient get(String name) {
+    return clientMap.get(name);
+  }
 
-    /**
-     * Returns the names of all registered LLM clients sorted alphabetically.
-     */
-    public List<String> getClientNames() {
-        List<String> names = new ArrayList<>(clientMap.keySet());
-        Collections.sort(names);
-        return names;
-    }
+  /** Returns the names of all registered LLM clients sorted alphabetically. */
+  public List<String> getClientNames() {
+    List<String> names = new ArrayList<>(clientMap.keySet());
+    Collections.sort(names);
+    return names;
+  }
 }

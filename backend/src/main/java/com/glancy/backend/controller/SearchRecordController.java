@@ -12,81 +12,71 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Endpoints for managing user search history. It allows recording
- * each search and provides retrieval and clearing operations.
+ * Endpoints for managing user search history. It allows recording each search and provides
+ * retrieval and clearing operations.
  */
 @RestController
 @RequestMapping("/api/search-records")
 @Slf4j
 public class SearchRecordController {
 
-    private final SearchRecordService searchRecordService;
+  private final SearchRecordService searchRecordService;
 
-    public SearchRecordController(SearchRecordService searchRecordService) {
-        this.searchRecordService = searchRecordService;
-    }
+  public SearchRecordController(SearchRecordService searchRecordService) {
+    this.searchRecordService = searchRecordService;
+  }
 
-    /**
-     * Record a search term for a user. Non-members are limited to
-     * 10 searches per day as enforced in the service layer.
-     */
-    @PostMapping("/user")
-    public ResponseEntity<SearchRecordResponse> create(
-        @AuthenticatedUser Long userId,
-        @Valid @RequestBody SearchRecordRequest req
-    ) {
-        SearchRecordResponse resp = searchRecordService.saveRecord(userId, req);
-        log.info("Create search record response: {}", resp);
-        return new ResponseEntity<>(resp, HttpStatus.CREATED);
-    }
+  /**
+   * Record a search term for a user. Non-members are limited to 10 searches per day as enforced in
+   * the service layer.
+   */
+  @PostMapping("/user")
+  public ResponseEntity<SearchRecordResponse> create(
+      @AuthenticatedUser Long userId, @Valid @RequestBody SearchRecordRequest req) {
+    SearchRecordResponse resp = searchRecordService.saveRecord(userId, req);
+    log.info("Create search record response: {}", resp);
+    return new ResponseEntity<>(resp, HttpStatus.CREATED);
+  }
 
-    /**
-     * Get a user's search history ordered by latest first.
-     */
-    @GetMapping("/user")
-    public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
-        List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
-        log.info("List search records response for user {}: {}", userId, resp);
-        return ResponseEntity.ok(resp);
-    }
+  /** Get a user's search history ordered by latest first. */
+  @GetMapping("/user")
+  public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
+    List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
+    log.info("List search records response for user {}: {}", userId, resp);
+    return ResponseEntity.ok(resp);
+  }
 
-    /**
-     * Clear all search records for a user.
-     */
-    @DeleteMapping("/user")
-    public ResponseEntity<Void> clear(@AuthenticatedUser Long userId) {
-        searchRecordService.clearRecords(userId);
-        log.info("Cleared search records for user {}", userId);
-        return ResponseEntity.noContent().build();
-    }
+  /** Clear all search records for a user. */
+  @DeleteMapping("/user")
+  public ResponseEntity<Void> clear(@AuthenticatedUser Long userId) {
+    searchRecordService.clearRecords(userId);
+    log.info("Cleared search records for user {}", userId);
+    return ResponseEntity.noContent().build();
+  }
 
-    /**
-     * Mark a search record as favorite for the user.
-     */
-    @PostMapping("/user/{recordId}/favorite")
-    public ResponseEntity<SearchRecordResponse> favorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
-        log.info("Favorite search record response: {}", resp);
-        return ResponseEntity.ok(resp);
-    }
+  /** Mark a search record as favorite for the user. */
+  @PostMapping("/user/{recordId}/favorite")
+  public ResponseEntity<SearchRecordResponse> favorite(
+      @AuthenticatedUser Long userId, @PathVariable Long recordId) {
+    SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
+    log.info("Favorite search record response: {}", resp);
+    return ResponseEntity.ok(resp);
+  }
 
-    /**
-     * Cancel favorite for a specific search record of the user.
-     */
-    @DeleteMapping("/user/{recordId}/favorite")
-    public ResponseEntity<Void> unfavorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        searchRecordService.unfavoriteRecord(userId, recordId);
-        log.info("Unfavorited record {} for user {}", recordId, userId);
-        return ResponseEntity.noContent().build();
-    }
+  /** Cancel favorite for a specific search record of the user. */
+  @DeleteMapping("/user/{recordId}/favorite")
+  public ResponseEntity<Void> unfavorite(
+      @AuthenticatedUser Long userId, @PathVariable Long recordId) {
+    searchRecordService.unfavoriteRecord(userId, recordId);
+    log.info("Unfavorited record {} for user {}", recordId, userId);
+    return ResponseEntity.noContent().build();
+  }
 
-    /**
-     * Delete a specific search record of a user.
-     */
-    @DeleteMapping("/user/{recordId}")
-    public ResponseEntity<Void> delete(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        searchRecordService.deleteRecord(userId, recordId);
-        log.info("Deleted record {} for user {}", recordId, userId);
-        return ResponseEntity.noContent().build();
-    }
+  /** Delete a specific search record of a user. */
+  @DeleteMapping("/user/{recordId}")
+  public ResponseEntity<Void> delete(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
+    searchRecordService.deleteRecord(userId, recordId);
+    log.info("Deleted record {} for user {}", recordId, userId);
+    return ResponseEntity.noContent().build();
+  }
 }

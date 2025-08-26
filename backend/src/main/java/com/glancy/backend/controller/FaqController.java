@@ -11,36 +11,34 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller exposing FAQ management endpoints used by admins
- * and clients. It allows creation and retrieval of FAQs.
+ * Controller exposing FAQ management endpoints used by admins and clients. It allows creation and
+ * retrieval of FAQs.
  */
 @RestController
 @RequestMapping("/api/faqs")
 @Slf4j
 public class FaqController {
 
-    private final FaqService faqService;
+  private final FaqService faqService;
 
-    public FaqController(FaqService faqService) {
-        this.faqService = faqService;
-    }
+  public FaqController(FaqService faqService) {
+    this.faqService = faqService;
+  }
 
-    /**
-     * Create a new FAQ entry. This fulfils the requirement for
-     * administrators to manage help documentation.
-     */
-    @PostMapping
-    public ResponseEntity<FaqResponse> create(@Valid @RequestBody FaqRequest req) {
-        FaqResponse resp = faqService.createFaq(req);
-        return new ResponseEntity<>(resp, HttpStatus.CREATED);
-    }
+  /**
+   * Create a new FAQ entry. This fulfils the requirement for administrators to manage help
+   * documentation.
+   */
+  @PostMapping
+  public ResponseEntity<FaqResponse> create(@Valid @RequestBody FaqRequest req) {
+    FaqResponse resp = faqService.createFaq(req);
+    return new ResponseEntity<>(resp, HttpStatus.CREATED);
+  }
 
-    /**
-     * Retrieve all FAQ entries for display on the client side.
-     */
-    @GetMapping
-    public ResponseEntity<List<FaqResponse>> list() {
-        List<FaqResponse> resp = faqService.getAllFaqs();
-        return ResponseEntity.ok(resp);
-    }
+  /** Retrieve all FAQ entries for display on the client side. */
+  @GetMapping
+  public ResponseEntity<List<FaqResponse>> list() {
+    List<FaqResponse> resp = faqService.getAllFaqs();
+    return ResponseEntity.ok(resp);
+  }
 }

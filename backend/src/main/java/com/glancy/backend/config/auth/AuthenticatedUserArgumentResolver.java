@@ -15,43 +15,42 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
- * Resolves parameters annotated with {@link AuthenticatedUser} by validating
- * the user token from request headers.
+ * Resolves parameters annotated with {@link AuthenticatedUser} by validating the user token from
+ * request headers.
  */
-
 @Component
 public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    public AuthenticatedUserArgumentResolver(UserService userService) {
-        this.userService = userService;
-    }
+  public AuthenticatedUserArgumentResolver(UserService userService) {
+    this.userService = userService;
+  }
 
-    @Override
-    public boolean supportsParameter(@NonNull MethodParameter parameter) {
-        if (!parameter.hasParameterAnnotation(AuthenticatedUser.class)) {
-            return false;
-        }
-        Class<?> type = parameter.getParameterType();
-        return User.class.isAssignableFrom(type) || Long.class.equals(type);
+  @Override
+  public boolean supportsParameter(@NonNull MethodParameter parameter) {
+    if (!parameter.hasParameterAnnotation(AuthenticatedUser.class)) {
+      return false;
     }
+    Class<?> type = parameter.getParameterType();
+    return User.class.isAssignableFrom(type) || Long.class.equals(type);
+  }
 
-    @Override
-    public Object resolveArgument(
-        @NonNull MethodParameter parameter,
-        @Nullable ModelAndViewContainer mavContainer,
-        @NonNull NativeWebRequest webRequest,
-        @Nullable WebDataBinderFactory binderFactory
-    ) throws Exception {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new UnauthorizedException("Missing authentication token");
-        }
-        Long userId = (Long) authentication.getPrincipal();
-        if (Long.class.equals(parameter.getParameterType())) {
-            return userId;
-        }
-        return userService.getUserRaw(userId);
+  @Override
+  public Object resolveArgument(
+      @NonNull MethodParameter parameter,
+      @Nullable ModelAndViewContainer mavContainer,
+      @NonNull NativeWebRequest webRequest,
+      @Nullable WebDataBinderFactory binderFactory)
+      throws Exception {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || authentication.getPrincipal() == null) {
+      throw new UnauthorizedException("Missing authentication token");
     }
+    Long userId = (Long) authentication.getPrincipal();
+    if (Long.class.equals(parameter.getParameterType())) {
+      return userId;
+    }
+    return userService.getUserRaw(userId);
+  }
 }

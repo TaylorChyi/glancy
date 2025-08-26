@@ -6,5 +6,5 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface FaqMapper {
-    FaqResponse toResponse(Faq faq);
+  FaqResponse toResponse(Faq faq);
 }

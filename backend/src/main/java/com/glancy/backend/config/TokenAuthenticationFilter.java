@@ -16,36 +16,37 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Spring Security filter that validates the {@code X-USER-TOKEN} header and
- * populates the SecurityContext when the token is valid.
+ * Spring Security filter that validates the {@code X-USER-TOKEN} header and populates the
+ * SecurityContext when the token is valid.
  */
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-    private final UserService userService;
+  private final UserService userService;
 
-    public TokenAuthenticationFilter(UserService userService) {
-        this.userService = userService;
+  public TokenAuthenticationFilter(UserService userService) {
+    this.userService = userService;
+  }
+
+  @Override
+  protected void doFilterInternal(
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
+      throws ServletException, IOException {
+    String token = TokenResolver.resolveToken(request);
+    if (token == null) {
+      filterChain.doFilter(request, response);
+      return;
     }
 
-    @Override
-    protected void doFilterInternal(
-        @NonNull HttpServletRequest request,
-        @NonNull HttpServletResponse response,
-        @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-        String token = TokenResolver.resolveToken(request);
-        if (token == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        try {
-            Long userId = userService.authenticateToken(token);
-            Authentication authentication = new UsernamePasswordAuthenticationToken(userId, token, List.of());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            filterChain.doFilter(request, response);
-        } catch (Exception ex) {
-            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid token");
-        }
+    try {
+      Long userId = userService.authenticateToken(token);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(userId, token, List.of());
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+      filterChain.doFilter(request, response);
+    } catch (Exception ex) {
+      response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid token");
     }
+  }
 }

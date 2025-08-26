@@ -17,41 +17,37 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ContactServiceTest {
 
-    @Autowired
-    private ContactService contactService;
+  @Autowired private ContactService contactService;
 
-    @Autowired
-    private ContactMessageRepository contactMessageRepository;
+  @Autowired private ContactMessageRepository contactMessageRepository;
 
-    @BeforeAll
-    static void loadEnv() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        String dbPassword = dotenv.get("DB_PASSWORD");
-        if (dbPassword != null) {
-            System.setProperty("DB_PASSWORD", dbPassword);
-        }
+  @BeforeAll
+  static void loadEnv() {
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    String dbPassword = dotenv.get("DB_PASSWORD");
+    if (dbPassword != null) {
+      System.setProperty("DB_PASSWORD", dbPassword);
     }
+  }
 
-    @BeforeEach
-    void setUp() {
-        contactMessageRepository.deleteAll();
-    }
+  @BeforeEach
+  void setUp() {
+    contactMessageRepository.deleteAll();
+  }
 
-    /**
-     * 测试 testSubmit 接口
-     */
-    @Test
-    void testSubmit() {
-        ContactRequest req = new ContactRequest();
-        req.setName("Alice");
-        req.setEmail("alice@example.com");
-        req.setMessage("Hi there");
+  /** 测试 testSubmit 接口 */
+  @Test
+  void testSubmit() {
+    ContactRequest req = new ContactRequest();
+    req.setName("Alice");
+    req.setEmail("alice@example.com");
+    req.setMessage("Hi there");
 
-        ContactResponse resp = contactService.submit(req);
-        assertNotNull(resp.getId());
-        assertEquals("Alice", resp.getName());
-        assertEquals("alice@example.com", resp.getEmail());
-        assertEquals("Hi there", resp.getMessage());
-        assertEquals(1, contactMessageRepository.count());
-    }
+    ContactResponse resp = contactService.submit(req);
+    assertNotNull(resp.getId());
+    assertEquals("Alice", resp.getName());
+    assertEquals("alice@example.com", resp.getEmail());
+    assertEquals("Hi there", resp.getMessage());
+    assertEquals(1, contactMessageRepository.count());
+  }
 }

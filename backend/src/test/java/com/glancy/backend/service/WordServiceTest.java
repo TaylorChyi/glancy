@@ -20,98 +20,88 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class WordServiceTest {
 
-    @Autowired
-    private WordService wordService;
+  @Autowired private WordService wordService;
 
-    @Autowired
-    private UserPreferenceRepository userPreferenceRepository;
+  @Autowired private UserPreferenceRepository userPreferenceRepository;
 
-    @Autowired
-    private WordRepository wordRepository;
+  @Autowired private WordRepository wordRepository;
 
-    @BeforeAll
-    static void loadEnv() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        String dbPassword = dotenv.get("DB_PASSWORD");
-        if (dbPassword != null) {
-            System.setProperty("DB_PASSWORD", dbPassword);
-        }
+  @BeforeAll
+  static void loadEnv() {
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    String dbPassword = dotenv.get("DB_PASSWORD");
+    if (dbPassword != null) {
+      System.setProperty("DB_PASSWORD", dbPassword);
     }
+  }
 
-    @BeforeEach
-    void setUp() {
-        wordRepository.deleteAll();
-        userPreferenceRepository.deleteAll();
-    }
+  @BeforeEach
+  void setUp() {
+    wordRepository.deleteAll();
+    userPreferenceRepository.deleteAll();
+  }
 
-    /**
-     * 测试 testFetchAndCacheWord 接口
-     */
-    @Test
-    void testFetchAndCacheWord() {
-        WordResponse result = wordService.findWordForUser(1L, "hello", Language.ENGLISH, null);
+  /** 测试 testFetchAndCacheWord 接口 */
+  @Test
+  void testFetchAndCacheWord() {
+    WordResponse result = wordService.findWordForUser(1L, "hello", Language.ENGLISH, null);
 
-        assertNotNull(result.getId());
-        assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
-    }
+    assertNotNull(result.getId());
+    assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
+  }
 
-    /**
-     * 测试 testUseCachedWord 接口
-     */
-    @Test
-    void testUseCachedWord() {
-        Word word = new Word();
-        word.setTerm("cached");
-        word.setLanguage(Language.ENGLISH);
-        word.setDefinitions(List.of("store"));
-        word.setMarkdown("md");
-        wordRepository.save(word);
+  /** 测试 testUseCachedWord 接口 */
+  @Test
+  void testUseCachedWord() {
+    Word word = new Word();
+    word.setTerm("cached");
+    word.setLanguage(Language.ENGLISH);
+    word.setDefinitions(List.of("store"));
+    word.setMarkdown("md");
+    wordRepository.save(word);
 
-        WordResponse result = wordService.findWordForUser(1L, "cached", Language.ENGLISH, null);
+    WordResponse result = wordService.findWordForUser(1L, "cached", Language.ENGLISH, null);
 
-        assertEquals(String.valueOf(word.getId()), result.getId());
-        assertEquals("md", result.getMarkdown());
-    }
+    assertEquals(String.valueOf(word.getId()), result.getId());
+    assertEquals("md", result.getMarkdown());
+  }
 
-    /**
-     * 测试 testGetAudio 接口
-     */
-    @Test
-    void testGetAudio() {
-        byte[] result = wordService.getAudio("hello", Language.ENGLISH);
-        assertNotNull(result);
-    }
+  /** 测试 testGetAudio 接口 */
+  @Test
+  void testGetAudio() {
+    byte[] result = wordService.getAudio("hello", Language.ENGLISH);
+    assertNotNull(result);
+  }
 
-    /**
-     * 测试 testCacheWordWhenLanguageMissing 接口
-     */
-    @Test
-    void testCacheWordWhenLanguageMissing() {
-        WordResponse result = wordService.findWordForUser(1L, "bye", Language.ENGLISH, null);
+  /** 测试 testCacheWordWhenLanguageMissing 接口 */
+  @Test
+  void testCacheWordWhenLanguageMissing() {
+    WordResponse result = wordService.findWordForUser(1L, "bye", Language.ENGLISH, null);
 
-        assertEquals(Language.ENGLISH, result.getLanguage());
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("bye", Language.ENGLISH).isPresent());
-    }
+    assertEquals(Language.ENGLISH, result.getLanguage());
+    assertTrue(
+        wordRepository.findByTermAndLanguageAndDeletedFalse("bye", Language.ENGLISH).isPresent());
+  }
 
-    /**
-     * 测试 testSaveSameTermDifferentLanguage 接口
-     */
-    @Test
-    void testSaveSameTermDifferentLanguage() {
-        Word wordEn = new Word();
-        wordEn.setTerm("hello");
-        wordEn.setLanguage(Language.ENGLISH);
-        wordEn.setDefinitions(List.of("greet"));
-        wordRepository.save(wordEn);
+  /** 测试 testSaveSameTermDifferentLanguage 接口 */
+  @Test
+  void testSaveSameTermDifferentLanguage() {
+    Word wordEn = new Word();
+    wordEn.setTerm("hello");
+    wordEn.setLanguage(Language.ENGLISH);
+    wordEn.setDefinitions(List.of("greet"));
+    wordRepository.save(wordEn);
 
-        Word wordZh = new Word();
-        wordZh.setTerm("hello");
-        wordZh.setLanguage(Language.CHINESE);
-        wordZh.setDefinitions(List.of("\u4f60\u597d"));
+    Word wordZh = new Word();
+    wordZh.setTerm("hello");
+    wordZh.setLanguage(Language.CHINESE);
+    wordZh.setDefinitions(List.of("\u4f60\u597d"));
 
-        assertDoesNotThrow(() -> wordRepository.save(wordZh));
+    assertDoesNotThrow(() -> wordRepository.save(wordZh));
 
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH).isPresent());
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.CHINESE).isPresent());
-    }
+    assertTrue(
+        wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH).isPresent());
+    assertTrue(
+        wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.CHINESE).isPresent());
+  }
 }

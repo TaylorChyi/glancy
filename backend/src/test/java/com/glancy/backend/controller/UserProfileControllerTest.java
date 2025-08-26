@@ -19,68 +19,57 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserProfileController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class UserProfileControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private UserProfileService userProfileService;
+  @MockitoBean private UserProfileService userProfileService;
 
-    @MockitoBean
-    private com.glancy.backend.service.UserService userService;
+  @MockitoBean private com.glancy.backend.service.UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    /**
-     * 测试 saveProfile 接口
-     */
-    @Test
-    void saveProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
-        when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
+  /** 测试 saveProfile 接口 */
+  @Test
+  void saveProfile() throws Exception {
+    UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
+    when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
 
-        UserProfileRequest req = new UserProfileRequest();
-        req.setAge(20);
-        req.setGender("M");
-        req.setJob("dev");
-        req.setInterest("code");
-        req.setGoal("learn");
+    UserProfileRequest req = new UserProfileRequest();
+    req.setAge(20);
+    req.setGender("M");
+    req.setJob("dev");
+    req.setInterest("code");
+    req.setGoal("learn");
 
-        when(userService.authenticateToken("tkn")).thenReturn(2L);
+    when(userService.authenticateToken("tkn")).thenReturn(2L);
 
-        mockMvc
-            .perform(
-                post("/api/profiles/user")
-                    .header("X-USER-TOKEN", "tkn")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req))
-            )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.userId").value(2L));
-    }
+    mockMvc
+        .perform(
+            post("/api/profiles/user")
+                .header("X-USER-TOKEN", "tkn")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.userId").value(2L));
+  }
 
-    /**
-     * 测试 getProfile 接口
-     */
-    @Test
-    void getProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
-        when(userProfileService.getProfile(2L)).thenReturn(resp);
+  /** 测试 getProfile 接口 */
+  @Test
+  void getProfile() throws Exception {
+    UserProfileResponse resp = new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn");
+    when(userProfileService.getProfile(2L)).thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(2L);
+    when(userService.authenticateToken("tkn")).thenReturn(2L);
 
-        mockMvc
-            .perform(get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userId").value(2L));
-    }
+    mockMvc
+        .perform(get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.userId").value(2L));
+  }
 }

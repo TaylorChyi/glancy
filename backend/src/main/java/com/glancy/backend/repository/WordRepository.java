@@ -6,10 +6,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-/**
- * Repository caching words fetched from external dictionary services.
- */
+/** Repository caching words fetched from external dictionary services. */
 @Repository
 public interface WordRepository extends JpaRepository<Word, Long> {
-    Optional<Word> findByTermAndLanguageAndDeletedFalse(String term, Language language);
+  Optional<Word> findByTermAndLanguageAndDeletedFalse(String term, Language language);
 }

@@ -10,27 +10,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * API controller for the "Contact Us" feature. It accepts contact
- * messages from end users and stores them via {@link ContactService}.
+ * API controller for the "Contact Us" feature. It accepts contact messages from end users and
+ * stores them via {@link ContactService}.
  */
 @RestController
 @RequestMapping("/api/contact")
 @Slf4j
 public class ContactController {
 
-    private final ContactService contactService;
+  private final ContactService contactService;
 
-    public ContactController(ContactService contactService) {
-        this.contactService = contactService;
-    }
+  public ContactController(ContactService contactService) {
+    this.contactService = contactService;
+  }
 
-    /**
-     * Submit a contact message. This endpoint supports the requirement for
-     * users to reach out to the system administrators.
-     */
-    @PostMapping
-    public ResponseEntity<ContactResponse> submit(@Valid @RequestBody ContactRequest req) {
-        ContactResponse resp = contactService.submit(req);
-        return new ResponseEntity<>(resp, HttpStatus.CREATED);
-    }
+  /**
+   * Submit a contact message. This endpoint supports the requirement for users to reach out to the
+   * system administrators.
+   */
+  @PostMapping
+  public ResponseEntity<ContactResponse> submit(@Valid @RequestBody ContactRequest req) {
+    ContactResponse resp = contactService.submit(req);
+    return new ResponseEntity<>(resp, HttpStatus.CREATED);
+  }
 }

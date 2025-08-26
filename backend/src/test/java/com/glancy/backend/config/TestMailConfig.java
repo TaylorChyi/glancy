@@ -8,8 +8,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 @Configuration
 public class TestMailConfig {
 
-    @Bean
-    public JavaMailSender javaMailSender() {
-        return new JavaMailSenderImpl();
-    }
+  @Bean
+  public JavaMailSender javaMailSender() {
+    return new JavaMailSenderImpl();
+  }
 }

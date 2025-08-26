@@ -8,15 +8,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class GlancyBackendApplicationTests {
 
-    @BeforeAll
-    static void setup() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
-    }
+  @BeforeAll
+  static void setup() {
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+  }
 
-    /**
-     * 测试 Spring 应用能启动无错
-     */
-    @Test
-    void contextLoads() {}
+  /** 测试 Spring 应用能启动无错 */
+  @Test
+  void contextLoads() {}
 }

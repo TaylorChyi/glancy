@@ -11,16 +11,15 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 class ContactMessageRepositoryTest {
 
-    @Autowired
-    private ContactMessageRepository contactMessageRepository;
+  @Autowired private ContactMessageRepository contactMessageRepository;
 
-    @Test
-    void saveAndFind() {
-        ContactMessage msg = TestEntityFactory.contactMessage("alice");
-        contactMessageRepository.save(msg);
+  @Test
+  void saveAndFind() {
+    ContactMessage msg = TestEntityFactory.contactMessage("alice");
+    contactMessageRepository.save(msg);
 
-        Optional<ContactMessage> found = contactMessageRepository.findById(msg.getId());
-        assertTrue(found.isPresent());
-        assertEquals("alice", found.get().getName());
-    }
+    Optional<ContactMessage> found = contactMessageRepository.findById(msg.getId());
+    assertTrue(found.isPresent());
+    assertEquals("alice", found.get().getName());
+  }
 }
