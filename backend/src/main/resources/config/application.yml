@@ -2,7 +2,7 @@ spring:
   application:
     name: glancy
   messages:
-    basename: messages
+    basename: i18n/messages
   mail:
     host: localhost
     port: 1025
