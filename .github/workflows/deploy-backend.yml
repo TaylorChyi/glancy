@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - "backend/**"
+  release:
+    types:
+      - published
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -24,13 +28,12 @@ jobs:
       - name: Build project
         run: ./mvnw -B clean package -DskipTests
         working-directory: backend
-
-      - name: Run database migrations
+      - name: Flyway migrate
         env:
           FLYWAY_URL: jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?createDatabaseIfNotExist=true
           FLYWAY_USER: ${{ secrets.DB_USER }}
           FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: mvn -pl backend flyway:migrate
+        run: mvn -f backend/pom.xml flyway:migrate
 
       - name: Upload jar to server
         uses: appleboy/scp-action@v1.0.0
