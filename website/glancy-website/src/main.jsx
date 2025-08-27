@@ -1,10 +1,13 @@
-import { StrictMode, Suspense, lazy, useEffect } from "react";
+/* eslint-env browser */
+
+import { StrictMode, Suspense, lazy, useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import "./styles/index.css";
 import Loader from "./components/ui/Loader";
 import AuthWatcher from "./components/AuthWatcher";
+import { rafThrottle } from "./utils/rafThrottle";
 
 const App = lazy(() => import("./pages/App"));
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -16,18 +19,21 @@ import {
   AppProviders,
 } from "@/context";
 
-// eslint-disable-next-line react-refresh/only-export-components
 function ViewportHeightUpdater() {
-  useEffect(() => {
-    const updateVh = () => {
+  useLayoutEffect(() => {
+    const setVh = () => {
       document.documentElement.style.setProperty(
         "--vh",
         `${window.innerHeight}px`,
       );
     };
-    updateVh();
-    window.addEventListener("resize", updateVh);
-    return () => window.removeEventListener("resize", updateVh);
+    const handleResize = rafThrottle(setVh);
+    setVh();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      handleResize.cancel();
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
   return null;
 }
