@@ -42,7 +42,6 @@ public class SearchRecordService {
   /** Save a search record for a user and apply daily limits if the user is not a member. */
   @Transactional
   public SearchRecordResponse saveRecord(Long userId, SearchRecordRequest request) {
-    log.info("Saving search record for user {} with term '{}'", userId, request.getTerm());
     User user =
         userRepository
             .findById(userId)
@@ -59,12 +58,9 @@ public class SearchRecordService {
         searchRecordRepository.findTopByUserIdAndTermAndLanguageOrderByCreatedAtDesc(
             userId, request.getTerm(), request.getLanguage());
     if (existing != null) {
-      log.info("Existing record found: {}", describeRecord(existing));
       existing.setCreatedAt(LocalDateTime.now());
       SearchRecord updated = searchRecordRepository.save(existing);
-      log.info("Updated record persisted: {}", describeRecord(updated));
       SearchRecordResponse response = searchRecordMapper.toResponse(updated);
-      log.info("Returning record response: {}", describeResponse(response));
       return response;
     }
 
@@ -83,34 +79,27 @@ public class SearchRecordService {
     record.setTerm(request.getTerm());
     record.setLanguage(request.getLanguage());
     SearchRecord saved = searchRecordRepository.save(record);
-    log.info("Persisted new search record: {}", describeRecord(saved));
     SearchRecordResponse response = searchRecordMapper.toResponse(saved);
-    log.info("Returning record response: {}", describeResponse(response));
     return response;
   }
 
   /** Mark a search record as favorite for the user. */
   @Transactional
   public SearchRecordResponse favoriteRecord(Long userId, Long recordId) {
-    log.info("Favoriting search record {} for user {}", recordId, userId);
     SearchRecord record =
         searchRecordRepository
             .findByIdAndUserId(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
     record.setFavorite(true);
     SearchRecord saved = searchRecordRepository.save(record);
-    log.info("Record after favoriting: {}", describeRecord(saved));
     SearchRecordResponse response = searchRecordMapper.toResponse(saved);
-    log.info("Favorite response: {}", describeResponse(response));
     return response;
   }
 
   /** Retrieve a user's search history ordered by creation time. */
   @Transactional(readOnly = true)
   public List<SearchRecordResponse> getRecords(Long userId) {
-    log.info("Fetching search records for user {}", userId);
     List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
-    log.info("Retrieved {} records from database for user {}", records.size(), userId);
     records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
     List<SearchRecordResponse> responses =
         records.stream().map(searchRecordMapper::toResponse).collect(Collectors.toList());
@@ -122,27 +111,23 @@ public class SearchRecordService {
   @Transactional
   public void clearRecords(Long userId) {
     List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
-    log.info("Clearing {} search records for user {}", records.size(), userId);
     searchRecordRepository.deleteByUserId(userId);
   }
 
   /** Cancel favorite status for a user's search record. */
   @Transactional
   public void unfavoriteRecord(Long userId, Long recordId) {
-    log.info("Unfavoriting search record {} for user {}", recordId, userId);
     SearchRecord record =
         searchRecordRepository
             .findByIdAndUserId(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
     record.setFavorite(false);
     SearchRecord saved = searchRecordRepository.save(record);
-    log.info("Record after unfavoriting: {}", describeRecord(saved));
   }
 
   /** Delete a single search record belonging to the given user. */
   @Transactional
   public void deleteRecord(Long userId, Long recordId) {
-    log.info("Deleting search record {} for user {}", recordId, userId);
     SearchRecord record =
         searchRecordRepository
             .findById(recordId)
@@ -151,7 +136,6 @@ public class SearchRecordService {
       throw new ResourceNotFoundException("搜索记录不存在");
     }
     searchRecordRepository.delete(record);
-    log.info("Deleted search record: {}", describeRecord(record));
   }
 
   private String describeRecord(SearchRecord record) {

@@ -10,7 +10,6 @@ import com.glancy.backend.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
  * Business logic around creating and listing notifications that may either be global announcements
  * or user specific.
  */
-@Slf4j
 @Service
 public class NotificationService {
 
@@ -34,7 +32,6 @@ public class NotificationService {
   /** Create a system level notification for all users. */
   @Transactional
   public NotificationResponse createSystemNotification(NotificationRequest request) {
-    log.info("Creating system notification: {}", request.getMessage());
     Notification notification = new Notification();
     notification.setMessage(request.getMessage());
     notification.setSystemLevel(true);
@@ -45,7 +42,6 @@ public class NotificationService {
   /** Create a notification for a single user. */
   @Transactional
   public NotificationResponse createUserNotification(Long userId, NotificationRequest request) {
-    log.info("Creating notification for user {}: {}", userId, request.getMessage());
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     Notification notification = new Notification();
@@ -59,7 +55,6 @@ public class NotificationService {
   /** Combine system notifications with those addressed to the given user. */
   @Transactional(readOnly = true)
   public List<NotificationResponse> getNotificationsForUser(Long userId) {
-    log.info("Fetching notifications for user {}", userId);
     List<Notification> result = new ArrayList<>();
     result.addAll(notificationRepository.findBySystemLevelTrueOrderByCreatedAtDesc());
     result.addAll(notificationRepository.findByUserIdOrderByCreatedAtDesc(userId));

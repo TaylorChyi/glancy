@@ -57,7 +57,6 @@ public class OssAvatarStorage implements AvatarStorage {
     } else {
       url = generatePresignedUrl(objectName);
     }
-    log.info("Avatar stored as {}. URL returned: {}", objectName, url);
     return url;
   }
 
@@ -91,7 +90,6 @@ public class OssAvatarStorage implements AvatarStorage {
     }
     URL url = ossClient.generatePresignedUrl(req);
     String result = url.toString();
-    log.info("Generated presigned URL: {}", result);
     return result;
   }
 

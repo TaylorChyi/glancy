@@ -51,23 +51,15 @@ public class WordService {
   /** Retrieve pronunciation audio from the DeepSeek service. */
   @Transactional(readOnly = true)
   public byte[] getAudio(String term, Language language) {
-    log.info("Fetching audio for term '{}' in language {}", term, language);
     return dictionaryClient.fetchAudio(term, language);
   }
 
   @Transactional
   public WordResponse findWordForUser(Long userId, String term, Language language, String model) {
-    log.info(
-        "Finding word '{}' for user {} in language {} using model {}",
-        term,
-        userId,
-        language,
-        model);
     userPreferenceRepository
         .findByUserId(userId)
         .orElseGet(
             () -> {
-              log.info("No user preference found for user {}, using default", userId);
               UserPreference p = new UserPreference();
               p.setDictionaryModel(DictionaryModel.DEEPSEEK);
               return p;
@@ -76,12 +68,10 @@ public class WordService {
         .findByTermAndLanguageAndDeletedFalse(term, language)
         .map(
             word -> {
-              log.info("Found word '{}' in local repository", term);
               return toResponse(word);
             })
         .orElseGet(
             () -> {
-              log.info("Word '{}' not found locally, streaming via LLM", term);
               return performStreamingSearch(term, language, model);
             });
   }
@@ -89,12 +79,6 @@ public class WordService {
   /** Stream search results for a word and persist the search record. */
   @Transactional
   public Flux<String> streamWordForUser(Long userId, String term, Language language, String model) {
-    log.info(
-        "Streaming word '{}' for user {} in language {} using model {}",
-        term,
-        userId,
-        language,
-        model);
     SearchRecordRequest req = new SearchRecordRequest();
     req.setTerm(term);
     req.setLanguage(language);
@@ -108,7 +92,6 @@ public class WordService {
 
     var existing = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
     if (existing.isPresent()) {
-      log.info("Found cached word '{}' in language {}", term, language);
       try {
         return Flux.just(serialize(existing.get()));
       } catch (Exception e) {
@@ -130,7 +113,6 @@ public class WordService {
     return stream
         .doOnNext(
             chunk -> {
-              log.info("Streaming chunk for term '{}': {}", term, chunk);
               buffer.append(chunk);
             })
         .doOnError(
@@ -145,7 +127,6 @@ public class WordService {
                     err))
         .doFinally(
             signal -> {
-              log.info("Streaming finished for term '{}' with signal {}", term, signal);
               if (signal == SignalType.ON_COMPLETE) {
                 try {
                   ParsedWord parsed = parser.parse(buffer.toString(), term, language);
@@ -190,7 +171,6 @@ public class WordService {
     word.setPhrases(resp.getPhrases());
     word.setExample(resp.getExample());
     word.setPhonetic(resp.getPhonetic());
-    log.info("Persisting new word '{}' with language {}", term, lang);
     Word saved = wordRepository.save(word);
     resp.setId(String.valueOf(saved.getId()));
     resp.setLanguage(lang);
