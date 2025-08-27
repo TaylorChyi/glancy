@@ -85,11 +85,4 @@ final class TestEntityFactory {
     profile.setAge(20);
     return profile;
   }
-
-  static Faq faq(String question) {
-    Faq faq = new Faq();
-    faq.setQuestion(question);
-    faq.setAnswer("answer");
-    return faq;
-  }
 }
