@@ -4,68 +4,51 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
-import com.glancy.backend.llm.llm.LLMClientFactory;
-import com.glancy.backend.llm.parser.ParsedWord;
-import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 class WordSearcherImplTest {
 
-  private LLMClientFactory factory;
+  private LLMClientResolver resolver;
   private LLMConfig config;
   private PromptManager promptManager;
   private SearchContentManager searchContentManager;
-  private WordResponseParser parser;
-  private LLMClient defaultClient;
+  private LLMClient client;
 
   @BeforeEach
   void setUp() {
-    factory = mock(LLMClientFactory.class);
+    resolver = mock(LLMClientResolver.class);
     config = new LLMConfig();
     config.setDefaultClient("deepseek");
     config.setTemperature(0.5);
     config.setPromptPath("path");
     promptManager = mock(PromptManager.class);
     searchContentManager = mock(SearchContentManager.class);
-    parser = mock(WordResponseParser.class);
-    defaultClient = mock(LLMClient.class);
+    client = mock(LLMClient.class);
   }
 
   @Test
-  void searchFallsBackToDefaultWhenClientMissing() {
-    when(factory.get("invalid")).thenReturn(null);
-    when(factory.get("deepseek")).thenReturn(defaultClient);
+  void streamSearchUsesResolvedClient() {
     when(promptManager.loadPrompt(anyString())).thenReturn("prompt");
     when(searchContentManager.normalize("hello")).thenReturn("hello");
-    when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
-    WordResponse expected = new WordResponse();
-    expected.setMarkdown("content");
-    when(parser.parse("content", "hello", Language.ENGLISH))
-        .thenReturn(new ParsedWord(expected, "content"));
-    WordSearcherImpl searcher =
-        new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-    WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
+    when(resolver.resolve("deepseek"))
+        .thenReturn(new LLMClientResolver.Selection("deepseek", client));
+    when(client.streamChat(anyList(), eq(0.5))).thenReturn(Flux.just("content"));
 
-    assertSame(expected, result);
-    verify(factory).get("invalid");
-    verify(factory).get("deepseek");
-    verify(defaultClient).chat(anyList(), eq(0.5));
-  }
-
-  @Test
-  void searchThrowsWhenDefaultMissing() {
-    when(factory.get("invalid")).thenReturn(null);
-    when(factory.get("deepseek")).thenReturn(null);
     WordSearcherImpl searcher =
-        new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-    assertThrows(
-        IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
+        new WordSearcherImpl(resolver, config, promptManager, searchContentManager);
+
+    Flux<String> result = searcher.streamSearch("hello", Language.ENGLISH, "deepseek");
+
+    StepVerifier.create(result).expectNext("content").verifyComplete();
+    verify(resolver).resolve("deepseek");
+    verify(client).streamChat(anyList(), eq(0.5));
   }
 }
