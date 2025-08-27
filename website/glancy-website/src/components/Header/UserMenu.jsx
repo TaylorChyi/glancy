@@ -1,5 +1,6 @@
-import { useUser, useHistory } from "@/context";
 import { useLanguage } from "@/context";
+import { useUser } from "@/context/UserContext.jsx";
+import { useHistory } from "@/context/HistoryContext.jsx";
 import styles from "./Header.module.css";
 import Avatar from "@/components/ui/Avatar";
 import { Link } from "react-router-dom";

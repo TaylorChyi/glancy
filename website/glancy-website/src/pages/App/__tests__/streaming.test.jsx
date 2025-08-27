@@ -44,15 +44,21 @@ jest.unstable_mockModule("react-router-dom", () => ({
 }));
 
 // mock contexts
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@/context/HistoryContext.jsx", () => ({
   useHistory: () => ({
     loadHistory: jest.fn(),
     addHistory: jest.fn(),
     unfavoriteHistory: jest.fn(),
     history: [],
   }),
+}));
+jest.unstable_mockModule("@/context/UserContext.jsx", () => ({
   useUser: () => ({ user: { id: "1", token: "t" } }),
+}));
+jest.unstable_mockModule("@/context/FavoritesContext.jsx", () => ({
   useFavorites: () => ({ favorites: [], toggleFavorite: jest.fn() }),
+}));
+jest.unstable_mockModule("@/context", () => ({
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
   useLanguage: () => ({
     t: {

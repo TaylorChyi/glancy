@@ -27,13 +27,16 @@ const mockT = {
 };
 
 jest.unstable_mockModule("@/context", () => ({
-  // Aggregate all required context hooks for clarity
   useLanguage: () => ({ t: mockT }),
   useTheme: () => ({ theme: "light", setTheme: mockSetTheme }),
-  useUser: () => ({ user: { id: "1", token: "t" } }),
-  useHistory: () => ({}),
   useApiContext: () => ({}),
   useLocale: () => ({ locale: { lang: "en" } }),
+}));
+jest.unstable_mockModule("@/context/UserContext.jsx", () => ({
+  useUser: () => ({ user: { id: "1", token: "t" } }),
+}));
+jest.unstable_mockModule("@/context/HistoryContext.jsx", () => ({
+  useHistory: () => ({}),
 }));
 jest.unstable_mockModule("@/hooks", () => ({
   useApi: () => ({
