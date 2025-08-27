@@ -1,4 +1,4 @@
-export const API_BASE = '/api'
+export const API_BASE = "/api";
 
 export const API_PATHS = {
   words: `${API_BASE}/words`,
@@ -8,7 +8,6 @@ export const API_PATHS = {
   register: `${API_BASE}/users/register`,
   ping: `${API_BASE}/ping`,
   locale: `${API_BASE}/locale`,
-  notifications: `${API_BASE}/notifications`,
   profiles: `${API_BASE}/profiles`,
   preferences: `${API_BASE}/preferences`,
   contact: `${API_BASE}/contact`,
@@ -17,5 +16,5 @@ export const API_PATHS = {
   llmModels: `${API_BASE}/llm/models`,
   ttsWord: `${API_BASE}/tts/word`,
   ttsSentence: `${API_BASE}/tts/sentence`,
-  ttsVoices: `${API_BASE}/tts/voices`
-}
+  ttsVoices: `${API_BASE}/tts/voices`,
+};
