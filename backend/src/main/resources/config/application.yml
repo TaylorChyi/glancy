@@ -34,7 +34,7 @@ spring:
       - classpath:config/oss.yml
       - classpath:config/tts.yml
 logging:
-  config: classpath:config/logback-spring.xml
+  config: classpath:/config/logback-spring.xml
 management:
   endpoints:
     web:
