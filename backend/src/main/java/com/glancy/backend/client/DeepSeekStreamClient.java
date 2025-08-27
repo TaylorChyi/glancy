@@ -1,5 +1,8 @@
 package com.glancy.backend.client;
 
+import static com.glancy.backend.util.ClientUtils.maskKey;
+import static com.glancy.backend.util.ClientUtils.trimTrailingSlash;
+
 import com.glancy.backend.llm.llm.StreamingLLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.StreamDecoder;
@@ -23,22 +26,24 @@ public class DeepSeekStreamClient implements StreamingLLMClient {
 
   private final WebClient webClient;
   private final StreamDecoder decoder;
+  private final String apiKey;
 
   public DeepSeekStreamClient(
       WebClient.Builder builder,
       @Value("${thirdparty.deepseek.base-url:https://api.deepseek.com}") String baseUrl,
       @Value("${thirdparty.deepseek.api-key:}") String apiKey,
       StreamDecoder decoder) {
-    this.webClient =
-        builder
-            .baseUrl(baseUrl)
-            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-            .build();
+    this.apiKey = apiKey == null ? null : apiKey.trim();
+    WebClient.Builder baseBuilder = builder.baseUrl(trimTrailingSlash(baseUrl));
+    if (this.apiKey != null && !this.apiKey.isEmpty()) {
+      baseBuilder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + this.apiKey);
+    }
+    this.webClient = baseBuilder.build();
     this.decoder = decoder;
-    if (apiKey == null || apiKey.isBlank()) {
+    if (this.apiKey == null || this.apiKey.isBlank()) {
       log.warn("DeepSeek API key is empty");
     } else {
-      log.info("DeepSeek API key loaded: {}", maskKey(apiKey));
+      log.info("DeepSeek API key loaded: {}", maskKey(this.apiKey));
     }
   }
 
@@ -77,11 +82,4 @@ public class DeepSeekStreamClient implements StreamingLLMClient {
             });
   }
 
-  private String maskKey(String key) {
-    if (key.length() <= 8) {
-      return "****";
-    }
-    int end = key.length() - 4;
-    return key.substring(0, 4) + "****" + key.substring(end);
-  }
 }
