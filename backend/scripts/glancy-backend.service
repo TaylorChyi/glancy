@@ -10,6 +10,7 @@ ExecStart=/usr/bin/java -jar /home/ecs-user/glancy-backend/target/glancy-backend
 SuccessExitStatus=143
 Restart=always
 RestartSec=10
+ExecStartPre=/home/ecs-user/glancy-backend/scripts/init-db.sh
 ExecStartPre=/usr/bin/truncate -s 0 /home/ecs-user/glancy-backend/backend.log
 StandardOutput=append:/home/ecs-user/glancy-backend/backend.log
 StandardError=append:/home/ecs-user/glancy-backend/backend.log

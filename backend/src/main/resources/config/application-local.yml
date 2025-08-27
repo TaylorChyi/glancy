@@ -5,11 +5,7 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  flyway:
-    # Disable baselining to allow migration scripts to run
-    baseline-on-migrate: false
-
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
