@@ -25,6 +25,13 @@ jobs:
         run: ./mvnw -B clean package -DskipTests
         working-directory: backend
 
+      - name: Run database migrations
+        env:
+          FLYWAY_URL: jdbc:mysql://${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?createDatabaseIfNotExist=true
+          FLYWAY_USER: ${{ secrets.DB_USER }}
+          FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: mvn -pl backend flyway:migrate
+
       - name: Upload jar to server
         uses: appleboy/scp-action@v1.0.0
         with:
@@ -51,19 +58,6 @@ jobs:
           strip_components: 2
           debug: true
 
-      - name: Upload init-db script
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          timeout: 2m
-          source: backend/scripts/init-db.sh
-          target: ${{ secrets.BACKEND_DEPLOY_PATH }}/scripts/
-          overwrite: true
-          strip_components: 2
-          debug: true
-
       - name: Restart service
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -72,7 +66,6 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             sudo cp ${{ secrets.BACKEND_DEPLOY_PATH }}/glancy-backend.service /etc/systemd/system/glancy-backend.service
-            sudo chmod +x ${{ secrets.BACKEND_DEPLOY_PATH }}/scripts/init-db.sh
             sudo systemctl daemon-reload
             if systemctl list-unit-files | grep -q '^glancy-backend.service'; then
               sudo systemctl restart glancy-backend.service
