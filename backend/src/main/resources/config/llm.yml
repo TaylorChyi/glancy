@@ -1,0 +1,4 @@
+llm:
+  default-client: deepseek
+  temperature: 0.7
+  prompt-path: prompts/english_to_chinese.txt

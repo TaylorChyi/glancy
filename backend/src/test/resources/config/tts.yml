@@ -1,0 +1,11 @@
+tts:
+  volcengine:
+    # Credentials and routing for Volcengine TTS service during tests.
+    app-id:
+    # Access token issued by Volcengine for authentication.
+    access-token: ${VOLCENGINE_ACCESS_TOKEN:}
+    cluster: volcano_tts
+    # Base URL used during tests; points to mock server or real endpoint.
+    api-url: https://openspeech.bytedance.com/api/v1/tts
+    # Interval for proactive health checks during tests.
+    health-interval: PT1M

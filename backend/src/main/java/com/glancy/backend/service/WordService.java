@@ -81,11 +81,8 @@ public class WordService {
             })
         .orElseGet(
             () -> {
-              log.info("Word '{}' not found locally, searching via LLM", term);
-              WordResponse resp = wordSearcher.search(term, language, model);
-              log.info("LLM search result: {}", resp);
-              saveWord(term, resp, language);
-              return resp;
+              log.info("Word '{}' not found locally, streaming via LLM", term);
+              return performStreamingSearch(term, language, model);
             });
   }
 
@@ -158,6 +155,19 @@ public class WordService {
                 }
               }
             });
+  }
+
+  private WordResponse performStreamingSearch(String term, Language language, String model) {
+    String content =
+        wordSearcher
+            .streamSearch(term, language, model)
+            .collectList()
+            .map(list -> String.join("", list))
+            .block();
+    ParsedWord parsed = parser.parse(content, term, language);
+    WordResponse resp = parsed.parsed();
+    saveWord(term, resp, language);
+    return resp;
   }
 
   private String serialize(Word word) throws JsonProcessingException {

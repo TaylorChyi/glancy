@@ -3,19 +3,17 @@ import MessagePopup from "@/components/ui/MessagePopup";
 import { useHistory, useUser, useFavorites } from "@/context";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/context";
-import DictionaryEntry from "@/components/ui/DictionaryEntry";
 import { useLanguage } from "@/context";
 import { useStreamWord, useSpeechInput } from "@/hooks";
 import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
-import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import { useModelStore } from "@/store";
 import ICP from "@/components/ui/ICP";
-import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import MarkdownStream from "@/components/ui/MarkdownStream";
+import SearchDisplay from "./SearchDisplay.jsx";
+import FavoritesPanel from "./FavoritesPanel.jsx";
+import HistoryPanel from "./HistoryPanel.jsx";
 
 function App() {
   const [text, setText] = useState("");
@@ -26,7 +24,7 @@ function App() {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const { user } = useUser();
-  const { loadHistory, addHistory, unfavoriteHistory } = useHistory();
+  const { history, loadHistory, addHistory, unfavoriteHistory } = useHistory();
   const { theme, setTheme } = useTheme();
   const inputRef = useRef(null);
   const [showFavorites, setShowFavorites] = useState(false);
@@ -242,28 +240,26 @@ function App() {
       >
         <div className="display">
           {showFavorites ? (
-            <FavoritesView
+            <FavoritesPanel
               favorites={favorites}
               onSelect={handleSelectFavorite}
               onUnfavorite={handleUnfavorite}
               emptyMessage={t.noFavorites}
             />
           ) : showHistory ? (
-            <HistoryDisplay />
-          ) : loading ? (
-            <MarkdownStream text={streamText || "..."} />
-          ) : entry ? (
-            <DictionaryEntry entry={entry} />
-          ) : finalText ? (
-            <MarkdownRenderer className="stream-text">
-              {finalText}
-            </MarkdownRenderer>
-          ) : streamText ? (
-            <MarkdownStream text={streamText} />
+            <HistoryPanel
+              history={history}
+              onSelect={handleSelectHistory}
+              emptyMessage={t.noHistory}
+            />
           ) : (
-            <div className="display-content">
-              <div className="display-term">{placeholder}</div>
-            </div>
+            <SearchDisplay
+              loading={loading}
+              entry={entry}
+              streamText={streamText}
+              finalText={finalText}
+              placeholder={placeholder}
+            />
           )}
         </div>
       </Layout>

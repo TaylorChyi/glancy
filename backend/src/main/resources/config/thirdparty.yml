@@ -1,0 +1,8 @@
+thirdparty:
+  deepseek:
+    base-url: https://api.deepseek.com
+    api-key: ""
+  doubao:
+    base-url: https://ark.cn-beijing.volces.com
+    chat-path: /api/v3/chat/completions
+    api-key: ""
