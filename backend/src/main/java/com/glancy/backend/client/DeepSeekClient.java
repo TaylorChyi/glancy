@@ -1,5 +1,8 @@
 package com.glancy.backend.client;
 
+import static com.glancy.backend.util.ClientUtils.maskKey;
+import static com.glancy.backend.util.ClientUtils.trimTrailingSlash;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.dto.WordResponse;
@@ -43,13 +46,13 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
       @Value("${thirdparty.deepseek.api-key:}") String apiKey,
       WordResponseParser parser) {
     this.restTemplate = restTemplate;
-    this.baseUrl = baseUrl;
-    this.apiKey = apiKey;
+    this.baseUrl = trimTrailingSlash(baseUrl);
+    this.apiKey = apiKey == null ? null : apiKey.trim();
     this.parser = parser;
-    if (apiKey == null || apiKey.isBlank()) {
+    if (this.apiKey == null || this.apiKey.isBlank()) {
       log.warn("DeepSeek API key is empty");
     } else {
-      log.info("DeepSeek API key loaded: {}", maskKey(apiKey));
+      log.info("DeepSeek API key loaded: {}", maskKey(this.apiKey));
     }
     this.enToZhPrompt = loadPrompt("prompts/english_to_chinese.txt");
     this.zhToEnPrompt = loadPrompt("prompts/chinese_to_english.txt");
@@ -87,8 +90,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
         UriComponentsBuilder.fromUriString(baseUrl).path("/v1/chat/completions").toUriString();
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    if (apiKey != null && !apiKey.isEmpty()) {
-      headers.setBearerAuth(apiKey);
+    if (this.apiKey != null && !this.apiKey.isEmpty()) {
+      headers.setBearerAuth(this.apiKey);
     }
 
     Map<String, Object> body = new HashMap<>();
@@ -154,8 +157,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
             .queryParam("language", language.name().toLowerCase())
             .toUriString();
     HttpHeaders headers = new HttpHeaders();
-    if (apiKey != null && !apiKey.isEmpty()) {
-      headers.setBearerAuth(apiKey);
+    if (this.apiKey != null && !this.apiKey.isEmpty()) {
+      headers.setBearerAuth(this.apiKey);
     }
     HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
     ResponseEntity<byte[]> response =
@@ -163,11 +166,4 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
     return response.getBody();
   }
 
-  private String maskKey(String key) {
-    if (key.length() <= 8) {
-      return "****";
-    }
-    int end = key.length() - 4;
-    return key.substring(0, 4) + "****" + key.substring(end);
-  }
 }

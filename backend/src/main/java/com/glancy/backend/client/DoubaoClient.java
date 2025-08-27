@@ -1,5 +1,9 @@
 package com.glancy.backend.client;
 
+import static com.glancy.backend.util.ClientUtils.ensureLeadingSlash;
+import static com.glancy.backend.util.ClientUtils.maskKey;
+import static com.glancy.backend.util.ClientUtils.trimTrailingSlash;
+
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
@@ -119,25 +123,4 @@ public class DoubaoClient implements LLMClient {
     return "message";
   }
 
-  private String trimTrailingSlash(String url) {
-    if (url == null || url.isBlank()) {
-      return "";
-    }
-    return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-  }
-
-  private String ensureLeadingSlash(String path) {
-    if (path == null || path.isBlank()) {
-      return "";
-    }
-    return path.startsWith("/") ? path : "/" + path;
-  }
-
-  private String maskKey(String key) {
-    if (key.length() <= 8) {
-      return "****";
-    }
-    int end = key.length() - 4;
-    return key.substring(0, 4) + "****" + key.substring(end);
-  }
 }
