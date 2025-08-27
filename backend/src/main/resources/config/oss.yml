@@ -1,0 +1,10 @@
+oss:
+  endpoint: https://oss-cn-beijing.aliyuncs.com
+  bucket: glancy-avatar-bucket
+  avatar-dir: avatars/
+  public-read: true
+  signed-url-expiration-minutes: 10080
+  verify-location: true
+  access-key-id: ${OSS_ACCESS_KEY_ID:}
+  access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+  security-token: ${OSS_SECURITY_TOKEN:}
