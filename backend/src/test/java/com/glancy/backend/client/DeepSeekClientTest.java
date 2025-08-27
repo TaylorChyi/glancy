@@ -35,7 +35,8 @@ class DeepSeekClientTest {
             restTemplate,
             "http://mock",
             "key",
-            new com.glancy.backend.llm.parser.JacksonWordResponseParser());
+            new com.glancy.backend.llm.parser.JacksonWordResponseParser(),
+            new com.glancy.backend.llm.prompt.PromptManagerImpl());
   }
 
   /** 测试 fetchDefinitionWithAuth 接口 */

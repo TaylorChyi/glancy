@@ -8,20 +8,19 @@ import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
+import com.glancy.backend.llm.prompt.PromptManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -41,7 +40,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
       RestTemplate restTemplate,
       @Value("${thirdparty.deepseek.base-url:https://api.deepseek.com}") String baseUrl,
       @Value("${thirdparty.deepseek.api-key:}") String apiKey,
-      WordResponseParser parser) {
+      WordResponseParser parser,
+      PromptManager promptManager) {
     this.restTemplate = restTemplate;
     this.baseUrl = baseUrl;
     this.apiKey = apiKey;
@@ -51,8 +51,8 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
     } else {
       log.info("DeepSeek API key loaded: {}", maskKey(apiKey));
     }
-    this.enToZhPrompt = loadPrompt("prompts/english_to_chinese.txt");
-    this.zhToEnPrompt = loadPrompt("prompts/chinese_to_english.txt");
+    this.enToZhPrompt = promptManager.loadPrompt("prompts/english_to_chinese.txt");
+    this.zhToEnPrompt = promptManager.loadPrompt("prompts/chinese_to_english.txt");
   }
 
   @Override
@@ -63,17 +63,6 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
   @Override
   public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
     return Flux.just(chat(messages, temperature));
-  }
-
-  private String loadPrompt(String path) {
-    try {
-      ClassPathResource resource = new ClassPathResource(path);
-      return StreamUtils.copyToString(
-          resource.getInputStream(), java.nio.charset.StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      log.warn("Failed to load prompt {}", path, e);
-      return "";
-    }
   }
 
   @Override
