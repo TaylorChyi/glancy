@@ -8,7 +8,26 @@ on:
       - "backend/**"
 
 jobs:
+  migration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Run database migrations
+        run: |
+          mvn -B -pl backend flyway:migrate
+          status=$?
+          if [ $status -ne 0 ]; then
+            echo "Flyway migration failed with exit code $status"
+            exit $status
+          fi
   build-and-deploy:
+    needs: migration
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
