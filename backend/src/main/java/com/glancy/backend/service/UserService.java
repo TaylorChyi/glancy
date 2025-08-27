@@ -59,7 +59,6 @@ public class UserService {
   /** Register a new user ensuring username and email uniqueness. */
   @Transactional
   public UserResponse register(UserRegistrationRequest req) {
-    log.info("Registering user {}", req.getUsername());
     if (userRepository.findByUsernameAndDeletedFalse(req.getUsername()).isPresent()) {
       log.warn("Username {} already exists", req.getUsername());
       throw new DuplicateResourceException("用户名已存在");
@@ -87,7 +86,6 @@ public class UserService {
   /** Logically delete a user account. */
   @Transactional
   public void deleteUser(Long id) {
-    log.info("Deleting user {}", id);
     User user =
         userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     user.setDeleted(true);
@@ -97,7 +95,6 @@ public class UserService {
   /** Retrieve a user by id, regardless of deletion flag. */
   @Transactional(readOnly = true)
   public User getUserRaw(Long id) {
-    log.info("Fetching user {}", id);
     return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
   }
 
@@ -164,7 +161,6 @@ public class UserService {
         break;
     }
 
-    log.info("Attempting login for {}", identifier);
 
     if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
       log.warn("Password mismatch for user {}", user.getUsername());
@@ -191,7 +187,6 @@ public class UserService {
     user.setLoginToken(token);
     userRepository.save(user);
 
-    log.info("User {} logged in", user.getId());
     return new LoginResponse(
         user.getId(),
         user.getUsername(),
@@ -206,7 +201,6 @@ public class UserService {
   @Transactional
   public ThirdPartyAccountResponse bindThirdPartyAccount(
       Long userId, ThirdPartyAccountRequest req) {
-    log.info("Binding {} account for user {}", req.getProvider(), userId);
     User user =
         userRepository
             .findById(userId)
@@ -283,7 +277,6 @@ public class UserService {
   /** Retrieve only the avatar URL of a user. */
   @Transactional(readOnly = true)
   public AvatarResponse getAvatar(Long userId) {
-    log.info("Fetching avatar for user {}", userId);
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     return new AvatarResponse(user.getAvatar());
@@ -292,13 +285,11 @@ public class UserService {
   /** Update the avatar URL for the specified user. */
   @Transactional
   public AvatarResponse updateAvatar(Long userId, String avatar) {
-    log.info("Updating avatar for user {}", userId);
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     String previousAvatar = user.getAvatar();
     user.setAvatar(avatar);
     User saved = userRepository.save(user);
-    log.info("Avatar updated for user {} from {} to {}", userId, previousAvatar, saved.getAvatar());
     return new AvatarResponse(saved.getAvatar());
   }
 
@@ -317,7 +308,6 @@ public class UserService {
   /** Update the username for the specified user. */
   @Transactional
   public UsernameResponse updateUsername(Long userId, String username) {
-    log.info("Updating username for user {}", userId);
     userRepository
         .findByUsernameAndDeletedFalse(username)
         .ifPresent(
@@ -334,7 +324,6 @@ public class UserService {
   /** Set a user as member. */
   @Transactional
   public void activateMembership(Long userId) {
-    log.info("Activating membership for user {}", userId);
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     user.setMember(true);
@@ -344,7 +333,6 @@ public class UserService {
   /** Remove member status from a user. */
   @Transactional
   public void removeMembership(Long userId) {
-    log.info("Removing membership for user {}", userId);
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     user.setMember(false);

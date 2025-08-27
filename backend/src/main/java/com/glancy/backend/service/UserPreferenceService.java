@@ -8,12 +8,10 @@ import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Stores and retrieves per-user settings such as theme and preferred languages. */
-@Slf4j
 @Service
 public class UserPreferenceService {
 
@@ -46,7 +44,6 @@ public class UserPreferenceService {
   /** Save UI and language preferences for a user. */
   @Transactional
   public UserPreferenceResponse savePreference(Long userId, UserPreferenceRequest req) {
-    log.info("Saving preferences for user {}", userId);
     User user =
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
     UserPreference pref =
@@ -63,7 +60,6 @@ public class UserPreferenceService {
   /** Retrieve preferences previously saved for the user. */
   @Transactional(readOnly = true)
   public UserPreferenceResponse getPreference(Long userId) {
-    log.info("Fetching preferences for user {}", userId);
     UserPreference pref =
         userPreferenceRepository
             .findByUserId(userId)

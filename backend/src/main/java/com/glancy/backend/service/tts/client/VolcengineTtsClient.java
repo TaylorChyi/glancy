@@ -146,7 +146,6 @@ public class VolcengineTtsClient {
     sanitized.put("uid", sanitize("uid", uid));
     Object lang = ((Map<?, ?>) payload.get("audio")).get("explicit_language");
     sanitized.put("lang", sanitize("lang", lang));
-    log.info("Resolved TTS parameters {}", sanitized);
   }
 
   private Object sanitize(String key, Object value) {

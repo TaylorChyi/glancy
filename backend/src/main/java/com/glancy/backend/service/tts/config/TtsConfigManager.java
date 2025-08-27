@@ -75,7 +75,6 @@ public class TtsConfigManager implements Closeable {
       TtsConfig cfg = mapper.readValue(in, TtsConfig.class);
       validate(cfg);
       snapshot.set(cfg);
-      log.info("Loaded TTS config from classpath");
     } catch (Exception ex) {
       log.error("Failed to load classpath TTS config", ex);
     }
@@ -86,7 +85,6 @@ public class TtsConfigManager implements Closeable {
       TtsConfig cfg = mapper.readValue(in, TtsConfig.class);
       validate(cfg);
       snapshot.set(cfg);
-      log.info("Loaded TTS config from {}", path.toAbsolutePath());
     } catch (Exception ex) {
       log.warn("Failed to reload TTS config from {}", path.toAbsolutePath(), ex);
     }
@@ -119,7 +117,6 @@ public class TtsConfigManager implements Closeable {
                 return t;
               });
       watchExecutor.submit(() -> watchLoop(dir, path));
-      log.info("Watching {} for TTS config changes", path.toAbsolutePath());
     } catch (IOException | RuntimeException ex) {
       log.warn("Failed to watch TTS config file", ex);
     }
@@ -132,7 +129,6 @@ public class TtsConfigManager implements Closeable {
         for (WatchEvent<?> event : key.pollEvents()) {
           Path changed = dir.resolve((Path) event.context());
           if (Files.isRegularFile(changed) && changed.getFileName().equals(path.getFileName())) {
-            log.info("Detected TTS config change");
             reload();
           }
         }
