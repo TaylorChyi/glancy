@@ -32,8 +32,7 @@ public class LLMClientResolver {
     if (client == null) {
       throw new IllegalStateException(
           String.format(
-              "LLM client '%s' not available and default '%s' not configured",
-              name, fallback));
+              "LLM client '%s' not available and default '%s' not configured", name, fallback));
     }
     return new Selection(fallback, client);
   }

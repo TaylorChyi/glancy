@@ -157,8 +157,7 @@ public class WordService {
             });
   }
 
-  private WordResponse performStreamingSearch(
-      String term, Language language, String model) {
+  private WordResponse performStreamingSearch(String term, Language language, String model) {
     String content =
         wordSearcher
             .streamSearch(term, language, model)
