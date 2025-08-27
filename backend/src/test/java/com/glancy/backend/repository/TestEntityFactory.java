@@ -37,15 +37,6 @@ final class TestEntityFactory {
     return word;
   }
 
-  static Notification notification(User user, String msg, boolean system, LocalDateTime createdAt) {
-    Notification n = new Notification();
-    n.setUser(user);
-    n.setMessage(msg);
-    n.setSystemLevel(system);
-    n.setCreatedAt(createdAt);
-    return n;
-  }
-
   static ContactMessage contactMessage(String name) {
     ContactMessage msg = new ContactMessage();
     msg.setName(name);

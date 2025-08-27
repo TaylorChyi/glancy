@@ -34,8 +34,6 @@ export default {
   noHistory: "No history",
   noDefinition: "No definition",
   clearHistory: "Clear History",
-  notifications: "Notifications",
-  markRead: "Mark read",
   contactTitle: "Contact Us",
   name: "Name",
   email: "Email",
