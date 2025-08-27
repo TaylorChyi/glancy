@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * A cross-cutting concern that logs all public methods within the service layer. By centralizing
- * this logic we keep service classes focused on business behaviour while still providing
- * consistent observability across the application.
+ * this logic we keep service classes focused on business behaviour while still providing consistent
+ * observability across the application.
  */
 @Aspect
 @Component
@@ -41,4 +41,3 @@ public class ServiceLoggingAspect {
     return result;
   }
 }
-

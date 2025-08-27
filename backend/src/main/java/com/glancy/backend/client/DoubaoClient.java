@@ -122,5 +122,4 @@ public class DoubaoClient implements LLMClient {
     }
     return "message";
   }
-
 }

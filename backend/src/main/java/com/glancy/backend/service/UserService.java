@@ -161,7 +161,6 @@ public class UserService {
         break;
     }
 
-
     if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
       log.warn("Password mismatch for user {}", user.getUsername());
       throw new InvalidRequestException("密码错误");

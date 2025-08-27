@@ -154,5 +154,4 @@ public class DeepSeekClient implements DictionaryClient, LLMClient {
         restTemplate.exchange(url, HttpMethod.GET, requestEntity, byte[].class);
     return response.getBody();
   }
-
 }
