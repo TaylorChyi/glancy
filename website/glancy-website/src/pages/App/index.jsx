@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
-import { useHistory, useUser, useFavorites } from "@/context";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/context";
 import { useLanguage } from "@/context";
+import { useHistory } from "@/context/HistoryContext.jsx";
+import { useUser } from "@/context/UserContext.jsx";
+import { useFavorites } from "@/context/FavoritesContext.jsx";
 import { useStreamWord, useSpeechInput } from "@/hooks";
 import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";

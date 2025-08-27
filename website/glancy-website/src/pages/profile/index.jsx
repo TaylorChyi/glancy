@@ -9,7 +9,7 @@ import GenderSelect from "@/components/form/GenderSelect/GenderSelect.jsx";
 import EditableField from "@/components/form/EditableField/EditableField.jsx";
 import FormField from "@/components/form/FormField.jsx";
 import { useApi } from "@/hooks";
-import { useUser } from "@/context";
+import { useUser } from "@/context/UserContext.jsx";
 import { cacheBust } from "@/utils";
 import ThemeIcon from "@/components/ui/Icon";
 import Tooltip from "@/components/ui/Tooltip";
