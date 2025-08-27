@@ -2,7 +2,7 @@ import { API_PATHS } from "@/config/api.js";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks";
 import { createCachedFetcher, parseSse, clientNameFromModel } from "@/utils";
-import { useWordStore } from "@/store/wordStore.js";
+import { useWordStore } from "@/store/wordStore";
 
 export const WORD_CACHE_VERSION = "md1";
 

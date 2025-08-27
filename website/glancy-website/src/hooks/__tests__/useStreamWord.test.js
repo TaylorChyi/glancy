@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import DictionaryEntry from "@/components/ui/DictionaryEntry";
 import { useStreamWord } from "@/hooks/useStreamWord";
-import { useWordStore } from "@/store/wordStore.js";
+import { useWordStore } from "@/store/wordStore";
 
 const streamWordMock = jest.fn();
 const apiMock = { words: { streamWord: streamWordMock } };

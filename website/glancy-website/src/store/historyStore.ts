@@ -1,7 +1,7 @@
 import api from "@/api/index.js";
-import { createPersistentStore } from "./createPersistentStore.ts";
-import { pickState } from "./persistUtils.ts";
-import type { User } from "./userStore.ts";
+import { createPersistentStore } from "./createPersistentStore";
+import { pickState } from "./persistUtils";
+import type { User } from "./userStore";
 import { detectWordLanguage } from "@/utils";
 
 interface HistoryState {
