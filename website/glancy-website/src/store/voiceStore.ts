@@ -1,14 +1,14 @@
-import { createPersistentStore } from './createPersistentStore.ts'
-import { pickState } from './persistUtils.ts'
+import { createPersistentStore } from "./createPersistentStore";
+import { pickState } from "./persistUtils";
 
 interface VoiceState {
-  voices: Record<string, string>
-  setVoice: (lang: string, voiceId: string) => void
-  getVoice: (lang: string) => string | undefined
+  voices: Record<string, string>;
+  setVoice: (lang: string, voiceId: string) => void;
+  getVoice: (lang: string) => string | undefined;
 }
 
 export const useVoiceStore = createPersistentStore<VoiceState>({
-  key: 'ttsVoicePrefs',
+  key: "ttsVoicePrefs",
   initializer: (set, get) => ({
     voices: {},
     setVoice: (lang: string, voiceId: string) =>
@@ -16,6 +16,6 @@ export const useVoiceStore = createPersistentStore<VoiceState>({
     getVoice: (lang: string) => get().voices[lang],
   }),
   persistOptions: {
-    partialize: pickState(['voices']),
+    partialize: pickState(["voices"]),
   },
-})
+});

@@ -1,7 +1,7 @@
 import { useApi } from "@/hooks/useApi.js";
 import { detectWordLanguage, clientNameFromModel } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
-import { useWordStore } from "@/store/wordStore.js";
+import { useWordStore } from "@/store/wordStore";
 
 /**
  * 提供基于 SSE 的词汇查询流式接口，并输出统一格式日志。

@@ -1,7 +1,7 @@
-export { useFavoritesStore } from "./favoritesStore.ts";
-export { useHistoryStore } from "./historyStore.ts";
-export { useModelStore } from "./modelStore.ts";
-export { useUserStore } from "./userStore.ts";
-export { useVoiceStore } from "./voiceStore.ts";
-export { useWordStore } from "./wordStore.js";
-export type { User } from "./userStore.ts";
+export { useFavoritesStore } from "./favoritesStore";
+export { useHistoryStore } from "./historyStore";
+export { useModelStore } from "./modelStore";
+export { useUserStore } from "./userStore";
+export { useVoiceStore } from "./voiceStore";
+export { useWordStore } from "./wordStore";
+export type { User } from "./userStore";

@@ -1,31 +1,31 @@
-import { createPersistentStore } from './createPersistentStore.ts'
-import { pickState } from './persistUtils.ts'
+import { createPersistentStore } from "./createPersistentStore";
+import { pickState } from "./persistUtils";
 
 export interface User {
-  id: string
-  token: string
-  avatar?: string
-  [key: string]: unknown
+  id: string;
+  token: string;
+  avatar?: string;
+  [key: string]: unknown;
 }
 
 interface UserState {
-  user: User | null
-  setUser: (user: User) => void
-  clearUser: () => void
+  user: User | null;
+  setUser: (user: User) => void;
+  clearUser: () => void;
 }
 
 export const useUserStore = createPersistentStore<UserState>({
-  key: 'user',
+  key: "user",
   initializer: (set) => ({
     user: null,
     setUser: (user: User) => {
-      set({ user })
+      set({ user });
     },
     clearUser: () => {
-      set({ user: null })
-    }
+      set({ user: null });
+    },
   }),
   persistOptions: {
-    partialize: pickState(['user'])
-  }
-})
+    partialize: pickState(["user"]),
+  },
+});
