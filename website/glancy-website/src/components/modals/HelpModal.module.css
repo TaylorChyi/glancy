@@ -1,8 +1,0 @@
-@import url('./ModalContent.module.css');
-
-.help-modal {
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}

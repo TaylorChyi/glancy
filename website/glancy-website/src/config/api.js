@@ -11,7 +11,6 @@ export const API_PATHS = {
   profiles: `${API_BASE}/profiles`,
   preferences: `${API_BASE}/preferences`,
   contact: `${API_BASE}/contact`,
-  faqs: `${API_BASE}/faqs`,
   searchRecords: `${API_BASE}/search-records`,
   llmModels: `${API_BASE}/llm/models`,
   ttsWord: `${API_BASE}/tts/word`,
