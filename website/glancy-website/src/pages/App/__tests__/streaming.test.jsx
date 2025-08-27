@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
-jest.mock("remark-gfm", () => () => {});
+jest.unstable_mockModule("remark-gfm", () => ({ default: () => null }));
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({
@@ -20,16 +20,16 @@ jest.unstable_mockModule("@/components/Layout", () => ({
 jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
   default: ({ entry }) => <div data-testid="entry">{entry.term}</div>,
 }));
-jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
-  default: () => null,
-}));
 jest.unstable_mockModule("@/components/ui/ICP", () => ({
   default: () => null,
 }));
 jest.unstable_mockModule("@/components/ui/MessagePopup", () => ({
   default: () => null,
 }));
-jest.unstable_mockModule("@/pages/App/FavoritesView.jsx", () => ({
+jest.unstable_mockModule("@/pages/App/FavoritesPanel.jsx", () => ({
+  default: () => null,
+}));
+jest.unstable_mockModule("@/pages/App/HistoryPanel.jsx", () => ({
   default: () => null,
 }));
 jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
@@ -49,12 +49,18 @@ jest.unstable_mockModule("@/context", () => ({
     loadHistory: jest.fn(),
     addHistory: jest.fn(),
     unfavoriteHistory: jest.fn(),
+    history: [],
   }),
   useUser: () => ({ user: { id: "1", token: "t" } }),
   useFavorites: () => ({ favorites: [], toggleFavorite: jest.fn() }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
   useLanguage: () => ({
-    t: { searchPlaceholder: "search", inputPlaceholder: "input" },
+    t: {
+      searchPlaceholder: "search",
+      inputPlaceholder: "input",
+      noFavorites: "no fav",
+      noHistory: "no history",
+    },
     lang: "en",
     setLang: jest.fn(),
   }),

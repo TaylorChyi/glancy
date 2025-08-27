@@ -5,7 +5,6 @@ export { default as ItemMenu } from "./ui/ItemMenu";
 export { default as Avatar } from "./ui/Avatar";
 export { default as DictionaryEntry } from "./ui/DictionaryEntry";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
-export { default as HistoryDisplay } from "./ui/HistoryDisplay";
 export { default as ICP } from "./ui/ICP";
 export { default as Loader } from "./ui/Loader";
 export { default as MessagePopup } from "./ui/MessagePopup";
