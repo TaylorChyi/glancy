@@ -49,8 +49,7 @@ public class FlywayConfig {
           // 记录已存在，无需处理
         }
         try (PreparedStatement ps =
-            connection.prepareStatement(
-                "SELECT id FROM flyway_lock WHERE id = 1 FOR UPDATE")) {
+            connection.prepareStatement("SELECT id FROM flyway_lock WHERE id = 1 FOR UPDATE")) {
           ps.executeQuery();
           flyway.migrate();
           connection.commit();
