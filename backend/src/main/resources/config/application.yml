@@ -7,10 +7,16 @@ spring:
     host: localhost
     port: 1025
   datasource:
-    url: jdbc:mysql://localhost:3306/glancy_db?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
-    username: glancy_user
+    url: ${DB_URL:jdbc:mysql://localhost:3306/glancy_db?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8}
+    username: ${DB_USERNAME:glancy_user}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    clean-disabled: true
+    schemas: ${DB_NAME:glancy_db}
+    table: flyway_schema_history
   servlet:
     multipart:
       max-file-size: 5MB
