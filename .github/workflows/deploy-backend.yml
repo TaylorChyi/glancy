@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'
+      - "backend/**"
+  workflow_dispatch: {}
 
 jobs:
   build-and-deploy:
@@ -16,8 +17,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
       - name: Code style check
         run: ./mvnw -B spotless:check checkstyle:check
         working-directory: backend
@@ -32,10 +33,10 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           timeout: 2m
-          source: backend/target/glancy-backend.jar   # ← 源仍在 backend/target/
+          source: backend/target/glancy-backend.jar # ← 源仍在 backend/target/
           target: ${{ secrets.BACKEND_DEPLOY_PATH }}/target/
           overwrite: true
-          strip_components: 2                         # ← 关键：剥掉 backend/ 与 target/
+          strip_components: 2 # ← 关键：剥掉 backend/ 与 target/
           debug: true
 
       - name: Upload service unit
