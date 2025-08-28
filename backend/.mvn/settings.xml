@@ -3,46 +3,41 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-  <!-- 固定本地仓库位置（与 maven.config 保持一致） -->
   <localRepository>/workspace/.m2/repository</localRepository>
 
   <mirrors>
-    <!-- 首选直连 Central（可用即走直连） -->
+    <!-- 优先走阿里云镜像 central -->
     <mirror>
-      <id>central-main</id>
-      <name>Maven Central (direct)</name>
-      <url>https://repo.maven.apache.org/maven2/</url>
-      <mirrorOf>central</mirrorOf>
-    </mirror>
-
-    <!-- 备用公共镜像（当直连不可达时由 Maven 依赖声明中的 remote repo 触发回退解析） -->
-    <mirror>
-      <id>aliyun-all</id>
-      <name>Aliyun mirror for all repos</name>
+      <id>aliyun-central</id>
+      <name>Aliyun Maven mirror</name>
       <url>https://maven.aliyun.com/repository/public</url>
-      <mirrorOf>*,!maven-default-http-blocker</mirrorOf>
-    </mirror>
-
-    <!-- 阻断所有 http（非 https） -->
-    <mirror>
-      <id>block-http</id>
-      <name>Block all external HTTP repos</name>
-      <url>http://0.0.0.0/</url>
-      <mirrorOf>external:http:*</mirrorOf>
-      <blocked>true</blocked>
+      <mirrorOf>central</mirrorOf>
     </mirror>
   </mirrors>
 
-  <!-- 如需代理，解注释并填写
-  <proxies>
-    <proxy>
-      <id>corp-proxy</id>
-      <active>true</active>
-      <protocol>http</protocol>
-      <host>proxy.example.com</host>
-      <port>8080</port>
-      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
-    </proxy>
-  </proxies>
-  -->
+  <profiles>
+    <profile>
+      <id>central-direct</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central-plugins</id>
+          <url>https://repo.maven.apache.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>central-direct</activeProfile>
+  </activeProfiles>
 </settings>

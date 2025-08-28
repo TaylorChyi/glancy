@@ -1,23 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="v2.3.1-prewarm-only"
+VERSION="v2.3.2-cli-settings-hotfix"
 echo "[setup] glancy - VERSION ${VERSION}"
 
-# 仓库根目录
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# 只做预热：后端 Maven 依赖、前端 npm 包
+# ---------- backend 预热 ----------
 if [ -f "$REPO_ROOT/backend/pom.xml" ] && command -v mvn >/dev/null 2>&1; then
-  echo "[prewarm] backend: mvn dependency:go-offline"
+  echo "[prewarm] backend: mvn (with -s .mvn/settings.xml)"
   (
     cd "$REPO_ROOT/backend"
-    mvn -q -B -U -DskipTests dependency:go-offline
+
+    # 强制不用 maven.config 里的 -s，避免隐形空格；若存在则先备份并置空
+    if [ -f ".mvn/maven.config" ]; then
+      cp .mvn/maven.config .mvn/maven.config.bak || true
+      : > .mvn/maven.config
+    fi
+
+    # 绝对路径打印，便于确认没有前导空格
+    SETTINGS_PATH=".mvn/settings.xml"
+    test -f "$SETTINGS_PATH" || { echo "FATAL: missing $SETTINGS_PATH"; exit 1; }
+    printf '[prewarm] settings path: [%s]\n' "$(readlink -f "$SETTINGS_PATH" 2>/dev/null || realpath "$SETTINGS_PATH" 2>/dev/null || echo "$SETTINGS_PATH")"
+
+    # 显式传 -s
+    mvn -q -B -U -DskipTests -ntp -s "$SETTINGS_PATH" dependency:go-offline
   )
 else
   echo "[prewarm] backend: skip"
 fi
 
+# ---------- website 预热 ----------
 if [ -d "$REPO_ROOT/website" ] && command -v npm >/dev/null 2>&1; then
   echo "[prewarm] website: npm ci/install"
   (
