@@ -3,72 +3,22 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-  <!-- 在容器的可写目录下缓存依赖 -->
+  <!-- 固定本地仓库，利于容器缓存 -->
   <localRepository>/workspace/.m2/repository</localRepository>
 
-  <!-- 不使用 mirrors，避免把所有流量强行导向单点 -->
-  <profiles>
-    <profile>
-      <id>glancy-multi-remotes</id>
-
-      <repositories>
-        <!-- 官方 Central 主域 -->
-        <repository>
-          <id>central-main</id>
-          <url>https://repo.maven.apache.org/maven2/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-
-        <!-- 官方 Central 备用域（Cloudflare 前端） -->
-        <repository>
-          <id>central-repo1</id>
-          <url>https://repo1.maven.org/maven2/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-
-        <!-- Spring 官方仓（部分 Spring 构件会更快/更稳） -->
-        <repository>
-          <id>spring-release</id>
-          <url>https://repo.spring.io/release/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-
-        <!-- 可选：再放一个公共镜像作为“第四顺位”，若线路不通会被自动跳过 -->
-        <repository>
-          <id>tuna-maven</id>
-          <url>https://mirrors.tuna.tsinghua.edu.cn/maven/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </repository>
-      </repositories>
-
-      <pluginRepositories>
-        <pluginRepository>
-          <id>central-main-plugins</id>
-          <url>https://repo.maven.apache.org/maven2/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </pluginRepository>
-        <pluginRepository>
-          <id>central-repo1-plugins</id>
-          <url>https://repo1.maven.org/maven2/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </pluginRepository>
-        <pluginRepository>
-          <id>spring-plugins</id>
-          <url>https://repo.spring.io/release/</url>
-          <releases><enabled>true</enabled><updatePolicy>always</updatePolicy></releases>
-          <snapshots><enabled>false</enabled></snapshots>
-        </pluginRepository>
-      </pluginRepositories>
-    </profile>
-  </profiles>
-
-  <activeProfiles>
-    <activeProfile>glancy-multi-remotes</activeProfile>
-  </activeProfiles>
+  <!-- 如需代理，在这里按官方写法配置（HTTP/HTTPS） -->
+  <!--
+  <proxies>
+    <proxy>
+      <id>corp-proxy</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>your.proxy.host</host>
+      <port>443</port>
+      <username>${env.PROXY_USER}</username>
+      <password>${env.PROXY_PASS}</password>
+      <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+    </proxy>
+  </proxies>
+  -->
 </settings>
