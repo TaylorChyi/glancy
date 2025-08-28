@@ -1,30 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[setup] java toolchain + certificates"
+echo "[setup] java toolchain + certificates (stable order)"
 
-# 1) 基础 CA（Certificate Authority，证书颁发机构），不触发 Java 逻辑
+export DEBIAN_FRONTEND=noninteractive
+
+# 0) 先创建 Java 证书目录，确保后续任何触发器都能写入
+install -d -m 0755 /etc/ssl/certs/java
+
+# 1) 更新索引并安装系统 CA（Certificate Authority，证书颁发机构）
 apt-get update -y
 apt-get install -y --no-install-recommends ca-certificates
 
-# 2) 先装 JRE（Java Runtime Environment）
-apt-get install -y --no-install-recommends openjdk-17-jre-headless
+# 2) 一次性安装 JRE（Java Runtime Environment）、Java 证书集成包、JDK（Java Development Kit）
+#    这里显式把 ca-certificates-java 列出来，避免 APT 在不可控的时机拉入
+apt-get install -y --no-install-recommends \
+  openjdk-17-jre-headless \
+  ca-certificates-java \
+  openjdk-17-jdk-headless
 
-# 3) 在任何 Java 触发器跑之前，确保目标目录存在
-install -d -m 0755 /etc/ssl/certs/java
-
-# 4) 再装 JDK（Java Development Kit）与 Java 证书集成包
-apt-get install -y --no-install-recommends openjdk-17-jdk-headless
-apt-get install -y --no-install-recommends ca-certificates-java
-
-# 5) 防守性收尾：把未完成的配置补齐，并强制刷新证书
+# 3) 收尾：把可能的“半配置状态”补齐，并强制刷新证书
 dpkg --configure -a || true
 update-ca-certificates -f || true
 
 java -version
 echo "[setup] java ready"
 
-# 6) 可选预热（prewarm），默认开启；设为 0 可关闭
+# 4) 可选预热（prewarm，预先把依赖下载到本地缓存），默认开启；设为 0 可关闭
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
 if [ "${PREWARM_BACKEND:-1}" = "1" ] && [ -f "$REPO_ROOT/backend/pom.xml" ]; then
