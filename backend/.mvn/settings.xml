@@ -3,21 +3,27 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
+  <!-- 将本地仓库固定到工作区，提升容器内命中率 -->
   <localRepository>/workspace/.m2/repository</localRepository>
 
+  <!-- 不再配置任何第三方镜像，避免 DNS/网络不可达 -->
   <mirrors>
-    <!-- 优先走阿里云镜像 central -->
+    <!-- 可选：当 Central 不可达时，手动切换到 secondary（repo1），默认不启用 -->
+    <!--
     <mirror>
-      <id>aliyun-central</id>
-      <name>Aliyun Maven mirror</name>
-      <url>https://maven.aliyun.com/repository/public</url>
+      <id>central-secondary</id>
+      <name>Central Secondary (repo1)</name>
+      <url>https://repo1.maven.org/maven2/</url>
       <mirrorOf>central</mirrorOf>
     </mirror>
+    -->
   </mirrors>
 
+  <!-- 显式声明 Central 仓库与插件仓库 -->
   <profiles>
     <profile>
-      <id>central-direct</id>
+      <id>central-only</id>
+
       <repositories>
         <repository>
           <id>central</id>
@@ -26,6 +32,7 @@
           <snapshots><enabled>false</enabled></snapshots>
         </repository>
       </repositories>
+
       <pluginRepositories>
         <pluginRepository>
           <id>central-plugins</id>
@@ -38,6 +45,6 @@
   </profiles>
 
   <activeProfiles>
-    <activeProfile>central-direct</activeProfile>
+    <activeProfile>central-only</activeProfile>
   </activeProfiles>
 </settings>
