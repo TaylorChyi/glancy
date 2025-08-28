@@ -3,20 +3,44 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-  <!-- 固定本地仓库，利于容器缓存 -->
+  <!-- 固定本地仓库位置（与 maven.config 保持一致） -->
   <localRepository>/workspace/.m2/repository</localRepository>
 
-  <!-- 如需代理，在这里按官方写法配置（HTTP/HTTPS） -->
-  <!--
+  <mirrors>
+    <!-- 首选直连 Central（可用即走直连） -->
+    <mirror>
+      <id>central-main</id>
+      <name>Maven Central (direct)</name>
+      <url>https://repo.maven.apache.org/maven2/</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+
+    <!-- 备用公共镜像（当直连不可达时由 Maven 依赖声明中的 remote repo 触发回退解析） -->
+    <mirror>
+      <id>aliyun-all</id>
+      <name>Aliyun mirror for all repos</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>*,!maven-default-http-blocker</mirrorOf>
+    </mirror>
+
+    <!-- 阻断所有 http（非 https） -->
+    <mirror>
+      <id>block-http</id>
+      <name>Block all external HTTP repos</name>
+      <url>http://0.0.0.0/</url>
+      <mirrorOf>external:http:*</mirrorOf>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+
+  <!-- 如需代理，解注释并填写
   <proxies>
     <proxy>
       <id>corp-proxy</id>
       <active>true</active>
-      <protocol>https</protocol>
-      <host>your.proxy.host</host>
-      <port>443</port>
-      <username>${env.PROXY_USER}</username>
-      <password>${env.PROXY_PASS}</password>
+      <protocol>http</protocol>
+      <host>proxy.example.com</host>
+      <port>8080</port>
       <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
     </proxy>
   </proxies>

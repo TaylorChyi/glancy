@@ -1,5 +1,0 @@
-# .mise.toml
-[tools]
-java  = "temurin-17"   # JDK 17（Eclipse Temurin 发行版）
-maven = "3.9.8"        # Maven 3.9.8（稳定）
-node  = "20"           # 供 website 使用，如不需要可删
