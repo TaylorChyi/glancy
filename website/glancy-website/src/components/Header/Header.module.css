@@ -72,7 +72,6 @@
   margin-bottom: 0.5rem;
 }
 
-
 .user-menu .avatar {
   width: 32px;
   height: 32px;
@@ -84,7 +83,6 @@
   margin-right: 0.5rem;
   position: relative;
 }
-
 
 .user-menu .pro-tag-small {
   position: absolute;
@@ -120,7 +118,7 @@
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme='dark'] .user-menu li:hover {
+:root[data-theme="dark"] .user-menu li:hover {
   background-color: var(--color-overlay-inverse);
 }
 
@@ -188,7 +186,7 @@
   margin: 0;
   font: inherit;
   cursor: pointer;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   text-decoration: none;
   white-space: nowrap;
 }

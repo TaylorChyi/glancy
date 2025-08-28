@@ -4,6 +4,6 @@
   text-align: center;
   background: var(--app-bg);
   color: var(--app-color);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 16px var(--shadow-color);
 }

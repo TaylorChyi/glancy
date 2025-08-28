@@ -1,4 +1,4 @@
-@import url('./ModalContent.module.css');
+@import url("./ModalContent.module.css");
 
 .logout-modal {
   width: 320px;
@@ -27,7 +27,7 @@
   background: var(--highlight-color);
   color: var(--primary-bg);
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: 0.5rem 1rem;
   cursor: pointer;
   width: 100%;
@@ -37,7 +37,7 @@
   background: none;
   border: 1px solid var(--border-color);
   color: var(--app-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: 0.5rem 1rem;
   cursor: pointer;
   width: 100%;
