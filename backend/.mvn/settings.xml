@@ -1,4 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!-- 可选：固定本地仓库位置（Codex 容器里命中率更高） -->
+  <localRepository>/workspace/.m2/repository</localRepository>
+
+  <mirrors>
+    <!-- 只镜像 central：把中央仓库映射到阿里云公共仓（稳定且覆盖全） -->
+    <mirror>
+      <id>aliyun-central</id>
+      <name>Aliyun Maven mirror for Central</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+
+    <!-- 阻断所有 http（非 https）仓库，避免偶发不安全源 -->
+    <mirror>
+      <id>block-http</id>
+      <name>Block all external HTTP repos</name>
+      <url>http://0.0.0.0/</url>
+      <mirrorOf>external:http:*</mirrorOf>
+      <blocked>true</blocked>
+    </mirror>
+  </mirrors>
+
+  <!-- 给“镜像不是回退”的现实加一条直连 Central 作为备选远程仓库 -->
+  <profiles>
+    <profile>
+      <id>add-central-direct</id>
+      <repositories>
+        <repository>
+          <id>central-direct</id>
+          <url>https://repo.maven.apache.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central-plugins</id>
+          <url>https://repo.maven.apache.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>add-central-direct</activeProfile>
+  </activeProfiles>
 </settings>
