@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[setup] glancy prewarm only - VERSION v2.2.0-prewarm-only"
+echo "[setup] glancy - VERSION v2.2.1-mise trust"
+
+mise trust .mise.toml
 
 # 仓库根目录
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
