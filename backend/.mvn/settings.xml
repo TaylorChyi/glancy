@@ -50,16 +50,9 @@
 
   <proxies>
     <proxy>
-      <id>defaultProxy</id>
+      <id>codexProxy</id>
       <active>true</active>
       <protocol>http</protocol>
-      <host>proxy</host>
-      <port>8080</port>
-    </proxy>
-    <proxy>
-      <id>defaultSecureProxy</id>
-      <active>true</active>
-      <protocol>https</protocol>
       <host>proxy</host>
       <port>8080</port>
     </proxy>
