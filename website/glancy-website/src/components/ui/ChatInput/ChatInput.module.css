@@ -10,7 +10,7 @@
 .input {
   flex: 1;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: 12px 20px;
   outline: none;
   font-size: 1rem;

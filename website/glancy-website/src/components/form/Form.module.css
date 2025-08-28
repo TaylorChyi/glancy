@@ -18,7 +18,7 @@
   border: 1px solid var(--border-color);
   background: var(--input-bg);
   color: var(--app-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
 }
 
 .select:focus {

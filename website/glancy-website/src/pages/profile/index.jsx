@@ -99,7 +99,11 @@ function Profile({ onCancel }) {
           {avatar && typeof avatar === "string" ? (
             <img src={avatar} alt="avatar" />
           ) : (
-            <Avatar width={100} height={100} style={{ borderRadius: "20px" }} />
+            <Avatar
+              width={100}
+              height={100}
+              style={{ borderRadius: "var(--radius-xl)" }}
+            />
           )}
           <span className={styles["avatar-hint"]}>{t.avatarHint}</span>
           <input
