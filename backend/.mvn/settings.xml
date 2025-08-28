@@ -46,15 +46,4 @@
 
   <activeProfiles>
     <activeProfile>central-only</activeProfile>
-  </activeProfiles>
-
-  <proxies>
-    <proxy>
-      <id>codexProxy</id>
-      <active>true</active>
-      <protocol>http</protocol>
-      <host>proxy</host>
-      <port>8080</port>
-    </proxy>
-  </proxies>
 </settings>
