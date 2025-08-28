@@ -35,4 +35,4 @@ else
   echo "[prewarm] website: 跳过（未找到目录或未检测到 npm）"
 fi
 
-echo "[setup] done (v2.2.0-prewarm-only)"
+echo "[setup] done (v2.2.1-mise trust)"
