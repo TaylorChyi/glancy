@@ -2,7 +2,7 @@ spring:
   application:
     name: glancy
   messages:
-    basename: messages
+    basename: i18n/messages
   mail:
     host: localhost
     port: 1025
@@ -11,6 +11,10 @@ spring:
     username: glancy_user
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  flyway:
+    # Disable baselining to ensure all migrations are executed
+    baseline-on-migrate: false
 
   servlet:
     multipart:
