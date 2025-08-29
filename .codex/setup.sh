@@ -33,6 +33,21 @@ if [ -d "$REPO_ROOT/website" ] && command -v npm >/dev/null 2>&1; then
   echo "[prewarm] website: npm ci/install"
   (
     cd "$REPO_ROOT/website"
+    # Normalize npm proxy env to supported keys to avoid: "Unknown env config 'http-proxy'"
+    if [ -z "${npm_config_proxy:-}" ]; then
+      if [ -n "${npm_config_http_proxy:-}" ]; then export npm_config_proxy="${npm_config_http_proxy}"; fi
+      if [ -z "${npm_config_proxy:-}" ] && [ -n "${HTTP_PROXY:-}" ]; then export npm_config_proxy="${HTTP_PROXY}"; fi
+      if [ -z "${npm_config_proxy:-}" ] && [ -n "${http_proxy:-}" ]; then export npm_config_proxy="${http_proxy}"; fi
+    fi
+    # Drop deprecated env key to silence npm warning
+    if [ -n "${npm_config_http_proxy:-}" ]; then unset npm_config_http_proxy; fi
+    if [ -z "${npm_config_https_proxy:-}" ]; then
+      if [ -n "${HTTPS_PROXY:-}" ]; then export npm_config_https_proxy="${HTTPS_PROXY}"; fi
+      if [ -z "${npm_config_https_proxy:-}" ] && [ -n "${https_proxy:-}" ]; then export npm_config_https_proxy="${https_proxy}"; fi
+      if [ -z "${npm_config_https_proxy:-}" ] && [ -n "${npm_config_proxy:-}" ]; then export npm_config_https_proxy="${npm_config_proxy}"; fi
+    fi
+    if [ -n "${NO_PROXY:-}" ] && [ -z "${npm_config_noproxy:-}" ]; then export npm_config_noproxy="${NO_PROXY}"; fi
+    if [ -n "${no_proxy:-}" ] && [ -z "${npm_config_noproxy:-}" ]; then export npm_config_noproxy="${no_proxy}"; fi
     if [ -f package-lock.json ]; then
       # Try ci first; if it fails (lock mismatch/peer issues), fall back to install
       npm ci --prefer-offline --no-audit --fund=false || npm install --prefer-offline --no-audit --fund=false
