@@ -1,5 +1,5 @@
-import { createPersistentStore } from './createPersistentStore.ts'
-import { pickState } from './persistUtils.ts'
+import { createPersistentStore } from './createPersistentStore.js'
+import { pickState } from './persistUtils.js'
 
 export interface User {
   id: string
