@@ -49,8 +49,24 @@ if [ -d "$REPO_ROOT/website" ] && command -v npm >/dev/null 2>&1; then
     if [ -n "${NO_PROXY:-}" ] && [ -z "${npm_config_noproxy:-}" ]; then export npm_config_noproxy="${NO_PROXY}"; fi
     if [ -n "${no_proxy:-}" ] && [ -z "${npm_config_noproxy:-}" ]; then export npm_config_noproxy="${no_proxy}"; fi
     if [ -f package-lock.json ]; then
-      # Try ci first; if it fails (lock mismatch/peer issues), fall back to install
-      npm ci --prefer-offline --no-audit --fund=false || npm install --prefer-offline --no-audit --fund=false
+      # Detect lockfile sync with package.json to avoid noisy npm ci failure
+      if node -e '
+        const fs=require("fs");
+        const pkg=JSON.parse(fs.readFileSync("package.json","utf8"));
+        const lock=JSON.parse(fs.readFileSync("package-lock.json","utf8"));
+        const want={...pkg.dependencies,...pkg.devDependencies};
+        const root=(lock.packages&&lock.packages[""])||{};
+        const have={...(root.dependencies||{}),...(root.devDependencies||{})};
+        const keys=new Set([...Object.keys(want),...Object.keys(have)]);
+        let mismatch=false;
+        for (const k of keys){ if(!want[k]||!have[k]||want[k]!==have[k]){ mismatch=true; break; } }
+        process.exit(mismatch?1:0);
+      '; then
+        npm ci --prefer-offline --no-audit --fund=false
+      else
+        echo "[prewarm] website: lock out of sync → npm install"
+        npm install --prefer-offline --no-audit --fund=false
+      fi
     else
       npm install --prefer-offline --no-audit --fund=false
     fi
