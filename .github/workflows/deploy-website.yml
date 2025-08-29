@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, 'feature-*']
     paths:
-      - 'website/glancy-website/**'
+      - 'website/**'
   workflow_dispatch: {}
 
 concurrency:
@@ -18,7 +18,7 @@ jobs:
     # 所有 run 步骤默认在前端目录执行（字面值，不能用表达式）
     defaults:
       run:
-        working-directory: website/glancy-website
+        working-directory: website
 
     steps:
       - uses: actions/checkout@v4
@@ -63,9 +63,9 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/glancy-website/dist/**'
+          source: 'website/dist/**'
           target: '/var/www/glancy-website/dist/'
-          strip_components: 3              # 剥掉 website/ glancy-website/ dist/ 三层
+          strip_components: 2              # 剥掉 website/ 与 dist/ 两层
           debug: true                      # 打开调试日志
 
       - name: Verify remote files
