@@ -1,22 +1,6 @@
-import { forwardRef } from "react";
-import { FixedSizeList as List } from "react-window";
+import { useMemo } from "react";
 import { useHistory, useLanguage } from "@/context";
 import styles from "./HistoryDisplay.module.css";
-
-const ITEM_HEIGHT = 32;
-
-const InnerElement = forwardRef(function InnerElement({ style, ...rest }, ref) {
-  return (
-    <ul
-      ref={ref}
-      style={style}
-      className={styles["history-grid-display"]}
-      {...rest}
-    />
-  );
-});
-
-const Row = ({ data, index, style }) => <li style={style}>{data[index]}</li>;
 
 function HistoryDisplay() {
   const { history } = useHistory();
@@ -30,19 +14,17 @@ function HistoryDisplay() {
     );
   }
 
-  const height = Math.min(400, history.length * ITEM_HEIGHT);
+  // Simple scrollable list (no virtualization)
+  const items = useMemo(() => history, [history]);
 
   return (
-    <List
-      height={height}
-      itemCount={history.length}
-      itemSize={ITEM_HEIGHT}
-      width="100%"
-      itemData={history}
-      innerElementType={InnerElement}
-    >
-      {Row}
-    </List>
+    <div className="display-content" style={{ maxHeight: 400, overflowY: "auto", width: "100%" }}>
+      <ul className={styles["history-grid-display"]}>
+        {items.map((item, idx) => (
+          <li key={idx}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

@@ -34,7 +34,8 @@ if [ -d "$REPO_ROOT/website" ] && command -v npm >/dev/null 2>&1; then
   (
     cd "$REPO_ROOT/website"
     if [ -f package-lock.json ]; then
-      npm ci --prefer-offline --no-audit --fund=false
+      # Try ci first; if it fails (lock mismatch/peer issues), fall back to install
+      npm ci --prefer-offline --no-audit --fund=false || npm install --prefer-offline --no-audit --fund=false
     else
       npm install --prefer-offline --no-audit --fund=false
     fi
