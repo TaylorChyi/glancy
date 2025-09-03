@@ -23,7 +23,7 @@ jobs:
         run: ./mvnw -B spotless:check checkstyle:check
         working-directory: backend
       - name: Build project
-        run: ./mvnw -B clean package -DskipTests
+        run: ./mvnw -B -DskipTests clean package spring-boot:repackage
         working-directory: backend
 
       - name: Upload jar to server
