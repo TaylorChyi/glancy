@@ -22,8 +22,7 @@ public class ControllerLoggingAspect {
 
     private static final Logger log = LoggerFactory.getLogger(ControllerLoggingAspect.class);
 
-    private final ParameterNameDiscoverer parameterNameDiscoverer =
-            new DefaultParameterNameDiscoverer();
+    private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
     @Around("within(@org.springframework.web.bind.annotation.RestController *)")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -35,10 +34,7 @@ public class ControllerLoggingAspect {
         if (args != null) {
             int nameLength = paramNames != null ? paramNames.length : 0;
             if (paramNames != null && nameLength != args.length) {
-                log.debug(
-                        "Parameter name count {} does not match argument count {}",
-                        nameLength,
-                        args.length);
+                log.debug("Parameter name count {} does not match argument count {}", nameLength, args.length);
             }
             for (int i = 0; i < args.length; i++) {
                 String name = (i < nameLength) ? paramNames[i] : "arg" + i;
@@ -63,8 +59,8 @@ public class ControllerLoggingAspect {
         }
         if (names == null && args != null) {
             names = IntStream.range(0, args.length)
-                    .mapToObj(i -> "arg" + i)
-                    .toArray(String[]::new);
+                .mapToObj(i -> "arg" + i)
+                .toArray(String[]::new);
         }
         return names;
     }
