@@ -86,5 +86,4 @@ final class TestEntityFactory {
         profile.setAge(20);
         return profile;
     }
-
 }
