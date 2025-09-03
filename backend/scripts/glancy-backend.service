@@ -8,9 +8,10 @@ WorkingDirectory=/home/ecs-user/glancy-backend
 EnvironmentFile=/home/ecs-user/glancy-backend/.env
 ExecStart=/usr/bin/java -jar /home/ecs-user/glancy-backend/target/glancy-backend.jar
 SuccessExitStatus=143
-Restart=always
+Restart=on-failure
 RestartSec=10
-ExecStartPre=/usr/bin/truncate -s 0 /home/ecs-user/glancy-backend/backend.log
+# 日志不再在启动时被截断，需额外配置 logrotate 以管理文件大小
+# 可参考: https://manpages.debian.org/logrotate
 StandardOutput=append:/home/ecs-user/glancy-backend/backend.log
 StandardError=append:/home/ecs-user/glancy-backend/backend.log
 
