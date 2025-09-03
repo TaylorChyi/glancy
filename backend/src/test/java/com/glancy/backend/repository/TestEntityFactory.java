@@ -87,10 +87,4 @@ final class TestEntityFactory {
         return profile;
     }
 
-    static Faq faq(String question) {
-        Faq faq = new Faq();
-        faq.setQuestion(question);
-        faq.setAnswer("answer");
-        return faq;
-    }
 }
