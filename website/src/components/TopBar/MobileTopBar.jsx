@@ -1,12 +1,13 @@
-import ThemeIcon from '@/components/ui/Icon'
-import TopBarActions from './TopBarActions.jsx'
-import common from './TopBarCommon.module.css'
-import styles from './MobileTopBar.module.css'
-import { getBrandText } from '@/utils'
-import { TtsButton } from '@/components'
+import ThemeIcon from "@/components/ui/Icon";
+import TopBarActions from "./TopBarActions.jsx";
+import common from "./TopBarCommon.module.css";
+import styles from "./MobileTopBar.module.css";
+import { getBrandText } from "@/utils";
+import { TtsButton } from "@/components";
+import { useLanguage } from "@/context";
 
 function MobileTopBar({
-  term = '',
+  term = "",
   lang,
   showBack = false,
   onBack,
@@ -15,22 +16,30 @@ function MobileTopBar({
   canFavorite = false,
   onOpenSidebar,
 }) {
-  const brandText = getBrandText(lang)
+  const brandText = getBrandText(lang);
+  const { t } = useLanguage();
 
   return (
-    <header className={styles['mobile-topbar']}>
-      <button className={styles['topbar-btn']} onClick={onOpenSidebar}>
+    <header className={styles["mobile-topbar"]}>
+      <button className={styles["topbar-btn"]} onClick={onOpenSidebar}>
         <ThemeIcon name="glancy-web" alt={brandText} width={24} height={24} />
       </button>
       <button
         type="button"
-        className={`${common['back-btn']} ${showBack ? styles.visible : styles.hidden}`}
+        className={`${common["back-btn"]} ${showBack ? styles.visible : styles.hidden}`}
         onClick={onBack}
+        aria-label={t.back}
       >
-        ←
+        <ThemeIcon
+          name="arrow-left"
+          alt=""
+          width={24}
+          height={24}
+          aria-hidden="true"
+        />
       </button>
-      <div className={`${common['term-text']} ${styles['term-text']}`}>
-        <span className={styles['term-label']}>{term || brandText}</span>
+      <div className={`${common["term-text"]} ${styles["term-text"]}`}>
+        <span className={styles["term-label"]}>{term || brandText}</span>
         {term && <TtsButton text={term} lang={lang} size={20} />}
       </div>
       <TopBarActions
@@ -39,7 +48,7 @@ function MobileTopBar({
         canFavorite={canFavorite}
       />
     </header>
-  )
+  );
 }
 
-export default MobileTopBar
+export default MobileTopBar;

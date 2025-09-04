@@ -37,6 +37,7 @@ export default {
   notifications: "Notifications",
   markRead: "Mark read",
   contactTitle: "Contact Us",
+  back: "Back",
   name: "Name",
   email: "Email",
   phone: "Phone",
