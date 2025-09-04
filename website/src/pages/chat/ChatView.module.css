@@ -31,30 +31,3 @@
   align-self: flex-start;
   background: var(--chat-bubble-bg);
 }
-
-.form {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.input {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-}
-
-.button {
-  padding: var(--btn-padding);
-  border: var(--btn-border);
-  background: var(--accent-color);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-md);
-  box-shadow: 0 2px 4px var(--shadow-color);
-  cursor: pointer;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
