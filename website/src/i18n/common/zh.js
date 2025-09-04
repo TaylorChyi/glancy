@@ -37,6 +37,7 @@ export default {
   notifications: "通知",
   markRead: "标为已读",
   contactTitle: "联系我们",
+  back: "返回",
   name: "姓名",
   email: "邮箱",
   phone: "手机号",
