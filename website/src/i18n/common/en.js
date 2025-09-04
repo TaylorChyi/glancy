@@ -19,6 +19,8 @@ export default {
   searchButton: "Search",
   termLabel: "Term",
   playAudio: "Play",
+  playPronunciation: "Play pronunciation",
+  playSentenceAudio: "Play sentence audio",
   phoneticLabel: "Phonetic",
   languageLabel: "Language",
   definitionsLabel: "Definitions",

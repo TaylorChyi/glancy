@@ -29,6 +29,7 @@ const mockT = {
 jest.unstable_mockModule("@/context", () => ({
   // Aggregate all required context hooks for clarity
   useLanguage: () => ({ t: mockT }),
+  useTranslation: () => ({ t: (k) => mockT[k] }),
   useTheme: () => ({ theme: "light", setTheme: mockSetTheme }),
   useUser: () => ({ user: { id: "1", token: "t" } }),
   useHistory: () => ({}),

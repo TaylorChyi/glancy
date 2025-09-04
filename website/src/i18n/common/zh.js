@@ -19,6 +19,8 @@ export default {
   searchButton: "搜索",
   termLabel: "词条",
   playAudio: "播放语音",
+  playPronunciation: "播放发音",
+  playSentenceAudio: "播放例句发音",
   phoneticLabel: "读音",
   languageLabel: "语言",
   definitionsLabel: "释义",

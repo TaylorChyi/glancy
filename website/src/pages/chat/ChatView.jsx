@@ -1,9 +1,11 @@
 import { useState } from "react";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { streamChatMessage } from "@/api/chat.js";
+import { useTranslation } from "@/context";
 import styles from "./ChatView.module.css";
 
 export default function ChatView({ streamFn = streamChatMessage }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
@@ -46,7 +48,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
       <form className={styles.form} onSubmit={handleSubmit}>
         <input
           className={styles.input}
-          placeholder="输入消息"
+          placeholder={t("chatPlaceholder")}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
@@ -55,7 +57,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
           type="submit"
           disabled={!input.trim()}
         >
-          发送
+          {t("sendButton")}
         </button>
       </form>
     </div>
