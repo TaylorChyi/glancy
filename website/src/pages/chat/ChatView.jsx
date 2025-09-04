@@ -1,9 +1,12 @@
 import { useState } from "react";
+import ChatInput from "@/components/ui/ChatInput";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { streamChatMessage } from "@/api/chat.js";
+import { useLanguage } from "@/context";
 import styles from "./ChatView.module.css";
 
 export default function ChatView({ streamFn = streamChatMessage }) {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
@@ -31,6 +34,10 @@ export default function ChatView({ streamFn = streamChatMessage }) {
     }
   };
 
+  const handleVoice = () => {
+    /* Voice input integration hook */
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.history}>
@@ -43,21 +50,14 @@ export default function ChatView({ streamFn = streamChatMessage }) {
           </div>
         ))}
       </div>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <input
-          className={styles.input}
-          placeholder="输入消息"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button
-          className={styles.button}
-          type="submit"
-          disabled={!input.trim()}
-        >
-          发送
-        </button>
-      </form>
+      <ChatInput
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onSubmit={handleSubmit}
+        onVoice={handleVoice}
+        placeholder={t.chatPlaceholder}
+        sendLabel={t.sendButton}
+      />
     </div>
   );
 }

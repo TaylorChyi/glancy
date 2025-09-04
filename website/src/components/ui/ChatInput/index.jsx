@@ -1,20 +1,29 @@
-import ThemeIcon from '@/components/ui/Icon'
-import styles from './ChatInput.module.css'
+import ThemeIcon from "@/components/ui/Icon";
+import styles from "./ChatInput.module.css";
 
 /**
  * Chat input field with dual submit/voice behaviour.
  * When the field is empty the button acts as a voice trigger
  * instead of submitting the form.
  */
-function ChatInput({ value, onChange, onSubmit, onVoice, inputRef, placeholder }) {
-  const isEmpty = value.trim() === ''
+function ChatInput({
+  value,
+  onChange,
+  onSubmit,
+  onVoice,
+  inputRef,
+  placeholder,
+  sendLabel = "Send",
+  voiceLabel = "Voice",
+}) {
+  const isEmpty = value.trim() === "";
 
   const handleClick = (e) => {
     if (isEmpty && onVoice) {
-      e.preventDefault()
-      onVoice()
+      e.preventDefault();
+      onVoice();
     }
-  }
+  };
 
   return (
     <form className={styles.container} onSubmit={onSubmit}>
@@ -27,18 +36,27 @@ function ChatInput({ value, onChange, onSubmit, onVoice, inputRef, placeholder }
         className={styles.input}
       />
       <button
-        type={isEmpty ? 'button' : 'submit'}
+        type={isEmpty ? "button" : "submit"}
         className={styles.button}
         onClick={handleClick}
+        aria-label={isEmpty ? voiceLabel : sendLabel}
       >
         {isEmpty ? (
-          <ThemeIcon name="voice-button" alt="voice" className={styles.icon} />
+          <ThemeIcon
+            name="voice-button"
+            alt={voiceLabel}
+            className={styles.icon}
+          />
         ) : (
-          <ThemeIcon name="send-button" alt="send" className={styles.icon} />
+          <ThemeIcon
+            name="send-button"
+            alt={sendLabel}
+            className={styles.icon}
+          />
         )}
       </button>
     </form>
-  )
+  );
 }
 
-export default ChatInput
+export default ChatInput;
