@@ -1,7 +1,7 @@
-@import url('@/theme/colors.css');
-@import url('@/theme/variables.css');
-@import url('@/theme/spacing.css');
-@import url('@/theme/typography.css');
+@import url("@/theme/colors.css");
+@import url("@/theme/variables.css");
+@import url("@/theme/spacing.css");
+@import url("@/theme/typography.css");
 
 :root {
   font-family: var(--font-family-base);
@@ -13,12 +13,28 @@
   -moz-osx-font-smoothing: grayscale;
 
   --vh: 100vh;
-  --highlight-color: var(--hl-dark);
+  --highlight-color: var(--color-link-light);
   --shadow-color: rgb(0 0 0 / 15%);
-  --color-overlay: color-mix(in srgb, var(--color-overlay-base), transparent 50%);
-  --color-overlay-strong: color-mix(in srgb, var(--color-overlay-base), transparent 25%);
-  --color-overlay-weak: color-mix(in srgb, var(--color-overlay-base), transparent 95%);
-  --color-overlay-inverse: color-mix(in srgb, var(--color-overlay-inverse-base), transparent 90%);
+  --color-overlay: color-mix(
+    in srgb,
+    var(--color-overlay-base),
+    transparent 50%
+  );
+  --color-overlay-strong: color-mix(
+    in srgb,
+    var(--color-overlay-base),
+    transparent 25%
+  );
+  --color-overlay-weak: color-mix(
+    in srgb,
+    var(--color-overlay-base),
+    transparent 95%
+  );
+  --color-overlay-inverse: color-mix(
+    in srgb,
+    var(--color-overlay-inverse-base),
+    transparent 90%
+  );
 }
 
 @supports (height: 100dvh) {
@@ -33,12 +49,12 @@
   box-sizing: border-box;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   color-scheme: dark;
   color: var(--sys-text-dark);
   background-color: var(--sys-bg-dark);
 
-  --highlight-color: var(--hl-dark);
+  --highlight-color: var(--color-link-dark);
   --app-bg: #2c2c2c;
   --app-color: rgb(255 255 255 / 87%);
   --chat-window-bg: #333;
@@ -63,12 +79,12 @@
   --color-surface-alt: var(--surface-alt);
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   color-scheme: light;
   color: var(--sys-text-light);
   background-color: var(--sys-bg-light);
 
-  --highlight-color: var(--hl-light);
+  --highlight-color: var(--color-link-light);
   --app-bg: #f5f5f5;
   --app-color: #333;
   --chat-window-bg: #fafafa;
@@ -93,7 +109,7 @@
   --color-surface-alt: var(--surface-alt);
 }
 
-:root[data-theme='system'] {
+:root[data-theme="system"] {
   color-scheme: light dark;
 
   --primary-bg: Canvas;
@@ -108,11 +124,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-theme='system'] {
+  :root[data-theme="system"] {
     color: var(--sys-text-dark);
     background-color: var(--sys-bg-dark);
 
-    --highlight-color: var(--hl-dark);
+    --highlight-color: var(--color-link-dark);
     --app-bg: #2c2c2c;
     --app-color: rgb(255 255 255 / 87%);
     --chat-window-bg: #333;
@@ -133,11 +149,11 @@
 }
 
 @media (prefers-color-scheme: light) {
-  :root[data-theme='system'] {
+  :root[data-theme="system"] {
     color: var(--sys-text-light);
     background-color: var(--sys-bg-light);
 
-    --highlight-color: var(--hl-light);
+    --highlight-color: var(--color-link-light);
     --app-bg: #f5f5f5;
     --app-color: #333;
     --chat-window-bg: #fafafa;
@@ -167,7 +183,7 @@ a:hover {
   color: var(--highlight-color);
 }
 
-:root[data-theme='light'] a:hover {
+:root[data-theme="light"] a:hover {
   color: var(--highlight-color);
 }
 
@@ -185,5 +201,3 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
-
-

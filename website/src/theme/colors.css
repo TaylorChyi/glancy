@@ -4,6 +4,10 @@
   --hl-light: #fff;
   --hl-dark: #000;
 
+  /* link colors */
+  --color-link-dark: var(--hl-light);
+  --color-link-light: var(--hl-dark);
+
   /* system colors */
   --sys-text-light: #213547;
   --sys-text-dark: rgb(255 255 255 / 87%);
