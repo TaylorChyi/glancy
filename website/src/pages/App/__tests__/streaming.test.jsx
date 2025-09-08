@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
-jest.mock("remark-gfm", () => () => {});
+jest.unstable_mockModule("remark-gfm", () => ({ default: () => {} }));
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({
@@ -35,7 +35,12 @@ jest.unstable_mockModule("@/pages/App/FavoritesView.jsx", () => ({
 jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
   default: ({ value, onChange, onSubmit, placeholder }) => (
     <form onSubmit={onSubmit}>
-      <input value={value} onChange={onChange} placeholder={placeholder} />
+      <textarea
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={1}
+      />
     </form>
   ),
 }));
@@ -97,7 +102,7 @@ test("streams text with markdown and preserves final output", async () => {
   render(<App />);
 
   const input = screen.getByPlaceholderText("input");
-  fireEvent.change(input, { target: { value: "hello" } });
+  fireEvent.change(input, { target: { value: "hello\nworld" } });
   fireEvent.submit(input.closest("form"));
 
   await screen.findByText("f");
@@ -126,7 +131,7 @@ test("renders dictionary entry after streaming completes", async () => {
   render(<App />);
 
   const input = screen.getByPlaceholderText("input");
-  fireEvent.change(input, { target: { value: "hello" } });
+  fireEvent.change(input, { target: { value: "hello\nworld" } });
   fireEvent.submit(input.closest("form"));
 
   const entry = await screen.findByTestId("entry");

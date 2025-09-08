@@ -237,6 +237,7 @@ function App() {
             onSubmit={handleSend}
             onVoice={handleVoice}
             placeholder={t.inputPlaceholder}
+            maxRows={5}
           />
         }
       >
