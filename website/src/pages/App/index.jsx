@@ -230,15 +230,18 @@ function App() {
           canFavorite: !!entry && !showFavorites && !showHistory,
         }}
         bottomContent={
-          <ChatInput
-            inputRef={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onSubmit={handleSend}
-            onVoice={handleVoice}
-            placeholder={t.inputPlaceholder}
-            maxRows={5}
-          />
+          <div>
+            <ChatInput
+              inputRef={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onSubmit={handleSend}
+              onVoice={handleVoice}
+              placeholder={t.inputPlaceholder}
+              maxRows={5}
+            />
+            <ICP />
+          </div>
         }
       >
         <div className="display">
@@ -268,7 +271,6 @@ function App() {
           )}
         </div>
       </Layout>
-      <ICP />
       <MessagePopup
         open={popupOpen}
         message={popupMsg}
