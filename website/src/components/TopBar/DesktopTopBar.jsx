@@ -32,10 +32,11 @@ function DesktopTopBar({
           aria-hidden="true"
         />
       </button>
-      <div className={`${common["term-text"]} ${styles["term-text"]}`}>
-        <span className={styles["term-label"]}>{term}</span>
-        {term && <TtsButton text={term} lang={lang} size={20} />}
-      </div>
+      {term && (
+        <div className={`${common["term-text"]} ${styles["term-text"]}`}>
+          <TtsButton text={term} lang={lang} size={20} />
+        </div>
+      )}
       <TopBarActions
         favorited={favorited}
         onToggleFavorite={onToggleFavorite}

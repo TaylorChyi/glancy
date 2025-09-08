@@ -24,10 +24,6 @@
   gap: 4px;
 }
 
-.term-label {
-  line-height: 1;
-}
-
 .mobile-topbar {
   height: var(--bar-height);
   display: flex;
@@ -36,4 +32,3 @@
   gap: 8px;
   border-bottom: 1px solid var(--border-color);
 }
-
