@@ -244,7 +244,7 @@ function App() {
           </div>
         }
       >
-        <div className="display">
+        <div className="display p-6">
           {showFavorites ? (
             <FavoritesView
               favorites={favorites}
@@ -266,7 +266,7 @@ function App() {
             <MarkdownStream text={streamText} />
           ) : (
             <div className="display-content">
-              <div className="display-term">{placeholder}</div>
+              <div className="display-term mb-6">{placeholder}</div>
             </div>
           )}
         </div>

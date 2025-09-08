@@ -8,13 +8,16 @@ function HistoryDisplay() {
   if (!history.length) {
     return (
       <div className="display-content">
-        <div className="display-term">{t.noHistory}</div>
+        <div className="display-term mb-6">{t.noHistory}</div>
       </div>
     );
   }
 
   return (
-    <div className="display-content" style={{ maxHeight: 400, overflowY: "auto", width: "100%" }}>
+    <div
+      className="display-content"
+      style={{ maxHeight: 400, overflowY: "auto", width: "100%" }}
+    >
       <ul className={styles["history-grid-display"]}>
         {history.map((item, idx) => (
           <li key={idx}>{item}</li>

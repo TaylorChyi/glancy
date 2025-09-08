@@ -56,7 +56,6 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 20px;
   overflow-y: auto;
   overscroll-behavior: contain;
   font-size: 2rem;
@@ -92,10 +91,6 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-}
-
-.display-term {
-  margin-bottom: 1rem;
 }
 
 @media (width <= 600px) {

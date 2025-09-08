@@ -1,12 +1,17 @@
-import ListItem from '@/components/ui/ListItem'
+import ListItem from "@/components/ui/ListItem";
 
-function FavoritesView({ favorites = [], onSelect, onUnfavorite, emptyMessage }) {
+function FavoritesView({
+  favorites = [],
+  onSelect,
+  onUnfavorite,
+  emptyMessage,
+}) {
   if (!favorites.length) {
     return (
       <div className="display-content">
-        <div className="display-term">{emptyMessage}</div>
+        <div className="display-term mb-6">{emptyMessage}</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -18,23 +23,23 @@ function FavoritesView({ favorites = [], onSelect, onUnfavorite, emptyMessage })
           text={w}
           textClassName="favorite-term"
           onClick={() => onSelect?.(w)}
-          actions={(
+          actions={
             <button
               type="button"
               aria-label="unfavorite"
               className="unfavorite-btn"
               onClick={(e) => {
-                e.stopPropagation()
-                onUnfavorite?.(w)
+                e.stopPropagation();
+                onUnfavorite?.(w);
               }}
             >
               ○
             </button>
-          )}
+          }
         />
       ))}
     </ul>
-  )
+  );
 }
 
-export default FavoritesView
+export default FavoritesView;
