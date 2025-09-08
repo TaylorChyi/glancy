@@ -190,11 +190,12 @@ a:hover {
 body {
   margin: 0;
   min-width: 320px;
-  min-height: var(--vh);
+  height: var(--vh);
+  overflow: hidden;
 }
 
 #root {
-  min-height: var(--vh);
+  height: var(--vh);
 }
 
 h1 {
