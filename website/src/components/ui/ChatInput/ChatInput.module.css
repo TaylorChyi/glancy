@@ -14,7 +14,7 @@
   outline: none;
   font-size: 1rem;
   line-height: 1.5;
-  box-shadow: 0 2px 4px var(--shadow-color);
+  box-shadow: var(--shadow-md);
   resize: none;
   overflow: hidden;
 }

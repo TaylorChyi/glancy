@@ -3,4 +3,5 @@
   color: var(--app-color);
   padding: 20px;
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
 }

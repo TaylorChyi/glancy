@@ -1,5 +1,5 @@
 .avatar {
   border-radius: var(--radius-full, 50%);
   object-fit: cover;
-  box-shadow: 0 0 4px var(--shadow-color);
+  box-shadow: var(--shadow-sm);
 }

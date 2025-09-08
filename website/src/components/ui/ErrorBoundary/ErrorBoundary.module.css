@@ -5,5 +5,5 @@
   background: var(--app-bg);
   color: var(--app-color);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 16px var(--shadow-color);
+  box-shadow: var(--shadow-xl);
 }

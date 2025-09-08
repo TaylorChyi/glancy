@@ -51,7 +51,7 @@
   background: var(--sidebar-bg);
   color: var(--sidebar-color);
   border: 1px solid var(--border-color);
-  box-shadow: 0 2px 8px var(--shadow-color);
+  box-shadow: var(--shadow-lg);
 }
 
 .sidebar-functions {
@@ -73,7 +73,7 @@
   padding: 4px 0;
   padding-left: 8px;
   position: relative;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -85,17 +85,17 @@
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme='dark'] .history-list li:hover {
+:root[data-theme="dark"] .history-list li:hover {
   background-color: var(--color-overlay-inverse);
 }
 
-:root[data-theme='dark'] .sidebar-user .user-menu li:hover {
+:root[data-theme="dark"] .sidebar-user .user-menu li:hover {
   background-color: var(--color-overlay-inverse);
 }
 
 .sidebar-user .user-menu button.with-name:hover {
   background-color: var(--color-overlay-inverse);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .favorites-list ul {
@@ -111,13 +111,13 @@
   user-select: none;
   padding: 4px 0;
   padding-left: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .collection-button:hover {
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme='dark'] .collection-button:hover {
+:root[data-theme="dark"] .collection-button:hover {
   background-color: var(--color-overlay-inverse);
 }
