@@ -1,8 +1,6 @@
 .icp {
-  text-align: center;
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin: 8px 0;
 }
 
 .icp a {
