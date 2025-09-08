@@ -57,6 +57,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
         onVoice={handleVoice}
         placeholder={t.chatPlaceholder}
         sendLabel={t.sendButton}
+        maxRows={5}
       />
     </div>
   );

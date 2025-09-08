@@ -1,20 +1,22 @@
 .container {
   display: flex;
-  align-items: center;
-  height: 100%;
+  align-items: flex-end;
   width: 100%;
   gap: 16px;
   background: var(--app-bg);
 }
 
-.input {
+.textarea {
   flex: 1;
   border: none;
   border-radius: var(--radius-xl);
   padding: 12px 20px;
   outline: none;
   font-size: 1rem;
+  line-height: 1.5;
   box-shadow: 0 2px 4px var(--shadow-color);
+  resize: none;
+  overflow: hidden;
 }
 
 .button {
