@@ -1,28 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap");
+
 :root {
-  --font-family-base: system-ui, avenir, helvetica, arial, sans-serif;
+  --font-family-base:
+    "Inter", system-ui, -apple-system, blinkmacsystemfont, "Segoe UI",
+    helvetica, arial, sans-serif;
+  --line-height-base: 1.6;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
   --font-light: 300;
   --font-normal: 400;
   --font-medium: 500;
   --font-bold: 700;
 }
 
-body {
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-family-base);
+  line-height: var(--line-height-base);
 }
 
-.text-xs { font-size: var(--text-xs); }
-.text-sm { font-size: var(--text-sm); }
-.text-base { font-size: var(--text-base); }
-.text-lg { font-size: var(--text-lg); }
-.text-xl { font-size: var(--text-xl); }
-.text-2xl { font-size: var(--text-2xl); }
-.font-light { font-weight: var(--font-light); }
-.font-normal { font-weight: var(--font-normal); }
-.font-medium { font-weight: var(--font-medium); }
-.font-bold { font-weight: var(--font-bold); }
+.text-xs {
+  font-size: var(--text-xs);
+}
+.text-sm {
+  font-size: var(--text-sm);
+}
+.text-base {
+  font-size: var(--text-base);
+}
+.text-lg {
+  font-size: var(--text-lg);
+}
+.text-xl {
+  font-size: var(--text-xl);
+}
+.text-2xl {
+  font-size: var(--text-2xl);
+}
+.text-3xl {
+  font-size: var(--text-3xl);
+}
+.text-4xl {
+  font-size: var(--text-4xl);
+}
+.font-light {
+  font-weight: var(--font-light);
+}
+.font-normal {
+  font-weight: var(--font-normal);
+}
+.font-medium {
+  font-weight: var(--font-medium);
+}
+.font-bold {
+  font-weight: var(--font-bold);
+}
