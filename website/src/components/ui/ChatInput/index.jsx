@@ -1,3 +1,4 @@
+import Button from "@/components/ui/Button";
 import ThemeIcon from "@/components/ui/Icon";
 import styles from "./ChatInput.module.css";
 
@@ -35,11 +36,13 @@ function ChatInput({
         onChange={onChange}
         className={styles.input}
       />
-      <button
+      <Button
         type={isEmpty ? "button" : "submit"}
         className={styles.button}
         onClick={handleClick}
         aria-label={isEmpty ? voiceLabel : sendLabel}
+        variant="ghost"
+        shadow={false}
       >
         {isEmpty ? (
           <ThemeIcon
@@ -54,7 +57,7 @@ function ChatInput({
             className={styles.icon}
           />
         )}
-      </button>
+      </Button>
     </form>
   );
 }

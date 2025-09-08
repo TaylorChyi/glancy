@@ -1,23 +1,77 @@
-@import url('@/theme/colors.css');
-@import url('@/theme/variables.css');
+@import url("@/theme/colors.css");
+@import url("@/theme/variables.css");
 
 .button {
-  border-radius: var(--radius-md);
-  border: var(--btn-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--btn-padding);
+  border: var(--btn-border);
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-
-.button:hover {
-  border-color: var(--highlight-color);
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
 }
 
 .button:focus,
 .button:focus-visible {
   outline: none;
+}
+
+.shadow {
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.button:active:not(:disabled) {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+}
+
+.primary {
+  background-color: var(--brand-color);
+  color: var(--text-inverse-light);
+}
+
+.secondary {
+  background-color: var(--surface-light);
+  color: var(--sys-text-light);
+}
+
+.danger {
+  background-color: var(--color-danger);
+  color: var(--text-inverse-light);
+}
+
+.ghost {
+  background-color: transparent;
+  color: inherit;
+}
+
+.radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.radius-md {
+  border-radius: var(--radius-md);
+}
+
+.radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.radius-xl {
+  border-radius: var(--radius-xl);
 }

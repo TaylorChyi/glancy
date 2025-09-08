@@ -1,59 +1,66 @@
-import ThemeIcon from '@/components/ui/Icon'
-import { useOutsideToggle } from '@/hooks'
-import { withStopPropagation } from '@/utils/stopPropagation.js'
-import styles from './ItemMenu.module.css'
+import Button from "@/components/ui/Button";
+import ThemeIcon from "@/components/ui/Icon";
+import { useOutsideToggle } from "@/hooks";
+import { withStopPropagation } from "@/utils/stopPropagation.js";
+import styles from "./ItemMenu.module.css";
 
 function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
-  const { open, setOpen, ref } = useOutsideToggle(false)
+  const { open, setOpen, ref } = useOutsideToggle(false);
 
   return (
     <div className={styles.wrapper} ref={ref}>
-      <button
+      <Button
         type="button"
         className={styles.action}
         onClick={withStopPropagation(() => {
-          setOpen(!open)
+          setOpen(!open);
         })}
+        variant="ghost"
+        shadow={false}
       >
         <ThemeIcon name="ellipsis-vertical" width={16} height={16} />
-      </button>
+      </Button>
       {open && (
         <div className={styles.menu}>
-          <button
+          <Button
             type="button"
             onClick={withStopPropagation(() => {
-              onFavorite()
-              setOpen(false)
+              onFavorite();
+              setOpen(false);
             })}
+            variant="ghost"
+            shadow={false}
           >
             <ThemeIcon
               name="star-solid"
               width={16}
               height={16}
               className={styles.icon}
-            />{' '}
+            />{" "}
             {favoriteLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className={styles['delete-btn']}
+            className={styles["delete-btn"]}
             onClick={withStopPropagation(() => {
-              onDelete()
-              setOpen(false)
+              onDelete();
+              setOpen(false);
             })}
+            variant="ghost"
+            shadow={false}
           >
             <ThemeIcon
               name="trash"
               width={16}
               height={16}
               className={styles.icon}
-            />{' '}
+            />{" "}
             {deleteLabel}
-          </button>
+          </Button>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default ItemMenu
+export default ItemMenu;
