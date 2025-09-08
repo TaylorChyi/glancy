@@ -25,11 +25,6 @@
   border-top: 1px solid transparent;
 }
 
-.sidebar-icp {
-  margin-left: auto;
-  text-align: right;
-}
-
 /* adapt header components used inside sidebar */
 .sidebar-user :global(.header-section) {
   display: block;
@@ -90,11 +85,11 @@
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme="dark"] .history-list li:hover {
+:root[data-theme='dark'] .history-list li:hover {
   background-color: var(--color-overlay-inverse);
 }
 
-:root[data-theme="dark"] .sidebar-user .user-menu li:hover {
+:root[data-theme='dark'] .sidebar-user .user-menu li:hover {
   background-color: var(--color-overlay-inverse);
 }
 
@@ -123,6 +118,6 @@
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme="dark"] .collection-button:hover {
+:root[data-theme='dark'] .collection-button:hover {
   background-color: var(--color-overlay-inverse);
 }

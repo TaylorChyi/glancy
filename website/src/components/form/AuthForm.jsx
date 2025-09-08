@@ -7,6 +7,7 @@ import MultiLineText from "@/components/ui/MultiLineText.jsx";
 import styles from "./AuthForm.module.css";
 import MessagePopup from "@/components/ui/MessagePopup";
 import ThemeIcon from "@/components/ui/Icon";
+import ICP from "@/components/ui/ICP";
 import { useLanguage } from "@/context";
 
 const defaultIcons = {
@@ -135,6 +136,7 @@ function AuthForm({
         <div className={styles["footer-links"]}>
           <a href="#">{t.termsOfUse}</a> | <a href="#">{t.privacyPolicy}</a>
         </div>
+        <ICP />
       </div>
       <MessagePopup
         open={showNotice}

@@ -11,6 +11,7 @@ import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import { useModelStore } from "@/store";
+import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
@@ -239,6 +240,7 @@ function App() {
               placeholder={t.inputPlaceholder}
               maxRows={5}
             />
+            <ICP />
           </div>
         }
       >

@@ -84,6 +84,17 @@ exports[`AuthForm submits valid credentials 1`] = `
           Privacy Policy
         </a>
       </div>
+      <div
+        class="icp"
+      >
+        <a
+          href="https://beian.miit.gov.cn/"
+          rel="noopener"
+          target="_blank"
+        >
+          京ICP备2025135702号-1
+        </a>
+      </div>
     </div>
   </div>
 </DocumentFragment>

@@ -23,6 +23,9 @@ jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
 jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
   default: () => null,
 }));
+jest.unstable_mockModule("@/components/ui/ICP", () => ({
+  default: () => null,
+}));
 jest.unstable_mockModule("@/components/ui/MessagePopup", () => ({
   default: () => null,
 }));
