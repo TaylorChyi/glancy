@@ -38,6 +38,12 @@
   background: var(--color-overlay-inverse);
 }
 
+.menu button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+  background: var(--color-overlay-inverse);
+}
+
 .delete-btn {
   color: var(--color-danger);
 }
