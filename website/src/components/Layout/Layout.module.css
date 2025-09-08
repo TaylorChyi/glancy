@@ -16,7 +16,6 @@
   top: 0;
   z-index: 10;
   background: var(--app-bg);
-  border-bottom: 1px solid var(--border-color);
 }
 
 .main-middle {
@@ -31,7 +30,6 @@
   position: sticky;
   bottom: 0;
   background: var(--app-bg);
-  border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: stretch;
