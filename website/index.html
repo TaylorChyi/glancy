@@ -2,29 +2,34 @@
 <html lang="zh" data-theme="system">
   <head>
     <meta charset="UTF-8" />
-    <link id="favicon" rel="icon" type="image/svg+xml" href="/src/assets/brand/glancy-web-light.svg" />
+    <link
+      id="favicon"
+      rel="icon"
+      type="image/svg+xml"
+      href="/src/assets/brand/glancy-web-light.svg"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>格律词典</title>
   </head>
   <body>
     <div id="root"></div>
     <script>
-      ;(function () {
-        const storedLang = localStorage.getItem('lang')
+      (function () {
+        const storedLang = localStorage.getItem("lang");
         if (storedLang) {
-          document.documentElement.lang = storedLang
+          document.documentElement.lang = storedLang;
         }
-        const theme = localStorage.getItem('theme') || 'system'
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-        const resolved = theme === 'system' ? (dark ? 'dark' : 'light') : theme
-        document.documentElement.dataset.theme = resolved
-        const link = document.getElementById('favicon')
+        const theme = localStorage.getItem("theme") || "system";
+        const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const resolved = theme === "system" ? (dark ? "dark" : "light") : theme;
+        document.documentElement.dataset.theme = resolved;
+        const link = document.getElementById("favicon");
         if (link) {
-          link.href = resolved === 'dark'
-            ? '/src/assets/brand/glancy-web-dark.svg'
-            : '/src/assets/brand/glancy-web-light.svg'
+          link.href = dark
+            ? "/src/assets/brand/glancy-web-dark.svg"
+            : "/src/assets/brand/glancy-web-light.svg";
         }
-      })()
+      })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
