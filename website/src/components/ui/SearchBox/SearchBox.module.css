@@ -5,6 +5,7 @@
     var(--padding-y, var(--search-box-padding-y)) 20px;
   border-radius: var(--radius-xl);
   box-shadow: 0 2px 4px var(--shadow-color);
+  background-color: var(--chat-window-bg, var(--body-bg));
   overflow-y: auto;
   box-sizing: border-box;
 }
