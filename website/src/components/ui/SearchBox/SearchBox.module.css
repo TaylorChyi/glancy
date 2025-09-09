@@ -1,0 +1,10 @@
+/* scrollable wrapper for multi-line inputs */
+.search-box {
+  width: 100%;
+  padding: var(--padding-y, var(--search-box-padding-y)) 56px
+    var(--padding-y, var(--search-box-padding-y)) 20px;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 4px var(--shadow-color);
+  overflow-y: auto;
+  box-sizing: border-box;
+}

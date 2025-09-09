@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import ThemeIcon from "@/components/ui/Icon";
+import SearchBox from "@/components/ui/SearchBox";
 import styles from "./ChatInput.module.css";
 
 const ICON_SIZE = 36;
 
 /**
- * ActionInput renders a textarea with an internally positioned action button.
- * The button toggles between voice trigger and form submit depending on the
- * trimmed content value.
+ * ActionInput 使用可滚动的 SearchBox 包裹 textarea，并在内部放置操作按钮。
+ * 按钮会根据内容是否为空在语音触发与提交之间切换。
  */
 function ActionInput({
   value,
@@ -57,14 +57,16 @@ function ActionInput({
 
   return (
     <form className={styles["input-wrapper"]} onSubmit={onSubmit}>
-      <textarea
-        ref={textareaRef}
-        rows={rows}
-        placeholder={placeholder}
-        value={value}
-        onChange={handleChange}
-        className={styles.textarea}
-      />
+      <SearchBox>
+        <textarea
+          ref={textareaRef}
+          rows={rows}
+          placeholder={placeholder}
+          value={value}
+          onChange={handleChange}
+          className={styles.textarea}
+        />
+      </SearchBox>
       <button
         type={isEmpty ? "button" : "submit"}
         className={styles["action-button"]}

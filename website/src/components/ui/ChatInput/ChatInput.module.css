@@ -13,14 +13,12 @@
 .textarea {
   width: 100%;
   border: none;
-  border-radius: var(--radius-xl);
-  padding: 12px 56px 12px 20px;
+  padding: 0;
   outline: none;
   font-size: 1rem;
   line-height: 1.5;
-  box-shadow: 0 2px 4px var(--shadow-color);
   resize: none;
-  overflow: hidden;
+  background: transparent;
 }
 
 .action-button {
