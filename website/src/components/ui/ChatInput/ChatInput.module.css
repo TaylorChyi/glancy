@@ -26,7 +26,8 @@
 .action-button {
   position: absolute;
   right: 8px;
-  bottom: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   border: none;
   background: none;
   padding: 8px;
