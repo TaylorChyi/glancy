@@ -1,6 +1,7 @@
 export { default as Button } from "./ui/Button";
 export { default as ListItem } from "./ui/ListItem";
 export { default as ItemMenu } from "./ui/ItemMenu";
+export { default as GlassPanel } from "./ui/GlassPanel";
 
 export { default as Avatar } from "./ui/Avatar";
 export { default as DictionaryEntry } from "./ui/DictionaryEntry";
