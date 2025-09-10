@@ -1,5 +1,5 @@
 import { useApi } from "@/hooks/useApi.js";
-import { detectWordLanguage, clientNameFromModel } from "@/utils";
+import { detectWordLanguage } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
 
@@ -14,14 +14,15 @@ export function useStreamWord() {
   const { streamWord } = api.words;
   const store = useWordStore;
 
-  return async function* streamWordWithHandling({ user, term, model, signal }) {
+  return async function* streamWordWithHandling({
+    user,
+    term,
+    model = "DOUBAO",
+    signal,
+  }) {
     const language = detectWordLanguage(term);
     const logCtx = { userId: user.id, term };
-    const key = wordCacheKey({
-      term,
-      language,
-      model: clientNameFromModel(model),
-    });
+    const key = wordCacheKey({ term, language, model });
     let acc = "";
     console.info("[streamWordWithHandling] start", logCtx);
     try {
@@ -29,7 +30,7 @@ export function useStreamWord() {
         userId: user.id,
         term,
         language,
-        model: clientNameFromModel(model),
+        model,
         token: user.token,
         signal,
         onChunk: (chunk) => {
