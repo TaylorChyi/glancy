@@ -52,7 +52,7 @@ public class WordService {
     }
 
     /**
-     * Retrieve pronunciation audio from the DeepSeek service.
+     * Retrieve pronunciation audio from the configured dictionary service.
      */
     @Transactional(readOnly = true)
     public byte[] getAudio(String term, Language language) {
@@ -68,7 +68,7 @@ public class WordService {
             .orElseGet(() -> {
                 log.info("No user preference found for user {}, using default", userId);
                 UserPreference p = new UserPreference();
-                p.setDictionaryModel(DictionaryModel.DEEPSEEK);
+                p.setDictionaryModel(DictionaryModel.DOUBAO);
                 return p;
             });
         return wordRepository

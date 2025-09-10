@@ -35,12 +35,11 @@ class LlmControllerTest {
 
     @Test
     void getModels() throws Exception {
-        given(modelService.getModelNames()).willReturn(List.of("deepseek", "doubao"));
+        given(modelService.getModelNames()).willReturn(List.of("doubao"));
         mockMvc
             .perform(get("/api/llm/models"))
             .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0]").value("deepseek"))
-            .andExpect(jsonPath("$[1]").value("doubao"));
+            .andExpect(jsonPath("$[0]").value("doubao"));
     }
 }

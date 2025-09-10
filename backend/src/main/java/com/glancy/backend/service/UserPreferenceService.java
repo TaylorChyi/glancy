@@ -26,7 +26,7 @@ public class UserPreferenceService {
     private static final String DEFAULT_THEME = "light";
     private static final String DEFAULT_SYSTEM_LANGUAGE = "en";
     private static final String DEFAULT_SEARCH_LANGUAGE = "en";
-    private static final DictionaryModel DEFAULT_DICTIONARY_MODEL = DictionaryModel.DEEPSEEK;
+    private static final DictionaryModel DEFAULT_DICTIONARY_MODEL = DictionaryModel.DOUBAO;
 
     public UserPreferenceService(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository) {
         this.userPreferenceRepository = userPreferenceRepository;
