@@ -3,7 +3,6 @@ package com.glancy.backend.service;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
@@ -29,9 +28,6 @@ class WordServiceStreamPersistenceTest {
     private WordService wordService;
 
     @Mock
-    private DictionaryClient dictionaryClient;
-
-    @Mock
     private WordSearcher wordSearcher;
 
     @Mock
@@ -50,7 +46,6 @@ class WordServiceStreamPersistenceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         wordService = new WordService(
-            dictionaryClient,
             wordSearcher,
             wordRepository,
             userPreferenceRepository,

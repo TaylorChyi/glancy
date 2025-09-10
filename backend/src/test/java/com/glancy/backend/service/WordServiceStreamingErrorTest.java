@@ -3,7 +3,6 @@ package com.glancy.backend.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
@@ -24,9 +23,6 @@ class WordServiceStreamingErrorTest {
     private WordService wordService;
 
     @Mock
-    private DictionaryClient dictionaryClient;
-
-    @Mock
     private WordSearcher wordSearcher;
 
     @Mock
@@ -45,7 +41,6 @@ class WordServiceStreamingErrorTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         wordService = new WordService(
-            dictionaryClient,
             wordSearcher,
             wordRepository,
             userPreferenceRepository,
