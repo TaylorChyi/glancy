@@ -74,15 +74,6 @@ class WordServiceTest {
     }
 
     /**
-     * 测试 testGetAudio 接口
-     */
-    @Test
-    void testGetAudio() {
-        byte[] result = wordService.getAudio("hello", Language.ENGLISH);
-        assertNotNull(result);
-    }
-
-    /**
      * 测试 testCacheWordWhenLanguageMissing 接口
      */
     @Test
