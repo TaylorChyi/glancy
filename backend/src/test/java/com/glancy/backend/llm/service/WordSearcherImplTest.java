@@ -29,7 +29,7 @@ class WordSearcherImplTest {
     void setUp() {
         factory = mock(LLMClientFactory.class);
         config = new LLMConfig();
-        config.setDefaultClient("deepseek");
+        config.setDefaultClient("doubao");
         config.setTemperature(0.5);
         config.setPromptPath("path");
         promptManager = mock(PromptManager.class);
@@ -38,10 +38,13 @@ class WordSearcherImplTest {
         defaultClient = mock(LLMClient.class);
     }
 
+    /**
+     * 当指定客户端在工厂中找不到时，应回退到默认客户端并完成查询流程。
+     */
     @Test
     void searchFallsBackToDefaultWhenClientMissing() {
         when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(defaultClient);
+        when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt(anyString())).thenReturn("prompt");
         when(searchContentManager.normalize("hello")).thenReturn("hello");
         when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
@@ -53,14 +56,17 @@ class WordSearcherImplTest {
 
         assertSame(expected, result);
         verify(factory).get("invalid");
-        verify(factory).get("deepseek");
+        verify(factory).get("doubao");
         verify(defaultClient).chat(anyList(), eq(0.5));
     }
 
+    /**
+     * 当默认客户端同样缺失时，系统应抛出 IllegalStateException。
+     */
     @Test
     void searchThrowsWhenDefaultMissing() {
         when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(null);
+        when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         assertThrows(IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
     }
