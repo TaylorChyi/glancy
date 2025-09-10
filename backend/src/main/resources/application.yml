@@ -44,7 +44,7 @@ search:
     nonMember: 10
 
 llm:
-  default-client: deepseek
+  default-client: doubao
   temperature: 0.7
   prompt-path: prompts/english_to_chinese.txt
 
