@@ -1,5 +1,6 @@
-import { streamWord } from "@/api/words.js";
-import { API_PATHS } from "@/config/api.js";
+import { streamWord } from "../words.js";
+import { API_PATHS } from "../../config/api.js";
+import { DEFAULT_MODEL } from "../../config/index.js";
 import { jest } from "@jest/globals";
 
 /**
@@ -32,7 +33,7 @@ test("streamWord yields chunks with logging", async () => {
   }
 
   expect(global.fetch).toHaveBeenCalledWith(
-    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH`,
+    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&model=${DEFAULT_MODEL}`,
     expect.objectContaining({
       headers: { "X-USER-TOKEN": "t" },
       signal: undefined,

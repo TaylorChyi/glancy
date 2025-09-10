@@ -1,7 +1,7 @@
 import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks";
-import { createCachedFetcher, parseSse, clientNameFromModel } from "@/utils";
+import { createCachedFetcher, parseSse } from "@/utils";
 import { useWordStore } from "@/store/wordStore.js";
 
 export const WORD_CACHE_VERSION = "md1";
@@ -21,7 +21,7 @@ export function createWordsApi(request = apiRequest) {
   const store = useWordStore;
 
   const resolveKey = ({ term, language, model = DEFAULT_MODEL }) =>
-    wordCacheKey({ term, language, model: clientNameFromModel(model) });
+    wordCacheKey({ term, language, model });
 
   const fetchWordImpl = async ({
     userId,
@@ -34,8 +34,7 @@ export function createWordsApi(request = apiRequest) {
     const cached = store.getState().getEntry(key);
     if (cached) return cached;
     const params = new URLSearchParams({ userId, term, language });
-    const clientModel = clientNameFromModel(model);
-    if (clientModel) params.append("model", clientModel);
+    if (model) params.append("model", model);
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
       token,
     });
@@ -65,7 +64,7 @@ export function createWordsApi(request = apiRequest) {
     userId,
     term,
     language,
-    model = clientNameFromModel(DEFAULT_MODEL),
+    model = DEFAULT_MODEL,
     token,
     signal,
     onChunk,

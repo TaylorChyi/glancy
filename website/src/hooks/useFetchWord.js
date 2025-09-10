@@ -1,5 +1,5 @@
 import { useApi } from "@/hooks/useApi.js";
-import { detectWordLanguage, clientNameFromModel } from "@/utils";
+import { detectWordLanguage } from "@/utils";
 import { DEFAULT_MODEL } from "@/config";
 
 export function useFetchWord() {
@@ -17,7 +17,7 @@ export function useFetchWord() {
         userId: user.id,
         term,
         language,
-        model: clientNameFromModel(model),
+        model,
         token: user.token,
       });
       return { data, error: null, language };
