@@ -1,94 +1,79 @@
-import { useState, useEffect } from 'react'
-import '@/pages/App/App.css'
-import styles from './Preferences.module.css'
-import { useLanguage } from '@/context'
-import { useTheme } from '@/context'
-import { useUser } from '@/context'
-import { API_PATHS } from '@/config/api.js'
-import MessagePopup from '@/components/ui/MessagePopup'
-import SelectField from '@/components/form/SelectField.jsx'
-import FormRow from '@/components/form/FormRow.jsx'
-import { useApi } from '@/hooks'
-import { useModelStore } from '@/store'
-import { VoiceSelector } from '@/components'
+import { useState, useEffect } from "react";
+import "@/pages/App/App.css";
+import styles from "./Preferences.module.css";
+import { useLanguage } from "@/context";
+import { useTheme } from "@/context";
+import { useUser } from "@/context";
+import { API_PATHS } from "@/config/api.js";
+import MessagePopup from "@/components/ui/MessagePopup";
+import SelectField from "@/components/form/SelectField.jsx";
+import FormRow from "@/components/form/FormRow.jsx";
+import { useApi } from "@/hooks";
+import { VoiceSelector } from "@/components";
 
 function Preferences() {
-  const { t } = useLanguage()
-  const { theme, setTheme } = useTheme()
-  const { user } = useUser()
-  const api = useApi()
-  const { model, setModel } = useModelStore()
-  const [models, setModels] = useState([])
+  const { t } = useLanguage();
+  const { theme, setTheme } = useTheme();
+  const { user } = useUser();
+  const api = useApi();
   const [sourceLang, setSourceLang] = useState(
-    localStorage.getItem('sourceLang') || 'auto'
-  )
+    localStorage.getItem("sourceLang") || "auto",
+  );
   const [targetLang, setTargetLang] = useState(
-    localStorage.getItem('targetLang') || 'ENGLISH'
-  )
-  const [defaultModel, setDefaultModel] = useState(model)
-  const [popupOpen, setPopupOpen] = useState(false)
-  const [popupMsg, setPopupMsg] = useState('')
+    localStorage.getItem("targetLang") || "ENGLISH",
+  );
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupMsg, setPopupMsg] = useState("");
 
   useEffect(() => {
-    api.llm
-      .fetchModels()
-      .then((list) => setModels(list))
-      .catch((err) => console.error(err))
-  }, [api])
-
-  useEffect(() => {
-    if (!user) return
-    api.request(`${API_PATHS.preferences}/user/${user.id}`)
+    if (!user) return;
+    api
+      .request(`${API_PATHS.preferences}/user/${user.id}`)
       .then((data) => {
-        const sl = data.systemLanguage || 'auto'
-        const tl = data.searchLanguage || 'ENGLISH'
-        const dm = data.dictionaryModel || model
-        setSourceLang(sl)
-        setTargetLang(tl)
-        setDefaultModel(dm)
-        setModel(dm)
-        localStorage.setItem('sourceLang', sl)
-        localStorage.setItem('targetLang', tl)
-        setTheme(data.theme || 'system')
+        const sl = data.systemLanguage || "auto";
+        const tl = data.searchLanguage || "ENGLISH";
+        setSourceLang(sl);
+        setTargetLang(tl);
+        localStorage.setItem("sourceLang", sl);
+        localStorage.setItem("targetLang", tl);
+        setTheme(data.theme || "system");
       })
       .catch((err) => {
-        console.error(err)
-        setPopupMsg(t.fail)
-        setPopupOpen(true)
-      })
-  }, [setTheme, t, user, api, model, setModel])
+        console.error(err);
+        setPopupMsg(t.fail);
+        setPopupOpen(true);
+      });
+  }, [setTheme, t, user, api]);
 
   const handleSave = async (e) => {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
     await api.jsonRequest(`${API_PATHS.preferences}/user/${user.id}`, {
-      method: 'POST',
+      method: "POST",
       body: {
         systemLanguage: sourceLang,
         searchLanguage: targetLang,
-        dictionaryModel: defaultModel,
-        theme
-      }
-    })
-    localStorage.setItem('sourceLang', sourceLang)
-    localStorage.setItem('targetLang', targetLang)
-    setModel(defaultModel)
-    setPopupMsg(t.saveSuccess)
-    setPopupOpen(true)
-  }
+        theme,
+      },
+    });
+    localStorage.setItem("sourceLang", sourceLang);
+    localStorage.setItem("targetLang", targetLang);
+    setPopupMsg(t.saveSuccess);
+    setPopupOpen(true);
+  };
 
   return (
     <div className="app">
       <h2>{t.prefTitle}</h2>
-      <form className={styles['preferences-form']} onSubmit={handleSave}>
+      <form className={styles["preferences-form"]} onSubmit={handleSave}>
         <FormRow label={t.prefLanguage} id="source-lang">
           <SelectField
             value={sourceLang}
             onChange={setSourceLang}
             options={[
-              { value: 'auto', label: t.autoDetect },
-              { value: 'CHINESE', label: 'CHINESE' },
-              { value: 'ENGLISH', label: 'ENGLISH' }
+              { value: "auto", label: t.autoDetect },
+              { value: "CHINESE", label: "CHINESE" },
+              { value: "ENGLISH", label: "ENGLISH" },
             ]}
           />
         </FormRow>
@@ -97,16 +82,9 @@ function Preferences() {
             value={targetLang}
             onChange={setTargetLang}
             options={[
-              { value: 'CHINESE', label: 'CHINESE' },
-              { value: 'ENGLISH', label: 'ENGLISH' }
+              { value: "CHINESE", label: "CHINESE" },
+              { value: "ENGLISH", label: "ENGLISH" },
             ]}
-          />
-        </FormRow>
-        <FormRow label={t.prefDictionaryModel} id="dictionary-model">
-          <SelectField
-            value={defaultModel}
-            onChange={setDefaultModel}
-            options={models.map((m) => ({ value: m, label: t[m] || m }))}
           />
         </FormRow>
         <FormRow label={t.prefVoiceEn} id="voice-en">
@@ -120,9 +98,9 @@ function Preferences() {
             value={theme}
             onChange={setTheme}
             options={[
-              { value: 'light', label: 'light' },
-              { value: 'dark', label: 'dark' },
-              { value: 'system', label: 'system' }
+              { value: "light", label: "light" },
+              { value: "dark", label: "dark" },
+              { value: "system", label: "system" },
             ]}
           />
         </FormRow>
@@ -134,7 +112,7 @@ function Preferences() {
         onClose={() => setPopupOpen(false)}
       />
     </div>
-  )
+  );
 }
 
-export default Preferences
+export default Preferences;

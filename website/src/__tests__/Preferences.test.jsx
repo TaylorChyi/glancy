@@ -5,15 +5,12 @@ import { jest } from "@jest/globals";
 import { API_PATHS } from "@/config/api.js";
 
 const mockRequest = jest.fn().mockResolvedValue({});
-const mockFetchModels = jest.fn().mockResolvedValue(["M1"]);
 const mockSetTheme = jest.fn();
-const mockSetModel = jest.fn();
 const mockTtsVoices = jest.fn().mockResolvedValue([]);
 const mockT = {
   prefTitle: "Preferences",
   prefLanguage: "Language",
   prefSearchLanguage: "Search Language",
-  prefDictionaryModel: "Model",
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
   prefTheme: "Theme",
@@ -23,7 +20,6 @@ const mockT = {
   autoDetect: "Auto",
   CHINESE: "CHINESE",
   ENGLISH: "ENGLISH",
-  M1: "M1",
 };
 
 jest.unstable_mockModule("@/context", () => ({
@@ -39,7 +35,6 @@ jest.unstable_mockModule("@/hooks", () => ({
   useApi: () => ({
     request: mockRequest,
     jsonRequest: mockRequest,
-    llm: { fetchModels: mockFetchModels },
     tts: { fetchVoices: mockTtsVoices },
   }),
   useEscapeKey: () => ({ on: () => {}, off: () => {} }),
@@ -51,7 +46,6 @@ jest.unstable_mockModule("@/hooks", () => ({
   useMediaQuery: () => false,
 }));
 jest.unstable_mockModule("@/store", () => ({
-  useModelStore: () => ({ model: "M1", setModel: mockSetModel }),
   useUserStore: (fn) => fn({ user: { plan: "free" } }),
   useVoiceStore: (fn) =>
     fn({ voices: {}, setVoice: jest.fn(), getVoice: () => undefined }),
@@ -73,7 +67,6 @@ beforeEach(() => {
  */
 test("saves preferences via api", async () => {
   render(<Preferences />);
-  await waitFor(() => expect(mockFetchModels).toHaveBeenCalled());
   fireEvent.change(screen.getByLabelText("Language"), {
     target: { value: "CHINESE" },
   });

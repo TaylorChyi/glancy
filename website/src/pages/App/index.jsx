@@ -10,7 +10,7 @@ import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
-import { useModelStore } from "@/store";
+import { DEFAULT_MODEL } from "@/config";
 import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
@@ -38,7 +38,6 @@ function App() {
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const streamWord = useStreamWord();
-  const { model } = useModelStore();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
 
   const { toggleFavoriteEntry } = useAppShortcuts({
@@ -111,7 +110,7 @@ function App() {
       for await (const { chunk, language } of streamWord({
         user,
         term: input,
-        model,
+        model: DEFAULT_MODEL,
         signal: controller.signal,
       })) {
         if (!detected) detected = language;
@@ -167,7 +166,7 @@ function App() {
       for await (const { chunk } of streamWord({
         user,
         term,
-        model,
+        model: DEFAULT_MODEL,
         signal: controller.signal,
       })) {
         acc += chunk;
