@@ -2,6 +2,7 @@ import { useApi } from "@/hooks/useApi.js";
 import { detectWordLanguage, clientNameFromModel } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
+import { DEFAULT_MODEL } from "@/config";
 
 /**
  * 提供基于 SSE 的词汇查询流式接口，并输出统一格式日志。
@@ -14,7 +15,12 @@ export function useStreamWord() {
   const { streamWord } = api.words;
   const store = useWordStore;
 
-  return async function* streamWordWithHandling({ user, term, model, signal }) {
+  return async function* streamWordWithHandling({
+    user,
+    term,
+    model = DEFAULT_MODEL,
+    signal,
+  }) {
     const language = detectWordLanguage(term);
     const logCtx = { userId: user.id, term };
     const key = wordCacheKey({

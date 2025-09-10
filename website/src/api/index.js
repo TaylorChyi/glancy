@@ -1,16 +1,15 @@
-import { createApiClient, createJsonRequest } from './client.js'
-import { createChatApi } from './chat.js'
-import { createWordsApi } from './words.js'
-import { createLocaleApi } from './locale.js'
-import { createSearchRecordsApi } from './searchRecords.js'
-import { createUsersApi } from './users.js'
-import { createProfilesApi } from './profiles.js'
-import { createLlmApi } from './llm.js'
-import { createTtsApi } from './tts.js'
+import { createApiClient, createJsonRequest } from "./client.js";
+import { createChatApi } from "./chat.js";
+import { createWordsApi } from "./words.js";
+import { createLocaleApi } from "./locale.js";
+import { createSearchRecordsApi } from "./searchRecords.js";
+import { createUsersApi } from "./users.js";
+import { createProfilesApi } from "./profiles.js";
+import { createTtsApi } from "./tts.js";
 
 export function createApi(config) {
-  const request = createApiClient(config)
-  const jsonRequest = createJsonRequest(request)
+  const request = createApiClient(config);
+  const jsonRequest = createJsonRequest(request);
   return {
     request,
     jsonRequest,
@@ -20,10 +19,9 @@ export function createApi(config) {
     searchRecords: createSearchRecordsApi(request),
     users: createUsersApi(request),
     profiles: createProfilesApi(request),
-    llm: createLlmApi(request),
-    tts: createTtsApi(request)
-  }
+    tts: createTtsApi(request),
+  };
 }
 
-const api = createApi()
-export default api
+const api = createApi();
+export default api;

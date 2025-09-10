@@ -2,6 +2,7 @@ import { useState } from "react";
 import ChatInput from "@/components/ui/ChatInput";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import { streamChatMessage } from "@/api/chat.js";
+import { DEFAULT_MODEL } from "@/config";
 import { useLanguage } from "@/context";
 import styles from "./ChatView.module.css";
 
@@ -18,7 +19,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
 
     let firstChunk = true;
     for await (const chunk of streamFn({
-      model: "default",
+      model: DEFAULT_MODEL,
       messages: [...messages, userMessage],
     })) {
       if (firstChunk) {

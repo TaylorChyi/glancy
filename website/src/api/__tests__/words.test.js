@@ -1,5 +1,6 @@
 import { createWordsApi } from "@/api/words.js";
-import { API_PATHS } from "@/config/api.js";
+import { API_PATHS, DEFAULT_MODEL } from "@/config";
+import { clientNameFromModel } from "@/utils";
 import { jest } from "@jest/globals";
 
 /**
@@ -12,12 +13,12 @@ test("fetchWord builds query string", async () => {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
-    model: "M1",
     token: "t",
   });
   const [url, opts] = request.mock.calls[0];
+  const expectedModel = clientNameFromModel(DEFAULT_MODEL);
   expect(url).toBe(
-    `${API_PATHS.words}?userId=u&term=hello&language=ENGLISH&model=M1`,
+    `${API_PATHS.words}?userId=u&term=hello&language=ENGLISH&model=${expectedModel}`,
   );
   expect(opts.token).toBe("t");
 });

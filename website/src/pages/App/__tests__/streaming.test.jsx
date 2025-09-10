@@ -66,9 +66,6 @@ jest.unstable_mockModule("@/context", () => ({
 }));
 
 // mock stores and hooks
-jest.unstable_mockModule("@/store", () => ({
-  useModelStore: () => ({ model: "m" }),
-}));
 const streamMock = jest.fn();
 jest.unstable_mockModule("@/hooks", () => ({
   useStreamWord: streamMock,

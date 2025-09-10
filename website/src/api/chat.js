@@ -1,4 +1,4 @@
-import { API_PATHS } from "@/config/api.js";
+import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest, createJsonRequest } from "./client.js";
 import { useApi } from "@/hooks";
 import { parseSse } from "@/utils";
@@ -14,7 +14,7 @@ export function createChatApi(request = apiRequest) {
    * @param {{model: string, messages: Array}} options
    * @returns {AsyncGenerator<string>}
    */
-  async function* streamChatMessage({ model, messages }) {
+  async function* streamChatMessage({ model = DEFAULT_MODEL, messages }) {
     const logCtx = { model, messages: messages.length };
     console.info("[streamChatMessage] start", logCtx);
     let response;
