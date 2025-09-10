@@ -10,7 +10,6 @@ import "./App.css";
 import ChatInput from "@/components/ui/ChatInput";
 import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
-import { DEFAULT_MODEL } from "@/config";
 import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
@@ -110,7 +109,6 @@ function App() {
       for await (const { chunk, language } of streamWord({
         user,
         term: input,
-        model: DEFAULT_MODEL,
         signal: controller.signal,
       })) {
         if (!detected) detected = language;
@@ -166,7 +164,6 @@ function App() {
       for await (const { chunk } of streamWord({
         user,
         term,
-        model: DEFAULT_MODEL,
         signal: controller.signal,
       })) {
         acc += chunk;
