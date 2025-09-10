@@ -46,14 +46,14 @@ class UserPreferenceControllerTest {
      */
     @Test
     void savePreference() throws Exception {
-        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DEEPSEEK);
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DOUBAO);
         when(userPreferenceService.savePreference(eq(2L), any(UserPreferenceRequest.class))).thenReturn(resp);
 
         UserPreferenceRequest req = new UserPreferenceRequest();
         req.setTheme("dark");
         req.setSystemLanguage("en");
         req.setSearchLanguage("en");
-        req.setDictionaryModel(DictionaryModel.DEEPSEEK);
+        req.setDictionaryModel(DictionaryModel.DOUBAO);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
@@ -73,7 +73,7 @@ class UserPreferenceControllerTest {
      */
     @Test
     void getPreference() throws Exception {
-        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DEEPSEEK);
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DOUBAO);
         when(userPreferenceService.getPreference(2L)).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);

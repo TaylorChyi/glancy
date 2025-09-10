@@ -104,6 +104,6 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   theme VARCHAR(20) NOT NULL,
   systemLanguage VARCHAR(20) NOT NULL,
   searchLanguage VARCHAR(20) NOT NULL,
-  dictionaryModel VARCHAR(20) NOT NULL DEFAULT 'DEEPSEEK',
+  dictionaryModel VARCHAR(20) NOT NULL DEFAULT 'DOUBAO',
   CONSTRAINT fk_user_pref_user FOREIGN KEY (user_id) REFERENCES users (id)
 );

@@ -1,20 +1,20 @@
-import { createPersistentStore } from './createPersistentStore.js'
-import { pickState } from './persistUtils.js'
+import { createPersistentStore } from "./createPersistentStore.js";
+import { pickState } from "./persistUtils.js";
 
 interface ModelState {
-  model: string
-  setModel: (value: string) => void
+  model: string;
+  setModel: (value: string) => void;
 }
 
 export const useModelStore = createPersistentStore<ModelState>({
-  key: 'dictionaryModel',
+  key: "dictionaryModel",
   initializer: (set) => ({
-    model: 'DEEPSEEK',
+    model: "DOUBAO",
     setModel: (value: string) => {
-      set({ model: value })
-    }
+      set({ model: value });
+    },
   }),
   persistOptions: {
-    partialize: pickState(['model'])
-  }
-})
+    partialize: pickState(["model"]),
+  },
+});

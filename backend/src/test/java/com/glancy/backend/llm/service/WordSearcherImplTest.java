@@ -29,7 +29,7 @@ class WordSearcherImplTest {
     void setUp() {
         factory = mock(LLMClientFactory.class);
         config = new LLMConfig();
-        config.setDefaultClient("deepseek");
+        config.setDefaultClient("doubao");
         config.setTemperature(0.5);
         config.setPromptPath("path");
         promptManager = mock(PromptManager.class);
@@ -41,7 +41,7 @@ class WordSearcherImplTest {
     @Test
     void searchFallsBackToDefaultWhenClientMissing() {
         when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(defaultClient);
+        when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt(anyString())).thenReturn("prompt");
         when(searchContentManager.normalize("hello")).thenReturn("hello");
         when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
@@ -53,14 +53,14 @@ class WordSearcherImplTest {
 
         assertSame(expected, result);
         verify(factory).get("invalid");
-        verify(factory).get("deepseek");
+        verify(factory).get("doubao");
         verify(defaultClient).chat(anyList(), eq(0.5));
     }
 
     @Test
     void searchThrowsWhenDefaultMissing() {
         when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("deepseek")).thenReturn(null);
+        when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         assertThrows(IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
     }
