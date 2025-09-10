@@ -54,7 +54,7 @@ public class WordService {
             .orElseGet(() -> {
                 log.info("No user preference found for user {}, using default", userId);
                 UserPreference p = new UserPreference();
-                p.setDictionaryModel(DictionaryModel.DEEPSEEK);
+                p.setDictionaryModel(DictionaryModel.DOUBAO);
                 return p;
             });
         return wordRepository

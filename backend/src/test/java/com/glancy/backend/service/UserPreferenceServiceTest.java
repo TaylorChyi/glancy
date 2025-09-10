@@ -60,7 +60,7 @@ class UserPreferenceServiceTest {
         req.setTheme("light");
         req.setSystemLanguage("en");
         req.setSearchLanguage("zh");
-        req.setDictionaryModel(DictionaryModel.DEEPSEEK);
+        req.setDictionaryModel(DictionaryModel.DOUBAO);
         UserPreferenceResponse saved = userPreferenceService.savePreference(user.getId(), req);
 
         assertNotNull(saved.getId());
@@ -69,7 +69,7 @@ class UserPreferenceServiceTest {
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
         assertEquals(saved.getId(), fetched.getId());
         assertEquals("zh", fetched.getSearchLanguage());
-        assertEquals(DictionaryModel.DEEPSEEK, fetched.getDictionaryModel());
+        assertEquals(DictionaryModel.DOUBAO, fetched.getDictionaryModel());
     }
 
     /**
@@ -87,6 +87,6 @@ class UserPreferenceServiceTest {
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
         assertEquals("light", fetched.getTheme());
         assertEquals("en", fetched.getSystemLanguage());
-        assertEquals(DictionaryModel.DEEPSEEK, fetched.getDictionaryModel());
+        assertEquals(DictionaryModel.DOUBAO, fetched.getDictionaryModel());
     }
 }

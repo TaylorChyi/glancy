@@ -32,5 +32,5 @@ public class UserPreference {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private DictionaryModel dictionaryModel = DictionaryModel.DEEPSEEK;
+    private DictionaryModel dictionaryModel = DictionaryModel.DOUBAO;
 }
