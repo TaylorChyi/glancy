@@ -42,6 +42,9 @@ class WordSearcherImplTest {
      * 当指定客户端在工厂中找不到时，应回退到默认客户端并完成查询流程。
      */
     @Test
+    /**
+     * 验证当指定的模型不存在时，会回退到默认的 doubao 模型。
+     */
     void searchFallsBackToDefaultWhenClientMissing() {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(defaultClient);
@@ -64,6 +67,9 @@ class WordSearcherImplTest {
      * 当默认客户端同样缺失时，系统应抛出 IllegalStateException。
      */
     @Test
+    /**
+     * 验证默认模型缺失时会抛出非法状态异常。
+     */
     void searchThrowsWhenDefaultMissing() {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(null);
