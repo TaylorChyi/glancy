@@ -2,7 +2,6 @@ package com.glancy.backend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.client.DictionaryClient;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryModel;
@@ -15,7 +14,6 @@ import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -28,7 +26,6 @@ import reactor.core.publisher.SignalType;
 @Service
 public class WordService {
 
-    private final DictionaryClient dictionaryClient;
     private final WordSearcher wordSearcher;
     private final WordRepository wordRepository;
     private final UserPreferenceRepository userPreferenceRepository;
@@ -36,28 +33,17 @@ public class WordService {
     private final WordResponseParser parser;
 
     public WordService(
-        @Qualifier("deepSeekClient") DictionaryClient dictionaryClient,
         WordSearcher wordSearcher,
         WordRepository wordRepository,
         UserPreferenceRepository userPreferenceRepository,
         SearchRecordService searchRecordService,
         WordResponseParser parser
     ) {
-        this.dictionaryClient = dictionaryClient;
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
         this.userPreferenceRepository = userPreferenceRepository;
         this.searchRecordService = searchRecordService;
         this.parser = parser;
-    }
-
-    /**
-     * Retrieve pronunciation audio from the DeepSeek service.
-     */
-    @Transactional(readOnly = true)
-    public byte[] getAudio(String term, Language language) {
-        log.info("Fetching audio for term '{}' in language {}", term, language);
-        return dictionaryClient.fetchAudio(term, language);
     }
 
     @Transactional

@@ -55,15 +55,6 @@ public class WordController {
     }
 
     /**
-     * Retrieve the pronunciation audio for a word.
-     */
-    @GetMapping(value = "/audio", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<byte[]> getAudio(@RequestParam String term, @RequestParam Language language) {
-        byte[] data = wordService.getAudio(term, language);
-        return ResponseEntity.ok(data);
-    }
-
-    /**
      * Stream word search results via SSE.
      */
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
