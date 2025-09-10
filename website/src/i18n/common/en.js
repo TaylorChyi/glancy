@@ -80,8 +80,6 @@ export default {
   logout: "Log out",
   logoutConfirmTitle: "Are you sure you want to log out?",
   logoutConfirmMessage: "Log out of ChatGPT as {email}?",
-  DEEPSEEK: "DeepSeek",
-  DOUBAO_FLASH: "Doubao Flash",
   share: "Share",
   report: "Report",
   shortcutsTitle: "Keyboard Shortcuts",

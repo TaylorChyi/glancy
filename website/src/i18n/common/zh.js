@@ -80,8 +80,6 @@ export default {
   logout: "退出登录",
   logoutConfirmTitle: "确定要退出登录吗？",
   logoutConfirmMessage: "以 {email} 身份退出 ChatGPT？",
-  DEEPSEEK: "DeepSeek 模型",
-  DOUBAO_FLASH: "豆包 Flash",
   share: "分享",
   report: "举报",
   shortcutsTitle: "键盘快捷键",
