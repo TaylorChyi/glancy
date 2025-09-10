@@ -33,7 +33,6 @@ test("cache JSON entry and render definitions", async () => {
   for await (const _ of streamWordWithHandling({
     user: { id: "u", token: "t" },
     term: "test",
-    model: "m",
     signal: new AbortController().signal,
   })) {
     // consume generator
@@ -64,7 +63,6 @@ test("cache markdown entry and render", async () => {
   for await (const _ of streamWordWithHandling({
     user: { id: "u", token: "t" },
     term: "test",
-    model: "m",
     signal: new AbortController().signal,
   })) {
     // consume generator
