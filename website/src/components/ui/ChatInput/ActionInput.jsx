@@ -43,20 +43,44 @@ function ActionInput({
     }
   }, [autoResize, value, textareaRef]);
 
-  const handleChange = (e) => {
-    autoResize(e.target);
-    onChange?.(e);
-  };
+  const handleChange = useCallback(
+    (e) => {
+      autoResize(e.target);
+      onChange?.(e);
+    },
+    [autoResize, onChange],
+  );
 
-  const handleClick = (e) => {
-    if (isEmpty && onVoice) {
+  const handleSubmit = useCallback(
+    (e) => {
       e.preventDefault();
-      onVoice();
-    }
-  };
+      onSubmit?.(e);
+    },
+    [onSubmit],
+  );
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        handleSubmit(e);
+        e.preventDefault();
+      }
+    },
+    [handleSubmit],
+  );
+
+  const handleClick = useCallback(
+    (e) => {
+      if (isEmpty && onVoice) {
+        e.preventDefault();
+        onVoice();
+      }
+    },
+    [isEmpty, onVoice],
+  );
 
   return (
-    <form className={styles["input-wrapper"]} onSubmit={onSubmit}>
+    <form className={styles["input-wrapper"]} onSubmit={handleSubmit}>
       <SearchBox>
         <textarea
           ref={textareaRef}
@@ -64,6 +88,7 @@ function ActionInput({
           placeholder={placeholder}
           value={value}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
           className={styles.textarea}
         />
       </SearchBox>
