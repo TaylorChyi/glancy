@@ -25,7 +25,7 @@
 
 .logout-btn {
   background: var(--highlight-color);
-  color: var(--primary-bg);
+  color: var(--primary-color);
   border: none;
   border-radius: var(--radius-xl);
   padding: 0.5rem 1rem;
