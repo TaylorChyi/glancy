@@ -17,12 +17,19 @@ export function createTtsApi(request = apiRequest) {
 
   const speakWord = (opts) => post(API_PATHS.ttsWord, opts);
   const speakSentence = (opts) => post(API_PATHS.ttsSentence, opts);
-  const fetchVoices = ({ lang, token } = {}) => {
+  const fetchVoices = async ({ lang, token } = {}) => {
     if (!lang) {
       throw new Error("Language is required to load voices");
     }
     const params = new URLSearchParams({ lang });
-    return request(`${API_PATHS.ttsVoices}?${params.toString()}`, { token });
+    const resp = await request(`${API_PATHS.ttsVoices}?${params.toString()}`, {
+      token,
+    });
+    if (!resp || typeof resp !== "object") {
+      return [];
+    }
+    const { options } = resp;
+    return Array.isArray(options) ? options : [];
   };
 
   return { speakWord, speakSentence, fetchVoices };

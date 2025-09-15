@@ -34,7 +34,9 @@ export default function VoiceSelector({ lang }) {
     api.tts
       .fetchVoices({ lang })
       .then((list) => {
-        if (!cancelled) setVoices(list);
+        if (!cancelled) {
+          setVoices(Array.isArray(list) ? list : []);
+        }
       })
       .catch((err) => {
         console.error(err);
