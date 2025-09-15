@@ -1,19 +1,28 @@
-import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useUser } from '@/context'
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "@/context";
+
+const PUBLIC_ROUTES = ["/login", "/register"];
 
 function AuthWatcher() {
-  const { user } = useUser()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { user } = useUser();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    if (!user && location.pathname !== '/login' && location.pathname !== '/register') {
-      navigate('/login', { replace: true })
-    }
-  }, [user, location, navigate])
+    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
-  return null
+    if (!user && !isPublicRoute) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    if (user && isPublicRoute) {
+      navigate("/", { replace: true });
+    }
+  }, [user, pathname, navigate]);
+
+  return null;
 }
 
-export default AuthWatcher
+export default AuthWatcher;
