@@ -3,6 +3,7 @@ package com.glancy.backend.controller;
 import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
+import com.glancy.backend.dto.UserPreferenceUpdateRequest;
 import com.glancy.backend.service.UserPreferenceService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,18 @@ public class UserPreferenceController {
     ) {
         UserPreferenceResponse resp = userPreferenceService.savePreference(userId, req);
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
+
+    /**
+     * Partially update stored preferences for the user.
+     */
+    @PatchMapping("/user")
+    public ResponseEntity<UserPreferenceResponse> updatePreference(
+        @AuthenticatedUser Long userId,
+        @RequestBody UserPreferenceUpdateRequest req
+    ) {
+        UserPreferenceResponse resp = userPreferenceService.updatePreference(userId, req);
+        return ResponseEntity.ok(resp);
     }
 
     /**

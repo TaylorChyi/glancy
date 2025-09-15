@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
+import com.glancy.backend.dto.UserPreferenceUpdateRequest;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.service.UserPreferenceService;
 import org.junit.jupiter.api.Test;
@@ -82,5 +83,29 @@ class UserPreferenceControllerTest {
             .perform(get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userId").value(2L));
+    }
+
+    /**
+     * 测试 updatePreference 接口
+     */
+    @Test
+    void updatePreference() throws Exception {
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en", DictionaryModel.DOUBAO);
+        when(userPreferenceService.updatePreference(eq(2L), any(UserPreferenceUpdateRequest.class))).thenReturn(resp);
+
+        UserPreferenceUpdateRequest req = new UserPreferenceUpdateRequest();
+        req.setTheme("dark");
+
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
+
+        mockMvc
+            .perform(
+                patch("/api/preferences/user")
+                    .header("X-USER-TOKEN", "tkn")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.theme").value("dark"));
     }
 }
