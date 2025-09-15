@@ -55,7 +55,7 @@ function Profile({ onCancel }) {
   useEffect(() => {
     if (!currentUser) return;
     api.profiles
-      .fetchProfile({ userId: currentUser.id, token: currentUser.token })
+      .fetchProfile({ token: currentUser.token })
       .then((data) => {
         setAge(data.age);
         setGender(data.gender);
@@ -77,7 +77,6 @@ function Profile({ onCancel }) {
     e.preventDefault();
     if (!currentUser) return;
     await api.profiles.saveProfile({
-      userId: currentUser.id,
       token: currentUser.token,
       profile: {
         age,
