@@ -15,7 +15,7 @@ import { useUserStore } from "@/store";
 export function useTtsPlayer({ scope = "word" } = {}) {
   const api = useApi();
   const tts = api.tts;
-  const userId = useUserStore((s) => s.user?.id);
+  const hasSession = useUserStore((s) => Boolean(s.user?.token));
   const audioRef = useRef(null);
   const urlRef = useRef("");
   const releaseUrl = useCallback(() => {
@@ -72,9 +72,9 @@ export function useTtsPlayer({ scope = "word" } = {}) {
       if (isDev) {
         console.debug("TTS fetch start", { scope, payload });
       }
-      let resp = await fn({ userId, ...payload, shortcut: true });
+      let resp = await fn({ ...payload, shortcut: true });
       if (resp instanceof Response && resp.status === 204) {
-        resp = await fn({ userId, ...payload, shortcut: false });
+        resp = await fn({ ...payload, shortcut: false });
       }
       const data = resp instanceof Response ? await resp.json() : resp;
       if (isDev) {
@@ -82,12 +82,12 @@ export function useTtsPlayer({ scope = "word" } = {}) {
       }
       return data;
     },
-    [tts, scope, userId],
+    [tts, scope],
   );
 
   const play = useCallback(
     async ({ text, lang, voice, speed = 1.0, format = "mp3" }) => {
-      if (!text || !lang || !userId) return;
+      if (!text || !lang || !hasSession) return;
       setLoading(true);
       setError(null);
       try {
@@ -158,7 +158,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
         setLoading(false);
       }
     },
-    [fetchAudio, scope, userId, releaseUrl],
+    [fetchAudio, scope, hasSession, releaseUrl],
   );
 
   const stop = useCallback(() => {
