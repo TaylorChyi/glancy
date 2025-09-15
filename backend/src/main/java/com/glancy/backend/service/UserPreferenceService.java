@@ -2,6 +2,7 @@ package com.glancy.backend.service;
 
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
+import com.glancy.backend.dto.UserPreferenceUpdateRequest;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.UserPreference;
@@ -71,6 +72,35 @@ public class UserPreferenceService {
             .findByUserId(userId)
             .orElseGet(() -> createDefaultPreference(userId));
         return toResponse(pref);
+    }
+
+    /**
+     * Partially update user preferences while preserving unspecified values.
+     */
+    @Transactional
+    public UserPreferenceResponse updatePreference(Long userId, UserPreferenceUpdateRequest req) {
+        log.info("Updating preferences for user {}", userId);
+        UserPreference pref = userPreferenceRepository
+            .findByUserId(userId)
+            .orElseGet(() -> createDefaultPreference(userId));
+
+        if (req.getTheme() != null) {
+            pref.setTheme(req.getTheme());
+        }
+        if (req.getSystemLanguage() != null) {
+            pref.setSystemLanguage(req.getSystemLanguage());
+        }
+        if (req.getSearchLanguage() != null) {
+            pref.setSearchLanguage(req.getSearchLanguage());
+        }
+        if (req.getDictionaryModel() != null) {
+            pref.setDictionaryModel(req.getDictionaryModel());
+        } else if (pref.getDictionaryModel() == null) {
+            pref.setDictionaryModel(DEFAULT_DICTIONARY_MODEL);
+        }
+
+        UserPreference saved = userPreferenceRepository.save(pref);
+        return toResponse(saved);
     }
 
     private UserPreferenceResponse toResponse(UserPreference pref) {
