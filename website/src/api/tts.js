@@ -19,9 +19,16 @@ export function createTtsApi(request = apiRequest) {
 
   const speakWord = (opts) => post(API_PATHS.ttsWord, opts);
   const speakSentence = (opts) => post(API_PATHS.ttsSentence, opts);
-  const fetchVoices = ({ userId, lang, token }) => {
-    const params = new URLSearchParams({ userId, lang });
-    return request(`${API_PATHS.ttsVoices}?${params.toString()}`, { token });
+  const fetchVoices = async ({ lang, token } = {}) => {
+    const params = new URLSearchParams();
+    if (lang) params.set("lang", lang);
+    const query = params.toString();
+    const resp = await request(
+      query ? `${API_PATHS.ttsVoices}?${query}` : API_PATHS.ttsVoices,
+      { token },
+    );
+    const options = resp?.options;
+    return Array.isArray(options) ? options : [];
   };
 
   return { speakWord, speakSentence, fetchVoices };
