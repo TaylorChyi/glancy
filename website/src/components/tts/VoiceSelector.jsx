@@ -15,20 +15,35 @@ export default function VoiceSelector({ lang }) {
   const [voices, setVoices] = useState([]);
   const selected = useVoiceStore((s) => s.getVoice(lang));
   const setVoice = useVoiceStore((s) => s.setVoice);
+  const sessionToken = user?.token;
+  const subscriptionSignature = `${user?.id ?? ""}|${user?.plan ?? ""}|${
+    user?.member ? "1" : "0"
+  }|${user?.isPro ? "1" : "0"}`;
 
   useEffect(() => {
     let cancelled = false;
-    if (!lang || !user?.id) return;
+    const resetVoices = () => {
+      if (!cancelled) setVoices([]);
+    };
+    if (!lang || !sessionToken) {
+      resetVoices();
+      return () => {
+        cancelled = true;
+      };
+    }
     api.tts
-      .fetchVoices({ lang, userId: user.id })
+      .fetchVoices({ lang })
       .then((list) => {
         if (!cancelled) setVoices(list);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        resetVoices();
+      });
     return () => {
       cancelled = true;
     };
-  }, [lang, api, user?.id]);
+  }, [lang, api, sessionToken, subscriptionSignature]);
 
   const isPro = !!(
     user?.member ||

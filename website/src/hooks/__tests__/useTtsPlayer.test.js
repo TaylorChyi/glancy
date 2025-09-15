@@ -40,7 +40,7 @@ jest.unstable_mockModule("@/hooks/useApi.js", () => ({
   useApi: () => ({ tts: { speakWord } }),
 }));
 jest.unstable_mockModule("@/store", () => ({
-  useUserStore: (sel) => sel({ user: { id: "1" } }),
+  useUserStore: (sel) => sel({ user: { id: "1", token: "t" } }),
 }));
 
 const { useTtsPlayer } = await import("@/hooks/useTtsPlayer.js");
@@ -69,7 +69,6 @@ describe("useTtsPlayer", () => {
     });
 
     const payload = {
-      userId: "1",
       text: "hi",
       lang: "en",
       voice: "v1",
