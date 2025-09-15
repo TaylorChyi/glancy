@@ -18,17 +18,30 @@ export default function VoiceSelector({ lang }) {
 
   useEffect(() => {
     let cancelled = false;
-    if (!lang || !user?.id) return;
-    api.tts
-      .fetchVoices({ lang, userId: user.id })
-      .then((list) => {
-        if (!cancelled) setVoices(list);
-      })
-      .catch((err) => console.error(err));
+
+    if (!lang) {
+      setVoices([]);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const loadVoices = async () => {
+      try {
+        const list = await api.tts.fetchVoices({ lang });
+        if (!cancelled) setVoices(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setVoices([]);
+      }
+    };
+
+    loadVoices();
+
     return () => {
       cancelled = true;
     };
-  }, [lang, api, user?.id]);
+  }, [lang, api]);
 
   const isPro = !!(
     user?.member ||
