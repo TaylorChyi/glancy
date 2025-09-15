@@ -24,6 +24,7 @@ function ActionInput({
   const isEmpty = value.trim() === "";
   const localRef = useRef(null);
   const textareaRef = inputRef || localRef;
+  const formRef = useRef(null);
 
   const autoResize = useCallback(
     (el) => {
@@ -62,11 +63,11 @@ function ActionInput({
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
-        handleSubmit(e);
         e.preventDefault();
+        formRef.current?.requestSubmit();
       }
     },
-    [handleSubmit],
+    [formRef],
   );
 
   const handleClick = useCallback(
@@ -80,7 +81,11 @@ function ActionInput({
   );
 
   return (
-    <form className={styles["input-wrapper"]} onSubmit={handleSubmit}>
+    <form
+      ref={formRef}
+      className={styles["input-wrapper"]}
+      onSubmit={handleSubmit}
+    >
       <SearchBox>
         <textarea
           ref={textareaRef}
