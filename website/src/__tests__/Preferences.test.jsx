@@ -72,5 +72,5 @@ test("saves preferences via api", async () => {
   });
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(mockRequest).toHaveBeenCalled());
-  expect(mockRequest.mock.calls[0][0]).toBe(`${API_PATHS.preferences}/user/1`);
+  expect(mockRequest.mock.calls[0][0]).toBe(`${API_PATHS.preferences}/user`);
 });
