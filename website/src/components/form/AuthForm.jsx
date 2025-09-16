@@ -121,9 +121,6 @@ function AuthForm({
 
   return (
     <div className={styles["auth-page"]}>
-      <Link to="/" className={styles["auth-close"]}>
-        ×
-      </Link>
       <ThemeIcon name="glancy-web" className={styles["auth-logo"]} />
       <div className={styles["auth-brand"]}>Glancy</div>
       <MultiLineText as="h1" className={styles["auth-title"]} text={title} />
