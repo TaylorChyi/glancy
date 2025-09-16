@@ -39,6 +39,7 @@ function AuthForm({
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
   const { t } = useLanguage();
+  const otherLoginOptionsLabel = t.otherLoginOptions ?? "Other login options";
   const handleSendCode = () => {};
 
   const handleSubmit = async (e) => {
@@ -110,8 +111,14 @@ function AuthForm({
           {switchLink.includes("login") ? t.loginButton : t.registerButton}
         </Link>
       </div>
-      <div className={styles.divider}>
-        <span>{t.or}</span>
+      <div
+        className={styles.divider}
+        role="separator"
+        aria-label={otherLoginOptionsLabel}
+      >
+        <span className={styles["divider-label"]}>
+          {otherLoginOptionsLabel}
+        </span>
       </div>
       <div className={styles["login-options"]}>
         {methodOrder
