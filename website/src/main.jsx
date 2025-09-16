@@ -35,12 +35,12 @@ function ViewportHeightUpdater() {
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ViewportHeightUpdater />
-    <AppProvider>
-      <ApiProvider>
-        <LanguageProvider>
-          <ThemeProvider>
-            <BrowserRouter>
+    <BrowserRouter>
+      <ViewportHeightUpdater />
+      <AppProvider>
+        <ApiProvider>
+          <LanguageProvider>
+            <ThemeProvider>
               <AuthWatcher />
               <ErrorBoundary>
                 <Suspense fallback={<Loader />}>
@@ -52,11 +52,11 @@ createRoot(document.getElementById("root")).render(
                   </Routes>
                 </Suspense>
               </ErrorBoundary>
-            </BrowserRouter>
-          </ThemeProvider>
-        </LanguageProvider>
-      </ApiProvider>
-    </AppProvider>
+            </ThemeProvider>
+          </LanguageProvider>
+        </ApiProvider>
+      </AppProvider>
+    </BrowserRouter>
   </StrictMode>,
 );
 
