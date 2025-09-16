@@ -32,12 +32,24 @@ exports[`AuthForm submits valid credentials 1`] = `
       <div
         class="password-row"
       >
-        <input
-          class="auth-input"
-          placeholder="Password"
-          type="password"
-          value="secret"
-        />
+        <div
+          class="wrapper"
+          data-visible="false"
+        >
+          <input
+            autocomplete="current-password"
+            class="input auth-input"
+            placeholder="Password"
+            type="password"
+            value="secret"
+          />
+          <button
+            aria-label="Show password"
+            aria-pressed="false"
+            class="toggle"
+            type="button"
+          />
+        </div>
       </div>
       <button
         class="button auth-primary-btn"

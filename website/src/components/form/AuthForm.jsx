@@ -8,6 +8,7 @@ import styles from "./AuthForm.module.css";
 import MessagePopup from "@/components/ui/MessagePopup";
 import ThemeIcon from "@/components/ui/Icon";
 import ICP from "@/components/ui/ICP";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { useLanguage } from "@/context";
 
 const defaultIcons = {
@@ -62,6 +63,8 @@ function AuthForm({
       typeof passwordPlaceholder === "function"
         ? passwordPlaceholder(method)
         : passwordPlaceholder;
+    const hasCodeButton = showCodeButton(method);
+
     return (
       <form onSubmit={handleSubmit} className={styles["auth-form"]}>
         {method === "phone" ? (
@@ -75,14 +78,15 @@ function AuthForm({
           />
         )}
         <div className={styles["password-row"]}>
-          <input
-            className={styles["auth-input"]}
-            type={showCodeButton(method) ? "text" : "password"}
-            placeholder={passHolder}
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder={passHolder}
+            mask={!hasCodeButton}
+            inputClassName={styles["auth-input"]}
+            autoComplete={hasCodeButton ? "one-time-code" : undefined}
           />
-          {showCodeButton(method) && <CodeButton onClick={handleSendCode} />}
+          {hasCodeButton && <CodeButton onClick={handleSendCode} />}
         </div>
         <Button type="submit" className={styles["auth-primary-btn"]}>
           {t.continueButton}
