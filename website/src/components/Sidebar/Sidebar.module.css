@@ -75,7 +75,7 @@
 
 .history-list li {
   padding-block: var(--sidebar-item-padding-y, 8px);
-  padding-inline: 0 var(--sidebar-item-padding-x, 16px);
+  padding-inline: var(--sidebar-item-padding-y, 8px);
 }
 
 .history-list li:hover {
