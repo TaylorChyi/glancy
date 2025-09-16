@@ -5,12 +5,6 @@ exports[`AuthForm submits valid credentials 1`] = `
   <div
     class="auth-page"
   >
-    <a
-      class="auth-close"
-      href="/"
-    >
-      ×
-    </a>
     <img
       alt="glancy-web"
       class="auth-logo"
