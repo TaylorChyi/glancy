@@ -1,5 +1,5 @@
-@import url('@/theme/spacing.css');
-@import url('@/theme/variables.css');
+@import url("@/theme/spacing.css");
+@import url("@/theme/variables.css");
 
 .item {
   display: flex;
@@ -15,7 +15,7 @@
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme='dark'] .item:hover {
+:root[data-theme="dark"] .item:hover {
   background-color: var(--color-overlay-inverse);
 }
 
@@ -28,4 +28,13 @@
   align-items: center;
   gap: var(--space-1);
   position: relative;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.item:hover .actions,
+.item:focus-within .actions {
+  opacity: 1;
+  pointer-events: auto;
 }
