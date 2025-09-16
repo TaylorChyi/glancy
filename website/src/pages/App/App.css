@@ -1,11 +1,23 @@
 .sidebar {
+  --sidebar-padding: calc(var(--space-4, 24px) - var(--space-1, 4px));
+  --sidebar-inline-padding: var(--sidebar-padding);
+  --sidebar-section-gap: var(--space-4, 24px);
+  --sidebar-item-gap: var(--space-1, 4px);
+  --sidebar-brand-gap: var(--space-2, 8px);
+  --sidebar-item-padding-y: var(--space-2, 8px);
+  --sidebar-item-padding-x: var(--space-3, 16px);
+  --sidebar-item-padding: var(--sidebar-item-padding-y)
+    var(--sidebar-item-padding-x);
+
   width: 240px;
   height: var(--vh);
   background: var(--sidebar-bg);
   color: var(--sidebar-color);
-  padding: 20px;
+  padding-block: var(--sidebar-padding);
+  padding-inline: 0;
   display: flex;
   flex-direction: column;
+  gap: var(--sidebar-section-gap);
   position: sticky;
   top: 0;
   align-self: start;
@@ -20,12 +32,13 @@
   top: 0;
   height: var(--bar-height);
   background: inherit;
-  padding: 0 20px;
+  padding: 0 var(--sidebar-inline-padding);
 }
 
 .brand-main {
   display: flex;
   align-items: center;
+  gap: var(--sidebar-brand-gap);
   cursor: pointer;
 }
 
@@ -36,7 +49,6 @@
 .sidebar-brand img {
   width: 32px;
   height: 32px;
-  margin-right: 8px;
 }
 
 .sidebar-brand span {
