@@ -23,9 +23,22 @@ jest.unstable_mockModule("@/context", () => ({
   }),
 }));
 
+const iconRegistry = {
+  "glancy-web": {
+    light: "/assets/glancy-web-light.svg",
+    dark: "/assets/glancy-web-dark.svg",
+  },
+  user: { single: "/assets/user.svg" },
+  email: { single: "/assets/email.svg" },
+  phone: { single: "/assets/phone.svg" },
+  wechat: { single: "/assets/wechat.svg" },
+  apple: { single: "/assets/apple.svg" },
+  google: { single: "/assets/google.svg" },
+};
+
 jest.unstable_mockModule("@/assets/icons.js", () => ({
   // Bypass Vite-specific import.meta.glob during tests
-  default: {},
+  default: iconRegistry,
 }));
 
 const { default: AuthForm } = await import("@/components/form/AuthForm.jsx");
@@ -45,8 +58,8 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={handleSubmit}
           placeholders={{ username: "Username" }}
-          formMethods={["username"]}
-          methodOrder={["username"]}
+          formMethods={["username", "wechat"]}
+          methodOrder={["username", "wechat"]}
         />
       </MemoryRouter>,
     );
@@ -63,6 +76,10 @@ describe("AuthForm", () => {
         password: "secret",
         method: "username",
       }),
+    );
+    expect(screen.getByAltText("glancy-web")).toHaveAttribute(
+      "src",
+      iconRegistry["glancy-web"].light,
     );
     expect(asFragment()).toMatchSnapshot();
   });
@@ -82,8 +99,8 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={handleSubmit}
           placeholders={{ username: "Username" }}
-          formMethods={["username"]}
-          methodOrder={["username"]}
+          formMethods={["username", "wechat"]}
+          methodOrder={["username", "wechat"]}
           validateAccount={validateAccount}
         />
       </MemoryRouter>,
@@ -108,8 +125,8 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={jest.fn()}
           placeholders={{ username: "Username" }}
-          formMethods={["username"]}
-          methodOrder={["username"]}
+          formMethods={["username", "wechat"]}
+          methodOrder={["username", "wechat"]}
         />
       </MemoryRouter>,
     );
