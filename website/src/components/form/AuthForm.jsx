@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import CodeButton from "./CodeButton.jsx";
 import PhoneInput from "./PhoneInput.jsx";
@@ -11,6 +11,8 @@ import ICP from "@/components/ui/ICP";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useLanguage } from "@/context";
 
+const USERNAME_METHOD = "username";
+
 const defaultIcons = {
   username: "user",
   email: "email",
@@ -18,6 +20,18 @@ const defaultIcons = {
   wechat: "wechat",
   apple: "apple",
   google: "google",
+};
+
+const resolveInitialMethod = (methods) => {
+  if (!Array.isArray(methods) || methods.length === 0) {
+    return null;
+  }
+
+  if (methods.includes(USERNAME_METHOD)) {
+    return USERNAME_METHOD;
+  }
+
+  return methods[0] ?? null;
 };
 
 function AuthForm({
@@ -35,12 +49,21 @@ function AuthForm({
 }) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-  const [method, setMethod] = useState(formMethods[0]);
+  const [method, setMethod] = useState(() => resolveInitialMethod(formMethods));
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
   const { t } = useLanguage();
   const otherLoginOptionsLabel = t.otherLoginOptions ?? "Other login options";
   const handleSendCode = () => {};
+
+  useEffect(() => {
+    if (formMethods.includes(method)) return;
+
+    const preferredMethod = resolveInitialMethod(formMethods);
+    if (preferredMethod !== method) {
+      setMethod(preferredMethod);
+    }
+  }, [formMethods, method]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
