@@ -1,22 +1,28 @@
-import { useLanguage } from '@/context'
+import { useLanguage } from "@/context";
+
+const USERNAME_METHOD = "username";
+const PRIMARY_METHODS = Object.freeze(["phone", "email"]);
+const SUPPORTED_SOCIAL_METHODS = Object.freeze(["wechat", "apple", "google"]);
 
 export function useAuthFormConfig({ includeUsername = false } = {}) {
-  const { t } = useLanguage()
+  const { t } = useLanguage();
 
   const placeholders = {
     phone: t.phonePlaceholder,
     email: t.emailPlaceholder,
-    ...(includeUsername && { username: t.usernamePlaceholder })
-  }
+    ...(includeUsername && { username: t.usernamePlaceholder }),
+  };
+
+  const baseFormMethods = [...PRIMARY_METHODS];
+  const baseMethodOrder = [...PRIMARY_METHODS, ...SUPPORTED_SOCIAL_METHODS];
 
   const formMethods = includeUsername
-    ? ['phone', 'email', 'username']
-    : ['phone', 'email']
+    ? [USERNAME_METHOD, ...baseFormMethods]
+    : baseFormMethods;
 
   const methodOrder = includeUsername
-    ? ['username', 'email', 'phone', 'wechat', 'apple', 'google']
-    : ['phone', 'email', 'wechat', 'apple', 'google']
+    ? [USERNAME_METHOD, ...baseMethodOrder]
+    : baseMethodOrder;
 
-  return { placeholders, formMethods, methodOrder }
+  return { placeholders, formMethods, methodOrder };
 }
-
