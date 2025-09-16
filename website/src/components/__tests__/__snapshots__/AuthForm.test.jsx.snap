@@ -11,6 +11,11 @@ exports[`AuthForm submits valid credentials 1`] = `
     >
       ×
     </a>
+    <img
+      alt="glancy-web"
+      class="auth-logo"
+      src="/assets/glancy-web-light.svg"
+    />
     <div
       class="auth-brand"
     >
@@ -77,7 +82,17 @@ exports[`AuthForm submits valid credentials 1`] = `
     </div>
     <div
       class="login-options"
-    />
+    >
+      <button
+        class="button"
+        type="button"
+      >
+        <img
+          alt="wechat"
+          src="/assets/wechat.svg"
+        />
+      </button>
+    </div>
     <div
       class="auth-footer"
     >
