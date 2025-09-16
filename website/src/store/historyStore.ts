@@ -1,8 +1,9 @@
 import api from "@/api/index.js";
+import { ApiError } from "@/api/client.js";
+import { detectWordLanguage } from "@/utils";
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
-import type { User } from "./userStore.js";
-import { detectWordLanguage } from "@/utils";
+import { useUserStore, type User } from "./userStore.js";
 
 interface HistoryState {
   history: string[];
@@ -18,6 +19,7 @@ interface HistoryState {
   removeHistory: (term: string, user?: User | null) => Promise<void>;
   favoriteHistory: (term: string, user?: User | null) => Promise<void>;
   unfavoriteHistory: (term: string, user?: User | null) => Promise<void>;
+  clearError: () => void;
 }
 
 type SetState = (
@@ -27,7 +29,18 @@ type SetState = (
   replace?: boolean,
 ) => void;
 
+const AUTH_EXPIRED_MESSAGE = "登录状态已过期，请重新登录";
+
 function handleApiError(err: unknown, set: SetState) {
+  if (err instanceof ApiError && err.status === 401) {
+    useUserStore.getState().clearUser();
+    set({
+      history: [],
+      recordMap: {},
+      error: AUTH_EXPIRED_MESSAGE,
+    });
+    return;
+  }
   console.error(err);
   const message = err instanceof Error ? err.message : String(err);
   set({ error: message });
@@ -65,7 +78,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         if (user) {
           await refreshHistory(user);
         } else {
-          set({ recordMap: {}, error: null });
+          set({ recordMap: {} });
         }
       },
       addHistory: async (
@@ -134,6 +147,9 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             .unfavoriteSearchRecord({ token: user.token, recordId: id })
             .catch((err) => handleApiError(err, set));
         }
+      },
+      clearError: () => {
+        set({ error: null });
       },
     };
   },
