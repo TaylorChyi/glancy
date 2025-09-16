@@ -75,7 +75,7 @@
 .user-menu .avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-avatar);
   background: var(--color-surface-alt);
   display: flex;
   align-items: center;
