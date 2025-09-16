@@ -1,6 +1,8 @@
 import api from "@/api/index.js";
+import { ApiError } from "@/api/client.js";
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
+import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
 import { detectWordLanguage } from "@/utils";
 
@@ -28,6 +30,16 @@ type SetState = (
 ) => void;
 
 function handleApiError(err: unknown, set: SetState) {
+  if (err instanceof ApiError && err.status === 401) {
+    const { clearUser } = useUserStore.getState();
+    clearUser();
+    const message = err.message?.trim()
+      ? err.message
+      : "登录状态已失效，请重新登录";
+    set({ error: message, history: [], recordMap: {} });
+    return;
+  }
+
   console.error(err);
   const message = err instanceof Error ? err.message : String(err);
   set({ error: message });
@@ -51,6 +63,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         set((state) => ({
           history: combined,
           recordMap: { ...state.recordMap, ...map },
+          error: null,
         }));
       } catch (err) {
         handleApiError(err, set);
