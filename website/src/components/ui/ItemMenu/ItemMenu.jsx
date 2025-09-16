@@ -1,16 +1,20 @@
-import { useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import ThemeIcon from "@/components/ui/Icon";
-import { useOutsideToggle } from "@/hooks";
 import useMenuNavigation from "@/hooks/useMenuNavigation.js";
+import Popover from "@/components/ui/Popover/Popover.jsx";
 import { withStopPropagation } from "@/utils/stopPropagation.js";
 import styles from "./ItemMenu.module.css";
 
 function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
-  const { open, setOpen, ref: wrapperRef } = useOutsideToggle(false);
+  const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
   useMenuNavigation(open, menuRef, triggerRef, setOpen);
+
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+  }, []);
 
   const handleTriggerKeyDown = (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -26,59 +30,68 @@ function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
   };
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
+    <div className={styles.wrapper}>
       <button
         type="button"
         className={styles.action}
         aria-haspopup="true"
         aria-expanded={open}
         onClick={withStopPropagation(() => {
-          setOpen(!open);
+          setOpen((current) => !current);
         })}
         onKeyDown={handleTriggerKeyDown}
         ref={triggerRef}
       >
         <ThemeIcon name="ellipsis-vertical" width={16} height={16} />
       </button>
-      {open && (
-        <ul className={styles.menu} role="menu" ref={menuRef}>
-          <li role="menuitem">
-            <button
-              type="button"
-              onClick={withStopPropagation(() => {
-                onFavorite();
-                setOpen(false);
-              })}
-            >
-              <ThemeIcon
-                name="star-solid"
-                width={16}
-                height={16}
-                className={styles.icon}
-              />{" "}
-              {favoriteLabel}
-            </button>
-          </li>
-          <li role="menuitem">
-            <button
-              type="button"
-              className={styles["delete-btn"]}
-              onClick={withStopPropagation(() => {
-                onDelete();
-                setOpen(false);
-              })}
-            >
-              <ThemeIcon
-                name="trash"
-                width={16}
-                height={16}
-                className={styles.icon}
-              />{" "}
-              {deleteLabel}
-            </button>
-          </li>
-        </ul>
-      )}
+      <Popover
+        isOpen={open}
+        anchorRef={triggerRef}
+        onClose={closeMenu}
+        placement="bottom"
+        align="end"
+        offset={4}
+      >
+        {open && (
+          <ul className={styles.menu} role="menu" ref={menuRef}>
+            <li role="menuitem">
+              <button
+                type="button"
+                onClick={withStopPropagation(() => {
+                  onFavorite();
+                  closeMenu();
+                })}
+              >
+                <ThemeIcon
+                  name="star-solid"
+                  width={16}
+                  height={16}
+                  className={styles.icon}
+                />{" "}
+                {favoriteLabel}
+              </button>
+            </li>
+            <li role="menuitem">
+              <button
+                type="button"
+                className={styles["delete-btn"]}
+                onClick={withStopPropagation(() => {
+                  onDelete();
+                  closeMenu();
+                })}
+              >
+                <ThemeIcon
+                  name="trash"
+                  width={16}
+                  height={16}
+                  className={styles.icon}
+                />{" "}
+                {deleteLabel}
+              </button>
+            </li>
+          </ul>
+        )}
+      </Popover>
     </div>
   );
 }
