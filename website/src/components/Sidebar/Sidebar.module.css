@@ -74,7 +74,9 @@
 }
 
 .history-list li {
-  padding: var(--sidebar-item-padding, 8px 16px);
+  padding-block: var(--sidebar-item-padding-y, 8px);
+  padding-inline-start: 0;
+  padding-inline-end: var(--sidebar-item-padding-x, 16px);
 }
 
 .history-list li:hover {
@@ -112,7 +114,9 @@
 .collection-button {
   cursor: pointer;
   user-select: none;
-  padding: var(--sidebar-item-padding, 8px 16px);
+  padding-block: var(--sidebar-item-padding-y, 8px);
+  padding-inline-start: 0;
+  padding-inline-end: var(--sidebar-item-padding-x, 16px);
   border-radius: var(--radius-sm, 4px);
   display: flex;
   align-items: center;
