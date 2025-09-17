@@ -113,36 +113,21 @@ public class EmailVerificationService {
         return builder.toString();
     }
 
-    private void dispatchEmail(
-        String email,
-        EmailVerificationPurpose purpose,
-        String code,
-        LocalDateTime expiresAt
-    ) {
+    private void dispatchEmail(String email, EmailVerificationPurpose purpose, String code, LocalDateTime expiresAt) {
         EmailVerificationProperties.Template template = properties.getTemplates().get(purpose);
         if (template == null) {
             throw new IllegalStateException("Missing email template configuration for purpose " + purpose);
         }
         MimeMessage message = mailSender.createMimeMessage();
         try {
-            log.info(
-                "Preparing to dispatch {} verification email to {} expiring at {}",
-                purpose,
-                email,
-                expiresAt
-            );
+            log.info("Preparing to dispatch {} verification email to {} expiring at {}", purpose, email, expiresAt);
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(properties.getFrom());
             helper.setTo(email);
             helper.setSubject(template.getSubject());
             helper.setText(renderBody(template.getBody(), code), false);
             mailSender.send(message);
-            log.info(
-                "Dispatched {} verification code to {} with expiry {}",
-                purpose,
-                email,
-                expiresAt
-            );
+            log.info("Dispatched {} verification code to {} with expiry {}", purpose, email, expiresAt);
         } catch (MessagingException e) {
             log.error("Failed to compose verification email", e);
             throw new IllegalStateException("邮件发送失败，请稍后重试");
