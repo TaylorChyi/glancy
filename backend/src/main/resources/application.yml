@@ -4,8 +4,16 @@ spring:
   messages:
     basename: messages
   mail:
-    host: localhost
-    port: 1025
+    host: smtpdm.aliyun.com
+    port: 465
+    username: no-reply@mail.glancy.xyz
+    password: ${GLANCY_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
   datasource:
     url: jdbc:mysql://localhost:3306/glancy_db?useSSL=true&serverTimezone=Asia/Shanghai&characterEncoding=utf8
     username: glancy_user
@@ -75,3 +83,16 @@ tts:
     api-url: https://openspeech.bytedance.com/api/v1/tts
     # Interval for proactive health checks to Volcengine TTS.
     health-interval: PT10M
+
+mail:
+  verification:
+    from: no-reply@mail.glancy.xyz
+    code-length: 6
+    ttl: PT10M
+    templates:
+      register:
+        subject: "Glancy 注册验证码"
+        body: "您的注册验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成验证。"
+      login:
+        subject: "Glancy 登录验证码"
+        body: "您的登录验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成登录。"

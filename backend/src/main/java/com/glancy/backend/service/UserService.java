@@ -1,6 +1,9 @@
 package com.glancy.backend.service;
 
 import com.glancy.backend.dto.AvatarResponse;
+import com.glancy.backend.dto.EmailLoginRequest;
+import com.glancy.backend.dto.EmailRegistrationRequest;
+import com.glancy.backend.dto.EmailVerificationCodeRequest;
 import com.glancy.backend.dto.LoginIdentifier;
 import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.LoginResponse;
@@ -10,6 +13,7 @@ import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UserStatisticsResponse;
 import com.glancy.backend.dto.UsernameResponse;
+import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
 import com.glancy.backend.entity.ThirdPartyAccount;
 import com.glancy.backend.entity.User;
@@ -22,6 +26,8 @@ import com.glancy.backend.repository.UserRepository;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,19 +48,22 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final AvatarStorage avatarStorage;
     private final UserProfileService userProfileService;
+    private final EmailVerificationService emailVerificationService;
 
     public UserService(
         UserRepository userRepository,
         LoginDeviceRepository loginDeviceRepository,
         ThirdPartyAccountRepository thirdPartyAccountRepository,
         AvatarStorage avatarStorage,
-        UserProfileService userProfileService
+        UserProfileService userProfileService,
+        EmailVerificationService emailVerificationService
     ) {
         this.userRepository = userRepository;
         this.loginDeviceRepository = loginDeviceRepository;
         this.thirdPartyAccountRepository = thirdPartyAccountRepository;
         this.avatarStorage = avatarStorage;
         this.userProfileService = userProfileService;
+        this.emailVerificationService = emailVerificationService;
     }
 
     /**
@@ -63,33 +72,7 @@ public class UserService {
     @Transactional
     public UserResponse register(UserRegistrationRequest req) {
         log.info("Registering user {}", req.getUsername());
-        if (userRepository.findByUsernameAndDeletedFalse(req.getUsername()).isPresent()) {
-            log.warn("Username {} already exists", req.getUsername());
-            throw new DuplicateResourceException("用户名已存在");
-        }
-        if (userRepository.findByEmailAndDeletedFalse(req.getEmail()).isPresent()) {
-            log.warn("Email {} is already in use", req.getEmail());
-            throw new DuplicateResourceException("邮箱已被使用");
-        }
-        if (userRepository.findByPhoneAndDeletedFalse(req.getPhone()).isPresent()) {
-            log.warn("Phone {} is already in use", req.getPhone());
-            throw new DuplicateResourceException("手机号已被使用");
-        }
-        User user = new User();
-        user.setUsername(req.getUsername());
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setEmail(req.getEmail());
-        user.setAvatar(req.getAvatar());
-        user.setPhone(req.getPhone());
-        User saved = userRepository.save(user);
-        userProfileService.initProfile(saved.getId());
-        return new UserResponse(
-            saved.getId(),
-            saved.getUsername(),
-            saved.getEmail(),
-            saved.getAvatar(),
-            saved.getPhone()
-        );
+        return createUser(req.getUsername(), req.getPassword(), req.getEmail(), req.getAvatar(), req.getPhone());
     }
 
     /**
@@ -110,6 +93,52 @@ public class UserService {
     public User getUserRaw(Long id) {
         log.info("Fetching user {}", id);
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+    }
+
+    /**
+     * Send a verification code to the provided email for the requested purpose.
+     */
+    @Transactional
+    public void sendVerificationCode(EmailVerificationCodeRequest request) {
+        String normalizedEmail = normalizeEmail(request.email());
+        EmailVerificationPurpose purpose = request.purpose();
+        log.info("Issuing {} verification code to {}", purpose, normalizedEmail);
+        if (purpose == EmailVerificationPurpose.REGISTER) {
+            userRepository
+                .findByEmailAndDeletedFalse(normalizedEmail)
+                .ifPresent(u -> {
+                    throw new DuplicateResourceException("邮箱已被使用");
+                });
+        } else if (purpose == EmailVerificationPurpose.LOGIN) {
+            userRepository
+                .findByEmailAndDeletedFalse(normalizedEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("用户不存在或已注销"));
+        }
+        emailVerificationService.issueCode(normalizedEmail, purpose);
+    }
+
+    /**
+     * Register a new account after verifying ownership of the email address.
+     */
+    @Transactional
+    public UserResponse registerWithEmailVerification(EmailRegistrationRequest request) {
+        log.info("Registering user {} via email verification", request.username());
+        emailVerificationService.consumeCode(request.email(), request.code(), EmailVerificationPurpose.REGISTER);
+        return createUser(request.username(), request.password(), request.email(), request.avatar(), request.phone());
+    }
+
+    /**
+     * Authenticate a user with an email verification code.
+     */
+    @Transactional
+    public LoginResponse loginWithEmailCode(EmailLoginRequest request) {
+        String normalizedEmail = normalizeEmail(request.email());
+        emailVerificationService.consumeCode(normalizedEmail, request.code(), EmailVerificationPurpose.LOGIN);
+        User user = userRepository
+            .findByEmailAndDeletedFalse(normalizedEmail)
+            .orElseThrow(() -> new ResourceNotFoundException("用户不存在或已注销"));
+        log.info("Logging in user {} via email code", user.getId());
+        return completeLogin(user, request.deviceInfo());
     }
 
     /**
@@ -178,35 +207,7 @@ public class UserService {
             throw new InvalidRequestException("密码错误");
         }
 
-        if (req.getDeviceInfo() != null && !req.getDeviceInfo().isEmpty()) {
-            LoginDevice device = new LoginDevice();
-            device.setUser(user);
-            device.setDeviceInfo(req.getDeviceInfo());
-            loginDeviceRepository.save(device);
-
-            List<LoginDevice> devices = loginDeviceRepository.findByUserIdOrderByLoginTimeAsc(user.getId());
-            if (devices.size() > 3) {
-                for (int i = 0; i < devices.size() - 3; i++) {
-                    loginDeviceRepository.delete(devices.get(i));
-                }
-            }
-        }
-
-        user.setLastLoginAt(LocalDateTime.now());
-        String token = java.util.UUID.randomUUID().toString();
-        user.setLoginToken(token);
-        userRepository.save(user);
-
-        log.info("User {} logged in", user.getId());
-        return new LoginResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getAvatar(),
-            user.getPhone(),
-            user.getMember(),
-            token
-        );
+        return completeLogin(user, req.getDeviceInfo());
     }
 
     /**
@@ -368,5 +369,78 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         user.setMember(false);
         userRepository.save(user);
+    }
+
+    private UserResponse createUser(String username, String rawPassword, String email, String avatar, String phone) {
+        userRepository
+            .findByUsernameAndDeletedFalse(username)
+            .ifPresent(u -> {
+                log.warn("Username {} already exists", username);
+                throw new DuplicateResourceException("用户名已存在");
+            });
+        String normalizedEmail = normalizeEmail(email);
+        userRepository
+            .findByEmailAndDeletedFalse(normalizedEmail)
+            .ifPresent(u -> {
+                log.warn("Email {} is already in use", normalizedEmail);
+                throw new DuplicateResourceException("邮箱已被使用");
+            });
+        userRepository
+            .findByPhoneAndDeletedFalse(phone)
+            .ifPresent(u -> {
+                log.warn("Phone {} is already in use", phone);
+                throw new DuplicateResourceException("手机号已被使用");
+            });
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setEmail(normalizedEmail);
+        user.setAvatar(avatar);
+        user.setPhone(phone);
+        User saved = userRepository.save(user);
+        userProfileService.initProfile(saved.getId());
+        return new UserResponse(
+            saved.getId(),
+            saved.getUsername(),
+            saved.getEmail(),
+            saved.getAvatar(),
+            saved.getPhone()
+        );
+    }
+
+    private LoginResponse completeLogin(User user, String deviceInfo) {
+        if (deviceInfo != null && !deviceInfo.isEmpty()) {
+            LoginDevice device = new LoginDevice();
+            device.setUser(user);
+            device.setDeviceInfo(deviceInfo);
+            loginDeviceRepository.save(device);
+
+            List<LoginDevice> devices = loginDeviceRepository.findByUserIdOrderByLoginTimeAsc(user.getId());
+            if (devices.size() > 3) {
+                for (int i = 0; i < devices.size() - 3; i++) {
+                    loginDeviceRepository.delete(devices.get(i));
+                }
+            }
+        }
+
+        user.setLastLoginAt(LocalDateTime.now());
+        String token = UUID.randomUUID().toString();
+        user.setLoginToken(token);
+        userRepository.save(user);
+
+        log.info("User {} logged in", user.getId());
+        return new LoginResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getAvatar(),
+            user.getPhone(),
+            user.getMember(),
+            token
+        );
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

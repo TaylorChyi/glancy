@@ -3,6 +3,9 @@ package com.glancy.backend.controller;
 import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.AvatarRequest;
 import com.glancy.backend.dto.AvatarResponse;
+import com.glancy.backend.dto.EmailLoginRequest;
+import com.glancy.backend.dto.EmailRegistrationRequest;
+import com.glancy.backend.dto.EmailVerificationCodeRequest;
 import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
@@ -45,6 +48,24 @@ public class UserController {
     }
 
     /**
+     * Request an email verification code for registration or login.
+     */
+    @PostMapping("/email/verification-code")
+    public ResponseEntity<Void> sendVerificationCode(@Valid @RequestBody EmailVerificationCodeRequest req) {
+        userService.sendVerificationCode(req);
+        return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * Register a user account after validating an email verification code.
+     */
+    @PostMapping("/register/email")
+    public ResponseEntity<UserResponse> registerWithEmail(@Valid @RequestBody EmailRegistrationRequest req) {
+        UserResponse resp = userService.registerWithEmailVerification(req);
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
+
+    /**
      * Delete (logically) an existing user account.
      */
     @DeleteMapping("/{id}")
@@ -68,6 +89,15 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
         LoginResponse resp = userService.login(req);
+        return new ResponseEntity<>(resp, HttpStatus.OK);
+    }
+
+    /**
+     * Authenticate using an email verification code instead of a password.
+     */
+    @PostMapping("/login/email")
+    public ResponseEntity<LoginResponse> loginWithEmail(@Valid @RequestBody EmailLoginRequest req) {
+        LoginResponse resp = userService.loginWithEmailCode(req);
         return new ResponseEntity<>(resp, HttpStatus.OK);
     }
 
