@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/context";
 import styles from "./AuthForm.module.css";
 
@@ -9,9 +9,20 @@ const DEFAULT_COUNTDOWN_TEMPLATE = "{count}s";
 
 function CodeButton({ onClick, countdownDuration = 60 }) {
   const [count, setCount] = useState(0);
+  const [deadline, setDeadline] = useState(null);
   const { t } = useLanguage();
 
   const buttonIdleLabel = t.codeButtonLabel ?? DEFAULT_IDLE_LABEL;
+  const normalizedDuration = useMemo(() => {
+    const parsed = Number(countdownDuration);
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      return 0;
+    }
+    return Math.round(parsed);
+  }, [countdownDuration]);
+
+  const isCountingDown = Boolean(deadline);
+
   const countdownTemplate = t.codeButtonCountdown ?? DEFAULT_COUNTDOWN_TEMPLATE;
   const countdownLabel = useMemo(
     () => countdownTemplate.replace("{count}", count),
@@ -19,26 +30,45 @@ function CodeButton({ onClick, countdownDuration = 60 }) {
   );
 
   useEffect(() => {
-    if (count === 0) return undefined;
-    const id = setInterval(() => {
-      setCount((c) => c - 1);
-    }, 1000);
+    if (!deadline) {
+      setCount(0);
+      return undefined;
+    }
+
+    const updateRemaining = () => {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        setCount(0);
+        setDeadline(null);
+        return;
+      }
+      setCount(Math.ceil(remainingMs / 1000));
+    };
+
+    updateRemaining();
+    const id = setInterval(updateRemaining, 1000);
     return () => clearInterval(id);
-  }, [count]);
+  }, [deadline]);
 
   const handleClick = () => {
-    if (onClick) onClick();
-    setCount(countdownDuration);
+    if (typeof onClick === "function") {
+      onClick();
+    }
+    if (normalizedDuration > 0) {
+      const target = Date.now() + normalizedDuration * 1000;
+      setCount(normalizedDuration);
+      setDeadline(target);
+    }
   };
 
   return (
     <button
       type="button"
       className={styles["code-btn"]}
-      disabled={count > 0}
+      disabled={isCountingDown}
       onClick={handleClick}
     >
-      {count > 0 ? countdownLabel : buttonIdleLabel}
+      {isCountingDown ? countdownLabel : buttonIdleLabel}
     </button>
   );
 }
