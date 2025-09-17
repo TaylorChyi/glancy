@@ -7,3 +7,46 @@
   align-items: center;
   z-index: 1000;
 }
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 26px 68px -32px var(--shadow-color);
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-color) 20%, transparent);
+  background: color-mix(in srgb, var(--app-bg) 80%, transparent);
+  color: var(--app-color);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus-visible {
+  background: color-mix(in srgb, var(--app-bg) 60%, transparent);
+  border-color: color-mix(in srgb, var(--app-color) 30%, transparent);
+  box-shadow: 0 12px 24px -18px var(--shadow-color);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+}
