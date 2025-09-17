@@ -8,6 +8,8 @@ export default {
   updateButton: "Update",
   updateSuccess: "Update success",
   prefTitle: "Preferences",
+  prefDescription:
+    "Tailor Glancy's languages, voices, and ambience to suit every session.",
   prefLanguage: "Source Language",
   prefSearchLanguage: "Target Language",
   prefDictionaryModel: "Default Model",

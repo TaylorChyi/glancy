@@ -8,6 +8,7 @@ export default {
   updateButton: "更新",
   updateSuccess: "更新成功",
   prefTitle: "偏好设置",
+  prefDescription: "协调语言、音色与外观，让每次查词都恰到好处。",
   prefLanguage: "源语言",
   prefSearchLanguage: "目标语言",
   prefDictionaryModel: "默认模型",
