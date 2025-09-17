@@ -3,7 +3,12 @@
  * Aggregates all SVG assets within the assets directory.
  */
 
-const modules = import.meta.glob("./**/*.svg", {
+const glob =
+  typeof import.meta !== "undefined" && typeof import.meta.glob === "function"
+    ? import.meta.glob
+    : () => ({});
+
+const modules = glob("./**/*.svg", {
   eager: true,
   import: "default",
 });

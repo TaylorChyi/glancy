@@ -13,6 +13,7 @@ export const API_PATHS = {
   preferences: `${API_BASE}/preferences`,
   contact: `${API_BASE}/contact`,
   searchRecords: `${API_BASE}/search-records`,
+  emailVerificationCode: `${API_BASE}/users/email/verification-code`,
   ttsWord: `${API_BASE}/tts/word`,
   ttsSentence: `${API_BASE}/tts/sentence`,
   ttsVoices: `${API_BASE}/tts/voices`,

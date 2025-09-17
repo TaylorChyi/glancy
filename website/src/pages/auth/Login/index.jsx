@@ -29,6 +29,24 @@ function Login() {
     navigate("/");
   };
 
+  const handleRequestCode = async ({ account: rawAccount, method }) => {
+    if (method !== "email") {
+      throw new Error(
+        t.codeRequestInvalidMethod ||
+          t.notImplementedYet ||
+          "Not implemented yet",
+      );
+    }
+
+    const account =
+      typeof rawAccount === "string" ? rawAccount.trim() : rawAccount;
+
+    await api.jsonRequest(API_PATHS.emailVerificationCode, {
+      method: "POST",
+      body: { email: account, purpose: "LOGIN" },
+    });
+  };
+
   const { placeholders, formMethods, methodOrder, defaultMethod } =
     useAuthFormConfig({
       includeUsername: true,
@@ -50,6 +68,7 @@ function Login() {
       showCodeButton={(m) => m !== "username"}
       validateAccount={validateAccount}
       otherOptionsLabel={t.otherLoginOptions}
+      onRequestCode={handleRequestCode}
     />
   );
 }

@@ -34,6 +34,24 @@ function Register() {
     navigate("/");
   };
 
+  const handleRequestCode = async ({ account: rawAccount, method }) => {
+    if (method !== "email") {
+      throw new Error(
+        t.codeRequestInvalidMethod ||
+          t.notImplementedYet ||
+          "Not implemented yet",
+      );
+    }
+
+    const account =
+      typeof rawAccount === "string" ? rawAccount.trim() : rawAccount;
+
+    await api.jsonRequest(API_PATHS.emailVerificationCode, {
+      method: "POST",
+      body: { email: account, purpose: "REGISTER" },
+    });
+  };
+
   const { placeholders, formMethods, methodOrder, defaultMethod } =
     useAuthFormConfig();
 
@@ -51,6 +69,7 @@ function Register() {
       showCodeButton={() => true}
       validateAccount={validateAccount}
       otherOptionsLabel={t.otherRegisterOptions}
+      onRequestCode={handleRequestCode}
     />
   );
 }

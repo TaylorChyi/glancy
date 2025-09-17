@@ -48,6 +48,13 @@ const router = await import("react-router-dom");
 const { MemoryRouter } = router;
 const { default: Login } = await import("@/pages/auth/Login");
 
+beforeEach(() => {
+  mockJsonRequest.mockClear();
+  mockSetUser.mockClear();
+  mockNavigate.mockClear();
+  mockHydrateClientSessionState.mockClear();
+});
+
 test("logs in and navigates home", async () => {
   /**
    * 验证默认登录方式优先使用用户名，并在表单提交流程中依次触发
@@ -86,4 +93,31 @@ test("logs in and navigates home", async () => {
     token: "t",
   });
   expect(mockNavigate).toHaveBeenCalledWith("/");
+});
+
+test("requests email verification code when prompted", async () => {
+  /**
+   * 确保邮箱验证码按钮会触发后端接口调用，并携带正确的用途与邮箱。
+   */
+  render(
+    <MemoryRouter>
+      <Login />
+    </MemoryRouter>,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "email" }));
+  fireEvent.change(screen.getByPlaceholderText("Enter email"), {
+    target: { value: "user@example.com" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Get code" }));
+
+  await waitFor(() =>
+    expect(mockJsonRequest).toHaveBeenCalledWith(
+      API_PATHS.emailVerificationCode,
+      expect.objectContaining({
+        method: "POST",
+        body: { email: "user@example.com", purpose: "LOGIN" },
+      }),
+    ),
+  );
 });
