@@ -153,11 +153,17 @@
 }
 
 .login-options {
-  display: flex;
+  --login-option-size: 48px;
+  --login-option-gap: var(--space-2);
+
+  display: grid;
   width: 100%;
   max-width: 360px;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--login-option-size);
+  justify-content: center;
+  column-gap: var(--login-option-gap);
+  margin-bottom: var(--space-1);
 }
 
 .login-options button {
@@ -167,9 +173,9 @@
   background: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
-  padding: 12px;
-  width: 48px;
-  height: 48px;
+  padding: var(--space-2);
+  width: var(--login-option-size);
+  height: var(--login-option-size);
   cursor: pointer;
   transition:
     background 0.3s ease,
