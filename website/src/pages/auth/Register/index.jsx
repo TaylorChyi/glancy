@@ -6,12 +6,16 @@ import { useUser } from "@/context";
 import { useLanguage } from "@/context";
 import { validateAccount } from "@/utils/validators.js";
 import { useAuthFormConfig } from "../useAuthFormConfig.js";
+import { useCookieConsentStore } from "@/store";
 
 function Register() {
   const api = useApi();
   const { setUser } = useUser();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const recordLoginCookie = useCookieConsentStore(
+    (state) => state.recordLoginCookie,
+  );
 
   const handleRegister = async ({ account, password, method }) => {
     await api.jsonRequest(API_PATHS.register, {
@@ -26,6 +30,7 @@ function Register() {
       body: { account, method, password },
     });
     setUser(loginData);
+    recordLoginCookie();
     navigate("/");
   };
 

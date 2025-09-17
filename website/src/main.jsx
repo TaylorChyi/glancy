@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/ui/ErrorBoundary";
 import "./styles/index.css";
 import Loader from "./components/ui/Loader";
 import AuthWatcher from "./components/AuthWatcher";
+import CookieConsent from "./components/CookieConsent";
 import FallbackRedirect from "./components/FallbackRedirect.jsx";
 
 const App = lazy(() => import("./pages/App"));
@@ -41,6 +42,7 @@ createRoot(document.getElementById("root")).render(
         <ApiProvider>
           <LanguageProvider>
             <ThemeProvider>
+              <CookieConsent />
               <AuthWatcher />
               <ErrorBoundary>
                 <Suspense fallback={<Loader />}>
