@@ -13,6 +13,12 @@ function Favorites({ onToggle }) {
     if (onToggle) onToggle((v) => !v);
   };
 
+  const favoritesSectionClassName = [
+    styles["sidebar-section"],
+    styles["favorites-list"],
+    styles["sidebar-hoverable"],
+  ].join(" ");
+
   const favoritesLabel = t.favorites || FALLBACK_FAVORITES_LABEL;
   const favoritesIconAlt = getFavoritesIconAlt(
     favoritesLabel,
@@ -20,7 +26,7 @@ function Favorites({ onToggle }) {
   );
 
   return (
-    <div className={`${styles["sidebar-section"]} ${styles["favorites-list"]}`}>
+    <div className={favoritesSectionClassName}>
       <h3 className={styles["collection-button"]} onClick={handleClick}>
         <ThemeIcon
           name="star-solid"
