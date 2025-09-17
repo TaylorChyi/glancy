@@ -74,7 +74,7 @@ export default {
   guest: "游客",
   upgrade: "升级",
   upgradeAvailable: "升级可用",
-  profile: "自定义 Glancy",
+  profile: "自定义格律词典",
   settings: "设置",
   shortcuts: "快捷键",
   logout: "退出登录",
