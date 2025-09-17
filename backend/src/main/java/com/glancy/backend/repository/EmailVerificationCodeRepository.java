@@ -17,19 +17,24 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EmailVerificationCodeRepository extends JpaRepository<EmailVerificationCode, Long> {
     Optional<EmailVerificationCode> findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(
-            String email,
-            EmailVerificationPurpose purpose,
-            String code);
+        String email,
+        EmailVerificationPurpose purpose,
+        String code
+    );
 
     List<EmailVerificationCode> findByEmailAndPurposeAndUsedFalseAndDeletedFalse(
-            String email,
-            EmailVerificationPurpose purpose);
+        String email,
+        EmailVerificationPurpose purpose
+    );
 
     @Modifying
-    @Query("update EmailVerificationCode c set c.used = true " +
-            "where c.email = :email and c.purpose = :purpose and c.used = false and c.deleted = false and c.expiresAt < :now")
+    @Query(
+        "update EmailVerificationCode c set c.used = true " +
+        "where c.email = :email and c.purpose = :purpose and c.used = false and c.deleted = false and c.expiresAt < :now"
+    )
     int markExpiredAsUsed(
-            @Param("email") String email,
-            @Param("purpose") EmailVerificationPurpose purpose,
-            @Param("now") LocalDateTime now);
+        @Param("email") String email,
+        @Param("purpose") EmailVerificationPurpose purpose,
+        @Param("now") LocalDateTime now
+    );
 }
