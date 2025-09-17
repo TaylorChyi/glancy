@@ -54,6 +54,7 @@ function AuthForm({
   passwordPlaceholder = "Password",
   showCodeButton = () => false,
   icons = defaultIcons,
+  otherOptionsLabel,
 }) {
   const { lang, t } = useLanguage();
   const brandText = useMemo(() => getBrandText(lang), [lang]);
@@ -72,7 +73,12 @@ function AuthForm({
   );
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
-  const otherLoginOptionsLabel = t.otherLoginOptions ?? "Other login options";
+  const fallbackOtherOptionsLabel =
+    t.otherLoginOptions ?? "Other login options";
+  const trimmedOtherOptionsLabel =
+    typeof otherOptionsLabel === "string" ? otherOptionsLabel.trim() : "";
+  const resolvedOtherOptionsLabel =
+    trimmedOtherOptionsLabel || fallbackOtherOptionsLabel;
   const handleSendCode = () => {};
 
   useEffect(() => {
@@ -169,10 +175,10 @@ function AuthForm({
       <div
         className={styles.divider}
         role="separator"
-        aria-label={otherLoginOptionsLabel}
+        aria-label={resolvedOtherOptionsLabel}
       >
         <span className={styles["divider-label"]}>
-          {otherLoginOptionsLabel}
+          {resolvedOtherOptionsLabel}
         </span>
       </div>
       <div className={styles["login-options"]}>

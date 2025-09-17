@@ -50,6 +50,7 @@ function Register() {
       passwordPlaceholder={() => t.codePlaceholder}
       showCodeButton={() => true}
       validateAccount={validateAccount}
+      otherOptionsLabel={t.otherRegisterOptions}
     />
   );
 }

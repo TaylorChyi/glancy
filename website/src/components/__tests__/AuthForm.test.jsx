@@ -20,6 +20,8 @@ jest.unstable_mockModule("@/context", () => ({
       notImplementedYet: "Not implemented yet",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
+      otherLoginOptions: "Other login options",
+      otherRegisterOptions: "Other register options",
     },
   }),
 }));
@@ -84,6 +86,32 @@ describe("AuthForm", () => {
       iconRegistry["glancy-web"].light,
     );
     expect(asFragment()).toMatchSnapshot();
+  });
+
+  /**
+   * Ensures the caller can override the default separator label, enabling
+   * context-aware messaging between login and registration flows.
+   */
+  test("renders custom alternative option label when provided", () => {
+    render(
+      <MemoryRouter>
+        <AuthForm
+          title="Register"
+          switchText="Back to login?"
+          switchLink="/login"
+          onSubmit={jest.fn()}
+          placeholders={{ username: "Username" }}
+          formMethods={["username", "wechat"]}
+          methodOrder={["username", "wechat"]}
+          defaultMethod="username"
+          otherOptionsLabel="Other register options"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("separator", { name: "Other register options" }),
+    ).toBeInTheDocument();
   });
 
   /**

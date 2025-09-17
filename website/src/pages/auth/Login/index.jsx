@@ -49,6 +49,7 @@ function Login() {
       }
       showCodeButton={(m) => m !== "username"}
       validateAccount={validateAccount}
+      otherOptionsLabel={t.otherLoginOptions}
     />
   );
 }

@@ -22,4 +22,5 @@ export default {
   termsOfUse: "Terms of Use",
   privacyPolicy: "Privacy Policy",
   otherLoginOptions: "Other login options",
+  otherRegisterOptions: "Other register options",
 };
