@@ -1,6 +1,6 @@
 export default {
   loginTitle: "User Login",
-  account: "Username/Email/Phone:",
+  account: "Username / Email / Phone:",
   username: "Username:",
   password: "Password:",
   confirmPassword: "Confirm Password:",
