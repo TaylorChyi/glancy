@@ -7,6 +7,27 @@ import { useUserStore } from "@/store";
 
 /* global process */
 
+const RETRY_AFTER_FALLBACK_LABEL = "稍后";
+
+const buildRateLimitMessage = (retryAfterRaw) => {
+  if (retryAfterRaw == null) {
+    return "请求过于频繁，请稍后重试";
+  }
+
+  const numeric = Number.parseFloat(retryAfterRaw);
+  if (Number.isFinite(numeric)) {
+    const seconds = Math.max(0, Math.ceil(numeric));
+    return `请求过于频繁，请在 ${seconds} 秒后重试`;
+  }
+
+  const label = String(retryAfterRaw).trim();
+  if (!label || label === RETRY_AFTER_FALLBACK_LABEL) {
+    return "请求过于频繁，请稍后重试";
+  }
+
+  return `请求过于频繁，请在 ${label} 后重试`;
+};
+
 /**
  * Hook that encapsulates TTS playback logic with cache-first strategy.
  * It first tries a shortcut request which may return 204 when cache misses.
@@ -138,10 +159,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
               break;
             case 429: {
               const retry = err.headers?.get("Retry-After");
-              setError({
-                code: 429,
-                message: `请求过于频繁，请在${retry || "稍后"}秒后重试`,
-              });
+              setError({ code: 429, message: buildRateLimitMessage(retry) });
               break;
             }
             case 424:

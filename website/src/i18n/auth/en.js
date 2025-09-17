@@ -1,6 +1,6 @@
 export default {
   loginTitle: "User Login",
-  account: "Username/Email/Phone:",
+  account: "Username / Email / Phone:",
   username: "Username:",
   password: "Password:",
   confirmPassword: "Confirm Password:",
@@ -15,7 +15,7 @@ export default {
   passwordOrCodePlaceholder: "Password / code",
   codePlaceholder: "Code",
   codeButtonLabel: "Get code",
-  codeButtonCountdown: "{count}s",
+  codeButtonCountdown: "{count} s",
   continueButton: "Continue",
   invalidAccount: "Invalid account",
   notImplementedYet: "Not implemented yet",
