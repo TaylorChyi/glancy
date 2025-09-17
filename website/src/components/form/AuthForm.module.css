@@ -164,9 +164,11 @@
   max-width: 360px;
   grid-auto-flow: column;
   grid-auto-columns: var(--login-option-size);
-  justify-content: space-between;
+  justify-content: center;
+  justify-items: center;
   column-gap: var(--login-option-gap);
   padding-inline: clamp(var(--space-1), 2vw, var(--space-3));
+  margin-inline: auto;
   margin-bottom: var(--space-2);
 }
 
