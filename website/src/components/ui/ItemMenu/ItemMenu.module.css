@@ -40,9 +40,10 @@
 }
 
 .menu button:focus-visible {
-  outline: 2px solid var(--accent-color);
+  outline: 2px solid var(--brand-outline);
   outline-offset: 2px;
   background: var(--color-overlay-inverse);
+  box-shadow: 0 0 0 4px var(--brand-glow);
 }
 
 .delete-btn {

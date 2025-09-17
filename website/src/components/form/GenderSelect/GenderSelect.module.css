@@ -1,6 +1,6 @@
-@import url('@/theme/colors.css');
-@import url('@/theme/variables.css');
-@import url('@/theme/spacing.css');
+@import url("@/theme/colors.css");
+@import url("@/theme/variables.css");
+@import url("@/theme/spacing.css");
 
 .group {
   display: flex;
@@ -28,7 +28,8 @@
 }
 
 .option input:checked + span {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
-  color: var(--sys-text-light);
+  background: var(--brand-primary);
+  border-color: var(--brand-outline);
+  color: var(--brand-primary-contrast);
+  box-shadow: 0 4px 12px var(--brand-glow);
 }
