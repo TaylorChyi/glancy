@@ -16,6 +16,7 @@ jest.unstable_mockModule("@/context", () => ({
       loginButton: "Log in",
       registerButton: "Sign up",
       or: "OR",
+      otherLoginOptions: "Other login options",
       notImplementedYet: "Not implemented yet",
       termsOfUse: "Terms of Use",
       privacyPolicy: "Privacy Policy",
@@ -82,6 +83,62 @@ describe("AuthForm", () => {
       iconRegistry["glancy-web"].light,
     );
     expect(asFragment()).toMatchSnapshot();
+  });
+
+  /**
+   * Ensures the username method is selected by default whenever it is
+   * part of the available methods, even if other methods precede it or
+   * are flagged as preferred defaults.
+   */
+  test("prioritizes username method when available", () => {
+    render(
+      <MemoryRouter>
+        <AuthForm
+          title="Login"
+          switchText="Have account?"
+          switchLink="/register"
+          onSubmit={jest.fn()}
+          placeholders={{
+            username: "Username",
+            email: "Email",
+            phone: "Phone",
+          }}
+          formMethods={["email", "username", "phone"]}
+          methodOrder={["username", "email", "phone"]}
+          defaultMethod="email"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByPlaceholderText("Username")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Email")).not.toBeInTheDocument();
+  });
+
+  /**
+   * Validates that when the username method is absent, the component
+   * respects the configured default while still falling back to the
+   * first available method if the preferred default is unsupported.
+   */
+  test("falls back to first method when username is unavailable", () => {
+    render(
+      <MemoryRouter>
+        <AuthForm
+          title="Login"
+          switchText="Have account?"
+          switchLink="/register"
+          onSubmit={jest.fn()}
+          placeholders={{
+            email: "Email",
+            phone: "Phone",
+          }}
+          formMethods={["email", "phone"]}
+          methodOrder={["email", "phone"]}
+          defaultMethod="username"
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });
 
   /**

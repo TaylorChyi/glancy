@@ -22,13 +22,17 @@ const defaultIcons = {
   google: "google",
 };
 
-const resolveInitialMethod = (methods) => {
+const resolveInitialMethod = (methods, preferredDefault) => {
   if (!Array.isArray(methods) || methods.length === 0) {
-    return null;
+    return preferredDefault ?? null;
   }
 
   if (methods.includes(USERNAME_METHOD)) {
     return USERNAME_METHOD;
+  }
+
+  if (preferredDefault && methods.includes(preferredDefault)) {
+    return preferredDefault;
   }
 
   return methods[0] ?? null;
@@ -42,6 +46,7 @@ function AuthForm({
   placeholders = {},
   formMethods = [],
   methodOrder = [],
+  defaultMethod = null,
   validateAccount = () => true,
   passwordPlaceholder = "Password",
   showCodeButton = () => false,
@@ -49,7 +54,9 @@ function AuthForm({
 }) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-  const [method, setMethod] = useState(() => resolveInitialMethod(formMethods));
+  const [method, setMethod] = useState(() =>
+    resolveInitialMethod(formMethods, defaultMethod),
+  );
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
   const { t } = useLanguage();
@@ -59,11 +66,11 @@ function AuthForm({
   useEffect(() => {
     if (formMethods.includes(method)) return;
 
-    const preferredMethod = resolveInitialMethod(formMethods);
+    const preferredMethod = resolveInitialMethod(formMethods, defaultMethod);
     if (preferredMethod !== method) {
       setMethod(preferredMethod);
     }
-  }, [formMethods, method]);
+  }, [formMethods, method, defaultMethod]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
