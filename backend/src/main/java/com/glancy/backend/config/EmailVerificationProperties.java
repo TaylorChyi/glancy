@@ -17,6 +17,9 @@ public class EmailVerificationProperties {
     private int codeLength = 6;
     private Duration ttl = Duration.ofMinutes(10);
     private Map<EmailVerificationPurpose, Template> templates = new EnumMap<>(EmailVerificationPurpose.class);
+    private final Sender sender = new Sender();
+    private final Compliance compliance = new Compliance();
+    private final Deliverability deliverability = new Deliverability();
 
     @PostConstruct
     void validate() {
@@ -76,6 +79,18 @@ public class EmailVerificationProperties {
         this.templates = templates;
     }
 
+    public Sender getSender() {
+        return sender;
+    }
+
+    public Compliance getCompliance() {
+        return compliance;
+    }
+
+    public Deliverability getDeliverability() {
+        return deliverability;
+    }
+
     /**
      * Template details for a single verification purpose.
      */
@@ -98,6 +113,117 @@ public class EmailVerificationProperties {
 
         public void setBody(String body) {
             this.body = body;
+        }
+    }
+
+    /**
+     * Sender customization that augments the bare mailbox address.
+     */
+    public static class Sender {
+
+        private String displayName;
+        private String replyTo;
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public void setDisplayName(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getReplyTo() {
+            return replyTo;
+        }
+
+        public void setReplyTo(String replyTo) {
+            this.replyTo = replyTo;
+        }
+    }
+
+    /**
+     * Compliance block appended to the verification mail for deliverability and policy clarity.
+     */
+    public static class Compliance {
+
+        private String companyName;
+        private String companyAddress;
+        private String supportEmail;
+        private String website;
+        private String unsubscribeUrl;
+        private String unsubscribeMailto;
+
+        public String getCompanyName() {
+            return companyName;
+        }
+
+        public void setCompanyName(String companyName) {
+            this.companyName = companyName;
+        }
+
+        public String getCompanyAddress() {
+            return companyAddress;
+        }
+
+        public void setCompanyAddress(String companyAddress) {
+            this.companyAddress = companyAddress;
+        }
+
+        public String getSupportEmail() {
+            return supportEmail;
+        }
+
+        public void setSupportEmail(String supportEmail) {
+            this.supportEmail = supportEmail;
+        }
+
+        public String getWebsite() {
+            return website;
+        }
+
+        public void setWebsite(String website) {
+            this.website = website;
+        }
+
+        public String getUnsubscribeUrl() {
+            return unsubscribeUrl;
+        }
+
+        public void setUnsubscribeUrl(String unsubscribeUrl) {
+            this.unsubscribeUrl = unsubscribeUrl;
+        }
+
+        public String getUnsubscribeMailto() {
+            return unsubscribeMailto;
+        }
+
+        public void setUnsubscribeMailto(String unsubscribeMailto) {
+            this.unsubscribeMailto = unsubscribeMailto;
+        }
+    }
+
+    /**
+     * Additional metadata that helps mailbox providers evaluate authenticity of transactional mails.
+     */
+    public static class Deliverability {
+
+        private String feedbackIdPrefix;
+        private String entityRefIdPrefix;
+
+        public String getFeedbackIdPrefix() {
+            return feedbackIdPrefix;
+        }
+
+        public void setFeedbackIdPrefix(String feedbackIdPrefix) {
+            this.feedbackIdPrefix = feedbackIdPrefix;
+        }
+
+        public String getEntityRefIdPrefix() {
+            return entityRefIdPrefix;
+        }
+
+        public void setEntityRefIdPrefix(String entityRefIdPrefix) {
+            this.entityRefIdPrefix = entityRefIdPrefix;
         }
     }
 }

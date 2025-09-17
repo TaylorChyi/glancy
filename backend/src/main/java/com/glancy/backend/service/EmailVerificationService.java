@@ -5,6 +5,7 @@ import com.glancy.backend.entity.EmailVerificationCode;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.EmailVerificationCodeRepository;
+import com.glancy.backend.service.email.VerificationEmailComposer;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.security.SecureRandom;
@@ -13,8 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class EmailVerificationService {
     private final EmailVerificationCodeRepository repository;
     private final EmailVerificationProperties properties;
     private final JavaMailSender mailSender;
+    private final VerificationEmailComposer emailComposer;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
@@ -35,11 +37,13 @@ public class EmailVerificationService {
         EmailVerificationCodeRepository repository,
         EmailVerificationProperties properties,
         JavaMailSender mailSender,
+        VerificationEmailComposer emailComposer,
         Clock clock
     ) {
         this.repository = repository;
         this.properties = properties;
         this.mailSender = mailSender;
+        this.emailComposer = emailComposer;
         this.clock = clock;
     }
 
@@ -137,10 +141,6 @@ public class EmailVerificationService {
     }
 
     private void dispatchEmail(String email, EmailVerificationPurpose purpose, String code, LocalDateTime expiresAt) {
-        EmailVerificationProperties.Template template = properties.getTemplates().get(purpose);
-        if (template == null) {
-            throw new IllegalStateException("Missing email template configuration for purpose " + purpose);
-        }
         MimeMessage message = mailSender.createMimeMessage();
         try {
             log.info(
@@ -149,21 +149,12 @@ public class EmailVerificationService {
                 purpose,
                 expiresAt
             );
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(properties.getFrom());
-            helper.setTo(email);
-            helper.setSubject(template.getSubject());
-            helper.setText(renderBody(template.getBody(), code), false);
+            emailComposer.populate(message, email, purpose, code, expiresAt);
             mailSender.send(message);
             log.info("Dispatched verification email to {} for purpose {} with expiry {}", email, purpose, expiresAt);
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to compose verification email", e);
             throw new IllegalStateException("邮件发送失败，请稍后重试");
         }
-    }
-
-    private String renderBody(String body, String code) {
-        long ttlMinutes = properties.getTtl().toMinutes();
-        return body.replace("{{code}}", code).replace("{{ttlMinutes}}", String.valueOf(ttlMinutes));
     }
 }
