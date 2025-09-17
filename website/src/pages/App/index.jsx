@@ -15,12 +15,13 @@ import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import MarkdownStream from "@/components/ui/MarkdownStream";
+import Button from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
 
 function App() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
   const { t, lang, setLang } = useLanguage();
-  const placeholder = t.searchPlaceholder;
   const [loading, setLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
@@ -38,6 +39,10 @@ function App() {
   const navigate = useNavigate();
   const streamWord = useStreamWord();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
+
+  const focusInput = () => {
+    inputRef.current?.focus();
+  };
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -246,11 +251,22 @@ function App() {
               favorites={favorites}
               onSelect={handleSelectFavorite}
               onUnfavorite={handleUnfavorite}
-              emptyMessage={t.noFavorites}
+              emptyTitle={t.favoritesEmptyTitle}
+              emptyDescription={t.favoritesEmptyDescription}
+              emptyActionLabel={t.favoritesEmptyAction}
+              onEmptyAction={() => {
+                setShowFavorites(false);
+                focusInput();
+              }}
               unfavoriteLabel={t.favoriteRemove}
             />
           ) : showHistory ? (
-            <HistoryDisplay />
+            <HistoryDisplay
+              onEmptyAction={() => {
+                setShowHistory(false);
+                focusInput();
+              }}
+            />
           ) : loading ? (
             <MarkdownStream text={streamText || "..."} />
           ) : entry ? (
@@ -262,9 +278,16 @@ function App() {
           ) : streamText ? (
             <MarkdownStream text={streamText} />
           ) : (
-            <div className="display-content">
-              <div className="display-term">{placeholder}</div>
-            </div>
+            <EmptyState
+              iconName="target"
+              title={t.searchEmptyTitle}
+              description={t.searchEmptyDescription}
+              actions={
+                <Button type="button" onClick={focusInput}>
+                  {t.searchEmptyAction}
+                </Button>
+              }
+            />
           )}
         </div>
       </Layout>

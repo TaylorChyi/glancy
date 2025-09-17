@@ -5,6 +5,7 @@ export { default as ItemMenu } from "./ui/ItemMenu";
 export { default as FallbackRedirect } from "./FallbackRedirect.jsx";
 export { default as Avatar } from "./ui/Avatar";
 export { default as DictionaryEntry } from "./ui/DictionaryEntry";
+export { default as EmptyState } from "./ui/EmptyState";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
 export { default as HistoryDisplay } from "./ui/HistoryDisplay";
 export { default as ICP } from "./ui/ICP";
