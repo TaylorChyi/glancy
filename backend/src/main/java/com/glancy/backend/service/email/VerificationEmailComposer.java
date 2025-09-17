@@ -27,8 +27,10 @@ import org.springframework.web.util.HtmlUtils;
 @Component
 public class VerificationEmailComposer {
 
-    private static final DateTimeFormatter EXPIRES_AT_FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.SIMPLIFIED_CHINESE);
+    private static final DateTimeFormatter EXPIRES_AT_FORMATTER = DateTimeFormatter.ofPattern(
+        "yyyy-MM-dd HH:mm",
+        Locale.SIMPLIFIED_CHINESE
+    );
 
     private final EmailVerificationProperties properties;
 
@@ -135,9 +137,7 @@ public class VerificationEmailComposer {
         builder.append("若您并未发起该请求，请忽略本邮件或立即联系我们的客服团队，以免账号被盗用。");
         String supportEmail = properties.getCompliance().getSupportEmail();
         if (StringUtils.hasText(supportEmail)) {
-            builder
-                .append(" 如需帮助，请联系：")
-                .append(supportEmail);
+            builder.append(" 如需帮助，请联系：").append(supportEmail);
         }
         return builder.toString();
     }
@@ -184,7 +184,8 @@ public class VerificationEmailComposer {
         return "如需停止接收此类通知，可通过以下方式退订：" + String.join("；", channels);
     }
 
-    private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose) throws MessagingException {
+    private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)
+        throws MessagingException {
         message.setSentDate(new Date());
         message.setHeader("Auto-Submitted", "auto-generated");
         message.setHeader("X-Auto-Response-Suppress", "All");
@@ -200,17 +201,13 @@ public class VerificationEmailComposer {
         String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
         if (StringUtils.hasText(feedbackIdPrefix)) {
             String companySlug = resolveCompanyName().replaceAll("\\s+", "-").toLowerCase(Locale.ROOT);
-            String feedbackId =
-                feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
+            String feedbackId = feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
             message.setHeader("Feedback-ID", feedbackId);
         }
 
         String entityRefIdPrefix = properties.getDeliverability().getEntityRefIdPrefix();
         if (StringUtils.hasText(entityRefIdPrefix)) {
-            message.setHeader(
-                "X-Entity-Ref-ID",
-                entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT)
-            );
+            message.setHeader("X-Entity-Ref-ID", entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT));
         }
     }
 
