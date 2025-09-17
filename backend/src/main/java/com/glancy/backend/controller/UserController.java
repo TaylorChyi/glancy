@@ -52,9 +52,7 @@ public class UserController {
      */
     @PostMapping("/email/verification-code")
     public ResponseEntity<Void> sendVerificationCode(@Valid @RequestBody EmailVerificationCodeRequest req) {
-        log.info(
-            "Email verification code request received for purpose {}", req.purpose()
-        );
+        log.info("Email verification code request received for purpose {}", req.purpose());
         userService.sendVerificationCode(req);
         log.info(
             "Email verification code request processed for purpose {} with response status {}",

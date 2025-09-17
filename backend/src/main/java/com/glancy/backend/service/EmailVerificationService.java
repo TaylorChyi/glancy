@@ -50,12 +50,7 @@ public class EmailVerificationService {
     public void issueCode(String email, EmailVerificationPurpose purpose) {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
-        log.info(
-            "Starting verification code issuance for {} with purpose {} at {}",
-            normalizedEmail,
-            purpose,
-            now
-        );
+        log.info("Starting verification code issuance for {} with purpose {} at {}", normalizedEmail, purpose, now);
         invalidateExisting(normalizedEmail, purpose, now);
 
         EmailVerificationCode code = new EmailVerificationCode();
@@ -81,12 +76,7 @@ public class EmailVerificationService {
     public void consumeCode(String email, String code, EmailVerificationPurpose purpose) {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
-        log.info(
-            "Consuming verification code for {} with purpose {} at {}",
-            normalizedEmail,
-            purpose,
-            now
-        );
+        log.info("Consuming verification code for {} with purpose {} at {}", normalizedEmail, purpose, now);
         repository.markExpiredAsUsed(normalizedEmail, purpose, now);
         EmailVerificationCode latest = repository
             .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(normalizedEmail, purpose, code)
@@ -125,12 +115,7 @@ public class EmailVerificationService {
             log.info("No active verification codes to invalidate for {} purpose {}", email, purpose);
             return;
         }
-        log.info(
-            "Marking {} active verification codes as used for {} purpose {}",
-            active.size(),
-            email,
-            purpose
-        );
+        log.info("Marking {} active verification codes as used for {} purpose {}", active.size(), email, purpose);
         active.forEach(code -> code.setUsed(true));
         repository.saveAll(active);
     }
@@ -170,12 +155,7 @@ public class EmailVerificationService {
             helper.setSubject(template.getSubject());
             helper.setText(renderBody(template.getBody(), code), false);
             mailSender.send(message);
-            log.info(
-                "Dispatched verification email to {} for purpose {} with expiry {}",
-                email,
-                purpose,
-                expiresAt
-            );
+            log.info("Dispatched verification email to {} for purpose {} with expiry {}", email, purpose, expiresAt);
         } catch (MessagingException e) {
             log.error("Failed to compose verification email", e);
             throw new IllegalStateException("邮件发送失败，请稍后重试");

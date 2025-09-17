@@ -109,7 +109,10 @@ public class UserService {
                 userRepository
                     .findByEmailAndDeletedFalse(normalizedEmail)
                     .ifPresent(u -> {
-                        log.warn("Attempt to request registration code for already registered email {}", normalizedEmail);
+                        log.warn(
+                            "Attempt to request registration code for already registered email {}",
+                            normalizedEmail
+                        );
                         throw new DuplicateResourceException("邮箱已被使用");
                     });
             } else if (purpose == EmailVerificationPurpose.LOGIN) {
