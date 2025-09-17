@@ -20,12 +20,7 @@ public class EmailDeliveryFailureClassifier {
 
     public EmailDeliveryFailure classify(MailException exception) {
         if (exception instanceof MailAuthenticationException authException) {
-            return new EmailDeliveryFailure(
-                true,
-                EmailSuppressionStatus.MANUAL,
-                "AUTH",
-                safeMessage(authException)
-            );
+            return new EmailDeliveryFailure(true, EmailSuppressionStatus.MANUAL, "AUTH", safeMessage(authException));
         }
         if (exception instanceof MailSendException sendException) {
             return extractFromMailSendException(sendException);
@@ -34,14 +29,12 @@ public class EmailDeliveryFailureClassifier {
     }
 
     private EmailDeliveryFailure extractFromMailSendException(MailSendException sendException) {
-        Optional<Exception> nested = sendException
-            .getFailedMessages()
-            .values()
-            .stream()
-            .findFirst();
+        Optional<Exception> nested = sendException.getFailedMessages().values().stream().findFirst();
         String diagnostic = nested.map(this::safeMessage).orElseGet(() -> safeMessage(sendException));
         boolean permanent = isPermanentFailure(diagnostic);
-        EmailSuppressionStatus status = permanent ? EmailSuppressionStatus.HARD_BOUNCE : EmailSuppressionStatus.SOFT_BOUNCE;
+        EmailSuppressionStatus status = permanent
+            ? EmailSuppressionStatus.HARD_BOUNCE
+            : EmailSuppressionStatus.SOFT_BOUNCE;
         String smtpCode = extractSmtpCode(diagnostic);
         return new EmailDeliveryFailure(permanent, status, smtpCode, diagnostic);
     }

@@ -63,7 +63,12 @@ public class EmailAudienceService {
     }
 
     @Transactional
-    public void recordDeliveryFailure(String email, EmailStream stream, EmailDeliveryFailure failure, LocalDateTime timestamp) {
+    public void recordDeliveryFailure(
+        String email,
+        EmailStream stream,
+        EmailDeliveryFailure failure,
+        LocalDateTime timestamp
+    ) {
         Optional<EmailAudience> optional = repository.findByEmailAndStream(normalize(email), stream);
         if (optional.isEmpty()) {
             return;

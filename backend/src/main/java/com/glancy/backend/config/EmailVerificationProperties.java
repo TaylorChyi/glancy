@@ -49,7 +49,10 @@ public class EmailVerificationProperties {
                 );
             }
         }
-        if (!StringUtils.hasText(compliance.getUnsubscribeMailto()) && !StringUtils.hasText(compliance.getUnsubscribeUrl())) {
+        if (
+            !StringUtils.hasText(compliance.getUnsubscribeMailto()) &&
+            !StringUtils.hasText(compliance.getUnsubscribeUrl())
+        ) {
             throw new IllegalStateException("mail.verification.compliance.unsubscribe contact must be configured");
         }
         audiencePolicy.validate();
@@ -326,7 +329,9 @@ public class EmailVerificationProperties {
 
         void validate() {
             if (!StringUtils.hasText(reverseDnsDomain)) {
-                throw new IllegalStateException("mail.verification.infrastructure.reverse-dns-domain must be configured");
+                throw new IllegalStateException(
+                    "mail.verification.infrastructure.reverse-dns-domain must be configured"
+                );
             }
             if (!StringUtils.hasText(spfRecord)) {
                 throw new IllegalStateException("mail.verification.infrastructure.spf-record must be configured");
@@ -389,13 +394,19 @@ public class EmailVerificationProperties {
 
         void validate() {
             if (inactivityThreshold == null || inactivityThreshold.isZero() || inactivityThreshold.isNegative()) {
-                throw new IllegalStateException("mail.verification.audience-policy.inactivity-threshold must be positive");
+                throw new IllegalStateException(
+                    "mail.verification.audience-policy.inactivity-threshold must be positive"
+                );
             }
             if (softBounceSuppressionThreshold < 1) {
-                throw new IllegalStateException("mail.verification.audience-policy.soft-bounce-suppression-threshold must be >= 1");
+                throw new IllegalStateException(
+                    "mail.verification.audience-policy.soft-bounce-suppression-threshold must be >= 1"
+                );
             }
             if (hardBounceSuppressionThreshold < 1) {
-                throw new IllegalStateException("mail.verification.audience-policy.hard-bounce-suppression-threshold must be >= 1");
+                throw new IllegalStateException(
+                    "mail.verification.audience-policy.hard-bounce-suppression-threshold must be >= 1"
+                );
             }
         }
     }
