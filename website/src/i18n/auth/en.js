@@ -14,6 +14,8 @@ export default {
   passwordPlaceholder: "Password",
   passwordOrCodePlaceholder: "Password / code",
   codePlaceholder: "Code",
+  codeButtonLabel: "Get code",
+  codeButtonCountdown: "{count}s",
   continueButton: "Continue",
   invalidAccount: "Invalid account",
   notImplementedYet: "Not implemented yet",
