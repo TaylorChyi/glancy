@@ -1,6 +1,6 @@
 # DTO 层军规
 
-> 本文件适用于 `backend/src/main/java/com/glancy/backend/dto/` 目录及其子目录，补充并强化仓库通用规范。
+> 本文件适用于 `backend/src/main/java/com/glancy/backend/dto` 目录及其子目录，补充并强化仓库通用规范。
 
 - **不可变模型**：DTO 必须保持不可变特性，优先使用 `record`；若因兼容性无法采用 `record`，需所有字段声明为 `private final` 并通过构造器一次性完成赋值。
 - **职责内聚**：DTO 内严禁出现任何业务逻辑或推导计算，所有转换、装配、格式化逻辑统一下沉到 Mapper 或专用转换服务中执行。
