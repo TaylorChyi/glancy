@@ -16,6 +16,11 @@ export default {
   codePlaceholder: "Code",
   codeButtonLabel: "Get code",
   codeButtonCountdown: "{count} s",
+  codeRequestSuccess: "Verification code sent. Please check your email.",
+  codeRequestFailed:
+    "Unable to send verification code. Please try again later.",
+  codeRequestInvalidMethod:
+    "This sign-in method does not support verification codes yet.",
   continueButton: "Continue",
   invalidAccount: "Invalid account",
   notImplementedYet: "Not implemented yet",

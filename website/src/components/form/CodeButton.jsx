@@ -18,6 +18,7 @@ const normalizeCountdownLabel = (label) =>
 function CodeButton({ onClick, countdownDuration = 60 }) {
   const [count, setCount] = useState(0);
   const [deadline, setDeadline] = useState(null);
+  const [isRequesting, setIsRequesting] = useState(false);
   const { t } = useLanguage();
 
   const buttonIdleLabel = t.codeButtonLabel ?? DEFAULT_IDLE_LABEL;
@@ -61,22 +62,45 @@ function CodeButton({ onClick, countdownDuration = 60 }) {
     return () => clearInterval(id);
   }, [deadline]);
 
-  const handleClick = () => {
-    if (typeof onClick === "function") {
-      onClick();
+  const handleClick = async () => {
+    if (isRequesting) {
+      return;
     }
-    if (normalizedDuration > 0) {
-      const target = Date.now() + normalizedDuration * 1000;
-      setCount(normalizedDuration);
-      setDeadline(target);
+
+    if (typeof onClick !== "function") {
+      return;
     }
+
+    let shouldStartCountdown = true;
+
+    try {
+      setIsRequesting(true);
+      const result = await onClick();
+      if (result === false) {
+        shouldStartCountdown = false;
+      }
+    } catch (error) {
+      console.error(error);
+      shouldStartCountdown = false;
+    } finally {
+      setIsRequesting(false);
+    }
+
+    if (!shouldStartCountdown || normalizedDuration <= 0) {
+      return;
+    }
+
+    const target = Date.now() + normalizedDuration * 1000;
+    setCount(normalizedDuration);
+    setDeadline(target);
   };
 
   return (
     <button
       type="button"
       className={styles["code-btn"]}
-      disabled={isCountingDown}
+      disabled={isCountingDown || isRequesting}
+      aria-busy={isRequesting}
       onClick={handleClick}
     >
       {isCountingDown ? countdownLabel : buttonIdleLabel}

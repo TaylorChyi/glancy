@@ -55,6 +55,7 @@ function AuthForm({
   showCodeButton = () => false,
   icons = defaultIcons,
   otherOptionsLabel,
+  onRequestCode,
 }) {
   const { lang, t } = useLanguage();
   const brandText = useMemo(() => getBrandText(lang), [lang]);
@@ -79,7 +80,51 @@ function AuthForm({
     typeof otherOptionsLabel === "string" ? otherOptionsLabel.trim() : "";
   const resolvedOtherOptionsLabel =
     trimmedOtherOptionsLabel || fallbackOtherOptionsLabel;
-  const handleSendCode = () => {};
+  const handleSendCode = async () => {
+    const sanitizedAccount =
+      typeof account === "string" ? account.trim() : account;
+
+    if (sanitizedAccount !== account) {
+      setAccount(sanitizedAccount);
+    }
+
+    if (!validateAccount(sanitizedAccount, method)) {
+      setNoticeMsg(t.invalidAccount || "Invalid account");
+      setShowNotice(true);
+      return false;
+    }
+
+    if (typeof onRequestCode !== "function") {
+      const fallbackMessage =
+        t.codeRequestInvalidMethod ||
+        t.notImplementedYet ||
+        "Verification code request is unavailable";
+      setNoticeMsg(fallbackMessage);
+      setShowNotice(true);
+      return false;
+    }
+
+    setNoticeMsg("");
+    setShowNotice(false);
+
+    try {
+      await onRequestCode({ account: sanitizedAccount, method });
+      const successMessage =
+        t.codeRequestSuccess ||
+        "Verification code sent. Please check your inbox.";
+      setNoticeMsg(successMessage);
+      setShowNotice(true);
+      return true;
+    } catch (err) {
+      const errorMessage =
+        (typeof err?.message === "string" && err.message.trim()) ||
+        t.codeRequestFailed ||
+        "Failed to send verification code";
+      setNoticeMsg(errorMessage);
+      setShowNotice(true);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const preferredMethod = resolveInitialMethod(

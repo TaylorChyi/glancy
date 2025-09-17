@@ -22,6 +22,10 @@ jest.unstable_mockModule("@/context", () => ({
       privacyPolicy: "Privacy Policy",
       otherLoginOptions: "Other login options",
       otherRegisterOptions: "Other register options",
+      codeButtonLabel: "Get code",
+      codeRequestSuccess: "Verification code sent. Please check your inbox.",
+      codeRequestFailed: "Failed to send verification code",
+      codeRequestInvalidMethod: "Unavailable",
     },
   }),
 }));
@@ -111,6 +115,49 @@ describe("AuthForm", () => {
 
     expect(
       screen.getByRole("separator", { name: "Other register options" }),
+    ).toBeInTheDocument();
+  });
+
+  /**
+   * Verifies that requesting a verification code triggers the supplied
+   * handler and surfaces the success message to the user.
+   */
+  test("requests verification code for email method", async () => {
+    const handleRequestCode = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <AuthForm
+          title="Login"
+          switchText="Have account?"
+          switchLink="/register"
+          onSubmit={jest.fn()}
+          placeholders={{ email: "Email" }}
+          formMethods={["email"]}
+          methodOrder={["email"]}
+          defaultMethod="email"
+          showCodeButton={() => true}
+          onRequestCode={handleRequestCode}
+        />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Get code" }));
+
+    await waitFor(() =>
+      expect(handleRequestCode).toHaveBeenCalledWith({
+        account: "user@example.com",
+        method: "email",
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Verification code sent. Please check your inbox.",
+      ),
     ).toBeInTheDocument();
   });
 
