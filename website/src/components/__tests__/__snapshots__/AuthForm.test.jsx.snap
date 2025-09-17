@@ -6,7 +6,7 @@ exports[`AuthForm submits valid credentials 1`] = `
     class="auth-page"
   >
     <img
-      alt="glancy-web"
+      alt="Glancy"
       class="auth-logo"
       src="/assets/glancy-web-light.svg"
     />
@@ -29,7 +29,7 @@ exports[`AuthForm submits valid credentials 1`] = `
         value="alice"
       />
       <div
-        class="password-row"
+        class="password-row-single"
       >
         <div
           class="wrapper"

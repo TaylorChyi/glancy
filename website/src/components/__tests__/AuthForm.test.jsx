@@ -10,6 +10,7 @@ jest.unstable_mockModule("@/context", () => ({
   useLocale: () => ({ locale: "en-US" }),
   useApiContext: () => ({ request: async () => {} }),
   useLanguage: () => ({
+    lang: "en",
     t: {
       continueButton: "Continue",
       invalidAccount: "Invalid account",
@@ -78,7 +79,7 @@ describe("AuthForm", () => {
         method: "username",
       }),
     );
-    expect(screen.getByAltText("glancy-web")).toHaveAttribute(
+    expect(screen.getByAltText("Glancy")).toHaveAttribute(
       "src",
       iconRegistry["glancy-web"].light,
     );

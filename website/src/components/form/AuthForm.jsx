@@ -10,6 +10,7 @@ import ThemeIcon from "@/components/ui/Icon";
 import ICP from "@/components/ui/ICP";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useLanguage } from "@/context";
+import { getBrandText } from "@/utils";
 
 const USERNAME_METHOD = "username";
 
@@ -54,7 +55,8 @@ function AuthForm({
   showCodeButton = () => false,
   icons = defaultIcons,
 }) {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
+  const brandText = useMemo(() => getBrandText(lang), [lang]);
   const availableFormMethods = useMemo(
     () => (Array.isArray(formMethods) ? formMethods : []),
     [formMethods],
@@ -146,8 +148,12 @@ function AuthForm({
 
   return (
     <div className={styles["auth-page"]}>
-      <ThemeIcon name="glancy-web" className={styles["auth-logo"]} />
-      <div className={styles["auth-brand"]}>Glancy</div>
+      <ThemeIcon
+        name="glancy-web"
+        alt={brandText}
+        className={styles["auth-logo"]}
+      />
+      <div className={styles["auth-brand"]}>{brandText}</div>
       <MultiLineText as="h1" className={styles["auth-title"]} text={title} />
       {renderForm()}
       <div className={styles["auth-switch"]}>
