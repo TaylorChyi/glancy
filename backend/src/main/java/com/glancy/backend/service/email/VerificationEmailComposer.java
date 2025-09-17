@@ -58,6 +58,7 @@ public class VerificationEmailComposer {
         helper.setPriority(1);
 
         applyComplianceHeaders(message, purpose);
+        applyArcHeaders(message);
     }
 
     private EmailVerificationProperties.Template resolveTemplate(EmailVerificationPurpose purpose) {
@@ -209,6 +210,16 @@ public class VerificationEmailComposer {
         if (StringUtils.hasText(entityRefIdPrefix)) {
             message.setHeader("X-Entity-Ref-ID", entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT));
         }
+    }
+
+    private void applyArcHeaders(MimeMessage message) throws MessagingException {
+        EmailVerificationProperties.Infrastructure infrastructure = properties.getInfrastructure();
+        if (!infrastructure.isArcSealEnabled()) {
+            return;
+        }
+        message.setHeader("ARC-Authentication-Results", infrastructure.getArcAuthenticationResults());
+        message.setHeader("ARC-Message-Signature", infrastructure.getArcMessageSignature());
+        message.setHeader("ARC-Seal", infrastructure.getArcSeal());
     }
 
     private String buildListUnsubscribeHeader() {
