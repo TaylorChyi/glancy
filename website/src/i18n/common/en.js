@@ -106,4 +106,7 @@ export default {
     "You can revisit this choice whenever you need. We only use cookies to secure and refine your experience.",
   cookieConsentAccept: "Allow cookies",
   cookieConsentDecline: "Maybe later",
+  playWordAudio: "Play pronunciation",
+  playSentenceAudio: "Play example audio",
+  favoriteRemove: "Remove from favorites",
 };

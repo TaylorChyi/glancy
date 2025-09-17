@@ -247,6 +247,7 @@ function App() {
               onSelect={handleSelectFavorite}
               onUnfavorite={handleUnfavorite}
               emptyMessage={t.noFavorites}
+              unfavoriteLabel={t.favoriteRemove}
             />
           ) : showHistory ? (
             <HistoryDisplay />
