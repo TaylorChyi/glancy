@@ -32,6 +32,18 @@ export default {
   searchHistory: "History",
   noFavorites: "No favorites yet",
   noHistory: "No history",
+  favoritesEmptyTitle: "Curate your first favorite",
+  favoritesEmptyDescription:
+    "Tap the star on any search result to build your personal lexicon.",
+  favoritesEmptyAction: "Return to search",
+  historyEmptyTitle: "Your story starts here",
+  historyEmptyDescription:
+    "Recent lookups will settle here for quick revisits once you begin exploring.",
+  historyEmptyAction: "Back to discovery",
+  searchEmptyTitle: "Awaiting your next curiosity",
+  searchEmptyDescription:
+    "Enter a word, phrase, or sentence to let Glancy compose tailored insights.",
+  searchEmptyAction: "Focus search",
   noDefinition: "No definition",
   clearHistory: "Clear History",
   notifications: "Notifications",

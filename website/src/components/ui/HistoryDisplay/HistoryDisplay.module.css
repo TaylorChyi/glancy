@@ -1,22 +1,46 @@
-.history-grid-display {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  max-width: 800px;
+.container {
+  width: min(720px, 100%);
+  max-height: 420px;
+  overflow-y: auto;
   margin: 0 auto;
-  padding: 20px 0;
+  padding: var(--space-2, 8px) 0;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  box-shadow: 0 20px 48px -36px var(--shadow-color);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--app-bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-muted) 70%, transparent) 100%
+  );
 }
 
-.history-grid-display li {
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2, 8px);
+  margin: 0;
+  padding: var(--space-3, 16px);
+}
+
+.grid li {
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  transition: background-color 0.2s ease;
 }
 
-.history-grid-display li:hover {
+.grid li:hover {
   background-color: var(--color-overlay-weak);
 }
 
-:root[data-theme='dark'] .history-grid-display li:hover {
+:root[data-theme="dark"] .grid li:hover {
   background-color: var(--color-overlay-inverse);
+}
+
+@supports not (color: color-mix(in srgb, white 50%, black)) {
+  .container {
+    background: var(--app-bg);
+    border: 1px solid var(--border-color);
+  }
 }
