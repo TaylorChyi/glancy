@@ -7,12 +7,16 @@ import { useLanguage } from "@/context";
 import { validateAccount } from "@/utils/validators.js";
 import { useAuthFormConfig } from "../useAuthFormConfig.js";
 import { hydrateClientSessionState } from "@/session/sessionLifecycle.js";
+import { useCookieConsentStore } from "@/store";
 
 function Login() {
   const { setUser } = useUser();
   const api = useApi();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const recordLoginCookie = useCookieConsentStore(
+    (state) => state.recordLoginCookie,
+  );
 
   const handleLogin = async ({ account, password, method }) => {
     const data = await api.jsonRequest(API_PATHS.login, {
@@ -20,6 +24,7 @@ function Login() {
       body: { account, password, method },
     });
     setUser(data);
+    recordLoginCookie();
     await hydrateClientSessionState(data);
     navigate("/");
   };
