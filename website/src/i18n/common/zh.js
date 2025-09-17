@@ -79,7 +79,7 @@ export default {
   shortcuts: "快捷键",
   logout: "退出登录",
   logoutConfirmTitle: "确定要退出登录吗？",
-  logoutConfirmMessage: "以 {email} 身份退出 ChatGPT？",
+  logoutConfirmMessage: "以 {email} 身份退出格律词典？",
   share: "分享",
   report: "举报",
   shortcutsTitle: "键盘快捷键",
