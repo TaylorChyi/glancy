@@ -79,7 +79,7 @@ export default {
   shortcuts: "Shortcuts",
   logout: "Log out",
   logoutConfirmTitle: "Are you sure you want to log out?",
-  logoutConfirmMessage: "Log out of ChatGPT as {email}?",
+  logoutConfirmMessage: "Log out of Glancy as {email}?",
   share: "Share",
   report: "Report",
   shortcutsTitle: "Keyboard Shortcuts",
