@@ -14,6 +14,8 @@ export default {
   passwordPlaceholder: "密码",
   passwordOrCodePlaceholder: "密码/验证码",
   codePlaceholder: "验证码",
+  codeButtonLabel: "获取验证码",
+  codeButtonCountdown: "{count}秒",
   continueButton: "继续",
   invalidAccount: "账号无效",
   notImplementedYet: "尚未实现",
