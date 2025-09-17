@@ -347,12 +347,14 @@ public class EmailVerificationProperties {
             if (arcSealEnabled) {
                 if (!StringUtils.hasText(arcAuthenticationResults)) {
                     throw new IllegalStateException(
-                        "mail.verification.infrastructure.arc-authentication-results must be configured when arcSealEnabled=true"
+                        "mail.verification.infrastructure.arc-authentication-results "
+                        + "must be configured when arcSealEnabled=true"
                     );
                 }
                 if (!StringUtils.hasText(arcMessageSignature)) {
                     throw new IllegalStateException(
-                        "mail.verification.infrastructure.arc-message-signature must be configured when arcSealEnabled=true"
+                        "mail.verification.infrastructure.arc-message-signature " 
+                        + "must be configured when arcSealEnabled=true"
                     );
                 }
                 if (!StringUtils.hasText(arcSeal)) {
@@ -458,7 +460,8 @@ public class EmailVerificationProperties {
             }
             if (StringUtils.hasText(marketingDomain) && marketingDomain.equalsIgnoreCase(transactionalDomain)) {
                 throw new IllegalStateException(
-                    "mail.verification.streams.marketing-domain must differ from transactional-domain for proper segmentation"
+                    "mail.verification.streams.marketing-domain " 
+                    + "must differ from transactional-domain for proper segmentation"
                 );
             }
             if (StringUtils.hasText(from)) {
