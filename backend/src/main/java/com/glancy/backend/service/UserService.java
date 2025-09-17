@@ -102,19 +102,30 @@ public class UserService {
     public void sendVerificationCode(EmailVerificationCodeRequest request) {
         String normalizedEmail = normalizeEmail(request.email());
         EmailVerificationPurpose purpose = request.purpose();
-        log.info("Issuing {} verification code to {}", purpose, normalizedEmail);
-        if (purpose == EmailVerificationPurpose.REGISTER) {
-            userRepository
-                .findByEmailAndDeletedFalse(normalizedEmail)
-                .ifPresent(u -> {
-                    throw new DuplicateResourceException("邮箱已被使用");
-                });
-        } else if (purpose == EmailVerificationPurpose.LOGIN) {
-            userRepository
-                .findByEmailAndDeletedFalse(normalizedEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("用户不存在或已注销"));
+        try (EmailVerificationLogContext ignored = EmailVerificationLogContext.create(normalizedEmail, purpose)) {
+            log.info("Email verification issuance flow started");
+            if (purpose == EmailVerificationPurpose.REGISTER) {
+                log.info("Validating registration eligibility for email {}", normalizedEmail);
+                userRepository
+                    .findByEmailAndDeletedFalse(normalizedEmail)
+                    .ifPresent(u -> {
+                        log.warn("Attempt to request registration code for already registered email {}", normalizedEmail);
+                        throw new DuplicateResourceException("邮箱已被使用");
+                    });
+            } else if (purpose == EmailVerificationPurpose.LOGIN) {
+                log.info("Validating login eligibility for email {}", normalizedEmail);
+                userRepository
+                    .findByEmailAndDeletedFalse(normalizedEmail)
+                    .orElseThrow(() -> {
+                        log.warn("Login verification code requested for non-existent email {}", normalizedEmail);
+                        return new ResourceNotFoundException("用户不存在或已注销");
+                    });
+            } else {
+                log.info("Processing email verification for custom purpose {}", purpose);
+            }
+            emailVerificationService.issueCode(normalizedEmail, purpose);
+            log.info("Email verification issuance flow completed");
         }
-        emailVerificationService.issueCode(normalizedEmail, purpose);
     }
 
     /**
