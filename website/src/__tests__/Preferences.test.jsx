@@ -9,6 +9,7 @@ const mockSetTheme = jest.fn();
 const mockTtsVoices = jest.fn().mockResolvedValue([]);
 const mockT = {
   prefTitle: "Preferences",
+  prefDescription: "Description",
   prefLanguage: "Language",
   prefSearchLanguage: "Search Language",
   prefVoiceEn: "English Voice",
@@ -44,6 +45,10 @@ jest.unstable_mockModule("@/hooks", () => ({
     ref: { current: null },
   }),
   useMediaQuery: () => false,
+}));
+jest.unstable_mockModule("@/components", () => ({
+  __esModule: true,
+  VoiceSelector: ({ lang }) => <div data-testid={`voice-selector-${lang}`} />,
 }));
 jest.unstable_mockModule("@/store", () => ({
   useUserStore: (fn) => fn({ user: { plan: "free" } }),
