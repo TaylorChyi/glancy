@@ -50,6 +50,12 @@ public class EmailVerificationService {
     public void issueCode(String email, EmailVerificationPurpose purpose) {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
+        log.info(
+            "Starting verification code issuance for {} with purpose {} at {}",
+            normalizedEmail,
+            purpose,
+            now
+        );
         invalidateExisting(normalizedEmail, purpose, now);
 
         EmailVerificationCode code = new EmailVerificationCode();
@@ -58,6 +64,12 @@ public class EmailVerificationService {
         code.setCode(generateCode());
         code.setExpiresAt(now.plus(properties.getTtl()));
         repository.save(code);
+        log.info(
+            "Persisted verification code entity {} for {} expiring at {}",
+            code.getId(),
+            normalizedEmail,
+            code.getExpiresAt()
+        );
 
         dispatchEmail(normalizedEmail, purpose, code.getCode(), code.getExpiresAt());
     }
@@ -69,6 +81,12 @@ public class EmailVerificationService {
     public void consumeCode(String email, String code, EmailVerificationPurpose purpose) {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
+        log.info(
+            "Consuming verification code for {} with purpose {} at {}",
+            normalizedEmail,
+            purpose,
+            now
+        );
         repository.markExpiredAsUsed(normalizedEmail, purpose, now);
         EmailVerificationCode latest = repository
             .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(normalizedEmail, purpose, code)
@@ -77,11 +95,24 @@ public class EmailVerificationService {
         if (Boolean.TRUE.equals(latest.getUsed()) || latest.getExpiresAt().isBefore(now)) {
             latest.setUsed(true);
             repository.save(latest);
+            log.warn(
+                "Verification code {} for {} purpose {} already used or expired at {}",
+                latest.getId(),
+                normalizedEmail,
+                purpose,
+                now
+            );
             throw new InvalidRequestException("验证码无效或已过期");
         }
 
         latest.setUsed(true);
         repository.save(latest);
+        log.info(
+            "Verification code {} for {} purpose {} consumed successfully",
+            latest.getId(),
+            normalizedEmail,
+            purpose
+        );
     }
 
     private void invalidateExisting(String email, EmailVerificationPurpose purpose, LocalDateTime now) {
@@ -91,8 +122,15 @@ public class EmailVerificationService {
             purpose
         );
         if (active.isEmpty()) {
+            log.info("No active verification codes to invalidate for {} purpose {}", email, purpose);
             return;
         }
+        log.info(
+            "Marking {} active verification codes as used for {} purpose {}",
+            active.size(),
+            email,
+            purpose
+        );
         active.forEach(code -> code.setUsed(true));
         repository.saveAll(active);
     }
@@ -120,14 +158,24 @@ public class EmailVerificationService {
         }
         MimeMessage message = mailSender.createMimeMessage();
         try {
-            log.info("Preparing to dispatch {} verification email to {} expiring at {}", purpose, email, expiresAt);
+            log.info(
+                "Preparing verification email payload for {} purpose {} expiring at {}",
+                email,
+                purpose,
+                expiresAt
+            );
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(properties.getFrom());
             helper.setTo(email);
             helper.setSubject(template.getSubject());
             helper.setText(renderBody(template.getBody(), code), false);
             mailSender.send(message);
-            log.info("Dispatched {} verification code to {} with expiry {}", purpose, email, expiresAt);
+            log.info(
+                "Dispatched verification email to {} for purpose {} with expiry {}",
+                email,
+                purpose,
+                expiresAt
+            );
         } catch (MessagingException e) {
             log.error("Failed to compose verification email", e);
             throw new IllegalStateException("邮件发送失败，请稍后重试");
