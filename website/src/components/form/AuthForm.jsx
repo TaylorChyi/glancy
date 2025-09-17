@@ -119,7 +119,11 @@ function AuthForm({
     return (
       <form onSubmit={handleSubmit} className={styles["auth-form"]}>
         {method === "phone" ? (
-          <PhoneInput value={account} onChange={setAccount} />
+          <PhoneInput
+            value={account}
+            onChange={setAccount}
+            placeholder={placeholders.phone}
+          />
         ) : (
           <input
             className={styles["auth-input"]}
