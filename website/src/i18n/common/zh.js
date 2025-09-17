@@ -106,4 +106,7 @@ export default {
     "您可以随时重新调整选择，我们仅为安全与体验优化使用 Cookie。",
   cookieConsentAccept: "同意并继续",
   cookieConsentDecline: "暂不授权",
+  playWordAudio: "播放发音",
+  playSentenceAudio: "播放例句发音",
+  favoriteRemove: "取消收藏",
 };
