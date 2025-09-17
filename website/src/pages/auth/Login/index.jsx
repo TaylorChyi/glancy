@@ -24,9 +24,10 @@ function Login() {
     navigate("/");
   };
 
-  const { placeholders, formMethods, methodOrder } = useAuthFormConfig({
-    includeUsername: true,
-  });
+  const { placeholders, formMethods, methodOrder, defaultMethod } =
+    useAuthFormConfig({
+      includeUsername: true,
+    });
 
   return (
     <AuthForm
@@ -37,6 +38,7 @@ function Login() {
       placeholders={placeholders}
       formMethods={formMethods}
       methodOrder={methodOrder}
+      defaultMethod={defaultMethod}
       passwordPlaceholder={(m) =>
         m === "username" ? t.passwordPlaceholder : t.passwordOrCodePlaceholder
       }

@@ -22,16 +22,22 @@ const defaultIcons = {
   google: "google",
 };
 
-const resolveInitialMethod = (methods) => {
-  if (!Array.isArray(methods) || methods.length === 0) {
-    return null;
+const resolveInitialMethod = (methods, preferredMethod = null) => {
+  const availableMethods = Array.isArray(methods) ? methods : [];
+
+  if (availableMethods.length === 0) {
+    return preferredMethod ?? null;
   }
 
-  if (methods.includes(USERNAME_METHOD)) {
+  if (availableMethods.includes(USERNAME_METHOD)) {
     return USERNAME_METHOD;
   }
 
-  return methods[0] ?? null;
+  if (preferredMethod && availableMethods.includes(preferredMethod)) {
+    return preferredMethod;
+  }
+
+  return availableMethods[0] ?? preferredMethod ?? null;
 };
 
 function AuthForm({
@@ -42,6 +48,7 @@ function AuthForm({
   placeholders = {},
   formMethods = [],
   methodOrder = [],
+  defaultMethod = null,
   validateAccount = () => true,
   passwordPlaceholder = "Password",
   showCodeButton = () => false,
@@ -49,7 +56,9 @@ function AuthForm({
 }) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
-  const [method, setMethod] = useState(() => resolveInitialMethod(formMethods));
+  const [method, setMethod] = useState(() =>
+    resolveInitialMethod(formMethods, defaultMethod),
+  );
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
   const { t } = useLanguage();
@@ -57,13 +66,11 @@ function AuthForm({
   const handleSendCode = () => {};
 
   useEffect(() => {
-    if (formMethods.includes(method)) return;
-
-    const preferredMethod = resolveInitialMethod(formMethods);
+    const preferredMethod = resolveInitialMethod(formMethods, defaultMethod);
     if (preferredMethod !== method) {
       setMethod(preferredMethod);
     }
-  }, [formMethods, method]);
+  }, [formMethods, defaultMethod, method]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,7 +89,9 @@ function AuthForm({
   };
 
   const renderForm = () => {
-    if (!formMethods.includes(method)) return null;
+    if (!Array.isArray(formMethods) || !formMethods.includes(method)) {
+      return null;
+    }
     const passHolder =
       typeof passwordPlaceholder === "function"
         ? passwordPlaceholder(method)
@@ -141,7 +150,7 @@ function AuthForm({
         </span>
       </div>
       <div className={styles["login-options"]}>
-        {methodOrder
+        {(Array.isArray(methodOrder) ? methodOrder : [])
           .filter((m) => m !== method)
           .map((m) => {
             const iconName = icons[m];

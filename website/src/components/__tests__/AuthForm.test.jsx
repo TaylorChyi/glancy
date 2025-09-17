@@ -58,8 +58,9 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={handleSubmit}
           placeholders={{ username: "Username" }}
-          formMethods={["username", "wechat"]}
+          formMethods={["wechat", "username"]}
           methodOrder={["username", "wechat"]}
+          defaultMethod="username"
         />
       </MemoryRouter>,
     );
@@ -99,8 +100,9 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={handleSubmit}
           placeholders={{ username: "Username" }}
-          formMethods={["username", "wechat"]}
+          formMethods={["wechat", "username"]}
           methodOrder={["username", "wechat"]}
+          defaultMethod="username"
           validateAccount={validateAccount}
         />
       </MemoryRouter>,
@@ -125,12 +127,35 @@ describe("AuthForm", () => {
           switchLink="/register"
           onSubmit={jest.fn()}
           placeholders={{ username: "Username" }}
-          formMethods={["username", "wechat"]}
+          formMethods={["wechat", "username"]}
           methodOrder={["username", "wechat"]}
+          defaultMethod="username"
         />
       </MemoryRouter>,
     );
     const title = container.querySelector("h1");
     expect(title.innerHTML).toBe("Welcome<br>Back");
+  });
+
+  /**
+   * Validates that a provided default method is respected when username
+   * authentication is unavailable, preventing regressions for legacy flows.
+   */
+  test("falls back to configured default when username is unavailable", () => {
+    render(
+      <MemoryRouter>
+        <AuthForm
+          title="Login"
+          switchText="Have account?"
+          switchLink="/register"
+          onSubmit={jest.fn()}
+          placeholders={{ email: "Email" }}
+          formMethods={["phone", "email"]}
+          methodOrder={["phone", "email"]}
+          defaultMethod="email"
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });
 });

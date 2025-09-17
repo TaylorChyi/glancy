@@ -68,10 +68,14 @@ exports[`AuthForm submits valid credentials 1`] = `
       </a>
     </div>
     <div
+      aria-label="Other login options"
       class="divider"
+      role="separator"
     >
-      <span>
-        OR
+      <span
+        class="divider-label"
+      >
+        Other login options
       </span>
     </div>
     <div

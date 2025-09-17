@@ -24,5 +24,7 @@ export function useAuthFormConfig({ includeUsername = false } = {}) {
     ? [USERNAME_METHOD, ...baseMethodOrder]
     : baseMethodOrder;
 
-  return { placeholders, formMethods, methodOrder };
+  const defaultMethod = formMethods[0] ?? null;
+
+  return { placeholders, formMethods, methodOrder, defaultMethod };
 }

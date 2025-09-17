@@ -1,35 +1,36 @@
-import { useNavigate } from 'react-router-dom'
-import { AuthForm } from '@/components'
-import { API_PATHS } from '@/config/api.js'
-import { useApi } from '@/hooks'
-import { useUser } from '@/context'
-import { useLanguage } from '@/context'
-import { validateAccount } from '@/utils/validators.js'
-import { useAuthFormConfig } from '../useAuthFormConfig.js'
+import { useNavigate } from "react-router-dom";
+import { AuthForm } from "@/components";
+import { API_PATHS } from "@/config/api.js";
+import { useApi } from "@/hooks";
+import { useUser } from "@/context";
+import { useLanguage } from "@/context";
+import { validateAccount } from "@/utils/validators.js";
+import { useAuthFormConfig } from "../useAuthFormConfig.js";
 
 function Register() {
-  const api = useApi()
-  const { setUser } = useUser()
-  const navigate = useNavigate()
-  const { t } = useLanguage()
+  const api = useApi();
+  const { setUser } = useUser();
+  const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleRegister = async ({ account, password, method }) => {
     await api.jsonRequest(API_PATHS.register, {
-      method: 'POST',
+      method: "POST",
       body: {
         [method]: account,
-        code: password
-      }
-    })
+        code: password,
+      },
+    });
     const loginData = await api.jsonRequest(API_PATHS.login, {
-      method: 'POST',
-      body: { account, method, password }
-    })
-    setUser(loginData)
-    navigate('/')
-  }
+      method: "POST",
+      body: { account, method, password },
+    });
+    setUser(loginData);
+    navigate("/");
+  };
 
-  const { placeholders, formMethods, methodOrder } = useAuthFormConfig()
+  const { placeholders, formMethods, methodOrder, defaultMethod } =
+    useAuthFormConfig();
 
   return (
     <AuthForm
@@ -40,11 +41,12 @@ function Register() {
       placeholders={placeholders}
       formMethods={formMethods}
       methodOrder={methodOrder}
+      defaultMethod={defaultMethod}
       passwordPlaceholder={() => t.codePlaceholder}
       showCodeButton={() => true}
       validateAccount={validateAccount}
     />
-  )
+  );
 }
 
-export default Register
+export default Register;
