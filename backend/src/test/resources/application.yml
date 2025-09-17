@@ -46,3 +46,44 @@ tts:
     api-url: https://openspeech.bytedance.com/api/v1/tts
     # Interval for proactive health checks during tests.
     health-interval: PT1M
+
+mail:
+  verification:
+    from: no-reply@test.glancy.xyz
+    sender:
+      display-name: "Glancy 测试服务"
+    compliance:
+      company-name: "Glancy 测试"
+      company-address: "测试地址"
+      support-email: support@test.glancy.xyz
+      website: https://test.glancy.xyz
+      unsubscribe-url: https://test.glancy.xyz/email/unsubscribe
+      unsubscribe-mailto: unsubscribe@test.glancy.xyz
+    deliverability:
+      feedback-id-prefix: test-txn
+      entity-ref-id-prefix: test-verification
+    infrastructure:
+      reverse-dns-domain: test.glancy.xyz
+      spf-record: "v=spf1 include:spf.test.glancy.xyz ~all"
+      dkim-selector: default
+      dmarc-policy: "v=DMARC1; p=none; rua=mailto:dmarc@test.glancy.xyz"
+      arc-seal-enabled: false
+      arc-authentication-results: ""
+      arc-message-signature: ""
+      arc-seal: ""
+    audience-policy:
+      inactivity-threshold: P90D
+      soft-bounce-suppression-threshold: 2
+      hard-bounce-suppression-threshold: 1
+    streams:
+      transactional-domain: test.glancy.xyz
+      transactional-ip-pool: test-ip-txn
+      marketing-domain: marketing.test.glancy.xyz
+      marketing-ip-pool: test-ip-mkt
+    templates:
+      register:
+        subject: "测试注册验证码"
+        body: "注册验证码 {{code}}"
+      login:
+        subject: "测试登录验证码"
+        body: "登录验证码 {{code}}"

@@ -100,6 +100,24 @@ mail:
     deliverability:
       feedback-id-prefix: glancy-txn
       entity-ref-id-prefix: glancy-verification
+    infrastructure:
+      reverse-dns-domain: mail.glancy.xyz
+      spf-record: "v=spf1 include:spf.mail.glancy.xyz ~all"
+      dkim-selector: default
+      dmarc-policy: "v=DMARC1; p=quarantine; rua=mailto:dmarc@mail.glancy.xyz"
+      arc-seal-enabled: true
+      arc-authentication-results: "i=1; mx.glancy.xyz; dkim=pass header.i=@mail.glancy.xyz; spf=pass smtp.mailfrom=no-reply@mail.glancy.xyz"
+      arc-message-signature: "i=1; a=rsa-sha256; c=relaxed/relaxed; d=mail.glancy.xyz; s=arc; bh=hash; b=signature"
+      arc-seal: "i=1; s=arc; d=mail.glancy.xyz; cv=none; b=seal"
+    audience-policy:
+      inactivity-threshold: P180D
+      soft-bounce-suppression-threshold: 3
+      hard-bounce-suppression-threshold: 1
+    streams:
+      transactional-domain: mail.glancy.xyz
+      transactional-ip-pool: ip-pool-txn
+      marketing-domain: marketing.glancy.xyz
+      marketing-ip-pool: ip-pool-mkt
     code-length: 6
     ttl: PT10M
     templates:

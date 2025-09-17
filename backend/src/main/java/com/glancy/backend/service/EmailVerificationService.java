@@ -5,6 +5,7 @@ import com.glancy.backend.entity.EmailVerificationCode;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.EmailVerificationCodeRepository;
+import com.glancy.backend.service.email.EmailDeliveryService;
 import com.glancy.backend.service.email.VerificationEmailComposer;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,21 +28,21 @@ public class EmailVerificationService {
 
     private final EmailVerificationCodeRepository repository;
     private final EmailVerificationProperties properties;
-    private final JavaMailSender mailSender;
     private final VerificationEmailComposer emailComposer;
+    private final EmailDeliveryService emailDeliveryService;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
     public EmailVerificationService(
         EmailVerificationCodeRepository repository,
         EmailVerificationProperties properties,
-        JavaMailSender mailSender,
+        EmailDeliveryService emailDeliveryService,
         VerificationEmailComposer emailComposer,
         Clock clock
     ) {
         this.repository = repository;
         this.properties = properties;
-        this.mailSender = mailSender;
+        this.emailDeliveryService = emailDeliveryService;
         this.emailComposer = emailComposer;
         this.clock = clock;
     }
@@ -141,7 +141,7 @@ public class EmailVerificationService {
     }
 
     private void dispatchEmail(String email, EmailVerificationPurpose purpose, String code, LocalDateTime expiresAt) {
-        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessage message = emailDeliveryService.createMessage();
         try {
             log.info(
                 "Preparing verification email payload for {} purpose {} expiring at {}",
@@ -150,7 +150,7 @@ public class EmailVerificationService {
                 expiresAt
             );
             emailComposer.populate(message, email, purpose, code, expiresAt);
-            mailSender.send(message);
+            emailDeliveryService.sendTransactional(message, email);
             log.info("Dispatched verification email to {} for purpose {} with expiry {}", email, purpose, expiresAt);
         } catch (MessagingException | MailException e) {
             log.error("Failed to compose verification email", e);
