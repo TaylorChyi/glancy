@@ -87,6 +87,19 @@ tts:
 mail:
   verification:
     from: no-reply@mail.glancy.xyz
+    sender:
+      display-name: "Glancy 官方服务团队"
+      reply-to: support@mail.glancy.xyz
+    compliance:
+      company-name: "Glancy 科技有限公司"
+      company-address: "北京市朝阳区示例路 100 号 18 层"
+      support-email: support@mail.glancy.xyz
+      website: https://www.glancy.xyz
+      unsubscribe-url: https://www.glancy.xyz/email/unsubscribe
+      unsubscribe-mailto: unsubscribe@mail.glancy.xyz
+    deliverability:
+      feedback-id-prefix: glancy-txn
+      entity-ref-id-prefix: glancy-verification
     code-length: 6
     ttl: PT10M
     templates:
