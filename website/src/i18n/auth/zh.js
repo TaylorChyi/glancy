@@ -22,4 +22,5 @@ export default {
   termsOfUse: "使用条款",
   privacyPolicy: "隐私政策",
   otherLoginOptions: "其他登录选项",
+  otherRegisterOptions: "其他注册选项",
 };
