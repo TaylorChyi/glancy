@@ -97,6 +97,8 @@ function AuthForm({
         ? passwordPlaceholder(method)
         : passwordPlaceholder;
     const hasCodeButton = showCodeButton(method);
+    const passwordRowClassName =
+      styles[hasCodeButton ? "password-row" : "password-row-single"];
 
     return (
       <form onSubmit={handleSubmit} className={styles["auth-form"]}>
@@ -110,7 +112,7 @@ function AuthForm({
             onChange={(e) => setAccount(e.target.value)}
           />
         )}
-        <div className={styles["password-row"]}>
+        <div className={passwordRowClassName}>
           <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}

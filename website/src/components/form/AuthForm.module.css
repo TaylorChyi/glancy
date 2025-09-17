@@ -177,19 +177,29 @@
     box-shadow 0.3s ease;
 }
 
-.password-row {
-  --auth-code-button-width: clamp(128px, 32%, 152px);
-
-  display: grid;
+.password-row,
+.password-row-single {
   width: 100%;
   max-width: 360px;
-  grid-template-columns: minmax(0, 1fr) var(--auth-code-button-width);
-  column-gap: var(--space-2);
   align-items: stretch;
   margin-bottom: 20px;
 }
 
-.password-row .auth-input {
+.password-row {
+  --auth-code-button-width: clamp(128px, 32%, 152px);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--auth-code-button-width);
+  column-gap: var(--space-2);
+}
+
+.password-row-single {
+  display: flex;
+  flex-direction: column;
+}
+
+.password-row .auth-input,
+.password-row-single .auth-input {
   margin-bottom: 0;
   width: 100%;
   min-width: 0;
