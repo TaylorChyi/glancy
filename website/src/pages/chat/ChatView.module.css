@@ -20,11 +20,13 @@
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 4px var(--shadow-color);
   line-height: 1.5;
+  color: var(--color-text);
 }
 
 .user {
   align-self: flex-end;
   background: var(--chat-bubble-user-bg);
+  color: var(--brand-primary-contrast);
 }
 
 .assistant {
