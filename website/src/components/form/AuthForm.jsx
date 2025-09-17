@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CodeButton from "./CodeButton.jsx";
 import PhoneInput from "./PhoneInput.jsx";
@@ -54,23 +54,37 @@ function AuthForm({
   showCodeButton = () => false,
   icons = defaultIcons,
 }) {
+  const { t } = useLanguage();
+  const availableFormMethods = useMemo(
+    () => (Array.isArray(formMethods) ? formMethods : []),
+    [formMethods],
+  );
+  const orderedMethods = useMemo(
+    () => (Array.isArray(methodOrder) ? methodOrder : []),
+    [methodOrder],
+  );
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [method, setMethod] = useState(() =>
-    resolveInitialMethod(formMethods, defaultMethod),
+    resolveInitialMethod(availableFormMethods, defaultMethod),
   );
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
-  const { t } = useLanguage();
   const otherLoginOptionsLabel = t.otherLoginOptions ?? "Other login options";
   const handleSendCode = () => {};
 
   useEffect(() => {
-    const preferredMethod = resolveInitialMethod(formMethods, defaultMethod);
-    if (preferredMethod !== method) {
-      setMethod(preferredMethod);
-    }
-  }, [formMethods, defaultMethod, method]);
+    const preferredMethod = resolveInitialMethod(
+      availableFormMethods,
+      defaultMethod,
+    );
+    setMethod((currentMethod) => {
+      if (availableFormMethods.includes(currentMethod)) {
+        return currentMethod;
+      }
+      return preferredMethod;
+    });
+  }, [availableFormMethods, defaultMethod]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,7 +103,7 @@ function AuthForm({
   };
 
   const renderForm = () => {
-    if (!Array.isArray(formMethods) || !formMethods.includes(method)) {
+    if (!availableFormMethods.includes(method)) {
       return null;
     }
     const passHolder =
@@ -152,7 +166,7 @@ function AuthForm({
         </span>
       </div>
       <div className={styles["login-options"]}>
-        {(Array.isArray(methodOrder) ? methodOrder : [])
+        {orderedMethods
           .filter((m) => m !== method)
           .map((m) => {
             const iconName = icons[m];
@@ -161,7 +175,7 @@ function AuthForm({
                 key={m}
                 type="button"
                 onClick={() => {
-                  if (formMethods.includes(m)) {
+                  if (availableFormMethods.includes(m)) {
                     setMethod(m);
                   } else {
                     setNoticeMsg(t.notImplementedYet || "Not implemented yet");
