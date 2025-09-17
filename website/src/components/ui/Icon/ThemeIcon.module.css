@@ -1,0 +1,65 @@
+@import url("@/theme/colors.css");
+@import url("@/theme/variables.css");
+
+.fallback {
+  --icon-fallback-size: 24px;
+  --icon-fallback-bg: color-mix(in srgb, var(--surface-light) 92%, transparent);
+  --icon-fallback-color: var(--text-primary-light);
+  --icon-fallback-ring: color-mix(in srgb, var(--neutral-300) 70%, transparent);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-fallback-size);
+  height: var(--icon-fallback-size);
+  border-radius: var(--radius-xl);
+  background: var(--icon-fallback-bg);
+  color: var(--icon-fallback-color);
+  font-family: Inter, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  font-size: calc(var(--icon-fallback-size) * 0.46);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px var(--icon-fallback-ring);
+  line-height: 1;
+}
+
+.fallback[data-variant="apple"] {
+  letter-spacing: 0.04em;
+}
+
+.fallback[data-variant="wechat"] {
+  font-size: calc(var(--icon-fallback-size) * 0.42);
+}
+
+.fallback[data-variant="google"] {
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .fallback {
+  --icon-fallback-bg: color-mix(in srgb, var(--surface-dark) 82%, transparent);
+  --icon-fallback-color: var(--text-inverse-light);
+  --icon-fallback-ring: color-mix(in srgb, var(--neutral-700) 55%, transparent);
+}
+
+:root[data-theme="system"] .fallback {
+  --icon-fallback-bg: color-mix(in srgb, var(--surface-light) 92%, transparent);
+  --icon-fallback-color: var(--text-primary-light);
+  --icon-fallback-ring: color-mix(in srgb, var(--neutral-300) 70%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .fallback {
+    --icon-fallback-bg: color-mix(
+      in srgb,
+      var(--surface-dark) 82%,
+      transparent
+    );
+    --icon-fallback-color: var(--text-inverse-light);
+    --icon-fallback-ring: color-mix(
+      in srgb,
+      var(--neutral-700) 55%,
+      transparent
+    );
+  }
+}

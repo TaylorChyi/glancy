@@ -70,4 +70,14 @@ describe("ThemeIcon", () => {
       iconRegistry.wechat.single,
     );
   });
+
+  /**
+   * Provides a graceful typographic badge whenever the requested icon
+   * is absent from the registry, ensuring the UI never collapses.
+   */
+  test("renders typographic fallback when icon registry entry is missing", () => {
+    render(<ThemeIcon name="google" alt="google" />);
+    const fallback = screen.getByRole("img", { name: "google" });
+    expect(fallback).toHaveTextContent("G");
+  });
 });
