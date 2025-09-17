@@ -128,3 +128,18 @@
 :root[data-theme="dark"] .collection-button:hover {
   background-color: var(--color-overlay-inverse);
 }
+
+.sidebar-hoverable {
+  border-radius: var(--radius-sm, 4px);
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.sidebar-hoverable:where(:hover, :focus-within) {
+  background-color: var(--color-overlay-weak);
+}
+
+:root[data-theme="dark"] .sidebar-hoverable:where(:hover, :focus-within) {
+  background-color: var(--color-overlay-inverse);
+}
