@@ -70,10 +70,9 @@ public class EmailVerificationService {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
         repository.markExpiredAsUsed(normalizedEmail, purpose, now);
-        EmailVerificationCode latest =
-            repository
-                .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(normalizedEmail, purpose, code)
-                .orElseThrow(() -> new InvalidRequestException("验证码无效或已过期"));
+        EmailVerificationCode latest = repository
+            .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(normalizedEmail, purpose, code)
+            .orElseThrow(() -> new InvalidRequestException("验证码无效或已过期"));
 
         if (Boolean.TRUE.equals(latest.getUsed()) || latest.getExpiresAt().isBefore(now)) {
             latest.setUsed(true);
@@ -87,7 +86,10 @@ public class EmailVerificationService {
 
     private void invalidateExisting(String email, EmailVerificationPurpose purpose, LocalDateTime now) {
         repository.markExpiredAsUsed(email, purpose, now);
-        List<EmailVerificationCode> active = repository.findByEmailAndPurposeAndUsedFalseAndDeletedFalse(email, purpose);
+        List<EmailVerificationCode> active = repository.findByEmailAndPurposeAndUsedFalseAndDeletedFalse(
+            email,
+            purpose
+        );
         if (active.isEmpty()) {
             return;
         }

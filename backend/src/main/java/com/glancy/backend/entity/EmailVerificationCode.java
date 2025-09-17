@@ -19,7 +19,7 @@ import lombok.Setter;
     name = "email_verification_codes",
     indexes = {
         @Index(name = "idx_email_purpose_active", columnList = "email, purpose, expiresAt"),
-        @Index(name = "idx_email_created", columnList = "email, createdAt")
+        @Index(name = "idx_email_created", columnList = "email, createdAt"),
     }
 )
 @Getter

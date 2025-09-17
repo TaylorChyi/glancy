@@ -5,5 +5,5 @@ package com.glancy.backend.entity;
  */
 public enum EmailVerificationPurpose {
     REGISTER,
-    LOGIN
+    LOGIN,
 }

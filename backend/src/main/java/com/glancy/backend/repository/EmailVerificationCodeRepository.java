@@ -16,14 +16,16 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface EmailVerificationCodeRepository extends JpaRepository<EmailVerificationCode, Long> {
-
     Optional<EmailVerificationCode> findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(
         String email,
         EmailVerificationPurpose purpose,
         String code
     );
 
-    List<EmailVerificationCode> findByEmailAndPurposeAndUsedFalseAndDeletedFalse(String email, EmailVerificationPurpose purpose);
+    List<EmailVerificationCode> findByEmailAndPurposeAndUsedFalseAndDeletedFalse(
+        String email,
+        EmailVerificationPurpose purpose
+    );
 
     @Modifying
     @Query(
