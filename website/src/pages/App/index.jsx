@@ -17,6 +17,7 @@ import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import MarkdownStream from "@/components/ui/MarkdownStream";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
+import { extractMarkdownPreview } from "@/utils";
 
 function App() {
   const [text, setText] = useState("");
@@ -110,6 +111,7 @@ function App() {
     let detected;
     try {
       let acc = "";
+      let preview = "";
       let parsedEntry = null;
       for await (const { chunk, language } of streamWord({
         user,
@@ -118,7 +120,9 @@ function App() {
       })) {
         if (!detected) detected = language;
         acc += chunk;
-        setStreamText((prev) => prev + chunk);
+        const derived = extractMarkdownPreview(acc);
+        preview = derived === null ? preview : derived;
+        setStreamText(preview);
         try {
           parsedEntry = JSON.parse(acc);
           setEntry(parsedEntry);
@@ -127,7 +131,7 @@ function App() {
         }
       }
       if (!parsedEntry) {
-        setFinalText(acc);
+        setFinalText(preview);
       }
       addHistory(input, user, detected);
       console.info("[App] search complete", input);
@@ -165,6 +169,7 @@ function App() {
     setFinalText("");
     try {
       let acc = "";
+      let preview = "";
       let parsedEntry = null;
       for await (const { chunk } of streamWord({
         user,
@@ -172,7 +177,9 @@ function App() {
         signal: controller.signal,
       })) {
         acc += chunk;
-        setStreamText((prev) => prev + chunk);
+        const derived = extractMarkdownPreview(acc);
+        preview = derived === null ? preview : derived;
+        setStreamText(preview);
         try {
           parsedEntry = JSON.parse(acc);
           setEntry(parsedEntry);
@@ -181,7 +188,7 @@ function App() {
         }
       }
       if (!parsedEntry) {
-        setFinalText(acc);
+        setFinalText(preview);
       }
       console.info("[App] search complete", term);
     } catch (error) {

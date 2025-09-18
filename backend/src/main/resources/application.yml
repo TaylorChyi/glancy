@@ -107,7 +107,7 @@ mail:
             - me.com
             - mac.com
           list-id: "Glancy 事务通知 <mail.glancy.xyz>"
-          complaints-mailto: postmaster@mail.glancy.xyz
+          complaints-mailto: complaints@mail.glancy.xyz
           enforce-list-unsubscribe: true
     infrastructure:
       reverse-dns-domain: mail.glancy.xyz

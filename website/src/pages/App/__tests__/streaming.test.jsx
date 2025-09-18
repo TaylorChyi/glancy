@@ -72,6 +72,7 @@ jest.unstable_mockModule("@/hooks", () => ({
   useSpeechInput: () => ({ start: jest.fn() }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: jest.fn() }),
   useApi: () => ({ words: {} }),
+  useMediaQuery: () => false,
 }));
 
 const { default: App } = await import("@/pages/App");
@@ -152,4 +153,32 @@ test("shows markdown when history item cannot be parsed", async () => {
 
   const paragraph = await screen.findByText("hello");
   expect(paragraph.tagName).toBe("P");
+});
+
+/**
+ * 验证流式 JSON 数据时能够提前渲染 markdown 字段。
+ */
+test("renders markdown preview from streaming json", async () => {
+  useStreamWord.mockImplementation(
+    () =>
+      async function* () {
+        const chunks = [
+          '{"term":"foo","markdown":"# Ti',
+          'tle","language":"ENGLISH"}',
+        ];
+        for (const c of chunks) {
+          yield { chunk: c };
+          await new Promise((r) => setTimeout(r, 10));
+        }
+      },
+  );
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText("input");
+  fireEvent.change(input, { target: { value: "word" } });
+  fireEvent.submit(input.closest("form"));
+
+  const heading = await screen.findByRole("heading", { name: "Title" });
+  expect(heading).toBeInTheDocument();
 });
