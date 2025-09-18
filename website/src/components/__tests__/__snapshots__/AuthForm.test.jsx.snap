@@ -47,7 +47,15 @@ exports[`AuthForm submits valid credentials 1`] = `
             aria-pressed="false"
             class="toggle"
             type="button"
-          />
+          >
+            <img
+              alt="Show password"
+              class=""
+              height="20"
+              src="/assets/eye-light.svg"
+              width="20"
+            />
+          </button>
         </div>
       </div>
       <button
@@ -87,7 +95,8 @@ exports[`AuthForm submits valid credentials 1`] = `
       >
         <img
           alt="wechat"
-          src="/assets/wechat.svg"
+          class=""
+          src="/assets/wechat-light.svg"
         />
       </button>
     </div>

@@ -35,12 +35,38 @@ const iconRegistry = {
     light: "/assets/glancy-web-light.svg",
     dark: "/assets/glancy-web-dark.svg",
   },
-  user: { single: "/assets/user.svg" },
-  email: { single: "/assets/email.svg" },
-  phone: { single: "/assets/phone.svg" },
-  wechat: { single: "/assets/wechat.svg" },
-  apple: { single: "/assets/apple.svg" },
-  google: { single: "/assets/google.svg" },
+  user: {
+    light: "/assets/user-light.svg",
+    dark: "/assets/user-dark.svg",
+  },
+  email: {
+    light: "/assets/email-light.svg",
+    dark: "/assets/email-dark.svg",
+  },
+  phone: {
+    light: "/assets/phone-light.svg",
+    dark: "/assets/phone-dark.svg",
+  },
+  wechat: {
+    light: "/assets/wechat-light.svg",
+    dark: "/assets/wechat-dark.svg",
+  },
+  apple: {
+    light: "/assets/apple-light.svg",
+    dark: "/assets/apple-dark.svg",
+  },
+  google: {
+    light: "/assets/google-light.svg",
+    dark: "/assets/google-dark.svg",
+  },
+  eye: {
+    light: "/assets/eye-light.svg",
+    dark: "/assets/eye-dark.svg",
+  },
+  "eye-off": {
+    light: "/assets/eye-off-light.svg",
+    dark: "/assets/eye-off-dark.svg",
+  },
 };
 
 jest.unstable_mockModule("@/assets/icons.js", () => ({
