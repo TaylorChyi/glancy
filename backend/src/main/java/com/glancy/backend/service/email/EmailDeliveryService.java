@@ -23,6 +23,7 @@ public class EmailDeliveryService {
     private final EmailDeliveryFailureClassifier failureClassifier;
     private final EmailVerificationProperties properties;
     private final EmailMessagePreparer messagePreparer;
+    private final MailboxProviderPolicyEngine mailboxProviderPolicyEngine;
     private final Clock clock;
 
     public EmailDeliveryService(
@@ -31,6 +32,7 @@ public class EmailDeliveryService {
         EmailDeliveryFailureClassifier failureClassifier,
         EmailVerificationProperties properties,
         EmailMessagePreparer messagePreparer,
+        MailboxProviderPolicyEngine mailboxProviderPolicyEngine,
         Clock clock
     ) {
         this.mailSender = mailSender;
@@ -38,6 +40,7 @@ public class EmailDeliveryService {
         this.failureClassifier = failureClassifier;
         this.properties = properties;
         this.messagePreparer = messagePreparer;
+        this.mailboxProviderPolicyEngine = mailboxProviderPolicyEngine;
         this.clock = clock;
     }
 
@@ -51,6 +54,7 @@ public class EmailDeliveryService {
         try {
             ensureStreamConsistency();
             messagePreparer.prepare(message, EmailStream.TRANSACTIONAL);
+            mailboxProviderPolicyEngine.apply(message, EmailStream.TRANSACTIONAL, recipient);
             mailSender.send(message);
             audienceService.recordDeliverySuccess(audience, timestamp);
         } catch (MessagingException exception) {
