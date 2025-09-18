@@ -9,9 +9,7 @@ import jakarta.validation.constraints.Pattern;
  */
 public record UserContactRequest(
     /** 用户联系邮箱。 */
-    @NotBlank(message = "邮箱不能为空")
-    @Email(message = "邮箱格式不正确")
-    String email,
+    @NotBlank(message = "邮箱不能为空") @Email(message = "邮箱格式不正确") String email,
     /** 用户联系手机号，采用国际区号+号码格式或纯数字。 */
     @NotBlank(message = "手机号不能为空")
     @Pattern(regexp = "^\\+?[0-9]{3,}$", message = "手机号格式不正确")
