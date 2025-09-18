@@ -1,8 +1,11 @@
-const MARKDOWN_KEY = "\"markdown\"";
+const MARKDOWN_KEY = '"markdown"';
 
 const WHITESPACE_RE = /\s/;
 
 const NEWLINE_NORMALIZER = /\r\n?|\u2028|\u2029/g;
+const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
+const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
+const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 
 function isLikelyJson(text) {
   if (!text) return false;
@@ -12,6 +15,27 @@ function isLikelyJson(text) {
 
 function normalizeNewlines(text) {
   return text.replace(NEWLINE_NORMALIZER, "\n");
+}
+
+function ensureHeadingSpacing(text) {
+  return text.replace(
+    HEADING_WITHOUT_SPACE,
+    (_, hashes, rest) => `${hashes} ${rest}`,
+  );
+}
+
+function ensureHeadingPadding(text) {
+  return text.replace(
+    HEADING_WITHOUT_PADDING,
+    (_, before, heading) => `${before}\n\n${heading}`,
+  );
+}
+
+function ensureListSpacing(text) {
+  return text.replace(
+    LIST_MARKER_WITHOUT_GAP,
+    (_, marker, rest) => `${marker} ${rest}`,
+  );
 }
 
 function decodeJsonString(raw) {
@@ -80,10 +104,10 @@ function readJsonString(source, startIndex) {
   let raw = "";
   while (index < source.length) {
     const ch = source[index];
-    if (ch === '\\') {
+    if (ch === "\\") {
       const next = source[index + 1];
       if (next === undefined) {
-        raw += '\\';
+        raw += "\\";
         index += 1;
         break;
       }
@@ -131,3 +155,10 @@ export function extractMarkdownPreview(buffer) {
   return decodeJsonString(value.raw);
 }
 
+export function polishDictionaryMarkdown(source) {
+  if (!source) return "";
+  const normalized = normalizeNewlines(source);
+  const padded = ensureHeadingPadding(normalized);
+  const withHeadingSpacing = ensureHeadingSpacing(padded);
+  return ensureListSpacing(withHeadingSpacing);
+}
