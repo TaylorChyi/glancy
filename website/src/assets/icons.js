@@ -28,25 +28,56 @@ const modules = glob("./**/*.svg", {
   import: "default",
 });
 
-const buildDynamicRegistry = () => {
+const NORMALISED_SEPARATOR = "/";
+
+const normaliseResourcePath = (resourcePath) =>
+  resourcePath.replace(/\\/g, NORMALISED_SEPARATOR);
+
+const extractIconDescriptor = (resourcePath) => {
+  if (!resourcePath) {
+    return null;
+  }
+
+  const normalisedPath = normaliseResourcePath(resourcePath);
+  const filename = normalisedPath.split(NORMALISED_SEPARATOR).pop();
+
+  if (!filename) {
+    return null;
+  }
+
+  const baseName = filename.replace(/\.svg$/i, "");
+
+  if (baseName.endsWith("-light")) {
+    return { name: baseName.slice(0, -6), variant: "light" };
+  }
+
+  if (baseName.endsWith("-dark")) {
+    return { name: baseName.slice(0, -5), variant: "dark" };
+  }
+
+  return { name: baseName, variant: "single" };
+};
+
+export const buildDynamicRegistry = (moduleEntries) => {
   const collected = {};
 
-  for (const [path, mod] of Object.entries(modules)) {
-    const filename = path.split("/").pop()?.replace(".svg", "");
+  for (const [path, mod] of Object.entries(moduleEntries || {})) {
+    const descriptor = extractIconDescriptor(path);
 
-    if (!filename) {
+    if (!descriptor) {
       continue;
     }
 
-    if (filename.endsWith("-light")) {
-      const name = filename.replace("-light", "");
-      collected[name] = { ...(collected[name] || {}), light: mod };
-    } else if (filename.endsWith("-dark")) {
-      const name = filename.replace("-dark", "");
-      collected[name] = { ...(collected[name] || {}), dark: mod };
+    const { name, variant } = descriptor;
+    const variants = collected[name] || {};
+
+    if (variant === "single") {
+      variants.single = mod;
     } else {
-      collected[filename] = { ...(collected[filename] || {}), single: mod };
+      variants[variant] = mod;
     }
+
+    collected[name] = variants;
   }
 
   return collected;
@@ -78,7 +109,7 @@ const mergeVariantMaps = (...sources) => {
   return merged;
 };
 
-const dynamicRegistry = buildDynamicRegistry();
+const dynamicRegistry = buildDynamicRegistry(modules);
 const hasDynamicEntries = Object.keys(dynamicRegistry).length > 0;
 
 const combinedRegistry = mergeVariantMaps(
