@@ -18,6 +18,12 @@ public class EmailDeliveryFailureClassifier {
 
     private static final Pattern SMTP_STATUS_PATTERN = Pattern.compile("\\b([245]\\d{2})\\b");
 
+    private final MailboxProviderFailureResolver failureResolver;
+
+    public EmailDeliveryFailureClassifier(MailboxProviderFailureResolver failureResolver) {
+        this.failureResolver = failureResolver;
+    }
+
     public EmailDeliveryFailure classify(MailException exception) {
         if (exception instanceof MailAuthenticationException authException) {
             return new EmailDeliveryFailure(true, EmailSuppressionStatus.MANUAL, "AUTH", safeMessage(authException));
@@ -31,6 +37,10 @@ public class EmailDeliveryFailureClassifier {
     private EmailDeliveryFailure extractFromMailSendException(MailSendException sendException) {
         Optional<Exception> nested = sendException.getFailedMessages().values().stream().findFirst();
         String diagnostic = nested.map(this::safeMessage).orElseGet(() -> safeMessage(sendException));
+        Optional<EmailDeliveryFailure> providerSpecific = failureResolver.resolve(diagnostic);
+        if (providerSpecific.isPresent()) {
+            return providerSpecific.get();
+        }
         boolean permanent = isPermanentFailure(diagnostic);
         EmailSuppressionStatus status = permanent
             ? EmailSuppressionStatus.HARD_BOUNCE
