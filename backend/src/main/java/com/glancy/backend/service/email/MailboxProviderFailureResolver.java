@@ -32,12 +32,9 @@ public class MailboxProviderFailureResolver {
 
     private String buildAppleDescription(String code, String diagnostic) {
         String hint = switch (code) {
-            case "CS01" ->
-                "iCloud 拒收代码 CS01，通常意味着内容或身份认证存在风险，请核对 DMARC、SPF、PTR 并保持验证码邮件内容极简";
-            case "HM07" ->
-                "iCloud 拒收代码 HM07，通常关联发送速率或信誉问题，请降低重试频率并按照 Apple 建议逐步预热专用域/IP";
-            case "HM08" ->
-                "iCloud 拒收代码 HM08，通常指向反向解析或域名对齐缺失，请确认 PTR、From 域与 DKIM 一致";
+            case "CS01" -> "iCloud 拒收代码 CS01，通常意味着内容或身份认证存在风险，请核对 DMARC、SPF、PTR 并保持验证码邮件内容极简";
+            case "HM07" -> "iCloud 拒收代码 HM07，通常关联发送速率或信誉问题，请降低重试频率并按照 Apple 建议逐步预热专用域/IP";
+            case "HM08" -> "iCloud 拒收代码 HM08，通常指向反向解析或域名对齐缺失，请确认 PTR、From 域与 DKIM 一致";
             default -> "iCloud 拒收代码 " + code + "，请结合退信原文排查";
         };
         String normalized = StringUtils.hasText(diagnostic) ? diagnostic : "无详细诊断信息";

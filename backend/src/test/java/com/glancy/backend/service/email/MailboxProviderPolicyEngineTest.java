@@ -48,8 +48,9 @@ class MailboxProviderPolicyEngineTest {
 
         policyEngine.apply(message, EmailStream.TRANSACTIONAL, "member@icloud.com");
 
-        assertThat(message.getHeader("List-Unsubscribe", null))
-            .isEqualTo("<mailto:unsubscribe@mail.glancy.xyz>, <https://www.glancy.xyz/email/unsubscribe>");
+        assertThat(message.getHeader("List-Unsubscribe", null)).isEqualTo(
+            "<mailto:unsubscribe@mail.glancy.xyz>, <https://www.glancy.xyz/email/unsubscribe>"
+        );
         assertThat(message.getHeader("List-Unsubscribe-Post", null)).isEqualTo("List-Unsubscribe=One-Click");
         assertThat(message.getHeader("List-ID", null)).isEqualTo("Glancy 事务通知 <mail.glancy.xyz>");
         assertThat(message.getHeader("X-Complaints-To", null)).isEqualTo("mailto:abuse@mail.glancy.xyz");

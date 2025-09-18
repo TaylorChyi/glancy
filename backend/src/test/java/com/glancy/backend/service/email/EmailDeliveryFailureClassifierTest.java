@@ -18,8 +18,13 @@ class EmailDeliveryFailureClassifierTest {
      */
     @Test
     void classifyShouldDelegateToResolverForAppleCodes() {
-        EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(new MailboxProviderFailureResolver());
-        Map<Object, Exception> failures = Collections.singletonMap(new Object(), new MessagingException("5.7.1 [CS01]"));
+        EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
+            new MailboxProviderFailureResolver()
+        );
+        Map<Object, Exception> failures = Collections.singletonMap(
+            new Object(),
+            new MessagingException("5.7.1 [CS01]")
+        );
         MailSendException exception = new MailSendException("smtp error", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
@@ -34,8 +39,13 @@ class EmailDeliveryFailureClassifierTest {
      */
     @Test
     void classifyShouldFallbackToGenericStrategy() {
-        EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(new MailboxProviderFailureResolver());
-        Map<Object, Exception> failures = Collections.singletonMap(new Object(), new MessagingException("451 4.7.0 try again later"));
+        EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
+            new MailboxProviderFailureResolver()
+        );
+        Map<Object, Exception> failures = Collections.singletonMap(
+            new Object(),
+            new MessagingException("451 4.7.0 try again later")
+        );
         MailSendException exception = new MailSendException("temporary failure", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
