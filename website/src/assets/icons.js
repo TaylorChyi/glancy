@@ -1,17 +1,4 @@
-import glancyWebLight from "./brand/glancy-web-light.svg";
-import glancyWebDark from "./brand/glancy-web-dark.svg";
-import userLight from "./icons/user-light.svg";
-import userDark from "./icons/user-dark.svg";
-import emailLight from "./icons/email-light.svg";
-import emailDark from "./icons/email-dark.svg";
-import phoneLight from "./icons/phone-light.svg";
-import phoneDark from "./icons/phone-dark.svg";
-import wechatLight from "./logos/wechat-light.svg";
-import wechatDark from "./logos/wechat-dark.svg";
-import appleLight from "./logos/apple-light.svg";
-import appleDark from "./logos/apple-dark.svg";
-import googleLight from "./logos/google-light.svg";
-import googleDark from "./logos/google-dark.svg";
+import staticManifest from "./icon-manifest.generated.js";
 
 /**
  * Icon registry generated via `import.meta.glob`.
@@ -83,16 +70,6 @@ export const buildDynamicRegistry = (moduleEntries) => {
   return collected;
 };
 
-const manualRegistry = {
-  "glancy-web": { light: glancyWebLight, dark: glancyWebDark },
-  user: { light: userLight, dark: userDark },
-  email: { light: emailLight, dark: emailDark },
-  phone: { light: phoneLight, dark: phoneDark },
-  wechat: { light: wechatLight, dark: wechatDark },
-  apple: { light: appleLight, dark: appleDark },
-  google: { light: googleLight, dark: googleDark },
-};
-
 const mergeVariantMaps = (...sources) => {
   const merged = {};
 
@@ -113,7 +90,7 @@ const dynamicRegistry = buildDynamicRegistry(modules);
 const hasDynamicEntries = Object.keys(dynamicRegistry).length > 0;
 
 const combinedRegistry = mergeVariantMaps(
-  manualRegistry,
+  staticManifest,
   hasDynamicEntries ? dynamicRegistry : null,
 );
 
