@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 class VerificationEmailComposerTest {
 
     /**
-     * 验证 populate 方法能够组装包含品牌、退订指引及传递性邮件头的多格式邮件内容。
+     * 验证 populate 方法能够组装仅包含验证码正文但仍具备必要传递性邮件头的多格式邮件内容。
      */
     @Test
     void populate_shouldComposeMultipartMessageWithComplianceHeaders() throws Exception {
@@ -36,13 +36,13 @@ class VerificationEmailComposerTest {
         MimeMultipart multipart = (MimeMultipart) message.getContent();
         assertEquals(2, multipart.getCount());
         String plainText = (String) multipart.getBodyPart(0).getContent();
-        assertTrue(plainText.contains("123456"));
-        assertTrue(plainText.contains("12 分钟"));
-        assertTrue(plainText.contains("退订"));
+        assertEquals("123456", plainText);
 
         String html = (String) multipart.getBodyPart(1).getContent();
         assertTrue(html.contains("<p"));
         assertTrue(html.contains("color:#1f2933"));
+        assertTrue(html.contains("123456"));
+        assertEquals(1, html.split("<p").length - 1);
 
         String listUnsubscribe = message.getHeader("List-Unsubscribe", null);
         assertNotNull(listUnsubscribe);
@@ -75,7 +75,12 @@ class VerificationEmailComposerTest {
 
         EmailVerificationProperties.Template template = new EmailVerificationProperties.Template();
         template.setSubject("Glancy 登录验证码");
-        template.setBody("验证码 {{code}}，将在 {{ttlMinutes}} 分钟后失效。{{companyName}}");
+        template.setBody("{{code}}");
+        EmailVerificationProperties.Template.Rendering rendering = new EmailVerificationProperties.Template.Rendering();
+        rendering.setIncludeComplianceBlock(false);
+        rendering.setIncludeSecurityNotice(false);
+        rendering.setIncludeUnsubscribe(false);
+        template.setRendering(rendering);
         properties.getTemplates().put(EmailVerificationPurpose.LOGIN, template);
         return properties;
     }

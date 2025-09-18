@@ -129,6 +129,7 @@ public class EmailVerificationProperties {
 
         private String subject;
         private String body;
+        private Rendering rendering = new Rendering();
 
         public String getSubject() {
             return subject;
@@ -144,6 +145,45 @@ public class EmailVerificationProperties {
 
         public void setBody(String body) {
             this.body = body;
+        }
+
+        public Rendering getRendering() {
+            return rendering;
+        }
+
+        public void setRendering(Rendering rendering) {
+            this.rendering = rendering == null ? new Rendering() : rendering;
+        }
+
+        public static class Rendering {
+
+            private boolean includeSecurityNotice = true;
+            private boolean includeComplianceBlock = true;
+            private boolean includeUnsubscribe = true;
+
+            public boolean isIncludeSecurityNotice() {
+                return includeSecurityNotice;
+            }
+
+            public void setIncludeSecurityNotice(boolean includeSecurityNotice) {
+                this.includeSecurityNotice = includeSecurityNotice;
+            }
+
+            public boolean isIncludeComplianceBlock() {
+                return includeComplianceBlock;
+            }
+
+            public void setIncludeComplianceBlock(boolean includeComplianceBlock) {
+                this.includeComplianceBlock = includeComplianceBlock;
+            }
+
+            public boolean isIncludeUnsubscribe() {
+                return includeUnsubscribe;
+            }
+
+            public void setIncludeUnsubscribe(boolean includeUnsubscribe) {
+                this.includeUnsubscribe = includeUnsubscribe;
+            }
         }
     }
 

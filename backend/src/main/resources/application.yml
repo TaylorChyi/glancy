@@ -123,7 +123,15 @@ mail:
     templates:
       register:
         subject: "Glancy 注册验证码"
-        body: "您的注册验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成验证。"
+        body: "{{code}}"
+        rendering:
+          include-security-notice: false
+          include-compliance-block: false
+          include-unsubscribe: false
       login:
         subject: "Glancy 登录验证码"
-        body: "您的登录验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成登录。"
+        body: "{{code}}"
+        rendering:
+          include-security-notice: false
+          include-compliance-block: false
+          include-unsubscribe: false

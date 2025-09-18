@@ -83,7 +83,15 @@ mail:
     templates:
       register:
         subject: "测试注册验证码"
-        body: "注册验证码 {{code}}"
+        body: "{{code}}"
+        rendering:
+          include-security-notice: false
+          include-compliance-block: false
+          include-unsubscribe: false
       login:
         subject: "测试登录验证码"
-        body: "登录验证码 {{code}}"
+        body: "{{code}}"
+        rendering:
+          include-security-notice: false
+          include-compliance-block: false
+          include-unsubscribe: false

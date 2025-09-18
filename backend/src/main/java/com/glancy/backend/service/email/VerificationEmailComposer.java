@@ -53,7 +53,7 @@ public class VerificationEmailComposer {
         setSender(helper);
         setReplyTo(helper);
 
-        RenderedContent renderedContent = renderContent(template.getBody(), code, expiresAt);
+        RenderedContent renderedContent = renderContent(template, code, expiresAt);
         helper.setText(renderedContent.plainText(), renderedContent.htmlBody());
         helper.setPriority(1);
 
@@ -93,7 +93,11 @@ public class VerificationEmailComposer {
         }
     }
 
-    private RenderedContent renderContent(String templateBody, String code, LocalDateTime expiresAt) {
+    private RenderedContent renderContent(
+        EmailVerificationProperties.Template template,
+        String code,
+        LocalDateTime expiresAt
+    ) {
         Map<String, String> tokens = new LinkedHashMap<>();
         tokens.put("{{code}}", code);
         tokens.put("{{ttlMinutes}}", String.valueOf(properties.getTtl().toMinutes()));
@@ -103,19 +107,26 @@ public class VerificationEmailComposer {
         if (StringUtils.hasText(supportEmail)) {
             tokens.put("{{supportEmail}}", supportEmail);
         }
-        String resolved = applyTokens(templateBody, tokens);
+        String resolved = applyTokens(template.getBody(), tokens);
 
         List<String> paragraphs = new ArrayList<>();
         paragraphs.add(resolved.trim());
-        paragraphs.add(buildSecurityNotice());
-
-        String complianceBlock = buildComplianceBlock();
-        if (StringUtils.hasText(complianceBlock)) {
-            paragraphs.add(complianceBlock);
+        EmailVerificationProperties.Template.Rendering rendering = template.getRendering();
+        if (rendering.isIncludeSecurityNotice()) {
+            paragraphs.add(buildSecurityNotice());
         }
-        String unsubscribeParagraph = buildUnsubscribeParagraph();
-        if (StringUtils.hasText(unsubscribeParagraph)) {
-            paragraphs.add(unsubscribeParagraph);
+
+        if (rendering.isIncludeComplianceBlock()) {
+            String complianceBlock = buildComplianceBlock();
+            if (StringUtils.hasText(complianceBlock)) {
+                paragraphs.add(complianceBlock);
+            }
+        }
+        if (rendering.isIncludeUnsubscribe()) {
+            String unsubscribeParagraph = buildUnsubscribeParagraph();
+            if (StringUtils.hasText(unsubscribeParagraph)) {
+                paragraphs.add(unsubscribeParagraph);
+            }
         }
 
         String plainText = String.join("\n\n", paragraphs);
