@@ -98,7 +98,7 @@ public class VerificationEmailComposer {
         tokens.put("{{code}}", code);
         tokens.put("{{ttlMinutes}}", String.valueOf(properties.getTtl().toMinutes()));
         tokens.put("{{expiresAt}}", EXPIRES_AT_FORMATTER.format(expiresAt));
-        tokens.put("{{companyName}}", resolveCompanyName());
+        tokens.put("{{companyName}}", EmailComplianceSupport.resolveCompanyName(properties));
         String supportEmail = properties.getCompliance().getSupportEmail();
         if (StringUtils.hasText(supportEmail)) {
             tokens.put("{{supportEmail}}", supportEmail);
@@ -145,7 +145,7 @@ public class VerificationEmailComposer {
 
     private String buildComplianceBlock() {
         List<String> lines = new ArrayList<>();
-        lines.add(resolveCompanyName());
+        lines.add(EmailComplianceSupport.resolveCompanyName(properties));
         String address = properties.getCompliance().getCompanyAddress();
         if (StringUtils.hasText(address)) {
             lines.add(address);
@@ -191,17 +191,25 @@ public class VerificationEmailComposer {
         message.setHeader("Auto-Submitted", "auto-generated");
         message.setHeader("X-Auto-Response-Suppress", "All");
 
-        String listUnsubscribe = buildListUnsubscribeHeader();
-        if (StringUtils.hasText(listUnsubscribe)) {
-            message.setHeader("List-Unsubscribe", listUnsubscribe);
-            if (properties.getCompliance().getUnsubscribeUrl() != null) {
-                message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
-            }
-        }
+        EmailComplianceSupport
+            .buildListUnsubscribeHeader(properties)
+            .ifPresent(listUnsubscribe -> {
+                try {
+                    message.setHeader("List-Unsubscribe", listUnsubscribe);
+                    if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
+                        message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+                    }
+                } catch (MessagingException exception) {
+                    throw new IllegalStateException("无法设置退订头部", exception);
+                }
+            });
 
         String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
         if (StringUtils.hasText(feedbackIdPrefix)) {
-            String companySlug = resolveCompanyName().replaceAll("\\s+", "-").toLowerCase(Locale.ROOT);
+            String companySlug = EmailComplianceSupport
+                .resolveCompanyName(properties)
+                .replaceAll("\\s+", "-")
+                .toLowerCase(Locale.ROOT);
             String feedbackId = feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
             message.setHeader("Feedback-ID", feedbackId);
         }
@@ -222,43 +230,10 @@ public class VerificationEmailComposer {
         message.setHeader("ARC-Seal", infrastructure.getArcSeal());
     }
 
-    private String buildListUnsubscribeHeader() {
-        List<String> entries = new ArrayList<>();
-        String unsubscribeMailto = properties.getCompliance().getUnsubscribeMailto();
-        if (StringUtils.hasText(unsubscribeMailto)) {
-            String address = unsubscribeMailto.startsWith("mailto:")
-                ? unsubscribeMailto
-                : "mailto:" + unsubscribeMailto;
-            entries.add("<" + address + ">");
-        }
-        String unsubscribeUrl = properties.getCompliance().getUnsubscribeUrl();
-        if (StringUtils.hasText(unsubscribeUrl)) {
-            entries.add("<" + unsubscribeUrl + ">");
-        }
-        return entries.isEmpty() ? "" : String.join(", ", entries);
-    }
-
     private String toHtmlParagraph(String paragraph) {
         String escaped = HtmlUtils.htmlEscape(paragraph.trim());
         String content = escaped.replace("\n", "<br/>");
         return "<p style=\"margin:0 0 16px; font-size:14px; line-height:1.6; color:#1f2933;\">" + content + "</p>";
-    }
-
-    private String resolveCompanyName() {
-        String companyName = properties.getCompliance().getCompanyName();
-        if (StringUtils.hasText(companyName)) {
-            return companyName;
-        }
-        String mailbox = properties.getFrom();
-        if (!StringUtils.hasText(mailbox)) {
-            return "Glancy";
-        }
-        int atIndex = mailbox.indexOf('@');
-        if (atIndex > 0 && atIndex < mailbox.length() - 1) {
-            String domain = mailbox.substring(atIndex + 1);
-            return domain.toUpperCase(Locale.ROOT);
-        }
-        return mailbox;
     }
 
     private record RenderedContent(String plainText, String htmlBody) {
