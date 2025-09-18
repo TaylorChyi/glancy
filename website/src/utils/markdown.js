@@ -6,6 +6,7 @@ const NEWLINE_NORMALIZER = /\r\n?|\u2028|\u2029/g;
 const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
+const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 
 function isLikelyJson(text) {
   if (!text) return false;
@@ -28,6 +29,24 @@ function ensureHeadingPadding(text) {
   return text.replace(
     HEADING_WITHOUT_PADDING,
     (_, before, heading) => `${before}\n\n${heading}`,
+  );
+}
+
+function ensureHeadingLineBreak(text) {
+  return text.replace(
+    HEADING_STUCK_TO_PREVIOUS,
+    (match, before, hashes, offset, source) => {
+      const hashIndex = offset + before.length;
+      if (hashes.length === 1) {
+        const lineStart = source.lastIndexOf("\n", hashIndex - 1) + 1;
+        const lineBefore = source.slice(lineStart, hashIndex);
+        const hasHeadingCue = /[:：)）】]/u.test(lineBefore);
+        if (!hasHeadingCue) {
+          return match;
+        }
+      }
+      return `${before}\n${hashes}`;
+    },
   );
 }
 
@@ -158,7 +177,8 @@ export function extractMarkdownPreview(buffer) {
 export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
-  const padded = ensureHeadingPadding(normalized);
-  const withHeadingSpacing = ensureHeadingSpacing(padded);
-  return ensureListSpacing(withHeadingSpacing);
+  const withLineBreak = ensureHeadingLineBreak(normalized);
+  const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
+  const padded = ensureHeadingPadding(withHeadingSpacing);
+  return ensureListSpacing(padded);
 }
