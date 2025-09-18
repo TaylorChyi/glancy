@@ -37,12 +37,16 @@ class VerificationEmailComposerTest {
         assertEquals(2, multipart.getCount());
         String plainText = (String) multipart.getBodyPart(0).getContent();
         assertTrue(plainText.contains("123456"));
-        assertTrue(plainText.contains("12 分钟"));
-        assertTrue(plainText.contains("退订"));
+        assertTrue(plainText.contains("尊敬的用户（user@example.com）："));
+        assertTrue(plainText.contains("我们已根据您在 Glancy 测试提交的登录验证请求"));
+        assertTrue(plainText.contains("验证码有效期为 12 分钟"));
+        assertTrue(plainText.contains("本邮件由 Glancy 测试 依据用户授权及相关法规发送"));
+        assertTrue(plainText.contains("https://test.glancy.xyz/unsubscribe"));
 
         String html = (String) multipart.getBodyPart(1).getContent();
         assertTrue(html.contains("<p"));
         assertTrue(html.contains("color:#1f2933"));
+        assertTrue(html.contains("尊敬的用户（user@example.com）："));
 
         String listUnsubscribe = message.getHeader("List-Unsubscribe", null);
         assertNotNull(listUnsubscribe);

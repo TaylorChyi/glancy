@@ -53,7 +53,7 @@ public class VerificationEmailComposer {
         setSender(helper);
         setReplyTo(helper);
 
-        RenderedContent renderedContent = renderContent(template.getBody(), code, expiresAt);
+        RenderedContent renderedContent = renderContent(template.getBody(), code, expiresAt, recipient, purpose);
         helper.setText(renderedContent.plainText(), renderedContent.htmlBody());
         helper.setPriority(1);
 
@@ -93,12 +93,19 @@ public class VerificationEmailComposer {
         }
     }
 
-    private RenderedContent renderContent(String templateBody, String code, LocalDateTime expiresAt) {
+    private RenderedContent renderContent(
+        String templateBody,
+        String code,
+        LocalDateTime expiresAt,
+        String recipient,
+        EmailVerificationPurpose purpose
+    ) {
         Map<String, String> tokens = new LinkedHashMap<>();
         tokens.put("{{code}}", code);
         tokens.put("{{ttlMinutes}}", String.valueOf(properties.getTtl().toMinutes()));
         tokens.put("{{expiresAt}}", EXPIRES_AT_FORMATTER.format(expiresAt));
-        tokens.put("{{companyName}}", EmailComplianceSupport.resolveCompanyName(properties));
+        String companyName = EmailComplianceSupport.resolveCompanyName(properties);
+        tokens.put("{{companyName}}", companyName);
         String supportEmail = properties.getCompliance().getSupportEmail();
         if (StringUtils.hasText(supportEmail)) {
             tokens.put("{{supportEmail}}", supportEmail);
@@ -106,7 +113,21 @@ public class VerificationEmailComposer {
         String resolved = applyTokens(templateBody, tokens);
 
         List<String> paragraphs = new ArrayList<>();
+        String salutation = buildSalutation(recipient);
+        if (StringUtils.hasText(salutation)) {
+            paragraphs.add(salutation);
+        }
+
+        String purposeDisclosure = buildPurposeDisclosure(purpose, companyName, expiresAt);
+        if (StringUtils.hasText(purposeDisclosure)) {
+            paragraphs.add(purposeDisclosure);
+        }
+
         paragraphs.add(resolved.trim());
+        String complianceIntroduction = buildComplianceIntroduction(companyName);
+        if (StringUtils.hasText(complianceIntroduction)) {
+            paragraphs.add(complianceIntroduction);
+        }
         paragraphs.add(buildSecurityNotice());
 
         String complianceBlock = buildComplianceBlock();
@@ -131,6 +152,56 @@ public class VerificationEmailComposer {
             }
         }
         return resolved;
+    }
+
+    private String buildSalutation(String recipient) {
+        String normalized = recipient == null ? "" : recipient.trim();
+        if (!StringUtils.hasText(normalized)) {
+            return "尊敬的用户：";
+        }
+        return "尊敬的用户（" + normalized + "）：";
+    }
+
+    private String buildPurposeDisclosure(
+        EmailVerificationPurpose purpose,
+        String companyName,
+        LocalDateTime expiresAt
+    ) {
+        String purposeLabel = resolvePurposeLabel(purpose);
+        String ttlMinutes = String.valueOf(properties.getTtl().toMinutes());
+        return String.format(
+            Locale.SIMPLIFIED_CHINESE,
+            "我们已根据您在 %s 提交的%s验证请求触发本次通知，验证码有效期为 %s 分钟（将于 %s 失效）。为保障账号安全并满足合规要求，请勿转发此邮件。",
+            companyName,
+            purposeLabel,
+            ttlMinutes,
+            EXPIRES_AT_FORMATTER.format(expiresAt)
+        );
+    }
+
+    private String resolvePurposeLabel(EmailVerificationPurpose purpose) {
+        return switch (purpose) {
+            case REGISTER -> "注册";
+            case LOGIN -> "登录";
+        };
+    }
+
+    private String buildComplianceIntroduction(String companyName) {
+        List<String> segments = new ArrayList<>();
+        segments.add("本邮件由 " + companyName + " 依据用户授权及相关法规发送，仅用于完成身份核验流程。");
+        String website = properties.getCompliance().getWebsite();
+        String supportEmail = properties.getCompliance().getSupportEmail();
+        List<String> contactTokens = new ArrayList<>();
+        if (StringUtils.hasText(website)) {
+            contactTokens.add("官网了解隐私政策：" + website);
+        }
+        if (StringUtils.hasText(supportEmail)) {
+            contactTokens.add("客服邮箱：" + supportEmail);
+        }
+        if (!contactTokens.isEmpty()) {
+            segments.add(String.join(" ｜ ", contactTokens));
+        }
+        return String.join(" ", segments);
     }
 
     private String buildSecurityNotice() {
