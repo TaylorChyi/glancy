@@ -153,8 +153,8 @@
 }
 
 .login-options {
-  --login-option-size: 52px;
-  --login-option-gap: var(--space-5);
+  --login-option-size: calc(var(--space-3) * 3);
+  --login-option-gap: var(--space-3);
   --login-options-max-width: calc(
     var(--login-option-size) * 5 + var(--login-option-gap) * 4
   );
