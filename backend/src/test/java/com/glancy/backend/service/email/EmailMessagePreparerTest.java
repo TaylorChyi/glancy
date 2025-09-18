@@ -1,8 +1,8 @@
 package com.glancy.backend.service.email;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.glancy.backend.config.EmailVerificationProperties;
@@ -75,5 +75,4 @@ class EmailMessagePreparerTest {
 
         assertNull(message.getHeader("Message-ID", null));
     }
-
 }

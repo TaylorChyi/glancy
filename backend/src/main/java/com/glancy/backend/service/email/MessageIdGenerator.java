@@ -16,9 +16,10 @@ import org.springframework.util.StringUtils;
 @Component
 public class MessageIdGenerator {
 
-    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter
-        .ofPattern("yyyyMMddHHmmssSSS", Locale.ROOT)
-        .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern(
+        "yyyyMMddHHmmssSSS",
+        Locale.ROOT
+    ).withZone(ZoneOffset.UTC);
 
     private final Clock clock;
 

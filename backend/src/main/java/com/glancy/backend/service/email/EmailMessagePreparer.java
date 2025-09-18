@@ -17,10 +17,7 @@ public class EmailMessagePreparer {
     private final EmailVerificationProperties properties;
     private final MessageIdGenerator messageIdGenerator;
 
-    public EmailMessagePreparer(
-        EmailVerificationProperties properties,
-        MessageIdGenerator messageIdGenerator
-    ) {
+    public EmailMessagePreparer(EmailVerificationProperties properties, MessageIdGenerator messageIdGenerator) {
         this.properties = properties;
         this.messageIdGenerator = messageIdGenerator;
     }
