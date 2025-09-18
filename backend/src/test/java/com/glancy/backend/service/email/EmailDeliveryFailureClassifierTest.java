@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.glancy.backend.entity.EmailSuppressionStatus;
 import jakarta.mail.MessagingException;
-import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.MailSendException;
@@ -21,11 +20,8 @@ class EmailDeliveryFailureClassifierTest {
         EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
             new MailboxProviderFailureResolver()
         );
-        Map<Object, Exception> failures = Collections.singletonMap(
-            new Object(),
-            new MessagingException("5.7.1 [CS01]")
-        );
-        MailSendException exception = new MailSendException("smtp error", failures);
+        Map<Object, Exception> failures = Map.of(new Object(), new MessagingException("5.7.1 [CS01]"));
+        MailSendException exception = new StubMailSendException("smtp error", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
 
@@ -42,16 +38,31 @@ class EmailDeliveryFailureClassifierTest {
         EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
             new MailboxProviderFailureResolver()
         );
-        Map<Object, Exception> failures = Collections.singletonMap(
+        Map<Object, Exception> failures = Map.of(
             new Object(),
             new MessagingException("451 4.7.0 try again later")
         );
-        MailSendException exception = new MailSendException("temporary failure", failures);
+        MailSendException exception = new StubMailSendException("temporary failure", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
 
         assertFalse(failure.permanent());
         assertEquals(EmailSuppressionStatus.SOFT_BOUNCE, failure.suppressionStatus());
         assertEquals("451", failure.diagnosticCode());
+    }
+
+    private static final class StubMailSendException extends MailSendException {
+
+        private final Map<Object, Exception> failedMessages;
+
+        private StubMailSendException(String message, Map<Object, Exception> failedMessages) {
+            super(message);
+            this.failedMessages = Map.copyOf(failedMessages);
+        }
+
+        @Override
+        public Map<Object, Exception> getFailedMessages() {
+            return failedMessages;
+        }
     }
 }
