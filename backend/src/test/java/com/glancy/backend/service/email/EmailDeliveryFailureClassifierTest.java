@@ -48,10 +48,7 @@ class EmailDeliveryFailureClassifierTest {
         assertEquals("451", failure.diagnosticCode());
     }
 
-    private static MailSendException mailSendException(
-        String message,
-        Map<Object, Exception> failedMessages
-    ) {
+    private static MailSendException mailSendException(String message, Map<Object, Exception> failedMessages) {
         return new MailSendException(message, Map.copyOf(failedMessages));
     }
 }
