@@ -3,7 +3,7 @@ import MessagePopup from "@/components/ui/MessagePopup";
 import { useHistory, useUser, useFavorites } from "@/context";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/context";
-import DictionaryEntry from "@/components/ui/DictionaryEntry";
+import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
 import { useLanguage } from "@/context";
 import { useStreamWord, useSpeechInput } from "@/hooks";
 import "./App.css";
@@ -13,8 +13,6 @@ import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import MarkdownStream from "@/components/ui/MarkdownStream";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import { extractMarkdownPreview } from "@/utils";
@@ -274,16 +272,12 @@ function App() {
                 focusInput();
               }}
             />
-          ) : loading ? (
-            <MarkdownStream text={streamText || "..."} />
-          ) : entry ? (
-            <DictionaryEntry entry={entry} />
-          ) : finalText ? (
-            <MarkdownRenderer className="stream-text">
-              {finalText}
-            </MarkdownRenderer>
-          ) : streamText ? (
-            <MarkdownStream text={streamText} />
+          ) : entry || finalText || streamText || loading ? (
+            <DictionaryEntryView
+              entry={entry}
+              preview={finalText || streamText}
+              isLoading={loading}
+            />
           ) : (
             <EmptyState
               iconName="target"

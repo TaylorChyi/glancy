@@ -1,0 +1,24 @@
+.preview {
+  margin: 0 2cm;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.preview-text {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.preview-text p {
+  margin: 0 0 16px;
+}
+
+.preview-text p:last-child {
+  margin-bottom: 0;
+}

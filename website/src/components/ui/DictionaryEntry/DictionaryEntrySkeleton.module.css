@@ -1,0 +1,77 @@
+.skeleton {
+  margin: 0 2cm;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title,
+.phonetic,
+.label,
+.line {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.title {
+  height: 36px;
+  max-width: 320px;
+}
+
+.phonetic {
+  height: 20px;
+  max-width: 200px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  height: 20px;
+  max-width: 120px;
+}
+
+.lines {
+  display: grid;
+  gap: 12px;
+}
+
+.line {
+  height: 16px;
+  width: 100%;
+}
+
+.title::after,
+.phonetic::after,
+.label::after,
+.line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-surface) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.8s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
