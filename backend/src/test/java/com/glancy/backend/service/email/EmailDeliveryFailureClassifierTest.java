@@ -20,7 +20,7 @@ class EmailDeliveryFailureClassifierTest {
         EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
             new MailboxProviderFailureResolver()
         );
-        Map<Object, Exception> failures = Map.of(new Object(), new MessagingException("5.7.1 [CS01]"));
+        Map<Object, Throwable> failures = Map.of(new Object(), new MessagingException("5.7.1 [CS01]"));
         MailSendException exception = mailSendException("smtp error", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
@@ -38,7 +38,7 @@ class EmailDeliveryFailureClassifierTest {
         EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
             new MailboxProviderFailureResolver()
         );
-        Map<Object, Exception> failures = Map.of(new Object(), new MessagingException("451 4.7.0 try again later"));
+        Map<Object, Throwable> failures = Map.of(new Object(), new MessagingException("451 4.7.0 try again later"));
         MailSendException exception = mailSendException("temporary failure", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
@@ -48,7 +48,10 @@ class EmailDeliveryFailureClassifierTest {
         assertEquals("451", failure.diagnosticCode());
     }
 
-    private static MailSendException mailSendException(String message, Map<Object, Exception> failedMessages) {
+    private static MailSendException mailSendException(
+        String message,
+        Map<Object, ? extends Throwable> failedMessages
+    ) {
         return new MailSendException(message, Map.copyOf(failedMessages));
     }
 }
