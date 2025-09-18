@@ -1,6 +1,7 @@
 import { useLanguage } from "@/context";
 import { TtsButton, PronounceableWord } from "@/components";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
+import { polishDictionaryMarkdown } from "@/utils";
 import styles from "./DictionaryEntry.module.css";
 
 function tryParseJson(text) {
@@ -22,9 +23,10 @@ function DictionaryEntry({ entry }) {
     if (parsed) {
       return <DictionaryEntry entry={parsed} />;
     }
+    const polished = polishDictionaryMarkdown(entry.markdown);
     return (
       <article className={styles["dictionary-entry"]}>
-        <MarkdownRenderer>{entry.markdown}</MarkdownRenderer>
+        <DictionaryMarkdown>{polished}</DictionaryMarkdown>
       </article>
     );
   }
@@ -55,7 +57,7 @@ function DictionaryEntry({ entry }) {
             <ol>
               {definitions.map((d, i) => (
                 <li key={i}>
-                  <MarkdownRenderer>{d}</MarkdownRenderer>
+                  <DictionaryMarkdown>{d}</DictionaryMarkdown>
                 </li>
               ))}
             </ol>
@@ -69,7 +71,7 @@ function DictionaryEntry({ entry }) {
               【{t.exampleLabel}】
             </h2>
             <blockquote>
-              <MarkdownRenderer>{example}</MarkdownRenderer>
+              <DictionaryMarkdown>{example}</DictionaryMarkdown>
               <TtsButton text={example} lang={lang} scope="sentence" />
             </blockquote>
           </section>
