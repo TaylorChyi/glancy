@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
+import com.glancy.backend.dto.UserContactResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.entity.LoginDevice;
@@ -163,6 +164,28 @@ class UserServiceTest {
             userService.register(req2);
         });
         assertEquals("手机号已被使用", ex.getMessage());
+    }
+
+    /**
+     * 测试 updateContact 能更新用户的邮箱和手机号并持久化。
+     */
+    @Test
+    void testUpdateContact() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("contactUser");
+        req.setPassword("pass123");
+        req.setEmail("contact@example.com");
+        req.setPhone("1234567");
+        UserResponse created = userService.register(req);
+
+        UserContactResponse updated = userService.updateContact(created.getId(), "changed@example.com", "7654321");
+
+        assertEquals("changed@example.com", updated.email());
+        assertEquals("7654321", updated.phone());
+
+        User persisted = userRepository.findById(created.getId()).orElseThrow();
+        assertEquals("changed@example.com", persisted.getEmail());
+        assertEquals("7654321", persisted.getPhone());
     }
 
     /**
