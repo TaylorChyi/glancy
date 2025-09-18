@@ -340,7 +340,9 @@ public class EmailVerificationProperties {
             void validate(String key, Compliance compliance) {
                 if (CollectionUtils.isEmpty(domains)) {
                     throw new IllegalStateException(
-                        "mail.verification.deliverability.mailbox-provider-policies." + key + ".domains must not be empty"
+                        "mail.verification.deliverability.mailbox-provider-policies." +
+                        key +
+                        ".domains must not be empty"
                     );
                 }
                 if (enforceListUnsubscribe) {

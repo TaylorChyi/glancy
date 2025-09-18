@@ -68,10 +68,7 @@ final class EmailComplianceSupport {
         return Optional.of(from.substring(atIndex + 1).toLowerCase(Locale.ROOT));
     }
 
-    static Optional<String> buildListIdHeader(
-        EmailVerificationProperties properties,
-        String configuredListId
-    ) {
+    static Optional<String> buildListIdHeader(EmailVerificationProperties properties, String configuredListId) {
         if (StringUtils.hasText(configuredListId)) {
             return Optional.of(configuredListId.trim());
         }
@@ -86,10 +83,7 @@ final class EmailComplianceSupport {
         return Optional.of(company + " <" + domain.get() + ">");
     }
 
-    static Optional<String> resolveComplaintsContact(
-        EmailVerificationProperties properties,
-        String configuredMailbox
-    ) {
+    static Optional<String> resolveComplaintsContact(EmailVerificationProperties properties, String configuredMailbox) {
         if (StringUtils.hasText(configuredMailbox)) {
             return Optional.of(configuredMailbox.trim());
         }

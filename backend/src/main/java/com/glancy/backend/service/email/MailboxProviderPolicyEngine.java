@@ -85,8 +85,7 @@ public class MailboxProviderPolicyEngine {
         if (!StringUtils.hasText(feedbackIdPrefix)) {
             return;
         }
-        String companySlug = EmailComplianceSupport
-            .resolveCompanyName(properties)
+        String companySlug = EmailComplianceSupport.resolveCompanyName(properties)
             .replaceAll("\\s+", "-")
             .toLowerCase(Locale.ROOT);
         String feedbackId = feedbackIdPrefix + ":" + stream.name().toLowerCase(Locale.ROOT) + ":" + companySlug;

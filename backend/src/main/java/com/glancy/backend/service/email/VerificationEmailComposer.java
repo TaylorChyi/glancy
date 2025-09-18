@@ -191,9 +191,7 @@ public class VerificationEmailComposer {
         message.setHeader("Auto-Submitted", "auto-generated");
         message.setHeader("X-Auto-Response-Suppress", "All");
 
-        EmailComplianceSupport
-            .buildListUnsubscribeHeader(properties)
-            .ifPresent(listUnsubscribe -> {
+        EmailComplianceSupport.buildListUnsubscribeHeader(properties).ifPresent(listUnsubscribe -> {
                 try {
                     message.setHeader("List-Unsubscribe", listUnsubscribe);
                     if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
@@ -206,8 +204,7 @@ public class VerificationEmailComposer {
 
         String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
         if (StringUtils.hasText(feedbackIdPrefix)) {
-            String companySlug = EmailComplianceSupport
-                .resolveCompanyName(properties)
+            String companySlug = EmailComplianceSupport.resolveCompanyName(properties)
                 .replaceAll("\\s+", "-")
                 .toLowerCase(Locale.ROOT);
             String feedbackId = feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
