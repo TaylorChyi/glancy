@@ -18,10 +18,38 @@ function Login() {
     (state) => state.recordLoginCookie,
   );
 
-  const handleLogin = async ({ account, password, method }) => {
-    const data = await api.jsonRequest(API_PATHS.login, {
+  const handleLogin = async ({ account: rawAccount, password, method }) => {
+    const unsupportedMessage =
+      t.codeRequestInvalidMethod ||
+      t.notImplementedYet ||
+      "Not implemented yet";
+
+    const sanitizedAccount =
+      typeof rawAccount === "string" ? rawAccount.trim() : rawAccount;
+
+    const loginRequest = {
+      username: () => ({
+        path: API_PATHS.login,
+        body: { account: sanitizedAccount, password, method },
+      }),
+      email: () => ({
+        path: API_PATHS.loginWithEmail,
+        body: {
+          email: sanitizedAccount,
+          code: typeof password === "string" ? password.trim() : password,
+        },
+      }),
+    }[method];
+
+    if (!loginRequest) {
+      throw new Error(unsupportedMessage);
+    }
+
+    const { path, body } = loginRequest();
+
+    const data = await api.jsonRequest(path, {
       method: "POST",
-      body: { account, password, method },
+      body,
     });
     setUser(data);
     recordLoginCookie();
