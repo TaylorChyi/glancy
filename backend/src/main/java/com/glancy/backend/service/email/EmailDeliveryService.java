@@ -3,10 +3,12 @@ package com.glancy.backend.service.email;
 import com.glancy.backend.config.EmailVerificationProperties;
 import com.glancy.backend.entity.EmailAudience;
 import com.glancy.backend.entity.EmailStream;
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ public class EmailDeliveryService {
     private final EmailAudienceService audienceService;
     private final EmailDeliveryFailureClassifier failureClassifier;
     private final EmailVerificationProperties properties;
+    private final EmailMessagePreparer messagePreparer;
     private final Clock clock;
 
     public EmailDeliveryService(
@@ -27,12 +30,14 @@ public class EmailDeliveryService {
         EmailAudienceService audienceService,
         EmailDeliveryFailureClassifier failureClassifier,
         EmailVerificationProperties properties,
+        EmailMessagePreparer messagePreparer,
         Clock clock
     ) {
         this.mailSender = mailSender;
         this.audienceService = audienceService;
         this.failureClassifier = failureClassifier;
         this.properties = properties;
+        this.messagePreparer = messagePreparer;
         this.clock = clock;
     }
 
@@ -45,8 +50,11 @@ public class EmailDeliveryService {
         LocalDateTime timestamp = LocalDateTime.now(clock);
         try {
             ensureStreamConsistency();
+            messagePreparer.prepare(message, EmailStream.TRANSACTIONAL);
             mailSender.send(message);
             audienceService.recordDeliverySuccess(audience, timestamp);
+        } catch (MessagingException exception) {
+            throw new MailPreparationException("发送事务邮件前准备失败", exception);
         } catch (MailException exception) {
             EmailDeliveryFailure failure = failureClassifier.classify(exception);
             audienceService.recordDeliveryFailure(recipient, EmailStream.TRANSACTIONAL, failure, timestamp);
