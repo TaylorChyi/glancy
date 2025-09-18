@@ -1,25 +1,19 @@
-import MarkdownStream from "@/components/ui/MarkdownStream";
-import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import layoutStyles from "./DictionaryEntry.module.css";
-import styles from "./DictionaryEntryPlaceholder.module.css";
+import { useMemo } from "react";
+import DictionaryEntry from "./DictionaryEntry.jsx";
 import DictionaryEntrySkeleton from "./DictionaryEntrySkeleton.jsx";
-
-function PreviewRenderer({ children }) {
-  return (
-    <MarkdownRenderer className={styles["preview-text"]}>
-      {children}
-    </MarkdownRenderer>
-  );
-}
+import styles from "./DictionaryEntryPlaceholder.module.css";
 
 function DictionaryEntryPlaceholder({ preview, isLoading }) {
-  if (preview) {
+  const previewEntry = useMemo(() => {
+    if (!preview) return null;
+    return { markdown: preview };
+  }, [preview]);
+
+  if (previewEntry) {
     return (
-      <article
-        className={`${layoutStyles["dictionary-entry"]} ${styles.preview}`}
-      >
-        <MarkdownStream text={preview} renderer={PreviewRenderer} />
-      </article>
+      <div className={styles["preview-wrapper"]}>
+        <DictionaryEntry entry={previewEntry} />
+      </div>
     );
   }
 
