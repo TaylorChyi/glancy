@@ -195,6 +195,27 @@ class UserControllerTest {
     }
 
     /**
+     * 测试 updateContact 接口
+     */
+    @Test
+    void updateContact() throws Exception {
+        UserContactResponse resp = new UserContactResponse("changed@example.com", "7654321");
+        when(userService.updateContact(eq(1L), eq("changed@example.com"), eq("7654321"))).thenReturn(resp);
+
+        UserContactRequest req = new UserContactRequest("changed@example.com", "7654321");
+
+        mockMvc
+            .perform(
+                put("/api/users/1/contact")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value("changed@example.com"))
+            .andExpect(jsonPath("$.phone").value("7654321"));
+    }
+
+    /**
      * 测试 uploadAvatar 接口
      */
     @Test

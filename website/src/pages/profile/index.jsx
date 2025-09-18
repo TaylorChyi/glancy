@@ -28,6 +28,13 @@ function Profile({ onCancel }) {
   const [avatar, setAvatar] = useState("");
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setUsername(currentUser?.username || "");
+    setEmail(currentUser?.email || "");
+    setPhone(currentUser?.phone || "");
+  }, [currentUser]);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -76,18 +83,73 @@ function Profile({ onCancel }) {
   const handleSave = async (e) => {
     e.preventDefault();
     if (!currentUser) return;
-    await api.profiles.saveProfile({
-      token: currentUser.token,
-      profile: {
-        age,
-        gender,
-        job: "",
-        interest: interests,
-        goal,
-      },
-    });
-    setPopupMsg(t.updateSuccess);
-    setPopupOpen(true);
+    setIsSaving(true);
+    const nextUser = { ...currentUser };
+    let hasIdentityUpdates = false;
+
+    try {
+      const updatePromises = [];
+
+      if (username && username !== currentUser.username) {
+        updatePromises.push(
+          api.users
+            .updateUsername({
+              userId: currentUser.id,
+              username,
+              token: currentUser.token,
+            })
+            .then(({ username: updatedUsername }) => {
+              nextUser.username = updatedUsername;
+              hasIdentityUpdates = true;
+            }),
+        );
+      }
+
+      if (email !== currentUser.email || phone !== currentUser.phone) {
+        updatePromises.push(
+          api.users
+            .updateContact({
+              userId: currentUser.id,
+              email,
+              phone,
+              token: currentUser.token,
+            })
+            .then(({ email: updatedEmail, phone: updatedPhone }) => {
+              nextUser.email = updatedEmail;
+              nextUser.phone = updatedPhone;
+              hasIdentityUpdates = true;
+            }),
+        );
+      }
+
+      updatePromises.push(
+        api.profiles.saveProfile({
+          token: currentUser.token,
+          profile: {
+            age,
+            gender,
+            job: "",
+            interest: interests,
+            goal,
+          },
+        }),
+      );
+
+      await Promise.all(updatePromises);
+
+      if (hasIdentityUpdates) {
+        setUser(nextUser);
+      }
+
+      setPopupMsg(t.updateSuccess);
+      setPopupOpen(true);
+    } catch (err) {
+      console.error(err);
+      setPopupMsg(t.fail);
+      setPopupOpen(true);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -211,7 +273,11 @@ function Profile({ onCancel }) {
           </FormField>
         </div>
         <div className={styles.actions}>
-          <button type="submit" className={styles["save-btn"]}>
+          <button
+            type="submit"
+            className={styles["save-btn"]}
+            disabled={isSaving}
+          >
             {t.saveButton}
           </button>
           <button

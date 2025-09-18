@@ -10,6 +10,8 @@ import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
+import com.glancy.backend.dto.UserContactRequest;
+import com.glancy.backend.dto.UserContactResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UsernameRequest;
@@ -167,6 +169,18 @@ public class UserController {
         @Valid @RequestBody UsernameRequest req
     ) {
         UsernameResponse resp = userService.updateUsername(id, req.getUsername());
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * Update the email and phone for a user.
+     */
+    @PutMapping("/{id}/contact")
+    public ResponseEntity<UserContactResponse> updateContact(
+        @PathVariable Long id,
+        @Valid @RequestBody UserContactRequest req
+    ) {
+        UserContactResponse resp = userService.updateContact(id, req.email(), req.phone());
         return ResponseEntity.ok(resp);
     }
 

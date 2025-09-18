@@ -9,6 +9,7 @@ import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
+import com.glancy.backend.dto.UserContactResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UserStatisticsResponse;
@@ -361,6 +362,43 @@ public class UserService {
         user.setUsername(username);
         User saved = userRepository.save(user);
         return new UsernameResponse(saved.getUsername());
+    }
+
+    /**
+     * Update the email and phone contact information for the specified user.
+     */
+    @Transactional
+    public UserContactResponse updateContact(Long userId, String email, String phone) {
+        log.info("Updating contact information for user {}", userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+
+        if (email != null && !email.isBlank()) {
+            String normalizedEmail = normalizeEmail(email);
+            userRepository
+                .findByEmailAndDeletedFalse(normalizedEmail)
+                .ifPresent(existing -> {
+                    if (!existing.getId().equals(userId)) {
+                        log.warn("Email {} is already in use", normalizedEmail);
+                        throw new DuplicateResourceException("邮箱已被使用");
+                    }
+                });
+            user.setEmail(normalizedEmail);
+        }
+
+        if (phone != null && !phone.isBlank()) {
+            userRepository
+                .findByPhoneAndDeletedFalse(phone)
+                .ifPresent(existing -> {
+                    if (!existing.getId().equals(userId)) {
+                        log.warn("Phone {} is already in use", phone);
+                        throw new DuplicateResourceException("手机号已被使用");
+                    }
+                });
+            user.setPhone(phone);
+        }
+
+        User saved = userRepository.save(user);
+        return new UserContactResponse(saved.getEmail(), saved.getPhone());
     }
 
     /**
