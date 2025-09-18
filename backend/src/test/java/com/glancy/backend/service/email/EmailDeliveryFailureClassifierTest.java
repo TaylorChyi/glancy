@@ -38,10 +38,7 @@ class EmailDeliveryFailureClassifierTest {
         EmailDeliveryFailureClassifier classifier = new EmailDeliveryFailureClassifier(
             new MailboxProviderFailureResolver()
         );
-        Map<Object, Exception> failures = Map.of(
-            new Object(),
-            new MessagingException("451 4.7.0 try again later")
-        );
+        Map<Object, Exception> failures = Map.of(new Object(), new MessagingException("451 4.7.0 try again later"));
         MailSendException exception = new StubMailSendException("temporary failure", failures);
 
         EmailDeliveryFailure failure = classifier.classify(exception);
