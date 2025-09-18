@@ -5,6 +5,7 @@ export const API_PATHS = {
   chat: `${API_BASE}/chat`,
   users: `${API_BASE}/users`,
   login: `${API_BASE}/users/login`,
+  loginWithEmail: `${API_BASE}/users/login/email`,
   register: `${API_BASE}/users/register`,
   ping: `${API_BASE}/ping`,
   locale: `${API_BASE}/locale`,
