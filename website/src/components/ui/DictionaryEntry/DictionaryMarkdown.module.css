@@ -8,7 +8,7 @@
 .heading {
   font-weight: 600;
   letter-spacing: 0.02em;
-  line-height: 1.4;
+  line-height: var(--line-height-snug);
 }
 
 .heading-primary {
@@ -29,7 +29,7 @@
 
 .paragraph {
   margin: 0;
-  line-height: 1.75;
+  line-height: var(--line-height-relaxed);
   font-size: 1rem;
   color: inherit;
 }
@@ -43,7 +43,7 @@
 }
 
 .list-item {
-  line-height: 1.6;
+  line-height: var(--line-height-comfortable);
   font-size: 1rem;
 }
 
