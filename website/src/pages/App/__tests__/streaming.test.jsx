@@ -9,7 +9,7 @@ jest.unstable_mockModule("@/components/Layout", () => ({
       {sidebarProps && (
         <button
           data-testid="history-select"
-          onClick={() => sidebarProps.onSelectHistory("foo")}
+          onClick={() => sidebarProps.onSelectHistory("foo", undefined)}
         />
       )}
       <div>{children}</div>
@@ -83,6 +83,7 @@ jest.unstable_mockModule("react-router-dom", () => ({
 // mock contexts
 jest.unstable_mockModule("@/context", () => ({
   useHistory: () => ({
+    history: [],
     loadHistory: jest.fn(),
     addHistory: jest.fn(),
     unfavoriteHistory: jest.fn(),

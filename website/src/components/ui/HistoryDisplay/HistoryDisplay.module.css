@@ -1,45 +1,151 @@
 .container {
-  width: min(720px, 100%);
-  max-height: 420px;
-  overflow-y: auto;
+  width: min(880px, 100%);
   margin: 0 auto;
-  padding: var(--space-2, 8px) 0;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  box-shadow: 0 20px 48px -36px var(--shadow-color);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--app-bg) 92%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-muted) 70%, transparent) 100%
-  );
+  padding: var(--space-4, 24px) var(--space-3, 16px);
 }
 
 .grid {
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--space-2, 8px);
   margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3, 16px);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 12px);
   padding: var(--space-3, 16px);
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--app-bg) 96%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-muted) 72%, transparent) 100%
+  );
+  box-shadow: 0 24px 64px -48px var(--shadow-color);
 }
 
-.grid li {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2, 12px);
+}
+
+.term {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 12px);
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
   cursor: pointer;
-  padding: var(--space-1, 4px) var(--space-2, 8px);
-  border-radius: var(--radius-sm, 4px);
-  transition: background-color 0.2s ease;
+  padding: 0;
 }
 
-.grid li:hover {
-  background-color: var(--color-overlay-weak);
+.term:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-color) 60%, transparent);
+  outline-offset: 2px;
 }
 
-:root[data-theme="dark"] .grid li:hover {
-  background-color: var(--color-overlay-inverse);
+.term-text {
+  flex: 1;
+  letter-spacing: 0.01em;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent-color) 28%, transparent);
+}
+
+.timestamp {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.72;
+  padding: 0;
+}
+
+.toggle:hover,
+.toggle:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.versions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 12px);
+}
+
+.versions li {
+  margin: 0;
+}
+
+.version {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2, 12px);
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 10px);
+  border: none;
+  background: color-mix(in srgb, var(--app-bg) 96%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.version[data-active="true"] {
+  background: color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.version:hover,
+.version:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--accent-color) 32%, transparent);
+  transform: translateY(-1px);
+}
+
+.version-time {
+  font-size: 12px;
+  opacity: 0.72;
+  white-space: nowrap;
 }
 
 @supports not (color: color-mix(in srgb, white 50%, black)) {
-  .container {
+  .card {
     background: var(--app-bg);
     border: 1px solid var(--border-color);
   }

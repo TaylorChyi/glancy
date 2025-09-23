@@ -9,6 +9,17 @@ export const useWordStore = createPersistentStore({
       set((state) => ({ entries: { ...state.entries, [key]: entry } })),
     getEntry: (key) => get().entries[key],
     clear: () => set({ entries: {} }),
+    removeVersions: (termKey) =>
+      set((state) => {
+        if (!termKey) return {};
+        const prefix = `${termKey}:`;
+        const entries = Object.fromEntries(
+          Object.entries(state.entries).filter(
+            ([key]) => !key.startsWith(prefix),
+          ),
+        );
+        return { entries };
+      }),
   }),
   persistOptions: {
     partialize: pickState(["entries"]),

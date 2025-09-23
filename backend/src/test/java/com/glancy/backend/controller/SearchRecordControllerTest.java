@@ -12,6 +12,7 @@ import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -40,7 +41,7 @@ class SearchRecordControllerTest {
     private UserService userService;
 
     /**
-     * 测试 testCreate 接口
+     * 模拟认证成功后创建搜索记录的请求，断言响应体包含基础字段与空版本列表。
      */
     @Test
     void testCreate() throws Exception {
@@ -50,7 +51,8 @@ class SearchRecordControllerTest {
             "hello",
             Language.ENGLISH,
             LocalDateTime.now(),
-            false
+            false,
+            List.of()
         );
         when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class))).thenReturn(resp);
 
@@ -65,11 +67,12 @@ class SearchRecordControllerTest {
             )
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.term").value("hello"));
+            .andExpect(jsonPath("$.term").value("hello"))
+            .andExpect(jsonPath("$.versions").isArray());
     }
 
     /**
-     * 测试 testList 接口
+     * 模拟认证成功后获取历史列表，断言列表项携带版本数组并保持成功状态。
      */
     @Test
     void testList() throws Exception {
@@ -79,7 +82,8 @@ class SearchRecordControllerTest {
             "hello",
             Language.ENGLISH,
             LocalDateTime.now(),
-            true
+            true,
+            List.of()
         );
         when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
 
@@ -89,6 +93,7 @@ class SearchRecordControllerTest {
             .perform(get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].term").value("hello"));
+            .andExpect(jsonPath("$[0].term").value("hello"))
+            .andExpect(jsonPath("$[0].versions").isArray());
     }
 }

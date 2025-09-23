@@ -5,10 +5,41 @@ import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
 import { detectWordLanguage } from "@/utils";
+import { useWordStore } from "./wordStore.js";
+
+const HISTORY_LIMIT = 20;
+
+type SearchRecordDto = {
+  id?: string | number | null;
+  term: string;
+  language?: string | null;
+  createdAt?: string | null;
+  favorite?: boolean | null;
+  versions?: Array<{
+    id?: string | number | null;
+    createdAt?: string | null;
+    favorite?: boolean | null;
+  }> | null;
+};
+
+export interface HistoryVersion {
+  id: string;
+  createdAt: string | null;
+  favorite: boolean;
+}
+
+export interface HistoryItem {
+  term: string;
+  language: string;
+  termKey: string;
+  createdAt: string | null;
+  favorite: boolean;
+  versions: HistoryVersion[];
+  latestVersionId: string | null;
+}
 
 interface HistoryState {
-  history: string[];
-  recordMap: Record<string, string>;
+  history: HistoryItem[];
   error: string | null;
   loadHistory: (user?: User | null) => Promise<void>;
   addHistory: (
@@ -17,9 +48,17 @@ interface HistoryState {
     language?: string,
   ) => Promise<void>;
   clearHistory: (user?: User | null) => Promise<void>;
-  removeHistory: (term: string, user?: User | null) => Promise<void>;
-  favoriteHistory: (term: string, user?: User | null) => Promise<void>;
-  unfavoriteHistory: (term: string, user?: User | null) => Promise<void>;
+  removeHistory: (identifier: string, user?: User | null) => Promise<void>;
+  favoriteHistory: (
+    identifier: string,
+    user?: User | null,
+    versionId?: string,
+  ) => Promise<void>;
+  unfavoriteHistory: (
+    identifier: string,
+    user?: User | null,
+    versionId?: string,
+  ) => Promise<void>;
 }
 
 type SetState = (
@@ -29,6 +68,86 @@ type SetState = (
   replace?: boolean,
 ) => void;
 
+const createTermKey = (term: string, language: string) => `${language}:${term}`;
+
+const normalizeLanguage = (term: string, language?: string | null) =>
+  (language ?? detectWordLanguage(term)).toUpperCase();
+
+const sanitizeVersion = (
+  version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,
+  fallback: { createdAt?: string | null; favorite?: boolean | null },
+): HistoryVersion | null => {
+  if (!version || version.id == null) return null;
+  return {
+    id: String(version.id),
+    createdAt: version.createdAt ?? fallback.createdAt ?? null,
+    favorite: Boolean(version.favorite ?? fallback.favorite ?? false),
+  };
+};
+
+const ensureVersions = (record: SearchRecordDto): HistoryVersion[] => {
+  const fallback = {
+    createdAt: record.createdAt ?? null,
+    favorite: record.favorite ?? null,
+  };
+  const provided = (record.versions ?? [])
+    .map((version) => sanitizeVersion(version, fallback))
+    .filter((v): v is HistoryVersion => Boolean(v));
+  if (provided.length > 0) {
+    return provided.sort((a, b) => {
+      const left = a.createdAt ?? "";
+      const right = b.createdAt ?? "";
+      return right.localeCompare(left);
+    });
+  }
+  if (record.id == null) return [];
+  return [
+    {
+      id: String(record.id),
+      createdAt: record.createdAt ?? null,
+      favorite: Boolean(record.favorite ?? false),
+    },
+  ];
+};
+
+const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
+  const language = normalizeLanguage(record.term, record.language);
+  const versions = ensureVersions(record);
+  const latestVersionId = versions.length ? versions[0].id : null;
+  return {
+    term: record.term,
+    language,
+    termKey: createTermKey(record.term, language),
+    createdAt: record.createdAt ?? versions[0]?.createdAt ?? null,
+    favorite: Boolean(record.favorite ?? versions[0]?.favorite ?? false),
+    versions,
+    latestVersionId,
+  };
+};
+
+const compareByCreatedAtDesc = (a: HistoryItem, b: HistoryItem) => {
+  const left = a.createdAt ?? "";
+  const right = b.createdAt ?? "";
+  if (!left && !right) return 0;
+  if (!left) return 1;
+  if (!right) return -1;
+  return right.localeCompare(left);
+};
+
+const mergeHistory = (existing: HistoryItem[], incoming: HistoryItem[]) => {
+  const map = new Map<string, HistoryItem>();
+  const orderedIncoming = [...incoming].sort(compareByCreatedAtDesc);
+  orderedIncoming.forEach((item) => {
+    map.set(item.termKey, item);
+  });
+  existing.forEach((item) => {
+    if (!map.has(item.termKey)) {
+      map.set(item.termKey, item);
+    }
+  });
+  return Array.from(map.values());
+};
+
 function handleApiError(err: unknown, set: SetState) {
   if (err instanceof ApiError && err.status === 401) {
     const { clearUser } = useUserStore.getState();
@@ -36,7 +155,7 @@ function handleApiError(err: unknown, set: SetState) {
     const message = err.message?.trim()
       ? err.message
       : "登录状态已失效，请重新登录";
-    set({ error: message, history: [], recordMap: {} });
+    set({ error: message, history: [] });
     return;
   }
 
@@ -45,26 +164,37 @@ function handleApiError(err: unknown, set: SetState) {
   set({ error: message });
 }
 
+const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
+  history.find(
+    (item) => item.termKey === identifier || item.term === identifier,
+  );
+
 export const useHistoryStore = createPersistentStore<HistoryState>({
   key: "searchHistory",
   initializer: (set, get) => {
+    const wordStore = useWordStore;
+
     async function refreshHistory(user: User) {
       try {
-        const records = await api.searchRecords.fetchSearchRecords({
+        const response = await api.searchRecords.fetchSearchRecords({
           token: user.token,
         });
-        const terms = records.map((r) => r.term);
-        const map: Record<string, string> = {};
-        records.forEach((r) => {
-          if (r.id) map[r.term] = r.id;
+        const payload: SearchRecordDto[] = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.items)
+            ? response.items
+            : [];
+        const incoming = payload.map(toHistoryItem);
+        set((state) => {
+          const merged = mergeHistory(state.history, incoming);
+          const ordered = [...merged]
+            .sort(compareByCreatedAtDesc)
+            .slice(0, HISTORY_LIMIT);
+          return {
+            history: ordered,
+            error: null,
+          };
         });
-        const existing = get().history;
-        const combined = Array.from(new Set([...terms, ...existing]));
-        set((state) => ({
-          history: combined,
-          recordMap: { ...state.recordMap, ...map },
-          error: null,
-        }));
       } catch (err) {
         handleApiError(err, set);
       }
@@ -72,13 +202,12 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
 
     return {
       history: [],
-      recordMap: {},
       error: null,
       loadHistory: async (user?: User | null) => {
         if (user) {
           await refreshHistory(user);
         } else {
-          set({ recordMap: {}, error: null });
+          set({ error: null });
         }
       },
       addHistory: async (
@@ -86,27 +215,38 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         user?: User | null,
         language?: string,
       ) => {
-        const langToSave = language ?? detectWordLanguage(term);
+        const normalizedLanguage = normalizeLanguage(term, language);
+        const termKey = createTermKey(term, normalizedLanguage);
+        const now = new Date().toISOString();
+        const placeholder: HistoryItem = {
+          term,
+          language: normalizedLanguage,
+          termKey,
+          createdAt: now,
+          favorite: false,
+          versions: [],
+          latestVersionId: null,
+        };
+        set((state) => {
+          const filtered = state.history.filter(
+            (item) => item.termKey !== termKey,
+          );
+          const next = [placeholder, ...filtered].slice(0, HISTORY_LIMIT);
+          return { history: next };
+        });
+
         if (user) {
           try {
-            const record = await api.searchRecords.saveSearchRecord({
+            await api.searchRecords.saveSearchRecord({
               token: user.token,
               term,
-              language: langToSave,
+              language: normalizedLanguage,
             });
-            set((state) => ({
-              recordMap: { ...state.recordMap, [term]: record.id },
-            }));
-            refreshHistory(user);
+            await refreshHistory(user);
           } catch (err) {
             handleApiError(err, set);
           }
         }
-        const unique = Array.from(new Set([term, ...get().history])).slice(
-          0,
-          20,
-        );
-        set({ history: unique });
       },
       clearHistory: async (user?: User | null) => {
         if (user) {
@@ -114,43 +254,112 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             .clearSearchRecords({ token: user.token })
             .catch((err) => handleApiError(err, set));
         }
-        set({ history: [], recordMap: {} });
+        set({ history: [], error: null });
       },
-      removeHistory: async (term: string, user?: User | null) => {
+      removeHistory: async (identifier: string, user?: User | null) => {
+        const target = resolveHistoryItem(get().history, identifier);
+        if (!target) {
+          set((state) => ({
+            history: state.history.filter(
+              (item) => item.termKey !== identifier && item.term !== identifier,
+            ),
+          }));
+          return;
+        }
+
         if (user) {
-          const id = get().recordMap[term];
-          if (id) {
-            api.searchRecords
-              .deleteSearchRecord({ recordId: id, token: user.token })
-              .catch((err) => handleApiError(err, set));
+          const versionIds = target.versions.length
+            ? target.versions.map((version) => version.id)
+            : target.latestVersionId
+              ? [target.latestVersionId]
+              : [];
+          for (const versionId of versionIds) {
+            try {
+              await api.searchRecords.deleteSearchRecord({
+                recordId: versionId,
+                token: user.token,
+              });
+            } catch (err) {
+              handleApiError(err, set);
+              break;
+            }
           }
         }
-        const updated = get().history.filter((t) => t !== term);
-        set((state) => {
-          const map = { ...state.recordMap };
-          delete map[term];
-          return { history: updated, recordMap: map };
-        });
+
+        set((state) => ({
+          history: state.history.filter(
+            (item) => item.termKey !== target.termKey,
+          ),
+        }));
+        wordStore.getState().removeVersions(target.termKey);
       },
-      favoriteHistory: async (term: string, user?: User | null) => {
-        const id = get().recordMap[term];
-        if (user && id) {
-          api.searchRecords
-            .favoriteSearchRecord({ token: user.token, recordId: id })
-            .catch((err) => handleApiError(err, set));
+      favoriteHistory: async (
+        identifier: string,
+        user?: User | null,
+        versionId?: string,
+      ) => {
+        if (!user) return;
+        const target = resolveHistoryItem(get().history, identifier);
+        const idToUse = versionId ?? target?.latestVersionId;
+        if (!idToUse) return;
+        try {
+          await api.searchRecords.favoriteSearchRecord({
+            token: user.token,
+            recordId: idToUse,
+          });
+          await refreshHistory(user);
+        } catch (err) {
+          handleApiError(err, set);
         }
       },
-      unfavoriteHistory: async (term: string, user?: User | null) => {
-        const id = get().recordMap[term];
-        if (user && id) {
-          api.searchRecords
-            .unfavoriteSearchRecord({ token: user.token, recordId: id })
-            .catch((err) => handleApiError(err, set));
+      unfavoriteHistory: async (
+        identifier: string,
+        user?: User | null,
+        versionId?: string,
+      ) => {
+        if (!user) return;
+        const target = resolveHistoryItem(get().history, identifier);
+        const idToUse = versionId ?? target?.latestVersionId;
+        if (!idToUse) return;
+        try {
+          await api.searchRecords.unfavoriteSearchRecord({
+            token: user.token,
+            recordId: idToUse,
+          });
+          await refreshHistory(user);
+        } catch (err) {
+          handleApiError(err, set);
         }
       },
     };
   },
   persistOptions: {
     partialize: pickState(["history"]),
+    version: 2,
+    migrate: (persistedState, version) => {
+      if (!persistedState) return persistedState;
+      if (version === undefined || version < 2) {
+        const legacy = Array.isArray(persistedState.history)
+          ? persistedState.history
+          : [];
+        const upgraded = legacy.map((item) => {
+          if (typeof item === "string") {
+            const language = normalizeLanguage(item);
+            return {
+              term: item,
+              language,
+              termKey: createTermKey(item, language),
+              createdAt: null,
+              favorite: false,
+              versions: [],
+              latestVersionId: null,
+            } satisfies HistoryItem;
+          }
+          return item;
+        });
+        return { ...persistedState, history: upgraded };
+      }
+      return persistedState;
+    },
   },
 });
