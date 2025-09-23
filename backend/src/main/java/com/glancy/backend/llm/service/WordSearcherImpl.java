@@ -10,6 +10,8 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
+import com.glancy.backend.llm.stream.CompletionSentinel;
+import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -62,8 +64,18 @@ public class WordSearcherImpl implements WordSearcher {
         messages.add(new ChatMessage("system", prompt));
         messages.add(new ChatMessage("user", cleanInput));
         String content = client.chat(messages, config.getTemperature());
-        log.info("LLM client '{}' returned content: {}", name, content);
-        ParsedWord parsed = parser.parse(content, term, language);
+        CompletionCheck completion = CompletionSentinel.inspect(content);
+        log.info(
+            "LLM client '{}' returned content (sentinelPresent={}): {}",
+            name,
+            completion.satisfied(),
+            content
+        );
+        if (!completion.satisfied()) {
+            log.warn("LLM client '{}' response missing completion sentinel '{}'", name, CompletionSentinel.MARKER);
+        }
+        String sanitized = completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
+        ParsedWord parsed = parser.parse(sanitized, term, language);
         return parsed.parsed();
     }
 
