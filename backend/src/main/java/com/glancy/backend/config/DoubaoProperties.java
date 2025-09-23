@@ -18,4 +18,9 @@ public class DoubaoProperties {
     private String apiKey;
     /** Doubao LLM model to use. */
     private String model = "doubao-seed-1-6-flash-250715";
+    /**
+     * Upper bound for completion tokens to avoid truncated responses while keeping
+     * resource usage predictable.
+     */
+    private Integer maxCompletionTokens = 8192;
 }
