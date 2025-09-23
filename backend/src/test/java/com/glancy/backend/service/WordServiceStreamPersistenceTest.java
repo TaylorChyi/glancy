@@ -78,7 +78,8 @@ class WordServiceStreamPersistenceTest {
     @Test
     void savesAfterStreaming() {
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(Flux.just("{\"term\":\"hi\"}", ""));
+        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null))
+            .thenReturn(Flux.just("{\"term\":\"hi\"}", "<END>"));
         WordResponse resp = new WordResponse(
             null,
             "hi",
@@ -104,8 +105,21 @@ class WordServiceStreamPersistenceTest {
 
         Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
 
-        StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").expectNext("\"").verifyComplete();
+        StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").expectNext("<END>").verifyComplete();
         verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
+    }
+
+    /** 验证缺少哨兵时不会解析或持久化，等待上游补齐。 */
+    @Test
+    void skipPersistenceWhenSentinelMissing() {
+        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
+        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(Flux.just("{\"term\":\"hi\"}"));
+
+        Flux<String> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null);
+
+        StepVerifier.create(flux).expectNext("{\"term\":\"hi\"}").verifyComplete();
+        verify(parser, never()).parse(any(), any(), any());
+        verify(wordRepository, never()).save(any());
     }
 
     /** 验证异常时不会写库。 */

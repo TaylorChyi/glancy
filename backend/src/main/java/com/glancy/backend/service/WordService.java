@@ -11,6 +11,8 @@ import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
+import com.glancy.backend.llm.stream.CompletionSentinel;
+import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.util.SensitiveDataUtil;
@@ -132,10 +134,18 @@ public class WordService {
             .doOnError(session::markError)
             .doFinally(signal -> {
                 log.info("Streaming finished for term '{}' with signal {}", term, signal);
-                session.finish(signal);
+                CompletionCheck completion = session.finish(signal);
                 if (signal == SignalType.ON_COMPLETE) {
+                    if (!completion.satisfied()) {
+                        log.warn(
+                            "Streaming session for term '{}' completed without sentinel '{}', skipping persistence",
+                            term,
+                            CompletionSentinel.MARKER
+                        );
+                        return;
+                    }
                     try {
-                        ParsedWord parsed = parser.parse(session.aggregatedContent(), term, language);
+                        ParsedWord parsed = parser.parse(completion.sanitizedContent(), term, language);
                         saveWord(term, parsed.parsed(), language);
                     } catch (Exception e) {
                         log.error("Failed to persist streamed word '{}'", term, e);
@@ -174,7 +184,7 @@ public class WordService {
             failure = throwable;
         }
 
-        void finish(SignalType signal) {
+        CompletionCheck finish(SignalType signal) {
             long duration = Duration.between(startedAt, Instant.now()).toMillis();
             String aggregated = aggregatedContent();
             String errorSummary = "<none>";
@@ -182,9 +192,10 @@ public class WordService {
                 String message = failure != null ? failure.getMessage() : "";
                 errorSummary = SensitiveDataUtil.previewText(message);
             }
+            CompletionCheck completion = CompletionSentinel.inspect(aggregated);
             log.info(
                 "Streaming session summary [user={}, term='{}', language={}, model={}]: signal={}, " +
-                "chunks={}, totalChars={}, durationMs={}, error={}, preview={}",
+                "chunks={}, totalChars={}, durationMs={}, error={}, completionSentinelPresent={}, preview={}",
                 userId,
                 term,
                 language,
@@ -194,8 +205,10 @@ public class WordService {
                 aggregated.length(),
                 duration,
                 errorSummary,
+                completion.satisfied(),
                 SensitiveDataUtil.previewText(aggregated)
             );
+            return completion;
         }
 
         String aggregatedContent() {
