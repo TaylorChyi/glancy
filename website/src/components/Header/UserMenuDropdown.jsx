@@ -1,4 +1,3 @@
-import Avatar from "@/components/ui/Avatar";
 import styles from "./Header.module.css";
 import ThemeIcon from "@/components/ui/Icon";
 
@@ -6,7 +5,6 @@ function UserMenuDropdown({
   open,
   setOpen,
   t,
-  username,
   isPro,
   openProfile,
   openSettings,
@@ -17,12 +15,6 @@ function UserMenuDropdown({
   if (!open) return null;
   return (
     <div className={styles.menu}>
-      <div className={styles["menu-header"]}>
-        <div className={styles.avatar}>
-          <Avatar width={32} height={32} />
-        </div>
-        {username ? <div className={styles.identity}>{username}</div> : null}
-      </div>
       <ul>
         {!isPro && (
           <li onClick={() => openUpgrade()}>
