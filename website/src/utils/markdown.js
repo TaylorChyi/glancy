@@ -58,10 +58,27 @@ function ensureListSpacing(text) {
   );
 }
 
+function computeListIndentation(source, offset) {
+  const lineStart = source.lastIndexOf("\n", offset) + 1;
+  const line = source.slice(lineStart, offset + 1);
+  const markerMatch = line.match(/^([ \t]*)(?:([-*+])|((?:\d+[.)])))(\s+)/);
+  if (!markerMatch) {
+    return null;
+  }
+  const [, leading = "", bullet = "", numbered = "", gap = ""] = markerMatch;
+  const marker = bullet || numbered;
+  const visualizedMarker = marker.replace(/[^\s]/g, " ");
+  return `${leading}${visualizedMarker}${gap.replace(/[^\s]/g, " ")}`;
+}
+
 function ensureTranslationLineBreak(text) {
   return text.replace(
     INLINE_TRANSLATION,
-    (_, before, spaces, translation) => `${before}\n${spaces}${translation}`,
+    (match, before, spaces, translation, offset, source) => {
+      const indent =
+        computeListIndentation(source, offset) || spaces.replace(/\S/g, " ");
+      return `${before}\n${indent}${translation}`;
+    },
   );
 }
 
