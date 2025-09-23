@@ -1,4 +1,7 @@
-import { extractMarkdownPreview } from "./markdown.js";
+import {
+  extractMarkdownPreview,
+  polishDictionaryMarkdown,
+} from "./markdown.js";
 
 /**
  * 验证纯 Markdown 文本会被原样返回（仅规范化换行）。
@@ -32,7 +35,7 @@ test("parses partial markdown from json stream", () => {
 test("decodes escaped characters", () => {
   const json = JSON.stringify({ markdown: 'Line 1\n\nHe said: "hi"' });
   const result = extractMarkdownPreview(json);
-  expect(result).toBe("Line 1\n\nHe said: \"hi\"");
+  expect(result).toBe('Line 1\n\nHe said: "hi"');
 });
 
 /**
@@ -51,4 +54,13 @@ test("treats null markdown as empty string", () => {
   const json = '{"markdown":null}';
   const result = extractMarkdownPreview(json);
   expect(result).toBe("");
+});
+
+/**
+ * 验证 `polishDictionaryMarkdown` 会强制将译文放到独立行，避免与英文例句同行展示。
+ */
+test("polishDictionaryMarkdown enforces translation line break", () => {
+  const source = "- **例句 1**: Hello world  **翻译**: 你好世界";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("- **例句 1**: Hello world\n  **翻译**: 你好世界");
 });

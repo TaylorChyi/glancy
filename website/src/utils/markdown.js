@@ -7,6 +7,7 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
+const INLINE_TRANSLATION = /([^\n])([ \t]+)(\*\*翻译\*\*:[^\n]*)/g;
 
 function isLikelyJson(text) {
   if (!text) return false;
@@ -54,6 +55,13 @@ function ensureListSpacing(text) {
   return text.replace(
     LIST_MARKER_WITHOUT_GAP,
     (_, marker, rest) => `${marker} ${rest}`,
+  );
+}
+
+function ensureTranslationLineBreak(text) {
+  return text.replace(
+    INLINE_TRANSLATION,
+    (_, before, spaces, translation) => `${before}\n${spaces}${translation}`,
   );
 }
 
@@ -180,5 +188,6 @@ export function polishDictionaryMarkdown(source) {
   const withLineBreak = ensureHeadingLineBreak(normalized);
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
   const padded = ensureHeadingPadding(withHeadingSpacing);
-  return ensureListSpacing(padded);
+  const spaced = ensureListSpacing(padded);
+  return ensureTranslationLineBreak(spaced);
 }
