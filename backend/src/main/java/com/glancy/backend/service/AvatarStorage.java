@@ -8,7 +8,12 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface AvatarStorage {
     /**
-     * Upload the avatar file and return the accessible URL.
+     * Upload the avatar file and return the object key inside the OSS bucket.
      */
     String upload(MultipartFile file) throws IOException;
+
+    /**
+     * Resolve the externally accessible URL for the provided object key.
+     */
+    String resolveUrl(String objectKey);
 }

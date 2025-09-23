@@ -10,6 +10,7 @@ import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
 import com.glancy.backend.dto.UserContactResponse;
+import com.glancy.backend.dto.UserDetailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UserStatisticsResponse;
@@ -21,6 +22,7 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
+import com.glancy.backend.service.support.AvatarReferenceResolver;
 import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.ThirdPartyAccountRepository;
 import com.glancy.backend.repository.UserRepository;
@@ -50,6 +52,7 @@ public class UserService {
     private final AvatarStorage avatarStorage;
     private final UserProfileService userProfileService;
     private final EmailVerificationService emailVerificationService;
+    private final AvatarReferenceResolver avatarReferenceResolver;
 
     public UserService(
         UserRepository userRepository,
@@ -57,7 +60,8 @@ public class UserService {
         ThirdPartyAccountRepository thirdPartyAccountRepository,
         AvatarStorage avatarStorage,
         UserProfileService userProfileService,
-        EmailVerificationService emailVerificationService
+        EmailVerificationService emailVerificationService,
+        AvatarReferenceResolver avatarReferenceResolver
     ) {
         this.userRepository = userRepository;
         this.loginDeviceRepository = loginDeviceRepository;
@@ -65,6 +69,7 @@ public class UserService {
         this.avatarStorage = avatarStorage;
         this.userProfileService = userProfileService;
         this.emailVerificationService = emailVerificationService;
+        this.avatarReferenceResolver = avatarReferenceResolver;
     }
 
     /**
@@ -94,6 +99,26 @@ public class UserService {
     public User getUserRaw(Long id) {
         log.info("Fetching user {}", id);
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+    }
+
+    /**
+     * Retrieve user profile details with avatar URL resolved for external consumption.
+     */
+    @Transactional(readOnly = true)
+    public UserDetailResponse getUserDetail(Long id) {
+        User user = getUserRaw(id);
+        return new UserDetailResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            resolveOutboundAvatar(user.getAvatar()),
+            user.getPhone(),
+            user.getMember(),
+            user.getDeleted(),
+            user.getCreatedAt(),
+            user.getUpdatedAt(),
+            user.getLastLoginAt()
+        );
     }
 
     /**
@@ -316,7 +341,7 @@ public class UserService {
     public AvatarResponse getAvatar(Long userId) {
         log.info("Fetching avatar for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        return new AvatarResponse(user.getAvatar());
+        return new AvatarResponse(resolveOutboundAvatar(user.getAvatar()));
     }
 
     /**
@@ -327,10 +352,11 @@ public class UserService {
         log.info("Updating avatar for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         String previousAvatar = user.getAvatar();
-        user.setAvatar(avatar);
+        String objectKey = requireObjectKey(avatar);
+        user.setAvatar(objectKey);
         User saved = userRepository.save(user);
         log.info("Avatar updated for user {} from {} to {}", userId, previousAvatar, saved.getAvatar());
-        return new AvatarResponse(saved.getAvatar());
+        return new AvatarResponse(resolveOutboundAvatar(saved.getAvatar()));
     }
 
     /**
@@ -339,8 +365,8 @@ public class UserService {
     @Transactional
     public AvatarResponse uploadAvatar(Long userId, MultipartFile file) {
         try {
-            String url = avatarStorage.upload(file);
-            return updateAvatar(userId, url);
+            String objectKey = avatarStorage.upload(file);
+            return updateAvatar(userId, objectKey);
         } catch (IOException e) {
             log.error("Failed to upload avatar", e);
             throw new InvalidRequestException("上传头像失败");
@@ -447,17 +473,11 @@ public class UserService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setEmail(normalizedEmail);
-        user.setAvatar(avatar);
+        user.setAvatar(normalizeAvatar(avatar));
         user.setPhone(phone);
         User saved = userRepository.save(user);
         userProfileService.initProfile(saved.getId());
-        return new UserResponse(
-            saved.getId(),
-            saved.getUsername(),
-            saved.getEmail(),
-            saved.getAvatar(),
-            saved.getPhone()
-        );
+        return toUserResponse(saved);
     }
 
     private LoginResponse completeLogin(User user, String deviceInfo) {
@@ -485,7 +505,7 @@ public class UserService {
             user.getId(),
             user.getUsername(),
             user.getEmail(),
-            user.getAvatar(),
+            resolveOutboundAvatar(user.getAvatar()),
             user.getPhone(),
             user.getMember(),
             token
@@ -494,5 +514,47 @@ public class UserService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeAvatar(String reference) {
+        if (reference == null) {
+            return null;
+        }
+        return avatarReferenceResolver
+            .normalizeToObjectKey(reference)
+            .orElseGet(() -> {
+                if (reference.trim().isEmpty()) {
+                    return null;
+                }
+                throw new InvalidRequestException("无效的头像地址");
+            });
+    }
+
+    private String requireObjectKey(String reference) {
+        String normalized = normalizeAvatar(reference);
+        if (normalized == null) {
+            throw new InvalidRequestException("无效的头像地址");
+        }
+        return normalized;
+    }
+
+    private String resolveOutboundAvatar(String storedAvatar) {
+        if (storedAvatar == null || storedAvatar.isBlank()) {
+            return storedAvatar;
+        }
+        if (avatarReferenceResolver.isFullUrl(storedAvatar)) {
+            return storedAvatar;
+        }
+        return avatarStorage.resolveUrl(storedAvatar);
+    }
+
+    private UserResponse toUserResponse(User user) {
+        return new UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            resolveOutboundAvatar(user.getAvatar()),
+            user.getPhone()
+        );
     }
 }

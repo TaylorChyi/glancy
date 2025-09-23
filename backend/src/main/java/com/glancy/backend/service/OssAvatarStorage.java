@@ -12,7 +12,9 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +34,8 @@ public class OssAvatarStorage implements AvatarStorage {
     private final long signedUrlExpirationMinutes;
     private final String urlPrefix;
 
+    private final Set<String> presignedOnlyKeys = ConcurrentHashMap.newKeySet();
+
     public OssAvatarStorage(OSS ossClient, OssProperties properties) {
         this.ossClient = Objects.requireNonNull(ossClient, "OSS client must not be null");
         this.bucket = properties.getBucket();
@@ -43,8 +47,9 @@ public class OssAvatarStorage implements AvatarStorage {
     }
 
     /**
-     * Upload the avatar and return the public URL.
+     * Upload the avatar and return its object key.
      */
+    @Override
     public String upload(MultipartFile file) throws IOException {
         String original = file.getOriginalFilename();
         String ext = "";
@@ -54,14 +59,24 @@ public class OssAvatarStorage implements AvatarStorage {
         String objectName = avatarDir + UUID.randomUUID() + ext;
         ossClient.putObject(bucket, objectName, file.getInputStream());
         boolean isPublic = setPublicReadAcl(objectName);
-        String url;
-        if (isPublic) {
-            url = urlPrefix + objectName;
+        if (!isPublic) {
+            presignedOnlyKeys.add(objectName);
         } else {
-            url = generatePresignedUrl(objectName);
+            presignedOnlyKeys.remove(objectName);
         }
-        log.info("Avatar stored as {}. URL returned: {}", objectName, url);
-        return url;
+        log.info("Avatar stored as {}", objectName);
+        return objectName;
+    }
+
+    @Override
+    public String resolveUrl(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            return objectKey;
+        }
+        if (publicRead && !presignedOnlyKeys.contains(objectKey)) {
+            return urlPrefix + objectKey;
+        }
+        return generatePresignedUrl(objectKey);
     }
 
     /**
