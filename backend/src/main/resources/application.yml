@@ -61,6 +61,7 @@ thirdparty:
     base-url: https://ark.cn-beijing.volces.com
     chat-path: /api/v3/chat/completions
     api-key: ""
+    max-completion-tokens: 8192
 oss:
   endpoint: https://oss-cn-beijing.aliyuncs.com
   bucket: glancy-avatar-bucket

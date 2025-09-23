@@ -31,6 +31,7 @@ public class DoubaoClient implements LLMClient {
     private final String chatPath;
     private final String apiKey;
     private final String model;
+    private final Integer maxCompletionTokens;
 
     public DoubaoClient(
         WebClient.Builder builder,
@@ -42,6 +43,7 @@ public class DoubaoClient implements LLMClient {
         this.chatPath = ensureLeadingSlash(properties.getChatPath());
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
+        this.maxCompletionTokens = properties.getMaxCompletionTokens();
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Doubao API key is empty");
         } else {
@@ -58,20 +60,7 @@ public class DoubaoClient implements LLMClient {
     public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
         log.info("DoubaoClient.streamChat called with {} messages, temperature={}", messages.size(), temperature);
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("model", model);
-        body.put("temperature", temperature);
-        body.put("stream", true);
-        body.put("thinking", Map.of("type", "disabled"));
-
-        List<Map<String, String>> reqMessages = new ArrayList<>();
-        for (ChatMessage m : messages) {
-            reqMessages.add(Map.of("role", m.getRole(), "content", m.getContent()));
-        }
-        List<String> roles = messages.stream().map(ChatMessage::getRole).toList();
-        log.info("Prepared {} request messages with roles {}", reqMessages.size(), roles);
-        body.put("messages", reqMessages);
-
+        Map<String, Object> body = prepareRequestBody(messages, temperature);
         log.info("Request body prepared for Doubao API: {}", body);
         return webClient
             .post()
@@ -86,6 +75,26 @@ public class DoubaoClient implements LLMClient {
             .bodyValue(body)
             .exchangeToFlux(this::handleResponse)
             .transform(decoder::decode);
+    }
+
+    private Map<String, Object> prepareRequestBody(List<ChatMessage> messages, double temperature) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model);
+        body.put("temperature", temperature);
+        body.put("stream", true);
+        body.put("thinking", Map.of("type", "disabled"));
+        if (maxCompletionTokens != null && maxCompletionTokens > 0) {
+            body.put("max_completion_tokens", maxCompletionTokens);
+        }
+
+        List<Map<String, String>> reqMessages = new ArrayList<>();
+        for (ChatMessage m : messages) {
+            reqMessages.add(Map.of("role", m.getRole(), "content", m.getContent()));
+        }
+        List<String> roles = messages.stream().map(ChatMessage::getRole).toList();
+        log.info("Prepared {} request messages with roles {}", reqMessages.size(), roles);
+        body.put("messages", reqMessages);
+        return body;
     }
 
     private Flux<String> handleResponse(ClientResponse resp) {
