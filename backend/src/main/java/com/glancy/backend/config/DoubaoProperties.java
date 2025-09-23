@@ -22,5 +22,5 @@ public class DoubaoProperties {
      * Upper bound for completion tokens to avoid truncated responses while keeping
      * resource usage predictable.
      */
-    private Integer maxCompletionTokens = 8192;
+    private Integer maxCompletionTokens = 20480;
 }
