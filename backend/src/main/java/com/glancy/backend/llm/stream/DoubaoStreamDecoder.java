@@ -165,7 +165,11 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
         void recordEvent(Event evt) {
             if (endReceived) {
-                log.warn("Received event '{}' after end signal, raw={}", evt.type, SensitiveDataUtil.previewText(evt.data.toString()));
+                log.warn(
+                    "Received event '{}' after end signal, raw={}",
+                    evt.type,
+                    SensitiveDataUtil.previewText(evt.data.toString())
+                );
             }
             eventCount++;
             log.info("Event [{}]: {}", evt.type, evt.data);
