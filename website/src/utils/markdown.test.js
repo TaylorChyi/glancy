@@ -64,3 +64,21 @@ test("polishDictionaryMarkdown enforces translation line break", () => {
   const result = polishDictionaryMarkdown(source);
   expect(result).toBe("- **例句 1**: Hello world\n  **翻译**: 你好世界");
 });
+
+/**
+ * 验证翻译行会继承有序列表的缩进，使得“翻译”与“例句”保持列对齐。
+ */
+test("translation line keeps ordered list indentation", () => {
+  const source = "1. **例句**: Sample text  **翻译**: 示例文本";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("1. **例句**: Sample text\n   **翻译**: 示例文本");
+});
+
+/**
+ * 验证翻译行会继承嵌套无序列表的缩进，避免视觉错位。
+ */
+test("translation line keeps nested unordered list indentation", () => {
+  const source = "  - **例句**: Nested sample  **翻译**: 嵌套示例";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("  - **例句**: Nested sample\n    **翻译**: 嵌套示例");
+});
