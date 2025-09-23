@@ -13,6 +13,9 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.util.SensitiveDataUtil;
+import java.time.Duration;
+import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,7 +103,7 @@ public class WordService {
             }
         }
 
-        StringBuilder buffer = new StringBuilder();
+        StreamingAccumulator session = new StreamingAccumulator(userId, term, language, model);
         Flux<String> stream;
         try {
             stream = wordSearcher.streamSearch(term, language, model);
@@ -113,7 +116,7 @@ public class WordService {
         return stream
             .doOnNext(chunk -> {
                 log.info("Streaming chunk for term '{}': {}", term, chunk);
-                buffer.append(chunk);
+                session.append(chunk);
             })
             .doOnError(err ->
                 log.error(
@@ -126,17 +129,80 @@ public class WordService {
                     err
                 )
             )
+            .doOnError(session::markError)
             .doFinally(signal -> {
                 log.info("Streaming finished for term '{}' with signal {}", term, signal);
+                session.finish(signal);
                 if (signal == SignalType.ON_COMPLETE) {
                     try {
-                        ParsedWord parsed = parser.parse(buffer.toString(), term, language);
+                        ParsedWord parsed = parser.parse(session.aggregatedContent(), term, language);
                         saveWord(term, parsed.parsed(), language);
                     } catch (Exception e) {
                         log.error("Failed to persist streamed word '{}'", term, e);
                     }
                 }
             });
+    }
+
+    private static final class StreamingAccumulator {
+
+        private final Long userId;
+        private final String term;
+        private final Language language;
+        private final String model;
+        private final Instant startedAt = Instant.now();
+        private final StringBuilder transcript = new StringBuilder();
+        private int chunkCount;
+        private boolean error;
+        private Throwable failure;
+        private String snapshot;
+
+        StreamingAccumulator(Long userId, String term, Language language, String model) {
+            this.userId = userId;
+            this.term = term;
+            this.language = language;
+            this.model = model;
+        }
+
+        void append(String chunk) {
+            chunkCount++;
+            transcript.append(chunk);
+        }
+
+        void markError(Throwable throwable) {
+            error = true;
+            failure = throwable;
+        }
+
+        void finish(SignalType signal) {
+            long duration = Duration.between(startedAt, Instant.now()).toMillis();
+            String aggregated = aggregatedContent();
+            String errorSummary = "<none>";
+            if (error) {
+                String message = failure != null ? failure.getMessage() : "";
+                errorSummary = SensitiveDataUtil.previewText(message);
+            }
+            log.info(
+                "Streaming session summary [user={}, term='{}', language={}, model={}]: signal={}, chunks={}, totalChars={}, durationMs={}, error={}, preview={}",
+                userId,
+                term,
+                language,
+                model,
+                signal,
+                chunkCount,
+                aggregated.length(),
+                duration,
+                errorSummary,
+                SensitiveDataUtil.previewText(aggregated)
+            );
+        }
+
+        String aggregatedContent() {
+            if (snapshot == null) {
+                snapshot = transcript.toString();
+            }
+            return snapshot;
+        }
     }
 
     private String serialize(Word word) throws JsonProcessingException {
