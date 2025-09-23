@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
 import { useHistory, useUser, useFavorites } from "@/context";
 import { useNavigate } from "react-router-dom";
@@ -84,6 +84,95 @@ function App() {
     startSpeech(locale);
   };
 
+  const executeLookup = useCallback(
+    async (term) => {
+      const normalized = term.trim();
+      if (!normalized) {
+        return { status: "idle", term: normalized };
+      }
+
+      setShowFavorites(false);
+      setShowHistory(false);
+      console.info("[App] search start", normalized);
+
+      if (abortRef.current) {
+        console.info("[App] search cancel previous");
+        abortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoading(true);
+      setEntry(null);
+      setStreamText("");
+      setFinalText("");
+
+      let detected;
+      try {
+        let acc = "";
+        let preview = "";
+        let parsedEntry = null;
+
+        for await (const { chunk, language } of streamWord({
+          user,
+          term: normalized,
+          signal: controller.signal,
+        })) {
+          if (!detected && language) detected = language;
+          acc += chunk;
+
+          const derived = extractMarkdownPreview(acc);
+          preview = derived === null ? preview : derived;
+          setStreamText(preview);
+
+          try {
+            parsedEntry = JSON.parse(acc);
+            setEntry(parsedEntry);
+          } catch {
+            // ignore parse errors until JSON is complete
+          }
+        }
+
+        if (!parsedEntry) {
+          setFinalText(preview);
+        }
+
+        console.info("[App] search complete", normalized);
+        return {
+          status: "success",
+          term: normalized,
+          detectedLanguage: detected,
+        };
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.info("[App] search cancelled", normalized);
+          return { status: "cancelled", term: normalized };
+        }
+
+        console.info("[App] search error", error);
+        setPopupMsg(error.message);
+        setPopupOpen(true);
+        return { status: "error", term: normalized, error };
+      } finally {
+        setLoading(false);
+        abortRef.current = null;
+      }
+    },
+    [
+      streamWord,
+      user,
+      setShowFavorites,
+      setShowHistory,
+      setLoading,
+      setEntry,
+      setStreamText,
+      setFinalText,
+      setPopupMsg,
+      setPopupOpen,
+    ],
+  );
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -91,59 +180,14 @@ function App() {
       return;
     }
     if (!text.trim()) return;
-    setShowFavorites(false);
-    setShowHistory(false);
+
+    setFromFavorites(false);
     const input = text.trim();
     setText("");
-    console.info("[App] search start", input);
-    if (abortRef.current) {
-      console.info("[App] search cancel previous");
-      abortRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoading(true);
-    setEntry(null);
-    setStreamText("");
-    setFinalText("");
-    let detected;
-    try {
-      let acc = "";
-      let preview = "";
-      let parsedEntry = null;
-      for await (const { chunk, language } of streamWord({
-        user,
-        term: input,
-        signal: controller.signal,
-      })) {
-        if (!detected) detected = language;
-        acc += chunk;
-        const derived = extractMarkdownPreview(acc);
-        preview = derived === null ? preview : derived;
-        setStreamText(preview);
-        try {
-          parsedEntry = JSON.parse(acc);
-          setEntry(parsedEntry);
-        } catch {
-          // ignore parse errors until JSON is complete
-        }
-      }
-      if (!parsedEntry) {
-        setFinalText(preview);
-      }
-      addHistory(input, user, detected);
-      console.info("[App] search complete", input);
-    } catch (error) {
-      if (error.name === "AbortError") {
-        console.info("[App] search cancelled", input);
-      } else {
-        console.info("[App] search error", error);
-        setPopupMsg(error.message);
-        setPopupOpen(true);
-      }
-    } finally {
-      setLoading(false);
-      abortRef.current = null;
+
+    const result = await executeLookup(input);
+    if (result.status === "success") {
+      addHistory(input, user, result.detectedLanguage);
     }
   };
 
@@ -152,55 +196,8 @@ function App() {
       navigate("/login");
       return;
     }
-    setShowFavorites(false);
-    setShowHistory(false);
-    console.info("[App] search start", term);
-    if (abortRef.current) {
-      console.info("[App] search cancel previous");
-      abortRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoading(true);
-    setEntry(null);
-    setStreamText("");
-    setFinalText("");
-    try {
-      let acc = "";
-      let preview = "";
-      let parsedEntry = null;
-      for await (const { chunk } of streamWord({
-        user,
-        term,
-        signal: controller.signal,
-      })) {
-        acc += chunk;
-        const derived = extractMarkdownPreview(acc);
-        preview = derived === null ? preview : derived;
-        setStreamText(preview);
-        try {
-          parsedEntry = JSON.parse(acc);
-          setEntry(parsedEntry);
-        } catch {
-          // ignore parse errors until JSON is complete
-        }
-      }
-      if (!parsedEntry) {
-        setFinalText(preview);
-      }
-      console.info("[App] search complete", term);
-    } catch (error) {
-      if (error.name === "AbortError") {
-        console.info("[App] search cancelled", term);
-      } else {
-        console.info("[App] search error", error);
-        setPopupMsg(error.message);
-        setPopupOpen(true);
-      }
-    } finally {
-      setLoading(false);
-      abortRef.current = null;
-    }
+
+    await executeLookup(term);
   };
 
   useEffect(() => {

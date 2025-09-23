@@ -17,8 +17,40 @@ jest.unstable_mockModule("@/components/Layout", () => ({
     </div>
   ),
 }));
+const renderMarkdown = (content) => {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return <p>{""}</p>;
+  }
+  if (trimmed.startsWith("# ")) {
+    return <h1>{trimmed.replace(/^#\s*/, "")}</h1>;
+  }
+  return <p>{content}</p>;
+};
+
+const MockDictionaryEntry = ({ entry }) => {
+  if (!entry) {
+    return <div data-testid="entry" />;
+  }
+  if (entry.markdown) {
+    return <div data-testid="entry">{renderMarkdown(entry.markdown)}</div>;
+  }
+  return <div data-testid="entry">{entry.term ?? ""}</div>;
+};
+
+const MockDictionaryEntryView = ({ entry, preview }) => {
+  if (entry) {
+    return <MockDictionaryEntry entry={entry} />;
+  }
+  if (preview) {
+    return renderMarkdown(preview);
+  }
+  return null;
+};
+
 jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
-  default: ({ entry }) => <div data-testid="entry">{entry.term}</div>,
+  default: MockDictionaryEntry,
+  DictionaryEntryView: MockDictionaryEntryView,
 }));
 jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
   default: () => null,
