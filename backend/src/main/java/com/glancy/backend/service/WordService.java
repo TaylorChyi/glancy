@@ -183,7 +183,8 @@ public class WordService {
                 errorSummary = SensitiveDataUtil.previewText(message);
             }
             log.info(
-                "Streaming session summary [user={}, term='{}', language={}, model={}]: signal={}, chunks={}, totalChars={}, durationMs={}, error={}, preview={}",
+                "Streaming session summary [user={}, term='{}', language={}, model={}]: signal={}, " +
+                "chunks={}, totalChars={}, durationMs={}, error={}, preview={}",
                 userId,
                 term,
                 language,

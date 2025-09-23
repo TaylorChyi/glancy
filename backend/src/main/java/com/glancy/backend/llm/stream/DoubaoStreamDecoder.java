@@ -226,7 +226,8 @@ public class DoubaoStreamDecoder implements StreamDecoder {
         String summary() {
             long duration = Duration.between(startedAt, Instant.now()).toMillis();
             return String.format(
-                "events=%d, chunks=%d, totalChars=%d, emptyPayloads=%d, decodeFailures=%d, finishReason=%s, endReceived=%s, lastChunk=%s, error=%s, durationMs=%d",
+                "events=%d, chunks=%d, totalChars=%d, emptyPayloads=%d, decodeFailures=%d, finishReason=%s, " +
+                "endReceived=%s, lastChunk=%s, error=%s, durationMs=%d",
                 eventCount,
                 chunkCount,
                 totalChars,
