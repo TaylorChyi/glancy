@@ -1,5 +1,6 @@
 import { useLanguage } from "@/context";
 import { TtsButton, PronounceableWord } from "@/components";
+import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
 import { polishDictionaryMarkdown } from "@/utils";
 import styles from "./DictionaryEntry.module.css";
@@ -138,7 +139,9 @@ function DictionaryEntry({ entry }) {
           <ol>
             {defs.map((d, i) => (
               <li key={i}>
-                <MarkdownRenderer>{d.定义}</MarkdownRenderer>
+                <MarkdownRenderer className={styles["definition-markdown"]}>
+                  {d.定义}
+                </MarkdownRenderer>
                 {d.类别 && <div className={styles.pos}>{d.类别}</div>}
                 {d.关系词 && (
                   <div className={styles.relations}>
