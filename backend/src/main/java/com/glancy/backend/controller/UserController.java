@@ -12,6 +12,7 @@ import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
 import com.glancy.backend.dto.UserContactRequest;
 import com.glancy.backend.dto.UserContactResponse;
+import com.glancy.backend.dto.UserDetailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UsernameRequest;
@@ -86,8 +87,8 @@ public class UserController {
      * Fetch user information regardless of deletion status.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        User user = userService.getUserRaw(id);
+    public ResponseEntity<UserDetailResponse> getUser(@PathVariable Long id) {
+        UserDetailResponse user = userService.getUserDetail(id);
         return ResponseEntity.ok(user);
     }
 
