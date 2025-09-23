@@ -44,18 +44,6 @@ public record UserDetailResponse(
         LocalDateTime updatedAt,
         LocalDateTime lastLoginAt
     ) {
-        this(
-            CURRENT_VERSION,
-            id,
-            username,
-            email,
-            avatar,
-            phone,
-            member,
-            deleted,
-            createdAt,
-            updatedAt,
-            lastLoginAt
-        );
+        this(CURRENT_VERSION, id, username, email, avatar, phone, member, deleted, createdAt, updatedAt, lastLoginAt);
     }
 }
