@@ -78,8 +78,9 @@ class WordServiceStreamPersistenceTest {
     @Test
     void savesAfterStreaming() {
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null))
-            .thenReturn(Flux.just("{\"term\":\"hi\"}", "<END>"));
+        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(
+            Flux.just("{\"term\":\"hi\"}", "<END>")
+        );
         WordResponse resp = new WordResponse(
             null,
             "hi",

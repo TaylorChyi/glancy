@@ -65,12 +65,7 @@ public class WordSearcherImpl implements WordSearcher {
         messages.add(new ChatMessage("user", cleanInput));
         String content = client.chat(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
-        log.info(
-            "LLM client '{}' returned content (sentinelPresent={}): {}",
-            name,
-            completion.satisfied(),
-            content
-        );
+        log.info("LLM client '{}' returned content (sentinelPresent={}): {}", name, completion.satisfied(), content);
         if (!completion.satisfied()) {
             log.warn("LLM client '{}' response missing completion sentinel '{}'", name, CompletionSentinel.MARKER);
         }
