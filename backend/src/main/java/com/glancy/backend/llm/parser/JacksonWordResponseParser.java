@@ -1,10 +1,12 @@
 package com.glancy.backend.llm.parser;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -12,75 +14,109 @@ import org.springframework.stereotype.Component;
 @Component
 public class JacksonWordResponseParser implements WordResponseParser {
 
+    private final ObjectMapper objectMapper;
+
+    public JacksonWordResponseParser(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     public ParsedWord parse(String content, String term, Language language) {
         String markdown = content;
-        String json = extractJson(content);
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            var node = mapper.readTree(json);
-
-            String id = node.path("id").isNull() ? null : node.path("id").asText();
-
-            String parsedTerm = node.path("term").asText(null);
-            if (parsedTerm == null || parsedTerm.isEmpty()) {
-                parsedTerm = node.path("entry").asText(null);
-            }
-            if (parsedTerm == null || parsedTerm.isEmpty()) {
-                parsedTerm = node.path("\u8BCD\u6761").asText(term); // "词条"
-            }
-
-            List<String> synonyms = new ArrayList<>();
-            List<String> antonyms = new ArrayList<>();
-            List<String> related = new ArrayList<>();
-
-            List<String> definitions = parseEnglishDefinitions(node, synonyms, antonyms, related);
-            if (definitions.isEmpty()) {
-                definitions = parseChineseDefinitions(node, synonyms, antonyms, related);
-            }
-
-            List<String> variations = parseVariations(node);
-            List<String> phrases = parsePhrases(node);
-
-            Language lang = parseLanguage(node, language);
-
-            String example = parseExample(node, definitions);
-
-            String phonetic = parsePhonetic(node);
-
-            WordResponse response = new WordResponse(
-                id,
-                parsedTerm,
-                definitions,
-                lang,
-                example,
-                phonetic,
-                variations,
-                synonyms,
-                antonyms,
-                related,
-                phrases,
-                markdown
-            );
-            return new ParsedWord(response, markdown);
-        } catch (Exception e) {
-            log.warn("Failed to parse word response", e);
-            WordResponse response = new WordResponse(
-                null,
-                term,
-                new ArrayList<>(),
-                language,
-                null,
-                null,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                new ArrayList<>(),
-                new ArrayList<>(),
-                new ArrayList<>(),
-                markdown
-            );
-            return new ParsedWord(response, markdown);
+        String candidate = extractJson(content);
+        Optional<JsonNode> jsonNode = tryParseJson(candidate);
+        if (jsonNode.isPresent()) {
+            return buildFromJson(jsonNode.get(), term, language, markdown);
         }
+        log.debug("Word response did not contain JSON payload, falling back to markdown parsing.");
+        return buildFromMarkdown(markdown, term, language);
+    }
+
+    private ParsedWord buildFromJson(JsonNode node, String term, Language language, String markdown) {
+        String id = node.path("id").isNull() ? null : node.path("id").asText();
+
+        String parsedTerm = node.path("term").asText(null);
+        if (parsedTerm == null || parsedTerm.isEmpty()) {
+            parsedTerm = node.path("entry").asText(null);
+        }
+        if (parsedTerm == null || parsedTerm.isEmpty()) {
+            parsedTerm = node.path("\u8BCD\u6761").asText(term); // "词条"
+        }
+
+        List<String> synonyms = new ArrayList<>();
+        List<String> antonyms = new ArrayList<>();
+        List<String> related = new ArrayList<>();
+
+        List<String> definitions = parseEnglishDefinitions(node, synonyms, antonyms, related);
+        if (definitions.isEmpty()) {
+            definitions = parseChineseDefinitions(node, synonyms, antonyms, related);
+        }
+
+        List<String> variations = parseVariations(node);
+        List<String> phrases = parsePhrases(node);
+
+        Language lang = parseLanguage(node, language);
+
+        String example = parseExample(node, definitions);
+
+        String phonetic = parsePhonetic(node);
+
+        WordResponse response = new WordResponse(
+            id,
+            parsedTerm,
+            definitions,
+            lang,
+            example,
+            phonetic,
+            variations,
+            synonyms,
+            antonyms,
+            related,
+            phrases,
+            markdown
+        );
+        return new ParsedWord(response, markdown);
+    }
+
+    private ParsedWord buildFromMarkdown(String markdown, String term, Language language) {
+        MarkdownWordSnapshot snapshot = MarkdownWordExtractor.extract(markdown, term);
+        WordResponse response = new WordResponse(
+            null,
+            snapshot.term(),
+            snapshot.definitions(),
+            language,
+            snapshot.example(),
+            snapshot.phonetic(),
+            snapshot.variations(),
+            snapshot.synonyms(),
+            snapshot.antonyms(),
+            snapshot.related(),
+            snapshot.phrases(),
+            markdown
+        );
+        return new ParsedWord(response, markdown);
+    }
+
+    private Optional<JsonNode> tryParseJson(String candidate) {
+        if (candidate == null) {
+            return Optional.empty();
+        }
+        String trimmed = candidate.trim();
+        if (trimmed.isEmpty() || !looksLikeJsonStructure(trimmed)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(objectMapper.readTree(trimmed));
+        } catch (Exception ex) {
+            log.debug("Failed to parse JSON content, markdown fallback will be used.", ex);
+            return Optional.empty();
+        }
+    }
+
+    private boolean looksLikeJsonStructure(String text) {
+        char first = text.charAt(0);
+        char last = text.charAt(text.length() - 1);
+        return (first == '{' && last == '}') || (first == '[' && last == ']');
     }
 
     private List<String> parseEnglishDefinitions(
