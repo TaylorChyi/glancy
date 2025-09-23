@@ -92,9 +92,11 @@
   height: auto;
 }
 
-.user-menu .email {
-  color: var(--color-text-secondary);
-  font-size: 0.8rem;
+.user-menu .identity {
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .user-menu ul {
