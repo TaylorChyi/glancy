@@ -11,7 +11,9 @@ import java.util.regex.Pattern;
 final class MarkdownWordExtractor {
 
     private static final Pattern NUMBERED_LIST_PATTERN = Pattern.compile("^(\\d+)[\\.)]\\s*(.+)$");
-    private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("^(?<key>[\\p{L}\\p{IsHan}\\s]+)[:：]\\s*(?<value>.+)$");
+    private static final Pattern KEY_VALUE_PATTERN = Pattern.compile(
+        "^(?<key>[\\p{L}\\p{IsHan}\\s]+)[:：]\\s*(?<value>.+)$"
+    );
 
     private MarkdownWordExtractor() {}
 
@@ -241,6 +243,6 @@ final class MarkdownWordExtractor {
         VARIATIONS,
         PHRASES,
         EXAMPLE,
-        PHONETIC
+        PHONETIC,
     }
 }
