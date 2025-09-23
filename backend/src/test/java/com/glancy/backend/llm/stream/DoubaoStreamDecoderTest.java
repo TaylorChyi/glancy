@@ -137,4 +137,34 @@ class DoubaoStreamDecoderTest {
             .then(() -> sink.tryEmitNext("event: end\n\n"))
             .verifyComplete();
     }
+
+    /**
+     * 构造 message + <END> + [DONE] 同帧场景，验证 <END> 可以输出且 endReceived 被标记。
+     * 流程：推送包含 message 与 [DONE] 两个事件的单次数据块，期望输出 <END> 并从日志摘要中确认 endReceived=true。
+     */
+    @Test
+    void decodeEndSentinelAndDoneInSameBuffer() {
+        Logger logger = (Logger) LoggerFactory.getLogger(DoubaoStreamDecoder.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        String chunk = """
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"content":"<END>"}]}}]}
+
+            data: [DONE]
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(chunk))).expectNext("<END>").verifyComplete();
+
+        boolean summaryLogged = appender.list
+            .stream()
+            .filter(event -> event.getFormattedMessage().contains("Doubao stream decode finished"))
+            .anyMatch(event -> event.getFormattedMessage().contains("endReceived=true") && event.getFormattedMessage().contains("events=2"));
+        assertTrue(summaryLogged, "end signal should be recorded when [DONE] is processed");
+
+        logger.detachAppender(appender);
+    }
 }

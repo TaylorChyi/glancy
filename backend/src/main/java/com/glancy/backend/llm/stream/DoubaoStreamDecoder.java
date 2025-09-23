@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,18 +33,24 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             .doFinally(signal -> log.info("Doubao stream decode finished with signal {}. {}", signal, state.summary()));
     }
 
-    /** 通过 bufferUntil 检测 \n\n 分隔符，逐事件输出并保留剩余数据。 */
+    /** 通过循环解析全部完整的 \n\n 分隔事件，并在流结束时冲刷剩余数据。 */
     private Flux<List<String>> splitEvents(Flux<String> source) {
         return Flux.defer(() -> {
             StringBuilder buf = new StringBuilder();
-            return source
-                .map(buf::append)
-                .bufferUntil(sb -> sb.indexOf("\n\n") >= 0)
-                .map(list -> {
-                    int idx = buf.indexOf("\n\n");
-                    String event = buf.substring(0, idx);
-                    buf.delete(0, idx + 2);
-                    return normalize(event);
+            return Flux
+                .concat(source, Flux.just("\n\n"))
+                .flatMapIterable(chunk -> {
+                    buf.append(chunk);
+                    List<List<String>> events = new ArrayList<>();
+                    int idx;
+                    while ((idx = buf.indexOf("\n\n")) >= 0) {
+                        String event = buf.substring(0, idx);
+                        buf.delete(0, idx + 2);
+                        if (!event.isEmpty()) {
+                            events.add(normalize(event));
+                        }
+                    }
+                    return events;
                 });
         });
     }
