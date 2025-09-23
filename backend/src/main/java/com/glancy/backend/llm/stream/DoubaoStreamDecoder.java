@@ -37,9 +37,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
     private Flux<List<String>> splitEvents(Flux<String> source) {
         return Flux.defer(() -> {
             StringBuilder buf = new StringBuilder();
-            return Flux
-                .concat(source, Flux.just("\n\n"))
-                .flatMapIterable(chunk -> {
+            return Flux.concat(source, Flux.just("\n\n")).flatMapIterable(chunk -> {
                     buf.append(chunk);
                     List<List<String>> events = new ArrayList<>();
                     int idx;

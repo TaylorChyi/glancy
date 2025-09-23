@@ -162,7 +162,11 @@ class DoubaoStreamDecoderTest {
         boolean summaryLogged = appender.list
             .stream()
             .filter(event -> event.getFormattedMessage().contains("Doubao stream decode finished"))
-            .anyMatch(event -> event.getFormattedMessage().contains("endReceived=true") && event.getFormattedMessage().contains("events=2"));
+            .anyMatch(
+                event ->
+                    event.getFormattedMessage().contains("endReceived=true") &&
+                    event.getFormattedMessage().contains("events=2")
+            );
         assertTrue(summaryLogged, "end signal should be recorded when [DONE] is processed");
 
         logger.detachAppender(appender);
