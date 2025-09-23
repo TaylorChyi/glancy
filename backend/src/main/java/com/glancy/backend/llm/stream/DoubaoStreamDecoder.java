@@ -3,10 +3,9 @@ package com.glancy.backend.llm.stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.util.SensitiveDataUtil;
-import java.util.HashMap;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -17,27 +16,20 @@ import reactor.core.publisher.Flux;
 public class DoubaoStreamDecoder implements StreamDecoder {
 
     private final ObjectMapper mapper;
-    private final Map<String, Function<String, Flux<String>>> handlers;
 
     public DoubaoStreamDecoder(ObjectMapper mapper) {
         this.mapper = mapper;
-        Map<String, Function<String, Flux<String>>> map = new HashMap<>();
-        map.put("message", this::handleMessage);
-        map.put("error", this::handleError);
-        map.put("end", data -> Flux.empty());
-        this.handlers = Map.copyOf(map);
     }
 
     @Override
     public Flux<String> decode(Flux<String> rawStream) {
+        StreamState state = new StreamState();
         return splitEvents(rawStream)
             .map(this::toEvent)
-            .doOnNext(evt -> log.info("Event [{}]: {}", evt.type, evt.data))
+            .doOnNext(state::recordEvent)
             .takeUntil(evt -> "end".equals(evt.type))
-            // 使用 concatMap 确保事件按接收顺序依次处理
-            .concatMap(evt ->
-                handlers.containsKey(evt.type) ? handlers.get(evt.type).apply(evt.data.toString()) : Flux.empty()
-            );
+            .concatMap(evt -> handleEvent(evt, state))
+            .doFinally(signal -> log.info("Doubao stream decode finished with signal {}. {}", signal, state.summary()));
     }
 
     /** 通过 bufferUntil 检测 \n\n 分隔符，逐事件输出并保留剩余数据。 */
@@ -86,39 +78,66 @@ public class DoubaoStreamDecoder implements StreamDecoder {
         return evt;
     }
 
-    private Flux<String> handleMessage(String json) {
+    private Flux<String> handleEvent(Event evt, StreamState state) {
+        return switch (evt.type) {
+            case "message" -> handleMessage(evt.data.toString(), state);
+            case "error" -> handleError(evt.data.toString(), state);
+            case "end" -> {
+                state.markEnd();
+                yield Flux.empty();
+            }
+            default -> Flux.empty();
+        };
+    }
+
+    private Flux<String> handleMessage(String json, StreamState state) {
         log.info("Handle message event: {}", json);
         if (json == null || json.trim().isEmpty() || "[DONE]".equals(json.trim())) {
             log.warn("Empty message event data, ignoring event: raw={}", SensitiveDataUtil.previewText(json));
+            state.incrementEmptyPayload();
             return Flux.empty();
         }
         try {
             JsonNode node = mapper.readTree(json);
-            JsonNode delta = node.path("choices").path(0).path("delta");
+            JsonNode choice = node.path("choices").path(0);
+            state.inspectChoice(choice);
+            JsonNode delta = choice.path("delta");
             String content = delta.path("messages").path(0).path("content").asText();
             if (content.isEmpty()) {
                 content = delta.path("content").asText();
             }
             if (content.isEmpty()) {
+                state.incrementEmptyPayload();
                 log.warn("Message event missing content: {}", SensitiveDataUtil.previewText(json));
                 return Flux.empty();
+            }
+            state.registerChunk(content);
+            if (state.hasFinishReason()) {
+                log.warn(
+                    "Received content chunk after finish reason '{}': {}",
+                    state.getFinishReason(),
+                    SensitiveDataUtil.previewText(content)
+                );
             }
             log.info("Decoded message chunk: {}", SensitiveDataUtil.previewText(content));
             return Flux.just(content);
         } catch (Exception e) {
+            state.incrementDecodeFailure();
             log.warn("Failed to decode message event, raw={}", SensitiveDataUtil.previewText(json), e);
             return Flux.empty();
         }
     }
 
-    private Flux<String> handleError(String json) {
+    private Flux<String> handleError(String json, StreamState state) {
         log.info("Handle error event: {}", json);
         try {
             JsonNode node = mapper.readTree(json);
             String msg = node.path("message").asText("Stream error");
+            state.markError(msg);
             return Flux.error(new IllegalStateException(msg));
         } catch (Exception e) {
             StreamDecodeException ex = new StreamDecodeException("error", json, e);
+            state.markError(e.getMessage());
             log.warn("Failed to decode error event: {}", SensitiveDataUtil.previewText(json), e);
             return Flux.error(ex);
         }
@@ -128,5 +147,93 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
         String type;
         StringBuilder data = new StringBuilder();
+    }
+
+    private class StreamState {
+
+        private final Instant startedAt = Instant.now();
+        private int eventCount;
+        private int chunkCount;
+        private int totalChars;
+        private int emptyPayloadCount;
+        private int decodeFailures;
+        private boolean endReceived;
+        private boolean finishReasonReceived;
+        private String finishReason;
+        private String lastChunkPreview;
+        private String errorMessage;
+
+        void recordEvent(Event evt) {
+            if (endReceived) {
+                log.warn("Received event '{}' after end signal, raw={}", evt.type, SensitiveDataUtil.previewText(evt.data.toString()));
+            }
+            eventCount++;
+            log.info("Event [{}]: {}", evt.type, evt.data);
+        }
+
+        void inspectChoice(JsonNode choice) {
+            JsonNode finish = choice.path("finish_reason");
+            if (finish.isMissingNode() || finish.isNull()) {
+                return;
+            }
+            String reason = finish.asText();
+            if (reason == null || reason.isBlank()) {
+                return;
+            }
+            if (!finishReasonReceived) {
+                finishReasonReceived = true;
+                finishReason = reason;
+                log.info("Finish reason '{}' received from Doubao stream", reason);
+            }
+        }
+
+        void registerChunk(String chunk) {
+            chunkCount++;
+            totalChars += chunk.length();
+            lastChunkPreview = SensitiveDataUtil.previewText(chunk);
+        }
+
+        void incrementEmptyPayload() {
+            emptyPayloadCount++;
+        }
+
+        void incrementDecodeFailure() {
+            decodeFailures++;
+        }
+
+        void markError(String message) {
+            if (message != null && !message.isBlank()) {
+                errorMessage = message;
+            }
+        }
+
+        void markEnd() {
+            endReceived = true;
+        }
+
+        boolean hasFinishReason() {
+            return finishReasonReceived;
+        }
+
+        String getFinishReason() {
+            return finishReason;
+        }
+
+        String summary() {
+            long duration = Duration.between(startedAt, Instant.now()).toMillis();
+            return String.format(
+                "events=%d, chunks=%d, totalChars=%d, emptyPayloads=%d, decodeFailures=%d, finishReason=%s, endReceived=%s, lastChunk=%s, error=%s, durationMs=%d",
+                eventCount,
+                chunkCount,
+                totalChars,
+                emptyPayloadCount,
+                decodeFailures,
+                finishReasonReceived ? finishReason : "<none>",
+                endReceived,
+                lastChunkPreview != null ? lastChunkPreview : "<none>",
+                errorMessage != null ? SensitiveDataUtil.previewText(errorMessage) : "<none>",
+                duration
+            );
+        }
     }
 }
