@@ -15,14 +15,18 @@ import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.SearchResultService;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
+import reactor.core.publisher.Sinks;
 
 /**
  * Performs dictionary lookups via the configured third-party client.
@@ -35,92 +39,151 @@ public class WordService {
     private final WordRepository wordRepository;
     private final UserPreferenceRepository userPreferenceRepository;
     private final SearchRecordService searchRecordService;
+    private final SearchResultService searchResultService;
     private final WordResponseParser parser;
+    private final ObjectMapper objectMapper;
 
     public WordService(
         WordSearcher wordSearcher,
         WordRepository wordRepository,
         UserPreferenceRepository userPreferenceRepository,
         SearchRecordService searchRecordService,
+        SearchResultService searchResultService,
         WordResponseParser parser
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
         this.userPreferenceRepository = userPreferenceRepository;
         this.searchRecordService = searchRecordService;
+        this.searchResultService = searchResultService;
         this.parser = parser;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Transactional
-    public WordResponse findWordForUser(Long userId, String term, Language language, String model) {
+    public WordResponse findWordForUser(
+        Long userId,
+        Long searchRecordId,
+        String term,
+        Language language,
+        String model,
+        boolean forceNew
+    ) {
         log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, model);
-        userPreferenceRepository
+        DictionaryModel preferredModel = userPreferenceRepository
             .findByUserId(userId)
-            .orElseGet(() -> {
-                log.info("No user preference found for user {}, using default", userId);
-                UserPreference p = new UserPreference();
-                p.setDictionaryModel(DictionaryModel.DOUBAO);
-                return p;
-            });
-        return wordRepository
-            .findByTermAndLanguageAndDeletedFalse(term, language)
-            .map(word -> {
-                log.info("Found word '{}' in local repository", term);
-                return toResponse(word);
-            })
-            .orElseGet(() -> {
-                log.info("Word '{}' not found locally, searching via LLM", term);
-                WordResponse resp = wordSearcher.search(term, language, model);
-                log.info("LLM search result: {}", resp);
-                saveWord(term, resp, language);
-                return resp;
-            });
+            .map(UserPreference::getDictionaryModel)
+            .orElse(DictionaryModel.DOUBAO);
+        String resolvedModel = model != null ? model : preferredModel.name();
+
+        Optional<Word> cached = Optional.empty();
+        if (!forceNew) {
+            cached = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
+        }
+
+        Word wordEntity;
+        WordResponse response;
+        String serialized;
+        if (cached.isPresent()) {
+            wordEntity = cached.get();
+            response = toResponse(wordEntity);
+            serialized = serializeResponse(response);
+            log.info("Found word '{}' in local repository", term);
+        } else {
+            log.info("Word '{}' not found locally or forceNew triggered, searching via LLM", term);
+            WordResponse remote = wordSearcher.search(term, language, model);
+            log.info("LLM search result: {}", remote);
+            wordEntity = saveWord(term, remote, language);
+            response = remote;
+            serialized = serializeResponse(response);
+        }
+        SearchResultService.VersionCommand command = new SearchResultService.VersionCommand(
+            userId,
+            searchRecordId,
+            wordEntity.getId(),
+            wordEntity.getTerm(),
+            wordEntity.getLanguage(),
+            resolvedModel,
+            serialized
+        );
+        long versionId = searchResultService.recordVersion(command).getId();
+        response.setVersionId(versionId);
+        return response;
     }
 
     /**
      * Stream search results for a word and persist the search record.
      */
     @Transactional
-    public Flux<String> streamWordForUser(Long userId, String term, Language language, String model) {
+    public WordStreamResult streamWordForUser(
+        Long userId,
+        String term,
+        Language language,
+        String model,
+        boolean forceNew
+    ) {
         log.info("Streaming word '{}' for user {} in language {} using model {}", term, userId, language, model);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
+        Long searchRecordId;
         try {
-            searchRecordService.saveRecord(userId, req);
+            searchRecordId = searchRecordService.saveRecord(userId, req).id();
         } catch (Exception e) {
             log.error("Failed to save search record for user {}", userId, e);
             String msg = "Failed to save search record: " + e.getMessage();
-            return Flux.error(new IllegalStateException(msg, e));
+            IllegalStateException wrapped = new IllegalStateException(msg, e);
+            return new WordStreamResult(Flux.error(wrapped), Mono.error(wrapped));
         }
 
-        var existing = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
-        if (existing.isPresent()) {
-            log.info("Found cached word '{}' in language {}", term, language);
-            try {
-                return Flux.just(serialize(existing.get()));
-            } catch (Exception e) {
-                log.error("Failed to serialize cached word '{}'", term, e);
-                return Flux.error(new IllegalStateException("Failed to serialize cached word", e));
+        DictionaryModel preferredModel = userPreferenceRepository
+            .findByUserId(userId)
+            .map(UserPreference::getDictionaryModel)
+            .orElse(DictionaryModel.DOUBAO);
+        String resolvedModel = model != null ? model : preferredModel.name();
+
+        if (!forceNew) {
+            Optional<Word> existing = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
+            if (existing.isPresent()) {
+                Word word = existing.get();
+                WordResponse cachedResponse = toResponse(word);
+                String serialized = serializeResponse(cachedResponse);
+                long versionId = searchResultService
+                    .recordVersion(
+                        new SearchResultService.VersionCommand(
+                            userId,
+                            searchRecordId,
+                            word.getId(),
+                            word.getTerm(),
+                            word.getLanguage(),
+                            resolvedModel,
+                            serialized
+                        )
+                    )
+                    .getId();
+                return new WordStreamResult(Flux.just(serialized), Mono.just(versionId));
             }
         }
 
-        StreamingAccumulator session = new StreamingAccumulator(userId, term, language, model);
+        Sinks.One<Long> versionSink = Sinks.one();
+        StreamingAccumulator session = new StreamingAccumulator(userId, term, language, resolvedModel);
         Flux<String> stream;
         try {
             stream = wordSearcher.streamSearch(term, language, model);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
-            return Flux.error(new IllegalStateException(msg, e));
+            IllegalStateException wrapped = new IllegalStateException(msg, e);
+            versionSink.tryEmitError(wrapped);
+            return new WordStreamResult(Flux.error(wrapped), versionSink.asMono());
         }
 
-        return stream
+        Flux<String> payload = stream
             .doOnNext(chunk -> {
                 log.info("Streaming chunk for term '{}': {}", term, chunk);
                 session.append(chunk);
             })
-            .doOnError(err ->
+            .doOnError(err -> {
                 log.error(
                     "Streaming error for user {} term '{}' in language {} using model {}: {}",
                     userId,
@@ -129,29 +192,51 @@ public class WordService {
                     model,
                     err.getMessage(),
                     err
-                )
-            )
-            .doOnError(session::markError)
+                );
+                session.markError(err);
+                versionSink.tryEmitError(err);
+            })
             .doFinally(signal -> {
                 log.info("Streaming finished for term '{}' with signal {}", term, signal);
                 CompletionCheck completion = session.finish(signal);
-                if (signal == SignalType.ON_COMPLETE) {
-                    if (!completion.satisfied()) {
-                        log.warn(
-                            "Streaming session for term '{}' completed without sentinel '{}', skipping persistence",
-                            term,
-                            CompletionSentinel.MARKER
-                        );
-                        return;
+                if (signal != SignalType.ON_COMPLETE) {
+                    if (!session.hasError()) {
+                        versionSink.tryEmitEmpty();
                     }
-                    try {
-                        ParsedWord parsed = parser.parse(completion.sanitizedContent(), term, language);
-                        saveWord(term, parsed.parsed(), language);
-                    } catch (Exception e) {
-                        log.error("Failed to persist streamed word '{}'", term, e);
-                    }
+                    return;
+                }
+                if (!completion.satisfied()) {
+                    log.warn(
+                        "Streaming session for term '{}' completed without sentinel '{}', skipping persistence",
+                        term,
+                        CompletionSentinel.MARKER
+                    );
+                    versionSink.tryEmitEmpty();
+                    return;
+                }
+                try {
+                    ParsedWord parsed = parser.parse(completion.sanitizedContent(), term, language);
+                    Word saved = saveWord(term, parsed.parsed(), language);
+                    long versionId = searchResultService
+                        .recordVersion(
+                            new SearchResultService.VersionCommand(
+                                userId,
+                                searchRecordId,
+                                saved.getId(),
+                                saved.getTerm(),
+                                saved.getLanguage(),
+                                resolvedModel,
+                                completion.sanitizedContent()
+                            )
+                        )
+                        .getId();
+                    versionSink.tryEmitValue(versionId);
+                } catch (Exception e) {
+                    log.error("Failed to persist streamed word '{}'", term, e);
+                    versionSink.tryEmitError(e);
                 }
             });
+        return new WordStreamResult(payload, versionSink.asMono());
     }
 
     private static final class StreamingAccumulator {
@@ -182,6 +267,10 @@ public class WordService {
         void markError(Throwable throwable) {
             error = true;
             failure = throwable;
+        }
+
+        boolean hasError() {
+            return error;
         }
 
         CompletionCheck finish(SignalType signal) {
@@ -219,12 +308,15 @@ public class WordService {
         }
     }
 
-    private String serialize(Word word) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(toResponse(word));
+    private String serializeResponse(WordResponse response) {
+        try {
+            return objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize search result", e);
+        }
     }
 
-    private void saveWord(String requestedTerm, WordResponse resp, Language language) {
+    private Word saveWord(String requestedTerm, WordResponse resp, Language language) {
         Word word = new Word();
         word.setMarkdown(resp.getMarkdown());
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
@@ -245,6 +337,7 @@ public class WordService {
         resp.setLanguage(lang);
         resp.setTerm(term);
         resp.setMarkdown(word.getMarkdown());
+        return saved;
     }
 
     private WordResponse toResponse(Word word) {
@@ -260,7 +353,10 @@ public class WordService {
             word.getAntonyms(),
             word.getRelated(),
             word.getPhrases(),
-            word.getMarkdown()
+            word.getMarkdown(),
+            null
         );
     }
+
+    public record WordStreamResult(Flux<String> payload, Mono<Long> versionId) {}
 }

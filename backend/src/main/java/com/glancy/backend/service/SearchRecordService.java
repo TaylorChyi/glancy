@@ -29,17 +29,20 @@ public class SearchRecordService {
     private final SearchRecordRepository searchRecordRepository;
     private final UserRepository userRepository;
     private final SearchRecordMapper searchRecordMapper;
+    private final SearchResultService searchResultService;
     private final int nonMemberSearchLimit;
 
     public SearchRecordService(
         SearchRecordRepository searchRecordRepository,
         UserRepository userRepository,
         SearchProperties properties,
-        SearchRecordMapper searchRecordMapper
+        SearchRecordMapper searchRecordMapper,
+        SearchResultService searchResultService
     ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
         this.searchRecordMapper = searchRecordMapper;
+        this.searchResultService = searchResultService;
         this.nonMemberSearchLimit = properties.getLimit().getNonMember();
     }
 
@@ -60,39 +63,41 @@ public class SearchRecordService {
             log.warn("User {} is not logged in", userId);
             throw new InvalidRequestException("用户未登录");
         }
-        SearchRecord existing = searchRecordRepository.findTopByUserIdAndTermAndLanguageOrderByCreatedAtDesc(
-            userId,
-            request.getTerm(),
-            request.getLanguage()
-        );
-        if (existing != null) {
-            log.info("Existing record found: {}", describeRecord(existing));
-            existing.setCreatedAt(LocalDateTime.now());
-            SearchRecord updated = searchRecordRepository.save(existing);
-            log.info("Updated record persisted: {}", describeRecord(updated));
-            SearchRecordResponse response = searchRecordMapper.toResponse(updated);
-            log.info("Returning record response: {}", describeResponse(response));
-            return response;
-        }
-
-        if (Boolean.FALSE.equals(user.getMember())) {
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-            LocalDateTime endOfDay = startOfDay.plusDays(1);
-            long count = searchRecordRepository.countByUserIdAndCreatedAtBetween(userId, startOfDay, endOfDay);
-            if (count >= nonMemberSearchLimit) {
-                log.warn("User {} exceeded daily search limit", userId);
-                throw new InvalidRequestException("非会员每天只能搜索" + nonMemberSearchLimit + "次");
-            }
-        }
-        SearchRecord record = new SearchRecord();
-        record.setUser(user);
-        record.setTerm(request.getTerm());
-        record.setLanguage(request.getLanguage());
-        SearchRecord saved = searchRecordRepository.save(record);
-        log.info("Persisted new search record: {}", describeRecord(saved));
-        SearchRecordResponse response = searchRecordMapper.toResponse(saved);
-        log.info("Returning record response: {}", describeResponse(response));
-        return response;
+        return searchRecordRepository
+            .findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
+                userId,
+                request.getTerm(),
+                request.getLanguage()
+            )
+            .map(record -> {
+                log.info("Existing record found: {}", describeRecord(record));
+                record.setCreatedAt(LocalDateTime.now());
+                SearchRecord updated = searchRecordRepository.save(record);
+                log.info("Updated record persisted: {}", describeRecord(updated));
+                return buildResponse(updated);
+            })
+            .orElseGet(() -> {
+                if (Boolean.FALSE.equals(user.getMember())) {
+                    LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+                    LocalDateTime endOfDay = startOfDay.plusDays(1);
+                    long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
+                        userId,
+                        startOfDay,
+                        endOfDay
+                    );
+                    if (count >= nonMemberSearchLimit) {
+                        log.warn("User {} exceeded daily search limit", userId);
+                        throw new InvalidRequestException("非会员每天只能搜索" + nonMemberSearchLimit + "次");
+                    }
+                }
+                SearchRecord record = new SearchRecord();
+                record.setUser(user);
+                record.setTerm(request.getTerm());
+                record.setLanguage(request.getLanguage());
+                SearchRecord saved = searchRecordRepository.save(record);
+                log.info("Persisted new search record: {}", describeRecord(saved));
+                return buildResponse(saved);
+            });
     }
 
     /**
@@ -102,14 +107,12 @@ public class SearchRecordService {
     public SearchRecordResponse favoriteRecord(Long userId, Long recordId) {
         log.info("Favoriting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-            .findByIdAndUserId(recordId, userId)
+            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
         record.setFavorite(true);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Record after favoriting: {}", describeRecord(saved));
-        SearchRecordResponse response = searchRecordMapper.toResponse(saved);
-        log.info("Favorite response: {}", describeResponse(response));
-        return response;
+        return buildResponse(saved);
     }
 
     /**
@@ -118,15 +121,10 @@ public class SearchRecordService {
     @Transactional(readOnly = true)
     public List<SearchRecordResponse> getRecords(Long userId) {
         log.info("Fetching search records for user {}", userId);
-        List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId);
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
-        List<SearchRecordResponse> responses = records
-            .stream()
-            .map(searchRecordMapper::toResponse)
-            .collect(Collectors.toList());
-        responses.forEach(r -> log.debug("Record response: {}", describeResponse(r)));
-        return responses;
+        return records.stream().map(this::buildResponse).collect(Collectors.toList());
     }
 
     /**
@@ -134,9 +132,11 @@ public class SearchRecordService {
      */
     @Transactional
     public void clearRecords(Long userId) {
-        List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId);
         log.info("Clearing {} search records for user {}", records.size(), userId);
-        searchRecordRepository.deleteByUserId(userId);
+        records.forEach(record -> record.setDeleted(true));
+        searchRecordRepository.saveAll(records);
+        searchResultService.softDeleteByRecordIds(records.stream().map(SearchRecord::getId).toList());
     }
 
     /**
@@ -146,7 +146,7 @@ public class SearchRecordService {
     public void unfavoriteRecord(Long userId, Long recordId) {
         log.info("Unfavoriting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-            .findByIdAndUserId(recordId, userId)
+            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
         record.setFavorite(false);
         SearchRecord saved = searchRecordRepository.save(record);
@@ -160,13 +160,12 @@ public class SearchRecordService {
     public void deleteRecord(Long userId, Long recordId) {
         log.info("Deleting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-            .findById(recordId)
+            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
-        if (!record.getUser().getId().equals(userId)) {
-            throw new ResourceNotFoundException("搜索记录不存在");
-        }
-        searchRecordRepository.delete(record);
-        log.info("Deleted search record: {}", describeRecord(record));
+        record.setDeleted(true);
+        searchRecordRepository.save(record);
+        searchResultService.softDeleteByRecordId(recordId);
+        log.info("Soft deleted search record: {}", describeRecord(record));
     }
 
     private String describeRecord(SearchRecord record) {
@@ -190,13 +189,23 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s",
-            response.getId(),
-            response.getUserId(),
-            response.getTerm(),
-            response.getLanguage(),
-            response.getFavorite(),
-            response.getCreatedAt()
+            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s, latestVersionId=%s",
+            response.id(),
+            response.userId(),
+            response.term(),
+            response.language(),
+            response.favorite(),
+            response.createdAt(),
+            response.latestVersion() != null ? response.latestVersion().id() : null
         );
+    }
+
+    private SearchRecordResponse buildResponse(SearchRecord record) {
+        SearchRecordResponse response = searchRecordMapper.toResponse(
+            record,
+            searchResultService.findLatestSummary(record.getId())
+        );
+        log.info("Returning record response: {}", describeResponse(response));
+        return response;
     }
 }

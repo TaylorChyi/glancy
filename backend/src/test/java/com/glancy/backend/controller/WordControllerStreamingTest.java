@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * 流式单词查询接口测试。
@@ -52,9 +53,8 @@ class WordControllerStreamingTest {
 
     @Test
     void testStreamWord() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
-            Flux.just("part1", "part2")
-        );
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false)))
+            .thenReturn(new WordService.WordStreamResult(Flux.just("part1", "part2"), Mono.just(55L)));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         MvcResult result = mockMvc
@@ -72,7 +72,9 @@ class WordControllerStreamingTest {
             .perform(asyncDispatch(result))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("data:part1")))
-            .andExpect(content().string(containsString("data:part2")));
+            .andExpect(content().string(containsString("data:part2")))
+            .andExpect(content().string(containsString("event:version")))
+            .andExpect(content().string(containsString("data:55")));
     }
 
     /**
@@ -80,9 +82,8 @@ class WordControllerStreamingTest {
      */
     @Test
     void testStreamWordError() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
-            Flux.error(new IllegalStateException("boom"))
-        );
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false)))
+            .thenReturn(new WordService.WordStreamResult(Flux.error(new IllegalStateException("boom")), Mono.error(new IllegalStateException("boom"))));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         MvcResult result = mockMvc

@@ -1,16 +1,20 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,9 +63,14 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
+            null,
+            22L
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+        when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(
+            new SearchRecordResponse(10L, 1L, "hello", Language.ENGLISH, LocalDateTime.now(), false, null)
+        );
+        when(wordService.findWordForUser(eq(1L), eq(10L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false)))
+            .thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -76,7 +85,8 @@ class WordControllerTest {
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("1"))
-            .andExpect(jsonPath("$.term").value("hello"));
+            .andExpect(jsonPath("$.term").value("hello"))
+            .andExpect(jsonPath("$.versionId").value(22));
     }
 
     /**
@@ -96,9 +106,14 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
+            null,
+            33L
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
+        when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(
+            new SearchRecordResponse(11L, 1L, "hello", Language.ENGLISH, LocalDateTime.now(), false, null)
+        );
+        when(wordService.findWordForUser(eq(1L), eq(11L), eq("hello"), eq(Language.ENGLISH), eq("doubao"), eq(false)))
+            .thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -163,9 +178,14 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
-            null
+            null,
+            44L
         );
-        when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+        when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(
+            new SearchRecordResponse(12L, 1L, "hi", Language.ENGLISH, LocalDateTime.now(), false, null)
+        );
+        when(wordService.findWordForUser(eq(1L), eq(12L), eq("hi"), eq(Language.ENGLISH), eq(null), eq(false)))
+            .thenReturn(resp);
 
         mockMvc
             .perform(

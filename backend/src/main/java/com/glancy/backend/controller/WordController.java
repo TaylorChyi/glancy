@@ -44,13 +44,21 @@ public class WordController {
         @AuthenticatedUser Long userId,
         @RequestParam String term,
         @RequestParam Language language,
-        @RequestParam(required = false) String model
+        @RequestParam(required = false) String model,
+        @RequestParam(defaultValue = "false") boolean forceNew
     ) {
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
-        searchRecordService.saveRecord(userId, req);
-        WordResponse resp = wordService.findWordForUser(userId, term, language, model);
+        var record = searchRecordService.saveRecord(userId, req);
+        WordResponse resp = wordService.findWordForUser(
+            userId,
+            record.id(),
+            term,
+            language,
+            model,
+            forceNew
+        );
         return ResponseEntity.ok(resp);
     }
 
@@ -63,14 +71,28 @@ public class WordController {
         @RequestParam String term,
         @RequestParam Language language,
         @RequestParam(required = false) String model,
+        @RequestParam(defaultValue = "false") boolean forceNew,
         HttpServletResponse response
     ) {
         response.setHeader(HttpHeaders.CACHE_CONTROL, CacheControl.noStore().getHeaderValue());
         response.setHeader("X-Accel-Buffering", "no");
-        return wordService
-            .streamWordForUser(userId, term, language, model)
+        WordService.WordStreamResult result = wordService.streamWordForUser(
+            userId,
+            term,
+            language,
+            model,
+            forceNew
+        );
+        Flux<ServerSentEvent<String>> dataStream = result
+            .payload()
             .doOnNext(chunk -> log.info("Controller streaming chunk for user {} term '{}': {}", userId, term, chunk))
-            .map(data -> ServerSentEvent.builder(data).build())
+            .map(data -> ServerSentEvent.builder(data).build());
+        Flux<ServerSentEvent<String>> versionEvent = result
+            .versionId()
+            .map(id -> ServerSentEvent.<String>builder(String.valueOf(id)).event("version").build())
+            .flux();
+        return Flux
+            .concat(dataStream, versionEvent)
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
             .onErrorResume(e -> {
                 log.error("Streaming error for user {} term '{}'", userId, term, e);
