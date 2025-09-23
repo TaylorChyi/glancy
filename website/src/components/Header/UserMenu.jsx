@@ -1,7 +1,6 @@
 import { useUser, useHistory } from "@/context";
 import { useLanguage } from "@/context";
 import styles from "./Header.module.css";
-import Avatar from "@/components/ui/Avatar";
 import { Link } from "react-router-dom";
 import UserMenuButton from "./UserMenuButton.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
@@ -56,7 +55,6 @@ function UserMenu({ size = 24, showName = false }) {
               setOpen={setOpen}
               t={t}
               isPro={isPro}
-              username={username}
               openProfile={openProfile}
               openSettings={openSettings}
               openShortcuts={openShortcuts}
