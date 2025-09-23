@@ -3,6 +3,7 @@ package com.glancy.backend.service;
 import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.SearchRecordVersionSummary;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
@@ -12,7 +13,11 @@ import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -121,10 +126,7 @@ public class SearchRecordService {
         List<SearchRecord> records = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(userId);
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
-        List<SearchRecordResponse> responses = records
-            .stream()
-            .map(searchRecordMapper::toResponse)
-            .collect(Collectors.toList());
+        List<SearchRecordResponse> responses = buildHistorySummaries(records);
         responses.forEach(r -> log.debug("Record response: {}", describeResponse(r)));
         return responses;
     }
@@ -185,18 +187,56 @@ public class SearchRecordService {
         );
     }
 
+    private List<SearchRecordResponse> buildHistorySummaries(List<SearchRecord> records) {
+        Map<String, List<SearchRecord>> grouped = records
+            .stream()
+            .collect(
+                Collectors.groupingBy(
+                    this::historyGroupKey,
+                    LinkedHashMap::new,
+                    Collectors.toCollection(ArrayList::new)
+                )
+            );
+        List<SearchRecordResponse> aggregated = new ArrayList<>();
+        grouped.forEach((key, items) -> {
+            log.debug("Assembling history group {} with {} items", key, items.size());
+            List<SearchRecordVersionSummary> versions = items
+                .stream()
+                .sorted(Comparator.comparing(SearchRecord::getCreatedAt).reversed())
+                .map(this::toVersionSummary)
+                .collect(Collectors.toList());
+            SearchRecord latest = items
+                .stream()
+                .max(Comparator.comparing(SearchRecord::getCreatedAt))
+                .orElseThrow(() -> new IllegalStateException("历史记录缺失最新版本"));
+            SearchRecordResponse response = searchRecordMapper.toResponse(latest).withVersions(versions);
+            aggregated.add(response);
+        });
+        aggregated.sort(Comparator.comparing(SearchRecordResponse::createdAt).reversed());
+        return aggregated;
+    }
+
+    private SearchRecordVersionSummary toVersionSummary(SearchRecord record) {
+        return new SearchRecordVersionSummary(record.getId(), record.getCreatedAt(), record.getFavorite());
+    }
+
+    private String historyGroupKey(SearchRecord record) {
+        return record.getLanguage() + "::" + record.getTerm();
+    }
+
     private String describeResponse(SearchRecordResponse response) {
         if (response == null) {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s",
-            response.getId(),
-            response.getUserId(),
-            response.getTerm(),
-            response.getLanguage(),
-            response.getFavorite(),
-            response.getCreatedAt()
+            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s, versions=%d",
+            response.id(),
+            response.userId(),
+            response.term(),
+            response.language(),
+            response.favorite(),
+            response.createdAt(),
+            response.versions().size()
         );
     }
 }

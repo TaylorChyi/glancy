@@ -8,5 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface SearchRecordMapper {
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(target = "versions", expression = "java(java.util.List.of())")
     SearchRecordResponse toResponse(SearchRecord record);
 }

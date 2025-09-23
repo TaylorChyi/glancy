@@ -15,7 +15,10 @@ import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
-import { extractMarkdownPreview } from "@/utils";
+import { extractMarkdownPreview, detectWordLanguage } from "@/utils";
+import { wordCacheKey } from "@/api/words.js";
+import { useWordStore } from "@/store";
+import { DEFAULT_MODEL } from "@/config";
 
 function App() {
   const [text, setText] = useState("");
@@ -25,7 +28,12 @@ function App() {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const { user } = useUser();
-  const { loadHistory, addHistory, unfavoriteHistory } = useHistory();
+  const {
+    history: historyItems,
+    loadHistory,
+    addHistory,
+    unfavoriteHistory,
+  } = useHistory();
   const { theme, setTheme } = useTheme();
   const inputRef = useRef(null);
   const [showFavorites, setShowFavorites] = useState(false);
@@ -38,6 +46,7 @@ function App() {
   const navigate = useNavigate();
   const streamWord = useStreamWord();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
+  const wordStore = useWordStore();
 
   const focusInput = () => {
     inputRef.current?.focus();
@@ -191,10 +200,52 @@ function App() {
     }
   };
 
-  const handleSelectHistory = async (term) => {
+  const handleSelectHistory = async (term, versionId) => {
     if (!user) {
       navigate("/login");
       return;
+    }
+    const target = historyItems?.find(
+      (item) => item.term === term || item.termKey === term,
+    );
+    const resolvedLanguage = target?.language ?? detectWordLanguage(term);
+    const cacheKey = wordCacheKey({
+      term,
+      language: resolvedLanguage,
+      model: DEFAULT_MODEL,
+    });
+    const cachedEntry = wordStore.getEntry?.(cacheKey);
+
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+
+    const hydrateFromCache = (entryCandidate) => {
+      if (!entryCandidate) return false;
+      setShowFavorites(false);
+      setShowHistory(false);
+      setLoading(false);
+      setStreamText("");
+      setFinalText(entryCandidate.markdown ?? "");
+      setEntry(entryCandidate);
+      return true;
+    };
+
+    if (versionId) {
+      if (
+        cachedEntry &&
+        String(cachedEntry.id ?? cachedEntry.versionId ?? "") ===
+          String(versionId)
+      ) {
+        if (hydrateFromCache(cachedEntry)) {
+          return;
+        }
+      }
+    } else if (cachedEntry) {
+      if (hydrateFromCache(cachedEntry)) {
+        return;
+      }
     }
 
     await executeLookup(term);
@@ -268,6 +319,7 @@ function App() {
                 setShowHistory(false);
                 focusInput();
               }}
+              onSelect={handleSelectHistory}
             />
           ) : entry || finalText || streamText || loading ? (
             <DictionaryEntryView
