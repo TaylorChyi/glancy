@@ -88,7 +88,7 @@ export default {
   guest: "Guest",
   upgrade: "Upgrade",
   upgradeAvailable: "Upgrade to use",
-  profile: "Customize Glancy",
+  profile: "Customize",
   settings: "Settings",
   shortcuts: "Shortcuts",
   logout: "Log out",

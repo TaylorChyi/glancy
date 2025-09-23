@@ -6,8 +6,8 @@ function UserMenuDropdown({
   open,
   setOpen,
   t,
+  username,
   isPro,
-  email,
   openProfile,
   openSettings,
   openShortcuts,
@@ -21,7 +21,7 @@ function UserMenuDropdown({
         <div className={styles.avatar}>
           <Avatar width={32} height={32} />
         </div>
-        <div className={styles.email}>{email}</div>
+        {username ? <div className={styles.identity}>{username}</div> : null}
       </div>
       <ul>
         {!isPro && (
