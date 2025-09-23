@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApi } from "@/hooks";
 import { useLanguage } from "@/context";
 import { useUserStore, useVoiceStore } from "@/store";
+import fieldStyles from "../form/Form.module.css";
 import styles from "./VoiceSelector.module.css";
 
 /**
@@ -55,7 +56,7 @@ export default function VoiceSelector({ lang }) {
 
   return (
     <select
-      className={styles.select}
+      className={[fieldStyles.select, styles.select].join(" ")}
       value={selected || ""}
       onChange={(e) => setVoice(lang, e.target.value)}
     >

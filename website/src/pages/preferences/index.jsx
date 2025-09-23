@@ -146,27 +146,39 @@ function Preferences() {
       </header>
       <form className={styles.form} onSubmit={handleSave}>
         <div className={styles.fields}>
-          <FormRow label={t.prefLanguage} id="source-lang">
+          <FormRow
+            label={t.prefLanguage}
+            id="source-lang"
+            className={styles.field}
+          >
             <SelectField
               value={sourceLang}
               onChange={setSourceLang}
               options={languageOptions}
             />
           </FormRow>
-          <FormRow label={t.prefSearchLanguage} id="target-lang">
+          <FormRow
+            label={t.prefSearchLanguage}
+            id="target-lang"
+            className={styles.field}
+          >
             <SelectField
               value={targetLang}
               onChange={setTargetLang}
               options={searchLanguageOptions}
             />
           </FormRow>
-          <FormRow label={t.prefVoiceEn} id="voice-en">
+          <FormRow label={t.prefVoiceEn} id="voice-en" className={styles.field}>
             <VoiceSelector lang="en" />
           </FormRow>
-          <FormRow label={t.prefVoiceZh} id="voice-zh">
+          <FormRow label={t.prefVoiceZh} id="voice-zh" className={styles.field}>
             <VoiceSelector lang="zh" />
           </FormRow>
-          <FormRow label={t.prefTheme} id="theme-select">
+          <FormRow
+            label={t.prefTheme}
+            id="theme-select"
+            className={`${styles.field} ${styles["field-wide"]}`}
+          >
             <SelectField
               value={theme}
               onChange={setTheme}
