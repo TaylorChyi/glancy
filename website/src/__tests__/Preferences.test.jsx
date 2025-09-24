@@ -64,6 +64,9 @@ const { default: Preferences } = await import("@/pages/preferences");
 
 beforeEach(() => {
   localStorage.clear();
+  mockRequest.mockReset();
+  mockRequest.mockResolvedValue({});
+  mockSetTheme.mockClear();
 });
 
 /**
@@ -78,4 +81,13 @@ test("saves preferences via api", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Save" }));
   await waitFor(() => expect(mockRequest).toHaveBeenCalled());
   expect(mockRequest.mock.calls[0][0]).toBe(`${API_PATHS.preferences}/user`);
+});
+
+/**
+ * 防止设置页因缺失主题数据而覆盖用户的显式选择。
+ */
+test("keeps user theme when server does not provide one", async () => {
+  render(<Preferences />);
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  expect(mockSetTheme).not.toHaveBeenCalled();
 });
