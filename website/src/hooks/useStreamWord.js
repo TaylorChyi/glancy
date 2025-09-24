@@ -1,5 +1,5 @@
 import { useApi } from "@/hooks/useApi.js";
-import { detectWordLanguage } from "@/utils";
+import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
 import { DEFAULT_MODEL } from "@/config";
@@ -34,11 +34,12 @@ export function useStreamWord() {
     signal,
     forceNew = false,
     versionId,
+    language = WORD_LANGUAGE_AUTO,
   }) {
-    const language = detectWordLanguage(term);
+    const resolvedLanguage = resolveWordLanguage(term, language);
     const model = DEFAULT_MODEL;
     const logCtx = { userId: user.id, term };
-    const key = wordCacheKey({ term, language, model });
+    const key = wordCacheKey({ term, language: resolvedLanguage, model });
     let acc = "";
     let metadataPayload = null;
     console.info("[streamWordWithHandling] start", logCtx);
@@ -46,7 +47,7 @@ export function useStreamWord() {
       for await (const event of streamWord({
         userId: user.id,
         term,
-        language,
+        language: resolvedLanguage,
         model,
         token: user.token,
         signal,
@@ -62,13 +63,13 @@ export function useStreamWord() {
         }
         const chunk = event?.data ?? "";
         acc += chunk;
-        yield { chunk, language };
+        yield { chunk, language: resolvedLanguage };
       }
       const parsedEntry = safeParseJson(acc);
       const entry =
         parsedEntry && typeof parsedEntry === "object"
           ? parsedEntry
-          : { term, language, markdown: acc };
+          : { term, language: resolvedLanguage, markdown: acc };
       const metadata = safeParseJson(metadataPayload);
       const versionsSource =
         (metadata && Array.isArray(metadata.versions) && metadata.versions) ||

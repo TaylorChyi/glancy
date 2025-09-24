@@ -58,7 +58,8 @@ public class WordSearcherImpl implements WordSearcher {
             personalizationContext != null && personalizationContext.hasSignals()
         );
         String cleanInput = searchContentManager.normalize(term);
-        String prompt = promptManager.loadPrompt(config.getPromptPath());
+        String promptPath = config.resolvePromptPath(language);
+        String prompt = promptManager.loadPrompt(promptPath);
         String name = clientName != null ? clientName : config.getDefaultClient();
         LLMClient client = clientFactory.get(name);
         if (client == null) {
@@ -72,7 +73,12 @@ public class WordSearcherImpl implements WordSearcher {
             }
             name = fallback;
         }
-        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext);
+        List<ChatMessage> messages = buildMessages(
+            prompt,
+            cleanInput,
+            personalizationContext,
+            language
+        );
         String content = client.chat(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info("LLM client '{}' returned content (sentinelPresent={}): {}", name, completion.satisfied(), content);
@@ -102,10 +108,12 @@ public class WordSearcherImpl implements WordSearcher {
         String cleanInput = searchContentManager.normalize(term);
         log.info("Normalized input term='{}'", cleanInput);
 
-        String prompt = promptManager.loadPrompt(config.getPromptPath());
+        String promptPath = config.resolvePromptPath(language);
+        String prompt = promptManager.loadPrompt(promptPath);
         log.info(
-            "Loaded prompt from path='{}', length='{}'",
-            config.getPromptPath(),
+            "Loaded prompt from path='{}' for language='{}', length='{}'",
+            promptPath,
+            language,
             prompt != null ? prompt.length() : 0
         );
 
@@ -117,7 +125,12 @@ public class WordSearcherImpl implements WordSearcher {
         }
         log.info("Using LLM client '{}'", name);
 
-        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext);
+        List<ChatMessage> messages = buildMessages(
+            prompt,
+            cleanInput,
+            personalizationContext,
+            language
+        );
         log.info("Using LLM client '{}'", name);
         log.info(
             "Prepared '{}' request messages: roles='{}'",
@@ -132,7 +145,8 @@ public class WordSearcherImpl implements WordSearcher {
     private List<ChatMessage> buildMessages(
         String prompt,
         String cleanInput,
-        WordPersonalizationContext personalizationContext
+        WordPersonalizationContext personalizationContext,
+        Language language
     ) {
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage("system", prompt));
@@ -140,7 +154,12 @@ public class WordSearcherImpl implements WordSearcher {
         if (personaInstruction != null) {
             messages.add(new ChatMessage("system", personaInstruction));
         }
-        messages.add(new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext)));
+        messages.add(
+            new ChatMessage(
+                "user",
+                renderUserPayload(cleanInput, personalizationContext, language)
+            )
+        );
         return messages;
     }
 
@@ -163,8 +182,20 @@ public class WordSearcherImpl implements WordSearcher {
         return builder.toString();
     }
 
-    private String renderUserPayload(String cleanInput, WordPersonalizationContext personalizationContext) {
+    private String renderUserPayload(
+        String cleanInput,
+        WordPersonalizationContext personalizationContext,
+        Language language
+    ) {
         StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
+        if (language == Language.CHINESE) {
+            builder
+                .append("\n条目类型：")
+                .append(classifyChineseEntry(cleanInput))
+                .append(
+                    "\n若为汉字，请以说文解字笔法拆解字形、字源、篆隶演变与常见组合；若为词语，则聚焦现代语境下的义项、搭配与例句。"
+                );
+        }
         if (personalizationContext != null && personalizationContext.hasSignals()) {
             if (!personalizationContext.recentTerms().isEmpty()) {
                 builder.append("\n近期检索：").append(String.join("、", personalizationContext.recentTerms()));
@@ -177,5 +208,23 @@ public class WordSearcherImpl implements WordSearcher {
             builder.append("\n请输出结构化释义、用法说明与示例。");
         }
         return builder.toString();
+    }
+
+    private String classifyChineseEntry(String cleanInput) {
+        if (!StringUtils.hasText(cleanInput)) {
+            return "词语（默认结构）";
+        }
+        String condensed = cleanInput.replaceAll("\\s+", "");
+        int codePoints = condensed.codePointCount(0, condensed.length());
+        boolean allHan = condensed
+            .codePoints()
+            .allMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN);
+        if (!allHan) {
+            return "混合或外来词（保持常规词典结构）";
+        }
+        if (codePoints == 1) {
+            return "汉字（拆解字源与古今演变）";
+        }
+        return "词语（聚焦现代义项与语境）";
     }
 }

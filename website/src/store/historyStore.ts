@@ -4,7 +4,7 @@ import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
-import { detectWordLanguage } from "@/utils";
+import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
 import { useWordStore } from "./wordStore.js";
 
 const HISTORY_LIMIT = 20;
@@ -71,7 +71,7 @@ type SetState = (
 const createTermKey = (term: string, language: string) => `${language}:${term}`;
 
 const normalizeLanguage = (term: string, language?: string | null) =>
-  (language ?? detectWordLanguage(term)).toUpperCase();
+  resolveWordLanguage(term, language ?? WORD_LANGUAGE_AUTO).toUpperCase();
 
 const sanitizeVersion = (
   version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,

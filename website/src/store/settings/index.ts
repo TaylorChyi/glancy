@@ -5,6 +5,7 @@ import {
   getSupportedLanguageCodes,
   isSupportedLanguage,
 } from "@/i18n/languages.js";
+import { WORD_LANGUAGE_AUTO, normalizeWordLanguage } from "@/utils/language.js";
 
 const LEGACY_LANGUAGE_STORAGE_KEY = "lang";
 const SETTINGS_STORAGE_KEY = "settings";
@@ -12,9 +13,13 @@ const DEFAULT_LANGUAGE_FALLBACK = "zh";
 
 type SystemLanguage = typeof SYSTEM_LANGUAGE_AUTO | string;
 
+type DictionaryLanguage = typeof WORD_LANGUAGE_AUTO | "CHINESE" | "ENGLISH";
+
 type SettingsState = {
   systemLanguage: SystemLanguage;
   setSystemLanguage: (language: SystemLanguage) => void;
+  dictionaryLanguage: DictionaryLanguage;
+  setDictionaryLanguage: (language: DictionaryLanguage) => void;
 };
 
 function sanitizeLanguage(candidate: SystemLanguage): SystemLanguage {
@@ -61,6 +66,7 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
   key: SETTINGS_STORAGE_KEY,
   initializer: (set, get) => ({
     systemLanguage: detectInitialLanguage(),
+    dictionaryLanguage: WORD_LANGUAGE_AUTO,
     setSystemLanguage: (language: SystemLanguage) => {
       const normalized = sanitizeLanguage(language);
       const current = get().systemLanguage;
@@ -71,12 +77,24 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       set({ systemLanguage: normalized });
       persistLegacyLanguage(normalized);
     },
+    setDictionaryLanguage: (language: DictionaryLanguage) => {
+      const normalized = normalizeWordLanguage(language) as DictionaryLanguage;
+      set((state) => {
+        if (state.dictionaryLanguage === normalized) {
+          return {};
+        }
+        return { dictionaryLanguage: normalized };
+      });
+    },
   }),
   persistOptions: {
-    partialize: pickState(["systemLanguage"]),
+    partialize: pickState(["systemLanguage", "dictionaryLanguage"]),
     onRehydrateStorage: () => (state) => {
       if (state) {
         persistLegacyLanguage(state.systemLanguage);
+        state.dictionaryLanguage = normalizeWordLanguage(
+          state.dictionaryLanguage,
+        ) as DictionaryLanguage;
       }
     },
   },

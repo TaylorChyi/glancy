@@ -18,6 +18,16 @@ export default {
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
   autoDetect: "Auto Detect",
+  dictionaryLanguageLabel: "Lookup language",
+  dictionaryLanguageAuto: "Auto",
+  dictionaryLanguageAutoDescription:
+    "Detect the term's language automatically.",
+  dictionaryLanguageEnglish: "English term",
+  dictionaryLanguageEnglishDescription:
+    "Always interpret the query as an English word or phrase.",
+  dictionaryLanguageChinese: "Chinese term",
+  dictionaryLanguageChineseDescription:
+    "Treat the query as a Chinese character or word for native explanations.",
   prefTheme: "Theme",
   searchTitle: "Word Search",
   searchButton: "Search",

@@ -3,6 +3,7 @@ import { memo, useMemo } from "react";
 import { TtsButton } from "@/components";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage } from "@/context";
+import { normalizeWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
 import styles from "./OutputToolbar.module.css";
 
 function OutputToolbar({
@@ -14,6 +15,10 @@ function OutputToolbar({
   activeVersionId,
   onNavigate,
   ttsComponent = TtsButton,
+  languageMode = WORD_LANGUAGE_AUTO,
+  languageOptions = [],
+  onLanguageModeChange,
+  languageLabel,
 }) {
   const { t } = useLanguage();
   const TtsComponent = ttsComponent;
@@ -37,9 +42,38 @@ function OutputToolbar({
     : t.versionIndicatorEmpty || "0/0";
   const speakableTerm = typeof term === "string" ? term.trim() : term;
   const showTts = Boolean(speakableTerm);
+  const normalizedLanguageMode = normalizeWordLanguage(languageMode);
+  const hasLanguageSelector =
+    Array.isArray(languageOptions) && languageOptions.length > 0;
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
+      {hasLanguageSelector ? (
+        <div
+          className={styles["language-select"]}
+          role="group"
+          aria-label={languageLabel || t.dictionaryLanguageLabel || ""}
+        >
+          {languageOptions.map(({ value, label, description }) => {
+            const optionValue = normalizeWordLanguage(value);
+            const isActive = optionValue === normalizedLanguageMode;
+            return (
+              <button
+                key={optionValue}
+                type="button"
+                className={`${styles["language-option"]} ${
+                  isActive ? styles.active : styles.inactive
+                }`}
+                aria-pressed={isActive}
+                onClick={() => onLanguageModeChange?.(optionValue)}
+                title={description || undefined}
+              >
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       {showTts ? (
         <TtsComponent
           text={term}
@@ -102,6 +136,16 @@ OutputToolbar.propTypes = {
   activeVersionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onNavigate: PropTypes.func,
   ttsComponent: PropTypes.elementType,
+  languageMode: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  languageOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+      label: PropTypes.string.isRequired,
+      description: PropTypes.string,
+    }),
+  ),
+  onLanguageModeChange: PropTypes.func,
+  languageLabel: PropTypes.string,
 };
 
 OutputToolbar.defaultProps = {
@@ -113,6 +157,10 @@ OutputToolbar.defaultProps = {
   activeVersionId: undefined,
   onNavigate: undefined,
   ttsComponent: TtsButton,
+  languageMode: WORD_LANGUAGE_AUTO,
+  languageOptions: [],
+  onLanguageModeChange: undefined,
+  languageLabel: undefined,
 };
 
 export default memo(OutputToolbar);

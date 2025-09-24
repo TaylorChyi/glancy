@@ -59,6 +59,10 @@ test("cache JSON entry and render definitions", async () => {
     // consume generator
   }
 
+  expect(streamWordMock).toHaveBeenCalledWith(
+    expect.objectContaining({ language: "ENGLISH" }),
+  );
+
   const record = useWordStore
     .getState()
     .getRecord(Object.keys(useWordStore.getState().entries)[0]);
@@ -89,6 +93,10 @@ test("cache markdown entry and render", async () => {
   })) {
     // consume generator
   }
+
+  expect(streamWordMock).toHaveBeenCalledWith(
+    expect.objectContaining({ language: "ENGLISH" }),
+  );
 
   const record = useWordStore
     .getState()

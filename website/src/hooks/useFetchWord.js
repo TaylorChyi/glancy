@@ -1,5 +1,5 @@
 import { useApi } from "@/hooks/useApi.js";
-import { detectWordLanguage } from "@/utils";
+import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
 import { DEFAULT_MODEL } from "@/config";
 
 export function useFetchWord() {
@@ -10,19 +10,20 @@ export function useFetchWord() {
     user,
     term,
     model = DEFAULT_MODEL,
+    language = WORD_LANGUAGE_AUTO,
   }) => {
-    const language = detectWordLanguage(term);
+    const resolvedLanguage = resolveWordLanguage(term, language);
     try {
       const data = await fetchWord({
         userId: user.id,
         term,
-        language,
+        language: resolvedLanguage,
         model,
         token: user.token,
       });
-      return { data, error: null, language };
+      return { data, error: null, language: resolvedLanguage };
     } catch (error) {
-      return { data: null, error, language };
+      return { data: null, error, language: resolvedLanguage };
     }
   };
 
