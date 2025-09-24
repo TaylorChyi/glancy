@@ -1,6 +1,7 @@
 package com.glancy.backend.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -67,6 +68,12 @@ class WordServiceStreamingErrorTest {
         );
     }
 
+    /**
+     * 步骤：
+     * 1. 构造 searchRecordService 的保存返回，确保业务前置流程顺利通过。
+     * 2. 令 wordSearcher.streamSearch 抛出运行时异常模拟底层流式查询错误。
+     * 3. 调用 streamWordForUser 并断言最终异常被包装为 IllegalStateException，且包含原始信息。
+     */
     @Test
     void wrapsExceptionFromSearcher() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse());
