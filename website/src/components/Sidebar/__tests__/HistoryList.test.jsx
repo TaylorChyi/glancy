@@ -62,7 +62,7 @@ describe("HistoryList", () => {
     fireEvent.click(screen.getByText("alpha"));
     expect(handleSelect).toHaveBeenCalledWith("alpha", "v1");
 
-    const versionButton = await screen.findByText("版本 2");
+    const versionButton = await screen.findByRole("button", { name: "版本 2" });
     fireEvent.click(versionButton);
     expect(handleSelect).toHaveBeenLastCalledWith("alpha", "v2");
   });
