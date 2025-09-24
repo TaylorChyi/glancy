@@ -159,14 +159,16 @@ function App() {
         model: DEFAULT_MODEL,
       });
       const isNewTerm = currentTermKey !== cacheKey;
+      const shouldResetView = isNewTerm || forceNew;
       setCurrentTermKey(cacheKey);
-      if (isNewTerm) {
+      setCurrentTerm(normalized);
+      setStreamText("");
+      if (shouldResetView) {
         setEntry(null);
+        setFinalText("");
         setVersions([]);
         setActiveVersionId(null);
-        setFinalText("");
       }
-      setStreamText("");
 
       if (!forceNew && versionId) {
         const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);

@@ -246,9 +246,9 @@ test("renders markdown preview from streaming json", async () => {
 });
 
 /**
- * 验证重新输出按钮以 forceNew 参数重新发起流并保留旧版本展示。
+ * 验证重新输出按钮以 forceNew 参数重新发起流并在新流开始前清空旧展示。
  */
-test("reoutput triggers forceNew stream and retains previous entry", async () => {
+test("reoutput triggers forceNew stream and resets view before streaming", async () => {
   const generator = jest
     .fn()
     .mockImplementationOnce(async function* () {
@@ -274,8 +274,11 @@ test("reoutput triggers forceNew stream and retains previous entry", async () =>
   fireEvent.click(screen.getByTestId("topbar-reoutput"));
 
   await waitFor(() => expect(generator).toHaveBeenCalledTimes(2));
-  await new Promise((resolve) => setTimeout(resolve, 10));
-  expect(screen.getByRole("heading", { name: "First" })).toBeInTheDocument();
+  await waitFor(() => {
+    expect(
+      screen.queryByRole("heading", { name: "First" }),
+    ).not.toBeInTheDocument();
+  });
 
   await screen.findByRole("heading", { name: "Second Chapter" });
   expect(generator.mock.calls[1][0].forceNew).toBe(true);
