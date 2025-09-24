@@ -7,11 +7,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.SearchRecordVersionSummary;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,18 +41,21 @@ class SearchRecordControllerTest {
     private UserService userService;
 
     /**
-     * 模拟认证成功后创建搜索记录的请求，断言响应体包含基础字段与空版本列表。
+     * 模拟认证成功后创建搜索记录的请求，断言响应体包含基础字段以及最新版本信息结构。
      */
     @Test
     void testCreate() throws Exception {
+        LocalDateTime createdAt = LocalDateTime.now();
+        SearchRecordVersionSummary version = new SearchRecordVersionSummary(2L, 1, createdAt, "gpt-4", "preview");
         SearchRecordResponse resp = new SearchRecordResponse(
             1L,
             1L,
             "hello",
             Language.ENGLISH,
-            LocalDateTime.now(),
+            createdAt,
             false,
-            List.of()
+            version,
+            List.of(version)
         );
         when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class))).thenReturn(resp);
 
@@ -72,20 +75,30 @@ class SearchRecordControllerTest {
     }
 
     /**
-     * 模拟认证成功后获取历史列表，断言列表项携带版本数组并保持成功状态。
+     * 模拟认证成功后获取历史列表，断言列表项携带最新版本与完整版本数组并保持成功状态。
      */
     @Test
     void testList() throws Exception {
+        LocalDateTime createdAt = LocalDateTime.now();
+        SearchRecordVersionSummary latestVersion = new SearchRecordVersionSummary(3L, 2, createdAt, "gpt-4", "preview");
+        SearchRecordVersionSummary previousVersion = new SearchRecordVersionSummary(
+            4L,
+            1,
+            createdAt.minusMinutes(1),
+            "gpt-3.5",
+            "older"
+        );
         SearchRecordResponse resp = new SearchRecordResponse(
             1L,
             1L,
             "hello",
             Language.ENGLISH,
-            LocalDateTime.now(),
+            createdAt,
             true,
-            List.of()
+            latestVersion,
+            List.of(previousVersion, latestVersion)
         );
-        when(searchRecordService.getRecords(1L)).thenReturn(Collections.singletonList(resp));
+        when(searchRecordService.getRecords(1L)).thenReturn(List.of(resp));
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 

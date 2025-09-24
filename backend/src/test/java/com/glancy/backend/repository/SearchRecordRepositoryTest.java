@@ -20,6 +20,9 @@ class SearchRecordRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * 构建多条搜索记录（含软删除记录），验证 Repository 查询仅关注未删除数据并能正确按照时间顺序、数量与存在性进行判定。
+     */
     @Test
     void searchRecordQueries() {
         User user = userRepository.save(TestEntityFactory.user(10));
@@ -33,17 +36,32 @@ class SearchRecordRepositoryTest {
         searchRecordRepository.save(r1);
         searchRecordRepository.save(r2);
 
-        List<SearchRecord> list = searchRecordRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        SearchRecord deletedRecord = TestEntityFactory.searchRecord(
+            user,
+            "term3",
+            Language.ENGLISH,
+            LocalDateTime.now().minusHours(2)
+        );
+        deletedRecord.setDeleted(true);
+        searchRecordRepository.save(deletedRecord);
+
+        List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId());
         assertEquals("term2", list.get(0).getTerm());
 
-        long count = searchRecordRepository.countByUserIdAndCreatedAtBetween(
+        long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
             user.getId(),
             LocalDateTime.now().minusDays(2),
             LocalDateTime.now()
         );
         assertEquals(2, count);
 
-        assertTrue(searchRecordRepository.existsByUserIdAndTermAndLanguage(user.getId(), "term1", Language.ENGLISH));
+        assertTrue(
+            searchRecordRepository.existsByUserIdAndTermAndLanguageAndDeletedFalse(
+                user.getId(),
+                "term1",
+                Language.ENGLISH
+            )
+        );
 
         SearchRecord r3 = TestEntityFactory.searchRecord(
             user,
@@ -52,13 +70,15 @@ class SearchRecordRepositoryTest {
             LocalDateTime.now().plusMinutes(1)
         );
         searchRecordRepository.save(r3);
-        SearchRecord top = searchRecordRepository.findTopByUserIdAndTermAndLanguageOrderByCreatedAtDesc(
+        SearchRecord top = searchRecordRepository.findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
             user.getId(),
             "term1",
             Language.ENGLISH
         );
         assertEquals(r3.getId(), top.getId());
 
-        assertTrue(searchRecordRepository.findByIdAndUserId(r1.getId(), user.getId()).isPresent());
+        assertTrue(searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent());
+        assertTrue(searchRecordRepository.findByIdAndDeletedFalse(r2.getId()).isPresent());
+        assertTrue(searchRecordRepository.findByIdAndDeletedFalse(deletedRecord.getId()).isEmpty());
     }
 }
