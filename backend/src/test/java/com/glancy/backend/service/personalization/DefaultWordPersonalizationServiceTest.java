@@ -61,8 +61,9 @@ class DefaultWordPersonalizationServiceTest {
         second.setCreatedAt(LocalDateTime.now().minusHours(1));
         second.setDeleted(false);
 
-        when(searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(eq(1L), any(Pageable.class)))
-            .thenReturn(List.of(first, second));
+        when(
+            searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(eq(1L), any(Pageable.class))
+        ).thenReturn(List.of(first, second));
 
         WordResponse response = new WordResponse(
             "10",
@@ -94,4 +95,3 @@ class DefaultWordPersonalizationServiceTest {
         assertTrue(result.reflectionPrompts().get(1).contains("商务演讲"));
     }
 }
-

@@ -13,4 +13,3 @@ public record PersonalizedWordExplanation(
     List<String> learningHooks,
     List<String> reflectionPrompts
 ) {}
-

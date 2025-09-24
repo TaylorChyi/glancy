@@ -52,10 +52,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         AgeBand ageBand = profile.map(UserProfile::getAge).map(AgeBand::fromAge).orElse(AgeBand.UNKNOWN);
         String goal = profile.map(UserProfile::getGoal).map(this::normalizeText).orElse(null);
         String gender = profile.map(UserProfile::getGender).map(this::normalizeText).orElse(null);
-        List<String> interests = profile
-            .map(UserProfile::getInterest)
-            .map(this::parseInterests)
-            .orElseGet(List::of);
+        List<String> interests = profile.map(UserProfile::getInterest).map(this::parseInterests).orElseGet(List::of);
 
         List<String> recentTerms = fetchRecentTerms(userId);
         return new PersonalizationContext(ageBand, goal, gender, interests, recentTerms);
@@ -96,7 +93,9 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         if (!context.interests().isEmpty()) {
             builder
                 .append("，关注")
-                .append(String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT))));
+                .append(
+                    String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT)))
+                );
         }
         if (StringUtils.hasText(context.goal())) {
             builder.append("，正在为了").append(context.goal()).append("努力");
@@ -128,7 +127,9 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         if (!context.interests().isEmpty()) {
             builder
                 .append("将其代入你关心的")
-                .append(String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT))))
+                .append(
+                    String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT)))
+                )
                 .append("场景，更容易感知语感差异。");
         } else {
             builder.append("结合你熟悉的生活或工作片段，构建专属语境。 ");
@@ -142,7 +143,12 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         } else if (response.getPhrases() != null && !response.getPhrases().isEmpty()) {
             builder
                 .append("可以从常见词组如")
-                .append(String.join("、", response.getPhrases().subList(0, Math.min(response.getPhrases().size(), HOOK_LIMIT))))
+                .append(
+                    String.join(
+                        "、",
+                        response.getPhrases().subList(0, Math.min(response.getPhrases().size(), HOOK_LIMIT))
+                    )
+                )
                 .append("入手体会语义层次。");
         }
         return builder.toString();
@@ -304,4 +310,3 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         }
     }
 }
-

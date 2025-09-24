@@ -10,4 +10,3 @@ import com.glancy.backend.dto.WordResponse;
 public interface WordPersonalizationService {
     PersonalizedWordExplanation personalize(Long userId, WordResponse response);
 }
-
