@@ -1,17 +1,18 @@
-import ThemeIcon from "@/components/ui/Icon";
+import { useCallback } from "react";
+import CollectionButton from "./CollectionButton.jsx";
 import { useLanguage } from "@/context";
 import styles from "./Sidebar.module.css";
 
 const FALLBACK_FAVORITES_LABEL = "Favorites";
 
-const getFavoritesIconAlt = (label, altFromLocale) => altFromLocale || label;
-
 function Favorites({ onToggle }) {
   const { t } = useLanguage();
 
-  const handleClick = () => {
-    if (onToggle) onToggle((v) => !v);
-  };
+  const handleClick = useCallback(() => {
+    if (typeof onToggle === "function") {
+      onToggle((value) => !value);
+    }
+  }, [onToggle]);
 
   const favoritesSectionClassName = [
     styles["sidebar-section"],
@@ -20,22 +21,16 @@ function Favorites({ onToggle }) {
   ].join(" ");
 
   const favoritesLabel = t.favorites || FALLBACK_FAVORITES_LABEL;
-  const favoritesIconAlt = getFavoritesIconAlt(
-    favoritesLabel,
-    t.favoritesIconAlt,
-  );
+  const favoritesIconAlt = t.favoritesIconAlt || favoritesLabel;
 
   return (
     <div className={favoritesSectionClassName}>
-      <h3 className={styles["collection-button"]} onClick={handleClick}>
-        <ThemeIcon
-          name="star-solid"
-          alt={favoritesIconAlt}
-          width={16}
-          height={16}
-        />
-        {favoritesLabel}
-      </h3>
+      <CollectionButton
+        icon="star-solid"
+        label={favoritesLabel}
+        iconAlt={favoritesIconAlt}
+        onClick={handleClick}
+      />
     </div>
   );
 }

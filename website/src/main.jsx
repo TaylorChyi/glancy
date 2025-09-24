@@ -9,6 +9,7 @@ import CookieConsent from "./components/CookieConsent";
 import FallbackRedirect from "./components/FallbackRedirect.jsx";
 
 const App = lazy(() => import("./pages/App"));
+const Gomemo = lazy(() => import("./pages/Gomemo"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 import {
@@ -47,6 +48,7 @@ createRoot(document.getElementById("root")).render(
               <ErrorBoundary>
                 <Suspense fallback={<Loader />}>
                   <Routes>
+                    <Route path="/gomemo" element={<Gomemo />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/" element={<App />} />
