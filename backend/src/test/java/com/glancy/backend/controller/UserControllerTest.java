@@ -238,8 +238,9 @@ class UserControllerTest {
      */
     @Test
     void changeEmail() throws Exception {
-        when(userService.changeEmail(1L, "next@example.com", "123456"))
-            .thenReturn(new UserEmailResponse("next@example.com"));
+        when(userService.changeEmail(1L, "next@example.com", "123456")).thenReturn(
+            new UserEmailResponse("next@example.com")
+        );
 
         EmailChangeRequest req = new EmailChangeRequest("next@example.com", "123456");
 

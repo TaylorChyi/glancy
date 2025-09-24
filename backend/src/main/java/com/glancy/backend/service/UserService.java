@@ -10,8 +10,8 @@ import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
 import com.glancy.backend.dto.UserContactResponse;
-import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserDetailResponse;
+import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UserStatisticsResponse;
@@ -155,9 +155,7 @@ public class UserService {
                 userRepository
                     .findByEmailAndDeletedFalse(normalizedEmail)
                     .ifPresent(existing -> {
-                        log.warn(
-                            "Attempt to request change-email code for already bound address {}", normalizedEmail
-                        );
+                        log.warn("Attempt to request change-email code for already bound address {}", normalizedEmail);
                         throw new DuplicateResourceException("邮箱已被使用");
                     });
             } else {
