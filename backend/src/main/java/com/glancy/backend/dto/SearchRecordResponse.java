@@ -14,6 +14,7 @@ public record SearchRecordResponse(
     Language language,
     LocalDateTime createdAt,
     Boolean favorite,
+    SearchRecordVersionSummary latestVersion,
     List<SearchRecordVersionSummary> versions
 ) {
 
@@ -21,7 +22,10 @@ public record SearchRecordResponse(
         versions = versions == null ? List.of() : List.copyOf(versions);
     }
 
-    public SearchRecordResponse withVersions(List<SearchRecordVersionSummary> versionSummaries) {
+    public SearchRecordResponse withVersionDetails(
+        SearchRecordVersionSummary latest,
+        List<SearchRecordVersionSummary> versionSummaries
+    ) {
         return new SearchRecordResponse(
             id,
             userId,
@@ -29,6 +33,7 @@ public record SearchRecordResponse(
             language,
             createdAt,
             favorite,
+            latest,
             versionSummaries == null ? List.of() : List.copyOf(versionSummaries)
         );
     }

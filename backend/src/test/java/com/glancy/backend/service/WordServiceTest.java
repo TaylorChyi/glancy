@@ -4,10 +4,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.Word;
+import com.glancy.backend.repository.SearchRecordRepository;
+import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.repository.UserPreferenceRepository;
+import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.repository.WordRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +34,17 @@ class WordServiceTest {
     @Autowired
     private WordRepository wordRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SearchRecordRepository searchRecordRepository;
+
+    @Autowired
+    private SearchResultVersionRepository searchResultVersionRepository;
+
+    private Long userId;
+
     @BeforeAll
     static void loadEnv() {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -42,6 +58,18 @@ class WordServiceTest {
     void setUp() {
         wordRepository.deleteAll();
         userPreferenceRepository.deleteAll();
+        searchRecordRepository.deleteAll();
+        searchResultVersionRepository.deleteAll();
+        userRepository.deleteAll();
+        User user = new User();
+        user.setUsername("word-tester");
+        user.setPassword("pwd");
+        user.setEmail("word@test.com");
+        user.setPhone("001");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+        userId = user.getId();
     }
 
     /**
@@ -49,7 +77,7 @@ class WordServiceTest {
      */
     @Test
     void testFetchAndCacheWord() {
-        WordResponse result = wordService.findWordForUser(1L, "hello", Language.ENGLISH, null);
+        WordResponse result = wordService.findWordForUser(userId, "hello", Language.ENGLISH, null, false);
 
         assertNotNull(result.getId());
         assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
@@ -67,7 +95,7 @@ class WordServiceTest {
         word.setMarkdown("md");
         wordRepository.save(word);
 
-        WordResponse result = wordService.findWordForUser(1L, "cached", Language.ENGLISH, null);
+        WordResponse result = wordService.findWordForUser(userId, "cached", Language.ENGLISH, null, false);
 
         assertEquals(String.valueOf(word.getId()), result.getId());
         assertEquals("md", result.getMarkdown());
@@ -78,7 +106,7 @@ class WordServiceTest {
      */
     @Test
     void testCacheWordWhenLanguageMissing() {
-        WordResponse result = wordService.findWordForUser(1L, "bye", Language.ENGLISH, null);
+        WordResponse result = wordService.findWordForUser(userId, "bye", Language.ENGLISH, null, false);
 
         assertEquals(Language.ENGLISH, result.getLanguage());
         assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("bye", Language.ENGLISH).isPresent());
