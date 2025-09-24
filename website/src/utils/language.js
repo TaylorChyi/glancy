@@ -5,7 +5,8 @@ const SUPPORTED_WORD_LANGUAGES = Object.freeze([
   "ENGLISH",
 ]);
 
-const CHINESE_CHAR_PATTERN = /[\u4e00-\u9fff]/u;
+const HAN_SCRIPT_PATTERN = /\p{Script=Han}/u;
+const EXTENDED_CHINESE_MARKS_PATTERN = /[\u3007\u3021-\u3029]/u;
 
 /**
  * Detect the language of a text based on presence of Chinese characters.
@@ -13,7 +14,16 @@ const CHINESE_CHAR_PATTERN = /[\u4e00-\u9fff]/u;
  * @returns {'CHINESE' | 'ENGLISH'}
  */
 export function detectWordLanguage(text = "") {
-  return CHINESE_CHAR_PATTERN.test(text) ? "CHINESE" : "ENGLISH";
+  if (typeof text !== "string" || text.trim().length === 0) {
+    return "ENGLISH";
+  }
+  if (
+    HAN_SCRIPT_PATTERN.test(text) ||
+    EXTENDED_CHINESE_MARKS_PATTERN.test(text)
+  ) {
+    return "CHINESE";
+  }
+  return "ENGLISH";
 }
 
 /**
