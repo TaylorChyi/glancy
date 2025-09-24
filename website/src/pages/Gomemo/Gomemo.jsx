@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import Button from "@/components/ui/Button";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage } from "@/context";
-import { useApi } from "@/context/ApiContext.jsx";
+import { useApi } from "@/hooks/useApi.js";
 import { useUserStore, useGomemoStore } from "@/store";
 import styles from "./Gomemo.module.css";
 

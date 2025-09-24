@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { useApi } from "@/hooks";
+import { useApi } from "@/hooks/useApi.js";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const LocaleContext = createContext({

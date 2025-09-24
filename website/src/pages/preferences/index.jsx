@@ -7,7 +7,7 @@ import { API_PATHS } from "@/config/api.js";
 import MessagePopup from "@/components/ui/MessagePopup";
 import SelectField from "@/components/form/SelectField.jsx";
 import FormRow from "@/components/form/FormRow.jsx";
-import { useApi } from "@/hooks";
+import { useApi } from "@/hooks/useApi.js";
 import { VoiceSelector } from "@/components";
 import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";

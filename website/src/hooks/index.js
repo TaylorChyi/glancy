@@ -1,4 +1,3 @@
-export { useApi } from "./useApi.js";
 export { useAppShortcuts } from "./useAppShortcuts.js";
 export { useFetchWord } from "./useFetchWord.js";
 export { useStreamWord } from "./useStreamWord.js";
