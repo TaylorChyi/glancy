@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useHistory, useFavorites, useUser, useLanguage } from "@/context";
 import ItemMenu from "@/components/ui/ItemMenu";
@@ -42,6 +42,21 @@ function HistoryList({ onSelect }) {
   };
 
   const hasHistory = groupedHistory.length > 0;
+  const versionDisplayLabel = t.versionLabel ?? "版本";
+  const accessibleLabelTemplate = t.versionAccessibleLabel;
+
+  const resolveAccessibleLabel = useCallback(
+    (sequence) => {
+      if (!Number.isFinite(sequence)) {
+        return versionDisplayLabel;
+      }
+      const order = Math.trunc(sequence);
+      return accessibleLabelTemplate
+        ? accessibleLabelTemplate.replace("{position}", order)
+        : `${versionDisplayLabel} ${order}`;
+    },
+    [accessibleLabelTemplate, versionDisplayLabel],
+  );
 
   return (
     <>
@@ -98,19 +113,21 @@ function HistoryList({ onSelect }) {
                         const isActive = item.latestVersionId
                           ? String(versionId) === String(item.latestVersionId)
                           : index === 0;
+                        const versionPosition = index + 1;
                         return (
                           <li key={versionId}>
                             <button
                               type="button"
                               className={styles["history-version"]}
                               data-active={isActive ? "true" : undefined}
+                              aria-label={resolveAccessibleLabel(
+                                versionPosition,
+                              )}
                               onClick={() =>
                                 handleSelectVersion(item, versionId)
                               }
                             >
-                              <span>
-                                {t.versionLabel ?? "版本"} {index + 1}
-                              </span>
+                              <span>{versionDisplayLabel}</span>
                             </button>
                           </li>
                         );

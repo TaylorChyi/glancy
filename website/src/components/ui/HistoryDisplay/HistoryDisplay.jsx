@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useHistory, useLanguage } from "@/context";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
@@ -8,6 +8,22 @@ import styles from "./HistoryDisplay.module.css";
 function HistoryDisplay({ onEmptyAction, onSelect }) {
   const { history } = useHistory();
   const { t } = useLanguage();
+
+  const versionDisplayLabel = t.versionLabel ?? "版本";
+  const accessibleLabelTemplate = t.versionAccessibleLabel;
+
+  const resolveAccessibleLabel = useCallback(
+    (sequence) => {
+      if (!Number.isFinite(sequence)) {
+        return versionDisplayLabel;
+      }
+      const order = Math.trunc(sequence);
+      return accessibleLabelTemplate
+        ? accessibleLabelTemplate.replace("{position}", order)
+        : `${versionDisplayLabel} ${order}`;
+    },
+    [accessibleLabelTemplate, versionDisplayLabel],
+  );
 
   const items = useMemo(() => history ?? [], [history]);
 
@@ -71,16 +87,18 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
                     const isActive = item.latestVersionId
                       ? String(versionId) === String(item.latestVersionId)
                       : index === 0;
+                    const versionPosition = index + 1;
                     return (
                       <li key={versionId}>
                         <button
                           type="button"
                           className={styles.version}
                           data-active={isActive ? "true" : undefined}
+                          aria-label={resolveAccessibleLabel(versionPosition)}
                           onClick={() => handleSelect(item.term, versionId)}
                         >
                           <span className={styles["version-label"]}>
-                            {t.versionLabel ?? "版本"} {index + 1}
+                            {versionDisplayLabel}
                           </span>
                         </button>
                       </li>

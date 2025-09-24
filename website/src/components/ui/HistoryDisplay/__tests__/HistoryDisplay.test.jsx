@@ -39,7 +39,7 @@ describe("HistoryDisplay", () => {
     const handleSelect = jest.fn();
     render(<HistoryDisplay onSelect={handleSelect} />);
 
-    const versionButton = screen.getByText("版本 2");
+    const versionButton = screen.getByRole("button", { name: "版本 2" });
     fireEvent.click(versionButton);
     expect(handleSelect).toHaveBeenCalledWith("beta", "v09");
   });
