@@ -22,6 +22,10 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 @Component
 public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentResolver {
 
+    private static final String ERROR_MISSING_TOKEN = "Missing authentication token";
+
+    private static final String ERROR_INVALID_PRINCIPAL = "Invalid authentication principal type";
+
     private final UserService userService;
 
     public AuthenticatedUserArgumentResolver(UserService userService) {
@@ -45,13 +49,34 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
         @Nullable WebDataBinderFactory binderFactory
     ) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new UnauthorizedException("Missing authentication token");
-        }
-        Long userId = (Long) authentication.getPrincipal();
+        Long userId = resolveUserId(authentication);
         if (Long.class.equals(parameter.getParameterType())) {
             return userId;
         }
         return userService.getUserRaw(userId);
+    }
+
+    private Long resolveUserId(@Nullable Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException(ERROR_MISSING_TOKEN);
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Long longId) {
+            return longId;
+        }
+        if (principal instanceof Number number) {
+            return number.longValue();
+        }
+        if (principal instanceof String str) {
+            if (str.isBlank()) {
+                throw new UnauthorizedException(ERROR_MISSING_TOKEN);
+            }
+            try {
+                return Long.parseLong(str);
+            } catch (NumberFormatException ex) {
+                throw new UnauthorizedException(ERROR_INVALID_PRINCIPAL);
+            }
+        }
+        throw new UnauthorizedException(ERROR_INVALID_PRINCIPAL);
     }
 }
