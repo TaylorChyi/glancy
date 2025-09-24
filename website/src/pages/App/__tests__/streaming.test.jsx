@@ -119,6 +119,13 @@ jest.unstable_mockModule("@/context", () => ({
       versionIndicator: "{current}/{total}",
       versionIndicatorEmpty: "0/0",
       back: "返回",
+      dictionaryLanguageLabel: "检索语言",
+      dictionaryLanguageAuto: "自动",
+      dictionaryLanguageAutoDescription: "根据输入自动识别",
+      dictionaryLanguageEnglish: "英文词条",
+      dictionaryLanguageEnglishDescription: "固定按英文解析",
+      dictionaryLanguageChinese: "中文词条",
+      dictionaryLanguageChineseDescription: "固定按中文解析",
     },
     lang: "en",
     setLang: jest.fn(),
@@ -138,11 +145,20 @@ jest.unstable_mockModule("@/hooks", () => ({
 const { default: App } = await import("@/pages/App");
 const { useStreamWord } = await import("@/hooks");
 const { useWordStore } = await import("@/store/wordStore.js");
+const { useSettingsStore } = await import("@/store");
 const { wordCacheKey } = await import("@/api/words.js");
 
 beforeEach(() => {
   useStreamWord.mockReset();
   useWordStore.getState().clear();
+  const settings = useSettingsStore.getState();
+  useSettingsStore.setState(
+    {
+      dictionaryLanguage: "AUTO",
+      setDictionaryLanguage: settings.setDictionaryLanguage,
+    },
+    true,
+  );
 });
 
 /**

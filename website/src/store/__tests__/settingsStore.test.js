@@ -1,15 +1,19 @@
 import { act } from "@testing-library/react";
 import { useSettingsStore } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
+import { WORD_LANGUAGE_AUTO } from "@/utils/language.js";
 
 describe("settingsStore", () => {
   beforeEach(() => {
     localStorage.clear();
     const setter = useSettingsStore.getState().setSystemLanguage;
+    const dictionarySetter = useSettingsStore.getState().setDictionaryLanguage;
     useSettingsStore.setState(
       {
         systemLanguage: SYSTEM_LANGUAGE_AUTO,
         setSystemLanguage: setter,
+        dictionaryLanguage: WORD_LANGUAGE_AUTO,
+        setDictionaryLanguage: dictionarySetter,
       },
       true,
     );
@@ -21,6 +25,9 @@ describe("settingsStore", () => {
   test("initializes with auto system language", () => {
     expect(useSettingsStore.getState().systemLanguage).toBe(
       SYSTEM_LANGUAGE_AUTO,
+    );
+    expect(useSettingsStore.getState().dictionaryLanguage).toBe(
+      WORD_LANGUAGE_AUTO,
     );
   });
 
@@ -40,5 +47,19 @@ describe("settingsStore", () => {
   test("setSystemLanguage falls back for unsupported values", () => {
     act(() => useSettingsStore.getState().setSystemLanguage("xx"));
     expect(useSettingsStore.getState().systemLanguage).toBe("zh");
+  });
+
+  /**
+   * 验证词典语言模式可写入并持久化，且不支持的值会回退到自动检测。
+   */
+  test("setDictionaryLanguage normalizes preference", () => {
+    act(() => useSettingsStore.getState().setDictionaryLanguage("CHINESE"));
+    expect(useSettingsStore.getState().dictionaryLanguage).toBe("CHINESE");
+    act(() => useSettingsStore.getState().setDictionaryLanguage("invalid"));
+    expect(useSettingsStore.getState().dictionaryLanguage).toBe(
+      WORD_LANGUAGE_AUTO,
+    );
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    expect(stored.state.dictionaryLanguage).toBe("AUTO");
   });
 });

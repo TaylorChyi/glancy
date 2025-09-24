@@ -55,6 +55,9 @@ llm:
   default-client: doubao
   temperature: 0.7
   prompt-path: prompts/english_to_chinese.txt
+  prompt-paths:
+    ENGLISH: prompts/english_to_chinese.txt
+    CHINESE: prompts/chinese_to_chinese.txt
 
 gomemo:
   default-daily-target: 12

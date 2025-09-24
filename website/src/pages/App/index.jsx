@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
 import { useHistory, useUser, useFavorites } from "@/context";
 import { useNavigate } from "react-router-dom";
@@ -15,9 +15,13 @@ import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
-import { extractMarkdownPreview, detectWordLanguage } from "@/utils";
+import {
+  extractMarkdownPreview,
+  resolveWordLanguage,
+  WORD_LANGUAGE_AUTO,
+} from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
-import { useWordStore } from "@/store";
+import { useWordStore, useSettingsStore } from "@/store";
 import { DEFAULT_MODEL } from "@/config";
 
 function App() {
@@ -47,6 +51,53 @@ function App() {
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
   const wordEntries = useWordStore((state) => state.entries);
+  const dictionaryLanguage = useSettingsStore(
+    (state) => state.dictionaryLanguage,
+  );
+  const setDictionaryLanguage = useSettingsStore(
+    (state) => state.setDictionaryLanguage,
+  );
+  const dictionaryLanguageOptions = useMemo(
+    () => [
+      {
+        value: WORD_LANGUAGE_AUTO,
+        label: t.dictionaryLanguageAuto,
+        description: t.dictionaryLanguageAutoDescription,
+      },
+      {
+        value: "ENGLISH",
+        label: t.dictionaryLanguageEnglish,
+        description: t.dictionaryLanguageEnglishDescription,
+      },
+      {
+        value: "CHINESE",
+        label: t.dictionaryLanguageChinese,
+        description: t.dictionaryLanguageChineseDescription,
+      },
+    ],
+    [
+      t.dictionaryLanguageAuto,
+      t.dictionaryLanguageAutoDescription,
+      t.dictionaryLanguageEnglish,
+      t.dictionaryLanguageEnglishDescription,
+      t.dictionaryLanguageChinese,
+      t.dictionaryLanguageChineseDescription,
+    ],
+  );
+  const toolbarLanguageProps = useMemo(
+    () => ({
+      languageMode: dictionaryLanguage,
+      onLanguageModeChange: setDictionaryLanguage,
+      languageOptions: dictionaryLanguageOptions,
+      languageLabel: t.dictionaryLanguageLabel,
+    }),
+    [
+      dictionaryLanguage,
+      setDictionaryLanguage,
+      dictionaryLanguageOptions,
+      t.dictionaryLanguageLabel,
+    ],
+  );
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -132,7 +183,10 @@ function App() {
   );
 
   const executeLookup = useCallback(
-    async (term, { forceNew = false, versionId } = {}) => {
+    async (
+      term,
+      { forceNew = false, versionId, language: preferredLanguage } = {},
+    ) => {
       const normalized = term.trim();
       if (!normalized) {
         return { status: "idle", term: normalized };
@@ -151,10 +205,13 @@ function App() {
       abortRef.current = controller;
 
       setLoading(true);
-      const detectedLanguage = detectWordLanguage(normalized);
+      const targetLanguage = resolveWordLanguage(
+        normalized,
+        preferredLanguage ?? dictionaryLanguage ?? WORD_LANGUAGE_AUTO,
+      );
       const cacheKey = wordCacheKey({
         term: normalized,
-        language: detectedLanguage,
+        language: targetLanguage,
         model: DEFAULT_MODEL,
       });
       const isNewTerm = currentTermKey !== cacheKey;
@@ -179,13 +236,13 @@ function App() {
             return {
               status: "success",
               term: normalized,
-              detectedLanguage,
+              detectedLanguage: targetLanguage,
             };
           }
         }
       }
 
-      let detected;
+      let detected = targetLanguage;
       try {
         let acc = "";
         let preview = "";
@@ -197,8 +254,9 @@ function App() {
           signal: controller.signal,
           forceNew,
           versionId,
+          language: targetLanguage,
         })) {
-          if (!detected && language) detected = language;
+          if (language && language !== detected) detected = language;
           acc += chunk;
 
           const derived = extractMarkdownPreview(acc);
@@ -228,7 +286,7 @@ function App() {
         return {
           status: "success",
           term: normalized,
-          detectedLanguage: detected ?? detectedLanguage,
+          detectedLanguage: detected ?? targetLanguage,
         };
       } catch (error) {
         if (error.name === "AbortError") {
@@ -259,6 +317,7 @@ function App() {
       currentTermKey,
       wordStoreApi,
       applyRecord,
+      dictionaryLanguage,
     ],
   );
 
@@ -345,7 +404,10 @@ function App() {
     const target = historyItems?.find(
       (item) => item.term === term || item.termKey === term,
     );
-    const resolvedLanguage = target?.language ?? detectWordLanguage(term);
+    const resolvedLanguage = resolveWordLanguage(
+      term,
+      target?.language ?? WORD_LANGUAGE_AUTO,
+    );
     const cacheKey = wordCacheKey({
       term,
       language: resolvedLanguage,
@@ -374,7 +436,7 @@ function App() {
       }
     }
 
-    await executeLookup(term, { versionId });
+    await executeLookup(term, { versionId, language: resolvedLanguage });
   };
 
   useEffect(() => {
@@ -435,6 +497,7 @@ function App() {
           isLoading: loading,
           onDelete:
             !showFavorites && !showHistory ? handleDeleteHistory : undefined,
+          toolbarProps: toolbarLanguageProps,
         }}
         bottomContent={
           <div>

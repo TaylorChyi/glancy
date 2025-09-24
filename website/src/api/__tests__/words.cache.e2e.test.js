@@ -26,7 +26,11 @@ beforeEach(() => {
 test("streams then reads markdown from cache", async () => {
   const stream = useStreamWord();
   const user = { id: "u", token: "t" };
-  for await (const _ of stream({ user, term: "hello" })) {
+  for await (const _ of stream({
+    user,
+    term: "hello",
+    language: "ENGLISH",
+  })) {
     // consume stream
   }
 
