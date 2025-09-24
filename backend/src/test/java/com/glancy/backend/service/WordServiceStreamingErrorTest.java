@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.WordResponseParser;
@@ -51,10 +52,23 @@ class WordServiceStreamingErrorTest {
     @Mock
     private WordPersonalizationService wordPersonalizationService;
 
+    private WordPersonalizationContext personalizationContext;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(wordPersonalizationService.personalize(anyLong(), any())).thenReturn(
+        personalizationContext =
+            new WordPersonalizationContext(
+                "自驱力强的青年进阶者",
+                true,
+                "大学或初入职场的伙伴",
+                "突破商务演讲",
+                "柔和而坚定",
+                List.of("金融"),
+                List.of("equity")
+            );
+        when(wordPersonalizationService.resolveContext(anyLong())).thenReturn(personalizationContext);
+        when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
         wordService = new WordService(
@@ -77,7 +91,7 @@ class WordServiceStreamingErrorTest {
     @Test
     void wrapsExceptionFromSearcher() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse());
-        when(wordSearcher.streamSearch(any(), any(), any())).thenThrow(new RuntimeException("boom"));
+        when(wordSearcher.streamSearch(any(), any(), any(), any())).thenThrow(new RuntimeException("boom"));
         Flux<WordService.StreamPayload> result = wordService.streamWordForUser(
             1L,
             "hello",

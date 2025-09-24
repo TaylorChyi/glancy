@@ -1,5 +1,6 @@
 package com.glancy.backend.llm.service;
 
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 
 @Slf4j
@@ -43,8 +45,18 @@ public class WordSearcherImpl implements WordSearcher {
     }
 
     @Override
-    public WordResponse search(String term, Language language, String clientName) {
-        log.info("WordSearcher searching for '{}' using client {}", term, clientName);
+    public WordResponse search(
+        String term,
+        Language language,
+        String clientName,
+        WordPersonalizationContext personalizationContext
+    ) {
+        log.info(
+            "WordSearcher searching for '{}' using client {} personalizationSignals={}",
+            term,
+            clientName,
+            personalizationContext != null && personalizationContext.hasSignals()
+        );
         String cleanInput = searchContentManager.normalize(term);
         String prompt = promptManager.loadPrompt(config.getPromptPath());
         String name = clientName != null ? clientName : config.getDefaultClient();
@@ -60,9 +72,7 @@ public class WordSearcherImpl implements WordSearcher {
             }
             name = fallback;
         }
-        List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("system", prompt));
-        messages.add(new ChatMessage("user", cleanInput));
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext);
         String content = client.chat(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info("LLM client '{}' returned content (sentinelPresent={}): {}", name, completion.satisfied(), content);
@@ -77,8 +87,18 @@ public class WordSearcherImpl implements WordSearcher {
     /**
      * 面向实时场景的搜索接口，直接返回模型的流式输出。
      */
-    public Flux<String> streamSearch(String term, Language language, String clientName) {
-        log.info("WordSearcher streaming for '{}' using client '{}'", term, clientName);
+    public Flux<String> streamSearch(
+        String term,
+        Language language,
+        String clientName,
+        WordPersonalizationContext personalizationContext
+    ) {
+        log.info(
+            "WordSearcher streaming for '{}' using client '{}' personalizationSignals={}",
+            term,
+            clientName,
+            personalizationContext != null && personalizationContext.hasSignals()
+        );
         String cleanInput = searchContentManager.normalize(term);
         log.info("Normalized input term='{}'", cleanInput);
 
@@ -97,9 +117,7 @@ public class WordSearcherImpl implements WordSearcher {
         }
         log.info("Using LLM client '{}'", name);
 
-        List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("system", prompt));
-        messages.add(new ChatMessage("user", cleanInput));
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext);
         log.info("Using LLM client '{}'", name);
         log.info(
             "Prepared '{}' request messages: roles='{}'",
@@ -109,5 +127,60 @@ public class WordSearcherImpl implements WordSearcher {
 
         log.info("Sending streaming request to LLM client '{}' for term='{}'", name, term);
         return client.streamChat(messages, config.getTemperature());
+    }
+
+    private List<ChatMessage> buildMessages(
+        String prompt,
+        String cleanInput,
+        WordPersonalizationContext personalizationContext
+    ) {
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(new ChatMessage("system", prompt));
+        String personaInstruction = renderPersonaInstruction(personalizationContext);
+        if (personaInstruction != null) {
+            messages.add(new ChatMessage("system", personaInstruction));
+        }
+        messages.add(new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext)));
+        return messages;
+    }
+
+    private String renderPersonaInstruction(WordPersonalizationContext personalizationContext) {
+        if (personalizationContext == null || !personalizationContext.hasSignals()) {
+            return null;
+        }
+        StringBuilder builder = new StringBuilder();
+        builder
+            .append("你正在为")
+            .append(personalizationContext.personaDescriptor())
+            .append("提供词汇讲解");
+        if (StringUtils.hasText(personalizationContext.preferredTone())) {
+            builder.append("，请保持").append(personalizationContext.preferredTone()).append("的语气");
+        }
+        if (StringUtils.hasText(personalizationContext.goal())) {
+            builder.append("，学习目标是").append(personalizationContext.goal());
+        }
+        if (!personalizationContext.interests().isEmpty()) {
+            builder.append("，关注领域包含").append(String.join("、", personalizationContext.interests()));
+        }
+        builder.append("。");
+        return builder.toString();
+    }
+
+    private String renderUserPayload(String cleanInput, WordPersonalizationContext personalizationContext) {
+        StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
+        if (personalizationContext != null && personalizationContext.hasSignals()) {
+            if (!personalizationContext.recentTerms().isEmpty()) {
+                builder
+                    .append("\n近期检索：")
+                    .append(String.join("、", personalizationContext.recentTerms()));
+            }
+            if (StringUtils.hasText(personalizationContext.goal())) {
+                builder.append("\n学习目标：").append(personalizationContext.goal());
+            }
+            builder.append("\n请结合画像输出结构化释义、语义差异与可执行练习建议。");
+        } else {
+            builder.append("\n请输出结构化释义、用法说明与示例。");
+        }
+        return builder.toString();
     }
 }
