@@ -180,9 +180,7 @@ public class WordSearcherImpl implements WordSearcher {
                 .append(profile.typeLabel())
                 .append("\n写作指引：")
                 .append(profile.guidance())
-                .append(
-                    "\n结构要求：请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。"
-                );
+                .append("\n结构要求：请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。");
         } else {
             builder
                 .append("\n条目类型：英文词汇")
