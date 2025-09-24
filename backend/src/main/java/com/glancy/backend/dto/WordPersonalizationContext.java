@@ -21,10 +21,12 @@ public record WordPersonalizationContext(
     }
 
     public boolean hasSignals() {
-        return personaDerivedFromProfile
-            || (goal != null && !goal.isBlank())
-            || (preferredTone != null && !preferredTone.isBlank())
-            || !interests.isEmpty()
-            || !recentTerms.isEmpty();
+        return (
+            personaDerivedFromProfile ||
+            (goal != null && !goal.isBlank()) ||
+            (preferredTone != null && !preferredTone.isBlank()) ||
+            !interests.isEmpty() ||
+            !recentTerms.isEmpty()
+        );
     }
 }

@@ -57,16 +57,15 @@ class WordServiceStreamingErrorTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        personalizationContext =
-            new WordPersonalizationContext(
-                "自驱力强的青年进阶者",
-                true,
-                "大学或初入职场的伙伴",
-                "突破商务演讲",
-                "柔和而坚定",
-                List.of("金融"),
-                List.of("equity")
-            );
+        personalizationContext = new WordPersonalizationContext(
+            "自驱力强的青年进阶者",
+            true,
+            "大学或初入职场的伙伴",
+            "突破商务演讲",
+            "柔和而坚定",
+            List.of("金融"),
+            List.of("equity")
+        );
         when(wordPersonalizationService.resolveContext(anyLong())).thenReturn(personalizationContext);
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())

@@ -222,8 +222,14 @@ public class WordService {
             }
         }
 
-        StreamingAccumulator session =
-            new StreamingAccumulator(userId, record.id(), term, language, model, personalizationContext);
+        StreamingAccumulator session = new StreamingAccumulator(
+            userId,
+            record.id(),
+            term,
+            language,
+            model,
+            personalizationContext
+        );
         Flux<String> stream;
         try {
             stream = wordSearcher.streamSearch(term, language, model, personalizationContext);
@@ -413,17 +419,14 @@ public class WordService {
         );
     }
 
-    private WordResponse applyPersonalization(
-        Long userId,
-        WordResponse response,
-        WordPersonalizationContext context
-    ) {
+    private WordResponse applyPersonalization(Long userId, WordResponse response, WordPersonalizationContext context) {
         if (response == null) {
             return null;
         }
         try {
-            WordPersonalizationContext effectiveContext =
-                context != null ? context : wordPersonalizationService.resolveContext(userId);
+            WordPersonalizationContext effectiveContext = context != null
+                ? context
+                : wordPersonalizationService.resolveContext(userId);
             response.setPersonalization(wordPersonalizationService.personalize(effectiveContext, response));
         } catch (Exception ex) {
             log.warn(

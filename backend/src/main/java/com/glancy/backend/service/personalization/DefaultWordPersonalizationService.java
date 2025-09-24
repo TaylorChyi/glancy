@@ -66,18 +66,17 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
 
     @Override
     public PersonalizedWordExplanation personalize(WordPersonalizationContext context, WordResponse response) {
-        WordPersonalizationContext effectiveContext =
-            context != null
-                ? context
-                : new WordPersonalizationContext(
-                    AgeBand.UNKNOWN.descriptor(),
-                    false,
-                    AgeBand.UNKNOWN.audience(),
-                    null,
-                    null,
-                    List.of(),
-                    List.of()
-                );
+        WordPersonalizationContext effectiveContext = context != null
+            ? context
+            : new WordPersonalizationContext(
+                AgeBand.UNKNOWN.descriptor(),
+                false,
+                AgeBand.UNKNOWN.audience(),
+                null,
+                null,
+                List.of(),
+                List.of()
+            );
         return composeExplanation(effectiveContext, response);
     }
 
@@ -102,10 +101,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return List.copyOf(deduplicated);
     }
 
-    private PersonalizedWordExplanation composeExplanation(
-        WordPersonalizationContext context,
-        WordResponse response
-    ) {
+    private PersonalizedWordExplanation composeExplanation(WordPersonalizationContext context, WordResponse response) {
         String personaSummary = buildPersonaSummary(context, response);
         String keyTakeaway = buildKeyTakeaway(response);
         String contextualExplanation = buildContextualExplanation(context, response);
@@ -120,10 +116,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
             builder
                 .append("，关注")
                 .append(
-                    String.join(
-                        "、",
-                        context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT))
-                    )
+                    String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT)))
                 );
         }
         if (StringUtils.hasText(context.goal())) {
@@ -325,5 +318,4 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
             return SENIOR;
         }
     }
-
 }

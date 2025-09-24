@@ -149,10 +149,7 @@ public class WordSearcherImpl implements WordSearcher {
             return null;
         }
         StringBuilder builder = new StringBuilder();
-        builder
-            .append("你正在为")
-            .append(personalizationContext.personaDescriptor())
-            .append("提供词汇讲解");
+        builder.append("你正在为").append(personalizationContext.personaDescriptor()).append("提供词汇讲解");
         if (StringUtils.hasText(personalizationContext.preferredTone())) {
             builder.append("，请保持").append(personalizationContext.preferredTone()).append("的语气");
         }
@@ -170,9 +167,7 @@ public class WordSearcherImpl implements WordSearcher {
         StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
         if (personalizationContext != null && personalizationContext.hasSignals()) {
             if (!personalizationContext.recentTerms().isEmpty()) {
-                builder
-                    .append("\n近期检索：")
-                    .append(String.join("、", personalizationContext.recentTerms()));
+                builder.append("\n近期检索：").append(String.join("、", personalizationContext.recentTerms()));
             }
             if (StringUtils.hasText(personalizationContext.goal())) {
                 builder.append("\n学习目标：").append(personalizationContext.goal());
