@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
@@ -13,10 +14,21 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class WordSearcherImplTest {
+
+    private static final WordPersonalizationContext NO_PERSONALIZATION_CONTEXT = new WordPersonalizationContext(
+        null,
+        false,
+        null,
+        null,
+        null,
+        List.of(),
+        List.of()
+    );
 
     private LLMClientFactory factory;
     private LLMConfig config;
@@ -39,12 +51,9 @@ class WordSearcherImplTest {
     }
 
     /**
-     * 当指定客户端在工厂中找不到时，应回退到默认客户端并完成查询流程。
+     * 验证当指定的模型不存在时，会优雅回退到默认的 doubao 模型并完成查询。测试通过模拟工厂返回空实例，随后校验默认模型被调用。
      */
     @Test
-    /**
-     * 验证当指定的模型不存在时，会回退到默认的 doubao 模型。
-     */
     void searchFallsBackToDefaultWhenClientMissing() {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(defaultClient);
@@ -55,7 +64,7 @@ class WordSearcherImplTest {
         expected.setMarkdown("content");
         when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid");
+        WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT);
 
         assertSame(expected, result);
         verify(factory).get("invalid");
@@ -64,16 +73,16 @@ class WordSearcherImplTest {
     }
 
     /**
-     * 当默认客户端同样缺失时，系统应抛出 IllegalStateException。
+     * 验证默认模型缺失时会抛出非法状态异常。测试通过模拟工厂对指定模型及默认模型均返回空值，从而确认搜索流程终止于异常抛出。
      */
     @Test
-    /**
-     * 验证默认模型缺失时会抛出非法状态异常。
-     */
     void searchThrowsWhenDefaultMissing() {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        assertThrows(IllegalStateException.class, () -> searcher.search("hi", Language.ENGLISH, "invalid"));
+        assertThrows(
+            IllegalStateException.class,
+            () -> searcher.search("hi", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT)
+        );
     }
 }
