@@ -58,7 +58,9 @@ class WordControllerTest {
             null,
             null
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(resp);
+        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
+            resp
+        );
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -96,7 +98,9 @@ class WordControllerTest {
             null,
             null
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"), eq(false))).thenReturn(resp);
+        when(
+            wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"), eq(false))
+        ).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 

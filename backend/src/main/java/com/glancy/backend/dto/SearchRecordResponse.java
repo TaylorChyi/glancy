@@ -17,7 +17,6 @@ public record SearchRecordResponse(
     SearchRecordVersionSummary latestVersion,
     List<SearchRecordVersionSummary> versions
 ) {
-
     public SearchRecordResponse {
         versions = versions == null ? List.of() : List.copyOf(versions);
     }

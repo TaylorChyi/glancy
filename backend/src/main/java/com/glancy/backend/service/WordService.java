@@ -114,13 +114,7 @@ public class WordService {
         }
     }
 
-    private SearchResultVersion persistVersion(
-        Long recordId,
-        Long userId,
-        String model,
-        String content,
-        Word word
-    ) {
+    private SearchResultVersion persistVersion(Long recordId, Long userId, String model, String content, Word word) {
         if (recordId == null) {
             log.warn("Skipping version persistence because search record is unavailable");
             return null;
@@ -147,13 +141,7 @@ public class WordService {
     }
 
     @Transactional
-    public WordResponse findWordForUser(
-        Long userId,
-        String term,
-        Language language,
-        String model,
-        boolean forceNew
-    ) {
+    public WordResponse findWordForUser(Long userId, String term, Language language, String model, boolean forceNew) {
         log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, model);
         userPreferenceRepository
             .findByUserId(userId)
@@ -245,9 +233,7 @@ public class WordService {
             .doOnError(session::markError)
             .map(StreamPayload::data);
 
-        return main
-            .concatWith(Mono.defer(() -> finalizeStreamingSession(session)))
-            .doFinally(session::logSummary);
+        return main.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
     }
 
     private static final class StreamingAccumulator {
@@ -351,9 +337,7 @@ public class WordService {
     private Word saveWord(String requestedTerm, WordResponse resp, Language language) {
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
-        Word word = wordRepository
-            .findByTermAndLanguageAndDeletedFalse(term, lang)
-            .orElseGet(Word::new);
+        Word word = wordRepository.findByTermAndLanguageAndDeletedFalse(term, lang).orElseGet(Word::new);
         word.setTerm(term);
         word.setLanguage(lang);
         word.setMarkdown(resp.getMarkdown());

@@ -62,7 +62,13 @@ class WordServiceStreamingErrorTest {
     void wrapsExceptionFromSearcher() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse());
         when(wordSearcher.streamSearch(any(), any(), any())).thenThrow(new RuntimeException("boom"));
-        Flux<WordService.StreamPayload> result = wordService.streamWordForUser(1L, "hello", Language.ENGLISH, null, false);
+        Flux<WordService.StreamPayload> result = wordService.streamWordForUser(
+            1L,
+            "hello",
+            Language.ENGLISH,
+            null,
+            false
+        );
         StepVerifier.create(result)
             .expectErrorMatches(e -> e instanceof IllegalStateException && e.getMessage().contains("boom"))
             .verify();

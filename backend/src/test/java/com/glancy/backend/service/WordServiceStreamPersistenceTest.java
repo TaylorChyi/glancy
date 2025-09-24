@@ -74,7 +74,13 @@ class WordServiceStreamPersistenceTest {
             Optional.of(word)
         );
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(1L, "cached", Language.ENGLISH, null, false);
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "cached",
+            Language.ENGLISH,
+            null,
+            false
+        );
 
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("cached") && payload.event() == null)
@@ -136,16 +142,15 @@ class WordServiceStreamPersistenceTest {
             .expectNextMatches(payload -> "version".equals(payload.event()) && "88".equals(payload.data()))
             .verifyComplete();
         verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
-        verify(searchResultService)
-            .createVersion(
-                anyLong(),
-                anyLong(),
-                anyString(),
-                any(Language.class),
-                anyString(),
-                anyString(),
-                any(Word.class)
-            );
+        verify(searchResultService).createVersion(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            any(Language.class),
+            anyString(),
+            anyString(),
+            any(Word.class)
+        );
     }
 
     /** 验证缺少哨兵时不会解析或持久化，等待上游补齐。 */
@@ -162,8 +167,15 @@ class WordServiceStreamPersistenceTest {
             .verifyComplete();
         verify(parser, never()).parse(any(), any(), any());
         verify(wordRepository, never()).save(any());
-        verify(searchResultService, never())
-            .createVersion(anyLong(), anyLong(), anyString(), any(Language.class), anyString(), anyString(), any(Word.class));
+        verify(searchResultService, never()).createVersion(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            any(Language.class),
+            anyString(),
+            anyString(),
+            any(Word.class)
+        );
     }
 
     /** 验证异常时不会写库。 */
@@ -183,8 +195,15 @@ class WordServiceStreamPersistenceTest {
             .verify();
         verify(wordRepository, never()).save(any());
         verify(parser, never()).parse(any(), any(), any());
-        verify(searchResultService, never())
-            .createVersion(anyLong(), anyLong(), anyString(), any(Language.class), anyString(), anyString(), any(Word.class));
+        verify(searchResultService, never()).createVersion(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            any(Language.class),
+            anyString(),
+            anyString(),
+            any(Word.class)
+        );
     }
 
     private SearchRecordResponse sampleRecordResponse(String term) {

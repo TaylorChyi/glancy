@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface SearchResultVersionRepository extends JpaRepository<SearchResultVersion, Long> {
-
     List<SearchResultVersion> findBySearchRecordIdAndDeletedFalseOrderByVersionNumberDesc(Long searchRecordId);
 
     Optional<SearchResultVersion> findTopBySearchRecordIdAndDeletedFalseOrderByVersionNumberDesc(Long searchRecordId);
@@ -22,7 +21,9 @@ public interface SearchResultVersionRepository extends JpaRepository<SearchResul
     Optional<SearchResultVersion> findByIdAndSearchRecordIdAndDeletedFalse(Long id, Long searchRecordId);
 
     @Modifying(clearAutomatically = true)
-    @Query("update SearchResultVersion v set v.deleted = true where v.searchRecord.id = :recordId and v.deleted = false")
+    @Query(
+        "update SearchResultVersion v set v.deleted = true where v.searchRecord.id = :recordId and v.deleted = false"
+    )
     int softDeleteBySearchRecordId(Long recordId);
 
     @Modifying(clearAutomatically = true)

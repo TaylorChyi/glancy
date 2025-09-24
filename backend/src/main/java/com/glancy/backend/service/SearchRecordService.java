@@ -9,11 +9,11 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.mapper.SearchRecordMapper;
-import com.glancy.backend.service.SearchResultService;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
-import java.time.LocalDateTime;
+import com.glancy.backend.service.SearchResultService;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -65,11 +65,12 @@ public class SearchRecordService {
             log.warn("User {} is not logged in", userId);
             throw new InvalidRequestException("用户未登录");
         }
-        SearchRecord existing = searchRecordRepository.findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
-            userId,
-            request.getTerm(),
-            request.getLanguage()
-        );
+        SearchRecord existing =
+            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
+                userId,
+                request.getTerm(),
+                request.getLanguage()
+            );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
             existing.setCreatedAt(LocalDateTime.now());
@@ -148,7 +149,9 @@ public class SearchRecordService {
             return;
         }
         records.forEach(record -> record.setDeleted(true));
-        searchResultService.softDeleteByRecordIds(records.stream().map(SearchRecord::getId).filter(Objects::nonNull).toList());
+        searchResultService.softDeleteByRecordIds(
+            records.stream().map(SearchRecord::getId).filter(Objects::nonNull).toList()
+        );
         searchRecordRepository.saveAll(records);
     }
 

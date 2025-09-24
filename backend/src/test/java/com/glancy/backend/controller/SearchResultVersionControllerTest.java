@@ -46,7 +46,7 @@ class SearchResultVersionControllerTest {
     private UserService userService;
 
     /**
-     * 验证版本列表接口返回基础摘要。 
+     * 验证版本列表接口返回基础摘要。
      */
     @Test
     void listVersionsReturnsSummaries() throws Exception {
@@ -61,17 +61,14 @@ class SearchResultVersionControllerTest {
         when(searchResultService.listVersionSummaries(eq(1L), eq(10L))).thenReturn(List.of(summary));
 
         mockMvc
-            .perform(
-                get("/api/words/10/versions")
-                    .header("X-USER-TOKEN", "tkn")
-            )
+            .perform(get("/api/words/10/versions").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("model-x")))
             .andExpect(content().string(containsString("sample")));
     }
 
     /**
-     * 验证版本详情接口返回完整信息。 
+     * 验证版本详情接口返回完整信息。
      */
     @Test
     void getVersionReturnsDetail() throws Exception {
@@ -96,10 +93,7 @@ class SearchResultVersionControllerTest {
         when(searchResultService.getVersionDetail(eq(1L), eq(10L), eq(8L))).thenReturn(version);
 
         mockMvc
-            .perform(
-                get("/api/words/10/versions/8")
-                    .header("X-USER-TOKEN", "tkn")
-            )
+            .perform(get("/api/words/10/versions/8").header("X-USER-TOKEN", "tkn"))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("model-y")))
             .andExpect(content().string(containsString("full content")));
