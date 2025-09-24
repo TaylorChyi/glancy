@@ -10,6 +10,8 @@ export default {
   prefTitle: "Preferences",
   prefDescription:
     "Tailor Glancy's languages, voices, and ambience to suit every session.",
+  prefSystemLanguage: "System Language",
+  prefSystemLanguageAuto: "Match Device Language",
   prefLanguage: "Source Language",
   prefSearchLanguage: "Target Language",
   prefDictionaryModel: "Default Model",

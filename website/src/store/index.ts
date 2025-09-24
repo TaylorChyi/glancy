@@ -7,5 +7,6 @@ export {
   useCookieConsentStore,
   LOGIN_HISTORY_COOKIE_KEY,
 } from "./cookieConsentStore.js";
+export { useSettingsStore } from "./settings/index.js";
 export type { User } from "./userStore.js";
 export type { CookieConsentStatus } from "./cookieConsentStore.js";
