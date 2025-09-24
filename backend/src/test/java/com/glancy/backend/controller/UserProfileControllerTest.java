@@ -48,8 +48,17 @@ class UserProfileControllerTest {
      */
     @Test
     void saveProfile() throws Exception {
-        UserProfileResponse resp =
-            new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn", 15, "exchange study");
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            20,
+            "M",
+            "dev",
+            "code",
+            "learn",
+            15,
+            "exchange study"
+        );
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
 
         UserProfileRequest req = new UserProfileRequest();
@@ -82,8 +91,17 @@ class UserProfileControllerTest {
      */
     @Test
     void getProfile() throws Exception {
-        UserProfileResponse resp =
-            new UserProfileResponse(1L, 2L, 20, "M", "dev", "code", "learn", 15, "exchange study");
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            20,
+            "M",
+            "dev",
+            "code",
+            "learn",
+            15,
+            "exchange study"
+        );
         when(userProfileService.getProfile(2L)).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
