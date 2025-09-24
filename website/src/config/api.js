@@ -18,4 +18,9 @@ export const API_PATHS = {
   ttsWord: `${API_BASE}/tts/word`,
   ttsSentence: `${API_BASE}/tts/sentence`,
   ttsVoices: `${API_BASE}/tts/voices`,
+  gomemoPlan: `${API_BASE}/gomemo/plan`,
+  gomemoProgress: (sessionId) =>
+    `${API_BASE}/gomemo/sessions/${sessionId}/progress`,
+  gomemoReview: (sessionId) =>
+    `${API_BASE}/gomemo/sessions/${sessionId}/review`,
 };

@@ -26,4 +26,8 @@ public class UserProfile {
     private String job;
     private String interest;
     private String goal;
+    private Integer dailyWordTarget;
+
+    @Column(length = 1024)
+    private String futurePlan;
 }
