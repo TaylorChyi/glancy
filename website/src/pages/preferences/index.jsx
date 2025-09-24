@@ -16,6 +16,14 @@ const DEFAULT_SOURCE_LANG = "auto";
 const DEFAULT_TARGET_LANG = "ENGLISH";
 const DEFAULT_THEME = "system";
 
+const resolveThemePreference = (candidate) => {
+  if (typeof candidate !== "string") {
+    return null;
+  }
+  const trimmed = candidate.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 function Preferences() {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -75,7 +83,10 @@ function Preferences() {
       setSourceLang(nextSource);
       setTargetLang(nextTarget);
       persistLanguages(nextSource, nextTarget);
-      setTheme(data.theme || DEFAULT_THEME);
+      const explicitTheme = resolveThemePreference(data.theme);
+      if (explicitTheme) {
+        setTheme(explicitTheme);
+      }
     },
     [persistLanguages, setTheme],
   );
