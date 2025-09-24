@@ -18,6 +18,49 @@ const normalizeVersions = (versions = []) =>
     return { ...version, id };
   });
 
+const parseTimestamp = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isNaN(time) ? null : time;
+};
+
+const resolveLatestVersionId = (versions = [], metadata) => {
+  if (!Array.isArray(versions) || versions.length === 0) {
+    return null;
+  }
+
+  const metadataId = metadata?.latestVersionId ?? metadata?.activeVersionId;
+  if (metadataId) {
+    const matched = versions.find(
+      (version) => String(version.id) === String(metadataId),
+    );
+    if (matched) {
+      return matched.id;
+    }
+  }
+
+  const ranked = [...versions]
+    .map((version, index) => ({
+      version,
+      index,
+      timestamp: parseTimestamp(version.createdAt),
+    }))
+    .sort((a, b) => {
+      if (a.timestamp == null && b.timestamp == null) {
+        return a.index - b.index;
+      }
+      if (a.timestamp == null) return 1;
+      if (b.timestamp == null) return -1;
+      if (a.timestamp === b.timestamp) {
+        return a.index - b.index;
+      }
+      return b.timestamp - a.timestamp;
+    });
+
+  return ranked[0]?.version?.id ?? versions[0]?.id ?? null;
+};
+
 const resolveActiveVersionId = (currentEntry, versions, preferredId) => {
   if (preferredId) return preferredId;
   if (
@@ -26,14 +69,7 @@ const resolveActiveVersionId = (currentEntry, versions, preferredId) => {
   ) {
     return currentEntry.activeVersionId;
   }
-  if (versions.length > 0) {
-    return (
-      versions[versions.length - 1].id ??
-      versions[versions.length - 1]?.versionId ??
-      null
-    );
-  }
-  return null;
+  return resolveLatestVersionId(versions, currentEntry?.metadata);
 };
 
 const selectVersion = (entry, versionId) => {
@@ -146,4 +182,5 @@ export const __private__ = {
   normalizeVersions,
   resolveActiveVersionId,
   selectVersion,
+  resolveLatestVersionId,
 };

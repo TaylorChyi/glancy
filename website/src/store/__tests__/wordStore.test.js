@@ -38,4 +38,18 @@ describe("wordStore", () => {
       "v1",
     );
   });
+
+  /**
+   * 当未指定激活版本时，默认选中最新时间戳的版本。
+   */
+  test("defaults to the most recent version when active id missing", () => {
+    const store = useWordStore.getState();
+    store.setVersions("term:fr", [
+      { id: "old", createdAt: "2024-01-01T10:00:00Z" },
+      { id: "new", createdAt: "2024-05-01T08:00:00Z" },
+    ]);
+
+    const record = useWordStore.getState().getRecord("term:fr");
+    expect(record.activeVersionId).toBe("new");
+  });
 });
