@@ -4,6 +4,19 @@ import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
 import { DEFAULT_MODEL } from "@/config";
 
+const safeParseJson = (input) => {
+  if (input == null) return null;
+  if (typeof input !== "string") {
+    if (typeof input === "object") return input;
+    return null;
+  }
+  try {
+    return JSON.parse(input);
+  } catch {
+    return null;
+  }
+};
+
 /**
  * 提供基于 SSE 的词汇查询流式接口，并输出统一格式日志。
  * 日志格式:
@@ -15,40 +28,90 @@ export function useStreamWord() {
   const { streamWord } = api.words;
   const store = useWordStore;
 
-  return async function* streamWordWithHandling({ user, term, signal }) {
+  return async function* streamWordWithHandling({
+    user,
+    term,
+    signal,
+    forceNew = false,
+    versionId,
+  }) {
     const language = detectWordLanguage(term);
     const model = DEFAULT_MODEL;
     const logCtx = { userId: user.id, term };
     const key = wordCacheKey({ term, language, model });
     let acc = "";
+    let metadataPayload = null;
     console.info("[streamWordWithHandling] start", logCtx);
     try {
-      for await (const chunk of streamWord({
+      for await (const event of streamWord({
         userId: user.id,
         term,
         language,
         model,
         token: user.token,
         signal,
+        forceNew,
+        versionId,
         onChunk: (chunk) => {
           console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
         },
       })) {
+        if (event?.type === "metadata") {
+          metadataPayload = event.data;
+          continue;
+        }
+        const chunk = event?.data ?? "";
         acc += chunk;
         yield { chunk, language };
       }
-      let entry;
-      try {
-        const parsed = JSON.parse(acc);
-        if (parsed && typeof parsed === "object") {
-          entry = parsed;
-        } else {
-          entry = { markdown: acc };
-        }
-      } catch {
-        entry = { term, language, markdown: acc };
-      }
-      store.getState().setEntry(key, entry);
+      const parsedEntry = safeParseJson(acc);
+      const entry =
+        parsedEntry && typeof parsedEntry === "object"
+          ? parsedEntry
+          : { term, language, markdown: acc };
+      const metadata = safeParseJson(metadataPayload);
+      const versionsSource =
+        (metadata && Array.isArray(metadata.versions) && metadata.versions) ||
+        (parsedEntry &&
+          Array.isArray(parsedEntry.versions) &&
+          parsedEntry.versions);
+      const derivedVersions =
+        versionsSource && versionsSource.length > 0 ? versionsSource : [entry];
+      const activeVersionId =
+        metadata?.activeVersionId ??
+        parsedEntry?.activeVersionId ??
+        entry.id ??
+        entry.versionId;
+      const metadataBase =
+        metadata && typeof metadata === "object"
+          ? Object.fromEntries(
+              Object.entries(metadata).filter(
+                ([key]) => key !== "versions" && key !== "activeVersionId",
+              ),
+            )
+          : {};
+      const metaPayload = {
+        ...metadataBase,
+        ...(parsedEntry?.metadata ?? {}),
+      };
+      const entryId = entry.id ?? entry.versionId;
+      const mergedVersions = derivedVersions.some(
+        (version) =>
+          String(version.id ?? version.versionId) === String(entryId) ||
+          version === entry,
+      )
+        ? derivedVersions.map((version) => {
+            const versionId = version.id ?? version.versionId;
+            if (entryId && String(versionId) === String(entryId)) {
+              return { ...version, ...entry };
+            }
+            return version;
+          })
+        : [...derivedVersions, entry];
+      store.getState().setVersions(key, mergedVersions, {
+        activeVersionId,
+        metadata: metaPayload,
+      });
       console.info("[streamWordWithHandling] end", logCtx);
     } catch (error) {
       console.info("[streamWordWithHandling] error", { ...logCtx, error });

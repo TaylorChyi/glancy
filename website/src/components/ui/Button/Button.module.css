@@ -1,5 +1,5 @@
-@import url('@/theme/colors.css');
-@import url('@/theme/variables.css');
+@import url("@/theme/colors.css");
+@import url("@/theme/variables.css");
 
 .button {
   border-radius: var(--radius-md);

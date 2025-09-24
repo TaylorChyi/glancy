@@ -119,5 +119,10 @@ export default {
   cookieConsentDecline: "暂不授权",
   playWordAudio: "播放发音",
   playSentenceAudio: "播放例句发音",
+  reoutput: "重新输出",
+  previousVersion: "上一版本",
+  nextVersion: "下一版本",
+  versionIndicator: "版本 {current}/{total}",
+  versionIndicatorEmpty: "暂无版本",
   favoriteRemove: "取消收藏",
 };

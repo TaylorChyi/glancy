@@ -1,1 +1,1 @@
-export { default } from './MessagePopup.jsx'
+export { default } from "./MessagePopup.jsx";

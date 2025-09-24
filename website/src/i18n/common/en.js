@@ -122,5 +122,10 @@ export default {
   cookieConsentDecline: "Maybe later",
   playWordAudio: "Play pronunciation",
   playSentenceAudio: "Play example audio",
+  reoutput: "Regenerate",
+  previousVersion: "Previous version",
+  nextVersion: "Next version",
+  versionIndicator: "Version {current}/{total}",
+  versionIndicatorEmpty: "No versions",
   favoriteRemove: "Remove from favorites",
 };

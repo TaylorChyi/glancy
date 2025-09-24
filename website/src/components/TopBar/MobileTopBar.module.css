@@ -22,6 +22,17 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.term-text span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mobile-topbar {
@@ -31,4 +42,11 @@
   padding: 0 12px;
   gap: 8px;
   border-bottom: 1px solid var(--border-color);
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

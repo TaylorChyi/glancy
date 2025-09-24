@@ -1,10 +1,10 @@
 module.exports = {
-  extends: ['stylelint-config-standard'],
+  extends: ["stylelint-config-standard"],
   rules: {
-    'selector-pseudo-class-no-unknown': [
+    "selector-pseudo-class-no-unknown": [
       true,
       {
-        ignorePseudoClasses: ['global'],
+        ignorePseudoClasses: ["global"],
       },
     ],
   },

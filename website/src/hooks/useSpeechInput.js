@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback } from "react";
 
 /**
  * Hook to capture speech input using the Web Speech API.
@@ -9,24 +9,24 @@ import { useCallback } from 'react'
  */
 export default function useSpeechInput({ onResult } = {}) {
   const start = useCallback(
-    (language = 'en-US') => {
+    (language = "en-US") => {
       const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition
-      if (!SpeechRecognition) return
-      const recognition = new SpeechRecognition()
-      recognition.lang = language
-      recognition.interimResults = false
-      recognition.maxAlternatives = 1
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+      const recognition = new SpeechRecognition();
+      recognition.lang = language;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
       recognition.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map((r) => r[0]?.transcript)
-          .join('')
-        if (transcript && onResult) onResult(transcript)
-      }
-      recognition.start()
+          .join("");
+        if (transcript && onResult) onResult(transcript);
+      };
+      recognition.start();
     },
     [onResult],
-  )
+  );
 
-  return { start }
+  return { start };
 }

@@ -1,12 +1,12 @@
-import { cloneElement, isValidElement } from 'react'
-import styles from './FormField.module.css'
+import { cloneElement, isValidElement } from "react";
+import styles from "./FormField.module.css";
 
-function FormField({ label, id, children, className = '' }) {
-  const cls = [styles.field, className].filter(Boolean).join(' ')
+function FormField({ label, id, children, className = "" }) {
+  const cls = [styles.field, className].filter(Boolean).join(" ");
   const content =
     isValidElement(children) && !children.props.id
       ? cloneElement(children, { id })
-      : children
+      : children;
   return (
     <div className={cls}>
       {label && (
@@ -16,7 +16,7 @@ function FormField({ label, id, children, className = '' }) {
       )}
       {content}
     </div>
-  )
+  );
 }
 
-export default FormField
+export default FormField;

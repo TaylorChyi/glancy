@@ -41,12 +41,17 @@ function App() {
   const [fromFavorites, setFromFavorites] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [finalText, setFinalText] = useState("");
+  const [versions, setVersions] = useState([]);
+  const [activeVersionId, setActiveVersionId] = useState(null);
+  const [currentTermKey, setCurrentTermKey] = useState(null);
+  const [currentTerm, setCurrentTerm] = useState("");
+  const wordEntries = useWordStore((state) => state.entries);
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const streamWord = useStreamWord();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
-  const wordStore = useWordStore();
+  const wordStoreApi = useWordStore;
 
   const focusInput = () => {
     inputRef.current?.focus();
@@ -93,8 +98,42 @@ function App() {
     startSpeech(locale);
   };
 
+  const applyRecord = useCallback(
+    (termKey, record, preferredVersionId) => {
+      if (!termKey || !record || !Array.isArray(record.versions)) return false;
+      if (record.versions.length === 0) {
+        setVersions([]);
+        setActiveVersionId(null);
+        return false;
+      }
+      const fallbackId =
+        record.versions[record.versions.length - 1].id ??
+        record.versions[record.versions.length - 1].versionId ??
+        null;
+      const resolvedActiveId =
+        preferredVersionId ?? record.activeVersionId ?? fallbackId;
+      const resolvedEntry =
+        wordStoreApi.getState().getEntry?.(termKey, resolvedActiveId) ??
+        record.versions.find(
+          (item) => String(item.id) === String(resolvedActiveId),
+        ) ??
+        record.versions[record.versions.length - 1];
+      setVersions(record.versions);
+      setActiveVersionId(resolvedActiveId ?? null);
+      if (resolvedEntry) {
+        setEntry(resolvedEntry);
+        setFinalText(resolvedEntry.markdown ?? "");
+        if (resolvedEntry.term) {
+          setCurrentTerm(resolvedEntry.term);
+        }
+      }
+      return !!resolvedEntry;
+    },
+    [wordStoreApi],
+  );
+
   const executeLookup = useCallback(
-    async (term) => {
+    async (term, { forceNew = false, versionId } = {}) => {
       const normalized = term.trim();
       if (!normalized) {
         return { status: "idle", term: normalized };
@@ -113,9 +152,37 @@ function App() {
       abortRef.current = controller;
 
       setLoading(true);
-      setEntry(null);
+      const detectedLanguage = detectWordLanguage(normalized);
+      const cacheKey = wordCacheKey({
+        term: normalized,
+        language: detectedLanguage,
+        model: DEFAULT_MODEL,
+      });
+      const isNewTerm = currentTermKey !== cacheKey;
+      setCurrentTermKey(cacheKey);
+      if (isNewTerm) {
+        setEntry(null);
+        setVersions([]);
+        setActiveVersionId(null);
+        setFinalText("");
+      }
       setStreamText("");
-      setFinalText("");
+
+      if (!forceNew && versionId) {
+        const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
+        if (cachedRecord) {
+          const hydrated = applyRecord(cacheKey, cachedRecord, versionId);
+          if (hydrated) {
+            setLoading(false);
+            abortRef.current = null;
+            return {
+              status: "success",
+              term: normalized,
+              detectedLanguage,
+            };
+          }
+        }
+      }
 
       let detected;
       try {
@@ -127,6 +194,8 @@ function App() {
           user,
           term: normalized,
           signal: controller.signal,
+          forceNew,
+          versionId,
         })) {
           if (!detected && language) detected = language;
           acc += chunk;
@@ -143,15 +212,22 @@ function App() {
           }
         }
 
-        if (!parsedEntry) {
+        const record = wordStoreApi.getState().getRecord?.(cacheKey);
+        if (record) {
+          applyRecord(cacheKey, record, record.activeVersionId);
+        } else if (parsedEntry) {
+          setEntry(parsedEntry);
+          setFinalText(parsedEntry.markdown ?? "");
+        } else {
           setFinalText(preview);
         }
 
+        setCurrentTerm(normalized);
         console.info("[App] search complete", normalized);
         return {
           status: "success",
           term: normalized,
-          detectedLanguage: detected,
+          detectedLanguage: detected ?? detectedLanguage,
         };
       } catch (error) {
         if (error.name === "AbortError") {
@@ -179,6 +255,9 @@ function App() {
       setFinalText,
       setPopupMsg,
       setPopupOpen,
+      currentTermKey,
+      wordStoreApi,
+      applyRecord,
     ],
   );
 
@@ -200,6 +279,46 @@ function App() {
     }
   };
 
+  const handleReoutput = useCallback(() => {
+    if (!currentTerm) return;
+    executeLookup(currentTerm, { forceNew: true });
+  }, [currentTerm, executeLookup]);
+
+  const handleNavigateVersion = useCallback(
+    (direction) => {
+      if (!currentTermKey || versions.length === 0) return;
+      const currentIndex = versions.findIndex(
+        (item) => String(item.id) === String(activeVersionId),
+      );
+      const safeIndex = currentIndex >= 0 ? currentIndex : versions.length - 1;
+      const delta = direction === "next" ? 1 : -1;
+      const nextIndex = Math.min(
+        versions.length - 1,
+        Math.max(0, safeIndex + delta),
+      );
+      if (nextIndex === safeIndex) return;
+      const nextVersion = versions[nextIndex];
+      if (!nextVersion) return;
+      const nextId = nextVersion.id ?? nextVersion.versionId;
+      wordStoreApi.getState().setActiveVersion?.(currentTermKey, nextId);
+      setActiveVersionId(nextId ?? null);
+      setEntry(nextVersion);
+      setFinalText(nextVersion.markdown ?? "");
+      setStreamText("");
+      if (nextVersion.term) {
+        setCurrentTerm(nextVersion.term);
+      }
+    },
+    [
+      currentTermKey,
+      versions,
+      activeVersionId,
+      wordStoreApi,
+      setEntry,
+      setFinalText,
+    ],
+  );
+
   const handleSelectHistory = async (term, versionId) => {
     if (!user) {
       navigate("/login");
@@ -214,46 +333,43 @@ function App() {
       language: resolvedLanguage,
       model: DEFAULT_MODEL,
     });
-    const cachedEntry = wordStore.getEntry?.(cacheKey);
+    const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
 
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
     }
 
-    const hydrateFromCache = (entryCandidate) => {
-      if (!entryCandidate) return false;
-      setShowFavorites(false);
-      setShowHistory(false);
-      setLoading(false);
-      setStreamText("");
-      setFinalText(entryCandidate.markdown ?? "");
-      setEntry(entryCandidate);
-      return true;
-    };
-
-    if (versionId) {
-      if (
-        cachedEntry &&
-        String(cachedEntry.id ?? cachedEntry.versionId ?? "") ===
-          String(versionId)
-      ) {
-        if (hydrateFromCache(cachedEntry)) {
-          return;
-        }
-      }
-    } else if (cachedEntry) {
-      if (hydrateFromCache(cachedEntry)) {
+    if (cachedRecord) {
+      const applied = applyRecord(
+        cacheKey,
+        cachedRecord,
+        versionId ?? cachedRecord.activeVersionId,
+      );
+      if (applied) {
+        setShowFavorites(false);
+        setShowHistory(false);
+        setLoading(false);
+        setStreamText("");
+        setCurrentTerm(term);
         return;
       }
     }
 
-    await executeLookup(term);
+    await executeLookup(term, { versionId });
   };
 
   useEffect(() => {
     loadHistory(user);
   }, [user, loadHistory]);
+
+  useEffect(() => {
+    if (!currentTermKey) return;
+    const record = wordStoreApi.getState().getRecord?.(currentTermKey);
+    if (record) {
+      applyRecord(currentTermKey, record, record.activeVersionId);
+    }
+  }, [wordEntries, currentTermKey, applyRecord, wordStoreApi]);
 
   useEffect(() => {
     if (!user) {
@@ -264,6 +380,10 @@ function App() {
       setFromFavorites(false);
       setStreamText("");
       setFinalText("");
+      setVersions([]);
+      setActiveVersionId(null);
+      setCurrentTermKey(null);
+      setCurrentTerm("");
     }
   }, [user]);
 
@@ -275,13 +395,24 @@ function App() {
           onSelectHistory: handleSelectHistory,
         }}
         topBarProps={{
-          term: entry?.term || "",
+          term: entry?.term || currentTerm,
           lang,
           showBack: !showFavorites && fromFavorites,
           onBack: handleBackFromFavorite,
-          favorited: favorites.includes(entry?.term),
+          favorited:
+            !!(entry?.term || currentTerm) &&
+            favorites.includes(entry?.term || currentTerm),
           onToggleFavorite: toggleFavoriteEntry,
           canFavorite: !!entry && !showFavorites && !showHistory,
+          canReoutput:
+            !!(entry?.term || currentTerm) && !showFavorites && !showHistory,
+          onReoutput: handleReoutput,
+          versions: !showFavorites && !showHistory ? versions : [],
+          activeVersionId:
+            !showFavorites && !showHistory ? activeVersionId : null,
+          onNavigateVersion:
+            !showFavorites && !showHistory ? handleNavigateVersion : undefined,
+          isLoading: loading,
         }}
         bottomContent={
           <div>

@@ -1,12 +1,12 @@
-import { cloneElement, isValidElement } from 'react'
-import styles from './Form.module.css'
+import { cloneElement, isValidElement } from "react";
+import styles from "./Form.module.css";
 
-function FormRow({ label, id, children, className = '' }) {
-  const cls = [styles.row, className].filter(Boolean).join(' ')
+function FormRow({ label, id, children, className = "" }) {
+  const cls = [styles.row, className].filter(Boolean).join(" ");
   const content =
     isValidElement(children) && id && !children.props.id
       ? cloneElement(children, { id })
-      : children
+      : children;
 
   return (
     <div className={cls}>
@@ -17,7 +17,7 @@ function FormRow({ label, id, children, className = '' }) {
       )}
       {content}
     </div>
-  )
+  );
 }
 
-export default FormRow
+export default FormRow;

@@ -1,1 +1,1 @@
-export { default } from './ICP.jsx'
+export { default } from "./ICP.jsx";
