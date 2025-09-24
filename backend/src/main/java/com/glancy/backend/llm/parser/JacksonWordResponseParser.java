@@ -73,7 +73,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
             antonyms,
             related,
             phrases,
-            markdown
+            markdown,
+            null
         );
         return new ParsedWord(response, markdown);
     }
@@ -92,7 +93,8 @@ public class JacksonWordResponseParser implements WordResponseParser {
             snapshot.antonyms(),
             snapshot.related(),
             snapshot.phrases(),
-            markdown
+            markdown,
+            null
         );
         return new ParsedWord(response, markdown);
     }

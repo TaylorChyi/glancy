@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
-import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
 import java.util.List;
@@ -37,9 +36,6 @@ class WordControllerTest {
     private WordService wordService;
 
     @MockitoBean
-    private SearchRecordService searchRecordService;
-
-    @MockitoBean
     private UserService userService;
 
     /**
@@ -59,9 +55,10 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
+            null,
             null
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -96,9 +93,10 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
+            null,
             null
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"))).thenReturn(resp);
+        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"), eq(false))).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -163,9 +161,10 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
+            null,
             null
         );
-        when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null))).thenReturn(resp);
+        when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(resp);
 
         mockMvc
             .perform(

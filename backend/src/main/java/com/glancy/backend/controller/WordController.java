@@ -1,10 +1,8 @@
 package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
-import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
-import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.WordService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +27,9 @@ import reactor.core.publisher.Flux;
 public class WordController {
 
     private final WordService wordService;
-    private final SearchRecordService searchRecordService;
 
-    public WordController(WordService wordService, SearchRecordService searchRecordService) {
+    public WordController(WordService wordService) {
         this.wordService = wordService;
-        this.searchRecordService = searchRecordService;
     }
 
     /**
@@ -44,13 +40,10 @@ public class WordController {
         @AuthenticatedUser Long userId,
         @RequestParam String term,
         @RequestParam Language language,
-        @RequestParam(required = false) String model
+        @RequestParam(required = false) String model,
+        @RequestParam(defaultValue = "false") boolean forceNew
     ) {
-        SearchRecordRequest req = new SearchRecordRequest();
-        req.setTerm(term);
-        req.setLanguage(language);
-        searchRecordService.saveRecord(userId, req);
-        WordResponse resp = wordService.findWordForUser(userId, term, language, model);
+        WordResponse resp = wordService.findWordForUser(userId, term, language, model, forceNew);
         return ResponseEntity.ok(resp);
     }
 
@@ -63,14 +56,29 @@ public class WordController {
         @RequestParam String term,
         @RequestParam Language language,
         @RequestParam(required = false) String model,
-        HttpServletResponse response
+        HttpServletResponse response,
+        @RequestParam(defaultValue = "false") boolean forceNew
     ) {
         response.setHeader(HttpHeaders.CACHE_CONTROL, CacheControl.noStore().getHeaderValue());
         response.setHeader("X-Accel-Buffering", "no");
         return wordService
-            .streamWordForUser(userId, term, language, model)
-            .doOnNext(chunk -> log.info("Controller streaming chunk for user {} term '{}': {}", userId, term, chunk))
-            .map(data -> ServerSentEvent.builder(data).build())
+            .streamWordForUser(userId, term, language, model, forceNew)
+            .doOnNext(payload ->
+                log.info(
+                    "Controller streaming chunk for user {} term '{}' event {}: {}",
+                    userId,
+                    term,
+                    payload.event(),
+                    payload.data()
+                )
+            )
+            .map(payload -> {
+                ServerSentEvent.Builder<String> builder = ServerSentEvent.builder(payload.data());
+                if (payload.event() != null) {
+                    builder.event(payload.event());
+                }
+                return builder.build();
+            })
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
             .onErrorResume(e -> {
                 log.error("Streaming error for user {} term '{}'", userId, term, e);

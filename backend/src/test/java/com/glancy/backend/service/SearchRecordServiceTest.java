@@ -6,9 +6,12 @@ import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.SearchRecord;
+import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.SearchRecordRepository;
+import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
@@ -29,6 +32,9 @@ class SearchRecordServiceTest {
 
     @Autowired
     private SearchRecordRepository searchRecordRepository;
+
+    @Autowired
+    private SearchResultVersionRepository searchResultVersionRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -77,11 +83,12 @@ class SearchRecordServiceTest {
         req.setTerm("hello");
         req.setLanguage(Language.ENGLISH);
         SearchRecordResponse saved = searchRecordService.saveRecord(user.getId(), req);
-        assertNotNull(saved.getId());
+        assertNotNull(saved.id());
 
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
         assertEquals(1, list.size());
-        assertEquals("hello", list.get(0).getTerm());
+        assertEquals("hello", list.get(0).term());
+        assertTrue(list.get(0).versions().isEmpty());
 
         searchRecordService.clearRecords(user.getId());
         assertTrue(searchRecordService.getRecords(user.getId()).isEmpty());
@@ -162,10 +169,49 @@ class SearchRecordServiceTest {
         SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), req);
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req);
 
-        assertEquals(first.getId(), second.getId());
-        assertTrue(second.getCreatedAt().isAfter(first.getCreatedAt()));
+        assertEquals(first.id(), second.id());
+        assertTrue(second.createdAt().isAfter(first.createdAt()));
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
         assertEquals(1, list.size());
-        assertEquals(second.getCreatedAt(), list.get(0).getCreatedAt());
+        assertEquals(second.createdAt(), list.get(0).createdAt());
+    }
+
+    /**
+     * 验证删除搜索记录时版本数据同步软删除。
+     */
+    @Test
+    void deleteRecordSoftDeletesVersions() {
+        User user = new User();
+        user.setUsername("deleter");
+        user.setPassword("p");
+        user.setEmail("del@example.com");
+        user.setPhone("99");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest req = new SearchRecordRequest();
+        req.setTerm("vanish");
+        req.setLanguage(Language.ENGLISH);
+        SearchRecordResponse recordResponse = searchRecordService.saveRecord(user.getId(), req);
+        SearchRecord record = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
+
+        SearchResultVersion version = new SearchResultVersion();
+        version.setSearchRecord(record);
+        version.setUser(user);
+        version.setTerm("vanish");
+        version.setLanguage(Language.ENGLISH);
+        version.setModel("test-model");
+        version.setVersionNumber(1);
+        version.setContent("content");
+        version.setPreview("cont");
+        searchResultVersionRepository.save(version);
+
+        searchRecordService.deleteRecord(user.getId(), recordResponse.id());
+
+        SearchRecord deletedRecord = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
+        assertTrue(deletedRecord.getDeleted());
+        SearchResultVersion deletedVersion = searchResultVersionRepository.findById(version.getId()).orElseThrow();
+        assertTrue(deletedVersion.getDeleted());
     }
 }

@@ -8,9 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.glancy.backend.entity.Language;
-import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
+import com.glancy.backend.service.WordService.StreamPayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -45,15 +45,12 @@ class WordControllerStreamingTest {
     private WordService wordService;
 
     @MockitoBean
-    private SearchRecordService searchRecordService;
-
-    @MockitoBean
     private UserService userService;
 
     @Test
     void testStreamWord() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
-            Flux.just("part1", "part2")
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
+            Flux.just(StreamPayload.data("part1"), StreamPayload.version("77"))
         );
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -72,7 +69,8 @@ class WordControllerStreamingTest {
             .perform(asyncDispatch(result))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("data:part1")))
-            .andExpect(content().string(containsString("data:part2")));
+            .andExpect(content().string(containsString("event:version")))
+            .andExpect(content().string(containsString("data:77")));
     }
 
     /**
@@ -80,7 +78,7 @@ class WordControllerStreamingTest {
      */
     @Test
     void testStreamWordError() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null))).thenReturn(
+        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
             Flux.error(new IllegalStateException("boom"))
         );
         when(userService.authenticateToken("tkn")).thenReturn(1L);
