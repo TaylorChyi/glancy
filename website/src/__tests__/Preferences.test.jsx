@@ -91,3 +91,15 @@ test("keeps user theme when server does not provide one", async () => {
   await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
   expect(mockSetTheme).not.toHaveBeenCalled();
 });
+
+/**
+ * 确认后端返回的主题值不会在用户未操作时触发全局主题切换。
+ */
+test("ignores remote theme preference without user input", async () => {
+  mockRequest.mockReset();
+  mockRequest.mockResolvedValue({ theme: "dark" });
+  render(<Preferences />);
+  await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
+  expect(mockSetTheme).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Theme").value).toBe("light");
+});
