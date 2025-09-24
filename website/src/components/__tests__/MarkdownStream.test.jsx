@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-jest.mock("remark-gfm", () => () => {});
 import MarkdownStream from "@/components/ui/MarkdownStream";
 
 /**
