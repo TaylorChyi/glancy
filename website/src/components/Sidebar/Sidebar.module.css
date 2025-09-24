@@ -19,12 +19,14 @@
 }
 
 .sidebar-user {
+  --user-menu-width: 100%;
+
   margin-top: auto;
   display: flex;
   align-items: center;
   gap: var(--sidebar-brand-gap, 8px);
-  height: var(--bar-height);
-  padding: 0 var(--sidebar-inline-padding, var(--sidebar-padding, 24px));
+  min-height: var(--bar-height);
+  padding: 0;
   position: sticky;
   bottom: 0;
   background: inherit;
@@ -35,22 +37,25 @@
 .sidebar-user :global(.header-section) {
   display: block;
   margin-right: 0;
-  width: var(--user-menu-width);
+  width: 100%;
+  height: 100%;
 }
 
-.sidebar-user .user-menu button.with-name {
-  width: var(--user-menu-width);
-  justify-content: flex-start;
-  padding: var(--sidebar-item-padding-y, 8px) 0;
-  color: inherit;
-}
-
-/* dropdown style inside sidebar */
 .sidebar-user :global(.user-menu) {
   position: relative;
   width: 100%;
 }
 
+.sidebar-user :global(.user-menu button) {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  padding: var(--sidebar-item-padding-y, 8px)
+    var(--sidebar-inline-padding, var(--sidebar-padding, 24px));
+  color: inherit;
+}
+
+/* dropdown style inside sidebar */
 .sidebar-user :global(.user-menu .menu) {
   inset: auto 0 calc(100% + 0.5rem);
   width: var(--user-menu-width);
