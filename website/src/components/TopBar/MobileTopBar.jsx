@@ -15,6 +15,8 @@ function MobileTopBar({
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
+  canDelete = false,
+  onDelete,
   canReoutput = false,
   onReoutput,
   versions = [],
@@ -70,6 +72,8 @@ function MobileTopBar({
           favorited={favorited}
           onToggleFavorite={onToggleFavorite}
           canFavorite={canFavorite}
+          canDelete={canDelete}
+          onDelete={onDelete}
         />
       </div>
     </header>
@@ -84,6 +88,8 @@ MobileTopBar.propTypes = {
   favorited: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
   canFavorite: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  onDelete: PropTypes.func,
   canReoutput: PropTypes.bool,
   onReoutput: PropTypes.func,
   versions: PropTypes.arrayOf(PropTypes.object),
@@ -104,6 +110,8 @@ MobileTopBar.defaultProps = {
   favorited: false,
   onToggleFavorite: undefined,
   canFavorite: false,
+  canDelete: false,
+  onDelete: undefined,
   canReoutput: false,
   onReoutput: undefined,
   versions: [],

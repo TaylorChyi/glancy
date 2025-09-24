@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { useHistory, useFavorites, useUser, useLanguage } from "@/context";
-import ItemMenu from "@/components/ui/ItemMenu";
+import { useHistory, useUser, useLanguage } from "@/context";
+import ThemeIcon from "@/components/ui/Icon";
 import Toast from "@/components/ui/Toast";
 import styles from "./Sidebar.module.css";
 
 function HistoryList({ onSelect }) {
-  const { history, removeHistory, favoriteHistory, loadHistory, error } =
-    useHistory();
-  const { toggleFavorite } = useFavorites();
+  const { history, loadHistory, error } = useHistory();
   const { user } = useUser();
-  const { t } = useLanguage();
+  const { lang } = useLanguage();
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -28,35 +26,34 @@ function HistoryList({ onSelect }) {
   };
 
   const groupedHistory = useMemo(() => history ?? [], [history]);
+  const hasHistory = groupedHistory.length > 0;
+  const locale = lang === "en" ? "en-US" : "zh-CN";
+  const dateFormatter = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return null;
+    }
+  }, [locale]);
 
-  const resolveVersionId = (version, fallback) =>
-    version?.id ??
-    version?.versionId ??
-    version?.metadata?.id ??
-    version?.metadata?.versionId ??
-    fallback;
-
-  const handleSelectVersion = (item, versionId) => {
-    if (!onSelect) return;
-    onSelect(item.term, versionId ?? item.latestVersionId);
+  const resolveDisplayDate = (timestamp) => {
+    if (!timestamp || !dateFormatter) return null;
+    try {
+      return dateFormatter.format(new Date(timestamp));
+    } catch {
+      return null;
+    }
   };
 
-  const hasHistory = groupedHistory.length > 0;
-  const versionDisplayLabel = t.versionLabel ?? "版本";
-  const accessibleLabelTemplate = t.versionAccessibleLabel;
-
-  const resolveAccessibleLabel = useCallback(
-    (sequence) => {
-      if (!Number.isFinite(sequence)) {
-        return versionDisplayLabel;
-      }
-      const order = Math.trunc(sequence);
-      return accessibleLabelTemplate
-        ? accessibleLabelTemplate.replace("{position}", order)
-        : `${versionDisplayLabel} ${order}`;
-    },
-    [accessibleLabelTemplate, versionDisplayLabel],
-  );
+  const handleSelect = (item) => {
+    if (!onSelect) return;
+    onSelect(item.term);
+  };
 
   return (
     <>
@@ -66,74 +63,35 @@ function HistoryList({ onSelect }) {
         >
           <ul className={styles["history-items"]}>
             {groupedHistory.map((item) => {
-              const versions = Array.isArray(item.versions)
-                ? item.versions
-                : [];
-              const primaryVersionId =
-                item.latestVersionId ??
-                resolveVersionId(versions[0], `${item.termKey}-0`);
+              const displayDate = resolveDisplayDate(item.createdAt);
               return (
                 <li key={item.termKey} className={styles["history-entry"]}>
-                  <div className={styles["history-row"]}>
-                    <button
-                      type="button"
-                      className={styles["history-term"]}
-                      onClick={() =>
-                        handleSelectVersion(item, primaryVersionId)
-                      }
-                    >
+                  <button
+                    type="button"
+                    className={styles["history-button"]}
+                    onClick={() => handleSelect(item)}
+                  >
+                    <div className={styles["history-labels"]}>
                       <span className={styles["history-term-text"]}>
                         {item.term}
                       </span>
-                    </button>
-                    <ItemMenu
-                      favoriteLabel={t.favoriteAction}
-                      deleteLabel={t.deleteAction}
-                      onFavorite={() => {
-                        favoriteHistory(
-                          item.termKey,
-                          user,
-                          item.latestVersionId ?? undefined,
-                        );
-                        toggleFavorite(item.term);
-                      }}
-                      onDelete={() => removeHistory(item.termKey, user)}
+                      {displayDate ? (
+                        <time
+                          dateTime={item.createdAt ?? undefined}
+                          className={styles["history-meta"]}
+                        >
+                          {displayDate}
+                        </time>
+                      ) : null}
+                    </div>
+                    <ThemeIcon
+                      name="arrow-right"
+                      width={18}
+                      height={18}
+                      aria-hidden="true"
+                      className={styles["history-arrow"]}
                     />
-                  </div>
-                  {versions.length > 0 ? (
-                    <ul
-                      id={`history-${item.termKey}`}
-                      className={styles["history-versions"]}
-                    >
-                      {versions.map((version, index) => {
-                        const versionId = resolveVersionId(
-                          version,
-                          `${item.termKey}-${index}`,
-                        );
-                        const isActive = item.latestVersionId
-                          ? String(versionId) === String(item.latestVersionId)
-                          : index === 0;
-                        const versionPosition = index + 1;
-                        return (
-                          <li key={versionId}>
-                            <button
-                              type="button"
-                              className={styles["history-version"]}
-                              data-active={isActive ? "true" : undefined}
-                              aria-label={resolveAccessibleLabel(
-                                versionPosition,
-                              )}
-                              onClick={() =>
-                                handleSelectVersion(item, versionId)
-                              }
-                            >
-                              <span>{versionDisplayLabel}</span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : null}
+                  </button>
                 </li>
               );
             })}

@@ -2,9 +2,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const loadHistory = jest.fn();
-const favoriteHistory = jest.fn();
-const removeHistory = jest.fn();
-const toggleFavorite = jest.fn();
 
 const historyMock = [
   {
@@ -15,7 +12,6 @@ const historyMock = [
     favorite: false,
     versions: [
       { id: "v1", createdAt: "2024-05-01T10:00:00Z", favorite: false },
-      { id: "v2", createdAt: "2024-04-01T10:00:00Z", favorite: false },
     ],
     latestVersionId: "v1",
   },
@@ -25,18 +21,12 @@ jest.unstable_mockModule("@/context", () => ({
   useHistory: () => ({
     history: historyMock,
     loadHistory,
-    favoriteHistory,
-    removeHistory,
     error: null,
   }),
-  useFavorites: () => ({ toggleFavorite }),
   useUser: () => ({ user: { token: "tkn" } }),
   useLanguage: () => ({
-    t: {
-      favoriteAction: "收藏",
-      deleteAction: "删除",
-      versionLabel: "版本",
-    },
+    t: { searchHistory: "历史" },
+    lang: "zh",
   }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
 }));
@@ -49,9 +39,9 @@ describe("HistoryList", () => {
   });
 
   /**
-   * 验证点击历史项时默认选中最新版本，并可直接切换其他版本。
+   * 验证点击历史项时会返回词条名称。
    */
-  test("calls onSelect with latest version and exposes versions", async () => {
+  test("calls onSelect with term only", async () => {
     const handleSelect = jest.fn();
     render(<HistoryList onSelect={handleSelect} />);
 
@@ -60,10 +50,6 @@ describe("HistoryList", () => {
     });
 
     fireEvent.click(screen.getByText("alpha"));
-    expect(handleSelect).toHaveBeenCalledWith("alpha", "v1");
-
-    const versionButton = await screen.findByRole("button", { name: "版本 2" });
-    fireEvent.click(versionButton);
-    expect(handleSelect).toHaveBeenLastCalledWith("alpha", "v2");
+    expect(handleSelect).toHaveBeenCalledWith("alpha");
   });
 });

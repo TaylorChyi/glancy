@@ -1,10 +1,3 @@
-.back-btn,
-.more-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
 .back-btn {
   width: 32px;
   height: 32px;
@@ -13,10 +6,9 @@
   justify-content: center;
   padding: 0;
   border-radius: 4px;
-}
-
-.more-btn {
-  padding: 0 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .term-text {
@@ -29,41 +21,58 @@
   margin-left: auto;
 }
 
-.favorite-toggle {
-  margin-right: 8px;
-  background: none;
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius-lg, 14px);
+  background: color-mix(in srgb, var(--app-bg) 78%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--border-color) 30%, transparent);
+}
+
+.action-button {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-}
-
-.more-menu {
-  position: relative;
-}
-
-.more-menu .menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  background: var(--app-bg);
-  color: var(--app-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 4px 0;
-  width: 100px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-}
-
-.more-menu .menu button {
+  border-radius: var(--radius-md, 10px);
   background: none;
-  border: none;
-  padding: 4px 8px;
-  text-align: left;
+  color: inherit;
   cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
-.more-menu .menu .icon {
-  margin-right: 4px;
+.action-button:hover,
+.action-button:focus-visible {
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--accent-color) 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.action-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-color) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.action-button[data-active="true"] {
+  color: color-mix(in srgb, var(--accent-color) 80%, var(--app-color) 20%);
+}
+
+.delete-button {
+  color: color-mix(in srgb, var(--color-danger) 70%, var(--app-color) 30%);
+}
+
+.delete-button:hover,
+.delete-button:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-danger) 22%, transparent);
 }

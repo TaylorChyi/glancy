@@ -33,6 +33,7 @@ function App() {
     loadHistory,
     addHistory,
     unfavoriteHistory,
+    removeHistory,
   } = useHistory();
   const { theme, setTheme } = useTheme();
   const inputRef = useRef(null);
@@ -284,6 +285,23 @@ function App() {
     executeLookup(currentTerm, { forceNew: true });
   }, [currentTerm, executeLookup]);
 
+  const handleDeleteHistory = useCallback(async () => {
+    const identifier = entry?.term ?? currentTerm;
+    if (!identifier) return;
+    try {
+      await removeHistory(identifier, user);
+      setEntry(null);
+      setFinalText("");
+      setStreamText("");
+      setVersions([]);
+      setActiveVersionId(null);
+      setCurrentTermKey(null);
+      setCurrentTerm("");
+    } catch (err) {
+      console.error("[App] remove history failed", err);
+    }
+  }, [entry, currentTerm, removeHistory, user]);
+
   const handleNavigateVersion = useCallback(
     (direction) => {
       if (!currentTermKey || versions.length === 0) return;
@@ -404,6 +422,8 @@ function App() {
             favorites.includes(entry?.term || currentTerm),
           onToggleFavorite: toggleFavoriteEntry,
           canFavorite: !!entry && !showFavorites && !showHistory,
+          canDelete:
+            !!(entry?.term || currentTerm) && !showFavorites && !showHistory,
           canReoutput:
             !!(entry?.term || currentTerm) && !showFavorites && !showHistory,
           onReoutput: handleReoutput,
@@ -413,6 +433,8 @@ function App() {
           onNavigateVersion:
             !showFavorites && !showHistory ? handleNavigateVersion : undefined,
           isLoading: loading,
+          onDelete:
+            !showFavorites && !showHistory ? handleDeleteHistory : undefined,
         }}
         bottomContent={
           <div>
