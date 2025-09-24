@@ -52,4 +52,33 @@ describe("wordStore", () => {
     const record = useWordStore.getState().getRecord("term:fr");
     expect(record.activeVersionId).toBe("new");
   });
+
+  /**
+   * 当后续写入仅返回部分版本时，需与已有缓存合并，确保历史版本仍可切换。
+   */
+  test("merges partial payloads with existing versions", () => {
+    const store = useWordStore.getState();
+    store.setVersions(
+      "term:es",
+      [
+        { id: "v1", markdown: "uno" },
+        { id: "v2", markdown: "dos" },
+      ],
+      { activeVersionId: "v2" },
+    );
+
+    store.setVersions("term:es", [{ id: "v2", markdown: "dos actualizado" }], {
+      activeVersionId: "v2",
+    });
+
+    const record = useWordStore.getState().getRecord("term:es");
+    expect(record.versions).toHaveLength(2);
+    expect(
+      record.versions.find((version) => version.id === "v1").markdown,
+    ).toBe("uno");
+    expect(
+      record.versions.find((version) => version.id === "v2").markdown,
+    ).toBe("dos actualizado");
+    expect(record.activeVersionId).toBe("v2");
+  });
 });

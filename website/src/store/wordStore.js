@@ -18,6 +18,40 @@ const normalizeVersions = (versions = []) =>
     return { ...version, id };
   });
 
+const mergeVersionCollections = (existing = [], incoming = []) => {
+  if (incoming.length === 0) {
+    return existing;
+  }
+
+  const nextOrder = [];
+  const registry = new Map();
+
+  const register = (candidate, { preferIncoming }) => {
+    if (!candidate || candidate.id == null) return;
+    const key = String(candidate.id);
+    const stored = registry.get(key);
+    if (!stored) {
+      registry.set(key, { ...candidate });
+      nextOrder.push(key);
+      return;
+    }
+    const merged = preferIncoming
+      ? { ...stored, ...candidate }
+      : { ...candidate, ...stored };
+    registry.set(key, merged);
+  };
+
+  incoming.forEach((version) => {
+    register(version, { preferIncoming: true });
+  });
+
+  existing.forEach((version) => {
+    register(version, { preferIncoming: false });
+  });
+
+  return nextOrder.map((key) => registry.get(key)).filter(Boolean);
+};
+
 const parseTimestamp = (value) => {
   if (!value) return null;
   const date = new Date(value);
@@ -95,16 +129,19 @@ export const useWordStore = createPersistentStore({
           return { entries: rest };
         }
         const current = state.entries[termKey];
+        const versionsToPersist = current
+          ? mergeVersionCollections(current.versions ?? [], normalized)
+          : normalized;
         const nextActiveId = resolveActiveVersionId(
           current,
-          normalized,
+          versionsToPersist,
           activeVersionId,
         );
         return {
           entries: {
             ...state.entries,
             [termKey]: {
-              versions: normalized,
+              versions: versionsToPersist,
               activeVersionId: nextActiveId,
               metadata: {
                 ...(current?.metadata ?? {}),
