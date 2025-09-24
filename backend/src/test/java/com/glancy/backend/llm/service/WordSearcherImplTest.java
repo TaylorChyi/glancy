@@ -10,11 +10,11 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
+import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
-import com.glancy.backend.llm.model.ChatMessage;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,8 +100,7 @@ class WordSearcherImplTest {
         when(searchContentManager.normalize("汉")).thenReturn("汉");
         when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content<END>", "汉", Language.CHINESE))
-            .thenReturn(new ParsedWord(expected, "content<END>"));
+        when(parser.parse("content<END>", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("汉", Language.CHINESE, "doubao", NO_PERSONALIZATION_CONTEXT);

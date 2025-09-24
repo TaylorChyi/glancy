@@ -73,12 +73,7 @@ public class WordSearcherImpl implements WordSearcher {
             }
             name = fallback;
         }
-        List<ChatMessage> messages = buildMessages(
-            prompt,
-            cleanInput,
-            personalizationContext,
-            language
-        );
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language);
         String content = client.chat(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info("LLM client '{}' returned content (sentinelPresent={}): {}", name, completion.satisfied(), content);
@@ -125,12 +120,7 @@ public class WordSearcherImpl implements WordSearcher {
         }
         log.info("Using LLM client '{}'", name);
 
-        List<ChatMessage> messages = buildMessages(
-            prompt,
-            cleanInput,
-            personalizationContext,
-            language
-        );
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language);
         log.info("Using LLM client '{}'", name);
         log.info(
             "Prepared '{}' request messages: roles='{}'",
@@ -154,12 +144,7 @@ public class WordSearcherImpl implements WordSearcher {
         if (personaInstruction != null) {
             messages.add(new ChatMessage("system", personaInstruction));
         }
-        messages.add(
-            new ChatMessage(
-                "user",
-                renderUserPayload(cleanInput, personalizationContext, language)
-            )
-        );
+        messages.add(new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext, language)));
         return messages;
     }
 
