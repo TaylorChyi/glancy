@@ -14,6 +14,10 @@ jest.mock("@/context", () => ({
       relatedLabel: "rel",
       variantsLabel: "var",
       phrasesLabel: "phr",
+      personalizationTitle: "Personalized",
+      personalizationBadge: "Personalized",
+      personalizationHooksTitle: "Hooks",
+      personalizationPromptsTitle: "Prompts",
     },
     lang: "en",
   }),
@@ -60,4 +64,24 @@ test("falls back to definitions", () => {
   render(<DictionaryEntry entry={entry} />);
   const strong = screen.getByText("bold");
   expect(strong.tagName).toBe("STRONG");
+});
+
+/**
+ * 确认当存在个性化数据时渲染专属面板。
+ */
+test("renders personalization panel", () => {
+  const entry = {
+    personalization: {
+      personaSummary: "curious learner",
+      keyTakeaway: "core message",
+      contextualExplanation: "context here",
+      learningHooks: ["hook"],
+      reflectionPrompts: ["prompt"],
+    },
+    definitions: [],
+  };
+  render(<DictionaryEntry entry={entry} />);
+  expect(screen.getByText("Personalized")).toBeInTheDocument();
+  expect(screen.getByText("curious learner")).toBeInTheDocument();
+  expect(screen.getByText("hook")).toBeInTheDocument();
 });

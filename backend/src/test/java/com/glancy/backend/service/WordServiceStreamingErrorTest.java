@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
@@ -11,6 +12,7 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.personalization.WordPersonalizationService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,16 +47,23 @@ class WordServiceStreamingErrorTest {
     @Mock
     private WordResponseParser parser;
 
+    @Mock
+    private WordPersonalizationService wordPersonalizationService;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(wordPersonalizationService.personalize(anyLong(), any())).thenReturn(
+            new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
+        );
         wordService = new WordService(
             wordSearcher,
             wordRepository,
             userPreferenceRepository,
             searchRecordService,
             searchResultService,
-            parser
+            parser,
+            wordPersonalizationService
         );
     }
 
