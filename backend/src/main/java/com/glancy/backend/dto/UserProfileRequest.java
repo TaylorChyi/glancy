@@ -13,4 +13,6 @@ public class UserProfileRequest {
     private String job;
     private String interest;
     private String goal;
+    private Integer dailyWordTarget;
+    private String futurePlan;
 }

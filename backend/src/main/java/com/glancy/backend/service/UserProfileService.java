@@ -55,6 +55,8 @@ public class UserProfileService {
         profile.setJob(req.getJob());
         profile.setInterest(req.getInterest());
         profile.setGoal(req.getGoal());
+        profile.setDailyWordTarget(req.getDailyWordTarget());
+        profile.setFuturePlan(req.getFuturePlan());
         UserProfile saved = userProfileRepository.save(profile);
         return toResponse(saved);
     }
@@ -77,7 +79,9 @@ public class UserProfileService {
             profile.getGender(),
             profile.getJob(),
             profile.getInterest(),
-            profile.getGoal()
+            profile.getGoal(),
+            profile.getDailyWordTarget(),
+            profile.getFuturePlan()
         );
     }
 }

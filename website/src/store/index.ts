@@ -7,5 +7,6 @@ export {
   useCookieConsentStore,
   LOGIN_HISTORY_COOKIE_KEY,
 } from "./cookieConsentStore.js";
+export { useGomemoStore } from "./gomemo/index.ts";
 export type { User } from "./userStore.js";
 export type { CookieConsentStatus } from "./cookieConsentStore.js";
