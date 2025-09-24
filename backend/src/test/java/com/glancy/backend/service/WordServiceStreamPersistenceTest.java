@@ -3,6 +3,7 @@ package com.glancy.backend.service;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
@@ -13,6 +14,7 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.personalization.WordPersonalizationService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -48,16 +50,23 @@ class WordServiceStreamPersistenceTest {
     @Mock
     private WordResponseParser parser;
 
+    @Mock
+    private WordPersonalizationService wordPersonalizationService;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(wordPersonalizationService.personalize(anyLong(), any())).thenReturn(
+            new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
+        );
         wordService = new WordService(
             wordSearcher,
             wordRepository,
             userPreferenceRepository,
             searchRecordService,
             searchResultService,
-            parser
+            parser,
+            wordPersonalizationService
         );
     }
 
@@ -110,6 +119,7 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             List.of(),
             "{\"term\":\"hi\"}",
+            null,
             null
         );
         when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(

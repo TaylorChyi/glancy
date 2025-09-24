@@ -17,6 +17,7 @@ import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,6 +41,7 @@ public class WordService {
     private final SearchRecordService searchRecordService;
     private final SearchResultService searchResultService;
     private final WordResponseParser parser;
+    private final WordPersonalizationService wordPersonalizationService;
 
     public WordService(
         WordSearcher wordSearcher,
@@ -47,7 +49,8 @@ public class WordService {
         UserPreferenceRepository userPreferenceRepository,
         SearchRecordService searchRecordService,
         SearchResultService searchResultService,
-        WordResponseParser parser
+        WordResponseParser parser,
+        WordPersonalizationService wordPersonalizationService
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -55,6 +58,7 @@ public class WordService {
         this.searchRecordService = searchRecordService;
         this.searchResultService = searchResultService;
         this.parser = parser;
+        this.wordPersonalizationService = wordPersonalizationService;
     }
 
     private WordResponse fetchAndPersistWord(
@@ -81,7 +85,7 @@ public class WordService {
         if (version != null) {
             resp.setVersionId(version.getId());
         }
-        return resp;
+        return applyPersonalization(userId, resp);
     }
 
     private Mono<StreamPayload> finalizeStreamingSession(StreamingAccumulator session) {
@@ -96,7 +100,8 @@ public class WordService {
         }
         try {
             ParsedWord parsed = parser.parse(completion.sanitizedContent(), session.term(), session.language());
-            Word savedWord = saveWord(session.term(), parsed.parsed(), session.language());
+            WordResponse response = applyPersonalization(session.userId(), parsed.parsed());
+            Word savedWord = saveWord(session.term(), response, session.language());
             SearchResultVersion version = persistVersion(
                 session.recordId(),
                 session.userId(),
@@ -160,7 +165,7 @@ public class WordService {
                 .findByTermAndLanguageAndDeletedFalse(term, language)
                 .map(word -> {
                     log.info("Found word '{}' in local repository", term);
-                    return toResponse(word);
+                    return applyPersonalization(userId, toResponse(word));
                 })
                 .orElseGet(() -> fetchAndPersistWord(userId, term, language, model, record));
         }
@@ -196,7 +201,8 @@ public class WordService {
             if (existing.isPresent()) {
                 log.info("Found cached word '{}' in language {}", term, language);
                 try {
-                    return Flux.just(StreamPayload.data(serialize(existing.get())));
+                    WordResponse cached = applyPersonalization(userId, toResponse(existing.get()));
+                    return Flux.just(StreamPayload.data(serializeResponse(cached)));
                 } catch (Exception e) {
                     log.error("Failed to serialize cached word '{}'", term, e);
                     return Flux.error(new IllegalStateException("Failed to serialize cached word", e));
@@ -330,8 +336,12 @@ public class WordService {
     }
 
     private String serialize(Word word) throws JsonProcessingException {
+        return serializeResponse(toResponse(word));
+    }
+
+    private String serializeResponse(WordResponse response) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(toResponse(word));
+        return mapper.writeValueAsString(response);
     }
 
     private Word saveWord(String requestedTerm, WordResponse resp, Language language) {
@@ -372,7 +382,25 @@ public class WordService {
             word.getRelated(),
             word.getPhrases(),
             word.getMarkdown(),
+            null,
             null
         );
+    }
+
+    private WordResponse applyPersonalization(Long userId, WordResponse response) {
+        if (response == null) {
+            return null;
+        }
+        try {
+            response.setPersonalization(wordPersonalizationService.personalize(userId, response));
+        } catch (Exception ex) {
+            log.warn(
+                "Failed to personalize response for user {} term '{}': {}",
+                userId,
+                response.getTerm(),
+                SensitiveDataUtil.previewText(ex.getMessage())
+            );
+        }
+        return response;
     }
 }

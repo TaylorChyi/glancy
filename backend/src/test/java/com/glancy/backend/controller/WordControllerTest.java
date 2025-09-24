@@ -56,6 +56,7 @@ class WordControllerTest {
             List.of(),
             List.of(),
             null,
+            null,
             null
         );
         when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
@@ -95,6 +96,7 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
+            null,
             null,
             null
         );
@@ -165,6 +167,7 @@ class WordControllerTest {
             List.of(),
             List.of(),
             List.of(),
+            null,
             null,
             null
         );

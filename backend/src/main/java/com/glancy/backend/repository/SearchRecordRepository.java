@@ -4,6 +4,7 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long> {
     List<SearchRecord> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId);
+
+    List<SearchRecord> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     long countByUserIdAndDeletedFalseAndCreatedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
