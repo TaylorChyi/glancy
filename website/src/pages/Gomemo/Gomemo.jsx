@@ -52,7 +52,8 @@ function buildChoiceOptions(correct, distractors) {
 function Gomemo() {
   const { t } = useLanguage();
   const api = useApi();
-  const { currentUser } = useUserStore();
+  const selectCurrentUser = useCallback((state) => state.user, []);
+  const currentUser = useUserStore(selectCurrentUser);
   const {
     plan,
     review,
