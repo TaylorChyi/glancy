@@ -1,23 +1,33 @@
 .profile-card {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
+  align-items: stretch;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-surface-muted) 78%, transparent);
+  box-shadow: 0 24px 48px rgb(15 15 15 / 10%);
 }
 
 .avatar-area {
-  width: 100px;
-  height: 100px;
+  position: relative;
+  align-self: center;
+  width: 128px;
+  height: 128px;
   border-radius: var(--radius-avatar);
   overflow: hidden;
-  margin-bottom: 8px;
-  position: relative;
-  transition: transform 0.3s;
+  box-shadow: 0 18px 32px rgb(0 0 0 / 20%);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .avatar-area:hover {
-  transform: scale(1.05);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 40px rgb(0 0 0 / 18%);
 }
 
 .avatar-area img {
@@ -25,11 +35,6 @@
   height: 100%;
   object-fit: cover;
   border-radius: var(--radius-avatar);
-  transition: transform 0.3s;
-}
-
-.avatar-area:hover img {
-  transform: scale(1.1);
 }
 
 .avatar-hint {
@@ -37,43 +42,34 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: 30%;
-  background: var(--color-overlay);
-  color: var(--color-text-inverse);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0 0 var(--radius-avatar) var(--radius-avatar);
+  padding: 12px;
   font-size: 0.8rem;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-}
-
-.avatar-area:hover .avatar-hint {
-  opacity: 1;
+  text-align: center;
+  color: var(--color-text-inverse);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--color-overlay-strong) 70%, transparent)
+  );
 }
 
 .username-input {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 700;
   border: none;
-  background: none;
-  color: inherit;
+  background: transparent;
+  text-align: center;
 }
 
-.email-input {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+.phone-input {
   border: none;
-  background: none;
+  background: transparent;
+  text-align: center;
 }
 
 .basic {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.9rem;
+  display: grid;
+  gap: var(--space-3);
 }
 
 .basic .icon {
@@ -81,40 +77,73 @@
   height: 20px;
 }
 
+.basic input {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 80%, transparent);
+}
+
 .actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
+  gap: var(--space-2);
 }
 
 .save-btn {
-  background: var(--primary-bg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-bg) 90%, transparent),
+    color-mix(in srgb, var(--primary-bg) 70%, transparent)
+  );
   color: var(--primary-color);
   border: none;
-  padding: 6px 16px;
-  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 16px 28px rgb(0 0 0 / 12%);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.save-btn:hover {
-  opacity: 0.9;
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.save-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 36px rgb(0 0 0 / 18%);
 }
 
 .cancel-btn {
   background: transparent;
-  border: 1px solid var(--primary-bg);
+  border: 1px solid color-mix(in srgb, var(--primary-bg) 55%, transparent);
   color: var(--primary-bg);
-  padding: 6px 16px;
-  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .cancel-btn:hover {
-  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgb(0 0 0 / 12%);
 }
 
-.username-input,
-.email-input,
-.phone-input {
-  flex: 1;
-  text-align: left;
+@media (width <= 720px) {
+  .profile-card {
+    padding: var(--space-3);
+  }
+
+  .username-input,
+  .phone-input {
+    text-align: left;
+  }
 }

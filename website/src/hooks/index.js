@@ -8,3 +8,7 @@ export { default as useMediaQuery } from "./useMediaQuery.js";
 export { default as useOutsideToggle } from "./useOutsideToggle.js";
 export { default as useSpeechInput } from "./useSpeechInput.js";
 export { default as useMenuNavigation } from "./useMenuNavigation.js";
+export {
+  useEmailBinding,
+  default as useEmailBindingHook,
+} from "./useEmailBinding.js";

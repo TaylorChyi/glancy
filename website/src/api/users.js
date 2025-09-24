@@ -29,10 +29,44 @@ export function createUsersApi(request = apiRequest) {
       body: { email, phone },
     });
 
-  return { uploadAvatar, updateUsername, updateContact };
+  const requestEmailChangeCode = ({ userId, email, token }) =>
+    jsonRequest(`${API_PATHS.users}/${userId}/email/change-code`, {
+      method: "POST",
+      token,
+      body: { email },
+    });
+
+  const confirmEmailChange = ({ userId, email, code, token }) =>
+    jsonRequest(`${API_PATHS.users}/${userId}/email`, {
+      method: "PUT",
+      token,
+      body: { email, code },
+    });
+
+  const unbindEmail = ({ userId, token }) =>
+    jsonRequest(`${API_PATHS.users}/${userId}/email`, {
+      method: "DELETE",
+      token,
+    });
+
+  return {
+    uploadAvatar,
+    updateUsername,
+    updateContact,
+    requestEmailChangeCode,
+    confirmEmailChange,
+    unbindEmail,
+  };
 }
 
-export const { uploadAvatar, updateUsername, updateContact } = createUsersApi();
+export const {
+  uploadAvatar,
+  updateUsername,
+  updateContact,
+  requestEmailChangeCode,
+  confirmEmailChange,
+  unbindEmail,
+} = createUsersApi();
 
 export function useUsersApi() {
   return useApi().users;

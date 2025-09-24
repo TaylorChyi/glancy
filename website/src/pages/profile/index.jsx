@@ -8,18 +8,18 @@ import AgeStepper from "@/components/form/AgeStepper/AgeStepper.jsx";
 import GenderSelect from "@/components/form/GenderSelect/GenderSelect.jsx";
 import EditableField from "@/components/form/EditableField/EditableField.jsx";
 import FormField from "@/components/form/FormField.jsx";
-import { useApi } from "@/hooks";
+import { useApi, useEmailBinding } from "@/hooks";
 import { useUser } from "@/context";
 import { cacheBust } from "@/utils";
 import ThemeIcon from "@/components/ui/Icon";
 import Tooltip from "@/components/ui/Tooltip";
+import EmailBindingCard from "@/components/Profile/EmailBindingCard";
 
 function Profile({ onCancel }) {
   const { t } = useLanguage();
   const { user: currentUser, setUser } = useUser();
   const api = useApi();
   const [username, setUsername] = useState(currentUser?.username || "");
-  const [email, setEmail] = useState(currentUser?.email || "");
   const [phone, setPhone] = useState(currentUser?.phone || "");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
@@ -32,7 +32,6 @@ function Profile({ onCancel }) {
 
   useEffect(() => {
     setUsername(currentUser?.username || "");
-    setEmail(currentUser?.email || "");
     setPhone(currentUser?.phone || "");
   }, [currentUser]);
 
@@ -105,17 +104,16 @@ function Profile({ onCancel }) {
         );
       }
 
-      if (email !== currentUser.email || phone !== currentUser.phone) {
+      if (phone !== currentUser.phone) {
         updatePromises.push(
           api.users
             .updateContact({
               userId: currentUser.id,
-              email,
+              email: currentUser.email,
               phone,
               token: currentUser.token,
             })
-            .then(({ email: updatedEmail, phone: updatedPhone }) => {
-              nextUser.email = updatedEmail;
+            .then(({ phone: updatedPhone }) => {
               nextUser.phone = updatedPhone;
               hasIdentityUpdates = true;
             }),
@@ -152,6 +150,78 @@ function Profile({ onCancel }) {
     }
   };
 
+  const emailBinding = useEmailBinding({
+    user: currentUser,
+    onUserUpdate: setUser,
+  });
+
+  const resolveEmailErrorMessage = (error) => {
+    if (!error) return t.fail;
+    if (error.code === "email-binding-email-required") {
+      return t.emailInputRequired;
+    }
+    if (error.code === "email-binding-email-unchanged") {
+      return t.emailSameAsCurrent;
+    }
+    if (error.code === "email-binding-code-required") {
+      return t.emailCodeRequired;
+    }
+    if (error.code === "email-binding-code-missing-request") {
+      return t.emailCodeNotRequested;
+    }
+    if (error.code === "email-binding-email-mismatch") {
+      return t.emailCodeMismatch;
+    }
+    if (error.message) {
+      return error.message;
+    }
+    return t.fail;
+  };
+
+  const handleEmailCodeRequest = async (nextEmail) => {
+    if (!nextEmail) {
+      setPopupMsg(t.emailInputRequired);
+      setPopupOpen(true);
+      return false;
+    }
+
+    try {
+      await emailBinding.requestCode(nextEmail);
+      setPopupMsg(t.emailCodeSent);
+      setPopupOpen(true);
+      return true;
+    } catch (error) {
+      console.error(error);
+      setPopupMsg(resolveEmailErrorMessage(error));
+      setPopupOpen(true);
+      return false;
+    }
+  };
+
+  const handleEmailConfirm = async ({ email: nextEmail, code }) => {
+    try {
+      await emailBinding.confirmChange({ email: nextEmail, code });
+      setPopupMsg(t.emailChangeSuccess);
+      setPopupOpen(true);
+    } catch (error) {
+      console.error(error);
+      setPopupMsg(resolveEmailErrorMessage(error));
+      setPopupOpen(true);
+    }
+  };
+
+  const handleEmailUnbind = async () => {
+    try {
+      await emailBinding.unbindEmail();
+      setPopupMsg(t.emailUnbindSuccess);
+      setPopupOpen(true);
+    } catch (error) {
+      console.error(error);
+      setPopupMsg(resolveEmailErrorMessage(error));
+      setPopupOpen(true);
+    }
+  };
+
   return (
     <div className="app">
       <h2>{t.profileTitle}</h2>
@@ -180,12 +250,20 @@ function Profile({ onCancel }) {
           inputClassName={styles["username-input"]}
           buttonText={t.editButton}
         />
-        <EditableField
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t.emailPlaceholder}
-          inputClassName={styles["email-input"]}
-          buttonText={t.editButton}
+        <EmailBindingCard
+          email={currentUser?.email ?? ""}
+          mode={emailBinding.mode}
+          isSendingCode={emailBinding.isSendingCode}
+          isVerifying={emailBinding.isVerifying}
+          isUnbinding={emailBinding.isUnbinding}
+          isAwaitingVerification={emailBinding.isAwaitingVerification}
+          requestedEmail={emailBinding.requestedEmail}
+          onStart={emailBinding.startEditing}
+          onCancel={emailBinding.cancelEditing}
+          onRequestCode={handleEmailCodeRequest}
+          onConfirm={handleEmailConfirm}
+          onUnbind={handleEmailUnbind}
+          t={t}
         />
         <EditableField
           value={phone}

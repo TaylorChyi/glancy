@@ -6,8 +6,10 @@ import static org.mockito.Mockito.*;
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.UserContactResponse;
+import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
+import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
@@ -43,6 +45,9 @@ class UserServiceTest {
 
     @MockitoBean
     private AvatarStorage avatarStorage;
+
+    @MockitoBean
+    private EmailVerificationService emailVerificationService;
 
     @BeforeAll
     static void loadEnv() {
@@ -186,6 +191,67 @@ class UserServiceTest {
         User persisted = userRepository.findById(created.getId()).orElseThrow();
         assertEquals("changed@example.com", persisted.getEmail());
         assertEquals("7654321", persisted.getPhone());
+    }
+
+    /**
+     * 验证 requestEmailChangeCode 会调用验证码发送服务。
+     */
+    @Test
+    void testRequestEmailChangeCode() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("emailchange");
+        req.setPassword("pass123");
+        req.setEmail("change@example.com");
+        req.setPhone("4567");
+        UserResponse created = userService.register(req);
+
+        doNothing().when(emailVerificationService).issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+
+        userService.requestEmailChangeCode(created.getId(), "next@example.com");
+
+        verify(emailVerificationService).issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+    }
+
+    /**
+     * 验证 changeEmail 会消费验证码并更新数据库中的邮箱。
+     */
+    @Test
+    void testChangeEmail() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("emailchange2");
+        req.setPassword("pass123");
+        req.setEmail("before@example.com");
+        req.setPhone("6543");
+        UserResponse created = userService.register(req);
+
+        doNothing()
+            .when(emailVerificationService)
+            .consumeCode("after@example.com", "123456", EmailVerificationPurpose.CHANGE_EMAIL);
+
+        UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", "123456");
+
+        assertEquals("after@example.com", response.email());
+        User persisted = userRepository.findById(created.getId()).orElseThrow();
+        assertEquals("after@example.com", persisted.getEmail());
+    }
+
+    /**
+     * 验证 unbindEmail 会清空用户邮箱字段。
+     */
+    @Test
+    void testUnbindEmail() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("emailunbind");
+        req.setPassword("pass123");
+        req.setEmail("unbind@example.com");
+        req.setPhone("9876");
+        UserResponse created = userService.register(req);
+
+        UserEmailResponse response = userService.unbindEmail(created.getId());
+
+        assertNull(response.email());
+        User persisted = userRepository.findById(created.getId()).orElseThrow();
+        assertNull(persisted.getEmail());
     }
 
     /**
