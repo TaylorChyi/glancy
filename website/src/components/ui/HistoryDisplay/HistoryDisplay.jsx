@@ -1,31 +1,38 @@
 import PropTypes from "prop-types";
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { useHistory, useLanguage } from "@/context";
+import ThemeIcon from "@/components/ui/Icon";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
 import styles from "./HistoryDisplay.module.css";
 
 function HistoryDisplay({ onEmptyAction, onSelect }) {
   const { history } = useHistory();
-  const { t } = useLanguage();
-
-  const versionDisplayLabel = t.versionLabel ?? "版本";
-  const accessibleLabelTemplate = t.versionAccessibleLabel;
-
-  const resolveAccessibleLabel = useCallback(
-    (sequence) => {
-      if (!Number.isFinite(sequence)) {
-        return versionDisplayLabel;
-      }
-      const order = Math.trunc(sequence);
-      return accessibleLabelTemplate
-        ? accessibleLabelTemplate.replace("{position}", order)
-        : `${versionDisplayLabel} ${order}`;
-    },
-    [accessibleLabelTemplate, versionDisplayLabel],
-  );
+  const { t, lang } = useLanguage();
 
   const items = useMemo(() => history ?? [], [history]);
+  const locale = lang === "en" ? "en-US" : "zh-CN";
+  const dateFormatter = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return null;
+    }
+  }, [locale]);
+
+  const resolveDisplayDate = (timestamp) => {
+    if (!timestamp || !dateFormatter) return null;
+    try {
+      return dateFormatter.format(new Date(timestamp));
+    } catch {
+      return null;
+    }
+  };
 
   if (!items.length) {
     return (
@@ -45,67 +52,42 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     );
   }
 
-  const handleSelect = (term, versionId) => {
+  const handleSelect = (term) => {
     if (!onSelect) return;
-    onSelect(term, versionId);
+    onSelect(term);
   };
 
   return (
     <div className={styles.container}>
       <ul className={styles.grid}>
         {items.map((item) => {
-          const versions = Array.isArray(item.versions) ? item.versions : [];
+          const displayDate = resolveDisplayDate(item.createdAt);
           return (
             <li key={item.termKey} className={styles.card}>
-              <div className={styles.header}>
-                <button
-                  type="button"
-                  className={styles.term}
-                  onClick={() =>
-                    handleSelect(
-                      item.term,
-                      item.latestVersionId ??
-                        versions[0]?.id ??
-                        versions[0]?.versionId ??
-                        undefined,
-                    )
-                  }
-                >
-                  <span className={styles["term-text"]}>{item.term}</span>
-                </button>
-              </div>
-              {versions.length > 0 ? (
-                <ul
-                  className={styles.versions}
-                  id={`history-card-${item.termKey}`}
-                >
-                  {versions.map((version, index) => {
-                    const versionId =
-                      version?.id ??
-                      version?.versionId ??
-                      `${item.termKey}-${index}`;
-                    const isActive = item.latestVersionId
-                      ? String(versionId) === String(item.latestVersionId)
-                      : index === 0;
-                    const versionPosition = index + 1;
-                    return (
-                      <li key={versionId}>
-                        <button
-                          type="button"
-                          className={styles.version}
-                          data-active={isActive ? "true" : undefined}
-                          aria-label={resolveAccessibleLabel(versionPosition)}
-                          onClick={() => handleSelect(item.term, versionId)}
-                        >
-                          <span className={styles["version-label"]}>
-                            {versionDisplayLabel}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : null}
+              <button
+                type="button"
+                className={styles.term}
+                onClick={() => handleSelect(item.term)}
+              >
+                <span className={styles["term-text"]}>{item.term}</span>
+                <span className={styles.trailing}>
+                  {displayDate ? (
+                    <time
+                      dateTime={item.createdAt ?? undefined}
+                      className={styles.meta}
+                    >
+                      {displayDate}
+                    </time>
+                  ) : null}
+                  <ThemeIcon
+                    name="arrow-right"
+                    width={18}
+                    height={18}
+                    aria-hidden="true"
+                    className={styles.arrow}
+                  />
+                </span>
+              </button>
             </li>
           );
         })}

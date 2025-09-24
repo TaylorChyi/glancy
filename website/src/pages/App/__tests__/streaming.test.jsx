@@ -104,6 +104,7 @@ jest.unstable_mockModule("@/context", () => ({
     loadHistory: jest.fn(),
     addHistory: jest.fn(),
     unfavoriteHistory: jest.fn(),
+    removeHistory: jest.fn(),
   }),
   useUser: () => ({ user: { id: "1", token: "t" } }),
   useFavorites: () => ({ favorites: [], toggleFavorite: jest.fn() }),
