@@ -1,46 +1,79 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useCallback,
+  useEffect,
+} from "react";
 import translations from "@/i18n/index.js";
+import { SYSTEM_LANGUAGE_AUTO, isSupportedLanguage } from "@/i18n/languages.js";
+import { useSettingsStore } from "@/store/settings";
 import { useLocale } from "./LocaleContext.jsx";
+
+const DEFAULT_LANGUAGE = "zh";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const LanguageContext = createContext({
-  lang: "zh",
-  t: translations.zh,
+  lang: DEFAULT_LANGUAGE,
+  t: translations[DEFAULT_LANGUAGE],
   setLang: () => {},
+  systemLanguage: SYSTEM_LANGUAGE_AUTO,
+  setSystemLanguage: () => {},
 });
 
-export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "zh");
-  const [t, setT] = useState(
-    () => translations[localStorage.getItem("lang")] || translations.zh,
-  );
+function resolveLanguage({ systemLanguage, locale }) {
+  if (isSupportedLanguage(systemLanguage)) {
+    return systemLanguage;
+  }
+  const candidate = locale?.lang;
+  if (candidate && isSupportedLanguage(candidate)) {
+    return candidate;
+  }
+  return DEFAULT_LANGUAGE;
+}
 
+export function LanguageProvider({ children }) {
+  const systemLanguage = useSettingsStore((state) => state.systemLanguage);
+  const storeSetSystemLanguage = useSettingsStore(
+    (state) => state.setSystemLanguage,
+  );
   const { locale } = useLocale();
 
-  useEffect(() => {
-    if (localStorage.getItem("lang") || !locale) return;
-    if (translations[locale.lang]) {
-      setLang(locale.lang);
-      setT(translations[locale.lang]);
-      localStorage.setItem("lang", locale.lang);
-    }
-  }, [locale]);
+  const lang = useMemo(
+    () => resolveLanguage({ systemLanguage, locale }),
+    [systemLanguage, locale],
+  );
+
+  const t = useMemo(
+    () => translations[lang] || translations[DEFAULT_LANGUAGE],
+    [lang],
+  );
 
   useEffect(() => {
     document.title = t.welcomeTitle;
     document.documentElement.lang = lang;
   }, [lang, t]);
 
-  const changeLanguage = (l) => {
-    if (translations[l]) {
-      setLang(l);
-      setT(translations[l]);
-      localStorage.setItem("lang", l);
-    }
-  };
+  const changeLanguage = useCallback(
+    (next) => {
+      storeSetSystemLanguage(next ?? SYSTEM_LANGUAGE_AUTO);
+    },
+    [storeSetSystemLanguage],
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      lang,
+      t,
+      setLang: changeLanguage,
+      systemLanguage,
+      setSystemLanguage: changeLanguage,
+    }),
+    [changeLanguage, lang, systemLanguage, t],
+  );
 
   return (
-    <LanguageContext.Provider value={{ lang, t, setLang: changeLanguage }}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );

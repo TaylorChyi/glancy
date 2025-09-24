@@ -9,6 +9,8 @@ import SelectField from "@/components/form/SelectField.jsx";
 import FormRow from "@/components/form/FormRow.jsx";
 import { useApi } from "@/hooks";
 import { VoiceSelector } from "@/components";
+import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
+import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 
 const SOURCE_LANG_STORAGE_KEY = "sourceLang";
 const TARGET_LANG_STORAGE_KEY = "targetLang";
@@ -17,10 +19,14 @@ const DEFAULT_TARGET_LANG = "ENGLISH";
 const DEFAULT_THEME = "system";
 
 function Preferences() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const api = useApi();
+  const { systemLanguage, setSystemLanguage } = useSettingsStore((state) => ({
+    systemLanguage: state.systemLanguage,
+    setSystemLanguage: state.setSystemLanguage,
+  }));
   const [sourceLang, setSourceLang] = useState(
     localStorage.getItem(SOURCE_LANG_STORAGE_KEY) || DEFAULT_SOURCE_LANG,
   );
@@ -32,6 +38,44 @@ function Preferences() {
   const headingId = useId();
   const descriptionId = useId();
 
+  const systemLanguageFormatter = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([lang], { type: "language" });
+    } catch (error) {
+      console.warn("[preferences] Intl.DisplayNames unsupported", error);
+      return null;
+    }
+  }, [lang]);
+
+  const formatLanguageLabel = useCallback(
+    (code) => {
+      const label = systemLanguageFormatter?.of(code);
+      if (!label) {
+        return code.toUpperCase();
+      }
+      return label
+        .split(" ")
+        .map((segment) =>
+          segment.length > 0
+            ? segment[0].toUpperCase() + segment.slice(1)
+            : segment,
+        )
+        .join(" ");
+    },
+    [systemLanguageFormatter],
+  );
+
+  const systemLanguageOptions = useMemo(
+    () => [
+      { value: SYSTEM_LANGUAGE_AUTO, label: t.prefSystemLanguageAuto },
+      ...SUPPORTED_SYSTEM_LANGUAGES.map((code) => ({
+        value: code,
+        label: formatLanguageLabel(code),
+      })),
+    ],
+    [formatLanguageLabel, t.prefSystemLanguageAuto],
+  );
+
   const languageOptions = useMemo(
     () => [
       { value: DEFAULT_SOURCE_LANG, label: t.autoDetect },
@@ -39,6 +83,13 @@ function Preferences() {
       { value: "ENGLISH", label: "ENGLISH" },
     ],
     [t],
+  );
+
+  const handleSystemLanguageChange = useCallback(
+    (value) => {
+      setSystemLanguage(value);
+    },
+    [setSystemLanguage],
   );
 
   const searchLanguageOptions = useMemo(
@@ -145,6 +196,17 @@ function Preferences() {
       </header>
       <form className={styles.form} onSubmit={handleSave}>
         <div className={styles.fields}>
+          <FormRow
+            label={t.prefSystemLanguage}
+            id="system-language"
+            className={`${styles.field} ${styles["field-wide"]}`}
+          >
+            <SelectField
+              value={systemLanguage}
+              onChange={handleSystemLanguageChange}
+              options={systemLanguageOptions}
+            />
+          </FormRow>
           <FormRow
             label={t.prefLanguage}
             id="source-lang"
