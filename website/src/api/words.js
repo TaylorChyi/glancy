@@ -23,6 +23,29 @@ export function createWordsApi(request = apiRequest) {
   const resolveKey = ({ term, language, model = DEFAULT_MODEL }) =>
     wordCacheKey({ term, language, model });
 
+  const persistWordRecord = (key, response) => {
+    if (!response) return undefined;
+    const versions = Array.isArray(response.versions)
+      ? response.versions
+      : response.version
+        ? [response.version]
+        : Array.isArray(response.entries)
+          ? response.entries
+          : [response];
+    const activeVersionId =
+      response.activeVersionId ??
+      response.version?.id ??
+      response.version?.versionId ??
+      versions[versions.length - 1]?.id ??
+      versions[versions.length - 1]?.versionId;
+    const metadata = response.metadata ?? {};
+    store.getState().setVersions(key, versions, {
+      activeVersionId,
+      metadata,
+    });
+    return store.getState().getEntry(key, activeVersionId);
+  };
+
   const fetchWordImpl = async ({
     userId,
     term,
@@ -38,8 +61,7 @@ export function createWordsApi(request = apiRequest) {
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
       token,
     });
-    store.getState().setEntry(key, result);
-    return result;
+    return persistWordRecord(key, result);
   };
 
   const fetchWord = createCachedFetcher(fetchWordImpl, resolveKey);
@@ -68,9 +90,13 @@ export function createWordsApi(request = apiRequest) {
     token,
     signal,
     onChunk,
+    forceNew = false,
+    versionId,
   }) {
     const params = new URLSearchParams({ userId, term, language });
     if (model) params.append("model", model);
+    if (forceNew) params.append("forceNew", "true");
+    if (versionId) params.append("versionId", versionId);
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
     const headers = {
       Accept: "text/event-stream",
@@ -97,10 +123,15 @@ export function createWordsApi(request = apiRequest) {
           throw new Error(data);
         }
         if (data === "[DONE]") break;
+        if (event === "metadata") {
+          console.info("[streamWord] metadata", { ...logCtx, data });
+          yield { type: "metadata", data };
+          continue;
+        }
         if (data) {
           console.info("[streamWord] chunk", { ...logCtx, chunk: data });
           if (onChunk) onChunk(data);
-          yield data;
+          yield { type: "chunk", data };
         }
       }
       console.info("[streamWord] end", logCtx);

@@ -1,23 +1,25 @@
-import Brand from '@/components/Brand'
-import SidebarFunctions from './SidebarFunctions.jsx'
-import SidebarUser from './SidebarUser.jsx'
-import { useIsMobile } from '@/utils'
+import Brand from "@/components/Brand";
+import SidebarFunctions from "./SidebarFunctions.jsx";
+import SidebarUser from "./SidebarUser.jsx";
+import { useIsMobile } from "@/utils";
 
 function Sidebar({
   isMobile: mobileProp,
   open = false,
   onClose,
   onToggleFavorites,
-  onSelectHistory
+  onSelectHistory,
 }) {
-  const defaultMobile = useIsMobile()
-  const isMobile = mobileProp ?? defaultMobile
+  const defaultMobile = useIsMobile();
+  const isMobile = mobileProp ?? defaultMobile;
   return (
     <>
       {isMobile && open && (
         <div className="sidebar-overlay" onClick={onClose} />
       )}
-      <aside className={`sidebar${isMobile ? (open ? ' mobile-open' : '') : ''}`}>
+      <aside
+        className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""}`}
+      >
         <Brand />
         <SidebarFunctions
           onToggleFavorites={onToggleFavorites}
@@ -26,7 +28,7 @@ function Sidebar({
         <SidebarUser />
       </aside>
     </>
-  )
+  );
 }
 
-export default Sidebar
+export default Sidebar;

@@ -1,27 +1,29 @@
-import { useState, useEffect } from 'react'
-import styles from './EditableField.module.css'
+import { useState, useEffect } from "react";
+import styles from "./EditableField.module.css";
 
 function EditableField({
   value,
   onChange,
-  placeholder = '',
+  placeholder = "",
   disabled = true,
-  className = '',
-  inputClassName = '',
-  buttonClassName = '',
-  buttonText = 'Edit'
+  className = "",
+  inputClassName = "",
+  buttonClassName = "",
+  buttonText = "Edit",
 }) {
-  const [editing, setEditing] = useState(!disabled)
+  const [editing, setEditing] = useState(!disabled);
 
   useEffect(() => {
-    setEditing(!disabled)
-  }, [disabled])
+    setEditing(!disabled);
+  }, [disabled]);
 
-  const containerCls = [styles.field, className].filter(Boolean).join(' ')
-  const inputCls = [styles.input, inputClassName].filter(Boolean).join(' ')
-  const btnCls = [styles['edit-btn'], buttonClassName].filter(Boolean).join(' ')
+  const containerCls = [styles.field, className].filter(Boolean).join(" ");
+  const inputCls = [styles.input, inputClassName].filter(Boolean).join(" ");
+  const btnCls = [styles["edit-btn"], buttonClassName]
+    .filter(Boolean)
+    .join(" ");
 
-  const enableEdit = () => setEditing(true)
+  const enableEdit = () => setEditing(true);
 
   return (
     <div className={containerCls}>
@@ -38,7 +40,7 @@ function EditableField({
         </button>
       )}
     </div>
-  )
+  );
 }
 
-export default EditableField
+export default EditableField;

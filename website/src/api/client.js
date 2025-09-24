@@ -1,4 +1,4 @@
-import { extractMessage } from '@/utils/json.js'
+import { extractMessage } from "@/utils/json.js";
 
 /**
  * Error thrown by the API client for non-ok HTTP responses.
@@ -7,9 +7,9 @@ import { extractMessage } from '@/utils/json.js'
  */
 export class ApiError extends Error {
   constructor(status, message, headers) {
-    super(message)
-    this.status = status
-    this.headers = headers
+    super(message);
+    this.status = status;
+    this.headers = headers;
   }
 }
 
@@ -22,41 +22,45 @@ export class ApiError extends Error {
  * @param {Function} [config.onUnauthorized] callback when response is 401
  * @returns {Function} request function
  */
-export function createApiClient({ token, headers: defaultHeaders = {}, onUnauthorized } = {}) {
+export function createApiClient({
+  token,
+  headers: defaultHeaders = {},
+  onUnauthorized,
+} = {}) {
   return async function apiRequest(
     url,
-    { token: reqToken, headers = {}, ...options } = {}
+    { token: reqToken, headers = {}, ...options } = {},
   ) {
-    const mergedHeaders = { ...defaultHeaders, ...headers }
-    const authToken = reqToken ?? token
-    if (authToken) mergedHeaders['X-USER-TOKEN'] = authToken
+    const mergedHeaders = { ...defaultHeaders, ...headers };
+    const authToken = reqToken ?? token;
+    if (authToken) mergedHeaders["X-USER-TOKEN"] = authToken;
 
-    let resp
+    let resp;
     try {
-      resp = await fetch(url, { ...options, headers: mergedHeaders })
+      resp = await fetch(url, { ...options, headers: mergedHeaders });
     } catch (err) {
-      console.error(err)
-      throw new Error('Network error')
+      console.error(err);
+      throw new Error("Network error");
     }
     if (!resp.ok) {
-      if (resp.status === 401) onUnauthorized?.()
+      if (resp.status === 401) onUnauthorized?.();
       const text = await resp.text().catch((err) => {
-        console.error(err)
-        return ''
-      })
-      const message = extractMessage(text) || 'Request failed'
-      throw new ApiError(resp.status, message, resp.headers)
+        console.error(err);
+        return "";
+      });
+      const message = extractMessage(text) || "Request failed";
+      throw new ApiError(resp.status, message, resp.headers);
     }
-    const contentType = resp.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      return resp.json()
+    const contentType = resp.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return resp.json();
     }
-    return resp
-  }
+    return resp;
+  };
 }
 
 // default instance without preset headers
-export const apiRequest = createApiClient()
+export const apiRequest = createApiClient();
 
 /**
  * Create a helper for JSON-based requests.
@@ -67,17 +71,17 @@ export const apiRequest = createApiClient()
 export function createJsonRequest(request = apiRequest) {
   return function jsonRequest(
     url,
-    { token, method = 'POST', body, headers = {}, ...options } = {},
+    { token, method = "POST", body, headers = {}, ...options } = {},
   ) {
     return request(url, {
       ...options,
       token,
       method,
-      headers: { 'Content-Type': 'application/json', ...headers },
+      headers: { "Content-Type": "application/json", ...headers },
       body: body !== undefined ? JSON.stringify(body) : undefined,
-    })
-  }
+    });
+  };
 }
 
 // default JSON request instance
-export const jsonRequest = createJsonRequest()
+export const jsonRequest = createJsonRequest();

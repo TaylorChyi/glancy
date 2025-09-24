@@ -1,5 +1,5 @@
-import { useApiContext } from '@/context'
+import { useApiContext } from "@/context";
 
 export function useApi() {
-  return useApiContext()
+  return useApiContext();
 }

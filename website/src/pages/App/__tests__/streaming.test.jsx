@@ -4,8 +4,25 @@ jest.unstable_mockModule("remark-gfm", () => ({ default: () => {} }));
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({
-  default: ({ bottomContent, children, sidebarProps }) => (
+  default: ({ bottomContent, children, sidebarProps, topBarProps }) => (
     <div>
+      {topBarProps && (
+        <div>
+          <button
+            data-testid="topbar-reoutput"
+            onClick={topBarProps.onReoutput}
+            disabled={!topBarProps.canReoutput}
+          />
+          <button
+            data-testid="topbar-prev"
+            onClick={() => topBarProps.onNavigateVersion?.("previous")}
+          />
+          <button
+            data-testid="topbar-next"
+            onClick={() => topBarProps.onNavigateVersion?.("next")}
+          />
+        </div>
+      )}
       {sidebarProps && (
         <button
           data-testid="history-select"
@@ -92,7 +109,16 @@ jest.unstable_mockModule("@/context", () => ({
   useFavorites: () => ({ favorites: [], toggleFavorite: jest.fn() }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
   useLanguage: () => ({
-    t: { searchPlaceholder: "search", inputPlaceholder: "input" },
+    t: {
+      searchPlaceholder: "search",
+      inputPlaceholder: "input",
+      reoutput: "重新输出",
+      previousVersion: "上一版本",
+      nextVersion: "下一版本",
+      versionIndicator: "{current}/{total}",
+      versionIndicatorEmpty: "0/0",
+      back: "返回",
+    },
     lang: "en",
     setLang: jest.fn(),
   }),
@@ -110,9 +136,12 @@ jest.unstable_mockModule("@/hooks", () => ({
 
 const { default: App } = await import("@/pages/App");
 const { useStreamWord } = await import("@/hooks");
+const { useWordStore } = await import("@/store/wordStore.js");
+const { wordCacheKey } = await import("@/api/words.js");
 
 beforeEach(() => {
   useStreamWord.mockReset();
+  useWordStore.getState().clear();
 });
 
 /**
@@ -214,4 +243,81 @@ test("renders markdown preview from streaming json", async () => {
 
   const heading = await screen.findByRole("heading", { name: "Title" });
   expect(heading).toBeInTheDocument();
+});
+
+/**
+ * 验证重新输出按钮以 forceNew 参数重新发起流并保留旧版本展示。
+ */
+test("reoutput triggers forceNew stream and retains previous entry", async () => {
+  const generator = jest
+    .fn()
+    .mockImplementationOnce(async function* () {
+      yield { chunk: '{"term":"foo","markdown":"# First"}' };
+    })
+    .mockImplementationOnce(async function* (options) {
+      expect(options.forceNew).toBe(true);
+      yield { chunk: '{"term":"foo","markdown":"# Second' };
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      yield { chunk: ' Chapter"}' };
+    });
+
+  useStreamWord.mockImplementation(() => generator);
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText("input");
+  fireEvent.change(input, { target: { value: "foo" } });
+  fireEvent.submit(input.closest("form"));
+
+  await screen.findByRole("heading", { name: "First" });
+
+  fireEvent.click(screen.getByTestId("topbar-reoutput"));
+
+  await waitFor(() => expect(generator).toHaveBeenCalledTimes(2));
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(screen.getByRole("heading", { name: "First" })).toBeInTheDocument();
+
+  await screen.findByRole("heading", { name: "Second Chapter" });
+  expect(generator.mock.calls[1][0].forceNew).toBe(true);
+});
+
+/**
+ * 验证版本切换按钮会根据缓存版本更新视图。
+ */
+test("navigates between cached versions", async () => {
+  useStreamWord.mockImplementation(
+    () =>
+      async function* () {
+        yield {
+          chunk: JSON.stringify({
+            term: "foo",
+            markdown: "# First",
+            versions: [
+              { id: "v1", term: "foo", markdown: "# First" },
+              { id: "v2", term: "foo", markdown: "# Second" },
+            ],
+            activeVersionId: "v1",
+          }),
+        };
+        const cacheKey = wordCacheKey({ term: "foo", language: "ENGLISH" });
+        useWordStore.getState().setVersions(cacheKey, [
+          { id: "v1", term: "foo", markdown: "# First" },
+          { id: "v2", term: "foo", markdown: "# Second" },
+        ]);
+        useWordStore.getState().setActiveVersion(cacheKey, "v1");
+      },
+  );
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText("input");
+  fireEvent.change(input, { target: { value: "foo" } });
+  fireEvent.submit(input.closest("form"));
+
+  await screen.findByRole("heading", { name: "First" });
+
+  fireEvent.click(screen.getByTestId("topbar-next"));
+
+  const second = await screen.findByRole("heading", { name: "Second" });
+  expect(second).toBeInTheDocument();
 });

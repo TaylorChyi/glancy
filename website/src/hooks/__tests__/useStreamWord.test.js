@@ -1,13 +1,34 @@
 import { render, screen } from "@testing-library/react";
-import DictionaryEntry from "../../components/ui/DictionaryEntry/index.js";
-import { useStreamWord } from "../useStreamWord.js";
-import { useWordStore } from "../../store/wordStore.js";
+import { jest } from "@jest/globals";
 
 const streamWordMock = jest.fn();
 const apiMock = { words: { streamWord: streamWordMock } };
-jest.mock("../useApi.js", () => ({
+
+jest.unstable_mockModule("../useApi.js", () => ({
   useApi: () => apiMock,
 }));
+
+jest.unstable_mockModule("@/context", () => ({
+  useLanguage: () => ({
+    t: {
+      playWordAudio: "",
+      playSentenceAudio: "",
+      upgrade: "",
+    },
+    lang: "en",
+  }),
+}));
+
+jest.unstable_mockModule("@/components", () => ({
+  TtsButton: () => null,
+  PronounceableWord: ({ children }) => <span>{children}</span>,
+}));
+
+const { default: DictionaryEntry } = await import(
+  "../../components/ui/DictionaryEntry/DictionaryEntry.jsx"
+);
+const { useStreamWord } = await import("../useStreamWord.js");
+const { useWordStore } = await import("../../store/wordStore.js");
 
 beforeEach(() => {
   streamWordMock.mockReset();
@@ -26,7 +47,7 @@ test("cache JSON entry and render definitions", async () => {
   );
 
   streamWordMock.mockImplementation(async function* () {
-    yield JSON.stringify(jsonEntry);
+    yield { type: "chunk", data: JSON.stringify(jsonEntry) };
   });
 
   const streamWordWithHandling = useStreamWord();
@@ -38,12 +59,13 @@ test("cache JSON entry and render definitions", async () => {
     // consume generator
   }
 
-  const entries = useWordStore.getState().entries;
-  const cached = entries[Object.keys(entries)[0]];
-  expect(cached).toEqual(jsonEntry);
-  expect(cached.markdown).toBeUndefined();
+  const record = useWordStore
+    .getState()
+    .getRecord(Object.keys(useWordStore.getState().entries)[0]);
+  expect(record.versions[0]).toMatchObject(jsonEntry);
+  expect(record.versions[0].markdown).toBeUndefined();
 
-  render(<DictionaryEntry entry={cached} />);
+  render(<DictionaryEntry entry={record.versions[0]} />);
   const strong = screen.getByText("bold");
   expect(strong.tagName).toBe("STRONG");
 });
@@ -56,7 +78,7 @@ test("cache JSON entry and render definitions", async () => {
  */
 test("cache markdown entry and render", async () => {
   streamWordMock.mockImplementation(async function* () {
-    yield "# Title";
+    yield { type: "chunk", data: "# Title" };
   });
 
   const streamWordWithHandling = useStreamWord();
@@ -68,11 +90,12 @@ test("cache markdown entry and render", async () => {
     // consume generator
   }
 
-  const entries = useWordStore.getState().entries;
-  const cached = entries[Object.keys(entries)[0]];
-  expect(cached.markdown).toBe("# Title");
+  const record = useWordStore
+    .getState()
+    .getRecord(Object.keys(useWordStore.getState().entries)[0]);
+  expect(record.versions[0].markdown).toBe("# Title");
 
-  render(<DictionaryEntry entry={cached} />);
+  render(<DictionaryEntry entry={record.versions[0]} />);
   const heading = screen.getByText("Title");
   expect(heading.tagName).toBe("H1");
 });

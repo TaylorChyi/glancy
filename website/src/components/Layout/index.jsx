@@ -1,13 +1,18 @@
-import { useState } from 'react'
-import Sidebar from '@/components/Sidebar'
-import DesktopTopBar from '@/components/TopBar/DesktopTopBar.jsx'
-import MobileTopBar from '@/components/TopBar/MobileTopBar.jsx'
-import { useIsMobile } from '@/utils'
-import styles from './Layout.module.css'
+import { useState } from "react";
+import Sidebar from "@/components/Sidebar";
+import DesktopTopBar from "@/components/TopBar/DesktopTopBar.jsx";
+import MobileTopBar from "@/components/TopBar/MobileTopBar.jsx";
+import { useIsMobile } from "@/utils";
+import styles from "./Layout.module.css";
 
-function Layout({ children, sidebarProps = {}, topBarProps = {}, bottomContent = null }) {
-  const isMobile = useIsMobile()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+function Layout({
+  children,
+  sidebarProps = {},
+  topBarProps = {},
+  bottomContent = null,
+}) {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className={styles.container}>
@@ -18,7 +23,7 @@ function Layout({ children, sidebarProps = {}, topBarProps = {}, bottomContent =
         isMobile={isMobile}
       />
       <div className={styles.main}>
-        <div className={styles['main-top']}>
+        <div className={styles["main-top"]}>
           {isMobile ? (
             <MobileTopBar
               {...topBarProps}
@@ -28,11 +33,11 @@ function Layout({ children, sidebarProps = {}, topBarProps = {}, bottomContent =
             <DesktopTopBar {...topBarProps} />
           )}
         </div>
-        <div className={styles['main-middle']}>{children}</div>
-        <div className={styles['main-bottom']}>{bottomContent}</div>
+        <div className={styles["main-middle"]}>{children}</div>
+        <div className={styles["main-bottom"]}>{bottomContent}</div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Layout
+export default Layout;

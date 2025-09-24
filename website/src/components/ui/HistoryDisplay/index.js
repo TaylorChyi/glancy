@@ -1,1 +1,1 @@
-export { default } from './HistoryDisplay.jsx'
+export { default } from "./HistoryDisplay.jsx";

@@ -1,4 +1,4 @@
-@import url('./ModalContent.module.css');
+@import url("./ModalContent.module.css");
 
 .auth-modal {
   max-width: 400px;
@@ -40,6 +40,6 @@
   color: var(--app-color);
 }
 
-.auth-modal button[type='submit'] {
+.auth-modal button[type="submit"] {
   width: 100%;
 }

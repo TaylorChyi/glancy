@@ -16,12 +16,37 @@
   gap: 8px;
 }
 
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .term-text {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   text-align: center;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.term-text span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .topbar-right .favorite-toggle {

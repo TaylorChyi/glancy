@@ -1,15 +1,15 @@
-import { useLanguage } from '@/context'
-import ThemeIcon from '@/components/ui/Icon'
-import { UserMenu } from '@/components/Header'
-import { getBrandText } from '@/utils'
+import { useLanguage } from "@/context";
+import ThemeIcon from "@/components/ui/Icon";
+import { UserMenu } from "@/components/Header";
+import { getBrandText } from "@/utils";
 
 function Brand() {
-  const { lang } = useLanguage()
-  const brandText = getBrandText(lang)
+  const { lang } = useLanguage();
+  const brandText = getBrandText(lang);
 
   const handleClick = () => {
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   return (
     <div className="sidebar-brand">
@@ -21,7 +21,7 @@ function Brand() {
         <UserMenu size={28} />
       </div>
     </div>
-  )
+  );
 }
 
-export default Brand
+export default Brand;

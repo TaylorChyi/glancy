@@ -1,7 +1,47 @@
-import { streamWord } from "../words.js";
-import { API_PATHS } from "../../config/api.js";
-import { DEFAULT_MODEL } from "../../config/index.js";
 import { jest } from "@jest/globals";
+import { TextEncoder, TextDecoder } from "util";
+import { ReadableStream } from "stream/web";
+
+const parseSseMock = async function* (stream) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+  }
+  buffer = buffer.replace(/\r\n?/g, "\n");
+  const events = buffer.split("\n\n");
+  for (const raw of events) {
+    if (!raw.trim()) continue;
+    const event = { event: "message", data: "" };
+    for (const line of raw.split("\n")) {
+      if (line.startsWith("event:")) {
+        event.event = line.slice(6).trim();
+      } else if (line.startsWith("data:")) {
+        const value = line.slice(5).trimStart();
+        event.data += event.data ? `\n${value}` : value;
+      }
+    }
+    if (event.data) {
+      yield event;
+    }
+  }
+};
+
+jest.unstable_mockModule("@/utils", () => ({
+  createCachedFetcher: (impl) => impl,
+  parseSse: parseSseMock,
+}));
+
+jest.unstable_mockModule("@/hooks", () => ({
+  useApi: () => ({ words: {} }),
+}));
+
+const { streamWord } = await import("../words.js");
+const { API_PATHS } = await import("../../config/api.js");
+const { DEFAULT_MODEL } = await import("../../config/model.js");
 
 /**
  * 验证流式接口能够解析 SSE 并输出日志。
@@ -23,23 +63,30 @@ test("streamWord yields chunks with logging", async () => {
   const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
 
   const chunks = [];
-  for await (const chunk of streamWord({
+  for await (const event of streamWord({
     userId: "u",
     term: "hello",
     language: "ENGLISH",
     token: "t",
   })) {
-    chunks.push(chunk);
+    chunks.push(event);
   }
 
   expect(global.fetch).toHaveBeenCalledWith(
     `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&model=${DEFAULT_MODEL}`,
     expect.objectContaining({
-      headers: { "X-USER-TOKEN": "t" },
+      headers: expect.objectContaining({
+        "X-USER-TOKEN": "t",
+        Accept: "text/event-stream",
+      }),
       signal: undefined,
+      cache: "no-store",
     }),
   );
-  expect(chunks).toEqual(["part1", "part2"]);
+  expect(chunks).toEqual([
+    { type: "chunk", data: "part1" },
+    { type: "chunk", data: "part2" },
+  ]);
   expect(infoSpy).toHaveBeenCalledWith("[streamWord] chunk", {
     userId: "u",
     term: "hello",
@@ -83,7 +130,7 @@ test("streamWord stops on DONE marker", async () => {
     chunks.push(chunk);
   }
 
-  expect(chunks).toEqual(["part1"]);
+  expect(chunks).toEqual([{ type: "chunk", data: "part1" }]);
 
   global.fetch = originalFetch;
 });

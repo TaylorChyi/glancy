@@ -1,44 +1,44 @@
 /* eslint-env jest */
-import { renderHook, act } from '@testing-library/react'
-import { jest } from '@jest/globals'
-import useSpeechInput from '../useSpeechInput.js'
+import { renderHook, act } from "@testing-library/react";
+import { jest } from "@jest/globals";
+import useSpeechInput from "../useSpeechInput.js";
 
 const recognitionMock = {
   start: jest.fn(),
-  lang: '',
+  lang: "",
   interimResults: false,
   maxAlternatives: 1,
   onresult: null,
-}
+};
 
 global.webkitSpeechRecognition = function () {
-  return recognitionMock
-}
+  return recognitionMock;
+};
 
-describe('useSpeechInput', () => {
+describe("useSpeechInput", () => {
   afterEach(() => {
-    recognitionMock.start.mockClear()
-    recognitionMock.onresult = null
-  })
+    recognitionMock.start.mockClear();
+    recognitionMock.onresult = null;
+  });
 
   afterAll(() => {
-    delete global.webkitSpeechRecognition
-  })
+    delete global.webkitSpeechRecognition;
+  });
 
-  test('invokes SpeechRecognition and callback', () => {
-    const onResult = jest.fn()
-    const { result } = renderHook(() => useSpeechInput({ onResult }))
+  test("invokes SpeechRecognition and callback", () => {
+    const onResult = jest.fn();
+    const { result } = renderHook(() => useSpeechInput({ onResult }));
 
     act(() => {
-      result.current.start('en-US')
-    })
+      result.current.start("en-US");
+    });
 
-    expect(recognitionMock.start).toHaveBeenCalled()
+    expect(recognitionMock.start).toHaveBeenCalled();
 
-    const event = { results: [[{ transcript: 'hello' }]] }
+    const event = { results: [[{ transcript: "hello" }]] };
     act(() => {
-      recognitionMock.onresult(event)
-    })
-    expect(onResult).toHaveBeenCalledWith('hello')
-  })
-})
+      recognitionMock.onresult(event);
+    });
+    expect(onResult).toHaveBeenCalledWith("hello");
+  });
+});

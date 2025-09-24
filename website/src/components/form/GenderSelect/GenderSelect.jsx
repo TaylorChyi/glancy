@@ -1,11 +1,11 @@
-import React from 'react'
-import { useLanguage } from '@/context'
-import styles from './GenderSelect.module.css'
+import React from "react";
+import { useLanguage } from "@/context";
+import styles from "./GenderSelect.module.css";
 
-const OPTIONS = ['male', 'female', 'none']
+const OPTIONS = ["male", "female", "none"];
 
-function GenderSelect({ value = '', onChange }) {
-  const { t } = useLanguage()
+function GenderSelect({ value = "", onChange }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.group}>
       {OPTIONS.map((opt) => (
@@ -16,11 +16,13 @@ function GenderSelect({ value = '', onChange }) {
             checked={value === opt}
             onChange={() => onChange && onChange(opt)}
           />
-          <span>{t[`gender${opt.charAt(0).toUpperCase() + opt.slice(1)}`]}</span>
+          <span>
+            {t[`gender${opt.charAt(0).toUpperCase() + opt.slice(1)}`]}
+          </span>
         </label>
       ))}
     </div>
-  )
+  );
 }
 
-export default GenderSelect
+export default GenderSelect;
