@@ -174,12 +174,19 @@ public class WordSearcherImpl implements WordSearcher {
     ) {
         StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
         if (language == Language.CHINESE) {
+            ChineseEntryProfile profile = resolveChineseEntryProfile(cleanInput);
             builder
-                .append("\n条目类型：")
-                .append(classifyChineseEntry(cleanInput))
+                .append("\n条目结构定位：")
+                .append(profile.typeLabel())
+                .append("\n写作指引：")
+                .append(profile.guidance())
                 .append(
-                    "\n若为汉字，请以说文解字笔法拆解字形、字源、篆隶演变与常见组合；若为词语，则聚焦现代语境下的义项、搭配与例句。"
+                    "\n结构要求：请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。"
                 );
+        } else {
+            builder
+                .append("\n条目类型：英文词汇")
+                .append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
         }
         if (personalizationContext != null && personalizationContext.hasSignals()) {
             if (!personalizationContext.recentTerms().isEmpty()) {
@@ -188,28 +195,51 @@ public class WordSearcherImpl implements WordSearcher {
             if (StringUtils.hasText(personalizationContext.goal())) {
                 builder.append("\n学习目标：").append(personalizationContext.goal());
             }
-            builder.append("\n请结合画像输出结构化释义、语义差异与可执行练习建议。");
+            builder.append("\n请结合画像输出结构化释义、语义差异与可执行练习建议（英文表达）。");
         } else {
-            builder.append("\n请输出结构化释义、用法说明与示例。");
+            builder.append("\n请确保释义、用法说明与示例完整。");
         }
         return builder.toString();
     }
 
-    private String classifyChineseEntry(String cleanInput) {
+    private ChineseEntryProfile resolveChineseEntryProfile(String cleanInput) {
         if (!StringUtils.hasText(cleanInput)) {
-            return "词语（默认结构）";
+            return new ChineseEntryProfile(
+                "Multi-character Word",
+                "未识别输入，按常规汉语词语处理，突出现代义项与搭配。"
+            );
         }
         String condensed = cleanInput.replaceAll("\\s+", "");
         int codePoints = condensed.codePointCount(0, condensed.length());
+        boolean containsHan = condensed
+            .codePoints()
+            .anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN);
+        if (!containsHan) {
+            return new ChineseEntryProfile(
+                "Multi-character Word",
+                "包含非汉字字符，请解释其在中文语境中的意义来源，并提供英文释义。"
+            );
+        }
         boolean allHan = condensed
             .codePoints()
             .allMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN);
         if (!allHan) {
-            return "混合或外来词（保持常规词典结构）";
+            return new ChineseEntryProfile(
+                "Multi-character Word",
+                "含汉字与其他符号混写，需补充借词背景，同时仍按词语结构组织英文释义。"
+            );
         }
         if (codePoints == 1) {
-            return "汉字（拆解字源与古今演变）";
+            return new ChineseEntryProfile(
+                "Single Character",
+                "请拆解字源、构形与历史演变，再补充当代主流义项与用例。"
+            );
         }
-        return "词语（聚焦现代义项与语境）";
+        return new ChineseEntryProfile(
+            "Multi-character Word",
+            "标准汉语词语，请分层呈现核心义项、语域差异与常见搭配，并提供文化背景。"
+        );
     }
+
+    private record ChineseEntryProfile(String typeLabel, String guidance) {}
 }

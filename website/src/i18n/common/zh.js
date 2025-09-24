@@ -19,12 +19,13 @@ export default {
   autoDetect: "自动检测",
   dictionaryLanguageLabel: "检索语言",
   dictionaryLanguageAuto: "自动",
-  dictionaryLanguageAutoDescription: "根据输入内容自动识别语言。",
+  dictionaryLanguageAutoDescription: "根据输入自动判断是英文还是中文。",
   dictionaryLanguageEnglish: "英文词条",
-  dictionaryLanguageEnglishDescription: "固定以英文单词或短语的视角解析。",
+  dictionaryLanguageEnglishDescription:
+    "固定以英文单词或短语的视角解析，输出中文主导的详解。",
   dictionaryLanguageChinese: "中文词条",
   dictionaryLanguageChineseDescription:
-    "固定视为中文汉字或词语，提供本义与衍生解释。",
+    "固定视为中文汉字或词语，生成以英文释义为核心的深度解读。",
   prefTheme: "主题",
   searchTitle: "词汇查询",
   searchButton: "搜索",

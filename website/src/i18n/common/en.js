@@ -21,13 +21,13 @@ export default {
   dictionaryLanguageLabel: "Lookup language",
   dictionaryLanguageAuto: "Auto",
   dictionaryLanguageAutoDescription:
-    "Detect the term's language automatically.",
+    "Let Glancy detect whether the entry is English or Chinese.",
   dictionaryLanguageEnglish: "English term",
   dictionaryLanguageEnglishDescription:
-    "Always interpret the query as an English word or phrase.",
+    "Interpret as an English word or phrase with Chinese-first guidance.",
   dictionaryLanguageChinese: "Chinese term",
   dictionaryLanguageChineseDescription:
-    "Treat the query as a Chinese character or word for native explanations.",
+    "Interpret as a Chinese character or word with English-first storytelling.",
   prefTheme: "Theme",
   searchTitle: "Word Search",
   searchButton: "Search",

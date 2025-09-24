@@ -57,6 +57,9 @@ function OutputToolbar({
           {languageOptions.map(({ value, label, description }) => {
             const optionValue = normalizeWordLanguage(value);
             const isActive = optionValue === normalizedLanguageMode;
+            const descriptionId = description
+              ? `dictionary-language-${optionValue.toLowerCase()}`
+              : undefined;
             return (
               <button
                 key={optionValue}
@@ -65,10 +68,19 @@ function OutputToolbar({
                   isActive ? styles.active : styles.inactive
                 }`}
                 aria-pressed={isActive}
+                aria-describedby={descriptionId}
                 onClick={() => onLanguageModeChange?.(optionValue)}
                 title={description || undefined}
               >
-                <span>{label}</span>
+                <span className={styles["option-title"]}>{label}</span>
+                {description ? (
+                  <span
+                    className={styles["option-description"]}
+                    id={descriptionId}
+                  >
+                    {description}
+                  </span>
+                ) : null}
               </button>
             );
           })}
