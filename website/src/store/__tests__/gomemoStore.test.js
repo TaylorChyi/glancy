@@ -126,4 +126,71 @@ describe("gomemo store", () => {
 
     expect(useGomemoStore.getState().plan?.progress.completedWords).toBe(1);
   });
+
+  /**
+   * 验证重新注入持久化数据时会清理 loading 状态并重建默认模式。
+   */
+  test("rehydrate clears transient flags", async () => {
+    const planResponse = {
+      sessionId: 7,
+      sessionDate: "2024-05-10",
+      persona: {
+        descriptor: "descriptor",
+        audience: "audience",
+        tone: "tone",
+        dailyTarget: 3,
+        interests: ["product"],
+      },
+      planHighlights: [],
+      words: [
+        {
+          term: "polish",
+          language: "ENGLISH",
+          priority: 9,
+          rationales: ["近期语境高频"],
+          recommendedModes: ["CARD"],
+        },
+      ],
+      modes: [
+        {
+          type: "CARD",
+          title: "卡片",
+          description: "desc",
+          focus: "focus",
+        },
+      ],
+      progress: {
+        completedWords: 0,
+        totalWords: 1,
+        retentionAverage: 0,
+        details: [],
+      },
+    };
+    mockApi.gomemo.getPlan.mockResolvedValue(planResponse);
+
+    await act(async () => {
+      await useGomemoStore.getState().loadPlan();
+    });
+
+    const { plan } = useGomemoStore.getState();
+    expect(plan).not.toBeNull();
+
+    useGomemoStore.getState().reset();
+
+    const snapshot = JSON.stringify({
+      state: { plan, review: null, loading: true },
+      version: useGomemoStore.persist.getOptions().version ?? 0,
+    });
+
+    localStorage.setItem("gomemo", snapshot);
+
+    await act(async () => {
+      await useGomemoStore.persist.rehydrate();
+    });
+
+    const nextState = useGomemoStore.getState();
+    expect(nextState.loading).toBe(false);
+    expect(nextState.activeWordIndex).toBe(0);
+    expect(nextState.activeMode).toBe("CARD");
+  });
 });
