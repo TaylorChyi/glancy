@@ -60,49 +60,14 @@
   letter-spacing: 0.01em;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  background: color-mix(in srgb, var(--accent-color) 28%, transparent);
-}
-
-.timestamp {
-  font-size: 12px;
-  opacity: 0.7;
-  white-space: nowrap;
-}
-
-.toggle {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  opacity: 0.72;
-  padding: 0;
-}
-
-.toggle:hover,
-.toggle:focus-visible {
-  opacity: 1;
-  outline: none;
-}
-
 .versions {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--space-2, 12px);
+  margin-top: var(--space-2, 12px);
 }
 
 .versions li {
@@ -110,12 +75,10 @@
 }
 
 .version {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
+  justify-content: center;
   align-items: center;
-  gap: var(--space-2, 12px);
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: var(--radius-md, 10px);
   border: none;
   background: color-mix(in srgb, var(--app-bg) 96%, transparent);
@@ -128,7 +91,7 @@
 }
 
 .version[data-active="true"] {
-  background: color-mix(in srgb, var(--accent-color) 20%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 26%, transparent);
 }
 
 .version:hover,
@@ -138,10 +101,10 @@
   transform: translateY(-1px);
 }
 
-.version-time {
-  font-size: 12px;
-  opacity: 0.72;
-  white-space: nowrap;
+.version-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 @supports not (color: color-mix(in srgb, white 50%, black)) {

@@ -1,33 +1,13 @@
 import PropTypes from "prop-types";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useHistory, useLanguage } from "@/context";
 import EmptyState from "@/components/ui/EmptyState";
 import Button from "@/components/ui/Button";
 import styles from "./HistoryDisplay.module.css";
 
-const formatTimestamp = (value) => {
-  if (!value) return "";
-  try {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString(undefined, {
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch (error) {
-    console.warn("[HistoryDisplay] failed to format timestamp", error);
-    return value;
-  }
-};
-
 function HistoryDisplay({ onEmptyAction, onSelect }) {
   const { history } = useHistory();
   const { t } = useLanguage();
-  const [expanded, setExpanded] = useState(() => new Set());
 
   const items = useMemo(() => history ?? [], [history]);
 
@@ -49,18 +29,6 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     );
   }
 
-  const toggleExpanded = (termKey) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(termKey)) {
-        next.delete(termKey);
-      } else {
-        next.add(termKey);
-      }
-      return next;
-    });
-  };
-
   const handleSelect = (term, versionId) => {
     if (!onSelect) return;
     onSelect(term, versionId);
@@ -70,7 +38,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     <div className={styles.container}>
       <ul className={styles.grid}>
         {items.map((item) => {
-          const isExpanded = expanded.has(item.termKey);
+          const versions = Array.isArray(item.versions) ? item.versions : [];
           return (
             <li key={item.termKey} className={styles.card}>
               <div className={styles.header}>
@@ -78,59 +46,48 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
                   type="button"
                   className={styles.term}
                   onClick={() =>
-                    handleSelect(item.term, item.latestVersionId ?? undefined)
+                    handleSelect(
+                      item.term,
+                      item.latestVersionId ??
+                        versions[0]?.id ??
+                        versions[0]?.versionId ??
+                        undefined,
+                    )
                   }
                 >
                   <span className={styles["term-text"]}>{item.term}</span>
-                  <span className={styles.badge}>{item.versions.length}</span>
                 </button>
-                {item.createdAt ? (
-                  <span className={styles.timestamp}>
-                    {formatTimestamp(item.createdAt)}
-                  </span>
-                ) : null}
               </div>
-              {item.versions.length > 1 ? (
-                <button
-                  type="button"
-                  className={styles.toggle}
-                  onClick={() => toggleExpanded(item.termKey)}
-                  aria-expanded={isExpanded}
-                  aria-controls={`history-card-${item.termKey}`}
-                >
-                  {isExpanded
-                    ? (t.collapse ?? "收起版本")
-                    : (t.expand ?? "展开版本")}
-                </button>
-              ) : null}
-              {(item.versions.length === 1 || isExpanded) && (
+              {versions.length > 0 ? (
                 <ul
                   className={styles.versions}
                   id={`history-card-${item.termKey}`}
                 >
-                  {item.versions.map((version, index) => (
-                    <li key={version.id}>
-                      <button
-                        type="button"
-                        className={styles.version}
-                        data-active={
-                          version.id === item.latestVersionId
-                            ? "true"
-                            : undefined
-                        }
-                        onClick={() => handleSelect(item.term, version.id)}
-                      >
-                        <span>
-                          {t.versionLabel ?? "版本"} {index + 1}
-                        </span>
-                        <span className={styles["version-time"]}>
-                          {formatTimestamp(version.createdAt)}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                  {versions.map((version, index) => {
+                    const versionId =
+                      version?.id ??
+                      version?.versionId ??
+                      `${item.termKey}-${index}`;
+                    const isActive = item.latestVersionId
+                      ? String(versionId) === String(item.latestVersionId)
+                      : index === 0;
+                    return (
+                      <li key={versionId}>
+                        <button
+                          type="button"
+                          className={styles.version}
+                          data-active={isActive ? "true" : undefined}
+                          onClick={() => handleSelect(item.term, versionId)}
+                        >
+                          <span className={styles["version-label"]}>
+                            {t.versionLabel ?? "版本"} {index + 1}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
-              )}
+              ) : null}
             </li>
           );
         })}

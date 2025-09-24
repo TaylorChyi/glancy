@@ -23,24 +23,21 @@ jest.unstable_mockModule("@/context", () => ({
       historyEmptyTitle: "暂无记录",
       historyEmptyDescription: "去搜索词汇吧",
       historyEmptyAction: "立即开始",
-      expand: "展开版本",
-      collapse: "收起版本",
       versionLabel: "版本",
     },
   }),
+  useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
 }));
 
 const { default: HistoryDisplay } = await import("../HistoryDisplay.jsx");
 
 describe("HistoryDisplay", () => {
   /**
-   * 验证展开卡片列表后能够展示所有版本，并在点击时回调版本 ID。
+   * 验证列表初始就展示全部版本，并在点击时回调对应的版本 ID。
    */
   test("renders versions and invokes onSelect", () => {
     const handleSelect = jest.fn();
     render(<HistoryDisplay onSelect={handleSelect} />);
-
-    fireEvent.click(screen.getByText("展开版本"));
 
     const versionButton = screen.getByText("版本 2");
     fireEvent.click(versionButton);

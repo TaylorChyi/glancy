@@ -107,9 +107,7 @@ function App() {
         return false;
       }
       const fallbackId =
-        record.versions[record.versions.length - 1].id ??
-        record.versions[record.versions.length - 1].versionId ??
-        null;
+        record.versions[0]?.id ?? record.versions[0]?.versionId ?? null;
       const resolvedActiveId =
         preferredVersionId ?? record.activeVersionId ?? fallbackId;
       const resolvedEntry =

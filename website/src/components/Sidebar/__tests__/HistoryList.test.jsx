@@ -35,11 +35,10 @@ jest.unstable_mockModule("@/context", () => ({
     t: {
       favoriteAction: "收藏",
       deleteAction: "删除",
-      expand: "展开版本",
-      collapse: "收起版本",
       versionLabel: "版本",
     },
   }),
+  useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
 }));
 
 const { default: HistoryList } = await import("../HistoryList.jsx");
@@ -50,9 +49,9 @@ describe("HistoryList", () => {
   });
 
   /**
-   * 验证点击历史项时默认选中最新版本，并在展开后可选择其他版本。
+   * 验证点击历史项时默认选中最新版本，并可直接切换其他版本。
    */
-  test("calls onSelect with latest version and expands versions", async () => {
+  test("calls onSelect with latest version and exposes versions", async () => {
     const handleSelect = jest.fn();
     render(<HistoryList onSelect={handleSelect} />);
 
@@ -62,9 +61,6 @@ describe("HistoryList", () => {
 
     fireEvent.click(screen.getByText("alpha"));
     expect(handleSelect).toHaveBeenCalledWith("alpha", "v1");
-
-    const expandButton = screen.getByText("展开版本");
-    fireEvent.click(expandButton);
 
     const versionButton = await screen.findByText("版本 2");
     fireEvent.click(versionButton);
