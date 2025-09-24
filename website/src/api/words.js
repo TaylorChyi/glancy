@@ -1,6 +1,6 @@
 import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest } from "./client.js";
-import { useApi } from "@/hooks";
+import { useApi } from "@/hooks/useApi.js";
 import { createCachedFetcher, parseSse } from "@/utils";
 import { useWordStore } from "@/store/wordStore.js";
 

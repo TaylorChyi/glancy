@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components";
 import { API_PATHS } from "@/config/api.js";
 import { useUser } from "@/context";
-import { useApi } from "@/hooks";
+import { useApi } from "@/hooks/useApi.js";
 import { useLanguage } from "@/context";
 import { validateAccount } from "@/utils/validators.js";
 import { useAuthFormConfig } from "../useAuthFormConfig.js";

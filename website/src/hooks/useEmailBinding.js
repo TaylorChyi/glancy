@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useApi } from "@/hooks";
+import { useApi } from "@/hooks/useApi.js";
 
 const MODE_IDLE = "idle";
 const MODE_EDITING = "editing";
