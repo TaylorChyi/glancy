@@ -137,3 +137,6 @@ mail:
       login:
         subject: "Glancy 登录验证码"
         body: "您的登录验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成登录。"
+      change_email:
+        subject: "Glancy 邮箱换绑验证码"
+        body: "您的邮箱换绑验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成验证。"

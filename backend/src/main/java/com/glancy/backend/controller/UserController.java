@@ -3,6 +3,8 @@ package com.glancy.backend.controller;
 import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.AvatarRequest;
 import com.glancy.backend.dto.AvatarResponse;
+import com.glancy.backend.dto.EmailChangeInitiationRequest;
+import com.glancy.backend.dto.EmailChangeRequest;
 import com.glancy.backend.dto.EmailLoginRequest;
 import com.glancy.backend.dto.EmailRegistrationRequest;
 import com.glancy.backend.dto.EmailVerificationCodeRequest;
@@ -13,6 +15,7 @@ import com.glancy.backend.dto.ThirdPartyAccountResponse;
 import com.glancy.backend.dto.UserContactRequest;
 import com.glancy.backend.dto.UserContactResponse;
 import com.glancy.backend.dto.UserDetailResponse;
+import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UsernameRequest;
@@ -182,6 +185,40 @@ public class UserController {
         @Valid @RequestBody UserContactRequest req
     ) {
         UserContactResponse resp = userService.updateContact(id, req.email(), req.phone());
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * Dispatch a verification code to the target email before switching bindings.
+     */
+    @PostMapping("/{id}/email/change-code")
+    public ResponseEntity<Void> requestEmailChangeCode(
+        @PathVariable Long id,
+        @Valid @RequestBody EmailChangeInitiationRequest req
+    ) {
+        log.info("Received email change code request for user {}", id);
+        userService.requestEmailChangeCode(id, req.email());
+        return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * Bind a new email to the user after verifying the code.
+     */
+    @PutMapping("/{id}/email")
+    public ResponseEntity<UserEmailResponse> changeEmail(
+        @PathVariable Long id,
+        @Valid @RequestBody EmailChangeRequest req
+    ) {
+        UserEmailResponse resp = userService.changeEmail(id, req.email(), req.code());
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * Remove the email binding so the user can no longer sign in via email.
+     */
+    @DeleteMapping("/{id}/email")
+    public ResponseEntity<UserEmailResponse> unbindEmail(@PathVariable Long id) {
+        UserEmailResponse resp = userService.unbindEmail(id);
         return ResponseEntity.ok(resp);
     }
 

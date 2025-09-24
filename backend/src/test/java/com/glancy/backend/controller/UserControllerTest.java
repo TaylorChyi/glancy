@@ -216,6 +216,57 @@ class UserControllerTest {
     }
 
     /**
+     * 验证 requestEmailChangeCode 接口能接受请求并返回 202。
+     */
+    @Test
+    void requestEmailChangeCode() throws Exception {
+        doNothing().when(userService).requestEmailChangeCode(1L, "next@example.com");
+
+        EmailChangeInitiationRequest req = new EmailChangeInitiationRequest("next@example.com");
+
+        mockMvc
+            .perform(
+                post("/api/users/1/email/change-code")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req))
+            )
+            .andExpect(status().isAccepted());
+    }
+
+    /**
+     * 验证 changeEmail 接口成功返回最新邮箱信息。
+     */
+    @Test
+    void changeEmail() throws Exception {
+        when(userService.changeEmail(1L, "next@example.com", "123456"))
+            .thenReturn(new UserEmailResponse("next@example.com"));
+
+        EmailChangeRequest req = new EmailChangeRequest("next@example.com", "123456");
+
+        mockMvc
+            .perform(
+                put("/api/users/1/email")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(req))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value("next@example.com"));
+    }
+
+    /**
+     * 验证 unbindEmail 接口返回空邮箱信息。
+     */
+    @Test
+    void unbindEmail() throws Exception {
+        when(userService.unbindEmail(1L)).thenReturn(new UserEmailResponse(null));
+
+        mockMvc
+            .perform(delete("/api/users/1/email"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.email").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    /**
      * 测试 uploadAvatar 接口
      */
     @Test

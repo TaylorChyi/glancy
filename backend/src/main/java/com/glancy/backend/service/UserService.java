@@ -10,6 +10,7 @@ import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.ThirdPartyAccountRequest;
 import com.glancy.backend.dto.ThirdPartyAccountResponse;
 import com.glancy.backend.dto.UserContactResponse;
+import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserDetailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
@@ -148,6 +149,16 @@ public class UserService {
                     .orElseThrow(() -> {
                         log.warn("Login verification code requested for non-existent email {}", normalizedEmail);
                         return new ResourceNotFoundException("用户不存在或已注销");
+                    });
+            } else if (purpose == EmailVerificationPurpose.CHANGE_EMAIL) {
+                log.info("Validating email change eligibility for email {}", normalizedEmail);
+                userRepository
+                    .findByEmailAndDeletedFalse(normalizedEmail)
+                    .ifPresent(existing -> {
+                        log.warn(
+                            "Attempt to request change-email code for already bound address {}", normalizedEmail
+                        );
+                        throw new DuplicateResourceException("邮箱已被使用");
                     });
             } else {
                 log.info("Processing email verification for custom purpose {}", purpose);
@@ -400,15 +411,11 @@ public class UserService {
 
         if (email != null && !email.isBlank()) {
             String normalizedEmail = normalizeEmail(email);
-            userRepository
-                .findByEmailAndDeletedFalse(normalizedEmail)
-                .ifPresent(existing -> {
-                    if (!existing.getId().equals(userId)) {
-                        log.warn("Email {} is already in use", normalizedEmail);
-                        throw new DuplicateResourceException("邮箱已被使用");
-                    }
-                });
-            user.setEmail(normalizedEmail);
+            String currentEmail = user.getEmail();
+            if (currentEmail == null || !currentEmail.equals(normalizedEmail)) {
+                log.warn("Direct email change attempt detected for user {}", userId);
+                throw new InvalidRequestException("请通过邮箱换绑流程完成更新");
+            }
         }
 
         if (phone != null && !phone.isBlank()) {
@@ -425,6 +432,85 @@ public class UserService {
 
         User saved = userRepository.save(user);
         return new UserContactResponse(saved.getEmail(), saved.getPhone());
+    }
+
+    /**
+     * Issue a verification code to the new email for change binding.
+     */
+    @Transactional
+    public void requestEmailChangeCode(Long userId, String email) {
+        log.info("Requesting email change code for user {}", userId);
+        if (email == null || email.isBlank()) {
+            throw new InvalidRequestException("邮箱不能为空");
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+        String normalizedEmail = normalizeEmail(email);
+        String currentEmail = user.getEmail();
+        if (currentEmail != null && currentEmail.equals(normalizedEmail)) {
+            log.warn("User {} attempted to rebind identical email {}", userId, normalizedEmail);
+            throw new InvalidRequestException("新邮箱不能与当前邮箱相同");
+        }
+
+        userRepository
+            .findByEmailAndDeletedFalse(normalizedEmail)
+            .ifPresent(existing -> {
+                if (!existing.getId().equals(userId)) {
+                    log.warn("Email {} already in use when user {} requested change", normalizedEmail, userId);
+                    throw new DuplicateResourceException("邮箱已被使用");
+                }
+            });
+
+        emailVerificationService.issueCode(normalizedEmail, EmailVerificationPurpose.CHANGE_EMAIL);
+    }
+
+    /**
+     * Bind the new email after verification succeeds.
+     */
+    @Transactional
+    public UserEmailResponse changeEmail(Long userId, String email, String code) {
+        log.info("Changing email for user {}", userId);
+        if (email == null || email.isBlank()) {
+            throw new InvalidRequestException("邮箱不能为空");
+        }
+        if (code == null || code.isBlank()) {
+            throw new InvalidRequestException("验证码不能为空");
+        }
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+        String normalizedEmail = normalizeEmail(email);
+        String currentEmail = user.getEmail();
+        if (currentEmail != null && currentEmail.equals(normalizedEmail)) {
+            log.warn("User {} attempted to change to identical email {}", userId, normalizedEmail);
+            throw new InvalidRequestException("新邮箱不能与当前邮箱相同");
+        }
+
+        userRepository
+            .findByEmailAndDeletedFalse(normalizedEmail)
+            .ifPresent(existing -> {
+                if (!existing.getId().equals(userId)) {
+                    log.warn("Email {} already bound to another user", normalizedEmail);
+                    throw new DuplicateResourceException("邮箱已被使用");
+                }
+            });
+
+        emailVerificationService.consumeCode(normalizedEmail, code.trim(), EmailVerificationPurpose.CHANGE_EMAIL);
+        user.setEmail(normalizedEmail);
+        User saved = userRepository.save(user);
+        log.info("Email changed for user {}", userId);
+        return new UserEmailResponse(saved.getEmail());
+    }
+
+    /**
+     * Remove the email binding so the account cannot sign in via email anymore.
+     */
+    @Transactional
+    public UserEmailResponse unbindEmail(Long userId) {
+        log.info("Unbinding email for user {}", userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+        user.setEmail(null);
+        User saved = userRepository.save(user);
+        return new UserEmailResponse(saved.getEmail());
     }
 
     /**
