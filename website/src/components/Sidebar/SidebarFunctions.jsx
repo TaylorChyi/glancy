@@ -1,3 +1,4 @@
+import GomemoEntry from "./GomemoEntry.jsx";
 import Favorites from "./Favorites.jsx";
 import HistoryList from "./HistoryList.jsx";
 import { useUser } from "@/context";
@@ -7,6 +8,7 @@ function SidebarFunctions({ onToggleFavorites, onSelectHistory }) {
   const { user } = useUser();
   return (
     <div className={styles["sidebar-functions"]}>
+      <GomemoEntry />
       {user && <Favorites onToggle={onToggleFavorites} />}
       <HistoryList onSelect={onSelectHistory} />
     </div>

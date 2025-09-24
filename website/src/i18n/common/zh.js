@@ -34,6 +34,66 @@ export default {
   personalizationHooksTitle: "巩固建议",
   personalizationPromptsTitle: "思考提示",
   favorites: "收藏夹",
+  favoritesIconAlt: "打开收藏夹",
+  gomemo: "学单词",
+  gomemoIconAlt: "进入 Gomemo 词汇工坊",
+  gomemoTagline: "围绕目标定制的每日高优先级清单。",
+  gomemoHeroTitle: "Gomemo · 私享记忆设计",
+  gomemoHeroSubtitle:
+    "Gomemo 将年龄、兴趣、目标与未来规划编织成一体，让背词成为与你的节奏完美契合的日常仪式。",
+  gomemoHeroBadgePersonal: "年龄自适应",
+  gomemoHeroBadgeRhythm: "每日节奏智能",
+  gomemoHeroBadgeFuture: "提前对齐未来",
+  gomemoPriorityTitle: "精准知道当下该背什么",
+  gomemoPrioritySubtitle:
+    "加权引擎综合年龄画像、兴趣偏好、阶段目标、搜索记录、日背数量与未来计划，计算出最高优先级的词表。",
+  gomemoPriorityAgeTitle: "年龄节律匹配",
+  gomemoPriorityAgeDescription:
+    "难度梯度与叙事语境随年龄段微调，从校园到职场都能轻松吸收。",
+  gomemoPriorityInterestTitle: "兴趣脉络嵌入",
+  gomemoPriorityInterestDescription:
+    "例句与语境主动呼应你的兴趣领域，让新词迅速融入熟悉的世界。",
+  gomemoPriorityGoalTitle: "目标导向加速",
+  gomemoPriorityGoalDescription:
+    "无论是考试、面试还是商务场景，系统都会突出最能推动成果的词汇。",
+  gomemoPriorityHistoryTitle: "搜索记忆回溯",
+  gomemoPriorityHistoryDescription:
+    "近期查询、遗忘词与易错点重新排队，弱项不会再悄然滑落。",
+  gomemoPriorityDailyTitle: "每日剂量校准",
+  gomemoPriorityDailyDescription:
+    "依据你的词量承诺调节节奏，既不过载也能保持稳步进阶。",
+  gomemoPriorityPlanTitle: "未来计划联动",
+  gomemoPriorityPlanDescription:
+    "旅行、升学或职业转折等规划都会提前反映，词汇准备领先一步。",
+  gomemoModesTitle: "精选记忆法，一应俱全",
+  gomemoModesSubtitle:
+    "汇聚市面验证过的高效记忆方式，打造高奢却高效的学习闭环。",
+  gomemoModesCardTitle: "沉浸式卡片",
+  gomemoModesCardDescription: "高质感图文与助记提示并行，秒建联想、持久记忆。",
+  gomemoModesQuizTitle: "智适应选择题",
+  gomemoModesQuizDescription:
+    "干扰项按掌握度调节，训练细微辨识力与考试反应速度。",
+  gomemoModesSpellingTitle: "精准拼写",
+  gomemoModesSpellingDescription: "输入纠错与音素提示同步呈现，消除拼写盲区。",
+  gomemoModesVisualTitle: "图像匹配",
+  gomemoModesVisualDescription: "依照兴趣选择图像锚点，激活多感官记忆通路。",
+  gomemoModesAudioTitle: "沉浸听力",
+  gomemoModesAudioDescription: "录音室级发音与跟读训练，雕琢口音与语调。",
+  gomemoInsightsTitle: "记录、复盘、再提升",
+  gomemoInsightsSubtitle:
+    "全程记录背诵轨迹，并由豆包输出高质复盘与下一阶段建议。",
+  gomemoInsightsTrackingTitle: "立体化进度洞察",
+  gomemoInsightsTrackingDescription:
+    "热力图与记忆曲线及时提示该强化、该休息还是该进阶。",
+  gomemoInsightsReviewTitle: "豆包复盘报告",
+  gomemoInsightsReviewDescription:
+    "豆包以叙事方式总结当日亮点与薄弱词，打造高记忆度回顾。",
+  gomemoInsightsNextTitle: "未来学习指引",
+  gomemoInsightsNextDescription:
+    "给出周末冲刺、主题词单与长线规划建议，紧贴你的未来安排。",
+  gomemoCtaTitle: "开启你的专属词汇工作室",
+  gomemoCtaSubtitle: "让每一次背诵都与抱负同频，优雅而高效。",
+  gomemoCtaAction: "立即启用智能背词",
   searchHistory: "搜索记录",
   noDefinition: "暂无释义",
   noFavorites: "暂无收藏",
