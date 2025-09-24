@@ -1,8 +1,8 @@
 package com.glancy.backend.service.gomemo;
 
 import com.glancy.backend.config.GomemoProperties;
-import com.glancy.backend.dto.GomemoPlanResponse;
 import com.glancy.backend.dto.GomemoPersonaView;
+import com.glancy.backend.dto.GomemoPlanResponse;
 import com.glancy.backend.dto.GomemoPriorityWordView;
 import com.glancy.backend.dto.GomemoProgressRequest;
 import com.glancy.backend.dto.GomemoProgressSnapshotView;
@@ -114,7 +114,9 @@ public class DefaultGomemoService implements GomemoService {
         progress.setNote(request.note());
         progressRepository.save(progress);
         List<GomemoProgress> entries = progressRepository.findBySessionIdAndDeletedFalse(sessionId);
-        List<GomemoSessionWord> words = sessionWordRepository.findBySessionIdAndDeletedFalseOrderByPriorityScoreDesc(sessionId);
+        List<GomemoSessionWord> words = sessionWordRepository.findBySessionIdAndDeletedFalseOrderByPriorityScoreDesc(
+            sessionId
+        );
         return progressCalculator.summarize(entries, Math.min(words.size(), session.getDailyTarget()));
     }
 
@@ -124,7 +126,10 @@ public class DefaultGomemoService implements GomemoService {
         GomemoSession session = validateSessionOwnership(userId, sessionId);
         List<GomemoProgress> entries = progressRepository.findBySessionIdAndDeletedFalse(sessionId);
         List<GomemoPlanWord> plan = wordPrioritizer.reloadFromSession(sessionId);
-        GomemoProgressSnapshotView snapshot = progressCalculator.summarize(entries, Math.min(plan.size(), session.getDailyTarget()));
+        GomemoProgressSnapshotView snapshot = progressCalculator.summarize(
+            entries,
+            Math.min(plan.size(), session.getDailyTarget())
+        );
         GomemoPersona persona = personaResolver.resolve(userId);
         GomemoReviewComposer.ReviewResult result = reviewComposer.compose(persona, plan, snapshot, entries);
         session.setCompleted(Boolean.TRUE);

@@ -43,7 +43,12 @@ class GomemoWordPrioritizerTest {
     void setUp() {
         GomemoProperties properties = new GomemoProperties();
         properties.setPlanOversamplingFactor(2);
-        prioritizer = new GomemoWordPrioritizer(searchRecordRepository, wordRepository, sessionWordRepository, properties);
+        prioritizer = new GomemoWordPrioritizer(
+            searchRecordRepository,
+            wordRepository,
+            sessionWordRepository,
+            properties
+        );
     }
 
     /**
@@ -60,8 +65,9 @@ class GomemoWordPrioritizerTest {
         strategy.setTerm("strategy");
         strategy.setLanguage(Language.ENGLISH);
         strategy.setFavorite(false);
-        when(searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(eq(userId), any(PageRequest.class)))
-            .thenReturn(List.of(innovation, strategy));
+        when(
+            searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(eq(userId), any(PageRequest.class))
+        ).thenReturn(List.of(innovation, strategy));
         Word innovationWord = new Word();
         innovationWord.setTerm("innovation");
         innovationWord.setLanguage(Language.ENGLISH);
@@ -70,10 +76,23 @@ class GomemoWordPrioritizerTest {
         strategyWord.setTerm("strategy");
         strategyWord.setLanguage(Language.ENGLISH);
         strategyWord.setDefinitions(List.of("long-term corporate planning"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("innovation", Language.ENGLISH)).thenReturn(java.util.Optional.of(innovationWord));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("strategy", Language.ENGLISH)).thenReturn(java.util.Optional.of(strategyWord));
+        when(wordRepository.findByTermAndLanguageAndDeletedFalse("innovation", Language.ENGLISH)).thenReturn(
+            java.util.Optional.of(innovationWord)
+        );
+        when(wordRepository.findByTermAndLanguageAndDeletedFalse("strategy", Language.ENGLISH)).thenReturn(
+            java.util.Optional.of(strategyWord)
+        );
         when(wordRepository.findAll(any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));
-        GomemoPersona persona = new GomemoPersona(28, "descriptor", "audience", "tone", 5, "海外演讲", "国际合作", List.of("business"));
+        GomemoPersona persona = new GomemoPersona(
+            28,
+            "descriptor",
+            "audience",
+            "tone",
+            5,
+            "海外演讲",
+            "国际合作",
+            List.of("business")
+        );
 
         List<GomemoPlanWord> plan = prioritizer.prioritize(userId, persona, 3);
 
@@ -95,8 +114,12 @@ class GomemoWordPrioritizerTest {
         stored.setLanguage(Language.ENGLISH);
         stored.setPriorityScore(10);
         stored.setRationales(List.of("近期检索优先复习"));
-        stored.setRecommendedModes(new java.util.LinkedHashSet<>(List.of(com.glancy.backend.gomemo.model.GomemoStudyModeType.CARD)));
-        when(sessionWordRepository.findBySessionIdAndDeletedFalseOrderByPriorityScoreDesc(10L)).thenReturn(List.of(stored));
+        stored.setRecommendedModes(
+            new java.util.LinkedHashSet<>(List.of(com.glancy.backend.gomemo.model.GomemoStudyModeType.CARD))
+        );
+        when(sessionWordRepository.findBySessionIdAndDeletedFalseOrderByPriorityScoreDesc(10L)).thenReturn(
+            List.of(stored)
+        );
 
         List<GomemoPlanWord> reloaded = prioritizer.reloadFromSession(10L);
 

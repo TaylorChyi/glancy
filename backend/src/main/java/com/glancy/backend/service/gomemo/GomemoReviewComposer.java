@@ -31,7 +31,11 @@ public class GomemoReviewComposer {
     private final PromptManager promptManager;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public GomemoReviewComposer(LLMClientFactory clientFactory, GomemoProperties properties, PromptManager promptManager) {
+    public GomemoReviewComposer(
+        LLMClientFactory clientFactory,
+        GomemoProperties properties,
+        PromptManager promptManager
+    ) {
         this.clientFactory = clientFactory;
         this.properties = properties;
         this.promptManager = promptManager;
@@ -93,10 +97,12 @@ public class GomemoReviewComposer {
             .append("/" + snapshot.totalWords());
         builder
             .append("\nPlan words: ")
-            .append(plan
-                .stream()
-                .map(word -> word.term() + "(" + word.priorityScore() + ")")
-                .collect(Collectors.joining(", ")));
+            .append(
+                plan
+                    .stream()
+                    .map(word -> word.term() + "(" + word.priorityScore() + ")")
+                    .collect(Collectors.joining(", "))
+            );
         if (!CollectionUtils.isEmpty(snapshot.details())) {
             builder.append("\nProgress: ");
             for (GomemoProgressDetailView detail : snapshot.details()) {

@@ -1,6 +1,7 @@
 package com.glancy.backend.service.gomemo;
 
 import com.glancy.backend.config.GomemoProperties;
+import com.glancy.backend.entity.GomemoSession;
 import com.glancy.backend.entity.GomemoSessionWord;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
@@ -8,7 +9,6 @@ import com.glancy.backend.entity.Word;
 import com.glancy.backend.gomemo.model.GomemoPersona;
 import com.glancy.backend.gomemo.model.GomemoPlanWord;
 import com.glancy.backend.gomemo.model.GomemoStudyModeType;
-import com.glancy.backend.entity.GomemoSession;
 import com.glancy.backend.repository.GomemoSessionWordRepository;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.WordRepository;
@@ -79,13 +79,15 @@ public class GomemoWordPrioritizer {
         return sessionWordRepository
             .findBySessionIdAndDeletedFalseOrderByPriorityScoreDesc(sessionId)
             .stream()
-            .map(word -> new GomemoPlanWord(
-                word.getTerm(),
-                word.getLanguage(),
-                word.getPriorityScore(),
-                List.copyOf(word.getRationales() != null ? word.getRationales() : List.of()),
-                List.copyOf(word.getRecommendedModes() != null ? word.getRecommendedModes() : Set.of())
-            ))
+            .map(word ->
+                new GomemoPlanWord(
+                    word.getTerm(),
+                    word.getLanguage(),
+                    word.getPriorityScore(),
+                    List.copyOf(word.getRationales() != null ? word.getRationales() : List.of()),
+                    List.copyOf(word.getRecommendedModes() != null ? word.getRecommendedModes() : Set.of())
+                )
+            )
             .toList();
     }
 
@@ -111,7 +113,11 @@ public class GomemoWordPrioritizer {
         return sessionWordRepository.save(entity);
     }
 
-    private GomemoPlanWord enrichCandidate(Candidate candidate, GomemoPersona persona, GomemoProperties.Scoring scoring) {
+    private GomemoPlanWord enrichCandidate(
+        Candidate candidate,
+        GomemoPersona persona,
+        GomemoProperties.Scoring scoring
+    ) {
         Word word = wordRepository
             .findByTermAndLanguageAndDeletedFalse(candidate.term, candidate.language)
             .orElse(null);
@@ -137,10 +143,21 @@ public class GomemoWordPrioritizer {
             rationales.add("词形稍长，建议拆解记忆");
         }
         List<GomemoStudyModeType> modes = recommendModes(word, candidate, persona);
-        return new GomemoPlanWord(candidate.term, candidate.language, Math.max(score, 0), List.copyOf(rationales), modes);
+        return new GomemoPlanWord(
+            candidate.term,
+            candidate.language,
+            Math.max(score, 0),
+            List.copyOf(rationales),
+            modes
+        );
     }
 
-    private int applyPersonaSignals(Word word, GomemoPersona persona, List<String> rationales, GomemoProperties.Scoring scoring) {
+    private int applyPersonaSignals(
+        Word word,
+        GomemoPersona persona,
+        List<String> rationales,
+        GomemoProperties.Scoring scoring
+    ) {
         int score = 0;
         String searchable = buildSearchableCorpus(word);
         if (!CollectionUtils.isEmpty(persona.interests())) {
@@ -234,13 +251,25 @@ public class GomemoWordPrioritizer {
         Map<String, Candidate> candidates = new LinkedHashMap<>();
         int index = 0;
         for (SearchRecord record : history) {
-            addCandidate(candidates, record.getLanguage(), record.getTerm(), Boolean.TRUE.equals(record.getFavorite()), index);
+            addCandidate(
+                candidates,
+                record.getLanguage(),
+                record.getTerm(),
+                Boolean.TRUE.equals(record.getFavorite()),
+                index
+            );
             index++;
         }
         return candidates;
     }
 
-    private void addCandidate(Map<String, Candidate> candidates, Language language, String term, boolean favorite, int position) {
+    private void addCandidate(
+        Map<String, Candidate> candidates,
+        Language language,
+        String term,
+        boolean favorite,
+        int position
+    ) {
         if (!StringUtils.hasText(term) || language == null) {
             return;
         }
@@ -255,6 +284,7 @@ public class GomemoWordPrioritizer {
     }
 
     private static final class Candidate {
+
         private final String term;
         private final Language language;
         private int frequency = 0;

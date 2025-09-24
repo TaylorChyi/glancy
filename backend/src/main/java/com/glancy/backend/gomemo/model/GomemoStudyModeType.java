@@ -9,5 +9,5 @@ public enum GomemoStudyModeType {
     MULTIPLE_CHOICE,
     SPELLING,
     VISUAL_ASSOCIATION,
-    LISTENING
+    LISTENING,
 }
