@@ -80,9 +80,8 @@ class WordSearcherImplTest {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        assertThrows(
-            IllegalStateException.class,
-            () -> searcher.search("hi", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT)
+        assertThrows(IllegalStateException.class, () ->
+            searcher.search("hi", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT)
         );
     }
 }
