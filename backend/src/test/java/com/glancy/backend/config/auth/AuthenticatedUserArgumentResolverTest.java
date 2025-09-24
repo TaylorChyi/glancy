@@ -58,9 +58,7 @@ class AuthenticatedUserArgumentResolverTest {
         User expectedUser = new User();
         expectedUser.setId(9L);
         expectedUser.setUsername("architect");
-        SecurityContextHolder
-            .getContext()
-            .setAuthentication(new UsernamePasswordAuthenticationToken(9L, "token"));
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(9L, "token"));
         when(userService.getUserRaw(9L)).thenReturn(expectedUser);
 
         Object resolved = resolver.resolveArgument(userParameter, null, WEB_REQUEST, null);
@@ -74,9 +72,7 @@ class AuthenticatedUserArgumentResolverTest {
      */
     @Test
     void resolveArgumentRejectsNonNumericPrincipal() {
-        SecurityContextHolder
-            .getContext()
-            .setAuthentication(new TestingAuthenticationToken("anonymousUser", null));
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken("anonymousUser", null));
 
         assertThatThrownBy(() -> resolver.resolveArgument(userIdParameter, null, WEB_REQUEST, null))
             .isInstanceOf(UnauthorizedException.class)
