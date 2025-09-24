@@ -96,6 +96,61 @@ const INITIAL_STATE: Pick<
   error: null,
 };
 
+type PersistedKey = "plan" | "review";
+
+type PersistedState = Pick<GomemoState, PersistedKey>;
+
+const PERSISTED_KEYS: PersistedKey[] = ["plan", "review"];
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const deriveInitialMode = (plan: GomemoPlan | null): string | null => {
+  if (!plan) return null;
+  const firstWord = plan.words?.[0];
+  if (firstWord?.recommendedModes?.length) {
+    return firstWord.recommendedModes[0];
+  }
+  return plan.modes?.[0]?.type ?? null;
+};
+
+const normalizePlan = (payload: unknown): GomemoPlan => {
+  if (!isObject(payload)) {
+    throw new Error("无效的 Gomemo 返回值");
+  }
+  const {
+    sessionId,
+    sessionDate,
+    persona,
+    planHighlights,
+    words,
+    modes,
+    progress,
+  } = payload;
+  if (
+    sessionId == null ||
+    sessionDate == null ||
+    !isObject(persona) ||
+    !isObject(progress)
+  ) {
+    throw new Error("无效的 Gomemo 返回值");
+  }
+  return {
+    sessionId: Number(sessionId),
+    sessionDate: String(sessionDate),
+    persona: persona as GomemoPersona,
+    planHighlights: Array.isArray(planHighlights) ? planHighlights : [],
+    words: Array.isArray(words) ? (words as GomemoPriorityWord[]) : [],
+    modes: Array.isArray(modes) ? (modes as GomemoStudyMode[]) : [],
+    progress: progress as GomemoProgressSnapshot,
+  };
+};
+
+const isPersistedState = (value: unknown): value is PersistedState => {
+  if (!isObject(value)) return false;
+  return PERSISTED_KEYS.some((key) => key in value);
+};
+
 export const useGomemoStore = createPersistentStore<GomemoState>({
   key: "gomemo",
   initializer: (set, get) => ({
@@ -106,33 +161,18 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
         const response = await api.gomemo.getPlan({
           token: token ?? undefined,
         });
-        if (!response || typeof response !== "object") {
-          throw new Error("无效的 Gomemo 返回值");
-        }
-        const plan: GomemoPlan = {
-          sessionId: Number(response.sessionId),
-          sessionDate: response.sessionDate,
-          persona: response.persona,
-          planHighlights: Array.isArray(response.planHighlights)
-            ? response.planHighlights
-            : [],
-          words: Array.isArray(response.words) ? response.words : [],
-          modes: Array.isArray(response.modes) ? response.modes : [],
-          progress: response.progress,
-        };
-        const firstWord = plan.words[0];
-        const initialMode =
-          firstWord?.recommendedModes?.[0] ?? plan.modes?.[0]?.type ?? null;
+        const plan = normalizePlan(response);
         set({
           plan,
           review: null,
           activeWordIndex: 0,
-          activeMode: initialMode,
-          loading: false,
+          activeMode: deriveInitialMode(plan),
         });
       } catch (error) {
         console.error(error);
-        set({ error: error?.message ?? "加载失败", loading: false });
+        set({ error: error?.message ?? "加载失败" });
+      } finally {
+        set({ loading: false });
       }
     },
     selectWord(index) {
@@ -194,19 +234,22 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
       set({ ...INITIAL_STATE });
     },
   }),
-  persist: {
-    serializer: {
-      serialize: (state) =>
-        JSON.stringify(pickState(state, ["plan", "review"])),
-      deserialize: (value) => {
-        if (!value) return { plan: null, review: null };
-        try {
-          return JSON.parse(value);
-        } catch (error) {
-          console.error(error);
-          return { plan: null, review: null };
-        }
-      },
+  persistOptions: {
+    partialize: pickState<GomemoState, PersistedKey>(PERSISTED_KEYS),
+    merge: (persisted, current) => {
+      if (!isPersistedState(persisted)) {
+        return current;
+      }
+      const plan = persisted.plan ?? null;
+      return {
+        ...current,
+        ...persisted,
+        plan,
+        activeWordIndex: 0,
+        activeMode: deriveInitialMode(plan),
+        loading: false,
+        error: null,
+      };
     },
   },
 });
