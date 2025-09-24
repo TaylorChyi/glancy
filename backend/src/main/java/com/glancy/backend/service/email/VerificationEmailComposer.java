@@ -183,6 +183,7 @@ public class VerificationEmailComposer {
         return switch (purpose) {
             case REGISTER -> "注册";
             case LOGIN -> "登录";
+            case CHANGE_EMAIL -> "邮箱变更";
         };
     }
 
