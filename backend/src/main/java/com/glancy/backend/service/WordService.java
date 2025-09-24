@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
@@ -66,10 +67,11 @@ public class WordService {
         String term,
         Language language,
         String model,
-        SearchRecordResponse record
+        SearchRecordResponse record,
+        WordPersonalizationContext personalizationContext
     ) {
         log.info("Word '{}' not found locally or forceNew requested, searching via LLM", term);
-        WordResponse resp = wordSearcher.search(term, language, model);
+        WordResponse resp = wordSearcher.search(term, language, model, personalizationContext);
         log.info("LLM search result: {}", resp);
         Word savedWord = saveWord(term, resp, language);
         String content = resp.getMarkdown();
@@ -85,7 +87,7 @@ public class WordService {
         if (version != null) {
             resp.setVersionId(version.getId());
         }
-        return applyPersonalization(userId, resp);
+        return applyPersonalization(userId, resp, personalizationContext);
     }
 
     private Mono<StreamPayload> finalizeStreamingSession(StreamingAccumulator session) {
@@ -100,7 +102,11 @@ public class WordService {
         }
         try {
             ParsedWord parsed = parser.parse(completion.sanitizedContent(), session.term(), session.language());
-            WordResponse response = applyPersonalization(session.userId(), parsed.parsed());
+            WordResponse response = applyPersonalization(
+                session.userId(),
+                parsed.parsed(),
+                session.personalizationContext()
+            );
             Word savedWord = saveWord(session.term(), response, session.language());
             SearchResultVersion version = persistVersion(
                 session.recordId(),
@@ -148,6 +154,7 @@ public class WordService {
     @Transactional
     public WordResponse findWordForUser(Long userId, String term, Language language, String model, boolean forceNew) {
         log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, model);
+        WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         userPreferenceRepository
             .findByUserId(userId)
             .orElseGet(() -> {
@@ -165,11 +172,11 @@ public class WordService {
                 .findByTermAndLanguageAndDeletedFalse(term, language)
                 .map(word -> {
                     log.info("Found word '{}' in local repository", term);
-                    return applyPersonalization(userId, toResponse(word));
+                    return applyPersonalization(userId, toResponse(word), personalizationContext);
                 })
-                .orElseGet(() -> fetchAndPersistWord(userId, term, language, model, record));
+                .orElseGet(() -> fetchAndPersistWord(userId, term, language, model, record, personalizationContext));
         }
-        return fetchAndPersistWord(userId, term, language, model, record);
+        return fetchAndPersistWord(userId, term, language, model, record, personalizationContext);
     }
 
     /**
@@ -184,6 +191,7 @@ public class WordService {
         boolean forceNew
     ) {
         log.info("Streaming word '{}' for user {} in language {} using model {}", term, userId, language, model);
+        WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
@@ -201,7 +209,11 @@ public class WordService {
             if (existing.isPresent()) {
                 log.info("Found cached word '{}' in language {}", term, language);
                 try {
-                    WordResponse cached = applyPersonalization(userId, toResponse(existing.get()));
+                    WordResponse cached = applyPersonalization(
+                        userId,
+                        toResponse(existing.get()),
+                        personalizationContext
+                    );
                     return Flux.just(StreamPayload.data(serializeResponse(cached)));
                 } catch (Exception e) {
                     log.error("Failed to serialize cached word '{}'", term, e);
@@ -210,10 +222,11 @@ public class WordService {
             }
         }
 
-        StreamingAccumulator session = new StreamingAccumulator(userId, record.id(), term, language, model);
+        StreamingAccumulator session =
+            new StreamingAccumulator(userId, record.id(), term, language, model, personalizationContext);
         Flux<String> stream;
         try {
-            stream = wordSearcher.streamSearch(term, language, model);
+            stream = wordSearcher.streamSearch(term, language, model, personalizationContext);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
@@ -249,6 +262,7 @@ public class WordService {
         private final String term;
         private final Language language;
         private final String model;
+        private final WordPersonalizationContext personalizationContext;
         private final Instant startedAt = Instant.now();
         private final StringBuilder transcript = new StringBuilder();
         private int chunkCount;
@@ -256,12 +270,20 @@ public class WordService {
         private Throwable failure;
         private String snapshot;
 
-        StreamingAccumulator(Long userId, Long recordId, String term, Language language, String model) {
+        StreamingAccumulator(
+            Long userId,
+            Long recordId,
+            String term,
+            Language language,
+            String model,
+            WordPersonalizationContext personalizationContext
+        ) {
             this.userId = userId;
             this.recordId = recordId;
             this.term = term;
             this.language = language;
             this.model = model;
+            this.personalizationContext = personalizationContext;
         }
 
         void append(String chunk) {
@@ -333,6 +355,10 @@ public class WordService {
         String model() {
             return model;
         }
+
+        WordPersonalizationContext personalizationContext() {
+            return personalizationContext;
+        }
     }
 
     private String serialize(Word word) throws JsonProcessingException {
@@ -387,12 +413,18 @@ public class WordService {
         );
     }
 
-    private WordResponse applyPersonalization(Long userId, WordResponse response) {
+    private WordResponse applyPersonalization(
+        Long userId,
+        WordResponse response,
+        WordPersonalizationContext context
+    ) {
         if (response == null) {
             return null;
         }
         try {
-            response.setPersonalization(wordPersonalizationService.personalize(userId, response));
+            WordPersonalizationContext effectiveContext =
+                context != null ? context : wordPersonalizationService.resolveContext(userId);
+            response.setPersonalization(wordPersonalizationService.personalize(effectiveContext, response));
         } catch (Exception ex) {
             log.warn(
                 "Failed to personalize response for user {} term '{}': {}",

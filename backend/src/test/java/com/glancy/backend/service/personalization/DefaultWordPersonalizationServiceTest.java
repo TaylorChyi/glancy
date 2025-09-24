@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.glancy.backend.dto.PersonalizedWordExplanation;
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
@@ -82,7 +83,18 @@ class DefaultWordPersonalizationServiceTest {
             null
         );
 
-        PersonalizedWordExplanation result = service.personalize(1L, response);
+        WordPersonalizationContext context = service.resolveContext(1L);
+        assertNotNull(context);
+        assertTrue(context.personaDerivedFromProfile());
+        assertEquals("自驱力强的青年进阶者", context.personaDescriptor());
+        assertEquals("大学或初入职场的伙伴", context.audienceDescriptor());
+        assertTrue(context.hasSignals());
+        assertEquals("通过商务演讲展示专业度", context.goal());
+        assertEquals("柔和而坚定", context.preferredTone());
+        assertEquals(List.of("金融", "设计"), context.interests());
+        assertEquals(List.of("equity", "portfolio"), context.recentTerms());
+
+        PersonalizedWordExplanation result = service.personalize(context, response);
 
         assertNotNull(result);
         assertTrue(result.personaSummary().contains("金融"));

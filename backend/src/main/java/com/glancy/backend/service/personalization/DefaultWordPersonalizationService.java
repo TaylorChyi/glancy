@@ -1,6 +1,7 @@
 package com.glancy.backend.service.personalization;
 
 import com.glancy.backend.dto.PersonalizedWordExplanation;
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.UserProfile;
@@ -42,20 +43,42 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
     }
 
     @Override
-    public PersonalizedWordExplanation personalize(Long userId, WordResponse response) {
-        PersonalizationContext context = buildContext(userId);
-        return composeExplanation(context, response);
-    }
-
-    private PersonalizationContext buildContext(Long userId) {
+    public WordPersonalizationContext resolveContext(Long userId) {
         Optional<UserProfile> profile = userProfileRepository.findByUserId(userId);
-        AgeBand ageBand = profile.map(UserProfile::getAge).map(AgeBand::fromAge).orElse(AgeBand.UNKNOWN);
+        Integer age = profile.map(UserProfile::getAge).orElse(null);
+        AgeBand ageBand = AgeBand.fromAge(age);
         String goal = profile.map(UserProfile::getGoal).map(this::normalizeText).orElse(null);
         String gender = profile.map(UserProfile::getGender).map(this::normalizeText).orElse(null);
         List<String> interests = profile.map(UserProfile::getInterest).map(this::parseInterests).orElseGet(List::of);
-
         List<String> recentTerms = fetchRecentTerms(userId);
-        return new PersonalizationContext(ageBand, goal, gender, interests, recentTerms);
+        String tone = gender != null ? resolveTone(gender) : null;
+        boolean personaDerived = age != null;
+        return new WordPersonalizationContext(
+            ageBand.descriptor(),
+            personaDerived,
+            ageBand.audience(),
+            goal,
+            tone,
+            interests,
+            recentTerms
+        );
+    }
+
+    @Override
+    public PersonalizedWordExplanation personalize(WordPersonalizationContext context, WordResponse response) {
+        WordPersonalizationContext effectiveContext =
+            context != null
+                ? context
+                : new WordPersonalizationContext(
+                    AgeBand.UNKNOWN.descriptor(),
+                    false,
+                    AgeBand.UNKNOWN.audience(),
+                    null,
+                    null,
+                    List.of(),
+                    List.of()
+                );
+        return composeExplanation(effectiveContext, response);
     }
 
     private List<String> fetchRecentTerms(Long userId) {
@@ -79,7 +102,10 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return List.copyOf(deduplicated);
     }
 
-    private PersonalizedWordExplanation composeExplanation(PersonalizationContext context, WordResponse response) {
+    private PersonalizedWordExplanation composeExplanation(
+        WordPersonalizationContext context,
+        WordResponse response
+    ) {
         String personaSummary = buildPersonaSummary(context, response);
         String keyTakeaway = buildKeyTakeaway(response);
         String contextualExplanation = buildContextualExplanation(context, response);
@@ -88,20 +114,23 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return new PersonalizedWordExplanation(personaSummary, keyTakeaway, contextualExplanation, hooks, prompts);
     }
 
-    private String buildPersonaSummary(PersonalizationContext context, WordResponse response) {
-        StringBuilder builder = new StringBuilder(context.ageBand().descriptor());
+    private String buildPersonaSummary(WordPersonalizationContext context, WordResponse response) {
+        StringBuilder builder = new StringBuilder(context.personaDescriptor());
         if (!context.interests().isEmpty()) {
             builder
                 .append("，关注")
                 .append(
-                    String.join("、", context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT)))
+                    String.join(
+                        "、",
+                        context.interests().subList(0, Math.min(context.interests().size(), HOOK_LIMIT))
+                    )
                 );
         }
         if (StringUtils.hasText(context.goal())) {
             builder.append("，正在为了").append(context.goal()).append("努力");
         }
-        if (StringUtils.hasText(context.gender())) {
-            builder.append("。偏好语气：").append(resolveTone(context.gender()));
+        if (StringUtils.hasText(context.preferredTone())) {
+            builder.append("。偏好语气：").append(context.preferredTone());
         }
         if (StringUtils.hasText(response.getTerm())) {
             builder.append("。本次聚焦词汇：").append(response.getTerm());
@@ -122,7 +151,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return "核心释义：该词条暂无结构化定义，请结合上下文理解。";
     }
 
-    private String buildContextualExplanation(PersonalizationContext context, WordResponse response) {
+    private String buildContextualExplanation(WordPersonalizationContext context, WordResponse response) {
         StringBuilder builder = new StringBuilder();
         if (!context.interests().isEmpty()) {
             builder
@@ -154,7 +183,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return builder.toString();
     }
 
-    private List<String> buildLearningHooks(PersonalizationContext context, WordResponse response) {
+    private List<String> buildLearningHooks(WordPersonalizationContext context, WordResponse response) {
         List<String> hooks = new ArrayList<>();
         if (!context.recentTerms().isEmpty() && StringUtils.hasText(response.getTerm())) {
             String related = context
@@ -190,10 +219,10 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return List.copyOf(hooks);
     }
 
-    private List<String> buildReflectionPrompts(PersonalizationContext context, WordResponse response) {
+    private List<String> buildReflectionPrompts(WordPersonalizationContext context, WordResponse response) {
         List<String> prompts = new ArrayList<>();
         String term = Optional.ofNullable(response.getTerm()).filter(StringUtils::hasText).orElse("该词");
-        prompts.add("如果向一位" + context.ageBand().audience() + "解释" + term + "，你会怎么说？");
+        prompts.add("如果向一位" + context.audienceDescriptor() + "解释" + term + "，你会怎么说？");
         if (StringUtils.hasText(context.goal())) {
             prompts.add("这个词如何帮助你更接近" + context.goal() + "？尝试写下行动计划。");
         } else {
@@ -297,16 +326,4 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         }
     }
 
-    private record PersonalizationContext(
-        AgeBand ageBand,
-        String goal,
-        String gender,
-        List<String> interests,
-        List<String> recentTerms
-    ) {
-        PersonalizationContext {
-            interests = interests == null ? List.of() : List.copyOf(interests);
-            recentTerms = recentTerms == null ? List.of() : List.copyOf(recentTerms);
-        }
-    }
 }

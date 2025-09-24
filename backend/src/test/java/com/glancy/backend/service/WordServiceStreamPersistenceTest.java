@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
@@ -53,10 +54,23 @@ class WordServiceStreamPersistenceTest {
     @Mock
     private WordPersonalizationService wordPersonalizationService;
 
+    private WordPersonalizationContext personalizationContext;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(wordPersonalizationService.personalize(anyLong(), any())).thenReturn(
+        personalizationContext =
+            new WordPersonalizationContext(
+                "自驱力强的青年进阶者",
+                true,
+                "大学或初入职场的伙伴",
+                "突破商务演讲",
+                "柔和而坚定",
+                List.of("金融"),
+                List.of("equity")
+            );
+        when(wordPersonalizationService.resolveContext(anyLong())).thenReturn(personalizationContext);
+        when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
         wordService = new WordService(
@@ -94,7 +108,7 @@ class WordServiceStreamPersistenceTest {
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("cached") && payload.event() == null)
             .verifyComplete();
-        verify(wordSearcher, never()).streamSearch(any(), any(), any());
+        verify(wordSearcher, never()).streamSearch(any(), any(), any(), any());
         verify(searchRecordService).saveRecord(eq(1L), any());
     }
 
@@ -103,7 +117,7 @@ class WordServiceStreamPersistenceTest {
     void savesAfterStreaming() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(
+        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
             Flux.just("{\"term\":\"hi\"}", "<END>")
         );
         WordResponse resp = new WordResponse(
@@ -168,7 +182,9 @@ class WordServiceStreamPersistenceTest {
     void skipPersistenceWhenSentinelMissing() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(Flux.just("{\"term\":\"hi\"}"));
+        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
+            Flux.just("{\"term\":\"hi\"}")
+        );
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null, false);
 
@@ -193,7 +209,7 @@ class WordServiceStreamPersistenceTest {
     void doesNotSaveOnError() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch("hi", Language.ENGLISH, null)).thenReturn(
+        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
             Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom")))
         );
 
