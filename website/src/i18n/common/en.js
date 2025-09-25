@@ -57,7 +57,6 @@ export default {
   favoritesIconAlt: "Open favorites collection",
   gomemo: "Gomemo",
   gomemoIconAlt: "Navigate to the Gomemo vocabulary atelier",
-  gomemoTagline: "Daily priority words, curated for your ambitions.",
   gomemoHeroTitle: "Gomemo · Bespoke vocabulary mastery",
   gomemoHeroSubtitle:
     "Gomemo orchestrates spaced memorisation that honours your age, passions, goals and future plans in one seamless ritual.",

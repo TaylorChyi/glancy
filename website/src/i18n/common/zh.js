@@ -56,7 +56,6 @@ export default {
   favoritesIconAlt: "打开收藏夹",
   gomemo: "为学单词",
   gomemoIconAlt: "进入 Gomemo 词汇工坊",
-  gomemoTagline: "围绕目标定制的每日高优先级清单。",
   gomemoHeroTitle: "Gomemo · 私享记忆设计",
   gomemoHeroSubtitle:
     "Gomemo 将年龄、兴趣、目标与未来规划编织成一体，让背词成为与你的节奏完美契合的日常仪式。",
