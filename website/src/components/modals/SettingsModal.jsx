@@ -7,9 +7,9 @@ function SettingsModal({ open, onClose }) {
     <BaseModal
       open={open}
       onClose={onClose}
-      className={`modal-content ${styles["auth-modal"]}`}
+      className={`${styles.dialog} modal-content`}
     >
-      <Preferences />
+      <Preferences variant="dialog" />
     </BaseModal>
   );
 }
