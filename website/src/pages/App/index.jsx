@@ -146,28 +146,6 @@ function App() {
     setDictionarySourceLanguage,
     setDictionaryTargetLanguage,
   ]);
-  const toolbarLanguageProps = useMemo(
-    () => ({
-      sourceLanguage: dictionarySourceLanguage,
-      sourceLanguageOptions,
-      onSourceLanguageChange: setDictionarySourceLanguage,
-      sourceLanguageLabel: t.dictionarySourceLanguageLabel,
-      targetLanguage: dictionaryTargetLanguage,
-      targetLanguageOptions,
-      onTargetLanguageChange: setDictionaryTargetLanguage,
-      targetLanguageLabel: t.dictionaryTargetLanguageLabel,
-    }),
-    [
-      dictionarySourceLanguage,
-      sourceLanguageOptions,
-      setDictionarySourceLanguage,
-      t.dictionarySourceLanguageLabel,
-      dictionaryTargetLanguage,
-      targetLanguageOptions,
-      setDictionaryTargetLanguage,
-      t.dictionaryTargetLanguageLabel,
-    ],
-  );
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -740,7 +718,6 @@ function App() {
       onShare={isEntryViewActive ? handleShare : undefined}
       canReport={isTermActionable}
       onReport={isEntryViewActive ? handleReport : undefined}
-      {...toolbarLanguageProps}
     />
   );
 
