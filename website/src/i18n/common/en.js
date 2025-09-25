@@ -37,6 +37,7 @@ export default {
   dictionarySourceLanguageChinese: "Chinese term",
   dictionarySourceLanguageChineseDescription:
     "Treat the input as Chinese and surface Chinese-first experiences.",
+  dictionarySwapLanguages: "Swap languages",
   dictionaryTargetLanguageLabel: "Target language",
   dictionaryTargetLanguageEnglish: "English definitions",
   dictionaryTargetLanguageEnglishDescription:

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import ThemeIcon from "@/components/ui/Icon";
 import SearchBox from "@/components/ui/SearchBox";
+import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
 const ICON_SIZE = 36;
@@ -20,6 +22,18 @@ function ActionInput({
   voiceLabel = "Voice",
   rows = 1,
   maxRows = 5,
+  sourceLanguage,
+  sourceLanguageOptions,
+  sourceLanguageLabel,
+  onSourceLanguageChange,
+  targetLanguage,
+  targetLanguageOptions,
+  targetLanguageLabel,
+  onTargetLanguageChange,
+  onSwapLanguages,
+  swapLabel,
+  normalizeSourceLanguageFn,
+  normalizeTargetLanguageFn,
 }) {
   const isEmpty = value.trim() === "";
   const localRef = useRef(null);
@@ -80,23 +94,49 @@ function ActionInput({
     [isEmpty, onVoice],
   );
 
+  const hasSourceOptions = Array.isArray(sourceLanguageOptions)
+    ? sourceLanguageOptions.length > 0
+    : false;
+  const hasTargetOptions = Array.isArray(targetLanguageOptions)
+    ? targetLanguageOptions.length > 0
+    : false;
+  const showLanguageControls = hasSourceOptions || hasTargetOptions;
+
   return (
     <form
       ref={formRef}
       className={styles["input-wrapper"]}
       onSubmit={handleSubmit}
     >
-      <SearchBox>
-        <textarea
-          ref={textareaRef}
-          rows={rows}
-          placeholder={placeholder}
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          className={styles.textarea}
+      {showLanguageControls ? (
+        <LanguageControls
+          sourceLanguage={sourceLanguage}
+          sourceLanguageOptions={sourceLanguageOptions}
+          sourceLanguageLabel={sourceLanguageLabel}
+          onSourceLanguageChange={onSourceLanguageChange}
+          targetLanguage={targetLanguage}
+          targetLanguageOptions={targetLanguageOptions}
+          targetLanguageLabel={targetLanguageLabel}
+          onTargetLanguageChange={onTargetLanguageChange}
+          onSwapLanguages={onSwapLanguages}
+          swapLabel={swapLabel}
+          normalizeSourceLanguage={normalizeSourceLanguageFn}
+          normalizeTargetLanguage={normalizeTargetLanguageFn}
         />
-      </SearchBox>
+      ) : null}
+      <div className={styles["search-area"]}>
+        <SearchBox>
+          <textarea
+            ref={textareaRef}
+            rows={rows}
+            placeholder={placeholder}
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            className={styles.textarea}
+          />
+        </SearchBox>
+      </div>
       <button
         type={isEmpty ? "button" : "submit"}
         className={styles["action-button"]}
@@ -124,3 +164,65 @@ function ActionInput({
 }
 
 export default ActionInput;
+
+ActionInput.propTypes = {
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func,
+  onSubmit: PropTypes.func,
+  onVoice: PropTypes.func,
+  inputRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.any }),
+  ]),
+  placeholder: PropTypes.string,
+  sendLabel: PropTypes.string,
+  voiceLabel: PropTypes.string,
+  rows: PropTypes.number,
+  maxRows: PropTypes.number,
+  sourceLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  sourceLanguageOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+      label: PropTypes.string.isRequired,
+    }),
+  ),
+  sourceLanguageLabel: PropTypes.string,
+  onSourceLanguageChange: PropTypes.func,
+  targetLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  targetLanguageOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+      label: PropTypes.string.isRequired,
+    }),
+  ),
+  targetLanguageLabel: PropTypes.string,
+  onTargetLanguageChange: PropTypes.func,
+  onSwapLanguages: PropTypes.func,
+  swapLabel: PropTypes.string,
+  normalizeSourceLanguageFn: PropTypes.func,
+  normalizeTargetLanguageFn: PropTypes.func,
+};
+
+ActionInput.defaultProps = {
+  onChange: undefined,
+  onSubmit: undefined,
+  onVoice: undefined,
+  inputRef: undefined,
+  placeholder: undefined,
+  sendLabel: "Send",
+  voiceLabel: "Voice",
+  rows: 1,
+  maxRows: 5,
+  sourceLanguage: undefined,
+  sourceLanguageOptions: [],
+  sourceLanguageLabel: undefined,
+  onSourceLanguageChange: undefined,
+  targetLanguage: undefined,
+  targetLanguageOptions: [],
+  targetLanguageLabel: undefined,
+  onTargetLanguageChange: undefined,
+  onSwapLanguages: undefined,
+  swapLabel: undefined,
+  normalizeSourceLanguageFn: (value) => value,
+  normalizeTargetLanguageFn: (value) => value,
+};

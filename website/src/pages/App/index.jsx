@@ -20,6 +20,8 @@ import {
   resolveDictionaryConfig,
   resolveDictionaryFlavor,
   WORD_LANGUAGE_AUTO,
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
   resolveShareTarget,
   attemptShareLink,
 } from "@/utils";
@@ -120,28 +122,30 @@ function App() {
       }),
     [dictionarySourceLanguage, dictionaryTargetLanguage],
   );
-  const toolbarLanguageProps = useMemo(
-    () => ({
-      sourceLanguage: dictionarySourceLanguage,
-      onSourceLanguageChange: setDictionarySourceLanguage,
-      sourceLanguageOptions,
-      sourceLanguageLabel: t.dictionarySourceLanguageLabel,
-      targetLanguage: dictionaryTargetLanguage,
-      onTargetLanguageChange: setDictionaryTargetLanguage,
-      targetLanguageOptions,
-      targetLanguageLabel: t.dictionaryTargetLanguageLabel,
-    }),
-    [
+  const handleSwapLanguages = useCallback(() => {
+    const normalizedSource = normalizeWordSourceLanguage(
       dictionarySourceLanguage,
-      setDictionarySourceLanguage,
-      sourceLanguageOptions,
-      t.dictionarySourceLanguageLabel,
+    );
+    const normalizedTarget = normalizeWordTargetLanguage(
       dictionaryTargetLanguage,
-      setDictionaryTargetLanguage,
-      targetLanguageOptions,
-      t.dictionaryTargetLanguageLabel,
-    ],
-  );
+    );
+
+    const nextSource = normalizedTarget;
+    const nextTarget =
+      normalizedSource === WORD_LANGUAGE_AUTO
+        ? normalizedTarget === "CHINESE"
+          ? "ENGLISH"
+          : "CHINESE"
+        : normalizeWordTargetLanguage(normalizedSource);
+
+    setDictionarySourceLanguage(nextSource);
+    setDictionaryTargetLanguage(nextTarget);
+  }, [
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionarySourceLanguage,
+    setDictionaryTargetLanguage,
+  ]);
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -702,7 +706,6 @@ function App() {
             !showFavorites && !showHistory ? handleDeleteHistory : undefined,
           onShare: !showFavorites && !showHistory ? handleShare : undefined,
           onReport: !showFavorites && !showHistory ? handleReport : undefined,
-          toolbarProps: toolbarLanguageProps,
         }}
         bottomContent={
           <div>
@@ -714,6 +717,18 @@ function App() {
               onVoice={handleVoice}
               placeholder={t.inputPlaceholder}
               maxRows={5}
+              sourceLanguage={dictionarySourceLanguage}
+              sourceLanguageOptions={sourceLanguageOptions}
+              sourceLanguageLabel={t.dictionarySourceLanguageLabel}
+              onSourceLanguageChange={setDictionarySourceLanguage}
+              targetLanguage={dictionaryTargetLanguage}
+              targetLanguageOptions={targetLanguageOptions}
+              targetLanguageLabel={t.dictionaryTargetLanguageLabel}
+              onTargetLanguageChange={setDictionaryTargetLanguage}
+              onSwapLanguages={handleSwapLanguages}
+              swapLabel={t.dictionarySwapLanguages}
+              normalizeSourceLanguageFn={normalizeWordSourceLanguage}
+              normalizeTargetLanguageFn={normalizeWordTargetLanguage}
             />
             <ICP />
           </div>
