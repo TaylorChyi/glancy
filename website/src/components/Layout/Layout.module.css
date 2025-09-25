@@ -43,9 +43,7 @@
     calc(var(--space-2, 8px) + env(safe-area-inset-bottom, 0px));
   height: auto;
   min-height: var(--bar-height);
-  background: color-mix(in srgb, var(--chat-window-bg) 94%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  box-shadow: 0 -14px 36px -24px var(--shadow-color);
+  background: linear-gradient(to bottom, var(--chat-window-bg) 99%, var(--chat-window-bg) 95%);
 }
 
 @media (width <= 600px) {
