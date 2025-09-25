@@ -43,7 +43,15 @@
     calc(var(--space-2, 8px) + env(safe-area-inset-bottom, 0px));
   height: auto;
   min-height: var(--bar-height);
-  background: linear-gradient(to bottom, var(--chat-window-bg) 99%, var(--chat-window-bg) 95%);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--chat-window-bg) 94%, transparent) 0%,
+    color-mix(in srgb, var(--chat-window-bg) 68%, transparent) 38%,
+    color-mix(in srgb, var(--chat-window-bg) 44%, transparent) 68%,
+    transparent 100%
+  );
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 @media (width <= 600px) {
