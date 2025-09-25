@@ -13,7 +13,6 @@ import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import ICP from "@/components/ui/ICP";
 import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
-import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
 import {
@@ -705,6 +704,23 @@ function App() {
   const resolvedTerm = activeTerm;
   const hasResolvedEntry = isEntryViewActive && Boolean(entry);
   const isTermActionable = isEntryViewActive && Boolean(resolvedTerm);
+  const isEmptyStateActive = useMemo(
+    () =>
+      !showFavorites &&
+      !showHistory &&
+      !entry &&
+      !finalText &&
+      !streamText &&
+      !loading,
+    [showFavorites, showHistory, entry, finalText, streamText, loading],
+  );
+  const displayClassName = useMemo(
+    () =>
+      ["display", isEmptyStateActive ? "display-empty" : ""]
+        .filter(Boolean)
+        .join(" "),
+    [isEmptyStateActive],
+  );
   const dictionaryActionBar = (
     <DictionaryEntryActionBar
       visible={hasResolvedEntry}
@@ -762,7 +778,7 @@ function App() {
           </div>
         }
       >
-        <div className="display">
+        <div className={displayClassName}>
           {showFavorites ? (
             <FavoritesView
               favorites={favorites}
@@ -797,11 +813,6 @@ function App() {
               iconName="target"
               title={t.searchEmptyTitle}
               description={t.searchEmptyDescription}
-              actions={
-                <Button type="button" onClick={focusInput}>
-                  {t.searchEmptyAction}
-                </Button>
-              }
             />
           )}
         </div>
