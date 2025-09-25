@@ -6,10 +6,14 @@ import styles from "./SearchBox.module.css";
  * 通过 CSS 变量 `--padding-y` 可灵活调整上下间距，
  * 默认值由主题变量 `--search-box-padding-y` 提供。
  */
-export default function SearchBox({ children, paddingY }) {
+export default function SearchBox({ children, paddingY, className }) {
   const style = paddingY ? { "--padding-y": paddingY } : undefined;
+  const classNames = [styles["search-box"], className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={styles["search-box"]} style={style}>
+    <div className={classNames} style={style}>
       {children}
     </div>
   );
@@ -18,4 +22,5 @@ export default function SearchBox({ children, paddingY }) {
 SearchBox.propTypes = {
   children: PropTypes.node.isRequired,
   paddingY: PropTypes.string,
+  className: PropTypes.string,
 };
