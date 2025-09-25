@@ -5,6 +5,7 @@ import SidebarActionItem from "./SidebarActionItem.jsx";
 
 const GOMEMO_PATH = "/gomemo";
 const FALLBACK_GOMEMO_LABEL = "Gomemo";
+const GOMEMO_ICON_NAME = "gomemo";
 
 function GomemoEntry() {
   const { t } = useLanguage();
@@ -24,7 +25,7 @@ function GomemoEntry() {
 
   return (
     <SidebarActionItem
-      icon="target"
+      icon={GOMEMO_ICON_NAME}
       iconAlt={gomemoIconAlt}
       label={gomemoLabel}
       isActive={isActive}
