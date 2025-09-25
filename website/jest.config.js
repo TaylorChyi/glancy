@@ -7,7 +7,8 @@ export default {
     "^.+\\.css$": "identity-obj-proxy",
     "^.+\\.(svg)$": "<rootDir>/test/__mocks__/fileMock.cjs",
   },
-  extensionsToTreatAsEsm: [".jsx", ".tsx"],
+  extensionsToTreatAsEsm: [".ts", ".tsx", ".jsx"],
+  moduleFileExtensions: ["js", "jsx", "ts", "tsx", "json", "node"],
   transform: {
     "^.+\\.(t|j)sx?$": [
       "babel-jest",

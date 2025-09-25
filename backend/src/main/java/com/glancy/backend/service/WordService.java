@@ -70,7 +70,11 @@ public class WordService {
         SearchRecordResponse record,
         WordPersonalizationContext personalizationContext
     ) {
-        log.info("Word '{}' not found locally or forceNew requested, searching via LLM", term);
+        log.info(
+            "Word '{}' not found locally or forceNew requested, searching via LLM model {}",
+            term,
+            model
+        );
         WordResponse resp = wordSearcher.search(term, language, model, personalizationContext);
         log.info("LLM search result: {}", resp);
         Word savedWord = saveWord(term, resp, language);
@@ -153,16 +157,16 @@ public class WordService {
 
     @Transactional
     public WordResponse findWordForUser(Long userId, String term, Language language, String model, boolean forceNew) {
-        log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, model);
+        DictionaryModel preferredModel = resolvePreferredModel(userId);
+        String resolvedModel = resolveModelName(model, preferredModel);
+        log.info(
+            "Finding word '{}' for user {} in language {} using model {}",
+            term,
+            userId,
+            language,
+            resolvedModel
+        );
         WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
-        userPreferenceRepository
-            .findByUserId(userId)
-            .orElseGet(() -> {
-                log.info("No user preference found for user {}, using default", userId);
-                UserPreference p = new UserPreference();
-                p.setDictionaryModel(DictionaryModel.DOUBAO);
-                return p;
-            });
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
@@ -174,9 +178,9 @@ public class WordService {
                     log.info("Found word '{}' in local repository", term);
                     return applyPersonalization(userId, toResponse(word), personalizationContext);
                 })
-                .orElseGet(() -> fetchAndPersistWord(userId, term, language, model, record, personalizationContext));
+                .orElseGet(() -> fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext));
         }
-        return fetchAndPersistWord(userId, term, language, model, record, personalizationContext);
+        return fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext);
     }
 
     /**
@@ -190,7 +194,15 @@ public class WordService {
         String model,
         boolean forceNew
     ) {
-        log.info("Streaming word '{}' for user {} in language {} using model {}", term, userId, language, model);
+        DictionaryModel preferredModel = resolvePreferredModel(userId);
+        String resolvedModel = resolveModelName(model, preferredModel);
+        log.info(
+            "Streaming word '{}' for user {} in language {} using model {}",
+            term,
+            userId,
+            language,
+            resolvedModel
+        );
         WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
@@ -227,12 +239,12 @@ public class WordService {
             record.id(),
             term,
             language,
-            model,
+            resolvedModel,
             personalizationContext
         );
         Flux<String> stream;
         try {
-            stream = wordSearcher.streamSearch(term, language, model, personalizationContext);
+            stream = wordSearcher.streamSearch(term, language, resolvedModel, personalizationContext);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
@@ -250,7 +262,7 @@ public class WordService {
                     userId,
                     term,
                     language,
-                    model,
+                    resolvedModel,
                     err.getMessage(),
                     err
                 )
@@ -259,6 +271,30 @@ public class WordService {
             .map(StreamPayload::data);
 
         return main.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
+    }
+
+    private DictionaryModel resolvePreferredModel(Long userId) {
+        return userPreferenceRepository
+            .findByUserId(userId)
+            .map(UserPreference::getDictionaryModel)
+            .orElseGet(() -> {
+                log.info("No user preference found for user {}, using default model {}", userId, DictionaryModel.DOUBAO);
+                return DictionaryModel.DOUBAO;
+            });
+    }
+
+    private String resolveModelName(String requestedModel, DictionaryModel preferredModel) {
+        if (requestedModel != null) {
+            String trimmed = requestedModel.trim();
+            if (!trimmed.isEmpty()) {
+                if (trimmed.equalsIgnoreCase(DictionaryModel.DOUBAO.name())) {
+                    return DictionaryModel.DOUBAO.getClientName();
+                }
+                return trimmed.toLowerCase();
+            }
+        }
+        DictionaryModel fallback = preferredModel != null ? preferredModel : DictionaryModel.DOUBAO;
+        return fallback.getClientName();
     }
 
     private static final class StreamingAccumulator {
