@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import ThemeIcon from "@/components/ui/Icon";
 import styles from "./Sidebar.module.css";
+import { SIDEBAR_ACTION_VARIANTS } from "./sidebarActionVariants.js";
 
 const joinClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
@@ -32,10 +33,17 @@ function SidebarActionItem({
   badge,
   trailing,
   isActive = false,
+  variant = SIDEBAR_ACTION_VARIANTS.default,
   className,
   onClick,
   ...rest
 }) {
+  const resolvedVariant = Object.values(SIDEBAR_ACTION_VARIANTS).includes(
+    variant,
+  )
+    ? variant
+    : SIDEBAR_ACTION_VARIANTS.default;
+
   const composedClassName = joinClassName(
     styles["sidebar-action"],
     isActive ? styles["sidebar-action-active"] : "",
@@ -70,6 +78,7 @@ function SidebarActionItem({
         type={type}
         className={composedClassName}
         onClick={onClick}
+        data-variant={resolvedVariant}
         {...rest}
       >
         {content}
@@ -78,7 +87,12 @@ function SidebarActionItem({
   }
 
   return (
-    <Component className={composedClassName} onClick={onClick} {...rest}>
+    <Component
+      className={composedClassName}
+      onClick={onClick}
+      data-variant={resolvedVariant}
+      {...rest}
+    >
       {content}
     </Component>
   );
@@ -94,6 +108,7 @@ SidebarActionItem.propTypes = {
   badge: PropTypes.node,
   trailing: PropTypes.node,
   isActive: PropTypes.bool,
+  variant: PropTypes.oneOf(Object.values(SIDEBAR_ACTION_VARIANTS)),
   className: PropTypes.string,
   onClick: PropTypes.func,
 };
@@ -107,6 +122,7 @@ SidebarActionItem.defaultProps = {
   badge: undefined,
   trailing: undefined,
   isActive: false,
+  variant: SIDEBAR_ACTION_VARIANTS.default,
   className: undefined,
   onClick: undefined,
 };

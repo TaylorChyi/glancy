@@ -1,6 +1,7 @@
 import { useLanguage } from "@/context";
 import { UserMenu } from "@/components/Header";
 import SidebarActionItem from "@/components/Sidebar/SidebarActionItem.jsx";
+import { SIDEBAR_ACTION_VARIANTS } from "@/components/Sidebar/sidebarActionVariants.js";
 import { getBrandText } from "@/utils";
 
 function Brand() {
@@ -18,7 +19,7 @@ function Brand() {
         iconAlt={brandText}
         label={brandText}
         onClick={handleClick}
-        className="sidebar-brand-action"
+        variant={SIDEBAR_ACTION_VARIANTS.prominent}
       />
       <div className="mobile-user-menu">
         <UserMenu size={28} />
