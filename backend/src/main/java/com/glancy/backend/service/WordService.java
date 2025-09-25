@@ -70,11 +70,7 @@ public class WordService {
         SearchRecordResponse record,
         WordPersonalizationContext personalizationContext
     ) {
-        log.info(
-            "Word '{}' not found locally or forceNew requested, searching via LLM model {}",
-            term,
-            model
-        );
+        log.info("Word '{}' not found locally or forceNew requested, searching via LLM model {}", term, model);
         WordResponse resp = wordSearcher.search(term, language, model, personalizationContext);
         log.info("LLM search result: {}", resp);
         Word savedWord = saveWord(term, resp, language);
@@ -159,13 +155,7 @@ public class WordService {
     public WordResponse findWordForUser(Long userId, String term, Language language, String model, boolean forceNew) {
         DictionaryModel preferredModel = resolvePreferredModel(userId);
         String resolvedModel = resolveModelName(model, preferredModel);
-        log.info(
-            "Finding word '{}' for user {} in language {} using model {}",
-            term,
-            userId,
-            language,
-            resolvedModel
-        );
+        log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, resolvedModel);
         WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
@@ -178,7 +168,9 @@ public class WordService {
                     log.info("Found word '{}' in local repository", term);
                     return applyPersonalization(userId, toResponse(word), personalizationContext);
                 })
-                .orElseGet(() -> fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext));
+                .orElseGet(() ->
+                    fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext)
+                );
         }
         return fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext);
     }
@@ -278,7 +270,11 @@ public class WordService {
             .findByUserId(userId)
             .map(UserPreference::getDictionaryModel)
             .orElseGet(() -> {
-                log.info("No user preference found for user {}, using default model {}", userId, DictionaryModel.DOUBAO);
+                log.info(
+                    "No user preference found for user {}, using default model {}",
+                    userId,
+                    DictionaryModel.DOUBAO
+                );
                 return DictionaryModel.DOUBAO;
             });
     }
