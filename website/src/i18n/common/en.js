@@ -184,7 +184,7 @@ export default {
   guest: "Guest",
   upgrade: "Upgrade",
   upgradeAvailable: "Upgrade to use",
-  profile: "Customize",
+  profile: "Personalization",
   settings: "Settings",
   shortcuts: "Shortcuts",
   logout: "Log out",
