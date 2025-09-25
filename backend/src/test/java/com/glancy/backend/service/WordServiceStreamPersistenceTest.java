@@ -72,6 +72,7 @@ class WordServiceStreamPersistenceTest {
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
+        when(userPreferenceRepository.findByUserId(anyLong())).thenReturn(Optional.empty());
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -116,7 +117,7 @@ class WordServiceStreamPersistenceTest {
     void savesAfterStreaming() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
+        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq("doubao"), any())).thenReturn(
             Flux.just("{\"term\":\"hi\"}", "<END>")
         );
         WordResponse resp = new WordResponse(
@@ -181,7 +182,7 @@ class WordServiceStreamPersistenceTest {
     void skipPersistenceWhenSentinelMissing() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
+        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq("doubao"), any())).thenReturn(
             Flux.just("{\"term\":\"hi\"}")
         );
 

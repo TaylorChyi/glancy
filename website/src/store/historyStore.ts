@@ -4,7 +4,7 @@ import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
-import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
+import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils/language.js";
 import { useWordStore } from "./wordStore.js";
 
 const HISTORY_LIMIT = 20;
