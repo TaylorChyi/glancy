@@ -31,18 +31,18 @@ export default {
   dictionarySourceLanguageAuto: "Auto detect",
   dictionarySourceLanguageAutoDescription:
     "Glancy senses the term language and chooses the proper dictionary automatically.",
-  dictionarySourceLanguageEnglish: "English term",
+  dictionarySourceLanguageEnglish: "English",
   dictionarySourceLanguageEnglishDescription:
     "Treat the input as English and unlock full tooling for English entries.",
-  dictionarySourceLanguageChinese: "Chinese term",
+  dictionarySourceLanguageChinese: "Chinese",
   dictionarySourceLanguageChineseDescription:
     "Treat the input as Chinese and surface Chinese-first experiences.",
   dictionarySwapLanguages: "Swap languages",
   dictionaryTargetLanguageLabel: "Target language",
-  dictionaryTargetLanguageEnglish: "English definitions",
+  dictionaryTargetLanguageEnglish: "English",
   dictionaryTargetLanguageEnglishDescription:
     "Deliver detailed explanations in English, ideal for immersive reading.",
-  dictionaryTargetLanguageChinese: "Chinese definitions",
+  dictionaryTargetLanguageChinese: "Chinese",
   dictionaryTargetLanguageChineseDescription:
     "Provide elegant Chinese interpretations tailored for precise translation.",
   prefTheme: "Theme",

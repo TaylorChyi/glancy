@@ -28,18 +28,18 @@ export default {
   dictionarySourceLanguageAuto: "自动识别",
   dictionarySourceLanguageAutoDescription:
     "智能侦测输入语种，自动匹配最合适的词典体验。",
-  dictionarySourceLanguageEnglish: "英文词条",
+  dictionarySourceLanguageEnglish: "英文",
   dictionarySourceLanguageEnglishDescription:
     "按英文单词处理，启用完整的英文输入配套能力。",
-  dictionarySourceLanguageChinese: "中文词条",
+  dictionarySourceLanguageChinese: "中文",
   dictionarySourceLanguageChineseDescription:
     "按中文词语理解，优先呈现中文语境中的重点。",
   dictionarySwapLanguages: "交换语向",
   dictionaryTargetLanguageLabel: "目标语言",
-  dictionaryTargetLanguageEnglish: "英文释义",
+  dictionaryTargetLanguageEnglish: "英文",
   dictionaryTargetLanguageEnglishDescription:
     "提供纯英文解释与例句，适合沉浸式阅读。",
-  dictionaryTargetLanguageChinese: "中文释义",
+  dictionaryTargetLanguageChinese: "中文",
   dictionaryTargetLanguageChineseDescription:
     "输出优雅细腻的中文解读，满足精准翻译需求。",
   prefTheme: "主题",
