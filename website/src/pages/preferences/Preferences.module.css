@@ -1,76 +1,15 @@
-.container {
+.sections {
   display: grid;
-  gap: clamp(var(--space-4), 3vw, var(--space-6));
-  padding: clamp(var(--space-4), 4vw, var(--space-6));
-}
-
-.container-page {
-  width: min(100%, 720px);
-  margin: 0 auto;
-  border-radius: var(--radius-xxl);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--app-bg) 94%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 82%, transparent) 100%
-  );
-  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
-  box-shadow: 0 36px 84px
-    color-mix(in srgb, var(--shadow-color) 26%, transparent);
-}
-
-.container-dialog {
-  width: min(100%, 640px);
-  padding: 0;
-}
-
-@supports (backdrop-filter: blur(12px)) {
-  .container-page {
-    backdrop-filter: blur(18px);
-    background: color-mix(in srgb, var(--app-bg) 82%, transparent);
-  }
-}
-
-.header {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.title {
-  margin: 0;
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text);
-}
-
-.subtitle {
-  margin: 0;
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: color-mix(in srgb, var(--color-text) 66%, transparent);
-}
-
-.form {
-  display: grid;
-  gap: clamp(var(--space-4), 3vw, var(--space-5));
+  gap: clamp(var(--space-5), 4vw, var(--space-6));
 }
 
 .section {
   margin: 0;
-  padding: clamp(var(--space-2), 3vw, var(--space-3)) 0 0;
+  padding: 0;
   border: none;
   display: grid;
-  gap: var(--space-3);
+  gap: clamp(var(--space-3), 3vw, var(--space-4));
   min-inline-size: 0;
-}
-
-.section:first-of-type {
-  padding-top: 0;
-}
-
-.section + .section {
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 35%, transparent);
 }
 
 .section-title {
@@ -92,11 +31,15 @@
 
 .section-fields {
   display: grid;
-  gap: clamp(var(--space-3), 2.5vw, var(--space-4));
+  gap: clamp(var(--space-3), 3vw, var(--space-4));
 }
 
 .section-fields-split {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.section-voices {
+  background: none;
 }
 
 .field {
@@ -115,7 +58,7 @@
   gap: var(--space-2);
   padding: clamp(var(--space-3), 2.5vw, var(--space-4));
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--app-bg) 90%, transparent);
+  background: color-mix(in srgb, var(--app-bg) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
   box-shadow: 0 20px 48px
     color-mix(in srgb, var(--shadow-color) 18%, transparent);
@@ -136,13 +79,6 @@
   border-color: color-mix(in srgb, var(--highlight-color) 68%, transparent);
   box-shadow: 0 26px 60px
     color-mix(in srgb, var(--shadow-color) 28%, transparent);
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: clamp(var(--space-3), 3vw, var(--space-4));
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
 }
 
 .submit-button {
@@ -189,8 +125,13 @@
   transform: translateY(0);
 }
 
-@media (width >= 480px) {
-  .form {
-    gap: clamp(var(--space-5), 3vw, var(--space-6));
+@media (width >= 960px) {
+  .sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .section-voices {
+    grid-column: span 2;
   }
 }

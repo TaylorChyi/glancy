@@ -1,0 +1,70 @@
+.surface {
+  display: grid;
+  gap: clamp(var(--space-4), 4vw, var(--space-6));
+  padding: clamp(var(--space-5), 5vw, var(--space-7));
+  border-radius: var(--radius-xxl);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--app-bg) 94%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-alt) 80%, transparent) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--border-color) 52%, transparent);
+  box-shadow: 0 42px 112px
+    color-mix(in srgb, var(--shadow-color) 28%, transparent);
+}
+
+.surface-modal {
+  width: min(96vw, 880px);
+}
+
+.surface-page {
+  width: min(100%, 880px);
+  margin: 0 auto;
+}
+
+@supports (backdrop-filter: blur(18px)) {
+  .surface {
+    backdrop-filter: blur(18px);
+    background: color-mix(in srgb, var(--app-bg) 86%, transparent);
+  }
+}
+
+.header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(var(--text-xl), 3vw, var(--text-2xl));
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+.content {
+  display: grid;
+  gap: clamp(var(--space-4), 3vw, var(--space-5));
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: clamp(var(--space-3), 3vw, var(--space-4));
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 32%, transparent);
+}
+
+@media (width <= 599px) {
+  .surface {
+    padding: clamp(var(--space-4), 8vw, var(--space-6));
+    border-radius: var(--radius-xl);
+  }
+}

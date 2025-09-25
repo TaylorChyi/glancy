@@ -1,34 +1,26 @@
 @import url("./ModalContent.module.css");
 
 .dialog {
-  width: min(92vw, 720px);
-  max-height: min(92vh, 760px);
-  padding: clamp(var(--space-5), 6vw, var(--space-7));
+  width: min(96vw, 920px);
+  max-height: 90vh;
+  padding: clamp(var(--space-2), 2vw, var(--space-3));
   border-radius: var(--radius-xxl);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--app-bg) 92%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 78%, transparent) 100%
-  );
-  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
-  box-shadow: 0 48px 128px
-    color-mix(in srgb, var(--shadow-color) 32%, transparent);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  backdrop-filter: blur(18px);
+  align-items: stretch;
+  justify-content: center;
+  overflow: visible;
 }
 
-.dialog > :global(section) {
+.dialog > :global(*) {
   flex: 1;
-  overflow-y: auto;
-  padding-right: clamp(var(--space-1), 1vw, var(--space-2));
-  scroll-behavior: smooth;
 }
 
 @media (width <= 599px) {
   .dialog {
-    padding: clamp(var(--space-4), 8vw, var(--space-6));
+    padding: clamp(var(--space-2), 6vw, var(--space-3));
     border-radius: var(--radius-xl);
   }
 }
