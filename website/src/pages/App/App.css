@@ -75,6 +75,10 @@
   text-align: center;
 }
 
+.display-empty {
+  justify-content: center;
+}
+
 .stream-text {
   width: 100%;
   padding: var(--space-3, 16px);
@@ -122,6 +126,11 @@
     padding: var(--space-3, 16px);
     width: 100%;
     text-align: left;
+  }
+
+  .display-empty {
+    align-items: center;
+    text-align: center;
   }
 }
 
