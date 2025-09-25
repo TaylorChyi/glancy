@@ -3,15 +3,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 28px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--app-bg) 80%, transparent) 100%
+  );
 }
 
 .toolbar-container {
   flex: 1;
   display: flex;
   justify-content: center;
+  padding: 0 12px;
 }
 
 .toolbar-container :global(> *) {
-  max-width: min(100%, 960px);
+  width: min(100%, 1040px);
 }

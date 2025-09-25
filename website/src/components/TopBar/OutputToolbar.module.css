@@ -1,51 +1,93 @@
 .toolbar {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding: 12px 24px;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  box-shadow: 0 16px 40px
+    color-mix(in srgb, var(--shadow-color) 20%, transparent);
+  backdrop-filter: blur(18px);
+  width: 100%;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.toolbar:hover,
+.toolbar:focus-within {
+  box-shadow: 0 20px 48px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
+.cluster-languages,
+.cluster-controls,
+.cluster-actions {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.cluster-languages {
+  flex: 1 1 32%;
+  justify-content: flex-start;
+}
+
+.cluster-controls {
+  flex: 1 0 auto;
   justify-content: center;
   gap: 12px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-alt) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  box-shadow: 0 6px 18px
-    color-mix(in srgb, var(--shadow-color) 20%, transparent);
-  flex-wrap: wrap;
+  margin: 0 auto;
+}
+
+.cluster-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .language-select {
   display: inline-flex;
   align-items: stretch;
-  gap: 10px;
-  padding: 4px;
+  gap: 12px;
+  padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 96%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 50%, transparent),
-    0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent);
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 52%, transparent),
+    0 6px 18px color-mix(in srgb, var(--shadow-color) 14%, transparent);
+  min-width: 0;
+  max-width: 440px;
+  flex: 1 1 auto;
 }
 
 .language-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 6px 10px;
-  min-width: 180px;
+  gap: 6px;
+  padding: 6px 12px;
+  min-width: 160px;
+  flex: 1 1 0;
 }
 
 .language-group:not(:last-child) {
   border-right: 1px solid
-    color-mix(in srgb, var(--border-color) 40%, transparent);
+    color-mix(in srgb, var(--border-color) 36%, transparent);
   padding-right: 18px;
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 .language-label {
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
-  padding-left: 2px;
+  color: color-mix(in srgb, var(--color-text-secondary) 78%, transparent);
+  padding-left: 4px;
 }
 
 .select-control {
@@ -70,9 +112,9 @@
 .select {
   appearance: none;
   width: 100%;
-  padding: 10px 38px 10px 16px;
+  padding: 10px 40px 10px 16px;
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 52%, transparent);
   background: linear-gradient(
     145deg,
     color-mix(in srgb, var(--color-surface) 94%, transparent) 0%,
@@ -106,63 +148,95 @@
 .replay {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 10px;
+  padding: 8px 20px;
   border-radius: 999px;
   border: none;
-  background: var(--primary-bg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-bg) 92%, transparent) 0%,
+    color-mix(in srgb, var(--primary-color) 24%, var(--primary-bg) 76%) 100%
+  );
   color: var(--primary-color);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
     opacity 0.2s ease;
-  box-shadow: 0 6px 16px
-    color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  box-shadow: 0 10px 28px
+    color-mix(in srgb, var(--shadow-color) 20%, transparent);
 }
 
 .replay:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  background: color-mix(in srgb, var(--color-surface-alt) 82%, transparent);
+  color: color-mix(in srgb, var(--color-text-secondary) 70%, transparent);
   box-shadow: none;
+  opacity: 1;
   transform: none;
 }
 
-.replay:not(:disabled):hover {
+.replay:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.replay:not(:disabled):is(:hover, :focus-visible) {
   transform: translateY(-1px);
+  box-shadow: 0 12px 32px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
 }
 
 .version-controls {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-bg) 80%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--border-color) 32%, transparent);
 }
 
 .nav-button {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 52%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
+  color: color-mix(in srgb, var(--color-text) 90%, transparent);
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    opacity 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .nav-button:disabled {
   cursor: not-allowed;
-  opacity: 0.4;
+  color: color-mix(in srgb, var(--color-text-secondary) 70%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 72%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 36%, transparent);
+  box-shadow: none;
   transform: none;
 }
 
-.nav-button:not(:disabled):hover {
+.nav-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.nav-button:not(:disabled):is(:hover, :focus-visible) {
   transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary-color) 46%, transparent);
+  box-shadow: 0 8px 18px
+    color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
 
 .indicator {
@@ -170,18 +244,20 @@
   text-align: center;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
 }
 
 .action-group {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 8px;
+  padding: 6px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--app-bg) 78%, transparent);
+  background: color-mix(in srgb, var(--app-bg) 76%, transparent);
   box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--border-color) 30%, transparent);
+    color-mix(in srgb, var(--border-color) 32%, transparent);
+  backdrop-filter: blur(10px);
 }
 
 .action-button {
@@ -190,32 +266,59 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  border-radius: var(--radius-md, 10px);
-  background: none;
-  color: inherit;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 94%, transparent);
+  color: color-mix(in srgb, var(--color-text) 90%, transparent);
   cursor: pointer;
+  box-shadow: 0 8px 18px
+    color-mix(in srgb, var(--shadow-color) 16%, transparent);
   transition:
     background-color 160ms ease,
     box-shadow 160ms ease,
-    transform 160ms ease;
+    transform 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
 }
 
 .action-button:hover,
 .action-button:focus-visible {
-  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--accent-color) 28%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 16%, transparent);
+  box-shadow: 0 10px 22px
+    color-mix(in srgb, var(--shadow-color) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 28%, transparent);
   transform: translateY(-1px);
 }
 
 .action-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-color) 48%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent-color) 46%, transparent);
   outline-offset: 2px;
 }
 
+.action-button:disabled {
+  cursor: not-allowed;
+  color: color-mix(in srgb, var(--color-text-secondary) 68%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 72%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 34%, transparent);
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+}
+
+.action-button:disabled:hover,
+.action-button:disabled:focus-visible {
+  background: color-mix(in srgb, var(--color-surface-alt) 72%, transparent);
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--border-color) 34%, transparent);
+  transform: none;
+}
+
 .action-button[data-active="true"] {
-  color: color-mix(in srgb, var(--accent-color) 80%, var(--app-color) 20%);
+  color: color-mix(in srgb, var(--accent-color) 78%, var(--app-color) 22%);
+}
+
+.action-button[data-active="true"]:disabled {
+  color: color-mix(in srgb, var(--accent-color) 60%, var(--app-color) 40%);
 }
 
 .action-button-delete {
@@ -253,21 +356,37 @@
 
 @media (width <= 768px) {
   .toolbar {
-    gap: 8px;
-    padding: 6px 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .cluster-languages,
+  .cluster-controls,
+  .cluster-actions {
+    width: 100%;
+    justify-content: center;
+    margin: 0;
+  }
+
+  .cluster-controls {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
   .language-select {
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
-    padding: 6px;
+    gap: 8px;
+    padding: 8px 10px;
     width: 100%;
+    max-width: none;
   }
 
   .language-group {
     min-width: unset;
-    padding: 4px 6px;
+    padding: 6px 4px;
     gap: 6px;
   }
 
@@ -284,8 +403,16 @@
     right: 14px;
   }
 
+  .replay {
+    justify-content: center;
+  }
+
   .replay span {
     display: none;
+  }
+
+  .version-controls {
+    justify-content: center;
   }
 
   .indicator {
@@ -293,8 +420,10 @@
   }
 
   .action-group {
-    padding: 4px;
-    gap: 4px;
+    width: 100%;
+    justify-content: center;
+    padding: 6px;
+    gap: 6px;
   }
 
   .action-button {
