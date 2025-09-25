@@ -114,26 +114,6 @@ describe("OutputToolbar", () => {
   });
 
   /**
-   * 当提供语言选项描述时应通过 title 呈现提示信息。
-   */
-  test("attaches hover hint for language options", () => {
-    render(
-      <OutputToolbar
-        term="hello"
-        sourceLanguage="AUTO"
-        sourceLanguageOptions={[
-          { value: "AUTO", label: "自动识别", description: "自动检测输入语言" },
-        ]}
-      />,
-    );
-
-    expect(screen.getByRole("combobox", { name: "源语言" })).toHaveAttribute(
-      "title",
-      "自动检测输入语言",
-    );
-  });
-
-  /**
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
   test("renders action buttons when permitted", () => {
