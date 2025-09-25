@@ -137,6 +137,7 @@ jest.unstable_mockModule("@/context", () => ({
       dictionarySourceLanguageEnglishDescription: "固定按英文解析",
       dictionarySourceLanguageChinese: "中文词条",
       dictionarySourceLanguageChineseDescription: "固定按中文解析",
+      dictionarySwapLanguages: "交换语向",
       dictionaryTargetLanguageLabel: "目标语言",
       dictionaryTargetLanguageChinese: "中文释义",
       dictionaryTargetLanguageChineseDescription: "输出中文解释",

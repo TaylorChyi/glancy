@@ -34,6 +34,7 @@ export default {
   dictionarySourceLanguageChinese: "中文词条",
   dictionarySourceLanguageChineseDescription:
     "按中文词语理解，优先呈现中文语境中的重点。",
+  dictionarySwapLanguages: "交换语向",
   dictionaryTargetLanguageLabel: "目标语言",
   dictionaryTargetLanguageEnglish: "英文释义",
   dictionaryTargetLanguageEnglishDescription:

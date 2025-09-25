@@ -41,3 +41,47 @@ test("clears value via parent state on Enter submit", () => {
   fireEvent.keyDown(textarea, { key: "Enter" });
   expect(textarea.value).toBe("");
 });
+
+/**
+ * 验证语言控制面板在提供选项时能够触发下拉与交换事件。
+ */
+test("handles language selection and swapping", () => {
+  const handleSourceChange = jest.fn();
+  const handleTargetChange = jest.fn();
+  const handleSwap = jest.fn();
+
+  render(
+    <ActionInput
+      value=""
+      onChange={() => {}}
+      onSubmit={() => {}}
+      sourceLanguage="CHINESE"
+      sourceLanguageOptions={[
+        { value: "CHINESE", label: "中文词条" },
+        { value: "ENGLISH", label: "英文词条" },
+      ]}
+      sourceLanguageLabel="源语言"
+      onSourceLanguageChange={handleSourceChange}
+      targetLanguage="ENGLISH"
+      targetLanguageOptions={[
+        { value: "ENGLISH", label: "英文释义" },
+        { value: "CHINESE", label: "中文释义" },
+      ]}
+      targetLanguageLabel="目标语言"
+      onTargetLanguageChange={handleTargetChange}
+      onSwapLanguages={handleSwap}
+      swapLabel="交换语向"
+    />,
+  );
+
+  const selects = screen.getAllByRole("combobox");
+  fireEvent.change(selects[0], { target: { value: "ENGLISH" } });
+  expect(handleSourceChange).toHaveBeenCalledWith("ENGLISH");
+
+  fireEvent.change(selects[1], { target: { value: "CHINESE" } });
+  expect(handleTargetChange).toHaveBeenCalledWith("CHINESE");
+
+  const swapButton = screen.getByRole("button", { name: "交换语向" });
+  fireEvent.click(swapButton);
+  expect(handleSwap).toHaveBeenCalledTimes(1);
+});
