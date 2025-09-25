@@ -108,24 +108,26 @@ function ActionInput({
       className={styles["input-wrapper"]}
       onSubmit={handleSubmit}
     >
-      {showLanguageControls ? (
-        <LanguageControls
-          sourceLanguage={sourceLanguage}
-          sourceLanguageOptions={sourceLanguageOptions}
-          sourceLanguageLabel={sourceLanguageLabel}
-          onSourceLanguageChange={onSourceLanguageChange}
-          targetLanguage={targetLanguage}
-          targetLanguageOptions={targetLanguageOptions}
-          targetLanguageLabel={targetLanguageLabel}
-          onTargetLanguageChange={onTargetLanguageChange}
-          onSwapLanguages={onSwapLanguages}
-          swapLabel={swapLabel}
-          normalizeSourceLanguage={normalizeSourceLanguageFn}
-          normalizeTargetLanguage={normalizeTargetLanguageFn}
-        />
-      ) : null}
-      <div className={styles["search-area"]}>
-        <SearchBox>
+      <SearchBox className={styles["input-surface"]}>
+        {showLanguageControls ? (
+          <div className={styles["leading-accessory"]}>
+            <LanguageControls
+              sourceLanguage={sourceLanguage}
+              sourceLanguageOptions={sourceLanguageOptions}
+              sourceLanguageLabel={sourceLanguageLabel}
+              onSourceLanguageChange={onSourceLanguageChange}
+              targetLanguage={targetLanguage}
+              targetLanguageOptions={targetLanguageOptions}
+              targetLanguageLabel={targetLanguageLabel}
+              onTargetLanguageChange={onTargetLanguageChange}
+              onSwapLanguages={onSwapLanguages}
+              swapLabel={swapLabel}
+              normalizeSourceLanguage={normalizeSourceLanguageFn}
+              normalizeTargetLanguage={normalizeTargetLanguageFn}
+            />
+          </div>
+        ) : null}
+        <div className={styles["input-body"]}>
           <textarea
             ref={textareaRef}
             rows={rows}
@@ -135,30 +137,32 @@ function ActionInput({
             onKeyDown={handleKeyDown}
             className={styles.textarea}
           />
-        </SearchBox>
-      </div>
-      <button
-        type={isEmpty ? "button" : "submit"}
-        className={styles["action-button"]}
-        onClick={handleClick}
-        aria-label={isEmpty ? voiceLabel : sendLabel}
-      >
-        {isEmpty ? (
-          <ThemeIcon
-            name="voice-button"
-            alt={voiceLabel}
-            width={ICON_SIZE}
-            height={ICON_SIZE}
-          />
-        ) : (
-          <ThemeIcon
-            name="send-button"
-            alt={sendLabel}
-            width={ICON_SIZE}
-            height={ICON_SIZE}
-          />
-        )}
-      </button>
+        </div>
+        <div className={styles["trailing-accessory"]}>
+          <button
+            type={isEmpty ? "button" : "submit"}
+            className={styles["action-button"]}
+            onClick={handleClick}
+            aria-label={isEmpty ? voiceLabel : sendLabel}
+          >
+            {isEmpty ? (
+              <ThemeIcon
+                name="voice-button"
+                alt={voiceLabel}
+                width={ICON_SIZE}
+                height={ICON_SIZE}
+              />
+            ) : (
+              <ThemeIcon
+                name="send-button"
+                alt={sendLabel}
+                width={ICON_SIZE}
+                height={ICON_SIZE}
+              />
+            )}
+          </button>
+        </div>
+      </SearchBox>
     </form>
   );
 }

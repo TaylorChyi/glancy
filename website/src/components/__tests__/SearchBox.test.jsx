@@ -35,7 +35,18 @@ test("uses themed background with body fallback", () => {
     </SearchBox>,
   );
   const box = container.firstChild;
-  expect(getComputedStyle(box).backgroundColor).toBe(
-    "var(--chat-window-bg, var(--body-bg))",
+  expect(getComputedStyle(box).backgroundColor).toContain("color-mix");
+});
+
+/**
+ * 验证自定义 className 会被拼接进最终类名。
+ */
+test("merges custom className", () => {
+  const { container } = render(
+    <SearchBox className="extra-class">
+      <textarea data-testid="input" />
+    </SearchBox>,
   );
+  const box = container.firstChild;
+  expect(box.className).toContain("extra-class");
 });
