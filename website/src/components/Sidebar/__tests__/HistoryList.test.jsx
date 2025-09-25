@@ -7,7 +7,8 @@ const historyMock = [
   {
     term: "alpha",
     language: "ENGLISH",
-    termKey: "ENGLISH:alpha",
+    flavor: "BILINGUAL",
+    termKey: "ENGLISH:BILINGUAL:alpha",
     createdAt: "2024-05-01T10:00:00Z",
     favorite: false,
     versions: [
@@ -39,9 +40,9 @@ describe("HistoryList", () => {
   });
 
   /**
-   * 验证点击历史项时会返回词条名称。
+   * 验证点击历史项时会返回完整历史对象并附带版本信息。
    */
-  test("calls onSelect with term only", async () => {
+  test("calls onSelect with history payload", async () => {
     const handleSelect = jest.fn();
     render(<HistoryList onSelect={handleSelect} />);
 
@@ -50,6 +51,6 @@ describe("HistoryList", () => {
     });
 
     fireEvent.click(screen.getByText("alpha"));
-    expect(handleSelect).toHaveBeenCalledWith("alpha");
+    expect(handleSelect).toHaveBeenCalledWith(historyMock[0], "v1");
   });
 });

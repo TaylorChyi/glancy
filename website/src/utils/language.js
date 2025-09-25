@@ -1,8 +1,12 @@
 export const WORD_LANGUAGE_AUTO = "AUTO";
+export const WORD_LANGUAGE_ENGLISH_MONO = "ENGLISH_MONOLINGUAL";
+export const WORD_FLAVOR_BILINGUAL = "BILINGUAL";
+export const WORD_FLAVOR_MONOLINGUAL_ENGLISH = "MONOLINGUAL_ENGLISH";
 const SUPPORTED_WORD_LANGUAGES = Object.freeze([
   WORD_LANGUAGE_AUTO,
   "CHINESE",
   "ENGLISH",
+  WORD_LANGUAGE_ENGLISH_MONO,
 ]);
 
 const HAN_SCRIPT_PATTERN = /\p{Script=Han}/u;
@@ -61,9 +65,19 @@ export function resolveWordLanguage(
 ) {
   const normalized = normalizeWordLanguage(preference);
   if (normalized !== WORD_LANGUAGE_AUTO) {
+    if (normalized === WORD_LANGUAGE_ENGLISH_MONO) {
+      return "ENGLISH";
+    }
     return normalized;
   }
   return detectWordLanguage(text);
+}
+
+export function resolveWordFlavor(preference = WORD_LANGUAGE_AUTO) {
+  const normalized = normalizeWordLanguage(preference);
+  return normalized === WORD_LANGUAGE_ENGLISH_MONO
+    ? WORD_FLAVOR_MONOLINGUAL_ENGLISH
+    : WORD_FLAVOR_BILINGUAL;
 }
 
 export function getSupportedWordLanguages() {

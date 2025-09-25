@@ -5,7 +5,11 @@ import {
   getSupportedLanguageCodes,
   isSupportedLanguage,
 } from "@/i18n/languages.js";
-import { WORD_LANGUAGE_AUTO, normalizeWordLanguage } from "@/utils/language.js";
+import {
+  WORD_LANGUAGE_AUTO,
+  WORD_LANGUAGE_ENGLISH_MONO,
+  normalizeWordLanguage,
+} from "@/utils/language.js";
 
 const LEGACY_LANGUAGE_STORAGE_KEY = "lang";
 const SETTINGS_STORAGE_KEY = "settings";
@@ -13,7 +17,11 @@ const DEFAULT_LANGUAGE_FALLBACK = "zh";
 
 type SystemLanguage = typeof SYSTEM_LANGUAGE_AUTO | string;
 
-type DictionaryLanguage = typeof WORD_LANGUAGE_AUTO | "CHINESE" | "ENGLISH";
+type DictionaryLanguage =
+  | typeof WORD_LANGUAGE_AUTO
+  | "CHINESE"
+  | "ENGLISH"
+  | typeof WORD_LANGUAGE_ENGLISH_MONO;
 
 type SettingsState = {
   systemLanguage: SystemLanguage;

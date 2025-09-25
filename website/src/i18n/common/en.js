@@ -25,6 +25,9 @@ export default {
   dictionaryLanguageEnglish: "English term",
   dictionaryLanguageEnglishDescription:
     "Interpret as an English word or phrase with Chinese-first guidance.",
+  dictionaryLanguageEnglishMonolingual: "English term · English definitions",
+  dictionaryLanguageEnglishMonolingualDescription:
+    "Receive nuanced English-to-English explanations without Chinese scaffolding.",
   dictionaryLanguageChinese: "Chinese term",
   dictionaryLanguageChineseDescription:
     "Interpret as a Chinese character or word with English-first storytelling.",

@@ -52,7 +52,8 @@ function HistoryList({ onSelect }) {
 
   const handleSelect = (item) => {
     if (!onSelect) return;
-    onSelect(item.term);
+    const versionId = item?.latestVersionId ?? undefined;
+    onSelect(item, versionId);
   };
 
   return (

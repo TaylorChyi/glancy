@@ -26,7 +26,18 @@ jest.unstable_mockModule("@/components/Layout", () => ({
       {sidebarProps && (
         <button
           data-testid="history-select"
-          onClick={() => sidebarProps.onSelectHistory("foo", undefined)}
+          onClick={() =>
+            sidebarProps.onSelectHistory(
+              {
+                term: "foo",
+                language: "ENGLISH",
+                flavor: "BILINGUAL",
+                termKey: "ENGLISH:BILINGUAL:foo",
+                latestVersionId: undefined,
+              },
+              undefined,
+            )
+          }
         />
       )}
       <div>{children}</div>
@@ -124,6 +135,8 @@ jest.unstable_mockModule("@/context", () => ({
       dictionaryLanguageAutoDescription: "根据输入自动识别",
       dictionaryLanguageEnglish: "英文词条",
       dictionaryLanguageEnglishDescription: "固定按英文解析",
+      dictionaryLanguageEnglishMonolingual: "英英释义",
+      dictionaryLanguageEnglishMonolingualDescription: "提供英文释义",
       dictionaryLanguageChinese: "中文词条",
       dictionaryLanguageChineseDescription: "固定按中文解析",
     },
@@ -147,6 +160,7 @@ const { useStreamWord } = await import("@/hooks");
 const { useWordStore } = await import("@/store/wordStore.js");
 const { useSettingsStore } = await import("@/store");
 const { wordCacheKey } = await import("@/api/words.js");
+const { WORD_FLAVOR_BILINGUAL } = await import("@/utils/language.js");
 
 beforeEach(() => {
   useStreamWord.mockReset();
@@ -319,7 +333,11 @@ test("navigates between cached versions", async () => {
             activeVersionId: "v1",
           }),
         };
-        const cacheKey = wordCacheKey({ term: "foo", language: "ENGLISH" });
+        const cacheKey = wordCacheKey({
+          term: "foo",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+        });
         useWordStore.getState().setVersions(cacheKey, [
           { id: "v1", term: "foo", markdown: "# First" },
           { id: "v2", term: "foo", markdown: "# Second" },

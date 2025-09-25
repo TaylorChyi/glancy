@@ -23,6 +23,9 @@ export default {
   dictionaryLanguageEnglish: "英文词条",
   dictionaryLanguageEnglishDescription:
     "固定以英文单词或短语的视角解析，输出中文主导的详解。",
+  dictionaryLanguageEnglishMonolingual: "英文词条 · 英文释义",
+  dictionaryLanguageEnglishMonolingualDescription:
+    "只提供英文释义与例句，适合深度英英思维训练。",
   dictionaryLanguageChinese: "中文词条",
   dictionaryLanguageChineseDescription:
     "固定视为中文汉字或词语，生成以英文释义为核心的深度解读。",

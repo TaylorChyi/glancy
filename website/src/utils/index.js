@@ -5,10 +5,14 @@ export { withStopPropagation } from "./stopPropagation.js";
 export {
   detectWordLanguage,
   WORD_LANGUAGE_AUTO,
+  WORD_LANGUAGE_ENGLISH_MONO,
   resolveWordLanguage,
   getSupportedWordLanguages,
   normalizeWordLanguage,
   isWordLanguage,
+  resolveWordFlavor,
+  WORD_FLAVOR_BILINGUAL,
+  WORD_FLAVOR_MONOLINGUAL_ENGLISH,
 } from "./language.js";
 export { getBrandText, BRAND_TEXT } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";
