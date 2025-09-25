@@ -1,6 +1,6 @@
 import { useLanguage } from "@/context";
-import ThemeIcon from "@/components/ui/Icon";
 import { UserMenu } from "@/components/Header";
+import SidebarActionItem from "@/components/Sidebar/SidebarActionItem.jsx";
 import { getBrandText } from "@/utils";
 
 function Brand() {
@@ -13,10 +13,13 @@ function Brand() {
 
   return (
     <div className="sidebar-brand">
-      <div className="brand-main" onClick={handleClick}>
-        <ThemeIcon name="glancy-web" alt={brandText} />
-        <span>{brandText}</span>
-      </div>
+      <SidebarActionItem
+        icon="glancy-web"
+        iconAlt={brandText}
+        label={brandText}
+        onClick={handleClick}
+        className="sidebar-brand-action"
+      />
       <div className="mobile-user-menu">
         <UserMenu size={28} />
       </div>

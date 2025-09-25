@@ -5,14 +5,19 @@ import { Link } from "react-router-dom";
 import UserMenuButton from "./UserMenuButton.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
 import UserMenuModals from "./UserMenuModals.jsx";
+import PropTypes from "prop-types";
 
-function UserMenu({ size = 24, showName = false }) {
+function UserMenu({ size = 24, showName = false, TriggerComponent }) {
   const { user, clearUser } = useUser();
   const { clearHistory } = useHistory();
   const { t } = useLanguage();
   const username = user?.username || "";
   const isPro =
     user?.member || user?.isPro || (user?.plan && user.plan !== "free");
+  const planName = user?.plan || (isPro ? "plus" : "free");
+  const planLabel = planName
+    ? planName.charAt(0).toUpperCase() + planName.slice(1)
+    : "";
 
   if (!user) {
     return (
@@ -29,6 +34,8 @@ function UserMenu({ size = 24, showName = false }) {
     );
   }
 
+  const Trigger = TriggerComponent ?? UserMenuButton;
+
   return (
     <UserMenuModals
       isPro={isPro}
@@ -43,11 +50,12 @@ function UserMenu({ size = 24, showName = false }) {
         openUpgrade,
         openLogout,
       }) => (
-        <UserMenuButton
+        <Trigger
           size={size}
           showName={showName}
           isPro={isPro}
           username={username}
+          planLabel={planLabel}
         >
           {({ open, setOpen }) => (
             <UserMenuDropdown
@@ -62,10 +70,16 @@ function UserMenu({ size = 24, showName = false }) {
               openLogout={openLogout}
             />
           )}
-        </UserMenuButton>
+        </Trigger>
       )}
     </UserMenuModals>
   );
 }
+
+UserMenu.propTypes = {
+  size: PropTypes.number,
+  showName: PropTypes.bool,
+  TriggerComponent: PropTypes.elementType,
+};
 
 export default UserMenu;
