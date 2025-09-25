@@ -32,9 +32,7 @@ jest.unstable_mockModule("@/components", () => ({
   TtsButton: mockTtsButton,
 }));
 
-const { default: OutputToolbar } = await import(
-  "@/components/TopBar/OutputToolbar.jsx"
-);
+const { default: OutputToolbar } = await import("@/components/OutputToolbar");
 
 describe("OutputToolbar", () => {
   beforeEach(() => {
