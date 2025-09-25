@@ -228,15 +228,11 @@ function Profile({ onCancel }) {
       <h2>{t.profileTitle}</h2>
       <form onSubmit={handleSave} className={styles["profile-card"]}>
         <div className={styles["avatar-area"]}>
-          {avatar && typeof avatar === "string" ? (
-            <img src={avatar} alt="avatar" />
-          ) : (
-            <Avatar
-              width={100}
-              height={100}
-              style={{ borderRadius: "var(--radius-xl)" }}
-            />
-          )}
+          <Avatar
+            src={typeof avatar === "string" && avatar ? avatar : undefined}
+            className={styles["profile-avatar"]}
+            elevation="none"
+          />
           <span className={styles["avatar-hint"]}>{t.avatarHint}</span>
           <input
             type="file"

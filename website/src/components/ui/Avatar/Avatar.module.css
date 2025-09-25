@@ -2,4 +2,10 @@
   border-radius: var(--radius-avatar);
   object-fit: cover;
   box-shadow: 0 0 4px var(--shadow-color);
+  display: block;
+  transition: box-shadow 0.2s ease;
+}
+
+.avatar[data-elevation="none"] {
+  box-shadow: none;
 }
