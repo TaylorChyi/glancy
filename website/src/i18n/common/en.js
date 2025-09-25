@@ -125,7 +125,7 @@ export default {
   historyEmptyAction: "Back to discovery",
   searchEmptyTitle: "Awaiting your next curiosity",
   searchEmptyDescription:
-    "Enter a word, phrase, or sentence to let Glancy compose tailored insights.",
+    "Enter a term, phrase, or sentence to let Glancy compose tailored insights.",
   searchEmptyAction: "Focus search",
   noDefinition: "No definition",
   clearHistory: "Clear History",
@@ -176,7 +176,16 @@ export default {
   logoutConfirmTitle: "Are you sure you want to log out?",
   logoutConfirmMessage: "Log out of Glancy as {email}?",
   share: "Share",
+  shareMessage: 'Explore insights about "{term}" together.',
+  shareSuccess: "Link ready to share whenever you are.",
+  shareCopySuccess: "Link copied — paste it into any conversation.",
+  shareFailed: "We couldn't complete the share. Please try again soon.",
   report: "Report",
+  reportSuccess:
+    "We've opened our feedback channel. Thank you for the vigilance.",
+  reportFailed: "We couldn't file the report right now. Please retry later.",
+  reportUnavailable:
+    "We couldn't open the report channel. Please reach our concierge team instead.",
   shortcutsTitle: "Keyboard Shortcuts",
   shortcutsFocusSearch: "Focus search input",
   shortcutsSwitchLanguage: "Switch language",
@@ -191,7 +200,7 @@ export default {
   favoriteAction: "Favorite",
   deleteAction: "Delete",
   searchPlaceholder: "What are we querying next?",
-  inputPlaceholder: "Word, Phrase or Sentence",
+  inputPlaceholder: "Term, phrase, or sentence",
   cookieConsentTitle: "Your privacy, elevated",
   cookieConsentDescription:
     "We use cookies to remember trusted devices and tailor your sign-in journey.",

@@ -111,4 +111,17 @@ describe("DesktopTopBar", () => {
       expect.objectContaining({ term: "term", tone: "warm" }),
     );
   });
+
+  /**
+   * 验证分享与举报按钮会触发对应回调，确保操作触达页面逻辑。
+   */
+  test("exposes share and report callbacks", () => {
+    const onShare = jest.fn();
+    const onReport = jest.fn();
+    renderBar({ canShare: true, onShare, canReport: true, onReport });
+    fireEvent.click(screen.getByRole("button", { name: "分享" }));
+    fireEvent.click(screen.getByRole("button", { name: "反馈" }));
+    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(onReport).toHaveBeenCalledTimes(1);
+  });
 });

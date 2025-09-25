@@ -21,3 +21,4 @@ export {
   extractMarkdownPreview,
   polishDictionaryMarkdown,
 } from "./markdown.js";
+export { resolveShareTarget, attemptShareLink } from "./share.js";

@@ -17,6 +17,10 @@ function MobileTopBar({
   canFavorite = false,
   canDelete = false,
   onDelete,
+  canShare = false,
+  onShare,
+  canReport = false,
+  onReport,
   canReoutput = false,
   onReoutput,
   versions = [],
@@ -74,6 +78,10 @@ function MobileTopBar({
           canFavorite={canFavorite}
           canDelete={canDelete}
           onDelete={onDelete}
+          canShare={canShare}
+          onShare={onShare}
+          canReport={canReport}
+          onReport={onReport}
         />
       </div>
     </header>
@@ -90,6 +98,10 @@ MobileTopBar.propTypes = {
   canFavorite: PropTypes.bool,
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
+  canShare: PropTypes.bool,
+  onShare: PropTypes.func,
+  canReport: PropTypes.bool,
+  onReport: PropTypes.func,
   canReoutput: PropTypes.bool,
   onReoutput: PropTypes.func,
   versions: PropTypes.arrayOf(PropTypes.object),
@@ -112,6 +124,10 @@ MobileTopBar.defaultProps = {
   canFavorite: false,
   canDelete: false,
   onDelete: undefined,
+  canShare: false,
+  onShare: undefined,
+  canReport: false,
+  onReport: undefined,
   canReoutput: false,
   onReoutput: undefined,
   versions: [],

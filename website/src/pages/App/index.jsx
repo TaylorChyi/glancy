@@ -19,10 +19,12 @@ import {
   extractMarkdownPreview,
   resolveWordLanguage,
   WORD_LANGUAGE_AUTO,
+  resolveShareTarget,
+  attemptShareLink,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore, useSettingsStore } from "@/store";
-import { DEFAULT_MODEL } from "@/config";
+import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 
 function App() {
   const [text, setText] = useState("");
@@ -104,6 +106,13 @@ function App() {
   const streamWord = useStreamWord();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
   const wordStoreApi = useWordStore;
+  const activeTerm = entry?.term || currentTerm;
+
+  const showPopup = useCallback((message) => {
+    if (!message) return;
+    setPopupMsg(message);
+    setPopupOpen(true);
+  }, []);
 
   const focusInput = () => {
     inputRef.current?.focus();
@@ -295,8 +304,7 @@ function App() {
         }
 
         console.info("[App] search error", error);
-        setPopupMsg(error.message);
-        setPopupOpen(true);
+        showPopup(error.message);
         return { status: "error", term: normalized, error };
       } finally {
         setLoading(false);
@@ -312,8 +320,7 @@ function App() {
       setEntry,
       setStreamText,
       setFinalText,
-      setPopupMsg,
-      setPopupOpen,
+      showPopup,
       currentTermKey,
       wordStoreApi,
       applyRecord,
@@ -344,8 +351,55 @@ function App() {
     executeLookup(currentTerm, { forceNew: true });
   }, [currentTerm, executeLookup]);
 
+  const handleShare = useCallback(async () => {
+    if (!activeTerm) return;
+
+    const currentUrl =
+      typeof window !== "undefined" && window.location
+        ? window.location.href
+        : "";
+
+    const shareUrl = resolveShareTarget({ currentUrl });
+    const applyTermTemplate = (template, fallback) => {
+      if (typeof template === "string" && template.length > 0) {
+        return template.split("{term}").join(activeTerm);
+      }
+      return fallback;
+    };
+
+    const shareText = applyTermTemplate(t.shareMessage, activeTerm);
+    const shareTitle = activeTerm;
+
+    try {
+      const result = await attemptShareLink({
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl,
+      });
+
+      if (result.status === "shared") {
+        showPopup(t.shareSuccess ?? t.share ?? shareTitle);
+      } else if (result.status === "copied") {
+        showPopup(t.shareCopySuccess ?? t.shareSuccess ?? shareTitle);
+      } else if (result.status === "failed") {
+        showPopup(t.shareFailed ?? t.share ?? shareTitle);
+      }
+    } catch (error) {
+      console.error("[App] share failed", error);
+      showPopup(t.shareFailed ?? t.share ?? shareTitle);
+    }
+  }, [
+    activeTerm,
+    t.shareMessage,
+    t.shareSuccess,
+    t.share,
+    t.shareCopySuccess,
+    t.shareFailed,
+    showPopup,
+  ]);
+
   const handleDeleteHistory = useCallback(async () => {
-    const identifier = entry?.term ?? currentTerm;
+    const identifier = activeTerm;
     if (!identifier) return;
     try {
       await removeHistory(identifier, user);
@@ -359,7 +413,86 @@ function App() {
     } catch (err) {
       console.error("[App] remove history failed", err);
     }
-  }, [entry, currentTerm, removeHistory, user]);
+  }, [activeTerm, removeHistory, user]);
+
+  const handleReport = useCallback(() => {
+    if (!activeTerm) return;
+
+    const currentUrl =
+      typeof window !== "undefined" && window.location
+        ? window.location.href
+        : "";
+
+    const buildReportTarget = () => {
+      if (REPORT_FORM_URL) {
+        try {
+          const base =
+            currentUrl ||
+            (typeof window !== "undefined" && window.location
+              ? `${window.location.origin}/`
+              : "http://localhost/");
+          const reportUrl = new URL(REPORT_FORM_URL, base);
+          reportUrl.searchParams.set("term", activeTerm);
+          if (currentUrl) {
+            reportUrl.searchParams.set("source", currentUrl);
+          }
+          return reportUrl.toString();
+        } catch (error) {
+          console.error("[App] report url resolution failed", error);
+        }
+      }
+
+      if (SUPPORT_EMAIL) {
+        const subject = encodeURIComponent(`[Glancy] Report: ${activeTerm}`);
+        const lines = [
+          `Term: ${activeTerm}`,
+          currentUrl ? `Page: ${currentUrl}` : null,
+          "",
+          "Describe the issue here:",
+        ].filter(Boolean);
+        const body = encodeURIComponent(lines.join("\n"));
+        return `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+      }
+
+      return "";
+    };
+
+    const target = buildReportTarget();
+
+    if (!target) {
+      showPopup(t.reportUnavailable ?? t.reportFailed ?? t.report ?? "Report");
+      return;
+    }
+
+    const openReportChannel = () => {
+      if (typeof window === "undefined") return false;
+      if (target.startsWith("mailto:")) {
+        window.location.href = target;
+        return true;
+      }
+      const newWindow = window.open(target, "_blank", "noopener,noreferrer");
+      return newWindow != null;
+    };
+
+    try {
+      const opened = openReportChannel();
+      if (opened) {
+        showPopup(t.reportSuccess ?? t.report ?? "Report");
+      } else {
+        showPopup(t.reportFailed ?? t.report ?? "Report");
+      }
+    } catch (error) {
+      console.error("[App] report open failed", error);
+      showPopup(t.reportFailed ?? t.report ?? "Report");
+    }
+  }, [
+    activeTerm,
+    showPopup,
+    t.reportUnavailable,
+    t.reportFailed,
+    t.report,
+    t.reportSuccess,
+  ]);
 
   const handleNavigateVersion = useCallback(
     (direction) => {
@@ -475,19 +608,17 @@ function App() {
           onSelectHistory: handleSelectHistory,
         }}
         topBarProps={{
-          term: entry?.term || currentTerm,
+          term: activeTerm,
           lang,
           showBack: !showFavorites && fromFavorites,
           onBack: handleBackFromFavorite,
-          favorited:
-            !!(entry?.term || currentTerm) &&
-            favorites.includes(entry?.term || currentTerm),
+          favorited: !!activeTerm && favorites.includes(activeTerm),
           onToggleFavorite: toggleFavoriteEntry,
           canFavorite: !!entry && !showFavorites && !showHistory,
-          canDelete:
-            !!(entry?.term || currentTerm) && !showFavorites && !showHistory,
-          canReoutput:
-            !!(entry?.term || currentTerm) && !showFavorites && !showHistory,
+          canDelete: !!activeTerm && !showFavorites && !showHistory,
+          canShare: !!activeTerm && !showFavorites && !showHistory,
+          canReport: !!activeTerm && !showFavorites && !showHistory,
+          canReoutput: !!activeTerm && !showFavorites && !showHistory,
           onReoutput: handleReoutput,
           versions: !showFavorites && !showHistory ? versions : [],
           activeVersionId:
@@ -497,6 +628,8 @@ function App() {
           isLoading: loading,
           onDelete:
             !showFavorites && !showHistory ? handleDeleteHistory : undefined,
+          onShare: !showFavorites && !showHistory ? handleShare : undefined,
+          onReport: !showFavorites && !showHistory ? handleReport : undefined,
           toolbarProps: toolbarLanguageProps,
         }}
         bottomContent={

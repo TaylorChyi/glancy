@@ -112,4 +112,17 @@ describe("MobileTopBar", () => {
     expect(customTts).toHaveBeenCalled();
     expect(mockTtsButton).not.toHaveBeenCalled();
   });
+
+  /**
+   * 验证移动端同样暴露分享与举报操作。
+   */
+  test("wires share and report interactions", () => {
+    const onShare = jest.fn();
+    const onReport = jest.fn();
+    renderBar({ canShare: true, onShare, canReport: true, onReport });
+    fireEvent.click(screen.getByRole("button", { name: "分享" }));
+    fireEvent.click(screen.getByRole("button", { name: "反馈" }));
+    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(onReport).toHaveBeenCalledTimes(1);
+  });
 });
