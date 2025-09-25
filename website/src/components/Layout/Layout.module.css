@@ -17,10 +17,51 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in srgb, var(--chat-window-bg) 96%, transparent);
+  background: color-mix(in srgb, var(--chat-window-bg) 92%, transparent);
   border-bottom: 1px solid
-    color-mix(in srgb, var(--border-color) 60%, transparent);
+    color-mix(in srgb, var(--border-color) 55%, transparent);
   backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  padding: var(--space-2, 8px) var(--space-3, 16px);
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 52%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 96%, transparent);
+  box-shadow: 0 8px 18px
+    color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  color: color-mix(in srgb, var(--color-text) 90%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary-color) 42%, transparent);
+  box-shadow: 0 10px 22px
+    color-mix(in srgb, var(--shadow-color) 22%, transparent);
+}
+
+.sidebar-toggle:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px
+    color-mix(in srgb, var(--shadow-color) 16%, transparent);
 }
 
 .main-middle {

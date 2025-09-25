@@ -1,16 +1,10 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import DesktopTopBar from "@/components/TopBar/DesktopTopBar.jsx";
-import MobileTopBar from "@/components/TopBar/MobileTopBar.jsx";
+import ThemeIcon from "@/components/ui/Icon";
 import { useIsMobile } from "@/utils";
 import styles from "./Layout.module.css";
 
-function Layout({
-  children,
-  sidebarProps = {},
-  topBarProps = {},
-  bottomContent = null,
-}) {
+function Layout({ children, sidebarProps = {}, bottomContent = null }) {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -23,16 +17,18 @@ function Layout({
         isMobile={isMobile}
       />
       <div className={styles.main}>
-        <div className={styles["main-top"]}>
-          {isMobile ? (
-            <MobileTopBar
-              {...topBarProps}
-              onOpenSidebar={() => setSidebarOpen(true)}
-            />
-          ) : (
-            <DesktopTopBar {...topBarProps} />
-          )}
-        </div>
+        {isMobile ? (
+          <div className={styles["main-top"]}>
+            <button
+              type="button"
+              className={styles["sidebar-toggle"]}
+              onClick={() => setSidebarOpen(true)}
+              aria-label="打开侧边栏"
+            >
+              <ThemeIcon name="glancy-web" width={24} height={24} />
+            </button>
+          </div>
+        ) : null}
         <div className={styles["main-middle"]}>{children}</div>
         <div className={styles["main-bottom"]}>{bottomContent}</div>
       </div>

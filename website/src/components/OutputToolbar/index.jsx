@@ -241,12 +241,14 @@ function OutputToolbar({
   const actionItems = useMemo(
     () =>
       ACTION_BLUEPRINTS.map((blueprint) => {
+        if (!actionContext.user) {
+          return null;
+        }
+
         const handler = blueprint.getHandler?.(actionContext);
         const label = blueprint.getLabel(actionContext);
         const disabled =
-          !actionContext.user ||
-          !blueprint.canUse?.(actionContext) ||
-          typeof handler !== "function";
+          !blueprint.canUse?.(actionContext) || typeof handler !== "function";
 
         return {
           key: blueprint.key,
@@ -257,7 +259,7 @@ function OutputToolbar({
           variant: blueprint.variant,
           disabled,
         };
-      }),
+      }).filter(Boolean),
     [actionContext],
   );
 

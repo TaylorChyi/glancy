@@ -4,25 +4,8 @@ jest.unstable_mockModule("remark-gfm", () => ({ default: () => {} }));
 
 // simplify layout and nested components for isolated testing
 jest.unstable_mockModule("@/components/Layout", () => ({
-  default: ({ bottomContent, children, sidebarProps, topBarProps }) => (
+  default: ({ bottomContent, children, sidebarProps }) => (
     <div>
-      {topBarProps && (
-        <div>
-          <button
-            data-testid="topbar-reoutput"
-            onClick={topBarProps.onReoutput}
-            disabled={!topBarProps.canReoutput}
-          />
-          <button
-            data-testid="topbar-prev"
-            onClick={() => topBarProps.onNavigateVersion?.("previous")}
-          />
-          <button
-            data-testid="topbar-next"
-            onClick={() => topBarProps.onNavigateVersion?.("next")}
-          />
-        </div>
-      )}
       {sidebarProps && (
         <button
           data-testid="history-select"
@@ -66,9 +49,14 @@ const MockDictionaryEntry = ({ entry }) => {
   return <div data-testid="entry">{entry.term ?? ""}</div>;
 };
 
-const MockDictionaryEntryView = ({ entry, preview }) => {
+const MockDictionaryEntryView = ({ entry, preview, actions }) => {
   if (entry) {
-    return <MockDictionaryEntry entry={entry} />;
+    return (
+      <div>
+        <MockDictionaryEntry entry={entry} />
+        {actions}
+      </div>
+    );
   }
   if (preview) {
     return renderMarkdown(preview);
@@ -106,6 +94,8 @@ jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
 }));
 jest.unstable_mockModule("react-router-dom", () => ({
   useNavigate: () => jest.fn(),
+  Navigate: () => null,
+  Link: ({ children }) => <>{children}</>,
 }));
 
 // mock contexts
@@ -146,6 +136,7 @@ jest.unstable_mockModule("@/context", () => ({
     lang: "en",
     setLang: jest.fn(),
   }),
+  useLocale: () => ({ locale: "zh-CN" }),
 }));
 
 // mock stores and hooks
@@ -156,6 +147,7 @@ jest.unstable_mockModule("@/hooks", () => ({
   useAppShortcuts: () => ({ toggleFavoriteEntry: jest.fn() }),
   useApi: () => ({ words: {} }),
   useMediaQuery: () => false,
+  useEscapeKey: () => ({ on: jest.fn(), off: jest.fn() }),
 }));
 
 const { default: App } = await import("@/pages/App");
@@ -308,7 +300,10 @@ test("reoutput triggers forceNew stream and resets view before streaming", async
 
   await screen.findByRole("heading", { name: "First" });
 
-  fireEvent.click(screen.getByTestId("topbar-reoutput"));
+  const reoutputButton = await screen.findByRole("button", {
+    name: "重新输出",
+  });
+  fireEvent.click(reoutputButton);
 
   await waitFor(() => expect(generator).toHaveBeenCalledTimes(2));
   await waitFor(() => {
@@ -360,7 +355,10 @@ test("navigates between cached versions", async () => {
 
   await screen.findByRole("heading", { name: "First" });
 
-  fireEvent.click(screen.getByTestId("topbar-next"));
+  const nextButton = await screen.findByRole("button", {
+    name: "下一版本",
+  });
+  fireEvent.click(nextButton);
 
   const second = await screen.findByRole("heading", { name: "Second" });
   expect(second).toBeInTheDocument();

@@ -15,6 +15,7 @@ import FavoritesView from "./FavoritesView.jsx";
 import { useAppShortcuts } from "@/hooks";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
+import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
 import {
   extractMarkdownPreview,
   resolveDictionaryConfig,
@@ -674,35 +675,39 @@ function App() {
     }
   }, [user]);
 
+  const isEntryViewActive = !showFavorites && !showHistory;
+  const resolvedTerm = activeTerm;
+  const hasResolvedEntry = isEntryViewActive && Boolean(entry);
+  const isTermActionable = isEntryViewActive && Boolean(resolvedTerm);
+  const dictionaryActionBar = (
+    <DictionaryEntryActionBar
+      visible={hasResolvedEntry}
+      term={resolvedTerm}
+      lang={lang}
+      onReoutput={handleReoutput}
+      disabled={!isTermActionable || loading}
+      versions={isEntryViewActive ? versions : []}
+      activeVersionId={isEntryViewActive ? activeVersionId : null}
+      onNavigate={isEntryViewActive ? handleNavigateVersion : undefined}
+      favorited={Boolean(resolvedTerm && favorites.includes(resolvedTerm))}
+      onToggleFavorite={toggleFavoriteEntry}
+      canFavorite={hasResolvedEntry && isTermActionable}
+      canDelete={isTermActionable}
+      onDelete={isEntryViewActive ? handleDeleteHistory : undefined}
+      canShare={isTermActionable}
+      onShare={isEntryViewActive ? handleShare : undefined}
+      canReport={isTermActionable}
+      onReport={isEntryViewActive ? handleReport : undefined}
+      {...toolbarLanguageProps}
+    />
+  );
+
   return (
     <>
       <Layout
         sidebarProps={{
           onToggleFavorites: handleToggleFavorites,
           onSelectHistory: handleSelectHistory,
-        }}
-        topBarProps={{
-          term: activeTerm,
-          lang,
-          favorited: !!activeTerm && favorites.includes(activeTerm),
-          onToggleFavorite: toggleFavoriteEntry,
-          canFavorite: !!entry && !showFavorites && !showHistory,
-          canDelete: !!activeTerm && !showFavorites && !showHistory,
-          canShare: !!activeTerm && !showFavorites && !showHistory,
-          canReport: !!activeTerm && !showFavorites && !showHistory,
-          canReoutput: !!activeTerm && !showFavorites && !showHistory,
-          onReoutput: handleReoutput,
-          versions: !showFavorites && !showHistory ? versions : [],
-          activeVersionId:
-            !showFavorites && !showHistory ? activeVersionId : null,
-          onNavigateVersion:
-            !showFavorites && !showHistory ? handleNavigateVersion : undefined,
-          isLoading: loading,
-          onDelete:
-            !showFavorites && !showHistory ? handleDeleteHistory : undefined,
-          onShare: !showFavorites && !showHistory ? handleShare : undefined,
-          onReport: !showFavorites && !showHistory ? handleReport : undefined,
-          toolbarProps: toolbarLanguageProps,
         }}
         bottomContent={
           <div>
@@ -747,6 +752,7 @@ function App() {
               entry={entry}
               preview={finalText || streamText}
               isLoading={loading}
+              actions={dictionaryActionBar}
             />
           ) : (
             <EmptyState
