@@ -1,36 +1,53 @@
+import { useMemo } from "react";
 import BaseModal from "./BaseModal.jsx";
 import styles from "./ShortcutsModal.module.css";
 import { getModifierKey } from "@/utils/device.js";
 import { useLanguage } from "@/context";
+import { SettingsSurface } from "@/components";
 
 function ShortcutsModal({ open, onClose }) {
   const { t } = useLanguage();
   const mod = getModifierKey();
-  const shortcuts = [
-    { keys: `${mod} + Shift + F`, action: t.shortcutsFocusSearch },
-    { keys: `${mod} + Shift + L`, action: t.shortcutsSwitchLanguage },
-    { keys: `${mod} + Shift + M`, action: t.shortcutsToggleTheme },
-    { keys: `${mod} + Shift + B`, action: t.shortcutsToggleFavorite },
-  ];
+
+  const shortcuts = useMemo(
+    () => [
+      { keys: [mod, "Shift", "F"], action: t.shortcutsFocusSearch },
+      { keys: [mod, "Shift", "L"], action: t.shortcutsSwitchLanguage },
+      { keys: [mod, "Shift", "M"], action: t.shortcutsToggleTheme },
+      { keys: [mod, "Shift", "B"], action: t.shortcutsToggleFavorite },
+    ],
+    [mod, t],
+  );
 
   return (
-    <BaseModal
-      open={open}
-      onClose={onClose}
-      className={`modal-content ${styles["shortcuts-modal"]}`}
-    >
-      <h3>{t.shortcutsTitle}</h3>
-      <ul>
-        {shortcuts.map((s) => (
-          <li key={s.keys}>
-            <span className={styles.keys}>{s.keys}</span>
-            <span className={styles.desc}>{s.action}</span>
-          </li>
-        ))}
-      </ul>
-      <button type="button" onClick={onClose} className={styles["close-btn"]}>
-        {t.close}
-      </button>
+    <BaseModal open={open} onClose={onClose} className="modal-content">
+      <SettingsSurface
+        title={t.shortcutsTitle}
+        actions={
+          <button
+            type="button"
+            onClick={onClose}
+            className={styles["close-button"]}
+          >
+            {t.close}
+          </button>
+        }
+      >
+        <ul className={styles.list}>
+          {shortcuts.map((shortcut) => (
+            <li key={shortcut.action} className={styles.item}>
+              <div className={styles.keys}>
+                {shortcut.keys.map((key) => (
+                  <kbd key={`${shortcut.action}-${key}`} className={styles.key}>
+                    {key}
+                  </kbd>
+                ))}
+              </div>
+              <span className={styles.action}>{shortcut.action}</span>
+            </li>
+          ))}
+        </ul>
+      </SettingsSurface>
     </BaseModal>
   );
 }

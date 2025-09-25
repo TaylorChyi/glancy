@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useId } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import styles from "./Preferences.module.css";
 import { useLanguage } from "@/context";
@@ -9,7 +9,11 @@ import MessagePopup from "@/components/ui/MessagePopup";
 import SelectField from "@/components/form/SelectField.jsx";
 import FormRow from "@/components/form/FormRow.jsx";
 import { useApi } from "@/hooks/useApi.js";
-import { VoiceSelector } from "@/components";
+import {
+  VoiceSelector,
+  SettingsSurface,
+  SETTINGS_SURFACE_VARIANTS,
+} from "@/components";
 import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 
@@ -41,8 +45,6 @@ function Preferences({ variant = VARIANTS.PAGE }) {
   );
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
-  const headingId = useId();
-  const descriptionId = useId();
 
   const systemLanguageFormatter = useMemo(() => {
     try {
@@ -186,135 +188,125 @@ function Preferences({ variant = VARIANTS.PAGE }) {
     ],
   );
 
-  const containerClassName = [
-    styles.container,
+  const surfaceVariant =
     variant === VARIANTS.PAGE
-      ? styles["container-page"]
-      : styles["container-dialog"],
-  ]
-    .filter(Boolean)
-    .join(" ");
+      ? SETTINGS_SURFACE_VARIANTS.PAGE
+      : SETTINGS_SURFACE_VARIANTS.MODAL;
 
   const splitFieldsClassName = `${styles["section-fields"]} ${styles["section-fields-split"]}`;
 
   return (
-    <section
-      className={containerClassName}
-      aria-labelledby={headingId}
-      aria-describedby={descriptionId}
-    >
-      <header className={styles.header}>
-        <h2 id={headingId} className={styles.title}>
-          {t.prefTitle}
-        </h2>
-        <p id={descriptionId} className={styles.subtitle}>
-          {t.prefDescription}
-        </p>
-      </header>
-      <form className={styles.form} onSubmit={handleSave}>
-        <fieldset className={styles.section}>
-          <legend className={styles["section-title"]}>
-            {t.prefDefaultsTitle}
-          </legend>
-          <p className={styles["section-description"]}>
-            {t.prefDefaultsDescription}
-          </p>
-          <div className={splitFieldsClassName}>
-            <FormRow
-              label={t.prefLanguage}
-              id="source-lang"
-              className={styles.field}
-            >
-              <SelectField
-                value={sourceLang}
-                onChange={setSourceLang}
-                options={languageOptions}
-              />
-            </FormRow>
-            <FormRow
-              label={t.prefSearchLanguage}
-              id="target-lang"
-              className={styles.field}
-            >
-              <SelectField
-                value={targetLang}
-                onChange={setTargetLang}
-                options={searchLanguageOptions}
-              />
-            </FormRow>
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.section}>
-          <legend className={styles["section-title"]}>
-            {t.prefInterfaceTitle}
-          </legend>
-          <p className={styles["section-description"]}>
-            {t.prefInterfaceDescription}
-          </p>
-          <div className={splitFieldsClassName}>
-            <FormRow
-              label={t.prefSystemLanguage}
-              id="system-language"
-              className={styles.field}
-            >
-              <SelectField
-                value={systemLanguage}
-                onChange={handleSystemLanguageChange}
-                options={systemLanguageOptions}
-              />
-            </FormRow>
-            <FormRow
-              label={t.prefTheme}
-              id="theme-select"
-              className={styles.field}
-            >
-              <SelectField
-                value={theme}
-                onChange={setTheme}
-                options={themeOptions}
-              />
-            </FormRow>
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.section}>
-          <legend className={styles["section-title"]}>
-            {t.prefVoicesTitle}
-          </legend>
-          <p className={styles["section-description"]}>
-            {t.prefVoicesDescription}
-          </p>
-          <div className={splitFieldsClassName}>
-            <FormRow
-              label={t.prefVoiceEn}
-              id="voice-en"
-              className={styles.field}
-            >
-              <VoiceSelector lang="en" />
-            </FormRow>
-            <FormRow
-              label={t.prefVoiceZh}
-              id="voice-zh"
-              className={styles.field}
-            >
-              <VoiceSelector lang="zh" />
-            </FormRow>
-          </div>
-        </fieldset>
-
-        <div className={styles.actions}>
+    <>
+      <SettingsSurface
+        variant={surfaceVariant}
+        title={t.prefTitle}
+        description={t.prefDescription}
+        onSubmit={handleSave}
+        actions={
           <button type="submit" className={styles["submit-button"]}>
             {t.saveButton}
           </button>
+        }
+      >
+        <div className={styles.sections}>
+          <fieldset className={styles.section}>
+            <legend className={styles["section-title"]}>
+              {t.prefDefaultsTitle}
+            </legend>
+            <p className={styles["section-description"]}>
+              {t.prefDefaultsDescription}
+            </p>
+            <div className={splitFieldsClassName}>
+              <FormRow
+                label={t.prefLanguage}
+                id="source-lang"
+                className={styles.field}
+              >
+                <SelectField
+                  value={sourceLang}
+                  onChange={setSourceLang}
+                  options={languageOptions}
+                />
+              </FormRow>
+              <FormRow
+                label={t.prefSearchLanguage}
+                id="target-lang"
+                className={styles.field}
+              >
+                <SelectField
+                  value={targetLang}
+                  onChange={setTargetLang}
+                  options={searchLanguageOptions}
+                />
+              </FormRow>
+            </div>
+          </fieldset>
+
+          <fieldset className={styles.section}>
+            <legend className={styles["section-title"]}>
+              {t.prefInterfaceTitle}
+            </legend>
+            <p className={styles["section-description"]}>
+              {t.prefInterfaceDescription}
+            </p>
+            <div className={splitFieldsClassName}>
+              <FormRow
+                label={t.prefSystemLanguage}
+                id="system-language"
+                className={styles.field}
+              >
+                <SelectField
+                  value={systemLanguage}
+                  onChange={handleSystemLanguageChange}
+                  options={systemLanguageOptions}
+                />
+              </FormRow>
+              <FormRow
+                label={t.prefTheme}
+                id="theme-select"
+                className={styles.field}
+              >
+                <SelectField
+                  value={theme}
+                  onChange={setTheme}
+                  options={themeOptions}
+                />
+              </FormRow>
+            </div>
+          </fieldset>
+
+          <fieldset className={`${styles.section} ${styles["section-voices"]}`}>
+            <legend className={styles["section-title"]}>
+              {t.prefVoicesTitle}
+            </legend>
+            <p className={styles["section-description"]}>
+              {t.prefVoicesDescription}
+            </p>
+            <div className={splitFieldsClassName}>
+              <FormRow
+                label={t.prefVoiceEn}
+                id="voice-en"
+                className={styles.field}
+              >
+                <VoiceSelector lang="en" />
+              </FormRow>
+              <FormRow
+                label={t.prefVoiceZh}
+                id="voice-zh"
+                className={styles.field}
+              >
+                <VoiceSelector lang="zh" />
+              </FormRow>
+            </div>
+          </fieldset>
         </div>
-      </form>
+      </SettingsSurface>
       <MessagePopup
         open={popupOpen}
         message={popupMsg}
         onClose={() => setPopupOpen(false)}
       />
-    </section>
+    </>
   );
 }
 
