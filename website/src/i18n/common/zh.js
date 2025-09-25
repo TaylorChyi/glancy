@@ -9,6 +9,13 @@ export default {
   updateSuccess: "更新成功",
   prefTitle: "偏好设置",
   prefDescription: "协调语言、音色与外观，让每次查词都恰到好处。",
+  prefDefaultsTitle: "默认使用语言",
+  prefDefaultsDescription:
+    "进入查词时沿用的源语言与目标语言配置，确保体验连贯。",
+  prefInterfaceTitle: "界面体验",
+  prefInterfaceDescription: "调整界面语言与主题，让系统表达更贴合你的习惯。",
+  prefVoicesTitle: "发音演绎",
+  prefVoicesDescription: "挑选英文与中文的播报音色，保持查词时的听感质感。",
   prefSystemLanguage: "界面语言",
   prefSystemLanguageAuto: "自动跟随系统",
   prefLanguage: "源语言",

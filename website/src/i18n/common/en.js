@@ -10,6 +10,15 @@ export default {
   prefTitle: "Preferences",
   prefDescription:
     "Tailor Glancy's languages, voices, and ambience to suit every session.",
+  prefDefaultsTitle: "Default languages",
+  prefDefaultsDescription:
+    "Choose the source and target languages Glancy prepares whenever you arrive.",
+  prefInterfaceTitle: "Interface experience",
+  prefInterfaceDescription:
+    "Adjust how the interface speaks and presents itself across sessions.",
+  prefVoicesTitle: "Pronunciation",
+  prefVoicesDescription:
+    "Select the studio voices that narrate English and Chinese entries.",
   prefSystemLanguage: "System Language",
   prefSystemLanguageAuto: "Match Device Language",
   prefLanguage: "Source Language",
