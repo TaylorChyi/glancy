@@ -19,58 +19,75 @@ function LanguageGroup({
   normalizeValue,
   type,
 }) {
-  if (!Array.isArray(options) || options.length === 0) {
+  const normalizedOptions = Array.isArray(options)
+    ? options.map(({ value: optionValue, label: optionLabel, description }) => {
+        const normalizedOption = normalizeValue?.(optionValue) ?? optionValue;
+        const normalizedString =
+          normalizedOption != null ? String(normalizedOption) : "";
+        return {
+          value: normalizedString,
+          label: optionLabel,
+          description,
+        };
+      })
+    : [];
+
+  if (normalizedOptions.length === 0) {
     return null;
   }
 
-  const resolvedValue = normalizeValue?.(value);
-  const groupId = `dictionary-${type}-label`;
+  const resolvedValue = normalizeValue?.(value) ?? value;
+  const normalizedValue =
+    resolvedValue != null ? String(resolvedValue) : undefined;
+  const selectValue = normalizedOptions.some(
+    ({ value: optionValue }) => optionValue === normalizedValue,
+  )
+    ? normalizedValue
+    : (normalizedOptions[0]?.value ?? "");
+  const activeOption = normalizedOptions.find(
+    ({ value: optionValue }) => optionValue === selectValue,
+  );
+  const baseId = `dictionary-${type}-language`;
+  const descriptionId = activeOption?.description
+    ? `${baseId}-description`
+    : undefined;
+
+  const handleChange = (event) => {
+    const selectedValue = event?.target?.value;
+    const normalizedSelection =
+      normalizeValue?.(selectedValue) ?? selectedValue;
+    onChange?.(normalizedSelection);
+  };
 
   return (
-    <div
-      className={styles["language-group"]}
-      role="group"
-      aria-labelledby={groupId}
-    >
+    <div className={styles["language-group"]}>
       {label ? (
-        <span className={styles["language-label"]} id={groupId}>
+        <label className={styles["language-label"]} htmlFor={baseId}>
           {label}
-        </span>
+        </label>
       ) : null}
-      <div className={styles["language-options"]}>
-        {options.map(
-          ({ value: optionValue, label: optionLabel, description }) => {
-            const normalizedOption = normalizeValue?.(optionValue);
-            const isActive = normalizedOption === resolvedValue;
-            const descriptionId = description
-              ? `${type}-language-${String(normalizedOption).toLowerCase()}`
-              : undefined;
-            return (
-              <button
-                key={normalizedOption ?? optionLabel}
-                type="button"
-                className={`${styles["language-option"]} ${
-                  isActive ? styles.active : styles.inactive
-                }`}
-                aria-pressed={isActive}
-                aria-describedby={descriptionId}
-                onClick={() => onChange?.(normalizedOption)}
-                title={description || undefined}
-              >
-                <span className={styles["option-title"]}>{optionLabel}</span>
-                {description ? (
-                  <span
-                    className={styles["option-description"]}
-                    id={descriptionId}
-                  >
-                    {description}
-                  </span>
-                ) : null}
-              </button>
-            );
-          },
-        )}
+      <div className={styles["select-control"]}>
+        <select
+          id={baseId}
+          className={styles.select}
+          value={selectValue}
+          onChange={handleChange}
+          aria-describedby={descriptionId}
+        >
+          {normalizedOptions.map(
+            ({ value: optionValue, label: optionLabel }) => (
+              <option key={optionValue || optionLabel} value={optionValue}>
+                {optionLabel}
+              </option>
+            ),
+          )}
+        </select>
       </div>
+      {activeOption?.description ? (
+        <p className={styles["option-description"]} id={descriptionId}>
+          {activeOption.description}
+        </p>
+      ) : null}
     </div>
   );
 }
