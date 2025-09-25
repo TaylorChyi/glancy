@@ -219,7 +219,7 @@ export default {
   reoutput: "重新输出",
   previousVersion: "上一版本",
   nextVersion: "下一版本",
-  versionIndicator: "版本 {current}/{total}",
+  versionIndicator: "{current} / {total}",
   versionIndicatorEmpty: "暂无版本",
   favoriteRemove: "取消收藏",
 };

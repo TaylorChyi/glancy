@@ -85,10 +85,10 @@ function OutputToolbar({
   const hasPrevious = total > 1 && currentIndex > 1;
   const hasNext = total > 1 && currentIndex < total;
   const indicator = total
-    ? (t.versionIndicator || "{current}/{total}")
+    ? (t.versionIndicator || "{current} / {total}")
         .replace("{current}", String(currentIndex))
         .replace("{total}", String(total))
-    : t.versionIndicatorEmpty || "0/0";
+    : t.versionIndicatorEmpty || "0 / 0";
   const speakableTerm = typeof term === "string" ? term.trim() : term;
   const showTts = Boolean(speakableTerm);
   const actionContext = useMemo(

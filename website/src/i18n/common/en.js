@@ -231,7 +231,7 @@ export default {
   reoutput: "Regenerate",
   previousVersion: "Previous version",
   nextVersion: "Next version",
-  versionIndicator: "Version {current}/{total}",
+  versionIndicator: "{current} / {total}",
   versionIndicatorEmpty: "No versions",
   favoriteRemove: "Remove from favorites",
 };
