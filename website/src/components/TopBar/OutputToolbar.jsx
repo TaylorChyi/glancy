@@ -3,8 +3,100 @@ import { memo, useMemo } from "react";
 import { TtsButton } from "@/components";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage } from "@/context";
-import { normalizeWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
+import {
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
+  WORD_LANGUAGE_AUTO,
+  WORD_DEFAULT_TARGET_LANGUAGE,
+} from "@/utils";
 import styles from "./OutputToolbar.module.css";
+
+function LanguageGroup({
+  label,
+  options,
+  value,
+  onChange,
+  normalizeValue,
+  type,
+}) {
+  if (!Array.isArray(options) || options.length === 0) {
+    return null;
+  }
+
+  const resolvedValue = normalizeValue?.(value);
+  const groupId = `dictionary-${type}-label`;
+
+  return (
+    <div
+      className={styles["language-group"]}
+      role="group"
+      aria-labelledby={groupId}
+    >
+      {label ? (
+        <span className={styles["language-label"]} id={groupId}>
+          {label}
+        </span>
+      ) : null}
+      <div className={styles["language-options"]}>
+        {options.map(
+          ({ value: optionValue, label: optionLabel, description }) => {
+            const normalizedOption = normalizeValue?.(optionValue);
+            const isActive = normalizedOption === resolvedValue;
+            const descriptionId = description
+              ? `${type}-language-${String(normalizedOption).toLowerCase()}`
+              : undefined;
+            return (
+              <button
+                key={normalizedOption ?? optionLabel}
+                type="button"
+                className={`${styles["language-option"]} ${
+                  isActive ? styles.active : styles.inactive
+                }`}
+                aria-pressed={isActive}
+                aria-describedby={descriptionId}
+                onClick={() => onChange?.(normalizedOption)}
+                title={description || undefined}
+              >
+                <span className={styles["option-title"]}>{optionLabel}</span>
+                {description ? (
+                  <span
+                    className={styles["option-description"]}
+                    id={descriptionId}
+                  >
+                    {description}
+                  </span>
+                ) : null}
+              </button>
+            );
+          },
+        )}
+      </div>
+    </div>
+  );
+}
+
+LanguageGroup.propTypes = {
+  label: PropTypes.string,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+      label: PropTypes.string.isRequired,
+      description: PropTypes.string,
+    }),
+  ),
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  onChange: PropTypes.func,
+  normalizeValue: PropTypes.func,
+  type: PropTypes.string.isRequired,
+};
+
+LanguageGroup.defaultProps = {
+  label: undefined,
+  options: [],
+  value: undefined,
+  onChange: undefined,
+  normalizeValue: undefined,
+};
 
 function OutputToolbar({
   term,
@@ -15,10 +107,14 @@ function OutputToolbar({
   activeVersionId,
   onNavigate,
   ttsComponent = TtsButton,
-  languageMode = WORD_LANGUAGE_AUTO,
-  languageOptions = [],
-  onLanguageModeChange,
-  languageLabel,
+  sourceLanguage = WORD_LANGUAGE_AUTO,
+  sourceLanguageOptions = [],
+  onSourceLanguageChange,
+  sourceLanguageLabel,
+  targetLanguage,
+  targetLanguageOptions = [],
+  onTargetLanguageChange,
+  targetLanguageLabel,
 }) {
   const { t } = useLanguage();
   const TtsComponent = ttsComponent;
@@ -42,48 +138,38 @@ function OutputToolbar({
     : t.versionIndicatorEmpty || "0/0";
   const speakableTerm = typeof term === "string" ? term.trim() : term;
   const showTts = Boolean(speakableTerm);
-  const normalizedLanguageMode = normalizeWordLanguage(languageMode);
-  const hasLanguageSelector =
-    Array.isArray(languageOptions) && languageOptions.length > 0;
+  const normalizedSourceLanguage = normalizeWordSourceLanguage(sourceLanguage);
+  const normalizedTargetLanguage = normalizeWordTargetLanguage(targetLanguage);
+  const showSourceSelector =
+    Array.isArray(sourceLanguageOptions) && sourceLanguageOptions.length > 0;
+  const showTargetSelector =
+    Array.isArray(targetLanguageOptions) && targetLanguageOptions.length > 0;
+  const hasLanguageSelector = showSourceSelector || showTargetSelector;
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
       {hasLanguageSelector ? (
-        <div
-          className={styles["language-select"]}
-          role="group"
-          aria-label={languageLabel || t.dictionaryLanguageLabel || ""}
-        >
-          {languageOptions.map(({ value, label, description }) => {
-            const optionValue = normalizeWordLanguage(value);
-            const isActive = optionValue === normalizedLanguageMode;
-            const descriptionId = description
-              ? `dictionary-language-${optionValue.toLowerCase()}`
-              : undefined;
-            return (
-              <button
-                key={optionValue}
-                type="button"
-                className={`${styles["language-option"]} ${
-                  isActive ? styles.active : styles.inactive
-                }`}
-                aria-pressed={isActive}
-                aria-describedby={descriptionId}
-                onClick={() => onLanguageModeChange?.(optionValue)}
-                title={description || undefined}
-              >
-                <span className={styles["option-title"]}>{label}</span>
-                {description ? (
-                  <span
-                    className={styles["option-description"]}
-                    id={descriptionId}
-                  >
-                    {description}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
+        <div className={styles["language-select"]}>
+          {showSourceSelector ? (
+            <LanguageGroup
+              type="source"
+              label={sourceLanguageLabel || t.dictionarySourceLanguageLabel}
+              options={sourceLanguageOptions}
+              value={normalizedSourceLanguage}
+              onChange={onSourceLanguageChange}
+              normalizeValue={normalizeWordSourceLanguage}
+            />
+          ) : null}
+          {showTargetSelector ? (
+            <LanguageGroup
+              type="target"
+              label={targetLanguageLabel || t.dictionaryTargetLanguageLabel}
+              options={targetLanguageOptions}
+              value={normalizedTargetLanguage}
+              onChange={onTargetLanguageChange}
+              normalizeValue={normalizeWordTargetLanguage}
+            />
+          ) : null}
         </div>
       ) : null}
       {showTts ? (
@@ -148,16 +234,26 @@ OutputToolbar.propTypes = {
   activeVersionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onNavigate: PropTypes.func,
   ttsComponent: PropTypes.elementType,
-  languageMode: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
-  languageOptions: PropTypes.arrayOf(
+  sourceLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  sourceLanguageOptions: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
       label: PropTypes.string.isRequired,
       description: PropTypes.string,
     }),
   ),
-  onLanguageModeChange: PropTypes.func,
-  languageLabel: PropTypes.string,
+  onSourceLanguageChange: PropTypes.func,
+  sourceLanguageLabel: PropTypes.string,
+  targetLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+  targetLanguageOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
+      label: PropTypes.string.isRequired,
+      description: PropTypes.string,
+    }),
+  ),
+  onTargetLanguageChange: PropTypes.func,
+  targetLanguageLabel: PropTypes.string,
 };
 
 OutputToolbar.defaultProps = {
@@ -169,10 +265,14 @@ OutputToolbar.defaultProps = {
   activeVersionId: undefined,
   onNavigate: undefined,
   ttsComponent: TtsButton,
-  languageMode: WORD_LANGUAGE_AUTO,
-  languageOptions: [],
-  onLanguageModeChange: undefined,
-  languageLabel: undefined,
+  sourceLanguage: WORD_LANGUAGE_AUTO,
+  sourceLanguageOptions: [],
+  onSourceLanguageChange: undefined,
+  sourceLanguageLabel: undefined,
+  targetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
+  targetLanguageOptions: [],
+  onTargetLanguageChange: undefined,
+  targetLanguageLabel: undefined,
 };
 
 export default memo(OutputToolbar);

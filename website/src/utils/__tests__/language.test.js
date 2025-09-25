@@ -2,7 +2,12 @@ import {
   detectWordLanguage,
   resolveWordLanguage,
   normalizeWordLanguage,
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
+  resolveDictionaryConfig,
   WORD_LANGUAGE_AUTO,
+  WORD_FLAVOR_BILINGUAL,
+  WORD_FLAVOR_MONOLINGUAL_ENGLISH,
 } from "@/utils/language.js";
 
 describe("language utilities", () => {
@@ -25,9 +30,36 @@ describe("language utilities", () => {
     expect(normalizeWordLanguage("unknown")).toBe(WORD_LANGUAGE_AUTO);
   });
 
+  test("normalizeWordSourceLanguage 兼容英英词典旧值", () => {
+    expect(normalizeWordSourceLanguage("english_monolingual")).toBe("ENGLISH");
+    expect(normalizeWordSourceLanguage("invalid")).toBe(WORD_LANGUAGE_AUTO);
+  });
+
+  test("normalizeWordTargetLanguage 强制受支持值", () => {
+    expect(normalizeWordTargetLanguage("english")).toBe("ENGLISH");
+    expect(normalizeWordTargetLanguage("AUTO")).toBe("CHINESE");
+    expect(normalizeWordTargetLanguage(null)).toBe("CHINESE");
+  });
+
   test("resolveWordLanguage 在自动模式下使用检测结果", () => {
     expect(resolveWordLanguage("晨曦", WORD_LANGUAGE_AUTO)).toBe("CHINESE");
     expect(resolveWordLanguage("dawn", WORD_LANGUAGE_AUTO)).toBe("ENGLISH");
     expect(resolveWordLanguage("纹章", "CHINESE")).toBe("CHINESE");
+  });
+
+  test("resolveDictionaryConfig 在不同组合下返回对应口味", () => {
+    expect(
+      resolveDictionaryConfig("immaculate", {
+        sourceLanguage: "ENGLISH",
+        targetLanguage: "ENGLISH",
+      }),
+    ).toEqual({ language: "ENGLISH", flavor: WORD_FLAVOR_MONOLINGUAL_ENGLISH });
+
+    expect(
+      resolveDictionaryConfig("优雅", {
+        sourceLanguage: WORD_LANGUAGE_AUTO,
+        targetLanguage: "CHINESE",
+      }),
+    ).toEqual({ language: "CHINESE", flavor: WORD_FLAVOR_BILINGUAL });
   });
 });

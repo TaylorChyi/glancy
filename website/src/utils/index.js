@@ -13,6 +13,12 @@ export {
   resolveWordFlavor,
   WORD_FLAVOR_BILINGUAL,
   WORD_FLAVOR_MONOLINGUAL_ENGLISH,
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
+  resolveDictionaryConfig,
+  resolveDictionaryFlavor,
+  WORD_TARGET_LANGUAGES,
+  WORD_DEFAULT_TARGET_LANGUAGE,
 } from "./language.js";
 export { getBrandText, BRAND_TEXT } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";

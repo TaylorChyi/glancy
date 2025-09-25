@@ -2,12 +2,26 @@ export const WORD_LANGUAGE_AUTO = "AUTO";
 export const WORD_LANGUAGE_ENGLISH_MONO = "ENGLISH_MONOLINGUAL";
 export const WORD_FLAVOR_BILINGUAL = "BILINGUAL";
 export const WORD_FLAVOR_MONOLINGUAL_ENGLISH = "MONOLINGUAL_ENGLISH";
+
 const SUPPORTED_WORD_LANGUAGES = Object.freeze([
   WORD_LANGUAGE_AUTO,
   "CHINESE",
   "ENGLISH",
   WORD_LANGUAGE_ENGLISH_MONO,
 ]);
+
+const SUPPORTED_SOURCE_LANGUAGES = Object.freeze([
+  WORD_LANGUAGE_AUTO,
+  "CHINESE",
+  "ENGLISH",
+]);
+
+const SUPPORTED_TARGET_LANGUAGES = Object.freeze(["CHINESE", "ENGLISH"]);
+
+const DEFAULT_TARGET_LANGUAGE = "CHINESE";
+
+export const WORD_TARGET_LANGUAGES = SUPPORTED_TARGET_LANGUAGES;
+export const WORD_DEFAULT_TARGET_LANGUAGE = DEFAULT_TARGET_LANGUAGE;
 
 const HAN_SCRIPT_PATTERN = /\p{Script=Han}/u;
 const EXTENDED_CHINESE_MARKS_PATTERN = /[\u3007\u3021-\u3029]/u;
@@ -53,31 +67,94 @@ export function normalizeWordLanguage(value) {
   return isWordLanguage(upper) ? upper : WORD_LANGUAGE_AUTO;
 }
 
+export function normalizeWordSourceLanguage(value) {
+  const normalized = normalizeWordLanguage(value);
+  if (normalized === WORD_LANGUAGE_ENGLISH_MONO) {
+    return "ENGLISH";
+  }
+  return SUPPORTED_SOURCE_LANGUAGES.includes(normalized)
+    ? normalized
+    : WORD_LANGUAGE_AUTO;
+}
+
+export function normalizeWordTargetLanguage(value) {
+  if (!value) return DEFAULT_TARGET_LANGUAGE;
+  const upper = String(value).toUpperCase();
+  return SUPPORTED_TARGET_LANGUAGES.includes(upper)
+    ? upper
+    : DEFAULT_TARGET_LANGUAGE;
+}
+
 /**
  * Resolve the effective lookup language by combining user preference and heuristics.
  * @param {string} text
  * @param {'AUTO' | 'CHINESE' | 'ENGLISH'} preference
  * @returns {'CHINESE' | 'ENGLISH'}
  */
+export function resolveWordSourceLanguage(
+  text = "",
+  preference = WORD_LANGUAGE_AUTO,
+) {
+  const normalized = normalizeWordSourceLanguage(preference);
+  if (normalized === WORD_LANGUAGE_AUTO) {
+    return detectWordLanguage(text);
+  }
+  return normalized;
+}
+
+export function resolveDictionaryFlavor({
+  sourceLanguage,
+  targetLanguage,
+  resolvedSourceLanguage,
+} = {}) {
+  const normalizedTarget = normalizeWordTargetLanguage(targetLanguage);
+  const normalizedSourcePreference =
+    normalizeWordSourceLanguage(sourceLanguage);
+  const normalizedSource = resolvedSourceLanguage
+    ? String(resolvedSourceLanguage).toUpperCase() === "ENGLISH"
+      ? "ENGLISH"
+      : "CHINESE"
+    : normalizedSourcePreference === WORD_LANGUAGE_AUTO
+      ? "CHINESE"
+      : normalizedSourcePreference;
+
+  if (normalizedSource === "ENGLISH" && normalizedTarget === "ENGLISH") {
+    return WORD_FLAVOR_MONOLINGUAL_ENGLISH;
+  }
+  return WORD_FLAVOR_BILINGUAL;
+}
+
+export function resolveDictionaryConfig(
+  text = "",
+  {
+    sourceLanguage = WORD_LANGUAGE_AUTO,
+    targetLanguage = DEFAULT_TARGET_LANGUAGE,
+  } = {},
+) {
+  const language = resolveWordSourceLanguage(text, sourceLanguage);
+  const flavor = resolveDictionaryFlavor({
+    sourceLanguage,
+    targetLanguage,
+    resolvedSourceLanguage: language,
+  });
+  return { language, flavor };
+}
+
 export function resolveWordLanguage(
   text = "",
   preference = WORD_LANGUAGE_AUTO,
 ) {
-  const normalized = normalizeWordLanguage(preference);
-  if (normalized !== WORD_LANGUAGE_AUTO) {
-    if (normalized === WORD_LANGUAGE_ENGLISH_MONO) {
-      return "ENGLISH";
-    }
-    return normalized;
-  }
-  return detectWordLanguage(text);
+  return resolveWordSourceLanguage(text, preference);
 }
 
-export function resolveWordFlavor(preference = WORD_LANGUAGE_AUTO) {
-  const normalized = normalizeWordLanguage(preference);
-  return normalized === WORD_LANGUAGE_ENGLISH_MONO
-    ? WORD_FLAVOR_MONOLINGUAL_ENGLISH
-    : WORD_FLAVOR_BILINGUAL;
+export function resolveWordFlavor(
+  preference = WORD_LANGUAGE_AUTO,
+  targetLanguage = DEFAULT_TARGET_LANGUAGE,
+) {
+  return resolveDictionaryFlavor({
+    sourceLanguage: preference,
+    targetLanguage,
+  });
 }
 
 export function getSupportedWordLanguages() {

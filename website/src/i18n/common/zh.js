@@ -17,18 +17,23 @@ export default {
   prefVoiceEn: "英文音色",
   prefVoiceZh: "中文音色",
   autoDetect: "自动检测",
-  dictionaryLanguageLabel: "检索语言",
-  dictionaryLanguageAuto: "自动",
-  dictionaryLanguageAutoDescription: "根据输入自动判断是英文还是中文。",
-  dictionaryLanguageEnglish: "英文词条",
-  dictionaryLanguageEnglishDescription:
-    "固定以英文单词或短语的视角解析，输出中文主导的详解。",
-  dictionaryLanguageEnglishMonolingual: "英文词条 · 英文释义",
-  dictionaryLanguageEnglishMonolingualDescription:
-    "只提供英文释义与例句，适合深度英英思维训练。",
-  dictionaryLanguageChinese: "中文词条",
-  dictionaryLanguageChineseDescription:
-    "固定视为中文汉字或词语，生成以英文释义为核心的深度解读。",
+  dictionarySourceLanguageLabel: "源语言",
+  dictionarySourceLanguageAuto: "自动识别",
+  dictionarySourceLanguageAutoDescription:
+    "智能侦测输入语种，自动匹配最合适的词典体验。",
+  dictionarySourceLanguageEnglish: "英文词条",
+  dictionarySourceLanguageEnglishDescription:
+    "按英文单词处理，启用完整的英文输入配套能力。",
+  dictionarySourceLanguageChinese: "中文词条",
+  dictionarySourceLanguageChineseDescription:
+    "按中文词语理解，优先呈现中文语境中的重点。",
+  dictionaryTargetLanguageLabel: "目标语言",
+  dictionaryTargetLanguageEnglish: "英文释义",
+  dictionaryTargetLanguageEnglishDescription:
+    "提供纯英文解释与例句，适合沉浸式阅读。",
+  dictionaryTargetLanguageChinese: "中文释义",
+  dictionaryTargetLanguageChineseDescription:
+    "输出优雅细腻的中文解读，满足精准翻译需求。",
   prefTheme: "主题",
   searchTitle: "词汇查询",
   searchButton: "搜索",

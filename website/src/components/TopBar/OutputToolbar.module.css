@@ -12,8 +12,8 @@
 
 .language-select {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch;
+  gap: 10px;
   padding: 4px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--border-color) 45%, transparent);
@@ -21,6 +21,35 @@
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--color-surface) 50%, transparent),
     0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent);
+}
+
+.language-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  position: relative;
+}
+
+.language-group:not(:last-child) {
+  border-right: 1px solid
+    color-mix(in srgb, var(--border-color) 40%, transparent);
+  padding-right: 14px;
+  margin-right: 4px;
+}
+
+.language-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
+  padding-left: 4px;
+}
+
+.language-options {
+  display: inline-flex;
+  gap: 6px;
 }
 
 .language-option {
@@ -154,13 +183,32 @@
   }
 
   .language-select {
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .language-group {
+    border-right: none;
+    padding: 0;
     gap: 4px;
-    padding: 3px;
+  }
+
+  .language-group:not(:last-child) {
+    margin-right: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 35%, transparent);
+  }
+
+  .language-options {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .language-option {
-    min-width: 120px;
-    padding: 6px 10px;
+    min-width: unset;
+    padding: 6px 12px;
     gap: 2px;
   }
 
