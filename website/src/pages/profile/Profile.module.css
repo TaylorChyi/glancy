@@ -30,11 +30,10 @@
   box-shadow: 0 24px 40px rgb(0 0 0 / 18%);
 }
 
-.avatar-area img {
+.profile-avatar[data-slot="avatar-visual"] {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius-avatar);
+  display: block;
 }
 
 .avatar-hint {
