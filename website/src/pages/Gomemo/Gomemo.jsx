@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Layout from "@/components/Layout";
 import Button from "@/components/ui/Button";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage } from "@/context";
 import { useApi } from "@/hooks/useApi.js";
 import { useUserStore, useGomemoStore } from "@/store";
 import styles from "./Gomemo.module.css";
-
-const EmptyToolbar = () => null;
 
 const GENERIC_DISTRACTORS = [
   "暂时与阶段目标不相关",
@@ -72,6 +69,7 @@ function Gomemo() {
   const [revealCard, setRevealCard] = useState(false);
   const [spellInput, setSpellInput] = useState("");
   const [choiceFeedback, setChoiceFeedback] = useState("");
+  const [selectedChoice, setSelectedChoice] = useState("");
   const [visualChoice, setVisualChoice] = useState("");
   const [audioSrc, setAudioSrc] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -92,6 +90,7 @@ function Gomemo() {
   useEffect(() => {
     setRevealCard(false);
     setChoiceFeedback("");
+    setSelectedChoice("");
     setSpellInput("");
     setVisualChoice("");
     setPracticeMessage("");
@@ -152,6 +151,18 @@ function Gomemo() {
     return Array.from(base);
   }, [persona]);
 
+  const progress = plan?.progress;
+  const completedWords = progress?.completedWords ?? 0;
+  const totalWords = progress?.totalWords ?? plan?.words?.length ?? 0;
+  const retentionAverage =
+    typeof progress?.retentionAverage === "number"
+      ? Math.round(progress.retentionAverage)
+      : null;
+  const queuePosition =
+    typeof activeWordIndex === "number" && activeWordIndex >= 0
+      ? activeWordIndex + 1
+      : 0;
+
   const handleRecord = useCallback(
     async ({ score, note }) => {
       if (!activeWord) return;
@@ -185,6 +196,7 @@ function Gomemo() {
   const handleChoiceSelect = useCallback(
     (option) => {
       if (!choiceOptions.length) return;
+      setSelectedChoice(option);
       const correct = option === correctChoice;
       setChoiceFeedback(
         correct ? "太棒了，理由命中！" : "可以再回顾下优先级理由。",
@@ -256,119 +268,204 @@ function Gomemo() {
   const wordList = plan?.words ?? [];
 
   return (
-    <Layout topBarProps={{ toolbarComponent: EmptyToolbar }}>
-      <div className={styles["gomemo-page"]}>
-        <section className={styles.hero}>
-          <div className={styles["hero-inner"]}>
-            <span className={styles["hero-kicker"]}>{t.gomemo}</span>
+    <div className={styles["gomemo-shell"]}>
+      <header className={styles["shell-header"]}>
+        <div className={styles.brand}>
+          <span className={styles["brand-icon"]}>
+            <ThemeIcon name="sparkle" width={22} height={22} />
+          </span>
+          <div className={styles["brand-copy"]}>
+            <span className={styles["brand-title"]}>GOMEMO STUDIO</span>
+            <span className={styles["brand-subtitle"]}>
+              {persona?.descriptor ?? t.gomemoHeroSubtitle}
+            </span>
+          </div>
+        </div>
+        <div className={styles["header-meta"]}>
+          <div className={styles["meta-item"]}>
+            <span className={styles["meta-label"]}>今日进度</span>
+            <span className={styles["meta-value"]}>
+              {completedWords}/{totalWords || "-"}
+            </span>
+          </div>
+          <div className={styles["meta-item"]}>
+            <span className={styles["meta-label"]}>保持率</span>
+            <span className={styles["meta-value"]}>
+              {retentionAverage != null ? `${retentionAverage}%` : "-"}
+            </span>
+          </div>
+          <div className={styles["meta-item"]}>
+            <span className={styles["meta-label"]}>当前词位</span>
+            <span className={styles["meta-value"]}>
+              {queuePosition && totalWords
+                ? `${queuePosition}/${totalWords}`
+                : "-"}
+            </span>
+          </div>
+        </div>
+        <div className={styles["header-actions"]}>
+          <Button
+            className={styles["primary-action"]}
+            disabled={loading}
+            onClick={() => loadPlan({ token })}
+          >
+            {loading ? (t.loading ?? "加载中") : t.gomemoCtaAction}
+          </Button>
+        </div>
+      </header>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      {!plan ? (
+        <div className={styles["empty-state"]}>
+          <div className={styles["empty-card"]}>
             <h1>{t.gomemoHeroTitle}</h1>
-            <p>{persona?.descriptor ?? t.gomemoHeroSubtitle}</p>
-            <div className={styles["persona-chip-row"]}>
-              <span className={styles.chip}>
-                {persona?.tone ?? t.gomemoHeroBadgePersonal}
-              </span>
-              <span className={styles.chip}>
-                {persona?.dailyTarget
-                  ? `${t.gomemoHeroBadgeRhythm} · ${persona.dailyTarget} 词`
-                  : t.gomemoHeroBadgeRhythm}
-              </span>
-              {persona?.futurePlan && (
-                <span className={styles.chip}>{persona.futurePlan}</span>
-              )}
-            </div>
+            <p>{t.gomemoHeroSubtitle}</p>
             <Button
-              className={styles["hero-cta"]}
+              className={styles["primary-action"]}
               disabled={loading}
               onClick={() => loadPlan({ token })}
             >
               {loading ? (t.loading ?? "加载中") : t.gomemoCtaAction}
             </Button>
-            {error && <p className={styles.error}>{error}</p>}
           </div>
-        </section>
-
-        {plan && (
-          <section className={styles.plan}>
-            <header className={styles["section-header"]}>
-              <h2 className={styles["section-title"]}>
-                {t.gomemoPriorityTitle}
-              </h2>
-              <p className={styles["section-subtitle"]}>
+        </div>
+      ) : (
+        <div className={styles["shell-body"]}>
+          <aside className={styles["plan-panel"]}>
+            <div>
+              <h2 className={styles["panel-title"]}>{t.gomemoPriorityTitle}</h2>
+              <p className={styles["panel-subtitle"]}>
                 {t.gomemoPrioritySubtitle}
               </p>
-            </header>
-            <div className={styles["highlight-grid"]}>
+            </div>
+            <div className={styles["persona-card"]}>
+              <div className={styles["persona-header"]}>
+                <span className={styles["persona-tone"]}>
+                  {persona?.tone ?? t.gomemoHeroBadgePersonal}
+                </span>
+                {persona?.dailyTarget && (
+                  <span className={styles["persona-target"]}>
+                    {persona.dailyTarget} 词/日
+                  </span>
+                )}
+              </div>
+              <div className={styles["persona-tags"]}>
+                {persona?.goal && (
+                  <span className={styles["persona-tag"]}>{persona.goal}</span>
+                )}
+                {persona?.futurePlan && (
+                  <span className={styles["persona-tag"]}>
+                    {persona.futurePlan}
+                  </span>
+                )}
+                {visualPalette.map((label) => (
+                  <span key={label} className={styles["persona-tag"]}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className={styles["highlight-list"]}>
               {plan.planHighlights.map((highlight) => (
-                <span key={highlight} className={styles.highlight}>
+                <span key={highlight} className={styles["highlight-item"]}>
                   {highlight}
                 </span>
               ))}
             </div>
-            <div className={styles["word-grid"]}>
-              {wordList.map((word, index) => (
-                <article
-                  key={termKey(word)}
-                  className={`${styles["word-card"]} ${
-                    index === activeWordIndex ? styles["word-card-active"] : ""
-                  }`}
-                  onClick={() => selectWord(index)}
-                >
-                  <div className={styles["word-head"]}>
-                    <span className={styles["word-term"]}>{word.term}</span>
-                    <span className={styles["word-score"]}>
-                      {word.priority}
-                    </span>
-                  </div>
-                  <p className={styles["word-rationale"]}>
-                    {word.rationales?.[0]}
+            <div className={styles["insight-stack"]}>
+              <article className={styles["insight-card"]}>
+                <ThemeIcon name="chart-bar" width={22} height={22} />
+                <div>
+                  <h3>{t.gomemoInsightsTrackingTitle}</h3>
+                  <p>
+                    {completedWords}/{totalWords} · 平均保持率{" "}
+                    {retentionAverage != null ? `${retentionAverage}%` : "-"}
                   </p>
-                  <div className={styles["word-mode-tags"]}>
-                    {word.recommendedModes?.map((mode) => (
-                      <span key={mode} className={styles["mode-tag"]}>
-                        {mode}
-                      </span>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {plan && activeWord && (
-          <section className={styles.practice}>
-            <header className={styles["section-header"]}>
-              <h2 className={styles["section-title"]}>{t.gomemoModesTitle}</h2>
-              <p className={styles["section-subtitle"]}>
-                {t.gomemoModesSubtitle}
-              </p>
-            </header>
-            <div className={styles["practice-layout"]}>
-              <div className={styles["practice-sidebar"]}>
-                <div className={styles["practice-word"]}>
-                  <h3>{activeWord.term}</h3>
-                  {details?.phonetic && (
-                    <span className={styles.phonetic}>
-                      /{details.phonetic}/
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    className={styles["reveal-button"]}
-                    onClick={() => setRevealCard((prev) => !prev)}
-                  >
-                    {revealCard ? "隐藏释义" : "显示释义"}
-                  </Button>
-                  {revealCard && (
-                    <p className={styles.definition}>{definition}</p>
-                  )}
-                  {details?.example && (
-                    <p className={styles.example}>
-                      <strong>Example:</strong> {details.example}
-                    </p>
-                  )}
                 </div>
-                <div className={styles["mode-list"]}>
+              </article>
+              <article className={styles["insight-card"]}>
+                <ThemeIcon name="sparkle" width={22} height={22} />
+                <div>
+                  <h3>{t.gomemoInsightsReviewTitle}</h3>
+                  <p>{review?.review ?? t.gomemoInsightsReviewDescription}</p>
+                </div>
+              </article>
+              <article className={styles["insight-card"]}>
+                <ThemeIcon name="arrow-right" width={22} height={22} />
+                <div>
+                  <h3>{t.gomemoInsightsNextTitle}</h3>
+                  <p>{review?.nextFocus ?? t.gomemoInsightsNextDescription}</p>
+                </div>
+              </article>
+            </div>
+            <Button
+              className={styles["secondary-action"]}
+              onClick={handleFinalize}
+            >
+              {t.gomemoInsightsReviewTitle}
+            </Button>
+          </aside>
+
+          <main className={styles["practice-panel"]}>
+            {activeWord ? (
+              <div className={styles["practice-wrapper"]}>
+                <div className={styles["focus-header"]}>
+                  <div className={styles["term-stack"]}>
+                    <span className={styles["term-label"]}>当前记忆</span>
+                    <div className={styles["term-row"]}>
+                      <span className={styles["term-value"]}>
+                        {activeWord.term}
+                      </span>
+                      <span className={styles["term-language"]}>
+                        {activeWord.language}
+                      </span>
+                    </div>
+                    {details?.phonetic && (
+                      <span className={styles.phonetic}>
+                        /{details.phonetic}/
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles["focus-controls"]}>
+                    <Button
+                      className={styles["surface-action"]}
+                      onClick={() => setRevealCard((prev) => !prev)}
+                    >
+                      {revealCard ? "隐藏释义" : "显示释义"}
+                    </Button>
+                    <Button
+                      className={styles["surface-action"]}
+                      onClick={handlePlayAudio}
+                      disabled={isPlaying}
+                    >
+                      {isPlaying ? "播放中" : "朗读单词"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className={styles["knowledge-panel"]}>
+                  <div className={styles["knowledge-card"]}>
+                    <h4>释义</h4>
+                    <p>
+                      {revealCard ? definition : "点击“显示释义”展开记忆要点"}
+                    </p>
+                  </div>
+                  {details?.example && (
+                    <div className={styles["knowledge-card"]}>
+                      <h4>例句</h4>
+                      <p>{details.example}</p>
+                    </div>
+                  )}
+                  {details?.synonyms?.length ? (
+                    <div className={styles["knowledge-card"]}>
+                      <h4>同义提示</h4>
+                      <p>{details.synonyms.join(" · ")}</p>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className={styles["mode-selector"]}>
                   {plan.modes.map((mode) => (
                     <button
                       key={mode.type}
@@ -383,146 +480,172 @@ function Gomemo() {
                       <ThemeIcon name="sparkle" width={18} height={18} />
                       <div>
                         <strong>{mode.title}</strong>
-                        <p className={styles["mode-description"]}>
-                          {mode.focus}
-                        </p>
+                        <p>{mode.focus}</p>
                       </div>
                     </button>
                   ))}
                 </div>
-              </div>
-              <div className={styles["practice-panel"]}>
-                {activeMode === "CARD" && (
-                  <div className={styles["card-mode"]}>
-                    <p>{definition}</p>
-                    <div className={styles["card-actions"]}>
-                      <Button onClick={() => handleFlashcard(true)}>
-                        已掌握
-                      </Button>
-                      <Button
-                        className={styles["ghost-button"]}
-                        onClick={() => handleFlashcard(false)}
-                      >
-                        需要复习
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {activeMode === "MULTIPLE_CHOICE" && (
-                  <div className={styles["choice-mode"]}>
-                    <h4>选出最贴切的优先级理由</h4>
-                    <div className={styles["choice-grid"]}>
-                      {choiceOptions.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          className={styles["choice-option"]}
-                          onClick={() => handleChoiceSelect(option)}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                    {choiceFeedback && (
-                      <p className={styles.feedback}>{choiceFeedback}</p>
-                    )}
-                  </div>
-                )}
-                {activeMode === "SPELLING" && (
-                  <form
-                    className={styles["spelling-mode"]}
-                    onSubmit={handleSpellingSubmit}
-                  >
-                    <label htmlFor="spellInput">键入拼写巩固肌肉记忆</label>
-                    <input
-                      id="spellInput"
-                      value={spellInput}
-                      onChange={(event) => setSpellInput(event.target.value)}
-                      placeholder="输入拼写"
-                      className={styles["spelling-input"]}
-                    />
-                    <Button type="submit">提交</Button>
-                  </form>
-                )}
-                {activeMode === "VISUAL_ASSOCIATION" && (
-                  <div className={styles["visual-mode"]}>
-                    <h4>挑选与你最有感的语境锚点</h4>
-                    <div className={styles["visual-grid"]}>
-                      {visualPalette.map((label) => (
-                        <button
-                          key={label}
-                          type="button"
-                          className={`${styles["visual-option"]} ${
-                            visualChoice === label
-                              ? styles["visual-option-active"]
-                              : ""
-                          }`}
-                          onClick={() => handleVisualSelect(label)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeMode === "LISTENING" && (
-                  <div className={styles["listening-mode"]}>
-                    <p>跟随音频模仿语流与重音。</p>
-                    <Button onClick={handlePlayAudio} disabled={isPlaying}>
-                      {isPlaying ? "播放中" : "播放音频"}
-                    </Button>
-                    {audioSrc && (
-                      <audio src={audioSrc} controls className={styles.audio} />
-                    )}
-                  </div>
-                )}
-                {practiceMessage && (
-                  <p className={styles.success}>{practiceMessage}</p>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
 
-        {plan && (
-          <section className={styles.insights}>
-            <header className={styles["section-header"]}>
-              <h2 className={styles["section-title"]}>
-                {t.gomemoInsightsTitle}
-              </h2>
-              <p className={styles["section-subtitle"]}>
-                {t.gomemoInsightsSubtitle}
-              </p>
-            </header>
-            <div className={styles["insight-grid"]}>
-              <article className={styles["insight-card"]}>
-                <ThemeIcon name="chart-bar" width={24} height={24} />
-                <h3>{t.gomemoInsightsTrackingTitle}</h3>
-                <p>
-                  {plan.progress.completedWords}/{plan.progress.totalWords} ·
-                  平均保留率 {Math.round(plan.progress.retentionAverage)}%
-                </p>
-              </article>
-              <article className={styles["insight-card"]}>
-                <ThemeIcon name="sparkle" width={24} height={24} />
-                <h3>{t.gomemoInsightsReviewTitle}</h3>
-                <p>{review?.review ?? t.gomemoInsightsReviewDescription}</p>
-              </article>
-              <article className={styles["insight-card"]}>
-                <ThemeIcon name="arrow-right" width={24} height={24} />
-                <h3>{t.gomemoInsightsNextTitle}</h3>
-                <p>{review?.nextFocus ?? t.gomemoInsightsNextDescription}</p>
-              </article>
+                <div className={styles["mode-stage"]}>
+                  {activeMode === "CARD" && (
+                    <div className={styles["card-mode"]}>
+                      <p className={styles["card-definition"]}>{definition}</p>
+                      <div className={styles["card-actions"]}>
+                        <Button
+                          className={styles["primary-action"]}
+                          onClick={() => handleFlashcard(true)}
+                        >
+                          已掌握
+                        </Button>
+                        <Button
+                          className={styles["surface-action"]}
+                          onClick={() => handleFlashcard(false)}
+                        >
+                          需要复习
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {activeMode === "MULTIPLE_CHOICE" && (
+                    <div className={styles["choice-mode"]}>
+                      <h4>选出最贴切的优先级理由</h4>
+                      <div className={styles["choice-grid"]}>
+                        {choiceOptions.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`${styles["choice-option"]} ${
+                              selectedChoice === option
+                                ? styles["choice-option-active"]
+                                : ""
+                            }`}
+                            onClick={() => handleChoiceSelect(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                      {choiceFeedback && (
+                        <p className={styles.feedback}>{choiceFeedback}</p>
+                      )}
+                    </div>
+                  )}
+                  {activeMode === "SPELLING" && (
+                    <form
+                      className={styles["spelling-mode"]}
+                      onSubmit={handleSpellingSubmit}
+                    >
+                      <label htmlFor="spellInput">键入拼写巩固肌肉记忆</label>
+                      <input
+                        id="spellInput"
+                        value={spellInput}
+                        onChange={(event) => setSpellInput(event.target.value)}
+                        placeholder="输入拼写"
+                        className={styles["spelling-input"]}
+                      />
+                      <Button
+                        type="submit"
+                        className={styles["primary-action"]}
+                      >
+                        提交
+                      </Button>
+                    </form>
+                  )}
+                  {activeMode === "VISUAL_ASSOCIATION" && (
+                    <div className={styles["visual-mode"]}>
+                      <h4>挑选与你最有感的语境锚点</h4>
+                      <div className={styles["visual-grid"]}>
+                        {visualPalette.map((label) => (
+                          <button
+                            key={label}
+                            type="button"
+                            className={`${styles["visual-option"]} ${
+                              visualChoice === label
+                                ? styles["visual-option-active"]
+                                : ""
+                            }`}
+                            onClick={() => handleVisualSelect(label)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {activeMode === "LISTENING" && (
+                    <div className={styles["listening-mode"]}>
+                      <p>跟随音频模仿语流与重音。</p>
+                      <Button
+                        onClick={handlePlayAudio}
+                        disabled={isPlaying}
+                        className={styles["primary-action"]}
+                      >
+                        {isPlaying ? "播放中" : "播放音频"}
+                      </Button>
+                      {audioSrc && (
+                        <audio
+                          src={audioSrc}
+                          controls
+                          className={styles.audio}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {practiceMessage && (
+                  <div className={styles["practice-toast"]}>
+                    {practiceMessage}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className={styles["empty-practice"]}>
+                <ThemeIcon name="sparkle" width={32} height={32} />
+                <h3>请选择一个词条开始训练</h3>
+                <p>从右侧词单中挑选词条，或刷新计划获取新的练习。</p>
+              </div>
+            )}
+          </main>
+
+          <aside className={styles["queue-panel"]}>
+            <div className={styles["queue-header"]}>
+              <h2 className={styles["panel-title"]}>今日词单</h2>
+              <span className={styles["queue-progress"]}>
+                {queuePosition && totalWords
+                  ? `${queuePosition}/${totalWords}`
+                  : `${wordList.length} 词`}
+              </span>
             </div>
-            <div className={styles["review-actions"]}>
-              <Button onClick={handleFinalize}>
-                {t.gomemoInsightsReviewTitle}
-              </Button>
+            <div className={styles["queue-list"]}>
+              {wordList.map((word, index) => {
+                const isActive = index === activeWordIndex;
+                return (
+                  <button
+                    key={termKey(word)}
+                    type="button"
+                    className={`${styles["queue-item"]} ${
+                      isActive ? styles["queue-item-active"] : ""
+                    }`}
+                    onClick={() => selectWord(index)}
+                  >
+                    <div className={styles["queue-term"]}>{word.term}</div>
+                    <div className={styles["queue-meta"]}>
+                      <span>优先级 {word.priority}</span>
+                      {word.recommendedModes?.length ? (
+                        <span>
+                          {word.recommendedModes.slice(0, 2).join(" · ")}
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </section>
-        )}
-      </div>
-    </Layout>
+          </aside>
+        </div>
+      )}
+    </div>
   );
 }
 
