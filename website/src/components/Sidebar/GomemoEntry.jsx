@@ -13,7 +13,6 @@ function GomemoEntry() {
 
   const gomemoLabel = t.gomemo || FALLBACK_GOMEMO_LABEL;
   const gomemoIconAlt = t.gomemoIconAlt || gomemoLabel;
-  const gomemoTagline = t.gomemoTagline || "";
 
   const isActive = location.pathname.startsWith(GOMEMO_PATH);
 
@@ -28,7 +27,6 @@ function GomemoEntry() {
       icon="target"
       iconAlt={gomemoIconAlt}
       label={gomemoLabel}
-      description={gomemoTagline || undefined}
       isActive={isActive}
       onClick={handleNavigate}
     />
