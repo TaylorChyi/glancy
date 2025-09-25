@@ -1,8 +1,7 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import CollectionButton from "./CollectionButton.jsx";
 import { useLanguage } from "@/context";
-import styles from "./Sidebar.module.css";
+import SidebarActionItem from "./SidebarActionItem.jsx";
 
 const GOMEMO_PATH = "/gomemo";
 const FALLBACK_GOMEMO_LABEL = "Gomemo";
@@ -16,14 +15,6 @@ function GomemoEntry() {
   const gomemoIconAlt = t.gomemoIconAlt || gomemoLabel;
   const gomemoTagline = t.gomemoTagline || "";
 
-  const sectionClassName = useMemo(
-    () =>
-      [styles["sidebar-section"], styles["sidebar-hoverable"]]
-        .filter(Boolean)
-        .join(" "),
-    [],
-  );
-
   const isActive = location.pathname.startsWith(GOMEMO_PATH);
 
   const handleNavigate = useCallback(() => {
@@ -33,18 +24,14 @@ function GomemoEntry() {
   }, [location.pathname, navigate]);
 
   return (
-    <div className={sectionClassName}>
-      <CollectionButton
-        icon="target"
-        label={gomemoLabel}
-        iconAlt={gomemoIconAlt}
-        isActive={isActive}
-        onClick={handleNavigate}
-      />
-      {gomemoTagline && (
-        <p className={styles["collection-note"]}>{gomemoTagline}</p>
-      )}
-    </div>
+    <SidebarActionItem
+      icon="target"
+      iconAlt={gomemoIconAlt}
+      label={gomemoLabel}
+      description={gomemoTagline || undefined}
+      isActive={isActive}
+      onClick={handleNavigate}
+    />
   );
 }
 
