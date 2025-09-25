@@ -18,7 +18,9 @@ import EmptyState from "@/components/ui/EmptyState";
 import {
   extractMarkdownPreview,
   resolveWordLanguage,
+  resolveWordFlavor,
   WORD_LANGUAGE_AUTO,
+  WORD_LANGUAGE_ENGLISH_MONO,
   resolveShareTarget,
   attemptShareLink,
 } from "@/utils";
@@ -72,6 +74,11 @@ function App() {
         description: t.dictionaryLanguageEnglishDescription,
       },
       {
+        value: WORD_LANGUAGE_ENGLISH_MONO,
+        label: t.dictionaryLanguageEnglishMonolingual,
+        description: t.dictionaryLanguageEnglishMonolingualDescription,
+      },
+      {
         value: "CHINESE",
         label: t.dictionaryLanguageChinese,
         description: t.dictionaryLanguageChineseDescription,
@@ -82,9 +89,15 @@ function App() {
       t.dictionaryLanguageAutoDescription,
       t.dictionaryLanguageEnglish,
       t.dictionaryLanguageEnglishDescription,
+      t.dictionaryLanguageEnglishMonolingual,
+      t.dictionaryLanguageEnglishMonolingualDescription,
       t.dictionaryLanguageChinese,
       t.dictionaryLanguageChineseDescription,
     ],
+  );
+  const dictionaryFlavor = useMemo(
+    () => resolveWordFlavor(dictionaryLanguage),
+    [dictionaryLanguage],
   );
   const toolbarLanguageProps = useMemo(
     () => ({
@@ -194,7 +207,12 @@ function App() {
   const executeLookup = useCallback(
     async (
       term,
-      { forceNew = false, versionId, language: preferredLanguage } = {},
+      {
+        forceNew = false,
+        versionId,
+        language: preferredLanguage,
+        flavor: preferredFlavor,
+      } = {},
     ) => {
       const normalized = term.trim();
       if (!normalized) {
@@ -218,9 +236,11 @@ function App() {
         normalized,
         preferredLanguage ?? dictionaryLanguage ?? WORD_LANGUAGE_AUTO,
       );
+      const targetFlavor = preferredFlavor ?? dictionaryFlavor;
       const cacheKey = wordCacheKey({
         term: normalized,
         language: targetLanguage,
+        flavor: targetFlavor,
         model: DEFAULT_MODEL,
       });
       const isNewTerm = currentTermKey !== cacheKey;
@@ -264,6 +284,7 @@ function App() {
           forceNew,
           versionId,
           language: targetLanguage,
+          flavor: targetFlavor,
         })) {
           if (language && language !== detected) detected = language;
           acc += chunk;
@@ -296,6 +317,7 @@ function App() {
           status: "success",
           term: normalized,
           detectedLanguage: detected ?? targetLanguage,
+          flavor: targetFlavor,
         };
       } catch (error) {
         if (error.name === "AbortError") {
@@ -325,6 +347,7 @@ function App() {
       wordStoreApi,
       applyRecord,
       dictionaryLanguage,
+      dictionaryFlavor,
     ],
   );
 
@@ -342,7 +365,12 @@ function App() {
 
     const result = await executeLookup(input);
     if (result.status === "success") {
-      addHistory(input, user, result.detectedLanguage);
+      addHistory(
+        input,
+        user,
+        result.detectedLanguage,
+        result.flavor ?? dictionaryFlavor,
+      );
     }
   };
 
@@ -529,23 +557,36 @@ function App() {
     ],
   );
 
-  const handleSelectHistory = async (term, versionId) => {
+  const handleSelectHistory = async (identifier, versionId) => {
     if (!user) {
       navigate("/login");
       return;
     }
-    const target = historyItems?.find(
-      (item) => item.term === term || item.termKey === term,
-    );
+    const target =
+      typeof identifier === "object" && identifier
+        ? identifier
+        : historyItems?.find(
+            (item) => item.term === identifier || item.termKey === identifier,
+          );
+    const resolvedTerm =
+      typeof identifier === "string" ? identifier : (target?.term ?? "");
+    if (!resolvedTerm) return;
     const resolvedLanguage = resolveWordLanguage(
-      term,
+      resolvedTerm,
       target?.language ?? WORD_LANGUAGE_AUTO,
     );
+    const resolvedFlavor =
+      target?.flavor ??
+      (typeof identifier === "object" && identifier?.language
+        ? resolveWordFlavor(identifier.language)
+        : dictionaryFlavor);
     const cacheKey = wordCacheKey({
-      term,
+      term: resolvedTerm,
       language: resolvedLanguage,
+      flavor: resolvedFlavor,
       model: DEFAULT_MODEL,
     });
+    setCurrentTermKey(cacheKey);
     const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
 
     if (abortRef.current) {
@@ -564,12 +605,16 @@ function App() {
         setShowHistory(false);
         setLoading(false);
         setStreamText("");
-        setCurrentTerm(term);
+        setCurrentTerm(resolvedTerm);
         return;
       }
     }
 
-    await executeLookup(term, { versionId, language: resolvedLanguage });
+    await executeLookup(resolvedTerm, {
+      versionId,
+      language: resolvedLanguage,
+      flavor: resolvedFlavor,
+    });
   };
 
   useEffect(() => {

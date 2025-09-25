@@ -2,12 +2,17 @@ import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks/useApi.js";
 import { createCachedFetcher, parseSse } from "@/utils";
+import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { useWordStore } from "@/store/wordStore.js";
 
 export const WORD_CACHE_VERSION = "md1";
 
-export const wordCacheKey = ({ term, language, model = DEFAULT_MODEL }) =>
-  `${language}:${term}:${model ?? ""}:${WORD_CACHE_VERSION}`;
+export const wordCacheKey = ({
+  term,
+  language,
+  flavor = WORD_FLAVOR_BILINGUAL,
+  model = DEFAULT_MODEL,
+}) => `${language}:${flavor}:${term}:${model ?? ""}:${WORD_CACHE_VERSION}`;
 
 /**
  * Query a word definition
@@ -15,13 +20,18 @@ export const wordCacheKey = ({ term, language, model = DEFAULT_MODEL }) =>
  * @param {string} opts.userId user identifier
  * @param {string} opts.term word to search
  * @param {string} opts.language CHINESE or ENGLISH
+ * @param {string} [opts.flavor] dictionary flavor variant
  * @param {string} [opts.token] user token for auth header
  */
 export function createWordsApi(request = apiRequest) {
   const store = useWordStore;
 
-  const resolveKey = ({ term, language, model = DEFAULT_MODEL }) =>
-    wordCacheKey({ term, language, model });
+  const resolveKey = ({
+    term,
+    language,
+    flavor = WORD_FLAVOR_BILINGUAL,
+    model = DEFAULT_MODEL,
+  }) => wordCacheKey({ term, language, flavor, model });
 
   const persistWordRecord = (key, response) => {
     if (!response) return undefined;
@@ -38,8 +48,17 @@ export function createWordsApi(request = apiRequest) {
       response.version?.versionId ??
       versions[versions.length - 1]?.id ??
       versions[versions.length - 1]?.versionId;
-    const metadata = response.metadata ?? {};
-    store.getState().setVersions(key, versions, {
+    const metadata = {
+      ...(response.metadata ?? {}),
+      ...(response.flavor ? { flavor: response.flavor } : {}),
+    };
+    const resolvedFlavor = metadata.flavor ?? WORD_FLAVOR_BILINGUAL;
+    const versionsWithFlavor = versions.map((version) =>
+      version && typeof version === "object"
+        ? { ...version, flavor: version.flavor ?? resolvedFlavor }
+        : version,
+    );
+    store.getState().setVersions(key, versionsWithFlavor, {
       activeVersionId,
       metadata,
     });
@@ -51,12 +70,13 @@ export function createWordsApi(request = apiRequest) {
     term,
     language,
     model = DEFAULT_MODEL,
+    flavor = WORD_FLAVOR_BILINGUAL,
     token,
   }) => {
-    const key = resolveKey({ term, language, model });
+    const key = resolveKey({ term, language, flavor, model });
     const cached = store.getState().getEntry(key);
     if (cached) return cached;
-    const params = new URLSearchParams({ userId, term, language });
+    const params = new URLSearchParams({ userId, term, language, flavor });
     if (model) params.append("model", model);
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
       token,
@@ -87,13 +107,14 @@ export function createWordsApi(request = apiRequest) {
     term,
     language,
     model = DEFAULT_MODEL,
+    flavor = WORD_FLAVOR_BILINGUAL,
     token,
     signal,
     onChunk,
     forceNew = false,
     versionId,
   }) {
-    const params = new URLSearchParams({ userId, term, language });
+    const params = new URLSearchParams({ userId, term, language, flavor });
     if (model) params.append("model", model);
     if (forceNew) params.append("forceNew", "true");
     if (versionId) params.append("versionId", versionId);

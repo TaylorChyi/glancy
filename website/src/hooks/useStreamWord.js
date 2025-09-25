@@ -1,5 +1,9 @@
 import { useApi } from "@/hooks/useApi.js";
-import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils";
+import {
+  resolveWordLanguage,
+  WORD_LANGUAGE_AUTO,
+  WORD_FLAVOR_BILINGUAL,
+} from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
 import { DEFAULT_MODEL } from "@/config";
@@ -35,11 +39,18 @@ export function useStreamWord() {
     forceNew = false,
     versionId,
     language = WORD_LANGUAGE_AUTO,
+    flavor = WORD_FLAVOR_BILINGUAL,
   }) {
     const resolvedLanguage = resolveWordLanguage(term, language);
+    const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
     const model = DEFAULT_MODEL;
     const logCtx = { userId: user.id, term };
-    const key = wordCacheKey({ term, language: resolvedLanguage, model });
+    const key = wordCacheKey({
+      term,
+      language: resolvedLanguage,
+      flavor: resolvedFlavor,
+      model,
+    });
     let acc = "";
     let metadataPayload = null;
     console.info("[streamWordWithHandling] start", logCtx);
@@ -49,6 +60,7 @@ export function useStreamWord() {
         term,
         language: resolvedLanguage,
         model,
+        flavor: resolvedFlavor,
         token: user.token,
         signal,
         forceNew,
@@ -66,11 +78,14 @@ export function useStreamWord() {
         yield { chunk, language: resolvedLanguage };
       }
       const parsedEntry = safeParseJson(acc);
-      const entry =
+      const metadata = safeParseJson(metadataPayload);
+      const entryBase =
         parsedEntry && typeof parsedEntry === "object"
           ? parsedEntry
           : { term, language: resolvedLanguage, markdown: acc };
-      const metadata = safeParseJson(metadataPayload);
+      const entryFlavor =
+        entryBase.flavor ?? metadata?.flavor ?? resolvedFlavor;
+      const entry = { ...entryBase, flavor: entryFlavor };
       const versionsSource =
         (metadata && Array.isArray(metadata.versions) && metadata.versions) ||
         (parsedEntry &&
@@ -94,8 +109,13 @@ export function useStreamWord() {
       const metaPayload = {
         ...metadataBase,
         ...(parsedEntry?.metadata ?? {}),
+        flavor: entryFlavor,
       };
       const entryId = entry.id ?? entry.versionId;
+      const applyFlavor = (version) => ({
+        ...version,
+        flavor: version.flavor ?? entryFlavor,
+      });
       const mergedVersions = derivedVersions.some(
         (version) =>
           String(version.id ?? version.versionId) === String(entryId) ||
@@ -104,11 +124,11 @@ export function useStreamWord() {
         ? derivedVersions.map((version) => {
             const versionId = version.id ?? version.versionId;
             if (entryId && String(versionId) === String(entryId)) {
-              return { ...version, ...entry };
+              return applyFlavor({ ...version, ...entry });
             }
-            return version;
+            return applyFlavor(version);
           })
-        : [...derivedVersions, entry];
+        : [...derivedVersions.map(applyFlavor), entry];
       store.getState().setVersions(key, mergedVersions, {
         activeVersionId,
         metadata: metaPayload,

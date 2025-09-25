@@ -1,6 +1,8 @@
 import { createWordsApi } from "../words.js";
 import { API_PATHS } from "../../config/api.js";
 import { DEFAULT_MODEL } from "../../config/index.js";
+import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
+import { useWordStore } from "@/store/wordStore.js";
 import { jest } from "@jest/globals";
 
 /**
@@ -13,11 +15,12 @@ test("fetchWord builds query string", async () => {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
     token: "t",
   });
   const [url, opts] = request.mock.calls[0];
   expect(url).toBe(
-    `${API_PATHS.words}?userId=u&term=hello&language=ENGLISH&model=${DEFAULT_MODEL}`,
+    `${API_PATHS.words}?userId=u&term=hello&language=ENGLISH&flavor=${WORD_FLAVOR_BILINGUAL}&model=${DEFAULT_MODEL}`,
   );
   expect(opts.token).toBe("t");
 });
@@ -28,7 +31,12 @@ test("fetchWord builds query string", async () => {
 test("fetchWord caches repeated queries", async () => {
   const request = jest.fn().mockResolvedValue({ word: "hello" });
   const api = createWordsApi(request);
-  const args = { userId: "u", term: "hello", language: "ENGLISH" };
+  const args = {
+    userId: "u",
+    term: "hello",
+    language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
+  };
   await api.fetchWord(args);
   await api.fetchWord(args);
   expect(request).toHaveBeenCalledTimes(1);
@@ -46,4 +54,7 @@ test("fetchWordAudio caches repeated queries", async () => {
   const second = await api.fetchWordAudio(args);
   expect(request).toHaveBeenCalledTimes(1);
   expect(second).toBe(first);
+});
+beforeEach(() => {
+  useWordStore.getState().clear();
 });

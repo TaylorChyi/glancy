@@ -52,9 +52,10 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     );
   }
 
-  const handleSelect = (term) => {
+  const handleSelect = (historyItem) => {
     if (!onSelect) return;
-    onSelect(term);
+    const versionId = historyItem?.latestVersionId ?? undefined;
+    onSelect(historyItem, versionId);
   };
 
   return (
@@ -67,7 +68,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
               <button
                 type="button"
                 className={styles.term}
-                onClick={() => handleSelect(item.term)}
+                onClick={() => handleSelect(item)}
               >
                 <span className={styles["term-text"]}>{item.term}</span>
                 <span className={styles.trailing}>

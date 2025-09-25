@@ -2,6 +2,7 @@ import { jest } from "@jest/globals";
 import { act } from "@testing-library/react";
 import api from "@/api/index.js";
 import { useHistoryStore, useWordStore } from "@/store";
+import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 
 const mockWordStore = useWordStore;
 
@@ -12,6 +13,7 @@ mockApi.searchRecords = {
     id: "r1",
     term: "test",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
     createdAt: "2024-05-01T10:00:00Z",
     favorite: false,
     versions: [
@@ -42,12 +44,30 @@ describe("historyStore", () => {
    * 验证新增历史记录时会调用后端接口并将返回的版本写入状态树。
    */
   test("addHistory stores item and calls api", async () => {
+    mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce([
+      {
+        id: "r1",
+        term: "test",
+        language: "ENGLISH",
+        flavor: WORD_FLAVOR_BILINGUAL,
+        createdAt: "2024-05-01T10:00:00Z",
+        favorite: false,
+        versions: [
+          {
+            id: "r1",
+            createdAt: "2024-05-01T10:00:00Z",
+            favorite: false,
+          },
+        ],
+      },
+    ]);
     await act(async () => {
       await useHistoryStore.getState().addHistory("test", user, "ENGLISH");
     });
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled();
     const item = useHistoryStore.getState().history[0];
     expect(item.term).toBe("test");
+    expect(item.flavor).toBe(WORD_FLAVOR_BILINGUAL);
     expect(item.versions).toHaveLength(1);
     expect(item.versions[0].id).toBe("r1");
   });
@@ -63,6 +83,7 @@ describe("historyStore", () => {
       token: user.token,
       term: "word",
       language: "ENGLISH",
+      flavor: WORD_FLAVOR_BILINGUAL,
     });
   });
 
@@ -89,7 +110,8 @@ describe("historyStore", () => {
         {
           term: "hello",
           language: "ENGLISH",
-          termKey: "ENGLISH:hello",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:hello",
           createdAt: "2024-05-01T10:00:00Z",
           favorite: false,
           versions: [
@@ -102,10 +124,12 @@ describe("historyStore", () => {
     });
 
     await act(async () => {
-      await useHistoryStore.getState().removeHistory("ENGLISH:hello", user);
+      await useHistoryStore
+        .getState()
+        .removeHistory("ENGLISH:BILINGUAL:hello", user);
     });
 
-    expect(removeSpy).toHaveBeenCalledWith("ENGLISH:hello");
+    expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:hello");
     expect(useHistoryStore.getState().history).toHaveLength(0);
     removeSpy.mockRestore();
   });

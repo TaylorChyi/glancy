@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 const streamWordMock = jest.fn(async function* () {
-  yield "**hello**";
+  yield { type: "chunk", data: "**hello**" };
 });
 
 jest.unstable_mockModule("@/hooks/useApi.js", () => ({
@@ -11,6 +11,7 @@ jest.unstable_mockModule("@/hooks/useApi.js", () => ({
 const { createWordsApi } = await import("@/api/words.js");
 const { useStreamWord } = await import("@/hooks");
 const { useWordStore } = await import("@/store");
+const { WORD_FLAVOR_BILINGUAL } = await import("@/utils/language.js");
 
 const request = jest.fn();
 const api = createWordsApi(request);
@@ -30,6 +31,7 @@ test("streams then reads markdown from cache", async () => {
     user,
     term: "hello",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
   })) {
     // consume stream
   }
@@ -38,6 +40,7 @@ test("streams then reads markdown from cache", async () => {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
   });
 
   expect(result.markdown).toBe("**hello**");

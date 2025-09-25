@@ -4,7 +4,11 @@ import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
-import { resolveWordLanguage, WORD_LANGUAGE_AUTO } from "@/utils/language.js";
+import {
+  resolveWordLanguage,
+  WORD_LANGUAGE_AUTO,
+  WORD_FLAVOR_BILINGUAL,
+} from "@/utils/language.js";
 import { useWordStore } from "./wordStore.js";
 
 const HISTORY_LIMIT = 20;
@@ -13,6 +17,7 @@ type SearchRecordDto = {
   id?: string | number | null;
   term: string;
   language?: string | null;
+  flavor?: string | null;
   createdAt?: string | null;
   favorite?: boolean | null;
   versions?: Array<{
@@ -31,6 +36,7 @@ export interface HistoryVersion {
 export interface HistoryItem {
   term: string;
   language: string;
+  flavor: string;
   termKey: string;
   createdAt: string | null;
   favorite: boolean;
@@ -46,9 +52,13 @@ interface HistoryState {
     term: string,
     user?: User | null,
     language?: string,
+    flavor?: string,
   ) => Promise<void>;
   clearHistory: (user?: User | null) => Promise<void>;
-  removeHistory: (identifier: string, user?: User | null) => Promise<void>;
+  removeHistory: (
+    identifier: string | HistoryItem,
+    user?: User | null,
+  ) => Promise<void>;
   favoriteHistory: (
     identifier: string,
     user?: User | null,
@@ -68,10 +78,17 @@ type SetState = (
   replace?: boolean,
 ) => void;
 
-const createTermKey = (term: string, language: string) => `${language}:${term}`;
+const createTermKey = (term: string, language: string, flavor: string) =>
+  `${language}:${flavor}:${term}`;
 
 const normalizeLanguage = (term: string, language?: string | null) =>
   resolveWordLanguage(term, language ?? WORD_LANGUAGE_AUTO).toUpperCase();
+
+const normalizeFlavor = (flavor?: string | null) => {
+  if (!flavor) return WORD_FLAVOR_BILINGUAL;
+  const upper = String(flavor).trim().toUpperCase();
+  return upper || WORD_FLAVOR_BILINGUAL;
+};
 
 const sanitizeVersion = (
   version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,
@@ -112,12 +129,14 @@ const ensureVersions = (record: SearchRecordDto): HistoryVersion[] => {
 
 const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
   const language = normalizeLanguage(record.term, record.language);
+  const flavor = normalizeFlavor(record.flavor);
   const versions = ensureVersions(record);
   const latestVersionId = versions.length ? versions[0].id : null;
   return {
     term: record.term,
     language,
-    termKey: createTermKey(record.term, language),
+    flavor,
+    termKey: createTermKey(record.term, language, flavor),
     createdAt: record.createdAt ?? versions[0]?.createdAt ?? null,
     favorite: Boolean(record.favorite ?? versions[0]?.favorite ?? false),
     versions,
@@ -166,7 +185,10 @@ function handleApiError(err: unknown, set: SetState) {
 
 const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
   history.find(
-    (item) => item.termKey === identifier || item.term === identifier,
+    (item) =>
+      item.termKey === identifier ||
+      item.term === identifier ||
+      `${item.language}:${item.term}` === identifier,
   );
 
 export const useHistoryStore = createPersistentStore<HistoryState>({
@@ -214,13 +236,20 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         term: string,
         user?: User | null,
         language?: string,
+        flavor?: string,
       ) => {
         const normalizedLanguage = normalizeLanguage(term, language);
-        const termKey = createTermKey(term, normalizedLanguage);
+        const normalizedFlavor = normalizeFlavor(flavor);
+        const termKey = createTermKey(
+          term,
+          normalizedLanguage,
+          normalizedFlavor,
+        );
         const now = new Date().toISOString();
         const placeholder: HistoryItem = {
           term,
           language: normalizedLanguage,
+          flavor: normalizedFlavor,
           termKey,
           createdAt: now,
           favorite: false,
@@ -241,6 +270,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
               token: user.token,
               term,
               language: normalizedLanguage,
+              flavor: normalizedFlavor,
             });
             await refreshHistory(user);
           } catch (err) {
@@ -257,7 +287,11 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         set({ history: [], error: null });
       },
       removeHistory: async (identifier: string, user?: User | null) => {
-        const target = resolveHistoryItem(get().history, identifier);
+        const historyItems = get().history;
+        const target =
+          typeof identifier === "object" && identifier
+            ? identifier
+            : resolveHistoryItem(historyItems, identifier);
         if (!target) {
           set((state) => ({
             history: state.history.filter(
@@ -335,31 +369,64 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
   },
   persistOptions: {
     partialize: pickState(["history"]),
-    version: 2,
+    version: 3,
     migrate: (persistedState, version) => {
       if (!persistedState) return persistedState;
+      let nextState = persistedState;
       if (version === undefined || version < 2) {
-        const legacy = Array.isArray(persistedState.history)
-          ? persistedState.history
+        const legacy = Array.isArray(nextState.history)
+          ? nextState.history
           : [];
         const upgraded = legacy.map((item) => {
           if (typeof item === "string") {
             const language = normalizeLanguage(item);
+            const flavor = normalizeFlavor();
             return {
               term: item,
               language,
-              termKey: createTermKey(item, language),
+              flavor,
+              termKey: createTermKey(item, language, flavor),
               createdAt: null,
               favorite: false,
               versions: [],
               latestVersionId: null,
             } satisfies HistoryItem;
           }
+          if (item && typeof item === "object") {
+            const language = normalizeLanguage(item.term, item.language);
+            const flavor = normalizeFlavor(
+              "flavor" in item ? item.flavor : undefined,
+            );
+            return {
+              ...item,
+              language,
+              flavor,
+              termKey: createTermKey(item.term, language, flavor),
+            } as HistoryItem;
+          }
           return item;
         });
-        return { ...persistedState, history: upgraded };
+        nextState = { ...nextState, history: upgraded };
       }
-      return persistedState;
+      if (version !== undefined && version < 3) {
+        const upgraded = Array.isArray(nextState.history)
+          ? nextState.history.map((item: any) => {
+              if (!item || typeof item !== "object") {
+                return item;
+              }
+              const language = normalizeLanguage(item.term, item.language);
+              const flavor = normalizeFlavor(item.flavor);
+              return {
+                ...item,
+                language,
+                flavor,
+                termKey: createTermKey(item.term, language, flavor),
+              } as HistoryItem;
+            })
+          : [];
+        nextState = { ...nextState, history: upgraded };
+      }
+      return nextState;
     },
   },
 });

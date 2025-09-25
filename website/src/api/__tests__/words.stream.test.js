@@ -42,6 +42,7 @@ jest.unstable_mockModule("@/hooks", () => ({
 const { streamWord } = await import("../words.js");
 const { API_PATHS } = await import("../../config/api.js");
 const { DEFAULT_MODEL } = await import("../../config/model.js");
+const { WORD_FLAVOR_BILINGUAL } = await import("@/utils/language.js");
 
 /**
  * 验证流式接口能够解析 SSE 并输出日志。
@@ -67,13 +68,14 @@ test("streamWord yields chunks with logging", async () => {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
     token: "t",
   })) {
     chunks.push(event);
   }
 
   expect(global.fetch).toHaveBeenCalledWith(
-    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&model=${DEFAULT_MODEL}`,
+    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&flavor=${WORD_FLAVOR_BILINGUAL}&model=${DEFAULT_MODEL}`,
     expect.objectContaining({
       headers: expect.objectContaining({
         "X-USER-TOKEN": "t",
@@ -126,6 +128,7 @@ test("streamWord stops on DONE marker", async () => {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
   })) {
     chunks.push(chunk);
   }
@@ -160,6 +163,7 @@ test("streamWord throws on error event", async () => {
         userId: "u",
         term: "hello",
         language: "ENGLISH",
+        flavor: WORD_FLAVOR_BILINGUAL,
       })) {
         // consume stream
       }
