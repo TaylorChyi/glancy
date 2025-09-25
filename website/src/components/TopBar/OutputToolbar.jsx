@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { memo, useMemo } from "react";
 import { TtsButton } from "@/components";
 import ThemeIcon from "@/components/ui/Icon";
-import { useLanguage } from "@/context";
+import { useLanguage, useUser } from "@/context";
 import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
@@ -48,9 +48,7 @@ function LanguageGroup({
     ({ value: optionValue }) => optionValue === selectValue,
   );
   const baseId = `dictionary-${type}-language`;
-  const descriptionId = activeOption?.description
-    ? `${baseId}-description`
-    : undefined;
+  const activeDescription = activeOption?.description;
 
   const handleChange = (event) => {
     const selectedValue = event?.target?.value;
@@ -72,7 +70,7 @@ function LanguageGroup({
           className={styles.select}
           value={selectValue}
           onChange={handleChange}
-          aria-describedby={descriptionId}
+          title={activeDescription || undefined}
         >
           {normalizedOptions.map(
             ({ value: optionValue, label: optionLabel }) => (
@@ -83,11 +81,6 @@ function LanguageGroup({
           )}
         </select>
       </div>
-      {activeOption?.description ? (
-        <p className={styles["option-description"]} id={descriptionId}>
-          {activeOption.description}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -132,8 +125,18 @@ function OutputToolbar({
   targetLanguageOptions = [],
   onTargetLanguageChange,
   targetLanguageLabel,
+  favorited = false,
+  onToggleFavorite,
+  canFavorite = false,
+  canDelete = false,
+  onDelete,
+  canShare = false,
+  onShare,
+  canReport = false,
+  onReport,
 }) {
   const { t } = useLanguage();
+  const { user } = useUser();
   const TtsComponent = ttsComponent;
   const { currentIndex, total } = useMemo(() => {
     if (!Array.isArray(versions) || versions.length === 0) {
@@ -162,6 +165,83 @@ function OutputToolbar({
   const showTargetSelector =
     Array.isArray(targetLanguageOptions) && targetLanguageOptions.length > 0;
   const hasLanguageSelector = showSourceSelector || showTargetSelector;
+  const actionConfigs = useMemo(() => {
+    if (!user) return [];
+
+    const favoriteLabel = favorited
+      ? (t.favoriteRemove ?? t.favoriteAction ?? "Favorite")
+      : (t.favoriteAction ?? "Favorite");
+    const deleteLabel = t.deleteButton ?? t.deleteAction ?? "Delete";
+    const shareLabel = t.share ?? "Share";
+    const reportLabel = t.report ?? "Report";
+
+    const configs = [];
+
+    if (canFavorite && typeof onToggleFavorite === "function") {
+      configs.push({
+        key: "favorite",
+        label: favoriteLabel,
+        onClick: onToggleFavorite,
+        icon: favorited ? (
+          <ThemeIcon name="star-solid" width={22} height={22} />
+        ) : (
+          <ThemeIcon name="star-outline" width={22} height={22} />
+        ),
+        active: favorited,
+        variant: "favorite",
+      });
+    }
+
+    if (canDelete && typeof onDelete === "function") {
+      configs.push({
+        key: "delete",
+        label: deleteLabel,
+        onClick: onDelete,
+        icon: <ThemeIcon name="trash" width={20} height={20} />,
+        variant: "delete",
+      });
+    }
+
+    if (canShare && typeof onShare === "function") {
+      configs.push({
+        key: "share",
+        label: shareLabel,
+        onClick: onShare,
+        icon: <ThemeIcon name="link" width={20} height={20} />,
+        variant: "share",
+      });
+    }
+
+    if (canReport && typeof onReport === "function") {
+      configs.push({
+        key: "report",
+        label: reportLabel,
+        onClick: onReport,
+        icon: <ThemeIcon name="flag" width={20} height={20} />,
+        variant: "report",
+      });
+    }
+
+    return configs;
+  }, [
+    user,
+    canFavorite,
+    onToggleFavorite,
+    favorited,
+    t.favoriteRemove,
+    t.favoriteAction,
+    canDelete,
+    onDelete,
+    t.deleteButton,
+    t.deleteAction,
+    canShare,
+    onShare,
+    t.share,
+    canReport,
+    onReport,
+    t.report,
+  ]);
+  const hasActions = actionConfigs.length > 0;
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
@@ -238,6 +318,27 @@ function OutputToolbar({
           />
         </button>
       </div>
+      {hasActions ? (
+        <div className={styles["action-group"]}>
+          {actionConfigs.map(
+            ({ key, label, onClick, icon, active, variant }) => (
+              <button
+                key={key}
+                type="button"
+                className={`${styles["action-button"]} ${
+                  variant ? (styles[`action-button-${variant}`] ?? "") : ""
+                }`.trim()}
+                data-active={active ? "true" : undefined}
+                onClick={onClick}
+                aria-label={label}
+                title={label}
+              >
+                {icon}
+              </button>
+            ),
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -271,6 +372,15 @@ OutputToolbar.propTypes = {
   ),
   onTargetLanguageChange: PropTypes.func,
   targetLanguageLabel: PropTypes.string,
+  favorited: PropTypes.bool,
+  onToggleFavorite: PropTypes.func,
+  canFavorite: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  onDelete: PropTypes.func,
+  canShare: PropTypes.bool,
+  onShare: PropTypes.func,
+  canReport: PropTypes.bool,
+  onReport: PropTypes.func,
 };
 
 OutputToolbar.defaultProps = {
@@ -290,6 +400,15 @@ OutputToolbar.defaultProps = {
   targetLanguageOptions: [],
   onTargetLanguageChange: undefined,
   targetLanguageLabel: undefined,
+  favorited: false,
+  onToggleFavorite: undefined,
+  canFavorite: false,
+  canDelete: false,
+  onDelete: undefined,
+  canShare: false,
+  onShare: undefined,
+  canReport: false,
+  onReport: undefined,
 };
 
 export default memo(OutputToolbar);

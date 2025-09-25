@@ -1,17 +1,12 @@
 import PropTypes from "prop-types";
 import ThemeIcon from "@/components/ui/Icon";
-import TopBarActions from "./TopBarActions.jsx";
-import common from "./TopBarCommon.module.css";
 import styles from "./MobileTopBar.module.css";
 import { getBrandText } from "@/utils";
 import OutputToolbar from "./OutputToolbar.jsx";
-import { useLanguage } from "@/context";
 
 function MobileTopBar({
   term = "",
   lang,
-  showBack = false,
-  onBack,
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
@@ -33,7 +28,6 @@ function MobileTopBar({
   ttsComponent,
 }) {
   const brandText = getBrandText(lang);
-  const { t } = useLanguage();
   const ToolbarComponent = toolbarComponent;
 
   return (
@@ -41,26 +35,7 @@ function MobileTopBar({
       <button className={styles["topbar-btn"]} onClick={onOpenSidebar}>
         <ThemeIcon name="glancy-web" alt={brandText} width={24} height={24} />
       </button>
-      <button
-        type="button"
-        className={`${common["back-btn"]} ${showBack ? styles.visible : styles.hidden}`}
-        onClick={onBack}
-        aria-label={t.back}
-      >
-        <ThemeIcon
-          name="arrow-left"
-          alt=""
-          width={24}
-          height={24}
-          aria-hidden="true"
-        />
-      </button>
-      {term && (
-        <div className={`${common["term-text"]} ${styles["term-text"]}`}>
-          <span>{term}</span>
-        </div>
-      )}
-      <div className={styles.right}>
+      <div className={styles["toolbar-container"]}>
         <ToolbarComponent
           term={term}
           lang={lang}
@@ -70,9 +45,6 @@ function MobileTopBar({
           activeVersionId={activeVersionId}
           onNavigate={onNavigateVersion}
           ttsComponent={ttsComponent}
-          {...toolbarProps}
-        />
-        <TopBarActions
           favorited={favorited}
           onToggleFavorite={onToggleFavorite}
           canFavorite={canFavorite}
@@ -82,6 +54,7 @@ function MobileTopBar({
           onShare={onShare}
           canReport={canReport}
           onReport={onReport}
+          {...toolbarProps}
         />
       </div>
     </header>
@@ -91,8 +64,6 @@ function MobileTopBar({
 MobileTopBar.propTypes = {
   term: PropTypes.string,
   lang: PropTypes.string,
-  showBack: PropTypes.bool,
-  onBack: PropTypes.func,
   favorited: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
   canFavorite: PropTypes.bool,
@@ -117,8 +88,6 @@ MobileTopBar.propTypes = {
 MobileTopBar.defaultProps = {
   term: "",
   lang: "en",
-  showBack: false,
-  onBack: undefined,
   favorited: false,
   onToggleFavorite: undefined,
   canFavorite: false,

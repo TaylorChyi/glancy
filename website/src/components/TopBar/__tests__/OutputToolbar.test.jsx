@@ -4,6 +4,8 @@ import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
 
+const userState = { user: { id: "u" } };
+
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({
     t: {
@@ -12,10 +14,18 @@ jest.unstable_mockModule("@/context", () => ({
       nextVersion: "下一版本",
       versionIndicator: "{current}/{total}",
       versionIndicatorEmpty: "0/0",
+      favoriteAction: "收藏",
+      favoriteRemove: "取消收藏",
+      deleteButton: "删除",
+      share: "分享",
+      report: "反馈",
+      dictionarySourceLanguageLabel: "源语言",
+      dictionaryTargetLanguageLabel: "目标语言",
     },
     lang: "zh",
   }),
   useTheme: () => ({ resolvedTheme: "light" }),
+  useUser: () => userState,
 }));
 
 jest.unstable_mockModule("@/components", () => ({
@@ -29,6 +39,7 @@ const { default: OutputToolbar } = await import(
 describe("OutputToolbar", () => {
   beforeEach(() => {
     mockTtsButton.mockClear();
+    userState.user = { id: "u" };
   });
 
   /**
@@ -102,5 +113,70 @@ describe("OutputToolbar", () => {
 
     expect(customTts).toHaveBeenCalled();
     expect(mockTtsButton).not.toHaveBeenCalled();
+  });
+
+  /**
+   * 当提供语言选项描述时应通过 title 呈现提示信息。
+   */
+  test("attaches hover hint for language options", () => {
+    render(
+      <OutputToolbar
+        term="hello"
+        sourceLanguage="AUTO"
+        sourceLanguageOptions={[
+          { value: "AUTO", label: "自动识别", description: "自动检测输入语言" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("combobox", { name: "源语言" })).toHaveAttribute(
+      "title",
+      "自动检测输入语言",
+    );
+  });
+
+  /**
+   * 确认启用动作按钮时在工具栏中渲染并响应交互。
+   */
+  test("renders action buttons when permitted", () => {
+    const onToggleFavorite = jest.fn();
+    const onDelete = jest.fn();
+    const onShare = jest.fn();
+    const onReport = jest.fn();
+
+    render(
+      <OutputToolbar
+        term="hello"
+        favorited
+        onToggleFavorite={onToggleFavorite}
+        canFavorite
+        onDelete={onDelete}
+        canDelete
+        onShare={onShare}
+        canShare
+        onReport={onReport}
+        canReport
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
+    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    fireEvent.click(screen.getByRole("button", { name: "分享" }));
+    fireEvent.click(screen.getByRole("button", { name: "反馈" }));
+
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(onReport).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 当用户未登录时，应隐藏动作按钮避免误导。
+   */
+  test("omits actions without user", () => {
+    userState.user = null;
+    render(<OutputToolbar term="hello" canShare onShare={jest.fn()} />);
+
+    expect(screen.queryByRole("button", { name: "分享" })).toBeNull();
   });
 });

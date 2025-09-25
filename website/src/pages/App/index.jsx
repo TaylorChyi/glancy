@@ -46,7 +46,6 @@ function App() {
   const inputRef = useRef(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [fromFavorites, setFromFavorites] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [finalText, setFinalText] = useState("");
   const [versions, setVersions] = useState([]);
@@ -177,7 +176,6 @@ function App() {
     // always show favorites when invoked
     setShowFavorites(true);
     setShowHistory(false);
-    setFromFavorites(false);
   };
 
   const handleUnfavorite = (term) => {
@@ -188,13 +186,6 @@ function App() {
   const handleSelectFavorite = async (term) => {
     await handleSelectHistory(term);
     setShowFavorites(false);
-    setFromFavorites(true);
-  };
-
-  const handleBackFromFavorite = () => {
-    setShowFavorites(true);
-    setFromFavorites(false);
-    setEntry(null);
   };
 
   const handleVoice = () => {
@@ -391,7 +382,6 @@ function App() {
     }
     if (!text.trim()) return;
 
-    setFromFavorites(false);
     const input = text.trim();
     setText("");
 
@@ -675,7 +665,6 @@ function App() {
       setText("");
       setShowFavorites(false);
       setShowHistory(false);
-      setFromFavorites(false);
       setStreamText("");
       setFinalText("");
       setVersions([]);
@@ -695,8 +684,6 @@ function App() {
         topBarProps={{
           term: activeTerm,
           lang,
-          showBack: !showFavorites && fromFavorites,
-          onBack: handleBackFromFavorite,
           favorited: !!activeTerm && favorites.includes(activeTerm),
           onToggleFavorite: toggleFavoriteEntry,
           canFavorite: !!entry && !showFavorites && !showHistory,
