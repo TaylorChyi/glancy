@@ -5,70 +5,6 @@ import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
 import { polishDictionaryMarkdown } from "@/utils";
 import styles from "./DictionaryEntry.module.css";
 
-function PersonalizationPanel({ data, labels }) {
-  if (!data) return null;
-  const {
-    personaSummary,
-    keyTakeaway,
-    contextualExplanation,
-    learningHooks = [],
-    reflectionPrompts = [],
-  } = data;
-  const hasHooks = Array.isArray(learningHooks) && learningHooks.length > 0;
-  const hasPrompts =
-    Array.isArray(reflectionPrompts) && reflectionPrompts.length > 0;
-
-  return (
-    <section
-      className={styles.personalization}
-      aria-labelledby="personalization-title"
-    >
-      <div className={styles["personalization-header"]}>
-        <span className={styles["personalization-badge"]}>{labels.badge}</span>
-        <h2
-          id="personalization-title"
-          className={styles["personalization-title"]}
-        >
-          {labels.title}
-        </h2>
-      </div>
-      {personaSummary && (
-        <p className={styles["personalization-persona"]}>{personaSummary}</p>
-      )}
-      {keyTakeaway && (
-        <p className={styles["personalization-key"]}>{keyTakeaway}</p>
-      )}
-      {contextualExplanation && (
-        <p className={styles["personalization-context"]}>
-          {contextualExplanation}
-        </p>
-      )}
-      {hasHooks && (
-        <div className={styles["personalization-block"]}>
-          <h3 className={styles["personalization-subtitle"]}>{labels.hooks}</h3>
-          <ul className={styles["personalization-list"]}>
-            {learningHooks.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {hasPrompts && (
-        <div className={styles["personalization-block"]}>
-          <h3 className={styles["personalization-subtitle"]}>
-            {labels.prompts}
-          </h3>
-          <ul className={styles["personalization-list"]}>
-            {reflectionPrompts.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
-  );
-}
-
 function tryParseJson(text) {
   const trimmed = text.trim();
   if (!trimmed.startsWith("{")) return null;
@@ -83,19 +19,6 @@ function DictionaryEntry({ entry }) {
   const { t, lang } = useLanguage();
   if (!entry) return null;
 
-  const personalization = entry.personalization;
-  const personalizationNode = (
-    <PersonalizationPanel
-      data={personalization}
-      labels={{
-        title: t.personalizationTitle,
-        badge: t.personalizationBadge,
-        hooks: t.personalizationHooksTitle,
-        prompts: t.personalizationPromptsTitle,
-      }}
-    />
-  );
-
   if (entry.markdown) {
     const parsed = tryParseJson(entry.markdown);
     if (parsed) {
@@ -104,7 +27,6 @@ function DictionaryEntry({ entry }) {
     const polished = polishDictionaryMarkdown(entry.markdown);
     return (
       <article className={styles["dictionary-entry"]}>
-        {personalizationNode}
         <DictionaryMarkdown>{polished}</DictionaryMarkdown>
       </article>
     );
@@ -117,7 +39,6 @@ function DictionaryEntry({ entry }) {
     const { phonetic, definitions, example } = entry;
     return (
       <article className={styles["dictionary-entry"]}>
-        {personalizationNode}
         {phonetic && (
           <section
             className={styles["phonetic-section"]}
@@ -180,7 +101,6 @@ function DictionaryEntry({ entry }) {
 
   return (
     <article className={styles["dictionary-entry"]}>
-      {personalizationNode}
       {term && (
         <h2 className={styles["section-title"]}>
           <PronounceableWord text={term} lang={lang} />
