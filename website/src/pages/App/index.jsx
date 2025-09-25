@@ -17,10 +17,9 @@ import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import {
   extractMarkdownPreview,
-  resolveWordLanguage,
-  resolveWordFlavor,
+  resolveDictionaryConfig,
+  resolveDictionaryFlavor,
   WORD_LANGUAGE_AUTO,
-  WORD_LANGUAGE_ENGLISH_MONO,
   resolveShareTarget,
   attemptShareLink,
 } from "@/utils";
@@ -55,62 +54,93 @@ function App() {
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
   const wordEntries = useWordStore((state) => state.entries);
-  const dictionaryLanguage = useSettingsStore(
-    (state) => state.dictionaryLanguage,
+  const dictionarySourceLanguage = useSettingsStore(
+    (state) => state.dictionarySourceLanguage,
   );
-  const setDictionaryLanguage = useSettingsStore(
-    (state) => state.setDictionaryLanguage,
+  const setDictionarySourceLanguage = useSettingsStore(
+    (state) => state.setDictionarySourceLanguage,
   );
-  const dictionaryLanguageOptions = useMemo(
+  const dictionaryTargetLanguage = useSettingsStore(
+    (state) => state.dictionaryTargetLanguage,
+  );
+  const setDictionaryTargetLanguage = useSettingsStore(
+    (state) => state.setDictionaryTargetLanguage,
+  );
+  const sourceLanguageOptions = useMemo(
     () => [
       {
         value: WORD_LANGUAGE_AUTO,
-        label: t.dictionaryLanguageAuto,
-        description: t.dictionaryLanguageAutoDescription,
+        label: t.dictionarySourceLanguageAuto,
+        description: t.dictionarySourceLanguageAutoDescription,
       },
       {
         value: "ENGLISH",
-        label: t.dictionaryLanguageEnglish,
-        description: t.dictionaryLanguageEnglishDescription,
-      },
-      {
-        value: WORD_LANGUAGE_ENGLISH_MONO,
-        label: t.dictionaryLanguageEnglishMonolingual,
-        description: t.dictionaryLanguageEnglishMonolingualDescription,
+        label: t.dictionarySourceLanguageEnglish,
+        description: t.dictionarySourceLanguageEnglishDescription,
       },
       {
         value: "CHINESE",
-        label: t.dictionaryLanguageChinese,
-        description: t.dictionaryLanguageChineseDescription,
+        label: t.dictionarySourceLanguageChinese,
+        description: t.dictionarySourceLanguageChineseDescription,
       },
     ],
     [
-      t.dictionaryLanguageAuto,
-      t.dictionaryLanguageAutoDescription,
-      t.dictionaryLanguageEnglish,
-      t.dictionaryLanguageEnglishDescription,
-      t.dictionaryLanguageEnglishMonolingual,
-      t.dictionaryLanguageEnglishMonolingualDescription,
-      t.dictionaryLanguageChinese,
-      t.dictionaryLanguageChineseDescription,
+      t.dictionarySourceLanguageAuto,
+      t.dictionarySourceLanguageAutoDescription,
+      t.dictionarySourceLanguageEnglish,
+      t.dictionarySourceLanguageEnglishDescription,
+      t.dictionarySourceLanguageChinese,
+      t.dictionarySourceLanguageChineseDescription,
+    ],
+  );
+  const targetLanguageOptions = useMemo(
+    () => [
+      {
+        value: "CHINESE",
+        label: t.dictionaryTargetLanguageChinese,
+        description: t.dictionaryTargetLanguageChineseDescription,
+      },
+      {
+        value: "ENGLISH",
+        label: t.dictionaryTargetLanguageEnglish,
+        description: t.dictionaryTargetLanguageEnglishDescription,
+      },
+    ],
+    [
+      t.dictionaryTargetLanguageChinese,
+      t.dictionaryTargetLanguageChineseDescription,
+      t.dictionaryTargetLanguageEnglish,
+      t.dictionaryTargetLanguageEnglishDescription,
     ],
   );
   const dictionaryFlavor = useMemo(
-    () => resolveWordFlavor(dictionaryLanguage),
-    [dictionaryLanguage],
+    () =>
+      resolveDictionaryFlavor({
+        sourceLanguage: dictionarySourceLanguage,
+        targetLanguage: dictionaryTargetLanguage,
+      }),
+    [dictionarySourceLanguage, dictionaryTargetLanguage],
   );
   const toolbarLanguageProps = useMemo(
     () => ({
-      languageMode: dictionaryLanguage,
-      onLanguageModeChange: setDictionaryLanguage,
-      languageOptions: dictionaryLanguageOptions,
-      languageLabel: t.dictionaryLanguageLabel,
+      sourceLanguage: dictionarySourceLanguage,
+      onSourceLanguageChange: setDictionarySourceLanguage,
+      sourceLanguageOptions,
+      sourceLanguageLabel: t.dictionarySourceLanguageLabel,
+      targetLanguage: dictionaryTargetLanguage,
+      onTargetLanguageChange: setDictionaryTargetLanguage,
+      targetLanguageOptions,
+      targetLanguageLabel: t.dictionaryTargetLanguageLabel,
     }),
     [
-      dictionaryLanguage,
-      setDictionaryLanguage,
-      dictionaryLanguageOptions,
-      t.dictionaryLanguageLabel,
+      dictionarySourceLanguage,
+      setDictionarySourceLanguage,
+      sourceLanguageOptions,
+      t.dictionarySourceLanguageLabel,
+      dictionaryTargetLanguage,
+      setDictionaryTargetLanguage,
+      targetLanguageOptions,
+      t.dictionaryTargetLanguageLabel,
     ],
   );
   const abortRef = useRef(null);
@@ -232,14 +262,16 @@ function App() {
       abortRef.current = controller;
 
       setLoading(true);
-      const targetLanguage = resolveWordLanguage(
-        normalized,
-        preferredLanguage ?? dictionaryLanguage ?? WORD_LANGUAGE_AUTO,
-      );
-      const targetFlavor = preferredFlavor ?? dictionaryFlavor;
+      const { language: resolvedLanguage, flavor: defaultFlavor } =
+        resolveDictionaryConfig(normalized, {
+          sourceLanguage:
+            preferredLanguage ?? dictionarySourceLanguage ?? WORD_LANGUAGE_AUTO,
+          targetLanguage: dictionaryTargetLanguage,
+        });
+      const targetFlavor = preferredFlavor ?? defaultFlavor;
       const cacheKey = wordCacheKey({
         term: normalized,
-        language: targetLanguage,
+        language: resolvedLanguage,
         flavor: targetFlavor,
         model: DEFAULT_MODEL,
       });
@@ -265,13 +297,13 @@ function App() {
             return {
               status: "success",
               term: normalized,
-              detectedLanguage: targetLanguage,
+              detectedLanguage: resolvedLanguage,
             };
           }
         }
       }
 
-      let detected = targetLanguage;
+      let detected = resolvedLanguage;
       try {
         let acc = "";
         let preview = "";
@@ -283,7 +315,7 @@ function App() {
           signal: controller.signal,
           forceNew,
           versionId,
-          language: targetLanguage,
+          language: resolvedLanguage,
           flavor: targetFlavor,
         })) {
           if (language && language !== detected) detected = language;
@@ -316,7 +348,7 @@ function App() {
         return {
           status: "success",
           term: normalized,
-          detectedLanguage: detected ?? targetLanguage,
+          detectedLanguage: detected ?? resolvedLanguage,
           flavor: targetFlavor,
         };
       } catch (error) {
@@ -346,8 +378,8 @@ function App() {
       currentTermKey,
       wordStoreApi,
       applyRecord,
-      dictionaryLanguage,
-      dictionaryFlavor,
+      dictionarySourceLanguage,
+      dictionaryTargetLanguage,
     ],
   );
 
@@ -571,14 +603,22 @@ function App() {
     const resolvedTerm =
       typeof identifier === "string" ? identifier : (target?.term ?? "");
     if (!resolvedTerm) return;
-    const resolvedLanguage = resolveWordLanguage(
-      resolvedTerm,
-      target?.language ?? WORD_LANGUAGE_AUTO,
-    );
+    const fallbackConfig = resolveDictionaryConfig(resolvedTerm, {
+      sourceLanguage:
+        (typeof identifier === "object" && identifier?.language) ||
+        dictionarySourceLanguage ||
+        WORD_LANGUAGE_AUTO,
+      targetLanguage: dictionaryTargetLanguage,
+    });
+    const resolvedLanguage = target?.language ?? fallbackConfig.language;
     const resolvedFlavor =
       target?.flavor ??
       (typeof identifier === "object" && identifier?.language
-        ? resolveWordFlavor(identifier.language)
+        ? resolveDictionaryFlavor({
+            sourceLanguage: identifier.language,
+            targetLanguage: dictionaryTargetLanguage,
+            resolvedSourceLanguage: fallbackConfig.language,
+          })
         : dictionaryFlavor);
     const cacheKey = wordCacheKey({
       term: resolvedTerm,

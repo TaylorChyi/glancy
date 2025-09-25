@@ -18,19 +18,23 @@ export default {
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
   autoDetect: "Auto Detect",
-  dictionaryLanguageLabel: "Lookup language",
-  dictionaryLanguageAuto: "Auto",
-  dictionaryLanguageAutoDescription:
-    "Let Glancy detect whether the entry is English or Chinese.",
-  dictionaryLanguageEnglish: "English term",
-  dictionaryLanguageEnglishDescription:
-    "Interpret as an English word or phrase with Chinese-first guidance.",
-  dictionaryLanguageEnglishMonolingual: "English term · English definitions",
-  dictionaryLanguageEnglishMonolingualDescription:
-    "Receive nuanced English-to-English explanations without Chinese scaffolding.",
-  dictionaryLanguageChinese: "Chinese term",
-  dictionaryLanguageChineseDescription:
-    "Interpret as a Chinese character or word with English-first storytelling.",
+  dictionarySourceLanguageLabel: "Source language",
+  dictionarySourceLanguageAuto: "Auto detect",
+  dictionarySourceLanguageAutoDescription:
+    "Glancy senses the term language and chooses the proper dictionary automatically.",
+  dictionarySourceLanguageEnglish: "English term",
+  dictionarySourceLanguageEnglishDescription:
+    "Treat the input as English and unlock full tooling for English entries.",
+  dictionarySourceLanguageChinese: "Chinese term",
+  dictionarySourceLanguageChineseDescription:
+    "Treat the input as Chinese and surface Chinese-first experiences.",
+  dictionaryTargetLanguageLabel: "Target language",
+  dictionaryTargetLanguageEnglish: "English definitions",
+  dictionaryTargetLanguageEnglishDescription:
+    "Deliver detailed explanations in English, ideal for immersive reading.",
+  dictionaryTargetLanguageChinese: "Chinese definitions",
+  dictionaryTargetLanguageChineseDescription:
+    "Provide elegant Chinese interpretations tailored for precise translation.",
   prefTheme: "Theme",
   searchTitle: "Word Search",
   searchButton: "Search",

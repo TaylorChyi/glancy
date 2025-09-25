@@ -1,19 +1,24 @@
 import { act } from "@testing-library/react";
 import { useSettingsStore } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
-import { WORD_LANGUAGE_AUTO } from "@/utils/language.js";
+import {
+  WORD_LANGUAGE_AUTO,
+  WORD_DEFAULT_TARGET_LANGUAGE,
+} from "@/utils/language.js";
 
 describe("settingsStore", () => {
   beforeEach(() => {
     localStorage.clear();
-    const setter = useSettingsStore.getState().setSystemLanguage;
-    const dictionarySetter = useSettingsStore.getState().setDictionaryLanguage;
+    const state = useSettingsStore.getState();
     useSettingsStore.setState(
       {
         systemLanguage: SYSTEM_LANGUAGE_AUTO,
-        setSystemLanguage: setter,
-        dictionaryLanguage: WORD_LANGUAGE_AUTO,
-        setDictionaryLanguage: dictionarySetter,
+        setSystemLanguage: state.setSystemLanguage,
+        dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
+        setDictionarySourceLanguage: state.setDictionarySourceLanguage,
+        dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
+        setDictionaryTargetLanguage: state.setDictionaryTargetLanguage,
+        setDictionaryLanguage: state.setDictionaryLanguage,
       },
       true,
     );
@@ -26,8 +31,11 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().systemLanguage).toBe(
       SYSTEM_LANGUAGE_AUTO,
     );
-    expect(useSettingsStore.getState().dictionaryLanguage).toBe(
+    expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
       WORD_LANGUAGE_AUTO,
+    );
+    expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
+      WORD_DEFAULT_TARGET_LANGUAGE,
     );
   });
 
@@ -54,12 +62,65 @@ describe("settingsStore", () => {
    */
   test("setDictionaryLanguage normalizes preference", () => {
     act(() => useSettingsStore.getState().setDictionaryLanguage("CHINESE"));
-    expect(useSettingsStore.getState().dictionaryLanguage).toBe("CHINESE");
+    expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
+      "CHINESE",
+    );
+    expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
+      "ENGLISH",
+    );
     act(() => useSettingsStore.getState().setDictionaryLanguage("invalid"));
-    expect(useSettingsStore.getState().dictionaryLanguage).toBe(
+    expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
+      WORD_LANGUAGE_AUTO,
+    );
+    expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
+      WORD_DEFAULT_TARGET_LANGUAGE,
+    );
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    expect(stored.state.dictionarySourceLanguage).toBe("AUTO");
+    expect(stored.state.dictionaryTargetLanguage).toBe(
+      WORD_DEFAULT_TARGET_LANGUAGE,
+    );
+  });
+
+  /**
+   * 验证新的词典源语言设置会被规范化并写入持久化存储。
+   */
+  test("setDictionarySourceLanguage persists normalized value", () => {
+    act(() =>
+      useSettingsStore.getState().setDictionarySourceLanguage("ENGLISH"),
+    );
+    expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
+      "ENGLISH",
+    );
+    act(() =>
+      useSettingsStore.getState().setDictionarySourceLanguage("invalid"),
+    );
+    expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
       WORD_LANGUAGE_AUTO,
     );
     const stored = JSON.parse(localStorage.getItem("settings"));
-    expect(stored.state.dictionaryLanguage).toBe("AUTO");
+    expect(stored.state.dictionarySourceLanguage).toBe("AUTO");
+  });
+
+  /**
+   * 验证目标语言设置仅接受受支持选项并提供稳定默认值。
+   */
+  test("setDictionaryTargetLanguage enforces supported options", () => {
+    act(() =>
+      useSettingsStore.getState().setDictionaryTargetLanguage("ENGLISH"),
+    );
+    expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
+      "ENGLISH",
+    );
+    act(() =>
+      useSettingsStore.getState().setDictionaryTargetLanguage("invalid"),
+    );
+    expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
+      WORD_DEFAULT_TARGET_LANGUAGE,
+    );
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    expect(stored.state.dictionaryTargetLanguage).toBe(
+      WORD_DEFAULT_TARGET_LANGUAGE,
+    );
   });
 });

@@ -9,6 +9,9 @@ import {
   WORD_LANGUAGE_AUTO,
   WORD_LANGUAGE_ENGLISH_MONO,
   normalizeWordLanguage,
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
+  WORD_DEFAULT_TARGET_LANGUAGE,
 } from "@/utils/language.js";
 
 const LEGACY_LANGUAGE_STORAGE_KEY = "lang";
@@ -17,18 +20,31 @@ const DEFAULT_LANGUAGE_FALLBACK = "zh";
 
 type SystemLanguage = typeof SYSTEM_LANGUAGE_AUTO | string;
 
-type DictionaryLanguage =
+type DictionarySourceLanguage =
   | typeof WORD_LANGUAGE_AUTO
   | "CHINESE"
-  | "ENGLISH"
-  | typeof WORD_LANGUAGE_ENGLISH_MONO;
+  | "ENGLISH";
+
+type DictionaryTargetLanguage = "CHINESE" | "ENGLISH";
 
 type SettingsState = {
   systemLanguage: SystemLanguage;
   setSystemLanguage: (language: SystemLanguage) => void;
-  dictionaryLanguage: DictionaryLanguage;
-  setDictionaryLanguage: (language: DictionaryLanguage) => void;
+  dictionarySourceLanguage: DictionarySourceLanguage;
+  setDictionarySourceLanguage: (language: DictionarySourceLanguage) => void;
+  dictionaryTargetLanguage: DictionaryTargetLanguage;
+  setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => void;
+  /**
+   * @deprecated 请改用 setDictionarySourceLanguage / setDictionaryTargetLanguage
+   */
+  setDictionaryLanguage: (language: DictionaryLegacyLanguage) => void;
 };
+
+type DictionaryLegacyLanguage =
+  | typeof WORD_LANGUAGE_AUTO
+  | "CHINESE"
+  | "ENGLISH"
+  | typeof WORD_LANGUAGE_ENGLISH_MONO;
 
 function sanitizeLanguage(candidate: SystemLanguage): SystemLanguage {
   if (candidate === SYSTEM_LANGUAGE_AUTO) {
@@ -74,7 +90,8 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
   key: SETTINGS_STORAGE_KEY,
   initializer: (set, get) => ({
     systemLanguage: detectInitialLanguage(),
-    dictionaryLanguage: WORD_LANGUAGE_AUTO,
+    dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
+    dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
     setSystemLanguage: (language: SystemLanguage) => {
       const normalized = sanitizeLanguage(language);
       const current = get().systemLanguage;
@@ -85,24 +102,114 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       set({ systemLanguage: normalized });
       persistLegacyLanguage(normalized);
     },
-    setDictionaryLanguage: (language: DictionaryLanguage) => {
-      const normalized = normalizeWordLanguage(language) as DictionaryLanguage;
+    setDictionarySourceLanguage: (language: DictionarySourceLanguage) => {
+      const normalized = normalizeWordSourceLanguage(language);
       set((state) => {
-        if (state.dictionaryLanguage === normalized) {
+        if (state.dictionarySourceLanguage === normalized) {
           return {};
         }
-        return { dictionaryLanguage: normalized };
+        return { dictionarySourceLanguage: normalized };
+      });
+    },
+    setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => {
+      const normalized = normalizeWordTargetLanguage(language);
+      set((state) => {
+        if (state.dictionaryTargetLanguage === normalized) {
+          return {};
+        }
+        return { dictionaryTargetLanguage: normalized };
+      });
+    },
+    setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
+      const normalized = normalizeWordLanguage(language);
+      set((state) => {
+        switch (normalized) {
+          case "CHINESE":
+            return {
+              dictionarySourceLanguage: "CHINESE",
+              dictionaryTargetLanguage: "ENGLISH",
+            };
+          case "ENGLISH":
+            return {
+              dictionarySourceLanguage: "ENGLISH",
+              dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
+            };
+          case WORD_LANGUAGE_ENGLISH_MONO:
+            return {
+              dictionarySourceLanguage: "ENGLISH",
+              dictionaryTargetLanguage: "ENGLISH",
+            };
+          case WORD_LANGUAGE_AUTO:
+          default:
+            return {
+              dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
+              dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
+            };
+        }
       });
     },
   }),
   persistOptions: {
-    partialize: pickState(["systemLanguage", "dictionaryLanguage"]),
+    partialize: pickState([
+      "systemLanguage",
+      "dictionarySourceLanguage",
+      "dictionaryTargetLanguage",
+    ]),
     onRehydrateStorage: () => (state) => {
       if (state) {
+        let persistedState: { state?: Record<string, unknown> } | null = null;
+        try {
+          const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+          persistedState = raw ? JSON.parse(raw) : null;
+        } catch (error) {
+          console.warn("[settings] failed to parse persisted state", error);
+        }
+        const hasPersistedSource = Boolean(
+          persistedState?.state?.dictionarySourceLanguage,
+        );
+        const hasPersistedTarget = Boolean(
+          persistedState?.state?.dictionaryTargetLanguage,
+        );
         persistLegacyLanguage(state.systemLanguage);
-        state.dictionaryLanguage = normalizeWordLanguage(
-          state.dictionaryLanguage,
-        ) as DictionaryLanguage;
+        const legacyLanguage =
+          "dictionaryLanguage" in state
+            ? normalizeWordLanguage(
+                (state as unknown as { dictionaryLanguage?: string })
+                  .dictionaryLanguage,
+              )
+            : undefined;
+        const persistedSource = normalizeWordSourceLanguage(
+          (state as unknown as { dictionarySourceLanguage?: string })
+            .dictionarySourceLanguage,
+        );
+        const persistedTarget = normalizeWordTargetLanguage(
+          (state as unknown as { dictionaryTargetLanguage?: string })
+            .dictionaryTargetLanguage,
+        );
+
+        if (legacyLanguage && !hasPersistedSource && !hasPersistedTarget) {
+          switch (legacyLanguage) {
+            case "CHINESE":
+              state.dictionarySourceLanguage = "CHINESE";
+              state.dictionaryTargetLanguage = "ENGLISH";
+              break;
+            case "ENGLISH":
+              state.dictionarySourceLanguage = "ENGLISH";
+              state.dictionaryTargetLanguage = WORD_DEFAULT_TARGET_LANGUAGE;
+              break;
+            case WORD_LANGUAGE_ENGLISH_MONO:
+              state.dictionarySourceLanguage = "ENGLISH";
+              state.dictionaryTargetLanguage = "ENGLISH";
+              break;
+            default:
+              state.dictionarySourceLanguage = WORD_LANGUAGE_AUTO;
+              state.dictionaryTargetLanguage = WORD_DEFAULT_TARGET_LANGUAGE;
+              break;
+          }
+        } else {
+          state.dictionarySourceLanguage = persistedSource;
+          state.dictionaryTargetLanguage = persistedTarget;
+        }
       }
     },
   },
