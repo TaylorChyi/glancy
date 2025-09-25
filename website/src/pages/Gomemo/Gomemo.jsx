@@ -19,6 +19,7 @@ const LANGUAGE_TO_TTS = {
 };
 
 const termKey = (word) => `${word.language}:${word.term}`;
+const GOMEMO_ICON_NAME = "gomemo";
 
 function normalizeDetails(entry) {
   if (!entry) return null;
@@ -272,7 +273,7 @@ function Gomemo() {
       <header className={styles["shell-header"]}>
         <div className={styles.brand}>
           <span className={styles["brand-icon"]}>
-            <ThemeIcon name="sparkle" width={22} height={22} />
+            <ThemeIcon name={GOMEMO_ICON_NAME} width={22} height={22} />
           </span>
           <div className={styles["brand-copy"]}>
             <span className={styles["brand-title"]}>GOMEMO STUDIO</span>
@@ -385,7 +386,7 @@ function Gomemo() {
                 </div>
               </article>
               <article className={styles["insight-card"]}>
-                <ThemeIcon name="sparkle" width={22} height={22} />
+                <ThemeIcon name={GOMEMO_ICON_NAME} width={22} height={22} />
                 <div>
                   <h3>{t.gomemoInsightsReviewTitle}</h3>
                   <p>{review?.review ?? t.gomemoInsightsReviewDescription}</p>
@@ -477,7 +478,11 @@ function Gomemo() {
                       }`}
                       onClick={() => selectMode(mode.type)}
                     >
-                      <ThemeIcon name="sparkle" width={18} height={18} />
+                      <ThemeIcon
+                        name={GOMEMO_ICON_NAME}
+                        width={18}
+                        height={18}
+                      />
                       <div>
                         <strong>{mode.title}</strong>
                         <p>{mode.focus}</p>
@@ -601,7 +606,7 @@ function Gomemo() {
               </div>
             ) : (
               <div className={styles["empty-practice"]}>
-                <ThemeIcon name="sparkle" width={32} height={32} />
+                <ThemeIcon name={GOMEMO_ICON_NAME} width={32} height={32} />
                 <h3>请选择一个词条开始训练</h3>
                 <p>从右侧词单中挑选词条，或刷新计划获取新的练习。</p>
               </div>
