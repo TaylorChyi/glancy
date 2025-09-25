@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/context";
 import SidebarActionItem from "./SidebarActionItem.jsx";
+import { SIDEBAR_ACTION_VARIANTS } from "./sidebarActionVariants.js";
 
 const GOMEMO_PATH = "/gomemo";
 const FALLBACK_GOMEMO_LABEL = "Gomemo";
@@ -30,6 +31,7 @@ function GomemoEntry() {
       label={gomemoLabel}
       isActive={isActive}
       onClick={handleNavigate}
+      variant={SIDEBAR_ACTION_VARIANTS.prominent}
     />
   );
 }
