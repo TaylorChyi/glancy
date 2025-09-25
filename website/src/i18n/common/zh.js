@@ -54,7 +54,7 @@ export default {
   personalizationPromptsTitle: "思考提示",
   favorites: "收藏夹",
   favoritesIconAlt: "打开收藏夹",
-  gomemo: "学单词",
+  gomemo: "为学单词",
   gomemoIconAlt: "进入 Gomemo 词汇工坊",
   gomemoTagline: "围绕目标定制的每日高优先级清单。",
   gomemoHeroTitle: "Gomemo · 私享记忆设计",
