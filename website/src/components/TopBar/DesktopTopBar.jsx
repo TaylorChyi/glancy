@@ -1,16 +1,10 @@
 import PropTypes from "prop-types";
 import styles from "./DesktopTopBar.module.css";
-import common from "./TopBarCommon.module.css";
-import TopBarActions from "./TopBarActions.jsx";
-import ThemeIcon from "@/components/ui/Icon";
 import OutputToolbar from "./OutputToolbar.jsx";
-import { useLanguage } from "@/context";
 
 function DesktopTopBar({
   term = "",
   lang,
-  showBack = false,
-  onBack,
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
@@ -30,33 +24,11 @@ function DesktopTopBar({
   toolbarProps = {},
   ttsComponent,
 }) {
-  const { t } = useLanguage();
   const ToolbarComponent = toolbarComponent;
 
   return (
     <header className={styles["desktop-topbar"]}>
-      <div className={styles.left}>
-        <button
-          type="button"
-          className={`${common["back-btn"]} ${showBack ? styles.visible : styles.hidden}`}
-          onClick={onBack}
-          aria-label={t.back}
-        >
-          <ThemeIcon
-            name="arrow-left"
-            alt=""
-            width={24}
-            height={24}
-            aria-hidden="true"
-          />
-        </button>
-        {term && (
-          <div className={`${common["term-text"]} ${styles["term-text"]}`}>
-            <span>{term}</span>
-          </div>
-        )}
-      </div>
-      <div className={styles.right}>
+      <div className={styles["toolbar-container"]}>
         <ToolbarComponent
           term={term}
           lang={lang}
@@ -66,9 +38,6 @@ function DesktopTopBar({
           activeVersionId={activeVersionId}
           onNavigate={onNavigateVersion}
           ttsComponent={ttsComponent}
-          {...toolbarProps}
-        />
-        <TopBarActions
           favorited={favorited}
           onToggleFavorite={onToggleFavorite}
           canFavorite={canFavorite}
@@ -78,6 +47,7 @@ function DesktopTopBar({
           onShare={onShare}
           canReport={canReport}
           onReport={onReport}
+          {...toolbarProps}
         />
       </div>
     </header>
@@ -87,8 +57,6 @@ function DesktopTopBar({
 DesktopTopBar.propTypes = {
   term: PropTypes.string,
   lang: PropTypes.string,
-  showBack: PropTypes.bool,
-  onBack: PropTypes.func,
   favorited: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
   canFavorite: PropTypes.bool,
@@ -112,8 +80,6 @@ DesktopTopBar.propTypes = {
 DesktopTopBar.defaultProps = {
   term: "",
   lang: "en",
-  showBack: false,
-  onBack: undefined,
   favorited: false,
   onToggleFavorite: undefined,
   canFavorite: false,

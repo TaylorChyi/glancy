@@ -1,6 +1,7 @@
 .toolbar {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: 6px 14px;
   border-radius: 999px;
@@ -8,6 +9,7 @@
   border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
   box-shadow: 0 6px 18px
     color-mix(in srgb, var(--shadow-color) 20%, transparent);
+  flex-wrap: wrap;
 }
 
 .language-select {
@@ -101,15 +103,6 @@
   outline: none;
 }
 
-.option-description {
-  font-size: 0.66rem;
-  line-height: 1.3;
-  color: color-mix(in srgb, var(--color-text-secondary) 82%, transparent);
-  text-align: left;
-  margin: 0;
-  padding: 0 4px;
-}
-
 .replay {
   display: inline-flex;
   align-items: center;
@@ -180,6 +173,84 @@
   color: var(--color-text-secondary);
 }
 
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-bg) 78%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--border-color) 30%, transparent);
+}
+
+.action-button {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.action-button:hover,
+.action-button:focus-visible {
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--accent-color) 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.action-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-color) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.action-button[data-active="true"] {
+  color: color-mix(in srgb, var(--accent-color) 80%, var(--app-color) 20%);
+}
+
+.action-button-delete {
+  color: color-mix(in srgb, var(--color-danger) 70%, var(--app-color) 30%);
+}
+
+.action-button-delete:hover,
+.action-button-delete:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-danger) 22%, transparent);
+}
+
+.action-button-share {
+  color: color-mix(in srgb, var(--accent-color) 68%, var(--app-color) 32%);
+}
+
+.action-button-share:hover,
+.action-button-share:focus-visible {
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--accent-color) 28%, transparent);
+}
+
+.action-button-report {
+  color: color-mix(in srgb, var(--color-danger) 55%, var(--app-color) 45%);
+}
+
+.action-button-report:hover,
+.action-button-report:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-danger) 26%, transparent);
+}
+
 @media (width <= 768px) {
   .toolbar {
     gap: 8px;
@@ -188,18 +259,22 @@
 
   .language-select {
     flex-direction: column;
+    align-items: stretch;
     gap: 6px;
     padding: 6px;
+    width: 100%;
   }
 
   .language-group {
-    border-right: none;
-    padding: 0;
+    min-width: unset;
+    padding: 4px 6px;
     gap: 6px;
   }
 
   .language-group:not(:last-child) {
+    border-right: none;
     margin-right: 0;
+    padding-right: 0;
     padding-bottom: 6px;
     border-bottom: 1px solid
       color-mix(in srgb, var(--border-color) 35%, transparent);
@@ -209,15 +284,21 @@
     right: 14px;
   }
 
-  .option-description {
-    font-size: 0.62rem;
-  }
-
   .replay span {
     display: none;
   }
 
   .indicator {
     min-width: 40px;
+  }
+
+  .action-group {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .action-button {
+    width: 32px;
+    height: 32px;
   }
 }
