@@ -46,7 +46,7 @@ jobs:
         run: npm run build
 
       - name: Prepare remote dist dir
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -69,7 +69,7 @@ jobs:
           debug: true                      # 打开调试日志
 
       - name: Verify remote files
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
