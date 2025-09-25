@@ -63,7 +63,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--sidebar-brand-gap, 8px);
   padding: var(--sidebar-item-padding-y, 10px)
     var(--sidebar-item-padding-x, 18px);
@@ -83,29 +83,12 @@
 .history-labels {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .history-term-text {
   font-weight: 600;
   letter-spacing: 0.01em;
-}
-
-.history-meta {
-  font-size: 12px;
-  color: color-mix(in srgb, var(--sidebar-color) 58%, transparent);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.history-arrow {
-  color: color-mix(in srgb, var(--sidebar-color) 75%, transparent);
-  transition: transform 160ms ease;
-}
-
-.history-button:hover .history-arrow,
-.history-button:focus-visible .history-arrow {
-  transform: translateX(2px);
 }
 
 .sidebar-action {
