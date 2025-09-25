@@ -11,6 +11,50 @@ import {
 } from "@/utils";
 import styles from "./OutputToolbar.module.css";
 
+const ACTION_BLUEPRINTS = [
+  {
+    key: "favorite",
+    variant: "favorite",
+    getLabel: ({ t, favorited }) =>
+      favorited
+        ? t.favoriteRemove || t.favoriteAction || "Favorite"
+        : t.favoriteAction || "Favorite",
+    getIcon: ({ favorited }) =>
+      favorited ? (
+        <ThemeIcon name="star-solid" width={22} height={22} />
+      ) : (
+        <ThemeIcon name="star-outline" width={22} height={22} />
+      ),
+    isActive: ({ favorited }) => Boolean(favorited),
+    canUse: ({ canFavorite }) => Boolean(canFavorite),
+    getHandler: ({ onToggleFavorite }) => onToggleFavorite,
+  },
+  {
+    key: "delete",
+    variant: "delete",
+    getLabel: ({ t }) => t.deleteButton || t.deleteAction || "Delete",
+    getIcon: () => <ThemeIcon name="trash" width={20} height={20} />,
+    canUse: ({ canDelete }) => Boolean(canDelete),
+    getHandler: ({ onDelete }) => onDelete,
+  },
+  {
+    key: "share",
+    variant: "share",
+    getLabel: ({ t }) => t.share || "Share",
+    getIcon: () => <ThemeIcon name="link" width={20} height={20} />,
+    canUse: ({ canShare }) => Boolean(canShare),
+    getHandler: ({ onShare }) => onShare,
+  },
+  {
+    key: "report",
+    variant: "report",
+    getLabel: ({ t }) => t.report || "Report",
+    getIcon: () => <ThemeIcon name="flag" width={20} height={20} />,
+    canUse: ({ canReport }) => Boolean(canReport),
+    getHandler: ({ onReport }) => onReport,
+  },
+];
+
 function LanguageGroup({
   label,
   options,
@@ -165,178 +209,180 @@ function OutputToolbar({
   const showTargetSelector =
     Array.isArray(targetLanguageOptions) && targetLanguageOptions.length > 0;
   const hasLanguageSelector = showSourceSelector || showTargetSelector;
-  const actionConfigs = useMemo(() => {
-    if (!user) return [];
+  const actionContext = useMemo(
+    () => ({
+      t,
+      user,
+      favorited,
+      canFavorite,
+      onToggleFavorite,
+      canDelete,
+      onDelete,
+      canShare,
+      onShare,
+      canReport,
+      onReport,
+    }),
+    [
+      t,
+      user,
+      favorited,
+      canFavorite,
+      onToggleFavorite,
+      canDelete,
+      onDelete,
+      canShare,
+      onShare,
+      canReport,
+      onReport,
+    ],
+  );
 
-    const favoriteLabel = favorited
-      ? (t.favoriteRemove ?? t.favoriteAction ?? "Favorite")
-      : (t.favoriteAction ?? "Favorite");
-    const deleteLabel = t.deleteButton ?? t.deleteAction ?? "Delete";
-    const shareLabel = t.share ?? "Share";
-    const reportLabel = t.report ?? "Report";
+  const actionItems = useMemo(
+    () =>
+      ACTION_BLUEPRINTS.map((blueprint) => {
+        const handler = blueprint.getHandler?.(actionContext);
+        const label = blueprint.getLabel(actionContext);
+        const disabled =
+          !actionContext.user ||
+          !blueprint.canUse?.(actionContext) ||
+          typeof handler !== "function";
 
-    const configs = [];
+        return {
+          key: blueprint.key,
+          label,
+          icon: blueprint.getIcon(actionContext),
+          onClick: handler,
+          active: blueprint.isActive?.(actionContext) ?? false,
+          variant: blueprint.variant,
+          disabled,
+        };
+      }),
+    [actionContext],
+  );
 
-    if (canFavorite && typeof onToggleFavorite === "function") {
-      configs.push({
-        key: "favorite",
-        label: favoriteLabel,
-        onClick: onToggleFavorite,
-        icon: favorited ? (
-          <ThemeIcon name="star-solid" width={22} height={22} />
-        ) : (
-          <ThemeIcon name="star-outline" width={22} height={22} />
-        ),
-        active: favorited,
-        variant: "favorite",
-      });
-    }
-
-    if (canDelete && typeof onDelete === "function") {
-      configs.push({
-        key: "delete",
-        label: deleteLabel,
-        onClick: onDelete,
-        icon: <ThemeIcon name="trash" width={20} height={20} />,
-        variant: "delete",
-      });
-    }
-
-    if (canShare && typeof onShare === "function") {
-      configs.push({
-        key: "share",
-        label: shareLabel,
-        onClick: onShare,
-        icon: <ThemeIcon name="link" width={20} height={20} />,
-        variant: "share",
-      });
-    }
-
-    if (canReport && typeof onReport === "function") {
-      configs.push({
-        key: "report",
-        label: reportLabel,
-        onClick: onReport,
-        icon: <ThemeIcon name="flag" width={20} height={20} />,
-        variant: "report",
-      });
-    }
-
-    return configs;
-  }, [
-    user,
-    canFavorite,
-    onToggleFavorite,
-    favorited,
-    t.favoriteRemove,
-    t.favoriteAction,
-    canDelete,
-    onDelete,
-    t.deleteButton,
-    t.deleteAction,
-    canShare,
-    onShare,
-    t.share,
-    canReport,
-    onReport,
-    t.report,
-  ]);
-  const hasActions = actionConfigs.length > 0;
+  const hasActions = actionItems.length > 0;
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
       {hasLanguageSelector ? (
-        <div className={styles["language-select"]}>
-          {showSourceSelector ? (
-            <LanguageGroup
-              type="source"
-              label={sourceLanguageLabel || t.dictionarySourceLanguageLabel}
-              options={sourceLanguageOptions}
-              value={normalizedSourceLanguage}
-              onChange={onSourceLanguageChange}
-              normalizeValue={normalizeWordSourceLanguage}
-            />
-          ) : null}
-          {showTargetSelector ? (
-            <LanguageGroup
-              type="target"
-              label={targetLanguageLabel || t.dictionaryTargetLanguageLabel}
-              options={targetLanguageOptions}
-              value={normalizedTargetLanguage}
-              onChange={onTargetLanguageChange}
-              normalizeValue={normalizeWordTargetLanguage}
-            />
-          ) : null}
+        <div className={styles["cluster-languages"]}>
+          <div className={styles["language-select"]}>
+            {showSourceSelector ? (
+              <LanguageGroup
+                type="source"
+                label={sourceLanguageLabel || t.dictionarySourceLanguageLabel}
+                options={sourceLanguageOptions}
+                value={normalizedSourceLanguage}
+                onChange={onSourceLanguageChange}
+                normalizeValue={normalizeWordSourceLanguage}
+              />
+            ) : null}
+            {showTargetSelector ? (
+              <LanguageGroup
+                type="target"
+                label={targetLanguageLabel || t.dictionaryTargetLanguageLabel}
+                options={targetLanguageOptions}
+                value={normalizedTargetLanguage}
+                onChange={onTargetLanguageChange}
+                normalizeValue={normalizeWordTargetLanguage}
+              />
+            ) : null}
+          </div>
         </div>
       ) : null}
-      {showTts ? (
-        <TtsComponent
-          text={term}
-          lang={lang}
-          size={20}
-          disabled={!speakableTerm}
-        />
-      ) : null}
-      <button
-        type="button"
-        className={styles.replay}
-        onClick={onReoutput}
-        disabled={disabled || !speakableTerm}
-        aria-label={t.reoutput}
-      >
-        <ThemeIcon name="refresh" width={16} height={16} aria-hidden="true" />
-        <span>{t.reoutput}</span>
-      </button>
-      <div className={styles["version-controls"]}>
+      <div className={styles["cluster-controls"]}>
+        {showTts ? (
+          <TtsComponent
+            text={term}
+            lang={lang}
+            size={20}
+            disabled={!speakableTerm}
+          />
+        ) : null}
         <button
           type="button"
-          className={styles["nav-button"]}
-          onClick={() => onNavigate?.("previous")}
-          disabled={!hasPrevious}
-          aria-label={t.previousVersion}
+          className={styles.replay}
+          onClick={onReoutput}
+          disabled={disabled || !speakableTerm}
+          aria-label={t.reoutput}
         >
-          <ThemeIcon
-            name="arrow-left"
-            width={14}
-            height={14}
-            aria-hidden="true"
-          />
+          <ThemeIcon name="refresh" width={16} height={16} aria-hidden="true" />
+          <span>{t.reoutput}</span>
         </button>
-        <span className={styles.indicator}>{indicator}</span>
-        <button
-          type="button"
-          className={styles["nav-button"]}
-          onClick={() => onNavigate?.("next")}
-          disabled={!hasNext}
-          aria-label={t.nextVersion}
-        >
-          <ThemeIcon
-            name="arrow-right"
-            width={14}
-            height={14}
-            aria-hidden="true"
-          />
-        </button>
+        <div className={styles["version-controls"]}>
+          <button
+            type="button"
+            className={styles["nav-button"]}
+            onClick={() => onNavigate?.("previous")}
+            disabled={!hasPrevious}
+            aria-label={t.previousVersion}
+          >
+            <ThemeIcon
+              name="arrow-left"
+              width={14}
+              height={14}
+              aria-hidden="true"
+            />
+          </button>
+          <span className={styles.indicator}>{indicator}</span>
+          <button
+            type="button"
+            className={styles["nav-button"]}
+            onClick={() => onNavigate?.("next")}
+            disabled={!hasNext}
+            aria-label={t.nextVersion}
+          >
+            <ThemeIcon
+              name="arrow-right"
+              width={14}
+              height={14}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
       </div>
       {hasActions ? (
-        <div className={styles["action-group"]}>
-          {actionConfigs.map(
-            ({ key, label, onClick, icon, active, variant }) => (
-              <button
-                key={key}
-                type="button"
-                className={`${styles["action-button"]} ${
-                  variant ? (styles[`action-button-${variant}`] ?? "") : ""
-                }`.trim()}
-                data-active={active ? "true" : undefined}
-                onClick={onClick}
-                aria-label={label}
-                title={label}
-              >
-                {icon}
-              </button>
-            ),
-          )}
+        <div className={styles["cluster-actions"]}>
+          <div className={styles["action-group"]}>
+            {actionItems.map(
+              ({
+                key,
+                label,
+                onClick,
+                icon,
+                active,
+                variant,
+                disabled: itemDisabled,
+              }) => {
+                const variantClassName =
+                  variant && styles[`action-button-${variant}`]
+                    ? styles[`action-button-${variant}`]
+                    : "";
+                const buttonClassName = [
+                  styles["action-button"],
+                  variantClassName,
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={buttonClassName}
+                    data-active={active ? "true" : undefined}
+                    onClick={onClick}
+                    aria-label={label}
+                    title={label}
+                    disabled={itemDisabled}
+                  >
+                    {icon}
+                  </button>
+                );
+              },
+            )}
+          </div>
         </div>
       ) : null}
     </div>
