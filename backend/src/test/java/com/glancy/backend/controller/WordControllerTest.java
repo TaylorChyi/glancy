@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
@@ -57,9 +58,19 @@ class WordControllerTest {
             List.of(),
             null,
             null,
-            null
+            null,
+            DictionaryFlavor.BILINGUAL
         );
-        when(wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
+        when(
+            wordService.findWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq(null),
+                eq(false)
+            )
+        ).thenReturn(
             resp
         );
 
@@ -98,10 +109,18 @@ class WordControllerTest {
             List.of(),
             null,
             null,
-            null
+            null,
+            DictionaryFlavor.BILINGUAL
         );
         when(
-            wordService.findWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq("doubao"), eq(false))
+            wordService.findWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq("doubao"),
+                eq(false)
+            )
         ).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
@@ -169,9 +188,19 @@ class WordControllerTest {
             List.of(),
             null,
             null,
-            null
+            null,
+            DictionaryFlavor.BILINGUAL
         );
-        when(wordService.findWordForUser(eq(1L), eq("hi"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(resp);
+        when(
+            wordService.findWordForUser(
+                eq(1L),
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq(null),
+                eq(false)
+            )
+        ).thenReturn(resp);
 
         mockMvc
             .perform(

@@ -58,6 +58,9 @@ llm:
   prompt-paths:
     ENGLISH: prompts/english_to_chinese.txt
     CHINESE: prompts/chinese_to_english_markdown.txt
+  prompt-flavor-paths:
+    ENGLISH:
+      MONOLINGUAL_ENGLISH: prompts/english_to_english.txt
 
 gomemo:
   default-daily-target: 12

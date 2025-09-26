@@ -1,5 +1,6 @@
 package com.glancy.backend.dto;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import java.time.LocalDateTime;
 
 /**
@@ -10,5 +11,6 @@ public record SearchRecordVersionSummary(
     Integer versionNumber,
     LocalDateTime createdAt,
     String model,
-    String preview
+    String preview,
+    DictionaryFlavor flavor
 ) {}

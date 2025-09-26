@@ -4,6 +4,7 @@ import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
@@ -65,11 +66,14 @@ public class SearchRecordService {
             log.warn("User {} is not logged in", userId);
             throw new InvalidRequestException("用户未登录");
         }
+        DictionaryFlavor flavor =
+            request.getFlavor() != null ? request.getFlavor() : DictionaryFlavor.BILINGUAL;
         SearchRecord existing =
-            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
+            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
                 userId,
                 request.getTerm(),
-                request.getLanguage()
+                request.getLanguage(),
+                flavor
             );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
@@ -98,6 +102,7 @@ public class SearchRecordService {
         record.setUser(user);
         record.setTerm(request.getTerm());
         record.setLanguage(request.getLanguage());
+        record.setFlavor(flavor);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Persisted new search record: {}", describeRecord(saved));
         SearchRecordResponse response = decorateWithVersions(userId, saved);
@@ -193,11 +198,12 @@ public class SearchRecordService {
         }
         Long uid = record.getUser() != null ? record.getUser().getId() : null;
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s, deleted=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, deleted=%s",
             record.getId(),
             uid,
             record.getTerm(),
             record.getLanguage(),
+            record.getFlavor(),
             record.getFavorite(),
             record.getCreatedAt(),
             record.getDeleted()
@@ -209,11 +215,12 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
             response.id(),
             response.userId(),
             response.term(),
             response.language(),
+            response.flavor(),
             response.favorite(),
             response.createdAt(),
             response.versions().size(),

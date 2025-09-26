@@ -1,6 +1,7 @@
 package com.glancy.backend.service.gomemo;
 
 import com.glancy.backend.config.GomemoProperties;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.GomemoSession;
 import com.glancy.backend.entity.GomemoSessionWord;
 import com.glancy.backend.entity.Language;
@@ -119,7 +120,11 @@ public class GomemoWordPrioritizer {
         GomemoProperties.Scoring scoring
     ) {
         Word word = wordRepository
-            .findByTermAndLanguageAndDeletedFalse(candidate.term, candidate.language)
+            .findByTermAndLanguageAndFlavorAndDeletedFalse(
+                candidate.term,
+                candidate.language,
+                DictionaryFlavor.BILINGUAL
+            )
             .orElse(null);
         List<String> rationales = new ArrayList<>();
         int score = scoring.getBaseScore();

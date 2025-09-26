@@ -1,5 +1,6 @@
 package com.glancy.backend.dto;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,7 @@ public record SearchRecordResponse(
     Long userId,
     String term,
     Language language,
+    DictionaryFlavor flavor,
     LocalDateTime createdAt,
     Boolean favorite,
     SearchRecordVersionSummary latestVersion,
@@ -30,6 +32,7 @@ public record SearchRecordResponse(
             userId,
             term,
             language,
+            flavor,
             createdAt,
             favorite,
             latest,

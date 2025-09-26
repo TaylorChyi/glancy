@@ -1,6 +1,7 @@
 package com.glancy.backend.service;
 
 import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
@@ -46,7 +47,8 @@ public class SearchResultService {
         Language language,
         String model,
         String content,
-        Word word
+        Word word,
+        DictionaryFlavor flavor
     ) {
         Objects.requireNonNull(recordId, "recordId must not be null");
         Objects.requireNonNull(userId, "userId must not be null");
@@ -73,17 +75,19 @@ public class SearchResultService {
         version.setTerm(effectiveTerm);
         version.setLanguage(effectiveLanguage);
         version.setModel(effectiveModel);
+        version.setFlavor(flavor != null ? flavor : DictionaryFlavor.BILINGUAL);
         version.setVersionNumber(nextVersionNumber);
         version.setContent(content);
         version.setPreview(SensitiveDataUtil.previewText(content));
 
         SearchResultVersion saved = searchResultVersionRepository.save(version);
         log.info(
-            "Persisted search result version {} for record {} (term='{}', language={}, model={}, versionNumber={})",
+            "Persisted search result version {} for record {} (term='{}', language={}, flavor={}, model={}, versionNumber={})",
             saved.getId(),
             recordId,
             saved.getTerm(),
             saved.getLanguage(),
+            saved.getFlavor(),
             saved.getModel(),
             saved.getVersionNumber()
         );
@@ -159,7 +163,8 @@ public class SearchResultService {
             version.getVersionNumber(),
             version.getCreatedAt(),
             version.getModel(),
-            version.getPreview()
+            version.getPreview(),
+            version.getFlavor()
         );
     }
 }

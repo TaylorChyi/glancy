@@ -73,10 +73,12 @@ export function createWordsApi(request = apiRequest) {
     flavor = WORD_FLAVOR_BILINGUAL,
     token,
   }) => {
-    const key = resolveKey({ term, language, flavor, model });
+    const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
+    const key = resolveKey({ term, language, flavor: resolvedFlavor, model });
     const cached = store.getState().getEntry(key);
     if (cached) return cached;
-    const params = new URLSearchParams({ userId, term, language, flavor });
+    const params = new URLSearchParams({ userId, term, language });
+    if (resolvedFlavor) params.append("flavor", resolvedFlavor);
     if (model) params.append("model", model);
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
       token,
@@ -114,7 +116,9 @@ export function createWordsApi(request = apiRequest) {
     forceNew = false,
     versionId,
   }) {
-    const params = new URLSearchParams({ userId, term, language, flavor });
+    const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
+    const params = new URLSearchParams({ userId, term, language });
+    if (resolvedFlavor) params.append("flavor", resolvedFlavor);
     if (model) params.append("model", model);
     if (forceNew) params.append("forceNew", "true");
     if (versionId) params.append("versionId", versionId);

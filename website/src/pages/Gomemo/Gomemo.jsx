@@ -4,6 +4,12 @@ import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage } from "@/context";
 import { useApi } from "@/hooks/useApi.js";
 import { useUserStore, useGomemoStore } from "@/store";
+import { useSettingsStore } from "@/store/settings";
+import {
+  resolveDictionaryConfig,
+  WORD_FLAVOR_BILINGUAL,
+  WORD_LANGUAGE_AUTO,
+} from "@/utils";
 import styles from "./Gomemo.module.css";
 
 const GENERIC_DISTRACTORS = [
@@ -18,7 +24,18 @@ const LANGUAGE_TO_TTS = {
   CHINESE: "zh-CN",
 };
 
-const termKey = (word) => `${word.language}:${word.term}`;
+const queueItemKey = (word) => `${word.language}:${word.term}`;
+
+const buildDetailKey = (term, language, flavor) => {
+  const normalizedLanguage = language
+    ? String(language).toUpperCase()
+    : WORD_LANGUAGE_AUTO;
+  const normalizedFlavor = flavor
+    ? String(flavor).toUpperCase()
+    : WORD_FLAVOR_BILINGUAL;
+  const safeTerm = term ?? "";
+  return `${normalizedLanguage}:${normalizedFlavor}:${safeTerm}`;
+};
 const GOMEMO_ICON_NAME = "gomemo";
 
 function normalizeDetails(entry) {
@@ -52,6 +69,12 @@ function Gomemo() {
   const api = useApi();
   const selectCurrentUser = useCallback((state) => state.user, []);
   const currentUser = useUserStore(selectCurrentUser);
+  const dictionarySourceLanguage = useSettingsStore(
+    (state) => state.dictionarySourceLanguage,
+  );
+  const dictionaryTargetLanguage = useSettingsStore(
+    (state) => state.dictionaryTargetLanguage,
+  );
   const {
     plan,
     review,
@@ -79,6 +102,24 @@ function Gomemo() {
   const token = currentUser?.token ?? null;
   const userId = currentUser?.id ? String(currentUser.id) : undefined;
 
+  const resolveLookupConfig = useCallback(
+    (word) => {
+      if (!word || !word.term) {
+        return {
+          language: WORD_LANGUAGE_AUTO,
+          flavor: WORD_FLAVOR_BILINGUAL,
+        };
+      }
+      const sourcePreference =
+        word.language ?? dictionarySourceLanguage ?? WORD_LANGUAGE_AUTO;
+      return resolveDictionaryConfig(word.term, {
+        sourceLanguage: sourcePreference,
+        targetLanguage: dictionaryTargetLanguage,
+      });
+    },
+    [dictionarySourceLanguage, dictionaryTargetLanguage],
+  );
+
   useEffect(() => {
     if (!plan && !loading) {
       loadPlan({ token });
@@ -86,6 +127,18 @@ function Gomemo() {
   }, [plan, loading, loadPlan, token]);
 
   const activeWord = plan?.words?.[activeWordIndex] ?? null;
+  const activeLookupConfig = useMemo(
+    () => resolveLookupConfig(activeWord),
+    [activeWord, resolveLookupConfig],
+  );
+  const activeDetailKey = useMemo(() => {
+    if (!activeWord || !activeLookupConfig) return null;
+    return buildDetailKey(
+      activeWord.term,
+      activeLookupConfig.language,
+      activeLookupConfig.flavor,
+    );
+  }, [activeWord, activeLookupConfig]);
   const persona = plan?.persona;
 
   useEffect(() => {
@@ -98,30 +151,40 @@ function Gomemo() {
   }, [activeWord, activeMode]);
 
   useEffect(() => {
-    if (!activeWord || !userId) return;
-    const key = termKey(activeWord);
-    if (wordDetails[key]) return;
+    if (!activeWord || !userId || !activeLookupConfig || !activeDetailKey) {
+      return;
+    }
+    if (wordDetails[activeDetailKey]) return;
     api.words
       .fetchWord({
         userId,
         term: activeWord.term,
-        language: activeWord.language,
+        language: activeLookupConfig.language,
+        flavor: activeLookupConfig.flavor,
         token,
       })
       .then((entry) => {
         setWordDetails((prev) => ({
           ...prev,
-          [key]: normalizeDetails(entry),
+          [activeDetailKey]: normalizeDetails(entry),
         }));
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [api.words, activeWord, token, userId, wordDetails]);
+  }, [
+    api.words,
+    activeWord,
+    token,
+    userId,
+    wordDetails,
+    activeLookupConfig,
+    activeDetailKey,
+  ]);
 
   const details = useMemo(
-    () => (activeWord ? (wordDetails[termKey(activeWord)] ?? null) : null),
-    [activeWord, wordDetails],
+    () => (activeDetailKey ? (wordDetails[activeDetailKey] ?? null) : null),
+    [activeDetailKey, wordDetails],
   );
 
   const definition = useMemo(() => {
@@ -627,7 +690,7 @@ function Gomemo() {
                 const isActive = index === activeWordIndex;
                 return (
                   <button
-                    key={termKey(word)}
+                    key={queueItemKey(word)}
                     type="button"
                     className={`${styles["queue-item"]} ${
                       isActive ? styles["queue-item-active"] : ""

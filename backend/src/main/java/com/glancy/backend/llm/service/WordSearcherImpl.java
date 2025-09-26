@@ -2,6 +2,7 @@ package com.glancy.backend.llm.service;
 
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
@@ -48,17 +49,20 @@ public class WordSearcherImpl implements WordSearcher {
     public WordResponse search(
         String term,
         Language language,
+        DictionaryFlavor flavor,
         String clientName,
         WordPersonalizationContext personalizationContext
     ) {
         log.info(
-            "WordSearcher searching for '{}' using client {} personalizationSignals={}",
+            "WordSearcher searching for '{}' using client {} language={} flavor={} personalizationSignals={}",
             term,
             clientName,
+            language,
+            flavor,
             personalizationContext != null && personalizationContext.hasSignals()
         );
         String cleanInput = searchContentManager.normalize(term);
-        String promptPath = config.resolvePromptPath(language);
+        String promptPath = config.resolvePromptPath(language, flavor);
         String prompt = promptManager.loadPrompt(promptPath);
         String name = clientName != null ? clientName : config.getDefaultClient();
         LLMClient client = clientFactory.get(name);
@@ -73,7 +77,7 @@ public class WordSearcherImpl implements WordSearcher {
             }
             name = fallback;
         }
-        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language);
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language, flavor);
         String content = client.chat(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info("LLM client '{}' returned content (sentinelPresent={}): {}", name, completion.satisfied(), content);
@@ -91,19 +95,22 @@ public class WordSearcherImpl implements WordSearcher {
     public Flux<String> streamSearch(
         String term,
         Language language,
+        DictionaryFlavor flavor,
         String clientName,
         WordPersonalizationContext personalizationContext
     ) {
         log.info(
-            "WordSearcher streaming for '{}' using client '{}' personalizationSignals={}",
+            "WordSearcher streaming for '{}' using client '{}' language={} flavor={} personalizationSignals={}",
             term,
             clientName,
+            language,
+            flavor,
             personalizationContext != null && personalizationContext.hasSignals()
         );
         String cleanInput = searchContentManager.normalize(term);
         log.info("Normalized input term='{}'", cleanInput);
 
-        String promptPath = config.resolvePromptPath(language);
+        String promptPath = config.resolvePromptPath(language, flavor);
         String prompt = promptManager.loadPrompt(promptPath);
         log.info(
             "Loaded prompt from path='{}' for language='{}', length='{}'",
@@ -120,7 +127,7 @@ public class WordSearcherImpl implements WordSearcher {
         }
         log.info("Using LLM client '{}'", name);
 
-        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language);
+        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language, flavor);
         log.info("Using LLM client '{}'", name);
         log.info(
             "Prepared '{}' request messages: roles='{}'",
@@ -136,7 +143,8 @@ public class WordSearcherImpl implements WordSearcher {
         String prompt,
         String cleanInput,
         WordPersonalizationContext personalizationContext,
-        Language language
+        Language language,
+        DictionaryFlavor flavor
     ) {
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(new ChatMessage("system", prompt));
@@ -144,7 +152,13 @@ public class WordSearcherImpl implements WordSearcher {
         if (personaInstruction != null) {
             messages.add(new ChatMessage("system", personaInstruction));
         }
-        messages.add(new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext, language)));
+        String flavorInstruction = renderFlavorInstruction(language, flavor);
+        if (flavorInstruction != null) {
+            messages.add(new ChatMessage("system", flavorInstruction));
+        }
+        messages.add(
+            new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext, language, flavor))
+        );
         return messages;
     }
 
@@ -170,7 +184,8 @@ public class WordSearcherImpl implements WordSearcher {
     private String renderUserPayload(
         String cleanInput,
         WordPersonalizationContext personalizationContext,
-        Language language
+        Language language,
+        DictionaryFlavor flavor
     ) {
         StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
         if (language == Language.CHINESE) {
@@ -185,6 +200,9 @@ public class WordSearcherImpl implements WordSearcher {
             builder
                 .append("\n条目类型：英文词汇")
                 .append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
+            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+                builder.append("\n输出语言：仅使用英文完成释义、例句与所有说明，严禁出现中文或其他语言翻译。");
+            }
         }
         if (personalizationContext != null && personalizationContext.hasSignals()) {
             if (!personalizationContext.recentTerms().isEmpty()) {
@@ -195,9 +213,23 @@ public class WordSearcherImpl implements WordSearcher {
             }
             builder.append("\n请结合画像输出结构化释义、语义差异与可执行练习建议（英文表达）。");
         } else {
-            builder.append("\n请确保释义、用法说明与示例完整。");
+            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+                builder.append("\n请保持语气亲切且专业，所有内容须使用英文。\n请确保释义、用法说明与示例完整。");
+            } else {
+                builder.append("\n请确保释义、用法说明与示例完整。");
+            }
         }
         return builder.toString();
+    }
+
+    private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
+        if (flavor == null) {
+            return null;
+        }
+        if (language == Language.ENGLISH && flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+            return "你正在输出高端英语词典条目，请严格使用英文完成所有章节，避免出现任何中文或翻译提示。";
+        }
+        return null;
     }
 
     private ChineseEntryProfile resolveChineseEntryProfile(String cleanInput) {

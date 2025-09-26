@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
@@ -68,7 +69,13 @@ class WordSearcherImplTest {
         expected.setMarkdown("content");
         when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        WordResponse result = searcher.search("hello", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT);
+        WordResponse result = searcher.search(
+            "hello",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            "invalid",
+            NO_PERSONALIZATION_CONTEXT
+        );
 
         assertSame(expected, result);
         verify(factory).get("invalid");
@@ -86,7 +93,13 @@ class WordSearcherImplTest {
         when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         assertThrows(IllegalStateException.class, () ->
-            searcher.search("hi", Language.ENGLISH, "invalid", NO_PERSONALIZATION_CONTEXT)
+            searcher.search(
+                "hi",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL,
+                "invalid",
+                NO_PERSONALIZATION_CONTEXT
+            )
         );
     }
 
@@ -103,7 +116,7 @@ class WordSearcherImplTest {
         when(parser.parse("content<END>", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
-        searcher.search("汉", Language.CHINESE, "doubao", NO_PERSONALIZATION_CONTEXT);
+        searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));

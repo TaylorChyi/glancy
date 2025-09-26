@@ -34,6 +34,10 @@ public class SearchResultVersion extends BaseEntity {
     @Column(nullable = false, length = 10)
     private Language language;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
+
     @Column(nullable = false, length = 64)
     private String model;
 

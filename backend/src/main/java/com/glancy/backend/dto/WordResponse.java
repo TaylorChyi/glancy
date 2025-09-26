@@ -1,5 +1,6 @@
 package com.glancy.backend.dto;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -25,4 +26,5 @@ public class WordResponse {
     private String markdown;
     private Long versionId;
     private PersonalizedWordExplanation personalization;
+    private DictionaryFlavor flavor;
 }

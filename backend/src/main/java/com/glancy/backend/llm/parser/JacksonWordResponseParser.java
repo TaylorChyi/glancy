@@ -75,6 +75,7 @@ public class JacksonWordResponseParser implements WordResponseParser {
             phrases,
             markdown,
             null,
+            null,
             null
         );
         return new ParsedWord(response, markdown);
@@ -95,6 +96,7 @@ public class JacksonWordResponseParser implements WordResponseParser {
             snapshot.related(),
             snapshot.phrases(),
             markdown,
+            null,
             null,
             null
         );

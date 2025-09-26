@@ -2,6 +2,7 @@ package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.WordService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,10 +41,12 @@ public class WordController {
         @AuthenticatedUser Long userId,
         @RequestParam String term,
         @RequestParam Language language,
+        @RequestParam(required = false) String flavor,
         @RequestParam(required = false) String model,
         @RequestParam(defaultValue = "false") boolean forceNew
     ) {
-        WordResponse resp = wordService.findWordForUser(userId, term, language, model, forceNew);
+        DictionaryFlavor resolvedFlavor = DictionaryFlavor.fromNullable(flavor, DictionaryFlavor.BILINGUAL);
+        WordResponse resp = wordService.findWordForUser(userId, term, language, resolvedFlavor, model, forceNew);
         return ResponseEntity.ok(resp);
     }
 
@@ -55,14 +58,16 @@ public class WordController {
         @AuthenticatedUser Long userId,
         @RequestParam String term,
         @RequestParam Language language,
+        @RequestParam(required = false) String flavor,
         @RequestParam(required = false) String model,
         HttpServletResponse response,
         @RequestParam(defaultValue = "false") boolean forceNew
     ) {
         response.setHeader(HttpHeaders.CACHE_CONTROL, CacheControl.noStore().getHeaderValue());
         response.setHeader("X-Accel-Buffering", "no");
+        DictionaryFlavor resolvedFlavor = DictionaryFlavor.fromNullable(flavor, DictionaryFlavor.BILINGUAL);
         return wordService
-            .streamWordForUser(userId, term, language, model, forceNew)
+            .streamWordForUser(userId, term, language, resolvedFlavor, model, forceNew)
             .doOnNext(payload ->
                 log.info(
                     "Controller streaming chunk for user {} term '{}' event {}: {}",

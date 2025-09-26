@@ -1,5 +1,6 @@
 package com.glancy.backend.repository;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import java.time.LocalDateTime;
@@ -19,12 +20,18 @@ public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long
 
     long countByUserIdAndDeletedFalseAndCreatedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
-    boolean existsByUserIdAndTermAndLanguageAndDeletedFalse(Long userId, String term, Language language);
-
-    SearchRecord findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
+    boolean existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
         Long userId,
         String term,
-        Language language
+        Language language,
+        DictionaryFlavor flavor
+    );
+
+    SearchRecord findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+        Long userId,
+        String term,
+        Language language,
+        DictionaryFlavor flavor
     );
 
     java.util.Optional<SearchRecord> findByIdAndUserIdAndDeletedFalse(Long id, Long userId);

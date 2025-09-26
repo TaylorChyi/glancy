@@ -2,6 +2,7 @@ package com.glancy.backend.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import java.util.Optional;
@@ -16,11 +17,15 @@ class WordRepositoryTest {
     private WordRepository wordRepository;
 
     @Test
-    void findByTermAndLanguageAndDeletedFalse() {
+    void findByTermAndLanguageAndFlavorAndDeletedFalse() {
         Word word = TestEntityFactory.word("hello", Language.ENGLISH);
         wordRepository.save(word);
 
-        Optional<Word> found = wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH);
+        Optional<Word> found = wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+            "hello",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL
+        );
         assertTrue(found.isPresent());
         assertEquals("hello", found.get().getTerm());
     }

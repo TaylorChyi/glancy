@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
@@ -46,12 +47,14 @@ class SearchRecordControllerTest {
     @Test
     void testCreate() throws Exception {
         LocalDateTime createdAt = LocalDateTime.now();
-        SearchRecordVersionSummary version = new SearchRecordVersionSummary(2L, 1, createdAt, "gpt-4", "preview");
+        SearchRecordVersionSummary version =
+            new SearchRecordVersionSummary(2L, 1, createdAt, "gpt-4", "preview", DictionaryFlavor.BILINGUAL);
         SearchRecordResponse resp = new SearchRecordResponse(
             1L,
             1L,
             "hello",
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             createdAt,
             false,
             version,
@@ -80,19 +83,28 @@ class SearchRecordControllerTest {
     @Test
     void testList() throws Exception {
         LocalDateTime createdAt = LocalDateTime.now();
-        SearchRecordVersionSummary latestVersion = new SearchRecordVersionSummary(3L, 2, createdAt, "gpt-4", "preview");
+        SearchRecordVersionSummary latestVersion = new SearchRecordVersionSummary(
+            3L,
+            2,
+            createdAt,
+            "gpt-4",
+            "preview",
+            DictionaryFlavor.BILINGUAL
+        );
         SearchRecordVersionSummary previousVersion = new SearchRecordVersionSummary(
             4L,
             1,
             createdAt.minusMinutes(1),
             "gpt-3.5",
-            "older"
+            "older",
+            DictionaryFlavor.BILINGUAL
         );
         SearchRecordResponse resp = new SearchRecordResponse(
             1L,
             1L,
             "hello",
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             createdAt,
             true,
             latestVersion,
