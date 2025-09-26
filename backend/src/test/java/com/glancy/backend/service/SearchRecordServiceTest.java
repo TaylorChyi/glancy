@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
@@ -16,6 +17,7 @@ import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest(properties = "search.limit.nonMember=2")
+@SpringBootTest(
+    properties = {
+        "search.limit.nonMember=2",
+        "oss.access-key-id=test-access-key",
+        "oss.access-key-secret=test-access-secret",
+        "oss.verify-location=false",
+    }
+)
 @Transactional
 class SearchRecordServiceTest {
 
@@ -177,6 +186,60 @@ class SearchRecordServiceTest {
     }
 
     /**
+     * 验证批量获取搜索记录时会一次性组装全部版本信息并确保最新版本优先呈现。
+     */
+    @Test
+    void getRecordsLoadsVersionSummariesInBatch() {
+        User user = new User();
+        user.setUsername("batch");
+        user.setPassword("p");
+        user.setEmail("batch@example.com");
+        user.setPhone("45");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest req1 = new SearchRecordRequest();
+        req1.setTerm("alpha");
+        req1.setLanguage(Language.ENGLISH);
+
+        SearchRecordRequest req2 = new SearchRecordRequest();
+        req2.setTerm("beta");
+        req2.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), req1);
+        SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req2);
+
+        SearchRecord recordOne = searchRecordRepository.findById(first.id()).orElseThrow();
+        SearchRecord recordTwo = searchRecordRepository.findById(second.id()).orElseThrow();
+
+        persistVersion(recordOne, user, "gpt-3.5", 1, "alpha-v1");
+        persistVersion(recordOne, user, "gpt-4", 2, "alpha-v2");
+        persistVersion(recordTwo, user, "gpt-4", 1, "beta-v1");
+
+        List<SearchRecordResponse> responses = searchRecordService.getRecords(user.getId());
+
+        SearchRecordResponse alphaResponse = responses
+            .stream()
+            .filter(resp -> resp.id().equals(recordOne.getId()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals(2, alphaResponse.versions().size());
+        assertNotNull(alphaResponse.latestVersion());
+        assertEquals(2, alphaResponse.latestVersion().versionNumber());
+        assertEquals(2, alphaResponse.versions().get(0).versionNumber());
+        assertEquals(1, alphaResponse.versions().get(1).versionNumber());
+
+        SearchRecordResponse betaResponse = responses
+            .stream()
+            .filter(resp -> resp.id().equals(recordTwo.getId()))
+            .findFirst()
+            .orElseThrow();
+        assertEquals(1, betaResponse.versions().size());
+        assertEquals(1, betaResponse.latestVersion().versionNumber());
+    }
+
+    /**
      * 验证删除搜索记录时版本数据同步软删除。
      */
     @Test
@@ -213,5 +276,19 @@ class SearchRecordServiceTest {
         assertTrue(deletedRecord.getDeleted());
         SearchResultVersion deletedVersion = searchResultVersionRepository.findById(version.getId()).orElseThrow();
         assertTrue(deletedVersion.getDeleted());
+    }
+
+    private void persistVersion(SearchRecord record, User user, String model, int versionNumber, String content) {
+        SearchResultVersion version = new SearchResultVersion();
+        version.setSearchRecord(record);
+        version.setUser(user);
+        version.setTerm(record.getTerm());
+        version.setLanguage(record.getLanguage());
+        version.setFlavor(Optional.ofNullable(record.getFlavor()).orElse(DictionaryFlavor.BILINGUAL));
+        version.setModel(model);
+        version.setVersionNumber(versionNumber);
+        version.setContent(content);
+        version.setPreview(content);
+        searchResultVersionRepository.save(version);
     }
 }

@@ -70,9 +70,7 @@ class WordControllerTest {
                 eq(null),
                 eq(false)
             )
-        ).thenReturn(
-            resp
-        );
+        ).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 

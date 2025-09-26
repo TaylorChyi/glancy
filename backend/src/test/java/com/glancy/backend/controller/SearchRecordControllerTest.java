@@ -47,8 +47,14 @@ class SearchRecordControllerTest {
     @Test
     void testCreate() throws Exception {
         LocalDateTime createdAt = LocalDateTime.now();
-        SearchRecordVersionSummary version =
-            new SearchRecordVersionSummary(2L, 1, createdAt, "gpt-4", "preview", DictionaryFlavor.BILINGUAL);
+        SearchRecordVersionSummary version = new SearchRecordVersionSummary(
+            2L,
+            1,
+            createdAt,
+            "gpt-4",
+            "preview",
+            DictionaryFlavor.BILINGUAL
+        );
         SearchRecordResponse resp = new SearchRecordResponse(
             1L,
             1L,

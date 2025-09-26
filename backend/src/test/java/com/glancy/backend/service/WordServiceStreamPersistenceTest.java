@@ -138,9 +138,7 @@ class WordServiceStreamPersistenceTest {
                 eq("doubao"),
                 any()
             )
-        ).thenReturn(
-            Flux.just("{\"term\":\"hi\"}", "<END>")
-        );
+        ).thenReturn(Flux.just("{\"term\":\"hi\"}", "<END>"));
         WordResponse resp = new WordResponse(
             null,
             "hi",
@@ -227,9 +225,7 @@ class WordServiceStreamPersistenceTest {
                 eq("doubao"),
                 any()
             )
-        ).thenReturn(
-            Flux.just("{\"term\":\"hi\"}")
-        );
+        ).thenReturn(Flux.just("{\"term\":\"hi\"}"));
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
             1L,
@@ -252,7 +248,8 @@ class WordServiceStreamPersistenceTest {
             any(Language.class),
             anyString(),
             anyString(),
-            any(Word.class)
+            any(Word.class),
+            any(DictionaryFlavor.class)
         );
     }
 
@@ -268,16 +265,8 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(Optional.empty());
         when(
-            wordSearcher.streamSearch(
-                eq("hi"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                any(),
-                any()
-            )
-        ).thenReturn(
-            Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom")))
-        );
+            wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq(DictionaryFlavor.BILINGUAL), any(), any())
+        ).thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
             1L,

@@ -6,8 +6,8 @@ import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
-import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.UserPreference;
@@ -104,11 +104,7 @@ public class WordService {
             return Mono.empty();
         }
         try {
-            ParsedWord parsed = parser.parse(
-                completion.sanitizedContent(),
-                session.term(),
-                session.language()
-            );
+            ParsedWord parsed = parser.parse(completion.sanitizedContent(), session.term(), session.language());
             WordResponse response = applyPersonalization(
                 session.userId(),
                 parsed.parsed(),
@@ -203,26 +199,10 @@ public class WordService {
                     return applyPersonalization(userId, response, personalizationContext);
                 })
                 .orElseGet(() ->
-                    fetchAndPersistWord(
-                        userId,
-                        term,
-                        language,
-                        flavor,
-                        resolvedModel,
-                        record,
-                        personalizationContext
-                    )
+                    fetchAndPersistWord(userId, term, language, flavor, resolvedModel, record, personalizationContext)
                 );
         }
-        return fetchAndPersistWord(
-            userId,
-            term,
-            language,
-            flavor,
-            resolvedModel,
-            record,
-            personalizationContext
-        );
+        return fetchAndPersistWord(userId, term, language, flavor, resolvedModel, record, personalizationContext);
     }
 
     /**
@@ -473,10 +453,9 @@ public class WordService {
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
         DictionaryFlavor resolvedFlavor = resp.getFlavor() != null ? resp.getFlavor() : flavor;
-        Word word =
-            wordRepository
-                .findByTermAndLanguageAndFlavorAndDeletedFalse(term, lang, resolvedFlavor)
-                .orElseGet(Word::new);
+        Word word = wordRepository
+            .findByTermAndLanguageAndFlavorAndDeletedFalse(term, lang, resolvedFlavor)
+            .orElseGet(Word::new);
         word.setTerm(term);
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
