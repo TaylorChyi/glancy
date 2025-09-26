@@ -1,7 +1,6 @@
 package com.glancy.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.glancy.backend.entity.DictionaryModel;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 
@@ -20,7 +19,4 @@ public class UserPreferenceUpdateRequest {
 
     @Nullable
     private String searchLanguage;
-
-    @Nullable
-    private DictionaryModel dictionaryModel;
 }
