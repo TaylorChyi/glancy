@@ -224,8 +224,13 @@ public class WordSearcherImpl implements WordSearcher {
         if (flavor == null) {
             return null;
         }
-        if (language == Language.ENGLISH && flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-            return "你正在输出高端英语词典条目，请严格使用英文完成所有章节，避免出现任何中文或翻译提示。";
+        if (language == Language.ENGLISH) {
+            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+                return "你正在输出高端英语词典条目，请严格使用英文完成所有章节，避免出现任何中文或翻译提示。";
+            }
+            if (flavor == DictionaryFlavor.BILINGUAL) {
+                return "请确保每个章节都提供精准的中文译文与注释，让读者能在英语释义旁同步获得优雅的中文理解。";
+            }
         }
         return null;
     }

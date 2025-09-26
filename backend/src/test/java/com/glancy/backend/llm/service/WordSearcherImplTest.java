@@ -107,7 +107,7 @@ class WordSearcherImplTest {
         when(searchContentManager.normalize("汉")).thenReturn("汉");
         when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content<END>", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
+        when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
@@ -121,7 +121,34 @@ class WordSearcherImplTest {
             .findFirst()
             .orElseThrow();
         String content = userMessage.getContent();
-        assertTrue(content.contains("汉字"));
-        assertTrue(content.contains("说文解字"));
+        assertTrue(content.contains("条目结构定位：Single Character"));
+        assertTrue(content.contains("写作指引：请拆解字源"));
+    }
+
+    /**
+     * 验证英文双语模式会追加中文译文提示，确保模型在双语词典模式下输出包含中文内容。
+     */
+    @Test
+    void englishBilingualSearchAddsChineseInstruction() {
+        when(factory.get("doubao")).thenReturn(defaultClient);
+        when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        when(searchContentManager.normalize("elegance")).thenReturn("elegance");
+        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
+        WordResponse expected = new WordResponse();
+        when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
+            new ParsedWord(expected, "content<END>")
+        );
+
+        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
+
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
+        boolean hasInstruction = messagesCaptor
+            .getValue()
+            .stream()
+            .filter(message -> "system".equals(message.getRole()))
+            .anyMatch(message -> message.getContent().contains("中文译文"));
+        assertTrue(hasInstruction);
     }
 }
