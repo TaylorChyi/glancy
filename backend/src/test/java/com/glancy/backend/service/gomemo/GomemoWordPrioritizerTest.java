@@ -7,8 +7,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.glancy.backend.config.GomemoProperties;
-import com.glancy.backend.entity.GomemoSession;
 import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.GomemoSession;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.Word;
@@ -85,18 +85,14 @@ class GomemoWordPrioritizerTest {
                 Language.ENGLISH,
                 DictionaryFlavor.BILINGUAL
             )
-        ).thenReturn(
-            java.util.Optional.of(innovationWord)
-        );
+        ).thenReturn(java.util.Optional.of(innovationWord));
         when(
             wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
                 "strategy",
                 Language.ENGLISH,
                 DictionaryFlavor.BILINGUAL
             )
-        ).thenReturn(
-            java.util.Optional.of(strategyWord)
-        );
+        ).thenReturn(java.util.Optional.of(strategyWord));
         when(wordRepository.findAll(any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));
         GomemoPersona persona = new GomemoPersona(
             28,

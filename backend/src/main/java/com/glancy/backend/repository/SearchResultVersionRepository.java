@@ -20,6 +20,10 @@ public interface SearchResultVersionRepository extends JpaRepository<SearchResul
 
     Optional<SearchResultVersion> findByIdAndSearchRecordIdAndDeletedFalse(Long id, Long searchRecordId);
 
+    List<SearchResultVersion> findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(
+        Collection<Long> recordIds
+    );
+
     @Modifying(clearAutomatically = true)
     @Query(
         "update SearchResultVersion v set v.deleted = true where v.searchRecord.id = :recordId and v.deleted = false"

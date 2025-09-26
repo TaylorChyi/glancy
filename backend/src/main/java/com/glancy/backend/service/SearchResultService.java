@@ -10,8 +10,11 @@ import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.util.SensitiveDataUtil;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -135,6 +138,44 @@ public class SearchResultService {
         return searchResultVersionRepository
             .findTopBySearchRecordIdAndDeletedFalseOrderByVersionNumberDesc(recordId)
             .map(this::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<Long, List<SearchRecordVersionSummary>> listVersionSummariesByRecordIds(Collection<Long> recordIds) {
+        if (recordIds == null || recordIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, List<SearchRecordVersionSummary>> grouped = new LinkedHashMap<>();
+        recordIds
+            .stream()
+            .filter(Objects::nonNull)
+            .forEach(id -> grouped.putIfAbsent(id, new ArrayList<>()));
+        if (grouped.isEmpty()) {
+            return Map.of();
+        }
+
+        List<SearchResultVersion> versions =
+            searchResultVersionRepository.findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(
+                grouped.keySet()
+            );
+
+        for (SearchResultVersion version : versions) {
+            Long searchRecordId = version.getSearchRecord().getId();
+            grouped.computeIfAbsent(searchRecordId, key -> new ArrayList<>()).add(toSummary(version));
+        }
+
+        return grouped
+            .entrySet()
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    Map.Entry::getKey,
+                    entry -> List.copyOf(entry.getValue()),
+                    (left, right) -> left,
+                    LinkedHashMap::new
+                )
+            );
     }
 
     private int determineNextVersionNumber(Long recordId) {

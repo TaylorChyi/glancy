@@ -90,3 +90,6 @@ mail:
       login:
         subject: "测试登录验证码"
         body: "登录验证码 {{code}}"
+      change-email:
+        subject: "测试修改邮箱验证码"
+        body: "修改邮箱验证码 {{code}}"

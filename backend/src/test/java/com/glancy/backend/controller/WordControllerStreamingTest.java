@@ -2,6 +2,7 @@ package com.glancy.backend.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -49,9 +50,16 @@ class WordControllerStreamingTest {
 
     @Test
     void testStreamWord() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
-            Flux.just(StreamPayload.data("part1"), StreamPayload.version("77"))
-        );
+        when(
+            wordService.streamWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                isNull(com.glancy.backend.entity.DictionaryFlavor.class),
+                isNull(String.class),
+                eq(false)
+            )
+        ).thenReturn(Flux.just(StreamPayload.data("part1"), StreamPayload.version("77")));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         MvcResult result = mockMvc
@@ -78,9 +86,16 @@ class WordControllerStreamingTest {
      */
     @Test
     void testStreamWordError() throws Exception {
-        when(wordService.streamWordForUser(eq(1L), eq("hello"), eq(Language.ENGLISH), eq(null), eq(false))).thenReturn(
-            Flux.error(new IllegalStateException("boom"))
-        );
+        when(
+            wordService.streamWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                isNull(com.glancy.backend.entity.DictionaryFlavor.class),
+                isNull(String.class),
+                eq(false)
+            )
+        ).thenReturn(Flux.error(new IllegalStateException("boom")));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         MvcResult result = mockMvc

@@ -156,9 +156,7 @@ public class WordSearcherImpl implements WordSearcher {
         if (flavorInstruction != null) {
             messages.add(new ChatMessage("system", flavorInstruction));
         }
-        messages.add(
-            new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext, language, flavor))
-        );
+        messages.add(new ChatMessage("user", renderUserPayload(cleanInput, personalizationContext, language, flavor)));
         return messages;
     }
 

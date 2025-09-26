@@ -3,16 +3,15 @@ package com.glancy.backend.service;
 import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
-import com.glancy.backend.dto.SearchRecordVersionSummary;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
-import com.glancy.backend.mapper.SearchRecordMapper;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.service.SearchResultService;
+import com.glancy.backend.service.support.SearchRecordViewAssembler;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,21 +30,21 @@ public class SearchRecordService {
 
     private final SearchRecordRepository searchRecordRepository;
     private final UserRepository userRepository;
-    private final SearchRecordMapper searchRecordMapper;
     private final SearchResultService searchResultService;
+    private final SearchRecordViewAssembler searchRecordViewAssembler;
     private final int nonMemberSearchLimit;
 
     public SearchRecordService(
         SearchRecordRepository searchRecordRepository,
         UserRepository userRepository,
         SearchProperties properties,
-        SearchRecordMapper searchRecordMapper,
-        SearchResultService searchResultService
+        SearchResultService searchResultService,
+        SearchRecordViewAssembler searchRecordViewAssembler
     ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
-        this.searchRecordMapper = searchRecordMapper;
         this.searchResultService = searchResultService;
+        this.searchRecordViewAssembler = searchRecordViewAssembler;
         this.nonMemberSearchLimit = properties.getLimit().getNonMember();
     }
 
@@ -66,8 +65,7 @@ public class SearchRecordService {
             log.warn("User {} is not logged in", userId);
             throw new InvalidRequestException("用户未登录");
         }
-        DictionaryFlavor flavor =
-            request.getFlavor() != null ? request.getFlavor() : DictionaryFlavor.BILINGUAL;
+        DictionaryFlavor flavor = request.getFlavor() != null ? request.getFlavor() : DictionaryFlavor.BILINGUAL;
         SearchRecord existing =
             searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
                 userId,
@@ -80,7 +78,7 @@ public class SearchRecordService {
             existing.setCreatedAt(LocalDateTime.now());
             SearchRecord updated = searchRecordRepository.save(existing);
             log.info("Updated record persisted: {}", describeRecord(updated));
-            SearchRecordResponse response = decorateWithVersions(userId, updated);
+            SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, updated);
             log.info("Returning record response: {}", describeResponse(response));
             return response;
         }
@@ -105,7 +103,7 @@ public class SearchRecordService {
         record.setFlavor(flavor);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Persisted new search record: {}", describeRecord(saved));
-        SearchRecordResponse response = decorateWithVersions(userId, saved);
+        SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, saved);
         log.info("Returning record response: {}", describeResponse(response));
         return response;
     }
@@ -122,7 +120,7 @@ public class SearchRecordService {
         record.setFavorite(true);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Record after favoriting: {}", describeRecord(saved));
-        SearchRecordResponse response = decorateWithVersions(userId, saved);
+        SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, saved);
         log.info("Favorite response: {}", describeResponse(response));
         return response;
     }
@@ -136,9 +134,9 @@ public class SearchRecordService {
         List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId);
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
-        return records
+        return searchRecordViewAssembler
+            .assemble(userId, records)
             .stream()
-            .map(record -> decorateWithVersions(userId, record))
             .peek(response -> log.debug("Record response: {}", describeResponse(response)))
             .toList();
     }
@@ -226,12 +224,5 @@ public class SearchRecordService {
             response.versions().size(),
             response.latestVersion() != null ? response.latestVersion().versionNumber() : null
         );
-    }
-
-    private SearchRecordResponse decorateWithVersions(Long userId, SearchRecord record) {
-        SearchRecordResponse base = searchRecordMapper.toResponse(record);
-        List<SearchRecordVersionSummary> versions = searchResultService.listVersionSummaries(userId, record.getId());
-        SearchRecordVersionSummary latest = versions.isEmpty() ? null : versions.get(0);
-        return base.withVersionDetails(latest, versions);
     }
 }

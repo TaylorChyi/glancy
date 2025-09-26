@@ -134,11 +134,7 @@ class WordServiceTest {
         assertEquals(Language.ENGLISH, result.getLanguage());
         assertTrue(
             wordRepository
-                .findByTermAndLanguageAndFlavorAndDeletedFalse(
-                    "bye",
-                    Language.ENGLISH,
-                    DictionaryFlavor.BILINGUAL
-                )
+                .findByTermAndLanguageAndFlavorAndDeletedFalse("bye", Language.ENGLISH, DictionaryFlavor.BILINGUAL)
                 .isPresent()
         );
     }
@@ -165,20 +161,12 @@ class WordServiceTest {
 
         assertTrue(
             wordRepository
-                .findByTermAndLanguageAndFlavorAndDeletedFalse(
-                    "hello",
-                    Language.ENGLISH,
-                    DictionaryFlavor.BILINGUAL
-                )
+                .findByTermAndLanguageAndFlavorAndDeletedFalse("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL)
                 .isPresent()
         );
         assertTrue(
             wordRepository
-                .findByTermAndLanguageAndFlavorAndDeletedFalse(
-                    "hello",
-                    Language.CHINESE,
-                    DictionaryFlavor.BILINGUAL
-                )
+                .findByTermAndLanguageAndFlavorAndDeletedFalse("hello", Language.CHINESE, DictionaryFlavor.BILINGUAL)
                 .isPresent()
         );
     }
