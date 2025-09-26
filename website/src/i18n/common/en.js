@@ -61,69 +61,6 @@ export default {
   phrasesLabel: "Phrases",
   favorites: "Favorites",
   favoritesIconAlt: "Open favorites collection",
-  gomemo: "Gomemo",
-  gomemoIconAlt: "Navigate to the Gomemo vocabulary atelier",
-  gomemoHeroTitle: "Gomemo · Bespoke vocabulary mastery",
-  gomemoHeroSubtitle:
-    "Gomemo orchestrates spaced memorisation that honours your age, passions, goals and future plans in one seamless ritual.",
-  gomemoHeroBadgePersonal: "Age-attuned pathways",
-  gomemoHeroBadgeRhythm: "Adaptive daily rhythm",
-  gomemoHeroBadgeFuture: "Future-ready planning",
-  gomemoPriorityTitle: "Know exactly what deserves your focus",
-  gomemoPrioritySubtitle:
-    "A weighted intelligence scores each candidate by age profile, personal interests, outcome goals, recent searches, daily quota and long-term plans.",
-  gomemoPriorityAgeTitle: "Age-sensitive cadence",
-  gomemoPriorityAgeDescription:
-    "Difficulty and storytelling shift with your cognitive rhythm, from junior explorers to seasoned professionals.",
-  gomemoPriorityInterestTitle: "Interest signature",
-  gomemoPriorityInterestDescription:
-    "Examples weave in your passions—be it design, finance or anime—so every word feels native to your world.",
-  gomemoPriorityGoalTitle: "Goal alignment",
-  gomemoPriorityGoalDescription:
-    "Exam prep, immigration interview or business pitch—priorities flex to accelerate the milestone ahead.",
-  gomemoPriorityHistoryTitle: "Search memory",
-  gomemoPriorityHistoryDescription:
-    "Latest lookups, forgotten attempts and tricky synonyms reform a queue that never lets weak spots fade.",
-  gomemoPriorityDailyTitle: "Daily quota intelligence",
-  gomemoPriorityDailyDescription:
-    "Your preferred word volume informs pacing so sessions feel achievable yet compounding.",
-  gomemoPriorityPlanTitle: "Future plan fusion",
-  gomemoPriorityPlanDescription:
-    "Upcoming trips, career shifts or exams feed forward to surface vocabulary you will soon rely on.",
-  gomemoModesTitle: "Elevated practice, every modality",
-  gomemoModesSubtitle:
-    "Blend leading memory techniques into a couture study loop that keeps curiosity awake.",
-  gomemoModesCardTitle: "Immersive flash cards",
-  gomemoModesCardDescription:
-    "Luxury-grade cards with imagery and mnemonics crafted for instant association and long recall.",
-  gomemoModesQuizTitle: "Curated multiple choice",
-  gomemoModesQuizDescription:
-    "Adaptive distractors target nuance, sharpening recognition even under exam pressure.",
-  gomemoModesSpellingTitle: "Precision spelling",
-  gomemoModesSpellingDescription:
-    "Type, correct and auto-highlight phonetic traps so orthography becomes effortless.",
-  gomemoModesVisualTitle: "Visual pairing",
-  gomemoModesVisualDescription:
-    "Select imagery that resonates with your interest fields to anchor sensory memory.",
-  gomemoModesAudioTitle: "Immersive listening",
-  gomemoModesAudioDescription:
-    "Studio-grade pronunciations and shadowing drills refine accent and tonal mastery.",
-  gomemoInsightsTitle: "Track, reflect, elevate",
-  gomemoInsightsSubtitle:
-    "Every rehearsal is logged to celebrate micro-wins and surface curated advice from Doubao.",
-  gomemoInsightsTrackingTitle: "Sculpted progress analytics",
-  gomemoInsightsTrackingDescription:
-    "Heatmaps and retention curves reveal when to reinforce, reschedule or elevate difficulty.",
-  gomemoInsightsReviewTitle: "Doubao debrief",
-  gomemoInsightsReviewDescription:
-    "A Doubao-powered narrative summarises your session, applauds breakthroughs and pinpoints delicate terms.",
-  gomemoInsightsNextTitle: "Forward guidance",
-  gomemoInsightsNextDescription:
-    "Receive bespoke study routes, weekend intensives and upcoming word themes aligned with your future plans.",
-  gomemoCtaTitle: "Craft your signature vocabulary atelier",
-  gomemoCtaSubtitle:
-    "Synchronise ambition with an intelligent guide that keeps every session poised and purposeful.",
-  gomemoCtaAction: "Begin personalised rehearsal",
   searchHistory: "History",
   noFavorites: "No favorites yet",
   noHistory: "No history",

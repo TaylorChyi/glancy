@@ -6,10 +6,6 @@ export const ROUTES_BLUEPRINT = Object.freeze([
     component: lazy(() => import("@/pages/App")),
   },
   {
-    path: "/gomemo",
-    component: lazy(() => import("@/pages/Gomemo")),
-  },
-  {
     path: "/login",
     component: lazy(() => import("@/pages/auth/Login")),
   },

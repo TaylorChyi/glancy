@@ -1,6 +1,4 @@
-const api = {
-  gomemo: {},
-};
+const api = {};
 
 function createApi() {
   return api;

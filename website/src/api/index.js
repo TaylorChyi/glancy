@@ -6,7 +6,6 @@ import { createSearchRecordsApi } from "./searchRecords.js";
 import { createUsersApi } from "./users.js";
 import { createProfilesApi } from "./profiles.js";
 import { createTtsApi } from "./tts.js";
-import { createGomemoApi } from "./gomemo.js";
 
 export function createApi(config) {
   const request = createApiClient(config);
@@ -21,7 +20,6 @@ export function createApi(config) {
     users: createUsersApi(request),
     profiles: createProfilesApi(request),
     tts: createTtsApi(request),
-    gomemo: createGomemoApi(request),
   };
 }
 
