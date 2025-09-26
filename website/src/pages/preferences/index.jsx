@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import styles from "./Preferences.module.css";
 import { useLanguage } from "@/context";
@@ -16,11 +16,17 @@ import {
 } from "@/components";
 import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
+import {
+  WORD_LANGUAGE_AUTO,
+  WORD_DEFAULT_TARGET_LANGUAGE,
+  normalizeWordSourceLanguage,
+  normalizeWordTargetLanguage,
+} from "@/utils/language.js";
 
 const SOURCE_LANG_STORAGE_KEY = "sourceLang";
 const TARGET_LANG_STORAGE_KEY = "targetLang";
 const DEFAULT_SOURCE_LANG = "auto";
-const DEFAULT_TARGET_LANG = "ENGLISH";
+const DEFAULT_TARGET_LANG = WORD_DEFAULT_TARGET_LANGUAGE;
 const DEFAULT_THEME = "system";
 
 const VARIANTS = {
@@ -28,20 +34,50 @@ const VARIANTS = {
   DIALOG: "dialog",
 };
 
+const toStoreSourceLanguage = (value) => {
+  if (!value || value === DEFAULT_SOURCE_LANG) {
+    return WORD_LANGUAGE_AUTO;
+  }
+  return normalizeWordSourceLanguage(value);
+};
+
+const toUiSourceLanguage = (value) => {
+  const normalized = normalizeWordSourceLanguage(value);
+  return normalized === WORD_LANGUAGE_AUTO ? DEFAULT_SOURCE_LANG : normalized;
+};
+
+const toUiTargetLanguage = (value) =>
+  normalizeWordTargetLanguage(value ?? DEFAULT_TARGET_LANG);
+
+const toStoreTargetLanguage = (value) => normalizeWordTargetLanguage(value);
+
 function Preferences({ variant = VARIANTS.PAGE }) {
   const { t, lang } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const api = useApi();
-  const { systemLanguage, setSystemLanguage } = useSettingsStore((state) => ({
+  const {
+    systemLanguage,
+    setSystemLanguage,
+    dictionarySourceLanguage,
+    setDictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionaryTargetLanguage,
+  } = useSettingsStore((state) => ({
     systemLanguage: state.systemLanguage,
     setSystemLanguage: state.setSystemLanguage,
+    dictionarySourceLanguage: state.dictionarySourceLanguage,
+    setDictionarySourceLanguage: state.setDictionarySourceLanguage,
+    dictionaryTargetLanguage: state.dictionaryTargetLanguage,
+    setDictionaryTargetLanguage: state.setDictionaryTargetLanguage,
   }));
-  const [sourceLang, setSourceLang] = useState(
-    localStorage.getItem(SOURCE_LANG_STORAGE_KEY) || DEFAULT_SOURCE_LANG,
+  const legacySourceRef = useRef(localStorage.getItem(SOURCE_LANG_STORAGE_KEY));
+  const legacyTargetRef = useRef(localStorage.getItem(TARGET_LANG_STORAGE_KEY));
+  const [sourceLang, setSourceLang] = useState(() =>
+    toUiSourceLanguage(legacySourceRef.current ?? dictionarySourceLanguage),
   );
-  const [targetLang, setTargetLang] = useState(
-    localStorage.getItem(TARGET_LANG_STORAGE_KEY) || DEFAULT_TARGET_LANG,
+  const [targetLang, setTargetLang] = useState(() =>
+    toUiTargetLanguage(legacyTargetRef.current ?? dictionaryTargetLanguage),
   );
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
@@ -120,16 +156,73 @@ function Preferences({ variant = VARIANTS.PAGE }) {
     setPopupOpen(true);
   }, []);
 
+  const handleSourceLanguageChange = useCallback(
+    (value) => {
+      const candidate = value ?? DEFAULT_SOURCE_LANG;
+      const uiValue =
+        typeof candidate === "string" ? candidate : DEFAULT_SOURCE_LANG;
+      setSourceLang(uiValue);
+      setDictionarySourceLanguage(toStoreSourceLanguage(uiValue));
+    },
+    [setDictionarySourceLanguage],
+  );
+
+  const handleTargetLanguageChange = useCallback(
+    (value) => {
+      const uiValue = toUiTargetLanguage(value);
+      setTargetLang(uiValue);
+      setDictionaryTargetLanguage(toStoreTargetLanguage(uiValue));
+    },
+    [setDictionaryTargetLanguage],
+  );
+
   const applyPreferences = useCallback(
     (data) => {
       const nextSource = data.systemLanguage || DEFAULT_SOURCE_LANG;
       const nextTarget = data.searchLanguage || DEFAULT_TARGET_LANG;
-      setSourceLang(nextSource);
-      setTargetLang(nextTarget);
+      handleSourceLanguageChange(nextSource);
+      handleTargetLanguageChange(nextTarget);
       persistLanguages(nextSource, nextTarget);
     },
-    [persistLanguages],
+    [handleSourceLanguageChange, handleTargetLanguageChange, persistLanguages],
   );
+
+  useEffect(() => {
+    const legacySource = legacySourceRef.current;
+    if (legacySource && dictionarySourceLanguage === WORD_LANGUAGE_AUTO) {
+      const normalized = toStoreSourceLanguage(legacySource);
+      if (normalized !== dictionarySourceLanguage) {
+        setDictionarySourceLanguage(normalized);
+      }
+      legacySourceRef.current = null;
+    }
+    const legacyTarget = legacyTargetRef.current;
+    if (
+      legacyTarget &&
+      dictionaryTargetLanguage === WORD_DEFAULT_TARGET_LANGUAGE
+    ) {
+      const normalized = toStoreTargetLanguage(legacyTarget);
+      if (normalized !== dictionaryTargetLanguage) {
+        setDictionaryTargetLanguage(normalized);
+      }
+      legacyTargetRef.current = null;
+    }
+  }, [
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionarySourceLanguage,
+    setDictionaryTargetLanguage,
+  ]);
+
+  useEffect(() => {
+    const uiValue = toUiSourceLanguage(dictionarySourceLanguage);
+    setSourceLang((prev) => (prev === uiValue ? prev : uiValue));
+  }, [dictionarySourceLanguage]);
+
+  useEffect(() => {
+    const uiValue = toUiTargetLanguage(dictionaryTargetLanguage);
+    setTargetLang((prev) => (prev === uiValue ? prev : uiValue));
+  }, [dictionaryTargetLanguage]);
 
   useEffect(() => {
     if (!user) {
@@ -207,7 +300,7 @@ function Preferences({ variant = VARIANTS.PAGE }) {
             node: (
               <SelectField
                 value={sourceLang}
-                onChange={setSourceLang}
+                onChange={handleSourceLanguageChange}
                 options={languageOptions}
               />
             ),
@@ -219,7 +312,7 @@ function Preferences({ variant = VARIANTS.PAGE }) {
             node: (
               <SelectField
                 value={targetLang}
-                onChange={setTargetLang}
+                onChange={handleTargetLanguageChange}
                 options={searchLanguageOptions}
               />
             ),
@@ -279,11 +372,11 @@ function Preferences({ variant = VARIANTS.PAGE }) {
       },
     ],
     [
+      handleSourceLanguageChange,
+      handleTargetLanguageChange,
       handleSystemLanguageChange,
       languageOptions,
       searchLanguageOptions,
-      setSourceLang,
-      setTargetLang,
       setTheme,
       sourceLang,
       systemLanguage,
