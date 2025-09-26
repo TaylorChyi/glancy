@@ -193,7 +193,118 @@ function Preferences({ variant = VARIANTS.PAGE }) {
       ? SETTINGS_SURFACE_VARIANTS.PAGE
       : SETTINGS_SURFACE_VARIANTS.MODAL;
 
-  const splitFieldsClassName = `${styles["section-fields"]} ${styles["section-fields-split"]}`;
+  const preferenceSections = useMemo(
+    () => [
+      {
+        id: "languages",
+        title: t.prefDefaultsTitle,
+        description: t.prefDefaultsDescription,
+        fields: [
+          {
+            key: "source-language",
+            label: t.prefLanguage,
+            id: "source-lang",
+            node: (
+              <SelectField
+                value={sourceLang}
+                onChange={setSourceLang}
+                options={languageOptions}
+              />
+            ),
+          },
+          {
+            key: "target-language",
+            label: t.prefSearchLanguage,
+            id: "target-lang",
+            node: (
+              <SelectField
+                value={targetLang}
+                onChange={setTargetLang}
+                options={searchLanguageOptions}
+              />
+            ),
+          },
+        ],
+      },
+      {
+        id: "interface",
+        title: t.prefInterfaceTitle,
+        description: t.prefInterfaceDescription,
+        fields: [
+          {
+            key: "system-language",
+            label: t.prefSystemLanguage,
+            id: "system-language",
+            node: (
+              <SelectField
+                value={systemLanguage}
+                onChange={handleSystemLanguageChange}
+                options={systemLanguageOptions}
+              />
+            ),
+          },
+          {
+            key: "theme",
+            label: t.prefTheme,
+            id: "theme-select",
+            node: (
+              <SelectField
+                value={theme}
+                onChange={setTheme}
+                options={themeOptions}
+              />
+            ),
+          },
+        ],
+      },
+      {
+        id: "voices",
+        title: t.prefVoicesTitle,
+        description: t.prefVoicesDescription,
+        span: "wide",
+        fields: [
+          {
+            key: "voice-en",
+            label: t.prefVoiceEn,
+            id: "voice-en",
+            node: <VoiceSelector lang="en" />,
+          },
+          {
+            key: "voice-zh",
+            label: t.prefVoiceZh,
+            id: "voice-zh",
+            node: <VoiceSelector lang="zh" />,
+          },
+        ],
+      },
+    ],
+    [
+      handleSystemLanguageChange,
+      languageOptions,
+      searchLanguageOptions,
+      setSourceLang,
+      setTargetLang,
+      setTheme,
+      sourceLang,
+      systemLanguage,
+      systemLanguageOptions,
+      targetLang,
+      t.prefDefaultsDescription,
+      t.prefDefaultsTitle,
+      t.prefInterfaceDescription,
+      t.prefInterfaceTitle,
+      t.prefLanguage,
+      t.prefSearchLanguage,
+      t.prefSystemLanguage,
+      t.prefTheme,
+      t.prefVoiceEn,
+      t.prefVoiceZh,
+      t.prefVoicesDescription,
+      t.prefVoicesTitle,
+      theme,
+      themeOptions,
+    ],
+  );
 
   return (
     <>
@@ -209,96 +320,46 @@ function Preferences({ variant = VARIANTS.PAGE }) {
         }
       >
         <div className={styles.sections}>
-          <fieldset className={styles.section}>
-            <legend className={styles["section-title"]}>
-              {t.prefDefaultsTitle}
-            </legend>
-            <p className={styles["section-description"]}>
-              {t.prefDefaultsDescription}
-            </p>
-            <div className={splitFieldsClassName}>
-              <FormRow
-                label={t.prefLanguage}
-                id="source-lang"
-                className={styles.field}
-              >
-                <SelectField
-                  value={sourceLang}
-                  onChange={setSourceLang}
-                  options={languageOptions}
-                />
-              </FormRow>
-              <FormRow
-                label={t.prefSearchLanguage}
-                id="target-lang"
-                className={styles.field}
-              >
-                <SelectField
-                  value={targetLang}
-                  onChange={setTargetLang}
-                  options={searchLanguageOptions}
-                />
-              </FormRow>
-            </div>
-          </fieldset>
+          {preferenceSections.map((section) => {
+            const sectionClassName = [
+              styles.section,
+              section.span === "wide" ? styles["section-wide"] : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
-          <fieldset className={styles.section}>
-            <legend className={styles["section-title"]}>
-              {t.prefInterfaceTitle}
-            </legend>
-            <p className={styles["section-description"]}>
-              {t.prefInterfaceDescription}
-            </p>
-            <div className={splitFieldsClassName}>
-              <FormRow
-                label={t.prefSystemLanguage}
-                id="system-language"
-                className={styles.field}
+            return (
+              <section
+                key={section.id}
+                className={sectionClassName}
+                aria-labelledby={`${section.id}-title`}
               >
-                <SelectField
-                  value={systemLanguage}
-                  onChange={handleSystemLanguageChange}
-                  options={systemLanguageOptions}
-                />
-              </FormRow>
-              <FormRow
-                label={t.prefTheme}
-                id="theme-select"
-                className={styles.field}
-              >
-                <SelectField
-                  value={theme}
-                  onChange={setTheme}
-                  options={themeOptions}
-                />
-              </FormRow>
-            </div>
-          </fieldset>
-
-          <fieldset className={`${styles.section} ${styles["section-voices"]}`}>
-            <legend className={styles["section-title"]}>
-              {t.prefVoicesTitle}
-            </legend>
-            <p className={styles["section-description"]}>
-              {t.prefVoicesDescription}
-            </p>
-            <div className={splitFieldsClassName}>
-              <FormRow
-                label={t.prefVoiceEn}
-                id="voice-en"
-                className={styles.field}
-              >
-                <VoiceSelector lang="en" />
-              </FormRow>
-              <FormRow
-                label={t.prefVoiceZh}
-                id="voice-zh"
-                className={styles.field}
-              >
-                <VoiceSelector lang="zh" />
-              </FormRow>
-            </div>
-          </fieldset>
+                <header className={styles["section-header"]}>
+                  <h3
+                    id={`${section.id}-title`}
+                    className={styles["section-title"]}
+                  >
+                    {section.title}
+                  </h3>
+                  <p className={styles["section-description"]}>
+                    {section.description}
+                  </p>
+                </header>
+                <div className={styles["section-fields"]}>
+                  {section.fields.map((field) => (
+                    <FormRow
+                      key={field.key}
+                      label={field.label}
+                      id={field.id}
+                      className={styles.field}
+                    >
+                      {field.node}
+                    </FormRow>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </SettingsSurface>
       <MessagePopup
