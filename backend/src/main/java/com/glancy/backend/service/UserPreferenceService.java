@@ -3,7 +3,6 @@ package com.glancy.backend.service;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
 import com.glancy.backend.dto.UserPreferenceUpdateRequest;
-import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.exception.ResourceNotFoundException;
@@ -27,7 +26,6 @@ public class UserPreferenceService {
     private static final String DEFAULT_THEME = "light";
     private static final String DEFAULT_SYSTEM_LANGUAGE = "en";
     private static final String DEFAULT_SEARCH_LANGUAGE = "en";
-    private static final DictionaryModel DEFAULT_DICTIONARY_MODEL = DictionaryModel.DOUBAO;
 
     public UserPreferenceService(UserPreferenceRepository userPreferenceRepository, UserRepository userRepository) {
         this.userPreferenceRepository = userPreferenceRepository;
@@ -41,7 +39,6 @@ public class UserPreferenceService {
         pref.setTheme(DEFAULT_THEME);
         pref.setSystemLanguage(DEFAULT_SYSTEM_LANGUAGE);
         pref.setSearchLanguage(DEFAULT_SEARCH_LANGUAGE);
-        pref.setDictionaryModel(DEFAULT_DICTIONARY_MODEL);
         return pref;
     }
 
@@ -57,7 +54,6 @@ public class UserPreferenceService {
         pref.setTheme(req.getTheme());
         pref.setSystemLanguage(req.getSystemLanguage());
         pref.setSearchLanguage(req.getSearchLanguage());
-        pref.setDictionaryModel(req.getDictionaryModel());
         UserPreference saved = userPreferenceRepository.save(pref);
         return toResponse(saved);
     }
@@ -93,11 +89,6 @@ public class UserPreferenceService {
         if (req.getSearchLanguage() != null) {
             pref.setSearchLanguage(req.getSearchLanguage());
         }
-        if (req.getDictionaryModel() != null) {
-            pref.setDictionaryModel(req.getDictionaryModel());
-        } else if (pref.getDictionaryModel() == null) {
-            pref.setDictionaryModel(DEFAULT_DICTIONARY_MODEL);
-        }
 
         UserPreference saved = userPreferenceRepository.save(pref);
         return toResponse(saved);
@@ -109,8 +100,7 @@ public class UserPreferenceService {
             pref.getUser().getId(),
             pref.getTheme(),
             pref.getSystemLanguage(),
-            pref.getSearchLanguage(),
-            pref.getDictionaryModel()
+            pref.getSearchLanguage()
         );
     }
 }

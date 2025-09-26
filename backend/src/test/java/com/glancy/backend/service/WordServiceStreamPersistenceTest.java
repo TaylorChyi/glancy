@@ -14,7 +14,6 @@ import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
-import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import java.time.LocalDateTime;
@@ -39,9 +38,6 @@ class WordServiceStreamPersistenceTest {
 
     @Mock
     private WordRepository wordRepository;
-
-    @Mock
-    private UserPreferenceRepository userPreferenceRepository;
 
     @Mock
     private SearchRecordService searchRecordService;
@@ -73,11 +69,9 @@ class WordServiceStreamPersistenceTest {
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
-        when(userPreferenceRepository.findByUserId(anyLong())).thenReturn(Optional.empty());
         wordService = new WordService(
             wordSearcher,
             wordRepository,
-            userPreferenceRepository,
             searchRecordService,
             searchResultService,
             parser,

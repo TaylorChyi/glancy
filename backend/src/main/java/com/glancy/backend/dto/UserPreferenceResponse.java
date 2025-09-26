@@ -1,6 +1,5 @@
 package com.glancy.backend.dto;
 
-import com.glancy.backend.entity.DictionaryModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -16,5 +15,4 @@ public class UserPreferenceResponse {
     private String theme;
     private String systemLanguage;
     private String searchLanguage;
-    private DictionaryModel dictionaryModel;
 }

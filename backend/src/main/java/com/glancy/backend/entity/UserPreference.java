@@ -29,8 +29,4 @@ public class UserPreference {
 
     @Column(nullable = false, length = 20)
     private String searchLanguage;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private DictionaryModel dictionaryModel = DictionaryModel.DOUBAO;
 }

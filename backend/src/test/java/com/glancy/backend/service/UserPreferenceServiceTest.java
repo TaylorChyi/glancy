@@ -5,9 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
 import com.glancy.backend.dto.UserPreferenceUpdateRequest;
-import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.User;
-import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -62,7 +60,6 @@ class UserPreferenceServiceTest {
         req.setTheme("light");
         req.setSystemLanguage("en");
         req.setSearchLanguage("zh");
-        req.setDictionaryModel(DictionaryModel.DOUBAO);
         UserPreferenceResponse saved = userPreferenceService.savePreference(user.getId(), req);
 
         assertNotNull(saved.getId());
@@ -71,7 +68,6 @@ class UserPreferenceServiceTest {
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
         assertEquals(saved.getId(), fetched.getId());
         assertEquals("zh", fetched.getSearchLanguage());
-        assertEquals(DictionaryModel.DOUBAO, fetched.getDictionaryModel());
     }
 
     /**
@@ -89,7 +85,6 @@ class UserPreferenceServiceTest {
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
         assertEquals("light", fetched.getTheme());
         assertEquals("en", fetched.getSystemLanguage());
-        assertEquals(DictionaryModel.DOUBAO, fetched.getDictionaryModel());
     }
 
     /**
@@ -108,12 +103,7 @@ class UserPreferenceServiceTest {
         req.setTheme("light");
         req.setSystemLanguage("en");
         req.setSearchLanguage("en");
-        req.setDictionaryModel(DictionaryModel.DOUBAO);
         userPreferenceService.savePreference(user.getId(), req);
-
-        UserPreference stored = userPreferenceRepository.findByUserId(user.getId()).orElseThrow();
-        stored.setDictionaryModel(null);
-        userPreferenceRepository.save(stored);
 
         UserPreferenceUpdateRequest updateRequest = new UserPreferenceUpdateRequest();
         updateRequest.setTheme("dark");
@@ -123,7 +113,6 @@ class UserPreferenceServiceTest {
         assertEquals("dark", updated.getTheme());
         assertEquals("en", updated.getSystemLanguage());
         assertEquals("en", updated.getSearchLanguage());
-        assertEquals(DictionaryModel.DOUBAO, updated.getDictionaryModel());
     }
 
     /**
@@ -142,20 +131,17 @@ class UserPreferenceServiceTest {
         req.setTheme("light");
         req.setSystemLanguage("en");
         req.setSearchLanguage("en");
-        req.setDictionaryModel(DictionaryModel.DOUBAO);
         userPreferenceService.savePreference(user.getId(), req);
 
         UserPreferenceUpdateRequest updateRequest = new UserPreferenceUpdateRequest();
         updateRequest.setTheme("dark");
         updateRequest.setSystemLanguage("fr");
         updateRequest.setSearchLanguage("es");
-        updateRequest.setDictionaryModel(DictionaryModel.DOUBAO);
 
         UserPreferenceResponse updated = userPreferenceService.updatePreference(user.getId(), updateRequest);
 
         assertEquals("dark", updated.getTheme());
         assertEquals("fr", updated.getSystemLanguage());
         assertEquals("es", updated.getSearchLanguage());
-        assertEquals(DictionaryModel.DOUBAO, updated.getDictionaryModel());
     }
 }

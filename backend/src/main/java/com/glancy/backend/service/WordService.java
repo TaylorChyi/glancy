@@ -10,14 +10,12 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
-import com.glancy.backend.entity.UserPreference;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
-import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.util.SensitiveDataUtil;
@@ -39,7 +37,6 @@ public class WordService {
 
     private final WordSearcher wordSearcher;
     private final WordRepository wordRepository;
-    private final UserPreferenceRepository userPreferenceRepository;
     private final SearchRecordService searchRecordService;
     private final SearchResultService searchResultService;
     private final WordResponseParser parser;
@@ -48,7 +45,6 @@ public class WordService {
     public WordService(
         WordSearcher wordSearcher,
         WordRepository wordRepository,
-        UserPreferenceRepository userPreferenceRepository,
         SearchRecordService searchRecordService,
         SearchResultService searchResultService,
         WordResponseParser parser,
@@ -56,12 +52,13 @@ public class WordService {
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
-        this.userPreferenceRepository = userPreferenceRepository;
         this.searchRecordService = searchRecordService;
         this.searchResultService = searchResultService;
         this.parser = parser;
         this.wordPersonalizationService = wordPersonalizationService;
     }
+
+    private static final String DEFAULT_MODEL = DictionaryModel.DOUBAO.getClientName();
 
     private WordResponse fetchAndPersistWord(
         Long userId,
@@ -173,8 +170,7 @@ public class WordService {
         String model,
         boolean forceNew
     ) {
-        DictionaryModel preferredModel = resolvePreferredModel(userId);
-        String resolvedModel = resolveModelName(model, preferredModel);
+        String resolvedModel = resolveModelName(model);
         log.info(
             "Finding word '{}' for user {} in language {} flavor {} using model {}",
             term,
@@ -217,8 +213,7 @@ public class WordService {
         String model,
         boolean forceNew
     ) {
-        DictionaryModel preferredModel = resolvePreferredModel(userId);
-        String resolvedModel = resolveModelName(model, preferredModel);
+        String resolvedModel = resolveModelName(model);
         log.info(
             "Streaming word '{}' for user {} in language {} flavor {} using model {}",
             term,
@@ -299,32 +294,19 @@ public class WordService {
         return main.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
     }
 
-    private DictionaryModel resolvePreferredModel(Long userId) {
-        return userPreferenceRepository
-            .findByUserId(userId)
-            .map(UserPreference::getDictionaryModel)
-            .orElseGet(() -> {
-                log.info(
-                    "No user preference found for user {}, using default model {}",
-                    userId,
-                    DictionaryModel.DOUBAO
-                );
-                return DictionaryModel.DOUBAO;
-            });
-    }
-
-    private String resolveModelName(String requestedModel, DictionaryModel preferredModel) {
+    private String resolveModelName(String requestedModel) {
         if (requestedModel != null) {
             String trimmed = requestedModel.trim();
             if (!trimmed.isEmpty()) {
-                if (trimmed.equalsIgnoreCase(DictionaryModel.DOUBAO.name())) {
-                    return DictionaryModel.DOUBAO.getClientName();
+                if (
+                    trimmed.equalsIgnoreCase(DictionaryModel.DOUBAO.name()) || trimmed.equalsIgnoreCase(DEFAULT_MODEL)
+                ) {
+                    return DEFAULT_MODEL;
                 }
-                return trimmed.toLowerCase();
+                log.warn("Unsupported dictionary model '{}' requested, defaulting to {}", trimmed, DEFAULT_MODEL);
             }
         }
-        DictionaryModel fallback = preferredModel != null ? preferredModel : DictionaryModel.DOUBAO;
-        return fallback.getClientName();
+        return DEFAULT_MODEL;
     }
 
     private static final class StreamingAccumulator {
