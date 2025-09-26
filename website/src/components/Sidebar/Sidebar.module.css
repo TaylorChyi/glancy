@@ -5,6 +5,29 @@
   padding-inline: var(--sidebar-inline-padding, var(--sidebar-padding, 24px));
 }
 
+.sidebar-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidebar-section-gap, 24px);
+  padding-block: var(--space-2, 8px);
+}
+
+.sidebar-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidebar-item-gap, 8px);
+  padding-inline: var(--sidebar-inline-padding, var(--sidebar-padding, 24px));
+}
+
+.sidebar-history {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .sidebar-section ul {
   list-style: none;
   padding: 0;
@@ -18,17 +41,10 @@
   padding: 0.25rem;
 }
 
-.sidebar-functions {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sidebar-section-gap, 24px);
-}
-
 .history-list {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: var(--space-4, 16px);
 }
 
 .history-items {
@@ -37,47 +53,15 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sidebar-item-gap, 6px);
+  gap: var(--sidebar-item-gap, 8px);
 }
 
 .history-entry {
-  border-radius: var(--radius-md, 10px);
-  background: color-mix(in srgb, var(--sidebar-bg) 90%, transparent);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--border-color) 24%, transparent);
-  transition:
-    box-shadow 160ms ease,
-    transform 160ms ease,
-    background-color 160ms ease;
+  border-radius: var(--radius-lg, 12px);
 }
 
-.history-entry:hover,
-.history-entry:focus-within {
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--accent-color) 32%, transparent);
-  background: color-mix(in srgb, var(--sidebar-bg) 94%, transparent);
-  transform: translateY(-1px);
-}
-
-.history-button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--sidebar-brand-gap, 8px);
-  padding: var(--sidebar-item-padding-y, 10px)
-    var(--sidebar-item-padding-x, 18px);
-  background: none;
-  border: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.history-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-color) 60%, transparent);
-  outline-offset: 3px;
+.history-entry :global(.sidebar-action) {
+  border-radius: inherit;
 }
 
 .history-labels {
@@ -95,54 +79,56 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--sidebar-brand-gap, 8px);
-  padding: var(--sidebar-item-padding-y, 8px)
+  gap: var(--sidebar-action-gap, 12px);
+  padding: var(--sidebar-item-padding-y, 10px)
     var(--sidebar-inline-padding, var(--sidebar-padding, 24px));
-  border-radius: var(--radius-md, 10px);
-  border: none;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid transparent;
   background: none;
   color: inherit;
   font: inherit;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   text-align: left;
   cursor: pointer;
   transition:
     background-color 160ms ease,
     color 160ms ease,
     box-shadow 160ms ease,
-    transform 160ms ease;
+    transform 160ms ease,
+    border-color 160ms ease;
 }
 
 .sidebar-action[data-variant="prominent"] {
   --sidebar-action-prominent-color: color-mix(
     in srgb,
-    var(--accent-color) 60%,
+    var(--accent-color) 58%,
     var(--sidebar-color)
   );
-  --sidebar-action-icon-shadow: drop-shadow(0 2px 6px rgb(15 23 42 / 18%));
+  --sidebar-action-icon-shadow: drop-shadow(0 2px 6px rgb(15 23 42 / 16%));
   --sidebar-action-description-color: color-mix(
     in srgb,
-    var(--accent-color) 48%,
+    var(--accent-color) 46%,
     var(--sidebar-color)
   );
 
-  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent-color) 38%, transparent);
-  box-shadow:
-    0 10px 28px rgb(15 23 42 / 12%),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 18%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 34%, transparent);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 12%);
   color: var(--sidebar-action-prominent-color);
 }
 
 .sidebar-action:where(:hover, :focus-visible) {
-  background-color: var(--color-overlay-weak);
+  background: color-mix(in srgb, var(--sidebar-bg) 92%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 36%, transparent);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 10%);
   transform: translateY(-1px);
 }
 
 .sidebar-action[data-variant="prominent"]:where(:hover, :focus-visible) {
-  background: color-mix(in srgb, var(--accent-color) 24%, transparent);
-  box-shadow:
-    0 16px 36px rgb(15 23 42 / 16%),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 22%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
+  box-shadow: 0 18px 40px rgb(15 23 42 / 16%);
   transform: translateY(-2px);
 }
 
@@ -152,7 +138,7 @@
 }
 
 .sidebar-action[data-variant="prominent"]:focus-visible {
-  outline-color: color-mix(in srgb, var(--accent-color) 75%, transparent);
+  outline-color: color-mix(in srgb, var(--accent-color) 70%, transparent);
   outline-offset: 4px;
 }
 
@@ -161,40 +147,36 @@
 }
 
 :root[data-theme="dark"] .sidebar-action:where(:hover, :focus-visible) {
-  background-color: var(--color-overlay-inverse);
+  background: color-mix(in srgb, var(--sidebar-bg) 86%, transparent);
+  border-color: color-mix(in srgb, var(--border-color) 50%, transparent);
+  box-shadow: 0 18px 40px rgb(2 6 23 / 28%);
 }
 
 :root[data-theme="dark"] .sidebar-action[data-variant="prominent"] {
   background: color-mix(in srgb, var(--accent-color) 26%, transparent);
   border-color: color-mix(in srgb, var(--accent-color) 48%, transparent);
-  box-shadow:
-    0 18px 40px rgb(2 6 23 / 24%),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 24%, transparent);
+  box-shadow: 0 22px 48px rgb(2 6 23 / 28%);
 }
 
 :root[data-theme="dark"]
   .sidebar-action[data-variant="prominent"]:where(:hover, :focus-visible) {
   background: color-mix(in srgb, var(--accent-color) 32%, transparent);
-  box-shadow:
-    0 24px 52px rgb(2 6 23 / 32%),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 32%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 54%, transparent);
+  box-shadow: 0 28px 56px rgb(2 6 23 / 36%);
 }
 
 .sidebar-action-active {
-  background: color-mix(in srgb, var(--sidebar-bg) 94%, transparent);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 28%, transparent),
-    0 4px 12px rgb(15 23 42 / 6%);
-  color: color-mix(in srgb, var(--accent-color) 52%, var(--sidebar-color));
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 28%, transparent);
+  box-shadow: 0 16px 32px rgb(15 23 42 / 12%);
+  color: color-mix(in srgb, var(--accent-color) 58%, var(--sidebar-color));
 }
 
 .sidebar-action-active[data-variant="prominent"] {
-  background: color-mix(in srgb, var(--accent-color) 30%, transparent);
-  border-color: color-mix(in srgb, var(--accent-color) 48%, transparent);
-  box-shadow:
-    0 18px 48px rgb(15 23 42 / 20%),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 42%, transparent);
-  color: color-mix(in srgb, var(--accent-color) 82%, var(--sidebar-color));
+  background: color-mix(in srgb, var(--accent-color) 22%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 46%, transparent);
+  box-shadow: 0 22px 48px rgb(15 23 42 / 18%);
+  color: color-mix(in srgb, var(--accent-color) 78%, var(--sidebar-color));
 }
 
 .sidebar-action-icon {

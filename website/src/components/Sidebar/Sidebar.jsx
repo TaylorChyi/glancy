@@ -1,7 +1,9 @@
 import Brand from "@/components/Brand";
-import SidebarFunctions from "./SidebarFunctions.jsx";
+import SidebarQuickActions from "./SidebarQuickActions.jsx";
+import SidebarHistory from "./SidebarHistory.jsx";
 import SidebarUser from "./SidebarUser.jsx";
 import { useIsMobile } from "@/utils";
+import styles from "./Sidebar.module.css";
 
 function Sidebar({
   isMobile: mobileProp,
@@ -21,10 +23,10 @@ function Sidebar({
         className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""}`}
       >
         <Brand />
-        <SidebarFunctions
-          onToggleFavorites={onToggleFavorites}
-          onSelectHistory={onSelectHistory}
-        />
+        <div className={styles["sidebar-content"]}>
+          <SidebarQuickActions onToggleFavorites={onToggleFavorites} />
+          <SidebarHistory onSelectHistory={onSelectHistory} />
+        </div>
         <SidebarUser />
       </aside>
     </>

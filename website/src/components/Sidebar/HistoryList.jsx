@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useHistory, useUser } from "@/context";
 import Toast from "@/components/ui/Toast";
+import SidebarActionItem from "./SidebarActionItem.jsx";
 import styles from "./Sidebar.module.css";
 
 function HistoryList({ onSelect }) {
@@ -42,17 +43,16 @@ function HistoryList({ onSelect }) {
             {groupedHistory.map((item) => {
               return (
                 <li key={item.termKey} className={styles["history-entry"]}>
-                  <button
-                    type="button"
-                    className={styles["history-button"]}
+                  <SidebarActionItem
+                    label={
+                      <div className={styles["history-labels"]}>
+                        <span className={styles["history-term-text"]}>
+                          {item.term}
+                        </span>
+                      </div>
+                    }
                     onClick={() => handleSelect(item)}
-                  >
-                    <div className={styles["history-labels"]}>
-                      <span className={styles["history-term-text"]}>
-                        {item.term}
-                      </span>
-                    </div>
-                  </button>
+                  />
                 </li>
               );
             })}
