@@ -63,9 +63,16 @@ type GomemoState = {
   activeMode: string | null;
   loading: boolean;
   error: string | null;
-  loadPlan: (opts?: { token?: string | null }) => Promise<void>;
+  lastFetchedAt: number;
+  loadPlanPromise: Promise<void> | null;
+  progressPromise: Promise<void> | null;
+  loadPlan: (opts?: {
+    token?: string | null;
+    force?: boolean;
+  }) => Promise<void>;
   selectWord: (index: number) => void;
   selectMode: (mode: string | null) => void;
+  syncProgress: (opts?: { token?: string | null }) => Promise<void>;
   recordProgress: (
     payload: {
       term: string;
@@ -86,7 +93,15 @@ type GomemoState = {
 
 const INITIAL_STATE: Pick<
   GomemoState,
-  "plan" | "review" | "activeWordIndex" | "activeMode" | "loading" | "error"
+  | "plan"
+  | "review"
+  | "activeWordIndex"
+  | "activeMode"
+  | "loading"
+  | "error"
+  | "lastFetchedAt"
+  | "loadPlanPromise"
+  | "progressPromise"
 > = {
   plan: null,
   review: null,
@@ -94,6 +109,9 @@ const INITIAL_STATE: Pick<
   activeMode: null,
   loading: false,
   error: null,
+  lastFetchedAt: 0,
+  loadPlanPromise: null,
+  progressPromise: null,
 };
 
 type PersistedKey = "plan" | "review";
@@ -113,6 +131,8 @@ const deriveInitialMode = (plan: GomemoPlan | null): string | null => {
   }
   return plan.modes?.[0]?.type ?? null;
 };
+
+const PLAN_STALE_TTL_MS = 2 * 60 * 1000;
 
 const normalizePlan = (payload: unknown): GomemoPlan => {
   if (!isObject(payload)) {
@@ -155,25 +175,50 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
   key: "gomemo",
   initializer: (set, get) => ({
     ...INITIAL_STATE,
-    async loadPlan({ token } = {}) {
-      set({ loading: true, error: null });
-      try {
-        const response = await api.gomemo.getPlan({
-          token: token ?? undefined,
-        });
-        const plan = normalizePlan(response);
-        set({
-          plan,
-          review: null,
-          activeWordIndex: 0,
-          activeMode: deriveInitialMode(plan),
-        });
-      } catch (error) {
-        console.error(error);
-        set({ error: error?.message ?? "加载失败" });
-      } finally {
-        set({ loading: false });
+    async loadPlan({ token, force = false } = {}) {
+      const now = Date.now();
+      const state = get();
+      const isFresh =
+        !force &&
+        state.plan !== null &&
+        now - state.lastFetchedAt < PLAN_STALE_TTL_MS;
+      if (isFresh) {
+        return;
       }
+
+      if (state.loading) {
+        return state.loadPlanPromise ?? Promise.resolve();
+      }
+
+      if (state.loadPlanPromise) {
+        return state.loadPlanPromise;
+      }
+
+      set({ loading: true, error: null });
+      const request = api.gomemo
+        .getPlan({
+          token: token ?? undefined,
+        })
+        .then((response) => {
+          const plan = normalizePlan(response);
+          set({
+            plan,
+            review: null,
+            activeWordIndex: 0,
+            activeMode: deriveInitialMode(plan),
+            lastFetchedAt: Date.now(),
+          });
+        })
+        .catch((error) => {
+          console.error(error);
+          set({ error: error?.message ?? "加载失败" });
+        })
+        .finally(() => {
+          set({ loading: false, loadPlanPromise: null });
+        });
+
+      set({ loadPlanPromise: request });
+      await request;
     },
     selectWord(index) {
       const state = get();
@@ -189,6 +234,34 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
     selectMode(mode) {
       set({ activeMode: mode });
     },
+    async syncProgress({ token } = {}) {
+      const state = get();
+      if (!state.plan) return;
+      if (state.progressPromise) {
+        await state.progressPromise;
+        return;
+      }
+      const request = api.gomemo
+        .getPlan({ token: token ?? undefined })
+        .then((updated) => {
+          if (updated?.progress) {
+            set((current) => ({
+              plan: current.plan
+                ? { ...current.plan, progress: updated.progress }
+                : current.plan,
+              lastFetchedAt: Date.now(),
+            }));
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .finally(() => {
+          set({ progressPromise: null });
+        });
+      set({ progressPromise: request });
+      await request;
+    },
     async recordProgress(payload, { token } = {}) {
       const state = get();
       if (!state.plan) return;
@@ -197,14 +270,7 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
         payload,
         token: token ?? undefined,
       });
-      const updated = await api.gomemo.getPlan({ token: token ?? undefined });
-      if (updated?.progress) {
-        set((current) => ({
-          plan: current.plan
-            ? { ...current.plan, progress: updated.progress }
-            : current.plan,
-        }));
-      }
+      await state.syncProgress({ token });
     },
     async finalizeSession({ token } = {}) {
       const state = get();
@@ -222,8 +288,12 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
         if (response.progress) {
           set((current) => ({
             plan: current.plan
-              ? { ...current.plan, progress: response.progress }
+              ? {
+                  ...current.plan,
+                  progress: response.progress,
+                }
               : current.plan,
+            lastFetchedAt: Date.now(),
           }));
         }
         return review;
@@ -249,6 +319,9 @@ export const useGomemoStore = createPersistentStore<GomemoState>({
         activeMode: deriveInitialMode(plan),
         loading: false,
         error: null,
+        lastFetchedAt: 0,
+        loadPlanPromise: null,
+        progressPromise: null,
       };
     },
   },
