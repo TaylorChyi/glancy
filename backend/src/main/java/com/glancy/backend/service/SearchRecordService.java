@@ -35,11 +35,12 @@ public class SearchRecordService {
     private final int nonMemberSearchLimit;
 
     public SearchRecordService(
-            SearchRecordRepository searchRecordRepository,
-            UserRepository userRepository,
-            SearchProperties properties,
-            SearchResultService searchResultService,
-            SearchRecordViewAssembler searchRecordViewAssembler) {
+        SearchRecordRepository searchRecordRepository,
+        UserRepository userRepository,
+        SearchProperties properties,
+        SearchResultService searchResultService,
+        SearchRecordViewAssembler searchRecordViewAssembler
+    ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
         this.searchResultService = searchResultService;
@@ -55,22 +56,23 @@ public class SearchRecordService {
     public SearchRecordResponse saveRecord(Long userId, SearchRecordRequest request) {
         log.info("Saving search record for user {} with term '{}'", userId, request.getTerm());
         User user = userRepository
-                .findById(userId)
-                .orElseThrow(() -> {
-                    log.warn("User with id {} not found", userId);
-                    return new ResourceNotFoundException("用户不存在");
-                });
+            .findById(userId)
+            .orElseThrow(() -> {
+                log.warn("User with id {} not found", userId);
+                return new ResourceNotFoundException("用户不存在");
+            });
         if (user.getLastLoginAt() == null) {
             log.warn("User {} is not logged in", userId);
             throw new InvalidRequestException("用户未登录");
         }
         DictionaryFlavor flavor = request.getFlavor() != null ? request.getFlavor() : DictionaryFlavor.BILINGUAL;
-        SearchRecord existing = searchRecordRepository
-                .findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
-                        userId,
-                        request.getTerm(),
-                        request.getLanguage(),
-                        flavor);
+        SearchRecord existing =
+            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+                userId,
+                request.getTerm(),
+                request.getLanguage(),
+                flavor
+            );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
             existing.setCreatedAt(LocalDateTime.now());
@@ -85,9 +87,10 @@ public class SearchRecordService {
             LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
-                    userId,
-                    startOfDay,
-                    endOfDay);
+                userId,
+                startOfDay,
+                endOfDay
+            );
             if (count >= nonMemberSearchLimit) {
                 log.warn("User {} exceeded daily search limit", userId);
                 throw new InvalidRequestException("非会员每天只能搜索" + nonMemberSearchLimit + "次");
@@ -112,8 +115,8 @@ public class SearchRecordService {
     public SearchRecordResponse favoriteRecord(Long userId, Long recordId) {
         log.info("Favoriting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-                .findByIdAndUserIdAndDeletedFalse(recordId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
+            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
         record.setFavorite(true);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Record after favoriting: {}", describeRecord(saved));
@@ -132,10 +135,10 @@ public class SearchRecordService {
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
         return searchRecordViewAssembler
-                .assemble(userId, records)
-                .stream()
-                .peek(response -> log.debug("Record response: {}", describeResponse(response)))
-                .toList();
+            .assemble(userId, records)
+            .stream()
+            .peek(response -> log.debug("Record response: {}", describeResponse(response)))
+            .toList();
     }
 
     /**
@@ -150,7 +153,8 @@ public class SearchRecordService {
         }
         records.forEach(record -> record.setDeleted(true));
         searchResultService.softDeleteByRecordIds(
-                records.stream().map(SearchRecord::getId).filter(Objects::nonNull).toList());
+            records.stream().map(SearchRecord::getId).filter(Objects::nonNull).toList()
+        );
         searchRecordRepository.saveAll(records);
     }
 
@@ -161,8 +165,8 @@ public class SearchRecordService {
     public void unfavoriteRecord(Long userId, Long recordId) {
         log.info("Unfavoriting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-                .findByIdAndUserIdAndDeletedFalse(recordId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
+            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
         record.setFavorite(false);
         SearchRecord saved = searchRecordRepository.save(record);
         log.info("Record after unfavoriting: {}", describeRecord(saved));
@@ -175,8 +179,8 @@ public class SearchRecordService {
     public void deleteRecord(Long userId, Long recordId) {
         log.info("Deleting search record {} for user {}", recordId, userId);
         SearchRecord record = searchRecordRepository
-                .findByIdAndDeletedFalse(recordId)
-                .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
+            .findByIdAndDeletedFalse(recordId)
+            .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
         if (!record.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("搜索记录不存在");
         }
@@ -192,15 +196,16 @@ public class SearchRecordService {
         }
         Long uid = record.getUser() != null ? record.getUser().getId() : null;
         return String.format(
-                "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, deleted=%s",
-                record.getId(),
-                uid,
-                record.getTerm(),
-                record.getLanguage(),
-                record.getFlavor(),
-                record.getFavorite(),
-                record.getCreatedAt(),
-                record.getDeleted());
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, deleted=%s",
+            record.getId(),
+            uid,
+            record.getTerm(),
+            record.getLanguage(),
+            record.getFlavor(),
+            record.getFavorite(),
+            record.getCreatedAt(),
+            record.getDeleted()
+        );
     }
 
     private String describeResponse(SearchRecordResponse response) {
@@ -208,15 +213,16 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-                "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
-                response.id(),
-                response.userId(),
-                response.term(),
-                response.language(),
-                response.flavor(),
-                response.favorite(),
-                response.createdAt(),
-                response.versions().size(),
-                response.latestVersion() != null ? response.latestVersion().versionNumber() : null);
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
+            response.id(),
+            response.userId(),
+            response.term(),
+            response.language(),
+            response.flavor(),
+            response.favorite(),
+            response.createdAt(),
+            response.versions().size(),
+            response.latestVersion() != null ? response.latestVersion().versionNumber() : null
+        );
     }
 }
