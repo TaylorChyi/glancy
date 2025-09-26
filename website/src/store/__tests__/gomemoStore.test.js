@@ -5,6 +5,55 @@ import { useGomemoStore } from "@/store/gomemo/index.ts";
 
 const mockApi = api;
 
+const createPlanPayload = () => ({
+  sessionId: 9,
+  sessionDate: "2024-05-01",
+  persona: {
+    descriptor: "descriptor",
+    audience: "audience",
+    tone: "tone",
+    dailyTarget: 5,
+    interests: ["design"],
+  },
+  planHighlights: ["今日节奏：5 词"],
+  words: [
+    {
+      term: "craft",
+      language: "ENGLISH",
+      priority: 10,
+      rationales: ["近期检索优先复习"],
+      recommendedModes: ["CARD"],
+    },
+  ],
+  modes: [
+    {
+      type: "CARD",
+      title: "卡片",
+      description: "desc",
+      focus: "focus",
+    },
+  ],
+  progress: {
+    completedWords: 0,
+    totalWords: 1,
+    retentionAverage: 0,
+    details: [],
+  },
+});
+
+const createDeferred = () => {
+  let resolver;
+  const promise = new Promise((res) => {
+    resolver = res;
+  });
+  return {
+    promise,
+    resolve(value) {
+      resolver?.(value);
+    },
+  };
+};
+
 describe("gomemo store", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -21,41 +70,7 @@ describe("gomemo store", () => {
    * 验证加载计划时会保存会话信息并推导首个练习模式。
    */
   test("loadPlan hydrates state", async () => {
-    mockApi.gomemo.getPlan.mockResolvedValue({
-      sessionId: 9,
-      sessionDate: "2024-05-01",
-      persona: {
-        descriptor: "descriptor",
-        audience: "audience",
-        tone: "tone",
-        dailyTarget: 5,
-        interests: ["design"],
-      },
-      planHighlights: ["今日节奏：5 词"],
-      words: [
-        {
-          term: "craft",
-          language: "ENGLISH",
-          priority: 10,
-          rationales: ["近期检索优先复习"],
-          recommendedModes: ["CARD"],
-        },
-      ],
-      modes: [
-        {
-          type: "CARD",
-          title: "卡片",
-          description: "desc",
-          focus: "focus",
-        },
-      ],
-      progress: {
-        completedWords: 0,
-        totalWords: 1,
-        retentionAverage: 0,
-        details: [],
-      },
-    });
+    mockApi.gomemo.getPlan.mockResolvedValue(createPlanPayload());
 
     await act(async () => {
       await useGomemoStore.getState().loadPlan();
@@ -70,17 +85,9 @@ describe("gomemo store", () => {
    * 验证记录进度后会重新同步后端返回的快照。
    */
   test("recordProgress refreshes snapshot", async () => {
-    mockApi.gomemo.getPlan.mockResolvedValueOnce({
+    const initialPlan = {
+      ...createPlanPayload(),
       sessionId: 1,
-      sessionDate: "2024-01-01",
-      persona: {
-        descriptor: "d",
-        audience: "a",
-        tone: "t",
-        dailyTarget: 3,
-        interests: [],
-      },
-      planHighlights: [],
       words: [
         {
           term: "align",
@@ -90,14 +97,8 @@ describe("gomemo store", () => {
           recommendedModes: ["CARD"],
         },
       ],
-      modes: [],
-      progress: {
-        completedWords: 0,
-        totalWords: 1,
-        retentionAverage: 0,
-        details: [],
-      },
-    });
+    };
+    mockApi.gomemo.getPlan.mockResolvedValueOnce(initialPlan);
     await act(async () => {
       await useGomemoStore.getState().loadPlan();
     });
@@ -122,6 +123,85 @@ describe("gomemo store", () => {
         },
         {},
       );
+    });
+
+    expect(useGomemoStore.getState().plan?.progress.completedWords).toBe(1);
+  });
+
+  /**
+   * 验证缓存期内重复调用不会再次触发远端请求，强制刷新可绕过缓存。
+   */
+  test("loadPlan uses freshness window", async () => {
+    const plan = createPlanPayload();
+    mockApi.gomemo.getPlan.mockResolvedValue(plan);
+
+    await act(async () => {
+      await useGomemoStore.getState().loadPlan();
+    });
+
+    expect(mockApi.gomemo.getPlan).toHaveBeenCalledTimes(1);
+
+    mockApi.gomemo.getPlan.mockClear();
+
+    await act(async () => {
+      await useGomemoStore.getState().loadPlan();
+    });
+
+    expect(mockApi.gomemo.getPlan).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await useGomemoStore.getState().loadPlan({ force: true });
+    });
+
+    expect(mockApi.gomemo.getPlan).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 验证并发触发加载时会复用同一个请求承诺，避免重复请求。
+   */
+  test("loadPlan dedupes concurrent invocations", async () => {
+    const deferred = createDeferred();
+    const plan = createPlanPayload();
+    mockApi.gomemo.getPlan.mockReturnValueOnce(deferred.promise);
+
+    await act(async () => {
+      const first = useGomemoStore.getState().loadPlan();
+      const second = useGomemoStore.getState().loadPlan();
+      expect(mockApi.gomemo.getPlan).toHaveBeenCalledTimes(1);
+      deferred.resolve(plan);
+      await Promise.all([first, second]);
+    });
+
+    expect(useGomemoStore.getState().plan?.sessionId).toBe(plan.sessionId);
+  });
+
+  /**
+   * 验证进度刷新在并发场景下只会发起单个网络请求。
+   */
+  test("syncProgress collapses parallel refresh", async () => {
+    const plan = createPlanPayload();
+    mockApi.gomemo.getPlan.mockResolvedValueOnce(plan);
+    await act(async () => {
+      await useGomemoStore.getState().loadPlan();
+    });
+
+    mockApi.gomemo.getPlan.mockClear();
+    const deferred = createDeferred();
+    mockApi.gomemo.getPlan.mockReturnValueOnce(deferred.promise);
+
+    await act(async () => {
+      const first = useGomemoStore.getState().syncProgress();
+      const second = useGomemoStore.getState().syncProgress();
+      expect(mockApi.gomemo.getPlan).toHaveBeenCalledTimes(1);
+      deferred.resolve({
+        progress: {
+          completedWords: 1,
+          totalWords: 1,
+          retentionAverage: 95,
+          details: [],
+        },
+      });
+      await Promise.all([first, second]);
     });
 
     expect(useGomemoStore.getState().plan?.progress.completedWords).toBe(1);

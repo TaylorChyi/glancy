@@ -126,6 +126,10 @@ function Gomemo() {
     }
   }, [plan, loading, loadPlan, token]);
 
+  const handleRefreshPlan = useCallback(() => {
+    loadPlan({ token, force: true });
+  }, [loadPlan, token]);
+
   const activeWord = plan?.words?.[activeWordIndex] ?? null;
   const activeLookupConfig = useMemo(
     () => resolveLookupConfig(activeWord),
@@ -371,7 +375,7 @@ function Gomemo() {
           <Button
             className={styles["primary-action"]}
             disabled={loading}
-            onClick={() => loadPlan({ token })}
+            onClick={handleRefreshPlan}
           >
             {loading ? (t.loading ?? "加载中") : t.gomemoCtaAction}
           </Button>
@@ -388,7 +392,7 @@ function Gomemo() {
             <Button
               className={styles["primary-action"]}
               disabled={loading}
-              onClick={() => loadPlan({ token })}
+              onClick={handleRefreshPlan}
             >
               {loading ? (t.loading ?? "加载中") : t.gomemoCtaAction}
             </Button>
