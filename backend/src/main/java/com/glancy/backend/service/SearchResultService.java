@@ -85,7 +85,8 @@ public class SearchResultService {
 
         SearchResultVersion saved = searchResultVersionRepository.save(version);
         log.info(
-            "Persisted search result version {} for record {} (term='{}', language={}, flavor={}, model={}, versionNumber={})",
+            "Persisted search result version {} for record {} " 
+            + "(term='{}', language={}, flavor={}, model={}, versionNumber={})",
             saved.getId(),
             recordId,
             saved.getTerm(),
@@ -155,10 +156,8 @@ public class SearchResultService {
             return Map.of();
         }
 
-        List<SearchResultVersion> versions =
-            searchResultVersionRepository.findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(
-                grouped.keySet()
-            );
+        List<SearchResultVersion> versions = searchResultVersionRepository
+            .findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(grouped.keySet());
 
         for (SearchResultVersion version : versions) {
             Long searchRecordId = version.getSearchRecord().getId();

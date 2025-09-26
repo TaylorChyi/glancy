@@ -10,7 +10,6 @@ import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
-import com.glancy.backend.service.SearchResultService;
 import com.glancy.backend.service.support.SearchRecordViewAssembler;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -213,7 +212,8 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, "
+            + "favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
             response.id(),
             response.userId(),
             response.term(),
