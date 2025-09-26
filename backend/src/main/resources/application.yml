@@ -62,46 +62,6 @@ llm:
     ENGLISH:
       MONOLINGUAL_ENGLISH: prompts/english_to_english.txt
 
-gomemo:
-  default-daily-target: 12
-  search-history-window: 80
-  plan-oversampling-factor: 2
-  completion-retention-threshold: 70
-  scoring:
-    base-score: 2
-    recency-weight: 6
-    favorite-bonus: 12
-    interest-weight: 5
-    goal-weight: 4
-    future-plan-weight: 4
-    frequency-weight: 3
-    age-length-penalty: 1
-  review:
-    prompt-path: prompts/gomemo_review.txt
-    temperature: 0.55
-    client: doubao
-  mode-catalog:
-    CARD:
-      title: "沉浸式卡片"
-      description: "图文助记并行，帮助快速建立记忆框架。"
-      focus: "先回顾释义，再口述自己的理解。"
-    MULTIPLE_CHOICE:
-      title: "智适应选择题"
-      description: "围绕同义、反义词动态生成干扰项。"
-      focus: "分析每个选项与语境的差异。"
-    SPELLING:
-      title: "精准拼写"
-      description: "拆分音节与重音，引导形成肌肉记忆。"
-      focus: "用手写或键入逐字拼写，复盘错误位置。"
-    VISUAL_ASSOCIATION:
-      title: "图像联想"
-      description: "结合兴趣与目标场景挑选视觉锚点。"
-      focus: "为单词匹配一个与你目标最贴近的画面。"
-    LISTENING:
-      title: "沉浸听力"
-      description: "高保真音频与跟读反馈同步呈现。"
-      focus: "循环跟读直至语流顺滑。"
-
 thirdparty:
   doubao:
     base-url: https://ark.cn-beijing.volces.com

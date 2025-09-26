@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
 import { useUser } from "@/context";
-import GomemoEntry from "./GomemoEntry.jsx";
 import Favorites from "./Favorites.jsx";
 import styles from "./Sidebar.module.css";
 
@@ -10,7 +9,6 @@ function SidebarQuickActions({ onToggleFavorites }) {
 
   return (
     <div className={styles["sidebar-quick-actions"]}>
-      <GomemoEntry />
       {showFavorites ? <Favorites onToggle={onToggleFavorites} /> : null}
     </div>
   );
