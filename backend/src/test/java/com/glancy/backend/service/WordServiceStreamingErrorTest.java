@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.WordResponseParser;
@@ -92,11 +93,12 @@ class WordServiceStreamingErrorTest {
     @Test
     void wrapsExceptionFromSearcher() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse());
-        when(wordSearcher.streamSearch(any(), any(), any(), any())).thenThrow(new RuntimeException("boom"));
+        when(wordSearcher.streamSearch(any(), any(), any(), any(), any())).thenThrow(new RuntimeException("boom"));
         Flux<WordService.StreamPayload> result = wordService.streamWordForUser(
             1L,
             "hello",
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             null,
             false
         );
@@ -111,6 +113,7 @@ class WordServiceStreamingErrorTest {
             1L,
             "hello",
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             LocalDateTime.now(),
             Boolean.FALSE,
             null,

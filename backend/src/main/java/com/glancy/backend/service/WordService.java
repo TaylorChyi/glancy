@@ -7,6 +7,7 @@ import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryModel;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.UserPreference;
@@ -66,14 +67,16 @@ public class WordService {
         Long userId,
         String term,
         Language language,
+        DictionaryFlavor flavor,
         String model,
         SearchRecordResponse record,
         WordPersonalizationContext personalizationContext
     ) {
         log.info("Word '{}' not found locally or forceNew requested, searching via LLM model {}", term, model);
-        WordResponse resp = wordSearcher.search(term, language, model, personalizationContext);
+        WordResponse resp = wordSearcher.search(term, language, flavor, model, personalizationContext);
+        resp.setFlavor(flavor);
         log.info("LLM search result: {}", resp);
-        Word savedWord = saveWord(term, resp, language);
+        Word savedWord = saveWord(term, resp, language, flavor);
         String content = resp.getMarkdown();
         if (content == null) {
             try {
@@ -83,7 +86,7 @@ public class WordService {
                 content = SensitiveDataUtil.previewText(savedWord.getMarkdown());
             }
         }
-        SearchResultVersion version = persistVersion(record.id(), userId, model, content, savedWord);
+        SearchResultVersion version = persistVersion(record.id(), userId, model, content, savedWord, flavor);
         if (version != null) {
             resp.setVersionId(version.getId());
         }
@@ -101,19 +104,25 @@ public class WordService {
             return Mono.empty();
         }
         try {
-            ParsedWord parsed = parser.parse(completion.sanitizedContent(), session.term(), session.language());
+            ParsedWord parsed = parser.parse(
+                completion.sanitizedContent(),
+                session.term(),
+                session.language()
+            );
             WordResponse response = applyPersonalization(
                 session.userId(),
                 parsed.parsed(),
                 session.personalizationContext()
             );
-            Word savedWord = saveWord(session.term(), response, session.language());
+            response.setFlavor(session.flavor());
+            Word savedWord = saveWord(session.term(), response, session.language(), session.flavor());
             SearchResultVersion version = persistVersion(
                 session.recordId(),
                 session.userId(),
                 session.model(),
                 parsed.markdown(),
-                savedWord
+                savedWord,
+                session.flavor()
             );
             if (version == null) {
                 return Mono.empty();
@@ -125,7 +134,14 @@ public class WordService {
         }
     }
 
-    private SearchResultVersion persistVersion(Long recordId, Long userId, String model, String content, Word word) {
+    private SearchResultVersion persistVersion(
+        Long recordId,
+        Long userId,
+        String model,
+        String content,
+        Word word,
+        DictionaryFlavor flavor
+    ) {
         if (recordId == null) {
             log.warn("Skipping version persistence because search record is unavailable");
             return null;
@@ -137,7 +153,8 @@ public class WordService {
             word.getLanguage(),
             model,
             content,
-            word
+            word,
+            flavor
         );
     }
 
@@ -152,27 +169,60 @@ public class WordService {
     }
 
     @Transactional
-    public WordResponse findWordForUser(Long userId, String term, Language language, String model, boolean forceNew) {
+    public WordResponse findWordForUser(
+        Long userId,
+        String term,
+        Language language,
+        DictionaryFlavor flavor,
+        String model,
+        boolean forceNew
+    ) {
         DictionaryModel preferredModel = resolvePreferredModel(userId);
         String resolvedModel = resolveModelName(model, preferredModel);
-        log.info("Finding word '{}' for user {} in language {} using model {}", term, userId, language, resolvedModel);
+        log.info(
+            "Finding word '{}' for user {} in language {} flavor {} using model {}",
+            term,
+            userId,
+            language,
+            flavor,
+            resolvedModel
+        );
         WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
+        req.setFlavor(flavor);
         SearchRecordResponse record = searchRecordService.saveRecord(userId, req);
         if (!forceNew) {
             return wordRepository
-                .findByTermAndLanguageAndDeletedFalse(term, language)
+                .findByTermAndLanguageAndFlavorAndDeletedFalse(term, language, flavor)
                 .map(word -> {
                     log.info("Found word '{}' in local repository", term);
-                    return applyPersonalization(userId, toResponse(word), personalizationContext);
+                    WordResponse response = toResponse(word);
+                    response.setFlavor(flavor);
+                    return applyPersonalization(userId, response, personalizationContext);
                 })
                 .orElseGet(() ->
-                    fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext)
+                    fetchAndPersistWord(
+                        userId,
+                        term,
+                        language,
+                        flavor,
+                        resolvedModel,
+                        record,
+                        personalizationContext
+                    )
                 );
         }
-        return fetchAndPersistWord(userId, term, language, resolvedModel, record, personalizationContext);
+        return fetchAndPersistWord(
+            userId,
+            term,
+            language,
+            flavor,
+            resolvedModel,
+            record,
+            personalizationContext
+        );
     }
 
     /**
@@ -183,22 +233,25 @@ public class WordService {
         Long userId,
         String term,
         Language language,
+        DictionaryFlavor flavor,
         String model,
         boolean forceNew
     ) {
         DictionaryModel preferredModel = resolvePreferredModel(userId);
         String resolvedModel = resolveModelName(model, preferredModel);
         log.info(
-            "Streaming word '{}' for user {} in language {} using model {}",
+            "Streaming word '{}' for user {} in language {} flavor {} using model {}",
             term,
             userId,
             language,
+            flavor,
             resolvedModel
         );
         WordPersonalizationContext personalizationContext = wordPersonalizationService.resolveContext(userId);
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm(term);
         req.setLanguage(language);
+        req.setFlavor(flavor);
         SearchRecordResponse record;
         try {
             record = searchRecordService.saveRecord(userId, req);
@@ -209,7 +262,7 @@ public class WordService {
         }
 
         if (!forceNew) {
-            var existing = wordRepository.findByTermAndLanguageAndDeletedFalse(term, language);
+            var existing = wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(term, language, flavor);
             if (existing.isPresent()) {
                 log.info("Found cached word '{}' in language {}", term, language);
                 try {
@@ -231,12 +284,13 @@ public class WordService {
             record.id(),
             term,
             language,
+            flavor,
             resolvedModel,
             personalizationContext
         );
         Flux<String> stream;
         try {
-            stream = wordSearcher.streamSearch(term, language, resolvedModel, personalizationContext);
+            stream = wordSearcher.streamSearch(term, language, flavor, resolvedModel, personalizationContext);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
             String msg = "Failed to initiate streaming search: " + e.getMessage();
@@ -299,6 +353,7 @@ public class WordService {
         private final Long recordId;
         private final String term;
         private final Language language;
+        private final DictionaryFlavor flavor;
         private final String model;
         private final WordPersonalizationContext personalizationContext;
         private final Instant startedAt = Instant.now();
@@ -313,6 +368,7 @@ public class WordService {
             Long recordId,
             String term,
             Language language,
+            DictionaryFlavor flavor,
             String model,
             WordPersonalizationContext personalizationContext
         ) {
@@ -320,8 +376,13 @@ public class WordService {
             this.recordId = recordId;
             this.term = term;
             this.language = language;
+            this.flavor = flavor;
             this.model = model;
             this.personalizationContext = personalizationContext;
+        }
+
+        DictionaryFlavor flavor() {
+            return flavor;
         }
 
         void append(String chunk) {
@@ -408,12 +469,17 @@ public class WordService {
         return mapper.writeValueAsString(response);
     }
 
-    private Word saveWord(String requestedTerm, WordResponse resp, Language language) {
+    private Word saveWord(String requestedTerm, WordResponse resp, Language language, DictionaryFlavor flavor) {
         String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
-        Word word = wordRepository.findByTermAndLanguageAndDeletedFalse(term, lang).orElseGet(Word::new);
+        DictionaryFlavor resolvedFlavor = resp.getFlavor() != null ? resp.getFlavor() : flavor;
+        Word word =
+            wordRepository
+                .findByTermAndLanguageAndFlavorAndDeletedFalse(term, lang, resolvedFlavor)
+                .orElseGet(Word::new);
         word.setTerm(term);
         word.setLanguage(lang);
+        word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
         word.setDefinitions(resp.getDefinitions());
         word.setVariations(resp.getVariations());
@@ -423,12 +489,13 @@ public class WordService {
         word.setPhrases(resp.getPhrases());
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
-        log.info("Persisting word '{}' with language {}", term, lang);
+        log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
         Word saved = wordRepository.save(word);
         resp.setId(String.valueOf(saved.getId()));
         resp.setLanguage(lang);
         resp.setTerm(term);
         resp.setMarkdown(word.getMarkdown());
+        resp.setFlavor(resolvedFlavor);
         return saved;
     }
 
@@ -447,7 +514,8 @@ public class WordService {
             word.getPhrases(),
             word.getMarkdown(),
             null,
-            null
+            null,
+            word.getFlavor()
         );
     }
 

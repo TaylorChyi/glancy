@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.glancy.backend.config.GomemoProperties;
 import com.glancy.backend.entity.GomemoSession;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.Word;
@@ -71,15 +72,29 @@ class GomemoWordPrioritizerTest {
         Word innovationWord = new Word();
         innovationWord.setTerm("innovation");
         innovationWord.setLanguage(Language.ENGLISH);
+        innovationWord.setFlavor(DictionaryFlavor.BILINGUAL);
         innovationWord.setDefinitions(List.of("business innovation in design"));
         Word strategyWord = new Word();
         strategyWord.setTerm("strategy");
         strategyWord.setLanguage(Language.ENGLISH);
+        strategyWord.setFlavor(DictionaryFlavor.BILINGUAL);
         strategyWord.setDefinitions(List.of("long-term corporate planning"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("innovation", Language.ENGLISH)).thenReturn(
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "innovation",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(
             java.util.Optional.of(innovationWord)
         );
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("strategy", Language.ENGLISH)).thenReturn(
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "strategy",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(
             java.util.Optional.of(strategyWord)
         );
         when(wordRepository.findAll(any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));

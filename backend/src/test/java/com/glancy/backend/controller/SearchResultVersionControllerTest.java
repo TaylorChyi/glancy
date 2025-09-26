@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
@@ -56,7 +57,8 @@ class SearchResultVersionControllerTest {
             2,
             LocalDateTime.now(),
             "model-x",
-            "sample"
+            "sample",
+            DictionaryFlavor.BILINGUAL
         );
         when(searchResultService.listVersionSummaries(eq(1L), eq(10L))).thenReturn(List.of(summary));
 
@@ -84,6 +86,7 @@ class SearchResultVersionControllerTest {
         version.setUser(user);
         version.setTerm("term");
         version.setLanguage(Language.ENGLISH);
+        version.setFlavor(DictionaryFlavor.BILINGUAL);
         version.setModel("model-y");
         version.setVersionNumber(3);
         version.setContent("full content");

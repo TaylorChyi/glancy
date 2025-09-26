@@ -1,5 +1,6 @@
 package com.glancy.backend.dto;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,4 +17,6 @@ public class SearchRecordRequest {
 
     @NotNull(message = "{validation.searchRecord.language.notnull}")
     private Language language;
+
+    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
 }

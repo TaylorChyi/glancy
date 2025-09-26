@@ -3,6 +3,7 @@ package com.glancy.backend.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.Word;
@@ -77,7 +78,14 @@ class WordServiceTest {
      */
     @Test
     void testFetchAndCacheWord() {
-        WordResponse result = wordService.findWordForUser(userId, "hello", Language.ENGLISH, null, false);
+        WordResponse result = wordService.findWordForUser(
+            userId,
+            "hello",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         assertNotNull(result.getId());
         assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
@@ -91,11 +99,19 @@ class WordServiceTest {
         Word word = new Word();
         word.setTerm("cached");
         word.setLanguage(Language.ENGLISH);
+        word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(List.of("store"));
         word.setMarkdown("md");
         wordRepository.save(word);
 
-        WordResponse result = wordService.findWordForUser(userId, "cached", Language.ENGLISH, null, false);
+        WordResponse result = wordService.findWordForUser(
+            userId,
+            "cached",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         assertEquals(String.valueOf(word.getId()), result.getId());
         assertEquals("md", result.getMarkdown());
@@ -106,10 +122,25 @@ class WordServiceTest {
      */
     @Test
     void testCacheWordWhenLanguageMissing() {
-        WordResponse result = wordService.findWordForUser(userId, "bye", Language.ENGLISH, null, false);
+        WordResponse result = wordService.findWordForUser(
+            userId,
+            "bye",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         assertEquals(Language.ENGLISH, result.getLanguage());
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("bye", Language.ENGLISH).isPresent());
+        assertTrue(
+            wordRepository
+                .findByTermAndLanguageAndFlavorAndDeletedFalse(
+                    "bye",
+                    Language.ENGLISH,
+                    DictionaryFlavor.BILINGUAL
+                )
+                .isPresent()
+        );
     }
 
     /**
@@ -120,17 +151,35 @@ class WordServiceTest {
         Word wordEn = new Word();
         wordEn.setTerm("hello");
         wordEn.setLanguage(Language.ENGLISH);
+        wordEn.setFlavor(DictionaryFlavor.BILINGUAL);
         wordEn.setDefinitions(List.of("greet"));
         wordRepository.save(wordEn);
 
         Word wordZh = new Word();
         wordZh.setTerm("hello");
         wordZh.setLanguage(Language.CHINESE);
+        wordZh.setFlavor(DictionaryFlavor.BILINGUAL);
         wordZh.setDefinitions(List.of("\u4f60\u597d"));
 
         assertDoesNotThrow(() -> wordRepository.save(wordZh));
 
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.ENGLISH).isPresent());
-        assertTrue(wordRepository.findByTermAndLanguageAndDeletedFalse("hello", Language.CHINESE).isPresent());
+        assertTrue(
+            wordRepository
+                .findByTermAndLanguageAndFlavorAndDeletedFalse(
+                    "hello",
+                    Language.ENGLISH,
+                    DictionaryFlavor.BILINGUAL
+                )
+                .isPresent()
+        );
+        assertTrue(
+            wordRepository
+                .findByTermAndLanguageAndFlavorAndDeletedFalse(
+                    "hello",
+                    Language.CHINESE,
+                    DictionaryFlavor.BILINGUAL
+                )
+                .isPresent()
+        );
     }
 }

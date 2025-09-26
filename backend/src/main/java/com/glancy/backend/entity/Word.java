@@ -11,7 +11,10 @@ import lombok.NoArgsConstructor;
  * Dictionary word entry cached from the external service.
  */
 @Entity
-@Table(name = "words", uniqueConstraints = @UniqueConstraint(columnNames = { "term", "language" }))
+@Table(
+    name = "words",
+    uniqueConstraints = @UniqueConstraint(columnNames = { "term", "language", "flavor" })
+)
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
@@ -53,6 +56,10 @@ public class Word extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private Language language;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
 
     @Column(length = 100)
     private String phonetic;

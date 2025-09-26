@@ -26,6 +26,7 @@ final class TestEntityFactory {
         record.setUser(user);
         record.setTerm(term);
         record.setLanguage(language);
+        record.setFlavor(DictionaryFlavor.BILINGUAL);
         record.setCreatedAt(createdAt);
         return record;
     }
@@ -34,6 +35,7 @@ final class TestEntityFactory {
         Word word = new Word();
         word.setTerm(term);
         word.setLanguage(language);
+        word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(Collections.singletonList("def"));
         return word;
     }

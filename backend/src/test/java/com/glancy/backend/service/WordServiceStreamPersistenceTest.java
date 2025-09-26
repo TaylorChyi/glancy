@@ -7,6 +7,7 @@ import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
@@ -91,16 +92,22 @@ class WordServiceStreamPersistenceTest {
         word.setId(1L);
         word.setTerm("cached");
         word.setLanguage(Language.ENGLISH);
+        word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(List.of("def"));
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("cached"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("cached", Language.ENGLISH)).thenReturn(
-            Optional.of(word)
-        );
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "cached",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(Optional.of(word));
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "cached",
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             null,
             false
         );
@@ -108,7 +115,7 @@ class WordServiceStreamPersistenceTest {
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("cached") && payload.event() == null)
             .verifyComplete();
-        verify(wordSearcher, never()).streamSearch(any(), any(), any(), any());
+        verify(wordSearcher, never()).streamSearch(any(), any(), any(), any(), any());
         verify(searchRecordService).saveRecord(eq(1L), any());
     }
 
@@ -116,8 +123,22 @@ class WordServiceStreamPersistenceTest {
     @Test
     void savesAfterStreaming() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq("doubao"), any())).thenReturn(
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "hi",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(Optional.empty());
+        when(
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq("doubao"),
+                any()
+            )
+        ).thenReturn(
             Flux.just("{\"term\":\"hi\"}", "<END>")
         );
         WordResponse resp = new WordResponse(
@@ -134,7 +155,8 @@ class WordServiceStreamPersistenceTest {
             List.of(),
             "{\"term\":\"hi\"}",
             null,
-            null
+            null,
+            DictionaryFlavor.BILINGUAL
         );
         when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(
             new ParsedWord(resp, "{\"term\":\"hi\"}")
@@ -154,11 +176,19 @@ class WordServiceStreamPersistenceTest {
                 any(Language.class),
                 anyString(),
                 anyString(),
-                any(Word.class)
+                any(Word.class),
+                any(DictionaryFlavor.class)
             )
         ).thenReturn(version);
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null, false);
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "hi",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("hi") && payload.event() == null)
@@ -173,7 +203,8 @@ class WordServiceStreamPersistenceTest {
             any(Language.class),
             anyString(),
             anyString(),
-            any(Word.class)
+            any(Word.class),
+            any(DictionaryFlavor.class)
         );
     }
 
@@ -181,12 +212,33 @@ class WordServiceStreamPersistenceTest {
     @Test
     void skipPersistenceWhenSentinelMissing() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq("doubao"), any())).thenReturn(
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "hi",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(Optional.empty());
+        when(
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq("doubao"),
+                any()
+            )
+        ).thenReturn(
             Flux.just("{\"term\":\"hi\"}")
         );
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null, false);
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "hi",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("hi") && payload.event() == null)
@@ -208,12 +260,33 @@ class WordServiceStreamPersistenceTest {
     @Test
     void doesNotSaveOnError() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(wordRepository.findByTermAndLanguageAndDeletedFalse("hi", Language.ENGLISH)).thenReturn(Optional.empty());
-        when(wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), any(), any())).thenReturn(
+        when(
+            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+                "hi",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            )
+        ).thenReturn(Optional.empty());
+        when(
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                any(),
+                any()
+            )
+        ).thenReturn(
             Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom")))
         );
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(1L, "hi", Language.ENGLISH, null, false);
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "hi",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false
+        );
 
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().equals("part") && payload.event() == null)
@@ -228,7 +301,8 @@ class WordServiceStreamPersistenceTest {
             any(Language.class),
             anyString(),
             anyString(),
-            any(Word.class)
+            any(Word.class),
+            any(DictionaryFlavor.class)
         );
     }
 
@@ -238,6 +312,7 @@ class WordServiceStreamPersistenceTest {
             1L,
             term,
             Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
             LocalDateTime.now(),
             Boolean.FALSE,
             null,

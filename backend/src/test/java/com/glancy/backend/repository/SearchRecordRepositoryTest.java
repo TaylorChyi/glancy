@@ -2,6 +2,7 @@ package com.glancy.backend.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
@@ -56,10 +57,11 @@ class SearchRecordRepositoryTest {
         assertEquals(2, count);
 
         assertTrue(
-            searchRecordRepository.existsByUserIdAndTermAndLanguageAndDeletedFalse(
+            searchRecordRepository.existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
                 user.getId(),
                 "term1",
-                Language.ENGLISH
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
             )
         );
 
@@ -70,11 +72,13 @@ class SearchRecordRepositoryTest {
             LocalDateTime.now().plusMinutes(1)
         );
         searchRecordRepository.save(r3);
-        SearchRecord top = searchRecordRepository.findTopByUserIdAndTermAndLanguageAndDeletedFalseOrderByCreatedAtDesc(
-            user.getId(),
-            "term1",
-            Language.ENGLISH
-        );
+        SearchRecord top =
+            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+                user.getId(),
+                "term1",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL
+            );
         assertEquals(r3.getId(), top.getId());
 
         assertTrue(searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent());
