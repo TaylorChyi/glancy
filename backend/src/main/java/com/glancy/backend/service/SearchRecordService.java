@@ -212,8 +212,8 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, "
-            + "favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, " +
+            "favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
             response.id(),
             response.userId(),
             response.term(),
