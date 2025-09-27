@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { useApi } from "@/hooks/useApi.js";
 import { useLanguage } from "@/context";
 import { useUserStore, useVoiceStore } from "@/store";
@@ -9,7 +10,7 @@ import styles from "./VoiceSelector.module.css";
  * Dropdown for selecting available voices for a given language.
  * Voices requiring Pro plan are disabled for non-pro users.
  */
-export default function VoiceSelector({ lang }) {
+export default function VoiceSelector({ lang, id, className = "", ...props }) {
   const api = useApi();
   const { t } = useLanguage();
   const user = useUserStore((s) => s.user);
@@ -54,11 +55,17 @@ export default function VoiceSelector({ lang }) {
     (user?.plan && user.plan !== "free")
   );
 
+  const composedClassName = [fieldStyles.select, styles.select, className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <select
-      className={[fieldStyles.select, styles.select].join(" ")}
+      id={id}
+      className={composedClassName}
       value={selected || ""}
       onChange={(e) => setVoice(lang, e.target.value)}
+      {...props}
     >
       {voices.map((v) => {
         const disabled = v.plan === "pro" && !isPro;
@@ -77,3 +84,14 @@ export default function VoiceSelector({ lang }) {
     </select>
   );
 }
+
+VoiceSelector.propTypes = {
+  lang: PropTypes.string.isRequired,
+  id: PropTypes.string,
+  className: PropTypes.string,
+};
+
+VoiceSelector.defaultProps = {
+  id: undefined,
+  className: "",
+};
