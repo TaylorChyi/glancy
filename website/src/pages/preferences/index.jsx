@@ -181,6 +181,16 @@ function Preferences({
   }, [lang]);
 
   const tabLabelMap = useMemo(() => buildTabLabelMap(t), [t]);
+  const tabDescriptionMap = useMemo(
+    () => ({
+      [TAB_KEYS.GENERAL]: t.settingsGeneralDescription || "",
+      [TAB_KEYS.PERSONALIZATION]: t.settingsPersonalizationDescription || "",
+      [TAB_KEYS.KEYBOARD]: t.settingsKeyboardDescription || "",
+      [TAB_KEYS.DATA]: t.settingsDataDescription || "",
+      [TAB_KEYS.ACCOUNT]: t.settingsAccountDescription || "",
+    }),
+    [t],
+  );
 
   const formatLanguageLabel = useCallback(
     (code) => {
@@ -418,99 +428,130 @@ function Preferences({
     setActiveTab(resolveInitialTab(tab));
   }, []);
 
-  const renderGeneralPanel = () => (
-    <section
-      className={styles["panel-card"]}
-      aria-labelledby="settings-general"
-    >
-      <header className={styles["panel-header"]}>
-        <div className={styles["panel-title-group"]}>
-          <ThemeIcon
-            name={TAB_ICONS[TAB_KEYS.GENERAL]}
-            width={18}
-            height={18}
-            className={styles["panel-icon"]}
-          />
-          <h3 id="settings-general" className={styles["panel-title"]}>
-            {tabLabelMap[TAB_KEYS.GENERAL]}
-          </h3>
+  const renderGeneralPanel = () => {
+    const defaultsTitle = t.prefDefaultsTitle || tabLabelMap[TAB_KEYS.GENERAL];
+    const defaultsDescription =
+      t.prefDefaultsDescription || tabDescriptionMap[TAB_KEYS.GENERAL];
+    const voicesTitle = t.prefVoicesTitle || t.prefVoiceEn;
+    const voicesDescription =
+      t.prefVoicesDescription || tabDescriptionMap[TAB_KEYS.GENERAL];
+
+    return (
+      <section
+        id={`settings-panel-${TAB_KEYS.GENERAL}`}
+        className={styles["panel-card"]}
+        aria-labelledby="settings-general"
+      >
+        <header className={styles["panel-header"]}>
+          <div className={styles["panel-title-group"]}>
+            <ThemeIcon
+              name={TAB_ICONS[TAB_KEYS.GENERAL]}
+              width={18}
+              height={18}
+              className={styles["panel-icon"]}
+            />
+            <h3 id="settings-general" className={styles["panel-title"]}>
+              {tabLabelMap[TAB_KEYS.GENERAL]}
+            </h3>
+          </div>
+          <p className={styles["panel-description"]}>
+            {tabDescriptionMap[TAB_KEYS.GENERAL]}
+          </p>
+        </header>
+        <div className={styles["panel-body"]}>
+          <div className={styles["panel-callout"]}>
+            <span className={styles["callout-eyebrow"]}>{defaultsTitle}</span>
+            <p className={styles["callout-description"]}>
+              {defaultsDescription}
+            </p>
+          </div>
+          <div className={styles["setting-grid"]}>
+            <div className={styles["setting-row"]}>
+              <label htmlFor="pref-theme" className={styles["setting-label"]}>
+                {t.prefTheme}
+              </label>
+              <SelectField
+                id="pref-theme"
+                value={theme}
+                onChange={setTheme}
+                options={themeOptions}
+              />
+            </div>
+            <div className={styles["setting-row"]}>
+              <label
+                htmlFor="pref-system-language"
+                className={styles["setting-label"]}
+              >
+                {t.prefSystemLanguage}
+              </label>
+              <SelectField
+                id="pref-system-language"
+                value={systemLanguage}
+                onChange={handleSystemLanguageChange}
+                options={systemLanguageOptions}
+              />
+            </div>
+            <div className={styles["setting-row"]}>
+              <label
+                htmlFor="pref-source-language"
+                className={styles["setting-label"]}
+              >
+                {t.prefLanguage}
+              </label>
+              <SelectField
+                id="pref-source-language"
+                value={sourceLang}
+                onChange={handleSourceLanguageChange}
+                options={languageOptions}
+              />
+            </div>
+            <div className={styles["setting-row"]}>
+              <label
+                htmlFor="pref-target-language"
+                className={styles["setting-label"]}
+              >
+                {t.prefSearchLanguage}
+              </label>
+              <SelectField
+                id="pref-target-language"
+                value={targetLang}
+                onChange={handleTargetLanguageChange}
+                options={searchLanguageOptions}
+              />
+            </div>
+          </div>
+          <div className={styles["panel-callout"]}>
+            <span className={styles["callout-eyebrow"]}>{voicesTitle}</span>
+            <p className={styles["callout-description"]}>{voicesDescription}</p>
+          </div>
+          <div className={styles["setting-grid"]}>
+            <div className={styles["setting-row"]}>
+              <label
+                htmlFor="pref-voice-en"
+                className={styles["setting-label"]}
+              >
+                {t.prefVoiceEn}
+              </label>
+              <VoiceSelector lang="en" id="pref-voice-en" />
+            </div>
+            <div className={styles["setting-row"]}>
+              <label
+                htmlFor="pref-voice-zh"
+                className={styles["setting-label"]}
+              >
+                {t.prefVoiceZh}
+              </label>
+              <VoiceSelector lang="zh" id="pref-voice-zh" />
+            </div>
+          </div>
         </div>
-        <p className={styles["panel-description"]}>
-          {t.settingsGeneralDescription || ""}
-        </p>
-      </header>
-      <div className={styles["setting-list"]}>
-        <div className={styles["setting-row"]}>
-          <label htmlFor="pref-theme" className={styles["setting-label"]}>
-            {t.prefTheme}
-          </label>
-          <SelectField
-            id="pref-theme"
-            value={theme}
-            onChange={setTheme}
-            options={themeOptions}
-          />
-        </div>
-        <div className={styles["setting-row"]}>
-          <label
-            htmlFor="pref-system-language"
-            className={styles["setting-label"]}
-          >
-            {t.prefSystemLanguage}
-          </label>
-          <SelectField
-            id="pref-system-language"
-            value={systemLanguage}
-            onChange={handleSystemLanguageChange}
-            options={systemLanguageOptions}
-          />
-        </div>
-        <div className={styles["setting-row"]}>
-          <label
-            htmlFor="pref-source-language"
-            className={styles["setting-label"]}
-          >
-            {t.prefLanguage}
-          </label>
-          <SelectField
-            id="pref-source-language"
-            value={sourceLang}
-            onChange={handleSourceLanguageChange}
-            options={languageOptions}
-          />
-        </div>
-        <div className={styles["setting-row"]}>
-          <label
-            htmlFor="pref-target-language"
-            className={styles["setting-label"]}
-          >
-            {t.prefSearchLanguage}
-          </label>
-          <SelectField
-            id="pref-target-language"
-            value={targetLang}
-            onChange={handleTargetLanguageChange}
-            options={searchLanguageOptions}
-          />
-        </div>
-        <div className={styles["setting-row"]}>
-          <label htmlFor="pref-voice-en" className={styles["setting-label"]}>
-            {t.prefVoiceEn}
-          </label>
-          <VoiceSelector lang="en" id="pref-voice-en" />
-        </div>
-        <div className={styles["setting-row"]}>
-          <label htmlFor="pref-voice-zh" className={styles["setting-label"]}>
-            {t.prefVoiceZh}
-          </label>
-          <VoiceSelector lang="zh" id="pref-voice-zh" />
-        </div>
-      </div>
-    </section>
-  );
+      </section>
+    );
+  };
 
   const renderPersonalizationPanel = () => (
     <section
+      id={`settings-panel-${TAB_KEYS.PERSONALIZATION}`}
       className={styles["panel-card"]}
       aria-labelledby="settings-personalization"
     >
@@ -527,79 +568,84 @@ function Preferences({
           </h3>
         </div>
         <p className={styles["panel-description"]}>
-          {t.settingsPersonalizationDescription || ""}
+          {tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
         </p>
       </header>
-      <div className={styles["setting-toggle-row"]}>
-        <label
-          htmlFor="personalization-toggle"
-          className={styles["setting-label"]}
-        >
-          {t.settingsEnableCustomization || "Enable customization"}
-        </label>
-        <label className={styles.switch}>
-          <input
-            id="personalization-toggle"
-            type="checkbox"
-            checked={personalizationEnabled}
-            onChange={(event) =>
-              setPersonalizationEnabled(event.target.checked)
-            }
-          />
-          <span aria-hidden="true" />
-        </label>
-      </div>
-      <div className={styles["field-grid"]}>
-        <label className={styles["field-item"]} htmlFor="personal-occupation">
-          <span className={styles["field-label"]}>{t.settingsOccupation}</span>
-          <input
-            id="personal-occupation"
-            type="text"
-            className={styles["field-input"]}
-            value={occupation}
-            onChange={(event) => setOccupation(event.target.value)}
-            placeholder={t.settingsOccupationPlaceholder || "e.g. Student"}
-            disabled={!personalizationEnabled}
-          />
-        </label>
-        <label className={styles["field-item"]} htmlFor="personal-about">
-          <span className={styles["field-label"]}>{t.settingsAboutYou}</span>
-          <textarea
-            id="personal-about"
-            rows={3}
-            className={styles["field-area"]}
-            value={persona}
-            onChange={(event) => setPersona(event.target.value)}
-            placeholder={
-              t.settingsAboutYouPlaceholder ||
-              "Share your expertise, interests, or context."
-            }
-            disabled={!personalizationEnabled}
-          />
-        </label>
-        <label className={styles["field-item"]} htmlFor="personal-goal">
-          <span className={styles["field-label"]}>
-            {t.settingsLearningGoal}
-          </span>
-          <textarea
-            id="personal-goal"
-            rows={3}
-            className={styles["field-area"]}
-            value={learningGoal}
-            onChange={(event) => setLearningGoal(event.target.value)}
-            placeholder={
-              t.settingsLearningGoalPlaceholder ||
-              "Tell us the outcome you're aiming for."
-            }
-            disabled={!personalizationEnabled}
-          />
-        </label>
+      <div className={styles["panel-body"]}>
+        <div className={styles["setting-toggle-row"]}>
+          <label
+            htmlFor="personalization-toggle"
+            className={styles["setting-label"]}
+          >
+            {t.settingsEnableCustomization || "Enable customization"}
+          </label>
+          <label className={styles.switch}>
+            <input
+              id="personalization-toggle"
+              type="checkbox"
+              checked={personalizationEnabled}
+              onChange={(event) =>
+                setPersonalizationEnabled(event.target.checked)
+              }
+            />
+            <span aria-hidden="true" />
+          </label>
+        </div>
+        <div className={styles["field-grid"]}>
+          <label className={styles["field-item"]} htmlFor="personal-occupation">
+            <span className={styles["field-label"]}>
+              {t.settingsOccupation}
+            </span>
+            <input
+              id="personal-occupation"
+              type="text"
+              className={styles["field-input"]}
+              value={occupation}
+              onChange={(event) => setOccupation(event.target.value)}
+              placeholder={t.settingsOccupationPlaceholder || "e.g. Student"}
+              disabled={!personalizationEnabled}
+            />
+          </label>
+          <label className={styles["field-item"]} htmlFor="personal-about">
+            <span className={styles["field-label"]}>{t.settingsAboutYou}</span>
+            <textarea
+              id="personal-about"
+              rows={3}
+              className={styles["field-area"]}
+              value={persona}
+              onChange={(event) => setPersona(event.target.value)}
+              placeholder={
+                t.settingsAboutYouPlaceholder ||
+                "Share your expertise, interests, or context."
+              }
+              disabled={!personalizationEnabled}
+            />
+          </label>
+          <label className={styles["field-item"]} htmlFor="personal-goal">
+            <span className={styles["field-label"]}>
+              {t.settingsLearningGoal}
+            </span>
+            <textarea
+              id="personal-goal"
+              rows={3}
+              className={styles["field-area"]}
+              value={learningGoal}
+              onChange={(event) => setLearningGoal(event.target.value)}
+              placeholder={
+                t.settingsLearningGoalPlaceholder ||
+                "Tell us the outcome you're aiming for."
+              }
+              disabled={!personalizationEnabled}
+            />
+          </label>
+        </div>
       </div>
     </section>
   );
 
   const renderKeyboardPanel = () => (
     <section
+      id={`settings-panel-${TAB_KEYS.KEYBOARD}`}
       className={styles["panel-card"]}
       aria-labelledby="settings-keyboard"
     >
@@ -616,24 +662,30 @@ function Preferences({
           </h3>
         </div>
         <p className={styles["panel-description"]}>
-          {t.settingsKeyboardDescription || ""}
+          {tabDescriptionMap[TAB_KEYS.KEYBOARD]}
         </p>
       </header>
-      <ul className={styles["shortcut-list"]}>
-        {KEYBOARD_SHORTCUTS.map((shortcut) => (
-          <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
-            <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
-            <span className={styles["shortcut-label"]}>
-              {t[shortcut.labelKey] || shortcut.labelKey}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className={styles["panel-body"]}>
+        <ul className={styles["shortcut-list"]}>
+          {KEYBOARD_SHORTCUTS.map((shortcut) => (
+            <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
+              <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
+              <span className={styles["shortcut-label"]}>
+                {t[shortcut.labelKey] || shortcut.labelKey}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 
   const renderDataPanel = () => (
-    <section className={styles["panel-card"]} aria-labelledby="settings-data">
+    <section
+      id={`settings-panel-${TAB_KEYS.DATA}`}
+      className={styles["panel-card"]}
+      aria-labelledby="settings-data"
+    >
       <header className={styles["panel-header"]}>
         <div className={styles["panel-title-group"]}>
           <ThemeIcon
@@ -647,18 +699,28 @@ function Preferences({
           </h3>
         </div>
         <p className={styles["panel-description"]}>
-          {t.settingsDataDescription || ""}
+          {tabDescriptionMap[TAB_KEYS.DATA]}
         </p>
       </header>
-      <div className={styles["data-card"]}>
-        <p className={styles["data-text"]}>{t.settingsDataNotice || ""}</p>
-        <div className={styles["data-actions"]}>
-          <button type="button" className={styles["secondary-button"]} disabled>
-            {t.settingsExportData}
-          </button>
-          <button type="button" className={styles["secondary-button"]} disabled>
-            {t.settingsEraseHistory}
-          </button>
+      <div className={styles["panel-body"]}>
+        <div className={styles["data-card"]}>
+          <p className={styles["data-text"]}>{t.settingsDataNotice || ""}</p>
+          <div className={styles["data-actions"]}>
+            <button
+              type="button"
+              className={styles["secondary-button"]}
+              disabled
+            >
+              {t.settingsExportData}
+            </button>
+            <button
+              type="button"
+              className={styles["secondary-button"]}
+              disabled
+            >
+              {t.settingsEraseHistory}
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -671,6 +733,7 @@ function Preferences({
       : "";
     return (
       <section
+        id={`settings-panel-${TAB_KEYS.ACCOUNT}`}
         className={styles["panel-card"]}
         aria-labelledby="settings-account"
       >
@@ -687,49 +750,51 @@ function Preferences({
             </h3>
           </div>
           <p className={styles["panel-description"]}>
-            {t.settingsAccountDescription || ""}
+            {tabDescriptionMap[TAB_KEYS.ACCOUNT]}
           </p>
         </header>
-        <div className={styles["account-header"]}>
-          <Avatar width={56} height={56} />
-          <div className={styles["account-meta"]}>
-            <span className={styles["account-name"]}>
-              {user?.username || ""}
-            </span>
-            <span className={styles["account-plan"]}>{planLabel}</span>
+        <div className={styles["panel-body"]}>
+          <div className={styles["account-header"]}>
+            <Avatar width={56} height={56} />
+            <div className={styles["account-meta"]}>
+              <span className={styles["account-name"]}>
+                {user?.username || ""}
+              </span>
+              <span className={styles["account-plan"]}>{planLabel}</span>
+            </div>
+            {typeof onOpenAccountManager === "function" ? (
+              <button
+                type="button"
+                className={styles["secondary-button"]}
+                onClick={onOpenAccountManager}
+              >
+                {t.settingsManageProfile || "Manage profile"}
+              </button>
+            ) : null}
           </div>
-          {typeof onOpenAccountManager === "function" ? (
-            <button
-              type="button"
-              className={styles["secondary-button"]}
-              onClick={onOpenAccountManager}
-            >
-              {t.settingsManageProfile || "Manage profile"}
-            </button>
-          ) : null}
+          <dl className={styles["account-list"]}>
+            <div className={styles["account-row"]}>
+              <dt>{t.settingsAccountUsername}</dt>
+              <dd>{user?.username || t.settingsEmptyValue || ""}</dd>
+            </div>
+            <div className={styles["account-row"]}>
+              <dt>{t.settingsAccountEmail}</dt>
+              <dd>{user?.email || t.settingsEmptyValue || ""}</dd>
+            </div>
+            <div className={styles["account-row"]}>
+              <dt>{t.settingsAccountPhone}</dt>
+              <dd>{user?.phone || t.settingsEmptyValue || ""}</dd>
+            </div>
+            <div className={styles["account-row"]}>
+              <dt>{t.settingsAccountAge}</dt>
+              <dd>{profileMeta.age || t.settingsEmptyValue || ""}</dd>
+            </div>
+            <div className={styles["account-row"]}>
+              <dt>{t.settingsAccountGender}</dt>
+              <dd>{profileMeta.gender || t.settingsEmptyValue || ""}</dd>
+            </div>
+          </dl>
         </div>
-        <dl className={styles["account-list"]}>
-          <div className={styles["account-row"]}>
-            <dt>{t.settingsAccountUsername}</dt>
-            <dd>{user?.username || t.settingsEmptyValue || ""}</dd>
-          </div>
-          <div className={styles["account-row"]}>
-            <dt>{t.settingsAccountEmail}</dt>
-            <dd>{user?.email || t.settingsEmptyValue || ""}</dd>
-          </div>
-          <div className={styles["account-row"]}>
-            <dt>{t.settingsAccountPhone}</dt>
-            <dd>{user?.phone || t.settingsEmptyValue || ""}</dd>
-          </div>
-          <div className={styles["account-row"]}>
-            <dt>{t.settingsAccountAge}</dt>
-            <dd>{profileMeta.age || t.settingsEmptyValue || ""}</dd>
-          </div>
-          <div className={styles["account-row"]}>
-            <dt>{t.settingsAccountGender}</dt>
-            <dd>{profileMeta.gender || t.settingsEmptyValue || ""}</dd>
-          </div>
-        </dl>
       </section>
     );
   };
@@ -778,37 +843,66 @@ function Preferences({
         }
       >
         <div className={styles.layout}>
-          <nav className={styles["tab-list"]} role="tablist">
-            {TAB_ORDER.map((tab) => {
-              const isActive = activeTab === tab;
-              const icon = TAB_ICONS[tab];
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={
-                    isActive
-                      ? `${styles["tab-button"]} ${styles["tab-button-active"]}`
-                      : styles["tab-button"]
-                  }
-                  onClick={() => handleTabClick(tab)}
-                >
-                  {icon ? (
-                    <ThemeIcon
-                      name={icon}
-                      width={16}
-                      height={16}
-                      className={styles["tab-icon"]}
+          <aside className={styles.sidebar} aria-label={t.prefTitle}>
+            <div className={styles["sidebar-card"]}>
+              <span className={styles["sidebar-eyebrow"]}>{t.prefTitle}</span>
+              <h3 className={styles["sidebar-active-title"]}>
+                {tabLabelMap[activeTab]}
+              </h3>
+              <p className={styles["sidebar-description"]}>
+                {tabDescriptionMap[activeTab]}
+              </p>
+            </div>
+            <nav
+              className={styles["tab-list"]}
+              role="tablist"
+              aria-orientation="vertical"
+            >
+              {TAB_ORDER.map((tab) => {
+                const isActive = activeTab === tab;
+                const icon = TAB_ICONS[tab];
+                const panelId = `settings-panel-${tab}`;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={panelId}
+                    tabIndex={isActive ? 0 : -1}
+                    className={
+                      isActive
+                        ? `${styles["tab-button"]} ${styles["tab-button-active"]}`
+                        : styles["tab-button"]
+                    }
+                    onClick={() => handleTabClick(tab)}
+                  >
+                    <span
+                      className={styles["tab-icon-wrapper"]}
                       aria-hidden="true"
-                    />
-                  ) : null}
-                  <span>{tabLabelMap[tab]}</span>
-                </button>
-              );
-            })}
-          </nav>
+                    >
+                      {icon ? (
+                        <ThemeIcon
+                          name={icon}
+                          width={18}
+                          height={18}
+                          className={styles["tab-icon"]}
+                        />
+                      ) : null}
+                    </span>
+                    <span className={styles["tab-copy"]}>
+                      <span className={styles["tab-label"]}>
+                        {tabLabelMap[tab]}
+                      </span>
+                      <span className={styles["tab-support"]}>
+                        {tabDescriptionMap[tab]}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
           <div className={styles["panel-area"]}>{renderActivePanel()}</div>
         </div>
       </SettingsSurface>
