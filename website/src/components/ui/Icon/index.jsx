@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { useTheme } from "@/context";
 import ICONS from "@/assets/icons.js";
 import styles from "./ThemeIcon.module.css";
@@ -26,10 +27,12 @@ export function ThemeIcon({
   style,
   width,
   height,
+  tone = "auto",
   ...rest
 }) {
   const { resolvedTheme } = useTheme();
-  const theme = resolvedTheme === "dark" ? "dark" : "light";
+  const preferredTone = tone === "auto" ? resolvedTheme : tone;
+  const theme = preferredTone === "dark" ? "dark" : "light";
   const registryEntry = ICONS[name];
   const src = registryEntry?.[theme] || registryEntry?.single;
 
@@ -71,6 +74,25 @@ export function ThemeIcon({
     </span>
   );
 }
+
+ThemeIcon.propTypes = {
+  name: PropTypes.string.isRequired,
+  alt: PropTypes.string,
+  className: PropTypes.string,
+  style: PropTypes.object,
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  tone: PropTypes.oneOf(["auto", "light", "dark"]),
+};
+
+ThemeIcon.defaultProps = {
+  alt: undefined,
+  className: "",
+  style: undefined,
+  width: undefined,
+  height: undefined,
+  tone: "auto",
+};
 
 export const EllipsisVerticalIcon = (props) => (
   <ThemeIcon name="ellipsis-vertical" alt="ellipsis" {...props} />

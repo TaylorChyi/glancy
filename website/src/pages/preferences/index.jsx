@@ -22,6 +22,7 @@ import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
 } from "@/utils/language.js";
+import ThemeIcon from "@/components/ui/Icon";
 
 const SOURCE_LANG_STORAGE_KEY = "sourceLang";
 const TARGET_LANG_STORAGE_KEY = "targetLang";
@@ -33,6 +34,12 @@ const VARIANTS = {
   PAGE: "page",
   DIALOG: "dialog",
 };
+
+const SECTION_NAV_ICONS = Object.freeze({
+  languages: "glancy-web",
+  interface: "cog-6-tooth",
+  voices: "voice-button",
+});
 
 const toStoreSourceLanguage = (value) => {
   if (!value || value === DEFAULT_SOURCE_LANG) {
@@ -81,6 +88,9 @@ function Preferences({ variant = VARIANTS.PAGE }) {
   );
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
+  const sectionRefs = useRef({});
+  const dialogContentRef = useRef(null);
+  const [activeDialogSection, setActiveDialogSection] = useState("");
 
   const systemLanguageFormatter = useMemo(() => {
     try {
@@ -399,6 +409,158 @@ function Preferences({ variant = VARIANTS.PAGE }) {
     ],
   );
 
+  useEffect(() => {
+    if (variant !== VARIANTS.DIALOG) {
+      setActiveDialogSection("");
+      return;
+    }
+    const firstSection = preferenceSections[0]?.id ?? "";
+    setActiveDialogSection((prev) => prev || firstSection);
+  }, [preferenceSections, variant]);
+
+  useEffect(() => {
+    if (variant !== VARIANTS.DIALOG) {
+      return undefined;
+    }
+    const container = dialogContentRef.current;
+    if (!container) {
+      return undefined;
+    }
+
+    const handleScroll = () => {
+      const threshold = 48;
+      const scrollTop = container.scrollTop;
+      let current = preferenceSections[0]?.id ?? "";
+      preferenceSections.forEach((section) => {
+        const node = sectionRefs.current[section.id];
+        if (!node) return;
+        if (node.offsetTop <= scrollTop + threshold) {
+          current = section.id;
+        }
+      });
+      setActiveDialogSection(current);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [preferenceSections, variant]);
+
+  const handleNavClick = useCallback((id) => {
+    const container = dialogContentRef.current;
+    const target = sectionRefs.current[id];
+    if (!container || !target) return;
+    const paddingOffset = 12;
+    container.scrollTo({
+      top: Math.max(target.offsetTop - paddingOffset, 0),
+      behavior: "smooth",
+    });
+    setActiveDialogSection(id);
+  }, []);
+
+  const renderSection = useCallback((section) => {
+    const sectionClassName = [
+      styles.section,
+      section.span === "wide" ? styles["section-wide"] : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    return (
+      <section
+        key={section.id}
+        ref={(node) => {
+          if (node) {
+            sectionRefs.current[section.id] = node;
+          } else {
+            delete sectionRefs.current[section.id];
+          }
+        }}
+        className={sectionClassName}
+        aria-labelledby={`${section.id}-title`}
+      >
+        <header className={styles["section-header"]}>
+          <h3 id={`${section.id}-title`} className={styles["section-title"]}>
+            {section.title}
+          </h3>
+          <p className={styles["section-description"]}>{section.description}</p>
+        </header>
+        <div className={styles["section-fields"]}>
+          {section.fields.map((field) => (
+            <FormRow
+              key={field.key}
+              label={field.label}
+              id={field.id}
+              className={styles.field}
+            >
+              {field.node}
+            </FormRow>
+          ))}
+        </div>
+      </section>
+    );
+  }, []);
+
+  const sectionsMarkup = useMemo(
+    () => preferenceSections.map((section) => renderSection(section)),
+    [preferenceSections, renderSection],
+  );
+
+  const dialogContent = useMemo(() => {
+    if (variant !== VARIANTS.DIALOG) {
+      return null;
+    }
+    return (
+      <div className={styles["dialog-layout"]}>
+        <nav className={styles["dialog-nav"]} aria-label={t.prefTitle}>
+          {preferenceSections.map((section) => {
+            const isActive = activeDialogSection === section.id;
+            const navClassName = [
+              styles["dialog-nav-item"],
+              isActive ? styles["dialog-nav-item-active"] : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            const iconName = SECTION_NAV_ICONS[section.id];
+            return (
+              <button
+                key={section.id}
+                type="button"
+                className={navClassName}
+                onClick={() => handleNavClick(section.id)}
+                aria-current={isActive ? "true" : undefined}
+              >
+                {iconName ? (
+                  <ThemeIcon
+                    name={iconName}
+                    width={18}
+                    height={18}
+                    tone="dark"
+                    className={styles["dialog-nav-icon"]}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span>{section.title}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div ref={dialogContentRef} className={styles["dialog-content"]}>
+          {sectionsMarkup}
+        </div>
+      </div>
+    );
+  }, [
+    activeDialogSection,
+    handleNavClick,
+    preferenceSections,
+    sectionsMarkup,
+    t.prefTitle,
+    variant,
+  ]);
+
   return (
     <>
       <SettingsSurface
@@ -406,54 +568,20 @@ function Preferences({ variant = VARIANTS.PAGE }) {
         title={t.prefTitle}
         description={t.prefDescription}
         onSubmit={handleSave}
+        className={
+          variant === VARIANTS.DIALOG ? styles["dialog-surface"] : undefined
+        }
         actions={
           <button type="submit" className={styles["submit-button"]}>
             {t.saveButton}
           </button>
         }
       >
-        <div className={styles.sections}>
-          {preferenceSections.map((section) => {
-            const sectionClassName = [
-              styles.section,
-              section.span === "wide" ? styles["section-wide"] : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-
-            return (
-              <section
-                key={section.id}
-                className={sectionClassName}
-                aria-labelledby={`${section.id}-title`}
-              >
-                <header className={styles["section-header"]}>
-                  <h3
-                    id={`${section.id}-title`}
-                    className={styles["section-title"]}
-                  >
-                    {section.title}
-                  </h3>
-                  <p className={styles["section-description"]}>
-                    {section.description}
-                  </p>
-                </header>
-                <div className={styles["section-fields"]}>
-                  {section.fields.map((field) => (
-                    <FormRow
-                      key={field.key}
-                      label={field.label}
-                      id={field.id}
-                      className={styles.field}
-                    >
-                      {field.node}
-                    </FormRow>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        {variant === VARIANTS.DIALOG ? (
+          dialogContent
+        ) : (
+          <div className={styles.sections}>{sectionsMarkup}</div>
+        )}
       </SettingsSurface>
       <MessagePopup
         open={popupOpen}

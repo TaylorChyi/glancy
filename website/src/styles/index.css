@@ -61,8 +61,18 @@
   --chat-bubble-bg: var(--neutral-800);
   --chat-bubble-user-bg: var(--brand-surface-dark);
   --body-bg: var(--neutral-950);
-  --sidebar-bg: var(--neutral-950);
-  --sidebar-color: var(--text-primary-dark);
+  --sidebar-surface: var(--night-surface);
+  --sidebar-panel: var(--night-panel);
+  --sidebar-border-color: var(--night-border);
+  --sidebar-hover-bg: var(--night-hover);
+  --sidebar-active-bg: var(--night-active);
+  --sidebar-text-color: var(--night-text);
+  --sidebar-muted-color: var(--night-muted);
+  --sidebar-shadow-elevated: var(--night-shadow);
+  --sidebar-input-bg: var(--night-input-bg);
+  --sidebar-input-ring: var(--night-input-ring);
+  --sidebar-bg: var(--sidebar-surface);
+  --sidebar-color: var(--sidebar-text-color);
   --input-bg: var(--neutral-900);
   --border-color: var(--sys-border-dark);
   --text-muted: var(--sys-muted);
@@ -89,8 +99,22 @@
   --chat-bubble-bg: var(--neutral-100);
   --chat-bubble-user-bg: var(--brand-surface-light);
   --body-bg: var(--neutral-0);
-  --sidebar-bg: var(--neutral-50);
-  --sidebar-color: var(--text-primary-light);
+  --sidebar-surface: #f5f7fb;
+  --sidebar-panel: #fff;
+  --sidebar-border-color: #d9dde7;
+  --sidebar-hover-bg: rgb(15 17 21 / 6%);
+  --sidebar-active-bg: rgb(15 17 21 / 12%);
+  --sidebar-text-color: var(--text-primary-light);
+  --sidebar-muted-color: color-mix(
+    in srgb,
+    var(--text-primary-light) 55%,
+    transparent
+  );
+  --sidebar-shadow-elevated: 0 18px 42px rgb(31 35 43 / 16%);
+  --sidebar-input-bg: #eef1f6;
+  --sidebar-input-ring: #cfd4e2;
+  --sidebar-bg: var(--sidebar-surface);
+  --sidebar-color: var(--sidebar-text-color);
   --input-bg: var(--neutral-0);
   --border-color: var(--sys-border-light);
   --text-muted: var(--sys-muted);
@@ -114,8 +138,22 @@
   --chat-bubble-bg: var(--neutral-100);
   --chat-bubble-user-bg: var(--brand-surface-light);
   --body-bg: var(--neutral-0);
-  --sidebar-bg: var(--neutral-50);
-  --sidebar-color: var(--text-primary-light);
+  --sidebar-surface: #f5f7fb;
+  --sidebar-panel: #fff;
+  --sidebar-border-color: #d9dde7;
+  --sidebar-hover-bg: rgb(15 17 21 / 6%);
+  --sidebar-active-bg: rgb(15 17 21 / 12%);
+  --sidebar-text-color: var(--text-primary-light);
+  --sidebar-muted-color: color-mix(
+    in srgb,
+    var(--text-primary-light) 55%,
+    transparent
+  );
+  --sidebar-shadow-elevated: 0 18px 42px rgb(31 35 43 / 16%);
+  --sidebar-input-bg: #eef1f6;
+  --sidebar-input-ring: #cfd4e2;
+  --sidebar-bg: var(--sidebar-surface);
+  --sidebar-color: var(--sidebar-text-color);
   --input-bg: var(--neutral-0);
   --border-color: var(--sys-border-light);
   --text-muted: var(--sys-muted);
@@ -142,8 +180,18 @@
     --chat-bubble-bg: var(--neutral-800);
     --chat-bubble-user-bg: var(--brand-surface-dark);
     --body-bg: var(--neutral-950);
-    --sidebar-bg: var(--neutral-950);
-    --sidebar-color: var(--text-primary-dark);
+    --sidebar-surface: var(--night-surface);
+    --sidebar-panel: var(--night-panel);
+    --sidebar-border-color: var(--night-border);
+    --sidebar-hover-bg: var(--night-hover);
+    --sidebar-active-bg: var(--night-active);
+    --sidebar-text-color: var(--night-text);
+    --sidebar-muted-color: var(--night-muted);
+    --sidebar-shadow-elevated: var(--night-shadow);
+    --sidebar-input-bg: var(--night-input-bg);
+    --sidebar-input-ring: var(--night-input-ring);
+    --sidebar-bg: var(--sidebar-surface);
+    --sidebar-color: var(--sidebar-text-color);
     --input-bg: var(--neutral-900);
     --border-color: var(--sys-border-dark);
     --text-muted: var(--sys-muted);
@@ -167,8 +215,22 @@
     --chat-bubble-bg: var(--neutral-100);
     --chat-bubble-user-bg: var(--brand-surface-light);
     --body-bg: var(--neutral-0);
-    --sidebar-bg: var(--neutral-50);
-    --sidebar-color: var(--text-primary-light);
+    --sidebar-surface: #f5f7fb;
+    --sidebar-panel: #fff;
+    --sidebar-border-color: #d9dde7;
+    --sidebar-hover-bg: rgb(15 17 21 / 6%);
+    --sidebar-active-bg: rgb(15 17 21 / 12%);
+    --sidebar-text-color: var(--text-primary-light);
+    --sidebar-muted-color: color-mix(
+      in srgb,
+      var(--text-primary-light) 55%,
+      transparent
+    );
+    --sidebar-shadow-elevated: 0 18px 42px rgb(31 35 43 / 16%);
+    --sidebar-input-bg: #eef1f6;
+    --sidebar-input-ring: #cfd4e2;
+    --sidebar-bg: var(--sidebar-surface);
+    --sidebar-color: var(--sidebar-text-color);
     --input-bg: var(--neutral-0);
     --border-color: var(--sys-border-light);
     --text-muted: var(--sys-muted);

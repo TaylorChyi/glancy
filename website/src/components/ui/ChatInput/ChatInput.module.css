@@ -28,7 +28,7 @@
   min-width: 0;
   padding-left: clamp(4px, 1vw, 12px);
   padding-right: clamp(12px, 2vw, 18px);
-  border-right: 1px solid var(--night-input-ring, var(--border-color));
+  border-right: 1px solid var(--sidebar-input-ring, var(--border-color));
 }
 
 .trailing-accessory {
@@ -50,7 +50,7 @@
   margin: 0;
   background: transparent;
   color: var(
-    --night-text,
+    --sidebar-color,
     color-mix(in srgb, var(--color-text) 94%, transparent)
   );
   font-size: 1rem;
@@ -64,7 +64,7 @@
 .textarea::placeholder {
   color: color-mix(
     in srgb,
-    var(--night-muted, var(--color-text)) 58%,
+    var(--sidebar-muted-color, var(--color-text)) 58%,
     transparent
   );
   letter-spacing: 0.02em;
@@ -77,9 +77,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid var(--night-input-ring, var(--border-color));
+  border: 1px solid var(--sidebar-input-ring, var(--border-color));
   background: transparent;
-  color: var(--night-text, var(--color-text));
+  color: var(--sidebar-color, var(--color-text));
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -91,7 +91,7 @@
   transform: translateY(-1px);
   background: color-mix(
     in srgb,
-    var(--night-input-ring, var(--primary-color)) 14%,
+    var(--sidebar-input-ring, var(--primary-color)) 14%,
     transparent
   );
   outline: none;
@@ -110,7 +110,7 @@
   padding: 4px clamp(4px, 1vw, 6px);
   border-radius: 999px;
   background: transparent;
-  color: var(--night-text, var(--color-text));
+  color: var(--sidebar-color, var(--color-text));
   min-width: 0;
 }
 
@@ -118,9 +118,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--night-panel, transparent);
+  background: var(--sidebar-panel, transparent);
   border-radius: 999px;
-  border: 1px solid var(--night-input-ring, var(--border-color));
+  border: 1px solid var(--sidebar-input-ring, var(--border-color));
   padding-inline: clamp(8px, 1.6vw, 12px);
   min-height: 34px;
 }
@@ -132,9 +132,9 @@
   width: 6px;
   height: 6px;
   border-right: 2px solid
-    color-mix(in srgb, var(--night-text, var(--color-text)) 76%, transparent);
+    color-mix(in srgb, var(--sidebar-color, var(--color-text)) 76%, transparent);
   border-bottom: 2px solid
-    color-mix(in srgb, var(--night-text, var(--color-text)) 76%, transparent);
+    color-mix(in srgb, var(--sidebar-color, var(--color-text)) 76%, transparent);
   transform: rotate(45deg);
   pointer-events: none;
 }
@@ -146,7 +146,7 @@
   border-radius: 999px;
   border: none;
   background: transparent;
-  color: var(--night-text, var(--color-text));
+  color: var(--sidebar-color, var(--color-text));
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -171,9 +171,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid var(--night-input-ring, var(--border-color));
+  border: 1px solid var(--sidebar-input-ring, var(--border-color));
   background: transparent;
-  color: var(--night-muted, var(--color-text));
+  color: var(--sidebar-muted-color, var(--color-text));
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -185,7 +185,7 @@
   transform: translateY(-1px);
   background: color-mix(
     in srgb,
-    var(--night-input-ring, var(--primary-color)) 18%,
+    var(--sidebar-input-ring, var(--primary-color)) 18%,
     transparent
   );
   outline: none;
@@ -268,7 +268,7 @@
     width: 100%;
     padding: clamp(12px, 5vw, 18px);
     border-right: none;
-    border-bottom: 1px solid var(--night-input-ring, var(--border-color));
+    border-bottom: 1px solid var(--sidebar-input-ring, var(--border-color));
     justify-content: center;
   }
 

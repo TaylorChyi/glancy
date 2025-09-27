@@ -10,12 +10,12 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
   const brandText = getBrandText(lang);
 
   const dictionaryLabel = t.primaryNavDictionaryLabel || brandText;
-  const dictionaryDescription =
-    t.primaryNavDictionaryDescription || t.searchTitle || "";
   const libraryLabel = t.primaryNavLibraryLabel || t.favorites || "Favorites";
-  const libraryDescription =
-    t.primaryNavLibraryDescription || t.favoritesEmptyTitle || "";
   const entriesLabel = t.primaryNavEntriesLabel || t.termLabel || "Entries";
+  const dictionaryHint =
+    t.primaryNavDictionaryDescription || t.searchTitle || dictionaryLabel;
+  const libraryHint =
+    t.primaryNavLibraryDescription || t.favoritesEmptyTitle || libraryLabel;
 
   const handleDictionary = () => {
     if (typeof onShowDictionary === "function") {
@@ -35,25 +35,24 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
     {
       key: "dictionary",
       label: dictionaryLabel,
-      description: dictionaryDescription,
       icon: "glancy-web",
       iconAlt: dictionaryLabel,
       onClick: handleDictionary,
-      variant: SIDEBAR_ACTION_VARIANTS.prominent,
-      isActive:
-        activeView === "dictionary" || activeView === "history" || !activeView,
+      variant: SIDEBAR_ACTION_VARIANTS.default,
+      isActive: activeView === "dictionary",
       className: "sidebar-nav-item sidebar-nav-item-dictionary",
+      title: dictionaryHint,
     },
     {
       key: "favorites",
       label: libraryLabel,
-      description: libraryDescription,
       icon: "library",
       iconAlt: libraryLabel,
       onClick: handleLibrary,
       variant: SIDEBAR_ACTION_VARIANTS.default,
       isActive: activeView === "favorites",
       className: "sidebar-nav-item",
+      title: libraryHint,
     },
   ];
 
@@ -66,12 +65,14 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
               key={item.key}
               icon={item.icon}
               iconAlt={item.iconAlt}
+              iconTone="dark"
               label={item.label}
-              description={item.description}
               onClick={item.onClick}
               variant={item.variant}
               isActive={item.isActive}
               className={item.className}
+              aria-current={item.isActive ? "page" : undefined}
+              title={item.title}
             />
           ))}
         </nav>
@@ -91,7 +92,7 @@ Brand.propTypes = {
 };
 
 Brand.defaultProps = {
-  activeView: "dictionary",
+  activeView: undefined,
   onShowDictionary: undefined,
   onShowFavorites: undefined,
 };

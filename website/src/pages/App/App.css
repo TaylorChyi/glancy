@@ -6,16 +6,16 @@
   min-width: var(--layout-sidebar-min, 240px);
   max-width: var(--layout-sidebar-max, 420px);
   height: var(--vh);
-  background: var(--night-surface, var(--sidebar-bg));
-  color: var(--night-text, var(--sidebar-color));
-  border-right: 1px solid var(--night-border, var(--border-color));
+  background: var(--sidebar-bg);
+  color: var(--sidebar-color);
+  border-right: 1px solid var(--sidebar-border-color, var(--border-color));
   display: grid;
   grid-template-rows: auto 1fr auto;
   position: sticky;
   top: 0;
   align-self: start;
   overflow: hidden;
-  box-shadow: var(--night-shadow, 0 12px 30px rgb(0 0 0 / 40%));
+  box-shadow: var(--sidebar-shadow-elevated, 0 12px 30px var(--shadow-color));
   z-index: 1;
 }
 
@@ -24,64 +24,65 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 2vw, 18px);
-  padding: clamp(20px, 3vw, 28px) clamp(18px, 3vw, 28px)
-    clamp(14px, 2.4vw, 20px);
-  background: var(--night-surface, var(--sidebar-bg));
-  border-bottom: 1px solid var(--night-border, var(--border-color));
+  gap: 12px;
+  padding: 16px 12px 8px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--sidebar-border-color, var(--border-color));
   box-shadow: 0 18px 34px
-    color-mix(in srgb, var(--shadow-color) 22%, transparent);
+    color-mix(in srgb, var(--shadow-color) 18%, transparent);
   z-index: 2;
 }
 
 .sidebar-brand-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: clamp(12px, 2vw, 20px);
+  gap: 12px;
 }
 
 .sidebar-primary-nav {
   display: flex;
   flex-direction: column;
-  gap: clamp(6px, 1.6vw, 12px);
+  gap: 6px;
   flex: 1 1 auto;
 }
 
 .sidebar-nav-item {
-  --sidebar-action-height: clamp(40px, 6vh, 50px);
-  --sidebar-action-padding-x: clamp(12px, 2vw, 18px);
-  --sidebar-action-radius: 12px;
-}
-
-.sidebar-nav-item :global(.sidebar-action-label) {
-  font-size: 1rem;
-  letter-spacing: 0.03em;
-}
-
-.sidebar-nav-item :global(.sidebar-action-description) {
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  color: color-mix(
-    in srgb,
-    var(--night-muted, var(--sidebar-color)) 76%,
-    transparent
-  );
+  --sidebar-action-height: 36px;
+  --sidebar-action-padding-x: 10px;
+  --sidebar-action-radius: 10px;
+  --sidebar-action-gap: 10px;
 }
 
 .sidebar-nav-item-dictionary {
-  --sidebar-action-height: clamp(44px, 6.5vh, 54px);
+  --sidebar-action-height: 38px;
+}
+
+.sidebar-nav-item :global(.sidebar-action-body) {
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+}
+
+.sidebar-nav-item :global(.sidebar-action-label) {
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-nav-item :global(.sidebar-action-description) {
+  display: none;
 }
 
 .sidebar-section-indicator {
-  padding-inline: clamp(4px, 1vw, 10px);
+  margin-top: 6px;
+  padding: 0 4px;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: color-mix(
     in srgb,
-    var(--night-muted, var(--sidebar-color)) 78%,
+    var(--sidebar-muted-color, var(--sidebar-color)) 78%,
     transparent
   );
 }
@@ -107,7 +108,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  color: var(--night-text, var(--app-color));
+  color: var(--app-color);
   overflow: auto;
 }
 
@@ -123,11 +124,16 @@
 .stream-text {
   width: 100%;
   padding: clamp(18px, 3vw, 24px);
-  background: var(--night-panel, var(--app-bg));
+  background: color-mix(
+    in srgb,
+    var(--sidebar-panel, var(--app-bg)) 96%,
+    transparent
+  );
   color: inherit;
   border-radius: 16px;
-  border: 1px solid var(--night-border, var(--border-color));
-  box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
+  border: 1px solid var(--sidebar-border-color, var(--border-color));
+  box-shadow: 0 12px 28px
+    color-mix(in srgb, var(--shadow-color) 32%, transparent);
   line-height: 1.6;
 }
 
@@ -157,8 +163,8 @@
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 999;
-    border-right: 1px solid var(--night-border, var(--border-color));
-    box-shadow: var(--night-shadow, 0 12px 30px rgb(0 0 0 / 40%));
+    border-right: 1px solid var(--sidebar-border-color, var(--border-color));
+    box-shadow: var(--sidebar-shadow-elevated, 0 12px 30px var(--shadow-color));
   }
 
   .sidebar.mobile-open {

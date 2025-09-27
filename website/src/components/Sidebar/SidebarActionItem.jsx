@@ -5,7 +5,7 @@ import { SIDEBAR_ACTION_VARIANTS } from "./sidebarActionVariants.js";
 
 const joinClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
-function renderIcon(icon, alt, label) {
+function renderIcon(icon, alt, label, tone) {
   if (!icon) return null;
   if (typeof icon !== "string") {
     return <span className={styles["sidebar-action-icon"]}>{icon}</span>;
@@ -17,6 +17,7 @@ function renderIcon(icon, alt, label) {
       alt={alt || label}
       width={18}
       height={18}
+      tone={tone}
       aria-hidden={alt ? undefined : "true"}
       className={styles["sidebar-action-icon"]}
     />
@@ -35,6 +36,7 @@ function SidebarActionItem({
   isActive = false,
   variant = SIDEBAR_ACTION_VARIANTS.default,
   className,
+  iconTone = "auto",
   onClick,
   ...rest
 }) {
@@ -52,7 +54,7 @@ function SidebarActionItem({
 
   const content = (
     <>
-      {renderIcon(icon, iconAlt, label)}
+      {renderIcon(icon, iconAlt, label, iconTone)}
       <div className={styles["sidebar-action-body"]}>
         <span className={styles["sidebar-action-label"]}>
           {label}
@@ -110,6 +112,7 @@ SidebarActionItem.propTypes = {
   isActive: PropTypes.bool,
   variant: PropTypes.oneOf(Object.values(SIDEBAR_ACTION_VARIANTS)),
   className: PropTypes.string,
+  iconTone: PropTypes.oneOf(["auto", "light", "dark"]),
   onClick: PropTypes.func,
 };
 
@@ -124,6 +127,7 @@ SidebarActionItem.defaultProps = {
   isActive: false,
   variant: SIDEBAR_ACTION_VARIANTS.default,
   className: undefined,
+  iconTone: "auto",
   onClick: undefined,
 };
 

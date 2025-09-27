@@ -3,6 +3,112 @@
   gap: clamp(var(--space-5), 4vw, var(--space-6));
 }
 
+.dialog-surface {
+  padding: clamp(var(--space-4), 4vw, var(--space-6));
+}
+
+.dialog-layout {
+  display: grid;
+  gap: clamp(var(--space-4), 3vw, var(--space-5));
+}
+
+.dialog-nav {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  position: sticky;
+  top: 0;
+  padding-top: clamp(var(--space-1), 1vw, var(--space-2));
+}
+
+.dialog-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 clamp(var(--space-2), 2vw, var(--space-3));
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  font-size: clamp(0.68rem, 1.8vw, 0.78rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.dialog-nav-item:hover,
+.dialog-nav-item:focus-visible {
+  color: var(--color-text);
+  background: var(
+    --sidebar-hover-bg,
+    color-mix(in srgb, var(--color-surface-muted) 40%, transparent)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--sidebar-border-color, var(--border-color)) 60%,
+    transparent
+  );
+  transform: translateY(-1px);
+}
+
+.dialog-nav-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-color) 35%, transparent);
+}
+
+.dialog-nav-item-active {
+  color: var(--color-text);
+  background: var(
+    --sidebar-active-bg,
+    color-mix(in srgb, var(--color-surface-muted) 60%, transparent)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--sidebar-border-color, var(--border-color)) 70%,
+    transparent
+  );
+  transform: translateY(-1px);
+}
+
+.dialog-nav-icon {
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+.dialog-content {
+  position: relative;
+  max-height: clamp(420px, 62vh, 620px);
+  overflow-y: auto;
+  padding-right: clamp(var(--space-3), 2vw, var(--space-4));
+  scrollbar-gutter: stable both-edges;
+}
+
+.dialog-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--sidebar-muted-color, var(--border-color)) 70%,
+    transparent
+  );
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .section {
   display: grid;
   gap: clamp(var(--space-4), 3vw, var(--space-5));
@@ -71,6 +177,14 @@
 }
 
 @media (width >= 960px) {
+  .dialog-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .dialog-nav {
+    max-height: clamp(320px, 60vh, 540px);
+  }
+
   .sections {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
