@@ -1,6 +1,12 @@
 import { render, fireEvent, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import { useState } from "react";
+
+jest.mock("@/components/ui/Popover/Popover.jsx", () => ({
+  __esModule: true,
+  default: ({ isOpen, children }) => (isOpen ? <div>{children}</div> : null),
+}));
+
 import ActionInput from "@/components/ui/ChatInput/ActionInput.jsx";
 
 /**
@@ -45,7 +51,7 @@ test("clears value via parent state on Enter submit", () => {
 /**
  * 验证语言控制面板在提供选项时能够触发下拉与交换事件。
  */
-test("handles language selection and swapping", () => {
+test("handles language selection and swapping", async () => {
   const handleSourceChange = jest.fn();
   const handleTargetChange = jest.fn();
   const handleSwap = jest.fn();
@@ -74,11 +80,14 @@ test("handles language selection and swapping", () => {
     />,
   );
 
-  const selects = screen.getAllByRole("combobox");
-  fireEvent.change(selects[0], { target: { value: "ENGLISH" } });
+  const sourceButton = screen.getByRole("button", { name: "源语言" });
+  fireEvent.click(sourceButton);
+  fireEvent.click(await screen.findByRole("menuitem", { name: "英文词条" }));
   expect(handleSourceChange).toHaveBeenCalledWith("ENGLISH");
 
-  fireEvent.change(selects[1], { target: { value: "CHINESE" } });
+  const targetButton = screen.getByRole("button", { name: "目标语言" });
+  fireEvent.click(targetButton);
+  fireEvent.click(await screen.findByRole("menuitem", { name: "中文释义" }));
   expect(handleTargetChange).toHaveBeenCalledWith("CHINESE");
 
   const swapButton = screen.getByRole("button", { name: "交换语向" });
