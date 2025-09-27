@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import Brand from "@/components/Brand";
-import SidebarQuickActions from "./SidebarQuickActions.jsx";
 import SidebarHistory from "./SidebarHistory.jsx";
 import SidebarUser from "./SidebarUser.jsx";
 import { useIsMobile } from "@/utils";
@@ -11,7 +10,9 @@ function Sidebar(
     isMobile: mobileProp,
     open = false,
     onClose,
-    onToggleFavorites,
+    onShowDictionary,
+    onShowFavorites,
+    activeView = "dictionary",
     onSelectHistory,
   },
   ref,
@@ -27,9 +28,12 @@ function Sidebar(
         ref={ref}
         className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""}`}
       >
-        <Brand />
+        <Brand
+          activeView={activeView}
+          onShowDictionary={onShowDictionary}
+          onShowFavorites={onShowFavorites}
+        />
         <div className={styles["sidebar-content"]}>
-          <SidebarQuickActions onToggleFavorites={onToggleFavorites} />
           <SidebarHistory onSelectHistory={onSelectHistory} />
         </div>
         <SidebarUser />
