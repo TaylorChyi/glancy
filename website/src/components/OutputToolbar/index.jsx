@@ -9,6 +9,7 @@ const ACTION_BLUEPRINTS = [
   {
     key: "favorite",
     variant: "favorite",
+    requiresUser: true,
     getLabel: ({ t, favorited }) =>
       favorited
         ? t.favoriteRemove || t.favoriteAction || "Favorite"
@@ -26,6 +27,7 @@ const ACTION_BLUEPRINTS = [
   {
     key: "delete",
     variant: "delete",
+    requiresUser: true,
     getLabel: ({ t }) => t.deleteButton || t.deleteAction || "Delete",
     getIcon: () => <ThemeIcon name="trash" width={20} height={20} />,
     canUse: ({ canDelete }) => Boolean(canDelete),
@@ -34,6 +36,7 @@ const ACTION_BLUEPRINTS = [
   {
     key: "share",
     variant: "share",
+    requiresUser: true,
     getLabel: ({ t }) => t.share || "Share",
     getIcon: () => <ThemeIcon name="link" width={20} height={20} />,
     canUse: ({ canShare }) => Boolean(canShare),
@@ -42,6 +45,8 @@ const ACTION_BLUEPRINTS = [
   {
     key: "report",
     variant: "report",
+    requiresUser: true,
+    hiddenWhenInactive: true,
     getLabel: ({ t }) => t.report || "Report",
     getIcon: () => <ThemeIcon name="flag" width={20} height={20} />,
     canUse: ({ canReport }) => Boolean(canReport),
@@ -58,6 +63,8 @@ function OutputToolbar({
   activeVersionId,
   onNavigate,
   ttsComponent = TtsButton,
+  onCopy,
+  canCopy = false,
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
@@ -91,6 +98,7 @@ function OutputToolbar({
     : t.versionIndicatorEmpty || "0 / 0";
   const speakableTerm = typeof term === "string" ? term.trim() : term;
   const showTts = Boolean(speakableTerm);
+  const copyLabel = t.copyAction || "Copy";
   const actionContext = useMemo(
     () => ({
       t,
@@ -104,6 +112,7 @@ function OutputToolbar({
       onShare,
       canReport,
       onReport,
+      disabled,
     }),
     [
       t,
@@ -117,63 +126,127 @@ function OutputToolbar({
       onShare,
       canReport,
       onReport,
+      disabled,
     ],
   );
 
-  const actionItems = useMemo(
-    () =>
-      ACTION_BLUEPRINTS.map((blueprint) => {
-        if (!actionContext.user) {
-          return null;
-        }
+  const actionItems = useMemo(() => {
+    const items = [
+      {
+        key: "copy",
+        label: copyLabel,
+        icon: <ThemeIcon name="copy" width={20} height={20} />,
+        onClick: onCopy,
+        active: false,
+        variant: "copy",
+        disabled: disabled || !canCopy || typeof onCopy !== "function",
+      },
+    ];
 
-        const handler = blueprint.getHandler?.(actionContext);
-        const label = blueprint.getLabel(actionContext);
-        const disabled =
-          !blueprint.canUse?.(actionContext) || typeof handler !== "function";
+    ACTION_BLUEPRINTS.forEach((blueprint) => {
+      const handler = blueprint.getHandler?.(actionContext);
+      const label = blueprint.getLabel(actionContext);
+      const canUseAction = blueprint.canUse?.(actionContext) ?? true;
+      const hasUser = !blueprint.requiresUser || Boolean(user);
+      const isHandlerFunction = typeof handler === "function";
+      const itemDisabled =
+        disabled || !hasUser || !canUseAction || !isHandlerFunction;
 
-        return {
-          key: blueprint.key,
-          label,
-          icon: blueprint.getIcon(actionContext),
-          onClick: handler,
-          active: blueprint.isActive?.(actionContext) ?? false,
-          variant: blueprint.variant,
-          disabled,
-        };
-      }).filter(Boolean),
-    [actionContext],
-  );
+      if (blueprint.hiddenWhenInactive && itemDisabled) {
+        return;
+      }
 
-  const hasActions = actionItems.length > 0;
+      items.push({
+        key: blueprint.key,
+        label,
+        icon: blueprint.getIcon(actionContext),
+        onClick: handler,
+        active: blueprint.isActive?.(actionContext) ?? false,
+        variant: blueprint.variant,
+        disabled: itemDisabled,
+      });
+    });
+
+    return items;
+  }, [actionContext, canCopy, copyLabel, disabled, onCopy, user]);
+
+  const showPrimaryCluster = showTts || typeof onReoutput === "function";
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
-      <div className={styles["cluster-controls"]}>
-        {showTts ? (
-          <TtsComponent
-            text={term}
-            lang={lang}
-            size={20}
-            disabled={!speakableTerm}
-          />
-        ) : null}
-        <button
-          type="button"
-          className={styles.replay}
-          onClick={onReoutput}
-          disabled={disabled || !speakableTerm}
-          aria-label={t.reoutput}
-        >
-          <ThemeIcon name="refresh" width={16} height={16} aria-hidden="true" />
-          <span>{t.reoutput}</span>
-        </button>
-        <div className={styles["version-controls"]}>
+      {showPrimaryCluster ? (
+        <div className={styles["primary-cluster"]}>
+          {showTts ? (
+            <TtsComponent
+              text={term}
+              lang={lang}
+              size={20}
+              disabled={!speakableTerm}
+            />
+          ) : null}
+          {typeof onReoutput === "function" ? (
+            <button
+              type="button"
+              className={styles.replay}
+              onClick={onReoutput}
+              disabled={disabled || !speakableTerm}
+              aria-label={t.reoutput}
+            >
+              <ThemeIcon
+                name="refresh"
+                width={16}
+                height={16}
+                aria-hidden="true"
+              />
+              <span>{t.reoutput}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      <div className={styles["meta-strip"]}>
+        <div className={styles["action-strip"]}>
+          {actionItems.map(
+            ({
+              key,
+              label,
+              onClick,
+              icon,
+              active,
+              variant,
+              disabled: itemDisabled,
+            }) => {
+              const variantClassName =
+                variant && styles[`icon-button-${variant}`]
+                  ? styles[`icon-button-${variant}`]
+                  : "";
+              const buttonClassName = [styles["icon-button"], variantClassName]
+                .filter(Boolean)
+                .join(" ");
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={buttonClassName}
+                  data-active={active ? "true" : undefined}
+                  onClick={onClick}
+                  aria-label={label}
+                  title={label}
+                  disabled={itemDisabled}
+                >
+                  {icon}
+                </button>
+              );
+            },
+          )}
+        </div>
+        <span className={styles.separator} aria-hidden="true" />
+        <div className={styles["version-dial"]}>
           <button
             type="button"
             className={styles["nav-button"]}
             onClick={() => onNavigate?.("previous")}
-            disabled={!hasPrevious}
+            disabled={!hasPrevious || disabled}
             aria-label={t.previousVersion}
           >
             <ThemeIcon
@@ -188,7 +261,7 @@ function OutputToolbar({
             type="button"
             className={styles["nav-button"]}
             onClick={() => onNavigate?.("next")}
-            disabled={!hasNext}
+            disabled={!hasNext || disabled}
             aria-label={t.nextVersion}
           >
             <ThemeIcon
@@ -200,49 +273,6 @@ function OutputToolbar({
           </button>
         </div>
       </div>
-      {hasActions ? (
-        <div className={styles["cluster-actions"]}>
-          <div className={styles["action-group"]}>
-            {actionItems.map(
-              ({
-                key,
-                label,
-                onClick,
-                icon,
-                active,
-                variant,
-                disabled: itemDisabled,
-              }) => {
-                const variantClassName =
-                  variant && styles[`action-button-${variant}`]
-                    ? styles[`action-button-${variant}`]
-                    : "";
-                const buttonClassName = [
-                  styles["action-button"],
-                  variantClassName,
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    className={buttonClassName}
-                    data-active={active ? "true" : undefined}
-                    onClick={onClick}
-                    aria-label={label}
-                    title={label}
-                    disabled={itemDisabled}
-                  >
-                    {icon}
-                  </button>
-                );
-              },
-            )}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -256,6 +286,8 @@ OutputToolbar.propTypes = {
   activeVersionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onNavigate: PropTypes.func,
   ttsComponent: PropTypes.elementType,
+  onCopy: PropTypes.func,
+  canCopy: PropTypes.bool,
   favorited: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
   canFavorite: PropTypes.bool,
@@ -276,6 +308,8 @@ OutputToolbar.defaultProps = {
   activeVersionId: undefined,
   onNavigate: undefined,
   ttsComponent: TtsButton,
+  onCopy: undefined,
+  canCopy: false,
   favorited: false,
   onToggleFavorite: undefined,
   canFavorite: false,

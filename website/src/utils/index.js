@@ -32,3 +32,4 @@ export {
   polishDictionaryMarkdown,
 } from "./markdown.js";
 export { resolveShareTarget, attemptShareLink } from "./share.js";
+export { copyTextToClipboard } from "./clipboard.js";
