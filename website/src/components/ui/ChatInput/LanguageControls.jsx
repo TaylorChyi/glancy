@@ -153,8 +153,8 @@ export default function LanguageControls({
         >
           <ThemeIcon
             name="arrow-right"
-            width={18}
-            height={18}
+            width={16}
+            height={16}
             aria-hidden="true"
           />
         </button>

@@ -1,54 +1,30 @@
 .sidebar {
-  --sidebar-padding: clamp(18px, 3vw, 28px);
-  --sidebar-inline-padding: clamp(20px, 3vw, 32px);
-  --sidebar-section-gap: clamp(16px, 2.8vw, 28px);
+  --sidebar-padding: clamp(14px, 2.8vw, 20px);
+  --sidebar-inline-padding: clamp(18px, 3vw, 26px);
+  --sidebar-section-gap: clamp(16px, 2.6vw, 24px);
   --sidebar-item-gap: 8px;
-  --sidebar-brand-gap: 12px;
+  --sidebar-brand-gap: 10px;
   --sidebar-item-padding-y: 12px;
-  --sidebar-item-padding-x: clamp(18px, 3vw, 24px);
-  --sidebar-item-padding: var(--sidebar-item-padding-y)
-    var(--sidebar-item-padding-x);
+  --sidebar-item-padding-x: clamp(16px, 3vw, 22px);
 
-  width: var(--layout-sidebar-width, clamp(240px, 24vw, 380px));
+  width: var(
+    --layout-sidebar-width,
+    var(--layout-sidebar-default, clamp(240px, 24vw, 380px))
+  );
   min-width: var(--layout-sidebar-min, 240px);
   max-width: var(--layout-sidebar-max, 392px);
   height: var(--vh);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--sidebar-bg) 96%, transparent) 0%,
-      color-mix(in srgb, var(--sidebar-bg) 92%, transparent) 42%,
-      color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--sidebar-bg) 96%, transparent);
-  color: var(--sidebar-color);
-  border-right: 1px solid
-    color-mix(in srgb, var(--border-color) 48%, transparent);
+  background: var(--night-surface, var(--sidebar-bg));
+  color: var(--night-text, var(--sidebar-color));
+  border-right: 1px solid var(--night-border, var(--border-color));
   display: grid;
   grid-template-rows: auto 1fr auto;
   position: sticky;
   top: 0;
   align-self: start;
   overflow: hidden;
-  box-shadow:
-    inset -1px 0 0 color-mix(in srgb, var(--border-color) 34%, transparent),
-    0 32px 80px color-mix(in srgb, var(--shadow-color) 22%, transparent);
-  backdrop-filter: blur(24px);
-  isolation: isolate;
-}
-
-.sidebar::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    140% 120% at -20% 0%,
-    color-mix(in srgb, var(--primary-bg) 14%, transparent) 0%,
-    transparent 68%
-  );
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 0;
+  box-shadow: var(--night-shadow, 0 12px 30px rgb(0 0 0 / 40%));
+  z-index: 1;
 }
 
 .sidebar-brand {
@@ -57,12 +33,11 @@
   display: flex;
   align-items: center;
   gap: var(--sidebar-brand-gap);
-  padding: clamp(20px, 3vw, 28px) var(--sidebar-inline-padding)
-    clamp(12px, 2.4vw, 18px);
-  background: color-mix(in srgb, var(--sidebar-bg) 96%, transparent);
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--border-color) 40%, transparent);
-  z-index: 1;
+  padding: clamp(18px, 3vw, 24px) var(--sidebar-inline-padding)
+    clamp(10px, 2vw, 16px);
+  background: var(--night-surface, var(--sidebar-bg));
+  border-bottom: 1px solid var(--night-border, var(--border-color));
+  z-index: 2;
 }
 
 .sidebar-brand [data-variant="prominent"] {
@@ -70,14 +45,10 @@
   width: 100%;
 }
 
-.sidebar-brand img {
-  width: 36px;
-  height: 36px;
-}
-
 .sidebar-brand span {
-  font-size: 1.3rem;
-  letter-spacing: 0.02em;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
 .mobile-user-menu {
@@ -87,57 +58,27 @@
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, rgb(8 10 16) 55%, transparent);
-  backdrop-filter: blur(8px);
+  background: rgb(8 10 16 / 60%);
+  backdrop-filter: blur(6px);
   z-index: 998;
 }
 
 .display {
   position: relative;
-  width: min(100%, 920px);
+  width: min(100%, 960px);
   margin: 0 auto;
-  padding: clamp(32px, 5vw, 48px) clamp(28px, 5vw, 44px);
-  border-radius: clamp(24px, 4vw, 38px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
-  background:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--app-bg) 94%, transparent) 0%,
-      color-mix(in srgb, var(--app-bg) 88%, transparent) 60%,
-      color-mix(in srgb, var(--app-bg) 82%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--app-bg) 92%, transparent);
-  box-shadow: 0 44px 120px
-    color-mix(in srgb, var(--shadow-color) 26%, transparent);
+  padding: clamp(24px, 5vw, 32px) clamp(20px, 5vw, 28px)
+    clamp(140px, 22vh, 200px);
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: clamp(24px, 3vw, 32px);
-  color: var(--app-color);
-  text-align: left;
-  overflow: hidden;
-}
-
-.display::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    120% 120% at 80% -10%,
-    color-mix(in srgb, var(--primary-bg) 10%, transparent) 0%,
-    transparent 65%
-  );
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.display > * {
-  position: relative;
-  z-index: 1;
+  justify-content: center;
+  align-items: flex-start;
+  color: var(--night-text, var(--app-color));
+  overflow: auto;
 }
 
 .display-empty {
+  flex: 1;
+  display: flex;
   justify-content: center;
   align-items: center;
   text-align: center;
@@ -146,14 +87,12 @@
 
 .stream-text {
   width: 100%;
-  padding: clamp(20px, 3vw, 28px);
-  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
-  color: var(--app-color);
-  border-radius: clamp(18px, 3vw, 24px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 36%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--app-bg) 86%, transparent),
-    0 28px 64px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  padding: clamp(18px, 3vw, 24px);
+  background: var(--night-panel, var(--app-bg));
+  color: inherit;
+  border-radius: 16px;
+  border: 1px solid var(--night-border, var(--border-color));
+  box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
   line-height: 1.6;
 }
 
@@ -167,26 +106,24 @@
 }
 
 .app-bottom {
-  width: min(100%, 960px);
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 0 clamp(12px, 4vw, 20px);
+  gap: 8px;
 }
 
 @media (width <= 900px) {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    width: min(80vw, 320px);
-    max-width: min(80vw, 360px);
+    width: min(82vw, 320px);
+    max-width: min(82vw, 360px);
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 999;
-    border-right: none;
-    box-shadow: 0 24px 80px
-      color-mix(in srgb, var(--shadow-color) 32%, transparent);
+    border-right: 1px solid var(--night-border, var(--border-color));
+    box-shadow: var(--night-shadow, 0 12px 30px rgb(0 0 0 / 40%));
   }
 
   .sidebar.mobile-open {
@@ -199,10 +136,8 @@
 
   .display {
     width: 100%;
-    padding: clamp(24px, 6vw, 36px);
-    border-radius: clamp(20px, 6vw, 28px);
-    box-shadow: 0 28px 80px
-      color-mix(in srgb, var(--shadow-color) 30%, transparent);
+    padding: clamp(24px, 6vw, 32px) clamp(18px, 6vw, 28px)
+      clamp(160px, 30vh, 220px);
   }
 
   .display-empty {
@@ -212,12 +147,7 @@
 
 @media (width <= 600px) {
   .sidebar {
-    width: min(84vw, 300px);
-  }
-
-  .display {
-    padding: clamp(20px, 7vw, 32px);
-    border-radius: clamp(18px, 7vw, 24px);
+    width: min(86vw, 300px);
   }
 
   .stream-text {
@@ -226,10 +156,5 @@
 
   .app-bottom {
     width: 100%;
-    padding: 0;
   }
-}
-
-.app h2 {
-  text-align: center;
 }

@@ -15,8 +15,8 @@ function renderIcon(icon, alt, label) {
     <ThemeIcon
       name={icon}
       alt={alt || label}
-      width={22}
-      height={22}
+      width={18}
+      height={18}
       aria-hidden={alt ? undefined : "true"}
       className={styles["sidebar-action-icon"]}
     />

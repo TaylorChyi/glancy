@@ -30,6 +30,18 @@
   --hl-light: var(--neutral-0);
   --hl-dark: var(--neutral-950);
 
+  /* prototype midnight palette */
+  --night-surface: #0f1115;
+  --night-panel: #1f232b;
+  --night-border: #2a2e37;
+  --night-hover: #1a1e24;
+  --night-active: #242935;
+  --night-text: #eef0f3;
+  --night-muted: #a2a9b4;
+  --night-shadow: 0 12px 30px rgb(0 0 0 / 40%);
+  --night-input-bg: #2b2f34;
+  --night-input-ring: #3a3f46;
+
   /* link colors */
   --color-link-light: #d49f0a;
   --color-link-dark: #ffe899;

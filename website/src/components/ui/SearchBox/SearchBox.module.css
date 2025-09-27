@@ -2,26 +2,15 @@
 .search-box {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
-  padding: var(--padding-y, var(--search-box-padding-y))
-    var(--padding-x, clamp(18px, 5vw, 28px));
-  border-radius: clamp(36px, 5vw, 44px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
-    0 36px 96px color-mix(in srgb, var(--shadow-color) 28%, transparent);
-  background:
-    linear-gradient(
-      150deg,
-      color-mix(in srgb, var(--input-bg) 96%, transparent) 0%,
-      color-mix(in srgb, var(--input-bg) 88%, transparent) 60%,
-      color-mix(in srgb, var(--input-bg) 84%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--input-bg) 94%, transparent);
-  backdrop-filter: blur(26px);
-  gap: var(--slot-gap, var(--space-3, 12px));
-  overflow: hidden;
+  padding: var(--padding-y, 0) var(--padding-x, clamp(16px, 4vw, 20px));
+  border-radius: 999px;
+  border: 1px solid var(--night-input-ring, var(--border-color));
+  background: var(--night-input-bg, var(--input-bg));
+  box-shadow: 0 12px 30px rgb(0 0 0 / 40%);
+  color: var(--night-text, var(--color-text));
+  gap: var(--slot-gap, 0);
   box-sizing: border-box;
+  overflow: hidden;
 }
