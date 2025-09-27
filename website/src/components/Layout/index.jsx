@@ -29,8 +29,14 @@ function Layout({ children, sidebarProps = {}, bottomContent = null }) {
             </button>
           </div>
         ) : null}
-        <div className={styles["main-middle"]}>{children}</div>
-        <div className={styles["main-bottom"]}>{bottomContent}</div>
+        <div className={styles["main-content"]}>
+          <div className={styles["main-middle"]}>{children}</div>
+        </div>
+        {bottomContent ? (
+          <div className={styles["main-bottom"]}>
+            <div className={styles["main-bottom-inner"]}>{bottomContent}</div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

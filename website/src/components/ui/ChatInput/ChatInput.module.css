@@ -1,11 +1,11 @@
 .container {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
 }
 
 .input-wrapper {
-  width: 100%;
+  width: min(100%, 960px);
   margin: 0 auto;
 }
 
@@ -14,14 +14,21 @@
   --padding-y: 0;
   --slot-gap: 0;
 
-  padding: 0;
-  align-items: center;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--color-surface) 94%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 80%, transparent) 80%,
-    color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
-  );
+  border-radius: clamp(36px, 5vw, 44px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--input-bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--input-bg) 88%, transparent) 60%,
+      color-mix(in srgb, var(--input-bg) 84%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--input-bg) 94%, transparent);
+  box-shadow:
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
+    0 32px 90px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+  backdrop-filter: blur(24px);
 }
 
 .leading-accessory,
@@ -29,20 +36,20 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding: 16px 20px;
-  min-height: 72px;
+  padding: clamp(18px, 4vw, 22px) clamp(20px, 4vw, 26px);
+  min-height: clamp(72px, 12vh, 88px);
 }
 
 .leading-accessory {
   flex: 0 1 auto;
   min-width: 0;
   border-right: 1px solid
-    color-mix(in srgb, var(--border-color) 38%, transparent);
+    color-mix(in srgb, var(--border-color) 32%, transparent);
 }
 
 .trailing-accessory {
   border-left: 1px solid
-    color-mix(in srgb, var(--border-color) 32%, transparent);
+    color-mix(in srgb, var(--border-color) 28%, transparent);
 }
 
 .input-body {
@@ -50,7 +57,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  padding: 20px 16px;
+  padding: clamp(20px, 4vw, 26px) clamp(18px, 4vw, 24px);
 }
 
 .textarea {
@@ -60,7 +67,7 @@
   margin: 0;
   background: transparent;
   color: color-mix(in srgb, var(--color-text) 94%, transparent);
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.6;
   font-weight: 500;
   resize: none;
@@ -69,25 +76,30 @@
 }
 
 .textarea::placeholder {
-  color: color-mix(in srgb, var(--color-text) 52%, transparent);
+  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+  letter-spacing: 0.02em;
 }
 
 .action-button {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 38%, transparent);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--color-surface) 98%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 74%, transparent) 100%
-  );
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--color-surface-muted) 98%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 76%, transparent),
-    0 18px 34px color-mix(in srgb, var(--shadow-color) 24%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 84%, transparent),
+    0 26px 54px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+  color: color-mix(in srgb, var(--color-text) 88%, transparent);
   cursor: pointer;
   transition:
     transform 0.2s ease,
@@ -100,13 +112,14 @@
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--primary-color) 52%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 82%, transparent),
-    0 22px 38px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 86%, transparent),
+    0 32px 64px color-mix(in srgb, var(--shadow-color) 32%, transparent);
   outline: none;
 }
 
 .action-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary-color) 48%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 46%, transparent);
   outline-offset: 2px;
 }
 
@@ -114,15 +127,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: 4px 6px;
+  gap: clamp(6px, 1vw, 10px);
+  padding: 6px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-surface-alt) 68%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 36%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 32%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 78%, transparent),
-    0 10px 24px color-mix(in srgb, var(--shadow-color) 16%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 80%, transparent),
+    0 16px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent);
   min-width: 0;
 }
 
@@ -138,30 +151,32 @@
   right: 14px;
   width: 7px;
   height: 7px;
-  border-right: 2px solid color-mix(in srgb, var(--color-text) 78%, transparent);
+  border-right: 2px solid color-mix(in srgb, var(--color-text) 76%, transparent);
   border-bottom: 2px solid
-    color-mix(in srgb, var(--color-text) 78%, transparent);
+    color-mix(in srgb, var(--color-text) 76%, transparent);
   transform: rotate(45deg);
   pointer-events: none;
 }
 
 .language-select {
   appearance: none;
-  min-width: 124px;
-  padding: 9px 34px 9px 18px;
+  min-width: 128px;
+  padding: 10px 34px 10px 18px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--color-surface) 96%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
-  );
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--color-surface-muted) 96%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--color-surface-muted) 92%, transparent);
   box-shadow: inset 0 1px 0
-    color-mix(in srgb, var(--color-surface) 84%, transparent);
+    color-mix(in srgb, var(--color-surface-muted) 84%, transparent);
   color: color-mix(in srgb, var(--color-text) 92%, transparent);
   font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
   transition:
@@ -172,28 +187,32 @@
 .language-select:hover,
 .language-select:focus-visible {
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 88%, transparent),
-    0 8px 18px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 88%, transparent),
+    0 12px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
   transform: translateY(-1px);
   outline: none;
 }
 
 .language-swap-button {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--border-color) 34%, transparent);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--color-surface) 98%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-alt) 70%, transparent) 100%
-  );
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--color-surface-muted) 98%, transparent) 0%,
+      color-mix(in srgb, var(--color-surface-alt) 70%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--color-surface-alt) 90%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 82%, transparent),
-    0 14px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
+    0 18px 36px color-mix(in srgb, var(--shadow-color) 20%, transparent);
   color: color-mix(in srgb, var(--color-text) 86%, transparent);
   cursor: pointer;
   transition:
@@ -205,14 +224,92 @@
 .language-swap-button:hover,
 .language-swap-button:focus-visible {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary-color) 50%, transparent);
+  border-color: color-mix(in srgb, var(--primary-color) 48%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 86%, transparent),
-    0 16px 28px color-mix(in srgb, var(--shadow-color) 22%, transparent);
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 86%, transparent),
+    0 22px 40px color-mix(in srgb, var(--shadow-color) 24%, transparent);
   outline: none;
 }
 
 .language-swap-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary-color) 46%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 44%, transparent);
   outline-offset: 2px;
+}
+
+@media (width <= 900px) {
+  .input-wrapper {
+    width: min(100%, 720px);
+  }
+
+  .leading-accessory,
+  .trailing-accessory {
+    padding: clamp(16px, 5vw, 20px) clamp(16px, 6vw, 22px);
+    min-height: clamp(68px, 12vh, 80px);
+  }
+
+  .input-body {
+    padding: clamp(18px, 6vw, 22px) clamp(16px, 6vw, 20px);
+  }
+
+  .language-controls {
+    gap: clamp(4px, 1.4vw, 8px);
+    padding: 4px 8px;
+  }
+
+  .language-select {
+    min-width: 112px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (width <= 600px) {
+  .container {
+    padding-inline: clamp(4px, 4vw, 12px);
+  }
+
+  .input-wrapper {
+    width: 100%;
+  }
+
+  .leading-accessory {
+    border-right: none;
+    padding-bottom: 0;
+  }
+
+  .trailing-accessory {
+    border-left: none;
+    padding-top: 0;
+  }
+
+  .input-surface {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: clamp(28px, 8vw, 36px);
+    gap: 0;
+  }
+
+  .input-body {
+    width: 100%;
+    padding: clamp(16px, 7vw, 22px) clamp(14px, 7vw, 20px);
+  }
+
+  .language-controls {
+    width: 100%;
+    justify-content: space-between;
+    padding: 6px 10px;
+  }
+
+  .language-select-wrapper {
+    flex: 1;
+  }
+
+  .language-select {
+    width: 100%;
+  }
+
+  .language-swap-button {
+    width: 40px;
+    height: 40px;
+  }
 }
