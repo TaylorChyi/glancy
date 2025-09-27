@@ -170,12 +170,14 @@ function OutputToolbar({
     return items;
   }, [actionContext, canCopy, copyLabel, disabled, onCopy, user]);
 
-  const showPrimaryCluster = showTts || typeof onReoutput === "function";
+  const showReplay = typeof onReoutput === "function";
+  const showLeftCluster = showTts || showReplay;
+  const hasActions = actionItems.length > 0;
 
   return (
     <div className={styles.toolbar} data-testid="output-toolbar">
-      {showPrimaryCluster ? (
-        <div className={styles["primary-cluster"]}>
+      {showLeftCluster ? (
+        <div className={styles["left-cluster"]}>
           {showTts ? (
             <TtsComponent
               text={term}
@@ -184,10 +186,10 @@ function OutputToolbar({
               disabled={!speakableTerm}
             />
           ) : null}
-          {typeof onReoutput === "function" ? (
+          {showReplay ? (
             <button
               type="button"
-              className={styles.replay}
+              className={`${styles["icon-button"]} ${styles["icon-button-replay"]}`}
               onClick={onReoutput}
               disabled={disabled || !speakableTerm}
               aria-label={t.reoutput}
@@ -198,12 +200,11 @@ function OutputToolbar({
                 height={16}
                 aria-hidden="true"
               />
-              <span>{t.reoutput}</span>
             </button>
           ) : null}
         </div>
       ) : null}
-      <div className={styles["meta-strip"]}>
+      {hasActions ? (
         <div className={styles["action-strip"]}>
           {actionItems.map(
             ({
@@ -240,38 +241,37 @@ function OutputToolbar({
             },
           )}
         </div>
-        <span className={styles.separator} aria-hidden="true" />
-        <div className={styles["version-dial"]}>
-          <button
-            type="button"
-            className={styles["nav-button"]}
-            onClick={() => onNavigate?.("previous")}
-            disabled={!hasPrevious || disabled}
-            aria-label={t.previousVersion}
-          >
-            <ThemeIcon
-              name="arrow-left"
-              width={14}
-              height={14}
-              aria-hidden="true"
-            />
-          </button>
-          <span className={styles.indicator}>{indicator}</span>
-          <button
-            type="button"
-            className={styles["nav-button"]}
-            onClick={() => onNavigate?.("next")}
-            disabled={!hasNext || disabled}
-            aria-label={t.nextVersion}
-          >
-            <ThemeIcon
-              name="arrow-right"
-              width={14}
-              height={14}
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+      ) : null}
+      <div className={styles["version-dial"]}>
+        <button
+          type="button"
+          className={styles["nav-button"]}
+          onClick={() => onNavigate?.("previous")}
+          disabled={!hasPrevious || disabled}
+          aria-label={t.previousVersion}
+        >
+          <ThemeIcon
+            name="arrow-left"
+            width={14}
+            height={14}
+            aria-hidden="true"
+          />
+        </button>
+        <span className={styles.indicator}>{indicator}</span>
+        <button
+          type="button"
+          className={styles["nav-button"]}
+          onClick={() => onNavigate?.("next")}
+          disabled={!hasNext || disabled}
+          aria-label={t.nextVersion}
+        >
+          <ThemeIcon
+            name="arrow-right"
+            width={14}
+            height={14}
+            aria-hidden="true"
+          />
+        </button>
       </div>
     </div>
   );
