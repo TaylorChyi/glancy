@@ -1,39 +1,68 @@
 .sidebar {
-  --sidebar-padding: calc(var(--space-4, 24px) - var(--space-1, 4px));
-  --sidebar-inline-padding: var(--sidebar-padding);
-  --sidebar-section-gap: var(--space-4, 24px);
-  --sidebar-item-gap: var(--space-1, 4px);
-  --sidebar-brand-gap: var(--space-2, 8px);
-  --sidebar-item-padding-y: var(--space-2, 8px);
-  --sidebar-item-padding-x: var(--space-3, 16px);
+  --sidebar-padding: clamp(18px, 3vw, 28px);
+  --sidebar-inline-padding: clamp(20px, 3vw, 32px);
+  --sidebar-section-gap: clamp(16px, 2.8vw, 28px);
+  --sidebar-item-gap: 8px;
+  --sidebar-brand-gap: 12px;
+  --sidebar-item-padding-y: 12px;
+  --sidebar-item-padding-x: clamp(18px, 3vw, 24px);
   --sidebar-item-padding: var(--sidebar-item-padding-y)
     var(--sidebar-item-padding-x);
 
-  width: 240px;
+  width: var(--layout-sidebar-width, clamp(240px, 24vw, 380px));
+  min-width: var(--layout-sidebar-min, 240px);
+  max-width: var(--layout-sidebar-max, 392px);
   height: var(--vh);
-  background: var(--sidebar-bg);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sidebar-bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--sidebar-bg) 92%, transparent) 42%,
+      color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--sidebar-bg) 96%, transparent);
   color: var(--sidebar-color);
-  padding-block: var(--sidebar-padding);
-  padding-inline: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sidebar-section-gap);
+  border-right: 1px solid
+    color-mix(in srgb, var(--border-color) 48%, transparent);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   position: sticky;
   top: 0;
   align-self: start;
-  overflow-y: auto;
+  overflow: hidden;
+  box-shadow:
+    inset -1px 0 0 color-mix(in srgb, var(--border-color) 34%, transparent),
+    0 32px 80px color-mix(in srgb, var(--shadow-color) 22%, transparent);
+  backdrop-filter: blur(24px);
+  isolation: isolate;
+}
+
+.sidebar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    140% 120% at -20% 0%,
+    color-mix(in srgb, var(--primary-bg) 14%, transparent) 0%,
+    transparent 68%
+  );
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .sidebar-brand {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sidebar-brand-gap);
   position: sticky;
   top: 0;
-  min-height: var(--bar-height);
-  background: inherit;
-  padding-block: var(--space-2, 8px);
+  display: flex;
+  align-items: center;
+  gap: var(--sidebar-brand-gap);
+  padding: clamp(20px, 3vw, 28px) var(--sidebar-inline-padding)
+    clamp(12px, 2.4vw, 18px);
+  background: color-mix(in srgb, var(--sidebar-bg) 96%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-color) 40%, transparent);
+  z-index: 1;
 }
 
 .sidebar-brand [data-variant="prominent"] {
@@ -41,54 +70,91 @@
   width: 100%;
 }
 
+.sidebar-brand img {
+  width: 36px;
+  height: 36px;
+}
+
+.sidebar-brand span {
+  font-size: 1.3rem;
+  letter-spacing: 0.02em;
+}
+
 .mobile-user-menu {
   display: none;
 }
 
-.sidebar-brand img {
-  width: 32px;
-  height: 32px;
-}
-
-.sidebar-brand span {
-  font-size: 1.25rem;
-}
-
-.avatar img {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-avatar);
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, rgb(8 10 16) 55%, transparent);
+  backdrop-filter: blur(8px);
+  z-index: 998;
 }
 
 .display {
-  flex: 1;
+  position: relative;
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 48px) clamp(28px, 5vw, 44px);
+  border-radius: clamp(24px, 4vw, 38px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--app-bg) 94%, transparent) 0%,
+      color-mix(in srgb, var(--app-bg) 88%, transparent) 60%,
+      color-mix(in srgb, var(--app-bg) 82%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--app-bg) 92%, transparent);
+  box-shadow: 0 44px 120px
+    color-mix(in srgb, var(--shadow-color) 26%, transparent);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  gap: var(--space-4, 24px);
-  padding: var(--space-4, 24px);
-  margin: 0 auto;
-  width: min(960px, 100%);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  text-align: center;
+  align-items: stretch;
+  gap: clamp(24px, 3vw, 32px);
+  color: var(--app-color);
+  text-align: left;
+  overflow: hidden;
+}
+
+.display::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 120% at 80% -10%,
+    color-mix(in srgb, var(--primary-bg) 10%, transparent) 0%,
+    transparent 65%
+  );
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.display > * {
+  position: relative;
+  z-index: 1;
 }
 
 .display-empty {
   justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: min(520px, 60vh);
 }
 
 .stream-text {
   width: 100%;
-  padding: var(--space-3, 16px);
-  text-align: left;
-  overflow-wrap: anywhere;
-  background: var(--app-bg);
+  padding: clamp(20px, 3vw, 28px);
+  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
   color: var(--app-color);
-  border-radius: var(--radius-md, 8px);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
-  line-height: 1.5;
+  border-radius: clamp(18px, 3vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 36%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--app-bg) 86%, transparent),
+    0 28px 64px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  line-height: 1.6;
 }
 
 .stream-text p {
@@ -100,16 +166,27 @@
   font-family: var(--font-mono, monospace);
 }
 
-@media (width <= 600px) {
+.app-bottom {
+  width: min(100%, 960px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 clamp(12px, 4vw, 20px);
+}
+
+@media (width <= 900px) {
   .sidebar {
     position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
+    inset: 0 auto 0 0;
+    width: min(80vw, 320px);
+    max-width: min(80vw, 360px);
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    z-index: 1000;
-    width: 240px;
+    z-index: 999;
+    border-right: none;
+    box-shadow: 0 24px 80px
+      color-mix(in srgb, var(--shadow-color) 32%, transparent);
   }
 
   .sidebar.mobile-open {
@@ -117,28 +194,40 @@
   }
 
   .mobile-user-menu {
-    display: none;
+    display: block;
   }
 
   .display {
-    align-items: stretch;
-    gap: var(--space-3, 16px);
-    padding: var(--space-3, 16px);
     width: 100%;
-    text-align: left;
+    padding: clamp(24px, 6vw, 36px);
+    border-radius: clamp(20px, 6vw, 28px);
+    box-shadow: 0 28px 80px
+      color-mix(in srgb, var(--shadow-color) 30%, transparent);
   }
 
   .display-empty {
-    align-items: center;
-    text-align: center;
+    min-height: min(420px, 55vh);
   }
 }
 
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 30%);
-  z-index: 999;
+@media (width <= 600px) {
+  .sidebar {
+    width: min(84vw, 300px);
+  }
+
+  .display {
+    padding: clamp(20px, 7vw, 32px);
+    border-radius: clamp(18px, 7vw, 24px);
+  }
+
+  .stream-text {
+    padding: clamp(16px, 6vw, 22px);
+  }
+
+  .app-bottom {
+    width: 100%;
+    padding: 0;
+  }
 }
 
 .app h2 {

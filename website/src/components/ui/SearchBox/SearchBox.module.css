@@ -5,16 +5,22 @@
   align-items: stretch;
   width: 100%;
   padding: var(--padding-y, var(--search-box-padding-y))
-    var(--padding-x, var(--search-box-padding-x, 24px));
-  border-radius: var(--radius-xl);
-  box-shadow: 0 14px 38px
-    color-mix(in srgb, var(--shadow-color) 14%, transparent);
-  background-color: color-mix(
-    in srgb,
-    var(--chat-window-bg, var(--body-bg)) 96%,
-    transparent
-  );
-  backdrop-filter: blur(18px);
+    var(--padding-x, clamp(18px, 5vw, 28px));
+  border-radius: clamp(36px, 5vw, 44px);
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  box-shadow:
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
+    0 36px 96px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--input-bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--input-bg) 88%, transparent) 60%,
+      color-mix(in srgb, var(--input-bg) 84%, transparent) 100%
+    ),
+    color-mix(in srgb, var(--input-bg) 94%, transparent);
+  backdrop-filter: blur(26px);
   gap: var(--slot-gap, var(--space-3, 12px));
   overflow: hidden;
   box-sizing: border-box;

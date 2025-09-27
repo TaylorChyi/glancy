@@ -729,7 +729,7 @@ function App() {
           onSelectHistory: handleSelectHistory,
         }}
         bottomContent={
-          <div>
+          <div className="app-bottom">
             <ChatInput
               inputRef={inputRef}
               value={text}
