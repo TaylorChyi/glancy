@@ -1,41 +1,28 @@
-.sidebar-section {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(4px, 1vw, 8px);
-  padding-inline: clamp(12px, 2.4vw, 18px);
-}
-
 .sidebar-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 2.6vw, 22px);
-  padding-block: clamp(10px, 2vw, 16px);
+  padding: clamp(8px, 2vh, 16px) clamp(12px, 2vw, 18px) clamp(18px, 5vh, 28px);
+  gap: clamp(12px, 2vw, 18px);
   overflow: hidden;
 }
 
-.sidebar-quick-actions {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(4px, 1vw, 8px);
-  padding-inline: clamp(12px, 2.4vw, 18px);
-}
-
 .sidebar-history {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .history-list {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: clamp(4px, 1vw, 8px) clamp(12px, 2.4vw, 18px) clamp(16px, 3vw, 24px);
+  padding: clamp(6px, 1.4vw, 12px) clamp(10px, 2vw, 16px) clamp(20px, 4vw, 30px);
+  scrollbar-gutter: stable both-edges;
 }
 
 .history-items {
@@ -44,25 +31,29 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(2px, 0.6vw, 6px);
+  gap: clamp(3px, 0.8vw, 8px);
 }
 
 .history-entry {
-  border-radius: 12px;
-  border: 1px solid transparent;
-  transition: border-color 0.16s ease;
-}
+  --sidebar-action-height: clamp(32px, 4vh, 40px);
+  --sidebar-action-padding-x: clamp(12px, 2vw, 16px);
+  --sidebar-action-radius: 10px;
 
-.history-entry :global(.sidebar-action) {
-  border-radius: inherit;
+  border-radius: var(--sidebar-action-radius);
+  border: 1px solid transparent;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
 }
 
 .history-entry:where(:hover, :focus-within) {
   border-color: color-mix(
     in srgb,
-    var(--night-input-ring, var(--border-color)) 60%,
+    var(--night-input-ring, var(--border-color)) 65%,
     transparent
   );
+  transform: translateY(-1px);
 }
 
 .history-labels {
@@ -77,13 +68,17 @@
 }
 
 .sidebar-action {
+  --sidebar-action-height: clamp(36px, 5vh, 46px);
+  --sidebar-action-padding-x: clamp(12px, 2.4vw, 18px);
+  --sidebar-action-radius: 12px;
+
   width: 100%;
   display: flex;
   align-items: center;
   gap: clamp(8px, 1.6vw, 12px);
-  padding: 0 clamp(12px, 2.4vw, 18px);
-  min-height: clamp(36px, 5vh, 44px);
-  border-radius: 12px;
+  padding: 0 var(--sidebar-action-padding-x);
+  min-height: var(--sidebar-action-height);
+  border-radius: var(--sidebar-action-radius);
   border: 1px solid transparent;
   background: transparent;
   color: inherit;
@@ -95,12 +90,13 @@
   transition:
     background-color 160ms ease,
     color 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    transform 160ms ease;
 }
 
 .sidebar-action[data-variant="prominent"] {
-  background: color-mix(in srgb, var(--accent-color) 16%, transparent);
-  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 42%, transparent);
   color: color-mix(in srgb, var(--accent-color) 68%, var(--sidebar-color));
 }
 
@@ -111,14 +107,15 @@
   );
   border-color: color-mix(
     in srgb,
-    var(--night-input-ring, var(--border-color)) 60%,
+    var(--night-input-ring, var(--border-color)) 62%,
     transparent
   );
+  transform: translateY(-1px);
 }
 
 .sidebar-action[data-variant="prominent"]:where(:hover, :focus-visible) {
-  background: color-mix(in srgb, var(--accent-color) 24%, transparent);
-  border-color: color-mix(in srgb, var(--accent-color) 56%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 26%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 58%, transparent);
 }
 
 .sidebar-action:focus-visible {
@@ -126,10 +123,14 @@
   outline-offset: 2px;
 }
 
+.sidebar-action:active {
+  transform: translateY(0);
+}
+
 .sidebar-action-active {
   background: var(
     --night-active,
-    color-mix(in srgb, var(--sidebar-bg) 88%, transparent)
+    color-mix(in srgb, var(--sidebar-bg) 86%, transparent)
   );
   border-color: color-mix(
     in srgb,
@@ -140,7 +141,7 @@
 }
 
 .sidebar-action-active[data-variant="prominent"] {
-  background: color-mix(in srgb, var(--accent-color) 30%, transparent);
+  background: color-mix(in srgb, var(--accent-color) 32%, transparent);
   border-color: color-mix(in srgb, var(--accent-color) 62%, transparent);
 }
 
@@ -155,7 +156,7 @@
 }
 
 .sidebar-action-body {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -168,6 +169,11 @@
   gap: 6px;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.history-entry :global(.sidebar-action-label) {
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
 }
 
 .sidebar-action-badge {
@@ -191,7 +197,7 @@
   line-height: 1.4;
   color: color-mix(
     in srgb,
-    var(--night-muted, var(--sidebar-color)) 80%,
+    var(--night-muted, var(--sidebar-color)) 82%,
     transparent
   );
   letter-spacing: 0.02em;
@@ -203,7 +209,7 @@
   justify-content: center;
   color: color-mix(
     in srgb,
-    var(--night-muted, var(--sidebar-color)) 80%,
+    var(--night-muted, var(--sidebar-color)) 78%,
     transparent
   );
 }
@@ -212,24 +218,26 @@
   --user-menu-width: 100%;
 
   margin-top: auto;
-  padding: clamp(12px, 2vw, 18px) clamp(14px, 2.4vw, 18px);
+  padding: clamp(12px, 2vw, 18px) clamp(14px, 2.4vw, 20px);
   position: sticky;
   bottom: 0;
   background: var(--night-surface, var(--sidebar-bg));
   border-top: 1px solid var(--night-border, var(--border-color));
+  box-shadow: 0 -12px 24px
+    color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
 
 .sidebar-user-trigger {
   width: 100%;
-}
 
-.sidebar-user-trigger .sidebar-action {
-  padding-inline: clamp(12px, 2.4vw, 18px);
+  --sidebar-action-height: clamp(56px, 9vh, 66px);
+  --sidebar-action-padding-x: clamp(12px, 2.4vw, 18px);
+  --sidebar-action-radius: 14px;
 }
 
 .sidebar-user-trigger .sidebar-action-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -238,7 +246,7 @@
   font-weight: 500;
   color: color-mix(
     in srgb,
-    var(--night-muted, var(--sidebar-color)) 75%,
+    var(--night-muted, var(--sidebar-color)) 76%,
     transparent
   );
 }
@@ -253,4 +261,15 @@
   color: var(--night-text, var(--sidebar-color));
   border: 1px solid var(--night-border, var(--border-color));
   box-shadow: var(--night-shadow, 0 12px 30px rgb(0 0 0 / 40%));
+}
+
+@media (width <= 900px) {
+  .sidebar-content {
+    padding: clamp(10px, 4vw, 18px) clamp(14px, 5vw, 24px)
+      clamp(24px, 10vw, 36px);
+  }
+
+  .history-list {
+    padding: clamp(8px, 4vw, 16px);
+  }
 }

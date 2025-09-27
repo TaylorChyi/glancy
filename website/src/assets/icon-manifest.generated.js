@@ -61,6 +61,8 @@ import iconAsset58 from "./buttons/voice-button-dark.svg";
 import iconAsset59 from "./buttons/voice-button-light.svg";
 import iconAsset60 from "./logos/wechat-dark.svg";
 import iconAsset61 from "./logos/wechat-light.svg";
+import iconAsset62 from "./icons/library-dark.svg";
+import iconAsset63 from "./icons/library-light.svg";
 
 const registry = Object.freeze({
   "adjustments-horizontal": Object.freeze({
@@ -186,6 +188,10 @@ const registry = Object.freeze({
   wechat: Object.freeze({
     dark: iconAsset60,
     light: iconAsset61,
+  }),
+  library: Object.freeze({
+    dark: iconAsset62,
+    light: iconAsset63,
   }),
 });
 

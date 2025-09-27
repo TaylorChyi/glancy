@@ -36,9 +36,7 @@ function HistoryList({ onSelect }) {
   return (
     <>
       {hasHistory && (
-        <div
-          className={`${styles["sidebar-section"]} ${styles["history-list"]}`}
-        >
+        <div className={styles["history-list"]}>
           <ul className={styles["history-items"]}>
             {groupedHistory.map((item) => {
               return (

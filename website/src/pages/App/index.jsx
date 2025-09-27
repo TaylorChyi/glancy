@@ -160,9 +160,9 @@ function App() {
     setPopupOpen(true);
   }, []);
 
-  const focusInput = () => {
+  const focusInput = useCallback(() => {
     inputRef.current?.focus();
-  };
+  }, []);
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -176,11 +176,17 @@ function App() {
     toggleFavorite,
   });
 
-  const handleToggleFavorites = () => {
+  const handleShowDictionary = useCallback(() => {
+    setShowFavorites(false);
+    setShowHistory(false);
+    focusInput();
+  }, [focusInput]);
+
+  const handleShowFavorites = useCallback(() => {
     // always show favorites when invoked
     setShowFavorites(true);
     setShowHistory(false);
-  };
+  }, []);
 
   const handleUnfavorite = (term) => {
     unfavoriteHistory(term, user);
@@ -678,6 +684,12 @@ function App() {
     }
   }, [user]);
 
+  const activeSidebarView = useMemo(() => {
+    if (showFavorites) return "favorites";
+    if (showHistory) return "history";
+    return "dictionary";
+  }, [showFavorites, showHistory]);
+
   const isEntryViewActive = !showFavorites && !showHistory;
   const resolvedTerm = activeTerm;
   const hasResolvedEntry = isEntryViewActive && Boolean(entry);
@@ -725,8 +737,10 @@ function App() {
     <>
       <Layout
         sidebarProps={{
-          onToggleFavorites: handleToggleFavorites,
+          onShowDictionary: handleShowDictionary,
+          onShowFavorites: handleShowFavorites,
           onSelectHistory: handleSelectHistory,
+          activeView: activeSidebarView,
         }}
         bottomContent={
           <div className="app-bottom">
