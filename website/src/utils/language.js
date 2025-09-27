@@ -3,6 +3,12 @@ export const WORD_LANGUAGE_ENGLISH_MONO = "ENGLISH_MONOLINGUAL";
 export const WORD_FLAVOR_BILINGUAL = "BILINGUAL";
 export const WORD_FLAVOR_MONOLINGUAL_ENGLISH = "MONOLINGUAL_ENGLISH";
 
+const LANGUAGE_BADGES = Object.freeze({
+  AUTO: "AUTO",
+  CHINESE: "ZH",
+  ENGLISH: "EN",
+});
+
 const SUPPORTED_WORD_LANGUAGES = Object.freeze([
   WORD_LANGUAGE_AUTO,
   "CHINESE",
@@ -83,6 +89,20 @@ export function normalizeWordTargetLanguage(value) {
   return SUPPORTED_TARGET_LANGUAGES.includes(upper)
     ? upper
     : DEFAULT_TARGET_LANGUAGE;
+}
+
+export function resolveLanguageBadge(value) {
+  if (value == null) {
+    return LANGUAGE_BADGES.AUTO;
+  }
+
+  const upper = String(value).toUpperCase();
+
+  if (upper === WORD_LANGUAGE_ENGLISH_MONO) {
+    return LANGUAGE_BADGES.ENGLISH;
+  }
+
+  return LANGUAGE_BADGES[upper] ?? upper;
 }
 
 /**

@@ -19,6 +19,7 @@ export {
   resolveDictionaryFlavor,
   WORD_TARGET_LANGUAGES,
   WORD_DEFAULT_TARGET_LANGUAGE,
+  resolveLanguageBadge,
 } from "./language.js";
 export { getBrandText, BRAND_TEXT } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";
