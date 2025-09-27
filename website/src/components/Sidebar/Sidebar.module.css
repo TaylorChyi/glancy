@@ -92,13 +92,30 @@
     background-color 160ms ease,
     color 160ms ease,
     border-color 160ms ease,
+    box-shadow 160ms ease,
     transform 160ms ease;
+  box-shadow: none;
 }
 
 .sidebar-action[data-variant="prominent"] {
   background: color-mix(in srgb, var(--accent-color) 18%, transparent);
   border-color: color-mix(in srgb, var(--accent-color) 42%, transparent);
   color: color-mix(in srgb, var(--accent-color) 68%, var(--sidebar-color));
+}
+
+.sidebar-action[data-variant="surface"] {
+  background: color-mix(in srgb, var(--sidebar-bg) 96%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--sidebar-border-color, var(--border-color)) 64%,
+    transparent
+  );
+  color: color-mix(
+    in srgb,
+    var(--sidebar-color) 88%,
+    var(--sidebar-muted-color, var(--sidebar-color))
+  );
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--shadow-color) 14%, transparent);
 }
 
 .sidebar-action:where(:hover, :focus-visible) {
@@ -112,6 +129,14 @@
     transparent
   );
   transform: translateY(-1px);
+}
+
+.sidebar-action[data-variant="surface"]:where(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--sidebar-bg) 88%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 42%, transparent);
+  color: var(--sidebar-color);
+  box-shadow: 0 8px 20px
+    color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
 
 .sidebar-action[data-variant="prominent"]:where(:hover, :focus-visible) {
@@ -139,6 +164,14 @@
     transparent
   );
   color: var(--sidebar-color);
+}
+
+.sidebar-action-active[data-variant="surface"] {
+  background: color-mix(in srgb, var(--sidebar-bg) 84%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 46%, transparent);
+  color: var(--sidebar-color);
+  box-shadow: 0 10px 24px
+    color-mix(in srgb, var(--shadow-color) 20%, transparent);
 }
 
 .sidebar-action-active[data-variant="prominent"] {
