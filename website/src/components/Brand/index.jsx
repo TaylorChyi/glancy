@@ -38,8 +38,8 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
       icon: "glancy-web",
       iconAlt: dictionaryLabel,
       onClick: handleDictionary,
-      variant: SIDEBAR_ACTION_VARIANTS.default,
-      isActive: activeView === "dictionary",
+      variant: SIDEBAR_ACTION_VARIANTS.surface,
+      enableActiveState: false,
       className: "sidebar-nav-item sidebar-nav-item-dictionary",
       title: dictionaryHint,
     },
@@ -49,8 +49,8 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
       icon: "library",
       iconAlt: libraryLabel,
       onClick: handleLibrary,
-      variant: SIDEBAR_ACTION_VARIANTS.default,
-      isActive: activeView === "favorites",
+      variant: SIDEBAR_ACTION_VARIANTS.surface,
+      enableActiveState: true,
       className: "sidebar-nav-item",
       title: libraryHint,
     },
@@ -60,21 +60,24 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
     <div className="sidebar-brand">
       <div className="sidebar-brand-header">
         <nav className="sidebar-primary-nav" aria-label={dictionaryLabel}>
-          {navItems.map((item) => (
-            <SidebarActionItem
-              key={item.key}
-              icon={item.icon}
-              iconAlt={item.iconAlt}
-              iconTone="dark"
-              label={item.label}
-              onClick={item.onClick}
-              variant={item.variant}
-              isActive={item.isActive}
-              className={item.className}
-              aria-current={item.isActive ? "page" : undefined}
-              title={item.title}
-            />
-          ))}
+          {navItems.map((item) => {
+            const isActive = item.enableActiveState && activeView === item.key;
+
+            return (
+              <SidebarActionItem
+                key={item.key}
+                icon={item.icon}
+                iconAlt={item.iconAlt}
+                label={item.label}
+                onClick={item.onClick}
+                variant={item.variant}
+                isActive={isActive}
+                className={item.className}
+                aria-current={isActive ? "page" : undefined}
+                title={item.title}
+              />
+            );
+          })}
         </nav>
         <div className="mobile-user-menu">
           <UserMenu size={28} />
