@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sidebar Preview — fixed header/footer & scrollable entries</title>
+<style>
+  :root{
+    --sidebar-min: 240px;
+    --sidebar-max: 420px;
+    --sidebar-w: var(--sidebar-min);
+    --bg: #0f1115;
+    --surface: #0f1115;
+    --panel: #1f232b;
+    --border: #2a2e37;
+    --text: #eef0f3;
+    --muted: #a2a9b4;
+    --hover: #1a1e24;
+    --active: #242935;
+    --shadow: 0 12px 30px rgba(0,0,0,.4);
+    --input-dark-bg: #2b2f34;
+    --input-dark-ring: #3a3f46;
+  }
+  body{ margin:0; overflow:hidden; font:14px/1.5 -apple-system,BlinkMacSystemFont,Inter,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"; color:var(--text); background:var(--surface); }
+  .demo{ height:100dvh; min-height:100vh; display:flex; }
+
+  /* ===== Sidebar ===== */
+  .sidebar{ width:var(--sidebar-w); min-width:var(--sidebar-min); max-width:var(--sidebar-max); height:100%; background:var(--bg); border-right:1px solid var(--border); display:grid; grid-template-rows:auto 1fr auto; position:relative; z-index:3; overflow:hidden; }
+
+  /* 固定头部（格律词典 / 致知单词 + “词条”标题） */
+  .s-header{ padding:12px; padding-top:16px; padding-bottom:8px; background:var(--bg); }
+  .nav{ display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+  .row{ display:flex; align-items:center; gap:10px; height:36px; padding:0 10px; border-radius:10px; color:var(--text); text-decoration:none; cursor:pointer; }
+  .row:hover{ background:var(--hover); }
+  .iconwrap{ width:18px; height:18px; flex:0 0 18px; display:grid; place-items:center; color:var(--text); }
+  .iconwrap svg{ width:18px; height:18px; display:block; }
+  .section{ margin:6px 0 0; padding:0 4px; color:var(--muted); font-size:12px; }
+
+  /* 仅让中间“词条列表”滚动 */
+  .s-scroll{ overflow-y:auto; -webkit-overflow-scrolling:touch; padding:6px 12px 8px; min-height:0; }
+  .chat-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+  .chat-item{ display:flex; align-items:center; height:32px; padding:0 10px; border-radius:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .chat-item:hover{ background:var(--hover); }
+
+  /* 固定底部用户栏 */
+  .user{ background:var(--bg); border-top:1px solid var(--border); padding:10px 12px; display:flex; align-items:center; gap:12px; height:64px; cursor:pointer; z-index:5; }
+  .user:hover{ background:var(--hover); }
+  .avatar{ width:40px; height:40px; border-radius:50%; overflow:hidden; display:grid; place-items:center; }
+  .avatar svg{ width:40px; height:40px; display:block; }
+  .u-meta{ display:flex; flex-direction:column; line-height:1.2; }
+  .u-name{ font-weight:600; font-size:15px; }
+  .u-tier{ font-size:12px; color:var(--muted); }
+
+  /* 拖拽分隔条 */
+  .resizer{ position:absolute; top:0; right:-2px; width:6px; height:100%; cursor:col-resize; background:transparent; }
+  .resizer:hover{ background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
+
+  /* ===== Menus ===== */
+  .menu{ position:fixed; background:var(--panel); color:#fff; border-radius:18px; box-shadow:var(--shadow); padding:12px; display:none; z-index:10; }
+  .menu .mi{ display:flex; align-items:center; justify-content:space-between; gap:12px; height:48px; padding:0 14px; border-radius:12px; cursor:pointer; }
+  .menu .mi .lhs{ display:flex; flex-direction:row; align-items:center; gap:14px; }
+  .menu .mi:hover{ background:rgba(255,255,255,.06); }
+  .menu hr{ border:none; height:1px; background:rgba(255,255,255,.08); margin:10px 12px; }
+  .icon{ width:20px;height:20px; display:block; color:#fff; }
+
+  .submenu{ position:fixed; display:none; z-index:11; }
+  .submenu.help{ background:var(--panel); color:#fff; border-radius:18px; box-shadow:var(--shadow); padding:12px; min-width:320px; }
+  .submenu.help .mi{ display:flex; align-items:center; justify-content:flex-start; gap:12px; height:52px; padding:0 16px; border-radius:12px; white-space:nowrap; }
+  .submenu.help .mi .lhs{ display:flex; flex-direction:row; align-items:center; gap:16px; }
+  .submenu.help .icon{ width:22px; height:22px; }
+  .submenu.help .mi:hover{ background:rgba(255,255,255,.06); }
+
+  /* ===== Content/Search area ===== */
+  .content{ flex:1; position:relative; }
+  .display{ position:relative; height:100%; padding:24px 32px 140px; overflow:auto; color:var(--text); display:flex; justify-content:center; align-items:flex-start; }
+  .display .md{ width:clamp(560px, 50vw, 960px); box-sizing:border-box; padding-inline:12px; }
+  .display h1{ font-size:28px; margin:0 0 12px; }
+  .display h2{ font-size:18px; margin:18px 0 10px; color:#cfd5df; }
+  .display h3{ font-size:16px; margin:12px 0 6px; }
+  .display p{ margin:6px 0; color:#e8eaed; }
+  .display ul{ margin:6px 0 10px 22px; padding:0; }
+  .display li{ margin:6px 0; line-height:1.6; }
+  .display strong{ font-weight:700; }
+
+  .search-area{ position:fixed; left:calc(var(--sidebar-w) + 50% - var(--sidebar-w)/2); transform:translateX(-50%); bottom:24px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2; }
+  .search-pill{ height:48px; display:flex; align-items:center; gap:10px; padding:0 12px; border-radius:999px; background:var(--input-dark-bg); border:1px solid var(--input-dark-ring); box-shadow:0 8px 20px rgba(0,0,0,.25); min-width:560px; max-width:960px; width:50vw; color:var(--text); }
+  .search-pill input{ flex:1; border:none; outline:none; background:transparent; color:#f0f3f6; font:16.5px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial; }
+  .search-pill input::placeholder{ color:#b3bac6; }
+  .lang-chip{ display:flex; align-items:center; gap:8px; padding:4px 2px 4px 6px; border-radius:999px; background:transparent; }
+  .lang-btn{ display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; padding:4px 6px; background:transparent; border:none; border-radius:0; box-shadow:none; }
+  .lang-btn .code{ display:inline-block; width:4ch; text-align:center; font-weight:700; font-size:15px; line-height:1.45; letter-spacing:.2px; }
+  .swap-btn{ width:auto; height:24px; display:grid; place-items:center; background:transparent; border:none; padding:0 2px; cursor:pointer; color:#cfd5df; }
+  .swap-btn svg{ width:16px; height:16px; }
+  .vsep{ width:1px; height:26px; background:var(--input-dark-ring); margin:0 8px; opacity:.9; }
+  .action{ width:36px; height:36px; border-radius:999px; margin-left:6px; display:grid; place-items:center; background:transparent; border:none; box-shadow:none; cursor:pointer; flex:0 0 36px; }
+  .action svg{ width:18px; height:18px; color:#fff; }
+  .beian{ font-size:12px; color:#9ba3ae; }
+  .beian a{ color:inherit; text-decoration:underline; }
+
+  .lang-menu{ position:fixed; display:none; z-index:1000; min-width:200px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:8px; box-shadow:var(--shadow); }
+  .lang-menu .opt{ display:flex; align-items:center; gap:12px; height:34px; padding:0 12px; border-radius:8px; cursor:pointer; white-space:nowrap; color:var(--text); font-size:15px; line-height:1.45; }
+  .lang-menu .opt:hover{ background:var(--hover); }
+  .lang-menu .code{ width:4ch; text-align:center; font-weight:700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; font-size:15px; line-height:1.45; }
+
+  /* ===== Settings Modal ===== */
+  .backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:900; }
+  .modal{ position:fixed; top:50%; left:calc(var(--sidebar-w) + 50% - var(--sidebar-w)/2); transform:translate(-50%,-50%); width:clamp(720px, 60vw, 980px); max-height:80vh; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:20px; box-shadow:var(--shadow); display:none; z-index:1001; }
+  .modal .close{ position:absolute; top:10px; right:12px; width:32px; height:32px; display:grid; place-items:center; border-radius:8px; cursor:pointer; color:#cfd5df; }
+  .modal .close:hover{ background:rgba(255,255,255,.08); }
+  .modal .wrap{ display:flex; gap:0; padding:18px 20px 20px 20px; box-sizing:border-box; min-height:50vh; max-height:80vh; }
+  .modal .left{ width:220px; border-right:1px solid var(--border); padding:6px 8px; box-sizing:border-box; }
+  .modal .left .item{ height:36px; display:flex; align-items:center; gap:10px; padding:0 10px; border-radius:10px; cursor:pointer; color:#e7e9ee; }
+  .modal .left .item:hover{ background:rgba(255,255,255,.06); }
+  .modal .left .item.active{ background:#2a2e37; }
+  .modal .left .item svg{ color:#cfd5df; }
+  .modal .right{ flex:1; padding:0 12px 0 16px; max-height:calc(80vh - 60px); overflow:auto; }
+  .modal .right header{ position:sticky; top:0; background:linear-gradient(180deg, rgba(31,35,43,1), rgba(31,35,43,.92)); z-index:1; padding:6px 0 8px; }
+  .modal .right h2{ margin:0; font-size:18px; }
+  .panel .form{ display:flex; flex-direction:column; gap:12px; padding-top:6px; }
+  .panel .field{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .panel .label{ color:#cfd5df; }
+  .panel .select{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:10px; border:1px solid var(--border); background:transparent; cursor:pointer; }
+  .panel .voice{ display:flex; align-items:center; gap:12px; }
+  .panel .play{ display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; }
+  .rowline{ height:1px; background:var(--border); margin:2px 0; }
+  .switch{ position:relative; display:inline-flex; align-items:center; height:22px; width:42px; }
+  .switch input{ position:absolute; opacity:0; }
+  .switch span{ display:block; width:42px; height:22px; background:#3a3f46; border-radius:999px; position:relative; }
+  .switch span:after{ content:""; position:absolute; left:3px; top:3px; width:16px; height:16px; background:#fff; border-radius:50%; transition:.2s; }
+  .switch input:checked + span:after{ transform:translateX(20px); }
+
+/* === Overrides (2025-09-27) === */
+.modal .close{ left:12px; right:auto; top:12px; }
+.modal .wrap{ padding-top:48px; } /* put left tab column below the close button */
+.modal .right{ height:calc(80vh - 60px); overflow:auto; } /* consistent height; right side scrolls */
+
+</style>
+</head>
+<body>
+<div class="demo">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" role="navigation" aria-label="Sidebar" id="sidebar">
+    <!-- 固定头部 -->
+    <div class="s-header">
+      <div class="nav">
+        <a class="row" href="#" title="Glancy"><span class="iconwrap" aria-hidden="true">
+          <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><rect x="432" y="352" width="160" height="320" rx="20" fill="currentColor"/><rect x="672" y="192" width="160" height="320" rx="20" fill="currentColor"/><rect x="192" y="512" width="160" height="320" rx="20" fill="currentColor"/></svg>
+        </span><span id="glancyLabel">格律词典</span></a>
+        <a class="row" href="#" id="libBtn"><span class="iconwrap" aria-hidden="true">
+          <svg viewBox="0 0 672 710" xmlns="http://www.w3.org/2000/svg"><path d="M0 465.851C19.4565 477.084 41.5269 482.999 63.9933 483C86.4597 483.001 108.531 477.089 127.988 465.858C147.446 454.627 163.605 438.472 174.841 419.017C186.077 399.563 191.995 377.493 192 355.027C192.005 332.56 186.096 310.488 174.868 291.029C163.64 271.57 147.488 255.408 128.035 244.169C108.582 232.93 86.5133 227.008 64.0469 227C41.5805 226.992 19.5076 232.897 0.0464325 244.122L0 465.851Z" fill="currentColor"/><path d="M672 465.851C652.544 477.084 630.473 482.999 608.007 483C585.54 483.001 563.469 477.089 544.012 465.858C524.554 454.627 508.395 438.472 497.159 419.017C485.923 399.563 480.005 377.493 480 355.027C479.995 332.56 485.904 310.488 497.132 291.029C508.36 271.57 524.512 255.408 543.965 244.169C563.418 232.93 585.487 227.008 607.953 227C630.42 226.992 652.492 232.897 671.954 244.122L672 465.851Z" fill="currentColor"/><path d="M263.851 701.395C283.308 690.161 299.465 674.005 310.699 654.549C321.933 635.093 327.849 613.023 327.851 590.557C327.854 568.09 321.943 546.019 310.713 526.561C299.482 507.103 283.329 490.943 263.874 479.706C244.42 468.468 222.351 462.549 199.885 462.543C177.418 462.538 155.346 468.445 135.886 479.672C116.426 490.899 100.264 507.05 89.0235 526.503C77.7831 545.955 71.8607 568.023 71.8513 590.49L263.851 701.395Z" fill="currentColor"/><path d="M599.851 119.426C599.851 141.892 593.938 163.963 582.706 183.42C571.474 202.877 555.318 219.035 535.863 230.27C516.408 241.505 494.338 247.422 471.871 247.426C449.405 247.429 427.333 241.519 407.874 230.29C388.416 219.061 372.255 202.908 361.017 183.455C349.778 164.001 343.858 141.932 343.851 119.466C343.844 96.9994 349.75 74.9268 360.977 55.4662C372.203 36.0056 388.353 19.8425 407.805 8.60117L599.851 119.426Z" fill="currentColor"/><path d="M599.851 590.543C599.851 568.077 593.938 546.006 582.706 526.549C571.474 507.092 555.318 490.934 535.863 479.699C516.408 468.464 494.338 462.547 471.871 462.543C449.405 462.54 427.333 468.45 407.874 479.679C388.416 490.908 372.255 507.061 361.017 526.514C349.778 545.968 343.858 568.037 343.851 590.503C343.844 612.97 349.75 635.042 360.977 654.503C372.203 673.963 388.353 690.127 407.805 701.368L599.851 590.543Z" fill="currentColor"/><path d="M263.851 8.57441C283.308 19.8076 299.465 35.964 310.699 55.4199C321.933 74.8758 327.849 96.9458 327.851 119.412C327.854 141.879 321.943 163.95 310.713 183.408C299.482 202.867 283.329 219.026 263.874 230.264C244.42 241.501 222.351 247.42 199.885 247.426C177.418 247.432 155.346 241.524 135.886 230.297C116.426 219.07 100.264 202.919 89.0235 183.466C77.7831 164.014 71.8607 141.946 71.8513 119.479L263.851 8.57441Z" fill="currentColor"/></svg>
+        </span><span id="libraryLabel">致知单词</span></a>
+      </div>
+      <div class="section"><span id="entriesLabel">词条</span></div>
+    </div>
+
+    <!-- 中间滚动区：仅词条列表 -->
+    <div class="s-scroll" id="entriesScroll">
+      <ul class="chat-list" aria-label="Entries">
+        <!-- populated by JS -->
+      </ul>
+    </div>
+
+    <!-- 固定底部用户栏 -->
+    <div class="user" id="userBtn" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+      <div class="avatar" aria-hidden="true">
+        <svg class="light" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="display:none"><circle cx="512" cy="512" r="512" fill="#ffffff"/><rect x="192" y="512" width="640" height="256" rx="20" fill="#121212"/><circle cx="512" cy="377" r="160" fill="#121212"/></svg>
+        <svg class="dark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"><circle cx="512" cy="512" r="512" fill="#121212"/><rect x="192" y="512" width="640" height="256" rx="20" fill="#ffffff"/><circle cx="512" cy="377" r="160" fill="#ffffff"/></svg>
+      </div>
+      <div class="u-meta"><div class="u-name">Taylor Chyi</div><div class="u-tier">Pro</div></div>
+    </div>
+
+    <div class="resizer" id="resizer" title="Drag to resize"></div>
+  </aside>
+
+  <!-- ===== Menus ===== -->
+  <div id="userMenu" class="menu" role="menu" aria-hidden="true">
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3l3 3-9 9H3v-3l9-9z"/></svg><span id="umUpgrade">Upgrade plan</span></div></div>
+    <div id="openSettings" class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.3l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 1 1 21.7 7.04l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .67.39 1.27 1 1.51.3.12.62.19.96.19A2 2 0 1 1 21 13h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span id="umSettings">Settings</span></div></div>
+    <hr/>
+    <div id="helpItem" class="mi" role="menuitem" aria-haspopup="true"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12" y2="17"/></svg><span id="umHelp">Help</span></div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 21l3-3 3 3"/><path d="M12 17V3"/></svg><span id="umLogout">Log out</span></div></div>
+  </div>
+  <div id="helpMenu" class="submenu help" role="menu" aria-hidden="true">
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="1"/></svg><span id="hmCenter">帮助中心</span></div></div>
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h16v4H4z"/><path d="M4 12h16v4H4z"/><path d="M4 20h16v0"/></svg><span id="hmNotes">版本说明</span></div></div>
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h8"/></svg><span id="hmTerms">条款与政策</span></div></div>
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 3l3 1 3 9 7 3 2-6-7-3"/></svg><span id="hmBug">问题反馈</span></div></div>
+    <div class="mi" role="menuitem"><div class="lhs"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M7 22v-5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v5"/><path d="M7 10V6a5 5 0 0 1 10 0v4"/></svg><span id="hmApps">下载应用</span></div></div>
+  </div>
+
+  <!-- ===== Display area & bottom search ===== -->
+  <main class="content">
+    <div id="display" class="display"><div class="md" id="mdRoot"></div></div>
+    <div id="searchArea" class="search-area">
+      <div class="search-pill" role="search">
+        <div class="lang-chip" id="langChip">
+          <div class="lang-btn" id="srcBtn"><span class="code" id="srcCode">AUTO</span></div>
+          <button class="swap-btn" id="swapBtn" title="To" aria-label="To"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 12h12M12 6l6 6-6 6"/></svg></button>
+          <div class="lang-btn" id="tgtBtn"><span class="code" id="tgtCode">EN</span></div>
+        </div>
+        <div class="vsep" aria-hidden="true"></div>
+        <input id="q" placeholder="词条、短语、句子"/>
+        <button class="action" id="actionBtn" title="Voice" aria-label="Voice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+        </button>
+      </div>
+      <div class="beian"><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">京ICP备2025135702号-1</a></div>
+    </div>
+  </main>
+</div>
+
+<!-- Language menus -->
+<div id="srcMenu" class="lang-menu" style="display:none"></div>
+<div id="tgtMenu" class="lang-menu" style="display:none"></div>
+
+<!-- Settings modal/backdrop -->
+<div id="backdrop" class="backdrop"></div>
+<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="close" id="closeSettings" aria-label="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+  <div class="wrap">
+    <aside class="left">
+      <div class="item active" data-panel="general"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span>General</span></div>
+      <div class="item" data-panel="personal"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5z"/><path d="M2 22a10 10 0 0 1 20 0"/></svg><span>Personalization</span></div>
+      <div class="item" data-panel="data"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>Data controls</span></div>
+      <div class="item" data-panel="account"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg><span>Account</span></div>
+      <div class="item" data-panel="shortcuts"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M9 20h6"/></svg><span>Keyboard shortcuts</span></div>
+    </aside>
+    <section class="right">
+      <header><h2 id="modalTitle">General</h2></header>
+      <div id="panel-general" class="panel">
+        <div class="form">
+          <div class="field"><div class="label">Theme</div><div class="select" id="themeSelect"><span class="val" id="themeVal">Dark</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Language</div><div class="select" id="langSelect"><span class="val" id="langVal">Auto-detect</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Voice</div><div class="voice"><button class="play" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg>Play</button><div class="select" id="voiceSelect"><span class="val">Spruce</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        </div>
+      </div>
+
+      <div id="panel-personal" class="panel" style="display:none">
+        <div class="form">
+          <div class="field"><div class="label">Enable customization</div><label class="switch"><input id="pz-enable" type="checkbox" checked><span></span></label></div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Occupation</div><input id="pz-occ" style="background:transparent;border:1px solid var(--border);border-radius:10px;height:32px;padding:0 10px;color:var(--text);width:60%" placeholder="e.g. Student"/></div>
+          <div class="rowline"></div>
+          <div class="field" style="align-items:flex-start"><div class="label" style="margin-top:8px">More about you</div><textarea id="pz-about" rows="3" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text)"></textarea></div>
+          <div class="rowline"></div>
+          <div class="field" style="align-items:flex-start"><div class="label" style="margin-top:8px">学习目标</div><textarea id="pz-goal" rows="3" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text)"></textarea></div>
+        </div>
+      </div>
+
+      <div id="panel-data" class="panel" style="display:none">
+        <p style="color:var(--muted)">Data controls settings placeholder…</p>
+      </div>
+
+      <div id="panel-account" class="panel" style="display:none">
+        <div class="form">
+          <div class="field" style="align-items:center; gap:16px; justify-content:flex-start">
+            <div class="avatar" style="width:56px;height:56px;border-radius:50%;overflow:hidden;background:#444">
+              <img id="acc-avatar" alt="avatar" src="https://placehold.co/112x112" style="width:56px;height:56px;object-fit:cover"/>
+            </div>
+            <button id="acc-avatar-change" class="play" type="button">Change</button>
+          </div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Username</div><input id="acc-name" value="Taylor Chyi" style="background:transparent;border:1px solid var(--border);border-radius:10px;height:32px;padding:0 10px;color:var(--text);width:60%"/></div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Phone</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="acc-phone-val" style="color:var(--muted)">Not bound</span>
+              <button id="acc-phone-add"  class="play" type="button">Bind</button>
+              <button id="acc-phone-change" class="play" type="button" style="display:none">Change</button>
+              <button id="acc-phone-unbind" class="play" type="button" style="display:none">Unbind</button>
+            </div>
+          </div>
+          <div class="rowline"></div>
+          <div class="field"><div class="label">Email</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="acc-email-val" style="color:var(--muted)">taylor_chyi@icloud.com</span>
+              <button id="acc-email-change" class="play" type="button">Change</button>
+              <button id="acc-email-unbind" class="play" type="button">Unbind</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-shortcuts" class="panel" style="display:none">
+        <ul style="margin:10px 0 0 16px; line-height:1.9">
+          <li><b>⌘ / Ctrl + K</b> – Global search</li>
+          <li><b>⌘ / Ctrl + Enter</b> – Send</li>
+          <li><b>↑</b> – Edit last message</li>
+          <li><b>Esc</b> – Close modal / menu</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ===== State & helpers =====
+  let themePref = 'dark';
+  let langPref = 'zh';
+  const root = document.documentElement;
+  const userBtn = document.getElementById('userBtn');
+  const userMenu = document.getElementById('userMenu');
+  const helpItem = document.getElementById('helpItem');
+  const helpMenu = document.getElementById('helpMenu');
+
+  const mediaDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : {matches:true, addEventListener(){}};
+  function applyTheme(){
+    const t = themePref === 'system' ? (mediaDark.matches ? 'dark':'light') : themePref;
+    root.setAttribute('data-theme', t);
+    const av = userBtn.querySelector('.avatar');
+    av.querySelector('.light').style.display = t === 'dark' ? 'none':'block';
+    av.querySelector('.dark').style.display  = t === 'dark' ? 'block':'none';
+    const v = themePref.charAt(0).toUpperCase()+themePref.slice(1);
+    const el = document.getElementById('themeVal'); if(el) el.textContent = v;
+  }
+  mediaDark.addEventListener && mediaDark.addEventListener('change', function(){ if(themePref==='system') applyTheme(); });
+
+  function isZh(){ return langPref==='zh' || (langPref==='auto' && (navigator.language||'').toLowerCase().startsWith('zh')); }
+
+  const mapFullEn = { AUTO:'Auto', ZH:'Chinese', EN:'English', JA:'Japanese', KO:'Korean', ES:'Spanish', FR:'French', DE:'German' };
+  const mapFullZh = { AUTO:'自动', ZH:'汉语', EN:'英语', JA:'日语', KO:'韩语', ES:'西班牙语', FR:'法语', DE:'德语' };
+  function getFullLabel(code){ return isZh() ? (mapFullZh[code]||code) : (mapFullEn[code]||code); }
+
+  function applyMenuI18n(){
+    const zh = isZh();
+    const t = zh ? {
+      upgrade:'升级套餐', settings:'设置', help:'帮助', logout:'退出登录',
+      center:'帮助中心', notes:'版本说明', terms:'条款与政策', bug:'问题反馈', apps:'下载应用', kb:'快捷键'
+    } : {
+      upgrade:'Upgrade plan', settings:'Settings', help:'Help', logout:'Log out',
+      center:'Help center', notes:'Release notes', terms:'Terms & policies', bug:'Report Bug', apps:'Download apps', kb:'Keyboard shortcuts'
+    };
+    const ids = [['umUpgrade','upgrade'],['umSettings','settings'],['umHelp','help'],['umLogout','logout'],['hmCenter','center'],['hmNotes','notes'],['hmTerms','terms'],['hmBug','bug'],['hmApps','apps']];
+    ids.forEach(function(pair){ var el=document.getElementById(pair[0]); if(el) el.textContent=t[pair[1]]; });
+  }
+
+  function applyLanguage(){
+    const zh = isZh();
+    var el;
+    el=document.getElementById('entriesLabel'); if(el) el.textContent = zh ? '词条' : 'Entries';
+    el=document.getElementById('libraryLabel'); if(el) el.textContent = zh ? '致知单词' : 'Gomemo';
+    el=document.getElementById('glancyLabel'); if(el) el.textContent = zh ? '格律词典' : 'Glancy';
+    el=document.getElementById('q'); if(el) el.placeholder = zh ? '词条、短语、句子' : 'term phrase sentence';
+    applyMenuI18n();
+    updateLangChip();
+  }
+
+  // Search action button icon
+  const q = document.getElementById('q');
+  const actionBtn = document.getElementById('actionBtn');
+  function setActionIcon(mode){
+    actionBtn.innerHTML = mode==='send'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>';
+    actionBtn.setAttribute('title', mode==='send' ? 'Send' : 'Voice');
+  }
+  function updateIcon(){ setActionIcon(q.value.trim().length>0 ? 'send':'mic'); }
+  q.addEventListener('input', updateIcon); updateIcon();
+
+  /* ===== Language chip menus ===== */
+  var srcLang = 'AUTO';
+  var tgtLang = 'EN';
+  const srcBtn = document.getElementById('srcBtn');
+  const tgtBtn = document.getElementById('tgtBtn');
+  const srcMenu = document.getElementById('srcMenu');
+  const tgtMenu = document.getElementById('tgtMenu');
+  const srcCodeEl = document.getElementById('srcCode');
+  const tgtCodeEl = document.getElementById('tgtCode');
+  const swapBtn = document.getElementById('swapBtn');
+
+  var LANGS_SRC = ['AUTO','ZH','EN','JA','KO','ES','FR','DE'];
+  var LANGS_TGT = ['ZH','EN','JA','KO','ES','FR','DE'];
+
+  function renderMenu(menu, list, onPick){
+    menu.innerHTML = list.map(function(c){
+      var left = c; // 缩写
+      var right = getFullLabel(c); // 全称
+      return '<div class="opt" data-code="'+c+'"><span class="code">'+left+'</span><span class="full">'+right+'</span></div>';
+    }).join('');
+    menu.addEventListener('click', function(e){ e.stopPropagation(); });
+    Array.prototype.slice.call(menu.querySelectorAll('.opt')).forEach(function(el){
+      el.addEventListener('click', function(){ onPick(el.getAttribute('data-code')); hideLangMenus(); });
+    });
+  }
+  function showMenu(menu,anchor){
+    var r = anchor.getBoundingClientRect();
+    menu.style.display = 'block';
+    var mh = menu.offsetHeight;
+    var left = r.left;
+    left = Math.max(8, Math.min(left, window.innerWidth - menu.offsetWidth - 8));
+    var top = r.top - mh - 20;
+    if(top < 8){ top = r.bottom + 20; }
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  }
+  function hideLangMenus(){ srcMenu.style.display='none'; tgtMenu.style.display='none'; }
+  function updateLangChip(){ srcCodeEl.textContent = srcLang; tgtCodeEl.textContent = tgtLang; }
+
+  function getSystemLangCode(){
+    var n = (navigator.language||'en').toLowerCase();
+    if(n.startsWith('zh')) return 'ZH';
+    if(n.startsWith('ja')) return 'JA';
+    if(n.startsWith('ko')) return 'KO';
+    if(n.startsWith('es')) return 'ES';
+    if(n.startsWith('fr')) return 'FR';
+    if(n.startsWith('de')) return 'DE';
+    return 'EN';
+  }
+
+  renderMenu(srcMenu, LANGS_SRC, function(code){ srcLang = code; updateLangChip(); });
+  renderMenu(tgtMenu, LANGS_TGT, function(code){ tgtLang = code; updateLangChip(); });
+  srcBtn.addEventListener('click', function(e){ e.stopPropagation(); hideLangMenus(); renderMenu(srcMenu, LANGS_SRC, function(code){ srcLang = code; updateLangChip(); }); showMenu(srcMenu, srcBtn); });
+  tgtBtn.addEventListener('click', function(e){ e.stopPropagation(); hideLangMenus(); renderMenu(tgtMenu, LANGS_TGT, function(code){ tgtLang = code; updateLangChip(); }); showMenu(tgtMenu, tgtBtn); });
+  document.addEventListener('click', hideLangMenus);
+
+  swapBtn.addEventListener('click', function(){
+    var prevSrc = srcLang; var prevTgt = tgtLang;
+    srcLang = prevTgt; var nextTgt = prevSrc;
+    if(nextTgt === 'AUTO'){ nextTgt = getSystemLangCode(); }
+    tgtLang = nextTgt; updateLangChip();
+  });
+
+  /* ===== User menu positioning ===== */
+  function openMenu(){
+    var sb = document.getElementById('sidebar').getBoundingClientRect();
+    var pad = 10; // 两侧内边距
+    var w = Math.max(220, sb.width - pad*2);
+    userMenu.style.width = w + 'px';
+    userMenu.style.display = 'block';
+    var left = sb.left + pad;
+    var ub = userBtn.getBoundingClientRect();
+    var top = ub.top - userMenu.offsetHeight - 8;
+    if(top < 8){ top = ub.bottom + 8; }
+    userMenu.style.left = left + 'px';
+    userMenu.style.top = top + 'px';
+    userMenu.setAttribute('aria-hidden','false');
+    userBtn.setAttribute('aria-expanded','true');
+  }
+  function closeMenus(){ userMenu.style.display='none'; helpMenu.style.display='none'; userMenu.setAttribute('aria-hidden','true'); userBtn.setAttribute('aria-expanded','false'); }
+  userBtn.addEventListener('click', function(e){ e.stopPropagation(); var shown=userMenu.style.display==='block'; shown?closeMenus():openMenu(); });
+  userBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+  userBtn.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); var shown=userMenu.style.display==='block'; shown?closeMenus():openMenu(); } });
+  document.addEventListener('click', closeMenus);
+  helpItem && helpItem.addEventListener('mouseenter', function(){
+      var r=userMenu.getBoundingClientRect();
+      helpMenu.style.display='block';
+      var top = r.bottom - helpMenu.offsetHeight;
+      helpMenu.style.left=(r.right+12)+'px';
+      helpMenu.style.top=(top)+'px';
+      helpMenu.setAttribute('aria-hidden','false');
+    });
+  userMenu.addEventListener('mouseleave', function(e){ if(!helpMenu.contains(e.relatedTarget)){ helpMenu.style.display='none'; helpMenu.setAttribute('aria-hidden','true'); } });
+  helpMenu.addEventListener('mouseleave', function(e){ if(!userMenu.contains(e.relatedTarget)){ helpMenu.style.display='none'; helpMenu.setAttribute('aria-hidden','true'); } });
+
+  /* ===== Sidebar resize ===== */
+  const rootEl = document.documentElement;
+  const resizer = document.getElementById('resizer');
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+  function getPx(v){ return Number(String(v).replace('px',''))||0; }
+  var dragging = false;
+  resizer.addEventListener('mousedown', function(){ dragging=true; document.body.style.userSelect='none'; });
+  window.addEventListener('mousemove', function(e){
+    if(!dragging) return;
+    var min = getPx(getComputedStyle(rootEl).getPropertyValue('--sidebar-min'))||240;
+    var max = getPx(getComputedStyle(rootEl).getPropertyValue('--sidebar-max'))||420;
+    var newW = clamp(e.clientX, min, max);
+    rootEl.style.setProperty('--sidebar-w', newW+'px');
+    localStorage.setItem('sidebarW', String(newW));
+  });
+  window.addEventListener('mouseup', function(){ dragging=false; document.body.style.userSelect=''; });
+  (function initSidebarWidth(){
+    var saved = Number(localStorage.getItem('sidebarW')); if(saved){ rootEl.style.setProperty('--sidebar-w', saved+'px'); }
+  })();
+
+  // ===== Settings modal logic =====
+  const openSettingsBtn = document.getElementById('openSettings');
+  const settingsModal = document.getElementById('settingsModal');
+  const backdrop = document.getElementById('backdrop');
+  const closeSettings = document.getElementById('closeSettings');
+
+  function showSettings(){ settingsModal.style.display='block'; backdrop.style.display='block'; }
+  function hideSettings(){ settingsModal.style.display='none'; backdrop.style.display='none'; }
+
+  openSettingsBtn.addEventListener('click', function(e){ e.stopPropagation(); hideLangMenus(); closeMenus(); showSettings(); });
+  closeSettings.addEventListener('click', function(e){ e.stopPropagation(); hideSettings(); });
+  backdrop.addEventListener('click', hideSettings);
+  window.addEventListener('keydown', function(e){ if(e.key==='Escape'){ hideSettings(); }});
+
+  // 左侧面板切换
+  const sideItems = settingsModal.querySelectorAll('.left .item');
+  sideItems.forEach(function(it){
+    it.addEventListener('click', function(){
+      sideItems.forEach(function(n){ n.classList.remove('active'); });
+      it.classList.add('active');
+      var name = it.getAttribute('data-panel');
+      settingsModal.querySelectorAll('.panel').forEach(function(p){ p.style.display = (p.id === 'panel-'+name) ? 'block':'none'; });
+      var titleMap = {general:'General', personal:'Personalization', data:'Data controls', account:'Account', shortcuts:'Keyboard shortcuts'};
+      var h = settingsModal.querySelector('#modalTitle'); if(h){ h.textContent = titleMap[name] || 'Settings'; }
+    });
+  });
+
+  // 初始化
+  function updateLangChip(){ document.getElementById('srcCode').textContent = srcLang; document.getElementById('tgtCode').textContent = tgtLang; }
+  applyTheme();
+  applyLanguage();
+
+  // 生成足量词条以便滚动测试
+  (function addMoreEntries(){
+    var list=document.querySelector('.chat-list');
+    if(!list) return;
+    var words = ["abate","abdicate","aberrant","abhor","abide","abject","abjure","abridge","abrogate","abrupt","abscond","absolve","abstain","abstruse","absurd","abysmal","accede","accelerate","accentuate","acclaim","acclimate","accolade","accommodate","accomplice","accord","accost","accrete","accrue","acerbic","acme","acquiesce","acrid","acrimonious","acumen","adamant","adept","adhere","adjacent","admonish","adroit","adumbrate","adverse","advocate","aesthetic","affable","afflict","affluent","aggrandize","aggregate","agile","agnostic","alacrity","allege","alleviate","allocate","aloof","altercation","altruism","amass","ambiguous","ambivalent","ameliorate","amenable","amiable","amicable","amorphous","ample","amplify","anachronism","analogy","anarchy","ancillary","anecdote","animosity","annex","annihilate","anomaly","antagonize","antedate","antidote","antipathy","antithesis","apathy","aplomb","apocryphal","appease","apprehend","approbation","apt","arbiter","arbitrary","arcane","archaic","ardent","arduous","arid","arrogant","articulate","ascend","ascetic","ashen","askew","asperity","assail","assent","assert","assess","assiduous","assimilate","assuage","austere","authentic","autonomous","avarice","aver","averse","avert","avid","avow"];
+    list.innerHTML = words.map(function(w){return '<li class="chat-item">'+w+'</li>';}).join('');
+  })();
+
+  // --- Markdown renderer + click handling ---
+  const display = document.getElementById('display');
+  const mdRoot = document.getElementById('mdRoot');
+
+  function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function inlineMd(s){
+    s = escapeHtml(s);
+    var parts = s.split('**');
+    var out = '';
+    for(var i=0;i<parts.length;i++){ out += (i%2===1 ? '<strong>'+parts[i]+'</strong>' : parts[i]); }
+    return out;
+  }
+  function mdToHtml(md){
+    md = md.split('\r').join('');
+    var lines = md.split('\n');
+    var html=''; var inUl=false; var liOpen=false;
+    function closeLi(){ if(liOpen){ html+='</li>'; liOpen=false; } }
+    function closeUl(){ closeLi(); if(inUl){ html+='</ul>'; inUl=false; } }
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i];
+      if(line.trim()===''){ closeLi(); continue; }
+      if(line.indexOf('### ')===0){ closeUl(); html+='<h3>'+inlineMd(line.slice(4))+'</h3>'; continue; }
+      if(line.indexOf('## ')===0){ closeUl(); html+='<h2>'+inlineMd(line.slice(3))+'</h2>'; continue; }
+      if(line.indexOf('# ')===0){ closeUl(); html+='<h1>'+inlineMd(line.slice(2))+'</h1>'; continue; }
+      if(line.indexOf('- ')===0){ if(!inUl){ html+='<ul>'; inUl=true; } closeLi(); html+='<li>'+inlineMd(line.slice(2)); liOpen=true; continue; }
+      if(line.indexOf('  **翻译**:')===0){ if(liOpen){ html+='<br>'+inlineMd(line.trim()); } else { html+='<p>'+inlineMd(line.trim())+'</p>'; } continue; }
+      closeUl();
+      html+='<p>'+inlineMd(line)+'</p>';
+    }
+    closeUl();
+    return html;
+  }
+  function renderMarkdown(md){ mdRoot.innerHTML = mdToHtml(md); display.scrollTop=0; }
+
+  function generateAvertMarkdown(){
+    return [
+      '# 单词：avert',
+      '',
+      '## 音标',
+      '- 英式: /əˈvɜːt/',
+      '- 美式: /əˈvɝːt/',
+      '',
+      '## 释义与例句',
+      '### s1 释义（v. verb 动词）：防止；避免（使坏事不发生）',
+      '- **例句 1**: Swift action by the firefighters helped avert a widespread blaze.',
+      '  **翻译**: 消防员的迅速行动帮助避免了大范围火灾的发生。',
+      '- **例句 2**: The company cut unnecessary spending to avert a financial crisis.',
+      '  **翻译**: 公司削减不必要的开支以避免财政危机。',
+      '- **例句 3（可选）**: Vaccination can avert thousands of preventable deaths each year.',
+      '  **翻译**: 接种疫苗每年都能避免数以千计的可避免死亡。',
+      '',
+      '### s2 释义（v. verb 动词）：转移；避开（目光、思考等）',
+      '- **例句 1**: She averted her eyes when the movie showed a graphic scene.',
+      '  **翻译**: 当电影出现血腥画面时，她把目光移开了。',
+      '- **例句 2**: He tried to avert his thoughts from the painful memory.',
+      '  **翻译**: 他努力把思绪从那段痛苦的记忆中转移开。',
+      '',
+      '## 常见搭配（Collocations）',
+      '- avert a crisis/disaster/catastrophe: 避免危机/灾难/浩劫  [对应：s1]',
+      '- avert war/conflict: 避免战争/冲突  [对应：s1]',
+      '- avert one’s eyes/gaze: 移开目光  [对应：s2]',
+      '',
+      '## 常见词组（Phrases）',
+      '- avert disaster: 避免灾难  [对应：s1]',
+      '  - **例句**: Early negotiations helped the two sides avert disaster.',
+      '    **翻译**: 早期谈判帮助双方避免了灾难的发生。',
+      '- avert one’s eyes: 移开视线  [对应：s2]',
+      '  - **例句**: He averted his eyes out of politeness.',
+      '    **翻译**: 他出于礼貌移开了视线。',
+      '',
+      '## 固定句型（Set Phrases / Patterns）',
+      '- avert + 名词（bad event）: 避免（坏事）  [对应：s1]',
+      '- avert A from B: 使 A 脱离/远离 B  [对应：s1]',
+      '',
+      '## 近义词',
+      '- prevent（对应：s1），avoid（对应：s1），ward off（对应：s1）；turn away（对应：s2）',
+      '',
+      '## 反义词',
+      '- cause（对应：s1），provoke（对应：s1）；face（对应：s2），fix one’s gaze（对应：s2）',
+      '',
+      '## 语法用法说明（Grammar Notes）',
+      '- avert 为及物动词：常接名词宾语（avert a crisis / disaster）。',
+      '- 结构 avert A from B 表“使 A 远离/避免 B”（如 avert catastrophe from the town）。',
+      '- 不常直接接不定式或从句；表达“避免……发生”时常用 avert + 名词 或改写为 prevent … from -ing。',
+      '',
+      '## 词源（Etymology）',
+      '- 来自拉丁语 avertere（转向、移开），ab-（离开）+ vertere（转动）。',
+      '',
+      '<END>'
+    ].join('\n');
+  }
+
+  // 点击词条：渲染展示
+  const listEl = document.querySelector('.chat-list');
+  listEl.addEventListener('click', function(e){
+    const li = e.target.closest('.chat-item');
+    if(!li) return;
+    const word = li.textContent.trim();
+    if(word.toLowerCase() === 'avert'){ renderMarkdown(generateAvertMarkdown()); }
+    else { renderMarkdown('# 单词：'+word+'\n\n（演示）点击了 **'+word+'**。详细词条暂未接入。\n\n<END>'); }
+  });
+
+// === JS Overrides (2025-09-27) ===
+// Reorder: place "Keyboard shortcuts" under "Personalization"
+(function reorderShortcuts(){
+  try{
+    var left = document.querySelector('#settingsModal .left');
+    if(left){
+      var shortcuts = left.querySelector('.item[data-panel="shortcuts"]');
+      var personal = left.querySelector('.item[data-panel="personal"]');
+      if(shortcuts && personal && personal.nextSibling !== shortcuts){
+        left.insertBefore(shortcuts, personal.nextSibling);
+      }
+    }
+  }catch(e){}
+})();
+
+// Help submenu should appear only while hovering the "Help" item
+try{
+  if(typeof helpItem !== 'undefined' && helpItem){
+    helpItem.addEventListener('mouseenter', function(){
+      // Position submenu: left edge = sidebar's right edge + 10px
+      var sb = document.getElementById('sidebar').getBoundingClientRect();
+      var pad = 10;
+      helpMenu.style.display='block';
+      var top = helpItem.getBoundingClientRect().bottom - helpMenu.offsetHeight;
+      if(top < 8){ top = helpItem.getBoundingClientRect().bottom + 8; }
+      helpMenu.style.left = (sb.right + pad) + 'px';
+      helpMenu.style.top  = top + 'px';
+      helpMenu.setAttribute('aria-hidden','false');
+    });
+    helpItem.addEventListener('mouseleave', function(){
+      helpMenu.style.display='none';
+      helpMenu.setAttribute('aria-hidden','true');
+    });
+  }
+}catch(e){}
+
+</script>
+</body>
+</html>
