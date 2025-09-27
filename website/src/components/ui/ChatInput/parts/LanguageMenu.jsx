@@ -112,7 +112,7 @@ export default function LanguageMenu({
   }
 
   return (
-    <div className={styles["language-select-wrapper"]}>
+    <div className={styles["language-select-wrapper"]} data-open={open}>
       <button
         type="button"
         className={styles["language-trigger"]}
@@ -135,9 +135,9 @@ export default function LanguageMenu({
         isOpen={open}
         anchorRef={triggerRef}
         onClose={() => setOpen(false)}
-        placement="bottom"
+        placement="top"
         align="start"
-        offset={6}
+        offset={12}
       >
         {open ? (
           <ul className={styles["language-menu"]} role="menu" ref={menuRef}>
