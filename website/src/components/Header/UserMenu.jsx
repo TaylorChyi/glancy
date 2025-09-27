@@ -1,11 +1,10 @@
-import { useUser, useHistory } from "@/context";
-import { useLanguage } from "@/context";
-import styles from "./Header.module.css";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import { useUser, useHistory, useLanguage } from "@/context";
+import styles from "./Header.module.css";
 import UserMenuButton from "./UserMenuButton.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
 import UserMenuModals from "./UserMenuModals.jsx";
-import PropTypes from "prop-types";
 
 function UserMenu({ size = 24, showName = false, TriggerComponent }) {
   const { user, clearUser } = useUser();
@@ -43,13 +42,7 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
       clearUser={clearUser}
       clearHistory={clearHistory}
     >
-      {({
-        openProfile,
-        openSettings,
-        openShortcuts,
-        openUpgrade,
-        openLogout,
-      }) => (
+      {({ openSettings, openShortcuts, openUpgrade, openLogout }) => (
         <Trigger
           size={size}
           showName={showName}
@@ -63,11 +56,10 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
               setOpen={setOpen}
               t={t}
               isPro={isPro}
-              openProfile={openProfile}
-              openSettings={openSettings}
-              openShortcuts={openShortcuts}
-              openUpgrade={openUpgrade}
-              openLogout={openLogout}
+              onOpenSettings={() => openSettings("general")}
+              onOpenUpgrade={openUpgrade}
+              onOpenKeyboard={openShortcuts}
+              onOpenLogout={openLogout}
             />
           )}
         </Trigger>

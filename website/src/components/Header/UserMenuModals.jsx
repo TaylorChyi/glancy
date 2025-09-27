@@ -1,27 +1,33 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import SettingsModal from "@/components/modals/SettingsModal.jsx";
-import ShortcutsModal from "@/components/modals/ShortcutsModal.jsx";
 import ProfileModal from "@/components/modals/ProfileModal.jsx";
 import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import LogoutConfirmModal from "@/components/modals/LogoutConfirmModal.jsx";
 
 function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [settingsState, setSettingsState] = useState({
+    open: false,
+    tab: "general",
+  });
 
-  useEffect(() => {
-    const handler = () => setShortcutsOpen(true);
-    document.addEventListener("open-shortcuts", handler);
-    return () => document.removeEventListener("open-shortcuts", handler);
+  const openSettings = useCallback((tab = "general") => {
+    setSettingsState({ open: true, tab });
   }, []);
 
+  useEffect(() => {
+    const handleShortcuts = () => openSettings("keyboard");
+    document.addEventListener("open-shortcuts", handleShortcuts);
+    return () =>
+      document.removeEventListener("open-shortcuts", handleShortcuts);
+  }, [openSettings]);
+
   const handlers = {
-    openSettings: () => setSettingsOpen(true),
-    openShortcuts: () => setShortcutsOpen(true),
-    openProfile: () => setProfileOpen(true),
+    openSettings,
+    openShortcuts: () => openSettings("keyboard"),
     openUpgrade: () => setUpgradeOpen(true),
     openLogout: () => setLogoutOpen(true),
   };
@@ -29,7 +35,6 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
   return (
     <>
       {children(handlers)}
-      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       {!isPro && (
         <UpgradeModal
           open={upgradeOpen}
@@ -37,13 +42,14 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
         />
       )}
       <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        open={settingsState.open}
+        onClose={() =>
+          setSettingsState((previous) => ({ ...previous, open: false }))
+        }
+        initialTab={settingsState.tab}
+        onOpenAccountManager={() => setProfileOpen(true)}
       />
-      <ShortcutsModal
-        open={shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-      />
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <LogoutConfirmModal
         open={logoutOpen}
         onConfirm={() => {
@@ -57,5 +63,18 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
     </>
   );
 }
+
+UserMenuModals.propTypes = {
+  isPro: PropTypes.bool,
+  user: PropTypes.object,
+  clearUser: PropTypes.func.isRequired,
+  clearHistory: PropTypes.func.isRequired,
+  children: PropTypes.func.isRequired,
+};
+
+UserMenuModals.defaultProps = {
+  isPro: false,
+  user: undefined,
+};
 
 export default UserMenuModals;

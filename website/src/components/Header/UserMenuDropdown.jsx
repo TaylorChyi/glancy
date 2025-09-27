@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import ThemeIcon from "@/components/ui/Icon";
 import styles from "./Header.module.css";
+
+const noop = () => {};
 
 const HELP_ITEMS = [
   { key: "center", icon: "question-mark-circle", labelKey: "helpCenter" },
@@ -8,9 +11,8 @@ const HELP_ITEMS = [
   { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
   { key: "bug", icon: "flag", labelKey: "reportBug" },
   { key: "apps", icon: "phone", labelKey: "downloadApps" },
+  { key: "shortcuts", icon: "command-line", labelKey: "shortcuts" },
 ];
-
-const noop = () => {};
 
 const emitHelpEvent = (action) => {
   if (typeof window === "undefined") return;
@@ -22,13 +24,12 @@ function UserMenuDropdown({
   setOpen,
   t,
   isPro,
-  openProfile,
-  openSettings,
-  openShortcuts,
-  openUpgrade,
-  openLogout,
+  onOpenSettings,
+  onOpenUpgrade,
+  onOpenKeyboard,
+  onOpenLogout,
 }) {
-  const containerRef = useRef(null);
+  const rootRef = useRef(null);
   const blurTimeoutRef = useRef(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -38,15 +39,16 @@ function UserMenuDropdown({
       return noop;
     }
     const handlePointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) {
+      if (!rootRef.current?.contains(event.target)) {
         setHelpOpen(false);
+        setOpen(false);
       }
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   useEffect(
     () => () => {
@@ -63,17 +65,17 @@ function UserMenuDropdown({
     setOpen(false);
   }, [setOpen]);
 
-  const handleAction = useCallback(
-    (handler) => () => {
-      if (typeof handler === "function") {
-        handler();
+  const handleMenuAction = useCallback(
+    (callback) => () => {
+      if (typeof callback === "function") {
+        callback();
       }
       closeMenu();
     },
     [closeMenu],
   );
 
-  const helpItems = useMemo(
+  const resolvedHelpItems = useMemo(
     () =>
       HELP_ITEMS.map((item) => ({
         ...item,
@@ -82,24 +84,31 @@ function UserMenuDropdown({
     [t],
   );
 
-  const handleHelpItem = useCallback(
-    (action) => () => {
-      emitHelpEvent(action);
-      closeMenu();
-    },
-    [closeMenu],
-  );
-
   const handleHelpBlur = useCallback(() => {
     if (blurTimeoutRef.current) {
       window.clearTimeout(blurTimeoutRef.current);
     }
     blurTimeoutRef.current = window.setTimeout(() => {
-      if (!containerRef.current?.contains(document.activeElement)) {
+      if (!rootRef.current?.contains(document.activeElement)) {
         setHelpOpen(false);
       }
     }, 120);
   }, []);
+
+  const handleHelpItem = useCallback(
+    (item) => () => {
+      if (item.key === "shortcuts") {
+        if (typeof onOpenKeyboard === "function") {
+          onOpenKeyboard();
+        }
+        closeMenu();
+        return;
+      }
+      emitHelpEvent(item.key);
+      closeMenu();
+    },
+    [closeMenu, onOpenKeyboard],
+  );
 
   if (!open) {
     return null;
@@ -107,7 +116,7 @@ function UserMenuDropdown({
 
   return (
     <div
-      ref={containerRef}
+      ref={rootRef}
       className={styles["user-menu-dropdown"]}
       onMouseLeave={() => setHelpOpen(false)}
     >
@@ -117,9 +126,9 @@ function UserMenuDropdown({
             type="button"
             role="menuitem"
             className={styles["menu-item"]}
-            onClick={handleAction(openUpgrade)}
+            onClick={handleMenuAction(onOpenUpgrade)}
           >
-            <span className={styles["menu-item-left"]}>
+            <span className={styles["menu-item-leading"]} aria-hidden="true">
               <ThemeIcon
                 name="shield-check"
                 className={styles["menu-icon"]}
@@ -127,34 +136,17 @@ function UserMenuDropdown({
                 height={20}
                 tone="dark"
               />
-              {t.upgrade}
             </span>
+            <span className={styles["menu-label"]}>{t.upgrade}</span>
           </button>
         ) : null}
         <button
           type="button"
           role="menuitem"
           className={styles["menu-item"]}
-          onClick={handleAction(openProfile)}
+          onClick={handleMenuAction(onOpenSettings)}
         >
-          <span className={styles["menu-item-left"]}>
-            <ThemeIcon
-              name="adjustments-horizontal"
-              className={styles["menu-icon"]}
-              width={20}
-              height={20}
-              tone="dark"
-            />
-            {t.profile}
-          </span>
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          className={styles["menu-item"]}
-          onClick={handleAction(openSettings)}
-        >
-          <span className={styles["menu-item-left"]}>
+          <span className={styles["menu-item-leading"]} aria-hidden="true">
             <ThemeIcon
               name="cog-6-tooth"
               className={styles["menu-icon"]}
@@ -162,25 +154,8 @@ function UserMenuDropdown({
               height={20}
               tone="dark"
             />
-            {t.settings}
           </span>
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          className={styles["menu-item"]}
-          onClick={handleAction(openShortcuts)}
-        >
-          <span className={styles["menu-item-left"]}>
-            <ThemeIcon
-              name="command-line"
-              className={styles["menu-icon"]}
-              width={20}
-              height={20}
-              tone="dark"
-            />
-            {t.shortcuts}
-          </span>
+          <span className={styles["menu-label"]}>{t.settings}</span>
         </button>
         <button
           type="button"
@@ -193,7 +168,7 @@ function UserMenuDropdown({
           onBlur={handleHelpBlur}
           onClick={() => setHelpOpen((prev) => !prev)}
         >
-          <span className={styles["menu-item-left"]}>
+          <span className={styles["menu-item-leading"]} aria-hidden="true">
             <ThemeIcon
               name="question-mark-circle"
               className={styles["menu-icon"]}
@@ -201,9 +176,9 @@ function UserMenuDropdown({
               height={20}
               tone="dark"
             />
-            {t.help}
           </span>
-          <span className={styles["menu-trailing"]} aria-hidden="true">
+          <span className={styles["menu-label"]}>{t.help}</span>
+          <span className={styles["menu-item-trailing"]} aria-hidden="true">
             <ThemeIcon
               name="arrow-right"
               className={styles["menu-icon"]}
@@ -213,20 +188,14 @@ function UserMenuDropdown({
             />
           </span>
         </button>
-        <hr className={styles["menu-divider"]} />
+        <div className={styles["menu-divider"]} aria-hidden="true" />
         <button
           type="button"
           role="menuitem"
-          className={styles["menu-item"]}
-          onClick={() => {
-            if (typeof openLogout === "function") {
-              openLogout();
-            }
-            setHelpOpen(false);
-            setOpen(false);
-          }}
+          className={`${styles["menu-item"]} ${styles["menu-item-danger"]}`}
+          onClick={handleMenuAction(onOpenLogout)}
         >
-          <span className={styles["menu-item-left"]}>
+          <span className={styles["menu-item-leading"]} aria-hidden="true">
             <ThemeIcon
               name="arrow-right-on-rectangle"
               className={styles["menu-icon"]}
@@ -234,8 +203,8 @@ function UserMenuDropdown({
               height={20}
               tone="dark"
             />
-            {t.logout}
           </span>
+          <span className={styles["menu-label"]}>{t.logout}</span>
         </button>
       </div>
       <div
@@ -244,28 +213,49 @@ function UserMenuDropdown({
         aria-hidden={!helpOpen}
         data-open={helpOpen ? "true" : "false"}
       >
-        {helpItems.map((item) => (
+        {resolvedHelpItems.map((item) => (
           <button
             key={item.key}
             type="button"
             role="menuitem"
             className={styles["submenu-item"]}
-            onClick={handleHelpItem(item.key)}
+            onClick={handleHelpItem(item)}
             onFocus={() => setHelpOpen(true)}
           >
-            <ThemeIcon
-              name={item.icon}
-              className={styles["submenu-icon"]}
-              width={22}
-              height={22}
-              tone="dark"
-            />
-            {item.label}
+            <span className={styles["submenu-icon-wrapper"]} aria-hidden="true">
+              <ThemeIcon
+                name={item.icon}
+                className={styles["submenu-icon"]}
+                width={22}
+                height={22}
+                tone="dark"
+              />
+            </span>
+            <span className={styles["submenu-label"]}>{item.label}</span>
           </button>
         ))}
       </div>
     </div>
   );
 }
+
+UserMenuDropdown.propTypes = {
+  open: PropTypes.bool.isRequired,
+  setOpen: PropTypes.func.isRequired,
+  t: PropTypes.object.isRequired,
+  isPro: PropTypes.bool,
+  onOpenSettings: PropTypes.func,
+  onOpenUpgrade: PropTypes.func,
+  onOpenKeyboard: PropTypes.func,
+  onOpenLogout: PropTypes.func,
+};
+
+UserMenuDropdown.defaultProps = {
+  isPro: false,
+  onOpenSettings: undefined,
+  onOpenUpgrade: undefined,
+  onOpenKeyboard: undefined,
+  onOpenLogout: undefined,
+};
 
 export default UserMenuDropdown;
