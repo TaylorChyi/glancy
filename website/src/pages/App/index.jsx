@@ -24,6 +24,8 @@ import {
   normalizeWordTargetLanguage,
   resolveShareTarget,
   attemptShareLink,
+  polishDictionaryMarkdown,
+  copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore, useSettingsStore } from "@/store";
@@ -153,12 +155,74 @@ function App() {
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
   const wordStoreApi = useWordStore;
   const activeTerm = entry?.term || currentTerm;
+  const copyPayload = useMemo(() => {
+    const stringCandidates = [
+      typeof entry?.markdown === "string" ? entry.markdown : null,
+      typeof finalText === "string" ? finalText : null,
+      typeof streamText === "string" ? streamText : null,
+    ];
+
+    for (const candidate of stringCandidates) {
+      if (!candidate || !candidate.trim()) {
+        continue;
+      }
+      const preview = extractMarkdownPreview(candidate);
+      const normalized = preview == null ? candidate : preview;
+      return polishDictionaryMarkdown(normalized);
+    }
+
+    if (entry && typeof entry === "object") {
+      try {
+        return JSON.stringify(entry, null, 2);
+      } catch {
+        return currentTerm || "";
+      }
+    }
+
+    return currentTerm || "";
+  }, [entry, finalText, streamText, currentTerm]);
+  const canCopyDefinition = useMemo(
+    () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
+    [copyPayload],
+  );
 
   const showPopup = useCallback((message) => {
     if (!message) return;
     setPopupMsg(message);
     setPopupOpen(true);
   }, []);
+
+  const copyLabel = t.copyAction || "Copy";
+  const handleCopy = useCallback(async () => {
+    if (!canCopyDefinition) {
+      showPopup(t.copyEmpty || t.copyFailed || copyLabel);
+      return;
+    }
+
+    const result = await copyTextToClipboard(copyPayload);
+    if (result.status === "copied") {
+      showPopup(t.copySuccess || copyLabel);
+      return;
+    }
+    if (result.status === "empty") {
+      showPopup(t.copyEmpty || t.copyFailed || copyLabel);
+      return;
+    }
+    if (result.status === "unavailable") {
+      showPopup(t.copyUnavailable || t.copyFailed || copyLabel);
+      return;
+    }
+    showPopup(t.copyFailed || copyLabel);
+  }, [
+    canCopyDefinition,
+    copyPayload,
+    copyLabel,
+    showPopup,
+    t.copySuccess,
+    t.copyEmpty,
+    t.copyFailed,
+    t.copyUnavailable,
+  ]);
 
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
@@ -721,6 +785,8 @@ function App() {
       versions={isEntryViewActive ? versions : []}
       activeVersionId={isEntryViewActive ? activeVersionId : null}
       onNavigate={isEntryViewActive ? handleNavigateVersion : undefined}
+      onCopy={handleCopy}
+      canCopy={canCopyDefinition}
       favorited={Boolean(resolvedTerm && favorites.includes(resolvedTerm))}
       onToggleFavorite={toggleFavoriteEntry}
       canFavorite={hasResolvedEntry && isTermActionable}

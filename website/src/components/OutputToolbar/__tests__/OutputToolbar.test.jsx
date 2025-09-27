@@ -14,6 +14,7 @@ jest.unstable_mockModule("@/context", () => ({
       nextVersion: "下一版本",
       versionIndicator: "{current} / {total}",
       versionIndicatorEmpty: "0 / 0",
+      copyAction: "复制",
       favoriteAction: "收藏",
       favoriteRemove: "取消收藏",
       deleteButton: "删除",
@@ -72,7 +73,8 @@ describe("OutputToolbar", () => {
     expect(mockTtsButton).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "上一版本" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "下一版本" })).toBeDisabled();
-    expect(screen.getByText("0/0")).toBeInTheDocument();
+    expect(screen.getByText("0 / 0")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "复制" })).toBeDisabled();
   });
 
   /**
@@ -89,7 +91,7 @@ describe("OutputToolbar", () => {
       />,
     );
 
-    expect(screen.getByText("2/3")).toBeInTheDocument();
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "下一版本" }));
     expect(onNavigate).toHaveBeenCalledWith("next");
     fireEvent.click(screen.getByRole("button", { name: "上一版本" }));
@@ -121,10 +123,13 @@ describe("OutputToolbar", () => {
     const onDelete = jest.fn();
     const onShare = jest.fn();
     const onReport = jest.fn();
+    const onCopy = jest.fn();
 
     render(
       <OutputToolbar
         term="hello"
+        canCopy
+        onCopy={onCopy}
         favorited
         onToggleFavorite={onToggleFavorite}
         canFavorite
@@ -141,20 +146,23 @@ describe("OutputToolbar", () => {
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
     fireEvent.click(screen.getByRole("button", { name: "分享" }));
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
+    fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
+    expect(onCopy).toHaveBeenCalledTimes(1);
   });
 
   /**
    * 当用户未登录时，应隐藏动作按钮避免误导。
    */
-  test("omits actions without user", () => {
+  test("disables actions without user", () => {
     userState.user = null;
     render(<OutputToolbar term="hello" canShare onShare={jest.fn()} />);
 
-    expect(screen.queryByRole("button", { name: "分享" })).toBeNull();
+    const shareButton = screen.getByRole("button", { name: "分享" });
+    expect(shareButton).toBeDisabled();
   });
 });
