@@ -12,7 +12,7 @@ function Sidebar(
     onClose,
     onShowDictionary,
     onShowFavorites,
-    activeView = "dictionary",
+    activeView,
     onSelectHistory,
   },
   ref,

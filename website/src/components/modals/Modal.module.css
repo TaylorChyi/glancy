@@ -19,8 +19,8 @@
 
 .close-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 18px;
+  left: 18px;
   width: 36px;
   height: 36px;
   border-radius: 999px;

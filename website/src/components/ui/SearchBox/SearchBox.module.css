@@ -6,10 +6,11 @@
   width: 100%;
   padding: var(--padding-y, 0) var(--padding-x, clamp(16px, 4vw, 20px));
   border-radius: 999px;
-  border: 1px solid var(--night-input-ring, var(--border-color));
-  background: var(--night-input-bg, var(--input-bg));
-  box-shadow: 0 12px 30px rgb(0 0 0 / 40%);
-  color: var(--night-text, var(--color-text));
+  border: 1px solid var(--sidebar-input-ring, var(--border-color));
+  background: var(--sidebar-input-bg, var(--input-bg));
+  box-shadow: 0 12px 30px
+    color-mix(in srgb, var(--shadow-color) 80%, transparent);
+  color: var(--sidebar-color, var(--color-text));
   gap: var(--slot-gap, 0);
   box-sizing: border-box;
   overflow: hidden;

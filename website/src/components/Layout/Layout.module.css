@@ -14,8 +14,8 @@
   display: flex;
   align-items: stretch;
   min-height: var(--vh);
-  background: var(--night-surface, var(--body-bg));
-  color: var(--night-text, var(--app-color));
+  background: var(--app-bg);
+  color: var(--app-color);
   position: relative;
   overflow: hidden;
 }
@@ -39,7 +39,7 @@
     transparent,
     color-mix(
       in srgb,
-      var(--night-muted, var(--border-color)) 16%,
+      var(--sidebar-border-color, var(--border-color)) 24%,
       transparent
     ),
     transparent
@@ -61,7 +61,7 @@
   align-items: center;
   flex: 1 1 auto;
   min-height: var(--vh);
-  background: var(--night-surface, var(--chat-window-bg));
+  background: var(--chat-window-bg);
   color: inherit;
   overflow: hidden;
 }
