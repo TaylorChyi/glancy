@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Popover from "@/components/ui/Popover/Popover.jsx";
 import useMenuNavigation from "@/hooks/useMenuNavigation.js";
+import { resolveLanguageBadge } from "@/utils/language.js";
 import styles from "../ChatInput.module.css";
 
 function resolveNormalizedValue(value, normalizeValue) {
@@ -31,8 +32,15 @@ function toNormalizedOptions(options, normalizeValue) {
         return null;
       }
 
+      const badge = resolveLanguageBadge(stringValue);
+
+      if (!badge) {
+        return null;
+      }
+
       return {
         value: stringValue,
+        badge,
         label,
         description,
       };
@@ -125,10 +133,7 @@ export default function LanguageMenu({
         data-open={open}
       >
         <span className={styles["language-trigger-code"]}>
-          {currentOption.value}
-        </span>
-        <span className={styles["language-trigger-label"]}>
-          {currentOption.label}
+          {currentOption.badge}
         </span>
       </button>
       <Popover
@@ -152,17 +157,10 @@ export default function LanguageMenu({
                     onClick={() => handleSelect(option.value)}
                   >
                     <span className={styles["language-option-code"]}>
-                      {option.value}
+                      {option.badge}
                     </span>
-                    <span className={styles["language-option-copy"]}>
-                      <span className={styles["language-option-label"]}>
-                        {option.label}
-                      </span>
-                      {option.description ? (
-                        <span className={styles["language-option-description"]}>
-                          {option.description}
-                        </span>
-                      ) : null}
+                    <span className={styles["language-option-label"]}>
+                      {option.label}
                     </span>
                   </button>
                 </li>
