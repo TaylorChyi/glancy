@@ -5,30 +5,14 @@
 }
 
 .input-wrapper {
-  width: min(100%, 960px);
-  margin: 0 auto;
+  width: 100%;
 }
 
 .input-surface {
-  --padding-x: 0;
-  --padding-y: 0;
-  --slot-gap: 0;
+  --padding-x: clamp(18px, 5vw, 24px);
+  --slot-gap: clamp(10px, 2vw, 14px);
 
-  border-radius: clamp(36px, 5vw, 44px);
-  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
-  background:
-    linear-gradient(
-      155deg,
-      color-mix(in srgb, var(--input-bg) 96%, transparent) 0%,
-      color-mix(in srgb, var(--input-bg) 88%, transparent) 60%,
-      color-mix(in srgb, var(--input-bg) 84%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--input-bg) 94%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
-    0 32px 90px color-mix(in srgb, var(--shadow-color) 28%, transparent);
-  backdrop-filter: blur(24px);
+  min-height: clamp(56px, 9vh, 72px);
 }
 
 .leading-accessory,
@@ -36,20 +20,19 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  padding: clamp(18px, 4vw, 22px) clamp(20px, 4vw, 26px);
-  min-height: clamp(72px, 12vh, 88px);
+  padding: 0;
 }
 
 .leading-accessory {
   flex: 0 1 auto;
   min-width: 0;
-  border-right: 1px solid
-    color-mix(in srgb, var(--border-color) 32%, transparent);
+  padding-left: clamp(4px, 1vw, 12px);
+  padding-right: clamp(12px, 2vw, 18px);
+  border-right: 1px solid var(--night-input-ring, var(--border-color));
 }
 
 .trailing-accessory {
-  border-left: 1px solid
-    color-mix(in srgb, var(--border-color) 28%, transparent);
+  padding-left: clamp(12px, 2vw, 16px);
 }
 
 .input-body {
@@ -57,7 +40,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  padding: clamp(20px, 4vw, 26px) clamp(18px, 4vw, 24px);
+  padding: clamp(14px, 3vw, 20px) clamp(12px, 3vw, 16px);
 }
 
 .textarea {
@@ -66,8 +49,11 @@
   padding: 0;
   margin: 0;
   background: transparent;
-  color: color-mix(in srgb, var(--color-text) 94%, transparent);
-  font-size: 1.02rem;
+  color: var(
+    --night-text,
+    color-mix(in srgb, var(--color-text) 94%, transparent)
+  );
+  font-size: 1rem;
   line-height: 1.6;
   font-weight: 500;
   resize: none;
@@ -76,50 +62,43 @@
 }
 
 .textarea::placeholder {
-  color: color-mix(in srgb, var(--color-text) 58%, transparent);
+  color: color-mix(
+    in srgb,
+    var(--night-muted, var(--color-text)) 58%,
+    transparent
+  );
   letter-spacing: 0.02em;
 }
 
 .action-button {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
-  background:
-    linear-gradient(
-      150deg,
-      color-mix(in srgb, var(--color-surface-muted) 98%, transparent) 0%,
-      color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 84%, transparent),
-    0 26px 54px color-mix(in srgb, var(--shadow-color) 28%, transparent);
-  color: color-mix(in srgb, var(--color-text) 88%, transparent);
+  border-radius: 999px;
+  border: 1px solid var(--night-input-ring, var(--border-color));
+  background: transparent;
+  color: var(--night-text, var(--color-text));
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    background 0.2s ease;
 }
 
 .action-button:hover,
 .action-button:focus-visible {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary-color) 52%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 86%, transparent),
-    0 32px 64px color-mix(in srgb, var(--shadow-color) 32%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--night-input-ring, var(--primary-color)) 14%,
+    transparent
+  );
   outline: none;
 }
 
 .action-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary-color) 46%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
   outline-offset: 2px;
 }
 
@@ -128,14 +107,10 @@
   align-items: center;
   justify-content: center;
   gap: clamp(6px, 1vw, 10px);
-  padding: 6px 10px;
+  padding: 4px clamp(4px, 1vw, 6px);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-surface-alt) 68%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 32%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 80%, transparent),
-    0 16px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  background: transparent;
+  color: var(--night-text, var(--color-text));
   min-width: 0;
 }
 
@@ -143,97 +118,81 @@
   position: relative;
   display: flex;
   align-items: center;
+  background: var(--night-panel, transparent);
+  border-radius: 999px;
+  border: 1px solid var(--night-input-ring, var(--border-color));
+  padding-inline: clamp(8px, 1.6vw, 12px);
+  min-height: 34px;
 }
 
 .language-select-wrapper::after {
   content: "";
   position: absolute;
-  right: 14px;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid color-mix(in srgb, var(--color-text) 76%, transparent);
+  right: clamp(8px, 1.4vw, 12px);
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid
+    color-mix(in srgb, var(--night-text, var(--color-text)) 76%, transparent);
   border-bottom: 2px solid
-    color-mix(in srgb, var(--color-text) 76%, transparent);
+    color-mix(in srgb, var(--night-text, var(--color-text)) 76%, transparent);
   transform: rotate(45deg);
   pointer-events: none;
 }
 
 .language-select {
   appearance: none;
-  min-width: 128px;
-  padding: 10px 34px 10px 18px;
+  min-width: 112px;
+  padding: 6px clamp(26px, 4vw, 32px) 6px clamp(12px, 2vw, 16px);
   border-radius: 999px;
   border: none;
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--color-surface-muted) 96%, transparent) 0%,
-      color-mix(in srgb, var(--color-surface-alt) 72%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--color-surface-muted) 92%, transparent);
-  box-shadow: inset 0 1px 0
-    color-mix(in srgb, var(--color-surface-muted) 84%, transparent);
-  color: color-mix(in srgb, var(--color-text) 92%, transparent);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  background: transparent;
+  color: var(--night-text, var(--color-text));
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   cursor: pointer;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .language-select:hover,
 .language-select:focus-visible {
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 88%, transparent),
-    0 12px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
   transform: translateY(-1px);
   outline: none;
 }
 
 .language-swap-button {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 34%, transparent);
-  background:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--color-surface-muted) 98%, transparent) 0%,
-      color-mix(in srgb, var(--color-surface-alt) 70%, transparent) 100%
-    ),
-    color-mix(in srgb, var(--color-surface-alt) 90%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
-    0 18px 36px color-mix(in srgb, var(--shadow-color) 20%, transparent);
-  color: color-mix(in srgb, var(--color-text) 86%, transparent);
+  border-radius: 999px;
+  border: 1px solid var(--night-input-ring, var(--border-color));
+  background: transparent;
+  color: var(--night-muted, var(--color-text));
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    background 0.2s ease;
 }
 
 .language-swap-button:hover,
 .language-swap-button:focus-visible {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary-color) 48%, transparent);
-  box-shadow:
-    inset 0 1px 0
-      color-mix(in srgb, var(--color-surface-muted) 86%, transparent),
-    0 22px 40px color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--night-input-ring, var(--primary-color)) 18%,
+    transparent
+  );
   outline: none;
 }
 
 .language-swap-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary-color) 44%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 46%, transparent);
   outline-offset: 2px;
 }
 
@@ -242,24 +201,26 @@
     width: min(100%, 720px);
   }
 
-  .leading-accessory,
+  .leading-accessory {
+    padding-left: clamp(6px, 2vw, 12px);
+    padding-right: clamp(10px, 3vw, 16px);
+  }
+
   .trailing-accessory {
-    padding: clamp(16px, 5vw, 20px) clamp(16px, 6vw, 22px);
-    min-height: clamp(68px, 12vh, 80px);
+    padding-left: clamp(10px, 3vw, 14px);
   }
 
   .input-body {
-    padding: clamp(18px, 6vw, 22px) clamp(16px, 6vw, 20px);
+    padding: clamp(12px, 4vw, 18px) clamp(12px, 4vw, 16px);
   }
 
   .language-controls {
     gap: clamp(4px, 1.4vw, 8px);
-    padding: 4px 8px;
   }
 
   .language-select {
-    min-width: 112px;
-    font-size: 0.72rem;
+    min-width: 100px;
+    font-size: 0.76rem;
   }
 }
 
@@ -272,32 +233,22 @@
     width: 100%;
   }
 
-  .leading-accessory {
-    border-right: none;
-    padding-bottom: 0;
-  }
-
-  .trailing-accessory {
-    border-left: none;
-    padding-top: 0;
-  }
-
   .input-surface {
     flex-direction: column;
     align-items: stretch;
     border-radius: clamp(28px, 8vw, 36px);
-    gap: 0;
+    gap: clamp(10px, 4vw, 16px);
   }
 
   .input-body {
     width: 100%;
-    padding: clamp(16px, 7vw, 22px) clamp(14px, 7vw, 20px);
+    padding: clamp(14px, 7vw, 20px);
   }
 
   .language-controls {
     width: 100%;
-    justify-content: space-between;
-    padding: 6px 10px;
+    justify-content: center;
+    padding: clamp(10px, 4vw, 14px);
   }
 
   .language-select-wrapper {
@@ -311,5 +262,19 @@
   .language-swap-button {
     width: 40px;
     height: 40px;
+  }
+
+  .leading-accessory {
+    width: 100%;
+    padding: clamp(12px, 5vw, 18px);
+    border-right: none;
+    border-bottom: 1px solid var(--night-input-ring, var(--border-color));
+    justify-content: center;
+  }
+
+  .trailing-accessory {
+    border-left: none;
+    padding: 0;
+    justify-content: center;
   }
 }
