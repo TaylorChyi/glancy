@@ -1,33 +1,79 @@
 @import url("@/theme/spacing.css");
 @import url("@/theme/variables.css");
+@import url("@/theme/colors.css");
+@import url("@/theme/typography.css");
 
 .item {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  --list-item-height: 46px;
+  --list-item-gap: var(--space-2);
+  --list-item-padding-x: var(--space-2);
+  --list-item-radius: var(--radius-xl);
+  --list-item-text-color: var(--sidebar-text-color, var(--color-text));
+  --list-item-hover-bg: var(--sidebar-hover-bg, var(--color-overlay-weak));
+  --list-item-active-bg: var(--sidebar-active-bg, var(--color-overlay-strong));
+  --list-item-indicator-color: var(--accent-color);
+
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--list-item-gap);
+  min-height: var(--list-item-height);
+  height: var(--list-item-height);
+  padding: 0 var(--list-item-padding-x);
+  border-radius: var(--list-item-radius);
+  color: var(--list-item-text-color);
   cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .item:hover {
-  background-color: var(--color-overlay-weak);
+  background-color: var(--list-item-hover-bg);
 }
 
-:root[data-theme="dark"] .item:hover {
-  background-color: var(--color-overlay-inverse);
+.item[data-active="true"] {
+  background-color: var(--list-item-active-bg);
+}
+
+.indicator {
+  position: absolute;
+  inset-block: 8px;
+  inset-inline-start: 0;
+  width: 2px;
+  border-radius: var(--radius-sm);
+  background-color: var(--list-item-indicator-color);
+  display: none;
+}
+
+.item[data-active="true"] .indicator {
+  display: block;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  color: inherit;
 }
 
 .text {
   flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actions {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  position: relative;
   margin-left: auto;
   opacity: 0;
   pointer-events: none;
@@ -38,4 +84,14 @@
 .item:focus-within .actions {
   opacity: 1;
   pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
+  }
+
+  .actions {
+    transition: none;
+  }
 }
