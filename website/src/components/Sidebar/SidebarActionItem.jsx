@@ -7,20 +7,23 @@ const joinClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
 function renderIcon(icon, alt, label, tone) {
   if (!icon) return null;
+
   if (typeof icon !== "string") {
     return <span className={styles["sidebar-action-icon"]}>{icon}</span>;
   }
 
   return (
-    <ThemeIcon
-      name={icon}
-      alt={alt || label}
-      width={18}
-      height={18}
-      tone={tone}
-      aria-hidden={alt ? undefined : "true"}
-      className={styles["sidebar-action-icon"]}
-    />
+    <span className={styles["sidebar-action-icon"]}>
+      <ThemeIcon
+        name={icon}
+        alt={alt || label}
+        width={20}
+        height={20}
+        tone={tone}
+        aria-hidden={alt ? undefined : "true"}
+        className={styles["sidebar-action-icon-asset"]}
+      />
+    </span>
   );
 }
 
