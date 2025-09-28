@@ -7,10 +7,15 @@
   padding: clamp(20px, 4vw, 28px);
   border-radius: clamp(20px, 3vw, 26px);
   border: 1px solid
-    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 42%, transparent);
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 42%,
+      transparent
+    );
   background: linear-gradient(
     142deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
+      0%,
     color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
   );
   box-shadow: 0 20px 48px
@@ -35,7 +40,11 @@
   padding: clamp(12px, 2.6vw, 16px);
   border-radius: clamp(16px, 2vw, 20px);
   border: 1px solid
-    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 26%, transparent);
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 26%,
+      transparent
+    );
   background: color-mix(
     in srgb,
     var(--sidebar-panel, var(--sidebar-bg)) 98%,
@@ -174,6 +183,7 @@
 
 .sidebar-action:where(:hover, :focus-visible) {
   transform: translateY(-2px);
+
   --sidebar-action-shadow: 0 22px 48px
     color-mix(in srgb, var(--shadow-color) 22%, transparent);
   --sidebar-action-border-color: color-mix(
@@ -199,6 +209,7 @@
 
 .sidebar-action:active {
   transform: translateY(0);
+
   --sidebar-action-shadow: 0 12px 28px
     color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
@@ -207,7 +218,8 @@
   --sidebar-action-background: linear-gradient(
     140deg,
     color-mix(in srgb, var(--accent-color) 20%, transparent) 0%,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 100%
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
+      100%
   );
   --sidebar-action-border-color: color-mix(
     in srgb,
@@ -221,11 +233,7 @@
     var(--accent-color) 68%,
     var(--sidebar-color)
   );
-  --sidebar-icon-bg: color-mix(
-    in srgb,
-    var(--accent-color) 24%,
-    transparent
-  );
+  --sidebar-icon-bg: color-mix(in srgb, var(--accent-color) 24%, transparent);
   --sidebar-icon-color: color-mix(
     in srgb,
     var(--accent-color) 86%,
@@ -251,11 +259,7 @@
     var(--accent-color) 88%,
     var(--sidebar-color)
   );
-  --sidebar-icon-bg: color-mix(
-    in srgb,
-    var(--accent-color) 40%,
-    transparent
-  );
+  --sidebar-icon-bg: color-mix(in srgb, var(--accent-color) 40%, transparent);
   --sidebar-icon-color: color-mix(
     in srgb,
     var(--accent-color) 96%,
@@ -267,7 +271,8 @@
   --sidebar-action-background: linear-gradient(
     140deg,
     color-mix(in srgb, var(--accent-color) 28%, transparent) 0%,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 92%, transparent) 100%
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 92%, transparent)
+      100%
   );
   --sidebar-action-shadow: 0 26px 58px
     color-mix(in srgb, var(--accent-color) 32%, transparent);
@@ -286,7 +291,8 @@
 .sidebar-action-active {
   --sidebar-action-background: linear-gradient(
     150deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 92%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 92%, transparent)
+      0%,
     color-mix(in srgb, var(--sidebar-bg) 86%, transparent) 100%
   );
   --sidebar-action-border-color: color-mix(
@@ -307,7 +313,8 @@
   --sidebar-action-background: linear-gradient(
     144deg,
     color-mix(in srgb, var(--accent-color) 34%, transparent) 0%,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent) 100%
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent)
+      100%
   );
   --sidebar-action-border-color: color-mix(
     in srgb,
@@ -316,11 +323,7 @@
   );
   --sidebar-action-shadow: 0 28px 68px
     color-mix(in srgb, var(--accent-color) 34%, transparent);
-  --sidebar-icon-bg: color-mix(
-    in srgb,
-    var(--accent-color) 30%,
-    transparent
-  );
+  --sidebar-icon-bg: color-mix(in srgb, var(--accent-color) 30%, transparent);
   --sidebar-icon-color: color-mix(
     in srgb,
     var(--accent-color) 94%,
@@ -341,11 +344,7 @@
   );
   --sidebar-action-shadow: 0 32px 72px
     color-mix(in srgb, var(--accent-color) 42%, transparent);
-  --sidebar-icon-bg: color-mix(
-    in srgb,
-    var(--accent-color) 44%,
-    transparent
-  );
+  --sidebar-icon-bg: color-mix(in srgb, var(--accent-color) 44%, transparent);
   --sidebar-icon-color: color-mix(
     in srgb,
     var(--accent-color) 98%,
@@ -377,7 +376,7 @@
 .sidebar-action-icon-asset {
   width: clamp(18px, 2vw, 22px);
   height: clamp(18px, 2vw, 22px);
-  color: currentColor;
+  color: currentcolor;
 }
 
 .sidebar-action-body {
@@ -433,16 +432,22 @@
 
 .sidebar-user {
   --user-menu-width: 100%;
+
   margin-top: auto;
   padding: clamp(20px, 4vw, 26px);
   position: sticky;
   bottom: clamp(20px, 4vw, 28px);
   border-radius: clamp(20px, 3vw, 26px);
   border: 1px solid
-    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 42%, transparent);
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 42%,
+      transparent
+    );
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
+      0%,
     color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
   );
   box-shadow: 0 -18px 44px
@@ -459,7 +464,8 @@
   --sidebar-action-gap: clamp(12px, 2vw, 18px);
   --sidebar-action-background: linear-gradient(
     150deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
+      0%,
     color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
   );
   --sidebar-action-border-color: color-mix(
