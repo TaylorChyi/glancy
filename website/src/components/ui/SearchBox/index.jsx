@@ -2,9 +2,9 @@ import PropTypes from "prop-types";
 import styles from "./SearchBox.module.css";
 
 /**
- * SearchBox 提供统一的滚动容器与垂直留白控制。
+ * SearchBox 提供统一的搜索框外层结构与垂直留白控制。
  * 通过 CSS 变量 `--padding-y` 可灵活调整上下间距，
- * 默认值由主题变量 `--search-box-padding-y` 提供。
+ * 默认情况下遵循 search bar 设计令牌定义的尺寸。
  */
 export default function SearchBox({ children, paddingY, className }) {
   const style = paddingY ? { "--padding-y": paddingY } : undefined;

@@ -10,6 +10,13 @@ beforeAll(() => {
   const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
+  document.documentElement.style.setProperty("--sb-panel", "#1b1f27");
+  document.documentElement.style.setProperty("--sb-radius", "14px");
+});
+
+afterAll(() => {
+  document.documentElement.style.removeProperty("--sb-panel");
+  document.documentElement.style.removeProperty("--sb-radius");
 });
 
 /**
@@ -26,16 +33,18 @@ test("applies custom vertical padding variable", () => {
 });
 
 /**
- * 验证在提供聊天窗口背景变量时，背景色继承该值。
+ * 验证搜索框容器使用设计令牌提供的圆角与背景色。
  */
-test("uses themed background with body fallback", () => {
+test("applies design token defaults", () => {
   const { container } = render(
     <SearchBox>
       <textarea data-testid="input" />
     </SearchBox>,
   );
   const box = container.firstChild;
-  expect(getComputedStyle(box).backgroundColor).toContain("color-mix");
+  const styles = getComputedStyle(box);
+  expect(styles.borderRadius).toBe("var(--sb-radius, 14px)");
+  expect(styles.minHeight).toBe("var(--sb-h, 48px)");
 });
 
 /**
