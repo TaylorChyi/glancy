@@ -13,6 +13,24 @@
   --user-menu-width: 180px;
   --z-index-popover: 1100;
 
+  /* sidebar layout tokens */
+  --sidebar-w: 272px;
+  --sidebar-radius: 12px;
+  --sidebar-item-h: 40px;
+  --sidebar-pad-x: 12px;
+  --sidebar-pad-y: 8px;
+  --sidebar-gap-row: 6px;
+  --sidebar-gap-section: 12px;
+  --sidebar-icon-size: 18px;
+
+  /* popover metrics */
+  --popover-w: 304px;
+  --popover-radius: 14px;
+  --sec-hd-size: 12px;
+  --sec-hd-weight: 600;
+  --item-size: 14px;
+  --item-weight: 400;
+
   /* search bar tokens */
   --sb-h: 48px;
   --sb-radius: 14px;

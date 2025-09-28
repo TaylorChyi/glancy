@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useHistory, useUser } from "@/context";
 import Toast from "@/components/ui/Toast";
-import SidebarActionItem from "./SidebarActionItem.jsx";
-import styles from "./Sidebar.module.css";
+import NavItem from "./NavItem.jsx";
+import styles from "./HistoryList.module.css";
 
 function HistoryList({ onSelect }) {
   const { history, loadHistory, error } = useHistory();
@@ -35,28 +35,15 @@ function HistoryList({ onSelect }) {
 
   return (
     <>
-      {hasHistory && (
-        <div className={styles["history-list"]}>
-          <ul className={styles["history-items"]}>
-            {groupedHistory.map((item) => {
-              return (
-                <li key={item.termKey} className={styles["history-entry"]}>
-                  <SidebarActionItem
-                    label={
-                      <div className={styles["history-labels"]}>
-                        <span className={styles["history-term-text"]}>
-                          {item.term}
-                        </span>
-                      </div>
-                    }
-                    onClick={() => handleSelect(item)}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+      {hasHistory ? (
+        <ul className={styles.list}>
+          {groupedHistory.map((item) => (
+            <li key={item.termKey} className={styles.item}>
+              <NavItem label={item.term} onClick={() => handleSelect(item)} />
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <Toast
         open={!!errorMessage}
         message={errorMessage}
