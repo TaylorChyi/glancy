@@ -74,8 +74,12 @@
   --sb-menu-max-h: 420px;
   --sb-menu-radius: 16px;
   --sb-menu-padding: 8px;
-  --sb-icon-size: 18px;
-  --sb-action-size: 40px;
+  --sb-icon-size-sm: 18px;
+  --sb-icon-size-lg: 20px;
+  --sb-action-size-sm: 40px;
+  --sb-action-size-lg: 44px;
+  --sb-icon-size: var(--sb-icon-size-lg);
+  --sb-action-size: var(--sb-action-size-lg);
   --sb-caret: #99a6b5;
   --chip-gap: 8px;
   --chip-radius: 16px;
@@ -105,8 +109,6 @@
     var(--color-border-strong) 65%,
     transparent
   );
-  --sb-icon-size: 20px;
-  --sb-action-size: 44px;
   --sb-send-bg: rgb(255 255 255 / 92%);
   --sb-send-color: #0b0d11;
   --sb-ring-width: 2px;
