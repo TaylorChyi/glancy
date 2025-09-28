@@ -1,4 +1,4 @@
-import UserDock from "./UserDock.jsx";
+import UserDock from "./UserDock";
 
 function SidebarUser() {
   return <UserDock />;

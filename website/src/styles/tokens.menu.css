@@ -1,0 +1,27 @@
+:root {
+  --user-menu-safe: 10px;
+  --sidebar-w: var(--layout-sidebar-width, 320px);
+  --menu-radius: 12px;
+  --border: color-mix(
+    in srgb,
+    var(--sidebar-border-color, var(--border-color, #2a2e37)) 64%,
+    transparent
+  );
+  --menu-border: 1px solid var(--border);
+  --menu-shadow: 0 12px 30px rgb(0 0 0 / 24%);
+  --menu-bg: var(--sidebar-panel, var(--sidebar-bg, #1f232b));
+  --menu-bg-hover: var(--night-hover, #1a1e24);
+  --menu-bg-active: var(--night-active, #242935);
+  --menu-text: var(--sidebar-color, #eef0f3);
+  --menu-muted: var(--sidebar-muted-color, #a2a9b4);
+  --menu-divider: color-mix(in srgb, var(--menu-muted) 24%, transparent);
+  --menu-item-h: 36px;
+  --menu-item-px: 12px;
+  --menu-icon: 20px;
+  --menu-gap: 8px;
+  --submenu-w: 252px;
+  --submenu-gap: 10px;
+  --submenu-delay-in: 120ms;
+  --submenu-delay-out: 100ms;
+  --z-popover: 2060;
+}
