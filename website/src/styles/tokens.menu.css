@@ -1,0 +1,22 @@
+:root {
+  /* 已有：--sidebar-w 来自你的项目变量 */
+  --user-menu-safe: 10px; /* 一级菜单与 Sidebar 内边界的安全边距 */
+  --menu-radius: 12px; /* 卡片圆角 */
+  --menu-border: 1px solid var(--border-color, var(--border)); /* 描边 */
+  --menu-shadow: 0 12px 30px rgb(0 0 0 / 24%);
+  --menu-bg: var(--sidebar-panel, var(--panel)); /* 深色面板底 */
+  --menu-bg-hover: #1a1e24; /* 行 hover（深色） */
+  --menu-bg-active: #242935; /* 行 active/focus（深色） */
+  --menu-text: var(--sidebar-color, var(--text));
+  --menu-muted: var(--sidebar-muted-color, var(--muted));
+  --menu-divider: var(--sidebar-border-color, var(--border));
+  --menu-item-h: 36px; /* 行高 */
+  --menu-item-px: 12px; /* 行左右内边距 */
+  --menu-icon: 20px; /* 图标尺寸 */
+  --menu-gap: 8px; /* 组内垂直间距 */
+  --submenu-w: 252px; /* 二级菜单宽度 */
+  --submenu-gap: 10px; /* 二级菜单与 Sidebar 右边线间距 */
+  --submenu-delay-in: 120ms; /* 打开延时 */
+  --submenu-delay-out: 100ms; /* 关闭延时 */
+  --z-popover: 60; /* 层级 */
+}

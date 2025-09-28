@@ -2,6 +2,7 @@
 @import url("@/theme/variables.css");
 @import url("@/theme/spacing.css");
 @import url("@/theme/typography.css");
+@import url("./tokens.menu.css");
 
 :root {
   font-family: var(--font-family-base);
