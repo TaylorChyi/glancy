@@ -1,13 +1,7 @@
-import { UserMenu } from "@/components/Header";
-import SidebarUserMenuTrigger from "./SidebarUserMenuTrigger.jsx";
-import styles from "./Sidebar.module.css";
+import UserDock from "./UserDock.jsx";
 
 function SidebarUser() {
-  return (
-    <div className={styles["sidebar-user"]}>
-      <UserMenu size={32} showName TriggerComponent={SidebarUserMenuTrigger} />
-    </div>
-  );
+  return <UserDock />;
 }
 
 export default SidebarUser;

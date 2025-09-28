@@ -1,0 +1,215 @@
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 68%,
+      transparent
+    );
+  background: color-mix(
+    in srgb,
+    var(--sidebar-panel, var(--sidebar-bg)) 96%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+  border-radius: 0 0 clamp(18px, 3vw, 24px) clamp(18px, 3vw, 24px);
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 6px 18px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--sidebar-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: color-mix(
+    in srgb,
+    var(--sidebar-muted-color, var(--text-muted)) 82%,
+    transparent
+  );
+}
+
+.more {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.more:hover,
+.more:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--sidebar-hover-bg, rgb(255 255 255 / 12%)) 72%,
+    transparent
+  );
+}
+
+.more:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px
+    color-mix(
+      in srgb,
+      var(--primary-color, var(--accent-color)) 30%,
+      transparent
+    );
+}
+
+.more:active {
+  transform: scale(0.96);
+}
+
+.dock :global(.user-menu-dropdown) {
+  inset: auto 16px calc(100% + 12px);
+  width: min(var(--user-menu-width, 220px), calc(100% - 32px));
+  background: color-mix(
+    in srgb,
+    var(--sidebar-panel, var(--app-bg)) 96%,
+    transparent
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 48%,
+      transparent
+    );
+  box-shadow: 0 24px 48px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  border-radius: clamp(18px, 3vw, 22px);
+  padding: 12px 0;
+}
+
+.auth-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.auth-button,
+.auth-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+}
+
+.auth-button {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 64%,
+      transparent
+    );
+  background: transparent;
+  color: var(--sidebar-color);
+}
+
+.auth-button:hover,
+.auth-button:focus-visible {
+  transform: translateY(-1px);
+  background: color-mix(
+    in srgb,
+    var(--sidebar-hover-bg, rgb(15 17 21 / 12%)) 60%,
+    transparent
+  );
+}
+
+.auth-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px
+    color-mix(
+      in srgb,
+      var(--primary-color, var(--accent-color)) 30%,
+      transparent
+    );
+}
+
+.auth-button-primary {
+  border: none;
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--primary-bg, var(--brand-primary)) 88%, transparent)
+      0%,
+    color-mix(in srgb, var(--primary-bg, var(--brand-primary)) 72%, transparent)
+      100%
+  );
+  color: var(--primary-color, var(--brand-primary-contrast));
+  box-shadow: 0 18px 42px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+}
+
+.auth-button-primary:hover,
+.auth-button-primary:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 24px 56px
+    color-mix(in srgb, var(--shadow-color) 28%, transparent);
+}
+
+.auth-button-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px
+      color-mix(
+        in srgb,
+        var(--primary-color, var(--accent-color)) 30%,
+        transparent
+      ),
+    0 24px 56px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+}
+
+@media (width <= 720px) {
+  .dock {
+    border-radius: clamp(18px, 3vw, 24px);
+  }
+}
