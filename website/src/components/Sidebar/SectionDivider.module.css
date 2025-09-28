@@ -1,8 +1,0 @@
-.divider {
-  width: calc(100% - var(--sidebar-pad-x) * 2);
-  height: 1px;
-  background: var(--border);
-  border-radius: 999px;
-  margin: var(--sidebar-pad-y) var(--sidebar-pad-x);
-  opacity: 0.6;
-}

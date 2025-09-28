@@ -16,6 +16,18 @@ const historyMock = [
     ],
     latestVersionId: "v1",
   },
+  {
+    term: "beta",
+    language: "ENGLISH",
+    flavor: "BILINGUAL",
+    termKey: "ENGLISH:BILINGUAL:beta",
+    createdAt: "2024-05-02T11:00:00Z",
+    favorite: false,
+    versions: [
+      { id: "v2", createdAt: "2024-05-02T11:00:00Z", favorite: false },
+    ],
+    latestVersionId: "v2",
+  },
 ];
 
 jest.unstable_mockModule("@/context", () => ({
@@ -52,5 +64,28 @@ describe("HistoryList", () => {
 
     fireEvent.click(screen.getByText("alpha"));
     expect(handleSelect).toHaveBeenCalledWith(historyMock[0], "v1");
+  });
+
+  /**
+   * 验证键盘方向键可以在历史记录项之间移动焦点。
+   */
+  test("arrow navigation moves focus across history items", async () => {
+    render(<HistoryList onSelect={jest.fn()} />);
+
+    await waitFor(() => {
+      expect(loadHistory).toHaveBeenCalled();
+    });
+
+    const firstItem = await screen.findByRole("button", { name: "alpha" });
+    const secondItem = await screen.findByRole("button", { name: "beta" });
+
+    firstItem.focus();
+    expect(document.activeElement).toBe(firstItem);
+
+    fireEvent.keyDown(firstItem, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(secondItem);
+
+    fireEvent.keyDown(secondItem, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(firstItem);
   });
 });

@@ -25,14 +25,15 @@
   --z-index-popover: 1100;
 
   /* sidebar layout tokens */
-  --sidebar-w: 272px;
-  --sidebar-radius: 12px;
-  --sidebar-item-h: 40px;
-  --sidebar-pad-x: 12px;
-  --sidebar-pad-y: 8px;
-  --sidebar-gap-row: 6px;
+  --sidebar-w: 240px;
+  --sidebar-radius: 10px;
+  --sidebar-item-h: 36px;
+  --sidebar-pad-x: 16px;
+  --sidebar-pad-y: 12px;
+  --sidebar-gap-row: 8px;
   --sidebar-gap-section: 12px;
   --sidebar-icon-size: 18px;
+  --sidebar-accent: #96a0ff;
 
   /* popover metrics */
   --popover-w: 304px;

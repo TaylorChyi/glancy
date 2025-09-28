@@ -55,6 +55,7 @@ function HelpMenu({ t, onClose, onOpenShortcuts }) {
           rel={link.external ? "noreferrer" : undefined}
           onClick={onClose}
           className={styles["popover-item"]}
+          tone="muted"
         />
       ))}
       <NavItem
@@ -65,6 +66,7 @@ function HelpMenu({ t, onClose, onOpenShortcuts }) {
           onOpenShortcuts();
         }}
         className={styles["popover-item"]}
+        tone="muted"
       />
     </div>
   );
@@ -106,6 +108,7 @@ function AccountMenu({ t, onClose, onUpgrade, onLogout, isPro }) {
             item.onClick();
           }}
           className={styles["popover-item"]}
+          tone="muted"
         />
       ))}
     </div>
@@ -143,6 +146,7 @@ function AuthenticatedDock({
           label={t.settings || "Settings"}
           onClick={() => onOpenSettings("general")}
           data-testid="sidebar-action-settings"
+          tone="muted"
         />
         <Popover
           renderTrigger={({ props }) => {
@@ -154,6 +158,7 @@ function AuthenticatedDock({
                 ref={ref}
                 {...rest}
                 data-testid="sidebar-action-help"
+                tone="muted"
               />
             );
           }}

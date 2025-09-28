@@ -1,40 +1,70 @@
 .item {
-  display: inline-flex;
+  width: 100%;
+  display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 12px;
   height: var(--sidebar-item-h);
   padding: 0 var(--sidebar-pad-x);
+  padding-left: calc(var(--sidebar-pad-x) + 3px);
   border: 0;
   border-radius: var(--sidebar-radius);
   background: transparent;
-  color: var(--text);
+  color: var(--sidebar-color, var(--text));
   font-size: var(--item-size);
   font-weight: var(--item-weight);
-  line-height: 1.2;
+  line-height: 1;
+  text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition:
-    background-color 180ms ease,
-    color 180ms ease;
   position: relative;
   min-width: 0;
+  user-select: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--sidebar-accent, var(--accent));
+  opacity: 0;
+  transform: scaleY(0.6);
+  transform-origin: center;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
 .item:hover,
 .item:focus-visible {
-  background: var(--hover);
+  background: var(--sidebar-hover-bg, var(--hover));
 }
 
 .item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--border) 40%, transparent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--sidebar-accent, var(--accent)) 40%, transparent)
+    inset;
 }
 
 .active,
 .item[aria-current="page"] {
-  background: var(--active);
-  font-weight: 500;
+  background: var(--sidebar-active-bg, var(--active));
+  color: var(--sidebar-color, var(--text));
+}
+
+.active::before,
+.item[aria-current="page"]::before {
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 .icon {
@@ -43,8 +73,13 @@
   justify-content: center;
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
-  color: var(--muted);
+  color: var(--sidebar-muted-color, var(--muted));
   flex: 0 0 auto;
+}
+
+:is(.item:hover, .item:focus-visible, .active, .item[aria-current="page"])
+  .icon {
+  color: currentcolor;
 }
 
 .label {
@@ -58,5 +93,16 @@
 .description {
   display: block;
   font-size: calc(var(--item-size) - 2px);
-  color: var(--muted);
+  color: var(--sidebar-muted-color, var(--muted));
+}
+
+.muted {
+  color: var(--sidebar-muted-color, var(--muted));
+}
+
+.muted:hover,
+.muted:focus-visible,
+.muted.active,
+.muted.item[aria-current="page"] {
+  color: var(--sidebar-color, var(--text));
 }
