@@ -189,7 +189,7 @@ export default {
   favoriteAction: "收藏",
   deleteAction: "删除",
   searchPlaceholder: "接下来查询什么？",
-  inputPlaceholder: "词条、短语或句子",
+  inputPlaceholder: "“词条、短语、句子”",
   cookieConsentTitle: "尊重隐私的尊奢体验",
   cookieConsentDescription:
     "我们会使用 Cookie 记录已信任的设备，为您定制更顺滑的登录旅程。",

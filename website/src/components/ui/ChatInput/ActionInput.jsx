@@ -115,22 +115,25 @@ function ActionInput({
     >
       <SearchBox className={styles["input-surface"]}>
         {showLanguageControls ? (
-          <div className={styles["lang-rail"]}>
-            <LanguageControls
-              sourceLanguage={sourceLanguage}
-              sourceLanguageOptions={sourceLanguageOptions}
-              sourceLanguageLabel={sourceLanguageLabel}
-              onSourceLanguageChange={onSourceLanguageChange}
-              targetLanguage={targetLanguage}
-              targetLanguageOptions={targetLanguageOptions}
-              targetLanguageLabel={targetLanguageLabel}
-              onTargetLanguageChange={onTargetLanguageChange}
-              onSwapLanguages={onSwapLanguages}
-              swapLabel={swapLabel}
-              normalizeSourceLanguage={normalizeSourceLanguageFn}
-              normalizeTargetLanguage={normalizeTargetLanguageFn}
-            />
-          </div>
+          <>
+            <div className={styles["lang-rail"]}>
+              <LanguageControls
+                sourceLanguage={sourceLanguage}
+                sourceLanguageOptions={sourceLanguageOptions}
+                sourceLanguageLabel={sourceLanguageLabel}
+                onSourceLanguageChange={onSourceLanguageChange}
+                targetLanguage={targetLanguage}
+                targetLanguageOptions={targetLanguageOptions}
+                targetLanguageLabel={targetLanguageLabel}
+                onTargetLanguageChange={onTargetLanguageChange}
+                onSwapLanguages={onSwapLanguages}
+                swapLabel={swapLabel}
+                normalizeSourceLanguage={normalizeSourceLanguageFn}
+                normalizeTargetLanguage={normalizeTargetLanguageFn}
+              />
+            </div>
+            <div className={styles["language-divider"]} aria-hidden="true" />
+          </>
         ) : null}
         <div className={styles["core-input"]}>
           <textarea

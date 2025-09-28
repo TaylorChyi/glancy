@@ -1,9 +1,6 @@
 import PropTypes from "prop-types";
-import ThemeIcon from "@/components/ui/Icon";
 import LanguageMenu from "./parts/LanguageMenu.jsx";
 import styles from "./ChatInput.module.css";
-
-const ICON_SIZE = 20;
 
 export default function LanguageControls({
   sourceLanguage,
@@ -49,29 +46,32 @@ export default function LanguageControls({
         onChange={onSourceLanguageChange}
         ariaLabel={sourceLanguageLabel}
         normalizeValue={normalizeSource}
+        showLabel={false}
+        variant="source"
       />
       {canSwap ? (
         <button
           type="button"
-          className={styles["language-swap-button"]}
+          className={styles["language-swap"]}
           onClick={onSwapLanguages}
           aria-label={swapLabel}
           title={swapLabel}
         >
-          <ThemeIcon
-            name="arrow-right"
-            width={ICON_SIZE}
-            height={ICON_SIZE}
-            aria-hidden="true"
-          />
+          →
         </button>
-      ) : null}
+      ) : (
+        <span className={styles["language-arrow"]} aria-hidden="true">
+          →
+        </span>
+      )}
       <LanguageMenu
         options={targetLanguageOptions}
         value={targetLanguage}
         onChange={onTargetLanguageChange}
         ariaLabel={targetLanguageLabel}
         normalizeValue={normalizeTarget}
+        showLabel={false}
+        variant="target"
       />
     </div>
   );

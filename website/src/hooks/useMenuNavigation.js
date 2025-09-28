@@ -15,16 +15,29 @@ export default function useMenuNavigation(open, menuRef, triggerRef, setOpen) {
     const menuEl = menuRef.current;
     if (!menuEl) return undefined;
 
-    const items = Array.from(menuEl.querySelectorAll('[role="menuitem"]'));
+    const items = Array.from(
+      menuEl.querySelectorAll(
+        '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
+      ),
+    );
     if (!items.length) return undefined;
 
-    const getFocusable = (item) =>
-      item.querySelector("button, [href], [tabindex]");
+    const getFocusable = (item) => {
+      if (!item) return undefined;
+      if (typeof item.matches === "function") {
+        if (item.matches("button, [href], [tabindex]")) {
+          return item;
+        }
+      }
+      return item.querySelector?.("button, [href], [tabindex]");
+    };
 
     getFocusable(items[0])?.focus();
 
     const handleKeyDown = (e) => {
-      const currentItem = e.target.closest('[role="menuitem"]');
+      const currentItem = e.target.closest(
+        '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
+      );
       const index = items.indexOf(currentItem);
       switch (e.key) {
         case "Escape":
