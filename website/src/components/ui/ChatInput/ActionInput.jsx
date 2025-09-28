@@ -1,15 +1,65 @@
 import { useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import ThemeIcon from "@/components/ui/Icon";
 import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
-const ICON_SIZE = 20;
+const MIC_ICON_SIZE = 18;
+
+function MicIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      width={MIC_ICON_SIZE}
+      height={MIC_ICON_SIZE}
+      viewBox="0 0 18 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 11.75a2.75 2.75 0 0 0 2.75-2.75V5a2.75 2.75 0 0 0-5.5 0v4c0 1.52 1.23 2.75 2.75 2.75Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4.5 8.5V9a4.5 4.5 0 0 0 9 0v-.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 13.5V16"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.5 16h5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+MicIcon.propTypes = {
+  className: PropTypes.string,
+};
+
+MicIcon.defaultProps = {
+  className: undefined,
+};
 
 /**
- * ActionInput 使用可滚动的 SearchBox 包裹 textarea，并在内部放置操作按钮。
- * 按钮会根据内容是否为空在语音触发与提交之间切换。
+ * ActionInput 使用 SearchBox 包裹 textarea，并在内部放置语音触发按钮。
+ * 表单提交通过 Enter 或隐藏的提交按钮触发，语音触发具备节流防抖保护。
  */
 function ActionInput({
   value,
@@ -18,7 +68,6 @@ function ActionInput({
   onVoice,
   inputRef,
   placeholder,
-  sendLabel = "Send",
   voiceLabel = "Voice",
   rows = 1,
   maxRows = 5,
@@ -34,11 +83,13 @@ function ActionInput({
   swapLabel,
   normalizeSourceLanguageFn,
   normalizeTargetLanguageFn,
+  onMenuOpen,
 }) {
   const isEmpty = value.trim() === "";
   const localRef = useRef(null);
   const textareaRef = inputRef || localRef;
   const formRef = useRef(null);
+  const voiceCooldownRef = useRef(0);
 
   const autoResize = useCallback(
     (el) => {
@@ -69,9 +120,12 @@ function ActionInput({
   const handleSubmit = useCallback(
     (e) => {
       e.preventDefault();
+      if (isEmpty) {
+        return;
+      }
       onSubmit?.(e);
     },
-    [onSubmit],
+    [isEmpty, onSubmit],
   );
 
   const handleKeyDown = useCallback(
@@ -92,12 +146,15 @@ function ActionInput({
         return;
       }
       event.preventDefault();
+      const now = Date.now();
+      if (now - voiceCooldownRef.current < 500) {
+        return;
+      }
+      voiceCooldownRef.current = now;
       onVoice?.();
     },
     [isVoiceDisabled, onVoice],
   );
-
-  const canSubmit = !isEmpty;
 
   const hasSourceOptions = Array.isArray(sourceLanguageOptions)
     ? sourceLanguageOptions.length > 0
@@ -130,6 +187,7 @@ function ActionInput({
                 swapLabel={swapLabel}
                 normalizeSourceLanguage={normalizeSourceLanguageFn}
                 normalizeTargetLanguage={normalizeTargetLanguageFn}
+                onMenuOpen={onMenuOpen}
               />
             </div>
             <div className={styles["language-divider"]} aria-hidden="true" />
@@ -145,6 +203,12 @@ function ActionInput({
             onKeyDown={handleKeyDown}
             className={styles.textarea}
           />
+          <button
+            type="submit"
+            className={styles["submit-proxy"]}
+            tabIndex={-1}
+            aria-hidden="true"
+          />
         </div>
         <div className={styles.actions}>
           <button
@@ -154,26 +218,7 @@ function ActionInput({
             aria-label={voiceLabel}
             disabled={isVoiceDisabled}
           >
-            <ThemeIcon
-              name="voice-button"
-              alt={voiceLabel}
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-            />
-          </button>
-          <button
-            type="submit"
-            className={styles["send-button"]}
-            aria-label={sendLabel}
-            disabled={!canSubmit}
-            data-empty={!canSubmit}
-          >
-            <ThemeIcon
-              name="send-button"
-              alt={sendLabel}
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-            />
+            <MicIcon className={styles["voice-icon"]} />
           </button>
         </div>
       </SearchBox>
@@ -193,7 +238,6 @@ ActionInput.propTypes = {
     PropTypes.shape({ current: PropTypes.any }),
   ]),
   placeholder: PropTypes.string,
-  sendLabel: PropTypes.string,
   voiceLabel: PropTypes.string,
   rows: PropTypes.number,
   maxRows: PropTypes.number,
@@ -219,6 +263,7 @@ ActionInput.propTypes = {
   swapLabel: PropTypes.string,
   normalizeSourceLanguageFn: PropTypes.func,
   normalizeTargetLanguageFn: PropTypes.func,
+  onMenuOpen: PropTypes.func,
 };
 
 ActionInput.defaultProps = {
@@ -227,7 +272,6 @@ ActionInput.defaultProps = {
   onVoice: undefined,
   inputRef: undefined,
   placeholder: undefined,
-  sendLabel: "Send",
   voiceLabel: "Voice",
   rows: 1,
   maxRows: 5,
@@ -243,4 +287,5 @@ ActionInput.defaultProps = {
   swapLabel: undefined,
   normalizeSourceLanguageFn: (value) => value,
   normalizeTargetLanguageFn: (value) => value,
+  onMenuOpen: undefined,
 };

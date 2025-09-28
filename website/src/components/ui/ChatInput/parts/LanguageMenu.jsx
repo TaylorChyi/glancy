@@ -5,6 +5,36 @@ import useMenuNavigation from "@/hooks/useMenuNavigation.js";
 import { resolveLanguageBadge } from "@/utils/language.js";
 import styles from "../ChatInput.module.css";
 
+function CheckIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      width={16}
+      height={16}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="m4 8.25 2.25 2.25L12 4.75"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+CheckIcon.propTypes = {
+  className: PropTypes.string,
+};
+
+CheckIcon.defaultProps = {
+  className: undefined,
+};
+
 function resolveNormalizedValue(value, normalizeValue) {
   if (typeof normalizeValue === "function") {
     return normalizeValue(value);
@@ -61,6 +91,7 @@ export default function LanguageMenu({
   normalizeValue,
   showLabel,
   variant,
+  onOpen,
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
@@ -88,8 +119,14 @@ export default function LanguageMenu({
     if (normalizedOptions.length === 0) {
       return;
     }
-    setOpen((prev) => !prev);
-  }, [normalizedOptions]);
+    setOpen((prev) => {
+      const next = !prev;
+      if (next && typeof onOpen === "function") {
+        onOpen(variant);
+      }
+      return next;
+    });
+  }, [normalizedOptions, onOpen, variant]);
 
   const handleSelect = useCallback(
     (nextValue) => {
@@ -106,20 +143,28 @@ export default function LanguageMenu({
     [normalizeValue, onChange],
   );
 
-  const handleTriggerKeyDown = useCallback((event) => {
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      setOpen(true);
-      requestAnimationFrame(() => {
-        const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
-        if (!items || items.length === 0) {
-          return;
-        }
-        const index = event.key === "ArrowUp" ? items.length - 1 : 0;
-        items[index]?.querySelector("button, [href], [tabindex]")?.focus();
-      });
-    }
-  }, []);
+  const handleTriggerKeyDown = useCallback(
+    (event) => {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        setOpen((prev) => {
+          if (!prev && typeof onOpen === "function") {
+            onOpen(variant);
+          }
+          return true;
+        });
+        requestAnimationFrame(() => {
+          const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
+          if (!items || items.length === 0) {
+            return;
+          }
+          const index = event.key === "ArrowUp" ? items.length - 1 : 0;
+          items[index]?.querySelector("button, [href], [tabindex]")?.focus();
+        });
+      }
+    },
+    [onOpen, variant],
+  );
 
   if (normalizedOptions.length === 0 || !currentOption) {
     return null;
@@ -160,9 +205,9 @@ export default function LanguageMenu({
         isOpen={open}
         anchorRef={triggerRef}
         onClose={() => setOpen(false)}
-        placement="top"
+        placement="bottom"
         align="start"
-        offset={12}
+        offset={8}
       >
         {open ? (
           <ul
@@ -186,25 +231,20 @@ export default function LanguageMenu({
                     className={styles["language-menu-button"]}
                     data-active={isActive}
                     onClick={() => handleSelect(option.value)}
+                    title={option.description || option.label}
                   >
                     <span className={styles["language-option-code"]}>
                       {option.badge}
                     </span>
-                    <span className={styles["language-option-text"]}>
-                      <span className={styles["language-option-label"]}>
-                        {option.label}
-                      </span>
-                      {option.description ? (
-                        <span className={styles["language-option-description"]}>
-                          {option.description}
-                        </span>
-                      ) : null}
+                    <span className={styles["language-option-name"]}>
+                      {option.label}
                     </span>
                     <span
-                      className={styles["language-option-state"]}
-                      data-active={isActive}
+                      className={styles["language-option-check"]}
                       aria-hidden="true"
-                    />
+                    >
+                      {isActive ? <CheckIcon /> : null}
+                    </span>
                   </button>
                 </li>
               );
@@ -230,6 +270,7 @@ LanguageMenu.propTypes = {
   normalizeValue: PropTypes.func,
   showLabel: PropTypes.bool,
   variant: PropTypes.oneOf(["source", "target"]),
+  onOpen: PropTypes.func,
 };
 
 LanguageMenu.defaultProps = {
@@ -240,4 +281,5 @@ LanguageMenu.defaultProps = {
   normalizeValue: undefined,
   showLabel: false,
   variant: "source",
+  onOpen: undefined,
 };

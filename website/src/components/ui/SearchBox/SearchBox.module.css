@@ -1,47 +1,47 @@
-/* high fidelity search shell with shared design tokens */
 .search-box {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
   min-height: var(--sb-h, 56px);
-  padding: var(--padding-y, 0) var(--padding-x, var(--sb-gap-lg, 16px));
-  gap: var(--slot-gap, var(--sb-gap, 12px));
-  border-radius: var(--sb-radius, 28px);
-  border: 1px solid var(--sb-border, #2a2f3a);
-  background: var(--sb-bg, #15181e);
-  box-shadow: var(--sb-shadow, 0 16px 40px rgb(0 0 0 / 45%));
-  color: var(--sb-text, #e8ecf2);
-  font-size: var(--sb-font, 15px);
-  line-height: 1.4;
+  padding: var(--padding-y, 0) var(--padding-x, var(--sb-pad-x, 20px));
+  gap: var(--slot-gap, var(--sb-col-gap, 12px));
+  border-radius: var(--sb-radius, 24px);
+  border: 1px solid var(--sb-border, #2a313b);
+  background: var(--sb-bg, #1e2329);
+  box-shadow:
+    var(--sb-shadow, 0 10px 24px rgb(0 0 0 / 35%)),
+    inset 0 1px 0 var(--sb-inner-highlight, rgb(255 255 255 / 12%));
+  color: var(--sb-text, #e9edf3);
+  font-size: var(--sb-font, 16px);
+  line-height: 1.5;
   box-sizing: border-box;
   transition:
-    box-shadow 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
-    background 0.25s ease;
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.search-box:hover {
+  border-color: var(--sb-border-active, #3a4452);
+  background: var(
+    --sb-bg-hover,
+    color-mix(in srgb, var(--sb-bg) 98%, white 2%)
+  );
 }
 
 .search-box:focus-within {
-  border-color: color-mix(in srgb, var(--sb-ring, #7aa2ff) 35%, transparent);
+  border-color: var(--sb-border-active, #3a4452);
   box-shadow:
-    var(--sb-shadow, 0 16px 40px rgb(0 0 0 / 45%)),
-    0 0 0 1px color-mix(in srgb, var(--sb-ring, #7aa2ff) 35%, transparent) inset;
+    var(--sb-ring, 0 0 0 6px rgb(120 160 255 / 6%)),
+    var(--sb-shadow, 0 10px 24px rgb(0 0 0 / 35%)),
+    inset 0 1px 0 var(--sb-inner-highlight, rgb(255 255 255 / 12%));
 }
 
-.search-box :global(button) {
+.search-box :global(button),
+.search-box :global(input),
+.search-box :global(textarea) {
   font: inherit;
   color: inherit;
-}
-
-.search-box :global(svg) {
-  width: var(--sb-icon-size, 20px);
-  height: var(--sb-icon-size, 20px);
-  color: var(--sb-muted, #9aa3af);
-  transition: color 0.2s ease;
-}
-
-.search-box :global(button:hover svg),
-.search-box :global(button:focus-visible svg) {
-  color: var(--sb-text);
 }
