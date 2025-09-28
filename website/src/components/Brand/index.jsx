@@ -1,9 +1,51 @@
 import PropTypes from "prop-types";
 import { useLanguage } from "@/context";
 import { UserMenu } from "@/components/Header";
-import SidebarActionItem from "@/components/Sidebar/SidebarActionItem.jsx";
-import { SIDEBAR_ACTION_VARIANTS } from "@/components/Sidebar/sidebarActionVariants.js";
+import ThemeIcon from "@/components/ui/Icon";
 import { getBrandText } from "@/utils";
+
+function PrimaryNavItem({ icon, iconAlt, label, onClick, isActive, title }) {
+  return (
+    <button
+      type="button"
+      className="primary-nav-item"
+      onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
+      title={title}
+    >
+      <span className="primary-nav-item-indicator" aria-hidden="true" />
+      <span className="primary-nav-item-icon" aria-hidden="true">
+        {icon ? (
+          <ThemeIcon
+            name={icon}
+            alt={iconAlt || label}
+            width={20}
+            height={20}
+            className="primary-nav-item-icon-asset"
+          />
+        ) : null}
+      </span>
+      <span className="primary-nav-item-label">{label}</span>
+    </button>
+  );
+}
+
+PrimaryNavItem.propTypes = {
+  icon: PropTypes.string,
+  iconAlt: PropTypes.string,
+  isActive: PropTypes.bool,
+  label: PropTypes.node.isRequired,
+  onClick: PropTypes.func,
+  title: PropTypes.string,
+};
+
+PrimaryNavItem.defaultProps = {
+  icon: undefined,
+  iconAlt: undefined,
+  isActive: false,
+  onClick: undefined,
+  title: undefined,
+};
 
 function Brand({ activeView, onShowDictionary, onShowFavorites }) {
   const { lang, t } = useLanguage();
@@ -38,10 +80,8 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
       icon: "glancy-web",
       iconAlt: dictionaryLabel,
       onClick: handleDictionary,
-      variant: SIDEBAR_ACTION_VARIANTS.surface,
-      enableActiveState: false,
-      className: "sidebar-nav-item sidebar-nav-item-dictionary",
       title: dictionaryHint,
+      enableActiveState: false,
     },
     {
       key: "favorites",
@@ -49,9 +89,7 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
       icon: "library",
       iconAlt: libraryLabel,
       onClick: handleLibrary,
-      variant: SIDEBAR_ACTION_VARIANTS.surface,
       enableActiveState: true,
-      className: "sidebar-nav-item",
       title: libraryHint,
     },
   ];
@@ -59,25 +97,26 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
   return (
     <div className="sidebar-brand">
       <div className="sidebar-brand-header">
-        <nav className="sidebar-primary-nav" aria-label={dictionaryLabel}>
-          {navItems.map((item) => {
-            const isActive = item.enableActiveState && activeView === item.key;
+        <nav aria-label={dictionaryLabel}>
+          <ul className="sidebar-primary-nav">
+            {navItems.map((item) => {
+              const isActive =
+                item.enableActiveState && activeView === item.key;
 
-            return (
-              <SidebarActionItem
-                key={item.key}
-                icon={item.icon}
-                iconAlt={item.iconAlt}
-                label={item.label}
-                onClick={item.onClick}
-                variant={item.variant}
-                isActive={isActive}
-                className={item.className}
-                aria-current={isActive ? "page" : undefined}
-                title={item.title}
-              />
-            );
-          })}
+              return (
+                <li key={item.key}>
+                  <PrimaryNavItem
+                    icon={item.icon}
+                    iconAlt={item.iconAlt}
+                    label={item.label}
+                    onClick={item.onClick}
+                    isActive={isActive}
+                    title={item.title}
+                  />
+                </li>
+              );
+            })}
+          </ul>
         </nav>
         <div className="mobile-user-menu">
           <UserMenu size={28} />
