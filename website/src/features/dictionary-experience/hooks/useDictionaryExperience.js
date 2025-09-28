@@ -13,24 +13,22 @@ import {
   resolveDictionaryConfig,
   resolveDictionaryFlavor,
   WORD_LANGUAGE_AUTO,
-  normalizeWordSourceLanguage,
-  normalizeWordTargetLanguage,
   resolveShareTarget,
   attemptShareLink,
   polishDictionaryMarkdown,
   copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
-import { useWordStore, useSettingsStore } from "@/store";
+import { useWordStore } from "@/store";
 import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
+import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
+import { useDictionaryPopup } from "./useDictionaryPopup.js";
 
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
   const { t, lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [popupMsg, setPopupMsg] = useState("");
   const { user } = useUser();
   const {
     history: historyItems,
@@ -50,98 +48,17 @@ export function useDictionaryExperience() {
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
   const wordEntries = useWordStore((state) => state.entries);
-  const dictionarySourceLanguage = useSettingsStore(
-    (state) => state.dictionarySourceLanguage,
-  );
-  const setDictionarySourceLanguage = useSettingsStore(
-    (state) => state.setDictionarySourceLanguage,
-  );
-  const dictionaryTargetLanguage = useSettingsStore(
-    (state) => state.dictionaryTargetLanguage,
-  );
-  const setDictionaryTargetLanguage = useSettingsStore(
-    (state) => state.setDictionaryTargetLanguage,
-  );
-  const sourceLanguageOptions = useMemo(
-    () => [
-      {
-        value: WORD_LANGUAGE_AUTO,
-        label: t.dictionarySourceLanguageAuto,
-        description: t.dictionarySourceLanguageAutoDescription,
-      },
-      {
-        value: "ENGLISH",
-        label: t.dictionarySourceLanguageEnglish,
-        description: t.dictionarySourceLanguageEnglishDescription,
-      },
-      {
-        value: "CHINESE",
-        label: t.dictionarySourceLanguageChinese,
-        description: t.dictionarySourceLanguageChineseDescription,
-      },
-    ],
-    [
-      t.dictionarySourceLanguageAuto,
-      t.dictionarySourceLanguageAutoDescription,
-      t.dictionarySourceLanguageEnglish,
-      t.dictionarySourceLanguageEnglishDescription,
-      t.dictionarySourceLanguageChinese,
-      t.dictionarySourceLanguageChineseDescription,
-    ],
-  );
-  const targetLanguageOptions = useMemo(
-    () => [
-      {
-        value: "CHINESE",
-        label: t.dictionaryTargetLanguageChinese,
-        description: t.dictionaryTargetLanguageChineseDescription,
-      },
-      {
-        value: "ENGLISH",
-        label: t.dictionaryTargetLanguageEnglish,
-        description: t.dictionaryTargetLanguageEnglishDescription,
-      },
-    ],
-    [
-      t.dictionaryTargetLanguageChinese,
-      t.dictionaryTargetLanguageChineseDescription,
-      t.dictionaryTargetLanguageEnglish,
-      t.dictionaryTargetLanguageEnglishDescription,
-    ],
-  );
-  const dictionaryFlavor = useMemo(
-    () =>
-      resolveDictionaryFlavor({
-        sourceLanguage: dictionarySourceLanguage,
-        targetLanguage: dictionaryTargetLanguage,
-      }),
-    [dictionarySourceLanguage, dictionaryTargetLanguage],
-  );
-
-  const handleSwapLanguages = useCallback(() => {
-    const normalizedSource = normalizeWordSourceLanguage(
-      dictionarySourceLanguage,
-    );
-    const normalizedTarget = normalizeWordTargetLanguage(
-      dictionaryTargetLanguage,
-    );
-
-    const nextSource = normalizedTarget;
-    const nextTarget =
-      normalizedSource === WORD_LANGUAGE_AUTO
-        ? normalizedTarget === "CHINESE"
-          ? "ENGLISH"
-          : "CHINESE"
-        : normalizeWordTargetLanguage(normalizedSource);
-
-    setDictionarySourceLanguage(nextSource);
-    setDictionaryTargetLanguage(nextTarget);
-  }, [
+  const {
     dictionarySourceLanguage,
     dictionaryTargetLanguage,
     setDictionarySourceLanguage,
     setDictionaryTargetLanguage,
-  ]);
+    sourceLanguageOptions,
+    targetLanguageOptions,
+    dictionaryFlavor,
+    handleSwapLanguages,
+  } = useDictionaryLanguageConfig({ t });
+  const { popupOpen, popupMsg, showPopup, closePopup } = useDictionaryPopup();
 
   const abortRef = useRef(null);
   const { favorites, toggleFavorite } = useFavorites();
@@ -182,16 +99,6 @@ export function useDictionaryExperience() {
     () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
     [copyPayload],
   );
-
-  const showPopup = useCallback((message) => {
-    if (!message) return;
-    setPopupMsg(message);
-    setPopupOpen(true);
-  }, []);
-
-  const closePopup = useCallback(() => {
-    setPopupOpen(false);
-  }, []);
 
   const handleCopy = useCallback(async () => {
     const copyLabel = t.copyAction || "Copy";
