@@ -2,12 +2,9 @@ import { forwardRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage } from "@/context";
 import { useIsMobile } from "@/utils";
-import Group from "./Group.jsx";
-import NavItem from "./NavItem.jsx";
-import CollapsibleNav from "./CollapsibleNav.jsx";
-import SectionDivider from "./SectionDivider.jsx";
 import SidebarHistory from "./SidebarHistory.jsx";
 import SidebarUser from "./SidebarUser.jsx";
+import ThemeIcon from "@/components/ui/Icon";
 import styles from "./Sidebar.module.css";
 
 function Sidebar(
@@ -56,7 +53,7 @@ function Sidebar(
     }
   };
 
-  const mainNavItems = [
+  const appNavItems = [
     {
       key: "dictionary",
       label: dictionaryLabel,
@@ -85,29 +82,36 @@ function Sidebar(
         data-testid="sidebar"
         className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""} ${styles.container}`}
       >
-        <header className={styles.header} data-testid="sidebar-header">
-          {headerLabel}
-        </header>
-        <div className={styles.scroll} data-testid="sidebar-scroll">
-          <Group title={entriesTitle}>
-            {mainNavItems.map((item) => (
-              <NavItem
+        <div className={styles.top} data-testid="sidebar-header">
+          <div className={styles.apps} role="group" aria-label={headerLabel}>
+            {appNavItems.map((item) => (
+              <button
                 key={item.key}
-                icon={item.icon}
-                label={item.label}
-                active={item.active}
+                type="button"
+                className={styles["app-button"]}
+                data-active={item.active}
+                aria-pressed={item.active}
                 onClick={item.onClick}
+                title={typeof item.label === "string" ? item.label : undefined}
                 data-testid={item.testId}
-              />
+              >
+                <ThemeIcon
+                  name={item.icon}
+                  alt={typeof item.label === "string" ? item.label : undefined}
+                  width={18}
+                  height={18}
+                />
+              </button>
             ))}
-          </Group>
-          <Group title={historyTitle}>
-            <CollapsibleNav label={historyTitle} icon="adjustments-horizontal">
-              <SidebarHistory onSelectHistory={onSelectHistory} />
-            </CollapsibleNav>
-          </Group>
+          </div>
         </div>
-        <SectionDivider />
+        <nav
+          className={styles.entries}
+          aria-label={historyTitle || entriesTitle}
+          data-testid="sidebar-scroll"
+        >
+          <SidebarHistory onSelectHistory={onSelectHistory} />
+        </nav>
         <footer className={styles.footer} data-testid="sidebar-footer">
           <SidebarUser />
         </footer>

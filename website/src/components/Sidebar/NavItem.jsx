@@ -27,6 +27,7 @@ const NavItem = forwardRef(function NavItem(
     to,
     href,
     className,
+    tone = "default",
     onClick,
     type = "button",
     children,
@@ -47,9 +48,16 @@ const NavItem = forwardRef(function NavItem(
     </>
   );
 
+  const toneClassName = tone === "muted" ? styles.muted : "";
   const resolvedClassName = useMemo(
-    () => joinClassNames(styles.item, active ? styles.active : "", className),
-    [active, className],
+    () =>
+      joinClassNames(
+        styles.item,
+        toneClassName,
+        active ? styles.active : "",
+        className,
+      ),
+    [active, className, toneClassName],
   );
 
   if (to) {
@@ -60,6 +68,7 @@ const NavItem = forwardRef(function NavItem(
         className={({ isActive }) =>
           joinClassNames(
             styles.item,
+            toneClassName,
             isActive || active ? styles.active : "",
             className,
           )
@@ -113,6 +122,7 @@ NavItem.propTypes = {
   onClick: PropTypes.func,
   type: PropTypes.oneOf(["button", "submit", "reset"]),
   children: PropTypes.node,
+  tone: PropTypes.oneOf(["default", "muted"]),
 };
 
 NavItem.defaultProps = {
@@ -125,6 +135,7 @@ NavItem.defaultProps = {
   onClick: undefined,
   type: "button",
   children: null,
+  tone: "default",
 };
 
 export default NavItem;
