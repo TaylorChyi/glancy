@@ -1,17 +1,18 @@
-/* high fidelity search shell with shared design tokens */
+/* search surface designed around dictionary action input */
 .search-box {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
   min-height: var(--sb-h, 56px);
-  padding: var(--padding-y, 0) var(--padding-x, var(--sb-gap-lg, 16px));
-  gap: var(--slot-gap, var(--sb-gap, 12px));
+  padding: var(--padding-y, 0)
+    clamp(12px, var(--padding-x, var(--sb-pad-x, 20px)), var(--sb-pad-x, 20px));
+  gap: var(--slot-gap, var(--sb-gap, 16px));
   border-radius: var(--sb-radius, 28px);
-  border: 1px solid var(--sb-border, #2a2f3a);
-  background: var(--sb-bg, #15181e);
-  box-shadow: var(--sb-shadow, 0 16px 40px rgb(0 0 0 / 45%));
-  color: var(--sb-text, #e8ecf2);
+  border: 1px solid var(--sb-border, rgb(255 255 255 / 6%));
+  background: var(--sb-bg, #0e1116);
+  box-shadow: var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%));
+  color: var(--sb-text, #edeff2);
   font-size: var(--sb-font, 15px);
   line-height: 1.4;
   box-sizing: border-box;
@@ -22,11 +23,15 @@
     background 0.25s ease;
 }
 
+.search-box:hover {
+  box-shadow: var(--sb-hover-elev, 0 10px 28px rgb(0 0 0 / 28%));
+}
+
 .search-box:focus-within {
-  border-color: color-mix(in srgb, var(--sb-ring, #7aa2ff) 35%, transparent);
+  border-color: var(--sb-border, rgb(255 255 255 / 6%));
   box-shadow:
-    var(--sb-shadow, 0 16px 40px rgb(0 0 0 / 45%)),
-    0 0 0 1px color-mix(in srgb, var(--sb-ring, #7aa2ff) 35%, transparent) inset;
+    var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%)),
+    var(--sb-ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
 }
 
 .search-box :global(button) {
@@ -34,14 +39,8 @@
   color: inherit;
 }
 
-.search-box :global(svg) {
-  width: var(--sb-icon-size, 20px);
-  height: var(--sb-icon-size, 20px);
-  color: var(--sb-muted, #9aa3af);
-  transition: color 0.2s ease;
-}
-
-.search-box :global(button:hover svg),
-.search-box :global(button:focus-visible svg) {
-  color: var(--sb-text);
+@media (width <= 360px) {
+  .search-box {
+    padding-inline: 12px;
+  }
 }

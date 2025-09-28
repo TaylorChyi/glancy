@@ -44,55 +44,68 @@
 
   /* search bar tokens */
   --sb-h: 56px;
-  --sb-radius: 28px;
-  --sb-border: var(--color-border-strong);
-  --sb-bg: var(--color-surface);
-  --sb-panel: var(--color-panel);
-  --sb-panel-strong: var(--color-panel-subtle);
-  --sb-text: var(--color-text-primary);
-  --sb-muted: var(--color-text-muted);
-  --sb-placeholder: var(--color-text-placeholder);
+  --sb-r: 28px;
+  --sb-surface: #0e1116;
+  --sb-inner: #11161e;
+  --sb-seg: #141b24;
+  --sb-stroke: rgb(255 255 255 / 6%);
+  --sb-divider: rgb(255 255 255 / 10%);
+  --sb-text: #edeff2;
+  --sb-muted: #9fa7b3;
+  --sb-icon: #edeff2;
+  --sb-cta: #fff;
+  --sb-cta-icon: #0e1116;
+  --sb-pad-x: 20px;
+  --sb-gap: 16px;
+  --sb-gap-sm: 12px;
+  --sb-divider-w: 1px;
+  --sb-shadow: 0 6px 20px rgb(0 0 0 / 25%);
+  --sb-hover-elev: 0 10px 28px rgb(0 0 0 / 28%);
+  --sb-ring-focus: 0 0 0 2px rgb(255 255 255 / 8%);
+  --seg-h: 44px;
+  --seg-r: 22px;
+  --seg-pad-x: 20px;
+  --seg-arrow-gap: 12px;
+  --seg-font-size: 14px;
+  --seg-font-weight: 600;
+  --seg-letter-space: 0.04em;
+  --ph-size: 16px;
+  --ph-weight: 500;
+  --btn-eq: 36px;
+  --btn-rec: 44px;
+  --btn-gap: 12px;
+  --ring-focus: var(--sb-ring-focus);
+  --sb-radius: var(--sb-r);
+  --sb-border: var(--sb-stroke);
+  --sb-bg: var(--sb-surface);
+  --sb-panel: var(--sb-inner);
+  --sb-panel-strong: var(--sb-inner);
+  --sb-placeholder: var(--sb-muted);
   --sb-hover: rgb(255 255 255 / 6%);
-  --sb-ring: var(--color-accent);
-  --sb-shadow: var(--shadow-elevated-md);
-  --sb-menu-shadow: var(--shadow-elevated-lg);
-  --sb-gap: 12px;
-  --sb-gap-lg: 16px;
+  --sb-ring: rgb(255 255 255 / 18%);
+  --sb-gap-lg: var(--sb-pad-x);
   --sb-font: 15px;
   --sb-font-sm: 13px;
   --sb-font-strong: 600;
   --sb-font-weight: 500;
   --sb-body-letter-spacing: 0.02em;
   --sb-description-letter-spacing: 0.04em;
-  --sb-direction-gap: 12px;
-  --sb-direction-padding-inline: 18px;
-  --sb-divider: var(--color-border-strong);
-  --sb-direction-bg: var(--color-panel-subtle);
-  --sb-direction-border: color-mix(
-    in srgb,
-    var(--color-border-strong) 60%,
-    transparent
-  );
+  --sb-direction-gap: var(--seg-arrow-gap);
+  --sb-direction-padding-inline: var(--seg-pad-x);
+  --sb-direction-bg: var(--sb-seg);
+  --sb-direction-border: color-mix(in srgb, var(--sb-stroke) 60%, transparent);
   --sb-code-letter-spacing: 0.16em;
   --sb-code-min-width: 88px;
   --sb-menu-width: 368px;
   --sb-row-height: 48px;
   --sb-menu-radius: 16px;
   --sb-menu-padding: 8px;
-  --sb-scroll-track: color-mix(
-    in srgb,
-    var(--color-border-strong) 35%,
-    transparent
-  );
-  --sb-scroll-thumb: color-mix(
-    in srgb,
-    var(--color-border-strong) 65%,
-    transparent
-  );
+  --sb-scroll-track: color-mix(in srgb, var(--sb-stroke) 35%, transparent);
+  --sb-scroll-thumb: color-mix(in srgb, var(--sb-stroke) 65%, transparent);
   --sb-icon-size: 20px;
   --sb-action-size: 44px;
-  --sb-send-bg: rgb(255 255 255 / 92%);
-  --sb-send-color: #0b0d11;
+  --sb-send-bg: var(--sb-cta);
+  --sb-send-color: var(--sb-cta-icon);
   --sb-ring-width: 2px;
 
   /* settings dialog */

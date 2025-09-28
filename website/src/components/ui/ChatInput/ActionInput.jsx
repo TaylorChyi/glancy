@@ -1,15 +1,27 @@
 import { useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import ThemeIcon from "@/components/ui/Icon";
 import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
-const ICON_SIZE = 20;
+function EqualizerIcon() {
+  return (
+    <svg
+      className={styles["equalizer-icon"]}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="4" y="8" width="3" height="8" rx="1.5" fill="currentColor" />
+      <rect x="10.5" y="6" width="3" height="12" rx="1.5" fill="currentColor" />
+      <rect x="17" y="10" width="3" height="6" rx="1.5" fill="currentColor" />
+    </svg>
+  );
+}
 
 /**
- * ActionInput 使用可滚动的 SearchBox 包裹 textarea，并在内部放置操作按钮。
- * 按钮会根据内容是否为空在语音触发与提交之间切换。
+ * ActionInput 使用可滚动的 SearchBox 包裹 textarea，并在内部放置语言切换与语音控制。
+ * 等化器按钮负责触发语音输入，录音按钮在内容就绪时提交查询。
  */
 function ActionInput({
   value,
@@ -34,6 +46,7 @@ function ActionInput({
   swapLabel,
   normalizeSourceLanguageFn,
   normalizeTargetLanguageFn,
+  isRecording,
 }) {
   const isEmpty = value.trim() === "";
   const localRef = useRef(null);
@@ -106,6 +119,10 @@ function ActionInput({
     ? targetLanguageOptions.length > 0
     : false;
   const showLanguageControls = hasSourceOptions || hasTargetOptions;
+  const searchAriaLabel = placeholder || "dictionary search";
+  const textareaAriaLabel = placeholder || "search terms";
+  const voiceControlsLabel = voiceLabel || "voice controls";
+  const recordButtonLabel = sendLabel;
 
   return (
     <form
@@ -113,68 +130,82 @@ function ActionInput({
       className={styles["input-wrapper"]}
       onSubmit={handleSubmit}
     >
-      <SearchBox className={styles["input-surface"]}>
+      <SearchBox
+        className={styles["input-surface"]}
+        role="search"
+        aria-label={searchAriaLabel}
+        data-testid="searchbar"
+      >
         {showLanguageControls ? (
-          <>
-            <div className={styles["lang-rail"]}>
-              <LanguageControls
-                sourceLanguage={sourceLanguage}
-                sourceLanguageOptions={sourceLanguageOptions}
-                sourceLanguageLabel={sourceLanguageLabel}
-                onSourceLanguageChange={onSourceLanguageChange}
-                targetLanguage={targetLanguage}
-                targetLanguageOptions={targetLanguageOptions}
-                targetLanguageLabel={targetLanguageLabel}
-                onTargetLanguageChange={onTargetLanguageChange}
-                onSwapLanguages={onSwapLanguages}
-                swapLabel={swapLabel}
-                normalizeSourceLanguage={normalizeSourceLanguageFn}
-                normalizeTargetLanguage={normalizeTargetLanguageFn}
-              />
-            </div>
-            <div className={styles["language-divider"]} aria-hidden="true" />
-          </>
+          <div className={styles["lang-rail"]}>
+            <LanguageControls
+              sourceLanguage={sourceLanguage}
+              sourceLanguageOptions={sourceLanguageOptions}
+              sourceLanguageLabel={sourceLanguageLabel}
+              onSourceLanguageChange={onSourceLanguageChange}
+              targetLanguage={targetLanguage}
+              targetLanguageOptions={targetLanguageOptions}
+              targetLanguageLabel={targetLanguageLabel}
+              onTargetLanguageChange={onTargetLanguageChange}
+              onSwapLanguages={onSwapLanguages}
+              swapLabel={swapLabel}
+              normalizeSourceLanguage={normalizeSourceLanguageFn}
+              normalizeTargetLanguage={normalizeTargetLanguageFn}
+            />
+          </div>
+        ) : null}
+        {showLanguageControls ? (
+          <div className={styles["language-divider"]} aria-hidden="true" />
         ) : null}
         <div className={styles["core-input"]}>
           <textarea
             ref={textareaRef}
             rows={rows}
             placeholder={placeholder}
+            aria-label={textareaAriaLabel}
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             className={styles.textarea}
           />
         </div>
-        <div className={styles.actions}>
+        <div
+          className={styles.actions}
+          role="group"
+          aria-label={voiceControlsLabel}
+        >
           <button
             type="button"
-            className={styles["voice-button"]}
+            className={styles["equalizer-button"]}
             onClick={handleVoice}
             aria-label={voiceLabel}
+            aria-pressed={false}
             disabled={isVoiceDisabled}
           >
-            <ThemeIcon
-              name="voice-button"
-              alt={voiceLabel}
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-            />
+            <EqualizerIcon />
           </button>
           <button
             type="submit"
-            className={styles["send-button"]}
-            aria-label={sendLabel}
+            className={styles["record-button"]}
+            aria-label={recordButtonLabel}
+            aria-pressed={isRecording}
             disabled={!canSubmit}
             data-empty={!canSubmit}
+            data-recording={isRecording}
           >
-            <ThemeIcon
-              name="send-button"
-              alt={sendLabel}
-              width={ICON_SIZE}
-              height={ICON_SIZE}
-            />
+            <span className={styles["record-dot"]} aria-hidden="true" />
           </button>
+          <span
+            className={styles["sr-only"]}
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {isRecording
+              ? voiceLabel
+                ? `${voiceLabel} active`
+                : "Recording active"
+              : ""}
+          </span>
         </div>
       </SearchBox>
     </form>
@@ -219,6 +250,7 @@ ActionInput.propTypes = {
   swapLabel: PropTypes.string,
   normalizeSourceLanguageFn: PropTypes.func,
   normalizeTargetLanguageFn: PropTypes.func,
+  isRecording: PropTypes.bool,
 };
 
 ActionInput.defaultProps = {
@@ -243,4 +275,5 @@ ActionInput.defaultProps = {
   swapLabel: undefined,
   normalizeSourceLanguageFn: (value) => value,
   normalizeTargetLanguageFn: (value) => value,
+  isRecording: false,
 };

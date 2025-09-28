@@ -37,9 +37,14 @@ export default function LanguageControls({
     typeof normalizeTargetLanguage === "function"
       ? normalizeTargetLanguage
       : (value) => value;
+  const groupLabel = swapLabel || "language selection";
 
   return (
-    <div className={styles["language-controls"]}>
+    <div
+      className={styles["language-controls"]}
+      role="group"
+      aria-label={groupLabel}
+    >
       <LanguageMenu
         options={sourceLanguageOptions}
         value={sourceLanguage}
