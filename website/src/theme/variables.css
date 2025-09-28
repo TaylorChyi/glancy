@@ -12,4 +12,39 @@
   --btn-border: 1px solid transparent;
   --user-menu-width: 180px;
   --z-index-popover: 1100;
+
+  /* search bar tokens */
+  --sb-h: 48px;
+  --sb-radius: 14px;
+  --sb-border: #2a2e37;
+  --sb-bg: #111318;
+  --sb-panel: #1b1f27;
+  --sb-text: #eef0f3;
+  --sb-muted: #a7afbd;
+  --sb-hover: #20242d;
+  --sb-ring: #3a3f46;
+  --sb-shadow: 0 4px 18px rgb(0 0 0 / 35%);
+  --sb-gap: 10px;
+  --sb-gap-lg: 14px;
+  --sb-font: 14px;
+  --sb-font-sm: 12px;
+  --sb-font-strong: 600;
+  --sb-font-weight: 500;
+  --sb-body-letter-spacing: 0.02em;
+  --sb-description-letter-spacing: 0.04em;
+  --sb-chip-bg: #0f1115;
+  --sb-chip-height: 28px;
+  --sb-chip-padding-inline: 12px;
+  --sb-chip-letter-spacing: 0.08em;
+  --sb-chip-letter-spacing-tight: 0.06em;
+  --sb-code-letter-spacing: 0.16em;
+  --sb-code-min-width: 42px;
+  --sb-menu-min-width: 220px;
+  --sb-swap-size: 32px;
+  --sb-icon-size: 20px;
+  --sb-action-size: 40px;
+  --sb-send-bg: rgb(255 255 255 / 92%);
+  --sb-send-color: #0b0d11;
+  --sb-compact-offset: 2px;
+  --sb-ring-width: 2px;
 }

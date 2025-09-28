@@ -5,7 +5,7 @@ import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
-const ICON_SIZE = 36;
+const ICON_SIZE = 20;
 
 /**
  * ActionInput 使用可滚动的 SearchBox 包裹 textarea，并在内部放置操作按钮。
@@ -84,15 +84,20 @@ function ActionInput({
     [formRef],
   );
 
-  const handleClick = useCallback(
-    (e) => {
-      if (isEmpty && onVoice) {
-        e.preventDefault();
-        onVoice();
+  const isVoiceDisabled = typeof onVoice !== "function";
+
+  const handleVoice = useCallback(
+    (event) => {
+      if (isVoiceDisabled) {
+        return;
       }
+      event.preventDefault();
+      onVoice?.();
     },
-    [isEmpty, onVoice],
+    [isVoiceDisabled, onVoice],
   );
+
+  const canSubmit = !isEmpty;
 
   const hasSourceOptions = Array.isArray(sourceLanguageOptions)
     ? sourceLanguageOptions.length > 0
@@ -110,7 +115,7 @@ function ActionInput({
     >
       <SearchBox className={styles["input-surface"]}>
         {showLanguageControls ? (
-          <div className={styles["leading-accessory"]}>
+          <div className={styles["lang-rail"]}>
             <LanguageControls
               sourceLanguage={sourceLanguage}
               sourceLanguageOptions={sourceLanguageOptions}
@@ -127,7 +132,7 @@ function ActionInput({
             />
           </div>
         ) : null}
-        <div className={styles["input-body"]}>
+        <div className={styles["core-input"]}>
           <textarea
             ref={textareaRef}
             rows={rows}
@@ -138,28 +143,34 @@ function ActionInput({
             className={styles.textarea}
           />
         </div>
-        <div className={styles["trailing-accessory"]}>
+        <div className={styles.actions}>
           <button
-            type={isEmpty ? "button" : "submit"}
-            className={styles["action-button"]}
-            onClick={handleClick}
-            aria-label={isEmpty ? voiceLabel : sendLabel}
+            type="button"
+            className={styles["voice-button"]}
+            onClick={handleVoice}
+            aria-label={voiceLabel}
+            disabled={isVoiceDisabled}
           >
-            {isEmpty ? (
-              <ThemeIcon
-                name="voice-button"
-                alt={voiceLabel}
-                width={ICON_SIZE}
-                height={ICON_SIZE}
-              />
-            ) : (
-              <ThemeIcon
-                name="send-button"
-                alt={sendLabel}
-                width={ICON_SIZE}
-                height={ICON_SIZE}
-              />
-            )}
+            <ThemeIcon
+              name="voice-button"
+              alt={voiceLabel}
+              width={ICON_SIZE}
+              height={ICON_SIZE}
+            />
+          </button>
+          <button
+            type="submit"
+            className={styles["send-button"]}
+            aria-label={sendLabel}
+            disabled={!canSubmit}
+            data-empty={!canSubmit}
+          >
+            <ThemeIcon
+              name="send-button"
+              alt={sendLabel}
+              width={ICON_SIZE}
+              height={ICON_SIZE}
+            />
           </button>
         </div>
       </SearchBox>

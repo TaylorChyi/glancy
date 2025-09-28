@@ -3,6 +3,8 @@ import ThemeIcon from "@/components/ui/Icon";
 import LanguageMenu from "./parts/LanguageMenu.jsx";
 import styles from "./ChatInput.module.css";
 
+const ICON_SIZE = 20;
+
 export default function LanguageControls({
   sourceLanguage,
   sourceLanguageOptions,
@@ -58,8 +60,8 @@ export default function LanguageControls({
         >
           <ThemeIcon
             name="arrow-right"
-            width={16}
-            height={16}
+            width={ICON_SIZE}
+            height={ICON_SIZE}
             aria-hidden="true"
           />
         </button>

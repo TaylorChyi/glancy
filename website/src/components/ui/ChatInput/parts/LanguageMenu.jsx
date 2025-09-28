@@ -82,10 +82,6 @@ export default function LanguageMenu({
   const fallbackOption = normalizedOptions[0];
 
   const currentOption = activeOption || fallbackOption;
-  const hasDescriptions = normalizedOptions.some(
-    (option) => option.description,
-  );
-
   const handleToggle = useCallback(() => {
     if (normalizedOptions.length === 0) {
       return;
@@ -128,11 +124,7 @@ export default function LanguageMenu({
   }
 
   return (
-    <div
-      className={styles["language-select-wrapper"]}
-      data-open={open}
-      data-has-descriptions={hasDescriptions}
-    >
+    <div className={styles["language-select-wrapper"]}>
       <button
         type="button"
         className={styles["language-trigger"]}
