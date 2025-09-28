@@ -1,16 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import styles from "./Preferences.module.css";
 import { useLanguage, useTheme, useUser } from "@/context";
 import { API_PATHS } from "@/config/api.js";
 import MessagePopup from "@/components/ui/MessagePopup";
-import SelectField from "@/components/form/SelectField.jsx";
 import { useApi } from "@/hooks/useApi.js";
-import {
-  VoiceSelector,
-  SettingsSurface,
-  SETTINGS_SURFACE_VARIANTS,
-} from "@/components";
+import { VoiceSelector } from "@/components";
 import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 import {
@@ -428,6 +423,57 @@ function Preferences({
     setActiveTab(resolveInitialTab(tab));
   }, []);
 
+  const navRefs = useRef([]);
+
+  const registerNavRef = useCallback(
+    (index) => (node) => {
+      navRefs.current[index] = node ?? null;
+    },
+    [],
+  );
+
+  const focusTabByIndex = useCallback((index) => {
+    const target = navRefs.current[index];
+    if (target && typeof target.focus === "function") {
+      target.focus();
+    }
+  }, []);
+
+  const handleNavKeyDown = useCallback(
+    (index) => (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        const nextIndex = (index + 1) % TAB_ORDER.length;
+        handleTabClick(TAB_ORDER[nextIndex]);
+        focusTabByIndex(nextIndex);
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        const nextIndex = index === 0 ? TAB_ORDER.length - 1 : index - 1;
+        handleTabClick(TAB_ORDER[nextIndex]);
+        focusTabByIndex(nextIndex);
+        return;
+      }
+
+      if (event.key === "Home") {
+        event.preventDefault();
+        handleTabClick(TAB_ORDER[0]);
+        focusTabByIndex(0);
+        return;
+      }
+
+      if (event.key === "End") {
+        event.preventDefault();
+        const lastIndex = TAB_ORDER.length - 1;
+        handleTabClick(TAB_ORDER[lastIndex]);
+        focusTabByIndex(lastIndex);
+      }
+    },
+    [focusTabByIndex, handleTabClick],
+  );
+
   const renderGeneralPanel = () => {
     const defaultsTitle = t.prefDefaultsTitle || tabLabelMap[TAB_KEYS.GENERAL];
     const defaultsDescription =
@@ -437,152 +483,176 @@ function Preferences({
       t.prefVoicesDescription || tabDescriptionMap[TAB_KEYS.GENERAL];
 
     return (
-      <section
-        id={`settings-panel-${TAB_KEYS.GENERAL}`}
-        className={styles["panel-card"]}
-        aria-labelledby="settings-general"
-      >
-        <header className={styles["panel-header"]}>
-          <div className={styles["panel-title-group"]}>
-            <ThemeIcon
-              name={TAB_ICONS[TAB_KEYS.GENERAL]}
-              width={18}
-              height={18}
-              className={styles["panel-icon"]}
-            />
-            <h3 id="settings-general" className={styles["panel-title"]}>
-              {tabLabelMap[TAB_KEYS.GENERAL]}
-            </h3>
+      <>
+        <section className={styles.section} aria-label={defaultsTitle}>
+          <div className={styles["section-header"]}>
+            <h3 className={styles["section-title"]}>{defaultsTitle}</h3>
+            {defaultsDescription ? (
+              <p className={styles["section-description"]}>
+                {defaultsDescription}
+              </p>
+            ) : null}
           </div>
-          <p className={styles["panel-description"]}>
-            {tabDescriptionMap[TAB_KEYS.GENERAL]}
-          </p>
-        </header>
-        <div className={styles["panel-body"]}>
-          <div className={styles["panel-callout"]}>
-            <span className={styles["callout-eyebrow"]}>{defaultsTitle}</span>
-            <p className={styles["callout-description"]}>
-              {defaultsDescription}
-            </p>
-          </div>
-          <div className={styles["setting-grid"]}>
-            <div className={styles["setting-row"]}>
-              <label htmlFor="pref-theme" className={styles["setting-label"]}>
-                {t.prefTheme}
-              </label>
-              <SelectField
+          <div className={styles.fields}>
+            <div className={styles.field}>
+              <div>
+                <label htmlFor="pref-theme" className={styles["field-label"]}>
+                  {t.prefTheme}
+                </label>
+              </div>
+              <select
                 id="pref-theme"
+                className={styles.select}
                 value={theme}
-                onChange={setTheme}
-                options={themeOptions}
-              />
-            </div>
-            <div className={styles["setting-row"]}>
-              <label
-                htmlFor="pref-system-language"
-                className={styles["setting-label"]}
+                onChange={(event) => setTheme(event.target.value)}
               >
-                {t.prefSystemLanguage}
-              </label>
-              <SelectField
+                {themeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.field}>
+              <div>
+                <label
+                  htmlFor="pref-system-language"
+                  className={styles["field-label"]}
+                >
+                  {t.prefSystemLanguage}
+                </label>
+              </div>
+              <select
                 id="pref-system-language"
+                className={styles.select}
                 value={systemLanguage}
-                onChange={handleSystemLanguageChange}
-                options={systemLanguageOptions}
-              />
-            </div>
-            <div className={styles["setting-row"]}>
-              <label
-                htmlFor="pref-source-language"
-                className={styles["setting-label"]}
+                onChange={(event) =>
+                  handleSystemLanguageChange(event.target.value)
+                }
               >
-                {t.prefLanguage}
-              </label>
-              <SelectField
+                {systemLanguageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.field}>
+              <div>
+                <label
+                  htmlFor="pref-source-language"
+                  className={styles["field-label"]}
+                >
+                  {t.prefLanguage}
+                </label>
+              </div>
+              <select
                 id="pref-source-language"
+                className={styles.select}
                 value={sourceLang}
-                onChange={handleSourceLanguageChange}
-                options={languageOptions}
-              />
-            </div>
-            <div className={styles["setting-row"]}>
-              <label
-                htmlFor="pref-target-language"
-                className={styles["setting-label"]}
+                onChange={(event) =>
+                  handleSourceLanguageChange(event.target.value)
+                }
               >
-                {t.prefSearchLanguage}
-              </label>
-              <SelectField
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.field}>
+              <div>
+                <label
+                  htmlFor="pref-target-language"
+                  className={styles["field-label"]}
+                >
+                  {t.prefSearchLanguage}
+                </label>
+              </div>
+              <select
                 id="pref-target-language"
+                className={styles.select}
                 value={targetLang}
-                onChange={handleTargetLanguageChange}
-                options={searchLanguageOptions}
-              />
+                onChange={(event) =>
+                  handleTargetLanguageChange(event.target.value)
+                }
+              >
+                {searchLanguageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <div className={styles["panel-callout"]}>
-            <span className={styles["callout-eyebrow"]}>{voicesTitle}</span>
-            <p className={styles["callout-description"]}>{voicesDescription}</p>
+        </section>
+        <section className={styles.section} aria-label={voicesTitle}>
+          <div className={styles["section-header"]}>
+            <h3 className={styles["section-title"]}>{voicesTitle}</h3>
+            {voicesDescription ? (
+              <p className={styles["section-description"]}>
+                {voicesDescription}
+              </p>
+            ) : null}
           </div>
-          <div className={styles["setting-grid"]}>
-            <div className={styles["setting-row"]}>
-              <label
-                htmlFor="pref-voice-en"
-                className={styles["setting-label"]}
-              >
-                {t.prefVoiceEn}
-              </label>
+          <div className={styles.fields}>
+            <div className={styles.field}>
+              <div>
+                <label
+                  htmlFor="pref-voice-en"
+                  className={styles["field-label"]}
+                >
+                  {t.prefVoiceEn}
+                </label>
+              </div>
               <VoiceSelector lang="en" id="pref-voice-en" />
             </div>
-            <div className={styles["setting-row"]}>
-              <label
-                htmlFor="pref-voice-zh"
-                className={styles["setting-label"]}
-              >
-                {t.prefVoiceZh}
-              </label>
+            <div className={styles.field}>
+              <div>
+                <label
+                  htmlFor="pref-voice-zh"
+                  className={styles["field-label"]}
+                >
+                  {t.prefVoiceZh}
+                </label>
+              </div>
               <VoiceSelector lang="zh" id="pref-voice-zh" />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </>
     );
   };
 
   const renderPersonalizationPanel = () => (
     <section
-      id={`settings-panel-${TAB_KEYS.PERSONALIZATION}`}
-      className={styles["panel-card"]}
-      aria-labelledby="settings-personalization"
+      className={styles.section}
+      aria-label={tabLabelMap[TAB_KEYS.PERSONALIZATION]}
     >
-      <header className={styles["panel-header"]}>
-        <div className={styles["panel-title-group"]}>
-          <ThemeIcon
-            name={TAB_ICONS[TAB_KEYS.PERSONALIZATION]}
-            width={18}
-            height={18}
-            className={styles["panel-icon"]}
-          />
-          <h3 id="settings-personalization" className={styles["panel-title"]}>
-            {tabLabelMap[TAB_KEYS.PERSONALIZATION]}
-          </h3>
-        </div>
-        <p className={styles["panel-description"]}>
-          {tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
-        </p>
-      </header>
-      <div className={styles["panel-body"]}>
-        <div className={styles["setting-toggle-row"]}>
-          <label
-            htmlFor="personalization-toggle"
-            className={styles["setting-label"]}
-          >
-            {t.settingsEnableCustomization || "Enable customization"}
-          </label>
-          <label className={styles.switch}>
+      <div className={styles["section-header"]}>
+        <h3 className={styles["section-title"]}>
+          {tabLabelMap[TAB_KEYS.PERSONALIZATION]}
+        </h3>
+        {tabDescriptionMap[TAB_KEYS.PERSONALIZATION] ? (
+          <p className={styles["section-description"]}>
+            {tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
+          </p>
+        ) : null}
+      </div>
+      <div className={styles.fields}>
+        <div className={`${styles.field} ${styles["field-inline"]}`}>
+          <div>
+            <span className={styles["field-label"]}>
+              {t.settingsEnableCustomization || "Enable customization"}
+            </span>
+          </div>
+          <label className={styles.switch} htmlFor="personalization-toggle">
             <input
               id="personalization-toggle"
               type="checkbox"
+              role="switch"
+              aria-checked={personalizationEnabled}
               checked={personalizationEnabled}
               onChange={(event) =>
                 setPersonalizationEnabled(event.target.checked)
@@ -591,53 +661,62 @@ function Preferences({
             <span aria-hidden="true" />
           </label>
         </div>
-        <div className={styles["field-grid"]}>
-          <label className={styles["field-item"]} htmlFor="personal-occupation">
-            <span className={styles["field-label"]}>
+        <div className={styles.field}>
+          <div>
+            <label
+              htmlFor="personal-occupation"
+              className={styles["field-label"]}
+            >
               {t.settingsOccupation}
-            </span>
-            <input
-              id="personal-occupation"
-              type="text"
-              className={styles["field-input"]}
-              value={occupation}
-              onChange={(event) => setOccupation(event.target.value)}
-              placeholder={t.settingsOccupationPlaceholder || "e.g. Student"}
-              disabled={!personalizationEnabled}
-            />
-          </label>
-          <label className={styles["field-item"]} htmlFor="personal-about">
-            <span className={styles["field-label"]}>{t.settingsAboutYou}</span>
-            <textarea
-              id="personal-about"
-              rows={3}
-              className={styles["field-area"]}
-              value={persona}
-              onChange={(event) => setPersona(event.target.value)}
-              placeholder={
-                t.settingsAboutYouPlaceholder ||
-                "Share your expertise, interests, or context."
-              }
-              disabled={!personalizationEnabled}
-            />
-          </label>
-          <label className={styles["field-item"]} htmlFor="personal-goal">
-            <span className={styles["field-label"]}>
+            </label>
+          </div>
+          <input
+            id="personal-occupation"
+            type="text"
+            className={styles.input}
+            value={occupation}
+            onChange={(event) => setOccupation(event.target.value)}
+            placeholder={t.settingsOccupationPlaceholder || "e.g. Student"}
+            disabled={!personalizationEnabled}
+          />
+        </div>
+        <div className={styles.field}>
+          <div>
+            <label htmlFor="personal-about" className={styles["field-label"]}>
+              {t.settingsAboutYou}
+            </label>
+          </div>
+          <textarea
+            id="personal-about"
+            rows={3}
+            className={styles.textarea}
+            value={persona}
+            onChange={(event) => setPersona(event.target.value)}
+            placeholder={
+              t.settingsAboutYouPlaceholder ||
+              "Share your expertise, interests, or context."
+            }
+            disabled={!personalizationEnabled}
+          />
+        </div>
+        <div className={styles.field}>
+          <div>
+            <label htmlFor="personal-goal" className={styles["field-label"]}>
               {t.settingsLearningGoal}
-            </span>
-            <textarea
-              id="personal-goal"
-              rows={3}
-              className={styles["field-area"]}
-              value={learningGoal}
-              onChange={(event) => setLearningGoal(event.target.value)}
-              placeholder={
-                t.settingsLearningGoalPlaceholder ||
-                "Tell us the outcome you're aiming for."
-              }
-              disabled={!personalizationEnabled}
-            />
-          </label>
+            </label>
+          </div>
+          <textarea
+            id="personal-goal"
+            rows={3}
+            className={styles.textarea}
+            value={learningGoal}
+            onChange={(event) => setLearningGoal(event.target.value)}
+            placeholder={
+              t.settingsLearningGoalPlaceholder ||
+              "Tell us the outcome you're aiming for."
+            }
+            disabled={!personalizationEnabled}
+          />
         </div>
       </div>
     </section>
@@ -645,82 +724,55 @@ function Preferences({
 
   const renderKeyboardPanel = () => (
     <section
-      id={`settings-panel-${TAB_KEYS.KEYBOARD}`}
-      className={styles["panel-card"]}
-      aria-labelledby="settings-keyboard"
+      className={styles.section}
+      aria-label={tabLabelMap[TAB_KEYS.KEYBOARD]}
     >
-      <header className={styles["panel-header"]}>
-        <div className={styles["panel-title-group"]}>
-          <ThemeIcon
-            name={TAB_ICONS[TAB_KEYS.KEYBOARD]}
-            width={18}
-            height={18}
-            className={styles["panel-icon"]}
-          />
-          <h3 id="settings-keyboard" className={styles["panel-title"]}>
-            {tabLabelMap[TAB_KEYS.KEYBOARD]}
-          </h3>
-        </div>
-        <p className={styles["panel-description"]}>
-          {tabDescriptionMap[TAB_KEYS.KEYBOARD]}
-        </p>
-      </header>
-      <div className={styles["panel-body"]}>
-        <ul className={styles["shortcut-list"]}>
-          {KEYBOARD_SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
-              <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
-              <span className={styles["shortcut-label"]}>
-                {t[shortcut.labelKey] || shortcut.labelKey}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className={styles["section-header"]}>
+        <h3 className={styles["section-title"]}>
+          {tabLabelMap[TAB_KEYS.KEYBOARD]}
+        </h3>
+        {tabDescriptionMap[TAB_KEYS.KEYBOARD] ? (
+          <p className={styles["section-description"]}>
+            {tabDescriptionMap[TAB_KEYS.KEYBOARD]}
+          </p>
+        ) : null}
       </div>
+      <ul className={styles["shortcut-list"]}>
+        {KEYBOARD_SHORTCUTS.map((shortcut) => (
+          <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
+            <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
+            <span className={styles["shortcut-label"]}>
+              {t[shortcut.labelKey] || shortcut.labelKey}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 
   const renderDataPanel = () => (
-    <section
-      id={`settings-panel-${TAB_KEYS.DATA}`}
-      className={styles["panel-card"]}
-      aria-labelledby="settings-data"
-    >
-      <header className={styles["panel-header"]}>
-        <div className={styles["panel-title-group"]}>
-          <ThemeIcon
-            name={TAB_ICONS[TAB_KEYS.DATA]}
-            width={18}
-            height={18}
-            className={styles["panel-icon"]}
-          />
-          <h3 id="settings-data" className={styles["panel-title"]}>
-            {tabLabelMap[TAB_KEYS.DATA]}
-          </h3>
-        </div>
-        <p className={styles["panel-description"]}>
-          {tabDescriptionMap[TAB_KEYS.DATA]}
+    <section className={styles.section} aria-label={tabLabelMap[TAB_KEYS.DATA]}>
+      <div className={styles["section-header"]}>
+        <h3 className={styles["section-title"]}>
+          {tabLabelMap[TAB_KEYS.DATA]}
+        </h3>
+        {tabDescriptionMap[TAB_KEYS.DATA] ? (
+          <p className={styles["section-description"]}>
+            {tabDescriptionMap[TAB_KEYS.DATA]}
+          </p>
+        ) : null}
+      </div>
+      <div className={styles["data-card"]}>
+        <p className={styles["field-description"]}>
+          {t.settingsDataNotice || ""}
         </p>
-      </header>
-      <div className={styles["panel-body"]}>
-        <div className={styles["data-card"]}>
-          <p className={styles["data-text"]}>{t.settingsDataNotice || ""}</p>
-          <div className={styles["data-actions"]}>
-            <button
-              type="button"
-              className={styles["secondary-button"]}
-              disabled
-            >
-              {t.settingsExportData}
-            </button>
-            <button
-              type="button"
-              className={styles["secondary-button"]}
-              disabled
-            >
-              {t.settingsEraseHistory}
-            </button>
-          </div>
+        <div className={styles["data-actions"]}>
+          <button type="button" className={styles["secondary-button"]} disabled>
+            {t.settingsExportData}
+          </button>
+          <button type="button" className={styles["secondary-button"]} disabled>
+            {t.settingsEraseHistory}
+          </button>
         </div>
       </div>
     </section>
@@ -733,27 +785,20 @@ function Preferences({
       : "";
     return (
       <section
-        id={`settings-panel-${TAB_KEYS.ACCOUNT}`}
-        className={styles["panel-card"]}
-        aria-labelledby="settings-account"
+        className={styles.section}
+        aria-label={tabLabelMap[TAB_KEYS.ACCOUNT]}
       >
-        <header className={styles["panel-header"]}>
-          <div className={styles["panel-title-group"]}>
-            <ThemeIcon
-              name={TAB_ICONS[TAB_KEYS.ACCOUNT]}
-              width={18}
-              height={18}
-              className={styles["panel-icon"]}
-            />
-            <h3 id="settings-account" className={styles["panel-title"]}>
-              {tabLabelMap[TAB_KEYS.ACCOUNT]}
-            </h3>
-          </div>
-          <p className={styles["panel-description"]}>
-            {tabDescriptionMap[TAB_KEYS.ACCOUNT]}
-          </p>
-        </header>
-        <div className={styles["panel-body"]}>
+        <div className={styles["section-header"]}>
+          <h3 className={styles["section-title"]}>
+            {tabLabelMap[TAB_KEYS.ACCOUNT]}
+          </h3>
+          {tabDescriptionMap[TAB_KEYS.ACCOUNT] ? (
+            <p className={styles["section-description"]}>
+              {tabDescriptionMap[TAB_KEYS.ACCOUNT]}
+            </p>
+          ) : null}
+        </div>
+        <div className={styles.fields}>
           <div className={styles["account-header"]}>
             <Avatar width={56} height={56} />
             <div className={styles["account-meta"]}>
@@ -815,24 +860,87 @@ function Preferences({
     }
   };
 
-  const surfaceVariant =
+  const panelId = `settings-panel-${activeTab}`;
+  const containerClassName =
     variant === VARIANTS.PAGE
-      ? SETTINGS_SURFACE_VARIANTS.PAGE
-      : SETTINGS_SURFACE_VARIANTS.MODAL;
+      ? `${styles.container} ${styles.page}`
+      : styles.container;
 
   return (
     <>
-      <SettingsSurface
-        variant={surfaceVariant}
-        title={t.prefTitle}
-        description={t.prefDescription}
+      <form
+        className={containerClassName}
         onSubmit={handleSave}
-        className={
-          variant === VARIANTS.DIALOG
-            ? styles["surface-dialog"]
-            : styles["surface-page"]
-        }
-        actions={
+        aria-labelledby="settings-heading"
+        aria-describedby="settings-description"
+      >
+        <header className={styles.header}>
+          <h2 id="settings-heading" className={styles.title}>
+            {t.prefTitle}
+          </h2>
+          <p id="settings-description" className={styles.description}>
+            {t.prefDescription}
+          </p>
+        </header>
+        <div className={styles.body}>
+          <aside className={styles.sidebar} aria-label={t.prefTitle}>
+            <nav aria-label={t.prefTitle}>
+              <ul
+                className={styles["nav-list"]}
+                role="tablist"
+                aria-orientation="vertical"
+              >
+                {TAB_ORDER.map((tab, index) => {
+                  const isActive = activeTab === tab;
+                  const icon = TAB_ICONS[tab];
+                  const tabId = `settings-tab-${tab}`;
+                  const tabPanelId = `settings-panel-${tab}`;
+                  return (
+                    <li key={tab}>
+                      <button
+                        type="button"
+                        role="tab"
+                        id={tabId}
+                        className={
+                          isActive
+                            ? `${styles["nav-button"]} ${styles["nav-button-active"]}`
+                            : styles["nav-button"]
+                        }
+                        aria-selected={isActive}
+                        aria-controls={tabPanelId}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={() => handleTabClick(tab)}
+                        onKeyDown={handleNavKeyDown(index)}
+                        ref={registerNavRef(index)}
+                      >
+                        {icon ? (
+                          <ThemeIcon
+                            name={icon}
+                            width={18}
+                            height={18}
+                            className={styles["nav-icon"]}
+                          />
+                        ) : null}
+                        <span className={styles["nav-label"]}>
+                          {tabLabelMap[tab]}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </aside>
+          <section
+            className={styles.content}
+            role="tabpanel"
+            id={panelId}
+            aria-labelledby={`settings-tab-${activeTab}`}
+          >
+            {renderActivePanel()}
+          </section>
+        </div>
+        <footer className={styles.actions}>
           <button
             type="submit"
             className={styles["primary-button"]}
@@ -840,72 +948,8 @@ function Preferences({
           >
             {isSaving ? (t.saving ?? t.saveButton) : t.saveButton}
           </button>
-        }
-      >
-        <div className={styles.layout}>
-          <aside className={styles.sidebar} aria-label={t.prefTitle}>
-            <div className={styles["sidebar-card"]}>
-              <span className={styles["sidebar-eyebrow"]}>{t.prefTitle}</span>
-              <h3 className={styles["sidebar-active-title"]}>
-                {tabLabelMap[activeTab]}
-              </h3>
-              <p className={styles["sidebar-description"]}>
-                {tabDescriptionMap[activeTab]}
-              </p>
-            </div>
-            <nav
-              className={styles["tab-list"]}
-              role="tablist"
-              aria-orientation="vertical"
-            >
-              {TAB_ORDER.map((tab) => {
-                const isActive = activeTab === tab;
-                const icon = TAB_ICONS[tab];
-                const panelId = `settings-panel-${tab}`;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={panelId}
-                    tabIndex={isActive ? 0 : -1}
-                    className={
-                      isActive
-                        ? `${styles["tab-button"]} ${styles["tab-button-active"]}`
-                        : styles["tab-button"]
-                    }
-                    onClick={() => handleTabClick(tab)}
-                  >
-                    <span
-                      className={styles["tab-icon-wrapper"]}
-                      aria-hidden="true"
-                    >
-                      {icon ? (
-                        <ThemeIcon
-                          name={icon}
-                          width={18}
-                          height={18}
-                          className={styles["tab-icon"]}
-                        />
-                      ) : null}
-                    </span>
-                    <span className={styles["tab-copy"]}>
-                      <span className={styles["tab-label"]}>
-                        {tabLabelMap[tab]}
-                      </span>
-                      <span className={styles["tab-support"]}>
-                        {tabDescriptionMap[tab]}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-          <div className={styles["panel-area"]}>{renderActivePanel()}</div>
-        </div>
-      </SettingsSurface>
+        </footer>
+      </form>
       <MessagePopup
         open={popupOpen}
         message={popupMsg}

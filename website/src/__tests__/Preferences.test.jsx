@@ -16,12 +16,13 @@ const mockTtsVoices = jest.fn().mockResolvedValue([]);
 const mockT = {
   prefTitle: "Preferences",
   prefDescription: "Description",
-  prefLanguage: "Language",
-  prefSearchLanguage: "Search Language",
+  prefLanguage: "Source Language",
+  prefSearchLanguage: "Target Language",
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
   prefTheme: "Theme",
-  saveButton: "Save",
+  saveButton: "Save changes",
+  saving: "Saving...",
   saveSuccess: "Saved",
   fail: "Fail",
   autoDetect: "Auto",
@@ -58,13 +59,6 @@ jest.unstable_mockModule("@/hooks/useApi.js", () => ({
 jest.unstable_mockModule("@/components", () => ({
   __esModule: true,
   VoiceSelector: ({ lang }) => <div data-testid={`voice-selector-${lang}`} />,
-  SettingsSurface: ({ children, actions, onSubmit }) => (
-    <form data-testid="settings-surface" onSubmit={onSubmit}>
-      <div>{children}</div>
-      {actions}
-    </form>
-  ),
-  SETTINGS_SURFACE_VARIANTS: { PAGE: "page", MODAL: "modal" },
 }));
 jest.unstable_mockModule("@/store", () => ({
   useUserStore: (fn) => fn({ user: { plan: "free" } }),
@@ -185,10 +179,10 @@ test("saves preferences via api", async () => {
     render(<Preferences />);
   });
   await act(async () => {});
-  fireEvent.change(screen.getByLabelText("Language"), {
+  fireEvent.change(screen.getByLabelText("Source Language"), {
     target: { value: "CHINESE" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
   await waitFor(() => expect(mockRequest).toHaveBeenCalled());
   expect(mockRequest.mock.calls[0][0]).toBe(`${API_PATHS.preferences}/user`);
 });
@@ -228,10 +222,10 @@ test("updates dictionary language preferences in settings store", async () => {
     render(<Preferences />);
   });
   await act(async () => {});
-  fireEvent.change(screen.getByLabelText("Language"), {
+  fireEvent.change(screen.getByLabelText("Source Language"), {
     target: { value: "CHINESE" },
   });
-  fireEvent.change(screen.getByLabelText("Search Language"), {
+  fireEvent.change(screen.getByLabelText("Target Language"), {
     target: { value: "ENGLISH" },
   });
   await waitFor(() => {
