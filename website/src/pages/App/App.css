@@ -10,10 +10,15 @@
   background: linear-gradient(
     155deg,
     color-mix(in srgb, var(--sidebar-bg) 94%, transparent) 0%,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent) 100%
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent)
+      100%
   );
   border-right: 1px solid
-    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 46%, transparent);
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 46%,
+      transparent
+    );
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   position: sticky;
@@ -38,10 +43,15 @@
   padding: clamp(24px, 4vw, 30px);
   border-radius: clamp(20px, 3vw, 26px);
   border: 1px solid
-    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 52%, transparent);
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 52%,
+      transparent
+    );
   background: linear-gradient(
     152deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
+      0%,
     color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
   );
   box-shadow: 0 26px 58px
@@ -181,7 +191,11 @@
     transition: transform 0.3s ease;
     z-index: 999;
     border-right: 1px solid
-      color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 46%, transparent);
+      color-mix(
+        in srgb,
+        var(--sidebar-border-color, var(--border-color)) 46%,
+        transparent
+      );
     box-shadow: 0 26px 52px
       color-mix(in srgb, var(--shadow-color) 24%, transparent);
   }
