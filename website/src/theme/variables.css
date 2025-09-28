@@ -94,4 +94,39 @@
   --direction-icon: #a6b0bd;
   --text-primary: var(--sb-text);
   --text-muted: var(--sb-muted);
+  --sb-scroll-track: color-mix(
+    in srgb,
+    var(--color-border-strong) 35%,
+    transparent
+  );
+  --sb-scroll-thumb: color-mix(
+    in srgb,
+    var(--color-border-strong) 65%,
+    transparent
+  );
+  --sb-icon-size: 20px;
+  --sb-action-size: 44px;
+  --sb-send-bg: rgb(255 255 255 / 92%);
+  --sb-send-color: #0b0d11;
+  --sb-ring-width: 2px;
+
+  /* settings dialog */
+  --settings-dialog-width-md: 640px;
+  --settings-dialog-width-lg: 720px;
+  --settings-dialog-max-height: 72vh;
+  --settings-dialog-surface: #fff;
+  --settings-dialog-surface-muted: #f2f4f7;
+  --settings-dialog-background: #f7f7f8;
+  --settings-dialog-border: #e5e7eb;
+  --settings-dialog-text: #0b1220;
+  --settings-dialog-muted: #667085;
+  --settings-dialog-accent: #3b82f6;
+  --settings-dialog-shadow:
+    0 12px 30px rgb(11 18 32 / 12%), 0 2px 8px rgb(11 18 32 / 6%);
+  --settings-dialog-radius: 16px;
+  --settings-dialog-control-radius: 12px;
+  --settings-dialog-control-height: 40px;
+  --settings-dialog-navigation-width: 240px;
+  --settings-dialog-gap-sm: 16px;
+  --settings-dialog-gap-md: 24px;
 }
