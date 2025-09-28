@@ -1,203 +1,19 @@
 .sidebar {
-  width: var(
-    --layout-sidebar-width,
-    var(--layout-sidebar-default, clamp(240px, 24vw, 384px))
-  );
-  min-width: var(--layout-sidebar-min, 240px);
-  max-width: var(--layout-sidebar-max, 420px);
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
   height: var(--vh);
-  color: var(--sidebar-color);
-  background: linear-gradient(
-    155deg,
-    color-mix(in srgb, var(--sidebar-bg) 94%, transparent) 0%,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent)
-      100%
-  );
-  border-right: 1px solid
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 46%,
-      transparent
-    );
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  color: var(--text);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
   position: sticky;
   top: 0;
   align-self: start;
-  padding: clamp(24px, 5vw, 32px) clamp(18px, 4vw, 28px);
-  row-gap: clamp(18px, 4vh, 30px);
-  box-sizing: border-box;
-  overflow: visible;
-  box-shadow: 0 28px 60px
-    color-mix(in srgb, var(--shadow-color) 24%, transparent);
-  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
   z-index: 1;
-}
-
-.sidebar-brand {
-  position: sticky;
-  top: clamp(24px, 5vw, 32px);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(18px, 3vw, 24px);
-  padding: clamp(24px, 4vw, 30px);
-  border-radius: clamp(20px, 3vw, 26px);
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 52%,
-      transparent
-    );
-  background: linear-gradient(
-    152deg,
-    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent)
-      0%,
-    color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
-  );
-  box-shadow: 0 26px 58px
-    color-mix(in srgb, var(--shadow-color) 20%, transparent);
-  backdrop-filter: blur(16px);
-  z-index: 2;
-
-  --primary-nav-height: clamp(44px, 5vh, 48px);
-  --primary-nav-radius: clamp(12px, 2vw, 14px);
-  --primary-nav-padding-x: clamp(12px, 2vw, 16px);
-  --primary-nav-gap: clamp(8px, 1.8vw, 12px);
-  --primary-nav-text: color-mix(in srgb, var(--sidebar-color) 94%, transparent);
-  --primary-nav-text-active: color-mix(
-    in srgb,
-    var(--sidebar-color) 98%,
-    transparent
-  );
-  --primary-nav-icon: color-mix(in srgb, var(--sidebar-color) 92%, transparent);
-  --primary-nav-hover-bg: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--sidebar-bg)) 94%,
-    transparent
-  );
-  --primary-nav-active-bg: color-mix(
-    in srgb,
-    var(--accent-color) 18%,
-    transparent
-  );
-}
-
-.sidebar-brand-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: clamp(12px, 2vw, 18px);
-}
-
-.sidebar-primary-nav {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(8px, 1.8vw, 12px);
-}
-
-.sidebar-primary-nav > li {
-  margin: 0;
-}
-
-.primary-nav-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--primary-nav-gap);
-  min-height: var(--primary-nav-height);
-  padding: 0 var(--primary-nav-padding-x);
-  width: 100%;
-  border: 0;
-  border-radius: var(--primary-nav-radius);
-  background: transparent;
-  color: var(--primary-nav-text);
-  font: inherit;
-  font-size: clamp(0.85rem, 1.8vw, 0.9rem);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background-color 160ms ease,
-    color 160ms ease;
-  overflow: hidden;
-}
-
-.primary-nav-item:hover,
-.primary-nav-item:focus-visible {
-  background: var(--primary-nav-hover-bg);
-  color: var(--primary-nav-text-active);
-}
-
-.primary-nav-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-color) 40%, transparent);
-  outline-offset: 2px;
-}
-
-.primary-nav-item[aria-current="page"] {
-  background: var(--primary-nav-active-bg);
-  color: var(--primary-nav-text-active);
-}
-
-.primary-nav-item-indicator {
-  position: absolute;
-  left: 0;
-  top: clamp(6px, 1.2vw, 8px);
-  bottom: clamp(6px, 1.2vw, 8px);
-  width: 2px;
-  border-radius: 2px;
-  background: var(--accent-color);
-  display: none;
-}
-
-.primary-nav-item[aria-current="page"] .primary-nav-item-indicator {
-  display: block;
-}
-
-.primary-nav-item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  color: var(--primary-nav-icon);
-  flex: 0 0 auto;
-}
-
-.primary-nav-item-icon-asset {
-  width: 20px;
-  height: 20px;
-  display: block;
-  object-fit: contain;
-}
-
-.primary-nav-item-label {
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-section-indicator {
-  margin-top: clamp(10px, 2vh, 18px);
-  padding: 0 clamp(6px, 1vw, 10px);
-  font-size: clamp(0.72rem, 1.6vw, 0.78rem);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: color-mix(
-    in srgb,
-    var(--sidebar-muted-color, var(--sidebar-color)) 78%,
-    transparent
-  );
-}
-
-.mobile-user-menu {
-  display: none;
+  overflow: visible;
 }
 
 .sidebar-overlay {
@@ -268,35 +84,18 @@
     position: fixed;
     inset: 0 auto 0 0;
     width: min(82vw, 320px);
+    min-width: min(82vw, 320px);
     max-width: min(82vw, 360px);
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 999;
-    border-right: 1px solid
-      color-mix(
-        in srgb,
-        var(--sidebar-border-color, var(--border-color)) 46%,
-        transparent
-      );
-    box-shadow: 0 26px 52px
-      color-mix(in srgb, var(--shadow-color) 24%, transparent);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    background: var(--bg);
   }
 
   .sidebar.mobile-open {
     transform: translateX(0);
-  }
-
-  .mobile-user-menu {
-    display: block;
-  }
-
-  .sidebar-brand {
-    top: clamp(18px, 8vw, 30px);
-    padding: clamp(22px, 8vw, 32px);
-  }
-
-  .sidebar-primary-nav {
-    gap: clamp(12px, 5vw, 20px);
   }
 
   .display {
@@ -313,6 +112,7 @@
 @media (width <= 600px) {
   .sidebar {
     width: min(86vw, 300px);
+    min-width: min(86vw, 300px);
   }
 
   .stream-text {

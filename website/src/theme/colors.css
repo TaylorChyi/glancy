@@ -42,6 +42,21 @@
   --night-input-bg: #2b2f34;
   --night-input-ring: #3a3f46;
 
+  /* sidebar token bridge */
+  --bg: var(--sidebar-surface, var(--night-surface));
+  --panel: var(--sidebar-panel, var(--night-panel));
+  --border: var(--sidebar-border-color, var(--night-border));
+  --text: var(--sidebar-color, var(--night-text));
+  --muted: var(--sidebar-muted-color, var(--night-muted));
+  --hover: var(--sidebar-hover-bg, var(--night-hover));
+  --active: var(--sidebar-active-bg, var(--night-active));
+  --shadow: var(--sidebar-shadow-elevated, 0 16px 40px rgb(0 0 0 / 45%));
+  --popover-shadow: var(
+    --sidebar-shadow-elevated,
+    0 20px 50px rgb(0 0 0 / 50%)
+  );
+  --surface: var(--panel);
+
   /* link colors */
   --color-link-light: #d49f0a;
   --color-link-dark: #ffe899;
@@ -66,7 +81,7 @@
   --text-primary-dark: #f5f5f5;
   --text-inverse-light: var(--neutral-0);
   --text-inverse-dark: var(--neutral-900);
-  --text-secondary: var(--neutral-600);
+  --text-secondary: var(--muted);
   --text-tertiary: var(--neutral-500);
 
   /* utility colors */

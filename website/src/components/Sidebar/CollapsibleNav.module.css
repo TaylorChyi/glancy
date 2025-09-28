@@ -1,0 +1,35 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidebar-gap-row);
+}
+
+.trigger {
+  width: 100%;
+}
+
+.chevron {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 120ms ease;
+}
+
+.panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.inner {
+  overflow: hidden;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidebar-gap-row);
+}
