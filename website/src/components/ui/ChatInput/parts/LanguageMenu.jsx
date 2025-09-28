@@ -38,11 +38,16 @@ function toNormalizedOptions(options, normalizeValue) {
         return null;
       }
 
+      const normalizedDescription =
+        typeof description === "string" && description.trim().length > 0
+          ? description.trim()
+          : undefined;
+
       return {
         value: stringValue,
         badge,
         label,
-        description,
+        description: normalizedDescription,
       };
     })
     .filter(Boolean);
@@ -77,6 +82,9 @@ export default function LanguageMenu({
   const fallbackOption = normalizedOptions[0];
 
   const currentOption = activeOption || fallbackOption;
+  const hasDescriptions = normalizedOptions.some(
+    (option) => option.description,
+  );
 
   const handleToggle = useCallback(() => {
     if (normalizedOptions.length === 0) {
@@ -120,7 +128,11 @@ export default function LanguageMenu({
   }
 
   return (
-    <div className={styles["language-select-wrapper"]} data-open={open}>
+    <div
+      className={styles["language-select-wrapper"]}
+      data-open={open}
+      data-has-descriptions={hasDescriptions}
+    >
       <button
         type="button"
         className={styles["language-trigger"]}
@@ -132,8 +144,13 @@ export default function LanguageMenu({
         ref={triggerRef}
         data-open={open}
       >
-        <span className={styles["language-trigger-code"]}>
-          {currentOption.badge}
+        <span className={styles["language-trigger-content"]}>
+          <span className={styles["language-trigger-code"]}>
+            {currentOption.badge}
+          </span>
+          <span className={styles["language-trigger-label"]}>
+            {currentOption.label}
+          </span>
         </span>
       </button>
       <Popover
@@ -159,8 +176,15 @@ export default function LanguageMenu({
                     <span className={styles["language-option-code"]}>
                       {option.badge}
                     </span>
-                    <span className={styles["language-option-label"]}>
-                      {option.label}
+                    <span className={styles["language-option-text"]}>
+                      <span className={styles["language-option-label"]}>
+                        {option.label}
+                      </span>
+                      {option.description ? (
+                        <span className={styles["language-option-description"]}>
+                          {option.description}
+                        </span>
+                      ) : null}
                     </span>
                   </button>
                 </li>
