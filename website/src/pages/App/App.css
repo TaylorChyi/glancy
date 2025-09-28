@@ -6,67 +6,84 @@
   min-width: var(--layout-sidebar-min, 240px);
   max-width: var(--layout-sidebar-max, 420px);
   height: var(--vh);
-  background: var(--sidebar-bg);
   color: var(--sidebar-color);
-  border-right: 1px solid var(--sidebar-border-color, var(--border-color));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--sidebar-bg) 94%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 88%, transparent) 100%
+  );
+  border-right: 1px solid
+    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 46%, transparent);
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   position: sticky;
   top: 0;
   align-self: start;
-  overflow: hidden;
-  box-shadow: var(--sidebar-shadow-elevated, 0 12px 30px var(--shadow-color));
+  padding: clamp(24px, 5vw, 32px) clamp(18px, 4vw, 28px);
+  row-gap: clamp(18px, 4vh, 30px);
+  box-sizing: border-box;
+  overflow: visible;
+  box-shadow: 0 28px 60px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  backdrop-filter: blur(12px);
   z-index: 1;
 }
 
 .sidebar-brand {
   position: sticky;
-  top: 0;
+  top: clamp(24px, 5vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 12px 8px;
-  background: var(--sidebar-bg);
-  border-bottom: 1px solid var(--sidebar-border-color, var(--border-color));
-  box-shadow: 0 18px 34px
-    color-mix(in srgb, var(--shadow-color) 18%, transparent);
+  gap: clamp(18px, 3vw, 24px);
+  padding: clamp(24px, 4vw, 30px);
+  border-radius: clamp(20px, 3vw, 26px);
+  border: 1px solid
+    color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 52%, transparent);
+  background: linear-gradient(
+    152deg,
+    color-mix(in srgb, var(--sidebar-panel, var(--sidebar-bg)) 96%, transparent) 0%,
+    color-mix(in srgb, var(--sidebar-bg) 88%, transparent) 100%
+  );
+  box-shadow: 0 26px 58px
+    color-mix(in srgb, var(--shadow-color) 20%, transparent);
+  backdrop-filter: blur(16px);
   z-index: 2;
 }
 
 .sidebar-brand-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: clamp(12px, 2vw, 18px);
 }
 
 .sidebar-primary-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: clamp(10px, 2vw, 16px);
   flex: 1 1 auto;
 }
 
 .sidebar-nav-item {
-  --sidebar-action-height: 36px;
-  --sidebar-action-padding-x: 10px;
-  --sidebar-action-radius: 10px;
-  --sidebar-action-gap: 10px;
+  --sidebar-action-height: clamp(48px, 6vh, 64px);
+  --sidebar-action-padding-x: clamp(18px, 3vw, 26px);
+  --sidebar-action-radius: clamp(16px, 2.4vw, 22px);
+  --sidebar-action-gap: clamp(12px, 2vw, 18px);
 }
 
 .sidebar-nav-item-dictionary {
-  --sidebar-action-height: 38px;
+  --sidebar-action-height: clamp(50px, 6.2vh, 66px);
 }
 
 .sidebar-nav-item :global(.sidebar-action-body) {
   flex-direction: row;
   align-items: center;
-  gap: 0;
+  gap: clamp(4px, 1vw, 8px);
 }
 
 .sidebar-nav-item :global(.sidebar-action-label) {
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
+  font-size: clamp(0.95rem, 2vw, 1.02rem);
+  letter-spacing: 0.012em;
 }
 
 .sidebar-nav-item :global(.sidebar-action-description) {
@@ -74,11 +91,11 @@
 }
 
 .sidebar-section-indicator {
-  margin-top: 6px;
-  padding: 0 4px;
-  font-size: 0.75rem;
+  margin-top: clamp(10px, 2vh, 18px);
+  padding: 0 clamp(6px, 1vw, 10px);
+  font-size: clamp(0.72rem, 1.6vw, 0.78rem);
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: color-mix(
     in srgb,
@@ -163,8 +180,10 @@
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 999;
-    border-right: 1px solid var(--sidebar-border-color, var(--border-color));
-    box-shadow: var(--sidebar-shadow-elevated, 0 12px 30px var(--shadow-color));
+    border-right: 1px solid
+      color-mix(in srgb, var(--sidebar-border-color, var(--border-color)) 46%, transparent);
+    box-shadow: 0 26px 52px
+      color-mix(in srgb, var(--shadow-color) 24%, transparent);
   }
 
   .sidebar.mobile-open {
@@ -176,12 +195,12 @@
   }
 
   .sidebar-brand {
-    padding: clamp(18px, 6vw, 28px) clamp(18px, 6vw, 26px)
-      clamp(10px, 4vw, 20px);
+    top: clamp(18px, 8vw, 30px);
+    padding: clamp(22px, 8vw, 32px);
   }
 
   .sidebar-primary-nav {
-    gap: clamp(8px, 4vw, 16px);
+    gap: clamp(12px, 5vw, 20px);
   }
 
   .display {
