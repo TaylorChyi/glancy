@@ -110,7 +110,7 @@
 
 .footer {
   margin-top: auto;
-  padding: 12px 16px 16px;
+  padding: 12px 0 16px;
   border-top: 1px solid var(--sidebar-border-color, var(--border));
   background: var(--sidebar-bg, var(--bg));
 }

@@ -1,0 +1,21 @@
+:root {
+  --user-menu-safe: 10px;
+  --menu-radius: 12px;
+  --menu-border: 1px solid var(--menu-divider, var(--border));
+  --menu-shadow: 0 12px 30px rgb(0 0 0 / 24%);
+  --menu-bg: var(--sidebar-panel, var(--panel));
+  --menu-bg-hover: #1a1e24;
+  --menu-bg-active: #242935;
+  --menu-text: var(--sidebar-color, var(--text));
+  --menu-muted: var(--sidebar-muted-color, var(--muted));
+  --menu-divider: var(--sidebar-border-color, var(--border));
+  --menu-item-h: 36px;
+  --menu-item-px: 12px;
+  --menu-icon: 20px;
+  --menu-gap: 8px;
+  --submenu-w: 252px;
+  --submenu-gap: 10px;
+  --submenu-delay-in: 120ms;
+  --submenu-delay-out: 100ms;
+  --z-popover: 60;
+}

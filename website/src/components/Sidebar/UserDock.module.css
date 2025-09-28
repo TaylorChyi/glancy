@@ -1,123 +1,15 @@
 .wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.user-dock {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: calc(var(--sidebar-radius) + 2px);
-  background: color-mix(
-    in srgb,
-    var(--sidebar-active-bg, var(--active)) 32%,
-    transparent
-  );
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border)) 70%,
-      transparent
-    );
-}
-
-.avatar {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-}
-
-.meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.name {
-  font-size: var(--item-size);
-  font-weight: 500;
-  color: var(--sidebar-color, var(--text));
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.plan {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  padding: 0 8px;
-  height: 18px;
-  border-radius: 999px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: color-mix(
-    in srgb,
-    var(--sidebar-accent, var(--accent)) 18%,
-    transparent
-  );
-  color: var(--sidebar-accent, var(--accent));
-}
-
-.trigger-button {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--sidebar-muted-color, var(--muted));
-  cursor: pointer;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease;
-}
-
-.trigger-button:hover {
-  background: var(--sidebar-hover-bg, var(--hover));
-  color: var(--sidebar-color, var(--text));
-}
-
-.trigger-button:focus-visible {
-  outline: none;
-  border-color: color-mix(
-    in srgb,
-    var(--sidebar-accent, var(--accent)) 35%,
-    transparent
-  );
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--sidebar-accent, var(--accent)) 25%, transparent);
-}
-
-.popover-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
-}
-
-.popover-item {
-  width: 100%;
+  gap: 8px;
+  padding: 0;
+  isolation: isolate;
 }
 
 .anonymous {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 0 var(--user-menu-safe);
 }
