@@ -82,12 +82,16 @@ test("handles language selection and swapping", async () => {
 
   const sourceButton = screen.getByRole("button", { name: "源语言" });
   fireEvent.click(sourceButton);
-  fireEvent.click(await screen.findByRole("menuitem", { name: "英文词条" }));
+  fireEvent.click(
+    await screen.findByRole("menuitemradio", { name: "英文词条" }),
+  );
   expect(handleSourceChange).toHaveBeenCalledWith("ENGLISH");
 
   const targetButton = screen.getByRole("button", { name: "目标语言" });
   fireEvent.click(targetButton);
-  fireEvent.click(await screen.findByRole("menuitem", { name: "中文释义" }));
+  fireEvent.click(
+    await screen.findByRole("menuitemradio", { name: "中文释义" }),
+  );
   expect(handleTargetChange).toHaveBeenCalledWith("CHINESE");
 
   const swapButton = screen.getByRole("button", { name: "交换语向" });

@@ -59,6 +59,8 @@ export default function LanguageMenu({
   onChange,
   ariaLabel,
   normalizeValue,
+  showLabel,
+  variant,
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
@@ -123,6 +125,10 @@ export default function LanguageMenu({
     return null;
   }
 
+  const triggerAriaLabel = ariaLabel || currentOption.label;
+  const triggerTitle = currentOption.label;
+  const showTriggerLabel = Boolean(showLabel);
+
   return (
     <div className={styles["language-select-wrapper"]}>
       <button
@@ -132,15 +138,20 @@ export default function LanguageMenu({
         aria-expanded={open}
         onClick={handleToggle}
         onKeyDown={handleTriggerKeyDown}
-        aria-label={ariaLabel}
+        aria-label={triggerAriaLabel}
+        title={triggerTitle}
         ref={triggerRef}
         data-open={open}
+        data-variant={variant}
       >
         <span className={styles["language-trigger-content"]}>
           <span className={styles["language-trigger-code"]}>
             {currentOption.badge}
           </span>
-          <span className={styles["language-trigger-label"]}>
+          <span
+            className={styles["language-trigger-label"]}
+            data-visible={showTriggerLabel}
+          >
             {currentOption.label}
           </span>
         </span>
@@ -154,14 +165,25 @@ export default function LanguageMenu({
         offset={12}
       >
         {open ? (
-          <ul className={styles["language-menu"]} role="menu" ref={menuRef}>
+          <ul
+            className={styles["language-menu"]}
+            role="menu"
+            ref={menuRef}
+            data-open={open}
+          >
             {normalizedOptions.map((option) => {
               const isActive = option.value === currentOption.value;
               return (
-                <li key={option.value} role="menuitem">
+                <li
+                  key={option.value}
+                  role="none"
+                  className={styles["language-menu-item"]}
+                >
                   <button
                     type="button"
-                    className={styles["language-menu-item"]}
+                    role="menuitemradio"
+                    aria-checked={isActive}
+                    className={styles["language-menu-button"]}
                     data-active={isActive}
                     onClick={() => handleSelect(option.value)}
                   >
@@ -178,6 +200,11 @@ export default function LanguageMenu({
                         </span>
                       ) : null}
                     </span>
+                    <span
+                      className={styles["language-option-state"]}
+                      data-active={isActive}
+                      aria-hidden="true"
+                    />
                   </button>
                 </li>
               );
@@ -201,6 +228,8 @@ LanguageMenu.propTypes = {
   onChange: PropTypes.func,
   ariaLabel: PropTypes.string,
   normalizeValue: PropTypes.func,
+  showLabel: PropTypes.bool,
+  variant: PropTypes.oneOf(["source", "target"]),
 };
 
 LanguageMenu.defaultProps = {
@@ -209,4 +238,6 @@ LanguageMenu.defaultProps = {
   onChange: undefined,
   ariaLabel: undefined,
   normalizeValue: undefined,
+  showLabel: false,
+  variant: "source",
 };
