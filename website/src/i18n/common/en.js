@@ -26,6 +26,10 @@ export default {
   prefDictionaryModel: "Default Model",
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
+  settingsVoicePreviewPlay: "Play",
+  settingsVoicePreviewStop: "Stop",
+  settingsVoicePreviewTextEn: "Hi, I'm Glancy.",
+  settingsVoicePreviewTextZh: "你好，我是 Glancy。",
   settingsTabGeneral: "General",
   settingsGeneralDescription:
     "Tune interface languages, theme, and pronunciation defaults.",

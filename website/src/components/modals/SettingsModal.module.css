@@ -1,18 +1,18 @@
 .dialog {
-  --modal-max-width: var(--settings-dialog-width-lg);
-  --modal-max-height: var(--settings-dialog-max-height);
-  --modal-radius: var(--settings-dialog-radius);
-  --modal-surface: var(--settings-dialog-surface);
+  --modal-max-width: min(92vw, 960px);
+  --modal-max-height: 86vh;
+  --modal-radius: 20px;
+  --modal-surface: transparent;
   --modal-color: var(--settings-dialog-text);
-  --modal-shadow: var(--settings-dialog-shadow);
+  --modal-shadow: none;
 
   display: flex;
   flex-direction: column;
-  background: var(--settings-dialog-surface);
+  background: transparent;
 }
 
 @media (width <= 1023px) {
   .dialog {
-    --modal-max-width: var(--settings-dialog-width-md);
+    --modal-max-width: min(92vw, 900px);
   }
 }
