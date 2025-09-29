@@ -338,6 +338,11 @@ function UserMenu({
     }, SUBMENU_DELAY_OUT);
   }, [cancelScheduledClose, closeSubmenu]);
 
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    closeSubmenu();
+  }, [closeSubmenu]);
+
   const handleToggle = useCallback(() => {
     if (open) {
       closeMenu();
@@ -346,11 +351,6 @@ function UserMenu({
     setActiveIndex(computeDefaultIndex());
     setOpen(true);
   }, [closeMenu, computeDefaultIndex, open]);
-
-  const closeMenu = useCallback(() => {
-    setOpen(false);
-    closeSubmenu();
-  }, [closeSubmenu]);
 
   const previousOpenRef = useRef(open);
   useEffect(() => {

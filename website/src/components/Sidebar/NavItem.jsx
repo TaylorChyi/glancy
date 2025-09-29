@@ -30,7 +30,7 @@ const NavItem = forwardRef(function NavItem(
     tone = "default",
     onClick,
     type = "button",
-    children,
+    children = null,
     ...rest
   },
   ref,
@@ -123,19 +123,6 @@ NavItem.propTypes = {
   type: PropTypes.oneOf(["button", "submit", "reset"]),
   children: PropTypes.node,
   tone: PropTypes.oneOf(["default", "muted"]),
-};
-
-NavItem.defaultProps = {
-  icon: undefined,
-  description: undefined,
-  active: false,
-  to: undefined,
-  href: undefined,
-  className: undefined,
-  onClick: undefined,
-  type: "button",
-  children: null,
-  tone: "default",
 };
 
 export default NavItem;
