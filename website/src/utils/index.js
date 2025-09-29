@@ -13,6 +13,7 @@ export {
   resolveWordFlavor,
   WORD_FLAVOR_BILINGUAL,
   WORD_FLAVOR_MONOLINGUAL_ENGLISH,
+  WORD_FLAVOR_MONOLINGUAL_CHINESE,
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
   resolveDictionaryConfig,

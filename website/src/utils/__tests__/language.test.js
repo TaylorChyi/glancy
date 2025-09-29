@@ -8,6 +8,7 @@ import {
   WORD_LANGUAGE_AUTO,
   WORD_FLAVOR_BILINGUAL,
   WORD_FLAVOR_MONOLINGUAL_ENGLISH,
+  WORD_FLAVOR_MONOLINGUAL_CHINESE,
 } from "@/utils/language.js";
 
 describe("language utilities", () => {
@@ -59,6 +60,13 @@ describe("language utilities", () => {
       resolveDictionaryConfig("优雅", {
         sourceLanguage: WORD_LANGUAGE_AUTO,
         targetLanguage: "CHINESE",
+      }),
+    ).toEqual({ language: "CHINESE", flavor: WORD_FLAVOR_MONOLINGUAL_CHINESE });
+
+    expect(
+      resolveDictionaryConfig("优雅", {
+        sourceLanguage: "CHINESE",
+        targetLanguage: "ENGLISH",
       }),
     ).toEqual({ language: "CHINESE", flavor: WORD_FLAVOR_BILINGUAL });
   });
