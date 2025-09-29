@@ -11,6 +11,7 @@ import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
+import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
@@ -230,10 +231,11 @@ public class WordService {
         SearchRecordResponse record;
         try {
             record = searchRecordService.saveRecord(userId, req);
+        } catch (BusinessException e) {
+            return Flux.error(e);
         } catch (Exception e) {
             log.error("Failed to save search record for user {}", userId, e);
-            String msg = "Failed to save search record: " + e.getMessage();
-            return Flux.error(new IllegalStateException(msg, e));
+            return Flux.error(new IllegalStateException("Failed to save search record", e));
         }
 
         if (!forceNew) {
@@ -247,7 +249,7 @@ public class WordService {
                         personalizationContext
                     );
                     return Flux.just(StreamPayload.data(serializeResponse(cached)));
-                } catch (Exception e) {
+                } catch (JsonProcessingException e) {
                     log.error("Failed to serialize cached word '{}'", term, e);
                     return Flux.error(new IllegalStateException("Failed to serialize cached word", e));
                 }
@@ -266,10 +268,11 @@ public class WordService {
         Flux<String> stream;
         try {
             stream = wordSearcher.streamSearch(term, language, flavor, resolvedModel, personalizationContext);
+        } catch (BusinessException e) {
+            return Flux.error(e);
         } catch (Exception e) {
-            log.error("Error initiating streaming search for term '{}': {}", term, e.getMessage(), e);
-            String msg = "Failed to initiate streaming search: " + e.getMessage();
-            return Flux.error(new IllegalStateException(msg, e));
+            log.error("Error initiating streaming search for term '{}'", term, e);
+            return Flux.error(new IllegalStateException("Failed to initiate streaming search", e));
         }
 
         Flux<StreamPayload> main = stream

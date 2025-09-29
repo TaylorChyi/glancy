@@ -77,6 +77,7 @@ public class WordController {
                     payload.data()
                 )
             )
+            .doOnError(error -> log.error("Controller streaming error for user {} term '{}'", userId, term, error))
             .map(payload -> {
                 ServerSentEvent.Builder<String> builder = ServerSentEvent.builder(payload.data());
                 if (payload.event() != null) {
@@ -85,10 +86,6 @@ public class WordController {
                 return builder.build();
             })
             .doOnCancel(() -> log.info("Streaming canceled for user {} term '{}'", userId, term))
-            .onErrorResume(e -> {
-                log.error("Streaming error for user {} term '{}'", userId, term, e);
-                return Flux.just(ServerSentEvent.<String>builder(e.getMessage()).event("error").build());
-            })
             .doFinally(sig -> log.info("Streaming finished with signal {} for user {} term '{}'", sig, userId, term));
     }
 }
