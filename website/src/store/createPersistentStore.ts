@@ -4,6 +4,7 @@ import {
   createJSONStorage,
   type PersistOptions,
 } from "zustand/middleware";
+import { resolveStateStorage } from "./persistUtils.js";
 import type { StateCreator, StoreApi, UseBoundStore } from "zustand";
 
 interface Options<T> {
@@ -20,7 +21,7 @@ export function createPersistentStore<T>({
   return create<T>()(
     persist(initializer, {
       name: key,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => resolveStateStorage(key)),
       ...(persistOptions ?? {}),
     }),
   );
