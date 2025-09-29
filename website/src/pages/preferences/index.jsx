@@ -7,6 +7,7 @@ import MessagePopup from "@/components/ui/MessagePopup";
 import { useApi } from "@/hooks/useApi.js";
 import { VoiceSelector } from "@/components";
 import { useSettingsStore, SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
+import { useVoiceStore } from "@/store";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 import {
   WORD_LANGUAGE_AUTO,
@@ -16,10 +17,16 @@ import {
 } from "@/utils/language.js";
 import ThemeIcon from "@/components/ui/Icon";
 import Avatar from "@/components/ui/Avatar";
+import { useTtsPlayer } from "@/hooks/useTtsPlayer.js";
 
 const SOURCE_LANG_STORAGE_KEY = "sourceLang";
 const TARGET_LANG_STORAGE_KEY = "targetLang";
 const PERSONALIZATION_ENABLED_STORAGE_KEY = "glancy:personalization-enabled";
+
+const VOICE_PREVIEW_SAMPLES = Object.freeze({
+  en: "Hi, I'm Glancy.",
+  zh: "你好，我是 Glancy。",
+});
 
 const readLocalPreference = (key) => {
   if (typeof window === "undefined") {
@@ -161,10 +168,43 @@ function Preferences({
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const voiceSelections = useVoiceStore((state) => state.voices || {});
+  const englishVoiceId = voiceSelections.en || "";
+  const chineseVoiceId = voiceSelections.zh || "";
+  const {
+    play: playVoicePreview,
+    stop: stopVoicePreview,
+    loading: isVoicePreviewLoading,
+    playing: isVoicePreviewPlaying,
+  } = useTtsPlayer({ scope: "sentence" });
+  const [previewLang, setPreviewLang] = useState(null);
 
   useEffect(() => {
     setActiveTab(resolveInitialTab(initialTab));
   }, [initialTab]);
+
+  useEffect(
+    () => () => {
+      stopVoicePreview();
+      setPreviewLang(null);
+    },
+    [stopVoicePreview],
+  );
+
+  useEffect(() => {
+    if (
+      activeTab !== TAB_KEYS.GENERAL &&
+      (isVoicePreviewPlaying || isVoicePreviewLoading)
+    ) {
+      stopVoicePreview();
+      setPreviewLang(null);
+    }
+  }, [
+    activeTab,
+    isVoicePreviewLoading,
+    isVoicePreviewPlaying,
+    stopVoicePreview,
+  ]);
 
   const systemLanguageFormatter = useMemo(() => {
     try {
@@ -185,6 +225,14 @@ function Preferences({
       [TAB_KEYS.ACCOUNT]: t.settingsAccountDescription || "",
     }),
     [t],
+  );
+
+  const voiceSampleTextMap = useMemo(
+    () => ({
+      en: t.settingsVoicePreviewTextEn || VOICE_PREVIEW_SAMPLES.en,
+      zh: t.settingsVoicePreviewTextZh || VOICE_PREVIEW_SAMPLES.zh,
+    }),
+    [t.settingsVoicePreviewTextEn, t.settingsVoicePreviewTextZh],
   );
 
   const formatLanguageLabel = useCallback(
@@ -277,6 +325,48 @@ function Preferences({
       setDictionaryTargetLanguage(toStoreTargetLanguage(uiValue));
     },
     [setDictionaryTargetLanguage],
+  );
+
+  const handleVoicePreview = useCallback(
+    async (langCode) => {
+      const sample = voiceSampleTextMap[langCode];
+      if (!sample) {
+        return;
+      }
+      const selectedVoice =
+        langCode === "zh"
+          ? chineseVoiceId || undefined
+          : englishVoiceId || undefined;
+      const isActivePreview =
+        previewLang === langCode &&
+        (isVoicePreviewPlaying || isVoicePreviewLoading);
+      if (isActivePreview) {
+        stopVoicePreview();
+        setPreviewLang(null);
+        return;
+      }
+      setPreviewLang(langCode);
+      try {
+        await playVoicePreview({
+          text: sample,
+          lang: langCode,
+          voice: selectedVoice,
+        });
+      } catch (error) {
+        console.error("[preferences] Voice preview failed", error);
+        setPreviewLang(null);
+      }
+    },
+    [
+      voiceSampleTextMap,
+      chineseVoiceId,
+      englishVoiceId,
+      previewLang,
+      isVoicePreviewPlaying,
+      isVoicePreviewLoading,
+      stopVoicePreview,
+      playVoicePreview,
+    ],
   );
 
   const applyPreferences = useCallback(
@@ -481,172 +571,122 @@ function Preferences({
     const voicesTitle = t.prefVoicesTitle || t.prefVoiceEn;
     const voicesDescription =
       t.prefVoicesDescription || tabDescriptionMap[TAB_KEYS.GENERAL];
+    const englishPreviewActive =
+      previewLang === "en" && (isVoicePreviewLoading || isVoicePreviewPlaying);
+    const chinesePreviewActive =
+      previewLang === "zh" && (isVoicePreviewLoading || isVoicePreviewPlaying);
 
     return (
       <>
-        <section className={styles.section} aria-label={defaultsTitle}>
-          <div className={styles["section-header"]}>
-            <h3 className={styles["section-title"]}>{defaultsTitle}</h3>
-            {defaultsDescription ? (
-              <p className={styles["section-description"]}>
-                {defaultsDescription}
-              </p>
-            ) : null}
-          </div>
-          <div className={styles.fields}>
-            <div className={styles.field}>
-              <div>
-                <label htmlFor="pref-theme" className={styles["field-label"]}>
-                  {t.prefTheme}
-                </label>
-              </div>
-              <select
-                id="pref-theme"
-                className={styles.select}
-                value={theme}
-                onChange={(event) => setTheme(event.target.value)}
-              >
-                {themeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <div>
-                <label
-                  htmlFor="pref-system-language"
-                  className={styles["field-label"]}
-                >
-                  {t.prefSystemLanguage}
-                </label>
-              </div>
-              <select
-                id="pref-system-language"
-                className={styles.select}
-                value={systemLanguage}
-                onChange={(event) =>
-                  handleSystemLanguageChange(event.target.value)
-                }
-              >
-                {systemLanguageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <div>
-                <label
-                  htmlFor="pref-source-language"
-                  className={styles["field-label"]}
-                >
-                  {t.prefLanguage}
-                </label>
-              </div>
-              <select
-                id="pref-source-language"
-                className={styles.select}
-                value={sourceLang}
-                onChange={(event) =>
-                  handleSourceLanguageChange(event.target.value)
-                }
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <div>
-                <label
-                  htmlFor="pref-target-language"
-                  className={styles["field-label"]}
-                >
-                  {t.prefSearchLanguage}
-                </label>
-              </div>
-              <select
-                id="pref-target-language"
-                className={styles.select}
-                value={targetLang}
-                onChange={(event) =>
-                  handleTargetLanguageChange(event.target.value)
-                }
-              >
-                {searchLanguageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </section>
-        <section className={styles.section} aria-label={voicesTitle}>
-          <div className={styles["section-header"]}>
-            <h3 className={styles["section-title"]}>{voicesTitle}</h3>
-            {voicesDescription ? (
-              <p className={styles["section-description"]}>
-                {voicesDescription}
-              </p>
-            ) : null}
-          </div>
-          <div className={styles.fields}>
-            <div className={styles.field}>
-              <div>
-                <label
-                  htmlFor="pref-voice-en"
-                  className={styles["field-label"]}
-                >
-                  {t.prefVoiceEn}
-                </label>
-              </div>
-              <VoiceSelector lang="en" id="pref-voice-en" />
-            </div>
-            <div className={styles.field}>
-              <div>
-                <label
-                  htmlFor="pref-voice-zh"
-                  className={styles["field-label"]}
-                >
-                  {t.prefVoiceZh}
-                </label>
-              </div>
-              <VoiceSelector lang="zh" id="pref-voice-zh" />
-            </div>
-          </div>
-        </section>
+        <SettingsSection
+          title={defaultsTitle}
+          description={defaultsDescription}
+        >
+          <SettingsRow label={t.prefTheme} htmlFor="pref-theme">
+            <PillSelect
+              id="pref-theme"
+              value={theme}
+              options={themeOptions}
+              onChange={(event) => setTheme(event.target.value)}
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t.prefSystemLanguage}
+            htmlFor="pref-system-language"
+          >
+            <PillSelect
+              id="pref-system-language"
+              value={systemLanguage}
+              options={systemLanguageOptions}
+              onChange={(event) =>
+                handleSystemLanguageChange(event.target.value)
+              }
+            />
+          </SettingsRow>
+          <SettingsRow label={t.prefLanguage} htmlFor="pref-source-language">
+            <PillSelect
+              id="pref-source-language"
+              value={sourceLang}
+              options={languageOptions}
+              onChange={(event) =>
+                handleSourceLanguageChange(event.target.value)
+              }
+            />
+          </SettingsRow>
+          <SettingsRow
+            label={t.prefSearchLanguage}
+            htmlFor="pref-target-language"
+          >
+            <PillSelect
+              id="pref-target-language"
+              value={targetLang}
+              options={searchLanguageOptions}
+              onChange={(event) =>
+                handleTargetLanguageChange(event.target.value)
+              }
+            />
+          </SettingsRow>
+        </SettingsSection>
+        <SettingsSection title={voicesTitle} description={voicesDescription}>
+          <SettingsRow label={t.prefVoiceEn} htmlFor="pref-voice-en">
+            <VoicePreviewButton
+              onClick={() => handleVoicePreview("en")}
+              active={englishPreviewActive}
+              loading={isVoicePreviewLoading && previewLang === "en"}
+              disabled={
+                !user ||
+                ((isVoicePreviewLoading || isVoicePreviewPlaying) &&
+                  previewLang !== "en")
+              }
+              playLabel={t.settingsVoicePreviewPlay}
+              stopLabel={t.settingsVoicePreviewStop}
+            />
+            <PillSelectField>
+              <VoiceSelector
+                lang="en"
+                id="pref-voice-en"
+                variant="pill"
+                className={styles["pill-native"]}
+              />
+            </PillSelectField>
+          </SettingsRow>
+          <SettingsRow label={t.prefVoiceZh} htmlFor="pref-voice-zh">
+            <VoicePreviewButton
+              onClick={() => handleVoicePreview("zh")}
+              active={chinesePreviewActive}
+              loading={isVoicePreviewLoading && previewLang === "zh"}
+              disabled={
+                !user ||
+                ((isVoicePreviewLoading || isVoicePreviewPlaying) &&
+                  previewLang !== "zh")
+              }
+              playLabel={t.settingsVoicePreviewPlay}
+              stopLabel={t.settingsVoicePreviewStop}
+            />
+            <PillSelectField>
+              <VoiceSelector
+                lang="zh"
+                id="pref-voice-zh"
+                variant="pill"
+                className={styles["pill-native"]}
+              />
+            </PillSelectField>
+          </SettingsRow>
+        </SettingsSection>
       </>
     );
   };
 
   const renderPersonalizationPanel = () => (
-    <section
-      className={styles.section}
-      aria-label={tabLabelMap[TAB_KEYS.PERSONALIZATION]}
-    >
-      <div className={styles["section-header"]}>
-        <h3 className={styles["section-title"]}>
-          {tabLabelMap[TAB_KEYS.PERSONALIZATION]}
-        </h3>
-        {tabDescriptionMap[TAB_KEYS.PERSONALIZATION] ? (
-          <p className={styles["section-description"]}>
-            {tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
-          </p>
-        ) : null}
-      </div>
-      <div className={styles.fields}>
-        <div className={`${styles.field} ${styles["field-inline"]}`}>
-          <div>
-            <span className={styles["field-label"]}>
-              {t.settingsEnableCustomization || "Enable customization"}
-            </span>
-          </div>
+    <>
+      <SettingsSection
+        title={tabLabelMap[TAB_KEYS.PERSONALIZATION]}
+        description={tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
+      >
+        <SettingsRow
+          label={t.settingsEnableCustomization || "Enable customization"}
+          htmlFor="personalization-toggle"
+        >
           <label className={styles.switch} htmlFor="personalization-toggle">
             <input
               id="personalization-toggle"
@@ -660,36 +700,32 @@ function Preferences({
             />
             <span aria-hidden="true" />
           </label>
-        </div>
-        <div className={styles.field}>
-          <div>
-            <label
-              htmlFor="personal-occupation"
-              className={styles["field-label"]}
-            >
-              {t.settingsOccupation}
-            </label>
-          </div>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settingsOccupation}
+          htmlFor="personal-occupation"
+          controlFullWidth
+        >
           <input
             id="personal-occupation"
             type="text"
-            className={styles.input}
+            className={styles["input-control"]}
             value={occupation}
             onChange={(event) => setOccupation(event.target.value)}
             placeholder={t.settingsOccupationPlaceholder || "e.g. Student"}
             disabled={!personalizationEnabled}
           />
-        </div>
-        <div className={styles.field}>
-          <div>
-            <label htmlFor="personal-about" className={styles["field-label"]}>
-              {t.settingsAboutYou}
-            </label>
-          </div>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settingsAboutYou}
+          htmlFor="personal-about"
+          alignTop
+          controlFullWidth
+        >
           <textarea
             id="personal-about"
             rows={3}
-            className={styles.textarea}
+            className={styles["input-area"]}
             value={persona}
             onChange={(event) => setPersona(event.target.value)}
             placeholder={
@@ -698,17 +734,17 @@ function Preferences({
             }
             disabled={!personalizationEnabled}
           />
-        </div>
-        <div className={styles.field}>
-          <div>
-            <label htmlFor="personal-goal" className={styles["field-label"]}>
-              {t.settingsLearningGoal}
-            </label>
-          </div>
+        </SettingsRow>
+        <SettingsRow
+          label={t.settingsLearningGoal}
+          htmlFor="personal-goal"
+          alignTop
+          controlFullWidth
+        >
           <textarea
             id="personal-goal"
             rows={3}
-            className={styles.textarea}
+            className={styles["input-area"]}
             value={learningGoal}
             onChange={(event) => setLearningGoal(event.target.value)}
             placeholder={
@@ -717,65 +753,62 @@ function Preferences({
             }
             disabled={!personalizationEnabled}
           />
-        </div>
-      </div>
-    </section>
+        </SettingsRow>
+      </SettingsSection>
+    </>
   );
 
   const renderKeyboardPanel = () => (
-    <section
-      className={styles.section}
-      aria-label={tabLabelMap[TAB_KEYS.KEYBOARD]}
-    >
-      <div className={styles["section-header"]}>
-        <h3 className={styles["section-title"]}>
-          {tabLabelMap[TAB_KEYS.KEYBOARD]}
-        </h3>
-        {tabDescriptionMap[TAB_KEYS.KEYBOARD] ? (
-          <p className={styles["section-description"]}>
-            {tabDescriptionMap[TAB_KEYS.KEYBOARD]}
-          </p>
-        ) : null}
-      </div>
-      <ul className={styles["shortcut-list"]}>
-        {KEYBOARD_SHORTCUTS.map((shortcut) => (
-          <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
-            <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
-            <span className={styles["shortcut-label"]}>
-              {t[shortcut.labelKey] || shortcut.labelKey}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <>
+      <SettingsSection
+        title={tabLabelMap[TAB_KEYS.KEYBOARD]}
+        description={tabDescriptionMap[TAB_KEYS.KEYBOARD]}
+      >
+        <div className={styles["section-columns"]}>
+          <ul className={styles["shortcut-list"]}>
+            {KEYBOARD_SHORTCUTS.map((shortcut) => (
+              <li key={shortcut.labelKey} className={styles["shortcut-item"]}>
+                <span className={styles["shortcut-key"]}>{shortcut.combo}</span>
+                <span className={styles["shortcut-label"]}>
+                  {t[shortcut.labelKey] || shortcut.labelKey}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </SettingsSection>
+    </>
   );
 
   const renderDataPanel = () => (
-    <section className={styles.section} aria-label={tabLabelMap[TAB_KEYS.DATA]}>
-      <div className={styles["section-header"]}>
-        <h3 className={styles["section-title"]}>
-          {tabLabelMap[TAB_KEYS.DATA]}
-        </h3>
-        {tabDescriptionMap[TAB_KEYS.DATA] ? (
-          <p className={styles["section-description"]}>
-            {tabDescriptionMap[TAB_KEYS.DATA]}
+    <>
+      <SettingsSection
+        title={tabLabelMap[TAB_KEYS.DATA]}
+        description={tabDescriptionMap[TAB_KEYS.DATA]}
+      >
+        <div className={styles["data-card"]}>
+          <p className={styles["data-description"]}>
+            {t.settingsDataNotice || ""}
           </p>
-        ) : null}
-      </div>
-      <div className={styles["data-card"]}>
-        <p className={styles["field-description"]}>
-          {t.settingsDataNotice || ""}
-        </p>
-        <div className={styles["data-actions"]}>
-          <button type="button" className={styles["secondary-button"]} disabled>
-            {t.settingsExportData}
-          </button>
-          <button type="button" className={styles["secondary-button"]} disabled>
-            {t.settingsEraseHistory}
-          </button>
+          <div className={styles["data-actions"]}>
+            <button
+              type="button"
+              className={styles["secondary-button"]}
+              disabled
+            >
+              {t.settingsExportData}
+            </button>
+            <button
+              type="button"
+              className={styles["secondary-button"]}
+              disabled
+            >
+              {t.settingsEraseHistory}
+            </button>
+          </div>
         </div>
-      </div>
-    </section>
+      </SettingsSection>
+    </>
   );
 
   const renderAccountPanel = () => {
@@ -784,63 +817,55 @@ function Preferences({
       ? planName.charAt(0).toUpperCase() + planName.slice(1)
       : "";
     return (
-      <section
-        className={styles.section}
-        aria-label={tabLabelMap[TAB_KEYS.ACCOUNT]}
-      >
-        <div className={styles["section-header"]}>
-          <h3 className={styles["section-title"]}>
-            {tabLabelMap[TAB_KEYS.ACCOUNT]}
-          </h3>
-          {tabDescriptionMap[TAB_KEYS.ACCOUNT] ? (
-            <p className={styles["section-description"]}>
-              {tabDescriptionMap[TAB_KEYS.ACCOUNT]}
-            </p>
-          ) : null}
-        </div>
-        <div className={styles.fields}>
-          <div className={styles["account-header"]}>
-            <Avatar width={56} height={56} />
-            <div className={styles["account-meta"]}>
-              <span className={styles["account-name"]}>
-                {user?.username || ""}
-              </span>
-              <span className={styles["account-plan"]}>{planLabel}</span>
+      <>
+        <SettingsSection
+          title={tabLabelMap[TAB_KEYS.ACCOUNT]}
+          description={tabDescriptionMap[TAB_KEYS.ACCOUNT]}
+        >
+          <div className={styles["account-card"]}>
+            <div className={styles["account-header"]}>
+              <Avatar width={56} height={56} />
+              <div className={styles["account-meta"]}>
+                <span className={styles["account-name"]}>
+                  {user?.username || ""}
+                </span>
+                <span className={styles["account-plan"]}>{planLabel}</span>
+              </div>
+              {typeof onOpenAccountManager === "function" ? (
+                <button
+                  type="button"
+                  className={styles["secondary-button"]}
+                  onClick={onOpenAccountManager}
+                >
+                  {t.settingsManageProfile || "Manage profile"}
+                </button>
+              ) : null}
             </div>
-            {typeof onOpenAccountManager === "function" ? (
-              <button
-                type="button"
-                className={styles["secondary-button"]}
-                onClick={onOpenAccountManager}
-              >
-                {t.settingsManageProfile || "Manage profile"}
-              </button>
-            ) : null}
+            <dl className={styles["account-rows"]}>
+              <div className={styles["account-row"]}>
+                <dt>{t.settingsAccountUsername}</dt>
+                <dd>{user?.username || t.settingsEmptyValue || ""}</dd>
+              </div>
+              <div className={styles["account-row"]}>
+                <dt>{t.settingsAccountEmail}</dt>
+                <dd>{user?.email || t.settingsEmptyValue || ""}</dd>
+              </div>
+              <div className={styles["account-row"]}>
+                <dt>{t.settingsAccountPhone}</dt>
+                <dd>{user?.phone || t.settingsEmptyValue || ""}</dd>
+              </div>
+              <div className={styles["account-row"]}>
+                <dt>{t.settingsAccountAge}</dt>
+                <dd>{profileMeta.age || t.settingsEmptyValue || ""}</dd>
+              </div>
+              <div className={styles["account-row"]}>
+                <dt>{t.settingsAccountGender}</dt>
+                <dd>{profileMeta.gender || t.settingsEmptyValue || ""}</dd>
+              </div>
+            </dl>
           </div>
-          <dl className={styles["account-list"]}>
-            <div className={styles["account-row"]}>
-              <dt>{t.settingsAccountUsername}</dt>
-              <dd>{user?.username || t.settingsEmptyValue || ""}</dd>
-            </div>
-            <div className={styles["account-row"]}>
-              <dt>{t.settingsAccountEmail}</dt>
-              <dd>{user?.email || t.settingsEmptyValue || ""}</dd>
-            </div>
-            <div className={styles["account-row"]}>
-              <dt>{t.settingsAccountPhone}</dt>
-              <dd>{user?.phone || t.settingsEmptyValue || ""}</dd>
-            </div>
-            <div className={styles["account-row"]}>
-              <dt>{t.settingsAccountAge}</dt>
-              <dd>{profileMeta.age || t.settingsEmptyValue || ""}</dd>
-            </div>
-            <div className={styles["account-row"]}>
-              <dt>{t.settingsAccountGender}</dt>
-              <dd>{profileMeta.gender || t.settingsEmptyValue || ""}</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
+        </SettingsSection>
+      </>
     );
   };
 
@@ -874,81 +899,83 @@ function Preferences({
         aria-labelledby="settings-heading"
         aria-describedby="settings-description"
       >
-        <header className={styles.header}>
-          <h2 id="settings-heading" className={styles.title}>
-            {t.prefTitle}
-          </h2>
-          <p id="settings-description" className={styles.description}>
-            {t.prefDescription}
-          </p>
-        </header>
-        <div className={styles.body}>
-          <aside className={styles.sidebar} aria-label={t.prefTitle}>
-            <nav aria-label={t.prefTitle}>
-              <ul
-                className={styles["nav-list"]}
-                role="tablist"
-                aria-orientation="vertical"
-              >
-                {TAB_ORDER.map((tab, index) => {
-                  const isActive = activeTab === tab;
-                  const icon = TAB_ICONS[tab];
-                  const tabId = `settings-tab-${tab}`;
-                  const tabPanelId = `settings-panel-${tab}`;
-                  return (
-                    <li key={tab}>
-                      <button
-                        type="button"
-                        role="tab"
-                        id={tabId}
-                        className={
-                          isActive
-                            ? `${styles["nav-button"]} ${styles["nav-button-active"]}`
-                            : styles["nav-button"]
-                        }
-                        aria-selected={isActive}
-                        aria-controls={tabPanelId}
-                        tabIndex={isActive ? 0 : -1}
-                        onClick={() => handleTabClick(tab)}
-                        onKeyDown={handleNavKeyDown(index)}
-                        ref={registerNavRef(index)}
-                      >
-                        {icon ? (
-                          <ThemeIcon
-                            name={icon}
-                            width={18}
-                            height={18}
-                            className={styles["nav-icon"]}
-                          />
-                        ) : null}
-                        <span className={styles["nav-label"]}>
-                          {tabLabelMap[tab]}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          </aside>
-          <section
-            className={styles.content}
-            role="tabpanel"
-            id={panelId}
-            aria-labelledby={`settings-tab-${activeTab}`}
-          >
+        <aside className={styles.sidebar} aria-label={t.prefTitle}>
+          <nav aria-label={t.prefTitle}>
+            <ul
+              className={styles["nav-list"]}
+              role="tablist"
+              aria-orientation="vertical"
+            >
+              {TAB_ORDER.map((tab, index) => {
+                const isActive = activeTab === tab;
+                const icon = TAB_ICONS[tab];
+                const tabId = `settings-tab-${tab}`;
+                const tabPanelId = `settings-panel-${tab}`;
+                const buttonClassName = isActive
+                  ? `${styles["nav-button"]} ${styles["nav-button-active"]}`
+                  : styles["nav-button"];
+                return (
+                  <li key={tab} className={styles["nav-item"]}>
+                    <button
+                      type="button"
+                      role="tab"
+                      id={tabId}
+                      className={buttonClassName}
+                      aria-selected={isActive}
+                      aria-controls={tabPanelId}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => handleTabClick(tab)}
+                      onKeyDown={handleNavKeyDown(index)}
+                      ref={registerNavRef(index)}
+                    >
+                      <span className={styles["nav-dot"]} aria-hidden="true" />
+                      {icon ? (
+                        <ThemeIcon
+                          name={icon}
+                          width={18}
+                          height={18}
+                          className={styles["nav-icon"]}
+                        />
+                      ) : null}
+                      <span className={styles["nav-label"]}>
+                        {tabLabelMap[tab]}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </aside>
+        <section
+          className={styles.content}
+          role="tabpanel"
+          id={panelId}
+          aria-labelledby={`settings-tab-${activeTab}`}
+        >
+          <header className={styles["content-header"]}>
+            <h2 id="settings-heading" className={styles["content-title"]}>
+              {tabLabelMap[activeTab]}
+            </h2>
+            {tabDescriptionMap[activeTab] ? (
+              <p className={styles["content-description"]}>
+                {tabDescriptionMap[activeTab]}
+              </p>
+            ) : null}
+          </header>
+          <div className={styles["section-stack"]} id="settings-description">
             {renderActivePanel()}
-          </section>
-        </div>
-        <footer className={styles.actions}>
-          <button
-            type="submit"
-            className={styles["primary-button"]}
-            disabled={isSaving}
-          >
-            {isSaving ? (t.saving ?? t.saveButton) : t.saveButton}
-          </button>
-        </footer>
+          </div>
+          <footer className={styles["content-footer"]}>
+            <button
+              type="submit"
+              className={styles["primary-button"]}
+              disabled={isSaving}
+            >
+              {isSaving ? (t.saving ?? t.saveButton) : t.saveButton}
+            </button>
+          </footer>
+        </section>
       </form>
       <MessagePopup
         open={popupOpen}
@@ -958,6 +985,261 @@ function Preferences({
     </>
   );
 }
+
+function SettingsSection({ title, description, children }) {
+  return (
+    <section className={styles.section} aria-label={title}>
+      <header className={styles["section-header"]}>
+        <h3 className={styles["section-title"]}>{title}</h3>
+        {description ? (
+          <p className={styles["section-description"]}>{description}</p>
+        ) : null}
+      </header>
+      <div className={styles["section-body"]}>{children}</div>
+    </section>
+  );
+}
+
+SettingsSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  children: PropTypes.node.isRequired,
+};
+
+SettingsSection.defaultProps = {
+  description: undefined,
+};
+
+function SettingsRow({
+  label,
+  description,
+  htmlFor,
+  children,
+  alignTop = false,
+  controlFullWidth = false,
+  className = "",
+}) {
+  const rowClassName = [
+    styles.row,
+    alignTop ? styles["row-top"] : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const controlClassName = [
+    styles["row-control"],
+    controlFullWidth ? styles["row-control-full"] : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={rowClassName}>
+      <div className={styles["row-label"]}>
+        {htmlFor ? (
+          <label htmlFor={htmlFor} className={styles["row-label-text"]}>
+            {label}
+          </label>
+        ) : (
+          <span className={styles["row-label-text"]}>{label}</span>
+        )}
+        {description ? (
+          <p className={styles["row-label-description"]}>{description}</p>
+        ) : null}
+      </div>
+      <div className={controlClassName}>{children}</div>
+    </div>
+  );
+}
+
+SettingsRow.propTypes = {
+  label: PropTypes.node.isRequired,
+  description: PropTypes.node,
+  htmlFor: PropTypes.string,
+  children: PropTypes.node.isRequired,
+  alignTop: PropTypes.bool,
+  controlFullWidth: PropTypes.bool,
+  className: PropTypes.string,
+};
+
+SettingsRow.defaultProps = {
+  description: undefined,
+  htmlFor: undefined,
+  alignTop: false,
+  controlFullWidth: false,
+  className: "",
+};
+
+function PillSelectField({ children }) {
+  return (
+    <div className={styles["pill-select"]}>
+      {children}
+      <ChevronDownGlyph className={styles["pill-select-icon"]} />
+    </div>
+  );
+}
+
+PillSelectField.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+function PillSelect({ id, value, options, onChange, disabled = false }) {
+  return (
+    <PillSelectField>
+      <select
+        id={id}
+        className={styles["pill-native"]}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </PillSelectField>
+  );
+}
+
+PillSelect.propTypes = {
+  id: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    }).isRequired,
+  ).isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
+PillSelect.defaultProps = {
+  disabled: false,
+};
+
+function VoicePreviewButton({
+  onClick,
+  active,
+  loading,
+  disabled,
+  playLabel,
+  stopLabel,
+}) {
+  const label = active ? stopLabel || "Stop" : playLabel || "Play";
+  const isDisabled = disabled && !active;
+
+  return (
+    <button
+      type="button"
+      className={styles["play-button"]}
+      onClick={onClick}
+      data-active={active}
+      aria-pressed={active}
+      aria-busy={loading}
+      disabled={isDisabled}
+    >
+      <PlayGlyph active={active} />
+      <span>{loading && !active ? `${label}…` : label}</span>
+    </button>
+  );
+}
+
+VoicePreviewButton.propTypes = {
+  onClick: PropTypes.func.isRequired,
+  active: PropTypes.bool,
+  loading: PropTypes.bool,
+  disabled: PropTypes.bool,
+  playLabel: PropTypes.string,
+  stopLabel: PropTypes.string,
+};
+
+VoicePreviewButton.defaultProps = {
+  active: false,
+  loading: false,
+  disabled: false,
+  playLabel: undefined,
+  stopLabel: undefined,
+};
+
+function ChevronDownGlyph({ className }) {
+  return (
+    <svg
+      className={className}
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M3 4.5 6 7.5 9 4.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+ChevronDownGlyph.propTypes = {
+  className: PropTypes.string,
+};
+
+ChevronDownGlyph.defaultProps = {
+  className: "",
+};
+
+function PlayGlyph({ active }) {
+  if (active) {
+    return (
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M3.25 2.5h1.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-5.5a.75.75 0 0 1 .75-.75Zm4 0h1.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1-.75-.75v-5.5a.75.75 0 0 1 .75-.75Z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M3.25 2.15 9.2 5.63a.4.4 0 0 1 0 .7L3.25 9.11a.4.4 0 0 1-.6-.35v-6a.4.4 0 0 1 .6-.35Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+PlayGlyph.propTypes = {
+  active: PropTypes.bool,
+};
+
+PlayGlyph.defaultProps = {
+  active: false,
+};
 
 Preferences.propTypes = {
   variant: PropTypes.oneOf(Object.values(VARIANTS)),

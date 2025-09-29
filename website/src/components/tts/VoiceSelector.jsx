@@ -10,7 +10,13 @@ import styles from "./VoiceSelector.module.css";
  * Dropdown for selecting available voices for a given language.
  * Voices requiring Pro plan are disabled for non-pro users.
  */
-export default function VoiceSelector({ lang, id, className = "", ...props }) {
+export default function VoiceSelector({
+  lang,
+  id,
+  className = "",
+  variant = "form",
+  ...props
+}) {
   const api = useApi();
   const { t } = useLanguage();
   const user = useUserStore((s) => s.user);
@@ -55,7 +61,12 @@ export default function VoiceSelector({ lang, id, className = "", ...props }) {
     (user?.plan && user.plan !== "free")
   );
 
-  const composedClassName = [fieldStyles.select, styles.select, className]
+  const normalizedVariant = variant === "pill" ? "pill" : "form";
+  const baseClassNames =
+    normalizedVariant === "pill"
+      ? [styles.select, styles["select-pill"]]
+      : [fieldStyles.select, styles.select];
+  const composedClassName = [...baseClassNames, className]
     .filter(Boolean)
     .join(" ");
 
@@ -89,9 +100,11 @@ VoiceSelector.propTypes = {
   lang: PropTypes.string.isRequired,
   id: PropTypes.string,
   className: PropTypes.string,
+  variant: PropTypes.oneOf(["form", "pill"]),
 };
 
 VoiceSelector.defaultProps = {
   id: undefined,
   className: "",
+  variant: "form",
 };

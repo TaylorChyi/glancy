@@ -2,6 +2,38 @@
   width: 100%;
 }
 
+.select-pill {
+  min-height: 36px;
+  padding: 0 36px 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--settings-border, #2a2e37);
+  background: var(--settings-surface, #242935);
+  color: var(--settings-text, #eef0f3);
+  font-size: 14px;
+  font-weight: 600;
+  appearance: none;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.select-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--settings-ring, #3a3f46);
+  border-color: var(--settings-ring, #3a3f46);
+}
+
+.select-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.select-pill:hover:not(:disabled) {
+  background: var(--settings-surface-hover, #1a1e24);
+}
+
 .disabled {
   color: color-mix(in srgb, var(--color-text) 45%, transparent);
   font-style: italic;
