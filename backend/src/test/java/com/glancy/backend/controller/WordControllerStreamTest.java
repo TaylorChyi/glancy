@@ -1,71 +1,76 @@
 package com.glancy.backend.controller;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
-import com.glancy.backend.service.WordService.StreamPayload;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Flux;
 
 /**
- * 流式单词查询接口测试。
- * 流程：
- * 1. 模拟用户认证。
- * 2. 模拟 WordService 返回两段数据。
- * 3. 发送请求并验证 SSE 响应序列。
+ * {@link WordController} 流式接口的集成测试，覆盖业务异常与系统异常。
  */
-@WebMvcTest(controllers = WordController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+@SpringBootTest(
+    properties = {
+        "oss.endpoint=https://oss-cn-hangzhou.aliyuncs.com",
+        "oss.bucket=test-bucket",
+        "oss.access-key-id=dummy",
+        "oss.access-key-secret=dummy",
+        "oss.verify-location=false",
     }
 )
-class WordControllerStreamingTest {
+@AutoConfigureMockMvc
+class WordControllerStreamTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private WordService wordService;
 
-    @MockitoBean
+    @MockBean
     private UserService userService;
 
+    /**
+     * 场景：请求触发 {@link InvalidRequestException}。
+     * 步骤：
+     * 1. 模拟用户认证与服务端抛出业务异常。
+     * 2. 触发 SSE 请求并完成异步调度。
+     * 3. 断言状态码为 422，且返回的 SSE 负载符合全局异常格式。
+     */
     @Test
-    void testStreamWord() throws Exception {
+    void streamWord_shouldRenderInvalidRequestAsSseError() throws Exception {
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
         when(
             wordService.streamWordForUser(
                 eq(1L),
                 eq("hello"),
                 eq(Language.ENGLISH),
-                eq(com.glancy.backend.entity.DictionaryFlavor.BILINGUAL),
+                eq(DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
                 eq(false)
             )
-        ).thenReturn(Flux.just(StreamPayload.data("part1"), StreamPayload.version("77")));
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        ).thenReturn(Flux.error(new InvalidRequestException("参数不合法")));
 
         MvcResult result = mockMvc
             .perform(
@@ -78,30 +83,36 @@ class WordControllerStreamingTest {
             .andExpect(request().asyncStarted())
             .andReturn();
 
-        mockMvc
+        MvcResult dispatched = mockMvc
             .perform(asyncDispatch(result))
-            .andExpect(status().isOk())
-            .andExpect(content().string(containsString("data:part1")))
-            .andExpect(content().string(containsString("event:version")))
-            .andExpect(content().string(containsString("data:77")));
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE))
+            .andReturn();
+
+        String body = dispatched.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertEquals("event: error\ndata: {\"message\":\"参数不合法\"}\n\n", body);
     }
 
     /**
-     * 测试流式接口在服务抛出错误时能够触发全局异常处理并输出 SSE 错误。
+     * 场景：流式接口发生系统异常。
+     * 步骤：
+     * 1. 模拟用户认证并让服务抛出运行时异常。
+     * 2. 触发 SSE 请求并完成异步调度。
+     * 3. 断言响应为 500 且使用全局异常的 SSE 包装体。
      */
     @Test
-    void testStreamWordError() throws Exception {
+    void streamWord_shouldWrapSystemErrorWithGlobalHandler() throws Exception {
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
         when(
             wordService.streamWordForUser(
                 eq(1L),
                 eq("hello"),
                 eq(Language.ENGLISH),
-                eq(com.glancy.backend.entity.DictionaryFlavor.BILINGUAL),
+                eq(DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
                 eq(false)
             )
-        ).thenReturn(Flux.error(new IllegalStateException("boom")));
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        ).thenReturn(Flux.error(new IllegalStateException("unexpected")));
 
         MvcResult result = mockMvc
             .perform(
@@ -117,7 +128,7 @@ class WordControllerStreamingTest {
         MvcResult dispatched = mockMvc
             .perform(asyncDispatch(result))
             .andExpect(status().isInternalServerError())
-            .andExpect(header().string("Content-Type", MediaType.TEXT_EVENT_STREAM_VALUE))
+            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE))
             .andReturn();
 
         String body = dispatched.getResponse().getContentAsString(StandardCharsets.UTF_8);
