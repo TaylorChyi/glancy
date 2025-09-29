@@ -136,6 +136,7 @@ beforeEach(() => {
   mockSettingsState.dictionaryTargetLanguage = "CHINESE";
   mockUserState.user = { id: "user-id" };
   mockFavoritesApi.favorites = [];
+  mockStreamWord.mockImplementation(() => (async function* () {})());
 });
 
 describe("useDictionaryExperience", () => {
@@ -154,6 +155,113 @@ describe("useDictionaryExperience", () => {
 
     expect(mockNavigate).toHaveBeenCalledWith("/login");
     expect(mockHistoryApi.addHistory).not.toHaveBeenCalled();
+  });
+
+  /**
+   * 测试路径：查询过程中卸载组件，需调用 AbortController.abort 并避免卸载后 setState。
+   * 步骤：启动查询但不等待结束，随后立即卸载 Hook。
+   * 断言：AbortController.abort 被调用一次，且控制台无卸载后更新的警告。
+   */
+  it("aborts in-flight lookups on unmount to avoid stale state updates", async () => {
+    const originalAbortController = global.AbortController;
+    const abortSpy = jest.fn();
+    const abortError = Object.assign(new Error("Aborted"), {
+      name: "AbortError",
+    });
+
+    class MockAbortController {
+      constructor() {
+        this.listeners = new Set();
+        this.signal = {
+          aborted: false,
+          addEventListener: (event, handler) => {
+            if (event === "abort") {
+              this.listeners.add(handler);
+            }
+          },
+          removeEventListener: (event, handler) => {
+            if (event === "abort") {
+              this.listeners.delete(handler);
+            }
+          },
+        };
+      }
+
+      abort() {
+        if (this.signal.aborted) {
+          return;
+        }
+        this.signal.aborted = true;
+        abortSpy();
+        for (const listener of this.listeners) {
+          listener();
+        }
+      }
+    }
+
+    global.AbortController = MockAbortController;
+
+    mockStreamWord.mockImplementationOnce(({ signal }) =>
+      (async function* () {
+        await new Promise((resolve, reject) => {
+          if (signal.aborted) {
+            reject(abortError);
+            return;
+          }
+          const handleAbort = () => {
+            signal.removeEventListener?.("abort", handleAbort);
+            reject(abortError);
+          };
+          signal.addEventListener?.("abort", handleAbort);
+        });
+        yield* [];
+      })(),
+    );
+
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const { result, unmount } = renderHook(() => useDictionaryExperience());
+
+    try {
+      await act(async () => {
+        result.current.setText("delayed term");
+      });
+
+      let pendingSend;
+      await act(async () => {
+        pendingSend = result.current.handleSend({
+          preventDefault: jest.fn(),
+        });
+        await Promise.resolve();
+      });
+
+      expect(mockStreamWord).toHaveBeenCalledTimes(1);
+      expect(abortSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        unmount();
+      });
+
+      expect(abortSpy).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await pendingSend;
+      });
+
+      const hasUnmountWarning = consoleErrorSpy.mock.calls.some(
+        (call) =>
+          typeof call[0] === "string" &&
+          call[0].includes(
+            "Can't perform a React state update on an unmounted component.",
+          ),
+      );
+      expect(hasUnmountWarning).toBe(false);
+    } finally {
+      consoleErrorSpy.mockRestore();
+      global.AbortController = originalAbortController;
+    }
   });
 
   /**
