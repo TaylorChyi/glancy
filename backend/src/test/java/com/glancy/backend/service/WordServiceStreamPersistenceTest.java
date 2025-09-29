@@ -8,6 +8,7 @@ import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.DictionaryTargetLanguage;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
@@ -86,13 +87,15 @@ class WordServiceStreamPersistenceTest {
         word.setId(1L);
         word.setTerm("cached");
         word.setLanguage(Language.ENGLISH);
+        word.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(List.of("def"));
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("cached"));
         when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+            wordRepository.findByTermAndLanguageAndTargetLanguageAndFlavorAndDeletedFalse(
                 "cached",
                 Language.ENGLISH,
+                DictionaryTargetLanguage.CHINESE,
                 DictionaryFlavor.BILINGUAL
             )
         ).thenReturn(Optional.of(word));
@@ -101,6 +104,7 @@ class WordServiceStreamPersistenceTest {
             1L,
             "cached",
             Language.ENGLISH,
+            DictionaryTargetLanguage.CHINESE,
             DictionaryFlavor.BILINGUAL,
             null,
             false
@@ -109,7 +113,7 @@ class WordServiceStreamPersistenceTest {
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("cached") && payload.event() == null)
             .verifyComplete();
-        verify(wordSearcher, never()).streamSearch(any(), any(), any(), any(), any());
+        verify(wordSearcher, never()).streamSearch(any(), any(), any(), any(), any(), any());
         verify(searchRecordService).saveRecord(eq(1L), any());
     }
 
@@ -118,9 +122,10 @@ class WordServiceStreamPersistenceTest {
     void savesAfterStreaming() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+            wordRepository.findByTermAndLanguageAndTargetLanguageAndFlavorAndDeletedFalse(
                 "hi",
                 Language.ENGLISH,
+                DictionaryTargetLanguage.CHINESE,
                 DictionaryFlavor.BILINGUAL
             )
         ).thenReturn(Optional.empty());
@@ -128,6 +133,7 @@ class WordServiceStreamPersistenceTest {
             wordSearcher.streamSearch(
                 eq("hi"),
                 eq(Language.ENGLISH),
+                eq(DictionaryTargetLanguage.CHINESE),
                 eq(DictionaryFlavor.BILINGUAL),
                 eq("doubao"),
                 any()
@@ -148,9 +154,10 @@ class WordServiceStreamPersistenceTest {
             "{\"term\":\"hi\"}",
             null,
             null,
-            DictionaryFlavor.BILINGUAL
+            DictionaryFlavor.BILINGUAL,
+            DictionaryTargetLanguage.CHINESE
         );
-        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(
+        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH, DictionaryTargetLanguage.CHINESE)).thenReturn(
             new ParsedWord(resp, "{\"term\":\"hi\"}")
         );
         when(wordRepository.save(any())).thenAnswer(invocation -> {
@@ -166,6 +173,7 @@ class WordServiceStreamPersistenceTest {
                 anyLong(),
                 anyString(),
                 any(Language.class),
+                any(DictionaryTargetLanguage.class),
                 anyString(),
                 anyString(),
                 any(Word.class),
@@ -177,6 +185,7 @@ class WordServiceStreamPersistenceTest {
             1L,
             "hi",
             Language.ENGLISH,
+            DictionaryTargetLanguage.CHINESE,
             DictionaryFlavor.BILINGUAL,
             null,
             false
@@ -189,14 +198,15 @@ class WordServiceStreamPersistenceTest {
             .verifyComplete();
         verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
         verify(searchResultService).createVersion(
-            anyLong(),
-            anyLong(),
-            anyString(),
-            any(Language.class),
-            anyString(),
-            anyString(),
+            eq(10L),
+            eq(1L),
+            eq("hi"),
+            eq(Language.ENGLISH),
+            eq(DictionaryTargetLanguage.CHINESE),
+            eq("doubao"),
+            eq("{\"term\":\"hi\"}"),
             any(Word.class),
-            any(DictionaryFlavor.class)
+            eq(DictionaryFlavor.BILINGUAL)
         );
     }
 
@@ -205,9 +215,10 @@ class WordServiceStreamPersistenceTest {
     void skipPersistenceWhenSentinelMissing() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+            wordRepository.findByTermAndLanguageAndTargetLanguageAndFlavorAndDeletedFalse(
                 "hi",
                 Language.ENGLISH,
+                DictionaryTargetLanguage.CHINESE,
                 DictionaryFlavor.BILINGUAL
             )
         ).thenReturn(Optional.empty());
@@ -215,6 +226,7 @@ class WordServiceStreamPersistenceTest {
             wordSearcher.streamSearch(
                 eq("hi"),
                 eq(Language.ENGLISH),
+                eq(DictionaryTargetLanguage.CHINESE),
                 eq(DictionaryFlavor.BILINGUAL),
                 eq("doubao"),
                 any()
@@ -225,6 +237,7 @@ class WordServiceStreamPersistenceTest {
             1L,
             "hi",
             Language.ENGLISH,
+            DictionaryTargetLanguage.CHINESE,
             DictionaryFlavor.BILINGUAL,
             null,
             false
@@ -233,13 +246,14 @@ class WordServiceStreamPersistenceTest {
         StepVerifier.create(flux)
             .expectNextMatches(payload -> payload.data().contains("hi") && payload.event() == null)
             .verifyComplete();
-        verify(parser, never()).parse(any(), any(), any());
+        verify(parser, never()).parse(any(), any(), any(), any());
         verify(wordRepository, never()).save(any());
         verify(searchResultService, never()).createVersion(
             anyLong(),
             anyLong(),
             anyString(),
             any(Language.class),
+            any(DictionaryTargetLanguage.class),
             anyString(),
             anyString(),
             any(Word.class),
@@ -252,20 +266,29 @@ class WordServiceStreamPersistenceTest {
     void doesNotSaveOnError() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
         when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
+            wordRepository.findByTermAndLanguageAndTargetLanguageAndFlavorAndDeletedFalse(
                 "hi",
                 Language.ENGLISH,
+                DictionaryTargetLanguage.CHINESE,
                 DictionaryFlavor.BILINGUAL
             )
         ).thenReturn(Optional.empty());
         when(
-            wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq(DictionaryFlavor.BILINGUAL), any(), any())
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryTargetLanguage.CHINESE),
+                eq(DictionaryFlavor.BILINGUAL),
+                any(),
+                any()
+            )
         ).thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
+            DictionaryTargetLanguage.CHINESE,
             DictionaryFlavor.BILINGUAL,
             null,
             false
@@ -276,12 +299,13 @@ class WordServiceStreamPersistenceTest {
             .expectError()
             .verify();
         verify(wordRepository, never()).save(any());
-        verify(parser, never()).parse(any(), any(), any());
+        verify(parser, never()).parse(any(), any(), any(), any());
         verify(searchResultService, never()).createVersion(
             anyLong(),
             anyLong(),
             anyString(),
             any(Language.class),
+            any(DictionaryTargetLanguage.class),
             anyString(),
             anyString(),
             any(Word.class),
@@ -295,6 +319,7 @@ class WordServiceStreamPersistenceTest {
             1L,
             term,
             Language.ENGLISH,
+            DictionaryTargetLanguage.CHINESE,
             DictionaryFlavor.BILINGUAL,
             LocalDateTime.now(),
             Boolean.FALSE,
