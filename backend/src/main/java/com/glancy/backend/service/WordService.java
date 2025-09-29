@@ -41,6 +41,7 @@ public class WordService {
     private final SearchResultService searchResultService;
     private final WordResponseParser parser;
     private final WordPersonalizationService wordPersonalizationService;
+    private final ObjectMapper objectMapper;
 
     public WordService(
         WordSearcher wordSearcher,
@@ -48,7 +49,8 @@ public class WordService {
         SearchRecordService searchRecordService,
         SearchResultService searchResultService,
         WordResponseParser parser,
-        WordPersonalizationService wordPersonalizationService
+        WordPersonalizationService wordPersonalizationService,
+        ObjectMapper objectMapper
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -56,6 +58,7 @@ public class WordService {
         this.searchResultService = searchResultService;
         this.parser = parser;
         this.wordPersonalizationService = wordPersonalizationService;
+        this.objectMapper = objectMapper;
     }
 
     private static final String DEFAULT_MODEL = DictionaryModel.DOUBAO.getClientName();
@@ -427,8 +430,7 @@ public class WordService {
     }
 
     private String serializeResponse(WordResponse response) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(response);
+        return objectMapper.writeValueAsString(response);
     }
 
     private Word saveWord(String requestedTerm, WordResponse resp, Language language, DictionaryFlavor flavor) {

@@ -1,8 +1,11 @@
 package com.glancy.backend.service;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -52,6 +56,8 @@ class WordServiceStreamPersistenceTest {
     private WordPersonalizationService wordPersonalizationService;
 
     private WordPersonalizationContext personalizationContext;
+    private PersonalizedWordExplanation personalization;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -65,17 +71,20 @@ class WordServiceStreamPersistenceTest {
             List.of("金融"),
             List.of("equity")
         );
+        personalization = new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of());
         when(wordPersonalizationService.resolveContext(anyLong())).thenReturn(personalizationContext);
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
-            new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
+            personalization
         );
+        objectMapper = Jackson2ObjectMapperBuilder.json().build();
         wordService = new WordService(
             wordSearcher,
             wordRepository,
             searchRecordService,
             searchResultService,
             parser,
-            wordPersonalizationService
+            wordPersonalizationService,
+            objectMapper
         );
     }
 
@@ -88,6 +97,7 @@ class WordServiceStreamPersistenceTest {
         word.setLanguage(Language.ENGLISH);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(List.of("def"));
+        word.setMarkdown("md");
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("cached"));
         when(
             wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
@@ -106,8 +116,33 @@ class WordServiceStreamPersistenceTest {
             false
         );
 
+        WordResponse expected = new WordResponse(
+            "1",
+            "cached",
+            List.of("def"),
+            Language.ENGLISH,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            "md",
+            null,
+            personalization,
+            DictionaryFlavor.BILINGUAL
+        );
+        String expectedJson;
+        try {
+            expectedJson = objectMapper.writeValueAsString(expected);
+        } catch (JsonProcessingException e) {
+            fail(e);
+            return;
+        }
+
         StepVerifier.create(flux)
-            .expectNextMatches(payload -> payload.data().contains("cached") && payload.event() == null)
+            .expectNextMatches(payload -> payload.event() == null && expectedJson.equals(payload.data()))
             .verifyComplete();
         verify(wordSearcher, never()).streamSearch(any(), any(), any(), any(), any());
         verify(searchRecordService).saveRecord(eq(1L), any());

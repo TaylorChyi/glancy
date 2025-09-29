@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -50,6 +52,7 @@ class WordServiceStreamingErrorTest {
     private WordPersonalizationService wordPersonalizationService;
 
     private WordPersonalizationContext personalizationContext;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -67,13 +70,15 @@ class WordServiceStreamingErrorTest {
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
+        objectMapper = Jackson2ObjectMapperBuilder.json().build();
         wordService = new WordService(
             wordSearcher,
             wordRepository,
             searchRecordService,
             searchResultService,
             parser,
-            wordPersonalizationService
+            wordPersonalizationService,
+            objectMapper
         );
     }
 
