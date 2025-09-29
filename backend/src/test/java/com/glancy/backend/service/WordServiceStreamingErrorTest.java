@@ -10,10 +10,10 @@ import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
-import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.StreamPayload;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +30,8 @@ import reactor.test.StepVerifier;
 class WordServiceStreamingErrorTest {
 
     private WordService wordService;
+    private WordLookupCoordinator lookupCoordinator;
+    private WordStreamingHandler streamingHandler;
 
     @Mock
     private WordSearcher wordSearcher;
@@ -67,14 +69,15 @@ class WordServiceStreamingErrorTest {
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
-        wordService = new WordService(
+        lookupCoordinator = new WordLookupCoordinator(
             wordSearcher,
             wordRepository,
             searchRecordService,
             searchResultService,
-            parser,
             wordPersonalizationService
         );
+        streamingHandler = new WordStreamingHandler(wordSearcher, parser, lookupCoordinator);
+        wordService = new WordService(lookupCoordinator, streamingHandler);
     }
 
     /**
@@ -87,7 +90,7 @@ class WordServiceStreamingErrorTest {
     void wrapsExceptionFromSearcher() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse());
         when(wordSearcher.streamSearch(any(), any(), any(), any(), any())).thenThrow(new RuntimeException("boom"));
-        Flux<WordService.StreamPayload> result = wordService.streamWordForUser(
+        Flux<StreamPayload> result = wordService.streamWordForUser(
             1L,
             "hello",
             Language.ENGLISH,

@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.service.StreamPayload;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
-import com.glancy.backend.service.WordService.StreamPayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

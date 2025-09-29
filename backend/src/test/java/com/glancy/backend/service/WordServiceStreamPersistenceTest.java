@@ -15,6 +15,7 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.StreamPayload;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,8 @@ import reactor.test.StepVerifier;
 class WordServiceStreamPersistenceTest {
 
     private WordService wordService;
+    private WordLookupCoordinator lookupCoordinator;
+    private WordStreamingHandler streamingHandler;
 
     @Mock
     private WordSearcher wordSearcher;
@@ -69,14 +72,15 @@ class WordServiceStreamPersistenceTest {
         when(wordPersonalizationService.personalize(any(WordPersonalizationContext.class), any())).thenReturn(
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
-        wordService = new WordService(
+        lookupCoordinator = new WordLookupCoordinator(
             wordSearcher,
             wordRepository,
             searchRecordService,
             searchResultService,
-            parser,
             wordPersonalizationService
         );
+        streamingHandler = new WordStreamingHandler(wordSearcher, parser, lookupCoordinator);
+        wordService = new WordService(lookupCoordinator, streamingHandler);
     }
 
     /** 验证已缓存词条时不调用模型。 */
@@ -97,7 +101,7 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(Optional.of(word));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "cached",
             Language.ENGLISH,
@@ -173,7 +177,7 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(version);
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
@@ -221,7 +225,7 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(Flux.just("{\"term\":\"hi\"}"));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
@@ -262,7 +266,7 @@ class WordServiceStreamPersistenceTest {
             wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq(DictionaryFlavor.BILINGUAL), any(), any())
         ).thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<StreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,

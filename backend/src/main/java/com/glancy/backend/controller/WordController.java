@@ -4,6 +4,7 @@ import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.service.StreamPayload;
 import com.glancy.backend.service.WordService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
