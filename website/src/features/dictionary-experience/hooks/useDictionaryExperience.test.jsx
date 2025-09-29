@@ -1,4 +1,4 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockNavigate = jest.fn();
@@ -65,7 +65,7 @@ const mockSettingsState = {
   setDictionarySourceLanguage: jest.fn(),
   setDictionaryTargetLanguage: jest.fn(),
 };
-const mockWordStoreState = { entries: [] };
+const mockWordStoreState = { entries: {} };
 
 jest.unstable_mockModule("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
@@ -136,6 +136,10 @@ beforeEach(() => {
   mockSettingsState.dictionaryTargetLanguage = "CHINESE";
   mockUserState.user = { id: "user-id" };
   mockFavoritesApi.favorites = [];
+  mockStreamWord.mockImplementation(() => (async function* () {})());
+  mockGetRecord.mockImplementation(() => null);
+  mockGetEntry.mockImplementation(() => null);
+  mockWordStoreState.entries = {};
 });
 
 describe("useDictionaryExperience", () => {
@@ -173,5 +177,113 @@ describe("useDictionaryExperience", () => {
       result.current.handleShowDictionary();
     });
     expect(result.current.activeSidebarView).toBe("dictionary");
+  });
+
+  /**
+   * 测试路径：当缓存存在时再次提交相同查询，应直接渲染缓存并避免流式请求。
+   * 步骤：预置缓存记录，调用 handleSend 提交相同查询。
+   * 断言：streamWord 未被调用，界面状态立即指向缓存词条，loading 与 isRefreshing 均为 false。
+   */
+  it("renders cached record immediately without triggering a new stream", async () => {
+    const cachedEntry = {
+      id: "v1",
+      versionId: "v1",
+      term: "hello",
+      markdown: "cached definition",
+      flavor: "default",
+    };
+    const cachedRecord = {
+      versions: [cachedEntry],
+      activeVersionId: "v1",
+      metadata: { flavor: "default" },
+    };
+    mockGetRecord.mockImplementation(() => cachedRecord);
+    mockGetEntry.mockImplementation(() => cachedEntry);
+    mockWordStoreState.entries = { "hello-ENGLISH": cachedRecord };
+    mockStreamWord.mockClear();
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    act(() => {
+      result.current.setText("hello");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(mockStreamWord).not.toHaveBeenCalled();
+    expect(result.current.entry).toEqual(cachedEntry);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.isRefreshing).toBe(false);
+  });
+
+  /**
+   * 测试路径：缓存命中后触发重新生成，应进入刷新状态并在收到新版本时更新展示。
+   * 步骤：预置缓存、执行查询、调用 handleReoutput，并在流式模拟中切换为新版本。
+   * 断言：streamWord 仅调用一次，刷新状态在流程结束后关闭，最终词条被更新为新版本。
+   */
+  it("refreshes in background and updates when a new version is available", async () => {
+    const cachedEntry = {
+      id: "v1",
+      versionId: "v1",
+      term: "hello",
+      markdown: "cached definition",
+      flavor: "default",
+    };
+    const refreshedEntry = {
+      id: "v2",
+      versionId: "v2",
+      term: "hello",
+      markdown: "refreshed definition",
+      flavor: "default",
+    };
+    const cachedRecord = {
+      versions: [cachedEntry],
+      activeVersionId: "v1",
+      metadata: { flavor: "default" },
+    };
+    let recordRef = cachedRecord;
+    mockGetRecord.mockImplementation(() => recordRef);
+    mockGetEntry.mockImplementation(() => recordRef.versions[0]);
+    mockWordStoreState.entries = { "hello-ENGLISH": cachedRecord };
+    mockStreamWord.mockClear();
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    act(() => {
+      result.current.setText("hello");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(mockStreamWord).not.toHaveBeenCalled();
+    expect(result.current.entry).toEqual(cachedEntry);
+
+    const refreshedRecord = {
+      versions: [refreshedEntry],
+      activeVersionId: "v2",
+      metadata: { flavor: "default" },
+    };
+
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        recordRef = refreshedRecord;
+        yield { chunk: JSON.stringify(refreshedEntry), language: "ENGLISH" };
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      })(),
+    );
+
+    await act(async () => {
+      result.current.dictionaryActionBarProps.onReoutput();
+    });
+
+    await waitFor(() => expect(result.current.isRefreshing).toBe(true));
+
+    await waitFor(() => expect(mockStreamWord).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.isRefreshing).toBe(false));
+    expect(result.current.entry).toEqual(refreshedEntry);
   });
 });

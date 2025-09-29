@@ -24,6 +24,48 @@ import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
 
+const resolveVersionIdentifier = (version) =>
+  version?.id ??
+  version?.versionId ??
+  version?.metadata?.id ??
+  version?.metadata?.versionId ??
+  null;
+
+const resolveVersionFingerprint = (version) => {
+  if (!version) return "";
+  const identifier = resolveVersionIdentifier(version);
+  const updatedAt =
+    version.updatedAt ??
+    version.createdAt ??
+    version.metadata?.updatedAt ??
+    version.metadata?.createdAt ??
+    null;
+  const checksumSources = [
+    version.metadata?.checksum,
+    version.metadata?.hash,
+    version.metadata?.sha,
+    version.metadata?.digest,
+  ];
+  const resolvedChecksum = checksumSources.find(
+    (value) => typeof value === "string" && value.length > 0,
+  );
+  const markdownSummary =
+    typeof version.markdown === "string" && version.markdown.length > 0
+      ? `${version.markdown.length}:${version.markdown.slice(0, 48)}`
+      : "";
+  const checksum = resolvedChecksum ?? markdownSummary;
+  const term = version.term ?? "";
+  const flavor = version.flavor ?? version.metadata?.flavor ?? "";
+  return [identifier ?? "", updatedAt ?? "", checksum, term, flavor].join("#");
+};
+
+const getRecordSignature = (record) => {
+  if (!record || !Array.isArray(record.versions)) return "record::empty";
+  const active = record.activeVersionId ?? "";
+  const payload = record.versions.map(resolveVersionFingerprint).join("||");
+  return [active, payload].join("::");
+};
+
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
@@ -47,6 +89,7 @@ export function useDictionaryExperience() {
   const [activeVersionId, setActiveVersionId] = useState(null);
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const wordEntries = useWordStore((state) => state.entries);
   const {
     dictionarySourceLanguage,
@@ -225,10 +268,6 @@ export function useDictionaryExperience() {
         abortRef.current.abort();
       }
 
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      setLoading(true);
       const { language: resolvedLanguage, flavor: defaultFlavor } =
         resolveDictionaryConfig(normalized, {
           sourceLanguage:
@@ -243,7 +282,14 @@ export function useDictionaryExperience() {
         model: DEFAULT_MODEL,
       });
       const isNewTerm = currentTermKey !== cacheKey;
-      const shouldResetView = isNewTerm || forceNew;
+      const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
+      const cachedSignature = getRecordSignature(cachedRecord);
+      const preferredVersionId =
+        versionId ?? cachedRecord?.activeVersionId ?? null;
+      const cachedApplied = cachedRecord
+        ? applyRecord(cacheKey, cachedRecord, preferredVersionId)
+        : false;
+      const shouldResetView = (isNewTerm || forceNew) && !cachedApplied;
       setCurrentTermKey(cacheKey);
       setCurrentTerm(normalized);
       setStreamText("");
@@ -254,21 +300,42 @@ export function useDictionaryExperience() {
         setActiveVersionId(null);
       }
 
-      if (!forceNew && versionId) {
-        const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
-        if (cachedRecord) {
-          const hydrated = applyRecord(cacheKey, cachedRecord, versionId);
-          if (hydrated) {
-            setLoading(false);
-            abortRef.current = null;
-            return {
-              status: "success",
-              term: normalized,
-              detectedLanguage: resolvedLanguage,
-            };
-          }
+      if (cachedApplied) {
+        setShowFavorites(false);
+        setShowHistory(false);
+        setStreamText("");
+        setCurrentTerm(normalized);
+        if (!forceNew && !versionId) {
+          setLoading(false);
+          setIsRefreshing(false);
+          abortRef.current = null;
+          return {
+            status: "success",
+            term: normalized,
+            detectedLanguage: resolvedLanguage,
+            flavor: cachedRecord?.metadata?.flavor ?? targetFlavor,
+          };
         }
       }
+
+      const shouldStream = !cachedApplied || forceNew;
+      if (!shouldStream) {
+        setLoading(false);
+        setIsRefreshing(false);
+        abortRef.current = null;
+        return {
+          status: "success",
+          term: normalized,
+          detectedLanguage: resolvedLanguage,
+          flavor: cachedRecord?.metadata?.flavor ?? targetFlavor,
+        };
+      }
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoading(!cachedApplied);
+      setIsRefreshing(cachedApplied);
 
       let detected = resolvedLanguage;
       try {
@@ -301,9 +368,10 @@ export function useDictionaryExperience() {
         }
 
         const record = wordStoreApi.getState().getRecord?.(cacheKey);
-        if (record) {
+        const recordSignature = getRecordSignature(record);
+        if (record && (!cachedApplied || recordSignature !== cachedSignature)) {
           applyRecord(cacheKey, record, record.activeVersionId);
-        } else if (parsedEntry) {
+        } else if (!cachedApplied && parsedEntry) {
           setEntry(parsedEntry);
           setFinalText(parsedEntry.markdown ?? "");
         } else {
@@ -326,6 +394,7 @@ export function useDictionaryExperience() {
         return { status: "error", term: normalized, error };
       } finally {
         setLoading(false);
+        setIsRefreshing(false);
         abortRef.current = null;
       }
     },
@@ -446,6 +515,7 @@ export function useDictionaryExperience() {
       setActiveVersionId(null);
       setCurrentTermKey(null);
       setCurrentTerm("");
+      setIsRefreshing(false);
     } catch (error) {
       console.error("[DictionaryExperience] remove history failed", error);
     }
@@ -625,6 +695,7 @@ export function useDictionaryExperience() {
           setShowHistory(false);
           setLoading(false);
           setStreamText("");
+          setIsRefreshing(false);
           setCurrentTerm(resolvedTerm);
           return;
         }
@@ -683,6 +754,7 @@ export function useDictionaryExperience() {
       setActiveVersionId(null);
       setCurrentTermKey(null);
       setCurrentTerm("");
+      setIsRefreshing(false);
     }
   }, [user]);
 
@@ -785,6 +857,7 @@ export function useDictionaryExperience() {
     finalText,
     streamText,
     loading,
+    isRefreshing,
     dictionaryActionBarProps,
     displayClassName,
     isEmptyStateActive,
