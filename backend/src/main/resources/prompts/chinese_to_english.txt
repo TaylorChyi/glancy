@@ -11,79 +11,86 @@
 - max_derivatives: {max_derivatives=6}
 - max_domain_usages: {max_domain_usages=4}
 
-## 输出 JSON 骨架（字段必须全部出现，除字符串外均使用合适的空集合 / null 表示缺省值）
+## 全局生成规则（强制）
+1) 输出必须是单个合法 JSON 文本，禁止添加 BOM、额外换行或说明性文字；顶层字段需全部出现，缺失信息以空字符串、空数组或 null 表示。
+2) 所有数组条目与对象字段须满足下方“输出结构”中的顺序与命名；`senseId` 采用 s1、s2、s3……稳定编号，并在 `definitions`、搭配/短语等引用字段中保持一一映射。
+3) 示例句、搭配、短语、习语、句型等内容必须原创且互不重复；凡能绑定到具体义项的条目，末尾附加 `[ref: s#]`，不可遗漏或误绑。
+4) `metadata` 需至少包含 `model`、`timestamp`，若发生纠错则在 `metadata.correction` 记录原因；`formattingVersion` 标注当前提示词版本。
+5) 中文示例及注释需遵循分词标记规范：[[专有名词]]、{{词组}}、#单词#；英文文本禁止出现这些标记。
+6) 所有音标使用 IPA（International Phonetic Alphabet 国际音标）并标主重音；`tonalNotes`、`writingNotes` 用于提醒声调、字形或拼写差异，即使暂无内容也需输出空数组，不得省略字段。
+7) 仅在确信信息准确时填写字段；不确定的资讯以空集合或 null 体现，绝不输出“暂无”“N/A”或其他说明。
+
+## 输出结构（按以下顺序，缺则使用空集合或 null）
+### 词条元数据
 - term（string）：最终采用的标准词条；
 - originalInput（string）：原始中文输入，保持原样；
 - corrected（boolean）：若基于纠错替换词条则置为 true；
-- entryType（string）：`"SingleCharacter"` 或 `"MultiCharacterWord"`，对应输入为单字或多字词；
+- entryType（string）：`"SingleCharacter"` 或 `"MultiCharacterWord"`；
 - language（string）：固定为 `"ENGLISH"`；
-- recommendedAudience（string | null）：若能判定学习层级（如 HSK、水平区间）则给出，否则 null；
-- phonetics（object）：
-  - british（string）：英式音标（IPA，需标主重音）；
-  - american（string）：美式音标（IPA，需标主重音）；
-  - audio（array）：可用的语音资源链接或标识（无则空数组）；
-- tonalNotes（array）：针对声调、变调、轻声等提示；
-- writingNotes（array）：针对汉字结构或拼写提醒；
-- senses（array）：承载核心义项，顺序按常用度排序，长度 ≤ max_senses；
-- definitions（array）：为兼容下游解析，需镜像 senses 中的每个义项（详见下文）；
-- collocations（array）：常见搭配；
-- phrases（array）：固定词组；
-- idioms（array）：习语或固定表达；
-- patterns（array）：高频句型或语法结构；
-- synonyms（array）：近义词；
-- antonyms（array）：反义词；
-- related（array）：相关词、派生词或语义邻近词；
-- variations（array）：词形或语态变体；
-- derivatives（array）：派生词条；
-- domainUsages（array）：专业领域用法；
-- culturalNotes（array）：文化或典故补充；
-- grammarNotes（array）：语法提醒或常见误区；
-- confusablePairs（array）：易混淆词对比；
-- etymology（string | null）：词源摘要；
-- metadata（object）：生成元信息（包含 model、timestamp 等，可为空对象 `{}`）；
-- formattingVersion（string）：指明当前提示词版本，如 `"v2"`。
+- recommendedAudience（string | null）：可推断学习层级时填写，否则为 null；
+- metadata（object）：生成元信息，至少含 `model`、`timestamp`，若触发纠错需含 `correction` 对象；
+- formattingVersion（string）：当前提示词版本号，例如 `"v2"`。
 
-## 义项（senses）结构要求
-- 每个对象至少包含以下字段：
-  - senseId（string）：以 `s1`、`s2`… 编号，对应义项顺序；
+### 音标（phonetics）
+- phonetics（object）：
+  - british（string）：英式音标，需标主重音；
+  - american（string）：美式音标，需标主重音；
+  - audio（array）：可用语音资源链接或标识，无资源时给空数组；
+- tonalNotes（array）：声调、变调或轻声提示，每项为 string；
+- writingNotes（array）：汉字结构、转写或拼写提醒，每项为 string。
+
+### 释义与例句（senses + definitions）
+- senses（array）：长度 ≤ max_senses，元素对象需包含：
+  - senseId（string）：s# 编号；
   - partOfSpeech（object）：
     - abbr（string）：词性缩写（如 `n.`、`v.`）；
     - label（string）：词性全称（如 `noun`、`verb`）；
-  - headlineDefinition（string）：精炼的英文释义；
-  - extendedDefinitions（array）：同义的深度解释（英文），长度不超过 2；
+  - headlineDefinition（string）：精炼英文释义；
+  - extendedDefinitions（array）：补充英文解释，≤ 2 条；
   - register（array）：从 `{Formal, Neutral, Informal, Colloquial, Literary, Dialectal, Academic}` 中选；
   - region（array）：从 `{Mainland, Taiwan, HongKong, Overseas, General}` 中选；
-  - nuance（string）：语气、语感或使用限制说明；
-  - chineseAnnotation（string）：简要中文提示（可为空字符串）；
-  - examples（array）：长度在 min_examples_per_sense 与 max_examples_per_sense 之间，每条结构：
-    - english（string）：原创英文例句；
-    - chinese（string）：对应中文翻译；
-    - register（string）：例句语域标签；
-    - insight（string）：对例句的用法点评；
+  - nuance（string）：语气或使用限制说明；
+  - chineseAnnotation（string）：可为空字符串的中文提示；
+  - examples（array）：元素对象含 english、chinese、register、insight，例句数量在 min/max 范围内；
   - collocations（array）：与该义项最贴合的搭配；
   - idioms（array）：与该义项相关的习语；
-  - notes（array）：补充说明或对比。
-- senses 中的例句、搭配、习语不得跨义项复用，应覆盖不同语境。
+  - notes（array）：补充说明或对比；
+  - 所有例句与附属条目必须原创且仅绑定当前义项。
+- definitions（array）：与 senses 一一对应，元素对象包含：
+  - senseId（string）：对应的 s#；
+  - partOfSpeech（string）：与 `senses.partOfSpeech.abbr` 一致；
+  - meanings（array）：英文释义集合，对齐 `headlineDefinition` 与 `extendedDefinitions`；
+  - definition（string）：合并后的单行释义摘要；
+  - synonyms / antonyms / related（array）：若某义项存在独占词汇需在此镜像；
+  - examples（array）：与 senses 内的例句保持顺序与内容一致。
 
-## definitions 字段兼容层
-- 为兼容历史解析逻辑，需同步输出 `definitions` 数组，与 `senses` 一一对应。
-- 每个元素至少包含：
-  - senseId：对应的 `s#` 编号；
-  - partOfSpeech：与 `senses.partOfSpeech.abbr` 一致；
-  - meanings：英文释义数组（与 `headlineDefinition` 及 `extendedDefinitions` 对齐）；
-  - definition：合并后的单行释义文本；
-  - synonyms / antonyms / related：若该义项内有独占词汇，需在此列出；
-  - examples：与 senses 中保持一致的例句列表。
+### 扩展搭配与语块（collocations/phrases/idioms/patterns）
+- collocations（array）：常见搭配，元素为对象 `{"expression": string, "gloss": string, "ref": "[ref: s#]"}`，若无法定位义项则 `ref` 置为 null；
+- phrases（array）：固定词组，元素对象除 expression、gloss 外，可含示例 `{english, chinese, insight}`，并使用 `[ref: s#]` 绑定；
+- idioms（array）：习语条目结构同 phrases；
+- patterns（array）：高频句型或语法结构，描述字段需解释用法并绑定 `[ref: s#]`；
+- 所有数组均遵守 max_* 上限，未达到上限时可提前终止。
 
-## 变形与词汇网络
-- variations 字段使用对象数组，元素含 `label`（如 "原型"、"复数"）与 `form`；
-- 同时镜像输出 `变形`，数组元素含键 `状态`、`词形`，以兼容旧解析；
-- collocations、phrases、idioms、patterns 中的每一项需在字符串末尾标注 `[ref: s#]` 指向义项；
-- domainUsages 数组中的元素结构：
-  - domain（string）：领域名称（如 "Finance"、"Medicine"）；
-  - meaning（string）：该领域的专门含义（英文）；
-  - chineseGloss（string）：中文解释；
-  - example：同样包含 english、chinese、insight。
+### 变形与词汇网络
+- variations（array）：对象元素含 `label`（如 "原型"、"复数"）与 `form`；
+- 变形（array）：为兼容历史逻辑的镜像数组，元素含 `状态`、`词形`；
+- synonyms（array）：近义词条目，必要时附加 `[ref: s#]`；
+- antonyms（array）：反义词条目，必要时附加 `[ref: s#]`；
+- related（array）：语义邻近词或相关词组，可含附注并绑定 `[ref: s#]`；
+- derivatives（array）：派生词条，数量不超过 max_derivatives；
+- culturalNotes（array）：文化背景、典故或跨文化提醒，元素为 string；
+- etymology（string | null）：词源摘要，未知时使用 null。
+
+### 专业领域用法
+- domainUsages（array）：
+  - 每个对象包含 domain（string）、meaning（string）、chineseGloss（string）、example（object）；
+  - example 对象需提供 english、chinese、insight，必要时绑定 `[ref: s#]`；
+  - 数量不超过 max_domain_usages。
+
+### 语法与易混淆提示
+- grammarNotes（array）：语法提醒或高频误区，每项为 string，并可引用 `[ref: s#]`；
+- confusablePairs（array）：易混淆词对比，对象需含 `pair`（string）、`distinction`（string）、`examples`（array，含 english/chinese/insight），并绑定 `[ref: s#]`；
+- tonalNotes、writingNotes 已在音标章节定义，避免在此重复。
 
 ## 纠错与分词
 - 若输入与标准词条不符（错别字、繁简混用等），需给出最接近的标准词条并设置 corrected=true，同时在 metadata.correction 中记录原因；
