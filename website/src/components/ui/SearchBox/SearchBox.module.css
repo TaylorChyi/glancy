@@ -4,39 +4,36 @@
   align-items: center;
   width: 100%;
   min-height: var(--sb-h, 56px);
-  padding: var(--padding-y, 0) var(--padding-x, var(--sb-pad-x, 20px));
-  gap: var(--slot-gap, var(--sb-col-gap, 12px));
-  border-radius: var(--sb-radius, 24px);
-  border: 1px solid var(--sb-border, #2a313b);
-  background: var(--sb-bg, #1e2329);
-  box-shadow:
-    var(--sb-shadow, 0 10px 24px rgb(0 0 0 / 35%)),
-    inset 0 1px 0 var(--sb-inner-highlight, rgb(255 255 255 / 12%));
-  color: var(--sb-text, #e9edf3);
-  font-size: var(--sb-font, 16px);
+  padding-block: var(--padding-y, 0);
+  padding-inline: var(--sb-pad-x, 20px);
+  gap: var(--slot-gap, var(--sb-gap, 16px));
+  border-radius: var(--sb-r, 28px);
+  background: var(--sb-surface, #0e1116);
+  color: var(--sb-text, #edeff2);
+  outline: 1px solid var(--sb-stroke, rgb(255 255 255 / 6%));
+  box-shadow: var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%));
   line-height: 1.5;
   box-sizing: border-box;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    color 0.15s ease;
+    background-color 0.2s ease,
+    outline-color 0.2s ease,
+    box-shadow 0.2s ease;
+  overflow: visible;
 }
 
 .search-box:hover {
-  border-color: var(--sb-border-active, #3a4452);
   background: var(
     --sb-bg-hover,
-    color-mix(in srgb, var(--sb-bg) 98%, white 2%)
+    color-mix(in srgb, var(--sb-surface) 94%, white 6%)
   );
+  outline-color: var(--sb-border-active, rgb(255 255 255 / 12%));
 }
 
 .search-box:focus-within {
-  border-color: var(--sb-border-active, #3a4452);
+  outline-color: var(--sb-border-active, rgb(255 255 255 / 12%));
   box-shadow:
-    var(--sb-ring, 0 0 0 6px rgb(120 160 255 / 6%)),
-    var(--sb-shadow, 0 10px 24px rgb(0 0 0 / 35%)),
-    inset 0 1px 0 var(--sb-inner-highlight, rgb(255 255 255 / 12%));
+    var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%)),
+    var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%));
 }
 
 .search-box :global(button),
@@ -44,4 +41,16 @@
 .search-box :global(textarea) {
   font: inherit;
   color: inherit;
+}
+
+.search-box :global(button:focus-visible),
+.search-box :global(input:focus-visible),
+.search-box :global(textarea:focus-visible) {
+  outline: none;
+}
+
+@media (width <= 360px) {
+  .search-box {
+    padding-inline: var(--sb-pad-x-compact, 12px);
+  }
 }

@@ -2,12 +2,14 @@ import { render, fireEvent, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import { useState } from "react";
 
-jest.mock("@/components/ui/Popover/Popover.jsx", () => ({
+await jest.unstable_mockModule("@/components/ui/Popover/Popover.jsx", () => ({
   __esModule: true,
   default: ({ isOpen, children }) => (isOpen ? <div>{children}</div> : null),
 }));
 
-import ActionInput from "@/components/ui/ChatInput/ActionInput.jsx";
+const { default: ActionInput } = await import(
+  "@/components/ui/ChatInput/ActionInput.jsx"
+);
 
 /**
  * 验证输入框在不同回车场景下的提交行为：
@@ -83,14 +85,14 @@ test("handles language selection and swapping", async () => {
   const sourceButton = screen.getByRole("button", { name: "源语言" });
   fireEvent.click(sourceButton);
   fireEvent.click(
-    await screen.findByRole("menuitemradio", { name: "英文词条" }),
+    await screen.findByRole("menuitemradio", { name: /英文词条/ }),
   );
   expect(handleSourceChange).toHaveBeenCalledWith("ENGLISH");
 
   const targetButton = screen.getByRole("button", { name: "目标语言" });
   fireEvent.click(targetButton);
   fireEvent.click(
-    await screen.findByRole("menuitemradio", { name: "中文释义" }),
+    await screen.findByRole("menuitemradio", { name: /中文释义/ }),
   );
   expect(handleTargetChange).toHaveBeenCalledWith("CHINESE");
 

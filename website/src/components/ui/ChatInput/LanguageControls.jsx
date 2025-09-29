@@ -2,50 +2,6 @@ import PropTypes from "prop-types";
 import LanguageMenu from "./parts/LanguageMenu.jsx";
 import styles from "./ChatInput.module.css";
 
-function DirectionIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      width={16}
-      height={16}
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M5.25 4.5 2.5 7.25 5.25 10"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.75 4.5 13.5 7.25 10.75 10"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M2.75 7.25h10.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-DirectionIcon.propTypes = {
-  className: PropTypes.string,
-};
-
-DirectionIcon.defaultProps = {
-  className: undefined,
-};
-
 export default function LanguageControls({
   sourceLanguage,
   sourceLanguageOptions,
@@ -83,8 +39,16 @@ export default function LanguageControls({
       ? normalizeTargetLanguage
       : (value) => value;
 
+  const groupLabel =
+    [sourceLanguageLabel, targetLanguageLabel].filter(Boolean).join(" → ") ||
+    "language selection";
+
   return (
-    <div className={styles["language-controls"]}>
+    <div
+      className={styles["language-shell"]}
+      role="group"
+      aria-label={groupLabel}
+    >
       <LanguageMenu
         options={sourceLanguageOptions}
         value={sourceLanguage}
@@ -107,11 +71,11 @@ export default function LanguageControls({
           aria-label={swapLabel}
           title={swapLabel}
         >
-          <DirectionIcon className={styles["direction-icon"]} />
+          →
         </button>
       ) : (
         <span className={styles["language-arrow"]} aria-hidden="true">
-          <DirectionIcon className={styles["direction-icon"]} />
+          →
         </span>
       )}
       <LanguageMenu
