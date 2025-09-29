@@ -61,6 +61,8 @@ llm:
   prompt-flavor-paths:
     ENGLISH:
       MONOLINGUAL_ENGLISH: prompts/english_to_english.txt
+    CHINESE:
+      MONOLINGUAL_CHINESE: prompts/chinese_to_chinese.txt
 
 thirdparty:
   doubao:

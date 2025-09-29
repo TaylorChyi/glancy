@@ -187,20 +187,9 @@ public class WordSearcherImpl implements WordSearcher {
     ) {
         StringBuilder builder = new StringBuilder("查询词汇：").append(cleanInput);
         if (language == Language.CHINESE) {
-            ChineseEntryProfile profile = resolveChineseEntryProfile(cleanInput);
-            builder
-                .append("\n条目结构定位：")
-                .append(profile.typeLabel())
-                .append("\n写作指引：")
-                .append(profile.guidance())
-                .append("\n结构要求：请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。");
+            appendChineseGuidance(builder, cleanInput, flavor);
         } else {
-            builder
-                .append("\n条目类型：英文词汇")
-                .append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
-            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-                builder.append("\n输出语言：仅使用英文完成释义、例句与所有说明，严禁出现中文或其他语言翻译。");
-            }
+            appendEnglishGuidance(builder, flavor);
         }
         if (personalizationContext != null && personalizationContext.hasSignals()) {
             if (!personalizationContext.recentTerms().isEmpty()) {
@@ -209,15 +198,54 @@ public class WordSearcherImpl implements WordSearcher {
             if (StringUtils.hasText(personalizationContext.goal())) {
                 builder.append("\n学习目标：").append(personalizationContext.goal());
             }
-            builder.append("\n请结合画像输出结构化释义、语义差异与可执行练习建议（英文表达）。");
+            builder.append(renderPersonalizedTone(flavor));
         } else {
-            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-                builder.append("\n请保持语气亲切且专业，所有内容须使用英文。\n请确保释义、用法说明与示例完整。");
-            } else {
-                builder.append("\n请确保释义、用法说明与示例完整。");
-            }
+            builder.append(renderDefaultTone(flavor));
         }
         return builder.toString();
+    }
+
+    private void appendChineseGuidance(StringBuilder builder, String cleanInput, DictionaryFlavor flavor) {
+        ChineseEntryProfile profile = resolveChineseEntryProfile(cleanInput);
+        builder
+            .append("\n条目结构定位：")
+            .append(profile.typeLabel())
+            .append("\n写作指引：")
+            .append(profile.guidance());
+        if (flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
+            builder.append("\n结构要求：请以中文为主线编写释义、例句与用法说明，遵循模板并以 <END> 收尾。");
+        } else {
+            builder.append("\n结构要求：请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。");
+        }
+    }
+
+    private void appendEnglishGuidance(StringBuilder builder, DictionaryFlavor flavor) {
+        builder
+            .append("\n条目类型：英文词汇")
+            .append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
+        if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+            builder.append("\n输出语言：仅使用英文完成释义、例句与所有说明，严禁出现中文或其他语言翻译。");
+        }
+    }
+
+    private String renderDefaultTone(DictionaryFlavor flavor) {
+        if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+            return "\n请保持语气亲切且专业，所有内容须使用英文。\n请确保释义、用法说明与示例完整。";
+        }
+        if (flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
+            return "\n请保持语气亲切且专业，使用中文完成所有章节，确保释义、用法说明与示例完整。";
+        }
+        return "\n请确保释义、用法说明与示例完整。";
+    }
+
+    private String renderPersonalizedTone(DictionaryFlavor flavor) {
+        if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+            return "\n请结合画像输出结构化释义、语义差异与可执行练习建议（英文表达）。";
+        }
+        if (flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
+            return "\n请结合画像输出结构化释义、语义差异与可执行练习建议（中文表达）。";
+        }
+        return "\n请结合画像输出结构化释义、语义差异与可执行练习建议。";
     }
 
     private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
@@ -231,6 +259,9 @@ public class WordSearcherImpl implements WordSearcher {
             if (flavor == DictionaryFlavor.BILINGUAL) {
                 return "请确保每个章节都提供精准的中文译文与注释，让读者能在英语释义旁同步获得优雅的中文理解。";
             }
+        }
+        if (language == Language.CHINESE && flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
+            return "你正在为高级中文辞书撰写条目，请全程使用中文呈现所有章节，避免加入英文解释或翻译。";
         }
         return null;
     }

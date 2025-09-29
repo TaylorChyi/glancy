@@ -12,7 +12,12 @@ public enum DictionaryFlavor {
     /**
      * Monolingual English presentation without any translated content.
      */
-    MONOLINGUAL_ENGLISH;
+    MONOLINGUAL_ENGLISH,
+
+    /**
+     * Monolingual Chinese presentation designed for native-language explanations.
+     */
+    MONOLINGUAL_CHINESE;
 
     public static DictionaryFlavor fromNullable(String raw, DictionaryFlavor fallback) {
         if (raw == null || raw.isBlank()) {

@@ -2,6 +2,7 @@ export const WORD_LANGUAGE_AUTO = "AUTO";
 export const WORD_LANGUAGE_ENGLISH_MONO = "ENGLISH_MONOLINGUAL";
 export const WORD_FLAVOR_BILINGUAL = "BILINGUAL";
 export const WORD_FLAVOR_MONOLINGUAL_ENGLISH = "MONOLINGUAL_ENGLISH";
+export const WORD_FLAVOR_MONOLINGUAL_CHINESE = "MONOLINGUAL_CHINESE";
 
 const LANGUAGE_BADGES = Object.freeze({
   AUTO: "AUTO",
@@ -140,6 +141,9 @@ export function resolveDictionaryFlavor({
 
   if (normalizedSource === "ENGLISH" && normalizedTarget === "ENGLISH") {
     return WORD_FLAVOR_MONOLINGUAL_ENGLISH;
+  }
+  if (normalizedSource === "CHINESE" && normalizedTarget === "CHINESE") {
+    return WORD_FLAVOR_MONOLINGUAL_CHINESE;
   }
   return WORD_FLAVOR_BILINGUAL;
 }
