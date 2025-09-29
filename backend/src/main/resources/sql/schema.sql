@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS search_records (
   user_id BIGINT NOT NULL,
   term VARCHAR(100) NOT NULL,
   language VARCHAR(10) NOT NULL,
+  target_language VARCHAR(16) NOT NULL DEFAULT 'CHINESE',
+  flavor VARCHAR(32) NOT NULL DEFAULT 'BILINGUAL',
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updatedAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -30,13 +32,15 @@ CREATE TABLE IF NOT EXISTS words (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   term VARCHAR(100) NOT NULL,
   language VARCHAR(10) NOT NULL,
+  target_language VARCHAR(16) NOT NULL DEFAULT 'CHINESE',
+  flavor VARCHAR(32) NOT NULL DEFAULT 'BILINGUAL',
   phonetic VARCHAR(100),
   example VARCHAR(255),
   markdown TEXT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updatedAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  CONSTRAINT uk_words_term_language UNIQUE (term, language)
+  CONSTRAINT uk_words_term_language_target_language_flavor UNIQUE (term, language, target_language, flavor)
 );
 
 CREATE TABLE IF NOT EXISTS word_definitions (
@@ -44,6 +48,27 @@ CREATE TABLE IF NOT EXISTS word_definitions (
   definition TEXT NOT NULL,
   PRIMARY KEY (word_id, definition),
   CONSTRAINT fk_word_definition_word FOREIGN KEY (word_id) REFERENCES words (id)
+);
+
+CREATE TABLE IF NOT EXISTS search_result_versions (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updatedAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  user_id BIGINT NOT NULL,
+  search_record_id BIGINT NOT NULL,
+  word_id BIGINT,
+  term VARCHAR(100) NOT NULL,
+  language VARCHAR(10) NOT NULL,
+  target_language VARCHAR(16) NOT NULL DEFAULT 'CHINESE',
+  flavor VARCHAR(32) NOT NULL DEFAULT 'BILINGUAL',
+  model VARCHAR(64) NOT NULL,
+  version_number INT NOT NULL,
+  content TEXT NOT NULL,
+  preview VARCHAR(255) NOT NULL,
+  CONSTRAINT fk_search_result_version_user FOREIGN KEY (user_id) REFERENCES users (id),
+  CONSTRAINT fk_search_result_version_record FOREIGN KEY (search_record_id) REFERENCES search_records (id),
+  CONSTRAINT fk_search_result_version_word FOREIGN KEY (word_id) REFERENCES words (id)
 );
 
 CREATE TABLE IF NOT EXISTS contact_messages (

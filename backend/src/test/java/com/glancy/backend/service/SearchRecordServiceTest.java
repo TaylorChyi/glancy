@@ -6,6 +6,7 @@ import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.DictionaryTargetLanguage;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
@@ -91,12 +92,14 @@ class SearchRecordServiceTest {
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm("hello");
         req.setLanguage(Language.ENGLISH);
+        req.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         SearchRecordResponse saved = searchRecordService.saveRecord(user.getId(), req);
         assertNotNull(saved.id());
 
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
         assertEquals(1, list.size());
         assertEquals("hello", list.get(0).term());
+        assertEquals(DictionaryTargetLanguage.CHINESE, list.get(0).targetLanguage());
         assertTrue(list.get(0).versions().isEmpty());
 
         searchRecordService.clearRecords(user.getId());
@@ -118,6 +121,7 @@ class SearchRecordServiceTest {
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm("hi");
         req.setLanguage(Language.ENGLISH);
+        req.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
 
         Exception ex = assertThrows(InvalidRequestException.class, () ->
             searchRecordService.saveRecord(user.getId(), req)
@@ -142,12 +146,15 @@ class SearchRecordServiceTest {
         SearchRecordRequest req1 = new SearchRecordRequest();
         req1.setTerm("hi1");
         req1.setLanguage(Language.ENGLISH);
+        req1.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         SearchRecordRequest req2 = new SearchRecordRequest();
         req2.setTerm("hi2");
         req2.setLanguage(Language.ENGLISH);
+        req2.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         SearchRecordRequest req3 = new SearchRecordRequest();
         req3.setTerm("hi3");
         req3.setLanguage(Language.ENGLISH);
+        req3.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
 
         searchRecordService.saveRecord(user.getId(), req1);
         searchRecordService.saveRecord(user.getId(), req2);
@@ -174,6 +181,7 @@ class SearchRecordServiceTest {
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm("hello");
         req.setLanguage(Language.ENGLISH);
+        req.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
 
         SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), req);
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req);
@@ -183,6 +191,7 @@ class SearchRecordServiceTest {
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
         assertEquals(1, list.size());
         assertEquals(second.createdAt(), list.get(0).createdAt());
+        assertEquals(DictionaryTargetLanguage.CHINESE, list.get(0).targetLanguage());
     }
 
     /**
@@ -202,10 +211,12 @@ class SearchRecordServiceTest {
         SearchRecordRequest req1 = new SearchRecordRequest();
         req1.setTerm("alpha");
         req1.setLanguage(Language.ENGLISH);
+        req1.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
 
         SearchRecordRequest req2 = new SearchRecordRequest();
         req2.setTerm("beta");
         req2.setLanguage(Language.ENGLISH);
+        req2.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
 
         SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), req1);
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req2);
@@ -224,6 +235,7 @@ class SearchRecordServiceTest {
             .filter(resp -> resp.id().equals(recordOne.getId()))
             .findFirst()
             .orElseThrow();
+        assertEquals(DictionaryTargetLanguage.CHINESE, alphaResponse.targetLanguage());
         assertEquals(2, alphaResponse.versions().size());
         assertNotNull(alphaResponse.latestVersion());
         assertEquals(2, alphaResponse.latestVersion().versionNumber());
@@ -235,6 +247,7 @@ class SearchRecordServiceTest {
             .filter(resp -> resp.id().equals(recordTwo.getId()))
             .findFirst()
             .orElseThrow();
+        assertEquals(DictionaryTargetLanguage.CHINESE, betaResponse.targetLanguage());
         assertEquals(1, betaResponse.versions().size());
         assertEquals(1, betaResponse.latestVersion().versionNumber());
     }
@@ -256,6 +269,7 @@ class SearchRecordServiceTest {
         SearchRecordRequest req = new SearchRecordRequest();
         req.setTerm("vanish");
         req.setLanguage(Language.ENGLISH);
+        req.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         SearchRecordResponse recordResponse = searchRecordService.saveRecord(user.getId(), req);
         SearchRecord record = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
 
@@ -264,6 +278,7 @@ class SearchRecordServiceTest {
         version.setUser(user);
         version.setTerm("vanish");
         version.setLanguage(Language.ENGLISH);
+        version.setTargetLanguage(DictionaryTargetLanguage.CHINESE);
         version.setModel("test-model");
         version.setVersionNumber(1);
         version.setContent("content");
@@ -284,6 +299,7 @@ class SearchRecordServiceTest {
         version.setUser(user);
         version.setTerm(record.getTerm());
         version.setLanguage(record.getLanguage());
+        version.setTargetLanguage(record.getTargetLanguage());
         version.setFlavor(Optional.ofNullable(record.getFlavor()).orElse(DictionaryFlavor.BILINGUAL));
         version.setModel(model);
         version.setVersionNumber(versionNumber);
