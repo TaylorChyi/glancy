@@ -27,33 +27,35 @@ export default function DictionaryExperience() {
     targetLanguageOptions,
     handleSwapLanguages,
     handleSend,
-    handleVoice,
-    showFavorites,
-    showHistory,
-    handleShowDictionary,
-    handleShowFavorites,
     handleSelectHistory,
     handleSelectFavorite,
-    handleUnfavorite,
-    favorites,
-    focusInput,
     entry,
     finalText,
     streamText,
     loading,
     dictionaryActionBarProps,
     displayClassName,
-    popupOpen,
-    popupMsg,
-    closePopup,
     dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel,
     favoritesEmptyState,
     searchEmptyState,
     chatInputPlaceholder,
-    activeSidebarView,
+    view,
+    actions,
+    popup,
   } = useDictionaryExperience();
+
+  const {
+    showFavorites,
+    showHistory,
+    handleShowDictionary,
+    handleShowFavorites,
+    focusInput,
+    activeSidebarView,
+  } = view;
+  const { favorites, handleVoice, handleUnfavorite } = actions;
+  const { popupOpen, popupMsg, closePopup } = popup;
 
   const dictionaryActionBar = (
     <DictionaryEntryActionBar {...dictionaryActionBarProps} />

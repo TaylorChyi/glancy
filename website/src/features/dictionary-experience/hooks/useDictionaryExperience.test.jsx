@@ -123,10 +123,11 @@ jest.unstable_mockModule("@/config", () => ({
   DEFAULT_MODEL: "test-model",
   REPORT_FORM_URL: "",
   SUPPORT_EMAIL: "",
+  SHARE_BASE_URL: "",
 }));
 
 const { useDictionaryExperience } = await import(
-  "./useDictionaryExperience.js"
+  "./useDictionaryExperience.ts"
 );
 
 beforeEach(() => {
