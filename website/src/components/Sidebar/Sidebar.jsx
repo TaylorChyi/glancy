@@ -130,14 +130,4 @@ Sidebar.propTypes = {
   onSelectHistory: PropTypes.func,
 };
 
-Sidebar.defaultProps = {
-  isMobile: undefined,
-  open: false,
-  onClose: undefined,
-  onShowDictionary: undefined,
-  onShowFavorites: undefined,
-  activeView: undefined,
-  onSelectHistory: undefined,
-};
-
 export default forwardRef(Sidebar);
