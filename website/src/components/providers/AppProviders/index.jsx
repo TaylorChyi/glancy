@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import Loader from "@/components/ui/Loader";
@@ -12,6 +13,8 @@ import {
 } from "@/context";
 
 function AppProviders({ children }) {
+  const location = useLocation();
+
   return (
     <AppProvider>
       <ApiProvider>
@@ -19,7 +22,7 @@ function AppProviders({ children }) {
           <ThemeProvider>
             <CookieConsent />
             <AuthWatcher />
-            <ErrorBoundary>
+            <ErrorBoundary resetKeys={[location.key]}>
               <Suspense fallback={<Loader />}>{children}</Suspense>
             </ErrorBoundary>
           </ThemeProvider>
