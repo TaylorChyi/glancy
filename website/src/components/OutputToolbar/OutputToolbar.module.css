@@ -1,39 +1,45 @@
 .toolbar {
+  grid-area: toolbar;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) calc(var(--space-3) + 8px);
-  border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-surface-alt) 90%, transparent);
+  justify-content: flex-start;
+  gap: var(--space-3, 12px);
+  padding: 10px 12px;
+  border-radius: var(--radius-xl, 16px);
   border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 92%, transparent);
+  box-shadow: var(
+    --shadow-elevated,
+    0 12px 30px color-mix(in srgb, var(--shadow-color) 40%, transparent)
+  );
+  overflow: hidden;
+  min-height: 44px;
+  flex-wrap: nowrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .left-cluster,
 .action-strip {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  flex-wrap: nowrap;
 }
 
 .action-strip {
-  flex: 1 1 auto;
-  justify-content: center;
-  min-width: 160px;
+  flex: 0 0 auto;
 }
 
-.icon-button {
-  width: 36px;
-  height: 36px;
+.tool-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 12px);
   color: color-mix(in srgb, var(--color-text-secondary) 86%, transparent);
-  opacity: 0.7;
+  opacity: 0.76;
   cursor: pointer;
   transition:
     color 0.2s ease,
@@ -42,67 +48,61 @@
     transform 0.2s ease;
 }
 
-.icon-button:hover,
-.icon-button:focus-visible {
+.tool-button:hover,
+.tool-button:focus-visible {
   opacity: 1;
   color: color-mix(in srgb, var(--accent-color) 82%, var(--app-color) 18%);
   background: color-mix(in srgb, var(--accent-color) 12%, transparent);
   transform: translateY(-1px);
 }
 
-.icon-button:focus-visible {
+.tool-button:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
   outline-offset: 2px;
 }
 
-.icon-button:disabled {
+.tool-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
   background: none;
   transform: none;
 }
 
-.icon-button[data-active="true"] {
+.tool-button[data-active="true"] {
   color: color-mix(in srgb, var(--accent-color) 78%, var(--app-color) 22%);
   opacity: 1;
 }
 
-.icon-button-replay {
+.tool-button-replay {
   color: color-mix(in srgb, var(--accent-color) 78%, var(--app-color) 22%);
 }
 
-.icon-button-replay:disabled {
+.tool-button-replay:disabled {
   color: color-mix(in srgb, var(--color-text-tertiary) 88%, transparent);
 }
 
-.icon-button-favorite,
-.icon-button-share {
+.tool-button-favorite,
+.tool-button-share {
   color: color-mix(in srgb, var(--accent-color) 70%, var(--app-color) 30%);
 }
 
-.icon-button-delete,
-.icon-button-report {
+.tool-button-delete,
+.tool-button-report {
   color: color-mix(in srgb, var(--color-danger) 70%, var(--app-color) 30%);
 }
 
 .version-dial {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2, 8px);
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .nav-button {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
   background: color-mix(in srgb, var(--color-surface-alt) 95%, transparent);
   color: color-mix(in srgb, var(--color-text-secondary) 82%, transparent);
-  cursor: pointer;
   transition:
     border-color 0.2s ease,
     color 0.2s ease,
@@ -139,13 +139,61 @@
   color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
 }
 
+/* stylelint-disable selector-class-pattern */
+:global(.entry__tool-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+:global(.entry__tool-btn svg),
+:global(.entry__tool-btn i) {
+  width: 18px;
+  height: 18px;
+}
+
+:global(.entry__tool-btn:hover) {
+  background: var(--hover, #1a1e24);
+}
+
+:global(.entry__tool-btn:active) {
+  transform: scale(0.96);
+}
+
+:global(.entry__tool-btn:focus-visible) {
+  outline: 2px solid var(--input-dark-ring, #3a3f46);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+:global(.entry__pager .entry__tool-btn) {
+  width: 34px;
+  height: 34px;
+}
+/* stylelint-enable selector-class-pattern */
+
 @media (width <= 768px) {
   .toolbar {
-    justify-content: center;
-    gap: var(--space-2);
+    gap: var(--space-2, 8px);
+  }
+}
+
+@media (width <= 480px) {
+  .toolbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
-  .version-dial {
-    margin-left: 0;
+  .toolbar::-webkit-scrollbar {
+    height: 6px;
   }
 }

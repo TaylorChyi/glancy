@@ -15,18 +15,21 @@ function tryParseJson(text) {
   }
 }
 
-function DictionaryEntry({ entry }) {
+function DictionaryEntry({ entry, className }) {
   const { t, lang } = useLanguage();
   if (!entry) return null;
+  const entryClassName = [styles["dictionary-entry"], className]
+    .filter(Boolean)
+    .join(" ");
 
   if (entry.markdown) {
     const parsed = tryParseJson(entry.markdown);
     if (parsed) {
-      return <DictionaryEntry entry={parsed} />;
+      return <DictionaryEntry entry={parsed} className={className} />;
     }
     const polished = polishDictionaryMarkdown(entry.markdown);
     return (
-      <article className={styles["dictionary-entry"]}>
+      <article className={entryClassName}>
         <DictionaryMarkdown>{polished}</DictionaryMarkdown>
       </article>
     );
@@ -38,7 +41,7 @@ function DictionaryEntry({ entry }) {
   if (!isNew) {
     const { phonetic, definitions, example } = entry;
     return (
-      <article className={styles["dictionary-entry"]}>
+      <article className={entryClassName}>
         {phonetic && (
           <section
             className={styles["phonetic-section"]}
@@ -100,7 +103,7 @@ function DictionaryEntry({ entry }) {
   const defs = groups.flatMap((g) => g.释义 || []);
 
   return (
-    <article className={styles["dictionary-entry"]}>
+    <article className={entryClassName}>
       {term && (
         <h2 className={styles["section-title"]}>
           <PronounceableWord text={term} lang={lang} />
