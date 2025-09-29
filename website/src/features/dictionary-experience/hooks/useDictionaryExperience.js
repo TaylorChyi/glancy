@@ -23,6 +23,7 @@ import { useWordStore } from "@/store";
 import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
+import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
 
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
@@ -60,7 +61,8 @@ export function useDictionaryExperience() {
   } = useDictionaryLanguageConfig({ t });
   const { popupOpen, popupMsg, showPopup, closePopup } = useDictionaryPopup();
 
-  const abortRef = useRef(null);
+  const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
+    useDictionaryLookupController();
   const { favorites, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const streamWord = useStreamWord();
@@ -221,12 +223,7 @@ export function useDictionaryExperience() {
 
       setShowFavorites(false);
       setShowHistory(false);
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
-
-      const controller = new AbortController();
-      abortRef.current = controller;
+      const controller = beginLookup();
 
       setLoading(true);
       const { language: resolvedLanguage, flavor: defaultFlavor } =
@@ -260,7 +257,7 @@ export function useDictionaryExperience() {
           const hydrated = applyRecord(cacheKey, cachedRecord, versionId);
           if (hydrated) {
             setLoading(false);
-            abortRef.current = null;
+            clearActiveLookup();
             return {
               status: "success",
               term: normalized,
@@ -325,13 +322,16 @@ export function useDictionaryExperience() {
         showPopup(error.message);
         return { status: "error", term: normalized, error };
       } finally {
-        setLoading(false);
-        abortRef.current = null;
+        if (!controller.signal.aborted && isMounted()) {
+          setLoading(false);
+        }
+        clearActiveLookup();
       }
     },
     [
       streamWord,
       user,
+      beginLookup,
       setShowFavorites,
       setShowHistory,
       setLoading,
@@ -346,6 +346,8 @@ export function useDictionaryExperience() {
       setCurrentTerm,
       wordStoreApi,
       applyRecord,
+      isMounted,
+      clearActiveLookup,
     ],
   );
 
@@ -609,10 +611,7 @@ export function useDictionaryExperience() {
       setCurrentTermKey(cacheKey);
       const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
 
-      if (abortRef.current) {
-        abortRef.current.abort();
-        abortRef.current = null;
-      }
+      cancelActiveLookup();
 
       if (cachedRecord) {
         const applied = applyRecord(
@@ -643,6 +642,7 @@ export function useDictionaryExperience() {
       dictionarySourceLanguage,
       dictionaryTargetLanguage,
       dictionaryFlavor,
+      cancelActiveLookup,
       wordStoreApi,
       applyRecord,
       executeLookup,
