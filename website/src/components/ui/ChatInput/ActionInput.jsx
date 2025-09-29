@@ -4,56 +4,55 @@ import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
-const MIC_ICON_SIZE = 18;
+const EQUALIZER_ICON_SIZE = 18;
 
-function MicIcon({ className }) {
+function EqualizerIcon({ className }) {
   return (
     <svg
       className={className}
-      width={MIC_ICON_SIZE}
-      height={MIC_ICON_SIZE}
+      width={EQUALIZER_ICON_SIZE}
+      height={EQUALIZER_ICON_SIZE}
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <path
-        d="M9 11.75a2.75 2.75 0 0 0 2.75-2.75V5a2.75 2.75 0 0 0-5.5 0v4c0 1.52 1.23 2.75 2.75 2.75Z"
+      <rect
+        x="2.75"
+        y="6"
+        width="2.5"
+        height="9.25"
+        rx="1.25"
         stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="1.5"
       />
-      <path
-        d="M4.5 8.5V9a4.5 4.5 0 0 0 9 0v-.5"
+      <rect
+        x="7.75"
+        y="3"
+        width="2.5"
+        height="12.25"
+        rx="1.25"
         stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="1.5"
       />
-      <path
-        d="M9 13.5V16"
+      <rect
+        x="12.75"
+        y="8"
+        width="2.5"
+        height="7.25"
+        rx="1.25"
         stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.5 16h5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth="1.5"
       />
     </svg>
   );
 }
 
-MicIcon.propTypes = {
+EqualizerIcon.propTypes = {
   className: PropTypes.string,
 };
 
-MicIcon.defaultProps = {
+EqualizerIcon.defaultProps = {
   className: undefined,
 };
 
@@ -66,11 +65,14 @@ function ActionInput({
   onChange,
   onSubmit,
   onVoice,
+  onEqualizer,
   inputRef,
   placeholder,
   voiceLabel = "Voice",
+  equalizerLabel = "Voice settings",
   rows = 1,
   maxRows = 5,
+  isRecording = false,
   sourceLanguage,
   sourceLanguageOptions,
   sourceLanguageLabel,
@@ -139,6 +141,9 @@ function ActionInput({
   );
 
   const isVoiceDisabled = typeof onVoice !== "function";
+  const handleEqualizer = useCallback(() => {
+    onEqualizer?.();
+  }, [onEqualizer]);
 
   const handleVoice = useCallback(
     (event) => {
@@ -173,23 +178,21 @@ function ActionInput({
       <SearchBox className={styles["input-surface"]}>
         {showLanguageControls ? (
           <>
-            <div className={styles["lang-rail"]}>
-              <LanguageControls
-                sourceLanguage={sourceLanguage}
-                sourceLanguageOptions={sourceLanguageOptions}
-                sourceLanguageLabel={sourceLanguageLabel}
-                onSourceLanguageChange={onSourceLanguageChange}
-                targetLanguage={targetLanguage}
-                targetLanguageOptions={targetLanguageOptions}
-                targetLanguageLabel={targetLanguageLabel}
-                onTargetLanguageChange={onTargetLanguageChange}
-                onSwapLanguages={onSwapLanguages}
-                swapLabel={swapLabel}
-                normalizeSourceLanguage={normalizeSourceLanguageFn}
-                normalizeTargetLanguage={normalizeTargetLanguageFn}
-                onMenuOpen={onMenuOpen}
-              />
-            </div>
+            <LanguageControls
+              sourceLanguage={sourceLanguage}
+              sourceLanguageOptions={sourceLanguageOptions}
+              sourceLanguageLabel={sourceLanguageLabel}
+              onSourceLanguageChange={onSourceLanguageChange}
+              targetLanguage={targetLanguage}
+              targetLanguageOptions={targetLanguageOptions}
+              targetLanguageLabel={targetLanguageLabel}
+              onTargetLanguageChange={onTargetLanguageChange}
+              onSwapLanguages={onSwapLanguages}
+              swapLabel={swapLabel}
+              normalizeSourceLanguage={normalizeSourceLanguageFn}
+              normalizeTargetLanguage={normalizeTargetLanguageFn}
+              onMenuOpen={onMenuOpen}
+            />
             <div className={styles["language-divider"]} aria-hidden="true" />
           </>
         ) : null}
@@ -210,15 +213,24 @@ function ActionInput({
             aria-hidden="true"
           />
         </div>
-        <div className={styles.actions}>
+        <div className={styles["voice-controls"]}>
           <button
             type="button"
-            className={styles["voice-button"]}
+            className={`${styles["voice-button"]} ${styles["voice-eq"]}`}
+            onClick={handleEqualizer}
+            aria-label={equalizerLabel}
+          >
+            <EqualizerIcon className={styles["equalizer-icon"]} />
+          </button>
+          <button
+            type="button"
+            className={`${styles["voice-button"]} ${styles["voice-rec"]}`}
             onClick={handleVoice}
             aria-label={voiceLabel}
+            aria-pressed={Boolean(isRecording)}
             disabled={isVoiceDisabled}
           >
-            <MicIcon className={styles["voice-icon"]} />
+            <span className={styles["voice-dot"]} />
           </button>
         </div>
       </SearchBox>
@@ -233,14 +245,17 @@ ActionInput.propTypes = {
   onChange: PropTypes.func,
   onSubmit: PropTypes.func,
   onVoice: PropTypes.func,
+  onEqualizer: PropTypes.func,
   inputRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.any }),
   ]),
   placeholder: PropTypes.string,
   voiceLabel: PropTypes.string,
+  equalizerLabel: PropTypes.string,
   rows: PropTypes.number,
   maxRows: PropTypes.number,
+  isRecording: PropTypes.bool,
   sourceLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
   sourceLanguageOptions: PropTypes.arrayOf(
     PropTypes.shape({
@@ -270,11 +285,14 @@ ActionInput.defaultProps = {
   onChange: undefined,
   onSubmit: undefined,
   onVoice: undefined,
+  onEqualizer: undefined,
   inputRef: undefined,
   placeholder: undefined,
   voiceLabel: "Voice",
+  equalizerLabel: "Voice settings",
   rows: 1,
   maxRows: 5,
+  isRecording: false,
   sourceLanguage: undefined,
   sourceLanguageOptions: [],
   sourceLanguageLabel: undefined,

@@ -43,8 +43,10 @@ test("applies design token defaults", () => {
   );
   const box = container.firstChild;
   const styles = getComputedStyle(box);
-  expect(styles.borderRadius).toBe("var(--sb-radius, 14px)");
-  expect(styles.minHeight).toBe("var(--sb-h, 48px)");
+  expect(styles.borderRadius).toBe("var(--sb-r, 28px)");
+  expect(styles.minHeight).toBe("var(--sb-h, 56px)");
+  expect(box.getAttribute("data-testid")).toBe("searchbar");
+  expect(box.getAttribute("role")).toBe("search");
 });
 
 /**
