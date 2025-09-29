@@ -1,0 +1,38 @@
+.entry {
+  display: grid;
+  grid-template: "definition" auto "toolbar" auto / 1fr;
+  row-gap: var(--space-4, 16px);
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.definition {
+  grid-area: definition;
+}
+
+/* stylelint-disable selector-class-pattern */
+:global(.entry__definition),
+:global(.entry__toolbar) {
+  float: none !important;
+  clear: both;
+  position: static !important;
+  width: auto;
+  flex: initial;
+  align-self: auto;
+}
+
+:global(.entry__definition) {
+  grid-area: definition;
+}
+
+:global(.entry__toolbar) {
+  grid-area: toolbar;
+}
+/* stylelint-enable selector-class-pattern */
+
+@media (width >= 768px) {
+  .entry {
+    row-gap: var(--space-5, 20px);
+  }
+}

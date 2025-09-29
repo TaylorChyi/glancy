@@ -8,9 +8,12 @@ export default function DictionaryEntryActionBar({ visible, ...toolbarProps }) {
   }
 
   return (
-    <div className={styles["action-bar"]}>
-      <OutputToolbar {...toolbarProps} />
-    </div>
+    <OutputToolbar
+      {...toolbarProps}
+      className={styles.toolbar}
+      role="toolbar"
+      ariaLabel="词条工具栏"
+    />
   );
 }
 

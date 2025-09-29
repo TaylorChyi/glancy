@@ -55,6 +55,8 @@ describe("OutputToolbar", () => {
       />,
     );
 
+    const toolbar = screen.getByRole("toolbar", { name: "词条工具栏" });
+    expect(toolbar.className).toContain("entry__toolbar");
     expect(mockTtsButton).toHaveBeenCalledTimes(1);
     expect(mockTtsButton.mock.calls[0][0]).toEqual(
       expect.objectContaining({ text: "hello", lang: "en" }),
@@ -91,6 +93,8 @@ describe("OutputToolbar", () => {
       />,
     );
 
+    const pagerGroup = screen.getByRole("group", { name: "例句翻页" });
+    expect(pagerGroup.className).toContain("entry__pager");
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "下一版本" }));
     expect(onNavigate).toHaveBeenCalledWith("next");
@@ -148,6 +152,9 @@ describe("OutputToolbar", () => {
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
+    expect(
+      screen.getByRole("button", { name: "取消收藏" }).className,
+    ).toContain("entry__tool-btn");
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onShare).toHaveBeenCalledTimes(1);

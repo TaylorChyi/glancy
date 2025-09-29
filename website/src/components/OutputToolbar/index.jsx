@@ -74,6 +74,9 @@ function OutputToolbar({
   onShare,
   canReport = false,
   onReport,
+  className,
+  role: toolbarRole = "toolbar",
+  ariaLabel = "词条工具栏",
 }) {
   const { t } = useLanguage();
   const { user } = useUser();
@@ -173,9 +176,21 @@ function OutputToolbar({
   const showReplay = typeof onReoutput === "function";
   const showLeftCluster = showTts || showReplay;
   const hasActions = actionItems.length > 0;
+  const rootClassName = Array.from(
+    new Set([styles.toolbar, "entry__toolbar", className].filter(Boolean)),
+  ).join(" ");
+  const pagerLabel = t.versionGroupLabel || "例句翻页";
+  const baseToolButtonClass = [styles["tool-button"], "entry__tool-btn"]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={styles.toolbar} data-testid="output-toolbar">
+    <div
+      className={rootClassName}
+      role={toolbarRole}
+      aria-label={ariaLabel}
+      data-testid="output-toolbar"
+    >
       {showLeftCluster ? (
         <div className={styles["left-cluster"]}>
           {showTts ? (
@@ -189,7 +204,7 @@ function OutputToolbar({
           {showReplay ? (
             <button
               type="button"
-              className={`${styles["icon-button"]} ${styles["icon-button-replay"]}`}
+              className={`${baseToolButtonClass} ${styles["tool-button-replay"]}`}
               onClick={onReoutput}
               disabled={disabled || !speakableTerm}
               aria-label={t.reoutput}
@@ -217,10 +232,10 @@ function OutputToolbar({
               disabled: itemDisabled,
             }) => {
               const variantClassName =
-                variant && styles[`icon-button-${variant}`]
-                  ? styles[`icon-button-${variant}`]
+                variant && styles[`tool-button-${variant}`]
+                  ? styles[`tool-button-${variant}`]
                   : "";
-              const buttonClassName = [styles["icon-button"], variantClassName]
+              const buttonClassName = [baseToolButtonClass, variantClassName]
                 .filter(Boolean)
                 .join(" ");
 
@@ -242,10 +257,14 @@ function OutputToolbar({
           )}
         </div>
       ) : null}
-      <div className={styles["version-dial"]}>
+      <div
+        className={`${styles["version-dial"]} entry__pager`}
+        role="group"
+        aria-label={pagerLabel}
+      >
         <button
           type="button"
-          className={styles["nav-button"]}
+          className={`${styles["nav-button"]} entry__tool-btn`}
           onClick={() => onNavigate?.("previous")}
           disabled={!hasPrevious || disabled}
           aria-label={t.previousVersion}
@@ -257,10 +276,16 @@ function OutputToolbar({
             aria-hidden="true"
           />
         </button>
-        <span className={styles.indicator}>{indicator}</span>
+        <span
+          className={styles.indicator}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {indicator}
+        </span>
         <button
           type="button"
-          className={styles["nav-button"]}
+          className={`${styles["nav-button"]} entry__tool-btn`}
           onClick={() => onNavigate?.("next")}
           disabled={!hasNext || disabled}
           aria-label={t.nextVersion}
@@ -297,6 +322,9 @@ OutputToolbar.propTypes = {
   onShare: PropTypes.func,
   canReport: PropTypes.bool,
   onReport: PropTypes.func,
+  className: PropTypes.string,
+  role: PropTypes.string,
+  ariaLabel: PropTypes.string,
 };
 
 OutputToolbar.defaultProps = {
@@ -319,6 +347,9 @@ OutputToolbar.defaultProps = {
   onShare: undefined,
   canReport: false,
   onReport: undefined,
+  className: "",
+  role: "toolbar",
+  ariaLabel: "词条工具栏",
 };
 
 export default memo(OutputToolbar);
