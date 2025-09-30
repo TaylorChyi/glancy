@@ -1,16 +1,23 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import PropTypes from "prop-types";
 import Sidebar from "@/components/Sidebar";
 import ThemeIcon from "@/components/ui/Icon";
 import { useIsMobile } from "@/utils";
 import styles from "./Layout.module.css";
 
-function Layout({ children, sidebarProps = {}, bottomContent = null }) {
+function Layout({
+  children,
+  sidebarProps = {},
+  bottomContent = null,
+  onMainMiddleScroll,
+}) {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(null);
   const containerRef = useRef(null);
   const sidebarRef = useRef(null);
   const resizeFrame = useRef(null);
+  const mainMiddleRef = useRef(null);
 
   useEffect(() => {
     if (isMobile) {
@@ -87,6 +94,23 @@ function Layout({ children, sidebarProps = {}, bottomContent = null }) {
     return { "--layout-sidebar-width": `${Math.round(sidebarWidth)}px` };
   }, [sidebarWidth, isMobile]);
 
+  useEffect(() => {
+    if (!onMainMiddleScroll) {
+      return undefined;
+    }
+    const node = mainMiddleRef.current;
+    if (!node) {
+      return undefined;
+    }
+    const handleScroll = (event) => {
+      onMainMiddleScroll(event);
+    };
+    node.addEventListener("scroll", handleScroll);
+    return () => {
+      node.removeEventListener("scroll", handleScroll);
+    };
+  }, [onMainMiddleScroll]);
+
   return (
     <div ref={containerRef} className={styles.container} style={containerStyle}>
       <Sidebar
@@ -119,7 +143,9 @@ function Layout({ children, sidebarProps = {}, bottomContent = null }) {
           </div>
         ) : null}
         <div className={styles["main-content"]}>
-          <div className={styles["main-middle"]}>{children}</div>
+          <div ref={mainMiddleRef} className={styles["main-middle"]}>
+            {children}
+          </div>
         </div>
         {bottomContent ? (
           <div className={styles["main-bottom"]}>
@@ -132,3 +158,16 @@ function Layout({ children, sidebarProps = {}, bottomContent = null }) {
 }
 
 export default Layout;
+
+Layout.propTypes = {
+  children: PropTypes.node.isRequired,
+  sidebarProps: PropTypes.object,
+  bottomContent: PropTypes.node,
+  onMainMiddleScroll: PropTypes.func,
+};
+
+Layout.defaultProps = {
+  sidebarProps: {},
+  bottomContent: null,
+  onMainMiddleScroll: undefined,
+};

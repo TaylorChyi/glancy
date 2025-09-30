@@ -198,68 +198,31 @@ test("GivenLanguageOptions_WhenProvided_ThenToggleVisibilityAndProps", () => {
 });
 
 /**
- * 测试目标：当存在释义且输入框失焦且为空时展示工具栏模式，反之展示语言模式。
- * 前置条件：hasDefinition=true，dictionaryActionBarProps 提供最小必要字段。
+ * 测试目标：聚焦与失焦事件触发 onFocusChange 回调，确保外部状态机可同步。
+ * 前置条件：提供 onFocusChange 桩函数。
  * 步骤：
- *  1) 初始渲染时断言 featureMode=toolbar。
- *  2) 触发 onFocus/onBlur 切换，观察模式变化。
- *  3) rerender 注入非空 value，再次失焦确保仍处于语言模式。
+ *  1) 调用 textareaProps.onFocus。
+ *  2) 调用 textareaProps.onBlur。
  * 断言：
- *  - 失焦且 value 为空时 dictionaryToolbar.isVisible=true。
- *  - 聚焦或存在文本时 featureMode 固定为 language。
+ *  - onFocusChange 依次收到 true、false。
  * 边界/异常：
- *  - 当 value 重新置空但 hasDefinition=false 时，工具栏保持隐藏（靠 props 约束）。
+ *  - 回调可选，未提供时不应抛出异常（由类型系统保证）。
  */
-test("GivenDefinitionFocusTransitions_WhenToggling_ThenSwitchFeatureMode", () => {
-  const { result, rerender } = renderHook(
-    (props: Parameters<typeof useActionInputBehavior>[0]) =>
-      useActionInputBehavior(props),
-    {
-      initialProps: {
-        value: "",
-        hasDefinition: true,
-        dictionaryActionBarProps: { term: "hello" },
-      },
-    },
+test("GivenFocusTransitions_WhenHandlersInvoke_ThenEmitFocusChange", () => {
+  const onFocusChange = jest.fn();
+  const { result } = renderHook(() =>
+    useActionInputBehavior({ value: "", onFocusChange }),
   );
-
-  expect(result.current.featureMode).toBe("toolbar");
-  expect(result.current.dictionaryToolbar.isVisible).toBe(true);
 
   act(() => {
     result.current.textareaProps.onFocus();
   });
 
-  expect(result.current.featureMode).toBe("language");
-  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
-
   act(() => {
     result.current.textareaProps.onBlur();
   });
 
-  expect(result.current.featureMode).toBe("toolbar");
-  expect(result.current.dictionaryToolbar.isVisible).toBe(true);
-
-  rerender({
-    value: "draft",
-    hasDefinition: true,
-    dictionaryActionBarProps: { term: "hello" },
-  });
-
-  expect(result.current.featureMode).toBe("language");
-  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
-
-  act(() => {
-    result.current.textareaProps.onBlur();
-  });
-
-  rerender({
-    value: "",
-    hasDefinition: false,
-    dictionaryActionBarProps: { term: "hello" },
-  });
-
-  expect(result.current.featureMode).toBe("language");
-  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
+  expect(onFocusChange).toHaveBeenNthCalledWith(1, true);
+  expect(onFocusChange).toHaveBeenNthCalledWith(2, false);
 });
 

@@ -2,19 +2,7 @@ import { render } from "@testing-library/react";
 import { createRef } from "react";
 import { jest } from "@jest/globals";
 
-let ActionInputView;
-
-beforeAll(async () => {
-  await jest.unstable_mockModule("@/components/DictionaryEntryActionBar", () => ({
-    __esModule: true,
-    default: ({ className }) => (
-      <div data-testid="dictionary-toolbar-mock" className={className}>
-        DictionaryToolbar
-      </div>
-    ),
-  }));
-  ({ default: ActionInputView } = await import("../parts/ActionInputView.jsx"));
-});
+import ActionInputView from "../parts/ActionInputView.jsx";
 
 /**
  * 测试目标：视图层在注入标准 Props 时渲染结构保持稳定。
@@ -66,11 +54,6 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
           onMenuOpen: jest.fn(),
         },
       }}
-      dictionaryToolbar={{
-        isVisible: false,
-        props: null,
-      }}
-      featureMode="language"
       actionButtonProps={{
         value: "example",
         isRecording: false,
@@ -88,21 +71,21 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
 });
 
 /**
- * 测试目标：当处于工具栏模式时渲染词典操作栏并附带样式容器。
- * 前置条件：languageControls 隐藏、dictionaryToolbar 提供 props、featureMode=toolbar。
+ * 测试目标：当语言区隐藏时，底部仍保持空容器并维持语义化标记。
+ * 前置条件：languageControls.isVisible=false。
  * 步骤：
- *  1) 传入工具栏可见状态并渲染组件。
- *  2) 捕获 DOM 并断言工具栏节点存在。
+ *  1) 渲染组件并读取 data-mode 属性。
+ *  2) 断言左侧容器为空。
  * 断言：
- *  - data-mode 属性为 "toolbar"。
- *  - 工具栏容器内存在 data-testid="output-toolbar" 的节点。
+ *  - data-mode 恒为 "language"。
+ *  - input-bottom-left 不包含子节点。
  * 边界/异常：
- *  - 即便 languageControls 可见也不会渲染，当 featureMode=toolbar 时仅呈现工具栏。
+ *  - 行为不依赖额外道具，确保视图层职责收敛。
  */
-test("GivenToolbarMode_WhenRenderingView_ThenRenderDictionaryToolbar", () => {
+test("GivenLanguageControlsHidden_WhenRendering_ThenRenderEmptyShell", () => {
   const formRef = createRef();
   const onSubmit = jest.fn();
-  const { container, getByTestId } = render(
+  const { container } = render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit }}
       textareaProps={{
@@ -116,7 +99,7 @@ test("GivenToolbarMode_WhenRenderingView_ThenRenderDictionaryToolbar", () => {
         onBlur: jest.fn(),
       }}
       languageControls={{
-        isVisible: true,
+        isVisible: false,
         props: {
           sourceLanguage: undefined,
           sourceLanguageOptions: [],
@@ -124,15 +107,6 @@ test("GivenToolbarMode_WhenRenderingView_ThenRenderDictionaryToolbar", () => {
           targetLanguageOptions: [],
         },
       }}
-      dictionaryToolbar={{
-        isVisible: true,
-        props: {
-          term: "hello",
-          lang: "en",
-          onCopy: jest.fn(),
-        },
-      }}
-      featureMode="toolbar"
       actionButtonProps={{
         value: "",
         isRecording: false,
@@ -145,6 +119,8 @@ test("GivenToolbarMode_WhenRenderingView_ThenRenderDictionaryToolbar", () => {
     />,
   );
 
-  expect(container.querySelector("[data-mode='toolbar']")).not.toBeNull();
-  expect(getByTestId("dictionary-toolbar-mock")).toBeInTheDocument();
+  const bottom = container.querySelector("[data-mode='language']");
+  expect(bottom).not.toBeNull();
+  const leftSlot = container.querySelector(`.${"input-bottom-left"}`);
+  expect(leftSlot?.childElementCount ?? 0).toBe(0);
 });

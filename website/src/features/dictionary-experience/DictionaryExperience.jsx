@@ -11,11 +11,15 @@ import {
   normalizeWordTargetLanguage,
 } from "@/utils";
 import { useDictionaryExperience } from "./hooks/useDictionaryExperience";
+import useBottomPanelState from "./hooks/useBottomPanelState";
+import BottomPanelSwitcher from "./components/BottomPanelSwitcher.jsx";
+import DictionaryActionPanel from "./components/DictionaryActionPanel.jsx";
 import "@/pages/App/App.css";
 
 export default function DictionaryExperience() {
   const {
     inputRef,
+    t,
     text,
     setText,
     dictionarySourceLanguage,
@@ -56,6 +60,31 @@ export default function DictionaryExperience() {
 
   const previewContent = finalText || streamText;
   const shouldRenderEntry = entry || previewContent || loading;
+  const hasDefinition = Boolean(entry);
+
+  const {
+    mode: bottomPanelMode,
+    activateSearchMode,
+    activateActionsMode,
+    handleFocusChange: handlePanelFocusChange,
+    handleScrollEscape,
+  } = useBottomPanelState({ hasDefinition, text });
+
+  const handleSearchButtonClick = () => {
+    activateSearchMode();
+    focusInput();
+  };
+
+  const handleInputFocusChange = (focused) => {
+    handlePanelFocusChange(focused);
+    if (!focused) {
+      activateActionsMode();
+    }
+  };
+
+  const handleMainScroll = () => {
+    handleScrollEscape();
+  };
 
   return (
     <>
@@ -66,30 +95,44 @@ export default function DictionaryExperience() {
           onSelectHistory: handleSelectHistory,
           activeView: activeSidebarView,
         }}
+        onMainMiddleScroll={handleMainScroll}
         bottomContent={
           <div className="app-bottom">
-            <ChatInput
-              inputRef={inputRef}
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              onSubmit={handleSend}
-              onVoice={handleVoice}
-              placeholder={chatInputPlaceholder}
-              maxRows={5}
-              sourceLanguage={dictionarySourceLanguage}
-              sourceLanguageOptions={sourceLanguageOptions}
-              sourceLanguageLabel={dictionarySourceLanguageLabel}
-              onSourceLanguageChange={setDictionarySourceLanguage}
-              targetLanguage={dictionaryTargetLanguage}
-              targetLanguageOptions={targetLanguageOptions}
-              targetLanguageLabel={dictionaryTargetLanguageLabel}
-              onTargetLanguageChange={setDictionaryTargetLanguage}
-              onSwapLanguages={handleSwapLanguages}
-              swapLabel={dictionarySwapLanguagesLabel}
-              normalizeSourceLanguageFn={normalizeWordSourceLanguage}
-              normalizeTargetLanguageFn={normalizeWordTargetLanguage}
-              dictionaryActionBarProps={dictionaryActionBarProps}
-              hasDefinition={Boolean(entry)}
+            <BottomPanelSwitcher
+              mode={bottomPanelMode}
+              searchContent={
+                <ChatInput
+                  inputRef={inputRef}
+                  value={text}
+                  onChange={(event) => setText(event.target.value)}
+                  onSubmit={handleSend}
+                  onVoice={handleVoice}
+                  placeholder={chatInputPlaceholder}
+                  maxRows={5}
+                  sourceLanguage={dictionarySourceLanguage}
+                  sourceLanguageOptions={sourceLanguageOptions}
+                  sourceLanguageLabel={dictionarySourceLanguageLabel}
+                  onSourceLanguageChange={setDictionarySourceLanguage}
+                  targetLanguage={dictionaryTargetLanguage}
+                  targetLanguageOptions={targetLanguageOptions}
+                  targetLanguageLabel={dictionaryTargetLanguageLabel}
+                  onTargetLanguageChange={setDictionaryTargetLanguage}
+                  onSwapLanguages={handleSwapLanguages}
+                  swapLabel={dictionarySwapLanguagesLabel}
+                  normalizeSourceLanguageFn={normalizeWordSourceLanguage}
+                  normalizeTargetLanguageFn={normalizeWordTargetLanguage}
+                  onFocusChange={handleInputFocusChange}
+                />
+              }
+              actionsContent={
+                hasDefinition ? (
+                  <DictionaryActionPanel
+                    actionBarProps={dictionaryActionBarProps ?? {}}
+                    onRequestSearch={handleSearchButtonClick}
+                    searchButtonLabel={t?.returnToSearch || "切换到搜索输入"}
+                  />
+                ) : null
+              }
             />
             <ICP />
           </div>

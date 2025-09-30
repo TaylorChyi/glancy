@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - 后续可在此处扩展动作策略映射或接入特性开关以支持更多输入模式。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 export type LanguageValue = string | symbol | undefined;
 
@@ -19,32 +19,6 @@ export interface LanguageOption {
   value: string | symbol;
   label: string;
 }
-
-export interface DictionaryToolbarProps {
-  visible?: boolean;
-  term?: string;
-  lang?: string;
-  onReoutput?: () => void;
-  disabled?: boolean;
-  versions?: Array<Record<string, unknown>>;
-  activeVersionId?: string | number | null;
-  onNavigate?: (versionId: string | number | null) => void;
-  onCopy?: () => void;
-  canCopy?: boolean;
-  favorited?: boolean;
-  onToggleFavorite?: () => void;
-  canFavorite?: boolean;
-  canDelete?: boolean;
-  onDelete?: () => void;
-  canShare?: boolean;
-  onShare?: () => void;
-  canReport?: boolean;
-  onReport?: () => void;
-  className?: string;
-  [key: string]: unknown;
-}
-
-export type SanitizedDictionaryToolbarProps = Omit<DictionaryToolbarProps, "visible">;
 
 export interface UseActionInputBehaviorParams {
   value: string;
@@ -71,8 +45,7 @@ export interface UseActionInputBehaviorParams {
   normalizeSourceLanguageFn?: (value: LanguageValue) => LanguageValue;
   normalizeTargetLanguageFn?: (value: LanguageValue) => LanguageValue;
   onMenuOpen?: () => void;
-  dictionaryActionBarProps?: DictionaryToolbarProps | null;
-  hasDefinition?: boolean;
+  onFocusChange?: (isFocused: boolean) => void;
 }
 
 export interface UseActionInputBehaviorResult {
@@ -108,11 +81,6 @@ export interface UseActionInputBehaviorResult {
       onMenuOpen?: () => void;
     };
   };
-  dictionaryToolbar: {
-    isVisible: boolean;
-    props: SanitizedDictionaryToolbarProps | null;
-  };
-  featureMode: "language" | "toolbar";
   actionButtonProps: {
     value: string;
     isRecording?: boolean;
@@ -164,13 +132,11 @@ export default function useActionInputBehavior({
   normalizeSourceLanguageFn = (language) => language,
   normalizeTargetLanguageFn = (language) => language,
   onMenuOpen,
-  dictionaryActionBarProps,
-  hasDefinition = false,
+  onFocusChange,
 }: UseActionInputBehaviorParams): UseActionInputBehaviorResult {
   const formRef = useRef<HTMLFormElement | null>(null);
   const internalTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const voiceCooldownRef = useRef<number>(0);
-  const [isTextareaFocused, setIsTextareaFocused] = useState(false);
 
   const setTextareaRef = useCallback(
     (node: HTMLTextAreaElement | null) => {
@@ -214,12 +180,12 @@ export default function useActionInputBehavior({
   }, [autoResize, value]);
 
   const handleFocus = useCallback(() => {
-    setIsTextareaFocused(true);
-  }, []);
+    onFocusChange?.(true);
+  }, [onFocusChange]);
 
   const handleBlur = useCallback(() => {
-    setIsTextareaFocused(false);
-  }, []);
+    onFocusChange?.(false);
+  }, [onFocusChange]);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -265,37 +231,6 @@ export default function useActionInputBehavior({
   const isVoiceDisabled = typeof onVoice !== "function";
   const isLanguageControlsVisible =
     languageOptions.source.length > 0 || languageOptions.target.length > 0;
-  const normalizedToolbar = useMemo(
-    () => dictionaryActionBarProps ?? null,
-    [dictionaryActionBarProps],
-  );
-  /**
-   * 意图：通过最小状态机在语言切换与工具栏之间流转，遵循“输入优先、复用工具栏”的交互规则。
-   * 取舍：
-   *  - 采用本地聚焦状态避免引入全局 context，保证 Hook 自洽；
-   *  - 工具栏显隐依赖 hasDefinition 与输入内容，避免渲染抖动。
-   */
-  const sanitizedToolbarProps = useMemo<SanitizedDictionaryToolbarProps | null>(
-    () => {
-      if (!normalizedToolbar) {
-        return null;
-      }
-      const { visible: _visible, ...rest } = normalizedToolbar;
-      return rest;
-    },
-    [normalizedToolbar],
-  );
-  const hasTypedContent = value.trim().length > 0;
-  const shouldShowToolbar =
-    Boolean(hasDefinition) &&
-    !isTextareaFocused &&
-    !hasTypedContent &&
-    Boolean(normalizedToolbar) &&
-    (normalizedToolbar?.visible ?? true);
-  const featureMode: "language" | "toolbar" = shouldShowToolbar
-    ? "toolbar"
-    : "language";
-
   return {
     formProps: {
       ref: formRef,
@@ -329,11 +264,6 @@ export default function useActionInputBehavior({
         onMenuOpen,
       },
     },
-    dictionaryToolbar: {
-      isVisible: shouldShowToolbar,
-      props: sanitizedToolbarProps,
-    },
-    featureMode,
     actionButtonProps: {
       value,
       isRecording,
