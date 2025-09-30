@@ -1,11 +1,4 @@
 .toolbar {
-  width: min(960px, 100%);
-  margin: 0 auto;
+  width: 100%;
   box-sizing: border-box;
-}
-
-@media (width <= 768px) {
-  .toolbar {
-    width: 100%;
-  }
 }

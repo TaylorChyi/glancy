@@ -197,3 +197,69 @@ test("GivenLanguageOptions_WhenProvided_ThenToggleVisibilityAndProps", () => {
   expect(result.current.languageControls.props.targetLanguageOptions).toHaveLength(1);
 });
 
+/**
+ * 测试目标：当存在释义且输入框失焦且为空时展示工具栏模式，反之展示语言模式。
+ * 前置条件：hasDefinition=true，dictionaryActionBarProps 提供最小必要字段。
+ * 步骤：
+ *  1) 初始渲染时断言 featureMode=toolbar。
+ *  2) 触发 onFocus/onBlur 切换，观察模式变化。
+ *  3) rerender 注入非空 value，再次失焦确保仍处于语言模式。
+ * 断言：
+ *  - 失焦且 value 为空时 dictionaryToolbar.isVisible=true。
+ *  - 聚焦或存在文本时 featureMode 固定为 language。
+ * 边界/异常：
+ *  - 当 value 重新置空但 hasDefinition=false 时，工具栏保持隐藏（靠 props 约束）。
+ */
+test("GivenDefinitionFocusTransitions_WhenToggling_ThenSwitchFeatureMode", () => {
+  const { result, rerender } = renderHook(
+    (props: Parameters<typeof useActionInputBehavior>[0]) =>
+      useActionInputBehavior(props),
+    {
+      initialProps: {
+        value: "",
+        hasDefinition: true,
+        dictionaryActionBarProps: { term: "hello" },
+      },
+    },
+  );
+
+  expect(result.current.featureMode).toBe("toolbar");
+  expect(result.current.dictionaryToolbar.isVisible).toBe(true);
+
+  act(() => {
+    result.current.textareaProps.onFocus();
+  });
+
+  expect(result.current.featureMode).toBe("language");
+  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
+
+  act(() => {
+    result.current.textareaProps.onBlur();
+  });
+
+  expect(result.current.featureMode).toBe("toolbar");
+  expect(result.current.dictionaryToolbar.isVisible).toBe(true);
+
+  rerender({
+    value: "draft",
+    hasDefinition: true,
+    dictionaryActionBarProps: { term: "hello" },
+  });
+
+  expect(result.current.featureMode).toBe("language");
+  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
+
+  act(() => {
+    result.current.textareaProps.onBlur();
+  });
+
+  rerender({
+    value: "",
+    hasDefinition: false,
+    dictionaryActionBarProps: { term: "hello" },
+  });
+
+  expect(result.current.featureMode).toBe("language");
+  expect(result.current.dictionaryToolbar.isVisible).toBe(false);
+});
+

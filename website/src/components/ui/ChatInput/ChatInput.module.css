@@ -41,6 +41,10 @@
     );
 }
 
+.input-surface-bottom[data-mode="toolbar"] {
+  align-items: flex-start;
+}
+
 .input-bottom-left {
   flex: 1 1 auto;
   display: flex;
@@ -48,10 +52,30 @@
   min-width: 0;
 }
 
+.input-surface-bottom[data-mode="toolbar"] .input-bottom-left {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--chat-input-toolbar-gap, 8px);
+}
+
 .input-bottom-right {
   flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
+}
+
+.input-surface-bottom[data-mode="toolbar"] .input-bottom-right {
+  align-self: flex-start;
+}
+
+.dictionary-toolbar-wrapper {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.dictionary-toolbar {
+  width: 100%;
 }
 
 @media (width <= 640px) {

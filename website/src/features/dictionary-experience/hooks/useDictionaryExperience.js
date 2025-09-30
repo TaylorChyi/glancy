@@ -716,7 +716,6 @@ export function useDictionaryExperience() {
 
   const dictionaryActionBarProps = useMemo(
     () => ({
-      visible: hasResolvedEntry,
       term: resolvedTerm,
       lang,
       onReoutput: handleReoutput,

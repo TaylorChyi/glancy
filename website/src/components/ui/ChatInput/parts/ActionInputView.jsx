@@ -13,6 +13,7 @@
 import PropTypes from "prop-types";
 
 import SearchBox from "@/components/ui/SearchBox";
+import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
 import LanguageControls from "../LanguageControls.jsx";
 import ActionButton from "./ActionButton.jsx";
 import styles from "../ChatInput.module.css";
@@ -21,16 +22,34 @@ function ActionInputView({
   formProps,
   textareaProps,
   languageControls,
+  dictionaryToolbar,
+  featureMode,
   actionButtonProps,
 }) {
+  const { onFocus, onBlur, ...restTextareaProps } = textareaProps;
   const { isVisible, props: languageProps } = languageControls;
+  const toolbarProps = dictionaryToolbar?.props ?? null;
+  const toolbarClassName = toolbarProps
+    ? [styles["dictionary-toolbar"], toolbarProps.className]
+        .filter(Boolean)
+        .join(" ")
+    : styles["dictionary-toolbar"];
+  const shouldRenderLanguageControls =
+    featureMode === "language" && isVisible;
+  const shouldRenderToolbar =
+    featureMode === "toolbar" && dictionaryToolbar?.isVisible && toolbarProps;
 
   return (
     <form {...formProps} className={styles["input-wrapper"]}>
       <SearchBox className={styles["input-surface"]}>
         <div className={styles["input-surface-top"]}>
           <div className={styles["core-input"]}>
-            <textarea {...textareaProps} className={styles.textarea} />
+            <textarea
+              {...restTextareaProps}
+              className={styles.textarea}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
             <button
               type="submit"
               className={styles["submit-proxy"]}
@@ -39,9 +58,22 @@ function ActionInputView({
             />
           </div>
         </div>
-        <div className={styles["input-surface-bottom"]}>
+        <div
+          className={styles["input-surface-bottom"]}
+          data-mode={featureMode}
+        >
           <div className={styles["input-bottom-left"]}>
-            {isVisible ? <LanguageControls {...languageProps} /> : null}
+            {shouldRenderLanguageControls ? (
+              <LanguageControls {...languageProps} />
+            ) : null}
+            {shouldRenderToolbar ? (
+              <div className={styles["dictionary-toolbar-wrapper"]}>
+                <DictionaryEntryActionBar
+                  {...toolbarProps}
+                  className={toolbarClassName}
+                />
+              </div>
+            ) : null}
           </div>
           <div className={styles["input-bottom-right"]}>
             <ActionButton {...actionButtonProps} />
@@ -64,6 +96,8 @@ ActionInputView.propTypes = {
     value: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
     onKeyDown: PropTypes.func.isRequired,
+    onFocus: PropTypes.func.isRequired,
+    onBlur: PropTypes.func.isRequired,
   }).isRequired,
   languageControls: PropTypes.shape({
     isVisible: PropTypes.bool.isRequired,
@@ -93,6 +127,11 @@ ActionInputView.propTypes = {
       onMenuOpen: PropTypes.func,
     }).isRequired,
   }).isRequired,
+  dictionaryToolbar: PropTypes.shape({
+    isVisible: PropTypes.bool.isRequired,
+    props: PropTypes.oneOfType([PropTypes.object, PropTypes.oneOf([null])]),
+  }).isRequired,
+  featureMode: PropTypes.oneOf(["language", "toolbar"]).isRequired,
   actionButtonProps: PropTypes.shape({
     value: PropTypes.string.isRequired,
     isRecording: PropTypes.bool,
