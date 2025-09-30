@@ -60,32 +60,7 @@ ActionInput.propTypes = {
   normalizeSourceLanguageFn: PropTypes.func,
   normalizeTargetLanguageFn: PropTypes.func,
   onMenuOpen: PropTypes.func,
-  dictionaryActionBarProps: PropTypes.shape({
-    term: PropTypes.string,
-    lang: PropTypes.string,
-    onReoutput: PropTypes.func,
-    disabled: PropTypes.bool,
-    versions: PropTypes.arrayOf(PropTypes.object),
-    activeVersionId: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number,
-      PropTypes.oneOf([null]),
-    ]),
-    onNavigate: PropTypes.func,
-    onCopy: PropTypes.func,
-    canCopy: PropTypes.bool,
-    favorited: PropTypes.bool,
-    onToggleFavorite: PropTypes.func,
-    canFavorite: PropTypes.bool,
-    canDelete: PropTypes.bool,
-    onDelete: PropTypes.func,
-    canShare: PropTypes.bool,
-    onShare: PropTypes.func,
-    canReport: PropTypes.bool,
-    onReport: PropTypes.func,
-    className: PropTypes.string,
-  }),
-  hasDefinition: PropTypes.bool,
+  onFocusChange: PropTypes.func,
 };
 
 ActionInput.defaultProps = {
@@ -112,8 +87,7 @@ ActionInput.defaultProps = {
   normalizeSourceLanguageFn: (value) => value,
   normalizeTargetLanguageFn: (value) => value,
   onMenuOpen: undefined,
-  dictionaryActionBarProps: undefined,
-  hasDefinition: false,
+  onFocusChange: undefined,
 };
 
 export default ActionInput;
