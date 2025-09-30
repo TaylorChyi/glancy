@@ -10,9 +10,64 @@
   width: 100%;
 }
 
+/*
+ * 结构说明：SearchBox 作为外层容器保持水平 padding，这里重置为纵向布局，
+ * 通过上下分区承载 textarea 与操作栏，便于未来扩展更多状态信息。
+ */
 .input-surface {
   --padding-y: 0;
-  --slot-gap: var(--sb-gap, 16px);
+  --slot-gap: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.input-surface-top {
+  padding-block: var(--chat-input-top-pad-y, 16px);
+}
+
+.input-surface-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--chat-input-bottom-gap, 12px);
+  padding-block: var(--chat-input-bottom-pad-y, 12px);
+  border-top: 1px solid var(--sb-divider, rgb(255 255 255 / 10%));
+  box-shadow: var(
+      --chat-input-bottom-shadow,
+      inset 0 1px 0 rgb(255 255 255 / 6%)
+    );
+}
+
+.input-bottom-left {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.input-bottom-right {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (width <= 640px) {
+  .input-surface-bottom {
+    flex-wrap: wrap;
+    row-gap: var(--chat-input-bottom-gap, 12px);
+  }
+
+  .input-bottom-left {
+    width: 100%;
+  }
+
+  .input-bottom-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .language-shell {
@@ -106,14 +161,6 @@
 
 .language-trigger-label {
   display: none;
-}
-
-.language-divider {
-  width: var(--sb-divider-w, 1px);
-  align-self: stretch;
-  background: var(--sb-divider, rgb(255 255 255 / 10%));
-  border-radius: 999px;
-  margin-block: calc((var(--sb-h, 56px) - var(--seg-h, 44px)) / 2);
 }
 
 .language-arrow,
