@@ -97,7 +97,7 @@ export default function DictionaryExperience() {
         }}
         onMainMiddleScroll={handleMainScroll}
         bottomContent={
-          <div className="app-bottom">
+          <>
             <BottomPanelSwitcher
               mode={bottomPanelMode}
               searchContent={
@@ -135,7 +135,7 @@ export default function DictionaryExperience() {
               }
             />
             <ICP />
-          </div>
+          </>
         }
       >
         <div className={displayClassName}>

@@ -35,6 +35,7 @@ const SidebarLayout = forwardRef(function SidebarLayout(
       ) : null}
       <aside
         ref={ref}
+        id="sidebar"
         data-testid="sidebar"
         className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""} ${styles.container}`}
       >
