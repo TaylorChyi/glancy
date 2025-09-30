@@ -12,6 +12,92 @@ const { default: ActionInput } = await import(
 );
 
 /**
+ * 测试目标：当输入为空时，动作按钮保持语音态且具备节流效果。
+ * 前置条件：提供语音回调与录音中标记。
+ * 步骤：
+ *  1) 渲染组件并定位语音按钮。
+ *  2) 连续点击两次按钮。
+ * 断言：
+ *  - aria-label 与 aria-pressed 对应语音态。
+ *  - 节流生效，仅第一次点击触发语音回调。
+ * 边界/异常：
+ *  - 验证快速重复点击被忽略。
+ */
+test("renders voice action for empty value and throttles clicks", () => {
+  const onVoice = jest.fn();
+  render(
+    <ActionInput
+      value=""
+      onChange={() => {}}
+      onSubmit={() => {}}
+      onVoice={onVoice}
+      voiceLabel="Start voice capture"
+      isRecording
+    />,
+  );
+
+  const voiceButton = screen.getByRole("button", {
+    name: "Start voice capture",
+  });
+  expect(voiceButton).toHaveAttribute("aria-label", "Start voice capture");
+  expect(voiceButton).toHaveAttribute("aria-pressed", "true");
+
+  fireEvent.click(voiceButton);
+  fireEvent.click(voiceButton);
+
+  expect(onVoice).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * 测试目标：当输入包含文本时，动作按钮切换到发送态并触发表单提交。
+ * 前置条件：通过受控组件维护输入值，提供自定义发送与语音标签。
+ * 步骤：
+ *  1) 输入文本使按钮进入发送态。
+ *  2) 点击按钮触发 requestSubmit。
+ * 断言：
+ *  - aria-label 变为发送文案且 aria-pressed 被移除。
+ *  - onSubmit 被调用且输入被清空，按钮回到语音态。
+ * 边界/异常：
+ *  - 确认状态切换后语音按钮重新出现。
+ */
+test("switches to send action when populated and submits form", () => {
+  const handleSubmit = jest.fn();
+
+  function Wrapper() {
+    const [value, setValue] = useState("");
+    return (
+      <ActionInput
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onSubmit={(event) => {
+          handleSubmit(event);
+          setValue("");
+        }}
+        sendLabel="Send message"
+        voiceLabel="Resume voice"
+      />
+    );
+  }
+
+  render(<Wrapper />);
+
+  const textarea = screen.getByRole("textbox");
+  fireEvent.change(textarea, { target: { value: "hello" } });
+
+  const sendButton = screen.getByRole("button", { name: "Send message" });
+  expect(sendButton).toHaveAttribute("aria-label", "Send message");
+  expect(sendButton.getAttribute("aria-pressed")).toBeNull();
+
+  fireEvent.click(sendButton);
+
+  expect(handleSubmit).toHaveBeenCalledTimes(1);
+  expect(textarea.value).toBe("");
+  expect(
+    screen.getByRole("button", { name: "Resume voice" }),
+  ).toBeInTheDocument();
+});
+
+/**
  * 验证输入框在不同回车场景下的提交行为：
  * - 普通 Enter 应触发表单提交；
  * - Shift+Enter 仅插入换行，不触发表单提交。
