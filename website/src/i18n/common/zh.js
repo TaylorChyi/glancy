@@ -87,7 +87,7 @@ export default {
   searchButton: "搜索",
   primaryNavDictionaryLabel: "格律词典",
   primaryNavDictionaryDescription: "沉浸式灵感解读",
-  primaryNavLibraryLabel: "致知单词",
+  primaryNavLibraryLabel: "致用单词",
   primaryNavLibraryDescription: "私享收藏集",
   primaryNavEntriesLabel: "词条",
   termLabel: "词条",

@@ -94,7 +94,7 @@ export default {
   searchButton: "Search",
   primaryNavDictionaryLabel: "Glancy Dictionary",
   primaryNavDictionaryDescription: "Immersive lexical intelligence",
-  primaryNavLibraryLabel: "Gomemo",
+  primaryNavLibraryLabel: "Goyoo",
   primaryNavLibraryDescription: "Your private word atelier",
   primaryNavEntriesLabel: "Entries",
   termLabel: "Term",
