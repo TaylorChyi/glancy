@@ -1,16 +1,28 @@
+/**
+ * 背景：
+ *  - Sidebar 既要处理业务逻辑又要渲染结构，难以扩展测试。
+ * 目的：
+ *  - 精简为容器组件，使用 Hook 聚合逻辑并将数据传递给展示层组件。
+ * 关键决策与取舍：
+ *  - 维持 forwardRef 以兼容既有外部调用；同时按照“容器 + 展示”模式拆分导航、布局，
+ *    舍弃继续在此文件内拼接 DOM 的方案，从而提升可维护性。
+ * 影响范围：
+ *  - DOM 结构保持一致，调用方仅感知到更清晰的组件边界。
+ * 演进与TODO：
+ *  - 可在 Hook 中扩展更多导航项或特性开关，容器层保持稳定。
+ */
 import { forwardRef, useMemo } from "react";
 import PropTypes from "prop-types";
-import { useLanguage } from "@/context";
-import { useIsMobile } from "@/utils";
-import SidebarHistory from "./SidebarHistory.jsx";
-import SidebarUser from "./SidebarUser.jsx";
-import ThemeIcon from "@/components/ui/Icon";
-import styles from "./Sidebar.module.css";
+import SidebarHistorySection from "./SidebarHistorySection.jsx";
+import SidebarUserSection from "./SidebarUserSection.jsx";
+import SidebarNavigation from "./actions/SidebarNavigation.jsx";
+import SidebarLayout from "./layout/SidebarLayout.jsx";
+import useSidebarNavigation from "./hooks/useSidebarNavigation.js";
 
 function Sidebar(
   {
     isMobile: mobileProp,
-    open = false,
+    open,
     onClose,
     onShowDictionary,
     onShowFavorites,
@@ -19,104 +31,36 @@ function Sidebar(
   },
   ref,
 ) {
-  const defaultMobile = useIsMobile();
-  const isMobile = mobileProp ?? defaultMobile;
-  const { t, lang } = useLanguage();
+  const navigationState = useSidebarNavigation({
+    isMobile: mobileProp,
+    open,
+    onClose,
+    onShowDictionary,
+    onShowFavorites,
+    activeView,
+  });
 
-  const headerLabel = useMemo(() => {
-    if (t.sidebarNavigationLabel) return t.sidebarNavigationLabel;
-    return lang === "zh" ? "导航" : "Navigation";
-  }, [lang, t.sidebarNavigationLabel]);
-
-  const dictionaryLabel = t.primaryNavDictionaryLabel || "Glancy";
-  const libraryLabel =
-    t.primaryNavLibraryLabel ||
-    t.favorites ||
-    t.primaryNavEntriesLabel ||
-    "Library";
-  const historyTitle =
-    t.searchHistory || (lang === "zh" ? "搜索记录" : "History");
-  const entriesTitle =
-    t.primaryNavEntriesLabel || (lang === "zh" ? "词条" : "Entries");
-
-  const handleDictionary = () => {
-    if (typeof onShowDictionary === "function") {
-      onShowDictionary();
-      return;
-    }
-    window.location.reload();
-  };
-
-  const handleFavorites = () => {
-    if (typeof onShowFavorites === "function") {
-      onShowFavorites();
-    }
-  };
-
-  const appNavItems = [
-    {
-      key: "dictionary",
-      label: dictionaryLabel,
-      icon: "glancy-web",
-      onClick: handleDictionary,
-      active: activeView === "dictionary",
-      testId: "sidebar-nav-dictionary",
-    },
-    {
-      key: "favorites",
-      label: libraryLabel,
-      icon: "library",
-      onClick: handleFavorites,
-      active: activeView === "favorites",
-      testId: "sidebar-nav-favorites",
-    },
-  ];
+  const historyAriaLabel = useMemo(() => {
+    return navigationState.historyLabel || navigationState.entriesLabel;
+  }, [navigationState.entriesLabel, navigationState.historyLabel]);
 
   return (
-    <>
-      {isMobile && open && (
-        <div className="sidebar-overlay" onClick={onClose} />
-      )}
-      <aside
-        ref={ref}
-        data-testid="sidebar"
-        className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""} ${styles.container}`}
-      >
-        <div className={styles.top} data-testid="sidebar-header">
-          <div className={styles.apps} role="group" aria-label={headerLabel}>
-            {appNavItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className={styles["app-button"]}
-                data-active={item.active}
-                aria-pressed={item.active}
-                onClick={item.onClick}
-                title={typeof item.label === "string" ? item.label : undefined}
-                data-testid={item.testId}
-              >
-                <ThemeIcon
-                  name={item.icon}
-                  alt={typeof item.label === "string" ? item.label : undefined}
-                  width={18}
-                  height={18}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-        <nav
-          className={styles.entries}
-          aria-label={historyTitle || entriesTitle}
-          data-testid="sidebar-scroll"
-        >
-          <SidebarHistory onSelectHistory={onSelectHistory} />
-        </nav>
-        <footer className={styles.footer} data-testid="sidebar-footer">
-          <SidebarUser />
-        </footer>
-      </aside>
-    </>
+    <SidebarLayout
+      ref={ref}
+      isMobile={navigationState.isMobile}
+      open={navigationState.isOpen}
+      showOverlay={navigationState.shouldShowOverlay}
+      onOverlayClick={navigationState.isMobile ? navigationState.closeSidebar : undefined}
+      navigation={
+        <SidebarNavigation
+          actions={navigationState.navigationActions}
+          ariaLabel={navigationState.headerLabel}
+        />
+      }
+      historyAriaLabel={historyAriaLabel}
+      historySection={<SidebarHistorySection onSelectHistory={onSelectHistory} />}
+      footerSection={<SidebarUserSection />}
+    />
   );
 }
 
@@ -128,6 +72,16 @@ Sidebar.propTypes = {
   onShowFavorites: PropTypes.func,
   activeView: PropTypes.string,
   onSelectHistory: PropTypes.func,
+};
+
+Sidebar.defaultProps = {
+  isMobile: undefined,
+  open: false,
+  onClose: undefined,
+  onShowDictionary: undefined,
+  onShowFavorites: undefined,
+  activeView: undefined,
+  onSelectHistory: undefined,
 };
 
 export default forwardRef(Sidebar);
