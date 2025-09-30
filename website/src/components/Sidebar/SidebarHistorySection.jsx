@@ -1,21 +1,33 @@
 /**
  * 背景：
- *  - Sidebar 历史区块此前通过匿名组件包裹列表，缺乏语义化命名。
+ *  - 历史列表逻辑此前分散在展示组件中，副作用与渲染耦合导致复用与测试困难。
  * 目的：
- *  - 提供明确的 `SidebarHistorySection` 作为展示组件，容器层可直接引用。
+ *  - 作为容器层承接 `useSidebarHistory` 的数据与回调，将其绑定到展示组件并渲染通知。
  * 关键决策与取舍：
- *  - 保持组件无状态，仅透传回调，避免与数据源耦合；若直接复用 HistoryList，
- *    会让容器持有多余逻辑，故保留薄包装。
+ *  - 保留滚动容器样式（styles.entries）以匹配布局约束，同时将 Toast 控制交由 Hook 管理；
+ *    若继续在展示层触发副作用，会破坏分层边界并阻碍未来扩展。
  * 影响范围：
- *  - Sidebar 容器改为引用该命名组件，其他模块不受影响。
+ *  - Sidebar 布局仍接收同名 Section，但结构由容器 + 展示组合组成，调用方无需调整。
  * 演进与TODO：
- *  - 若未来需要头部过滤器，可在此组件中扩展结构。
+ *  - 后续可在此容器内注入空状态或筛选器组件，而无需影响展示层接口。
  */
 import PropTypes from "prop-types";
-import HistoryList from "./HistoryList.jsx";
+import Toast from "@/components/ui/Toast";
+import styles from "./Sidebar.module.css";
+import HistoryListView from "./HistoryListView.jsx";
+import useSidebarHistory from "./hooks/useSidebarHistory.js";
 
 function SidebarHistorySection({ onSelectHistory }) {
-  return <HistoryList onSelect={onSelectHistory} />;
+  const { items, onSelect, onNavigate, toast } = useSidebarHistory({
+    onSelectHistory,
+  });
+
+  return (
+    <div className={styles.entries} data-testid="sidebar-history-section">
+      <HistoryListView items={items} onSelect={onSelect} onNavigate={onNavigate} />
+      <Toast open={toast.open} message={toast.message} onClose={toast.onClose} />
+    </div>
+  );
 }
 
 SidebarHistorySection.propTypes = {
