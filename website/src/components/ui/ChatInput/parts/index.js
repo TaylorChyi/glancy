@@ -11,4 +11,5 @@
  *  - 若子组件数量持续增加，可考虑引入自动化导出脚本。
  */
 export { default as ActionButton } from "./ActionButton.jsx";
+export { default as ActionInputView } from "./ActionInputView.jsx";
 export { default as LanguageMenu } from "./LanguageMenu.jsx";
