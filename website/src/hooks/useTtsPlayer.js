@@ -5,8 +5,6 @@ import { audioManager } from "@/utils/audioManager.js";
 import { decodeTtsAudio } from "@/utils/audio.js";
 import { useUserStore } from "@/store";
 
-/* global process */
-
 /**
  * Hook that encapsulates TTS playback logic with cache-first strategy.
  * It first tries a shortcut request which may return 204 when cache misses.

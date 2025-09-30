@@ -5,7 +5,7 @@ import AppProviders from "@/components/providers/AppProviders";
 import ViewportHeightUpdater from "@/components/system/ViewportHeightUpdater";
 import AppRouter from "@/routes/AppRouter";
 import registerServiceWorker from "@/utils/registerServiceWorker";
-import "./styles/index.css";
+import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

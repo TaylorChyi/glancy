@@ -122,7 +122,7 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
     },
     setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
       const normalized = normalizeWordLanguage(language);
-      set((state) => {
+      set(() => {
         switch (normalized) {
           case "CHINESE":
             return {

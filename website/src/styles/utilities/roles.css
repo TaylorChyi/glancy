@@ -1,0 +1,53 @@
+/*
+ * 背景：
+ *  - 语义角色变量就绪后，需要对应的工具类以降低 JSX 中的样式噪音。
+ * 目的：
+ *  - 将常用语义角色包装为 @layer utilities，便于在组件中直接通过类名引用。
+ * 关键决策与取舍：
+ *  - 仅暴露核心语义，避免与 Tailwind 默认色系混淆；后续可根据需求扩展。
+ * 影响范围：
+ *  - 所有消费 `.bg-surface`、`.text-onsurface` 等工具类的组件。
+ * 演进与TODO：
+ *  - 结合设计反馈迭代更多状态类（如 `border-danger`、`bg-soft-primary` 等）。
+ */
+@layer utilities {
+  .bg-surface {
+    background-color: var(--role-surface);
+  }
+
+  .text-onsurface {
+    color: var(--role-on-surface);
+  }
+
+  .text-onsurface-strong {
+    color: var(--role-on-surface-strong);
+  }
+
+  .text-muted {
+    color: var(--role-on-surface-muted);
+  }
+
+  .border-role {
+    border-color: var(--role-border);
+  }
+
+  .bg-primary {
+    background-color: var(--role-primary);
+  }
+
+  .text-onprimary {
+    color: var(--role-on-primary);
+  }
+
+  .text-onsuccess {
+    color: var(--role-on-success);
+  }
+
+  .text-onwarning {
+    color: var(--role-on-warning);
+  }
+
+  .text-ondanger {
+    color: var(--role-on-danger);
+  }
+}
