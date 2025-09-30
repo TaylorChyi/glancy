@@ -39,7 +39,7 @@ const SidebarLayout = forwardRef(function SidebarLayout(
         data-testid="sidebar"
         className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""} ${styles.container}`}
       >
-        <div className={styles.top} data-testid="sidebar-header">
+        <div className={styles.header} data-testid="sidebar-header">
           {navigation}
         </div>
         <nav
