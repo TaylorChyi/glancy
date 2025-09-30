@@ -205,9 +205,11 @@ export default function LanguageMenu({
         isOpen={open}
         anchorRef={triggerRef}
         onClose={() => setOpen(false)}
-        placement="bottom"
+        placement="top"
         align="start"
-        offset={8}
+        fallbackPlacements={["bottom"]}
+        offset={12}
+        // 优先将菜单展示在按钮上方；当顶部空间不足时自动回退至下方。
       >
         {open ? (
           <ul
