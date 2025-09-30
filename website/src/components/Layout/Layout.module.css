@@ -1,7 +1,21 @@
-.container {
+/**
+ * 背景：
+ *  - 旧布局采用多层容器并让 body/主区共同滚动，导致底部工具条与内容区之间互相遮挡。
+ * 目的：
+ *  - 构建 #app > #sidebar + #main(#content + #docker) 的固定布局，限定滚动发生在内容区。
+ * 关键决策与取舍：
+ *  - 通过 CSS 变量暴露侧边栏宽度与 docker 高度，便于拖拽/断点同步；
+ *  - 选用 fixed docker 搭配 backdrop，放弃 sticky 实现以规避移动端滚动兼容性问题。
+ * 影响范围：
+ *  - App 页面主体区域、底部搜索工具条、侧边栏拖拽宽度。
+ * 演进与TODO：
+ *  - 后续可将断点与 token 抽至主题配置，或拆分出独立的布局主题模块。
+ */
+
+.app {
   --layout-sidebar-min: 240px;
   --layout-sidebar-max: 420px;
-  --layout-sidebar-default: clamp(
+  --sidebar-w: clamp(
     var(--layout-sidebar-min),
     24vw,
     var(--layout-sidebar-max)
@@ -10,23 +24,26 @@
   --layout-content-padding-x: clamp(20px, 5vw, 48px);
   --layout-content-padding-top: clamp(24px, 5vw, 36px);
   --layout-content-padding-bottom: clamp(24px, 6vh, 36px);
+  --docker-h: 0px;
+  --docker-padding-y: clamp(16px, 4vw, 24px);
+  --docker-padding-x: clamp(20px, 5vw, 32px);
 
-  display: flex;
-  align-items: stretch;
+  position: relative;
   min-height: var(--vh);
+  width: 100%;
   background: var(--app-bg);
   color: var(--app-color);
-  position: relative;
-  overflow: hidden;
 }
 
 .resizer {
-  position: relative;
-  z-index: 2;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sidebar-w) - 3px);
   width: 6px;
-  min-height: 100%;
   cursor: col-resize;
   touch-action: none;
+  z-index: 120;
   transition: background 0.2s ease;
 }
 
@@ -58,9 +75,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1 1 auto;
+  align-items: stretch;
   min-height: var(--vh);
+  margin-left: var(--sidebar-w);
   background: var(--chat-window-bg);
   color: inherit;
   overflow: hidden;
@@ -71,7 +88,7 @@
   min-height: var(--bar-height);
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 65;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -138,17 +155,32 @@
     0 14px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
 }
 
-.main-content {
+.content {
   position: relative;
-  z-index: 1;
   flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   display: flex;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--docker-h, 0px) + env(safe-area-inset-bottom));
 }
 
-.main-middle {
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: color-mix(
+    in srgb,
+    var(--border-color) 32%,
+    transparent
+  );
+  border-radius: 6px;
+}
+
+.content-inner {
   flex: 1 1 auto;
   width: min(100%, var(--layout-content-max));
   padding: var(--layout-content-padding-top) var(--layout-content-padding-x)
@@ -160,72 +192,73 @@
   gap: clamp(24px, 4vw, 40px);
 }
 
-.main-bottom {
+.docker {
   position: fixed;
-  inset-inline: 0;
-  bottom: clamp(24px, 6vh, 40px);
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-w);
+  z-index: 70;
+  border-top: 1px solid
+    color-mix(in srgb, var(--border-color) 64%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--chat-window-bg) 92%,
+    transparent
+  );
+  backdrop-filter: blur(18px);
+  padding: var(--docker-padding-y) var(--docker-padding-x);
+  padding-bottom: calc(
+    var(--docker-padding-y) + env(safe-area-inset-bottom)
+  );
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.docker-inner {
+  width: min(100%, 960px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  pointer-events: none;
-  z-index: 5;
-}
-
-.main-bottom-inner {
-  width: min(clamp(360px, 50vw, 960px), calc(100vw - 48px));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-inline: auto;
-  pointer-events: auto;
+  gap: 12px;
 }
 
 @media (width <= 900px) {
-  .container {
-    --layout-sidebar-default: var(--layout-sidebar-min);
+  .app {
+    --sidebar-w: 0px;
+    --layout-content-padding-x: clamp(16px, 6vw, 28px);
+    --layout-content-padding-top: clamp(24px, 6vw, 32px);
+    --layout-content-padding-bottom: clamp(24px, 8vw, 32px);
   }
 
   .resizer {
     display: none;
   }
 
-  .main-middle {
-    padding: clamp(24px, 6vw, 32px) clamp(16px, 6vw, 28px)
-      calc(160px + env(safe-area-inset-bottom, 0px));
-    gap: clamp(20px, 5vw, 28px);
+  .main {
+    margin-left: 0;
   }
 
-  .main-bottom {
-    position: static;
-    transform: none;
-    width: 100%;
-    padding: clamp(16px, 6vw, 24px) clamp(12px, 6vw, 28px);
+  .docker {
+    left: 0;
+    padding: clamp(18px, 6vw, 28px) clamp(16px, 6vw, 28px);
+    padding-bottom: calc(clamp(18px, 6vw, 28px) + env(safe-area-inset-bottom));
   }
 
-  .main-bottom-inner {
+  .docker-inner {
     width: 100%;
   }
 }
 
 @media (width <= 600px) {
-  .container {
-    display: block;
-    min-height: var(--vh);
+  .app {
+    --layout-content-padding-x: clamp(14px, 6vw, 24px);
+    --layout-content-padding-top: clamp(20px, 6vw, 28px);
   }
 
-  .main {
-    min-height: var(--vh);
-  }
-
-  .main-bottom {
-    padding: clamp(16px, 6vw, 24px);
-  }
-
-  .main-bottom-inner {
-    width: 100%;
+  .docker-inner {
+    gap: 10px;
   }
 }
