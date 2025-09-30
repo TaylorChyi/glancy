@@ -1,18 +1,32 @@
-@import url("@/theme/colors.css");
-@import url("@/theme/variables.css");
-
+/*
+ * 背景：
+ *  - 图标缺失时需回退为首字母方块，旧实现依赖旧版主题变量，无法适配新的 roles token。
+ * 目的：
+ *  - 使用 roles token 重写回退样式，确保在 light/dark 与反相场景下对比度一致。
+ * 关键决策与取舍：
+ *  - 通过 color-mix 提供柔和背景，同时允许 data-variant 微调字重与字距；
+ *  - 支持 `.dark` class 与 data-theme 并存，兼容旧逻辑。
+ * 影响范围：
+ *  - 所有依赖 ThemeIcon 回退渲染的组件。
+ * 演进与TODO：
+ *  - 后续可接入角色色盘控制不同品牌的 fallback 配色策略。
+ */
 .fallback {
   --icon-fallback-size: 24px;
-  --icon-fallback-bg: color-mix(in srgb, var(--surface-light) 92%, transparent);
-  --icon-fallback-color: var(--text-primary-light);
-  --icon-fallback-ring: color-mix(in srgb, var(--neutral-300) 70%, transparent);
+  --icon-fallback-bg: color-mix(in oklab, var(--role-surface) 92%, transparent);
+  --icon-fallback-color: var(--role-on-surface);
+  --icon-fallback-ring: color-mix(
+    in oklab,
+    var(--role-border) 70%,
+    transparent
+  );
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--icon-fallback-size);
   height: var(--icon-fallback-size);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-xl, 0.875rem);
   background: var(--icon-fallback-bg);
   color: var(--icon-fallback-color);
   font-family: Inter, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
@@ -36,29 +50,42 @@
   font-weight: 700;
 }
 
+:global(.dark) .fallback,
 :root[data-theme="dark"] .fallback {
-  --icon-fallback-bg: color-mix(in srgb, var(--surface-dark) 82%, transparent);
-  --icon-fallback-color: var(--text-inverse-light);
-  --icon-fallback-ring: color-mix(in srgb, var(--neutral-700) 55%, transparent);
+  --icon-fallback-bg: color-mix(
+    in oklab,
+    var(--role-surface-strong) 82%,
+    transparent
+  );
+  --icon-fallback-color: var(--role-on-surface-strong);
+  --icon-fallback-ring: color-mix(
+    in oklab,
+    var(--role-border) 55%,
+    transparent
+  );
 }
 
 :root[data-theme="system"] .fallback {
-  --icon-fallback-bg: color-mix(in srgb, var(--surface-light) 92%, transparent);
-  --icon-fallback-color: var(--text-primary-light);
-  --icon-fallback-ring: color-mix(in srgb, var(--neutral-300) 70%, transparent);
+  --icon-fallback-bg: color-mix(in oklab, var(--role-surface) 92%, transparent);
+  --icon-fallback-color: var(--role-on-surface);
+  --icon-fallback-ring: color-mix(
+    in oklab,
+    var(--role-border) 70%,
+    transparent
+  );
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] .fallback {
     --icon-fallback-bg: color-mix(
-      in srgb,
-      var(--surface-dark) 82%,
+      in oklab,
+      var(--role-surface-strong) 82%,
       transparent
     );
-    --icon-fallback-color: var(--text-inverse-light);
+    --icon-fallback-color: var(--role-on-surface-strong);
     --icon-fallback-ring: color-mix(
-      in srgb,
-      var(--neutral-700) 55%,
+      in oklab,
+      var(--role-border) 55%,
       transparent
     );
   }

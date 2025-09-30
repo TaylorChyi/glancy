@@ -1,0 +1,22 @@
+/*
+ * 背景：
+ *  - 引入 Tailwind 后需要统一入口承载基础指令与语义 token。
+ * 目的：
+ *  - 通过单一入口串联 palette/roles/components/utilities，并兼容 legacy 样式。
+ * 关键决策与取舍：
+ *  - 先执行 Tailwind 层，再按 tokens → 组件 → 工具顺序导入，最后保留旧全局样式；
+ *  - 使用相对路径指向 src/styles，方便 Vite 与 Jest 解析。
+ * 影响范围：
+ *  - 全局样式初始化流程以及所有页面的样式注入顺序。
+ * 演进与TODO：
+ *  - 后续逐步拆解 legacy 样式至 Tailwind 或 tokens 体系，减少冗余规则。
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("./styles/tokens/palette.css");
+@import url("./styles/tokens/roles.css");
+@import url("./styles/components/button.css");
+@import url("./styles/utilities/roles.css");
+@import url("./styles/index.css");

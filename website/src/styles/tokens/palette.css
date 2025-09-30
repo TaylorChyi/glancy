@@ -1,0 +1,71 @@
+/*
+ * 背景：
+ *  - 旧版主题色分散在多个 CSS 文件中，不利于 Tailwind 语义色复用。
+ * 目的：
+ *  - 将所有基础色值统一抽取为 palette 层，供 roles.css 与组件变量消费。
+ * 关键决策与取舍：
+ *  - 采用浅/深主题两套品牌与中性色盘，兼容现有设计语言并方便扩展。
+ * 影响范围：
+ *  - 所有依赖语义变量的组件与 Tailwind 原子类。
+ * 演进与TODO：
+ *  - 后续可根据设计输入补充更多状态色或中性色密度。
+ */
+:root {
+  /* Brand（Light） */
+  --brand-1: #f5faff;
+  --brand-2: #e6f0ff;
+  --brand-3: #d6e6ff;
+  --brand-4: #c5dcff;
+  --brand-5: #a3c7ff;
+  --brand-6: #7db0ff;
+  --brand-7: #5898ff;
+  --brand-8: #3b86ff;
+  --brand-9: #2563eb;
+  --brand-10: #1d4ed8;
+  --brand-11: #1e40af;
+  --brand-12: #172554;
+
+  /* Neutral（Light） */
+  --neutral-1: #fff;
+  --neutral-2: #f7f7f9;
+  --neutral-3: #efeff2;
+  --neutral-4: #e6e7eb;
+  --neutral-5: #d3d5db;
+  --neutral-6: #b7bbc4;
+  --neutral-7: #9aa0ac;
+  --neutral-8: #7e8592;
+  --neutral-9: #636b78;
+  --neutral-10: #4b5563;
+  --neutral-11: #303744;
+  --neutral-12: #0f1115;
+}
+
+.dark {
+  /* Brand（Dark） */
+  --brand-1: #0b1220;
+  --brand-2: #0f1a2e;
+  --brand-3: #12203a;
+  --brand-4: #152746;
+  --brand-5: #1a2f58;
+  --brand-6: #1f3a73;
+  --brand-7: #23468e;
+  --brand-8: #2752a8;
+  --brand-9: #3b82f6;
+  --brand-10: #60a5fa;
+  --brand-11: #93c5fd;
+  --brand-12: #dbeafe;
+
+  /* Neutral（Dark） */
+  --neutral-1: #0f1115;
+  --neutral-2: #14171c;
+  --neutral-3: #181c22;
+  --neutral-4: #1f232b;
+  --neutral-5: #2a2e37;
+  --neutral-6: #363b46;
+  --neutral-7: #4b5160;
+  --neutral-8: #687086;
+  --neutral-9: #8a94a8;
+  --neutral-10: #b2bbca;
+  --neutral-11: #d6dbe4;
+  --neutral-12: #eef0f3;
+}

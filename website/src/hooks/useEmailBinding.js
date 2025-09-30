@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApi } from "@/hooks/useApi.js";
 
 const MODE_IDLE = "idle";
@@ -24,11 +24,15 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUnbinding, setIsUnbinding] = useState(false);
+  // 使用 ref 保证在同一个交互周期（尤其是测试中的单个 act）内读取到最新的请求邮箱，
+  // 避免仅依赖异步 setState 导致确认流程拿到空值。
+  const lastRequestedEmailRef = useRef(null);
   const [lastRequestedEmail, setLastRequestedEmail] = useState(null);
 
   useEffect(() => {
     setMode(MODE_IDLE);
     setCodeIssuedAt(null);
+    lastRequestedEmailRef.current = null;
     setLastRequestedEmail(null);
   }, [user?.email]);
 
@@ -50,6 +54,7 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
   const cancelEditing = useCallback(() => {
     setMode(MODE_IDLE);
     setCodeIssuedAt(null);
+    lastRequestedEmailRef.current = null;
     setLastRequestedEmail(null);
   }, []);
 
@@ -78,6 +83,7 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
           token: user.token,
         });
         setCodeIssuedAt(Date.now());
+        lastRequestedEmailRef.current = normalized;
         setLastRequestedEmail(normalized);
         return true;
       } finally {
@@ -105,16 +111,18 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
         throw error;
       }
 
-      if (!lastRequestedEmail) {
+      const requestedEmail = lastRequestedEmailRef.current;
+
+      if (!requestedEmail) {
         const error = new Error(ERROR_MISSING_REQUEST);
         error.code = ERROR_MISSING_REQUEST;
         throw error;
       }
 
-      if (normalizeEmail(lastRequestedEmail) !== normalizedEmail) {
+      if (normalizeEmail(requestedEmail) !== normalizedEmail) {
         const error = new Error(ERROR_EMAIL_MISMATCH);
         error.code = ERROR_EMAIL_MISMATCH;
-        error.meta = { requestedEmail: lastRequestedEmail };
+        error.meta = { requestedEmail };
         throw error;
       }
 
@@ -132,13 +140,14 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
         }
         setMode(MODE_IDLE);
         setCodeIssuedAt(null);
+        lastRequestedEmailRef.current = null;
         setLastRequestedEmail(null);
         return updatedEmail;
       } finally {
         setIsVerifying(false);
       }
     },
-    [client, ensureClient, lastRequestedEmail, onUserUpdate, user],
+    [client, ensureClient, onUserUpdate, user],
   );
 
   const unbindEmail = useCallback(async () => {
@@ -155,6 +164,7 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
       }
       setMode(MODE_IDLE);
       setCodeIssuedAt(null);
+      lastRequestedEmailRef.current = null;
       setLastRequestedEmail(null);
       return updatedEmail;
     } finally {

@@ -7,7 +7,8 @@ exports[`AuthForm submits valid credentials 1`] = `
   >
     <img
       alt="Glancy"
-      class="auth-logo"
+      class="inline-block align-middle text-onsurface auth-logo"
+      loading="lazy"
       src="/assets/glancy-web-light.svg"
     />
     <div
@@ -50,8 +51,9 @@ exports[`AuthForm submits valid credentials 1`] = `
           >
             <img
               alt="Show password"
-              class=""
+              class="inline-block align-middle text-onsurface"
               height="20"
+              loading="lazy"
               src="/assets/eye-light.svg"
               width="20"
             />
@@ -59,7 +61,8 @@ exports[`AuthForm submits valid credentials 1`] = `
         </div>
       </div>
       <button
-        class="button auth-primary-btn"
+        class="btn auth-primary-btn"
+        data-variant="secondary"
         type="submit"
       >
         Continue
@@ -90,12 +93,14 @@ exports[`AuthForm submits valid credentials 1`] = `
       class="login-options"
     >
       <button
-        class="button"
+        class="btn"
+        data-variant="secondary"
         type="button"
       >
         <img
           alt="wechat"
-          class=""
+          class="inline-block align-middle text-onsurface"
+          loading="lazy"
           src="/assets/wechat-light.svg"
         />
       </button>

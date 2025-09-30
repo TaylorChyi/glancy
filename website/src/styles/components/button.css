@@ -1,0 +1,104 @@
+/*
+ * 背景：
+ *  - 旧按钮样式以 CSS Module 为主，缺乏语义化变量，难以在不同主题下复用。
+ * 目的：
+ *  - 建立按钮组件变量体系，通过 data-attributes 控制强调/语义/图标反色。
+ * 关键决策与取舍：
+ *  - 使用 CSS 变量承载按钮视觉参数，结合 Tailwind `@apply` 保持一致间距；
+ *  - 提供 `data-icon` 与 `data-label` 控制强弱对比，满足“同主题内反相配色”。
+ * 影响范围：
+ *  - 所有 `.btn` 类按钮；后续 JS 组件可直接复用。
+ * 演进与TODO：
+ *  - 根据交互反馈补充 loading/ghost-soft 等更多变体，并与 tokens 体系联动。
+ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium;
+
+    background: var(--btn-bg, var(--role-surface));
+    color: var(--btn-label, var(--role-on-surface));
+    border-color: var(--btn-border, var(--role-border));
+    box-shadow: var(--btn-shadow, none);
+    outline: none;
+  }
+
+  .btn:focus-visible {
+    @apply ring-2 ring-offset-2;
+
+    --tw-ring-color: var(--role-focus);
+    --tw-ring-offset-color: transparent;
+  }
+
+  .btn .icon {
+    color: var(--btn-icon, var(--btn-label, var(--role-on-surface)));
+  }
+
+  .btn[data-variant="primary"] {
+    --btn-bg: var(--role-primary);
+    --btn-label: var(--role-on-primary);
+    --btn-border: transparent;
+  }
+
+  .btn[data-variant="secondary"] {
+    --btn-bg: var(--role-surface);
+    --btn-label: var(--role-on-surface);
+    --btn-border: var(--role-border);
+  }
+
+  .btn[data-variant="danger"] {
+    --btn-bg: var(--role-danger);
+    --btn-label: var(--role-on-danger);
+    --btn-border: transparent;
+  }
+
+  .btn[data-variant="ghost"] {
+    --btn-bg: transparent;
+    --btn-label: var(--role-on-surface);
+    --btn-border: transparent;
+  }
+
+  .btn[data-variant="outline"] {
+    --btn-bg: transparent;
+    --btn-label: var(--role-on-surface);
+    --btn-border: var(--role-border);
+  }
+
+  .btn[data-emphasis="soft"][data-variant="primary"] {
+    --btn-bg: color-mix(in oklab, var(--role-primary) 18%, transparent);
+    --btn-label: var(--role-primary);
+    --btn-border: color-mix(in oklab, var(--role-primary) 35%, transparent);
+  }
+
+  .btn[data-icon="dark"] {
+    --btn-icon: var(--role-on-surface-strong);
+  }
+
+  .btn[data-icon="light"] {
+    --btn-icon: var(--role-on-surface);
+  }
+
+  .btn[data-label="dark"] {
+    --btn-label: var(--role-on-surface-strong);
+  }
+
+  .btn[data-label="light"] {
+    --btn-label: var(--role-on-surface);
+  }
+
+  .btn:hover {
+    --btn-bg: var(--btn-bg-hover, var(--btn-bg));
+    --btn-label: var(--btn-label-hover, var(--btn-label));
+    --btn-border: var(--btn-border-hover, var(--btn-border));
+  }
+
+  .btn:active {
+    --btn-bg: var(--btn-bg-active, var(--btn-bg));
+    --btn-label: var(--btn-label-active, var(--btn-label));
+  }
+
+  .btn[disabled],
+  .btn[aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
