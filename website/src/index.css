@@ -1,20 +1,17 @@
 /*
  * 背景：
- *  - 引入 Tailwind 后需要统一入口承载基础指令与语义 token。
+ *  - Tailwind 指令与设计 token 原先混杂在同一文件，导致 @import 顺序不符合规范。
  * 目的：
- *  - 通过单一入口串联 palette/roles/components/utilities，并兼容 legacy 样式。
+ *  - 通过显式聚合入口维护全局样式装配顺序，并消除 stylelint 对 @import 位置的告警。
  * 关键决策与取舍：
- *  - 先执行 Tailwind 层，再按 tokens → 组件 → 工具顺序导入，最后保留旧全局样式；
- *  - 使用相对路径指向 src/styles，方便 Vite 与 Jest 解析。
+ *  - 拆分 Tailwind 指令至独立 tailwind.css，再以 @import 顺序表达依赖链，避免禁用规则的权宜之计；
+ *  - 保持 tokens → 组件 → 工具 → legacy 的加载节奏，兼容既有样式的演进计划。
  * 影响范围：
- *  - 全局样式初始化流程以及所有页面的样式注入顺序。
+ *  - 全局样式初始化流程以及任何依赖 index.css 的页面入口。
  * 演进与TODO：
- *  - 后续逐步拆解 legacy 样式至 Tailwind 或 tokens 体系，减少冗余规则。
+ *  - 后续可将 legacy 样式逐步迁移至分层 tokens/组件中，进一步减少跨文件耦合。
  */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import url("./tailwind.css");
 @import url("./styles/tokens/palette.css");
 @import url("./styles/tokens/roles.css");
 @import url("./styles/components/button.css");
