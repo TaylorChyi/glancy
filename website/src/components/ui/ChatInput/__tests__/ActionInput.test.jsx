@@ -186,3 +186,37 @@ test("handles language selection and swapping", async () => {
   fireEvent.click(swapButton);
   expect(handleSwap).toHaveBeenCalledTimes(1);
 });
+
+/**
+ * 测试目标：发送态时渲染纸飞机图标并沿用 currentColor 着色策略。
+ * 前置条件：传入非空输入值与 sendLabel，触发按钮进入发送态。
+ * 步骤：
+ *  1) 渲染组件并定位发送按钮。
+ *  2) 查询 data-icon-name 标记的元素。
+ * 断言：
+ *  - 元素存在且 aria-hidden 为 true；
+ *  - style 属性包含 currentColor 与生成的资源 URL。
+ * 边界/异常：
+ *  - 若资源缺失，测试将失败以提示清单未更新。
+ */
+test("renders paper airplane icon with inherited color in send state", () => {
+  render(
+    <ActionInput
+      value="hello"
+      onChange={() => {}}
+      onSubmit={() => {}}
+      sendLabel="Send"
+      voiceLabel="Voice"
+    />,
+  );
+
+  const sendButton = screen.getByRole("button", { name: "Send" });
+  const icon = sendButton.querySelector('[data-icon-name="paper-airplane"]');
+
+  expect(icon).not.toBeNull();
+  expect(icon).toHaveAttribute("aria-hidden", "true");
+
+  const styleAttr = (icon.getAttribute("style") ?? "").toLowerCase();
+  expect(styleAttr).toContain("currentcolor");
+  expect(styleAttr).toContain("file-mock");
+});
