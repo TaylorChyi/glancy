@@ -1,59 +1,141 @@
+/**
+ * 背景：
+ *  - 语音触发与消息发送共享一个操作入口，现状为双按钮结构，存在交互冗余。
+ * 目的：
+ *  - 提供统一的动作按钮，根据输入态自动切换语音与发送能力，减少误操作。
+ * 关键决策与取舍：
+ *  - 采用局部状态机（ActionButton）实现状态切换，重用现有节流逻辑，避免引入全局管理。
+ *  - 放弃均衡器入口，后续若需可在 ActionButton 内扩展菜单式交互。
+ * 影响范围：
+ *  - ChatInput 表单的动作区布局与可访问性标签。
+ * 演进与TODO：
+ *  - 后续可在语音态补充录音进度反馈，或引入长按手势。
+ */
 import { useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
-const EQUALIZER_ICON_SIZE = 18;
+const ACTION_BUTTON_COOLDOWN_MS = 500;
 
-function EqualizerIcon({ className }) {
+function SendIcon({ className }) {
   return (
     <svg
       className={className}
-      width={EQUALIZER_ICON_SIZE}
-      height={EQUALIZER_ICON_SIZE}
+      width="18"
+      height="18"
       viewBox="0 0 18 18"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect
-        x="2.75"
-        y="6"
-        width="2.5"
-        height="9.25"
-        rx="1.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <rect
-        x="7.75"
-        y="3"
-        width="2.5"
-        height="12.25"
-        rx="1.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <rect
-        x="12.75"
-        y="8"
-        width="2.5"
-        height="7.25"
-        rx="1.25"
-        stroke="currentColor"
-        strokeWidth="1.5"
+      <path
+        d="M2.25 15.75L16.5 9 2.25 2.25l4.5 6L2.25 15.75z"
+        fill="currentColor"
       />
     </svg>
   );
 }
 
-EqualizerIcon.propTypes = {
+SendIcon.propTypes = {
   className: PropTypes.string,
 };
 
-EqualizerIcon.defaultProps = {
+SendIcon.defaultProps = {
   className: undefined,
+};
+
+/**
+ * 意图：提供语音/发送的单一入口，根据输入状态自动切换动作。
+ * 输入：
+ *  - value：当前输入内容，用于判定是否展示发送态。
+ *  - isRecording：语音是否进行中，驱动 pressed 状态。
+ *  - voiceCooldownRef：节流引用，防止频繁触发语音。
+ *  - onVoice/onSubmit：对应语音与提交的回调。
+ * 输出：返回具备正确 aria 属性的按钮元素。
+ * 流程：
+ *  1) 基于 value.trim() 判定语音/发送态。
+ *  2) 点击时复用节流逻辑触发相应回调。
+ * 错误处理：禁用态下静默返回；节流窗口内忽略重复点击。
+ * 复杂度：O(1)，仅依赖常量时间判定。
+ */
+function ActionButton({
+  value,
+  isRecording,
+  voiceCooldownRef,
+  onVoice,
+  onSubmit,
+  isVoiceDisabled,
+  sendLabel,
+  voiceLabel,
+}) {
+  const trimmedLength = value.trim().length;
+  const isSendState = trimmedLength > 0;
+  const ariaLabel = isSendState ? sendLabel : voiceLabel;
+  const actionClassName = [
+    styles["action-button"],
+    styles[isSendState ? "action-button-send" : "action-button-voice"],
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const handleClick = useCallback(
+    (event) => {
+      event.preventDefault();
+      if (isSendState) {
+        onSubmit?.();
+        return;
+      }
+      if (isVoiceDisabled) {
+        return;
+      }
+      const now = Date.now();
+      if (now - voiceCooldownRef.current < ACTION_BUTTON_COOLDOWN_MS) {
+        return;
+      }
+      voiceCooldownRef.current = now;
+      onVoice?.();
+    },
+    [isSendState, isVoiceDisabled, onSubmit, onVoice, voiceCooldownRef],
+  );
+
+  return (
+    <button
+      type="button"
+      className={actionClassName}
+      onClick={handleClick}
+      aria-label={ariaLabel}
+      aria-pressed={
+        isSendState ? undefined : Boolean(isRecording)
+      }
+      disabled={isSendState ? false : isVoiceDisabled}
+    >
+      {isSendState ? (
+        <SendIcon className={styles["action-button-icon"]} />
+      ) : (
+        <span className={styles["action-button-dot"]} />
+      )}
+    </button>
+  );
+}
+
+ActionButton.propTypes = {
+  value: PropTypes.string.isRequired,
+  isRecording: PropTypes.bool,
+  voiceCooldownRef: PropTypes.shape({ current: PropTypes.number }).isRequired,
+  onVoice: PropTypes.func,
+  onSubmit: PropTypes.func,
+  isVoiceDisabled: PropTypes.bool,
+  sendLabel: PropTypes.string.isRequired,
+  voiceLabel: PropTypes.string.isRequired,
+};
+
+ActionButton.defaultProps = {
+  isRecording: false,
+  onVoice: undefined,
+  onSubmit: undefined,
+  isVoiceDisabled: false,
 };
 
 /**
@@ -65,11 +147,10 @@ function ActionInput({
   onChange,
   onSubmit,
   onVoice,
-  onEqualizer,
   inputRef,
   placeholder,
   voiceLabel = "Voice",
-  equalizerLabel = "Voice settings",
+  sendLabel = "Send",
   rows = 1,
   maxRows = 5,
   isRecording = false,
@@ -141,25 +222,10 @@ function ActionInput({
   );
 
   const isVoiceDisabled = typeof onVoice !== "function";
-  const handleEqualizer = useCallback(() => {
-    onEqualizer?.();
-  }, [onEqualizer]);
 
-  const handleVoice = useCallback(
-    (event) => {
-      if (isVoiceDisabled) {
-        return;
-      }
-      event.preventDefault();
-      const now = Date.now();
-      if (now - voiceCooldownRef.current < 500) {
-        return;
-      }
-      voiceCooldownRef.current = now;
-      onVoice?.();
-    },
-    [isVoiceDisabled, onVoice],
-  );
+  const handleActionSubmit = useCallback(() => {
+    formRef.current?.requestSubmit();
+  }, []);
 
   const hasSourceOptions = Array.isArray(sourceLanguageOptions)
     ? sourceLanguageOptions.length > 0
@@ -213,26 +279,16 @@ function ActionInput({
             aria-hidden="true"
           />
         </div>
-        <div className={styles["voice-controls"]}>
-          <button
-            type="button"
-            className={`${styles["voice-button"]} ${styles["voice-eq"]}`}
-            onClick={handleEqualizer}
-            aria-label={equalizerLabel}
-          >
-            <EqualizerIcon className={styles["equalizer-icon"]} />
-          </button>
-          <button
-            type="button"
-            className={`${styles["voice-button"]} ${styles["voice-rec"]}`}
-            onClick={handleVoice}
-            aria-label={voiceLabel}
-            aria-pressed={Boolean(isRecording)}
-            disabled={isVoiceDisabled}
-          >
-            <span className={styles["voice-dot"]} />
-          </button>
-        </div>
+        <ActionButton
+          value={value}
+          isRecording={isRecording}
+          voiceCooldownRef={voiceCooldownRef}
+          onVoice={onVoice}
+          onSubmit={handleActionSubmit}
+          isVoiceDisabled={isVoiceDisabled}
+          sendLabel={sendLabel}
+          voiceLabel={voiceLabel}
+        />
       </SearchBox>
     </form>
   );
@@ -245,14 +301,13 @@ ActionInput.propTypes = {
   onChange: PropTypes.func,
   onSubmit: PropTypes.func,
   onVoice: PropTypes.func,
-  onEqualizer: PropTypes.func,
   inputRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.any }),
   ]),
   placeholder: PropTypes.string,
   voiceLabel: PropTypes.string,
-  equalizerLabel: PropTypes.string,
+  sendLabel: PropTypes.string,
   rows: PropTypes.number,
   maxRows: PropTypes.number,
   isRecording: PropTypes.bool,
@@ -285,11 +340,10 @@ ActionInput.defaultProps = {
   onChange: undefined,
   onSubmit: undefined,
   onVoice: undefined,
-  onEqualizer: undefined,
   inputRef: undefined,
   placeholder: undefined,
   voiceLabel: "Voice",
-  equalizerLabel: "Voice settings",
+  sendLabel: "Send",
   rows: 1,
   maxRows: 5,
   isRecording: false,

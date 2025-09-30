@@ -171,17 +171,14 @@
   color: var(--sb-muted, #9fa7b3);
 }
 
-.voice-controls {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--btn-gap, 12px);
+
+.action-button {
   margin-inline-start: auto;
   flex-shrink: 0;
-}
-
-.voice-button {
   display: grid;
   place-items: center;
+  width: var(--btn-action, 44px);
+  height: var(--btn-action, 44px);
   border: none;
   border-radius: 999px;
   background: var(--sb-cta, #fff);
@@ -190,52 +187,53 @@
   cursor: pointer;
   transition:
     box-shadow 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
-.voice-button:hover {
+.action-button-voice,
+.action-button-send {
+  width: 100%;
+  height: 100%;
+}
+
+.action-button:hover {
   box-shadow: 0 12px 32px rgb(0 0 0 / 32%);
 }
 
-.voice-button:focus-visible {
+.action-button:focus-visible {
   outline: none;
   box-shadow:
     var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%)),
     var(--sb-cta-shadow, 0 10px 30px rgb(0 0 0 / 30%));
 }
 
-.voice-button:active {
+.action-button:active {
   transform: scale(0.98);
 }
 
-.voice-button[disabled] {
+.action-button[disabled] {
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
 }
 
-.voice-eq {
-  width: var(--btn-eq, 36px);
-  height: var(--btn-eq, 36px);
+.action-button-voice[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--sb-cta) 85%, black 15%);
 }
 
-.voice-rec {
-  width: var(--btn-rec, 44px);
-  height: var(--btn-rec, 44px);
-}
-
-.equalizer-icon {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-
-.voice-dot {
+.action-button-dot {
   display: block;
   width: 10px;
   height: 10px;
   border-radius: 999px;
   background: var(--sb-cta-icon, #0e1116);
+}
+
+.action-button-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .submit-proxy {
@@ -361,8 +359,3 @@
   opacity: 1;
 }
 
-@media (width <= 360px) {
-  .voice-eq {
-    display: none;
-  }
-}
