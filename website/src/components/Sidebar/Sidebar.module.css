@@ -20,60 +20,14 @@
   isolation: isolate;
 }
 
-.top {
+.header {
   padding: 16px 16px 8px;
 }
 
-.apps {
+.headerNav {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-}
-
-.app-button {
-  width: var(--sidebar-item-h);
-  height: var(--sidebar-item-h);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--sidebar-muted-color, var(--muted));
-  cursor: pointer;
-  transition:
-    background-color 160ms ease,
-    border-color 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.app-button:hover {
-  background: var(--sidebar-hover-bg, var(--hover));
-  color: var(--sidebar-color, var(--text));
-}
-
-.app-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--sidebar-accent, var(--accent)) 40%, transparent);
-}
-
-.app-button[data-active="true"] {
-  background: color-mix(
-    in srgb,
-    var(--sidebar-accent, var(--accent)) 16%,
-    transparent
-  );
-  border-color: color-mix(
-    in srgb,
-    var(--sidebar-accent, var(--accent)) 35%,
-    transparent
-  );
-  color: var(--sidebar-color, var(--text));
-}
-
-.app-button[data-active="true"]:hover {
-  transform: translateY(-1px);
 }
 
 .entries {

@@ -15,7 +15,7 @@ import { forwardRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import SidebarHistorySection from "./SidebarHistorySection.jsx";
 import SidebarUserSection from "./SidebarUserSection.jsx";
-import SidebarNavigation from "./actions/SidebarNavigation.jsx";
+import SidebarHeader from "./header/SidebarHeader.jsx";
 import SidebarLayout from "./layout/SidebarLayout.jsx";
 import useSidebarNavigation from "./hooks/useSidebarNavigation.js";
 
@@ -52,8 +52,8 @@ function Sidebar(
       showOverlay={navigationState.shouldShowOverlay}
       onOverlayClick={navigationState.isMobile ? navigationState.closeSidebar : undefined}
       navigation={
-        <SidebarNavigation
-          actions={navigationState.navigationActions}
+        <SidebarHeader
+          items={navigationState.navigationActions}
           ariaLabel={navigationState.headerLabel}
         />
       }

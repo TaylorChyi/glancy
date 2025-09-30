@@ -1,0 +1,69 @@
+import { render, screen, fireEvent } from "@testing-library/react";
+import { jest } from "@jest/globals";
+
+jest.unstable_mockModule("@/components/ui/Icon", () => ({
+  __esModule: true,
+  default: ({ name }) => <span data-testid={`icon-${name}`} />,
+}));
+
+const { default: SidebarHeader } = await import("../header/SidebarHeader.jsx");
+
+const createItems = () => [
+  {
+    key: "dictionary",
+    icon: "glancy-web",
+    label: "Dictionary",
+    active: true,
+    onClick: jest.fn(),
+    testId: "sidebar-nav-dictionary",
+  },
+  {
+    key: "favorites",
+    icon: "library",
+    label: "Favorites",
+    active: false,
+    onClick: jest.fn(),
+    testId: "sidebar-nav-favorites",
+  },
+];
+
+describe("SidebarHeader", () => {
+  /**
+   * 测试目标：点击底部项时应触发对应 onClick。
+   * 前置条件：提供带有 onClick mock 的导航项数组并渲染组件。
+   * 步骤：
+   *  1) 渲染 SidebarHeader。
+   *  2) 点击第二个 NavItem。
+   * 断言：
+   *  - 第二项 onClick 被调用一次（失败信息：致用单词入口未触发回调）。
+   * 边界/异常：
+   *  - 若 items 为空组件返回 null，本用例不覆盖。
+   */
+  test("Given items When click favorites Then invokes handler", () => {
+    const items = createItems();
+    render(<SidebarHeader items={items} ariaLabel="Navigation" />);
+
+    fireEvent.click(screen.getByTestId("sidebar-nav-favorites"));
+
+    expect(items[1].onClick).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：激活项需要暴露 aria-current 属性以支持样式与无障碍。
+   * 前置条件：提供带 active 标记的导航项数组。
+   * 步骤：
+   *  1) 渲染 SidebarHeader。
+   *  2) 获取 active 项。
+   * 断言：
+   *  - aria-current 值为 "page"（失败信息：激活态未映射到 aria-current）。
+   * 边界/异常：
+   *  - 未设置 active 时应省略 aria-current，本用例不覆盖。
+   */
+  test("Given active item When rendered Then exposes aria current", () => {
+    const items = createItems();
+    render(<SidebarHeader items={items} ariaLabel="Navigation" />);
+
+    const activeButton = screen.getByTestId("sidebar-nav-dictionary");
+    expect(activeButton).toHaveAttribute("aria-current", "page");
+  });
+});
