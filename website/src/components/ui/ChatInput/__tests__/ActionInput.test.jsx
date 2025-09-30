@@ -7,9 +7,7 @@ await jest.unstable_mockModule("@/components/ui/Popover/Popover.jsx", () => ({
   default: ({ isOpen, children }) => (isOpen ? <div>{children}</div> : null),
 }));
 
-const { default: ActionInput } = await import(
-  "@/components/ui/ChatInput/ActionInput.jsx"
-);
+const { ActionInput } = await import("@/components/ui/ChatInput");
 
 /**
  * 测试目标：当输入为空时，动作按钮保持语音态且具备节流效果。

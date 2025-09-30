@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import LanguageMenu from "./parts/LanguageMenu.jsx";
+import { LanguageMenu } from "./parts";
 import styles from "./ChatInput.module.css";
 
 export default function LanguageControls({

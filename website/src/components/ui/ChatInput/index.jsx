@@ -10,3 +10,5 @@ function ChatInput(props) {
 }
 
 export default ChatInput;
+export { ActionInput };
+export { ActionButton } from "./parts";
