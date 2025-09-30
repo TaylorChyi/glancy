@@ -13,38 +13,72 @@
  */
 import { useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
+import ICONS from "@/assets/icons.js";
 import SearchBox from "@/components/ui/SearchBox";
 import LanguageControls from "./LanguageControls.jsx";
 import styles from "./ChatInput.module.css";
 
 const ACTION_BUTTON_COOLDOWN_MS = 500;
 
-function SendIcon({ className }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M2.25 15.75L16.5 9 2.25 2.25l4.5 6L2.25 15.75z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
+const SEND_ICON_TOKEN = "paper-airplane";
 
-SendIcon.propTypes = {
-  className: PropTypes.string,
+/**
+ * 意图：根据图标注册表解析发送按钮使用的纸飞机资源，保持资源解析逻辑与其他图标一致。
+ * 输入：
+ *  - registry：由 `@/assets/icons` 暴露的只读清单。
+ * 输出：
+ *  - 返回最适合的资源 URL（单一/亮色/暗色优先级）。
+ * 流程：
+ *  1) 获取名称对应的变体映射；
+ *  2) 按 single -> light -> dark 顺序取首个可用资源；
+ *  3) 若不存在则返回 null，交由调用方处理回退逻辑。
+ * 错误处理：
+ *  - registry 缺失或缺少该图标时返回 null，避免运行时异常。
+ * 复杂度：O(1)，直接字典访问。
+ */
+const resolveSendIconResource = (registry) => {
+  const entry = registry?.[SEND_ICON_TOKEN];
+  if (!entry) {
+    return null;
+  }
+  return entry.single ?? entry.light ?? entry.dark ?? null;
 };
 
-SendIcon.defaultProps = {
-  className: undefined,
+/**
+ * 意图：基于 SVG 资源 URL 生成遮罩样式，确保按钮可以沿用 currentColor 着色策略。
+ * 输入：
+ *  - resource：SVG 文件的 URL。
+ * 输出：
+ *  - 包含 mask 与 -webkit-mask 的样式对象，用于 <span> 元素。
+ * 流程：
+ *  1) 构造统一的 `url(...) center / contain no-repeat` 片段；
+ *  2) 同步写入标准与 WebKit 前缀属性；
+ *  3) 返回冻结对象，防止运行期被意外修改。
+ * 错误处理：resource 为空时返回 null，由调用方决定降级策略。
+ * 复杂度：O(1)。
+ */
+const buildSendIconMaskStyle = (resource) => {
+  if (!resource) {
+    return null;
+  }
+  const maskFragment = `url(${resource}) center / contain no-repeat`;
+  return Object.freeze({
+    mask: maskFragment,
+    WebkitMask: maskFragment,
+  });
 };
+
+const SEND_ICON_MASK_STYLE = buildSendIconMaskStyle(
+  resolveSendIconResource(ICONS),
+);
+
+const SEND_ICON_INLINE_STYLE =
+  SEND_ICON_MASK_STYLE === null
+    ? null
+    : Object.freeze({
+        ...SEND_ICON_MASK_STYLE,
+        backgroundColor: "currentColor",
+      });
 
 /**
  * 意图：提供语音/发送的单一入口，根据输入状态自动切换动作。
@@ -106,13 +140,28 @@ function ActionButton({
       className={actionClassName}
       onClick={handleClick}
       aria-label={ariaLabel}
-      aria-pressed={
-        isSendState ? undefined : Boolean(isRecording)
-      }
+      aria-pressed={isSendState ? undefined : Boolean(isRecording)}
       disabled={isSendState ? false : isVoiceDisabled}
     >
       {isSendState ? (
-        <SendIcon className={styles["action-button-icon"]} />
+        SEND_ICON_INLINE_STYLE ? (
+          <span
+            aria-hidden="true"
+            className={styles["action-button-icon"]}
+            data-icon-name={SEND_ICON_TOKEN}
+            style={SEND_ICON_INLINE_STYLE}
+          />
+        ) : (
+          <svg
+            aria-hidden="true"
+            className={styles["action-button-icon"]}
+            viewBox="0 0 18 18"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M2.25 15.75 16.5 9 2.25 2.25l4.5 6-4.5 7.5Z" />
+          </svg>
+        )
       ) : (
         <span className={styles["action-button-dot"]} />
       )}
