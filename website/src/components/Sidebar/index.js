@@ -5,3 +5,4 @@ export { default as SidebarNavigation } from "./actions/SidebarNavigation.jsx";
 export { default as SidebarActionButton } from "./actions/SidebarActionButton.jsx";
 export { default as SidebarLayout } from "./layout/SidebarLayout.jsx";
 export { default as useSidebarNavigation } from "./hooks/useSidebarNavigation.js";
+export { default as useSidebarHistory } from "./hooks/useSidebarHistory.js";
