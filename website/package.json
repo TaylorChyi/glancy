@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "prebuild": "pnpm run icons:mono && pnpm run generate:icons",
+    "prebuild": "npm run icons:mono && npm run generate:icons",
     "lint": "eslint .",
     "preview": "vite preview",
     "generate:icons": "node scripts/generate-icon-manifest.mjs",
