@@ -198,13 +198,6 @@
   bottom: 0;
   left: var(--sidebar-w);
   z-index: 70;
-  border-top: 1px solid
-    color-mix(in srgb, var(--border-color) 64%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--chat-window-bg) 92%,
-    transparent
-  );
   backdrop-filter: blur(18px);
   padding: var(--docker-padding-y) var(--docker-padding-x);
   padding-bottom: calc(
