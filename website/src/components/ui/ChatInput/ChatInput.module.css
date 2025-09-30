@@ -16,12 +16,32 @@
 }
 
 .language-shell {
+  /*
+   * 约束语言徽标容器的最小宽度，避免不同语言代码导致布局抖动；
+   * 自定义属性允许未来在主题层统一调节数值。
+   */
+  --language-trigger-min-inline: var(--sb-language-trigger-min-inline, 4ch);
+  --language-shell-gap: clamp(10px, 2vw, var(--seg-arrow-gap, 12px));
+  --language-shell-padding-inline: clamp(16px, 4vw, var(--seg-pad-x, 20px));
+  --language-arrow-pad-inline: max(
+    8px,
+    calc(var(--language-shell-gap) * 0.75)
+  );
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: var(--seg-h, 44px);
-  padding-inline: var(--seg-pad-x, 20px);
-  gap: var(--seg-arrow-gap, 12px);
+  padding-inline: var(--language-shell-padding-inline);
+  gap: var(--language-shell-gap);
+  inline-size: fit-content;
+  min-inline-size: calc(
+    (
+        var(--language-trigger-min-inline) +
+          var(--language-shell-gap)
+      ) * 2 +
+      (var(--language-shell-padding-inline) * 2)
+  );
   border-radius: var(--seg-r, 22px);
   background: var(--sb-seg, #141b24);
   color: var(--sb-text, #edeff2);
@@ -63,7 +83,10 @@
   justify-content: center;
   gap: var(--seg-arrow-gap, 12px);
   height: 100%;
+  inline-size: fit-content;
+  min-inline-size: var(--language-trigger-min-inline, 4ch);
   padding: 0;
+  padding-inline: var(--seg-trigger-pad-inline, 4px);
   border: none;
   border-radius: calc(var(--seg-r, 22px) - 6px);
   background: transparent;
@@ -122,7 +145,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding-inline: var(--seg-arrow-gap, 12px);
+  padding-inline: var(--language-arrow-pad-inline);
   border: none;
   border-radius: calc(var(--seg-r, 22px) - 6px);
   background: transparent;
@@ -155,6 +178,21 @@
 
 .language-swap:active {
   transform: scale(0.96);
+}
+
+@media (width <= 360px) {
+  .language-shell {
+    --language-shell-gap: 8px;
+    --language-shell-padding-inline: 12px;
+    --language-arrow-pad-inline: max(6px, calc(var(--language-shell-gap) * 0.9));
+
+    justify-content: space-between;
+  }
+
+  .language-trigger {
+    min-inline-size: var(--sb-language-trigger-mobile-inline, 3.5ch);
+    padding-inline: 2px;
+  }
 }
 
 .core-input {

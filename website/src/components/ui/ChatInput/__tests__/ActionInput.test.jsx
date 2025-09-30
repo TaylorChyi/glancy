@@ -186,3 +186,46 @@ test("handles language selection and swapping", async () => {
   fireEvent.click(swapButton);
   expect(handleSwap).toHaveBeenCalledTimes(1);
 });
+
+/**
+ * 测试目标：确保语言触发按钮在全角/中英文混排的代码下仍保持徽标宽度一致。
+ * 前置条件：源/目标语言选项提供长度为两字符的全角代码与中文标签。
+ * 步骤：
+ *  1) 渲染 ActionInput 并传入包含全角代码的语言配置；
+ *  2) 读取源/目标语言按钮的文本内容。
+ * 断言：
+ *  - 源语言按钮文本前两字符应为“ＺＨ”；
+ *  - 目标语言按钮文本前两字符应为“ＥＮ”。
+ * 边界/异常：
+ *  - 验证文本保留两个字符前缀，以保障布局宽度稳定。
+ */
+test("renders fullwidth language badges consistently", () => {
+  render(
+    <ActionInput
+      value=""
+      onChange={() => {}}
+      onSubmit={() => {}}
+      sourceLanguage="ＺＨ"
+      sourceLanguageOptions={[
+        { value: "ＺＨ", label: "中文词条（全角）" },
+        { value: "ＥＮ", label: "英文词条（全角）" },
+      ]}
+      sourceLanguageLabel="源语言"
+      targetLanguage="ＥＮ"
+      targetLanguageOptions={[
+        { value: "ＥＮ", label: "英文释义（全角）" },
+        { value: "ＺＨ", label: "中文释义（全角）" },
+      ]}
+      targetLanguageLabel="目标语言"
+    />,
+  );
+
+  const sourceButton = screen.getByRole("button", { name: "源语言" });
+  const targetButton = screen.getByRole("button", { name: "目标语言" });
+
+  const sourceText = (sourceButton.textContent || "").trim();
+  const targetText = (targetButton.textContent || "").trim();
+
+  expect(sourceText.slice(0, 2)).toBe("ＺＨ");
+  expect(targetText.slice(0, 2)).toBe("ＥＮ");
+});
