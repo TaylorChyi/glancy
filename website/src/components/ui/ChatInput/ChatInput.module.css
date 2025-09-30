@@ -2,6 +2,8 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  max-width: var(--sb-max-width, 960px);
+  margin-inline: auto;
 }
 
 .input-wrapper {

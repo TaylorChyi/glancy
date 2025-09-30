@@ -54,6 +54,9 @@
   --sb-icon: #edeff2;
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
+
+  /* search bar 在桌面稿中的最大内容宽度，供容器与输入组件共享 */
+  --sb-max-width: 960px;
   --sb-h: 56px;
   --sb-r: 28px;
   --sb-radius: var(--sb-r);
