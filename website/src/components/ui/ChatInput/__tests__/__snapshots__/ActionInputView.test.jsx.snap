@@ -1,0 +1,136 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`renders structured layout snapshot 1`] = `
+<DocumentFragment>
+  <form
+    class="input-wrapper"
+  >
+    <div
+      aria-label="dictionary search"
+      class="search-box input-surface"
+      data-testid="searchbar"
+      role="search"
+    >
+      <div
+        class="input-surface-top"
+      >
+        <div
+          class="core-input"
+        >
+          <textarea
+            class="textarea"
+            placeholder="Type here"
+            rows="2"
+          >
+            hello
+          </textarea>
+          <button
+            aria-hidden="true"
+            class="submit-proxy"
+            tabindex="-1"
+            type="submit"
+          />
+        </div>
+      </div>
+      <div
+        class="input-surface-bottom"
+      >
+        <div
+          class="input-bottom-left"
+        >
+          <div
+            aria-label="源语言 → 目标语言"
+            class="language-shell"
+            role="group"
+          >
+            <div
+              class="language-select-wrapper"
+            >
+              <button
+                aria-expanded="false"
+                aria-haspopup="menu"
+                aria-label="源语言"
+                class="language-trigger"
+                data-open="false"
+                data-variant="source"
+                title="中文"
+                type="button"
+              >
+                <span
+                  class="language-trigger-content"
+                >
+                  <span
+                    class="language-trigger-code"
+                  >
+                    ZH
+                  </span>
+                  <span
+                    class="language-trigger-label"
+                    data-visible="false"
+                  >
+                    中文
+                  </span>
+                </span>
+              </button>
+            </div>
+            <button
+              aria-label="交换语向"
+              class="language-swap"
+              title="交换语向"
+              type="button"
+            >
+              →
+            </button>
+            <div
+              class="language-select-wrapper"
+            >
+              <button
+                aria-expanded="false"
+                aria-haspopup="menu"
+                aria-label="目标语言"
+                class="language-trigger"
+                data-open="false"
+                data-variant="target"
+                title="English"
+                type="button"
+              >
+                <span
+                  class="language-trigger-content"
+                >
+                  <span
+                    class="language-trigger-code"
+                  >
+                    EN
+                  </span>
+                  <span
+                    class="language-trigger-label"
+                    data-visible="false"
+                  >
+                    English
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="input-bottom-right"
+        >
+          <button
+            aria-label="Send message"
+            class="action-button action-button-send"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+              class="action-button-icon"
+              data-icon-name="paper-airplane"
+              style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</DocumentFragment>
+`;
