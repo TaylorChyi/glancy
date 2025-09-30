@@ -242,53 +242,58 @@ function ActionInput({
       onSubmit={handleSubmit}
     >
       <SearchBox className={styles["input-surface"]}>
-        {showLanguageControls ? (
-          <>
-            <LanguageControls
-              sourceLanguage={sourceLanguage}
-              sourceLanguageOptions={sourceLanguageOptions}
-              sourceLanguageLabel={sourceLanguageLabel}
-              onSourceLanguageChange={onSourceLanguageChange}
-              targetLanguage={targetLanguage}
-              targetLanguageOptions={targetLanguageOptions}
-              targetLanguageLabel={targetLanguageLabel}
-              onTargetLanguageChange={onTargetLanguageChange}
-              onSwapLanguages={onSwapLanguages}
-              swapLabel={swapLabel}
-              normalizeSourceLanguage={normalizeSourceLanguageFn}
-              normalizeTargetLanguage={normalizeTargetLanguageFn}
-              onMenuOpen={onMenuOpen}
+        <div className={styles["input-surface-top"]}>
+          <div className={styles["core-input"]}>
+            <textarea
+              ref={textareaRef}
+              rows={rows}
+              placeholder={placeholder}
+              value={value}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              className={styles.textarea}
             />
-            <div className={styles["language-divider"]} aria-hidden="true" />
-          </>
-        ) : null}
-        <div className={styles["core-input"]}>
-          <textarea
-            ref={textareaRef}
-            rows={rows}
-            placeholder={placeholder}
-            value={value}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            className={styles.textarea}
-          />
-          <button
-            type="submit"
-            className={styles["submit-proxy"]}
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+            <button
+              type="submit"
+              className={styles["submit-proxy"]}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+          </div>
         </div>
-        <ActionButton
-          value={value}
-          isRecording={isRecording}
-          voiceCooldownRef={voiceCooldownRef}
-          onVoice={onVoice}
-          onSubmit={handleActionSubmit}
-          isVoiceDisabled={isVoiceDisabled}
-          sendLabel={sendLabel}
-          voiceLabel={voiceLabel}
-        />
+        <div className={styles["input-surface-bottom"]}>
+          <div className={styles["input-bottom-left"]}>
+            {showLanguageControls ? (
+              <LanguageControls
+                sourceLanguage={sourceLanguage}
+                sourceLanguageOptions={sourceLanguageOptions}
+                sourceLanguageLabel={sourceLanguageLabel}
+                onSourceLanguageChange={onSourceLanguageChange}
+                targetLanguage={targetLanguage}
+                targetLanguageOptions={targetLanguageOptions}
+                targetLanguageLabel={targetLanguageLabel}
+                onTargetLanguageChange={onTargetLanguageChange}
+                onSwapLanguages={onSwapLanguages}
+                swapLabel={swapLabel}
+                normalizeSourceLanguage={normalizeSourceLanguageFn}
+                normalizeTargetLanguage={normalizeTargetLanguageFn}
+                onMenuOpen={onMenuOpen}
+              />
+            ) : null}
+          </div>
+          <div className={styles["input-bottom-right"]}>
+            <ActionButton
+              value={value}
+              isRecording={isRecording}
+              voiceCooldownRef={voiceCooldownRef}
+              onVoice={onVoice}
+              onSubmit={handleActionSubmit}
+              isVoiceDisabled={isVoiceDisabled}
+              sendLabel={sendLabel}
+              voiceLabel={voiceLabel}
+            />
+          </div>
+        </div>
       </SearchBox>
     </form>
   );
