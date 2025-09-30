@@ -6,7 +6,6 @@ import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
 import ChatInput from "@/components/ui/ChatInput";
 import ICP from "@/components/ui/ICP";
 import EmptyState from "@/components/ui/EmptyState";
-import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
 import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
@@ -55,9 +54,6 @@ export default function DictionaryExperience() {
     activeSidebarView,
   } = useDictionaryExperience();
 
-  const dictionaryActionBar = (
-    <DictionaryEntryActionBar {...dictionaryActionBarProps} />
-  );
   const previewContent = finalText || streamText;
   const shouldRenderEntry = entry || previewContent || loading;
 
@@ -92,6 +88,8 @@ export default function DictionaryExperience() {
               swapLabel={dictionarySwapLanguagesLabel}
               normalizeSourceLanguageFn={normalizeWordSourceLanguage}
               normalizeTargetLanguageFn={normalizeWordTargetLanguage}
+              dictionaryActionBarProps={dictionaryActionBarProps}
+              hasDefinition={Boolean(entry)}
             />
             <ICP />
           </div>
@@ -125,7 +123,6 @@ export default function DictionaryExperience() {
               entry={entry}
               preview={previewContent}
               isLoading={loading}
-              actions={dictionaryActionBar}
             />
           ) : (
             <EmptyState

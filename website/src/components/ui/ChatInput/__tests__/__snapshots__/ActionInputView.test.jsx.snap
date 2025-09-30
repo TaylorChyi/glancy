@@ -34,6 +34,7 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
       </div>
       <div
         class="input-surface-bottom"
+        data-mode="language"
       >
         <div
           class="input-bottom-left"

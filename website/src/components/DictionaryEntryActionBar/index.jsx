@@ -2,15 +2,16 @@ import PropTypes from "prop-types";
 import OutputToolbar from "@/components/OutputToolbar";
 import styles from "./DictionaryEntryActionBar.module.css";
 
-export default function DictionaryEntryActionBar({ visible, ...toolbarProps }) {
-  if (!visible) {
-    return null;
-  }
+export default function DictionaryEntryActionBar(toolbarProps) {
+  const { className, ...restProps } = toolbarProps;
+  const toolbarClassName = [styles.toolbar, className]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <OutputToolbar
-      {...toolbarProps}
-      className={styles.toolbar}
+      {...restProps}
+      className={toolbarClassName}
       role="toolbar"
       ariaLabel="词条工具栏"
     />
@@ -18,9 +19,9 @@ export default function DictionaryEntryActionBar({ visible, ...toolbarProps }) {
 }
 
 DictionaryEntryActionBar.propTypes = {
-  visible: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 DictionaryEntryActionBar.defaultProps = {
-  visible: false,
+  className: undefined,
 };
