@@ -66,4 +66,24 @@ describe("SidebarHeader", () => {
     const activeButton = screen.getByTestId("sidebar-nav-dictionary");
     expect(activeButton).toHaveAttribute("aria-current", "page");
   });
+
+  /**
+   * 测试目标：头部导航应采用平铺交互变体以移除高亮边框。
+   * 前置条件：渲染包含激活项的头部导航列表。
+   * 步骤：
+   *  1) 渲染 SidebarHeader。
+   *  2) 获取任意一个导航按钮。
+   * 断言：
+   *  - 元素包含 flat 类且未包含 active 类（失败信息：头部导航仍使用高亮变体）。
+   * 边界/异常：
+   *  - 若未来允许自定义变体需更新断言，本用例仅覆盖默认头部行为。
+   */
+  test("Given header navigation When rendered Then uses flat variant", () => {
+    const items = createItems();
+    render(<SidebarHeader items={items} ariaLabel="Navigation" />);
+
+    const dictionaryButton = screen.getByTestId("sidebar-nav-dictionary");
+    expect(dictionaryButton).toHaveClass("flat");
+    expect(dictionaryButton).not.toHaveClass("active");
+  });
 });

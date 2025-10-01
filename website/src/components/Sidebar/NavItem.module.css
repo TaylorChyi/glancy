@@ -106,3 +106,33 @@
 .muted.item[aria-current="page"] {
   color: var(--sidebar-color, var(--text));
 }
+
+.flat {
+  background: transparent;
+}
+
+.flat::before {
+  display: none;
+}
+
+.flat-active {
+  background: transparent;
+  color: var(--sidebar-color, var(--text));
+}
+
+.flat-active::before {
+  opacity: 0;
+  transform: scaleY(0.6);
+}
+
+.flat.item[aria-current="page"],
+.flat-active.item[aria-current="page"] {
+  background: transparent;
+  color: var(--sidebar-color, var(--text));
+}
+
+.flat.item[aria-current="page"]::before,
+.flat-active.item[aria-current="page"]::before {
+  opacity: 0;
+  transform: scaleY(0.6);
+}
