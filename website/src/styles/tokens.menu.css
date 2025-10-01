@@ -1,14 +1,36 @@
+/**
+ * 背景：
+ *  - 主题切换依赖 data-theme 属性，由 mode 策略统一驱动，历史上仅维护暗色令牌。
+ * 目的：
+ *  - 以策略模式对齐菜单令牌，与侧边栏共用色板并支撑亮色/系统主题切换。
+ * 关键决策与取舍：
+ *  - 选择根据 data-theme 注入策略分支，复用既有 --sidebar-* 令牌，避免重复维护独立色值；
+ *    备选方案（单独维护菜单色板）会造成 token 暴增与视觉失配，因此暂缓至出现差异化需求。
+ * 影响范围：
+ *  - Sidebar UserMenu 及依赖 tokens.menu.css 的子菜单样式，hover/active 状态与阴影随主题切换。
+ * 演进与TODO：
+ *  - 若未来菜单需要独立品牌色，可新增 --menu-surface-* 系列并在策略分支中组合替换。
+ */
+
 :root {
   --user-menu-safe: 10px;
   --menu-radius: 12px;
   --menu-border: 1px solid var(--menu-divider, var(--border));
-  --menu-shadow: 0 12px 30px rgb(0 0 0 / 24%);
+
+  /* 取自侧边栏投影，若未来独立投影可替换为 --menu-shadow-dark */
+  --menu-shadow: var(
+    --sidebar-shadow-elevated,
+    0 12px 30px rgb(0 0 0 / 24%)
+  );
   --menu-bg: var(--sidebar-panel, var(--panel));
-  --menu-bg-hover: #1a1e24;
-  --menu-bg-active: #242935;
   --menu-text: var(--sidebar-color, var(--text));
   --menu-muted: var(--sidebar-muted-color, var(--muted));
-  --menu-divider: var(--sidebar-border-color, var(--border));
+
+  /* 对齐侧边栏分割线，备选为 --border-color */
+  --menu-divider: var(
+    --sidebar-border-color,
+    var(--border)
+  );
   --menu-item-h: 36px;
   --menu-item-px: 12px;
   --menu-icon: 20px;
@@ -18,4 +40,62 @@
   --submenu-delay-in: 120ms;
   --submenu-delay-out: 100ms;
   --z-popover: 60;
+}
+
+:root,
+:root[data-theme="dark"] {
+  /* 深色稿 hover，默认继承侧边栏 hover 背景 */
+  --menu-bg-hover: var(
+    --sidebar-hover-bg,
+    #1a1e24
+  );
+
+  /* 深色稿 active，与侧边栏选中背景保持一致 */
+  --menu-bg-active: var(
+    --sidebar-active-bg,
+    #242935
+  );
+}
+
+:root[data-theme="light"],
+:root[data-theme="system"] {
+  /* 亮色稿投影，若未来分离可引入 --menu-shadow-light */
+  --menu-shadow: var(
+    --sidebar-shadow-elevated,
+    0 18px 42px rgb(31 35 43 / 16%)
+  );
+
+  /* 亮色稿 hover，复用侧边栏 hover 色 */
+  --menu-bg-hover: var(
+    --sidebar-hover-bg,
+    rgb(15 17 21 / 6%)
+  );
+
+  /* 亮色稿 active，保持侧边栏选中态一致 */
+  --menu-bg-active: var(
+    --sidebar-active-bg,
+    rgb(15 17 21 / 12%)
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    /* 系统暗色偏好时回落至深色投影 */
+    --menu-shadow: var(
+      --sidebar-shadow-elevated,
+      0 12px 30px rgb(0 0 0 / 24%)
+    );
+
+    /* 与深色策略共用 hover 令牌 */
+    --menu-bg-hover: var(
+      --sidebar-hover-bg,
+      #1a1e24
+    );
+
+    /* 与深色策略共用 active 令牌 */
+    --menu-bg-active: var(
+      --sidebar-active-bg,
+      #242935
+    );
+  }
 }
