@@ -1,15 +1,15 @@
-<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
   <path
-    d="M9 7.25C9 6.00736 10.0074 5 11.25 5H18.75C19.9926 5 21 6.00736 21 7.25V14.75C21 15.9926 19.9926 17 18.75 17H11.25C10.0074 17 9 15.9926 9 14.75V7.25Z"
+    d="M10.25 5.5c0-1.3807 1.1193-2.5 2.5-2.5h4.5c1.3807 0 2.5 1.1193 2.5 2.5v4.5c0 1.3807-1.1193 2.5-2.5 2.5h-4.5c-1.3807 0-2.5-1.1193-2.5-2.5V5.5Z"
     stroke="currentColor"
-    stroke-width="1.4"
+    stroke-width="1.6"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
   <path
-    d="M6.75 7H6C4.89543 7 4 7.89543 4 9V16.5C4 17.6046 4.89543 18.5 6 18.5H13.5C14.6046 18.5 15.5 17.6046 15.5 16.5V15.75"
+    d="M7.25 8.5h-1.5c-1.3807 0-2.5 1.1193-2.5 2.5v7c0 1.3807 1.1193 2.5 2.5 2.5h7c1.3807 0 2.5-1.1193 2.5-2.5v-1.5"
     stroke="currentColor"
-    stroke-width="1.4"
+    stroke-width="1.6"
     stroke-linecap="round"
     stroke-linejoin="round"
   />

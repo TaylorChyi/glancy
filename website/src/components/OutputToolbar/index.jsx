@@ -54,6 +54,35 @@ const ACTION_BLUEPRINTS = [
   },
 ];
 
+/**
+ * 背景：
+ *  - DictionaryActionPanel 需要将工具栏的子节点直接托管给上层 SearchBox，
+ *    避免额外的 div 破坏语义与布局节奏。
+ * 目的：
+ *  - 通过策略函数暴露根节点渲染方式，让调用方可自定义容器或选择“无容器”。
+ * 关键决策与取舍：
+ *  - 采用简单的 render prop 而非 context，便于在 SSR 与测试场景中保持纯函数特性；
+ *  - 默认实现沿用 div 结构，以兼容历史调用方与单测期望。
+ * 影响范围：
+ *  - 所有 OutputToolbar 调用方，可选择注入 renderRoot 以改变根节点。
+ */
+const defaultRenderRoot = ({
+  className,
+  role,
+  ariaLabel,
+  dataTestId,
+  children,
+}) => (
+  <div
+    className={className}
+    role={role}
+    aria-label={ariaLabel}
+    data-testid={dataTestId}
+  >
+    {children}
+  </div>
+);
+
 function OutputToolbar({
   term,
   lang,
@@ -77,6 +106,7 @@ function OutputToolbar({
   className,
   role: toolbarRole = "toolbar",
   ariaLabel = "词条工具栏",
+  renderRoot = defaultRenderRoot,
 }) {
   const { t } = useLanguage();
   const { user } = useUser();
@@ -179,18 +209,22 @@ function OutputToolbar({
   const rootClassName = Array.from(
     new Set([styles.toolbar, "entry__toolbar", className].filter(Boolean)),
   ).join(" ");
+  const rootProps = useMemo(
+    () => ({
+      className: rootClassName,
+      role: toolbarRole,
+      ariaLabel,
+      dataTestId: "output-toolbar",
+    }),
+    [ariaLabel, rootClassName, toolbarRole],
+  );
   const pagerLabel = t.versionGroupLabel || "例句翻页";
   const baseToolButtonClass = [styles["tool-button"], "entry__tool-btn"]
     .filter(Boolean)
     .join(" ");
 
-  return (
-    <div
-      className={rootClassName}
-      role={toolbarRole}
-      aria-label={ariaLabel}
-      data-testid="output-toolbar"
-    >
+  const toolbarContent = (
+    <>
       {showLeftCluster ? (
         <div className={styles["left-cluster"]}>
           {showTts ? (
@@ -298,8 +332,10 @@ function OutputToolbar({
           />
         </button>
       </div>
-    </div>
+    </>
   );
+
+  return renderRoot({ ...rootProps, children: toolbarContent });
 }
 
 OutputToolbar.propTypes = {
@@ -325,6 +361,7 @@ OutputToolbar.propTypes = {
   className: PropTypes.string,
   role: PropTypes.string,
   ariaLabel: PropTypes.string,
+  renderRoot: PropTypes.func,
 };
 
 OutputToolbar.defaultProps = {
@@ -350,6 +387,7 @@ OutputToolbar.defaultProps = {
   className: "",
   role: "toolbar",
   ariaLabel: "词条工具栏",
+  renderRoot: defaultRenderRoot,
 };
 
 export default memo(OutputToolbar);

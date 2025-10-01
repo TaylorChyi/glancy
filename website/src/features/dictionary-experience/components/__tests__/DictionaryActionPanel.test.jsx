@@ -14,9 +14,10 @@ jest.unstable_mockModule("@/components/ui/Icon", () => ({
 
 jest.unstable_mockModule("@/components/DictionaryEntryActionBar", () => ({
   __esModule: true,
-  default: ({ className }) => (
-    <div data-testid="dictionary-entry-action-bar" className={className} />
-  ),
+  default: ({ renderRoot }) =>
+    renderRoot({
+      children: <div data-testid="dictionary-entry-action-bar" />,
+    }),
 }));
 
 const DictionaryActionPanel = (await import("../DictionaryActionPanel.jsx"))
