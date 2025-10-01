@@ -16,11 +16,13 @@ const mockTtsVoices = jest.fn().mockResolvedValue([]);
 const mockT = {
   prefTitle: "Preferences",
   prefDescription: "Description",
+  prefInterfaceTitle: "Interface experience",
   prefLanguage: "Source Language",
   prefSearchLanguage: "Target Language",
   prefVoiceEn: "English Voice",
   prefVoiceZh: "Chinese Voice",
   prefTheme: "Theme",
+  settingsTabGeneral: "General",
   saveButton: "Save changes",
   saving: "Saving...",
   saveSuccess: "Saved",
@@ -197,6 +199,31 @@ test("keeps user theme when server does not provide one", async () => {
   await act(async () => {});
   await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
   expect(mockSetTheme).not.toHaveBeenCalled();
+});
+
+/**
+ * 测试目标：确保设置页侧栏标签与主标题使用不同文案，维持信息层级清晰。
+ * 前置条件：默认渲染 Preferences 页面，并提供区分的翻译文案。
+ * 步骤：
+ *  1) 渲染组件。
+ *  2) 捕获当前激活的导航标签与内容标题。
+ * 断言：
+ *  - 标签文本与标题文本不相等，否则提示文案配置回退。
+ * 边界/异常：
+ *  - 若翻译缺失导致文本一致，应提醒补齐翻译或调整默认值。
+ */
+test("renders distinct copy between navigation and heading", async () => {
+  await act(async () => {
+    render(<Preferences />);
+  });
+  await act(async () => {});
+
+  const activeTab = screen.getByRole("tab", { selected: true });
+  const heading = screen.getByRole("heading", { level: 2 });
+
+  expect(activeTab.textContent?.trim()).not.toBe(
+    heading.textContent?.trim(),
+  );
 });
 
 /**

@@ -92,11 +92,46 @@ const KEYBOARD_SHORTCUTS = [
 
 const buildTabLabelMap = (t) => ({
   [TAB_KEYS.GENERAL]: t.settingsTabGeneral || "General",
-  [TAB_KEYS.PERSONALIZATION]: t.settingsTabPersonalization || "Personalization",
+  [TAB_KEYS.PERSONALIZATION]:
+    t.settingsTabPersonalization || "Personalization",
   [TAB_KEYS.KEYBOARD]: t.settingsTabKeyboard || "Keyboard",
   [TAB_KEYS.DATA]: t.settingsTabData || "Data controls",
   [TAB_KEYS.ACCOUNT]: t.settingsTabAccount || "Account",
 });
+
+/**
+ * 背景：
+ *  - 之前导航标签与内容标题共用同一文案来源，导致无法表达差异化语义。
+ * 目的：
+ *  - 提供显式的导航标签与内容标题映射，确保信息架构的可扩展性与可维护性。
+ * 关键决策与取舍：
+ *  - 采用集中 Copy Registry 的方式返回 labels/titles/descriptions，避免到处散落的文案取值逻辑。
+ *  - 未引入复杂状态机，原因是当前需求仅涉及静态文案分层，使用简单映射即可满足演进需求。
+ */
+const buildTabCopyMap = (t) => {
+  const tabLabelMap = buildTabLabelMap(t);
+  return {
+    labels: tabLabelMap,
+    titles: {
+      [TAB_KEYS.GENERAL]:
+        t.prefInterfaceTitle || tabLabelMap[TAB_KEYS.GENERAL],
+      [TAB_KEYS.PERSONALIZATION]:
+        t.prefPersonalizationTitle || tabLabelMap[TAB_KEYS.PERSONALIZATION],
+      [TAB_KEYS.KEYBOARD]:
+        t.prefKeyboardTitle || tabLabelMap[TAB_KEYS.KEYBOARD],
+      [TAB_KEYS.DATA]: t.prefDataTitle || tabLabelMap[TAB_KEYS.DATA],
+      [TAB_KEYS.ACCOUNT]:
+        t.prefAccountTitle || tabLabelMap[TAB_KEYS.ACCOUNT],
+    },
+    descriptions: {
+      [TAB_KEYS.GENERAL]: t.settingsGeneralDescription || "",
+      [TAB_KEYS.PERSONALIZATION]: t.settingsPersonalizationDescription || "",
+      [TAB_KEYS.KEYBOARD]: t.settingsKeyboardDescription || "",
+      [TAB_KEYS.DATA]: t.settingsDataDescription || "",
+      [TAB_KEYS.ACCOUNT]: t.settingsAccountDescription || "",
+    },
+  };
+};
 
 const toStoreSourceLanguage = (value) => {
   if (!value || value === WORD_LANGUAGE_AUTO) {
@@ -215,17 +250,11 @@ function Preferences({
     }
   }, [lang]);
 
-  const tabLabelMap = useMemo(() => buildTabLabelMap(t), [t]);
-  const tabDescriptionMap = useMemo(
-    () => ({
-      [TAB_KEYS.GENERAL]: t.settingsGeneralDescription || "",
-      [TAB_KEYS.PERSONALIZATION]: t.settingsPersonalizationDescription || "",
-      [TAB_KEYS.KEYBOARD]: t.settingsKeyboardDescription || "",
-      [TAB_KEYS.DATA]: t.settingsDataDescription || "",
-      [TAB_KEYS.ACCOUNT]: t.settingsAccountDescription || "",
-    }),
-    [t],
-  );
+  const {
+    labels: tabLabelMap,
+    titles: tabTitleMap,
+    descriptions: tabDescriptionMap,
+  } = useMemo(() => buildTabCopyMap(t), [t]);
 
   const voiceSampleTextMap = useMemo(
     () => ({
@@ -565,7 +594,7 @@ function Preferences({
   );
 
   const renderGeneralPanel = () => {
-    const defaultsTitle = t.prefDefaultsTitle || tabLabelMap[TAB_KEYS.GENERAL];
+    const defaultsTitle = t.prefDefaultsTitle || tabTitleMap[TAB_KEYS.GENERAL];
     const defaultsDescription =
       t.prefDefaultsDescription || tabDescriptionMap[TAB_KEYS.GENERAL];
     const voicesTitle = t.prefVoicesTitle || t.prefVoiceEn;
@@ -680,7 +709,7 @@ function Preferences({
   const renderPersonalizationPanel = () => (
     <>
       <SettingsSection
-        title={tabLabelMap[TAB_KEYS.PERSONALIZATION]}
+        title={tabTitleMap[TAB_KEYS.PERSONALIZATION]}
         description={tabDescriptionMap[TAB_KEYS.PERSONALIZATION]}
       >
         <SettingsRow
@@ -761,7 +790,7 @@ function Preferences({
   const renderKeyboardPanel = () => (
     <>
       <SettingsSection
-        title={tabLabelMap[TAB_KEYS.KEYBOARD]}
+        title={tabTitleMap[TAB_KEYS.KEYBOARD]}
         description={tabDescriptionMap[TAB_KEYS.KEYBOARD]}
       >
         <div className={styles["section-columns"]}>
@@ -783,7 +812,7 @@ function Preferences({
   const renderDataPanel = () => (
     <>
       <SettingsSection
-        title={tabLabelMap[TAB_KEYS.DATA]}
+        title={tabTitleMap[TAB_KEYS.DATA]}
         description={tabDescriptionMap[TAB_KEYS.DATA]}
       >
         <div className={styles["data-card"]}>
@@ -819,7 +848,7 @@ function Preferences({
     return (
       <>
         <SettingsSection
-          title={tabLabelMap[TAB_KEYS.ACCOUNT]}
+          title={tabTitleMap[TAB_KEYS.ACCOUNT]}
           description={tabDescriptionMap[TAB_KEYS.ACCOUNT]}
         >
           <div className={styles["account-card"]}>
@@ -955,7 +984,7 @@ function Preferences({
         >
           <header className={styles["content-header"]}>
             <h2 id="settings-heading" className={styles["content-title"]}>
-              {tabLabelMap[activeTab]}
+              {tabTitleMap[activeTab]}
             </h2>
             {tabDescriptionMap[activeTab] ? (
               <p className={styles["content-description"]}>
