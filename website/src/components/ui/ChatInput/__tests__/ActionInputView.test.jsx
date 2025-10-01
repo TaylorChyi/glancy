@@ -71,18 +71,19 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
 });
 
 /**
- * 测试目标：当语言区隐藏时，底部仍保持空容器并维持语义化标记。
+ * 测试目标：当语言区隐藏时，网格属性与语义标记应正确折叠。
  * 前置条件：languageControls.isVisible=false。
  * 步骤：
- *  1) 渲染组件并读取 data-mode 属性。
- *  2) 断言左侧容器为空。
+ *  1) 渲染组件并读取 data-language-visible 属性。
+ *  2) 断言语言槽位与分隔符均被折叠。
  * 断言：
- *  - data-mode 恒为 "language"。
- *  - input-bottom-left 不包含子节点。
+ *  - data-language-visible === "false"。
+ *  - language-slot 不包含子节点并具有 data-visible="false"。
+ *  - divider 在此场景下被移除，避免冗余列。
  * 边界/异常：
- *  - 行为不依赖额外道具，确保视图层职责收敛。
+ *  - 折叠逻辑纯展示层处理，不依赖额外行为。
  */
-test("GivenLanguageControlsHidden_WhenRendering_ThenRenderEmptyShell", () => {
+test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () => {
   const formRef = createRef();
   const onSubmit = jest.fn();
   const { container } = render(
@@ -119,8 +120,14 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenRenderEmptyShell", () => {
     />,
   );
 
-  const bottom = container.querySelector("[data-mode='language']");
-  expect(bottom).not.toBeNull();
-  const leftSlot = container.querySelector(`.${"input-bottom-left"}`);
-  expect(leftSlot?.childElementCount ?? 0).toBe(0);
+  const surface = container.querySelector(`.${"input-surface"}`);
+  expect(surface?.getAttribute("data-language-visible")).toBe("false");
+
+  const languageSlot = container.querySelector(`.${"language-slot"}`);
+  expect(languageSlot).not.toBeNull();
+  expect(languageSlot?.getAttribute("data-visible")).toBe("false");
+  expect(languageSlot?.childElementCount ?? 0).toBe(0);
+
+  const divider = container.querySelector(`.${"input-divider"}`);
+  expect(divider?.getAttribute("data-visible")).toBe("false");
 });

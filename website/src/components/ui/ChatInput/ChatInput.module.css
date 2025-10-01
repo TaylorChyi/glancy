@@ -11,62 +11,106 @@
 }
 
 /*
- * 结构说明：SearchBox 作为外层容器保持水平 padding，这里重置为纵向布局，
- * 通过上下分区承载 textarea 与操作栏，便于未来扩展更多状态信息。
+ * 结构说明：SearchBox 维持统一的视觉壳层，此处通过 grid 划分语言、分隔符、文本与动作槽位。
+ *  - 桌面端：四列横向排列，并以 column-gap 继承 searchbox 的节奏感。
+ *  - 窄屏：降级为单列栈结构，divider 退化为横向描边，完全移除 flex-wrap 带来的换行抖动。
  */
 .input-surface {
   --padding-y: 0;
   --slot-gap: 0;
 
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns:
+    auto
+    var(--chat-input-divider-width, 1px)
+    minmax(0, 1fr)
+    auto;
+  grid-template-areas: "language divider text action";
   align-items: stretch;
-  gap: 0;
+  column-gap: var(
+    --chat-input-inline-gap,
+    var(--chat-input-bottom-gap, 12px)
+  );
 }
 
-.input-surface-top {
-  padding-block: var(--chat-input-top-pad-y, 16px);
+.input-surface[data-language-visible="false"] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "text action";
 }
 
-.input-surface-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--chat-input-bottom-gap, 12px);
-  padding-block: var(--chat-input-bottom-pad-y, 12px);
-  border-top: 1px solid var(--sb-divider);
-  box-shadow: var(
-      --chat-input-bottom-shadow,
-      inset 0 1px 0 rgb(255 255 255 / 6%)
-    );
-}
-
-.input-bottom-left {
-  flex: 1 1 auto;
+.language-slot {
+  grid-area: language;
   display: flex;
   align-items: center;
   min-width: 0;
+  padding-block: var(--chat-input-bottom-pad-y, 12px);
 }
 
-.input-bottom-right {
-  flex: 0 0 auto;
+.language-slot[data-visible="false"] {
+  display: none;
+}
+
+.input-divider {
+  grid-area: divider;
+  width: var(--chat-input-divider-width, 1px);
+  background: var(--chat-input-divider-color, var(--sb-divider));
+  border-radius: 999px;
+  align-self: stretch;
+}
+
+.input-surface[data-language-visible="false"] .input-divider {
+  display: none;
+}
+
+.text-slot {
+  grid-area: text;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: var(--chat-input-top-pad-y, 16px);
+  min-width: 0;
+}
+
+.action-slot {
+  grid-area: action;
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  padding-block: var(--chat-input-bottom-pad-y, 12px);
 }
 
 @media (width <= 640px) {
-  .input-surface-bottom {
-    flex-wrap: wrap;
-    row-gap: var(--chat-input-bottom-gap, 12px);
+  .input-surface {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "text"
+      "divider"
+      "language"
+      "action";
+    row-gap: var(
+      --chat-input-mobile-gap,
+      var(--chat-input-bottom-gap, 12px)
+    );
   }
 
-  .input-bottom-left {
-    width: 100%;
+  .input-surface[data-language-visible="false"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "text"
+      "action";
   }
 
-  .input-bottom-right {
+  .input-divider {
     width: 100%;
-    justify-content: flex-end;
+    height: var(--chat-input-divider-width, 1px);
+  }
+
+  .input-surface[data-language-visible="false"] .input-divider {
+    display: none;
+  }
+
+  .language-slot {
+    padding-block-start: 0;
   }
 }
 

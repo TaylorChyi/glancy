@@ -8,11 +8,96 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
     <div
       aria-label="dictionary search"
       class="search-box input-surface"
+      data-language-visible="true"
       data-testid="searchbar"
       role="search"
     >
       <div
-        class="input-surface-top"
+        class="language-slot"
+        data-visible="true"
+      >
+        <div
+          aria-label="源语言 → 目标语言"
+          class="language-shell"
+          role="group"
+        >
+          <div
+            class="language-select-wrapper"
+          >
+            <button
+              aria-expanded="false"
+              aria-haspopup="menu"
+              aria-label="源语言"
+              class="language-trigger"
+              data-open="false"
+              data-variant="source"
+              title="中文"
+              type="button"
+            >
+              <span
+                class="language-trigger-content"
+              >
+                <span
+                  class="language-trigger-code"
+                >
+                  ZH
+                </span>
+                <span
+                  class="language-trigger-label"
+                  data-visible="false"
+                >
+                  中文
+                </span>
+              </span>
+            </button>
+          </div>
+          <button
+            aria-label="交换语向"
+            class="language-swap"
+            title="交换语向"
+            type="button"
+          >
+            →
+          </button>
+          <div
+            class="language-select-wrapper"
+          >
+            <button
+              aria-expanded="false"
+              aria-haspopup="menu"
+              aria-label="目标语言"
+              class="language-trigger"
+              data-open="false"
+              data-variant="target"
+              title="英文"
+              type="button"
+            >
+              <span
+                class="language-trigger-content"
+              >
+                <span
+                  class="language-trigger-code"
+                >
+                  EN
+                </span>
+                <span
+                  class="language-trigger-label"
+                  data-visible="false"
+                >
+                  英文
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <span
+        aria-hidden="true"
+        class="input-divider"
+        data-visible="true"
+      />
+      <div
+        class="text-slot"
       >
         <div
           class="core-input"
@@ -33,103 +118,20 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
         </div>
       </div>
       <div
-        class="input-surface-bottom"
-        data-mode="language"
+        class="action-slot"
       >
-        <div
-          class="input-bottom-left"
+        <button
+          aria-label="发送"
+          class="action-button action-button-send"
+          type="button"
         >
-          <div
-            aria-label="源语言 → 目标语言"
-            class="language-shell"
-            role="group"
-          >
-            <div
-              class="language-select-wrapper"
-            >
-              <button
-                aria-expanded="false"
-                aria-haspopup="menu"
-                aria-label="源语言"
-                class="language-trigger"
-                data-open="false"
-                data-variant="source"
-                title="中文"
-                type="button"
-              >
-                <span
-                  class="language-trigger-content"
-                >
-                  <span
-                    class="language-trigger-code"
-                  >
-                    ZH
-                  </span>
-                  <span
-                    class="language-trigger-label"
-                    data-visible="false"
-                  >
-                    中文
-                  </span>
-                </span>
-              </button>
-            </div>
-            <button
-              aria-label="交换语向"
-              class="language-swap"
-              title="交换语向"
-              type="button"
-            >
-              →
-            </button>
-            <div
-              class="language-select-wrapper"
-            >
-              <button
-                aria-expanded="false"
-                aria-haspopup="menu"
-                aria-label="目标语言"
-                class="language-trigger"
-                data-open="false"
-                data-variant="target"
-                title="英文"
-                type="button"
-              >
-                <span
-                  class="language-trigger-content"
-                >
-                  <span
-                    class="language-trigger-code"
-                  >
-                    EN
-                  </span>
-                  <span
-                    class="language-trigger-label"
-                    data-visible="false"
-                  >
-                    英文
-                  </span>
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div
-          class="input-bottom-right"
-        >
-          <button
-            aria-label="发送"
-            class="action-button action-button-send"
-            type="button"
-          >
-            <span
-              aria-hidden="true"
-              class="action-button-icon"
-              data-icon-name="paper-airplane"
-              style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
-            />
-          </button>
-        </div>
+          <span
+            aria-hidden="true"
+            class="action-button-icon"
+            data-icon-name="paper-airplane"
+            style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+          />
+        </button>
       </div>
     </div>
   </form>

@@ -27,10 +27,28 @@ function ActionInputView({
   const { isVisible, props: languageProps } = languageControls;
   const shouldRenderLanguageControls = isVisible;
 
+  const languageVisibility = shouldRenderLanguageControls ? "true" : "false";
+
   return (
     <form {...formProps} className={styles["input-wrapper"]}>
-      <SearchBox className={styles["input-surface"]}>
-        <div className={styles["input-surface-top"]}>
+      <SearchBox
+        className={styles["input-surface"]}
+        data-language-visible={languageVisibility}
+      >
+        <div
+          className={styles["language-slot"]}
+          data-visible={languageVisibility}
+        >
+          {shouldRenderLanguageControls ? (
+            <LanguageControls {...languageProps} />
+          ) : null}
+        </div>
+        <span
+          className={styles["input-divider"]}
+          aria-hidden="true"
+          data-visible={languageVisibility}
+        />
+        <div className={styles["text-slot"]}>
           <div className={styles["core-input"]}>
             <textarea
               {...restTextareaProps}
@@ -46,15 +64,8 @@ function ActionInputView({
             />
           </div>
         </div>
-        <div className={styles["input-surface-bottom"]} data-mode="language">
-          <div className={styles["input-bottom-left"]}>
-            {shouldRenderLanguageControls ? (
-              <LanguageControls {...languageProps} />
-            ) : null}
-          </div>
-          <div className={styles["input-bottom-right"]}>
-            <ActionButton {...actionButtonProps} />
-          </div>
+        <div className={styles["action-slot"]}>
+          <ActionButton {...actionButtonProps} />
         </div>
       </SearchBox>
     </form>
