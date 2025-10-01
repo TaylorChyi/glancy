@@ -35,13 +35,15 @@ interface UserMenuProps {
   onOpenLogout: () => void;
 }
 
-type TimeoutHandle = ReturnType<typeof window.setTimeout>;
+type TimeoutHandle = ReturnType<typeof setTimeout>;
 
 type SubmenuState = {
   id: string | null;
   top: number;
   focusOnMount: boolean;
   parentIndex: number;
+  parentBottom: number;
+  height: number;
 };
 
 const INITIAL_SUBMENU_STATE: SubmenuState = {
@@ -49,9 +51,19 @@ const INITIAL_SUBMENU_STATE: SubmenuState = {
   top: 0,
   focusOnMount: false,
   parentIndex: -1,
+  parentBottom: 0,
+  height: 0,
 };
 
-const SUBMENU_DELAY_IN = 120;
+/**
+ * 意图：根据父级项的底边对齐子菜单，保持视觉上沿底贴合。
+ * 输入：父项底边相对于菜单根节点的偏移量与子菜单高度。
+ * 输出：用于定位子菜单的 top 偏移，保证不越界。
+ */
+const computeSubmenuTop = (parentBottom: number, height: number) =>
+  Math.max(parentBottom - height, 0);
+
+const SUBMENU_DELAY_IN = 40;
 const SUBMENU_DELAY_OUT = 100;
 
 function UserMenu({
@@ -248,11 +260,29 @@ function UserMenu({
       if (!rootNode || !parentNode) return prev;
       const rootRect = rootNode.getBoundingClientRect();
       const parentRect = parentNode.getBoundingClientRect();
-      const nextTop = parentRect.top - rootRect.top;
-      if (Math.abs(nextTop - prev.top) < 0.5) {
+      const parentBottom = parentRect.bottom - rootRect.top;
+      const nextTop = computeSubmenuTop(parentBottom, prev.height);
+      if (
+        Math.abs(nextTop - prev.top) < 0.5 &&
+        Math.abs(parentBottom - prev.parentBottom) < 0.5
+      ) {
         return prev;
       }
-      return { ...prev, top: nextTop };
+      return { ...prev, top: nextTop, parentBottom };
+    });
+  }, []);
+
+  const handleSubmenuHeightChange = useCallback((height: number) => {
+    setSubmenuState((prev) => {
+      if (!prev.id) return prev;
+      const nextTop = computeSubmenuTop(prev.parentBottom, height);
+      if (
+        Math.abs(nextTop - prev.top) < 0.5 &&
+        Math.abs(height - prev.height) < 0.5
+      ) {
+        return prev;
+      }
+      return { ...prev, top: nextTop, height };
     });
   }, []);
 
@@ -309,11 +339,16 @@ function UserMenu({
       if (!rootNode || !parentNode) return;
       const rootRect = rootNode.getBoundingClientRect();
       const parentRect = parentNode.getBoundingClientRect();
+      const parentBottom = parentRect.bottom - rootRect.top;
+      const measuredHeight =
+        submenuRef.current?.getCurrentHeight?.() ?? INITIAL_SUBMENU_STATE.height;
       setSubmenuState({
         id: item.id,
-        top: parentRect.top - rootRect.top,
+        top: computeSubmenuTop(parentBottom, measuredHeight),
         focusOnMount,
         parentIndex: index,
+        parentBottom,
+        height: measuredHeight,
       });
     },
     [clearTimers],
@@ -321,6 +356,7 @@ function UserMenu({
 
   const scheduleSubmenuOpen = useCallback(
     (item: MenuSubmenuItem, index: number) => {
+      cancelScheduledClose();
       if (timers.current.open) {
         window.clearTimeout(timers.current.open);
       }
@@ -328,11 +364,15 @@ function UserMenu({
         openSubmenu(item, index, false);
       }, SUBMENU_DELAY_IN);
     },
-    [openSubmenu],
+    [cancelScheduledClose, openSubmenu],
   );
 
   const scheduleSubmenuClose = useCallback(() => {
     cancelScheduledClose();
+    if (timers.current.open) {
+      window.clearTimeout(timers.current.open);
+      timers.current.open = undefined;
+    }
     timers.current.close = window.setTimeout(() => {
       closeSubmenu();
     }, SUBMENU_DELAY_OUT);
@@ -587,6 +627,11 @@ function UserMenu({
               tabIndex: isActive ? 0 : -1,
               onFocus: () => {
                 setActiveIndex(interactiveIndex);
+                if (item.kind === "submenu") {
+                  scheduleSubmenuOpen(item, interactiveIndex);
+                } else {
+                  closeSubmenu();
+                }
               },
               onMouseEnter: () => {
                 setActiveIndex(interactiveIndex);
@@ -609,10 +654,6 @@ function UserMenu({
                   key={item.id}
                   type="button"
                   {...commonProps}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    openSubmenu(item, interactiveIndex, true);
-                  }}
                 >
                   <span className={styles.icon}>
                     <ThemeIcon name={item.icon} width={18} height={18} />
@@ -692,6 +733,7 @@ function UserMenu({
           closeSubmenu(true);
         }}
         focusOnMount={submenuState.focusOnMount}
+        onHeightChange={handleSubmenuHeightChange}
       />
     </div>
   );
