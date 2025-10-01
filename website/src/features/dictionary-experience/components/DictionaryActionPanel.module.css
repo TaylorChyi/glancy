@@ -16,24 +16,21 @@
   --dictionary-panel-action-size: var(--chat-input-action-size, 40px);
   --dictionary-panel-icon-size: 18px;
   --dictionary-panel-icon-color: var(--sb-text);
+  /*
+   * 背景：原先通过 ::before 伪元素绘制顶部 1px 分隔线，但在深色背景下造成强对比。
+   * 取舍：引入可配置的阴影层，沿用现有阴影令牌，既保持层级又能按需复用旧变量。
+   * 影响：移除固定分隔线，默认转为柔和下投影；如需恢复外部可通过 --dictionary-panel-elevation-shadow 覆写。
+   */
+  --dictionary-panel-elevation-shadow: var(
+    --chat-input-bottom-shadow,
+    var(--sb-shadow-soft)
+  );
 
   display: flex;
   width: 100%;
   align-items: center;
   flex-wrap: nowrap;
-  box-shadow:
-    var(--sb-shadow),
-    var(--chat-input-bottom-shadow, inset 0 1px 0 rgb(255 255 255 / 6%));
-}
-
-.panel::before {
-  content: "";
-  position: absolute;
-  inset-inline: var(--chat-input-bottom-divider-inset, 0);
-  top: 0;
-  height: 1px;
-  background: var(--sb-divider);
-  pointer-events: none;
+  box-shadow: var(--sb-shadow), var(--dictionary-panel-elevation-shadow);
 }
 
 .search-toggle {
