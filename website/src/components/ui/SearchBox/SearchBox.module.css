@@ -8,10 +8,10 @@
   padding-inline: var(--sb-pad-x, 20px);
   gap: var(--slot-gap, var(--sb-gap, 16px));
   border-radius: var(--sb-r, 28px);
-  background: var(--sb-surface, #0e1116);
-  color: var(--sb-text, #edeff2);
-  outline: 1px solid var(--sb-stroke, rgb(255 255 255 / 6%));
-  box-shadow: var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%));
+  background: var(--sb-surface);
+  color: var(--sb-text);
+  outline: 1px solid var(--sb-stroke);
+  box-shadow: var(--sb-shadow);
   line-height: 1.5;
   box-sizing: border-box;
   transition:
@@ -22,18 +22,13 @@
 }
 
 .search-box:hover {
-  background: var(
-    --sb-bg-hover,
-    color-mix(in srgb, var(--sb-surface) 94%, white 6%)
-  );
-  outline-color: var(--sb-border-active, rgb(255 255 255 / 12%));
+  background: var(--sb-bg-hover);
+  outline-color: var(--sb-border-active);
 }
 
 .search-box:focus-within {
-  outline-color: var(--sb-border-active, rgb(255 255 255 / 12%));
-  box-shadow:
-    var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%)),
-    var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%));
+  outline-color: var(--sb-border-active);
+  box-shadow: var(--ring-focus), var(--sb-shadow);
 }
 
 .search-box :global(button),

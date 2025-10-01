@@ -134,6 +134,7 @@
   --btn-gap: 12px;
   --ring-focus: 0 0 0 2px rgb(255 255 255 / 8%);
   --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
+  --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
 
   /* settings dialog */
   --settings-dialog-width-md: 640px;
@@ -154,4 +155,112 @@
   --settings-dialog-navigation-width: 240px;
   --settings-dialog-gap-sm: 16px;
   --settings-dialog-gap-md: 24px;
+}
+
+/*
+ * 背景：SearchBox 与 ChatInput 依赖 --sb-* 令牌，需与语义色系统联动，支持浅色与系统主题。
+ * 取舍：通过在 data-theme 作用域内覆写关键色彩，避免重复定义具体色值，保留暗色默认声明。
+ */
+:root[data-theme="light"],
+:root[data-theme="system"] {
+  --sb-surface: color-mix(in srgb, var(--color-surface-alt) 88%, white 12%);
+  --sb-inner: color-mix(in srgb, var(--color-surface-alt) 92%, white 8%);
+  --sb-seg: color-mix(in srgb, var(--color-surface-alt) 82%, white 18%);
+  --sb-stroke: color-mix(in srgb, var(--border-color) 65%, transparent 35%);
+  --sb-divider: color-mix(in srgb, var(--border-color) 45%, transparent 55%);
+  --sb-text: var(--color-text);
+  --sb-muted: color-mix(in srgb, var(--color-text) 55%, transparent 45%);
+  --sb-icon: var(--color-text);
+  --sb-cta: color-mix(in srgb, var(--color-text) 6%, white 94%);
+  --sb-cta-icon: var(--color-text);
+  --sb-inner-highlight: color-mix(in srgb, var(--color-text) 8%, transparent);
+  --sb-ring: 0 0 0 var(--sb-ring-width, 2px)
+    color-mix(in srgb, var(--border-color) 35%, transparent 65%);
+  --sb-shadow: 0 18px 44px color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
+  --sb-shadow-soft: 0 12px 28px
+    color-mix(in srgb, var(--shadow-color) 45%, transparent 55%);
+  --sb-menu-shadow: 0 22px 50px
+    color-mix(in srgb, var(--shadow-color) 60%, transparent 40%);
+  --sb-bg-hover: color-mix(
+    in srgb,
+    var(--sb-surface) 92%,
+    var(--sb-inner-highlight) 8%
+  );
+  --ring-focus: 0 0 0 var(--sb-ring-width, 2px)
+    color-mix(in srgb, var(--border-color) 40%, transparent 60%);
+  --seg-hover-outline: color-mix(in srgb, var(--border-color) 40%, transparent 60%);
+  --seg-hover-foreground: color-mix(in srgb, var(--color-text) 80%, transparent 20%);
+  --menu-bg: color-mix(in srgb, var(--color-surface-alt) 95%, white 5%);
+  --menu-border: color-mix(in srgb, var(--border-color) 60%, transparent 40%);
+  --menu-hover: color-mix(in srgb, var(--color-surface-alt) 85%, white 15%);
+  --menu-code-color: color-mix(in srgb, var(--color-text) 92%, transparent 8%);
+  --menu-name-color: color-mix(in srgb, var(--color-text) 82%, transparent 18%);
+  --menu-check-color: color-mix(in srgb, var(--color-text) 78%, transparent 22%);
+  --menu-scroll-track: color-mix(in srgb, var(--color-surface-alt) 60%, transparent 40%);
+  --menu-scroll-thumb: color-mix(in srgb, var(--color-surface-alt) 80%, transparent 20%);
+  --menu-scroll-thumb-hover: color-mix(
+    in srgb,
+    var(--menu-scroll-thumb) 70%,
+    var(--color-text) 30%
+  );
+  --sb-send-bg: color-mix(in srgb, var(--color-surface-alt) 94%, var(--color-text) 6%);
+  --sb-send-color: var(--color-text);
+  --sb-caret: color-mix(in srgb, var(--color-text) 55%, transparent 45%);
+  --chip-bg: color-mix(in srgb, var(--color-surface-alt) 90%, transparent 10%);
+  --chip-bg-hover: color-mix(in srgb, var(--color-surface-alt) 82%, white 18%);
+  --chip-text: color-mix(in srgb, var(--color-text) 88%, transparent 12%);
+  --sb-scroll-track: color-mix(in srgb, var(--color-surface-alt) 55%, transparent 45%);
+  --sb-scroll-thumb: color-mix(in srgb, var(--color-surface-alt) 80%, transparent 20%);
+  --sb-cta-shadow: 0 14px 40px color-mix(in srgb, var(--shadow-color) 45%, transparent 55%);
+  --sb-cta-shadow-hover: 0 18px 44px
+    color-mix(in srgb, var(--shadow-color) 50%, transparent 50%);
+}
+
+/*
+ * 适配：暗色主题（含系统模式下的 prefers-color-scheme: dark）需回退原生夜间配方。
+ */
+:root.dark,
+:root[data-theme="dark"] {
+  --sb-surface: #0e1116;
+  --sb-inner: #11161e;
+  --sb-seg: #141b24;
+  --sb-stroke: rgb(255 255 255 / 6%);
+  --sb-divider: rgb(255 255 255 / 10%);
+  --sb-text: #edeff2;
+  --sb-muted: #9fa7b3;
+  --sb-icon: #edeff2;
+  --sb-cta: #fff;
+  --sb-cta-icon: #0e1116;
+  --sb-inner-highlight: rgb(255 255 255 / 12%);
+  --sb-ring: 0 0 0 2px rgb(255 255 255 / 8%);
+  --sb-shadow: 0 6px 20px rgb(0 0 0 / 25%);
+  --sb-shadow-soft: 0 4px 16px rgb(0 0 0 / 22%);
+  --sb-menu-shadow: 0 18px 44px rgb(0 0 0 / 45%);
+  --sb-bg-hover: color-mix(in srgb, var(--sb-surface) 94%, white 6%);
+  --ring-focus: 0 0 0 2px rgb(255 255 255 / 8%);
+  --seg-hover-outline: rgb(255 255 255 / 16%);
+  --seg-hover-foreground: color-mix(in srgb, var(--sb-text) 88%, white 12%);
+  --menu-bg: var(--sb-inner);
+  --menu-border: color-mix(in srgb, var(--sb-stroke) 80%, black 20%);
+  --menu-hover: color-mix(in srgb, var(--sb-inner) 88%, white 12%);
+  --menu-code-color: #f1f4f8;
+  --menu-name-color: #c6ccd7;
+  --menu-check-color: #d9dee7;
+  --menu-scroll-track: color-mix(in srgb, var(--sb-inner) 70%, transparent);
+  --menu-scroll-thumb: color-mix(in srgb, var(--sb-inner) 20%, white 12%);
+  --menu-scroll-thumb-hover: color-mix(
+    in srgb,
+    var(--menu-scroll-thumb) 70%,
+    white 30%
+  );
+  --sb-send-bg: rgb(255 255 255 / 92%);
+  --sb-send-color: #0b0d11;
+  --sb-caret: #99a6b5;
+  --chip-bg: #252b33;
+  --chip-bg-hover: #2b323c;
+  --chip-text: #d5dbe6;
+  --sb-scroll-track: color-mix(in srgb, var(--sb-inner) 35%, transparent);
+  --sb-scroll-thumb: color-mix(in srgb, var(--sb-inner) 65%, transparent);
+  --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
+  --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
 }

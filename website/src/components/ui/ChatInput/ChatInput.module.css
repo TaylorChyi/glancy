@@ -34,7 +34,7 @@
   justify-content: space-between;
   gap: var(--chat-input-bottom-gap, 12px);
   padding-block: var(--chat-input-bottom-pad-y, 12px);
-  border-top: 1px solid var(--sb-divider, rgb(255 255 255 / 10%));
+  border-top: 1px solid var(--sb-divider);
   box-shadow: var(
       --chat-input-bottom-shadow,
       inset 0 1px 0 rgb(255 255 255 / 6%)
@@ -78,8 +78,8 @@
   padding-inline: var(--seg-pad-x, 20px);
   gap: var(--seg-arrow-gap, 12px);
   border-radius: var(--seg-r, 22px);
-  background: var(--sb-seg, #141b24);
-  color: var(--sb-text, #edeff2);
+  background: var(--sb-seg);
+  color: var(--sb-text);
   font-size: var(--seg-font-size, 14px);
   font-weight: var(--seg-font-weight, 600);
   letter-spacing: var(--seg-letter-space, 0.04em);
@@ -96,13 +96,11 @@
    * 交互取舍：通过细致描边保留悬停反馈，避免背景覆盖导致的视觉层级混淆；
    * 若未来需要增强对比，可调整 --seg-hover-outline 的透明度而非改动底色。
    */
-  box-shadow: inset 0 0 0 1px var(--seg-hover-outline, rgb(255 255 255 / 16%));
+  box-shadow: inset 0 0 0 1px var(--seg-hover-outline);
 }
 
 .language-shell:focus-within {
-  box-shadow:
-    var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%)),
-    0 0 0 1px rgb(255 255 255 / 6%);
+  box-shadow: var(--ring-focus), 0 0 0 1px var(--sb-stroke);
 }
 
 .language-select-wrapper {
@@ -138,15 +136,12 @@
    * 交互取舍：采用文字色微调强化状态感，同时保持透明背景以减少分段噪声。
    * 可通过 --seg-hover-foreground 定制不同主题下的可访问对比度。
    */
-  color: var(
-    --seg-hover-foreground,
-    color-mix(in srgb, var(--sb-text) 88%, white 12%)
-  );
+  color: var(--seg-hover-foreground);
 }
 
 .language-trigger:focus-visible {
   outline: none;
-  box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
+  box-shadow: var(--ring-focus);
 }
 
 .language-trigger-content {
@@ -192,12 +187,16 @@
 }
 
 .language-swap:hover {
-  background: color-mix(in srgb, var(--sb-seg) 85%, white 15%);
+  background: color-mix(
+    in srgb,
+    var(--sb-seg) 85%,
+    var(--sb-inner-highlight) 15%
+  );
 }
 
 .language-swap:focus-visible {
   outline: none;
-  box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
+  box-shadow: var(--ring-focus);
 }
 
 .language-swap:active {
@@ -217,18 +216,18 @@
   margin: 0;
   border: none;
   background: transparent;
-  color: var(--sb-text, #edeff2);
+  color: var(--sb-text);
   font-size: var(--ph-size, 16px);
   font-weight: var(--ph-weight, 500);
   line-height: 1.5;
   letter-spacing: 0.01em;
   resize: none;
   outline: none;
-  caret-color: var(--sb-icon, #edeff2);
+  caret-color: var(--sb-icon);
 }
 
 .textarea::placeholder {
-  color: var(--sb-muted, #9fa7b3);
+  color: var(--sb-muted);
 }
 
 
@@ -243,9 +242,9 @@
   height: var(--btn-action, 44px);
   border: none;
   border-radius: 999px;
-  background: var(--sb-cta, #fff);
-  color: var(--sb-cta-icon, #0e1116);
-  box-shadow: var(--sb-cta-shadow, 0 10px 30px rgb(0 0 0 / 30%));
+  background: var(--sb-cta);
+  color: var(--sb-cta-icon);
+  box-shadow: var(--sb-cta-shadow);
   cursor: pointer;
   transition:
     box-shadow 0.2s ease,
@@ -254,14 +253,12 @@
 }
 
 .action-button:hover {
-  box-shadow: 0 12px 32px rgb(0 0 0 / 32%);
+  box-shadow: var(--sb-cta-shadow-hover);
 }
 
 .action-button:focus-visible {
   outline: none;
-  box-shadow:
-    var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%)),
-    var(--sb-cta-shadow, 0 10px 30px rgb(0 0 0 / 30%));
+  box-shadow: var(--ring-focus), var(--sb-cta-shadow);
 }
 
 .action-button:active {
@@ -275,7 +272,11 @@
 }
 
 .action-button-voice[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--sb-cta) 85%, black 15%);
+  background: color-mix(
+    in srgb,
+    var(--sb-cta) 85%,
+    var(--sb-cta-icon) 15%
+  );
 }
 
 .action-button-dot {
@@ -283,7 +284,7 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: var(--sb-cta-icon, #0e1116);
+  background: var(--sb-cta-icon);
 }
 
 .action-button-icon {
@@ -313,13 +314,12 @@
   flex-direction: column;
   gap: 4px;
   border-radius: var(--sb-menu-radius, 16px);
-  background: var(--menu-bg, #11161e);
-  border: 1px solid var(--menu-border, rgb(255 255 255 / 10%));
-  box-shadow: var(--sb-menu-shadow, 0 18px 44px rgb(0 0 0 / 45%));
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-border);
+  box-shadow: var(--sb-menu-shadow);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--menu-scroll-thumb, #2c3440)
-    var(--menu-scroll-track, #1b2026);
+  scrollbar-color: var(--menu-scroll-thumb) var(--menu-scroll-track);
   opacity: 0;
   transform: translateY(4px) scale(0.98);
   transform-origin: top center;
@@ -338,17 +338,17 @@
 }
 
 .language-menu::-webkit-scrollbar-track {
-  background: var(--menu-scroll-track, #1b2026);
+  background: var(--menu-scroll-track);
   border-radius: 8px;
 }
 
 .language-menu::-webkit-scrollbar-thumb {
-  background: var(--menu-scroll-thumb, #2c3440);
+  background: var(--menu-scroll-thumb);
   border-radius: 8px;
 }
 
 .language-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--menu-scroll-thumb-hover, #354050);
+  background: var(--menu-scroll-thumb-hover);
 }
 
 .language-menu-item {
@@ -367,7 +367,7 @@
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: var(--menu-name-color, #c6ccd7);
+  color: var(--menu-name-color);
   font-size: var(--sb-font-sm, 15px);
   font-weight: 500;
   text-align: left;
@@ -380,22 +380,19 @@
 .language-menu-button:hover,
 .language-menu-button:focus-visible,
 .language-menu-button[data-active="true"] {
-  background: var(
-    --menu-hover,
-    color-mix(in srgb, var(--sb-inner) 88%, white 12%)
-  );
+  background: var(--menu-hover);
   outline: none;
 }
 
 .language-option-code {
-  color: var(--menu-code-color, #f1f4f8);
+  color: var(--menu-code-color);
   font-weight: 700;
   letter-spacing: var(--sb-code-letter-spacing, 0.08em);
   text-transform: uppercase;
 }
 
 .language-option-name {
-  color: var(--menu-name-color, #c6ccd7);
+  color: var(--menu-name-color);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -406,7 +403,7 @@
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  color: var(--menu-check-color, #d9dee7);
+  color: var(--menu-check-color);
   opacity: 0;
   transition: opacity 0.15s ease;
 }
