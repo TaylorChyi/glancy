@@ -1,3 +1,9 @@
+.section,
+.summary,
+.body {
+  box-sizing: border-box;
+}
+
 .section {
   margin-block: 16px;
   border-radius: var(--radius-lg, 14px);
