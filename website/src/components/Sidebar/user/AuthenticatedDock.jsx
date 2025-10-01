@@ -19,10 +19,8 @@ function AuthenticatedDock({
   displayName,
   planLabel,
   labels,
-  isPro,
   onOpenSettings,
   onOpenShortcuts,
-  onOpenUpgrade,
   onOpenLogout,
 }) {
   return (
@@ -31,10 +29,8 @@ function AuthenticatedDock({
         displayName={displayName}
         planLabel={planLabel}
         labels={labels}
-        isPro={isPro}
         onOpenSettings={onOpenSettings}
         onOpenShortcuts={onOpenShortcuts}
-        onOpenUpgrade={onOpenUpgrade}
         onOpenLogout={onOpenLogout}
       />
     </div>
@@ -46,20 +42,15 @@ AuthenticatedDock.propTypes = {
   planLabel: PropTypes.string,
   labels: PropTypes.shape({
     help: PropTypes.string.isRequired,
-    helpSection: PropTypes.string,
     settings: PropTypes.string.isRequired,
     shortcuts: PropTypes.string.isRequired,
     shortcutsDescription: PropTypes.string,
-    upgrade: PropTypes.string,
     logout: PropTypes.string.isRequired,
-    accountSection: PropTypes.string,
     supportEmail: PropTypes.string,
     report: PropTypes.string,
   }).isRequired,
-  isPro: PropTypes.bool.isRequired,
   onOpenSettings: PropTypes.func.isRequired,
   onOpenShortcuts: PropTypes.func.isRequired,
-  onOpenUpgrade: PropTypes.func.isRequired,
   onOpenLogout: PropTypes.func.isRequired,
 };
 

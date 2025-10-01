@@ -1,9 +1,3 @@
-export type MenuSection = {
-  id: string;
-  label?: string;
-  items: Array<MenuActionItem | MenuSubmenuItem>;
-};
-
 export type MenuBaseItem = {
   id: string;
   icon: string;
@@ -32,8 +26,4 @@ export type MenuSubmenuItem = MenuBaseItem & {
   items: SubmenuLinkItem[];
 };
 
-export type FlatMenuEntry =
-  | MenuActionItem
-  | MenuSubmenuItem
-  | { kind: "divider"; id: string }
-  | { kind: "section-label"; id: string; label: string };
+export type MenuItem = MenuActionItem | MenuSubmenuItem;

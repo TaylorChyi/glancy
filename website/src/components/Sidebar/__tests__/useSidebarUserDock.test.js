@@ -60,12 +60,12 @@ describe("useSidebarUserDock", () => {
 
   /**
    * 测试目标：验证登录用户的派生状态与模态回调映射。
-   * 前置条件：useUser 返回 pro 用户，语言包覆盖升级文案。
+   * 前置条件：useUser 返回 pro 用户，语言包覆盖必要文案。
    * 步骤：
    *  1) 渲染 Hook。
    *  2) 调用 buildAuthenticatedProps 映射模态控制。
    * 断言：
-   *  - planLabel 与 labels.upgrade 状态符合 pro 用户预期（失败信息：会员状态派生错误）。
+   *  - planLabel 正确派生且 labels 不包含升级文案（失败信息：会员状态派生错误）。
    *  - 回调被正确转发（失败信息：模态控制映射错误）。
    * 边界/异常：
    *  - 当缺少用户名时将回退邮箱，本用例未触达。
@@ -73,7 +73,6 @@ describe("useSidebarUserDock", () => {
   test("Given_pro_user_When_build_props_Then_maps_modal_controls", () => {
     const openSettings = jest.fn();
     const openShortcuts = jest.fn();
-    const openUpgrade = jest.fn();
     const openLogout = jest.fn();
 
     userState = {
@@ -87,8 +86,8 @@ describe("useSidebarUserDock", () => {
         settings: "设置",
         shortcuts: "快捷键",
         logout: "退出",
-        profileTitle: "账号",
-        upgrade: "升级",
+        helpCenter: "帮助中心",
+        reportBug: "反馈",
       },
     };
 
@@ -102,30 +101,31 @@ describe("useSidebarUserDock", () => {
     const props = result.current.buildAuthenticatedProps({
       openSettings,
       openShortcuts,
-      openUpgrade,
       openLogout,
     });
 
     expect(props.displayName).toBe("alice");
     expect(props.planLabel).toBe("Plus");
-    expect(props.labels.upgrade).toBeUndefined();
+    expect(props.labels).not.toHaveProperty("upgrade");
+    expect(props).not.toHaveProperty("onOpenUpgrade");
+    expect(props.labels.supportEmail).toBe("帮助中心");
+    expect(props.labels.report).toBe("反馈");
     expect(props.onOpenSettings).toBe(openSettings);
     expect(props.onOpenShortcuts).toBe(openShortcuts);
-    expect(props.onOpenUpgrade).toBe(openUpgrade);
     expect(props.onOpenLogout).toBe(openLogout);
   });
 
   /**
-   * 测试目标：验证非会员用户会暴露升级入口并正确生成计划标签。
+   * 测试目标：验证免费用户派生标签集合保持精简且包含必要 fallback。
    * 前置条件：useUser 返回 plan 为 free 的用户。
    * 步骤：
    *  1) 渲染 Hook 并构建 props。
    * 断言：
-   *  - planLabel 为 "Free" 且 labels.upgrade 存在（失败信息：免费计划派生错误）。
+   *  - planLabel 为 "Free" 且 labels 仅包含菜单所需键（失败信息：免费用户标签派生错误）。
    * 边界/异常：
-   *  - 若 plan 缺失则回退为 "Free"，此处覆盖显式 free。 
+   *  - 若 plan 缺失则回退为 "Free"，此处覆盖显式 free。
    */
-  test("Given_free_user_When_build_props_Then_includes_upgrade_label", () => {
+  test("Given_free_user_When_build_props_Then_returns_minimal_labels", () => {
     userState = {
       user: { email: "user@example.com", plan: "free" },
       clearUser: jest.fn(),
@@ -137,7 +137,7 @@ describe("useSidebarUserDock", () => {
         settings: "设置",
         shortcuts: "快捷键",
         logout: "退出",
-        upgrade: "升级",
+        helpCenter: "帮助中心",
       },
     };
 
@@ -146,11 +146,21 @@ describe("useSidebarUserDock", () => {
     const props = result.current.buildAuthenticatedProps({
       openSettings: jest.fn(),
       openShortcuts: jest.fn(),
-      openUpgrade: jest.fn(),
       openLogout: jest.fn(),
     });
 
     expect(props.planLabel).toBe("Free");
-    expect(props.labels.upgrade).toBe("升级");
+    expect(Object.keys(props.labels).sort()).toEqual(
+      [
+        "help",
+        "logout",
+        "report",
+        "settings",
+        "shortcuts",
+        "shortcutsDescription",
+        "supportEmail",
+      ].sort(),
+    );
+    expect(props.labels.supportEmail).toBe("帮助中心");
   });
 });

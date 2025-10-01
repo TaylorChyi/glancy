@@ -62,17 +62,14 @@ export function useSidebarUserDock() {
   const labels = useMemo(
     () => ({
       help: t.help || "Help",
-      helpSection: t.support || t.helpSection || undefined,
       settings: t.settings || "Settings",
       shortcuts: t.shortcuts || t.shortcutsTitle || "Keyboard shortcuts",
       shortcutsDescription: t.shortcutsDescription || undefined,
-      upgrade: !isPro ? t.upgrade || "Upgrade" : undefined,
       logout: t.logout || "Logout",
-      accountSection: t.profileTitle || t.account || "Account",
       supportEmail: t.helpCenter || t.help,
       report: t.reportBug || t.report,
     }),
-    [isPro, t],
+    [t],
   );
 
   const anonymousNav = useMemo(
@@ -106,17 +103,15 @@ export function useSidebarUserDock() {
       displayName,
       planLabel,
       labels,
-      isPro,
     }),
-    [displayName, isPro, labels, planLabel],
+    [displayName, labels, planLabel],
   );
 
   const buildAuthenticatedProps = useCallback(
-    ({ openSettings, openShortcuts, openUpgrade, openLogout }) => ({
+    ({ openSettings, openShortcuts, openLogout }) => ({
       ...authenticatedBaseProps,
       onOpenSettings: openSettings,
       onOpenShortcuts: openShortcuts,
-      onOpenUpgrade: openUpgrade,
       onOpenLogout: openLogout,
     }),
     [authenticatedBaseProps],
