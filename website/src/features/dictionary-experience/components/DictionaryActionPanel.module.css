@@ -1,6 +1,9 @@
 .panel {
   --padding-y: var(--chat-input-bottom-pad-y, 12px);
   --slot-gap: var(--chat-input-bottom-gap, 12px);
+  --dictionary-panel-action-size: var(--chat-input-action-size, 40px);
+  --dictionary-panel-icon-size: 18px;
+  --dictionary-panel-icon-color: var(--sb-text, #edeff2);
 
   display: flex;
   width: 100%;
@@ -22,29 +25,22 @@
 }
 
 .search-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--chat-input-action-size, 40px);
-  height: var(--chat-input-action-size, 40px);
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--sb-text, #edeff2);
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
+  --toolbar-button-size: var(--dictionary-panel-action-size);
+  --tool-button-opacity-base: 0.7;
+  --tool-button-opacity-hover: 1;
+  --tool-button-opacity-disabled: 0.32;
+  --tool-button-focus-ring-color: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 16%));
+  --toolbar-icon-color: var(--dictionary-panel-icon-color);
+  --toolbar-icon-color-disabled: color-mix(
+    in srgb,
+    var(--dictionary-panel-icon-color) 40%,
+    transparent
+  );
 }
 
-.search-toggle:hover {
-  background: color-mix(in srgb, var(--sb-surface, #0e1116) 85%, white 15%);
-}
-
-.search-toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
+.search-toggle :global(svg) {
+  width: var(--dictionary-panel-icon-size);
+  height: var(--dictionary-panel-icon-size);
 }
 
 @media (width <= 640px) {
