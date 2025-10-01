@@ -298,7 +298,7 @@ function OutputToolbar({
       >
         <button
           type="button"
-          className={`${styles["nav-button"]} entry__tool-btn`}
+          className={`${baseToolButtonClass} ${styles["nav-button"]}`}
           onClick={() => onNavigate?.("previous")}
           disabled={!hasPrevious || disabled}
           aria-label={t.previousVersion}
@@ -319,7 +319,7 @@ function OutputToolbar({
         </span>
         <button
           type="button"
-          className={`${styles["nav-button"]} entry__tool-btn`}
+          className={`${baseToolButtonClass} ${styles["nav-button"]}`}
           onClick={() => onNavigate?.("next")}
           disabled={!hasNext || disabled}
           aria-label={t.nextVersion}

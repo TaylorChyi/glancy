@@ -17,6 +17,45 @@
   flex-wrap: nowrap;
   width: 100%;
   box-sizing: border-box;
+
+  --toolbar-icon-color: color-mix(
+    in srgb,
+    var(--color-text-secondary) 88%,
+    transparent
+  );
+  --toolbar-icon-color-hover: color-mix(
+    in srgb,
+    var(--accent-color) 82%,
+    var(--app-color) 18%
+  );
+  --toolbar-icon-color-active: color-mix(
+    in srgb,
+    var(--accent-color) 78%,
+    var(--app-color) 22%
+  );
+  --toolbar-icon-color-disabled: color-mix(
+    in srgb,
+    var(--color-text-tertiary) 92%,
+    transparent
+  );
+  --toolbar-icon-opacity: 0.84;
+  --toolbar-icon-opacity-hover: 1;
+  --toolbar-icon-opacity-disabled: 0.46;
+  --toolbar-nav-color: color-mix(
+    in srgb,
+    var(--color-text-secondary) 82%,
+    transparent
+  );
+  --toolbar-nav-color-hover: color-mix(
+    in srgb,
+    var(--accent-color) 80%,
+    var(--app-color) 20%
+  );
+  --toolbar-nav-color-disabled: color-mix(
+    in srgb,
+    var(--color-text-tertiary) 90%,
+    transparent
+  );
 }
 
 .left-cluster,
@@ -36,23 +75,21 @@
   align-items: center;
   justify-content: center;
   border: none;
-  background: none;
   border-radius: var(--radius-lg, 12px);
-  color: color-mix(in srgb, var(--color-text-secondary) 86%, transparent);
-  opacity: 0.76;
+  background: none;
+  color: var(--toolbar-icon-color);
+  opacity: var(--toolbar-icon-opacity);
   cursor: pointer;
   transition:
     color 0.2s ease,
     opacity 0.2s ease,
-    background-color 0.2s ease,
     transform 0.2s ease;
 }
 
 .tool-button:hover,
 .tool-button:focus-visible {
-  opacity: 1;
-  color: color-mix(in srgb, var(--accent-color) 82%, var(--app-color) 18%);
-  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  opacity: var(--toolbar-icon-opacity-hover);
+  color: var(--toolbar-icon-color-hover);
   transform: translateY(-1px);
 }
 
@@ -62,15 +99,15 @@
 }
 
 .tool-button:disabled {
-  opacity: 0.35;
+  color: var(--toolbar-icon-color-disabled);
+  opacity: var(--toolbar-icon-opacity-disabled);
   cursor: not-allowed;
-  background: none;
   transform: none;
 }
 
 .tool-button[data-active="true"] {
-  color: color-mix(in srgb, var(--accent-color) 78%, var(--app-color) 22%);
-  opacity: 1;
+  color: var(--toolbar-icon-color-active);
+  opacity: var(--toolbar-icon-opacity-hover);
 }
 
 .tool-button-replay {
@@ -100,33 +137,24 @@
 }
 
 .nav-button {
-  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 95%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 82%, transparent);
+  color: var(--toolbar-nav-color);
+  opacity: var(--toolbar-icon-opacity);
   transition:
-    border-color 0.2s ease,
     color 0.2s ease,
-    background-color 0.2s ease,
+    opacity 0.2s ease,
     transform 0.2s ease;
 }
 
 .nav-button:disabled {
   cursor: not-allowed;
-  color: color-mix(in srgb, var(--color-text-tertiary) 90%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 80%, transparent);
-  border-color: color-mix(in srgb, var(--border-color) 40%, transparent);
+  color: var(--toolbar-nav-color-disabled);
+  opacity: var(--toolbar-icon-opacity-disabled);
   transform: none;
 }
 
-.nav-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
-  outline-offset: 2px;
-}
-
 .nav-button:not(:disabled):is(:hover, :focus-visible) {
-  border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
-  color: color-mix(in srgb, var(--accent-color) 80%, var(--app-color) 20%);
-  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  color: var(--toolbar-nav-color-hover);
+  opacity: var(--toolbar-icon-opacity-hover);
   transform: translateY(-1px);
 }
 
@@ -149,8 +177,9 @@
   border-radius: 10px;
   cursor: pointer;
   user-select: none;
+  background: none;
   transition:
-    background-color 0.15s ease,
+    color 0.15s ease,
     transform 0.1s ease;
 }
 
@@ -161,7 +190,7 @@
 }
 
 :global(.entry__tool-btn:hover) {
-  background: var(--hover, #1a1e24);
+  background: none;
 }
 
 :global(.entry__tool-btn:active) {
