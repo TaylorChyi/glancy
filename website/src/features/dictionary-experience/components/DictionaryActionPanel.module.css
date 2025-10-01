@@ -16,6 +16,7 @@
   --dictionary-panel-action-size: var(--chat-input-action-size, 40px);
   --dictionary-panel-icon-size: 18px;
   --dictionary-panel-icon-color: var(--sb-text);
+
   /*
    * 背景：原先通过 ::before 伪元素绘制顶部 1px 分隔线，但在深色背景下造成强对比。
    * 取舍：引入可配置的阴影层，沿用现有阴影令牌，既保持层级又能按需复用旧变量。
