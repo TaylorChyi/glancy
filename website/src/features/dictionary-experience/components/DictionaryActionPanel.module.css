@@ -3,14 +3,14 @@
   --slot-gap: var(--chat-input-bottom-gap, 12px);
   --dictionary-panel-action-size: var(--chat-input-action-size, 40px);
   --dictionary-panel-icon-size: 18px;
-  --dictionary-panel-icon-color: var(--sb-text, #edeff2);
+  --dictionary-panel-icon-color: var(--sb-text);
 
   display: flex;
   width: 100%;
   align-items: center;
   flex-wrap: nowrap;
   box-shadow:
-    var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%)),
+    var(--sb-shadow),
     var(--chat-input-bottom-shadow, inset 0 1px 0 rgb(255 255 255 / 6%));
 }
 
@@ -20,7 +20,7 @@
   inset-inline: var(--chat-input-bottom-divider-inset, 0);
   top: 0;
   height: 1px;
-  background: var(--sb-divider, rgb(255 255 255 / 10%));
+  background: var(--sb-divider);
   pointer-events: none;
 }
 
@@ -29,7 +29,7 @@
   --tool-button-opacity-base: 0.7;
   --tool-button-opacity-hover: 1;
   --tool-button-opacity-disabled: 0.32;
-  --tool-button-focus-ring-color: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 16%));
+  --tool-button-focus-ring-color: var(--ring-focus);
   --toolbar-icon-color: var(--dictionary-panel-icon-color);
   --toolbar-icon-color-disabled: color-mix(
     in srgb,
