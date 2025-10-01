@@ -1,6 +1,5 @@
 import { forwardRef, KeyboardEvent, MouseEvent } from "react";
 import Avatar from "@/components/ui/Avatar";
-import ThemeIcon from "@/components/ui/Icon";
 import styles from "./UserButton.module.css";
 
 export interface UserButtonProps {
@@ -45,12 +44,6 @@ const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
           <span className={styles.name}>{displayName || ""}</span>
           {planLabel ? <span className={styles.plan}>{planLabel}</span> : null}
         </span>
-        <ThemeIcon
-          name="chevron-up-down"
-          width={18}
-          height={18}
-          className={styles.chevron}
-        />
       </button>
     );
   },

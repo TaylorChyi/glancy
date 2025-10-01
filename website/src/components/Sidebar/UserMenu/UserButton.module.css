@@ -63,13 +63,3 @@
   gap: 4px;
 }
 
-.chevron {
-  margin-left: auto;
-  color: var(--menu-muted);
-  transition: transform 160ms ease;
-}
-
-.button[data-open="true"] .chevron {
-  transform: rotate(-180deg);
-  color: var(--menu-text);
-}
