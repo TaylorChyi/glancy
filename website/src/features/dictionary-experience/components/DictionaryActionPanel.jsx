@@ -17,6 +17,7 @@ import { useMemo, useCallback } from "react";
 import SearchBox from "@/components/ui/SearchBox";
 import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
 import ThemeIcon from "@/components/ui/Icon";
+import toolbarStyles from "@/components/OutputToolbar/OutputToolbar.module.css";
 
 import styles from "./DictionaryActionPanel.module.css";
 
@@ -33,6 +34,26 @@ export default function DictionaryActionPanel({
   const panelClassName = useMemo(
     () => [styles.panel, actionBarClassName].filter(Boolean).join(" "),
     [actionBarClassName],
+  );
+  const searchToggleClassName = useMemo(
+    /**
+     * 意图：复用 OutputToolbar 的圆形图标按钮基类，并在此处覆写尺寸/不透明度变量，
+     *       保证词典入口按钮与工具栏动作按钮视觉一致。
+     * 输入：无外部依赖，仅取静态样式引用。
+     * 输出：组合后的类名字符串。
+     * 流程：过滤空值后拼接，保证 className 稳定。
+     * 错误处理：均为静态依赖，无异常分支。
+     * 复杂度：O(1)。
+     */
+    () =>
+      [
+        toolbarStyles["tool-button"],
+        "entry__tool-btn",
+        styles["search-toggle"],
+      ]
+        .filter(Boolean)
+        .join(" "),
+    [],
   );
   const toolbarRootRenderer = useCallback(
     /**
@@ -59,7 +80,7 @@ export default function DictionaryActionPanel({
     >
       <button
         type="button"
-        className={styles["search-toggle"]}
+        className={searchToggleClassName}
         onClick={onRequestSearch}
         aria-label={searchButtonLabel}
         title={searchButtonLabel}
