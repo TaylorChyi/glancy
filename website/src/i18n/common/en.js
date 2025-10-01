@@ -19,6 +19,10 @@ export default {
   prefVoicesTitle: "Pronunciation",
   prefVoicesDescription:
     "Select the studio voices that narrate English and Chinese entries.",
+  prefPersonalizationTitle: "Personal context",
+  prefKeyboardTitle: "Shortcut playbook",
+  prefDataTitle: "Data stewardship",
+  prefAccountTitle: "Account essentials",
   prefSystemLanguage: "System Language",
   prefSystemLanguageAuto: "Match Device Language",
   prefLanguage: "Source Language",
