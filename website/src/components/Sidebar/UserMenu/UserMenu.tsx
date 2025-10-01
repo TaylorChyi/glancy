@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import ThemeIcon from "@/components/ui/Icon";
-import { REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config/support.js";
 import UserButton from "./UserButton";
 import UserSubmenu, { type UserSubmenuHandle } from "./UserSubmenu";
 import type { MenuItem, MenuSubmenuItem, SubmenuLinkItem } from "./types";
@@ -16,8 +15,11 @@ interface UserMenuProps {
     shortcuts: string;
     shortcutsDescription?: string;
     logout: string;
-    supportEmail?: string;
-    report?: string;
+    helpCenter?: string;
+    releaseNotes?: string;
+    termsPolicies?: string;
+    reportBug?: string;
+    downloadApps?: string;
   };
   onOpenSettings: (section?: string) => void;
   onOpenShortcuts: () => void;
@@ -55,6 +57,33 @@ const computeSubmenuTop = (parentBottom: number, height: number) =>
 const SUBMENU_DELAY_IN = 40;
 const SUBMENU_DELAY_OUT = 100;
 
+/**
+ * 背景：
+ *  - Header 已通过统一的 HELP_ITEMS 配置驱动帮助入口，Sidebar 需复用同一事件协议。
+ * 目的：
+ *  - 维护相同的 key/icon/labelKey 映射，确保后续仅在配置层即可新增帮助项。
+ * 关键决策与取舍：
+ *  - 选择以常量表述策略集合而非散落条件判断，便于未来扩展或复用到其它入口。
+ */
+const HELP_ITEMS = [
+  { key: "center", icon: "question-mark-circle", labelKey: "helpCenter" },
+  { key: "notes", icon: "refresh", labelKey: "releaseNotes" },
+  { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
+  { key: "bug", icon: "flag", labelKey: "reportBug" },
+  { key: "apps", icon: "phone", labelKey: "downloadApps" },
+  { key: "shortcuts", icon: "command-line", labelKey: "shortcuts" },
+] as const;
+
+type HelpItemConfig = (typeof HELP_ITEMS)[number];
+type HelpAction = HelpItemConfig["key"];
+type HelpLabelKey = HelpItemConfig["labelKey"];
+
+const emitHelpEvent = (action: HelpAction) => {
+  // 复用 Header 的自定义事件协议，让监听方无需感知入口差异。
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("glancy-help", { detail: { action } }));
+};
+
 function UserMenu({
   displayName,
   planLabel,
@@ -79,41 +108,37 @@ function UserMenu({
   const [placement, setPlacement] = useState<"up" | "down">("up");
 
   const supportItems = useMemo<SubmenuLinkItem[]>(() => {
-    const items: SubmenuLinkItem[] = [];
+    return HELP_ITEMS.map<SubmenuLinkItem>((item) => {
+      const labelKey = item.labelKey as HelpLabelKey & keyof UserMenuProps["labels"];
+      const rawLabel = labels[labelKey];
+      const label =
+        item.key === "shortcuts"
+          ? labels.shortcuts
+          : rawLabel ?? labels.help;
+      if (item.key === "shortcuts") {
+        return {
+          id: item.key,
+          icon: item.icon,
+          label,
+          onSelect: onOpenShortcuts,
+        };
+      }
 
-    if (SUPPORT_EMAIL) {
-      items.push({
-        id: "support-email",
-        icon: "email",
-        label: labels.supportEmail || labels.help,
-        href: `mailto:${SUPPORT_EMAIL}`,
-        external: true,
-      });
-    }
-
-    if (REPORT_FORM_URL) {
-      items.push({
-        id: "report",
-        icon: "flag",
-        label: labels.report || labels.help,
-        href: REPORT_FORM_URL,
-        external: true,
-      });
-    }
-
-    items.push({
-      id: "shortcuts",
-      icon: "command-line",
-      label: labels.shortcuts,
-      onSelect: onOpenShortcuts,
+      return {
+        id: item.key,
+        icon: item.icon,
+        label,
+        onSelect: () => emitHelpEvent(item.key),
+      };
     });
-
-    return items;
   }, [
     labels.help,
-    labels.report,
+    labels.helpCenter,
+    labels.releaseNotes,
+    labels.reportBug,
     labels.shortcuts,
-    labels.supportEmail,
+    labels.termsPolicies,
+    labels.downloadApps,
     onOpenShortcuts,
   ]);
 
