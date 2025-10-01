@@ -1,22 +1,24 @@
 .panel {
-  --padding-y: 0;
-  --slot-gap: 0;
+  --padding-y: var(--chat-input-bottom-pad-y, 12px);
+  --slot-gap: var(--chat-input-bottom-gap, 12px);
 
   display: flex;
   width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
+  box-shadow:
+    var(--sb-shadow, 0 6px 20px rgb(0 0 0 / 25%)),
+    var(--chat-input-bottom-shadow, inset 0 1px 0 rgb(255 255 255 / 6%));
 }
 
-.inner {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--chat-input-bottom-gap, 12px);
-  padding-block: var(--chat-input-bottom-pad-y, 12px);
-  border-top: 1px solid var(--sb-divider, rgb(255 255 255 / 10%));
-  box-shadow: var(
-      --chat-input-bottom-shadow,
-      inset 0 1px 0 rgb(255 255 255 / 6%)
-    );
+.panel::before {
+  content: "";
+  position: absolute;
+  inset-inline: var(--chat-input-bottom-divider-inset, 0);
+  top: 0;
+  height: 1px;
+  background: var(--sb-divider, rgb(255 255 255 / 10%));
+  pointer-events: none;
 }
 
 .search-toggle {
@@ -45,22 +47,19 @@
   box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
 }
 
-.toolbar-wrapper {
+.toolbar {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.toolbar {
   width: 100%;
 }
 
 @media (width <= 640px) {
-  .inner {
+  .panel {
     flex-wrap: wrap;
-    justify-content: space-between;
+    row-gap: var(--chat-input-bottom-gap, 12px);
   }
 
-  .toolbar-wrapper {
+  .toolbar {
     width: 100%;
   }
 }
