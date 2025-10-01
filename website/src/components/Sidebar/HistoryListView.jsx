@@ -34,6 +34,7 @@ function HistoryListView({ items, onSelect, onNavigate }) {
                   onSelect(item);
                 }
               }}
+              className={styles.entryButton}
               ref={navigationBindings.ref}
               onKeyDown={navigationBindings.onKeyDown}
             />

@@ -9,3 +9,16 @@
 .item {
   width: 100%;
 }
+
+/*
+ * 调整历史词条的交互区域，使其与头部导航按钮保持统一宽度，并让文本与导航图标左缘对齐。
+ * 备注：这里的 3px 对应 NavItem 中指示条宽度，需配合 sidebar 变量保持一致。
+ */
+.entry-button {
+  width: calc(100% + var(--sidebar-pad-x) * 2);
+  margin-inline: calc(var(--sidebar-pad-x) * -1);
+  padding-left: calc(
+    var(--sidebar-pad-x) + 3px + var(--sidebar-icon-size) +
+      var(--sidebar-item-gap, 12px)
+  );
+}

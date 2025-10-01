@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: var(--sidebar-item-gap, 12px);
   height: var(--sidebar-item-h);
   padding: 0 var(--sidebar-pad-x);
   padding-left: calc(var(--sidebar-pad-x) + 3px);

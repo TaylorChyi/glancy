@@ -34,6 +34,7 @@
   --sidebar-gap-section: 12px;
   --sidebar-icon-size: 18px;
   --sidebar-accent: #96a0ff;
+  --sidebar-item-gap: 12px;
 
   /* popover metrics */
   --popover-w: 304px;
