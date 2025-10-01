@@ -1,7 +1,13 @@
 .dictionary-entry {
   width: auto;
-  margin: 0 2cm;
-  padding: 20px 0;
+
+  /*
+   * 保持词条内容在中心对齐，去除固定 2cm 外边距以适配 Markdown 折叠块；
+   * 通过水平内边距吸收横向留白，避免超出内容区域。
+   */
+  margin: 0 auto;
+  padding: 0 20px;
+  max-width: var(--layout-content-max, 100%);
   text-align: justify;
   text-align-last: left;
   font-size: 1rem;
