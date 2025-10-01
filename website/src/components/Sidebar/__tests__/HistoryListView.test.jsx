@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import styles from "../HistoryList.module.css";
 
 const loadHistory = jest.fn();
 
@@ -41,7 +42,11 @@ jest.unstable_mockModule("@/context", () => ({
     t: { searchHistory: "历史" },
     lang: "zh",
   }),
-  useTheme: () => ({ theme: "light", setTheme: jest.fn(), resolvedTheme: "light" }),
+  useTheme: () => ({
+    theme: "light",
+    setTheme: jest.fn(),
+    resolvedTheme: "light",
+  }),
 }));
 
 const { default: HistoryListView } = await import("../HistoryListView.jsx");
@@ -59,7 +64,7 @@ describe("HistoryListView", () => {
    *  2) 查询具有 listbox 语义的容器与按钮。
    * 断言：
    *  - 存在 role 为 listbox 的元素。
-   *  - 每个词条渲染为可点击按钮。
+   *  - 每个词条渲染为可点击按钮，并继承对齐样式类。
    * 边界/异常：
    *  - 如导航函数返回空对象亦应安全渲染。
    */
@@ -74,8 +79,13 @@ describe("HistoryListView", () => {
     render(<HistoryListView items={items} onNavigate={onNavigate} />);
 
     expect(screen.getByRole("listbox")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "alpha" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "beta" })).toBeInTheDocument();
+    const firstButton = screen.getByRole("button", { name: "alpha" });
+    const secondButton = screen.getByRole("button", { name: "beta" });
+
+    expect(firstButton).toBeInTheDocument();
+    expect(secondButton).toBeInTheDocument();
+    expect(firstButton).toHaveClass(styles.entryButton);
+    expect(secondButton).toHaveClass(styles.entryButton);
     expect(onNavigate).toHaveBeenCalledTimes(items.length);
   });
 
