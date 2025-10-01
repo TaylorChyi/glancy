@@ -1,3 +1,15 @@
+.panelShell {
+  /*
+   * 目的：复用 ChatInput 布局壳的宽度策略，确保词典面板在不同容器内保持一致居中表现。
+   * 关键取舍：直接引入布局类而非在父级分散样式，避免将 SearchBox 暴露给外层布局细节。
+   */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  max-width: var(--sb-max-width, 960px);
+  margin-inline: auto;
+}
+
 .panel {
   --padding-y: var(--chat-input-bottom-pad-y, 12px);
   --slot-gap: var(--chat-input-bottom-gap, 12px);

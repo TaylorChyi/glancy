@@ -71,27 +71,33 @@ export default function DictionaryActionPanel({
   const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
 
   return (
-    <SearchBox
-      className={panelClassName}
-      role="group"
-      aria-label="释义操作区域"
-      data-testid="dictionary-action-panel"
-      data-output-toolbar="true"
-    >
-      <button
-        type="button"
-        className={searchToggleClassName}
-        onClick={onRequestSearch}
-        aria-label={searchButtonLabel}
-        title={searchButtonLabel}
+    <div className={styles.panelShell}>
+      <SearchBox
+        className={panelClassName}
+        role="group"
+        aria-label="释义操作区域"
+        data-testid="dictionary-action-panel"
+        data-output-toolbar="true"
       >
-        <ThemeIcon name="search" width={18} height={18} />
-      </button>
-      <DictionaryEntryActionBar
-        {...restActionBarProps}
-        renderRoot={resolvedRenderRoot}
-      />
-    </SearchBox>
+        {/*
+         * 背景：SearchBox 需要在多布局容器中保持一致的中心与宽度策略。
+         * 取舍：通过局部壳层承载宽度约束，而非依赖上层父容器，避免跨层耦合。
+         */}
+        <button
+          type="button"
+          className={searchToggleClassName}
+          onClick={onRequestSearch}
+          aria-label={searchButtonLabel}
+          title={searchButtonLabel}
+        >
+          <ThemeIcon name="search" width={18} height={18} />
+        </button>
+        <DictionaryEntryActionBar
+          {...restActionBarProps}
+          renderRoot={resolvedRenderRoot}
+        />
+      </SearchBox>
+    </div>
   );
 }
 
