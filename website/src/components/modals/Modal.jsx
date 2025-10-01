@@ -80,7 +80,14 @@ const toFocusableElements = (root) => {
   });
 };
 
-function Modal({ onClose, className = "", children, closeLabel = "Close" }) {
+function Modal({
+  onClose,
+  className = "",
+  children,
+  closeLabel = "Close",
+  closeButton,
+  hideDefaultCloseButton = false,
+}) {
   useEscapeKey(onClose);
   const contentRef = useRef(null);
   const previousFocusRef = useRef(null);
@@ -168,6 +175,35 @@ function Modal({ onClose, className = "", children, closeLabel = "Close" }) {
     ? `${styles.content} ${className}`
     : styles.content;
 
+  const shouldRenderDefaultCloseButton =
+    !hideDefaultCloseButton && !closeButton;
+
+  /**
+   * 意图：
+   *  - 在保持默认关闭按钮体验的同时，为设计稿要求的差异化方案预留插槽。
+   * 流程：
+   *  1) 如提供 `closeButton`，优先渲染该节点；否则按需渲染默认按钮。
+   *  2) 关闭控件始终位于内容首部，确保焦点环顺序稳定。
+   */
+  const renderCloseControl = () => {
+    if (closeButton) {
+      return <div className={styles["close-slot"]}>{closeButton}</div>;
+    }
+    if (!shouldRenderDefaultCloseButton) {
+      return null;
+    }
+    return (
+      <button
+        type="button"
+        className={styles["close-button"]}
+        aria-label={closeLabel}
+        onClick={onClose}
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+    );
+  };
+
   return createPortal(
     <div className={styles.overlay} role="presentation" onClick={onClose}>
       <div
@@ -178,14 +214,7 @@ function Modal({ onClose, className = "", children, closeLabel = "Close" }) {
         ref={contentRef}
         onClick={withStopPropagation()}
       >
-        <button
-          type="button"
-          className={styles["close-button"]}
-          aria-label={closeLabel}
-          onClick={onClose}
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
+        {renderCloseControl()}
         {children}
       </div>
     </div>,
@@ -198,6 +227,8 @@ Modal.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node.isRequired,
   closeLabel: PropTypes.string,
+  closeButton: PropTypes.node,
+  hideDefaultCloseButton: PropTypes.bool,
 };
 
 export default Modal;
