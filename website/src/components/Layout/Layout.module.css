@@ -6,6 +6,7 @@
  * 关键决策与取舍：
  *  - 通过 CSS 变量暴露侧边栏宽度与 docker 高度，便于拖拽/断点同步；
  *  - 选用 fixed docker 搭配 backdrop，放弃 sticky 实现以规避移动端滚动兼容性问题。
+ *  - 以 ::before + mask 控制底部磨砂渐变，保留输入框顶缘的清晰度并为未来调优保留变量。
  * 影响范围：
  *  - App 页面主体区域、底部搜索工具条、侧边栏拖拽宽度。
  * 演进与TODO：
@@ -27,6 +28,12 @@
   --docker-h: 0px;
   --docker-padding-y: clamp(16px, 4vw, 24px);
   --docker-padding-x: clamp(20px, 5vw, 32px);
+  --docker-backdrop-blur: 22px;
+  --docker-backdrop-tint-strong: 82%;
+  --docker-backdrop-tint-weak: 32%;
+  --docker-backdrop-gradient-hold: 58%;
+  --docker-backdrop-gradient-fade-start: 72%;
+  --docker-backdrop-mask-solid-stop: 64%;
 
   position: relative;
   min-height: var(--vh);
@@ -172,11 +179,7 @@
 }
 
 .content::-webkit-scrollbar-thumb {
-  background: color-mix(
-    in srgb,
-    var(--border-color) 32%,
-    transparent
-  );
+  background: color-mix(in srgb, var(--border-color) 32%, transparent);
   border-radius: 6px;
 }
 
@@ -198,15 +201,56 @@
   bottom: 0;
   left: var(--sidebar-w);
   z-index: 70;
-  backdrop-filter: blur(18px);
   padding: var(--docker-padding-y) var(--docker-padding-x);
-  padding-bottom: calc(
-    var(--docker-padding-y) + env(safe-area-inset-bottom)
-  );
+  padding-bottom: calc(var(--docker-padding-y) + env(safe-area-inset-bottom));
   min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
+  isolation: isolate;
+}
+
+/*
+ * 采用 ::before + mask 限制磨砂范围，保证搜索框顶缘以上保持清晰；
+ * 若后续需要全覆盖磨砂，可通过变量重置 mask 与渐变控制点。
+ */
+.docker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(var(--docker-backdrop-blur));
+  background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      var(--docker-backdrop-gradient-hold),
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-weak),
+        transparent
+      )
+      var(--docker-backdrop-gradient-fade-start),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    0deg,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) var(--docker-backdrop-mask-solid-stop),
+    rgb(0 0 0 / 0%) 100%
+  );
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
 }
 
 .docker-inner {
@@ -224,6 +268,9 @@
     --layout-content-padding-x: clamp(16px, 6vw, 28px);
     --layout-content-padding-top: clamp(24px, 6vw, 32px);
     --layout-content-padding-bottom: clamp(24px, 8vw, 32px);
+    --docker-backdrop-gradient-hold: 64%;
+    --docker-backdrop-gradient-fade-start: 82%;
+    --docker-backdrop-mask-solid-stop: 74%;
   }
 
   .resizer {
@@ -249,6 +296,9 @@
   .app {
     --layout-content-padding-x: clamp(14px, 6vw, 24px);
     --layout-content-padding-top: clamp(20px, 6vw, 28px);
+    --docker-backdrop-gradient-hold: 68%;
+    --docker-backdrop-gradient-fade-start: 88%;
+    --docker-backdrop-mask-solid-stop: 78%;
   }
 
   .docker-inner {
