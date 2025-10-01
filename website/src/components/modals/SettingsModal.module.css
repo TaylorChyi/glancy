@@ -11,8 +11,74 @@
   background: transparent;
 }
 
+.surface {
+  position: relative;
+}
+
+.surface > :global(header) {
+  padding-right: clamp(var(--space-8), 6vw, var(--space-10));
+}
+
+.surface > :global(footer) {
+  position: absolute;
+  top: clamp(var(--space-5), 5vw, var(--space-7));
+  right: clamp(var(--space-5), 5vw, var(--space-7));
+  padding: 0;
+  border: none;
+  display: flex;
+}
+
+.close-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.85rem 1.6rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border-color) 42%, transparent);
+  background: color-mix(in srgb, var(--app-bg) 94%, transparent);
+  color: var(--settings-dialog-text);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 22px 56px
+    color-mix(in srgb, var(--shadow-color) 28%, transparent);
+}
+
+.close-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 64px
+    color-mix(in srgb, var(--shadow-color) 34%, transparent);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 32px 72px color-mix(in srgb, var(--shadow-color) 38%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--highlight-color) 36%, transparent);
+}
+
+.close-button:active {
+  transform: translateY(0);
+}
+
 @media (width <= 1023px) {
   .dialog {
     --modal-max-width: min(92vw, 900px);
+  }
+
+  .surface > :global(header) {
+    padding-right: clamp(var(--space-7), 7vw, var(--space-9));
+  }
+
+  .surface > :global(footer) {
+    top: clamp(var(--space-4), 6vw, var(--space-6));
+    right: clamp(var(--space-4), 6vw, var(--space-6));
   }
 }

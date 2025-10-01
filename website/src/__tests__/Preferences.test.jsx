@@ -1,5 +1,6 @@
 /* eslint-env jest */
 import React from "react";
+import PropTypes from "prop-types";
 import {
   render,
   screen,
@@ -28,6 +29,7 @@ const mockT = {
   autoDetect: "Auto",
   CHINESE: "CHINESE",
   ENGLISH: "ENGLISH",
+  close: "Close",
 };
 
 jest.unstable_mockModule("@/context", () => ({
@@ -56,10 +58,68 @@ jest.unstable_mockModule("@/hooks/useApi.js", () => ({
     tts: { fetchVoices: mockTtsVoices },
   }),
 }));
-jest.unstable_mockModule("@/components", () => ({
-  __esModule: true,
-  VoiceSelector: ({ lang }) => <div data-testid={`voice-selector-${lang}`} />,
-}));
+jest.unstable_mockModule("@/components", async () => {
+  const React = await import("react");
+  const { forwardRef, useId } = React;
+
+  const SettingsSurface = forwardRef(function SettingsSurface(
+    {
+      title,
+      description,
+      actions,
+      children,
+      variant,
+      className = "",
+      headingId: providedHeadingId,
+      descriptionId: providedDescriptionId,
+    },
+    ref,
+  ) {
+    const autoHeadingId = useId();
+    const autoDescriptionId = useId();
+    const headingId = providedHeadingId ?? autoHeadingId;
+    const resolvedDescriptionId = description
+      ? providedDescriptionId ?? autoDescriptionId
+      : undefined;
+
+    return (
+      <section
+        ref={ref}
+        className={className}
+        aria-labelledby={headingId}
+        aria-describedby={resolvedDescriptionId}
+        data-variant={variant}
+      >
+        <header>
+          <h2 id={headingId}>{title}</h2>
+          {description ? (
+            <p id={resolvedDescriptionId}>{description}</p>
+          ) : null}
+        </header>
+        <div>{children}</div>
+        {actions ? <footer>{actions}</footer> : null}
+      </section>
+    );
+  });
+
+  SettingsSurface.propTypes = {
+    title: PropTypes.string,
+    description: PropTypes.string,
+    actions: PropTypes.node,
+    children: PropTypes.node,
+    variant: PropTypes.string,
+    className: PropTypes.string,
+    headingId: PropTypes.string,
+    descriptionId: PropTypes.string,
+  };
+
+  return {
+    __esModule: true,
+    VoiceSelector: ({ lang }) => <div data-testid={`voice-selector-${lang}`} />,
+    SettingsSurface,
+    SETTINGS_SURFACE_VARIANTS: { MODAL: "modal", PAGE: "page" },
+  };
+});
 jest.unstable_mockModule("@/store", () => ({
   useUserStore: (fn) => fn({ user: { plan: "free" } }),
   useVoiceStore: (fn) =>
@@ -157,6 +217,9 @@ jest.unstable_mockModule("@/store/settings", () => ({
 
 const { default: Preferences } = await import("@/pages/preferences");
 const { useSettingsStore } = await import("@/store/settings");
+const { default: SettingsModal } = await import(
+  "@/components/modals/SettingsModal.jsx"
+);
 
 beforeEach(() => {
   localStorage.clear();
@@ -197,6 +260,56 @@ test("keeps user theme when server does not provide one", async () => {
   await act(async () => {});
   await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
   expect(mockSetTheme).not.toHaveBeenCalled();
+});
+
+/**
+ * 测试目标：设置弹窗应隐藏默认关闭按钮并使用动作槽位的自定义按钮。
+ * 前置条件：
+ *  - `SettingsModal` 以 `open=true` 渲染。
+ *  - 语言上下文提供 `prefTitle`、`prefDescription`、`close` 文案。
+ * 步骤：
+ *  1) 渲染组件并等待副作用完成。
+ *  2) 查询“Close”按钮并触发点击。
+ *  3) 读取对话框的 aria 属性。
+ * 断言：
+ *  - 仅存在动作槽位中的关闭按钮，点击后触发 `onClose`。
+ *  - 对话框 `aria-labelledby` 与 `aria-describedby` 均指向实际文案节点。
+ * 边界/异常：
+ *  - 若未来移除描述文案，应允许 `aria-describedby` 为空。
+ */
+test("renders custom close control inside settings modal actions", async () => {
+  const handleClose = jest.fn();
+
+  await act(async () => {
+    render(<SettingsModal open onClose={handleClose} />);
+  });
+  await act(async () => {});
+
+  const closeButton = screen.getByRole("button", { name: "Close" });
+  expect(closeButton).toBeInTheDocument();
+  fireEvent.click(closeButton);
+  expect(handleClose).toHaveBeenCalledTimes(1);
+
+  expect(screen.queryByText("×")).toBeNull();
+
+  const dialog = screen.getByRole("dialog");
+  expect(dialog).toHaveAttribute("aria-modal", "true");
+
+  const labelledBy = dialog.getAttribute("aria-labelledby");
+  if (labelledBy) {
+    const titleNode = document.getElementById(labelledBy);
+    expect(titleNode).not.toBeNull();
+    expect(titleNode?.textContent).toContain("Preferences");
+  } else {
+    throw new Error("Expected dialog to reference a heading for accessibility");
+  }
+
+  const describedBy = dialog.getAttribute("aria-describedby");
+  if (describedBy) {
+    const descriptionNode = document.getElementById(describedBy);
+    expect(descriptionNode).not.toBeNull();
+    expect(descriptionNode?.textContent).toContain("Description");
+  }
 });
 
 /**

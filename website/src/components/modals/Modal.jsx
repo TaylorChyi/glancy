@@ -80,7 +80,16 @@ const toFocusableElements = (root) => {
   });
 };
 
-function Modal({ onClose, className = "", children, closeLabel = "Close" }) {
+function Modal({
+  onClose,
+  className = "",
+  children,
+  closeLabel = "Close",
+  renderCloseButton,
+  showDefaultCloseButton = true,
+  ariaLabelledBy,
+  ariaDescribedBy,
+}) {
   useEscapeKey(onClose);
   const contentRef = useRef(null);
   const previousFocusRef = useRef(null);
@@ -168,24 +177,40 @@ function Modal({ onClose, className = "", children, closeLabel = "Close" }) {
     ? `${styles.content} ${className}`
     : styles.content;
 
+  // 关闭按钮采用“策略模式”：
+  //  - 默认路径保持既有按钮，保障所有弹窗均有兜底的可访问关闭手段。
+  //  - 调用方可注入自定义渲染逻辑（含返回 null 彻底隐藏），以适配不同布局与交互需求。
+  const customCloseButton =
+    typeof renderCloseButton === "function"
+      ? renderCloseButton({ onClose, closeLabel })
+      : undefined;
+  const shouldRenderDefault =
+    customCloseButton === undefined && showDefaultCloseButton;
+
   return createPortal(
     <div className={styles.overlay} role="presentation" onClick={onClose}>
       <div
         className={contentClassName}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         ref={contentRef}
         onClick={withStopPropagation()}
       >
-        <button
-          type="button"
-          className={styles["close-button"]}
-          aria-label={closeLabel}
-          onClick={onClose}
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
+        {customCloseButton !== undefined
+          ? customCloseButton
+          : shouldRenderDefault && (
+              <button
+                type="button"
+                className={styles["close-button"]}
+                aria-label={closeLabel}
+                onClick={onClose}
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            )}
         {children}
       </div>
     </div>,
@@ -198,6 +223,10 @@ Modal.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node.isRequired,
   closeLabel: PropTypes.string,
+  renderCloseButton: PropTypes.func,
+  showDefaultCloseButton: PropTypes.bool,
+  ariaLabelledBy: PropTypes.string,
+  ariaDescribedBy: PropTypes.string,
 };
 
 export default Modal;

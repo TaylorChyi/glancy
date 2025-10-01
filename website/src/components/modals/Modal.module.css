@@ -29,7 +29,7 @@
 .close-button {
   position: absolute;
   top: 16px;
-  left: 16px;
+  right: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -94,7 +94,7 @@
 
   .close-button {
     top: 12px;
-    left: 12px;
+    right: 12px;
   }
 }
 
