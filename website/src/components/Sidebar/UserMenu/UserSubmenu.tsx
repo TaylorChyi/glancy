@@ -1,7 +1,9 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -13,6 +15,7 @@ import styles from "./UserMenu.module.css";
 export interface UserSubmenuHandle {
   getFocusable: () => HTMLElement[];
   focusFirst: () => void;
+  getCurrentHeight: () => number;
 }
 
 interface UserSubmenuProps {
@@ -25,6 +28,7 @@ interface UserSubmenuProps {
   onPointerLeave: () => void;
   requestCloseFromKeyboard: () => void;
   focusOnMount: boolean;
+  onHeightChange: (height: number) => void;
 }
 
 const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
@@ -39,6 +43,7 @@ const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
       onPointerLeave,
       requestCloseFromKeyboard,
       focusOnMount,
+      onHeightChange,
     },
     ref,
   ) => {
@@ -47,6 +52,19 @@ const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
     const getFocusableNodes = (): Array<HTMLElement> =>
       itemRefs.current.filter((node): node is HTMLElement => Boolean(node));
     const [activeIndex, setActiveIndex] = useState(0);
+    const lastKnownHeightRef = useRef(0);
+
+    // 背景：父级菜单需要基于子菜单高度对齐底边，因而通过回调上报最新高度。
+    const reportHeight = useCallback(() => {
+      const node = containerRef.current;
+      if (!node) return;
+      const nextHeight = node.offsetHeight;
+      if (Math.abs(nextHeight - lastKnownHeightRef.current) < 0.5) {
+        return;
+      }
+      lastKnownHeightRef.current = nextHeight;
+      onHeightChange(nextHeight);
+    }, [onHeightChange]);
 
     useImperativeHandle(
       ref,
@@ -59,6 +77,7 @@ const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
             setActiveIndex(0);
           }
         },
+        getCurrentHeight: () => lastKnownHeightRef.current,
       }),
       [],
     );
@@ -77,6 +96,26 @@ const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
         }
       }
     }, [focusOnMount, open]);
+
+    useLayoutEffect(() => {
+      if (!open) return;
+      reportHeight();
+    }, [items, open, reportHeight]);
+
+    useEffect(() => {
+      if (!open) return undefined;
+      const node = containerRef.current;
+      if (!node || typeof ResizeObserver === "undefined") {
+        return undefined;
+      }
+      const observer = new ResizeObserver(() => {
+        reportHeight();
+      });
+      observer.observe(node);
+      return () => {
+        observer.disconnect();
+      };
+    }, [open, reportHeight]);
 
     const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (!open) return;
