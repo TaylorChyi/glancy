@@ -106,15 +106,33 @@ function UserMenu({
     INITIAL_SUBMENU_STATE,
   );
   const [placement, setPlacement] = useState<"up" | "down">("up");
+  const {
+    help,
+    helpCenter,
+    releaseNotes,
+    reportBug,
+    shortcuts,
+    shortcutsDescription,
+    termsPolicies,
+    downloadApps,
+    settings,
+    logout,
+  } = labels;
 
   const supportItems = useMemo<SubmenuLinkItem[]>(() => {
+    const labelMap: Partial<Record<HelpLabelKey, string | undefined>> = {
+      helpCenter,
+      releaseNotes,
+      reportBug,
+      shortcuts,
+      termsPolicies,
+      downloadApps,
+    };
+
     return HELP_ITEMS.map<SubmenuLinkItem>((item) => {
-      const labelKey = item.labelKey as HelpLabelKey & keyof UserMenuProps["labels"];
-      const rawLabel = labels[labelKey];
-      const label =
-        item.key === "shortcuts"
-          ? labels.shortcuts
-          : rawLabel ?? labels.help;
+      const labelKey = item.labelKey as HelpLabelKey;
+      const rawLabel = labelMap[labelKey];
+      const label = item.key === "shortcuts" ? shortcuts : rawLabel ?? help;
       if (item.key === "shortcuts") {
         return {
           id: item.key,
@@ -132,14 +150,14 @@ function UserMenu({
       };
     });
   }, [
-    labels.help,
-    labels.helpCenter,
-    labels.releaseNotes,
-    labels.reportBug,
-    labels.shortcuts,
-    labels.termsPolicies,
-    labels.downloadApps,
+    downloadApps,
+    help,
+    helpCenter,
     onOpenShortcuts,
+    releaseNotes,
+    reportBug,
+    shortcuts,
+    termsPolicies,
   ]);
 
   const menuItems = useMemo<MenuItem[]>(() => {
@@ -148,7 +166,7 @@ function UserMenu({
         kind: "action",
         id: "settings",
         icon: "cog-6-tooth",
-        label: labels.settings,
+        label: settings,
         onSelect: () => onOpenSettings("general"),
       },
     ];
@@ -157,8 +175,8 @@ function UserMenu({
       kind: "submenu",
       id: "help",
       icon: "question-mark-circle",
-      label: labels.help,
-      description: labels.shortcutsDescription,
+      label: help,
+      description: shortcutsDescription,
       items: supportItems,
     };
 
@@ -170,18 +188,18 @@ function UserMenu({
       kind: "action",
       id: "logout",
       icon: "arrow-right-on-rectangle",
-      label: labels.logout,
+      label: logout,
       onSelect: onOpenLogout,
     });
 
     return items;
   }, [
-    labels.help,
-    labels.logout,
-    labels.settings,
-    labels.shortcutsDescription,
+    help,
+    logout,
     onOpenLogout,
     onOpenSettings,
+    settings,
+    shortcutsDescription,
     supportItems,
   ]);
 
