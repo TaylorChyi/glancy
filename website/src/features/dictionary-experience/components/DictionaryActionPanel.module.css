@@ -13,9 +13,18 @@
 .panel {
   --padding-y: var(--chat-input-bottom-pad-y, 12px);
   --slot-gap: var(--chat-input-bottom-gap, 12px);
-  --dictionary-panel-action-size: var(--chat-input-action-size, 40px);
+
+  /*
+   * 背景：ChatInput 与释义面板共用动作槽位尺寸，为保持互动元素节奏统一，此处复用 44px 的 --btn-action 令牌。
+   * 取舍：优先使用外部注入的 --chat-input-action-size，若未提供则回落到 ChatInput 的 --btn-action 默认值，避免出现双维护尺寸。
+   */
+  --dictionary-panel-action-size: var(
+    --chat-input-action-size,
+    var(--btn-action, 44px)
+  );
   --dictionary-panel-icon-size: 18px;
   --dictionary-panel-icon-color: var(--sb-text);
+
   /*
    * 背景：原先通过 ::before 伪元素绘制顶部 1px 分隔线，但在深色背景下造成强对比。
    * 取舍：引入可配置的阴影层，沿用现有阴影令牌，既保持层级又能按需复用旧变量。
