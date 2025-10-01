@@ -69,8 +69,11 @@ export function useSidebarUserDock() {
       upgrade: !isPro ? t.upgrade || "Upgrade" : undefined,
       logout: t.logout || "Logout",
       accountSection: t.profileTitle || t.account || "Account",
-      supportEmail: t.helpCenter || t.help,
-      report: t.reportBug || t.report,
+      helpCenter: t.helpCenter || t.help,
+      releaseNotes: t.releaseNotes || "Release notes",
+      termsPolicies: t.termsPolicies || "Terms & policies",
+      reportBug: t.reportBug || t.report || "Report an issue",
+      downloadApps: t.downloadApps || "Download apps",
     }),
     [isPro, t],
   );

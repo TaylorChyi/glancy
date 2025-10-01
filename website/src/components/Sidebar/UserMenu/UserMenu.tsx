@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import ThemeIcon from "@/components/ui/Icon";
-import { REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config/support.js";
 import UserButton from "./UserButton";
 import UserSubmenu, { type UserSubmenuHandle } from "./UserSubmenu";
 import type {
@@ -12,22 +11,15 @@ import type {
   SubmenuLinkItem,
 } from "./types";
 import styles from "./UserMenu.module.css";
+import { createHelpSubmenuItems } from "./support";
+import type { UserMenuLabels } from "./support";
+
+export type { UserMenuLabels } from "./support";
 
 interface UserMenuProps {
   displayName: string;
   planLabel?: string;
-  labels: {
-    help: string;
-    helpSection?: string;
-    settings: string;
-    shortcuts: string;
-    shortcutsDescription?: string;
-    upgrade?: string;
-    logout: string;
-    accountSection?: string;
-    supportEmail?: string;
-    report?: string;
-  };
+  labels: UserMenuLabels;
   isPro: boolean;
   onOpenSettings: (section?: string) => void;
   onOpenShortcuts: () => void;
@@ -79,44 +71,10 @@ function UserMenu({
   );
   const [placement, setPlacement] = useState<"up" | "down">("up");
 
-  const supportItems = useMemo<SubmenuLinkItem[]>(() => {
-    const items: SubmenuLinkItem[] = [];
-
-    if (SUPPORT_EMAIL) {
-      items.push({
-        id: "support-email",
-        icon: "email",
-        label: labels.supportEmail || labels.help,
-        href: `mailto:${SUPPORT_EMAIL}`,
-        external: true,
-      });
-    }
-
-    if (REPORT_FORM_URL) {
-      items.push({
-        id: "report",
-        icon: "flag",
-        label: labels.report || labels.help,
-        href: REPORT_FORM_URL,
-        external: true,
-      });
-    }
-
-    items.push({
-      id: "shortcuts",
-      icon: "command-line",
-      label: labels.shortcuts,
-      onSelect: onOpenShortcuts,
-    });
-
-    return items;
-  }, [
-    labels.help,
-    labels.report,
-    labels.shortcuts,
-    labels.supportEmail,
-    onOpenShortcuts,
-  ]);
+  const supportItems = useMemo<SubmenuLinkItem[]>(
+    () => createHelpSubmenuItems(labels, onOpenShortcuts),
+    [labels, onOpenShortcuts],
+  );
 
   const sections = useMemo<MenuSection[]>(() => {
     const helpItem: MenuSubmenuItem = {

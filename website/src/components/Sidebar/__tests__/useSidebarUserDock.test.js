@@ -24,6 +24,11 @@ describe("useSidebarUserDock", () => {
         navLogin: "登录",
         navRegister: "注册",
         help: "帮助",
+        helpCenter: "帮助中心",
+        releaseNotes: "版本说明",
+        termsPolicies: "条款与政策",
+        reportBug: "问题反馈",
+        downloadApps: "下载应用",
         settings: "设置",
         shortcuts: "快捷键",
         logout: "退出",
@@ -84,6 +89,11 @@ describe("useSidebarUserDock", () => {
     languageState = {
       t: {
         help: "帮助",
+        helpCenter: "帮助中心",
+        releaseNotes: "版本说明",
+        termsPolicies: "条款与政策",
+        reportBug: "问题反馈",
+        downloadApps: "下载应用",
         settings: "设置",
         shortcuts: "快捷键",
         logout: "退出",
@@ -109,6 +119,11 @@ describe("useSidebarUserDock", () => {
     expect(props.displayName).toBe("alice");
     expect(props.planLabel).toBe("Plus");
     expect(props.labels.upgrade).toBeUndefined();
+    expect(props.labels.helpCenter).toBe("帮助中心");
+    expect(props.labels.releaseNotes).toBe("版本说明");
+    expect(props.labels.termsPolicies).toBe("条款与政策");
+    expect(props.labels.reportBug).toBe("问题反馈");
+    expect(props.labels.downloadApps).toBe("下载应用");
     expect(props.onOpenSettings).toBe(openSettings);
     expect(props.onOpenShortcuts).toBe(openShortcuts);
     expect(props.onOpenUpgrade).toBe(openUpgrade);
@@ -134,6 +149,11 @@ describe("useSidebarUserDock", () => {
     languageState = {
       t: {
         help: "帮助",
+        helpCenter: "帮助中心",
+        releaseNotes: "版本说明",
+        termsPolicies: "条款与政策",
+        reportBug: "问题反馈",
+        downloadApps: "下载应用",
         settings: "设置",
         shortcuts: "快捷键",
         logout: "退出",
