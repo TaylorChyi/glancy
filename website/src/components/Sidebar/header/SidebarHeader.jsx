@@ -27,6 +27,7 @@ function SidebarHeader({ items, ariaLabel }) {
           label={item.label}
           active={item.active}
           onClick={item.onClick}
+          variant={item.variant || "flat"}
           data-testid={item.testId}
         />
       ))}

@@ -7,7 +7,7 @@
   padding: 0 12px;
   border-radius: calc(var(--menu-radius) - 2px);
   border: 1px solid transparent;
-  background: color-mix(in srgb, var(--menu-bg) 72%, transparent);
+  background: transparent;
   color: var(--menu-text);
   cursor: pointer;
   transition:

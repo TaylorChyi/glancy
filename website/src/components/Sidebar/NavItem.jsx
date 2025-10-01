@@ -4,6 +4,18 @@ import { NavLink } from "react-router-dom";
 import ThemeIcon from "@/components/ui/Icon";
 import styles from "./NavItem.module.css";
 
+// 使用策略模式在运行时挑选交互风格，避免在组件内部散落条件判断并便于未来扩展更多变体。
+const INTERACTION_VARIANTS = {
+  accent: {
+    baseClass: "",
+    activeClass: styles.active,
+  },
+  flat: {
+    baseClass: styles.flat,
+    activeClass: styles["flat-active"],
+  },
+};
+
 const joinClassNames = (...tokens) => tokens.filter(Boolean).join(" ");
 
 function renderIcon(icon, label) {
@@ -31,10 +43,16 @@ const NavItem = forwardRef(function NavItem(
     onClick,
     type = "button",
     children = null,
+    variant = "accent",
     ...rest
   },
   ref,
 ) {
+  const variantStyles =
+    INTERACTION_VARIANTS[variant] || INTERACTION_VARIANTS.accent;
+  const baseVariantClass = variantStyles.baseClass;
+  const activeVariantClass = variantStyles.activeClass;
+
   const content = (
     <>
       {renderIcon(icon, typeof label === "string" ? label : undefined)}
@@ -54,10 +72,11 @@ const NavItem = forwardRef(function NavItem(
       joinClassNames(
         styles.item,
         toneClassName,
-        active ? styles.active : "",
+        baseVariantClass,
+        active ? activeVariantClass : "",
         className,
       ),
-    [active, className, toneClassName],
+    [active, baseVariantClass, activeVariantClass, className, toneClassName],
   );
 
   if (to) {
@@ -69,7 +88,8 @@ const NavItem = forwardRef(function NavItem(
           joinClassNames(
             styles.item,
             toneClassName,
-            isActive || active ? styles.active : "",
+            baseVariantClass,
+            isActive || active ? activeVariantClass : "",
             className,
           )
         }
@@ -123,6 +143,7 @@ NavItem.propTypes = {
   type: PropTypes.oneOf(["button", "submit", "reset"]),
   children: PropTypes.node,
   tone: PropTypes.oneOf(["default", "muted"]),
+  variant: PropTypes.oneOf(Object.keys(INTERACTION_VARIANTS)),
 };
 
 export default NavItem;
