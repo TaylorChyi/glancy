@@ -30,6 +30,7 @@ const mockT = {
   autoDetect: "Auto",
   CHINESE: "CHINESE",
   ENGLISH: "ENGLISH",
+  close: "Close",
 };
 
 jest.unstable_mockModule("@/context", () => ({
@@ -61,6 +62,20 @@ jest.unstable_mockModule("@/hooks/useApi.js", () => ({
 jest.unstable_mockModule("@/components", () => ({
   __esModule: true,
   VoiceSelector: ({ lang }) => <div data-testid={`voice-selector-${lang}`} />,
+  SettingsSurface: ({ title, description, actions, children }) => (
+    <section>
+      <header>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
+        {actions}
+      </header>
+      <div>{children}</div>
+    </section>
+  ),
+  SETTINGS_SURFACE_VARIANTS: {
+    MODAL: "modal",
+    PAGE: "page",
+  },
 }));
 jest.unstable_mockModule("@/store", () => ({
   useUserStore: (fn) => fn({ user: { plan: "free" } }),
@@ -158,6 +173,9 @@ jest.unstable_mockModule("@/store/settings", () => ({
 }));
 
 const { default: Preferences } = await import("@/pages/preferences");
+const { default: SettingsModal } = await import(
+  "@/components/modals/SettingsModal.jsx",
+);
 const { useSettingsStore } = await import("@/store/settings");
 
 beforeEach(() => {
@@ -199,6 +217,60 @@ test("keeps user theme when server does not provide one", async () => {
   await act(async () => {});
   await waitFor(() => expect(mockRequest).toHaveBeenCalledTimes(1));
   expect(mockSetTheme).not.toHaveBeenCalled();
+});
+
+/**
+ * 测试目标：设置弹窗应渲染自定义关闭按钮，并保证焦点留在弹窗内部且 aria 属性正确。
+ * 前置条件：
+ *  - SettingsModal 以 open=true 渲染，使用 jest 上下文 mock。
+ * 步骤：
+ *  1) 渲染组件并等待初次 effect。
+ *  2) 查询关闭按钮与 dialog 节点。
+ *  3) 校验 dialog 的 aria 属性与焦点范围。
+ * 断言：
+ *  - 关闭按钮存在，dialog 具备 aria-modal 属性，当前焦点位于弹窗内。
+ * 边界/异常：
+ *  - 若焦点跑出弹窗或 aria 属性缺失，测试失败以提示回归。
+ */
+test("GivenSettingsModal_WhenOpened_ThenCustomCloseButtonRenderedWithAriaContext", async () => {
+  const handleClose = jest.fn();
+
+  await act(async () => {
+    render(<SettingsModal open onClose={handleClose} />);
+  });
+
+  const closeButton = await screen.findByRole("button", { name: "Close" });
+  const dialog = screen.getByRole("dialog");
+
+  expect(closeButton).toBeVisible();
+  expect(dialog).toHaveAttribute("aria-modal", "true");
+  await waitFor(() => {
+    expect(dialog).toContainElement(document.activeElement);
+  });
+});
+
+/**
+ * 测试目标：点击设置弹窗中的关闭按钮应触发 onClose 回调。
+ * 前置条件：
+ *  - SettingsModal 处于打开状态，并注入 jest.fn() 作为 onClose。
+ * 步骤：
+ *  1) 渲染组件。
+ *  2) 点击关闭按钮。
+ * 断言：
+ *  - onClose 被调用一次，表明事件链路畅通。
+ * 边界/异常：
+ *  - 若按钮缺失或点击未触发回调，测试失败以暴露回归。
+ */
+test("GivenSettingsModal_WhenCloseClicked_ThenOnCloseFires", async () => {
+  const handleClose = jest.fn();
+
+  await act(async () => {
+    render(<SettingsModal open onClose={handleClose} />);
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(handleClose).toHaveBeenCalledTimes(1);
 });
 
 /**
