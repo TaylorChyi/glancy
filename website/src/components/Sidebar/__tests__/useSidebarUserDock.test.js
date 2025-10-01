@@ -87,7 +87,10 @@ describe("useSidebarUserDock", () => {
         shortcuts: "快捷键",
         logout: "退出",
         helpCenter: "帮助中心",
+        releaseNotes: "版本说明",
+        termsPolicies: "条款与政策",
         reportBug: "反馈",
+        downloadApps: "下载应用",
       },
     };
 
@@ -108,8 +111,11 @@ describe("useSidebarUserDock", () => {
     expect(props.planLabel).toBe("Plus");
     expect(props.labels).not.toHaveProperty("upgrade");
     expect(props).not.toHaveProperty("onOpenUpgrade");
-    expect(props.labels.supportEmail).toBe("帮助中心");
-    expect(props.labels.report).toBe("反馈");
+    expect(props.labels.helpCenter).toBe("帮助中心");
+    expect(props.labels.releaseNotes).toBe("版本说明");
+    expect(props.labels.termsPolicies).toBe("条款与政策");
+    expect(props.labels.reportBug).toBe("反馈");
+    expect(props.labels.downloadApps).toBe("下载应用");
     expect(props.onOpenSettings).toBe(openSettings);
     expect(props.onOpenShortcuts).toBe(openShortcuts);
     expect(props.onOpenLogout).toBe(openLogout);
@@ -138,6 +144,7 @@ describe("useSidebarUserDock", () => {
         shortcuts: "快捷键",
         logout: "退出",
         helpCenter: "帮助中心",
+        report: "举报",
       },
     };
 
@@ -154,13 +161,17 @@ describe("useSidebarUserDock", () => {
       [
         "help",
         "logout",
-        "report",
+        "downloadApps",
+        "helpCenter",
+        "releaseNotes",
+        "reportBug",
         "settings",
         "shortcuts",
         "shortcutsDescription",
-        "supportEmail",
+        "termsPolicies",
       ].sort(),
     );
-    expect(props.labels.supportEmail).toBe("帮助中心");
+    expect(props.labels.helpCenter).toBe("帮助中心");
+    expect(props.labels.reportBug).toBe("举报");
   });
 });

@@ -66,8 +66,11 @@ export function useSidebarUserDock() {
       shortcuts: t.shortcuts || t.shortcutsTitle || "Keyboard shortcuts",
       shortcutsDescription: t.shortcutsDescription || undefined,
       logout: t.logout || "Logout",
-      supportEmail: t.helpCenter || t.help,
-      report: t.reportBug || t.report,
+      helpCenter: t.helpCenter || undefined,
+      releaseNotes: t.releaseNotes || undefined,
+      termsPolicies: t.termsPolicies || undefined,
+      reportBug: t.reportBug || t.report || undefined,
+      downloadApps: t.downloadApps || undefined,
     }),
     [t],
   );
