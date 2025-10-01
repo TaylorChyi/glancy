@@ -71,7 +71,7 @@ export default function DictionaryActionPanel({
   const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
 
   return (
-    <div className={styles.panelShell}>
+    <div className={styles["panel-shell"]}>
       <SearchBox
         className={panelClassName}
         role="group"
