@@ -4,13 +4,7 @@ import ThemeIcon from "@/components/ui/Icon";
 import { REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config/support.js";
 import UserButton from "./UserButton";
 import UserSubmenu, { type UserSubmenuHandle } from "./UserSubmenu";
-import type {
-  FlatMenuEntry,
-  MenuActionItem,
-  MenuSection,
-  MenuSubmenuItem,
-  SubmenuLinkItem,
-} from "./types";
+import type { MenuItem, MenuSubmenuItem, SubmenuLinkItem } from "./types";
 import styles from "./UserMenu.module.css";
 
 interface UserMenuProps {
@@ -18,20 +12,15 @@ interface UserMenuProps {
   planLabel?: string;
   labels: {
     help: string;
-    helpSection?: string;
     settings: string;
     shortcuts: string;
     shortcutsDescription?: string;
-    upgrade?: string;
     logout: string;
-    accountSection?: string;
     supportEmail?: string;
     report?: string;
   };
-  isPro: boolean;
   onOpenSettings: (section?: string) => void;
   onOpenShortcuts: () => void;
-  onOpenUpgrade: () => void;
   onOpenLogout: () => void;
 }
 
@@ -58,10 +47,8 @@ function UserMenu({
   displayName,
   planLabel,
   labels,
-  isPro,
   onOpenSettings,
   onOpenShortcuts,
-  onOpenUpgrade,
   onOpenLogout,
 }: UserMenuProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -118,17 +105,8 @@ function UserMenu({
     onOpenShortcuts,
   ]);
 
-  const sections = useMemo<MenuSection[]>(() => {
-    const helpItem: MenuSubmenuItem = {
-      kind: "submenu",
-      id: "help",
-      icon: "question-mark-circle",
-      label: labels.help,
-      description: labels.shortcutsDescription,
-      items: supportItems,
-    };
-
-    const preferences: MenuActionItem[] = [
+  const menuItems = useMemo<MenuItem[]>(() => {
+    const items: MenuItem[] = [
       {
         kind: "action",
         id: "settings",
@@ -138,89 +116,39 @@ function UserMenu({
       },
     ];
 
-    if (!isPro && labels.upgrade) {
-      preferences.push({
-        kind: "action",
-        id: "upgrade",
-        icon: "sparkles",
-        label: labels.upgrade,
-        onSelect: onOpenUpgrade,
-      });
+    const helpItem: MenuSubmenuItem = {
+      kind: "submenu",
+      id: "help",
+      icon: "question-mark-circle",
+      label: labels.help,
+      description: labels.shortcutsDescription,
+      items: supportItems,
+    };
+
+    if (helpItem.items.length > 0) {
+      items.push(helpItem);
     }
 
-    const account: MenuActionItem[] = [
-      {
-        kind: "action",
-        id: "logout",
-        icon: "arrow-right-on-rectangle",
-        label: labels.logout,
-        onSelect: onOpenLogout,
-      },
-    ];
+    items.push({
+      kind: "action",
+      id: "logout",
+      icon: "arrow-right-on-rectangle",
+      label: labels.logout,
+      onSelect: onOpenLogout,
+    });
 
-    const list: MenuSection[] = [
-      {
-        id: "support",
-        label: labels.helpSection,
-        items: helpItem.items.length > 0 ? [helpItem] : [],
-      },
-      {
-        id: "preferences",
-        items: preferences,
-      },
-      {
-        id: "account",
-        label: labels.accountSection,
-        items: account,
-      },
-    ];
-
-    return list.filter((section) => section.items.length > 0);
+    return items;
   }, [
-    labels.accountSection,
     labels.help,
-    labels.helpSection,
     labels.logout,
     labels.settings,
     labels.shortcutsDescription,
-    labels.upgrade,
     onOpenLogout,
     onOpenSettings,
-    onOpenUpgrade,
     supportItems,
-    isPro,
   ]);
 
-  const flatItems = useMemo<FlatMenuEntry[]>(() => {
-    const result: FlatMenuEntry[] = [];
-    sections.forEach((section, sectionIndex) => {
-      if (section.label) {
-        result.push({
-          kind: "section-label",
-          id: `label-${section.id}`,
-          label: section.label,
-        });
-      }
-
-      section.items.forEach((item) => {
-        result.push(item);
-      });
-
-      if (sectionIndex < sections.length - 1 && section.items.length > 0) {
-        result.push({ kind: "divider", id: `divider-${section.id}` });
-      }
-    });
-    return result;
-  }, [sections]);
-
-  const interactiveItems = useMemo(
-    () =>
-      flatItems.filter(
-        (item): item is MenuActionItem | MenuSubmenuItem =>
-          item.kind === "action" || item.kind === "submenu",
-      ),
-    [flatItems],
-  );
+  const interactiveItems = menuItems;
 
   const clearTimers = useCallback(() => {
     if (timers.current.open) {
@@ -528,8 +456,6 @@ function UserMenu({
     [],
   );
 
-  let interactiveCursor = -1;
-
   return (
     <div ref={rootRef} className={styles.root} data-open={open}>
       <UserButton
@@ -556,27 +482,7 @@ function UserMenu({
         }}
       >
         <div className={styles.list}>
-          {flatItems.map((item) => {
-            if (item.kind === "section-label") {
-              return (
-                <span key={item.id} className={styles["section-label"]}>
-                  {item.label}
-                </span>
-              );
-            }
-
-            if (item.kind === "divider") {
-              return (
-                <div
-                  key={item.id}
-                  className={styles.divider}
-                  role="separator"
-                />
-              );
-            }
-
-            interactiveCursor += 1;
-            const interactiveIndex = interactiveCursor;
+          {menuItems.map((item, interactiveIndex) => {
             const isActive = activeIndex === interactiveIndex;
 
             const commonProps = {

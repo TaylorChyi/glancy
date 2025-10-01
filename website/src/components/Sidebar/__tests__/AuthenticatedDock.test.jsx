@@ -32,7 +32,7 @@ describe("AuthenticatedDock", () => {
    *  1) 渲染组件。
    *  2) 检查 mock 的 UserMenu 入参。
    * 断言：
-   *  - displayName、planLabel、labels、isPro 与四个回调均保持引用（失败信息：UserMenu props 转发错误）。
+   *  - displayName、planLabel、labels 与三个回调均保持引用（失败信息：UserMenu props 转发错误）。
    * 边界/异常：
    *  - planLabel 可选，默认空字符串，本用例覆盖自定义值。
    */
@@ -47,10 +47,8 @@ describe("AuthenticatedDock", () => {
       displayName: "Alice",
       planLabel: "Plus",
       labels,
-      isPro: true,
       onOpenSettings: jest.fn(),
       onOpenShortcuts: jest.fn(),
-      onOpenUpgrade: jest.fn(),
       onOpenLogout: jest.fn(),
     };
 

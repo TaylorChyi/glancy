@@ -49,21 +49,6 @@
   gap: 0;
 }
 
-.section-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--menu-muted);
-  margin: 6px 12px 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.divider {
-  height: 1px;
-  background: var(--menu-divider);
-  margin: 8px 12px;
-}
-
 .menu-item {
   position: relative;
   display: flex;
