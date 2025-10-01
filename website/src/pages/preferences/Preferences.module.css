@@ -1,11 +1,18 @@
+/**
+ * 背景：
+ *  - 主题系统扩展到浅色时，原本写死在容器变量上的暗色值无法复用。
+ * 目的：
+ *  - 为偏好面板提供暗/浅两套令牌映射，并沿用既有 `--sidebar-*` 设计语言。
+ * 关键决策与取舍：
+ *  - 暗色分支继续锚定 night token，保持当前感知；浅色分支复用侧边栏 light token，避免重复维护颜色。
+ *  - 额外抽象 `--settings-panel-surface-active` 与 `--settings-panel-press`，确保常规/激活/按压层级在两套主题中语义一致。
+ * 影响范围：
+ *  - 仅偏好设置面板依赖的 CSS 变量；其他页面未引用这些变量不受影响。
+ * 演进与TODO：
+ *  - 若后续引入更多主题，可在此处扩展新的 :root 分支，或改由主题模块集中注入。
+ */
+
 .container {
-  --settings-panel-bg: #1f232b;
-  --settings-panel-surface: #242935;
-  --settings-panel-surface-hover: #1a1e24;
-  --settings-panel-border: #2a2e37;
-  --settings-panel-text: #eef0f3;
-  --settings-panel-muted: #a2a9b4;
-  --settings-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
   --settings-panel-radius: 16px;
   --settings-panel-nav-width: 280px;
   --settings-panel-padding-x: 32px;
@@ -13,8 +20,6 @@
   --settings-panel-gap: 24px;
   --settings-panel-row-gap: 18px;
   --settings-panel-row-height: 56px;
-  --settings-panel-ring: #3a3f46;
-  --settings-panel-overlay: rgb(0 0 0 / 60%);
   --settings-panel-max-width: min(92vw, 960px);
   --settings-panel-min-width: 720px;
   --settings-panel-max-height: 86vh;
@@ -34,6 +39,63 @@
   color: var(--settings-panel-text);
   box-shadow: var(--settings-panel-shadow);
   overflow: hidden;
+}
+
+:global(:root[data-theme="dark"]) .container,
+:global(:root:not([data-theme])) .container {
+  --settings-panel-bg: var(--night-panel);
+  --settings-panel-surface: var(--night-active);
+  --settings-panel-surface-hover: var(--night-hover);
+  --settings-panel-surface-active: var(--night-active);
+  --settings-panel-press: var(--night-hover);
+  --settings-panel-border: var(--night-border);
+  --settings-panel-text: var(--night-text);
+  --settings-panel-muted: var(--night-muted);
+  --settings-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+  --settings-panel-ring: var(--night-input-ring);
+  --settings-panel-overlay: var(--color-overlay-strong);
+}
+
+:global(:root[data-theme="light"]) .container {
+  /*
+   * 主题映射：
+   *  - 所有颜色引用现有 light 面板令牌，确保与侧栏、弹层等组件风格一致。
+   */
+  --settings-panel-bg: var(--sidebar-panel, var(--neutral-0));
+  --settings-panel-surface: var(--sidebar-panel, var(--neutral-0));
+  --settings-panel-surface-hover: var(--sidebar-hover-bg, rgb(15 17 21 / 6%));
+  --settings-panel-surface-active: var(--sidebar-active-bg, rgb(15 17 21 / 12%));
+  --settings-panel-press: var(--sidebar-active-bg, rgb(15 17 21 / 12%));
+  --settings-panel-border: var(--sidebar-border-color, #d9dde7);
+  --settings-panel-text: var(--sidebar-text-color, var(--text-primary-light));
+  --settings-panel-muted: var(
+    --sidebar-muted-color,
+    color-mix(in srgb, var(--text-primary-light) 55%, transparent)
+  );
+  --settings-panel-shadow: var(
+    --sidebar-shadow-elevated,
+    0 18px 42px rgb(31 35 43 / 16%)
+  );
+  --settings-panel-ring: var(--sidebar-input-ring, #cfd4e2);
+  --settings-panel-overlay: var(--color-overlay);
+}
+
+:global(:root[data-theme="system"]) .container {
+  /*
+   * 系统主题跟随：
+   *  - 变量值挂靠在 `--sidebar-*` 令牌上，让浏览器 `prefers-color-scheme` 接管明暗切换。
+   */
+  --settings-panel-bg: var(--sidebar-panel, var(--night-panel));
+  --settings-panel-surface: var(--sidebar-panel, var(--night-active));
+  --settings-panel-surface-hover: var(--sidebar-hover-bg, var(--night-hover));
+  --settings-panel-surface-active: var(--sidebar-active-bg, var(--night-active));
+  --settings-panel-press: var(--sidebar-active-bg, var(--night-hover));
+  --settings-panel-border: var(--sidebar-border-color, var(--night-border));
+  --settings-panel-text: var(--sidebar-text-color, var(--night-text));
+  --settings-panel-muted: var(--sidebar-muted-color, var(--night-muted));
+  --settings-panel-shadow: var(--sidebar-shadow-elevated, 0 24px 60px rgb(0 0 0 / 45%));
+  --settings-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
+  --settings-panel-overlay: var(--color-overlay);
 }
 
 .page {
@@ -112,7 +174,7 @@
 }
 
 .nav-button-active {
-  background: var(--settings-panel-surface);
+  background: var(--settings-panel-surface-active);
   color: var(--settings-panel-text);
 }
 
@@ -346,7 +408,7 @@
 }
 
 .play-button[data-active="true"] {
-  background: color-mix(in srgb, var(--settings-panel-surface) 90%, #000 10%);
+  background: var(--settings-panel-press);
 }
 
 .play-button:focus-visible {
