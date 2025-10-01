@@ -24,6 +24,11 @@ export default function DictionaryActionPanel({
   onRequestSearch,
   searchButtonLabel,
 }) {
+  const { className: actionBarClassName, ...restActionBarProps } = actionBarProps;
+  const mergedActionBarClassName = [styles.toolbar, actionBarClassName]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <SearchBox
       className={styles.panel}
@@ -31,25 +36,19 @@ export default function DictionaryActionPanel({
       aria-label="释义操作区域"
       data-testid="dictionary-action-panel"
     >
-      <div className={styles.inner}>
-        <button
-          type="button"
-          className={styles["search-toggle"]}
-          onClick={onRequestSearch}
-          aria-label={searchButtonLabel}
-          title={searchButtonLabel}
-        >
-          <ThemeIcon name="search" width={18} height={18} />
-        </button>
-        <div className={styles["toolbar-wrapper"]}>
-          <DictionaryEntryActionBar
-            {...actionBarProps}
-            className={[styles.toolbar, actionBarProps.className]
-              .filter(Boolean)
-              .join(" ")}
-          />
-        </div>
-      </div>
+      <button
+        type="button"
+        className={styles["search-toggle"]}
+        onClick={onRequestSearch}
+        aria-label={searchButtonLabel}
+        title={searchButtonLabel}
+      >
+        <ThemeIcon name="search" width={18} height={18} />
+      </button>
+      <DictionaryEntryActionBar
+        {...restActionBarProps}
+        className={mergedActionBarClassName}
+      />
     </SearchBox>
   );
 }
