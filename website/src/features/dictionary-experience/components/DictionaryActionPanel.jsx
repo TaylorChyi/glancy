@@ -48,6 +48,10 @@ export default function DictionaryActionPanel({
     [],
   );
   const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
+  const searchToggleClassName = useMemo(
+    () => [styles["search-toggle"], "entry__tool-btn"].join(" "),
+    [],
+  );
 
   return (
     <SearchBox
@@ -59,7 +63,7 @@ export default function DictionaryActionPanel({
     >
       <button
         type="button"
-        className={styles["search-toggle"]}
+        className={searchToggleClassName}
         onClick={onRequestSearch}
         aria-label={searchButtonLabel}
         title={searchButtonLabel}

@@ -1,6 +1,16 @@
 .panel {
   --padding-y: var(--chat-input-bottom-pad-y, 12px);
   --slot-gap: var(--chat-input-bottom-gap, 12px);
+  --dictionary-panel-icon-size: var(--chat-input-action-size, 40px);
+  --dictionary-panel-icon-color: var(--sb-text, #edeff2);
+  --dictionary-panel-icon-opacity-base: var(--chat-input-action-opacity, 0.76);
+  --dictionary-panel-icon-opacity-hover: var(--chat-input-action-opacity-hover, 1);
+  --dictionary-panel-icon-opacity-disabled: var(--chat-input-action-opacity-disabled, 0.35);
+  --dictionary-panel-icon-focus-ring-color: color-mix(
+    in srgb,
+    var(--sb-text, #edeff2) 32%,
+    transparent
+  );
 
   display: flex;
   width: 100%;
@@ -22,29 +32,29 @@
 }
 
 .search-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--chat-input-action-size, 40px);
-  height: var(--chat-input-action-size, 40px);
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--sb-text, #edeff2);
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
+  --icon-button-size: var(
+    --dictionary-panel-icon-size,
+    var(--chat-input-action-size, 40px)
+  );
+  --icon-button-opacity-base: var(
+    --dictionary-panel-icon-opacity-base,
+    0.76
+  );
+  --icon-button-opacity-hover: var(
+    --dictionary-panel-icon-opacity-hover,
+    1
+  );
+  --icon-button-opacity-disabled: var(
+    --dictionary-panel-icon-opacity-disabled,
+    0.35
+  );
+  --icon-button-focus-ring-color: var(
+    --dictionary-panel-icon-focus-ring-color,
+    color-mix(in srgb, var(--sb-text, #edeff2) 32%, transparent)
+  );
 
-.search-toggle:hover {
-  background: color-mix(in srgb, var(--sb-surface, #0e1116) 85%, white 15%);
-}
-
-.search-toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
+  color: var(--dictionary-panel-icon-color, var(--sb-text, #edeff2));
+  transition: color 0.2s ease;
 }
 
 @media (width <= 640px) {
