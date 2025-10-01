@@ -27,10 +27,7 @@
     auto;
   grid-template-areas: "language divider text action";
   align-items: stretch;
-  column-gap: var(
-    --chat-input-inline-gap,
-    var(--chat-input-bottom-gap, 12px)
-  );
+  column-gap: var(--chat-input-inline-gap, var(--chat-input-bottom-gap, 12px));
 }
 
 .input-surface[data-language-visible="false"] {
@@ -87,10 +84,7 @@
       "divider"
       "language"
       "action";
-    row-gap: var(
-      --chat-input-mobile-gap,
-      var(--chat-input-bottom-gap, 12px)
-    );
+    row-gap: var(--chat-input-mobile-gap, var(--chat-input-bottom-gap, 12px));
   }
 
   .input-surface[data-language-visible="false"] {
@@ -122,7 +116,6 @@
   padding-inline: var(--seg-pad-x, 20px);
   gap: var(--seg-arrow-gap, 12px);
   border-radius: var(--seg-r, 22px);
-  background: var(--sb-seg);
   color: var(--sb-text);
   font-size: var(--seg-font-size, 14px);
   font-weight: var(--seg-font-weight, 600);
@@ -130,6 +123,12 @@
   text-transform: uppercase;
   text-align: center;
   flex-shrink: 0;
+
+  /*
+   * 层级策略：用透明壳体配合内描边呈现区块结构，避免背景色与外层容器叠色；
+   * 若未来需要更强的分割感，可单独调高 --seg-outline 的不透明度而无需恢复底色。
+   */
+  box-shadow: inset 0 0 0 1px var(--seg-outline, rgb(255 255 255 / 12%));
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -144,7 +143,9 @@
 }
 
 .language-shell:focus-within {
-  box-shadow: var(--ring-focus), 0 0 0 1px rgb(255 255 255 / 6%);
+  box-shadow:
+    var(--ring-focus),
+    0 0 0 1px rgb(255 255 255 / 6%);
 }
 
 .language-select-wrapper {
@@ -272,7 +273,6 @@
 .textarea::placeholder {
   color: var(--sb-muted);
 }
-
 
 .action-button {
   margin-inline-start: auto;
@@ -450,4 +450,3 @@
 .language-menu-button[data-active="true"] .language-option-check {
   opacity: 1;
 }
-
