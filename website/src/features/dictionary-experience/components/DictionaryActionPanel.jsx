@@ -12,6 +12,7 @@
  *  - 若需引入更多辅助按钮，可在左侧 slot 内扩展并复用相同的 aria 语义。
  */
 import PropTypes from "prop-types";
+import { useMemo, useCallback } from "react";
 
 import SearchBox from "@/components/ui/SearchBox";
 import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
@@ -24,17 +25,37 @@ export default function DictionaryActionPanel({
   onRequestSearch,
   searchButtonLabel,
 }) {
-  const { className: actionBarClassName, ...restActionBarProps } = actionBarProps;
-  const mergedActionBarClassName = [styles.toolbar, actionBarClassName]
-    .filter(Boolean)
-    .join(" ");
+  const {
+    className: actionBarClassName,
+    renderRoot,
+    ...restActionBarProps
+  } = actionBarProps;
+  const panelClassName = useMemo(
+    () => [styles.panel, actionBarClassName].filter(Boolean).join(" "),
+    [actionBarClassName],
+  );
+  const toolbarRootRenderer = useCallback(
+    /**
+     * 意图：在 SearchBox 内内联 OutputToolbar 的子节点，
+     *       保持单一容器并复用上层的语义结构。
+     * 输入：来自 OutputToolbar 的根节点描述（仅取 children）。
+     * 输出：透传的子节点。
+     * 流程：直接返回 children，交由 SearchBox 负责排版。
+     * 错误处理：renderRoot 语义纯粹，无异常路径。
+     * 复杂度：O(1)。
+     */
+    ({ children }) => children,
+    [],
+  );
+  const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
 
   return (
     <SearchBox
-      className={styles.panel}
+      className={panelClassName}
       role="group"
       aria-label="释义操作区域"
       data-testid="dictionary-action-panel"
+      data-output-toolbar="true"
     >
       <button
         type="button"
@@ -47,7 +68,7 @@ export default function DictionaryActionPanel({
       </button>
       <DictionaryEntryActionBar
         {...restActionBarProps}
-        className={mergedActionBarClassName}
+        renderRoot={resolvedRenderRoot}
       />
     </SearchBox>
   );
@@ -56,6 +77,7 @@ export default function DictionaryActionPanel({
 DictionaryActionPanel.propTypes = {
   actionBarProps: PropTypes.shape({
     className: PropTypes.string,
+    renderRoot: PropTypes.func,
   }).isRequired,
   onRequestSearch: PropTypes.func.isRequired,
   searchButtonLabel: PropTypes.string,

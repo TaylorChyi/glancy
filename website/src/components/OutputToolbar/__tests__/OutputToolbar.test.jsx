@@ -172,4 +172,37 @@ describe("OutputToolbar", () => {
     const shareButton = screen.getByRole("button", { name: "分享" });
     expect(shareButton).toBeDisabled();
   });
+
+  /**
+   * 验证 renderRoot 策略可替换默认容器，且仍保留 aria 语义。
+   */
+  test("supports custom root renderer", () => {
+    const renderRoot = jest.fn(
+      ({ children, className, role, ariaLabel, dataTestId }) => (
+        <section
+          data-testid="custom-toolbar"
+          data-original-testid={dataTestId}
+          data-role={role}
+          aria-label={ariaLabel}
+          className={`host ${className}`}
+        >
+          {children}
+        </section>
+      ),
+    );
+
+    render(
+      <OutputToolbar
+        term="hello"
+        versions={[{ id: "only" }]}
+        renderRoot={renderRoot}
+      />,
+    );
+
+    expect(renderRoot).toHaveBeenCalled();
+    const host = screen.getByTestId("custom-toolbar");
+    expect(host.dataset.role).toBe("toolbar");
+    expect(host.getAttribute("aria-label")).toBe("词条工具栏");
+    expect(host.className).toContain("entry__toolbar");
+  });
 });

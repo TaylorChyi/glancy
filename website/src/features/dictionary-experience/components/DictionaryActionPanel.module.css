@@ -47,19 +47,9 @@
   box-shadow: var(--ring-focus, 0 0 0 2px rgb(255 255 255 / 8%));
 }
 
-.toolbar {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: 100%;
-}
-
 @media (width <= 640px) {
   .panel {
     flex-wrap: wrap;
     row-gap: var(--chat-input-bottom-gap, 12px);
-  }
-
-  .toolbar {
-    width: 100%;
   }
 }
