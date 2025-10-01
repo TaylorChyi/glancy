@@ -2,6 +2,8 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
+import styles from "../DictionaryActionPanel.module.css";
+
 const recordedIconProps = [];
 
 jest.unstable_mockModule("@/components/ui/Icon", () => ({
@@ -73,5 +75,48 @@ describe("DictionaryActionPanel", () => {
     expect(recordedIconProps[0]?.width).toBe(18);
     expect(recordedIconProps[0]?.height).toBe(18);
     expect(onRequestSearch).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：验证 SearchBox 在默认与自定义 renderRoot 两种模式下，都会被 panelShell 布局壳包裹。
+   * 前置条件：CSS Modules 在测试环境返回稳定类名字符串；DictionaryEntryActionBar 被桩件替换。
+   * 步骤：
+   *  1) 渲染组件（默认 renderRoot）；
+   *  2) 断言 SearchBox 父元素含 panelShell 类；
+   *  3) 以自定义 renderRoot 重新渲染；
+   *  4) 再次断言父元素类名未变。
+   * 断言：
+   *  - data-testid 为 dictionary-action-panel 的元素父节点包含 styles.panelShell；
+   *  - 重新渲染后依旧满足上述条件。
+   * 边界/异常：
+   *  - 自定义 renderRoot 返回 null 时组件将不渲染工具栏，此路径不在当前验证范围内。
+   */
+  test("wraps search box with layout shell across toolbar render modes", () => {
+    const { rerender } = render(
+      <DictionaryActionPanel
+        actionBarProps={{ className: "" }}
+        onRequestSearch={jest.fn()}
+        searchButtonLabel="返回搜索"
+      />,
+    );
+
+    const searchBox = screen.getByTestId("dictionary-action-panel");
+    expect(searchBox.parentElement).toHaveClass(styles.panelShell);
+
+    rerender(
+      <DictionaryActionPanel
+        actionBarProps={{
+          className: "",
+          renderRoot: ({ children }) => <section>{children}</section>,
+        }}
+        onRequestSearch={jest.fn()}
+        searchButtonLabel="返回搜索"
+      />,
+    );
+
+    const searchBoxAfterRerender = screen.getByTestId(
+      "dictionary-action-panel",
+    );
+    expect(searchBoxAfterRerender.parentElement).toHaveClass(styles.panelShell);
   });
 });
