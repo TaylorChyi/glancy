@@ -22,8 +22,7 @@
 }
 
 .search-box:hover {
-  background: var(--sb-bg-hover);
-  outline-color: var(--sb-border-active);
+  box-shadow: var(--sb-shadow-hover, var(--sb-shadow));
 }
 
 .search-box:focus-within {
