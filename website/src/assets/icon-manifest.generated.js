@@ -32,18 +32,19 @@ import iconAsset29 from "./brand/pro-tag-dark.svg";
 import iconAsset30 from "./brand/pro-tag-light.svg";
 import iconAsset31 from "./icons/question-mark-circle.svg";
 import iconAsset32 from "./icons/refresh.svg";
-import iconAsset33 from "./buttons/send-button-dark.svg";
-import iconAsset34 from "./buttons/send-button-light.svg";
-import iconAsset35 from "./icons/shield-check.svg";
-import iconAsset36 from "./icons/star-outline.svg";
-import iconAsset37 from "./icons/star-solid.svg";
-import iconAsset38 from "./icons/target.svg";
-import iconAsset39 from "./icons/trash.svg";
-import iconAsset40 from "./icons/user.svg";
-import iconAsset41 from "./buttons/voice-button-dark.svg";
-import iconAsset42 from "./buttons/voice-button-light.svg";
-import iconAsset43 from "./logos/wechat-dark.svg";
-import iconAsset44 from "./logos/wechat-light.svg";
+import iconAsset33 from "./icons/search.svg";
+import iconAsset34 from "./buttons/send-button-dark.svg";
+import iconAsset35 from "./buttons/send-button-light.svg";
+import iconAsset36 from "./icons/shield-check.svg";
+import iconAsset37 from "./icons/star-outline.svg";
+import iconAsset38 from "./icons/star-solid.svg";
+import iconAsset39 from "./icons/target.svg";
+import iconAsset40 from "./icons/trash.svg";
+import iconAsset41 from "./icons/user.svg";
+import iconAsset42 from "./buttons/voice-button-dark.svg";
+import iconAsset43 from "./buttons/voice-button-light.svg";
+import iconAsset44 from "./logos/wechat-dark.svg";
+import iconAsset45 from "./logos/wechat-light.svg";
 
 const registry = Object.freeze({
   "adjustments-horizontal": Object.freeze({
@@ -131,35 +132,38 @@ const registry = Object.freeze({
   "refresh": Object.freeze({
     single: iconAsset32
   }),
+  "search": Object.freeze({
+    single: iconAsset33
+  }),
   "send-button": Object.freeze({
-    dark: iconAsset33,
-    light: iconAsset34
+    dark: iconAsset34,
+    light: iconAsset35
   }),
   "shield-check": Object.freeze({
-    single: iconAsset35
-  }),
-  "star-outline": Object.freeze({
     single: iconAsset36
   }),
-  "star-solid": Object.freeze({
+  "star-outline": Object.freeze({
     single: iconAsset37
   }),
-  "target": Object.freeze({
+  "star-solid": Object.freeze({
     single: iconAsset38
   }),
-  "trash": Object.freeze({
+  "target": Object.freeze({
     single: iconAsset39
   }),
-  "user": Object.freeze({
+  "trash": Object.freeze({
     single: iconAsset40
   }),
+  "user": Object.freeze({
+    single: iconAsset41
+  }),
   "voice-button": Object.freeze({
-    dark: iconAsset41,
-    light: iconAsset42
+    dark: iconAsset42,
+    light: iconAsset43
   }),
   "wechat": Object.freeze({
-    dark: iconAsset43,
-    light: iconAsset44
+    dark: iconAsset44,
+    light: iconAsset45
   })
 });
 
