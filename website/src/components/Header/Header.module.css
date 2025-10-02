@@ -126,20 +126,10 @@
   display: grid;
   gap: 6px;
   border-radius: 22px;
-  background: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--app-bg)) 94%,
-    transparent
-  );
+  background: var(--sidebar-panel, var(--sb-bg));
   color: var(--sidebar-color, var(--app-color));
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 38%,
-      transparent
-    );
-  box-shadow: 0 32px 72px
-    color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  border: 1px solid var(--sidebar-border-color, var(--sb-border));
+  box-shadow: var(--sidebar-panel-shadow, var(--sb-shadow));
 }
 
 .menu-item {
@@ -150,7 +140,7 @@
   min-height: 52px;
   padding: 0 16px;
   border-radius: 14px;
-  background: transparent;
+  background: var(--sidebar-item-bg, transparent);
   border: none;
   color: inherit;
   font: inherit;
@@ -165,17 +155,12 @@
 
 .menu-item:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--primary-color) 36%, transparent);
+  box-shadow: var(--sidebar-ring, var(--sb-ring));
 }
 
 .menu-item:hover,
 .menu-item:focus-visible {
-  background: color-mix(
-    in srgb,
-    var(--sidebar-hover-bg, rgb(24 27 33 / 58%)) 74%,
-    transparent
-  );
+  background: var(--sidebar-hover-bg, var(--sb-bg-hover));
   transform: translateX(2px);
 }
 
@@ -186,17 +171,8 @@
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: color-mix(
-    in srgb,
-    var(--sidebar-hover-bg, rgb(24 27 33 / 48%)) 48%,
-    transparent
-  );
-  box-shadow: inset 0 0 0 1px
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 44%,
-      transparent
-    );
+  background: var(--sidebar-hover-bg, var(--sb-bg-hover));
+  box-shadow: inset 0 0 0 1px var(--sidebar-border-color, var(--sb-border));
 }
 
 .menu-icon {
@@ -248,19 +224,9 @@
   min-width: 280px;
   padding: 14px;
   border-radius: 20px;
-  background: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--app-bg)) 94%,
-    transparent
-  );
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 36%,
-      transparent
-    );
-  box-shadow: 0 28px 70px
-    color-mix(in srgb, var(--shadow-color) 26%, transparent);
+  background: var(--sidebar-panel, var(--sb-bg));
+  border: 1px solid var(--sidebar-border-color, var(--sb-border));
+  box-shadow: var(--sidebar-panel-shadow, var(--sb-shadow));
   display: none;
   gap: 6px;
   z-index: calc(var(--z-index-popover) + 1);
@@ -278,7 +244,7 @@
   min-height: 50px;
   padding: 0 14px;
   border-radius: 12px;
-  background: transparent;
+  background: var(--sidebar-item-bg, transparent);
   border: none;
   color: inherit;
   font: inherit;
@@ -292,18 +258,13 @@
 
 .submenu-item:hover,
 .submenu-item:focus-visible {
-  background: color-mix(
-    in srgb,
-    var(--sidebar-hover-bg, rgb(24 27 33 / 58%)) 72%,
-    transparent
-  );
+  background: var(--sidebar-hover-bg, var(--sb-bg-hover));
   transform: translateX(2px);
 }
 
 .submenu-item:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--primary-color) 34%, transparent);
+  box-shadow: var(--sidebar-ring, var(--sb-ring));
 }
 
 .submenu-icon-wrapper {
@@ -313,17 +274,8 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: color-mix(
-    in srgb,
-    var(--sidebar-hover-bg, rgb(24 27 33 / 48%)) 46%,
-    transparent
-  );
-  box-shadow: inset 0 0 0 1px
-    color-mix(
-      in srgb,
-      var(--sidebar-border-color, var(--border-color)) 42%,
-      transparent
-    );
+  background: var(--sidebar-hover-bg, var(--sb-bg-hover));
+  box-shadow: inset 0 0 0 1px var(--sidebar-border-color, var(--sb-border));
 }
 
 .submenu-icon {
