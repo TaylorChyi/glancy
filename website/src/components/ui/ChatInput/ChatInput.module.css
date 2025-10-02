@@ -296,27 +296,26 @@
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--sb-cta-icon);
+  color: var(--sb-icon);
   cursor: pointer;
   transition:
     color 0.2s ease,
     outline-color 0.2s ease,
     outline-width 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
   outline: 1px solid transparent;
   outline-offset: 2px;
 }
 
 .action-button:hover {
-  color: var(
-    --sb-cta-icon-hover,
-    color-mix(in srgb, var(--sb-cta-icon) 80%, white 20%)
-  );
+  color: color-mix(in srgb, var(--sb-icon) 82%, white 18%);
 }
 
 .action-button:focus-visible {
   outline: 2px solid
-    var(--sb-cta-outline, color-mix(in srgb, var(--sb-cta-icon) 72%, white 28%));
+    var(--sb-cta-outline, color-mix(in srgb, var(--sb-icon) 72%, white 28%));
 }
 
 .action-button:active {
@@ -329,6 +328,10 @@
   color: var(--sb-muted-icon, currentColor);
 }
 
+.action-button-voice {
+  color: var(--sb-icon);
+}
+
 .action-button-voice[aria-pressed="true"] {
   color: var(
     --sb-cta-icon-active,
@@ -339,6 +342,30 @@
       --sb-cta-outline-active,
       color-mix(in srgb, var(--sb-cta-icon) 60%, white 40%)
     );
+}
+
+.action-button-send {
+  background: var(--sb-send-bg);
+  color: var(--sb-send-color);
+  box-shadow: var(--sb-cta-shadow);
+}
+
+.action-button-send:hover {
+  background: var(--sb-send-bg);
+  color: var(--sb-send-color);
+  box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
+}
+
+.action-button-send:focus-visible {
+  background: var(--sb-send-bg);
+  color: var(--sb-send-color);
+  box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
+}
+
+.action-button-send:active {
+  background: var(--sb-send-bg);
+  color: var(--sb-send-color);
+  box-shadow: var(--sb-cta-shadow);
 }
 
 .action-button-icon {
