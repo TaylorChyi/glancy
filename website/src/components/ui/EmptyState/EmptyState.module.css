@@ -23,10 +23,30 @@
   backdrop-filter: blur(18px);
 }
 
+.tone-decorated {
+  /* 保持默认的华丽装饰语态，预留钩子以便未来扩展主题细节。 */
+}
+
+.tone-plain {
+  /* 纯净态移除所有装饰元素，仅保留信息层级与舒展的留白节奏。 */
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: var(--space-4, 24px) 0;
+  gap: var(--space-2, 8px);
+}
+
 @supports not (color: color-mix(in srgb, white 50%, black)) {
   .wrapper {
     background: var(--color-surface-muted);
     border: 1px solid var(--border-color);
+  }
+
+  .tone-plain {
+    background: none;
+    border: none;
+    box-shadow: none;
   }
 }
 
