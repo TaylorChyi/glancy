@@ -31,11 +31,34 @@ import {
   isLibraryView,
 } from "../dictionaryExperienceViews.js";
 
+/**
+ * 背景：
+ *  - 复制操作的反馈此前仅依赖弹窗提示，用户无法快速辨识当前按钮是否可再次复制。
+ * 目的：
+ *  - 建立一个可扩展的复制反馈状态机，为工具栏按钮提供语义化的交互源数据。
+ * 关键决策与取舍：
+ *  - 采用有限状态机常量而非布尔标志，便于未来扩展错误、处理中等状态；
+ *  - 通过计时器在成功 2 秒后回退至初始态，兼顾即时反馈与连续复制需求。
+ * 影响范围：
+ *  - DictionaryExperience 与其子组件使用的复制按钮状态。
+ * 演进与TODO：
+ *  - 后续可根据 copyFeedbackState 扩展更多视觉反馈，如错误提示高亮。
+ */
+export const COPY_FEEDBACK_STATES = Object.freeze({
+  IDLE: "idle",
+  SUCCESS: "success",
+});
+
+const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
+
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
   const { t, lang, setLang } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [copyFeedbackState, setCopyFeedbackState] = useState(
+    COPY_FEEDBACK_STATES.IDLE,
+  );
   const { user } = useUser();
   const {
     history: historyItems,
@@ -54,6 +77,7 @@ export function useDictionaryExperience() {
   const [activeVersionId, setActiveVersionId] = useState(null);
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
+  const copyFeedbackResetTimerRef = useRef(null);
   const wordEntries = useWordStore((state) => state.entries);
   const {
     dictionarySourceLanguage,
@@ -117,30 +141,58 @@ export function useDictionaryExperience() {
     [copyPayload],
   );
 
+  const clearCopyFeedbackResetTimer = useCallback(() => {
+    if (copyFeedbackResetTimerRef.current) {
+      clearTimeout(copyFeedbackResetTimerRef.current);
+      copyFeedbackResetTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleCopyFeedbackReset = useCallback(() => {
+    clearCopyFeedbackResetTimer();
+    copyFeedbackResetTimerRef.current = setTimeout(() => {
+      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
+      copyFeedbackResetTimerRef.current = null;
+    }, COPY_FEEDBACK_RESET_DELAY_MS);
+  }, [clearCopyFeedbackResetTimer]);
+
   const handleCopy = useCallback(async () => {
     const copyLabel = t.copyAction || "Copy";
     if (!canCopyDefinition) {
+      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
       showPopup(t.copyEmpty || t.copyFailed || copyLabel);
       return;
     }
 
-    const result = await copyTextToClipboard(copyPayload);
-    if (result.status === "copied") {
-      showPopup(t.copySuccess || copyLabel);
+    try {
+      const result = await copyTextToClipboard(copyPayload);
+      if (result.status === "copied") {
+        setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
+        scheduleCopyFeedbackReset();
+        showPopup(t.copySuccess || copyLabel);
+        return;
+      }
+
+      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
+
+      if (result.status === "empty") {
+        showPopup(t.copyEmpty || t.copyFailed || copyLabel);
+        return;
+      }
+      if (result.status === "unavailable") {
+        showPopup(t.copyUnavailable || t.copyFailed || copyLabel);
+        return;
+      }
+      showPopup(t.copyFailed || copyLabel);
+    } catch {
+      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
+      showPopup(t.copyFailed || copyLabel);
       return;
     }
-    if (result.status === "empty") {
-      showPopup(t.copyEmpty || t.copyFailed || copyLabel);
-      return;
-    }
-    if (result.status === "unavailable") {
-      showPopup(t.copyUnavailable || t.copyFailed || copyLabel);
-      return;
-    }
-    showPopup(t.copyFailed || copyLabel);
   }, [
     canCopyDefinition,
     copyPayload,
+    scheduleCopyFeedbackReset,
     showPopup,
     t.copySuccess,
     t.copyEmpty,
@@ -152,6 +204,13 @@ export function useDictionaryExperience() {
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
   }, []);
+
+  useEffect(
+    () => () => {
+      clearCopyFeedbackResetTimer();
+    },
+    [clearCopyFeedbackResetTimer],
+  );
 
   /**
    * 意图：集中回收词典首页所依赖的查询状态，保证任意入口返回首页时体验一致。
@@ -167,6 +226,8 @@ export function useDictionaryExperience() {
    */
   const resetDictionaryHomeState = useCallback(() => {
     cancelActiveLookup();
+    clearCopyFeedbackResetTimer();
+    setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
     setEntry(null);
     setFinalText("");
     setStreamText("");
@@ -177,7 +238,12 @@ export function useDictionaryExperience() {
     setCurrentTerm("");
     setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
     focusInput();
-  }, [cancelActiveLookup, focusInput, setActiveView]);
+  }, [
+    cancelActiveLookup,
+    clearCopyFeedbackResetTimer,
+    focusInput,
+    setActiveView,
+  ]);
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -251,6 +317,8 @@ export function useDictionaryExperience() {
       }
 
       setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
+      clearCopyFeedbackResetTimer();
+      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
       const controller = beginLookup();
 
       setLoading(true);
@@ -375,6 +443,7 @@ export function useDictionaryExperience() {
       applyRecord,
       isMounted,
       clearActiveLookup,
+      clearCopyFeedbackResetTimer,
     ],
   );
 
@@ -703,11 +772,7 @@ export function useDictionaryExperience() {
   const isTermActionable = isEntryViewActive && Boolean(resolvedTerm);
   const isEmptyStateActive = useMemo(
     () =>
-      isDictionaryViewActive &&
-      !entry &&
-      !finalText &&
-      !streamText &&
-      !loading,
+      isDictionaryViewActive && !entry && !finalText && !streamText && !loading,
     [isDictionaryViewActive, entry, finalText, streamText, loading],
   );
   const displayClassName = useMemo(
@@ -717,6 +782,9 @@ export function useDictionaryExperience() {
         .join(" "),
     [isEmptyStateActive],
   );
+
+  const isCopySuccessActive =
+    copyFeedbackState === COPY_FEEDBACK_STATES.SUCCESS;
 
   const dictionaryActionBarProps = useMemo(
     () => ({
@@ -729,6 +797,8 @@ export function useDictionaryExperience() {
       onNavigate: isEntryViewActive ? handleNavigateVersion : undefined,
       onCopy: handleCopy,
       canCopy: canCopyDefinition,
+      copyFeedbackState,
+      isCopySuccess: isCopySuccessActive,
       favorited: Boolean(resolvedTerm && favorites.includes(resolvedTerm)),
       onToggleFavorite: toggleFavoriteEntry,
       canFavorite: hasResolvedEntry && isTermActionable,
@@ -752,6 +822,8 @@ export function useDictionaryExperience() {
       handleNavigateVersion,
       handleCopy,
       canCopyDefinition,
+      copyFeedbackState,
+      isCopySuccessActive,
       favorites,
       toggleFavoriteEntry,
       handleDeleteHistory,

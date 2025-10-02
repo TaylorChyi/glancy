@@ -94,6 +94,8 @@ function OutputToolbar({
   ttsComponent = TtsButton,
   onCopy,
   canCopy = false,
+  copyFeedbackState = "idle",
+  isCopySuccess = false,
   favorited = false,
   onToggleFavorite,
   canFavorite = false,
@@ -111,6 +113,13 @@ function OutputToolbar({
   const { t } = useLanguage();
   const { user } = useUser();
   const TtsComponent = ttsComponent;
+  const copySuccessActive = Boolean(
+    isCopySuccess || copyFeedbackState === "success",
+  );
+  const copyBaseLabel = t.copyAction || "Copy";
+  const copyResolvedLabel = copySuccessActive
+    ? t.copySuccess || copyBaseLabel
+    : copyBaseLabel;
   const { currentIndex, total } = useMemo(() => {
     if (!Array.isArray(versions) || versions.length === 0) {
       return { currentIndex: 0, total: 0 };
@@ -131,7 +140,6 @@ function OutputToolbar({
     : t.versionIndicatorEmpty || "0 / 0";
   const speakableTerm = typeof term === "string" ? term.trim() : term;
   const showTts = Boolean(speakableTerm);
-  const copyLabel = t.copyAction || "Copy";
   const actionContext = useMemo(
     () => ({
       t,
@@ -164,15 +172,22 @@ function OutputToolbar({
   );
 
   const actionItems = useMemo(() => {
+    const copyIcon = copySuccessActive ? (
+      <ThemeIcon name="copy-success" width={20} height={20} />
+    ) : (
+      <ThemeIcon name="copy" width={20} height={20} />
+    );
+    const copyButtonDisabled =
+      disabled || copySuccessActive || !canCopy || typeof onCopy !== "function";
     const items = [
       {
         key: "copy",
-        label: copyLabel,
-        icon: <ThemeIcon name="copy" width={20} height={20} />,
+        label: copyResolvedLabel,
+        icon: copyIcon,
         onClick: onCopy,
         active: false,
         variant: "copy",
-        disabled: disabled || !canCopy || typeof onCopy !== "function",
+        disabled: copyButtonDisabled,
       },
     ];
 
@@ -201,7 +216,15 @@ function OutputToolbar({
     });
 
     return items;
-  }, [actionContext, canCopy, copyLabel, disabled, onCopy, user]);
+  }, [
+    actionContext,
+    canCopy,
+    copyResolvedLabel,
+    copySuccessActive,
+    disabled,
+    onCopy,
+    user,
+  ]);
 
   const showReplay = typeof onReoutput === "function";
   const showLeftCluster = showTts || showReplay;
@@ -349,6 +372,8 @@ OutputToolbar.propTypes = {
   ttsComponent: PropTypes.elementType,
   onCopy: PropTypes.func,
   canCopy: PropTypes.bool,
+  copyFeedbackState: PropTypes.string,
+  isCopySuccess: PropTypes.bool,
   favorited: PropTypes.bool,
   onToggleFavorite: PropTypes.func,
   canFavorite: PropTypes.bool,
@@ -375,6 +400,8 @@ OutputToolbar.defaultProps = {
   ttsComponent: TtsButton,
   onCopy: undefined,
   canCopy: false,
+  copyFeedbackState: "idle",
+  isCopySuccess: false,
   favorited: false,
   onToggleFavorite: undefined,
   canFavorite: false,

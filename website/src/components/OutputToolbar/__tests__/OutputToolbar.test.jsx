@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, screen } from "@testing-library/react";
+import { render, fireEvent, screen, within } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
@@ -15,6 +15,7 @@ jest.unstable_mockModule("@/context", () => ({
       versionIndicator: "{current} / {total}",
       versionIndicatorEmpty: "0 / 0",
       copyAction: "复制",
+      copySuccess: "复制完成",
       favoriteAction: "收藏",
       favoriteRemove: "取消收藏",
       deleteButton: "删除",
@@ -160,6 +161,52 @@ describe("OutputToolbar", () => {
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：复制成功态下按钮需禁用并显示勾选图标，恢复 idle 后重新启用。
+   * 前置条件：组件接收 copyFeedbackState="success" 与 isCopySuccess=true。
+   * 步骤：
+   *  1) 初次渲染为成功态，断言禁用与图标；
+   *  2) rerender 为 idle，断言图标/禁用恢复。
+   * 断言：
+   *  - 勾选态按钮禁用且渲染 copy-success 图标；
+   *  - idle 态恢复复制图标与可用状态。
+   * 边界/异常：
+   *  - 若状态切换未更新按钮属性，将导致断言失败。
+   */
+  test("GivenCopySuccessState_WhenRendering_ThenShowsSuccessIconAndDisables", () => {
+    const { rerender } = render(
+      <OutputToolbar
+        term="gamma"
+        canCopy
+        onCopy={jest.fn()}
+        copyFeedbackState="success"
+        isCopySuccess
+      />,
+    );
+
+    const successButton = screen.getByRole("button", { name: "复制完成" });
+    expect(successButton).toBeDisabled();
+    expect(
+      within(successButton).getByRole("img", { name: "copy-success" }),
+    ).toBeInTheDocument();
+
+    rerender(
+      <OutputToolbar
+        term="gamma"
+        canCopy
+        onCopy={jest.fn()}
+        copyFeedbackState="idle"
+        isCopySuccess={false}
+      />,
+    );
+
+    const idleButton = screen.getByRole("button", { name: "复制" });
+    expect(idleButton).not.toBeDisabled();
+    expect(
+      within(idleButton).getByRole("img", { name: "copy" }),
+    ).toBeInTheDocument();
   });
 
   /**

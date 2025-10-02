@@ -123,7 +123,7 @@ jest.unstable_mockModule("@/config", () => ({
 }));
 
 const utilsModule = await import("@/utils");
-const { useDictionaryExperience } = await import(
+const { useDictionaryExperience, COPY_FEEDBACK_STATES } = await import(
   "./useDictionaryExperience.js"
 );
 
@@ -138,6 +138,10 @@ beforeEach(() => {
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe("useDictionaryExperience", () => {
@@ -266,6 +270,154 @@ describe("useDictionaryExperience", () => {
   });
 
   /**
+   * 测试目标：复制成功后状态机应进入 success，并在延迟后恢复 idle。
+   * 前置条件：mockStreamWord 返回含 markdown 的词条，clipboard 写入成功。
+   * 步骤：
+   *  1) 通过 handleSend 拉取词条；
+   *  2) 调用工具栏 onCopy；
+   *  3) 推进计时器 2 秒等待复位。
+   * 断言：
+   *  - copyTextToClipboard 被调用一次；
+   *  - copyFeedbackState 由 success 退回 idle，isCopySuccess 相应更新。
+   * 边界/异常：
+   *  - 若定时器未清理，状态将停留在 success 触发断言失败。
+   */
+  it("GivenSuccessfulCopy_WhenCopyInvoked_ThenShowsSuccessAndResets", async () => {
+    jest.useFakeTimers();
+
+    const entry = {
+      id: "v-copy",
+      term: "delta",
+      markdown: "## Meaning",
+    };
+    const record = {
+      versions: [entry],
+      activeVersionId: entry.id,
+    };
+    mockGetRecord.mockReturnValue(record);
+    mockGetEntry.mockImplementation(() => entry);
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: JSON.stringify(entry), language: "ENGLISH" };
+      })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText(entry.term);
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(result.current.dictionaryActionBarProps.canCopy).toBe(true);
+
+    await act(async () => {
+      await result.current.dictionaryActionBarProps.onCopy();
+    });
+
+    expect(utilsModule.copyTextToClipboard).toHaveBeenCalledTimes(1);
+    expect(result.current.dictionaryActionBarProps.copyFeedbackState).toBe(
+      COPY_FEEDBACK_STATES.SUCCESS,
+    );
+    expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(true);
+
+    await act(async () => {
+      jest.advanceTimersByTime(2000);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.dictionaryActionBarProps.copyFeedbackState).toBe(
+      COPY_FEEDBACK_STATES.IDLE,
+    );
+    expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(false);
+  });
+
+  /**
+   * 测试目标：当复制内容为空时，状态机保持 idle 并避免触发 clipboard 写入。
+   * 前置条件：未加载任何词条内容，copyPayload 为空字符串。
+   * 步骤：
+   *  1) 直接调用工具栏 onCopy；
+   * 断言：
+   *  - copyTextToClipboard 不会被调用；
+   *  - copyFeedbackState 与 isCopySuccess 维持初始值。
+   * 边界/异常：
+   *  - 若误判可复制导致调用 clipboard，将触发断言失败。
+   */
+  it("GivenEmptyClipboardPayload_WhenCopyInvoked_ThenStaysIdle", async () => {
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      await result.current.dictionaryActionBarProps.onCopy();
+    });
+
+    expect(utilsModule.copyTextToClipboard).not.toHaveBeenCalled();
+    expect(result.current.dictionaryActionBarProps.copyFeedbackState).toBe(
+      COPY_FEEDBACK_STATES.IDLE,
+    );
+    expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(false);
+  });
+
+  /**
+   * 测试目标：复制出现异常时需立即回退至 idle，避免卡在成功态。
+   * 前置条件：clipboard 写入抛出异常，已有词条可复制。
+   * 步骤：
+   *  1) 构造词条并触发 onCopy；
+   * 断言：
+   *  - copyFeedbackState 仍为 idle；
+   *  - isCopySuccess 为 false。
+   * 边界/异常：
+   *  - 若异常分支未处理，状态将残留导致断言失败。
+   */
+  it("GivenClipboardFailure_WhenCopyInvoked_ThenResetsToIdle", async () => {
+    jest.useFakeTimers();
+
+    const entry = {
+      id: "v-error",
+      term: "epsilon",
+      markdown: "## Alt",
+    };
+    const record = {
+      versions: [entry],
+      activeVersionId: entry.id,
+    };
+    utilsModule.copyTextToClipboard.mockRejectedValueOnce(
+      new Error("clipboard failed"),
+    );
+    mockGetRecord.mockReturnValue(record);
+    mockGetEntry.mockImplementation(() => entry);
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: JSON.stringify(entry), language: "ENGLISH" };
+      })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText(entry.term);
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    await act(async () => {
+      await result.current.dictionaryActionBarProps.onCopy();
+    });
+
+    expect(utilsModule.copyTextToClipboard).toHaveBeenCalledTimes(1);
+    expect(result.current.dictionaryActionBarProps.copyFeedbackState).toBe(
+      COPY_FEEDBACK_STATES.IDLE,
+    );
+    expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(false);
+  });
+
+  /**
    * 测试路径：切换致用单词视图时，activeView 需同步更新。
    * 步骤：依次调用 handleShowLibrary 与 handleShowDictionary。
    * 断言：activeView 从 library 变更为 dictionary 且 viewState 标志同步。
@@ -302,7 +454,9 @@ describe("useDictionaryExperience", () => {
    *  - 若取消查询逻辑未清理 loading，应导致断言失败提示状态未复位。
    */
   it("GivenDefinitionState_WhenHandleShowDictionary_ThenResetsToHome", async () => {
-    utilsModule.extractMarkdownPreview.mockImplementation(() => "Preview snippet");
+    utilsModule.extractMarkdownPreview.mockImplementation(
+      () => "Preview snippet",
+    );
 
     const record = {
       versions: [
