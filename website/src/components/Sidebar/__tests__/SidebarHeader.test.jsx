@@ -18,12 +18,12 @@ const createItems = () => [
     testId: "sidebar-nav-dictionary",
   },
   {
-    key: "favorites",
+    key: "library",
     icon: "library",
-    label: "Favorites",
+    label: "Library",
     active: false,
     onClick: jest.fn(),
-    testId: "sidebar-nav-favorites",
+    testId: "sidebar-nav-library",
   },
 ];
 
@@ -35,15 +35,15 @@ describe("SidebarHeader", () => {
    *  1) 渲染 SidebarHeader。
    *  2) 点击第二个 NavItem。
    * 断言：
-   *  - 第二项 onClick 被调用一次（失败信息：致用单词入口未触发回调）。
+   *  - 第二项 onClick 被调用一次（失败信息：library 入口未触发回调）。
    * 边界/异常：
    *  - 若 items 为空组件返回 null，本用例不覆盖。
    */
-  test("Given items When click favorites Then invokes handler", () => {
+  test("Given items When click library Then invokes handler", () => {
     const items = createItems();
     render(<SidebarHeader items={items} ariaLabel="Navigation" />);
 
-    fireEvent.click(screen.getByTestId("sidebar-nav-favorites"));
+    fireEvent.click(screen.getByTestId("sidebar-nav-library"));
 
     expect(items[1].onClick).toHaveBeenCalledTimes(1);
   });

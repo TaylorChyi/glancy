@@ -24,6 +24,12 @@ import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
+import {
+  DICTIONARY_EXPERIENCE_VIEWS,
+  isDictionaryView,
+  isHistoryView,
+  isLibraryView,
+} from "../dictionaryExperienceViews.js";
 
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
@@ -35,13 +41,13 @@ export function useDictionaryExperience() {
     history: historyItems,
     loadHistory,
     addHistory,
-    unfavoriteHistory,
     removeHistory,
   } = useHistory();
   const { theme, setTheme } = useTheme();
   const inputRef = useRef(null);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [activeView, setActiveView] = useState(
+    DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
+  );
   const [streamText, setStreamText] = useState("");
   const [finalText, setFinalText] = useState("");
   const [versions, setVersions] = useState([]);
@@ -69,6 +75,15 @@ export function useDictionaryExperience() {
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
   const wordStoreApi = useWordStore;
   const activeTerm = entry?.term || currentTerm;
+  const isDictionaryViewActive = isDictionaryView(activeView);
+  const isHistoryViewActive = isHistoryView(activeView);
+  const isLibraryViewActive = isLibraryView(activeView);
+  const libraryLandingLabel = useMemo(() => {
+    if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
+    if (t.favorites) return t.favorites;
+    if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
+    return "致用单词";
+  }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
 
   const copyPayload = useMemo(() => {
     const stringCandidates = [
@@ -160,10 +175,9 @@ export function useDictionaryExperience() {
     setActiveVersionId(null);
     setCurrentTermKey(null);
     setCurrentTerm("");
-    setShowFavorites(false);
-    setShowHistory(false);
+    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
     focusInput();
-  }, [cancelActiveLookup, focusInput]);
+  }, [cancelActiveLookup, focusInput, setActiveView]);
 
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
@@ -172,8 +186,7 @@ export function useDictionaryExperience() {
     theme,
     setTheme,
     entry,
-    showFavorites,
-    showHistory,
+    isDictionaryViewActive,
     toggleFavorite,
   });
 
@@ -181,18 +194,9 @@ export function useDictionaryExperience() {
     resetDictionaryHomeState();
   }, [resetDictionaryHomeState]);
 
-  const handleShowFavorites = useCallback(() => {
-    setShowFavorites(true);
-    setShowHistory(false);
-  }, []);
-
-  const handleUnfavorite = useCallback(
-    (term) => {
-      unfavoriteHistory(term, user);
-      toggleFavorite(term);
-    },
-    [unfavoriteHistory, user, toggleFavorite],
-  );
+  const handleShowLibrary = useCallback(() => {
+    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.LIBRARY);
+  }, [setActiveView]);
 
   const handleVoice = useCallback(() => {
     const locale = lang === "en" ? "en-US" : "zh-CN";
@@ -246,8 +250,7 @@ export function useDictionaryExperience() {
         return { status: "idle", term: normalized };
       }
 
-      setShowFavorites(false);
-      setShowHistory(false);
+      setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
       const controller = beginLookup();
 
       setLoading(true);
@@ -357,8 +360,7 @@ export function useDictionaryExperience() {
       streamWord,
       user,
       beginLookup,
-      setShowFavorites,
-      setShowHistory,
+      setActiveView,
       setLoading,
       setEntry,
       setStreamText,
@@ -645,8 +647,7 @@ export function useDictionaryExperience() {
           versionId ?? cachedRecord.activeVersionId,
         );
         if (applied) {
-          setShowFavorites(false);
-          setShowHistory(false);
+          setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
           setLoading(false);
           setStreamText("");
           setCurrentTerm(resolvedTerm);
@@ -673,15 +674,8 @@ export function useDictionaryExperience() {
       executeLookup,
       setLoading,
       setStreamText,
+      setActiveView,
     ],
-  );
-
-  const handleSelectFavorite = useCallback(
-    async (term) => {
-      await handleSelectHistory(term);
-      setShowFavorites(false);
-    },
-    [handleSelectHistory],
   );
 
   useEffect(() => {
@@ -703,25 +697,18 @@ export function useDictionaryExperience() {
     }
   }, [user, resetDictionaryHomeState]);
 
-  const activeSidebarView = useMemo(() => {
-    if (showFavorites) return "favorites";
-    if (showHistory) return "history";
-    return "dictionary";
-  }, [showFavorites, showHistory]);
-
-  const isEntryViewActive = !showFavorites && !showHistory;
+  const isEntryViewActive = isDictionaryViewActive;
   const resolvedTerm = activeTerm;
   const hasResolvedEntry = isEntryViewActive && Boolean(entry);
   const isTermActionable = isEntryViewActive && Boolean(resolvedTerm);
   const isEmptyStateActive = useMemo(
     () =>
-      !showFavorites &&
-      !showHistory &&
+      isDictionaryViewActive &&
       !entry &&
       !finalText &&
       !streamText &&
       !loading,
-    [showFavorites, showHistory, entry, finalText, streamText, loading],
+    [isDictionaryViewActive, entry, finalText, streamText, loading],
   );
   const displayClassName = useMemo(
     () =>
@@ -787,15 +774,17 @@ export function useDictionaryExperience() {
     handleSwapLanguages,
     handleSend,
     handleVoice,
-    showFavorites,
-    showHistory,
     handleShowDictionary,
-    handleShowFavorites,
+    handleShowLibrary,
     handleSelectHistory,
-    handleSelectFavorite,
-    handleUnfavorite,
     favorites,
-    activeSidebarView,
+    activeView,
+    viewState: {
+      active: activeView,
+      isDictionary: isDictionaryViewActive,
+      isHistory: isHistoryViewActive,
+      isLibrary: isLibraryViewActive,
+    },
     focusInput,
     entry,
     finalText,
@@ -811,15 +800,10 @@ export function useDictionaryExperience() {
     canCopyDefinition,
     lang,
     dictionaryFlavor,
+    libraryLandingLabel,
     dictionaryTargetLanguageLabel: t.dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel: t.dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel: t.dictionarySwapLanguages,
-    favoritesEmptyState: {
-      title: t.favoritesEmptyTitle,
-      description: t.favoritesEmptyDescription,
-      actionLabel: t.favoritesEmptyAction,
-      removeLabel: t.favoriteRemove,
-    },
     searchEmptyState: {
       title: t.searchEmptyTitle,
       description: t.searchEmptyDescription,

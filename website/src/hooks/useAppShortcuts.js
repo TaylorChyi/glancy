@@ -8,8 +8,7 @@ export function useAppShortcuts({
   theme,
   setTheme,
   entry,
-  showFavorites,
-  showHistory,
+  isDictionaryViewActive,
   toggleFavorite,
 }) {
   const focusInput = useCallback(() => {
@@ -28,10 +27,10 @@ export function useAppShortcuts({
   }, [theme, setTheme]);
 
   const toggleFavoriteEntry = useCallback(() => {
-    if (entry && !showFavorites && !showHistory) {
+    if (entry && isDictionaryViewActive) {
       toggleFavorite(entry.term);
     }
-  }, [entry, showFavorites, showHistory, toggleFavorite]);
+  }, [entry, isDictionaryViewActive, toggleFavorite]);
 
   const openShortcuts = useCallback(() => {
     document.dispatchEvent(new Event("open-shortcuts"));

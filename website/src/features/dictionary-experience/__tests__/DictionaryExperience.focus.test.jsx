@@ -35,14 +35,16 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     handleSwapLanguages: jest.fn(),
     handleSend: jest.fn(),
     handleVoice: jest.fn(),
-    showFavorites: false,
-    showHistory: false,
     handleShowDictionary: jest.fn(),
-    handleShowFavorites: jest.fn(),
+    handleShowLibrary: jest.fn(),
     handleSelectHistory: jest.fn(),
-    handleSelectFavorite: jest.fn(),
-    handleUnfavorite: jest.fn(),
-    favorites: [],
+    activeView: "dictionary",
+    viewState: {
+      active: "dictionary",
+      isDictionary: true,
+      isHistory: false,
+      isLibrary: false,
+    },
     focusInput: focusInputMock,
     entry: { term: "mock" },
     finalText: "",
@@ -56,15 +58,9 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     dictionaryTargetLanguageLabel: "目标语言",
     dictionarySourceLanguageLabel: "源语言",
     dictionarySwapLanguagesLabel: "切换",
-    favoritesEmptyState: {
-      title: "",
-      description: "",
-      actionLabel: "",
-      removeLabel: "",
-    },
     searchEmptyState: { title: "", description: "" },
     chatInputPlaceholder: "",
-    activeSidebarView: "dictionary",
+    libraryLandingLabel: "致用单词",
   })),
 }));
 
@@ -92,16 +88,20 @@ jest.unstable_mockModule("../hooks/useBottomPanelState.ts", async () => {
 jest.unstable_mockModule("@/components/Layout", () => ({
   __esModule: true,
   default: ({ bottomContent, children }) => (
-    <div>
-      <div data-testid="layout-bottom-content">{bottomContent}</div>
+    <div data-testid="layout-root" data-has-bottom={bottomContent ? "yes" : "no"}>
+      {bottomContent ? (
+        <div data-testid="layout-bottom-content">{bottomContent}</div>
+      ) : null}
       <div>{children}</div>
     </div>
   ),
 }));
 
-jest.unstable_mockModule("@/pages/App/FavoritesView.jsx", () => ({
+jest.unstable_mockModule("@/pages/App/LibraryLandingView.jsx", () => ({
   __esModule: true,
-  default: () => null,
+  default: ({ label }) => (
+    <div data-testid="library-landing">{label || "致用单词"}</div>
+  ),
 }));
 
 jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
@@ -172,6 +172,9 @@ jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
 }));
 
 const DictionaryExperience = (await import("../DictionaryExperience.jsx")).default;
+const { useDictionaryExperience } = await import(
+  "../hooks/useDictionaryExperience.js"
+);
 
 describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
@@ -205,5 +208,69 @@ describe("DictionaryExperience focus management", () => {
       expect(screen.getByTestId("dictionary-chat-input")).toBeInTheDocument();
       expect(focusInputMock).toHaveBeenCalledTimes(1);
     });
+  });
+
+  /**
+   * 测试目标：当视图切换至“致用单词”时，底栏应被移除且占位标签居中展示。
+   * 前置条件：useDictionaryExperience 返回 activeView 为 library 的桩数据。
+   * 步骤：
+   *  1) 通过 mockReturnValueOnce 覆盖 Hook 输出；
+   *  2) 渲染 DictionaryExperience；
+   * 断言：
+   *  - Layout 的 data-has-bottom 属性为 "no"；
+   *  - LibraryLandingView 渲染致用单词标签（失败信息：占位文案未呈现）。
+   * 边界/异常：
+   *  - 若未来 LibraryLandingView 支持更多插槽需同步更新断言。
+   */
+  test("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
+    useDictionaryExperience.mockReturnValueOnce({
+      inputRef,
+      t: {},
+      text: "",
+      setText: jest.fn(),
+      dictionarySourceLanguage: "en",
+      setDictionarySourceLanguage: jest.fn(),
+      dictionaryTargetLanguage: "zh",
+      setDictionaryTargetLanguage: jest.fn(),
+      sourceLanguageOptions: [],
+      targetLanguageOptions: [],
+      handleSwapLanguages: jest.fn(),
+      handleSend: jest.fn(),
+      handleVoice: jest.fn(),
+      handleShowDictionary: jest.fn(),
+      handleShowLibrary: jest.fn(),
+      handleSelectHistory: jest.fn(),
+      activeView: "library",
+      viewState: {
+        active: "library",
+        isDictionary: false,
+        isHistory: false,
+        isLibrary: true,
+      },
+      focusInput: jest.fn(),
+      entry: null,
+      finalText: "",
+      streamText: "",
+      loading: false,
+      dictionaryActionBarProps: {},
+      displayClassName: "library-view",
+      popupOpen: false,
+      popupMsg: "",
+      closePopup: jest.fn(),
+      dictionaryTargetLanguageLabel: "目标语言",
+      dictionarySourceLanguageLabel: "源语言",
+      dictionarySwapLanguagesLabel: "切换",
+      searchEmptyState: { title: "", description: "" },
+      chatInputPlaceholder: "",
+      libraryLandingLabel: "致用单词",
+    });
+
+    render(<DictionaryExperience />);
+
+    expect(screen.getByTestId("layout-root")).toHaveAttribute(
+      "data-has-bottom",
+      "no",
+    );
+    expect(screen.getByTestId("library-landing")).toHaveTextContent("致用单词");
   });
 });

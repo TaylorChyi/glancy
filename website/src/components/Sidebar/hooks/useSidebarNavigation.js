@@ -19,7 +19,7 @@ import { useIsMobile } from "@/utils";
 
 const NAVIGATION_KEYS = {
   DICTIONARY: "dictionary",
-  FAVORITES: "favorites",
+  LIBRARY: "library",
 };
 
 /**
@@ -38,7 +38,7 @@ export default function useSidebarNavigation({
   open: openProp,
   onClose,
   onShowDictionary,
-  onShowFavorites,
+  onShowLibrary,
   activeView,
 }) {
   const defaultMobile = useIsMobile();
@@ -83,7 +83,7 @@ export default function useSidebarNavigation({
     [t.primaryNavDictionaryLabel],
   );
 
-  const favoritesLabel = useMemo(() => {
+  const libraryLabel = useMemo(() => {
     if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
     if (t.favorites) return t.favorites;
     if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
@@ -111,14 +111,14 @@ export default function useSidebarNavigation({
     }
   }, [closeSidebar, isMobile, onShowDictionary]);
 
-  const handleFavorites = useCallback(() => {
-    if (typeof onShowFavorites === "function") {
-      onShowFavorites();
+  const handleLibrary = useCallback(() => {
+    if (typeof onShowLibrary === "function") {
+      onShowLibrary();
     }
     if (isMobile) {
       closeSidebar();
     }
-  }, [closeSidebar, isMobile, onShowFavorites]);
+  }, [closeSidebar, isMobile, onShowLibrary]);
 
   const navigationActions = useMemo(
     () => [
@@ -131,15 +131,15 @@ export default function useSidebarNavigation({
         testId: "sidebar-nav-dictionary",
       },
       {
-        key: NAVIGATION_KEYS.FAVORITES,
-        label: favoritesLabel,
+        key: NAVIGATION_KEYS.LIBRARY,
+        label: libraryLabel,
         icon: "library",
-        onClick: handleFavorites,
-        active: activeView === NAVIGATION_KEYS.FAVORITES,
-        testId: "sidebar-nav-favorites",
+        onClick: handleLibrary,
+        active: activeView === NAVIGATION_KEYS.LIBRARY,
+        testId: "sidebar-nav-library",
       },
     ],
-    [activeView, dictionaryLabel, favoritesLabel, handleDictionary, handleFavorites],
+    [activeView, dictionaryLabel, libraryLabel, handleDictionary, handleLibrary],
   );
 
   const shouldShowOverlay = isMobile && resolvedOpen;
