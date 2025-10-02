@@ -10,7 +10,7 @@
  * 演进与TODO：
  *  - TODO: 后续可在此接入动画或过渡状态，并考虑拆分基础模态与业务逻辑。
  */
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "./BaseModal.jsx";
 import SettingsBody from "./SettingsBody.jsx";
@@ -20,6 +20,7 @@ import SettingsPanel from "./SettingsPanel.jsx";
 import modalStyles from "./SettingsModal.module.css";
 import preferencesStyles from "@/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
+import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
 function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) {
   const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
@@ -27,6 +28,19 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       initialSectionId: initialSection,
       onOpenAccountManager,
     });
+
+  const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
+    activeSectionId,
+    headingId: panel.headingId,
+  });
+
+  const handleSectionSelectWithFocus = useCallback(
+    (section) => {
+      captureFocusOrigin();
+      handleSectionSelect(section);
+    },
+    [captureFocusOrigin, handleSectionSelect],
+  );
 
   const renderCloseAction = useMemo(
     () =>
@@ -86,7 +100,7 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             <SettingsNav
               sections={sections}
               activeSectionId={activeSectionId}
-              onSelect={handleSectionSelect}
+              onSelect={handleSectionSelectWithFocus}
               tablistLabel={copy.tablistLabel}
               renderCloseAction={renderCloseAction}
               classes={{
@@ -102,7 +116,9 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             <SettingsPanel
               panelId={panel.panelId}
               tabId={panel.tabId}
+              headingId={panel.headingId}
               className={preferencesStyles.panel}
+              onHeadingElementChange={registerHeading}
             >
               {activeSection ? (
                 <activeSection.Component
