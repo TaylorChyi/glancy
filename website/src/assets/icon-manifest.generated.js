@@ -9,162 +9,166 @@ import iconAsset6 from "./icons/cake.svg";
 import iconAsset7 from "./icons/cog-6-tooth.svg";
 import iconAsset8 from "./icons/command-line.svg";
 import iconAsset9 from "./icons/copy.svg";
-import iconAsset10 from "./avatars/default-user-avatar-dark.svg";
-import iconAsset11 from "./avatars/default-user-avatar-light.svg";
-import iconAsset12 from "./icons/ellipsis-vertical.svg";
-import iconAsset13 from "./icons/email.svg";
-import iconAsset14 from "./icons/eye.svg";
-import iconAsset15 from "./icons/eye-off.svg";
-import iconAsset16 from "./icons/flag.svg";
-import iconAsset17 from "./brand/glancy-dark.svg";
-import iconAsset18 from "./brand/glancy-light.svg";
-import iconAsset19 from "./brand/glancy-web-dark.svg";
-import iconAsset20 from "./brand/glancy-web-light.svg";
-import iconAsset21 from "./brand/golang-dark.svg";
-import iconAsset22 from "./brand/golang-light.svg";
-import iconAsset23 from "./logos/google-dark.svg";
-import iconAsset24 from "./logos/google-light.svg";
-import iconAsset25 from "./icons/library.svg";
-import iconAsset26 from "./icons/link.svg";
-import iconAsset27 from "./icons/paper-airplane.svg";
-import iconAsset28 from "./icons/phone.svg";
-import iconAsset29 from "./brand/pro-tag-dark.svg";
-import iconAsset30 from "./brand/pro-tag-light.svg";
-import iconAsset31 from "./icons/question-mark-circle.svg";
-import iconAsset32 from "./icons/refresh.svg";
-import iconAsset33 from "./icons/search.svg";
-import iconAsset34 from "./buttons/send-button-dark.svg";
-import iconAsset35 from "./buttons/send-button-light.svg";
-import iconAsset36 from "./icons/shield-check.svg";
-import iconAsset37 from "./icons/star-outline.svg";
-import iconAsset38 from "./icons/star-solid.svg";
-import iconAsset39 from "./icons/target.svg";
-import iconAsset40 from "./icons/trash.svg";
-import iconAsset41 from "./icons/user.svg";
-import iconAsset42 from "./buttons/voice-button-dark.svg";
-import iconAsset43 from "./buttons/voice-button-light.svg";
-import iconAsset44 from "./logos/wechat-dark.svg";
-import iconAsset45 from "./logos/wechat-light.svg";
+import iconAsset10 from "./icons/copy-success.svg";
+import iconAsset11 from "./avatars/default-user-avatar-dark.svg";
+import iconAsset12 from "./avatars/default-user-avatar-light.svg";
+import iconAsset13 from "./icons/ellipsis-vertical.svg";
+import iconAsset14 from "./icons/email.svg";
+import iconAsset15 from "./icons/eye.svg";
+import iconAsset16 from "./icons/eye-off.svg";
+import iconAsset17 from "./icons/flag.svg";
+import iconAsset18 from "./brand/glancy-dark.svg";
+import iconAsset19 from "./brand/glancy-light.svg";
+import iconAsset20 from "./brand/glancy-web-dark.svg";
+import iconAsset21 from "./brand/glancy-web-light.svg";
+import iconAsset22 from "./brand/golang-dark.svg";
+import iconAsset23 from "./brand/golang-light.svg";
+import iconAsset24 from "./logos/google-dark.svg";
+import iconAsset25 from "./logos/google-light.svg";
+import iconAsset26 from "./icons/library.svg";
+import iconAsset27 from "./icons/link.svg";
+import iconAsset28 from "./icons/paper-airplane.svg";
+import iconAsset29 from "./icons/phone.svg";
+import iconAsset30 from "./brand/pro-tag-dark.svg";
+import iconAsset31 from "./brand/pro-tag-light.svg";
+import iconAsset32 from "./icons/question-mark-circle.svg";
+import iconAsset33 from "./icons/refresh.svg";
+import iconAsset34 from "./icons/search.svg";
+import iconAsset35 from "./buttons/send-button-dark.svg";
+import iconAsset36 from "./buttons/send-button-light.svg";
+import iconAsset37 from "./icons/shield-check.svg";
+import iconAsset38 from "./icons/star-outline.svg";
+import iconAsset39 from "./icons/star-solid.svg";
+import iconAsset40 from "./icons/target.svg";
+import iconAsset41 from "./icons/trash.svg";
+import iconAsset42 from "./icons/user.svg";
+import iconAsset43 from "./buttons/voice-button-dark.svg";
+import iconAsset44 from "./buttons/voice-button-light.svg";
+import iconAsset45 from "./logos/wechat-dark.svg";
+import iconAsset46 from "./logos/wechat-light.svg";
 
 const registry = Object.freeze({
   "adjustments-horizontal": Object.freeze({
-    single: iconAsset0
+    single: iconAsset0,
   }),
-  "apple": Object.freeze({
+  apple: Object.freeze({
     dark: iconAsset1,
-    light: iconAsset2
+    light: iconAsset2,
   }),
   "arrow-left": Object.freeze({
-    single: iconAsset3
+    single: iconAsset3,
   }),
   "arrow-right": Object.freeze({
-    single: iconAsset4
+    single: iconAsset4,
   }),
   "arrow-right-on-rectangle": Object.freeze({
-    single: iconAsset5
+    single: iconAsset5,
   }),
-  "cake": Object.freeze({
-    single: iconAsset6
+  cake: Object.freeze({
+    single: iconAsset6,
   }),
   "cog-6-tooth": Object.freeze({
-    single: iconAsset7
+    single: iconAsset7,
   }),
   "command-line": Object.freeze({
-    single: iconAsset8
+    single: iconAsset8,
   }),
-  "copy": Object.freeze({
-    single: iconAsset9
+  copy: Object.freeze({
+    single: iconAsset9,
+  }),
+  "copy-success": Object.freeze({
+    single: iconAsset10,
   }),
   "default-user-avatar": Object.freeze({
-    dark: iconAsset10,
-    light: iconAsset11
+    dark: iconAsset11,
+    light: iconAsset12,
   }),
   "ellipsis-vertical": Object.freeze({
-    single: iconAsset12
+    single: iconAsset13,
   }),
-  "email": Object.freeze({
-    single: iconAsset13
+  email: Object.freeze({
+    single: iconAsset14,
   }),
-  "eye": Object.freeze({
-    single: iconAsset14
+  eye: Object.freeze({
+    single: iconAsset15,
   }),
   "eye-off": Object.freeze({
-    single: iconAsset15
+    single: iconAsset16,
   }),
-  "flag": Object.freeze({
-    single: iconAsset16
+  flag: Object.freeze({
+    single: iconAsset17,
   }),
-  "glancy": Object.freeze({
-    dark: iconAsset17,
-    light: iconAsset18
+  glancy: Object.freeze({
+    dark: iconAsset18,
+    light: iconAsset19,
   }),
   "glancy-web": Object.freeze({
-    dark: iconAsset19,
-    light: iconAsset20
+    dark: iconAsset20,
+    light: iconAsset21,
   }),
-  "golang": Object.freeze({
-    dark: iconAsset21,
-    light: iconAsset22
+  golang: Object.freeze({
+    dark: iconAsset22,
+    light: iconAsset23,
   }),
-  "google": Object.freeze({
-    dark: iconAsset23,
-    light: iconAsset24
+  google: Object.freeze({
+    dark: iconAsset24,
+    light: iconAsset25,
   }),
-  "library": Object.freeze({
-    single: iconAsset25
+  library: Object.freeze({
+    single: iconAsset26,
   }),
-  "link": Object.freeze({
-    single: iconAsset26
+  link: Object.freeze({
+    single: iconAsset27,
   }),
   "paper-airplane": Object.freeze({
-    single: iconAsset27
+    single: iconAsset28,
   }),
-  "phone": Object.freeze({
-    single: iconAsset28
+  phone: Object.freeze({
+    single: iconAsset29,
   }),
   "pro-tag": Object.freeze({
-    dark: iconAsset29,
-    light: iconAsset30
+    dark: iconAsset30,
+    light: iconAsset31,
   }),
   "question-mark-circle": Object.freeze({
-    single: iconAsset31
+    single: iconAsset32,
   }),
-  "refresh": Object.freeze({
-    single: iconAsset32
+  refresh: Object.freeze({
+    single: iconAsset33,
   }),
-  "search": Object.freeze({
-    single: iconAsset33
+  search: Object.freeze({
+    single: iconAsset34,
   }),
   "send-button": Object.freeze({
-    dark: iconAsset34,
-    light: iconAsset35
+    dark: iconAsset35,
+    light: iconAsset36,
   }),
   "shield-check": Object.freeze({
-    single: iconAsset36
+    single: iconAsset37,
   }),
   "star-outline": Object.freeze({
-    single: iconAsset37
+    single: iconAsset38,
   }),
   "star-solid": Object.freeze({
-    single: iconAsset38
+    single: iconAsset39,
   }),
-  "target": Object.freeze({
-    single: iconAsset39
+  target: Object.freeze({
+    single: iconAsset40,
   }),
-  "trash": Object.freeze({
-    single: iconAsset40
+  trash: Object.freeze({
+    single: iconAsset41,
   }),
-  "user": Object.freeze({
-    single: iconAsset41
+  user: Object.freeze({
+    single: iconAsset42,
   }),
   "voice-button": Object.freeze({
-    dark: iconAsset42,
-    light: iconAsset43
+    dark: iconAsset43,
+    light: iconAsset44,
   }),
-  "wechat": Object.freeze({
-    dark: iconAsset44,
-    light: iconAsset45
-  })
+  wechat: Object.freeze({
+    dark: iconAsset45,
+    light: iconAsset46,
+  }),
 });
 
 export default registry;
