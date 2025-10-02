@@ -1,26 +1,50 @@
 /**
  * 背景：
- *  - 历史上 Preferences 组件承载多标签与语音预览逻辑，维护成本高且难以复用。
+ *  - 偏好设置面板从单页表单演进到多标签导航，旧实现耦合度高且难以扩展。
  * 目的：
- *  - 收敛到账户信息的极简展示面板，构建后续可扩展的账号偏好基座。
+ *  - 通过标签策略化管理不同偏好模块，将展示与数据逻辑拆分，奠定后续扩展基础。
  * 关键决策与取舍：
- *  - 移除与多标签、语音预览、个性化相关的状态，仅保留读取账户与档案信息的必要逻辑。
- *  - 通过 useApi 拉取 profile 元数据，保持数据来源一致，并采用守卫避免卸载后状态更新。
+ *  - 采用“策略模式”维护标签定义：每个标签以组件作为渲染策略，便于未来按需增减模块；相比条件分支，可避免父组件膨胀。
+ *  - 保留账户信息拉取逻辑于父组件，向子策略下发纯数据，使请求复用并便于缓存。
  * 影响范围：
- *  - SettingsModal 调用接口收敛为 onOpenAccountManager，可在弹窗内复用该表单骨架。
+ *  - Preferences 页面整体布局、样式与单测结构均更新为多标签形态。
  * 演进与TODO：
- *  - TODO: 当引入账户编辑功能时，在现有结构上补充输入控件与校验态。
+ *  - TODO: 当接入更多偏好模块时，仅需扩充 TAB_BLUEPRINTS 并提供对应策略组件。
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "./Preferences.module.css";
 import { useLanguage, useUser } from "@/context";
 import { useApi } from "@/hooks/useApi.js";
 import Avatar from "@/components/ui/Avatar";
+import AccountPreferencesTab from "./parts/AccountPreferencesTab.jsx";
+import PlaceholderTab from "./parts/PlaceholderTab.jsx";
 
 const EMPTY_PROFILE = Object.freeze({ age: "", gender: "" });
 
-function Preferences({ onOpenAccountManager }) {
+const sanitizeActiveTabId = (candidateId, tabs) => {
+  if (!tabs || tabs.length === 0) {
+    return "";
+  }
+  const fallbackTab = tabs.find((tab) => !tab.disabled) ?? tabs[0];
+  if (!candidateId) {
+    return fallbackTab.id;
+  }
+  const matched = tabs.find((tab) => tab.id === candidateId && !tab.disabled);
+  return matched ? matched.id : fallbackTab.id;
+};
+
+const mapToDisplayValue = (candidate, fallbackValue) => {
+  if (candidate === null || candidate === undefined) {
+    return fallbackValue;
+  }
+  if (typeof candidate === "string" && candidate.trim().length === 0) {
+    return fallbackValue;
+  }
+  return String(candidate);
+};
+
+function Preferences({ onOpenAccountManager, initialTabId }) {
   const { t } = useLanguage();
   const { user } = useUser();
   const api = useApi();
@@ -87,10 +111,10 @@ function Preferences({ onOpenAccountManager }) {
   const headingId = "settings-heading";
   const hasDescription = Boolean(t.prefDescription && t.prefDescription.trim());
   const descriptionId = hasDescription ? "settings-description" : undefined;
-  const sectionHeadingId = "account-preferences-section-heading";
   const fallbackValue = t.settingsEmptyValue ?? "—";
+  const tablistLabel = t.prefTablistLabel ?? "Preference sections";
 
-  const planLabel = (() => {
+  const planLabel = useMemo(() => {
     if (!user) {
       return "";
     }
@@ -102,49 +126,162 @@ function Preferences({ onOpenAccountManager }) {
     }
     const normalized = candidate.trim();
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-  })();
+  }, [user]);
 
-  const mapValue = (candidate) => {
-    if (candidate === null || candidate === undefined) {
-      return fallbackValue;
+  const canManageProfile = useMemo(
+    () => Boolean(user && typeof onOpenAccountManager === "function"),
+    [onOpenAccountManager, user],
+  );
+
+  const manageLabel = t.settingsManageProfile ?? "Manage profile";
+
+  const tabBlueprints = useMemo(() => {
+    const accountLabel = t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
+    const accountDescription = t.settingsAccountDescription ?? "";
+    const accountFields = [
+      {
+        id: "username",
+        label: t.settingsAccountUsername ?? "Username",
+        value: mapToDisplayValue(user?.username, fallbackValue),
+      },
+      {
+        id: "email",
+        label: t.settingsAccountEmail ?? "Email",
+        value: mapToDisplayValue(user?.email, fallbackValue),
+      },
+      {
+        id: "phone",
+        label: t.settingsAccountPhone ?? "Phone",
+        value: mapToDisplayValue(user?.phone, fallbackValue),
+      },
+      {
+        id: "age",
+        label: t.settingsAccountAge ?? "Age",
+        value: mapToDisplayValue(profileMeta.age, fallbackValue),
+      },
+      {
+        id: "gender",
+        label: t.settingsAccountGender ?? "Gender",
+        value: mapToDisplayValue(profileMeta.gender, fallbackValue),
+      },
+    ];
+
+    return [
+      {
+        id: "account",
+        label: accountLabel,
+        summary:
+          accountDescription ||
+          "Details that travel with your workspace.",
+        disabled: false,
+        Component: AccountPreferencesTab,
+        componentProps: {
+          title: accountLabel,
+          description: accountDescription,
+          fields: accountFields,
+          manageLabel,
+          canManageProfile,
+          onOpenAccountManager,
+        },
+      },
+      {
+        id: "privacy",
+        label: t.prefPrivacyTitle ?? "Privacy",
+        summary:
+          t.prefPrivacyDescription ??
+          "Control how your presence and data are shared across Glancy.",
+        disabled: false,
+        Component: PlaceholderTab,
+        componentProps: {
+          title: t.prefPrivacyTitle ?? "Privacy",
+          message:
+            t.prefPrivacyPlaceholder ??
+            "Privacy controls are being handcrafted and will arrive soon.",
+        },
+      },
+      {
+        id: "notifications",
+        label: t.prefNotificationsTitle ?? "Notifications",
+        summary:
+          t.prefNotificationsDescription ??
+          "Tune alerts to match your creative rhythm.",
+        disabled: true,
+        Component: PlaceholderTab,
+        componentProps: {
+          title: t.prefNotificationsTitle ?? "Notifications",
+          message:
+            t.prefNotificationsDisabledMessage ??
+            "Notification preferences are managed in the mobile app for now.",
+        },
+      },
+    ];
+  }, [
+    fallbackValue,
+    manageLabel,
+    canManageProfile,
+    onOpenAccountManager,
+    profileMeta.age,
+    profileMeta.gender,
+    t.prefAccountTitle,
+    t.prefPrivacyDescription,
+    t.prefPrivacyPlaceholder,
+    t.prefPrivacyTitle,
+    t.prefNotificationsDescription,
+    t.prefNotificationsDisabledMessage,
+    t.prefNotificationsTitle,
+    t.settingsAccountAge,
+    t.settingsAccountDescription,
+    t.settingsAccountEmail,
+    t.settingsAccountGender,
+    t.settingsAccountPhone,
+    t.settingsAccountUsername,
+    t.settingsTabAccount,
+    user?.email,
+    user?.phone,
+    user?.username,
+  ]);
+
+  const [activeTabId, setActiveTabId] = useState(() =>
+    sanitizeActiveTabId(initialTabId, tabBlueprints),
+  );
+
+  useEffect(() => {
+    setActiveTabId((current) => {
+      const sanitized = sanitizeActiveTabId(current, tabBlueprints);
+      return sanitized === current ? current : sanitized;
+    });
+  }, [tabBlueprints]);
+
+  useEffect(() => {
+    setActiveTabId((current) => {
+      const sanitized = sanitizeActiveTabId(initialTabId, tabBlueprints);
+      return sanitized === current ? current : sanitized;
+    });
+  }, [initialTabId, tabBlueprints]);
+
+  const handleTabSelect = (tab) => {
+    if (!tab || tab.disabled) {
+      return;
     }
-    if (typeof candidate === "string" && candidate.trim().length === 0) {
-      return fallbackValue;
-    }
-    return String(candidate);
+    setActiveTabId((current) => (current === tab.id ? current : tab.id));
   };
 
-  const accountRows = [
-    {
-      id: "username",
-      label: t.settingsAccountUsername ?? "Username",
-      value: mapValue(user?.username),
-    },
-    {
-      id: "email",
-      label: t.settingsAccountEmail ?? "Email",
-      value: mapValue(user?.email),
-    },
-    {
-      id: "phone",
-      label: t.settingsAccountPhone ?? "Phone",
-      value: mapValue(user?.phone),
-    },
-    {
-      id: "age",
-      label: t.settingsAccountAge ?? "Age",
-      value: mapValue(profileMeta.age),
-    },
-    {
-      id: "gender",
-      label: t.settingsAccountGender ?? "Gender",
-      value: mapValue(profileMeta.gender),
-    },
-  ];
+  const activeTab = useMemo(
+    () => tabBlueprints.find((tab) => tab.id === activeTabId) ?? tabBlueprints[0],
+    [activeTabId, tabBlueprints],
+  );
 
   const handleSubmit = (event) => {
     event.preventDefault();
   };
+
+  const panelId = activeTab ? `${activeTab.id}-panel` : "";
+  const tabId = activeTab ? `${activeTab.id}-tab` : "";
+  const panelHeadingId = activeTab ? `${activeTab.id}-section-heading` : "";
+  const panelDescriptionId = activeTab
+    ? `${activeTab.id}-section-description`
+    : "";
+  const PanelComponent = activeTab?.Component ?? null;
 
   return (
     <div className={styles.content}>
@@ -170,37 +307,54 @@ function Preferences({ onOpenAccountManager }) {
             </p>
           ) : null}
         </header>
-        <section aria-labelledby={sectionHeadingId} className={styles.section}>
-          <div className={styles["section-header"]}>
-            <h3 id={sectionHeadingId} className={styles["section-title"]}>
-              {t.prefAccountTitle ?? t.settingsTabAccount ?? "Account"}
-            </h3>
-            {t.settingsAccountDescription ? (
-              <p className={styles["section-description"]}>
-                {t.settingsAccountDescription}
-              </p>
+        <div className={styles.body}>
+          <nav
+            aria-label={tablistLabel}
+            aria-orientation="vertical"
+            className={styles.tabs}
+            role="tablist"
+          >
+            {tabBlueprints.map((tab) => {
+              const currentTabId = `${tab.id}-tab`;
+              const currentPanelId = `${tab.id}-panel`;
+              const isActive = tab.id === activeTabId;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={currentTabId}
+                  aria-controls={currentPanelId}
+                  aria-selected={isActive}
+                  tabIndex={isActive ? 0 : -1}
+                  disabled={tab.disabled}
+                  className={styles.tab}
+                  data-state={isActive ? "active" : "inactive"}
+                  onClick={() => handleTabSelect(tab)}
+                >
+                  <span className={styles["tab-label"]}>{tab.label}</span>
+                  {tab.summary ? (
+                    <span className={styles["tab-summary"]}>{tab.summary}</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </nav>
+          <div
+            role="tabpanel"
+            id={panelId}
+            aria-labelledby={tabId}
+            className={styles.panel}
+          >
+            {PanelComponent ? (
+              <PanelComponent
+                headingId={panelHeadingId}
+                descriptionId={panelDescriptionId}
+                {...activeTab.componentProps}
+              />
             ) : null}
           </div>
-          <dl className={styles.details}>
-            {accountRows.map((field) => (
-              <div key={field.id} className={styles["detail-row"]}>
-                <dt className={styles["detail-label"]}>{field.label}</dt>
-                <dd className={styles["detail-value"]}>{field.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-        {user && typeof onOpenAccountManager === "function" ? (
-          <footer className={styles.footer}>
-            <button
-              type="button"
-              className={styles["manage-button"]}
-              onClick={onOpenAccountManager}
-            >
-              {t.settingsManageProfile ?? "Manage profile"}
-            </button>
-          </footer>
-        ) : null}
+        </div>
       </form>
     </div>
   );
@@ -208,10 +362,12 @@ function Preferences({ onOpenAccountManager }) {
 
 Preferences.propTypes = {
   onOpenAccountManager: PropTypes.func,
+  initialTabId: PropTypes.string,
 };
 
 Preferences.defaultProps = {
   onOpenAccountManager: undefined,
+  initialTabId: undefined,
 };
 
 export default Preferences;

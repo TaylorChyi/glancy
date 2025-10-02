@@ -1,11 +1,11 @@
 /**
  * 背景：
- *  - 偏好设置回归账户信息展示，需要重塑单列面板的视觉节奏。
+ *  - 偏好设置升级为双栏多标签布局，原单列面板无法承载导航节奏。
  * 目的：
- *  - 提供奢侈品级极简的账户摘要样式，兼容暗/浅/系统三种主题令牌。
+ *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅/系统三种主题令牌。
  * 关键决策与取舍：
- *  - 沿用原有设置面板配色变量，删除多标签与语音预览遗留样式。
- *  - 通过柔和的层次与充足留白凸显关键信息，为未来编辑态预留空间。
+ *  - 沿用原有设置面板配色变量，新增 tabs 状态样式覆盖默认/悬停/激活/禁用。
+ *  - 通过柔和的层次与充足留白凸显关键信息，为未来更多偏好模块预留空间。
  * 影响范围：
  *  - 仅作用于 Preferences 页面。
  * 演进与TODO：
@@ -38,7 +38,7 @@
   color: var(--preferences-panel-text);
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 40px;
 }
 
 :global(:root[data-theme="light"]) .form {
@@ -77,6 +77,91 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.36fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: flex-start;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid var(--preferences-panel-border);
+  background: color-mix(in srgb, var(--preferences-panel-surface) 88%, transparent);
+}
+
+.tab {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--preferences-panel-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-align: left;
+}
+
+.tab[data-state="active"] {
+  border-color: var(--preferences-panel-border);
+  background: var(--preferences-panel-surface);
+  color: var(--preferences-panel-text);
+}
+
+.tab[data-state="active"] .tab-summary {
+  color: var(--preferences-panel-muted);
+}
+
+.tab:not([disabled]):hover {
+  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
+  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
+  color: var(--preferences-panel-text);
+}
+
+.tab:focus-visible {
+  outline: none;
+  border-color: var(--preferences-panel-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  color: color-mix(in srgb, var(--preferences-panel-muted) 65%, transparent);
+  opacity: 0.6;
+}
+
+.tab:disabled .tab-summary {
+  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
+}
+
+.tab-label {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tab-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
+.panel {
+  min-height: 100%;
 }
 
 .identity {
@@ -147,6 +232,13 @@
   margin: 0;
   font-size: 14px;
   line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
   color: var(--preferences-panel-muted);
 }
 
@@ -225,6 +317,22 @@
   .form {
     padding: 32px 24px;
     gap: 32px;
+  }
+
+  .body {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .tab {
+    min-width: 220px;
   }
 
   .section {
