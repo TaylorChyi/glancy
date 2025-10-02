@@ -1,29 +1,37 @@
+/**
+ * 背景：
+ *  - 旧版 SettingsModal 直接渲染 Preferences 页面组件，耦合度高且无法共享组合式设置结构。
+ * 目的：
+ *  - 使用组合组件（Header/Body/Nav/Panel）与 usePreferenceSections hook 构建模态内容，解耦布局与数据逻辑。
+ * 关键决策与取舍：
+ *  - 模态内复用页面样式类，但关闭按钮样式仍由模态本地维护，以确保视觉一致；保留 renderCloseAction 模式以方便 SettingsNav 注入 className。
+ * 影响范围：
+ *  - SettingsModal、本地样式模块以及调用偏好设置模态的入口。
+ * 演进与TODO：
+ *  - TODO: 后续可在此接入动画或过渡状态，并考虑拆分基础模态与业务逻辑。
+ */
 import { useMemo } from "react";
 import PropTypes from "prop-types";
-import Preferences from "@/pages/preferences";
 import BaseModal from "./BaseModal.jsx";
-import styles from "./SettingsModal.module.css";
-import { SettingsSurface } from "@/components";
-import { useLanguage } from "@/context";
+import SettingsBody from "./SettingsBody.jsx";
+import SettingsHeader from "./SettingsHeader.jsx";
+import SettingsNav from "./SettingsNav.jsx";
+import SettingsPanel from "./SettingsPanel.jsx";
+import modalStyles from "./SettingsModal.module.css";
+import preferencesStyles from "@/pages/preferences/Preferences.module.css";
+import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
 
-function SettingsModal({ open, onClose, onOpenAccountManager }) {
-  const { t } = useLanguage();
-  const closeLabel = t.close ?? "Close";
-  const surfaceTitle = t.prefTitle ?? "Preferences";
-  const surfaceDescription = t.prefDescription ?? "";
+function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) {
+  const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
+    usePreferenceSections({
+      initialSectionId: initialSection,
+      onOpenAccountManager,
+    });
 
   const renderCloseAction = useMemo(
     () =>
-      /**
-       * 背景：
-       *  - 偏好设置升级为“标签 + 关闭”组合布局，需要在标签栈顶部提供关闭操作。
-       * 设计取舍：
-       *  - 采用渲染函数（Render Props）下发关闭按钮，实现 SettingsModal 持续掌控交互逻辑，
-       *    同时允许 Preferences 决定布局与样式拼装；相比直接传递节点，可在后续注入布局所需
-       *    的 className/aria 属性，避免双向耦合。
-       */
-      ({ className = "", ...slotProps } = {}) => {
-        const composedClassName = [styles["close-button"], className]
+      ({ className = "" } = {}) => {
+        const composedClassName = [modalStyles["close-button"], className]
           .filter(Boolean)
           .join(" ");
         return (
@@ -31,40 +39,82 @@ function SettingsModal({ open, onClose, onOpenAccountManager }) {
             type="button"
             onClick={onClose}
             className={composedClassName}
-            {...slotProps}
           >
-            {closeLabel}
+            {copy.closeLabel}
           </button>
         );
       },
-    [closeLabel, onClose],
+    [copy.closeLabel, onClose],
   );
 
-  /**
-   * 背景：
-   *  - Modal 仍复用 SettingsSurface 的标题与描述，但关闭按钮交由标签面板统一排布。
-   * 关键取舍：
-   *  - 通过 renderCloseAction 将交互逻辑托管于 SettingsModal，避免 Preferences 直接依赖模态层，
-   *    同时禁用 BaseModal 默认关闭按钮，确保视觉层级唯一。
-   */
   return (
     <BaseModal
       open={open}
       onClose={onClose}
-      className={`${styles.dialog} modal-content`}
-      closeLabel={closeLabel}
+      className={`${modalStyles.dialog} modal-content`}
+      closeLabel={copy.closeLabel}
       hideDefaultCloseButton
     >
-      <SettingsSurface
-        variant="modal"
-        title={surfaceTitle}
-        description={surfaceDescription}
-      >
-        <Preferences
-          onOpenAccountManager={onOpenAccountManager}
-          renderCloseAction={renderCloseAction}
-        />
-      </SettingsSurface>
+      <div className={preferencesStyles.content}>
+        <form
+          aria-labelledby={header.headingId}
+          aria-describedby={header.descriptionId}
+          className={preferencesStyles.form}
+          onSubmit={handleSubmit}
+        >
+          <SettingsHeader
+            headingId={header.headingId}
+            descriptionId={header.descriptionId}
+            title={copy.title}
+            description={copy.description}
+            planLabel={header.planLabel}
+            avatarProps={{
+              width: 56,
+              height: 56,
+              className: preferencesStyles.avatar,
+            }}
+            classes={{
+              container: preferencesStyles.header,
+              identity: preferencesStyles.identity,
+              identityCopy: preferencesStyles["identity-copy"],
+              plan: preferencesStyles.plan,
+              title: preferencesStyles.title,
+              description: preferencesStyles.description,
+            }}
+          />
+          <SettingsBody className={preferencesStyles.body}>
+            <SettingsNav
+              sections={sections}
+              activeSectionId={activeSectionId}
+              onSelect={handleSectionSelect}
+              tablistLabel={copy.tablistLabel}
+              renderCloseAction={renderCloseAction}
+              classes={{
+                container: preferencesStyles["tabs-region"],
+                action: preferencesStyles["close-action"],
+                nav: preferencesStyles.tabs,
+                button: preferencesStyles.tab,
+                label: preferencesStyles["tab-label"],
+                summary: preferencesStyles["tab-summary"],
+                actionButton: preferencesStyles["close-button"],
+              }}
+            />
+            <SettingsPanel
+              panelId={panel.panelId}
+              tabId={panel.tabId}
+              className={preferencesStyles.panel}
+            >
+              {activeSection ? (
+                <activeSection.Component
+                  headingId={panel.headingId}
+                  descriptionId={panel.descriptionId}
+                  {...activeSection.componentProps}
+                />
+              ) : null}
+            </SettingsPanel>
+          </SettingsBody>
+        </form>
+      </div>
     </BaseModal>
   );
 }
@@ -72,11 +122,14 @@ function SettingsModal({ open, onClose, onOpenAccountManager }) {
 SettingsModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  initialSection: PropTypes.string,
   onOpenAccountManager: PropTypes.func,
 };
 
 SettingsModal.defaultProps = {
+  initialSection: undefined,
   onOpenAccountManager: undefined,
 };
 
 export default SettingsModal;
+

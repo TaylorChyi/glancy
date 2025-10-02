@@ -232,16 +232,16 @@ test("GivenSecondaryTab_WhenSelected_ThenPanelSwitchesToTarget", async () => {
 
 /**
  * 测试目标：校验传入无效初始标签时回退到默认标签。
- * 前置条件：提供 initialTabId 为未知值。
+ * 前置条件：提供 initialSection 为未知值。
  * 步骤：
- *  1) 渲染组件，传入 initialTabId="unknown"。
+ *  1) 渲染组件，传入 initialSection="unknown"。
  * 断言：
  *  - Account 标签仍被选中。
  * 边界/异常：
  *  - 若选择发生改变则说明防御逻辑失效。
  */
-test("GivenInvalidInitialTab_WhenRendered_ThenFallbackToDefaultTab", async () => {
-  render(<Preferences initialTabId="unknown" />);
+test("GivenInvalidInitialSection_WhenRendered_ThenFallbackToDefaultTab", async () => {
+  render(<Preferences initialSection="unknown" />);
 
   await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
 
