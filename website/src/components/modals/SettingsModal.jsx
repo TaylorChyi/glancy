@@ -69,68 +69,66 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       closeLabel={copy.closeLabel}
       hideDefaultCloseButton
     >
-      <div className={preferencesStyles.content}>
-        <form
-          aria-labelledby={header.headingId}
-          aria-describedby={header.descriptionId}
-          className={preferencesStyles.form}
-          onSubmit={handleSubmit}
-        >
-          <SettingsHeader
-            headingId={header.headingId}
-            descriptionId={header.descriptionId}
-            title={copy.title}
-            description={copy.description}
-            planLabel={header.planLabel}
-            avatarProps={{
-              width: 56,
-              height: 56,
-              className: preferencesStyles.avatar,
-            }}
+      <form
+        aria-labelledby={header.headingId}
+        aria-describedby={header.descriptionId}
+        className={`${preferencesStyles.form} ${modalStyles["form-in-dialog"]}`}
+        onSubmit={handleSubmit}
+      >
+        <SettingsHeader
+          headingId={header.headingId}
+          descriptionId={header.descriptionId}
+          title={copy.title}
+          description={copy.description}
+          planLabel={header.planLabel}
+          avatarProps={{
+            width: 56,
+            height: 56,
+            className: preferencesStyles.avatar,
+          }}
+          classes={{
+            container: preferencesStyles.header,
+            identity: preferencesStyles.identity,
+            identityCopy: preferencesStyles["identity-copy"],
+            plan: preferencesStyles.plan,
+            title: preferencesStyles.title,
+            description: preferencesStyles.description,
+          }}
+        />
+        <SettingsBody className={preferencesStyles.body}>
+          <SettingsNav
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelect={handleSectionSelectWithFocus}
+            tablistLabel={copy.tablistLabel}
+            renderCloseAction={renderCloseAction}
             classes={{
-              container: preferencesStyles.header,
-              identity: preferencesStyles.identity,
-              identityCopy: preferencesStyles["identity-copy"],
-              plan: preferencesStyles.plan,
-              title: preferencesStyles.title,
-              description: preferencesStyles.description,
+              container: preferencesStyles["tabs-region"],
+              action: preferencesStyles["close-action"],
+              nav: preferencesStyles.tabs,
+              button: preferencesStyles.tab,
+              label: preferencesStyles["tab-label"],
+              summary: preferencesStyles["tab-summary"],
+              actionButton: preferencesStyles["close-button"],
             }}
           />
-          <SettingsBody className={preferencesStyles.body}>
-            <SettingsNav
-              sections={sections}
-              activeSectionId={activeSectionId}
-              onSelect={handleSectionSelectWithFocus}
-              tablistLabel={copy.tablistLabel}
-              renderCloseAction={renderCloseAction}
-              classes={{
-                container: preferencesStyles["tabs-region"],
-                action: preferencesStyles["close-action"],
-                nav: preferencesStyles.tabs,
-                button: preferencesStyles.tab,
-                label: preferencesStyles["tab-label"],
-                summary: preferencesStyles["tab-summary"],
-                actionButton: preferencesStyles["close-button"],
-              }}
-            />
-            <SettingsPanel
-              panelId={panel.panelId}
-              tabId={panel.tabId}
-              headingId={panel.headingId}
-              className={preferencesStyles.panel}
-              onHeadingElementChange={registerHeading}
-            >
-              {activeSection ? (
-                <activeSection.Component
-                  headingId={panel.headingId}
-                  descriptionId={panel.descriptionId}
-                  {...activeSection.componentProps}
-                />
-              ) : null}
-            </SettingsPanel>
-          </SettingsBody>
-        </form>
-      </div>
+          <SettingsPanel
+            panelId={panel.panelId}
+            tabId={panel.tabId}
+            headingId={panel.headingId}
+            className={preferencesStyles.panel}
+            onHeadingElementChange={registerHeading}
+          >
+            {activeSection ? (
+              <activeSection.Component
+                headingId={panel.headingId}
+                descriptionId={panel.descriptionId}
+                {...activeSection.componentProps}
+              />
+            ) : null}
+          </SettingsPanel>
+        </SettingsBody>
+      </form>
     </BaseModal>
   );
 }
