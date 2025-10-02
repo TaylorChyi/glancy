@@ -9,7 +9,7 @@
 
 .surface {
   position: absolute;
-  bottom: calc(48px + 8px + var(--sidebar-footer-padding-top, 0px));
+  bottom: calc(48px + var(--sidebar-footer-padding-top, 0px));
   left: var(--user-menu-safe);
   width: calc(var(--sidebar-w) - 2 * var(--user-menu-safe));
   border-radius: var(--menu-radius);
