@@ -90,6 +90,11 @@ test(
       "keyboard",
       "account",
     ]);
+    expect(
+      result.current.sections.every(
+        (section) => !Object.prototype.hasOwnProperty.call(section, "summary"),
+      ),
+    ).toBe(true);
     expect(result.current.activeSectionId).toBe("general");
     expect(result.current.panel.headingId).toBe("general-section-heading");
     expect(result.current.panel.focusHeadingId).toBe("general-section-heading");

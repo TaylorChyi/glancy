@@ -26,7 +26,6 @@ function SettingsNav({
   const navClassName = classes?.nav ?? "";
   const buttonClassName = classes?.button ?? "";
   const labelClassName = classes?.label ?? "";
-  const summaryClassName = classes?.summary ?? "";
   const actionButtonClassName = classes?.actionButton ?? "";
 
   const closeActionNode = useMemo(() => {
@@ -71,10 +70,11 @@ function SettingsNav({
                 }
               }}
             >
+              {/*
+               * 偏好设置导航仅展示主标签文本，避免双列信息导致键盘导航朗读冗余。
+               * 如需补充副标题，应改由 tab 内容区域呈现而非按钮内部。
+               */}
               <span className={labelClassName}>{section.label}</span>
-              {section.summary ? (
-                <span className={summaryClassName}>{section.summary}</span>
-              ) : null}
             </button>
           );
         })}
@@ -88,7 +88,6 @@ SettingsNav.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
-      summary: PropTypes.string,
       disabled: PropTypes.bool,
     }).isRequired,
   ).isRequired,
@@ -102,7 +101,6 @@ SettingsNav.propTypes = {
     nav: PropTypes.string,
     button: PropTypes.string,
     label: PropTypes.string,
-    summary: PropTypes.string,
     actionButton: PropTypes.string,
   }),
 };

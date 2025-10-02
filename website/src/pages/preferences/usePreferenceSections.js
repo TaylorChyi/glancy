@@ -236,11 +236,12 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       },
     ];
 
+    //
+    // 导航标签仅展示主标题，摘要内容由具体面板负责渲染，避免屏幕阅读器重复朗读。
     return [
       {
         id: "general",
         label: generalLabel,
-        summary: generalSummary,
         disabled: false,
         Component: GeneralSection,
         componentProps: {
@@ -251,7 +252,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       {
         id: "personalization",
         label: personalizationLabel,
-        summary: personalizationSummary,
         disabled: false,
         Component: PersonalizationSection,
         componentProps: {
@@ -262,7 +262,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       {
         id: "data",
         label: dataLabel,
-        summary: dataSummary,
         disabled: false,
         Component: DataSection,
         componentProps: {
@@ -273,7 +272,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       {
         id: "keyboard",
         label: keyboardLabel,
-        summary: keyboardSummary,
         disabled: false,
         Component: KeyboardSection,
         componentProps: {
@@ -284,7 +282,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       {
         id: "account",
         label: accountLabel,
-        summary: accountDescription,
         disabled: false,
         Component: AccountSection,
         componentProps: {

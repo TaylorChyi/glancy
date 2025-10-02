@@ -31,8 +31,8 @@ function TestSection({ headingId, title, actionLabel }) {
 function TestSettingsHarness({ withCloseAction = false }) {
   const sections = useMemo(
     () => [
-      { id: "account", label: "Account", summary: "Account summary" },
-      { id: "privacy", label: "Privacy", summary: "Privacy summary" },
+      { id: "account", label: "Account" },
+      { id: "privacy", label: "Privacy" },
     ],
     [],
   );
@@ -92,6 +92,26 @@ function TestSettingsHarness({ withCloseAction = false }) {
     </div>
   );
 }
+
+/**
+ * 测试目标：标签可访问名称仅包含主标签文本，不暴露冗余摘要。
+ * 前置条件：渲染 TestSettingsHarness 并聚焦 account 标签。
+ * 步骤：
+ *  1) 查询 account 标签元素。
+ *  2) 检查文案与摘要是否存在。
+ * 断言：
+ *  - 标签可访问名称为 Account。
+ *  - DOM 内不存在 Account summary 文本节点。
+ * 边界/异常：
+ *  - 若未来重新引入摘要，应更新设计并同步调整断言。
+ */
+test("Given navigation sections When rendering Then only primary label is exposed", () => {
+  render(<TestSettingsHarness />);
+
+  const accountTab = screen.getByRole("tab", { name: "Account" });
+  expect(accountTab).toHaveAccessibleName("Account");
+  expect(screen.queryByText("Account summary")).not.toBeInTheDocument();
+});
 
 /**
  * 测试目标：切换分区后标题获得焦点并滚动至首部。
