@@ -51,6 +51,18 @@
   box-shadow: none;
 }
 
+.form-in-dialog {
+  /* 背景：模态内需要复用 Preferences 表单结构，但需撑满弹窗并自持留白。 */
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+  padding: 44px;
+  border-radius: var(--modal-radius, 20px);
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+}
+
 @media (width <= 1023px) {
   .dialog {
     --modal-max-width: min(92vw, 900px);
