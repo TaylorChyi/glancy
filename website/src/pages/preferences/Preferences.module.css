@@ -106,13 +106,8 @@
   inline-size: var(--btn-action, 44px);
   block-size: var(--btn-action, 44px);
   border-radius: 999px;
-  border: 1px solid
-    color-mix(in srgb, var(--preferences-panel-border) 68%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 94%,
-    transparent
-  );
+  border: none;
+  background: transparent;
   color: var(--preferences-panel-text);
   cursor: pointer;
   transition:
@@ -122,11 +117,6 @@
 }
 
 .close-button:hover {
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 98%,
-    transparent
-  );
   transform: translateY(-1px);
 }
 
@@ -140,11 +130,6 @@
 .close-button:active {
   transform: translateY(0);
   box-shadow: none;
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 88%,
-    transparent
-  );
 }
 
 .tabs {
