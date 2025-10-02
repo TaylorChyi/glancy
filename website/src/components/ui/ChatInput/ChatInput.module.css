@@ -125,10 +125,9 @@
   flex-shrink: 0;
 
   /*
-   * 层级策略：用透明壳体配合内描边呈现区块结构，避免背景色与外层容器叠色；
-   * 若未来需要更强的分割感，可单独调高 --seg-outline 的不透明度而无需恢复底色。
+   * 层级策略：通过透明壳体与排版节奏维持区块识别，依赖文字/焦点状态提供层级反馈；
+   * 若未来需要更强的分割感，可在不破坏 hover/焦点节奏的前提下重新评估描边策略。
    */
-  box-shadow: inset 0 0 0 1px var(--seg-outline, rgb(255 255 255 / 12%));
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -136,16 +135,12 @@
 
 .language-shell:hover {
   /*
-   * 交互取舍：通过细致描边保留悬停反馈，避免背景覆盖导致的视觉层级混淆；
-   * 若未来需要增强对比，可调整 --seg-hover-outline 的透明度而非改动底色。
+   * 交互取舍：改以文字色与透明壳体的对比提供悬停反馈，避免描边重现导致的视觉噪声。
    */
-  box-shadow: inset 0 0 0 1px var(--seg-hover-outline, rgb(255 255 255 / 16%));
 }
 
 .language-shell:focus-within {
-  box-shadow:
-    var(--ring-focus),
-    0 0 0 1px rgb(255 255 255 / 6%);
+  box-shadow: var(--ring-focus);
 }
 
 .language-select-wrapper {
