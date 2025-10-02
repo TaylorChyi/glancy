@@ -1,6 +1,6 @@
 /* eslint-env jest */
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 
@@ -8,12 +8,21 @@ const mockLanguage = {
   prefTitle: "Account preferences",
   prefDescription: "Review and curate your Glancy identity.",
   prefAccountTitle: "Account",
+  prefTablistLabel: "Preference sections",
+  prefPrivacyTitle: "Privacy",
+  prefPrivacyDescription: "Control how you share your data.",
+  prefPrivacyPlaceholder: "Privacy settings coming soon.",
+  prefNotificationsTitle: "Notifications",
+  prefNotificationsDescription: "Keep every alert intentional.",
+  prefNotificationsDisabledMessage:
+    "Manage notifications in the Glancy mobile app for now.",
   settingsAccountDescription: "Details that travel with your workspace.",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
   settingsAccountAge: "Age",
   settingsAccountGender: "Gender",
+  settingsTabAccount: "Account",
   settingsEmptyValue: "Not set",
   settingsManageProfile: "Manage profile",
 };
@@ -76,14 +85,15 @@ test("GivenUserContext_WhenRendered_ThenAccountFieldsReflectUserData", async () 
   ).toBeInTheDocument();
   expect(screen.getByText(mockLanguage.prefDescription)).toBeInTheDocument();
 
+  const activePanel = screen.getByRole("tabpanel");
   expect(
-    screen.getByText(mockLanguage.settingsAccountUsername),
+    within(activePanel).getByText(mockLanguage.settingsAccountUsername),
   ).toBeInTheDocument();
-  expect(screen.getByText(mockUser.username)).toBeInTheDocument();
-  expect(screen.getByText(mockUser.email)).toBeInTheDocument();
-  expect(screen.getByText(mockUser.phone)).toBeInTheDocument();
-  expect(await screen.findByText("28")).toBeInTheDocument();
-  expect(await screen.findByText("Female")).toBeInTheDocument();
+  expect(within(activePanel).getByText(mockUser.username)).toBeInTheDocument();
+  expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
+  expect(within(activePanel).getByText(mockUser.phone)).toBeInTheDocument();
+  expect(await within(activePanel).findByText("28")).toBeInTheDocument();
+  expect(await within(activePanel).findByText("Female")).toBeInTheDocument();
 });
 
 /**
@@ -112,7 +122,8 @@ test("GivenMissingAccountData_WhenRendered_ThenFallbackCopyDisplayed", async () 
   await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
 
   const fallback = mockLanguage.settingsEmptyValue;
-  expect(screen.getAllByText(fallback)).toHaveLength(4);
+  const activePanel = screen.getByRole("tabpanel");
+  expect(within(activePanel).getAllByText(fallback)).toHaveLength(4);
 });
 
 /**
@@ -132,7 +143,8 @@ test("GivenManageProfileHandler_WhenClicked_ThenDelegateInvoked", async () => {
 
   await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
 
-  const button = screen.getByRole("button", {
+  const activePanel = screen.getByRole("tabpanel");
+  const button = within(activePanel).getByRole("button", {
     name: mockLanguage.settingsManageProfile,
   });
   await userEvent.setup().click(button);
@@ -158,8 +170,113 @@ test("GivenNoUserContext_WhenRendered_ThenProfileRequestSkipped", () => {
 
   expect(fetchProfile).not.toHaveBeenCalled();
   expect(
-    screen.queryByRole("button", {
+    within(screen.getByRole("tabpanel")).queryByRole("button", {
       name: mockLanguage.settingsManageProfile,
     }),
   ).not.toBeInTheDocument();
+});
+
+/**
+ * 测试目标：验证默认激活标签为配置中的第一个可用标签。
+ * 前置条件：使用默认 props 渲染组件。
+ * 步骤：
+ *  1) 渲染 Preferences 组件。
+ * 断言：
+ *  - “Account” 标签 aria-selected 为 true，禁用标签保持 disabled 状态。
+ * 边界/异常：
+ *  - 若默认激活标签不是 Account，说明回退逻辑失效。
+ */
+test("GivenDefaultConfiguration_WhenRendered_ThenFirstAvailableTabActive", async () => {
+  render(<Preferences />);
+
+  await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
+
+  const accountTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+  });
+  expect(accountTab).toHaveAttribute("aria-selected", "true");
+
+  const notificationsTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefNotificationsTitle),
+  });
+  expect(notificationsTab).toBeDisabled();
+});
+
+/**
+ * 测试目标：验证点击其他标签时面板内容发生切换。
+ * 前置条件：准备用户上下文与隐私标签文案。
+ * 步骤：
+ *  1) 渲染组件等待请求。
+ *  2) 点击 Privacy 标签。
+ * 断言：
+ *  - Privacy 标签被选中，面板展示隐私占位文案。
+ * 边界/异常：
+ *  - 若内容未切换或 aria-selected 未更新则失败。
+ */
+test("GivenSecondaryTab_WhenSelected_ThenPanelSwitchesToTarget", async () => {
+  render(<Preferences />);
+
+  await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
+
+  const privacyTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefPrivacyTitle),
+  });
+  const user = userEvent.setup();
+  await user.click(privacyTab);
+
+  expect(privacyTab).toHaveAttribute("aria-selected", "true");
+  expect(
+    screen.getByText(mockLanguage.prefPrivacyPlaceholder),
+  ).toBeInTheDocument();
+});
+
+/**
+ * 测试目标：校验传入无效初始标签时回退到默认标签。
+ * 前置条件：提供 initialTabId 为未知值。
+ * 步骤：
+ *  1) 渲染组件，传入 initialTabId="unknown"。
+ * 断言：
+ *  - Account 标签仍被选中。
+ * 边界/异常：
+ *  - 若选择发生改变则说明防御逻辑失效。
+ */
+test("GivenInvalidInitialTab_WhenRendered_ThenFallbackToDefaultTab", async () => {
+  render(<Preferences initialTabId="unknown" />);
+
+  await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
+
+  const accountTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+  });
+  expect(accountTab).toHaveAttribute("aria-selected", "true");
+});
+
+/**
+ * 测试目标：尝试激活被禁用标签时应保持当前选中态。
+ * 前置条件：通知标签默认禁用。
+ * 步骤：
+ *  1) 渲染组件。
+ *  2) 触发对禁用标签的点击行为。
+ * 断言：
+ *  - Account 标签仍然保持选中。
+ * 边界/异常：
+ *  - 若禁用标签被选中则说明禁用态失效。
+ */
+test("GivenDisabledTab_WhenClicked_ThenActiveSelectionRemains", async () => {
+  render(<Preferences />);
+
+  await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
+
+  const accountTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+  });
+  const notificationsTab = screen.getByRole("tab", {
+    name: (name) => name.startsWith(mockLanguage.prefNotificationsTitle),
+  });
+
+  const user = userEvent.setup();
+  await user.click(notificationsTab);
+
+  expect(accountTab).toHaveAttribute("aria-selected", "true");
+  expect(notificationsTab).toHaveAttribute("aria-selected", "false");
 });
