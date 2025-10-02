@@ -5,7 +5,7 @@
  *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅/系统三种主题令牌。
  * 关键决策与取舍：
  *  - 沿用原有设置面板配色变量，新增 tabs 状态样式覆盖默认/悬停/激活/禁用。
- *  - 通过柔和的层次与充足留白凸显关键信息，为未来更多偏好模块预留空间。
+ *  - 本轮去除容器底色/描边，改以 spacing/shadow 令牌维持结构节奏并贴合全局主题。
  * 影响范围：
  *  - 仅作用于 Preferences 页面。
  * 演进与TODO：
@@ -19,22 +19,17 @@
 }
 
 .form {
-  --preferences-panel-bg: var(--night-panel);
   --preferences-panel-border: rgb(255 255 255 / 12%);
   --preferences-panel-text: var(--night-text);
   --preferences-panel-muted: var(--night-muted);
   --preferences-panel-ring: var(--night-input-ring);
   --preferences-panel-surface: rgb(255 255 255 / 6%);
-  --preferences-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
   --preferences-panel-accent: linear-gradient(135deg, #5a8bff, #4c6fff);
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
 
   width: min(720px, 100%);
   padding: 44px;
   border-radius: 20px;
-  border: 1px solid var(--preferences-panel-border);
-  background: var(--preferences-panel-bg);
-  box-shadow: var(--preferences-panel-shadow);
   color: var(--preferences-panel-text);
   display: flex;
   flex-direction: column;
@@ -42,21 +37,15 @@
 }
 
 :global(:root[data-theme="light"]) .form {
-  --preferences-panel-bg: var(--sidebar-panel, var(--neutral-0));
   --preferences-panel-border: var(--sidebar-border-color, #d9dde7);
   --preferences-panel-text: var(--sidebar-text-color, #1f232b);
   --preferences-panel-muted: var(--sidebar-muted-color, #6f7585);
   --preferences-panel-ring: var(--sidebar-input-ring, #cfd4e2);
   --preferences-panel-surface: rgb(15 17 21 / 6%);
-  --preferences-panel-shadow: var(
-    --sidebar-shadow-elevated,
-    0 18px 42px rgb(31 35 43 / 16%)
-  );
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
 }
 
 :global(:root[data-theme="system"]) .form {
-  --preferences-panel-bg: var(--sidebar-panel, var(--night-panel));
   --preferences-panel-border: var(--sidebar-border-color, var(--night-border));
   --preferences-panel-text: var(--sidebar-text-color, var(--night-text));
   --preferences-panel-muted: var(--sidebar-muted-color, var(--night-muted));
@@ -65,10 +54,6 @@
     in srgb,
     var(--sidebar-panel, var(--night-panel)) 92%,
     transparent
-  );
-  --preferences-panel-shadow: var(
-    --sidebar-shadow-elevated,
-    0 24px 60px rgb(0 0 0 / 45%)
   );
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 30%);
 }
@@ -117,11 +102,8 @@
   inline-size: var(--btn-action, 44px);
   block-size: var(--btn-action, 44px);
   border-radius: 999px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 68%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 68%, transparent);
   background: color-mix(
     in srgb,
     var(--preferences-panel-surface) 94%,
@@ -168,14 +150,10 @@
   width: 100%;
   flex: 1;
   min-height: 0;
-  padding: calc(var(--preferences-close-offset) + 12px) 12px 12px;
-  border-radius: 18px;
-  border: 1px solid var(--preferences-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 88%,
-    transparent
-  );
+  padding: calc(
+      var(--preferences-close-offset) + var(--space-2) + var(--space-1)
+    )
+    calc(var(--space-2) + var(--space-1)) calc(var(--space-2) + var(--space-1));
 }
 
 .tab {
@@ -299,11 +277,11 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 32px;
+  gap: var(--space-4);
+  padding: var(--space-5);
   border-radius: 18px;
-  border: 1px solid var(--preferences-panel-border);
-  background: var(--preferences-panel-surface);
+  box-shadow: 0 1px 0
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
 }
 
 .section-header {
@@ -367,8 +345,7 @@
 .footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 26px;
-  border-top: 1px solid var(--preferences-panel-border);
+  padding-top: var(--space-4);
 }
 
 .manage-button {
@@ -441,7 +418,7 @@
   }
 
   .section {
-    padding: 24px;
+    padding: var(--space-4);
   }
 
   .detail-row {
