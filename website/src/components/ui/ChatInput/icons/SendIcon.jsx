@@ -1,41 +1,31 @@
 /**
  * 背景：
- *  - ChatInput 的发送动作依赖纸飞机符号，但历史实现内联于 ActionInput 难以复用。
+ *  - ChatInput 的发送动作依赖纸飞机符号，但历史实现将遮罩解析与组件逻辑耦合，导致与 VoiceIcon 等同类组件存在重复代码，维护困难。
  * 目的：
- *  - 将纸飞机资源解析与遮罩样式封装为独立组件，支撑后续多入口重用。
+ *  - 基于统一的 createMaskedIconRenderer 模板方法，将资源解析与遮罩样式构建作为策略注入，确保发送图标与语音图标共享一致骨架。
  * 关键决策与取舍：
- *  - 采用配置清单驱动的资源解析策略，避免硬编码 URL；如清单缺失则降级到内联 SVG。
- *  - 放弃在此处引入 IconContext，保持组件纯净，交由上层控制配色与尺寸。
+ *  - 采用策略函数描述主题资源选择与样式生成，保留模板对降级逻辑的控制，避免自定义实现偏离探测流程。
+ *  - 保留 SVG fallback 以应对遮罩不可用场景，并在注释中保留扩展点说明，确保未来动画或主题扩展有容纳空间。
  * 影响范围：
- *  - ActionButton 与后续可能引用发送图标的组件。
+ *  - ChatInput 的发送按钮图标渲染逻辑及其单测；其他依赖 send-button 令牌的入口也将受益于统一策略。
  * 演进与TODO：
- *  - 如需支持主题化或动画，可在保持纯函数接口的前提下扩展 props。
+ *  - 若后续需要为发送图标增加动态效果，可通过扩展 buildStyle 或 fallback 注入额外类名与属性。
  */
-import { useMemo } from "react";
 import PropTypes from "prop-types";
 
-import { useTheme } from "@/context";
-import ICONS from "@/assets/icons.js";
-import useMaskSupport from "./useMaskSupport.js";
+import createMaskedIconRenderer from "./createMaskedIconRenderer.jsx";
 
 const SEND_ICON_TOKEN = "send-button";
-/**
- * 说明：
- *  - 发送按钮图标切换为 send-button 令牌，以便显式承载按钮专用的 light/dark 变体。
- *  - 通过主题上下文选择对应资源，保留 single 作为降级路径，避免 dark/light 缺失时闪烁。
- */
 
-const resolveSendIconResource = (registry, resolvedTheme) => {
+const resolveSendIconResource = ({ registry, resolvedTheme }) => {
   const entry = registry?.[SEND_ICON_TOKEN];
   if (!entry) {
     return null;
   }
 
   const themeKey = resolvedTheme === "dark" ? "dark" : "light";
-  const themedResource = entry[themeKey];
-
-  if (themedResource) {
-    return themedResource;
+  if (entry[themeKey]) {
+    return entry[themeKey];
   }
 
   if (entry.single) {
@@ -46,17 +36,17 @@ const resolveSendIconResource = (registry, resolvedTheme) => {
   return entry[alternativeKey] ?? null;
 };
 
-const buildSendIconInlineStyle = (resource) => {
+const buildSendIconInlineStyle = ({ resource }) => {
   if (!resource) {
     return null;
   }
 
   const maskFragment = `url(${resource}) center / contain no-repeat`;
-  return {
+  return Object.freeze({
     mask: maskFragment,
     WebkitMask: maskFragment,
     backgroundColor: "currentColor",
-  };
+  });
 };
 
 const defaultFallback = ({ className }) => (
@@ -71,51 +61,23 @@ const defaultFallback = ({ className }) => (
   </svg>
 );
 
-function SendIcon({ className, fallback }) {
-  const { resolvedTheme = "light" } = useTheme() ?? {};
-  const isMaskSupported = useMaskSupport();
-  const effectiveFallback = fallback ?? defaultFallback;
+const SendIcon = createMaskedIconRenderer({
+  token: SEND_ICON_TOKEN,
+  resolveResource: resolveSendIconResource,
+  buildStyle: buildSendIconInlineStyle,
+  defaultFallback,
+});
 
-  // 说明：先基于能力探测拿到资源，再单独构造样式，确保遮罩失败时直接降级到 SVG。
-  const maskResource = useMemo(() => {
-    if (!isMaskSupported) {
-      return null;
-    }
-
-    return resolveSendIconResource(ICONS, resolvedTheme);
-  }, [isMaskSupported, resolvedTheme]);
-
-  const inlineStyle = useMemo(() => {
-    if (!maskResource) {
-      return null;
-    }
-
-    return buildSendIconInlineStyle(maskResource);
-  }, [maskResource]);
-
-  const canRenderMask = Boolean(inlineStyle?.mask || inlineStyle?.WebkitMask);
-
-  if (!canRenderMask) {
-    return effectiveFallback({ className, iconName: SEND_ICON_TOKEN });
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className={className}
-      data-icon-name={SEND_ICON_TOKEN}
-      style={inlineStyle}
-    />
-  );
+// 说明：导出具名组件以补充 PropTypes，保持接口语义清晰，可在无需主题的环境中强制传入 className。
+export default function SendIconWrapper({ className, fallback }) {
+  return <SendIcon className={className} fallback={fallback} />;
 }
 
-SendIcon.propTypes = {
+SendIconWrapper.propTypes = {
   className: PropTypes.string.isRequired,
   fallback: PropTypes.func,
 };
 
-SendIcon.defaultProps = {
-  fallback: defaultFallback,
+SendIconWrapper.defaultProps = {
+  fallback: undefined,
 };
-
-export default SendIcon;

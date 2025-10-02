@@ -1,53 +1,48 @@
 /**
  * 背景：
- *  - 语音触发入口此前以纯色圆点占位，缺乏语义化表达且在无障碍设备上难以理解。
+ *  - 语音触发入口此前在组件内部重复实现遮罩解析与降级逻辑，导致与 SendIcon 存在分支差异，部分浏览器渲染出纯黑块。
  * 目的：
- *  - 将麦克风图形封装为可复用的 UI 原子，统一资源解析、遮罩样式与降级策略。
+ *  - 借助 createMaskedIconRenderer 模板统一遮罩渲染流程，仅以策略函数定义语音资源的解析与样式构造，消除重复实现导致的偏差。
  * 关键决策与取舍：
- *  - 延续 SendIcon 的资源解析与遮罩构造模板，复用既有策略以降低维护成本。
- *  - 放弃继续使用圆点样式，而以麦克风图形呈现，换取更强的语义与后续动画扩展空间。
+ *  - 继续保留麦克风 SVG 作为 fallback，保证在遮罩不受支持时仍具备语义图形；策略函数优先选择主题匹配资源，兜底返回 single/light/dark 变体。
  * 影响范围：
- *  - ChatInput 下所有语音相关按钮与未来潜在的语音入口组件。
+ *  - ChatInput 语音按钮渲染行为与对应单元测试，修复部分浏览器下的黑块问题，并为未来语音动画扩展预留策略接口。
  * 演进与TODO：
- *  - 若需针对录音态展示波形动画，可扩展 props 注入不同的遮罩资源或动画类名。
+ *  - 若需支持录音态的动态素材，可在 buildStyle 中注入额外属性或在 fallback 渲染动画节点。
  */
-import { useMemo } from "react";
 import PropTypes from "prop-types";
 
-import ICONS from "@/assets/icons.js";
-import { useTheme } from "@/context/ThemeContext";
-import useMaskSupport from "./useMaskSupport.js";
+import createMaskedIconRenderer from "./createMaskedIconRenderer.jsx";
 
 const VOICE_ICON_TOKEN = "voice-button";
 
-const resolveVoiceIconResource = (registry, resolvedTheme) => {
+const resolveVoiceIconResource = ({ registry, resolvedTheme }) => {
   const entry = registry?.[VOICE_ICON_TOKEN];
 
   if (!entry) {
     return null;
   }
 
-  const themeAlignedVariant = resolvedTheme ? entry?.[resolvedTheme] : null;
-
-  if (themeAlignedVariant) {
-    return themeAlignedVariant;
+  if (resolvedTheme && entry?.[resolvedTheme]) {
+    return entry[resolvedTheme];
   }
 
   return entry.single ?? entry.light ?? entry.dark ?? null;
 };
 
-const buildVoiceIconMaskStyle = (resource) => {
+const buildVoiceIconMaskStyle = ({ resource }) => {
   if (!resource) {
     return null;
   }
+
   const maskFragment = `url(${resource}) center / contain no-repeat`;
   return Object.freeze({
     mask: maskFragment,
     WebkitMask: maskFragment,
+    backgroundColor: "currentColor",
   });
 };
 
-// 注：选用麦克风轮廓而非圆点，可直接传达语音含义并避免在暗色主题下失真。
 const defaultFallback = ({ className, iconName = VOICE_ICON_TOKEN }) => (
   <svg
     aria-hidden="true"
@@ -61,69 +56,22 @@ const defaultFallback = ({ className, iconName = VOICE_ICON_TOKEN }) => (
   </svg>
 );
 
-function VoiceIcon({ className, fallback }) {
-  const { resolvedTheme } = useTheme();
-  const iconRegistry = ICONS;
-  const isMaskSupported = useMaskSupport();
-  const effectiveFallback = fallback ?? defaultFallback;
-  // 说明：保持“解析 → 构建遮罩 → 注入背景”三段式模板，结合 useMemo 缓存结果以支撑主题切换与未来动画扩展。
+const VoiceIcon = createMaskedIconRenderer({
+  token: VOICE_ICON_TOKEN,
+  resolveResource: resolveVoiceIconResource,
+  buildStyle: buildVoiceIconMaskStyle,
+  defaultFallback,
+});
 
-  // 说明：探测失败或解析不到资源时直接走降级，避免出现仅有背景色的 span。
-  const maskResource = useMemo(() => {
-    if (!isMaskSupported) {
-      return null;
-    }
-
-    return resolveVoiceIconResource(iconRegistry, resolvedTheme);
-  }, [iconRegistry, isMaskSupported, resolvedTheme]);
-
-  const maskStyle = useMemo(() => {
-    if (!maskResource) {
-      return null;
-    }
-
-    return buildVoiceIconMaskStyle(maskResource);
-  }, [maskResource]);
-
-  const inlineStyle = useMemo(() => {
-    if (!maskStyle) {
-      return null;
-    }
-
-    return Object.freeze({
-      ...maskStyle,
-      backgroundColor: "currentColor",
-    });
-  }, [maskStyle]);
-
-  const canRenderMask = Boolean(
-    inlineStyle?.mask ||
-      inlineStyle?.WebkitMask ||
-      inlineStyle?.maskImage ||
-      inlineStyle?.WebkitMaskImage,
-  );
-
-  if (!canRenderMask) {
-    return effectiveFallback({ className, iconName: VOICE_ICON_TOKEN });
-  }
-
-  return (
-    <span
-      aria-hidden="true"
-      className={className}
-      data-icon-name={VOICE_ICON_TOKEN}
-      style={inlineStyle}
-    />
-  );
+export default function VoiceIconWrapper({ className, fallback }) {
+  return <VoiceIcon className={className} fallback={fallback} />;
 }
 
-VoiceIcon.propTypes = {
+VoiceIconWrapper.propTypes = {
   className: PropTypes.string.isRequired,
   fallback: PropTypes.func,
 };
 
-VoiceIcon.defaultProps = {
-  fallback: defaultFallback,
+VoiceIconWrapper.defaultProps = {
+  fallback: undefined,
 };
-
-export default VoiceIcon;
