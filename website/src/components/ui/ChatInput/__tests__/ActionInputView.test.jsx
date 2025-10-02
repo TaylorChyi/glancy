@@ -76,10 +76,12 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
  * 步骤：
  *  1) 渲染组件并读取 data-language-visible 属性。
  *  2) 断言语言槽位与分隔符均被折叠。
+ *  3) 捕获动作按钮，确认语音图标结构与语义标识。
  * 断言：
  *  - data-language-visible === "false"。
  *  - language-slot 不包含子节点并具有 data-visible="false"。
  *  - divider 在此场景下被移除，避免冗余列。
+ *  - 语音态按钮包含标记为 voice-button 的图标。
  * 边界/异常：
  *  - 折叠逻辑纯展示层处理，不依赖额外行为。
  */
@@ -130,4 +132,11 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
 
   const divider = container.querySelector(`.${"input-divider"}`);
   expect(divider?.getAttribute("data-visible")).toBe("false");
+
+  const voiceIcon = container.querySelector('[data-icon-name="voice-button"]');
+  expect(voiceIcon).not.toBeNull();
+  expect(voiceIcon?.classList.contains("action-button-icon")).toBe(true);
+
+  const actionButton = container.querySelector(`.${"action-slot"} button`);
+  expect(actionButton).toMatchSnapshot("VoiceActionButtonMarkup");
 });

@@ -1,13 +1,6 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_44_22)">
-<circle cx="512" cy="512" r="512" fill="#121212"/>
-<rect x="576" y="192" width="640" height="128" rx="20" transform="rotate(90 576 192)" fill="white"/>
-<rect x="768" y="384" width="256" height="128" rx="20" transform="rotate(90 768 384)" fill="white"/>
-<rect x="384" y="320" width="384" height="128" rx="20" transform="rotate(90 384 320)" fill="white"/>
-</g>
-<defs>
-<clipPath id="clip0_44_22">
-<rect width="1024" height="1024" fill="white"/>
-</clipPath>
-</defs>
+  <path
+    fill="currentColor"
+    d="M512 128C417.707 128 341.333 204.373 341.333 298.667v256c0 94.293 76.373 170.667 170.667 170.667s170.667-76.373 170.667-170.667V298.667c0-94.293-76.373-170.667-170.667-170.667zm213.333 298.667v85.333c0 117.76-95.573 213.333-213.333 213.333s-213.333-95.573-213.333-213.333v-85.333H213.333v85.333c0 150.613 111.36 274.347 256 295.253V896h85.333v-88.747c144.64-20.907 256-144.64 256-295.253v-85.333h-85.333z"
+  />
 </svg>

@@ -318,14 +318,6 @@
   background: color-mix(in srgb, var(--sb-cta) 85%, black 15%);
 }
 
-.action-button-dot {
-  display: block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--sb-cta-icon);
-}
-
 .action-button-icon {
   width: 18px;
   height: 18px;
