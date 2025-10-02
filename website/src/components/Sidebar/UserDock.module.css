@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 0;
+  background: var(--sidebar-bg, var(--bg));
   isolation: isolate;
 }
 
@@ -12,4 +13,5 @@
   flex-direction: column;
   gap: 8px;
   padding: 0 var(--user-menu-safe);
+  background: inherit;
 }
