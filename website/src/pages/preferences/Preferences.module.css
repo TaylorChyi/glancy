@@ -417,7 +417,7 @@
     flex-direction: row;
     gap: 10px;
     min-height: auto;
-    padding: calc(var(--preferences-close-offset) + 10px) 10px 10px;
+    padding: 10px;
   }
 
   .tab {
