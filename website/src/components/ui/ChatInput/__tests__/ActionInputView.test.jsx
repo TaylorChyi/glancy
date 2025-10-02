@@ -24,8 +24,10 @@ afterEach(() => {
  * 步骤：
  *  1) 构造 props 并渲染组件。
  *  2) 捕获渲染输出进行快照。
+ *  3) 抽取语言代码标识，确认挂载宽度约束类名。
  * 断言：
  *  - 快照与基准一致，证明视图未引入额外逻辑。
+ *  - language-trigger-code 类名存在，以保障 4ch 的宽度策略。
  * 边界/异常：
  *  - 语言区隐藏与否由 snapshot 体现，确保布尔条件生效。
  */
@@ -83,6 +85,14 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
 
   const sendIcon = container.querySelector('[data-icon-name="send-button"]');
   expect(sendIcon).not.toBeNull();
+
+  const languageCodeBadges = Array.from(
+    container.querySelectorAll(`.${"language-trigger-code"}`),
+  );
+  expect(languageCodeBadges.length).toBeGreaterThan(0);
+  languageCodeBadges.forEach((badge) => {
+    expect(badge.classList.contains("language-trigger-code")).toBe(true);
+  });
 
   expect(container).toMatchSnapshot();
 });
