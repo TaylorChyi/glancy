@@ -169,7 +169,7 @@ export default function DictionaryExperience() {
             />
           ) : (
             <EmptyState
-              iconName="target"
+              tone="plain"
               title={searchEmptyState.title}
               description={searchEmptyState.description}
             />
