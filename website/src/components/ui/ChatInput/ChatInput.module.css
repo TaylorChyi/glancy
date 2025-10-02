@@ -1,5 +1,9 @@
 .container {
-  width: 100%;
+  /*
+   * 背景：需要与释义面板共享宽度比例，确保 docker 栏内组件节奏统一。
+   * 取舍：优先读取 Layout 提供的 --docker-row-width，脱离 docker 时回退为 100%。
+   */
+  width: var(--docker-row-width, 100%);
   display: flex;
   justify-content: center;
   max-width: var(--sb-max-width);
