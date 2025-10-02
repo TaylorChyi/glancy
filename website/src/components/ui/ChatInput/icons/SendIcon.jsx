@@ -76,16 +76,26 @@ function SendIcon({ className, fallback }) {
   const isMaskSupported = useMaskSupport();
   const effectiveFallback = fallback ?? defaultFallback;
 
-  const inlineStyle = useMemo(() => {
+  // 说明：先基于能力探测拿到资源，再单独构造样式，确保遮罩失败时直接降级到 SVG。
+  const maskResource = useMemo(() => {
     if (!isMaskSupported) {
       return null;
     }
 
-    const resource = resolveSendIconResource(ICONS, resolvedTheme);
-    return buildSendIconInlineStyle(resource);
+    return resolveSendIconResource(ICONS, resolvedTheme);
   }, [isMaskSupported, resolvedTheme]);
 
-  if (!inlineStyle) {
+  const inlineStyle = useMemo(() => {
+    if (!maskResource) {
+      return null;
+    }
+
+    return buildSendIconInlineStyle(maskResource);
+  }, [maskResource]);
+
+  const canRenderMask = Boolean(inlineStyle?.mask || inlineStyle?.WebkitMask);
+
+  if (!canRenderMask) {
     return effectiveFallback({ className, iconName: SEND_ICON_TOKEN });
   }
 

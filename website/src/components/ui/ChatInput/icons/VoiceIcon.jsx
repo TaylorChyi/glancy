@@ -68,14 +68,22 @@ function VoiceIcon({ className, fallback }) {
   const effectiveFallback = fallback ?? defaultFallback;
   // 说明：保持“解析 → 构建遮罩 → 注入背景”三段式模板，结合 useMemo 缓存结果以支撑主题切换与未来动画扩展。
 
-  const maskStyle = useMemo(() => {
+  // 说明：探测失败或解析不到资源时直接走降级，避免出现仅有背景色的 span。
+  const maskResource = useMemo(() => {
     if (!isMaskSupported) {
       return null;
     }
 
-    const resource = resolveVoiceIconResource(iconRegistry, resolvedTheme);
-    return buildVoiceIconMaskStyle(resource);
+    return resolveVoiceIconResource(iconRegistry, resolvedTheme);
   }, [iconRegistry, isMaskSupported, resolvedTheme]);
+
+  const maskStyle = useMemo(() => {
+    if (!maskResource) {
+      return null;
+    }
+
+    return buildVoiceIconMaskStyle(maskResource);
+  }, [maskResource]);
 
   const inlineStyle = useMemo(() => {
     if (!maskStyle) {
@@ -88,7 +96,14 @@ function VoiceIcon({ className, fallback }) {
     });
   }, [maskStyle]);
 
-  if (!inlineStyle) {
+  const canRenderMask = Boolean(
+    inlineStyle?.mask ||
+      inlineStyle?.WebkitMask ||
+      inlineStyle?.maskImage ||
+      inlineStyle?.WebkitMaskImage,
+  );
+
+  if (!canRenderMask) {
     return effectiveFallback({ className, iconName: VOICE_ICON_TOKEN });
   }
 

@@ -20,9 +20,16 @@ let currentResolvedTheme = "light";
 const mockUseTheme = jest.fn(() => ({
   resolvedTheme: currentResolvedTheme,
 }));
+const mockUseMaskSupport = jest.fn(() => true);
 
 jest.unstable_mockModule("@/context/ThemeContext", () => ({
   useTheme: mockUseTheme,
+}));
+
+jest.unstable_mockModule("../useMaskSupport.js", () => ({
+  __esModule: true,
+  default: mockUseMaskSupport,
+  useMaskSupport: mockUseMaskSupport,
 }));
 
 const voiceRegistry = {
@@ -53,10 +60,12 @@ describe("VoiceIcon", () => {
   beforeEach(() => {
     currentResolvedTheme = "light";
     mockUseTheme.mockClear();
-    global.CSS.supports.mockReturnValue(true);
-    if (typeof window !== "undefined") {
-      window.CSS.supports.mockReturnValue(true);
-    }
+    mockUseMaskSupport.mockReset();
+    mockUseMaskSupport.mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    mockUseMaskSupport.mockReset();
   });
 
   /**
@@ -131,21 +140,18 @@ describe("VoiceIcon", () => {
   });
 
   /**
-   * 测试目标：当浏览器缺乏 CSS mask 支持时，应直接渲染 fallback SVG，避免空白按钮。
-   * 前置条件：CSS.supports 恒为 false，注册表仍提供资源。
+   * 测试目标：当 useMaskSupport 返回 false 时，应直接渲染 fallback SVG，避免空白按钮。
+   * 前置条件：mockUseMaskSupport 返回 false，注册表仍提供资源。
    * 步骤：
-   *  1) 将 CSS.supports mock 为 false。
+   *  1) 将 mockUseMaskSupport mock 为 false。
    *  2) 渲染 VoiceIcon 并查询 SVG。
    * 断言：
    *  - 组件渲染 fallback SVG 元素。
    * 边界/异常：
    *  - 若未来引入渐进增强策略，此用例需同步调整断言。
    */
-  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackSvg", () => {
-    global.CSS.supports.mockReturnValue(false);
-    if (typeof window !== "undefined") {
-      window.CSS.supports.mockReturnValue(false);
-    }
+  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackSvg", () => {
+    mockUseMaskSupport.mockReturnValueOnce(false);
 
     const { container } = render(<VoiceIcon className="icon" />);
 
