@@ -139,6 +139,12 @@
   text-align: left;
 }
 
+.tab-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
 .tab:focus-visible {
   outline: none;
   border-color: var(--preferences-panel-ring);
@@ -150,6 +156,10 @@
   cursor: not-allowed;
   color: color-mix(in srgb, var(--preferences-panel-muted) 65%, transparent);
   opacity: 0.6;
+}
+
+.tab:disabled .tab-summary {
+  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
 }
 
 .tab:not([disabled]):hover {
@@ -177,16 +187,6 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.tab-summary {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--preferences-panel-muted);
-}
-
-.tab:disabled .tab-summary {
-  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
 }
 
 .tab[data-state="active"] .tab-summary {
