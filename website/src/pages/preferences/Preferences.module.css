@@ -121,14 +121,14 @@
   color: var(--preferences-panel-text);
 }
 
-.tab[data-state="active"] .tab-summary {
+.tab-summary {
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--preferences-panel-muted);
 }
 
-.tab:not([disabled]):hover {
-  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
-  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
-  color: var(--preferences-panel-text);
+.tab[data-state="active"] .tab-summary {
+  color: var(--preferences-panel-muted);
 }
 
 .tab:focus-visible {
@@ -147,17 +147,17 @@
   color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
 }
 
+.tab:not([disabled]):hover {
+  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
+  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
+  color: var(--preferences-panel-text);
+}
+
 .tab-label {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.tab-summary {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--preferences-panel-muted);
 }
 
 .panel {
