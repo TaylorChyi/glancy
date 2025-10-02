@@ -12,12 +12,14 @@
  *  - 若后续增加更多底部模式，可拓展此文件覆盖多模式切换的聚焦策略。
  */
 /* eslint-env jest */
-import React, { useEffect, useRef } from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 
 const focusInputMock = jest.fn();
 const inputRef = { current: null };
+const handleVoiceMock = jest.fn();
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   __esModule: true,
@@ -34,7 +36,7 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     targetLanguageOptions: [],
     handleSwapLanguages: jest.fn(),
     handleSend: jest.fn(),
-    handleVoice: jest.fn(),
+    handleVoice: handleVoiceMock,
     handleShowDictionary: jest.fn(),
     handleShowLibrary: jest.fn(),
     handleSelectHistory: jest.fn(),
@@ -63,27 +65,6 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     libraryLandingLabel: "致用单词",
   })),
 }));
-
-jest.unstable_mockModule("../hooks/useBottomPanelState.ts", async () => {
-  const ReactModule = await import("react");
-  const useBottomPanelStateMock = jest.fn(() => {
-    const [mode, setMode] = ReactModule.useState("actions");
-
-    return {
-      mode,
-      activateSearchMode: () => setMode("search"),
-      activateActionsMode: () => setMode("actions"),
-      handleFocusChange: jest.fn(),
-      handleScrollEscape: jest.fn(),
-    };
-  });
-
-  return {
-    __esModule: true,
-    PANEL_MODE_SEARCH: "search",
-    default: useBottomPanelStateMock,
-  };
-});
 
 jest.unstable_mockModule("@/components/Layout", () => ({
   __esModule: true,
@@ -114,21 +95,47 @@ jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
   DictionaryEntryView: () => <div data-testid="dictionary-entry" />,
 }));
 
-jest.unstable_mockModule("@/components/ui/ChatInput", () => {
-  const MockChatInput = ({ inputRef: forwardedRef }) => {
-    const innerRef = useRef(null);
+jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
+  const ReactModule = await import("react");
+  const { default: useActionInputBehavior } = await import(
+    "@/components/ui/ChatInput/hooks/useActionInputBehavior",
+  );
 
-    useEffect(() => {
-      if (innerRef.current) {
-        forwardedRef.current = innerRef.current;
-      }
-      return () => {
-        forwardedRef.current = null;
-      };
-    }, [forwardedRef]);
+  function MockChatInput(props) {
+    const behavior = useActionInputBehavior(props);
+    const { formProps, textareaProps, actionButtonProps } = behavior;
+    const isSendState = actionButtonProps.value.trim().length > 0;
 
-    return <input ref={innerRef} data-testid="dictionary-chat-input" />;
-  };
+    const handleActionClick = ReactModule.useCallback(
+      (event) => {
+        event.preventDefault();
+        if (isSendState) {
+          actionButtonProps.onSubmit?.();
+          actionButtonProps.restoreFocus();
+          return;
+        }
+        if (actionButtonProps.isVoiceDisabled) {
+          return;
+        }
+        actionButtonProps.onVoice?.();
+        actionButtonProps.restoreFocus();
+      },
+      [actionButtonProps, isSendState],
+    );
+
+    return (
+      <form
+        ref={formProps.ref}
+        onSubmit={formProps.onSubmit}
+        data-testid="dictionary-chat-input-form"
+      >
+        <textarea {...textareaProps} data-testid="dictionary-chat-input" />
+        <button type="button" onClick={handleActionClick}>
+          {isSendState ? actionButtonProps.sendLabel : actionButtonProps.voiceLabel}
+        </button>
+      </form>
+    );
+  }
 
   MockChatInput.displayName = "MockChatInput";
 
@@ -179,6 +186,7 @@ const { useDictionaryExperience } = await import(
 describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
     focusInputMock.mockClear();
+    handleVoiceMock.mockClear();
     inputRef.current = null;
   });
 
@@ -197,17 +205,55 @@ describe("DictionaryExperience focus management", () => {
    *  - 当输入框 ref 尚未建立时不会触发聚焦，避免空引用异常。
    */
   test("Given_actionsPanel_When_switchBackToSearch_Then_focusesChatInputAfterRemount", async () => {
+    const user = userEvent.setup();
     render(<DictionaryExperience />);
 
     const searchButton = screen.getByRole("button", { name: "返回搜索" });
-    expect(focusInputMock).not.toHaveBeenCalled();
+    const initialFocusCalls = focusInputMock.mock.calls.length;
 
-    fireEvent.click(searchButton);
+    await user.click(searchButton);
 
     await waitFor(() => {
-      expect(screen.getByTestId("dictionary-chat-input")).toBeInTheDocument();
-      expect(focusInputMock).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
     });
+  });
+
+  /**
+   * 测试目标：当搜索模式下点击 ChatInput 内部动作按钮时保持搜索模式并恢复输入焦点。
+   * 前置条件：存在释义记录使面板可切换；初始处于动作模式。
+   * 步骤：
+   *  1) 切换到底部搜索模式并聚焦 textarea；
+   *  2) 点击语音按钮触发 onVoice；
+   * 断言：
+   *  - actions 面板不再显示（搜索模式未退回）；
+   *  - textarea 再次获得焦点；
+   *  - onVoice 被调用一次。
+   * 边界/异常：
+   *  - 若未来语音按钮文案调整需同步更新查询条件。
+   */
+  test("Given_searchMode_When_clickActionButton_Then_keepSearchAndRefocusTextarea", async () => {
+    const user = userEvent.setup();
+    render(<DictionaryExperience />);
+
+    const searchButton = screen.getByRole("button", { name: "返回搜索" });
+    await user.click(searchButton);
+
+    const textarea = await screen.findByRole("textbox");
+    await user.click(textarea);
+    expect(textarea).toHaveFocus();
+
+    const voiceButton = screen.getByRole("button", { name: "Voice" });
+    await user.click(voiceButton);
+
+    await waitFor(() => {
+      expect(handleVoiceMock).toHaveBeenCalledTimes(1);
+      expect(textarea).toHaveFocus();
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "返回搜索" }),
+    ).not.toBeInTheDocument();
   });
 
   /**

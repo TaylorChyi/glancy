@@ -12,6 +12,7 @@
  *  - 若后续需要新增模式（如语音录制面板），可在此扩展枚举与转换图并补充测试。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
 
 export const PANEL_MODE_SEARCH = "search" as const;
 export const PANEL_MODE_ACTIONS = "actions" as const;
@@ -23,11 +24,18 @@ type UseBottomPanelStateParams = {
   text: string;
 };
 
+type FocusChangePayload = {
+  isFocused: boolean;
+  event: React.FocusEvent<HTMLTextAreaElement>;
+  formElement: HTMLFormElement | null;
+  restoreFocus: () => void;
+};
+
 type UseBottomPanelStateResult = {
   mode: PanelMode;
   isSearchMode: boolean;
   isActionsMode: boolean;
-  handleFocusChange: (focused: boolean) => void;
+  handleFocusChange: (payload: FocusChangePayload) => void;
   activateSearchMode: () => void;
   activateActionsMode: () => void;
   handleScrollEscape: () => void;
@@ -56,9 +64,19 @@ export default function useBottomPanelState({
   }, []);
 
   const handleFocusChange = useCallback(
-    (focused: boolean) => {
-      setIsInputFocused(focused);
-      if (focused) {
+    ({ isFocused, event, formElement }: FocusChangePayload) => {
+      const relatedTarget = event.relatedTarget;
+      const isRelatedTargetNode =
+        relatedTarget instanceof Node ? relatedTarget : null;
+      const isWithinForm = Boolean(
+        formElement &&
+          isRelatedTargetNode &&
+          formElement.contains(isRelatedTargetNode),
+      );
+      const isSearchActive = isFocused || isWithinForm;
+
+      setIsInputFocused(isSearchActive);
+      if (isSearchActive) {
         setMode(PANEL_MODE_SEARCH);
         return;
       }
