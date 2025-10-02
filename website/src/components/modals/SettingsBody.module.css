@@ -56,6 +56,12 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  border-inline-start: var(--settings-body-divider-width, 1px)
+    solid
+    var(
+      --settings-body-divider-color,
+      var(--sb-divider, color-mix(in srgb, var(--border-color, #1f2937) 70%, transparent 30%))
+    );
 }
 
 .content-scroller {
@@ -91,6 +97,10 @@
 
   .nav-scroller > * {
     min-width: max-content;
+  }
+
+  .content-column {
+    border-inline-start: none;
   }
 
   .content-scroller {
