@@ -4,16 +4,15 @@ import { jest } from "@jest/globals";
 
 /**
  * 背景：
- *  - VoiceIcon 需根据主题动态切换遮罩资源，过去使用模块级常量导致主题切换后样式无法更新。
+ *  - VoiceIcon 通过 createMaskedIconRenderer 共享遮罩模板，需要验证策略函数在不同主题与降级场景下仍然生效。
  * 目的：
- *  - 通过对 useTheme 与图标注册表的桩件，验证在不同主题下能解析正确的遮罩，并在缺失资源时触发降级渲染。
+ *  - 通过桩件控制主题、遮罩能力与图标注册表，确保新模板对语音图标的渲染路径完整覆盖。
  * 关键决策与取舍：
- *  - 采用策略模式：通过 mockUseTheme 控制 resolvedTheme 以驱动遮罩选择，同时模拟图标注册表确保不依赖真实资源路径。
- *  - 舍弃直接引用真实 SVG，避免 Jest 文件桩导致的同值干扰，确保断言具备区分度。
+ *  - 延续策略模式测试：mock useTheme、useMaskSupport 与 icon registry，聚焦资源解析与降级行为；避免依赖真实资源文件导致测试脆弱。
  * 影响范围：
- *  - 覆盖 VoiceIcon 主题分支与兜底逻辑，间接保障 ChatInput 动作按钮图标渲染稳定。
+ *  - 覆盖 VoiceIcon 的主题分支、遮罩降级与 fallback 调用逻辑，间接验证 createMaskedIconRenderer 的稳定性。
  * 演进与TODO：
- *  - 后续若新增高对比主题，应扩充此处的注册表桩件与断言以覆盖新增变体。
+ *  - 若未来引入录音态动画，应扩展测试验证 buildStyle 返回的额外样式字段。
  */
 
 let currentResolvedTheme = "light";
@@ -22,7 +21,7 @@ const mockUseTheme = jest.fn(() => ({
 }));
 const mockUseMaskSupport = jest.fn(() => true);
 
-jest.unstable_mockModule("@/context/ThemeContext", () => ({
+jest.unstable_mockModule("@/context", () => ({
   useTheme: mockUseTheme,
 }));
 
@@ -158,4 +157,3 @@ describe("VoiceIcon", () => {
     expect(container.querySelector("svg")).not.toBeNull();
   });
 });
-

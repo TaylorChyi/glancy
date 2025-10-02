@@ -1,26 +1,25 @@
-/**
- * 背景：
- *  - SendIcon 需随主题切换引用 send-button 资产，但历史测试缺少主题覆盖。
- * 目的：
- *  - 验证资源解析策略基于 resolvedTheme 选择正确变体，并在缺失时触发降级。
- * 关键决策与取舍：
- *  - 通过模块 mock 注入受控资源，确保测试聚焦逻辑，不依赖真实清单。
- * 影响范围：
- *  - ChatInput 发送按钮的图标渲染可靠性。
- * 演进与TODO：
- *  - 后续可补充动画或高对比度主题时的断言。
- */
-
+/* eslint-env jest */
 import { render } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
-const iconRegistry = {};
-const mockUseTheme = jest.fn();
-const mockUseMaskSupport = jest.fn(() => true);
+/**
+ * 背景：
+ *  - SendIcon 迁移到 createMaskedIconRenderer 模板后，需要验证策略函数在不同主题、资源缺失与遮罩不可用时的分支行为。
+ * 目的：
+ *  - 模拟主题、遮罩能力与图标注册表，确保发送图标始终能渲染出正确的遮罩或回退 SVG，避免再次出现圆形占位问题。
+ * 关键决策与取舍：
+ *  - 复用与 VoiceIcon 一致的 mock 体系，降低测试认知成本；重点断言主题分支、跨主题回退与 fallback 调用。
+ * 影响范围：
+ *  - 覆盖发送按钮图标的主要渲染路径，为 ChatInput 的发送体验提供回归保障。
+ * 演进与TODO：
+ *  - 若后续引入多尺寸或动画资源，可在此处扩展策略桩件并新增断言。
+ */
 
-jest.unstable_mockModule("@/assets/icons.js", () => ({
-  default: iconRegistry,
+let currentResolvedTheme = "light";
+const mockUseTheme = jest.fn(() => ({
+  resolvedTheme: currentResolvedTheme,
 }));
+const mockUseMaskSupport = jest.fn(() => true);
 
 jest.unstable_mockModule("@/context", () => ({
   useTheme: mockUseTheme,
@@ -30,6 +29,17 @@ jest.unstable_mockModule("../useMaskSupport.js", () => ({
   __esModule: true,
   default: mockUseMaskSupport,
   useMaskSupport: mockUseMaskSupport,
+}));
+
+const sendRegistry = {
+  "send-button": {
+    light: "send-light.svg",
+    dark: "send-dark.svg",
+  },
+};
+
+jest.unstable_mockModule("@/assets/icons.js", () => ({
+  default: sendRegistry,
 }));
 
 const { default: SendIcon } = await import("../SendIcon.jsx");
@@ -46,109 +56,130 @@ describe("SendIcon", () => {
   });
 
   beforeEach(() => {
-    mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
+    currentResolvedTheme = "light";
+    mockUseTheme.mockClear();
+    mockUseMaskSupport.mockReset();
     mockUseMaskSupport.mockReturnValue(true);
-    iconRegistry["send-button"] = {
-      light: "/light.svg",
-      dark: "/dark.svg",
-    };
   });
 
   afterEach(() => {
-    mockUseTheme.mockReset();
     mockUseMaskSupport.mockReset();
-    delete iconRegistry["send-button"];
   });
 
   /**
-   * 测试目标：亮色主题下渲染 send-button/light 资源并暴露数据标识。
-   * 前置条件：resolvedTheme=light 且注册表包含 light 变体。
+   * 测试目标：浅色主题下应解析 light 资源并生成遮罩样式。
+   * 前置条件：resolvedTheme=light，注册表提供 light/dark 资源。
    * 步骤：
-   *  1) 渲染 SendIcon。
-   *  2) 捕获生成的 span 元素。
+   *  1) 渲染 SendIcon 并查询标记节点。
+   *  2) 读取 style.mask。
    * 断言：
-   *  - data-icon-name=send-button。
-   *  - mask 样式指向 light 资源。
+   *  - mask 使用 light 资源。
    * 边界/异常：
-   *  - 若资源缺失则断言会失败提示覆盖不足。
+   *  - 其他主题分支由后续用例覆盖。
    */
-  test("GivenLightTheme_WhenRendering_ThenApplyLightVariant", () => {
+  test("GivenLightTheme_WhenRendering_ThenApplyLightVariantMask", () => {
     const { container } = render(<SendIcon className="icon" />);
 
-    const icon = container.firstChild;
-    expect(icon).not.toBeNull();
-    expect(icon).toHaveAttribute("data-icon-name", "send-button");
-    expect(icon?.style.mask ?? "").toContain("/light.svg");
-    expect(icon?.style.mask ?? "").toContain("center / contain no-repeat");
-    expect(icon?.getAttribute("style") ?? "").toContain("background-color");
+    const node = container.querySelector('[data-icon-name="send-button"]');
+    expect(node).not.toBeNull();
+    expect(node?.style.mask).toBe(
+      "url(send-light.svg) center / contain no-repeat",
+    );
   });
 
   /**
-   * 测试目标：暗色主题且缺失 dark/light 变体时应退回 single 资源。
-   * 前置条件：resolvedTheme=dark 且仅提供 single。
+   * 测试目标：深色主题应解析 dark 资源，验证策略与主题联动。
+   * 前置条件：resolvedTheme=dark，注册表提供 dark 资源。
    * 步骤：
-   *  1) 更新 mock 主题与注册表。
-   *  2) 渲染 SendIcon 并检查蒙版样式。
+   *  1) 切换主题 mock。
+   *  2) 渲染组件并读取遮罩。
    * 断言：
-   *  - mask 样式引用 single 资源。
+   *  - mask 使用 dark 资源。
    * 边界/异常：
-   *  - 若回退失败则说明解析函数未覆盖降级逻辑。
+   *  - 若未来新增 single 资源，应扩充用例。
    */
-  test("GivenDarkTheme_WhenVariantsMissing_ThenFallbackToSingle", () => {
-    mockUseTheme.mockReturnValue({ resolvedTheme: "dark" });
-    iconRegistry["send-button"] = {
-      single: "/single.svg",
-    };
+  test("GivenDarkTheme_WhenRendering_ThenApplyDarkVariantMask", () => {
+    currentResolvedTheme = "dark";
 
     const { container } = render(<SendIcon className="icon" />);
 
-    const icon = container.firstChild;
-    expect(icon).not.toBeNull();
-    expect(icon).toHaveAttribute("data-icon-name", "send-button");
-    expect(icon?.style.mask ?? "").toContain("/single.svg");
-    expect(icon?.style.mask ?? "").toContain("center / contain no-repeat");
-    expect(icon?.getAttribute("style") ?? "").toContain("background-color");
+    const node = container.querySelector('[data-icon-name="send-button"]');
+    expect(node).not.toBeNull();
+    expect(node?.style.mask).toBe(
+      "url(send-dark.svg) center / contain no-repeat",
+    );
   });
 
   /**
-   * 测试目标：资源缺失时应调用 fallback 渲染兜底结构。
-   * 前置条件：发送按钮令牌未在注册表中注册。
+   * 测试目标：当主题对应的资源缺失时，应回退到另一个可用主题资源。
+   * 前置条件：删除 dark 资源，resolvedTheme=dark。
    * 步骤：
-   *  1) 清空注册表。
-   *  2) 渲染组件并捕获 fallback。
+   *  1) 修改注册表后渲染组件。
+   *  2) 检查遮罩是否使用 light 资源。
    * 断言：
-   *  - fallback 被调用一次且入参包含 iconName。
-   *  - fallback 产物被挂载。
+   *  - mask 回退到 light 资源。
    * 边界/异常：
-   *  - 若未调用则表示降级逻辑失效。
+   *  - 用例结束后恢复注册表。
    */
-  test("GivenMissingResource_WhenRendering_ThenInvokeFallback", () => {
-    delete iconRegistry["send-button"];
-    const fallback = jest.fn(() => <div data-testid="fallback" />);
+  test("GivenMissingThemeVariant_WhenRendering_ThenFallbackToAlternateTheme", () => {
+    currentResolvedTheme = "dark";
+    const originalEntry = { ...sendRegistry["send-button"] };
+    delete sendRegistry["send-button"].dark;
 
-    const { getByTestId } = render(<SendIcon className="icon" fallback={fallback} />);
+    const { container } = render(<SendIcon className="icon" />);
 
-    expect(fallback).toHaveBeenCalledTimes(1);
-    expect(fallback).toHaveBeenCalledWith({ className: "icon", iconName: "send-button" });
-    expect(getByTestId("fallback")).toBeInTheDocument();
+    const node = container.querySelector('[data-icon-name="send-button"]');
+    expect(node).not.toBeNull();
+    expect(node?.style.mask).toBe(
+      "url(send-light.svg) center / contain no-repeat",
+    );
+
+    sendRegistry["send-button"] = originalEntry;
   });
 
   /**
-   * 测试目标：当 useMaskSupport 返回 false 时，应直接渲染 SVG fallback，验证渐进增强降级链路。
-   * 前置条件：mockUseMaskSupport 返回 false，注册表仍提供资源。
+   * 测试目标：当遮罩能力不可用时，应渲染 fallback SVG。
+   * 前置条件：mockUseMaskSupport 返回 false。
    * 步骤：
-   *  1) 将 mockUseMaskSupport 配置为 false。
-   *  2) 渲染 SendIcon。
+   *  1) 令 hook 返回 false。
+   *  2) 渲染组件并查询 SVG 元素。
    * 断言：
-   *  - 渲染结构中包含 fallback SVG。
+   *  - 渲染 fallback SVG，避免空白按钮。
    * 边界/异常：
-   *  - 若未来新增多级回退，此用例需扩展断言覆盖具体结构。
+   *  - 如未来提供渐进增强，需要同步更新断言。
    */
-  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackSvg", () => {
+  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackSvg", () => {
     mockUseMaskSupport.mockReturnValueOnce(false);
 
     const { container } = render(<SendIcon className="icon" />);
 
     expect(container.querySelector("svg")).not.toBeNull();
+  });
+
+  /**
+   * 测试目标：当注册表缺失 send-button 条目时，应调用自定义 fallback。
+   * 前置条件：删除整个条目，提供 mock fallback。
+   * 步骤：
+   *  1) 删除注册表条目后渲染组件。
+   *  2) 断言 fallback 调用次数与参数。
+   * 断言：
+   *  - fallback 被调用一次，参数包含 className 与 iconName。
+   * 边界/异常：
+   *  - 渲染完成后恢复注册表，避免污染其他测试。
+   */
+  test("GivenMissingRegistryEntry_WhenRendering_ThenInvokeFallback", () => {
+    const originalEntry = sendRegistry["send-button"];
+    delete sendRegistry["send-button"];
+
+    const fallback = jest.fn(() => null);
+    render(<SendIcon className="icon" fallback={fallback} />);
+
+    expect(fallback).toHaveBeenCalledTimes(1);
+    expect(fallback).toHaveBeenCalledWith({
+      className: "icon",
+      iconName: "send-button",
+    });
+
+    sendRegistry["send-button"] = originalEntry;
   });
 });
