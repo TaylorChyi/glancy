@@ -86,6 +86,9 @@ export default function useBottomPanelState({
   );
 
   const activateSearchMode = useCallback(() => {
+    // 设计取舍：在手动激活搜索模式时提前标记输入聚焦，
+    // 以阻断收敛副作用的兜底回退，避免模式在下一轮渲染中闪回 actions。
+    setIsInputFocused(true);
     setMode(PANEL_MODE_SEARCH);
   }, []);
 

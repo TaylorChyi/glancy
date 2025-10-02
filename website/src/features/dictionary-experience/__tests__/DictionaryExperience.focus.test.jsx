@@ -70,7 +70,10 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
 jest.unstable_mockModule("@/components/Layout", () => ({
   __esModule: true,
   default: ({ bottomContent, children }) => (
-    <div data-testid="layout-root" data-has-bottom={bottomContent ? "yes" : "no"}>
+    <div
+      data-testid="layout-root"
+      data-has-bottom={bottomContent ? "yes" : "no"}
+    >
       {bottomContent ? (
         <div data-testid="layout-bottom-content">{bottomContent}</div>
       ) : null}
@@ -99,7 +102,7 @@ jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
 jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
   const ReactModule = await import("react");
   const { default: useActionInputBehavior } = await import(
-    "@/components/ui/ChatInput/hooks/useActionInputBehavior",
+    "@/components/ui/ChatInput/hooks/useActionInputBehavior"
   );
 
   function MockChatInput(props) {
@@ -132,7 +135,9 @@ jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
       >
         <textarea {...textareaProps} data-testid="dictionary-chat-input" />
         <button type="button" onClick={handleActionClick}>
-          {isSendState ? actionButtonProps.sendLabel : actionButtonProps.voiceLabel}
+          {isSendState
+            ? actionButtonProps.sendLabel
+            : actionButtonProps.voiceLabel}
         </button>
       </form>
     );
@@ -186,7 +191,8 @@ jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
   ),
 }));
 
-const DictionaryExperience = (await import("../DictionaryExperience.jsx")).default;
+const DictionaryExperience = (await import("../DictionaryExperience.jsx"))
+  .default;
 const { useDictionaryExperience } = await import(
   "../hooks/useDictionaryExperience.js"
 );
@@ -229,7 +235,7 @@ describe("DictionaryExperience focus management", () => {
   });
 
   /**
-   * 测试目标：验证点击“重试释义”按钮会触发重试逻辑并回落至搜索模式。
+   * 测试目标：验证点击“重试释义”按钮会触发重试逻辑并保持在搜索模式，避免闪回 actions。
    * 前置条件：底部面板初始处于 actions 模式且暴露 onReoutput 回调。
    * 步骤：
    *  1) 渲染 DictionaryExperience 并确认无搜索输入；
@@ -256,6 +262,15 @@ describe("DictionaryExperience focus management", () => {
       expect(handleReoutputMock).toHaveBeenCalledTimes(1);
       expect(screen.getByRole("textbox")).toBeInTheDocument();
       expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "返回搜索" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "重试释义" }),
+      ).not.toBeInTheDocument();
     });
   });
 
