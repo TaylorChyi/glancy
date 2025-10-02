@@ -1,30 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <polyline
-    points="19.5 4 19.5 9 14.5 9"
-    stroke="currentColor"
-    stroke-width="1.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <polyline
-    points="4.5 20 4.5 15 9.5 15"
-    stroke="currentColor"
-    stroke-width="1.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
+<!--
+背景：
+ - 原有刷新图标沿用 24x24 线框组合，线条在小尺寸下模糊且与最新设计规范不符。
+目的：
+ - 引入产品提供的 20x20 实心版本，确保在主题切换时仍沿用 currentColor，维持一致的视觉识别。
+关键决策与取舍：
+ - 直接采纳设计部交付的路径数据，避免自行重绘造成微差；
+ - 保留 fill-rule/clip-rule 以保证高倍率缩放时的填充正确性，同时删除旧有多段折线结构降低渲染成本。
+影响范围：
+ - 所有引用 ThemeIcon 的刷新操作入口将使用统一矢量，确保新旧主题配色兼容。
+演进与TODO：
+ - 如未来需要描边版本，可在 assets/icons 下增设 refresh-outline.svg 并在 manifest 注册变体。
+-->
+<svg
+  width="20"
+  height="20"
+  viewBox="0 0 20 20"
+  fill="currentColor"
+  xmlns="http://www.w3.org/2000/svg"
+  aria-hidden="true"
+>
   <path
-    d="M6.32 7.08A7.2 7.2 0 0 1 17.5 4.47L19.5 6.5"
-    stroke="currentColor"
-    stroke-width="1.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M17.68 16.92A7.2 7.2 0 0 1 6.5 19.53L4.5 17.5"
-    stroke="currentColor"
-    stroke-width="1.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
+    fill-rule="evenodd"
+    clip-rule="evenodd"
+    d="M4.5 4a.75.75 0 0 1 .75.75v2.69a5.5 5.5 0 0 1 9.364-1.92.75.75 0 1 1-1.071 1.05A4 4 0 0 0 6 8.5h2.75a.75.75 0 0 1 0 1.5H4.5A.75.75 0 0 1 3.75 9.25V4.75A.75.75 0 0 1 4.5 4Zm11 7.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-4.5a.75.75 0 0 1 0-1.5h2.69a5.5 5.5 0 0 1-9.364-1.92.75.75 0 1 1 1.071-1.05A4 4 0 0 0 14 11.5h-2.75a.75.75 0 0 1 0-1.5h4.25a.75.75 0 0 1 .75.75Z"
   />
 </svg>
