@@ -28,12 +28,26 @@ jest.unstable_mockModule("@/context", () => ({
 const { default: SendIcon } = await import("../SendIcon.jsx");
 
 describe("SendIcon", () => {
+  beforeAll(() => {
+    const cssSupport = {
+      supports: jest.fn(() => true),
+    };
+    global.CSS = cssSupport;
+    if (typeof window !== "undefined") {
+      window.CSS = cssSupport;
+    }
+  });
+
   beforeEach(() => {
     mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
     iconRegistry["send-button"] = {
       light: "/light.svg",
       dark: "/dark.svg",
     };
+    global.CSS.supports.mockReturnValue(true);
+    if (typeof window !== "undefined") {
+      window.CSS.supports.mockReturnValue(true);
+    }
   });
 
   afterEach(() => {
@@ -112,5 +126,27 @@ describe("SendIcon", () => {
     expect(fallback).toHaveBeenCalledTimes(1);
     expect(fallback).toHaveBeenCalledWith({ className: "icon", iconName: "send-button" });
     expect(getByTestId("fallback")).toBeInTheDocument();
+  });
+
+  /**
+   * 测试目标：当运行环境不支持 CSS mask 时，应立即退回到 SVG fallback。
+   * 前置条件：CSS.supports 返回 false，注册表仍提供可用资源。
+   * 步骤：
+   *  1) mock CSS.supports 恒为 false。
+   *  2) 渲染 SendIcon 并捕获 fallback。
+   * 断言：
+   *  - fallback 被调用一次且渲染结果存在。
+   * 边界/异常：
+   *  - 若未来新增浏览器特判，此用例需扩展断言覆盖。
+   */
+  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackSvg", () => {
+    global.CSS.supports.mockReturnValue(false);
+    if (typeof window !== "undefined") {
+      window.CSS.supports.mockReturnValue(false);
+    }
+
+    const { container } = render(<SendIcon className="icon" />);
+
+    expect(container.querySelector("svg")).not.toBeNull();
   });
 });
