@@ -1,11 +1,21 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_44_19)">
-<circle cx="512" cy="512" r="512" fill="#121212"/>
-<circle cx="512" cy="512" r="256" fill="white"/>
-</g>
-<defs>
-<clipPath id="clip0_44_19">
-<rect width="1024" height="1024" fill="white"/>
-</clipPath>
-</defs>
+<!--
+  背景：
+    - ChatInput 的发送按钮需要与通用纸飞机图形保持一致，以继承主题配色且避免多套资源维护。
+  目的：
+    - 提供 manifest 中 send-button/light 令牌的矢量实现，确保按钮在亮色主题下仍通过 currentColor 着色。
+  与 paper-airplane.svg 的关系：
+    - 共用完全相同的几何路径与 fill="currentColor" 方案。
+    - 保留独立文件仅为兼容生成脚本对 light/dark 令牌的区分，后续可将 send-button 映射直接指向 paper-airplane.svg。
+  关键决策与取舍：
+    - 放弃原先带背景圆的版本以减少视觉噪点，并依赖主题色控制视觉对比度。
+  演进与 TODO：
+    - 若未来脚本支持别名映射，可删除该文件，改由 manifest 引用 icons/paper-airplane.svg。
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 18 18"
+  aria-hidden="true"
+  fill="currentColor"
+>
+  <path d="M2.25 15.75 16.5 9 2.25 2.25l4.5 6-4.5 7.5Z" />
 </svg>
