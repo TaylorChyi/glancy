@@ -7,6 +7,7 @@ import {
   waitFor,
   act,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 import { API_PATHS } from "@/config/api.js";
 
@@ -174,7 +175,7 @@ jest.unstable_mockModule("@/store/settings", () => ({
 
 const { default: Preferences } = await import("@/pages/preferences");
 const { default: SettingsModal } = await import(
-  "@/components/modals/SettingsModal.jsx",
+  "@/components/modals/SettingsModal.jsx"
 );
 const { useSettingsStore } = await import("@/store/settings");
 
@@ -239,7 +240,7 @@ test("GivenSettingsModal_WhenOpened_ThenCustomCloseButtonRenderedWithAriaContext
     render(<SettingsModal open onClose={handleClose} />);
   });
 
-  const closeButton = await screen.findByRole("button", { name: "Close" });
+  const [closeButton] = await screen.findAllByRole("button", { name: "Close" });
   const dialog = screen.getByRole("dialog");
 
   expect(closeButton).toBeVisible();
@@ -268,7 +269,87 @@ test("GivenSettingsModal_WhenCloseClicked_ThenOnCloseFires", async () => {
     render(<SettingsModal open onClose={handleClose} />);
   });
 
-  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  const [modalCloseButton] = screen.getAllByRole("button", { name: "Close" });
+  fireEvent.click(modalCloseButton);
+
+  expect(handleClose).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * 测试目标：
+ *  - 默认页面模式不应渲染关闭按钮，确保布局纯粹。
+ * 前置条件：
+ *  - 渲染未提供 onClose 的 Preferences 页面。
+ * 步骤：
+ *  1) 渲染组件并等待初次 effect。
+ * 断言：
+ *  - 查询关闭按钮返回 null，避免误露出无效控件。
+ * 边界/异常：
+ *  - 若默认模式渲染按钮则测试失败，提示可访问性回归。
+ */
+test("GivenPreferencesWithoutOnClose_WhenRendered_ThenCloseButtonHidden", async () => {
+  await act(async () => {
+    render(<Preferences />);
+  });
+  await act(async () => {});
+
+  expect(screen.queryByRole("button", { name: "Close" })).toBeNull();
+});
+
+/**
+ * 测试目标：
+ *  - 对话框模式应渲染关闭按钮并在点击时触发回调。
+ * 前置条件：
+ *  - 注入 onClose 模拟函数，并以 dialog 变体渲染组件。
+ * 步骤：
+ *  1) 渲染组件并等待初次 effect。
+ *  2) 获取关闭按钮并触发点击。
+ * 断言：
+ *  - onClose 恰好被调用一次，说明事件链路正确。
+ * 边界/异常：
+ *  - 若按钮缺失或多次触发，则视为交互回归。
+ */
+test("GivenPreferencesDialog_WhenCloseClicked_ThenOnCloseInvoked", async () => {
+  const handleClose = jest.fn();
+
+  await act(async () => {
+    render(<Preferences variant="dialog" onClose={handleClose} />);
+  });
+  await act(async () => {});
+
+  const closeButton = screen.getByRole("button", { name: "Close" });
+  fireEvent.click(closeButton);
+
+  expect(handleClose).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * 测试目标：
+ *  - 关闭按钮需支持键盘 Enter 激活，保障可访问性。
+ * 前置条件：
+ *  - 渲染带 onClose 的 dialog 变体并准备 userEvent。
+ * 步骤：
+ *  1) 渲染组件并聚焦关闭按钮。
+ *  2) 通过键盘输入 Enter 激活。
+ * 断言：
+ *  - onClose 被调用一次，证明键盘路径生效。
+ * 边界/异常：
+ *  - 若键盘触发未生效，则需检查按钮语义或事件绑定。
+ */
+test("GivenPreferencesDialog_WhenEnterPressedOnClose_ThenOnCloseInvoked", async () => {
+  const handleClose = jest.fn();
+  const user = userEvent.setup();
+
+  await act(async () => {
+    render(<Preferences variant="dialog" onClose={handleClose} />);
+  });
+  await act(async () => {});
+
+  const closeButton = screen.getByRole("button", { name: "Close" });
+  closeButton.focus();
+  expect(closeButton).toHaveFocus();
+
+  await user.keyboard("{Enter}");
 
   expect(handleClose).toHaveBeenCalledTimes(1);
 });
@@ -293,9 +374,7 @@ test("renders distinct copy between navigation and heading", async () => {
   const activeTab = screen.getByRole("tab", { selected: true });
   const heading = screen.getByRole("heading", { level: 2 });
 
-  expect(activeTab.textContent?.trim()).not.toBe(
-    heading.textContent?.trim(),
-  );
+  expect(activeTab.textContent?.trim()).not.toBe(heading.textContent?.trim());
 });
 
 /**

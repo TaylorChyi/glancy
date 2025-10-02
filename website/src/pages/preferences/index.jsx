@@ -92,8 +92,7 @@ const KEYBOARD_SHORTCUTS = [
 
 const buildTabLabelMap = (t) => ({
   [TAB_KEYS.GENERAL]: t.settingsTabGeneral || "General",
-  [TAB_KEYS.PERSONALIZATION]:
-    t.settingsTabPersonalization || "Personalization",
+  [TAB_KEYS.PERSONALIZATION]: t.settingsTabPersonalization || "Personalization",
   [TAB_KEYS.KEYBOARD]: t.settingsTabKeyboard || "Keyboard",
   [TAB_KEYS.DATA]: t.settingsTabData || "Data controls",
   [TAB_KEYS.ACCOUNT]: t.settingsTabAccount || "Account",
@@ -113,15 +112,13 @@ const buildTabCopyMap = (t) => {
   return {
     labels: tabLabelMap,
     titles: {
-      [TAB_KEYS.GENERAL]:
-        t.prefInterfaceTitle || tabLabelMap[TAB_KEYS.GENERAL],
+      [TAB_KEYS.GENERAL]: t.prefInterfaceTitle || tabLabelMap[TAB_KEYS.GENERAL],
       [TAB_KEYS.PERSONALIZATION]:
         t.prefPersonalizationTitle || tabLabelMap[TAB_KEYS.PERSONALIZATION],
       [TAB_KEYS.KEYBOARD]:
         t.prefKeyboardTitle || tabLabelMap[TAB_KEYS.KEYBOARD],
       [TAB_KEYS.DATA]: t.prefDataTitle || tabLabelMap[TAB_KEYS.DATA],
-      [TAB_KEYS.ACCOUNT]:
-        t.prefAccountTitle || tabLabelMap[TAB_KEYS.ACCOUNT],
+      [TAB_KEYS.ACCOUNT]: t.prefAccountTitle || tabLabelMap[TAB_KEYS.ACCOUNT],
     },
     descriptions: {
       [TAB_KEYS.GENERAL]: t.settingsGeneralDescription || "",
@@ -157,6 +154,7 @@ function Preferences({
   variant = VARIANTS.PAGE,
   initialTab = TAB_KEYS.GENERAL,
   onOpenAccountManager,
+  onClose,
 }) {
   const { t, lang } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -920,6 +918,13 @@ function Preferences({
       ? `${styles.container} ${styles.page}`
       : styles.container;
 
+  const closeLabel = t.close ?? "Close";
+  const handleClose = useCallback(() => {
+    if (typeof onClose === "function") {
+      onClose();
+    }
+  }, [onClose]);
+
   return (
     <>
       <form
@@ -929,6 +934,25 @@ function Preferences({
         aria-describedby="settings-description"
       >
         <aside className={styles.sidebar} aria-label={t.prefTitle}>
+          {typeof onClose === "function" ? (
+            <button
+              type="button"
+              className={styles["sidebar-close"]}
+              aria-label={closeLabel}
+              onClick={handleClose}
+            >
+              {/*
+               * 背景：
+               *  - Dialog 变体需要就地关闭入口，避免用户依赖外层组件寻找关闭控件。
+               * 关键取舍：
+               *  - 通过局部 SVG 图标避免新增全局资产，同时沿用侧边栏的交互令牌，保持节奏一致。
+               */}
+              <CloseGlyph
+                className={styles["sidebar-close-icon"]}
+                aria-hidden="true"
+              />
+            </button>
+          ) : null}
           <nav aria-label={t.prefTitle}>
             <ul
               className={styles["nav-list"]}
@@ -1270,16 +1294,54 @@ PlayGlyph.defaultProps = {
   active: false,
 };
 
+/**
+ * 背景：
+ *  - 设置侧边栏需提供统一的关闭图标，同时不依赖额外的资产构建。
+ * 目的：
+ *  - 提供语义化的乘号图标用于对话框关闭按钮，保持与导航控件一致的视觉密度。
+ * 关键决策与取舍：
+ *  - 采用内联 SVG 以规避新增静态资源与构建步骤；路径参数参考 16px 基线，便于未来主题复用。
+ */
+function CloseGlyph({ className, ...props }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      focusable="false"
+      {...props}
+    >
+      <path
+        d="M4.22 4.22a.75.75 0 0 1 1.06 0L8 6.94l2.72-2.72a.75.75 0 1 1 1.06 1.06L9.06 8l2.72 2.72a.75.75 0 0 1-1.06 1.06L8 9.06l-2.72 2.72a.75.75 0 1 1-1.06-1.06L6.94 8 4.22 5.28a.75.75 0 0 1 0-1.06Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+CloseGlyph.propTypes = {
+  className: PropTypes.string,
+};
+
+CloseGlyph.defaultProps = {
+  className: undefined,
+};
+
 Preferences.propTypes = {
   variant: PropTypes.oneOf(Object.values(VARIANTS)),
   initialTab: PropTypes.oneOf(TAB_ORDER),
   onOpenAccountManager: PropTypes.func,
+  onClose: PropTypes.func,
 };
 
 Preferences.defaultProps = {
   variant: VARIANTS.PAGE,
   initialTab: TAB_KEYS.GENERAL,
   onOpenAccountManager: undefined,
+  onClose: undefined,
 };
 
 export default Preferences;

@@ -64,7 +64,10 @@
   --settings-panel-bg: var(--sidebar-panel, var(--neutral-0));
   --settings-panel-surface: var(--sidebar-panel, var(--neutral-0));
   --settings-panel-surface-hover: var(--sidebar-hover-bg, rgb(15 17 21 / 6%));
-  --settings-panel-surface-active: var(--sidebar-active-bg, rgb(15 17 21 / 12%));
+  --settings-panel-surface-active: var(
+    --sidebar-active-bg,
+    rgb(15 17 21 / 12%)
+  );
   --settings-panel-press: var(--sidebar-active-bg, rgb(15 17 21 / 12%));
   --settings-panel-border: var(--sidebar-border-color, #d9dde7);
   --settings-panel-text: var(--sidebar-text-color, var(--text-primary-light));
@@ -88,12 +91,18 @@
   --settings-panel-bg: var(--sidebar-panel, var(--night-panel));
   --settings-panel-surface: var(--sidebar-panel, var(--night-active));
   --settings-panel-surface-hover: var(--sidebar-hover-bg, var(--night-hover));
-  --settings-panel-surface-active: var(--sidebar-active-bg, var(--night-active));
+  --settings-panel-surface-active: var(
+    --sidebar-active-bg,
+    var(--night-active)
+  );
   --settings-panel-press: var(--sidebar-active-bg, var(--night-hover));
   --settings-panel-border: var(--sidebar-border-color, var(--night-border));
   --settings-panel-text: var(--sidebar-text-color, var(--night-text));
   --settings-panel-muted: var(--sidebar-muted-color, var(--night-muted));
-  --settings-panel-shadow: var(--sidebar-shadow-elevated, 0 24px 60px rgb(0 0 0 / 45%));
+  --settings-panel-shadow: var(
+    --sidebar-shadow-elevated,
+    0 24px 60px rgb(0 0 0 / 45%)
+  );
   --settings-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
   --settings-panel-overlay: var(--color-overlay);
 }
@@ -114,6 +123,47 @@
   gap: 12px;
   width: var(--settings-panel-nav-width);
   min-height: 0;
+}
+
+/*
+ * 背景：
+ *  - 对话框模式需在侧边栏顶部提供关闭按钮，节奏需与导航按钮一致。
+ * 设计取舍：
+ *  - 沿用 nav-button 的尺寸与过渡，保证视觉韵律；按钮仅在提供 onClose 时渲染。
+ */
+.sidebar-close {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--settings-panel-muted);
+  cursor: pointer;
+  transition:
+    background var(--settings-panel-transition),
+    color var(--settings-panel-transition),
+    transform var(--settings-panel-transition),
+    box-shadow var(--settings-panel-transition);
+}
+
+.sidebar-close:hover {
+  background: var(--settings-panel-surface-hover);
+  color: var(--settings-panel-text);
+}
+
+.sidebar-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--settings-panel-ring);
+}
+
+.sidebar-close-icon {
+  width: 16px;
+  height: 16px;
+  color: inherit;
 }
 
 .nav-title {

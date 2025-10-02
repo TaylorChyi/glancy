@@ -49,6 +49,7 @@ function SettingsModal({ open, onClose, initialTab, onOpenAccountManager }) {
           variant="dialog"
           initialTab={initialTab}
           onOpenAccountManager={onOpenAccountManager}
+          onClose={onClose}
         />
       </SettingsSurface>
     </BaseModal>
