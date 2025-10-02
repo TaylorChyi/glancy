@@ -12,24 +12,40 @@ function SettingsModal({ open, onClose, onOpenAccountManager }) {
   const surfaceTitle = t.prefTitle ?? "Preferences";
   const surfaceDescription = t.prefDescription ?? "";
 
-  const closeAction = useMemo(
-    () => (
-      <button
-        type="button"
-        onClick={onClose}
-        className={styles["close-button"]}
-      >
-        {closeLabel}
-      </button>
-    ),
+  const renderCloseAction = useMemo(
+    () =>
+      /**
+       * 背景：
+       *  - 偏好设置升级为“标签 + 关闭”组合布局，需要在标签栈顶部提供关闭操作。
+       * 设计取舍：
+       *  - 采用渲染函数（Render Props）下发关闭按钮，实现 SettingsModal 持续掌控交互逻辑，
+       *    同时允许 Preferences 决定布局与样式拼装；相比直接传递节点，可在后续注入布局所需
+       *    的 className/aria 属性，避免双向耦合。
+       */
+      ({ className = "", ...slotProps } = {}) => {
+        const composedClassName = [styles["close-button"], className]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <button
+            type="button"
+            onClick={onClose}
+            className={composedClassName}
+            {...slotProps}
+          >
+            {closeLabel}
+          </button>
+        );
+      },
     [closeLabel, onClose],
   );
 
   /**
    * 背景：
-   *  - 设计稿要求设置弹窗复用 SettingsSurface 的标题/描述/动作布局。
+   *  - Modal 仍复用 SettingsSurface 的标题与描述，但关闭按钮交由标签面板统一排布。
    * 关键取舍：
-   *  - 通过 BaseModal 提供的关闭插槽隐藏默认按钮，仅保留 actions 槽中的自定义按钮，保持视觉与焦点顺序统一。
+   *  - 通过 renderCloseAction 将交互逻辑托管于 SettingsModal，避免 Preferences 直接依赖模态层，
+   *    同时禁用 BaseModal 默认关闭按钮，确保视觉层级唯一。
    */
   return (
     <BaseModal
@@ -43,9 +59,11 @@ function SettingsModal({ open, onClose, onOpenAccountManager }) {
         variant="modal"
         title={surfaceTitle}
         description={surfaceDescription}
-        actions={closeAction}
       >
-        <Preferences onOpenAccountManager={onOpenAccountManager} />
+        <Preferences
+          onOpenAccountManager={onOpenAccountManager}
+          renderCloseAction={renderCloseAction}
+        />
       </SettingsSurface>
     </BaseModal>
   );
