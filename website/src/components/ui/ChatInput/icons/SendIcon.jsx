@@ -15,6 +15,12 @@ import PropTypes from "prop-types";
 import ICONS from "@/assets/icons.js";
 
 const SEND_ICON_TOKEN = "paper-airplane";
+/**
+ * 说明：
+ *  - send-button 资产虽已切换为相同纸飞机几何，但其 light/dark 变体仍服务于按钮蒙版，
+ *    若直接引用会让通用图标组件与按钮实现产生耦合；因此继续解析通用的 paper-airplane 令牌。
+ *  - 一旦 icon manifest 支持别名或统一引用，可在保持向后兼容的前提下退化至 send-button 令牌以减少资源冗余。
+ */
 
 const resolveSendIconResource = (registry) => {
   const entry = registry?.[SEND_ICON_TOKEN];
