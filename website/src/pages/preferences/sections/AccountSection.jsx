@@ -1,19 +1,19 @@
 /**
  * 背景：
- *  - 偏好设置面板切换为多标签模式，需要将账号详情渲染拆分为独立展示层以便策略化组合。
+ *  - 偏好设置面板的账号信息此前散落在父组件与布局层，难以在模态与页面之间共享。
  * 目的：
- *  - 以纯展示组件承载账号字段与操作按钮，供父组件在标签策略中复用。
+ *  - 以纯展示 Section 组件承载账号字段、描述及管理入口，供偏好设置的组合式布局复用。
  * 关键决策与取舍：
- *  - 采用“策略模式”：每个标签以组件作为渲染策略，方便未来扩展不同的偏好模块；对比直接在父组件内条件渲染，可避免逻辑膨胀。
+ *  - 组件保持无状态，仅依赖 props 渲染；拒绝在此处触发数据请求，使其适合作为策略模式中的具体策略。
  * 影响范围：
- *  - 仅影响 Preferences 页的“账号”标签渲染，不改动数据获取逻辑。
+ *  - 偏好设置页面与 SettingsModal 的账号分区渲染逻辑。
  * 演进与TODO：
- *  - TODO: 当新增可编辑字段时，在本组件内接入表单控件与验证态展示。
+ *  - TODO: 当后续支持编辑态，可在此扩展表单控件与验证反馈。
  */
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
 
-function AccountPreferencesTab({
+function AccountSection({
   title,
   description,
   fields,
@@ -62,7 +62,7 @@ function AccountPreferencesTab({
   );
 }
 
-AccountPreferencesTab.propTypes = {
+AccountSection.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
   fields: PropTypes.arrayOf(
@@ -79,11 +79,12 @@ AccountPreferencesTab.propTypes = {
   onOpenAccountManager: PropTypes.func,
 };
 
-AccountPreferencesTab.defaultProps = {
+AccountSection.defaultProps = {
   description: "",
   descriptionId: undefined,
   canManageProfile: false,
   onOpenAccountManager: undefined,
 };
 
-export default AccountPreferencesTab;
+export default AccountSection;
+

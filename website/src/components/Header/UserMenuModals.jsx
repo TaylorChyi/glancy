@@ -11,11 +11,11 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [settingsState, setSettingsState] = useState({
     open: false,
-    tab: "general",
+    section: "account",
   });
 
-  const openSettings = useCallback((tab = "general") => {
-    setSettingsState({ open: true, tab });
+  const openSettings = useCallback((section = "account") => {
+    setSettingsState({ open: true, section });
   }, []);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
         onClose={() =>
           setSettingsState((previous) => ({ ...previous, open: false }))
         }
-        initialTab={settingsState.tab}
+        initialSection={settingsState.section}
         onOpenAccountManager={() => setProfileOpen(true)}
       />
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
