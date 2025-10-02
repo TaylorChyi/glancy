@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
 import Layout from "@/components/Layout";
 import FavoritesView from "@/pages/App/FavoritesView.jsx";
@@ -11,7 +12,9 @@ import {
   normalizeWordTargetLanguage,
 } from "@/utils";
 import { useDictionaryExperience } from "./hooks/useDictionaryExperience";
-import useBottomPanelState from "./hooks/useBottomPanelState";
+import useBottomPanelState, {
+  PANEL_MODE_SEARCH,
+} from "./hooks/useBottomPanelState";
 import BottomPanelSwitcher from "./components/BottomPanelSwitcher.jsx";
 import DictionaryActionPanel from "./components/DictionaryActionPanel.jsx";
 import "@/pages/App/App.css";
@@ -70,9 +73,19 @@ export default function DictionaryExperience() {
     handleScrollEscape,
   } = useBottomPanelState({ hasDefinition, text });
 
+  useEffect(() => {
+    // 当面板切回搜索模式时再聚焦输入框，确保 ChatInput 完成重新挂载。
+    if (bottomPanelMode !== PANEL_MODE_SEARCH) {
+      return;
+    }
+    if (!inputRef.current) {
+      return;
+    }
+    focusInput();
+  }, [bottomPanelMode, focusInput, inputRef]);
+
   const handleSearchButtonClick = () => {
     activateSearchMode();
-    focusInput();
   };
 
   const handleInputFocusChange = (focused) => {
