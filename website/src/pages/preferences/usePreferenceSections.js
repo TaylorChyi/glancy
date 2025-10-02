@@ -14,7 +14,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage, useUser } from "@/context";
 import { useApi } from "@/hooks/useApi.js";
 import AccountSection from "./sections/AccountSection.jsx";
-import PlaceholderSection from "./sections/PlaceholderSection.jsx";
+import DataSection from "./sections/DataSection.jsx";
+import GeneralSection from "./sections/GeneralSection.jsx";
+import KeyboardSection from "./sections/KeyboardSection.jsx";
+import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 
 const EMPTY_PROFILE = Object.freeze({ age: "", gender: "" });
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
@@ -162,8 +165,49 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   const manageLabel = t.settingsManageProfile ?? "Manage profile";
 
   const sections = useMemo(() => {
+    const generalLabel = t.settingsTabGeneral ?? "General";
+    const generalSummary =
+      t.settingsGeneralDescription ??
+      "Tune interface languages, theme, and pronunciation defaults.";
+    const generalMessage = pickFirstMeaningfulString(
+      [t.prefDefaultsDescription, t.prefInterfaceDescription, generalSummary],
+      generalSummary,
+    );
+
+    const personalizationLabel =
+      t.settingsTabPersonalization ?? "Personalization";
+    const personalizationSummary =
+      t.settingsPersonalizationDescription ??
+      "Describe your background so answers feel bespoke.";
+    const personalizationMessage = pickFirstMeaningfulString(
+      [t.settingsPersonalizationDescription, t.prefPersonalizationTitle],
+      personalizationSummary,
+    );
+
+    const dataLabel = t.settingsTabData ?? "Data controls";
+    const dataSummary =
+      t.settingsDataDescription ??
+      "Manage how Glancy stores and purges your historical traces.";
+    const dataMessage = pickFirstMeaningfulString(
+      [t.settingsDataNotice, t.settingsDataDescription],
+      dataSummary,
+    );
+
+    const keyboardLabel =
+      t.settingsTabKeyboard ?? "Keyboard shortcuts";
+    const keyboardSummary =
+      t.settingsKeyboardDescription ??
+      "Master Glancy with a curated set of command keys.";
+    const keyboardMessage = pickFirstMeaningfulString(
+      [t.settingsKeyboardDescription, t.prefKeyboardTitle],
+      keyboardSummary,
+    );
+
     const accountLabel = t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
-    const accountDescription = t.settingsAccountDescription ?? "";
+    const accountDescription = pickFirstMeaningfulString(
+      [t.settingsAccountDescription],
+      "Review and safeguard the basics that identify you in Glancy.",
+    );
     const accountFields = [
       {
         id: "username",
@@ -194,11 +238,53 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 
     return [
       {
+        id: "general",
+        label: generalLabel,
+        summary: generalSummary,
+        disabled: false,
+        Component: GeneralSection,
+        componentProps: {
+          title: generalLabel,
+          message: generalMessage,
+        },
+      },
+      {
+        id: "personalization",
+        label: personalizationLabel,
+        summary: personalizationSummary,
+        disabled: false,
+        Component: PersonalizationSection,
+        componentProps: {
+          title: personalizationLabel,
+          message: personalizationMessage,
+        },
+      },
+      {
+        id: "data",
+        label: dataLabel,
+        summary: dataSummary,
+        disabled: false,
+        Component: DataSection,
+        componentProps: {
+          title: dataLabel,
+          message: dataMessage,
+        },
+      },
+      {
+        id: "keyboard",
+        label: keyboardLabel,
+        summary: keyboardSummary,
+        disabled: false,
+        Component: KeyboardSection,
+        componentProps: {
+          title: keyboardLabel,
+          message: keyboardMessage,
+        },
+      },
+      {
         id: "account",
         label: accountLabel,
-        summary:
-          accountDescription ||
-          "Details that travel with your workspace.",
+        summary: accountDescription,
         disabled: false,
         Component: AccountSection,
         componentProps: {
@@ -210,36 +296,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
           onOpenAccountManager,
         },
       },
-      {
-        id: "privacy",
-        label: t.prefPrivacyTitle ?? "Privacy",
-        summary:
-          t.prefPrivacyDescription ??
-          "Control how your presence and data are shared across Glancy.",
-        disabled: false,
-        Component: PlaceholderSection,
-        componentProps: {
-          title: t.prefPrivacyTitle ?? "Privacy",
-          message:
-            t.prefPrivacyPlaceholder ??
-            "Privacy controls are being handcrafted and will arrive soon.",
-        },
-      },
-      {
-        id: "notifications",
-        label: t.prefNotificationsTitle ?? "Notifications",
-        summary:
-          t.prefNotificationsDescription ??
-          "Tune alerts to match your creative rhythm.",
-        disabled: true,
-        Component: PlaceholderSection,
-        componentProps: {
-          title: t.prefNotificationsTitle ?? "Notifications",
-          message:
-            t.prefNotificationsDisabledMessage ??
-            "Notification preferences are managed in the mobile app for now.",
-        },
-      },
     ];
   }, [
     canManageProfile,
@@ -249,19 +305,26 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     profileMeta.age,
     profileMeta.gender,
     t.prefAccountTitle,
-    t.prefNotificationsDescription,
-    t.prefNotificationsDisabledMessage,
-    t.prefNotificationsTitle,
-    t.prefPrivacyDescription,
-    t.prefPrivacyPlaceholder,
-    t.prefPrivacyTitle,
+    t.prefDefaultsDescription,
+    t.prefInterfaceDescription,
+    t.prefKeyboardTitle,
+    t.prefPersonalizationTitle,
     t.settingsAccountAge,
     t.settingsAccountDescription,
     t.settingsAccountEmail,
     t.settingsAccountGender,
     t.settingsAccountPhone,
     t.settingsAccountUsername,
+    t.settingsDataDescription,
+    t.settingsDataNotice,
+    t.settingsGeneralDescription,
+    t.settingsKeyboardDescription,
+    t.settingsPersonalizationDescription,
     t.settingsTabAccount,
+    t.settingsTabData,
+    t.settingsTabGeneral,
+    t.settingsTabKeyboard,
+    t.settingsTabPersonalization,
     user?.email,
     user?.phone,
     user?.username,
