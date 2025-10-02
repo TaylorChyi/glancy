@@ -11,6 +11,16 @@
 }
 
 .panel {
+  /*
+   * 背景：词典动作面板与 ChatInput 属于同一底部工作区，需同步侧边栏色板以维持视觉连续性。
+   * 取舍：与 ChatInput 一致，优先消费 --sidebar-panel / --sidebar-hover-bg，必要时退回 SearchBox 令牌，
+   *       确保未来 SearchBox 在其它模块的主题自洽性不被本地覆写所影响。
+   */
+  --sb-bg: var(--sidebar-panel, var(--sb-surface));
+  --sb-bg-hover: var(
+    --sidebar-hover-bg,
+    color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
+  );
   --padding-y: var(--chat-input-bottom-pad-y, 12px);
   --slot-gap: var(--chat-input-bottom-gap, 12px);
 
