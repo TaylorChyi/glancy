@@ -79,8 +79,11 @@
 }
 
 .footer {
+  --sidebar-footer-padding-top: 12px;
+  --sidebar-footer-padding-bottom: 16px;
+
   margin-top: auto;
-  padding: 12px 0 16px;
+  padding: var(--sidebar-footer-padding-top) 0 var(--sidebar-footer-padding-bottom);
   border-top: 1px solid var(--sidebar-border-color, var(--border));
   background: var(--sidebar-bg, var(--bg));
 }
