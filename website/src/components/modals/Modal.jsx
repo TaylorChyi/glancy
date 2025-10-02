@@ -87,6 +87,8 @@ function Modal({
   closeLabel = "Close",
   closeButton,
   hideDefaultCloseButton = false,
+  ariaLabelledBy,
+  ariaDescribedBy,
 }) {
   useEscapeKey(onClose);
   const contentRef = useRef(null);
@@ -210,6 +212,8 @@ function Modal({
         className={contentClassName}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         ref={contentRef}
         onClick={withStopPropagation()}
@@ -229,6 +233,8 @@ Modal.propTypes = {
   closeLabel: PropTypes.string,
   closeButton: PropTypes.node,
   hideDefaultCloseButton: PropTypes.bool,
+  ariaLabelledBy: PropTypes.string,
+  ariaDescribedBy: PropTypes.string,
 };
 
 export default Modal;

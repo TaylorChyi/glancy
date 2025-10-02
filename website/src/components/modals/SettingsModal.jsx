@@ -14,13 +14,32 @@ import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "./BaseModal.jsx";
 import SettingsBody from "./SettingsBody.jsx";
-import SettingsHeader from "./SettingsHeader.jsx";
 import SettingsNav from "./SettingsNav.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
 import modalStyles from "./SettingsModal.module.css";
 import preferencesStyles from "@/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
+
+// 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
+const buildCloseLabel = (baseLabel, contextLabel) => {
+  const normalizedBase = typeof baseLabel === "string" ? baseLabel.trim() : "";
+  const normalizedContext =
+    typeof contextLabel === "string" ? contextLabel.trim() : "";
+  if (!normalizedBase && !normalizedContext) {
+    return "Close";
+  }
+  if (!normalizedBase) {
+    return normalizedContext;
+  }
+  if (!normalizedContext) {
+    return normalizedBase;
+  }
+  if (normalizedBase.toLowerCase() === normalizedContext.toLowerCase()) {
+    return normalizedBase;
+  }
+  return `${normalizedBase} ${normalizedContext}`;
+};
 
 function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) {
   const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
@@ -29,9 +48,12 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       onOpenAccountManager,
     });
 
+  const resolvedHeadingId = panel.focusHeadingId || panel.modalHeadingId;
+  const resolvedDescriptionId = panel.descriptionId || header.descriptionId;
+
   const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
     activeSectionId,
-    headingId: panel.headingId,
+    headingId: resolvedHeadingId,
   });
 
   const handleSectionSelectWithFocus = useCallback(
@@ -40,6 +62,20 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       handleSectionSelect(section);
     },
     [captureFocusOrigin, handleSectionSelect],
+  );
+
+  const resolvedCloseLabel = useMemo(
+    () => buildCloseLabel(copy.closeLabel, panel.modalHeadingText),
+    [copy.closeLabel, panel.modalHeadingText],
+  );
+
+  const registerFallbackHeading = useCallback(
+    (node) => {
+      if (!panel.headingId) {
+        registerHeading(node);
+      }
+    },
+    [panel.headingId, registerHeading],
   );
 
   const renderCloseAction = useMemo(
@@ -53,12 +89,13 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             type="button"
             onClick={onClose}
             className={composedClassName}
+            aria-label={resolvedCloseLabel}
           >
             {copy.closeLabel}
           </button>
         );
       },
-    [copy.closeLabel, onClose],
+    [copy.closeLabel, onClose, resolvedCloseLabel],
   );
 
   return (
@@ -66,31 +103,11 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       open={open}
       onClose={onClose}
       className={`${modalStyles.dialog} modal-content`}
-      closeLabel={copy.closeLabel}
+      closeLabel={resolvedCloseLabel}
       hideDefaultCloseButton
+      ariaLabelledBy={resolvedHeadingId}
+      ariaDescribedBy={resolvedDescriptionId}
     >
-      <div className={modalStyles["header-region"]}>
-        <SettingsHeader
-          headingId={header.headingId}
-          descriptionId={header.descriptionId}
-          title={copy.title}
-          description={copy.description}
-          planLabel={header.planLabel}
-          avatarProps={{
-            width: 56,
-            height: 56,
-            className: preferencesStyles.avatar,
-          }}
-          classes={{
-            container: preferencesStyles.header,
-            identity: preferencesStyles.identity,
-            identityCopy: preferencesStyles["identity-copy"],
-            plan: preferencesStyles.plan,
-            title: preferencesStyles.title,
-            description: preferencesStyles.description,
-          }}
-        />
-      </div>
       <SettingsBody
         className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
       >
@@ -111,11 +128,21 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
           }}
         />
         <form
-          aria-labelledby={header.headingId}
-          aria-describedby={header.descriptionId}
+          aria-labelledby={resolvedHeadingId}
+          aria-describedby={resolvedDescriptionId}
           className={modalStyles.form}
           onSubmit={handleSubmit}
         >
+          {!panel.headingId ? (
+            <h2
+              id={panel.modalHeadingId}
+              className={modalStyles["visually-hidden"]}
+              ref={registerFallbackHeading}
+            >
+              {/* 在缺失业务 heading 时提供隐藏标题以维持无障碍语义。 */}
+              {panel.modalHeadingText || copy.title}
+            </h2>
+          ) : null}
           <SettingsPanel
             panelId={panel.panelId}
             tabId={panel.tabId}
@@ -125,7 +152,7 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
           >
             {activeSection ? (
               <activeSection.Component
-                headingId={panel.headingId}
+                headingId={panel.headingId || panel.modalHeadingId}
                 descriptionId={panel.descriptionId}
                 {...activeSection.componentProps}
               />

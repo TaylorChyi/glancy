@@ -10,13 +10,14 @@
  * 演进与TODO：
  *  - TODO: 当新增分区或引入懒加载时，可在此处扩展蓝图数组或接入数据缓存策略。
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage, useUser } from "@/context";
 import { useApi } from "@/hooks/useApi.js";
 import AccountSection from "./sections/AccountSection.jsx";
 import PlaceholderSection from "./sections/PlaceholderSection.jsx";
 
 const EMPTY_PROFILE = Object.freeze({ age: "", gender: "" });
+const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
 const sanitizeActiveSectionId = (candidateId, sections) => {
   if (!sections || sections.length === 0) {
@@ -40,6 +41,19 @@ const mapToDisplayValue = (candidate, fallbackValue) => {
     return fallbackValue;
   }
   return String(candidate);
+};
+
+const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") {
+      continue;
+    }
+    const trimmed = candidate.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+  return typeof fallbackValue === "string" ? fallbackValue.trim() : "";
 };
 
 /**
@@ -124,6 +138,7 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   const fallbackValue = t.settingsEmptyValue ?? "—";
   const tablistLabel = t.prefTablistLabel ?? "Preference sections";
   const closeLabel = t.close ?? "Close";
+  const modalTitle = t.prefTitle ?? "Preferences";
 
   const planLabel = useMemo(() => {
     if (!user) {
@@ -255,6 +270,11 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   const [activeSectionId, setActiveSectionId] = useState(() =>
     sanitizeActiveSectionId(initialSectionId, sections),
   );
+  const hasAppliedInitialRef = useRef(false);
+  const previousInitialRef = useRef(initialSectionId);
+  const previousSanitizedInitialRef = useRef(
+    sanitizeActiveSectionId(initialSectionId, sections),
+  );
 
   useEffect(() => {
     setActiveSectionId((current) => {
@@ -264,10 +284,25 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   }, [sections]);
 
   useEffect(() => {
-    setActiveSectionId((current) => {
-      const sanitized = sanitizeActiveSectionId(initialSectionId, sections);
-      return sanitized === current ? current : sanitized;
-    });
+    const nextInitial = sanitizeActiveSectionId(initialSectionId, sections);
+    const initialChanged = previousInitialRef.current !== initialSectionId;
+    const sanitizedChanged = previousSanitizedInitialRef.current !== nextInitial;
+    const shouldSync =
+      !hasAppliedInitialRef.current || initialChanged || sanitizedChanged;
+
+    if (!shouldSync) {
+      return undefined;
+    }
+
+    hasAppliedInitialRef.current = true;
+    previousInitialRef.current = initialSectionId;
+    previousSanitizedInitialRef.current = nextInitial;
+
+    setActiveSectionId((current) =>
+      current === nextInitial ? current : nextInitial,
+    );
+
+    return undefined;
   }, [initialSectionId, sections]);
 
   const activeSection = useMemo(
@@ -297,9 +332,15 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     ? `${activeSection.id}-section-description`
     : "";
 
+  const resolvedModalHeadingText = pickFirstMeaningfulString(
+    [activeSection?.componentProps?.title, activeSection?.label],
+    modalTitle,
+  );
+  const focusHeadingId = panelHeadingId || FALLBACK_MODAL_HEADING_ID;
+
   return {
     copy: {
-      title: t.prefTitle ?? "Preferences",
+      title: modalTitle,
       description,
       tablistLabel,
       closeLabel,
@@ -319,6 +360,9 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       tabId,
       headingId: panelHeadingId,
       descriptionId: panelDescriptionId,
+      focusHeadingId,
+      modalHeadingId: FALLBACK_MODAL_HEADING_ID,
+      modalHeadingText: resolvedModalHeadingText,
     },
   };
 }
