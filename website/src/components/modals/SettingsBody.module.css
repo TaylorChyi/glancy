@@ -1,0 +1,100 @@
+/**
+ * 背景：
+ *  - SettingsBody 迁移到组件内维护网格与滚动，避免页面/模态重复编排布局细节。
+ * 目的：
+ *  - 定义双栏布局与滚动策略，确保左右区域在模态及独立页面中都能保持可预测的高度与滚动行为。
+ * 关键决策与取舍：
+ *  - 采用 CSS Grid 生成列宽，通过 CSS 自定义属性暴露安全边距与列间距，便于调用方主题化。
+ *  - 左右列分别封装滚动容器，防止外层遮罩承担滚动职责，保障 body 锁定逻辑持续生效。
+ * 影响范围：
+ *  - SettingsModal、Preferences 页面、后续重用 SettingsBody 的容器。
+ * 演进与TODO：
+ *  - TODO: 视需要扩展 data-stack 属性以支持抽屉式导航等更复杂的交互模式。
+ */
+
+.container {
+  display: grid;
+  grid-template-columns: var(--settings-body-grid-template, minmax(220px, 0.36fr) minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--settings-body-column-gap, 36px);
+  max-height: calc(100vh - var(--settings-body-safe-area, 160px));
+  min-height: 0;
+  width: 100%;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.nav-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nav-scroller {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  padding-right: 4px;
+}
+
+.nav-scroller > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.content-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content-scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  padding-right: 4px;
+}
+
+@media (width <= 1023px) {
+  .container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    max-height: none;
+    gap: var(--settings-body-column-gap-mobile, 28px);
+  }
+
+  .nav-column {
+    overflow: visible;
+  }
+
+  .nav-scroller {
+    flex: none;
+    max-height: none;
+    overflow: hidden auto;
+    padding-right: 0;
+    padding-bottom: 6px;
+    scroll-padding-inline: 16px;
+    scrollbar-gutter: auto;
+  }
+
+  .nav-scroller > * {
+    min-width: max-content;
+  }
+
+  .content-scroller {
+    max-height: none;
+    padding-right: 0;
+  }
+}
