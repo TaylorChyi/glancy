@@ -285,23 +285,28 @@
   height: var(--btn-action, 44px);
   border: none;
   border-radius: 999px;
-  background: var(--sb-cta);
+  background: transparent;
   color: var(--sb-cta-icon);
-  box-shadow: var(--sb-cta-shadow);
   cursor: pointer;
   transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    background-color 0.2s ease;
+    color 0.2s ease,
+    outline-color 0.2s ease,
+    outline-width 0.2s ease,
+    transform 0.2s ease;
+  outline: 1px solid transparent;
+  outline-offset: 2px;
 }
 
 .action-button:hover {
-  box-shadow: var(--sb-cta-shadow-hover, 0 12px 32px rgb(0 0 0 / 32%));
+  color: var(
+    --sb-cta-icon-hover,
+    color-mix(in srgb, var(--sb-cta-icon) 80%, white 20%)
+  );
 }
 
 .action-button:focus-visible {
-  outline: none;
-  box-shadow: var(--ring-focus), var(--sb-cta-shadow);
+  outline: 2px solid
+    var(--sb-cta-outline, color-mix(in srgb, var(--sb-cta-icon) 72%, white 28%));
 }
 
 .action-button:active {
@@ -311,11 +316,19 @@
 .action-button[disabled] {
   cursor: not-allowed;
   opacity: 0.5;
-  box-shadow: none;
+  color: var(--sb-muted-icon, currentColor);
 }
 
 .action-button-voice[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--sb-cta) 85%, black 15%);
+  color: var(
+    --sb-cta-icon-active,
+    color-mix(in srgb, var(--sb-cta-icon) 65%, white 35%)
+  );
+  outline: 2px solid
+    var(
+      --sb-cta-outline-active,
+      color-mix(in srgb, var(--sb-cta-icon) 60%, white 40%)
+    );
 }
 
 .action-button-icon {
