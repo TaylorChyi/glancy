@@ -145,7 +145,7 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
           <span
             aria-hidden="true"
             class="action-button-icon"
-            data-icon-name="paper-airplane"
+            data-icon-name="send-button"
             style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
           />
         </button>
@@ -153,4 +153,19 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
     </div>
   </form>
 </div>
+`;
+
+exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSendActionButtonMarkup 1`] = `
+<button
+  aria-label="发送"
+  class="action-button action-button-send"
+  type="button"
+>
+  <span
+    aria-hidden="true"
+    class="action-button-icon"
+    data-icon-name="send-button"
+    style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+  />
+</button>
 `;
