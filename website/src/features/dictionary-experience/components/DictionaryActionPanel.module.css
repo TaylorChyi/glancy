@@ -23,7 +23,32 @@
     var(--btn-action, 44px)
   );
   --dictionary-panel-icon-size: 18px;
-  --dictionary-panel-icon-color: var(--sb-text);
+
+  /*
+   * 背景：词典动作区与 OutputToolbar 共享同一批交互图标，若颜色脱节将导致跨面板体验割裂。
+   * 取舍：直接复用 OutputToolbar 的色彩配方，确保默认/悬停/禁用状态在亮暗主题下表现一致；
+   *       如未来需要差异化某些动作，只需覆写下方的 --dictionary-panel-icon-* 令牌而无需回退到 --sb-text。
+   */
+  --dictionary-panel-icon-color: color-mix(
+    in srgb,
+    var(--color-text-secondary) 88%,
+    transparent
+  );
+  --dictionary-panel-icon-color-hover: color-mix(
+    in srgb,
+    var(--accent-color) 82%,
+    var(--app-color) 18%
+  );
+  --dictionary-panel-icon-color-active: color-mix(
+    in srgb,
+    var(--accent-color) 78%,
+    var(--app-color) 22%
+  );
+  --dictionary-panel-icon-color-disabled: color-mix(
+    in srgb,
+    var(--color-text-tertiary) 92%,
+    transparent
+  );
 
   /*
    * 背景：原先通过 ::before 伪元素绘制顶部 1px 分隔线，但在深色背景下造成强对比。
@@ -49,11 +74,8 @@
   --tool-button-opacity-disabled: 0.32;
   --tool-button-focus-ring-color: var(--ring-focus);
   --toolbar-icon-color: var(--dictionary-panel-icon-color);
-  --toolbar-icon-color-disabled: color-mix(
-    in srgb,
-    var(--dictionary-panel-icon-color) 40%,
-    transparent
-  );
+  --toolbar-icon-color-hover: var(--dictionary-panel-icon-color-hover);
+  --toolbar-icon-color-disabled: var(--dictionary-panel-icon-color-disabled);
 }
 
 .search-toggle :global(svg) {
