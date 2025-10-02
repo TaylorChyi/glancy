@@ -16,6 +16,7 @@ import PropTypes from "prop-types";
 
 import ICONS from "@/assets/icons.js";
 import { useTheme } from "@/context/ThemeContext";
+import useMaskSupport from "./useMaskSupport.js";
 
 const VOICE_ICON_TOKEN = "voice-button";
 
@@ -63,12 +64,18 @@ const defaultFallback = ({ className, iconName = VOICE_ICON_TOKEN }) => (
 function VoiceIcon({ className, fallback }) {
   const { resolvedTheme } = useTheme();
   const iconRegistry = ICONS;
+  const isMaskSupported = useMaskSupport();
+  const effectiveFallback = fallback ?? defaultFallback;
   // 说明：保持“解析 → 构建遮罩 → 注入背景”三段式模板，结合 useMemo 缓存结果以支撑主题切换与未来动画扩展。
 
   const maskStyle = useMemo(() => {
+    if (!isMaskSupported) {
+      return null;
+    }
+
     const resource = resolveVoiceIconResource(iconRegistry, resolvedTheme);
     return buildVoiceIconMaskStyle(resource);
-  }, [iconRegistry, resolvedTheme]);
+  }, [iconRegistry, isMaskSupported, resolvedTheme]);
 
   const inlineStyle = useMemo(() => {
     if (!maskStyle) {
@@ -82,7 +89,7 @@ function VoiceIcon({ className, fallback }) {
   }, [maskStyle]);
 
   if (!inlineStyle) {
-    return fallback({ className, iconName: VOICE_ICON_TOKEN });
+    return effectiveFallback({ className, iconName: VOICE_ICON_TOKEN });
   }
 
   return (

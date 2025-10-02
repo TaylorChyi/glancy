@@ -16,6 +16,7 @@ import PropTypes from "prop-types";
 
 import { useTheme } from "@/context";
 import ICONS from "@/assets/icons.js";
+import useMaskSupport from "./useMaskSupport.js";
 
 const SEND_ICON_TOKEN = "send-button";
 /**
@@ -72,14 +73,20 @@ const defaultFallback = ({ className }) => (
 
 function SendIcon({ className, fallback }) {
   const { resolvedTheme = "light" } = useTheme() ?? {};
+  const isMaskSupported = useMaskSupport();
+  const effectiveFallback = fallback ?? defaultFallback;
 
   const inlineStyle = useMemo(() => {
+    if (!isMaskSupported) {
+      return null;
+    }
+
     const resource = resolveSendIconResource(ICONS, resolvedTheme);
     return buildSendIconInlineStyle(resource);
-  }, [resolvedTheme]);
+  }, [isMaskSupported, resolvedTheme]);
 
   if (!inlineStyle) {
-    return fallback({ className, iconName: SEND_ICON_TOKEN });
+    return effectiveFallback({ className, iconName: SEND_ICON_TOKEN });
   }
 
   return (
