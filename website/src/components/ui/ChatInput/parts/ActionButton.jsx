@@ -15,7 +15,7 @@ import { useCallback } from "react";
 import PropTypes from "prop-types";
 
 import styles from "../ChatInput.module.css";
-import { SendIcon } from "../icons";
+import { SendIcon, VoiceIcon } from "../icons";
 
 const ACTION_BUTTON_COOLDOWN_MS = 500;
 
@@ -71,7 +71,7 @@ function ActionButton({
       {isSendState ? (
         <SendIcon className={styles["action-button-icon"]} />
       ) : (
-        <span className={styles["action-button-dot"]} />
+        <VoiceIcon className={styles["action-button-icon"]} />
       )}
     </button>
   );
