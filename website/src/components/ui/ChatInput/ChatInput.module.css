@@ -198,7 +198,17 @@
   gap: 0;
 }
 
+/*
+ * 背景说明：语言缩写需要固定容积以保持箭头与动作按钮对齐。
+ *  - 选用 4ch 结合 tabular-nums 提供稳定的等宽节奏，避免切换语言时触发抖动。
+ *  - 暴露 --seg-code-width 便于未来适配更长徽标，无需改动组件结构。
+ */
 .language-trigger-code {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--seg-code-width, 4ch);
+  letter-spacing: normal;
   font-variant-numeric: tabular-nums;
 }
 

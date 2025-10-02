@@ -89,6 +89,7 @@
 .tabs-region {
   position: relative;
   display: flex;
+
   --preferences-close-offset: 68px;
 }
 
