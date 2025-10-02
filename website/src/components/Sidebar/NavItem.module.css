@@ -111,6 +111,11 @@
   background: transparent;
 }
 
+.flat:hover,
+.flat:focus-visible {
+  background: var(--sidebar-hover-bg, var(--hover));
+}
+
 .flat::before {
   display: none;
 }
@@ -118,6 +123,11 @@
 .flat-active {
   background: transparent;
   color: var(--sidebar-color, var(--text));
+}
+
+.flat-active:hover,
+.flat-active:focus-visible {
+  background: var(--sidebar-active-bg, var(--active));
 }
 
 .flat-active::before {
@@ -129,6 +139,13 @@
 .flat-active.item[aria-current="page"] {
   background: transparent;
   color: var(--sidebar-color, var(--text));
+}
+
+.flat.item[aria-current="page"]:hover,
+.flat.item[aria-current="page"]:focus-visible,
+.flat-active.item[aria-current="page"]:hover,
+.flat-active.item[aria-current="page"]:focus-visible {
+  background: var(--sidebar-active-bg, var(--active));
 }
 
 .flat.item[aria-current="page"]::before,
