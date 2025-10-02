@@ -87,7 +87,6 @@ function Preferences({
               nav: styles.tabs,
               button: styles.tab,
               label: styles["tab-label"],
-              summary: styles["tab-summary"],
               actionButton: styles["close-button"],
             }}
           />

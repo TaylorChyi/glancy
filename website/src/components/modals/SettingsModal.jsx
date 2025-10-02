@@ -125,7 +125,6 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             nav: preferencesStyles.tabs,
             button: preferencesStyles.tab,
             label: preferencesStyles["tab-label"],
-            summary: preferencesStyles["tab-summary"],
             actionButton: preferencesStyles["close-button"],
           }}
         />
