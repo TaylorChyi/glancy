@@ -1,902 +1,246 @@
 /**
  * 背景：
- *  - 主题系统扩展到浅色时，原本写死在容器变量上的暗色值无法复用。
+ *  - 偏好设置回归账户信息展示，需要重塑单列面板的视觉节奏。
  * 目的：
- *  - 为偏好面板提供暗/浅两套令牌映射，并沿用既有 `--sidebar-*` 设计语言。
+ *  - 提供奢侈品级极简的账户摘要样式，兼容暗/浅/系统三种主题令牌。
  * 关键决策与取舍：
- *  - 暗色分支继续锚定 night token，保持当前感知；浅色分支复用侧边栏 light token，避免重复维护颜色。
- *  - 额外抽象 `--settings-panel-surface-active` 与 `--settings-panel-press`，确保常规/激活/按压层级在两套主题中语义一致。
+ *  - 沿用原有设置面板配色变量，删除多标签与语音预览遗留样式。
+ *  - 通过柔和的层次与充足留白凸显关键信息，为未来编辑态预留空间。
  * 影响范围：
- *  - 仅偏好设置面板依赖的 CSS 变量；其他页面未引用这些变量不受影响。
+ *  - 仅作用于 Preferences 页面。
  * 演进与TODO：
- *  - 若后续引入更多主题，可在此处扩展新的 :root 分支，或改由主题模块集中注入。
+ *  - TODO: 当引入更多字段或编辑态时扩展交互状态（hover/focus/disabled）。
  */
 
-.container {
-  --settings-panel-radius: 16px;
-  --settings-panel-nav-width: 280px;
-  --settings-panel-padding-x: 32px;
-  --settings-panel-padding-y: 28px;
-  --settings-panel-gap: 24px;
-  --settings-panel-row-gap: 18px;
-  --settings-panel-row-height: 56px;
-  --settings-panel-max-width: min(92vw, 960px);
-  --settings-panel-min-width: 720px;
-  --settings-panel-max-height: 86vh;
-  --settings-panel-transition: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--settings-panel-nav-width) minmax(0, 1fr);
-  gap: var(--settings-panel-gap);
-  width: 100%;
-  max-width: var(--settings-panel-max-width);
-  min-width: min(100%, var(--settings-panel-min-width));
-  max-height: var(--settings-panel-max-height);
-  padding: var(--settings-panel-padding-y) var(--settings-panel-padding-x);
-  border-radius: var(--settings-panel-radius);
-  background: var(--settings-panel-bg);
-  color: var(--settings-panel-text);
-  box-shadow: var(--settings-panel-shadow);
-  overflow: hidden;
+.content {
+  display: flex;
+  justify-content: center;
+  padding: 56px 24px 72px;
 }
 
-:global(:root[data-theme="dark"]) .container,
-:global(:root:not([data-theme])) .container {
-  --settings-panel-bg: var(--night-panel);
-  --settings-panel-surface: var(--night-active);
-  --settings-panel-surface-hover: var(--night-hover);
-  --settings-panel-surface-active: var(--night-active);
-  --settings-panel-press: var(--night-hover);
-  --settings-panel-border: var(--night-border);
-  --settings-panel-text: var(--night-text);
-  --settings-panel-muted: var(--night-muted);
-  --settings-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
-  --settings-panel-ring: var(--night-input-ring);
-  --settings-panel-overlay: var(--color-overlay-strong);
+.form {
+  --preferences-panel-bg: var(--night-panel);
+  --preferences-panel-border: rgb(255 255 255 / 12%);
+  --preferences-panel-text: var(--night-text);
+  --preferences-panel-muted: var(--night-muted);
+  --preferences-panel-ring: var(--night-input-ring);
+  --preferences-panel-surface: rgb(255 255 255 / 6%);
+  --preferences-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
+  --preferences-panel-accent: linear-gradient(135deg, #5a8bff, #4c6fff);
+  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
+
+  width: min(720px, 100%);
+  padding: 44px;
+  border-radius: 20px;
+  border: 1px solid var(--preferences-panel-border);
+  background: var(--preferences-panel-bg);
+  box-shadow: var(--preferences-panel-shadow);
+  color: var(--preferences-panel-text);
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
 }
 
-:global(:root[data-theme="light"]) .container {
-  /*
-   * 主题映射：
-   *  - 所有颜色引用现有 light 面板令牌，确保与侧栏、弹层等组件风格一致。
-   */
-  --settings-panel-bg: var(--sidebar-panel, var(--neutral-0));
-  --settings-panel-surface: var(--sidebar-panel, var(--neutral-0));
-  --settings-panel-surface-hover: var(--sidebar-hover-bg, rgb(15 17 21 / 6%));
-  --settings-panel-surface-active: var(
-    --sidebar-active-bg,
-    rgb(15 17 21 / 12%)
-  );
-  --settings-panel-press: var(--sidebar-active-bg, rgb(15 17 21 / 12%));
-  --settings-panel-border: var(--sidebar-border-color, #d9dde7);
-  --settings-panel-text: var(--sidebar-text-color, var(--text-primary-light));
-  --settings-panel-muted: var(
-    --sidebar-muted-color,
-    color-mix(in srgb, var(--text-primary-light) 55%, transparent)
-  );
-  --settings-panel-shadow: var(
+:global(:root[data-theme="light"]) .form {
+  --preferences-panel-bg: var(--sidebar-panel, var(--neutral-0));
+  --preferences-panel-border: var(--sidebar-border-color, #d9dde7);
+  --preferences-panel-text: var(--sidebar-text-color, #1f232b);
+  --preferences-panel-muted: var(--sidebar-muted-color, #6f7585);
+  --preferences-panel-ring: var(--sidebar-input-ring, #cfd4e2);
+  --preferences-panel-surface: rgb(15 17 21 / 6%);
+  --preferences-panel-shadow: var(
     --sidebar-shadow-elevated,
     0 18px 42px rgb(31 35 43 / 16%)
   );
-  --settings-panel-ring: var(--sidebar-input-ring, #cfd4e2);
-  --settings-panel-overlay: var(--color-overlay);
+  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
 }
 
-:global(:root[data-theme="system"]) .container {
-  /*
-   * 系统主题跟随：
-   *  - 变量值挂靠在 `--sidebar-*` 令牌上，让浏览器 `prefers-color-scheme` 接管明暗切换。
-   */
-  --settings-panel-bg: var(--sidebar-panel, var(--night-panel));
-  --settings-panel-surface: var(--sidebar-panel, var(--night-active));
-  --settings-panel-surface-hover: var(--sidebar-hover-bg, var(--night-hover));
-  --settings-panel-surface-active: var(
-    --sidebar-active-bg,
-    var(--night-active)
+:global(:root[data-theme="system"]) .form {
+  --preferences-panel-bg: var(--sidebar-panel, var(--night-panel));
+  --preferences-panel-border: var(--sidebar-border-color, var(--night-border));
+  --preferences-panel-text: var(--sidebar-text-color, var(--night-text));
+  --preferences-panel-muted: var(--sidebar-muted-color, var(--night-muted));
+  --preferences-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
+  --preferences-panel-surface: color-mix(
+    in srgb,
+    var(--sidebar-panel, var(--night-panel)) 92%,
+    transparent
   );
-  --settings-panel-press: var(--sidebar-active-bg, var(--night-hover));
-  --settings-panel-border: var(--sidebar-border-color, var(--night-border));
-  --settings-panel-text: var(--sidebar-text-color, var(--night-text));
-  --settings-panel-muted: var(--sidebar-muted-color, var(--night-muted));
-  --settings-panel-shadow: var(
+  --preferences-panel-shadow: var(
     --sidebar-shadow-elevated,
     0 24px 60px rgb(0 0 0 / 45%)
   );
-  --settings-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
-  --settings-panel-overlay: var(--color-overlay);
+  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 30%);
 }
 
-.page {
-  margin: 40px auto;
-  width: min(100%, var(--settings-panel-max-width));
-}
-
-.surface {
-  position: relative;
-  display: contents;
-}
-
-.sidebar {
+.header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: var(--settings-panel-nav-width);
-  min-height: 0;
+  gap: 20px;
 }
 
-/*
- * 背景：
- *  - 对话框模式需在侧边栏顶部提供关闭按钮，节奏需与导航按钮一致。
- * 设计取舍：
- *  - 沿用 nav-button 的尺寸与过渡，保证视觉韵律；按钮仅在提供 onClose 时渲染。
- */
-.sidebar-close {
-  align-self: flex-end;
-  display: inline-flex;
+.identity {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--settings-panel-muted);
-  cursor: pointer;
-  transition:
-    background var(--settings-panel-transition),
-    color var(--settings-panel-transition),
-    transform var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
+  gap: 18px;
 }
 
-.sidebar-close:hover {
-  background: var(--settings-panel-surface-hover);
-  color: var(--settings-panel-text);
+.avatar {
+  width: 56px;
+  height: 56px;
 }
 
-.sidebar-close:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
+.identity-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.sidebar-close-icon {
-  width: 16px;
-  height: 16px;
-  color: inherit;
-}
-
-.nav-title {
+.plan {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--settings-panel-muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--preferences-panel-muted);
 }
 
-.nav-list {
+.title {
   margin: 0;
-  padding: 8px 4px 8px 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-}
-
-.nav-item {
-  display: contents;
-}
-
-.nav-button {
-  position: relative;
-  display: grid;
-  grid-template-columns: 8px 20px auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--settings-panel-muted);
-  font-size: 14px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background var(--settings-panel-transition),
-    color var(--settings-panel-transition),
-    transform var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
-}
-
-.nav-button:hover {
-  background: var(--settings-panel-surface-hover);
-  color: var(--settings-panel-text);
-}
-
-.nav-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
-}
-
-.nav-button-active {
-  background: var(--settings-panel-surface-active);
-  color: var(--settings-panel-text);
-}
-
-.nav-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: transparent;
-  transform: scale(0.4);
-  transition:
-    transform var(--settings-panel-transition),
-    background var(--settings-panel-transition);
-}
-
-.nav-button-active .nav-dot {
-  background: var(--settings-panel-text);
-  transform: scale(1);
-}
-
-.nav-icon {
-  width: 18px;
-  height: 18px;
-  color: inherit;
-}
-
-.nav-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.content {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 0;
-  min-width: 0;
-  min-height: 0;
-}
-
-.content-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 20px;
-}
-
-.content-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   line-height: 1.2;
+  color: var(--preferences-panel-text);
 }
 
-.content-description {
+.description {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--settings-panel-muted);
-}
-
-.section-stack {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  padding-right: 4px;
-  overflow-y: auto;
-  padding-bottom: 24px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--preferences-panel-muted);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
+  padding: 32px;
+  border-radius: 18px;
+  border: 1px solid var(--preferences-panel-border);
+  background: var(--preferences-panel-surface);
 }
 
 .section-header {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 
 .section-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
+  color: var(--preferences-panel-text);
 }
 
 .section-description {
   margin: 0;
-  font-size: 13px;
-  color: var(--settings-panel-muted);
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
 }
 
-.section-body {
-  border: 1px solid var(--settings-panel-border);
-  border-radius: 14px;
-  overflow: hidden;
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 96%,
-    transparent
-  );
-}
-
-.row {
+.details {
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  min-height: var(--settings-panel-row-height);
-  padding: 12px 20px;
+  gap: 18px;
 }
 
-.row-top {
-  align-items: flex-start;
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: baseline;
 }
 
-.row-control {
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.row-top .row-control {
-  align-self: stretch;
-}
-
-.row + .row {
-  border-top: 1px solid var(--settings-panel-border);
-}
-
-.row-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.row-label-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--settings-panel-text);
-}
-
-.row-label-description {
+.detail-label {
+  margin: 0;
   font-size: 13px;
-  color: var(--settings-panel-muted);
-  line-height: 1.45;
-}
-
-.row-control-full {
-  width: 100%;
-  justify-content: flex-start;
-}
-
-.row-control-full > * {
-  width: 100%;
-}
-
-.pill-select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-width: 180px;
-}
-
-.pill-native {
-  width: 100%;
-  min-height: 36px;
-  padding: 0 36px 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--settings-panel-border);
-  background: var(--settings-panel-surface);
-  color: var(--settings-panel-text);
-  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  appearance: none;
-  cursor: pointer;
-  transition:
-    background-color var(--settings-panel-transition),
-    border-color var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition),
-    color var(--settings-panel-transition);
+  color: var(--preferences-panel-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.pill-native:focus-visible {
-  outline: none;
-  border-color: var(--settings-panel-ring);
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
+.detail-value {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--preferences-panel-text);
+  overflow-wrap: break-word;
 }
 
-.pill-native:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
-}
-
-.pill-native:hover:not(:disabled) {
-  background: var(--settings-panel-surface-hover);
-}
-
-.pill-select-icon {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: var(--settings-panel-muted);
-}
-
-.play-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--settings-panel-border);
-  background: var(--settings-panel-surface);
-  color: var(--settings-panel-text);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color var(--settings-panel-transition),
-    transform var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition),
-    border-color var(--settings-panel-transition);
-}
-
-.play-button[data-active="true"] {
-  background: var(--settings-panel-press);
-}
-
-.play-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
-}
-
-.play-button:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
-}
-
-.play-button:hover:not(:disabled) {
-  background: var(--settings-panel-surface-hover);
-}
-
-.content-footer {
+.footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 20px;
-  border-top: 1px solid var(--settings-panel-border);
-  margin-top: 24px;
+  padding-top: 26px;
+  border-top: 1px solid var(--preferences-panel-border);
 }
 
-.primary-button {
+.manage-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 160px;
-  min-height: 42px;
-  padding: 0 24px;
-  border-radius: 999px;
+  min-width: 176px;
+  min-height: 44px;
+  padding: 0 28px;
   border: none;
-  background: linear-gradient(135deg, #5a8bff, #4c6fff);
+  border-radius: 999px;
+  background: var(--preferences-panel-accent);
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition:
-    transform var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.primary-button:focus-visible {
+.manage-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgb(76 111 255 / 40%);
+  box-shadow: 0 0 0 3px var(--preferences-panel-ring);
 }
 
-.primary-button:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.primary-button:hover:not(:disabled) {
+.manage-button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgb(76 111 255 / 35%);
+  box-shadow: var(--preferences-panel-accent-shadow);
 }
 
-.shortcut-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.manage-button:active {
+  transform: translateY(0);
 }
 
-.shortcut-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  border-radius: 14px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 90%,
-    transparent
-  );
-}
-
-.shortcut-key {
-  font-family:
-    SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 92%,
-    transparent
-  );
-  color: var(--settings-panel-text);
-}
-
-.shortcut-label {
-  font-size: 13px;
-  color: var(--settings-panel-muted);
-}
-
-.data-card {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 94%,
-    transparent
-  );
-}
-
-.data-description {
-  margin: 0;
-  font-size: 13px;
-  color: var(--settings-panel-muted);
-  line-height: 1.6;
-}
-
-.data-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid var(--settings-panel-border);
-  background: transparent;
-  color: var(--settings-panel-text);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color var(--settings-panel-transition),
-    border-color var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
-}
-
-.secondary-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
-}
-
-.secondary-button:hover:not(:disabled) {
-  background: var(--settings-panel-surface-hover);
-}
-
-.section-columns {
-  display: grid;
-  gap: 18px;
-}
-
-.switch-row {
-  justify-content: space-between;
-}
-
-.switch {
-  position: relative;
-  width: 48px;
-  height: 26px;
-}
-
-.switch input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-}
-
-.switch span {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--settings-panel-border) 55%, transparent);
-  transition:
-    background-color var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
-}
-
-.switch span::after {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: var(--settings-panel-text);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 24%);
-  transition:
-    transform var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
-}
-
-.switch input:checked + span {
-  background: linear-gradient(135deg, #5a8bff, #4c6fff);
-}
-
-.switch input:checked + span::after {
-  transform: translateX(22px);
-}
-
-.switch input:focus-visible + span {
-  outline: none;
-  box-shadow: 0 0 0 2px rgb(76 111 255 / 45%);
-}
-
-.input-control {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 14px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 92%,
-    transparent
-  );
-  color: var(--settings-panel-text);
-  font-size: 14px;
-  font-weight: 500;
-  transition:
-    border-color var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition),
-    background-color var(--settings-panel-transition);
-}
-
-.input-control:focus-visible {
-  outline: none;
-  border-color: var(--settings-panel-ring);
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
-}
-
-.input-control:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
-}
-
-.input-area {
-  width: 100%;
-  padding: 14px 18px;
-  border-radius: 14px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 92%,
-    transparent
-  );
-  color: var(--settings-panel-text);
-  font-size: 14px;
-  line-height: 1.6;
-  resize: vertical;
-  min-height: 120px;
-  transition:
-    border-color var(--settings-panel-transition),
-    box-shadow var(--settings-panel-transition);
-}
-
-.input-area:focus-visible {
-  outline: none;
-  border-color: var(--settings-panel-ring);
-  box-shadow: 0 0 0 2px var(--settings-panel-ring);
-}
-
-.input-area:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
-}
-
-.inline-field {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.account-card {
-  display: grid;
-  gap: 18px;
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid var(--settings-panel-border);
-  background: color-mix(
-    in srgb,
-    var(--settings-panel-surface) 92%,
-    transparent
-  );
-}
-
-.account-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.account-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.account-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--settings-panel-text);
-}
-
-.account-plan {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--settings-panel-muted);
-}
-
-.account-rows dt {
-  margin: 0;
-  font-size: 13px;
-  color: var(--settings-panel-muted);
-}
-
-.account-rows dd {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.account-rows {
-  display: grid;
-  gap: 12px;
-}
-
-.account-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: var(--settings-panel-text);
-}
-
-.account-row dd {
-  margin: 0;
-  color: var(--settings-panel-muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nav-button,
-  .pill-native,
-  .play-button,
-  .primary-button,
-  .secondary-button,
-  .switch span,
-  .switch span::after {
-    transition: none;
-  }
-}
-
-@media (width <= 1023px) {
-  .container {
-    grid-template-columns: 240px minmax(0, 1fr);
-
-    --settings-panel-nav-width: 240px;
-  }
-}
-
-@media (width <= 900px) {
-  .container {
-    grid-template-columns: 220px minmax(0, 1fr);
-
-    --settings-panel-nav-width: 220px;
+@media (width <= 768px) {
+  .form {
+    padding: 32px 24px;
+    gap: 32px;
   }
 
-  .nav-list {
-    max-height: 60vh;
-  }
-}
-
-@media (width <= 760px) {
-  .container {
-    grid-template-columns: 1fr;
-    min-width: auto;
-    width: 100%;
+  .section {
     padding: 24px;
   }
 
-  .sidebar {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 8px;
-  }
-
-  .nav-list {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    padding-bottom: 4px;
-  }
-
-  .nav-button {
-    grid-template-columns: 8px auto;
-    padding: 0 14px;
-    min-height: 44px;
-  }
-
-  .nav-icon {
-    display: none;
-  }
-
-  .content {
-    padding-top: 12px;
-  }
-
-  .row {
+  .detail-row {
     grid-template-columns: 1fr;
-    justify-items: flex-start;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .row-control {
-    justify-self: flex-start;
-  }
-
-  .content-footer {
+  .footer {
     justify-content: stretch;
   }
 
-  .primary-button {
+  .manage-button {
     width: 100%;
   }
 }
