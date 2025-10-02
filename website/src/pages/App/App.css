@@ -24,10 +24,9 @@
 
 .display {
   position: relative;
-  width: min(100%, 960px);
+  width: min(100%, var(--sb-max-width, 960px));
   margin: 0 auto;
-  padding: clamp(24px, 5vw, 32px) clamp(20px, 5vw, 28px)
-    clamp(40px, 6vh, 56px);
+  padding: clamp(24px, 5vw, 32px) clamp(20px, 5vw, 28px) clamp(40px, 6vh, 56px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -102,5 +101,4 @@
   .stream-text {
     padding: clamp(16px, 6vw, 22px);
   }
-
 }
