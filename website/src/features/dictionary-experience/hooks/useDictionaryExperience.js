@@ -138,6 +138,33 @@ export function useDictionaryExperience() {
     inputRef.current?.focus();
   }, []);
 
+  /**
+   * 意图：集中回收词典首页所依赖的查询状态，保证任意入口返回首页时体验一致。
+   * 输入：无显式参数，通过闭包访问当前 Hook 状态。
+   * 输出：副作用：终止流式查询、清空释义相关状态并重置视图聚焦。
+   * 流程：
+   *  1) 终止仍在运行的查询以避免竞争态；
+   *  2) 归零释义/版本/加载等状态，恢复收藏与历史侧边栏的关闭态；
+   *  3) 聚焦输入框，方便继续输入。
+   * 错误处理：取消查询失败时由内部控制器保障幂等。
+   * 复杂度：O(1)；只操作常量数量的状态。
+   * 设计取舍：集中重置可避免散落在多处的清理逻辑发生漂移，相比逐处手动设置可显著降低未来新增状态时的遗漏风险。
+   */
+  const resetDictionaryHomeState = useCallback(() => {
+    cancelActiveLookup();
+    setEntry(null);
+    setFinalText("");
+    setStreamText("");
+    setLoading(false);
+    setVersions([]);
+    setActiveVersionId(null);
+    setCurrentTermKey(null);
+    setCurrentTerm("");
+    setShowFavorites(false);
+    setShowHistory(false);
+    focusInput();
+  }, [cancelActiveLookup, focusInput]);
+
   const { toggleFavoriteEntry } = useAppShortcuts({
     inputRef,
     lang,
@@ -151,10 +178,8 @@ export function useDictionaryExperience() {
   });
 
   const handleShowDictionary = useCallback(() => {
-    setShowFavorites(false);
-    setShowHistory(false);
-    focusInput();
-  }, [focusInput]);
+    resetDictionaryHomeState();
+  }, [resetDictionaryHomeState]);
 
   const handleShowFavorites = useCallback(() => {
     setShowFavorites(true);
@@ -673,18 +698,10 @@ export function useDictionaryExperience() {
 
   useEffect(() => {
     if (!user) {
-      setEntry(null);
+      resetDictionaryHomeState();
       setText("");
-      setShowFavorites(false);
-      setShowHistory(false);
-      setStreamText("");
-      setFinalText("");
-      setVersions([]);
-      setActiveVersionId(null);
-      setCurrentTermKey(null);
-      setCurrentTerm("");
     }
-  }, [user]);
+  }, [user, resetDictionaryHomeState]);
 
   const activeSidebarView = useMemo(() => {
     if (showFavorites) return "favorites";
