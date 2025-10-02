@@ -16,6 +16,16 @@
  *  - 窄屏：降级为单列栈结构，divider 退化为横向描边，完全移除 flex-wrap 带来的换行抖动。
  */
 .input-surface {
+  /*
+   * 背景：底部输入区需与侧边栏保持同一面板色调，避免跨页面底部区域割裂。
+   * 取舍：优先读取 --sidebar-panel / --sidebar-hover-bg，缺省时回落到 SearchBox 内建 token，
+   *       以免影响未来复用 SearchBox 的其它场景。
+   */
+  --sb-bg: var(--sidebar-panel, var(--sb-surface));
+  --sb-bg-hover: var(
+    --sidebar-hover-bg,
+    color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
+  );
   --padding-y: 0;
   --slot-gap: 0;
 
