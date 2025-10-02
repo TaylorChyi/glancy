@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
 import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
@@ -79,6 +79,29 @@ export default function DictionaryExperience() {
     handleScrollEscape,
   } = useBottomPanelState({ hasDefinition, text });
 
+  const dictionaryActionBarViewModel = useMemo(() => {
+    if (!dictionaryActionBarProps || typeof dictionaryActionBarProps !== "object") {
+      return dictionaryActionBarProps;
+    }
+
+    const originalReoutput = dictionaryActionBarProps.onReoutput;
+    if (typeof originalReoutput !== "function") {
+      return dictionaryActionBarProps;
+    }
+
+    /**
+     * 背景：重试释义源于动作面板，但语义属于“重新触发搜索”。
+     * 取舍：在此处包裹回调，统一经由底部面板状态机切回搜索模式，
+     *       避免在工具栏或 Hook 内部散落切换逻辑，保持模式职责单一。
+     */
+    const wrappedReoutput = (...args) => {
+      activateSearchMode();
+      return originalReoutput(...args);
+    };
+
+    return { ...dictionaryActionBarProps, onReoutput: wrappedReoutput };
+  }, [activateSearchMode, dictionaryActionBarProps]);
+
   useEffect(() => {
     // 当面板切回搜索模式时再聚焦输入框，确保 ChatInput 完成重新挂载。
     if (bottomPanelMode !== PANEL_MODE_SEARCH) {
@@ -152,7 +175,7 @@ export default function DictionaryExperience() {
         actionsContent={
           hasDefinition ? (
             <DictionaryActionPanel
-              actionBarProps={dictionaryActionBarProps ?? {}}
+              actionBarProps={dictionaryActionBarViewModel ?? {}}
               onRequestSearch={handleSearchButtonClick}
               searchButtonLabel={t?.returnToSearch || "切换到搜索输入"}
             />

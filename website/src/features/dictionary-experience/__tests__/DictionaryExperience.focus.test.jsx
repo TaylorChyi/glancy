@@ -20,12 +20,13 @@ import { jest } from "@jest/globals";
 const focusInputMock = jest.fn();
 const inputRef = { current: null };
 const handleVoiceMock = jest.fn();
+const handleReoutputMock = jest.fn();
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   __esModule: true,
   useDictionaryExperience: jest.fn(() => ({
     inputRef,
-    t: { returnToSearch: "返回搜索" },
+    t: { returnToSearch: "返回搜索", reoutput: "重试释义" },
     text: "",
     setText: jest.fn(),
     dictionarySourceLanguage: "en",
@@ -52,7 +53,7 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     finalText: "",
     streamText: "",
     loading: false,
-    dictionaryActionBarProps: {},
+    dictionaryActionBarProps: { onReoutput: handleReoutputMock },
     displayClassName: "dictionary-experience",
     popupOpen: false,
     popupMsg: "",
@@ -171,10 +172,17 @@ jest.unstable_mockModule("../components/BottomPanelSwitcher.jsx", () => ({
 
 jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
   __esModule: true,
-  default: ({ onRequestSearch, searchButtonLabel }) => (
-    <button type="button" onClick={onRequestSearch}>
-      {searchButtonLabel}
-    </button>
+  default: ({ onRequestSearch, searchButtonLabel, actionBarProps }) => (
+    <div>
+      <button type="button" onClick={onRequestSearch}>
+        {searchButtonLabel}
+      </button>
+      {actionBarProps?.onReoutput ? (
+        <button type="button" onClick={actionBarProps.onReoutput}>
+          重试释义
+        </button>
+      ) : null}
+    </div>
   ),
 }));
 
@@ -187,6 +195,7 @@ describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
     focusInputMock.mockClear();
     handleVoiceMock.mockClear();
+    handleReoutputMock.mockClear();
     inputRef.current = null;
   });
 
@@ -214,6 +223,37 @@ describe("DictionaryExperience focus management", () => {
     await user.click(searchButton);
 
     await waitFor(() => {
+      expect(screen.getByRole("textbox")).toBeInTheDocument();
+      expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
+    });
+  });
+
+  /**
+   * 测试目标：验证点击“重试释义”按钮会触发重试逻辑并回落至搜索模式。
+   * 前置条件：底部面板初始处于 actions 模式且暴露 onReoutput 回调。
+   * 步骤：
+   *  1) 渲染 DictionaryExperience 并确认无搜索输入；
+   *  2) 点击“重试释义”按钮；
+   * 断言：
+   *  - onReoutput 被调用一次；
+   *  - ChatInput 重新挂载（表示模式切换至 search）；
+   *  - focusInput 被再次调用，确保聚焦恢复。
+   * 边界/异常：
+   *  - 若重试按钮在无释义场景下隐藏，该用例需同步调整前置条件。
+   */
+  test("Given_actionsPanel_When_retryDefinition_Then_switchToSearchAndFocusInput", async () => {
+    const user = userEvent.setup();
+    render(<DictionaryExperience />);
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+
+    const retryButton = screen.getByRole("button", { name: "重试释义" });
+    const initialFocusCalls = focusInputMock.mock.calls.length;
+
+    await user.click(retryButton);
+
+    await waitFor(() => {
+      expect(handleReoutputMock).toHaveBeenCalledTimes(1);
       expect(screen.getByRole("textbox")).toBeInTheDocument();
       expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
     });
@@ -298,7 +338,7 @@ describe("DictionaryExperience focus management", () => {
       finalText: "",
       streamText: "",
       loading: false,
-      dictionaryActionBarProps: {},
+      dictionaryActionBarProps: { onReoutput: jest.fn() },
       displayClassName: "library-view",
       popupOpen: false,
       popupMsg: "",
