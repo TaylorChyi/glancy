@@ -280,3 +280,52 @@ test("GivenDisabledTab_WhenClicked_ThenActiveSelectionRemains", async () => {
   expect(accountTab).toHaveAttribute("aria-selected", "true");
   expect(notificationsTab).toHaveAttribute("aria-selected", "false");
 });
+
+/**
+ * 测试目标：验证传入 renderCloseAction 时关闭按钮在标签区域可见并触发回调。
+ * 前置条件：renderCloseAction 返回带有自定义 className 的按钮，onClose 回调为 jest.fn。
+ * 步骤：
+ *  1) 渲染 Preferences，传入 renderCloseAction。
+ *  2) 等待 profile 请求完成。
+ *  3) 点击关闭按钮。
+ * 断言：
+ *  - 渲染钩子被调用并接收到布局层提供的 className。
+ *  - 关闭按钮位于标签列表之前且点击后触发 onClose。
+ * 边界/异常：
+ *  - 若渲染钩子未调用或按钮未触发回调则失败。
+ */
+test(
+  "GivenCloseRenderer_WhenRendered_ThenButtonVisibleAndOnCloseInvoked",
+  async () => {
+    const handleClose = jest.fn();
+    const renderCloseAction = jest.fn(({ className }) => (
+      <button
+        type="button"
+        onClick={handleClose}
+        className={`custom-class ${className}`}
+      >
+        Close
+      </button>
+    ));
+
+    render(<Preferences renderCloseAction={renderCloseAction} />);
+
+    await waitFor(() => expect(fetchProfile).toHaveBeenCalledTimes(1));
+
+    expect(renderCloseAction).toHaveBeenCalledTimes(1);
+    expect(renderCloseAction.mock.calls[0][0].className).toBeTruthy();
+
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    const tablist = screen.getByRole("tablist");
+    expect(closeButton.className).toMatch(/custom-class/);
+    expect(
+      closeButton.compareDocumentPosition(tablist) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    const user = userEvent.setup();
+    await user.click(closeButton);
+
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  },
+);

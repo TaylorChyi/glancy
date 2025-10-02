@@ -44,7 +44,11 @@ const mapToDisplayValue = (candidate, fallbackValue) => {
   return String(candidate);
 };
 
-function Preferences({ onOpenAccountManager, initialTabId }) {
+function Preferences({
+  onOpenAccountManager,
+  initialTabId,
+  renderCloseAction,
+}) {
   const { t } = useLanguage();
   const { user } = useUser();
   const api = useApi();
@@ -134,6 +138,20 @@ function Preferences({ onOpenAccountManager, initialTabId }) {
   );
 
   const manageLabel = t.settingsManageProfile ?? "Manage profile";
+
+  const closeAction = useMemo(() => {
+    if (typeof renderCloseAction !== "function") {
+      return null;
+    }
+    /**
+     * 背景：
+     *  - Modal 关闭操作需要在标签区域中保持固定位置。
+     * 关键取舍：
+     *  - 通过渲染钩子注入布局层的 className，以组合 SettingsModal 的视觉风格与页面布局，
+     *    比直接引用按钮节点更利于未来扩展可访问属性或动画能力。
+     */
+    return renderCloseAction({ className: styles["close-button"] });
+  }, [renderCloseAction]);
 
   const tabBlueprints = useMemo(() => {
     const accountLabel = t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
@@ -308,38 +326,43 @@ function Preferences({ onOpenAccountManager, initialTabId }) {
           ) : null}
         </header>
         <div className={styles.body}>
-          <nav
-            aria-label={tablistLabel}
-            aria-orientation="vertical"
-            className={styles.tabs}
-            role="tablist"
-          >
-            {tabBlueprints.map((tab) => {
-              const currentTabId = `${tab.id}-tab`;
-              const currentPanelId = `${tab.id}-panel`;
-              const isActive = tab.id === activeTabId;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  id={currentTabId}
-                  aria-controls={currentPanelId}
-                  aria-selected={isActive}
-                  tabIndex={isActive ? 0 : -1}
-                  disabled={tab.disabled}
-                  className={styles.tab}
-                  data-state={isActive ? "active" : "inactive"}
-                  onClick={() => handleTabSelect(tab)}
-                >
-                  <span className={styles["tab-label"]}>{tab.label}</span>
-                  {tab.summary ? (
-                    <span className={styles["tab-summary"]}>{tab.summary}</span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </nav>
+          <div className={styles["tabs-region"]}>
+            {closeAction ? (
+              <div className={styles["close-action"]}>{closeAction}</div>
+            ) : null}
+            <nav
+              aria-label={tablistLabel}
+              aria-orientation="vertical"
+              className={styles.tabs}
+              role="tablist"
+            >
+              {tabBlueprints.map((tab) => {
+                const currentTabId = `${tab.id}-tab`;
+                const currentPanelId = `${tab.id}-panel`;
+                const isActive = tab.id === activeTabId;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    id={currentTabId}
+                    aria-controls={currentPanelId}
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    disabled={tab.disabled}
+                    className={styles.tab}
+                    data-state={isActive ? "active" : "inactive"}
+                    onClick={() => handleTabSelect(tab)}
+                  >
+                    <span className={styles["tab-label"]}>{tab.label}</span>
+                    {tab.summary ? (
+                      <span className={styles["tab-summary"]}>{tab.summary}</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
           <div
             role="tabpanel"
             id={panelId}
@@ -363,11 +386,13 @@ function Preferences({ onOpenAccountManager, initialTabId }) {
 Preferences.propTypes = {
   onOpenAccountManager: PropTypes.func,
   initialTabId: PropTypes.string,
+  renderCloseAction: PropTypes.func,
 };
 
 Preferences.defaultProps = {
   onOpenAccountManager: undefined,
   initialTabId: undefined,
+  renderCloseAction: undefined,
 };
 
 export default Preferences;

@@ -86,11 +86,30 @@
   align-items: flex-start;
 }
 
+.tabs-region {
+  position: relative;
+  display: flex;
+  --preferences-close-offset: 68px;
+}
+
+.close-action {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+}
+
+.close-button {
+  width: auto;
+}
+
 .tabs {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px;
+  width: 100%;
+  padding: calc(var(--preferences-close-offset) + 12px) 12px 12px;
   border-radius: 18px;
   border: 1px solid var(--preferences-panel-border);
   background: color-mix(
@@ -337,10 +356,14 @@
     gap: 28px;
   }
 
+  .tabs-region {
+    --preferences-close-offset: 76px;
+  }
+
   .tabs {
     flex-direction: row;
     overflow-x: auto;
-    padding: 10px;
+    padding: calc(var(--preferences-close-offset) + 10px) 10px 10px;
     gap: 10px;
   }
 
