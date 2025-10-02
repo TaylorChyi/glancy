@@ -16,6 +16,7 @@ import { jest } from "@jest/globals";
 
 const iconRegistry = {};
 const mockUseTheme = jest.fn();
+const mockUseMaskSupport = jest.fn(() => true);
 
 jest.unstable_mockModule("@/assets/icons.js", () => ({
   default: iconRegistry,
@@ -23,6 +24,12 @@ jest.unstable_mockModule("@/assets/icons.js", () => ({
 
 jest.unstable_mockModule("@/context", () => ({
   useTheme: mockUseTheme,
+}));
+
+jest.unstable_mockModule("../useMaskSupport.js", () => ({
+  __esModule: true,
+  default: mockUseMaskSupport,
+  useMaskSupport: mockUseMaskSupport,
 }));
 
 const { default: SendIcon } = await import("../SendIcon.jsx");
@@ -40,18 +47,16 @@ describe("SendIcon", () => {
 
   beforeEach(() => {
     mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
+    mockUseMaskSupport.mockReturnValue(true);
     iconRegistry["send-button"] = {
       light: "/light.svg",
       dark: "/dark.svg",
     };
-    global.CSS.supports.mockReturnValue(true);
-    if (typeof window !== "undefined") {
-      window.CSS.supports.mockReturnValue(true);
-    }
   });
 
   afterEach(() => {
     mockUseTheme.mockReset();
+    mockUseMaskSupport.mockReset();
     delete iconRegistry["send-button"];
   });
 
@@ -129,21 +134,18 @@ describe("SendIcon", () => {
   });
 
   /**
-   * 测试目标：当运行环境不支持 CSS mask 时，应立即退回到 SVG fallback。
-   * 前置条件：CSS.supports 返回 false，注册表仍提供可用资源。
+   * 测试目标：当 useMaskSupport 返回 false 时，应直接渲染 SVG fallback，验证渐进增强降级链路。
+   * 前置条件：mockUseMaskSupport 返回 false，注册表仍提供资源。
    * 步骤：
-   *  1) mock CSS.supports 恒为 false。
-   *  2) 渲染 SendIcon 并捕获 fallback。
+   *  1) 将 mockUseMaskSupport 配置为 false。
+   *  2) 渲染 SendIcon。
    * 断言：
-   *  - fallback 被调用一次且渲染结果存在。
+   *  - 渲染结构中包含 fallback SVG。
    * 边界/异常：
-   *  - 若未来新增浏览器特判，此用例需扩展断言覆盖。
+   *  - 若未来新增多级回退，此用例需扩展断言覆盖具体结构。
    */
-  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackSvg", () => {
-    global.CSS.supports.mockReturnValue(false);
-    if (typeof window !== "undefined") {
-      window.CSS.supports.mockReturnValue(false);
-    }
+  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackSvg", () => {
+    mockUseMaskSupport.mockReturnValueOnce(false);
 
     const { container } = render(<SendIcon className="icon" />);
 
