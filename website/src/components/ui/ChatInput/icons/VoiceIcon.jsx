@@ -11,17 +11,27 @@
  * 演进与TODO：
  *  - 若需针对录音态展示波形动画，可扩展 props 注入不同的遮罩资源或动画类名。
  */
+import { useMemo } from "react";
 import PropTypes from "prop-types";
 
 import ICONS from "@/assets/icons.js";
+import { useTheme } from "@/context/ThemeContext";
 
 const VOICE_ICON_TOKEN = "voice-button";
 
-const resolveVoiceIconResource = (registry) => {
+const resolveVoiceIconResource = (registry, resolvedTheme) => {
   const entry = registry?.[VOICE_ICON_TOKEN];
+
   if (!entry) {
     return null;
   }
+
+  const themeAlignedVariant = resolvedTheme ? entry?.[resolvedTheme] : null;
+
+  if (themeAlignedVariant) {
+    return themeAlignedVariant;
+  }
+
   return entry.single ?? entry.light ?? entry.dark ?? null;
 };
 
@@ -36,34 +46,42 @@ const buildVoiceIconMaskStyle = (resource) => {
   });
 };
 
-const VOICE_ICON_MASK_STYLE = buildVoiceIconMaskStyle(
-  resolveVoiceIconResource(ICONS),
-);
-
-const VOICE_ICON_INLINE_STYLE =
-  VOICE_ICON_MASK_STYLE === null
-    ? null
-    : Object.freeze({
-        ...VOICE_ICON_MASK_STYLE,
-        backgroundColor: "currentColor",
-      });
-
 // 注：选用麦克风轮廓而非圆点，可直接传达语音含义并避免在暗色主题下失真。
-const defaultFallback = ({ className }) => (
+const defaultFallback = ({ className, iconName = VOICE_ICON_TOKEN }) => (
   <svg
     aria-hidden="true"
     className={className}
     viewBox="0 0 1024 1024"
     fill="currentColor"
     xmlns="http://www.w3.org/2000/svg"
-    data-icon-name={VOICE_ICON_TOKEN}
+    data-icon-name={iconName}
   >
     <path d="M512 128C417.707 128 341.333 204.373 341.333 298.667v256c0 94.293 76.373 170.667 170.667 170.667s170.667-76.373 170.667-170.667V298.667c0-94.293-76.373-170.667-170.667-170.667zm213.333 298.667v85.333c0 117.76-95.573 213.333-213.333 213.333s-213.333-95.573-213.333-213.333v-85.333H213.333v85.333c0 150.613 111.36 274.347 256 295.253V896h85.333v-88.747c144.64-20.907 256-144.64 256-295.253v-85.333h-85.333z" />
   </svg>
 );
 
 function VoiceIcon({ className, fallback }) {
-  if (!VOICE_ICON_INLINE_STYLE) {
+  const { resolvedTheme } = useTheme();
+  const iconRegistry = ICONS;
+  // 说明：保持“解析 → 构建遮罩 → 注入背景”三段式模板，结合 useMemo 缓存结果以支撑主题切换与未来动画扩展。
+
+  const maskStyle = useMemo(() => {
+    const resource = resolveVoiceIconResource(iconRegistry, resolvedTheme);
+    return buildVoiceIconMaskStyle(resource);
+  }, [iconRegistry, resolvedTheme]);
+
+  const inlineStyle = useMemo(() => {
+    if (!maskStyle) {
+      return null;
+    }
+
+    return Object.freeze({
+      ...maskStyle,
+      backgroundColor: "currentColor",
+    });
+  }, [maskStyle]);
+
+  if (!inlineStyle) {
     return fallback({ className, iconName: VOICE_ICON_TOKEN });
   }
 
@@ -72,7 +90,7 @@ function VoiceIcon({ className, fallback }) {
       aria-hidden="true"
       className={className}
       data-icon-name={VOICE_ICON_TOKEN}
-      style={VOICE_ICON_INLINE_STYLE}
+      style={inlineStyle}
     />
   );
 }
