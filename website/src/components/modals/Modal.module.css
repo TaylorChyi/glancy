@@ -2,11 +2,11 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--settings-dialog-gap-md);
   background: rgb(0 0 0 / 60%);
-  overflow: auto;
   animation: sheet-overlay-fade 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 

@@ -80,25 +80,35 @@
 }
 
 .body {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.36fr) minmax(0, 1fr);
-  gap: 36px;
-  align-items: flex-start;
+  --settings-body-safe-area: 184px;
+  --settings-body-column-gap: 36px;
+  --settings-body-grid-template: minmax(220px, 0.36fr) minmax(0, 1fr);
+  --settings-body-column-gap-mobile: 28px;
 }
 
 .tabs-region {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: stretch;
+  min-height: 0;
+  padding-block: 4px;
 
   --preferences-close-offset: 68px;
 }
 
 .close-action {
-  position: absolute;
+  position: sticky;
   top: 12px;
-  left: 12px;
   z-index: 2;
   display: flex;
+  justify-content: flex-start;
+  align-self: flex-start;
+  padding-left: 12px;
+  margin-bottom: -8px;
 }
 
 .close-button {
@@ -110,6 +120,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  flex: 1;
+  min-height: 0;
   padding: calc(var(--preferences-close-offset) + 12px) 12px 12px;
   border-radius: 18px;
   border: 1px solid var(--preferences-panel-border);
@@ -353,19 +365,30 @@
   }
 
   .body {
-    grid-template-columns: 1fr;
-    gap: 28px;
+    --settings-body-safe-area: 112px;
+    --settings-body-grid-template: 1fr;
   }
 
   .tabs-region {
-    --preferences-close-offset: 76px;
+    position: static;
+    gap: 12px;
+    padding-block: 0;
+
+    --preferences-close-offset: 64px;
+  }
+
+  .close-action {
+    position: static;
+    padding-left: 0;
+    margin-bottom: 0;
   }
 
   .tabs {
+    flex: none;
     flex-direction: row;
-    overflow-x: auto;
-    padding: calc(var(--preferences-close-offset) + 10px) 10px 10px;
     gap: 10px;
+    min-height: auto;
+    padding: calc(var(--preferences-close-offset) + 10px) 10px 10px;
   }
 
   .tab {
