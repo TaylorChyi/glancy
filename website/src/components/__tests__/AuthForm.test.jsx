@@ -30,43 +30,27 @@ jest.unstable_mockModule("@/context", () => ({
   }),
 }));
 
+const createDualVariant = (token) => ({
+  light: {
+    src: `/assets/${token}-light.svg`,
+    content: `<svg data-icon="${token}-light"></svg>`,
+  },
+  dark: {
+    src: `/assets/${token}-dark.svg`,
+    content: `<svg data-icon="${token}-dark"></svg>`,
+  },
+});
+
 const iconRegistry = {
-  "glancy-web": {
-    light: "/assets/glancy-web-light.svg",
-    dark: "/assets/glancy-web-dark.svg",
-  },
-  user: {
-    light: "/assets/user-light.svg",
-    dark: "/assets/user-dark.svg",
-  },
-  email: {
-    light: "/assets/email-light.svg",
-    dark: "/assets/email-dark.svg",
-  },
-  phone: {
-    light: "/assets/phone-light.svg",
-    dark: "/assets/phone-dark.svg",
-  },
-  wechat: {
-    light: "/assets/wechat-light.svg",
-    dark: "/assets/wechat-dark.svg",
-  },
-  apple: {
-    light: "/assets/apple-light.svg",
-    dark: "/assets/apple-dark.svg",
-  },
-  google: {
-    light: "/assets/google-light.svg",
-    dark: "/assets/google-dark.svg",
-  },
-  eye: {
-    light: "/assets/eye-light.svg",
-    dark: "/assets/eye-dark.svg",
-  },
-  "eye-off": {
-    light: "/assets/eye-off-light.svg",
-    dark: "/assets/eye-off-dark.svg",
-  },
+  "glancy-web": createDualVariant("glancy-web"),
+  user: createDualVariant("user"),
+  email: createDualVariant("email"),
+  phone: createDualVariant("phone"),
+  wechat: createDualVariant("wechat"),
+  apple: createDualVariant("apple"),
+  google: createDualVariant("google"),
+  eye: createDualVariant("eye"),
+  "eye-off": createDualVariant("eye-off"),
 };
 
 jest.unstable_mockModule("@/assets/icons.js", () => ({
@@ -111,10 +95,8 @@ describe("AuthForm", () => {
         method: "username",
       }),
     );
-    expect(screen.getByAltText("Glancy")).toHaveAttribute(
-      "src",
-      iconRegistry["glancy-web"].light,
-    );
+    const brandIcon = screen.getByRole("img", { name: "Glancy" });
+    expect(brandIcon.innerHTML).toContain("data-icon=\"glancy-web-light\"");
     expect(asFragment()).toMatchSnapshot();
   });
 

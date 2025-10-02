@@ -27,9 +27,9 @@ jest.unstable_mockModule("@/context/ThemeContext", () => ({
 
 const voiceRegistry = {
   "voice-button": {
-    light: "voice-light.svg",
-    dark: "voice-dark.svg",
-    single: "voice-single.svg",
+    light: { src: "voice-light.svg", content: "<svg>light</svg>" },
+    dark: { src: "voice-dark.svg", content: "<svg>dark</svg>" },
+    single: { src: "voice-single.svg", content: "<svg>single</svg>" },
   },
 };
 

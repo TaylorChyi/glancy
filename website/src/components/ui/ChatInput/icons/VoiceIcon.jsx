@@ -20,6 +20,19 @@ import useMaskSupport from "./useMaskSupport.js";
 
 const VOICE_ICON_TOKEN = "voice-button";
 
+// 说明：运行时与测试桩可能混用字符串与对象，此处统一适配以复用遮罩逻辑。
+const normaliseIconAsset = (candidate) => {
+  if (!candidate) {
+    return null;
+  }
+
+  if (typeof candidate === "string") {
+    return { src: candidate };
+  }
+
+  return candidate;
+};
+
 const resolveVoiceIconResource = (registry, resolvedTheme) => {
   const entry = registry?.[VOICE_ICON_TOKEN];
 
@@ -27,20 +40,34 @@ const resolveVoiceIconResource = (registry, resolvedTheme) => {
     return null;
   }
 
-  const themeAlignedVariant = resolvedTheme ? entry?.[resolvedTheme] : null;
+  const themeAlignedVariant = resolvedTheme
+    ? normaliseIconAsset(entry?.[resolvedTheme])
+    : null;
 
-  if (themeAlignedVariant) {
+  if (themeAlignedVariant?.src) {
     return themeAlignedVariant;
   }
 
-  return entry.single ?? entry.light ?? entry.dark ?? null;
+  const fallbackSequence = [entry.single, entry.light, entry.dark];
+
+  for (const candidate of fallbackSequence) {
+    const normalised = normaliseIconAsset(candidate);
+
+    if (normalised?.src) {
+      return normalised;
+    }
+  }
+
+  return null;
 };
 
 const buildVoiceIconMaskStyle = (resource) => {
-  if (!resource) {
+  const payload = normaliseIconAsset(resource);
+
+  if (!payload?.src) {
     return null;
   }
-  const maskFragment = `url(${resource}) center / contain no-repeat`;
+  const maskFragment = `url(${payload.src}) center / contain no-repeat`;
   return Object.freeze({
     mask: maskFragment,
     WebkitMask: maskFragment,

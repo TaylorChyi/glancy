@@ -7,15 +7,27 @@ describe("buildDynamicRegistry", () => {
    * 确保在浅色与深色主题间切换时能够命中既有素材。
    */
   test("aggregates theme variants into a single registry entry", () => {
-    const registry = buildDynamicRegistry({
-      "./icons/eye-light.svg": "/assets/eye-light.svg",
-      "./icons/eye-dark.svg": "/assets/eye-dark.svg",
-      "./logos/wechat.svg": "/assets/wechat.svg",
-    });
+    const registry = buildDynamicRegistry(
+      {
+        "./icons/eye-light.svg": "/assets/eye-light.svg",
+        "./icons/eye-dark.svg": "/assets/eye-dark.svg",
+        "./logos/wechat.svg": "/assets/wechat.svg",
+      },
+      {
+        "./icons/eye-light.svg": "<svg>light</svg>",
+        "./icons/eye-dark.svg": "<svg>dark</svg>",
+        "./logos/wechat.svg": "<svg>wechat</svg>",
+      },
+    );
 
     expect(registry).toEqual({
-      eye: { light: "/assets/eye-light.svg", dark: "/assets/eye-dark.svg" },
-      wechat: { single: "/assets/wechat.svg" },
+      eye: {
+        light: { src: "/assets/eye-light.svg", content: "<svg>light</svg>" },
+        dark: { src: "/assets/eye-dark.svg", content: "<svg>dark</svg>" },
+      },
+      wechat: {
+        single: { src: "/assets/wechat.svg", content: "<svg>wechat</svg>" },
+      },
     });
   });
 
@@ -24,15 +36,27 @@ describe("buildDynamicRegistry", () => {
    * 仍能提取出正确的图标名称并关联到原始 SVG 素材，避免回退占位符。
    */
   test("normalises windows style paths to keep original svg assets", () => {
-    const registry = buildDynamicRegistry({
-      ".\\icons\\send-button-light.svg": "/assets/send-button-light.svg",
-      ".\\icons\\send-button-dark.svg": "/assets/send-button-dark.svg",
-    });
+    const registry = buildDynamicRegistry(
+      {
+        ".\\icons\\send-button-light.svg": "/assets/send-button-light.svg",
+        ".\\icons\\send-button-dark.svg": "/assets/send-button-dark.svg",
+      },
+      {
+        ".\\icons\\send-button-light.svg": "<svg>mask-light</svg>",
+        ".\\icons\\send-button-dark.svg": "<svg>mask-dark</svg>",
+      },
+    );
 
     expect(registry).toEqual({
       "send-button": {
-        light: "/assets/send-button-light.svg",
-        dark: "/assets/send-button-dark.svg",
+        light: {
+          src: "/assets/send-button-light.svg",
+          content: "<svg>mask-light</svg>",
+        },
+        dark: {
+          src: "/assets/send-button-dark.svg",
+          content: "<svg>mask-dark</svg>",
+        },
       },
     });
   });

@@ -83,7 +83,8 @@ describe("Sidebar/UserMenu", () => {
   const openHelpSubmenu = async () => {
     fireEvent.click(screen.getByRole("button", { name: "Alice" }));
     const helpTrigger = await screen.findByRole("menuitem", { name: /帮助/ });
-    fireEvent.click(helpTrigger);
+    fireEvent.focus(helpTrigger);
+    fireEvent.mouseEnter(helpTrigger);
     let menus = [];
     await waitFor(() => {
       menus = screen.getAllByRole("menu");

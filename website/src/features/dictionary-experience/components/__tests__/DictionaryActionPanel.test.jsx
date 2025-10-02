@@ -101,7 +101,7 @@ describe("DictionaryActionPanel", () => {
     );
 
     const searchBox = screen.getByTestId("dictionary-action-panel");
-    expect(searchBox.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBox.parentElement).toHaveClass(styles["panel-shell"]);
 
     rerender(
       <DictionaryActionPanel
@@ -117,6 +117,8 @@ describe("DictionaryActionPanel", () => {
     const searchBoxAfterRerender = screen.getByTestId(
       "dictionary-action-panel",
     );
-    expect(searchBoxAfterRerender.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBoxAfterRerender.parentElement).toHaveClass(
+      styles["panel-shell"],
+    );
   });
 });

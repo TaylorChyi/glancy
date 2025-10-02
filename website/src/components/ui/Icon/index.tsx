@@ -33,6 +33,26 @@ type IconRoleClass = keyof typeof ROLE_CLASSNAME_MAP;
 
 type LegacyTone = "auto" | "light" | "dark";
 
+type IconVariantKey = "single" | "light" | "dark";
+
+type IconAssetPayload = {
+  src?: string;
+  content?: string;
+};
+
+type IconRegistry = Record<
+  string,
+  Partial<Record<IconVariantKey, IconAssetPayload>>
+>;
+
+const ICON_VARIANT_PRIORITY: readonly IconVariantKey[] = [
+  "single",
+  "light",
+  "dark",
+];
+
+const registry = ICONS as IconRegistry;
+
 type BaseIconProps = {
   name: string;
   className?: string;
@@ -85,12 +105,59 @@ const composeClassName = (
   external?: string,
 ) => [base, ROLE_CLASSNAME_MAP[roleClass], external].filter(Boolean).join(" ");
 
-const resolveIconSrc = (name: string) => {
-  const entry = ICONS[name];
+/**
+ * 意图：统一包装元素的尺寸与配色策略，避免内联 SVG 因属性缺失而退化为黑色。
+ * 输入：可选的 style、width、height；width/height 支持 number 或 string。
+ * 输出：合并后的 CSSProperties，保留调用方传入的色彩设置。
+ * 流程：
+ *  1) 基于传入 style 创建浅拷贝，避免突变调用方；
+ *  2) 若 width/height 未在 style 指定，则补写 prop；
+ *  3) 默认落地 color: inherit，允许调用方覆盖。
+ * 错误处理：静态数据整合，不涉及异常。
+ * 复杂度：O(1)。
+ */
+const buildInlineStyle = (
+  baseStyle: CSSProperties | undefined,
+  widthOverride?: number | string,
+  heightOverride?: number | string,
+): CSSProperties => {
+  const merged: CSSProperties = { ...(baseStyle ?? {}) };
+
+  if (widthOverride != null && merged.width == null) {
+    merged.width = widthOverride;
+  }
+
+  if (heightOverride != null && merged.height == null) {
+    merged.height = heightOverride;
+  }
+
+  return merged;
+};
+
+/**
+ * 意图：按照 single/light/dark 的优先顺序查找可用资源，兼顾历史兼容。
+ * 输入：图标名称。
+ * 输出：包含 URL 与文本的资产描述；若未收录则返回 undefined。
+ * 流程：顺序遍历预设 variant 优先级，遇到首个包含 src/content 的候选即返回。
+ * 错误处理：未命中时回退到 fallback 渲染路径。
+ * 复杂度：O(variantCount)。
+ */
+const resolveIconAsset = (name: string): IconAssetPayload | undefined => {
+  const entry = registry[name];
+
   if (!entry) {
     return undefined;
   }
-  return entry.single ?? entry.light ?? entry.dark;
+
+  for (const variant of ICON_VARIANT_PRIORITY) {
+    const candidate = entry[variant];
+
+    if (candidate && (candidate.src || candidate.content)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
 };
 
 const resolveFallback = (name: string): FallbackPreset => {
@@ -131,13 +198,37 @@ export function ThemeIcon({
 }: IconProps) {
   const { resolvedTheme } = useTheme();
   const iconRole = roleClass ?? legacyToneToRole(tone, resolvedTheme);
-  const src = resolveIconSrc(name);
+  const asset = resolveIconAsset(name);
   const commonClassName = composeClassName(
     "inline-block align-middle",
     iconRole,
     className,
   );
   const altText = decorative ? "" : (alt ?? name);
+  const inlineContent = asset?.content?.trim();
+
+  if (inlineContent) {
+    const inlineAccessibility = decorative
+      ? { "aria-hidden": true as const }
+      : ({ role: "img", "aria-label": altText } as const);
+
+    return (
+      <span
+        className={commonClassName}
+        style={buildInlineStyle(style, width, height)}
+        title={title}
+        {...inlineAccessibility}
+      >
+        <span
+          style={{ color: "inherit" }}
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: inlineContent }}
+        />
+      </span>
+    );
+  }
+
+  const src = asset?.src;
 
   if (src) {
     return (

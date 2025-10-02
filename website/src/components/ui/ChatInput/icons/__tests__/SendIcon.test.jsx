@@ -41,8 +41,8 @@ describe("SendIcon", () => {
   beforeEach(() => {
     mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
     iconRegistry["send-button"] = {
-      light: "/light.svg",
-      dark: "/dark.svg",
+      light: { src: "/light.svg", content: "<svg>light</svg>" },
+      dark: { src: "/dark.svg", content: "<svg>dark</svg>" },
     };
     global.CSS.supports.mockReturnValue(true);
     if (typeof window !== "undefined") {
@@ -92,7 +92,7 @@ describe("SendIcon", () => {
   test("GivenDarkTheme_WhenVariantsMissing_ThenFallbackToSingle", () => {
     mockUseTheme.mockReturnValue({ resolvedTheme: "dark" });
     iconRegistry["send-button"] = {
-      single: "/single.svg",
+      single: { src: "/single.svg", content: "<svg>single</svg>" },
     };
 
     const { container } = render(<SendIcon className="icon" />);

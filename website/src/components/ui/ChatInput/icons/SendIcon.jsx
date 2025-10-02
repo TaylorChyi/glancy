@@ -25,6 +25,19 @@ const SEND_ICON_TOKEN = "send-button";
  *  - 通过主题上下文选择对应资源，保留 single 作为降级路径，避免 dark/light 缺失时闪烁。
  */
 
+// 说明：遮罩策略需兼容生成脚本返回的对象以及测试桩传入的字符串，两者统一在此适配。
+const normaliseIconAsset = (candidate) => {
+  if (!candidate) {
+    return null;
+  }
+
+  if (typeof candidate === "string") {
+    return { src: candidate };
+  }
+
+  return candidate;
+};
+
 const resolveSendIconResource = (registry, resolvedTheme) => {
   const entry = registry?.[SEND_ICON_TOKEN];
   if (!entry) {
@@ -32,26 +45,31 @@ const resolveSendIconResource = (registry, resolvedTheme) => {
   }
 
   const themeKey = resolvedTheme === "dark" ? "dark" : "light";
-  const themedResource = entry[themeKey];
+  const themedResource = normaliseIconAsset(entry[themeKey]);
 
-  if (themedResource) {
+  if (themedResource?.src) {
     return themedResource;
   }
 
-  if (entry.single) {
-    return entry.single;
+  const singleVariant = normaliseIconAsset(entry.single);
+
+  if (singleVariant?.src) {
+    return singleVariant;
   }
 
   const alternativeKey = themeKey === "dark" ? "light" : "dark";
-  return entry[alternativeKey] ?? null;
+  const alternativeResource = normaliseIconAsset(entry[alternativeKey]);
+  return alternativeResource?.src ? alternativeResource : null;
 };
 
 const buildSendIconInlineStyle = (resource) => {
-  if (!resource) {
+  const payload = normaliseIconAsset(resource);
+
+  if (!payload?.src) {
     return null;
   }
 
-  const maskFragment = `url(${resource}) center / contain no-repeat`;
+  const maskFragment = `url(${payload.src}) center / contain no-repeat`;
   return {
     mask: maskFragment,
     WebkitMask: maskFragment,

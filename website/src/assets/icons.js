@@ -14,6 +14,11 @@ const modules = glob("./**/*.svg", {
   eager: true,
   import: "default",
 });
+// 镜像 default 导入，确保运行时能获取可内联的 SVG 文本。
+const rawModules = glob("./**/*.svg", {
+  eager: true,
+  as: "raw",
+});
 
 const NORMALISED_SEPARATOR = "/";
 
@@ -45,10 +50,17 @@ const extractIconDescriptor = (resourcePath) => {
   return { name: baseName, variant: "single" };
 };
 
-export const buildDynamicRegistry = (moduleEntries) => {
+export const buildDynamicRegistry = (moduleEntries, rawEntries) => {
   const collected = {};
 
-  for (const [path, mod] of Object.entries(moduleEntries || {})) {
+  const paths = new Set([
+    ...Object.keys(moduleEntries || {}),
+    ...Object.keys(rawEntries || {}),
+  ]);
+
+  for (const path of paths) {
+    const mod = moduleEntries?.[path];
+    const raw = rawEntries?.[path];
     const descriptor = extractIconDescriptor(path);
 
     if (!descriptor) {
@@ -58,10 +70,13 @@ export const buildDynamicRegistry = (moduleEntries) => {
     const { name, variant } = descriptor;
     const variants = collected[name] || {};
 
+    // 通过适配器模式统一 URL 与文本形态，便于 UI 层按需渲染。
+    const payload = { src: mod, content: raw };
+
     if (variant === "single") {
-      variants.single = mod;
+      variants.single = payload;
     } else {
-      variants[variant] = mod;
+      variants[variant] = payload;
     }
 
     collected[name] = variants;
@@ -86,7 +101,7 @@ const mergeVariantMaps = (...sources) => {
   return merged;
 };
 
-const dynamicRegistry = buildDynamicRegistry(modules);
+const dynamicRegistry = buildDynamicRegistry(modules, rawModules);
 const hasDynamicEntries = Object.keys(dynamicRegistry).length > 0;
 
 const combinedRegistry = mergeVariantMaps(
@@ -97,7 +112,14 @@ const combinedRegistry = mergeVariantMaps(
 const frozenIcons = Object.fromEntries(
   Object.entries(combinedRegistry).map(([name, variants]) => [
     name,
-    Object.freeze({ ...variants }),
+    Object.freeze(
+      Object.fromEntries(
+        Object.entries(variants).map(([variantKey, payload]) => [
+          variantKey,
+          Object.freeze({ ...(payload || {}) }),
+        ]),
+      ),
+    ),
   ]),
 );
 
