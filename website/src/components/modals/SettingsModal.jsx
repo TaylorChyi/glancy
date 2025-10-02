@@ -20,6 +20,7 @@ import modalStyles from "./SettingsModal.module.css";
 import preferencesStyles from "@/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
+import ThemeIcon from "@/components/ui/Icon";
 
 // 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
 const buildCloseLabel = (baseLabel, contextLabel) => {
@@ -91,11 +92,12 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             className={composedClassName}
             aria-label={resolvedCloseLabel}
           >
-            {copy.closeLabel}
+            {/* 统一使用图标按钮，避免重复文本且保留无障碍语义。 */}
+            <ThemeIcon name="close" width={20} height={20} decorative />
           </button>
         );
       },
-    [copy.closeLabel, onClose, resolvedCloseLabel],
+    [onClose, resolvedCloseLabel],
   );
 
   return (

@@ -97,7 +97,7 @@
   min-height: 0;
   padding-block: 4px;
 
-  --preferences-close-offset: 68px;
+  --preferences-close-offset: calc(var(--btn-action, 44px) + 24px);
 }
 
 .close-action {
@@ -105,14 +105,60 @@
   top: 12px;
   z-index: 2;
   display: flex;
-  justify-content: flex-start;
-  align-self: flex-start;
-  padding-left: 12px;
-  margin-bottom: -8px;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0;
 }
 
 .close-button {
-  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--btn-action, 44px);
+  block-size: var(--btn-action, 44px);
+  border-radius: 999px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--preferences-panel-border) 68%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 94%,
+    transparent
+  );
+  color: var(--preferences-panel-text);
+  cursor: pointer;
+  transition:
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.close-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 98%,
+    transparent
+  );
+  transform: translateY(-1px);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+.close-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 88%,
+    transparent
+  );
 }
 
 .tabs {
@@ -374,13 +420,12 @@
     gap: 12px;
     padding-block: 0;
 
-    --preferences-close-offset: 64px;
+    --preferences-close-offset: calc(var(--btn-action, 44px) + 20px);
   }
 
   .close-action {
     position: static;
-    padding-left: 0;
-    margin-bottom: 0;
+    justify-content: flex-end;
   }
 
   .tabs {
