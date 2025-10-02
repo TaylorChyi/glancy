@@ -85,13 +85,17 @@
   --preferences-close-offset: calc(var(--btn-action, 44px) + 24px);
 }
 
+/*
+ * 关闭插槽需贴合左上角以避免 sticky 区域遮挡首个标签，
+ * 同时在页面与模态内维持一致的交互起点。
+ */
 .close-action {
   position: sticky;
   top: 12px;
   z-index: 2;
   display: flex;
-  justify-content: flex-end;
-  width: 100%;
+  justify-content: flex-start;
+  inline-size: fit-content;
   padding: 0;
 }
 
@@ -402,7 +406,7 @@
 
   .close-action {
     position: static;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
   .tabs {
