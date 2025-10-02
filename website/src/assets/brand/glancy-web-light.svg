@@ -1,12 +1,25 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_99_3)">
-<rect x="432" y="352" width="160" height="320" rx="20" fill="#121212"/>
-<rect x="672" y="192" width="160" height="320" rx="20" fill="#121212"/>
-<rect x="192" y="512" width="160" height="320" rx="20" fill="#121212"/>
-</g>
-<defs>
-<clipPath id="clip0_99_3">
-<rect width="1024" height="1024" fill="white"/>
-</clipPath>
-</defs>
+  <g clip-path="url(#clip0_legacy_light)">
+    <rect width="1024" height="1024" fill="none"/>
+    <circle cx="512" cy="512" r="392" fill="#F5F7FF"/>
+    <rect x="272" y="216" width="208" height="440" rx="72" fill="#111829"/>
+    <rect x="544" y="216" width="208" height="440" rx="72" fill="#111829"/>
+    <rect x="486" y="216" width="52" height="440" rx="26" fill="#3D5CFF"/>
+    <rect x="320" y="292" width="120" height="32" rx="16" fill="#3D5CFF"/>
+    <rect x="320" y="356" width="144" height="28" rx="14" fill="#1C2A44"/>
+    <rect x="608" y="292" width="120" height="32" rx="16" fill="#3D5CFF"/>
+    <rect x="584" y="356" width="144" height="28" rx="14" fill="#1C2A44"/>
+    <path d="M272 592C272 546.771 308.771 510 354 510H670C715.229 510 752 546.771 752 592V688C752 733.229 715.229 770 670 770H354C308.771 770 272 733.229 272 688V592Z" fill="#111829"/>
+    <path d="M320 608C320 579.49 343.49 556 372 556H652C680.51 556 704 579.49 704 608V656C704 684.51 680.51 708 652 708H372C343.49 708 320 684.51 320 656V608Z" fill="#3D5CFF"/>
+    <path d="M400 660C400 648.954 408.954 640 420 640H604C615.046 640 624 648.954 624 660C624 671.046 615.046 680 604 680H420C408.954 680 400 671.046 400 660Z" fill="#F9B05D"/>
+    <circle cx="512" cy="812" r="46" fill="#3D5CFF"/>
+    <path d="M360 840C360 823.431 373.431 810 390 810H634C650.569 810 664 823.431 664 840C664 856.569 650.569 870 634 870H390C373.431 870 360 856.569 360 840Z" fill="#111829"/>
+    <circle cx="512" cy="176" r="52" fill="#3D5CFF"/>
+    <path d="M512 140C491.908 140 476 155.908 476 176C476 196.092 491.908 212 512 212C532.092 212 548 196.092 548 176C548 155.908 532.092 140 512 140ZM512 188C505.373 188 500 182.627 500 176C500 169.373 505.373 164 512 164C518.627 164 524 169.373 524 176C524 182.627 518.627 188 512 188Z" fill="#F5F7FF"/>
+  </g>
+  <defs>
+    <clipPath id="clip0_legacy_light">
+      <rect width="1024" height="1024" fill="white"/>
+    </clipPath>
+  </defs>
 </svg>
