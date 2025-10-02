@@ -47,7 +47,7 @@ PrimaryNavItem.defaultProps = {
   title: undefined,
 };
 
-function Brand({ activeView, onShowDictionary, onShowFavorites }) {
+function Brand({ activeView, onShowDictionary, onShowLibrary }) {
   const { lang, t } = useLanguage();
   const brandText = getBrandText(lang);
 
@@ -68,8 +68,8 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
   };
 
   const handleLibrary = () => {
-    if (typeof onShowFavorites === "function") {
-      onShowFavorites();
+    if (typeof onShowLibrary === "function") {
+      onShowLibrary();
     }
   };
 
@@ -84,7 +84,7 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
       enableActiveState: false,
     },
     {
-      key: "favorites",
+      key: "library",
       label: libraryLabel,
       icon: "library",
       iconAlt: libraryLabel,
@@ -130,13 +130,13 @@ function Brand({ activeView, onShowDictionary, onShowFavorites }) {
 Brand.propTypes = {
   activeView: PropTypes.string,
   onShowDictionary: PropTypes.func,
-  onShowFavorites: PropTypes.func,
+  onShowLibrary: PropTypes.func,
 };
 
 Brand.defaultProps = {
   activeView: undefined,
   onShowDictionary: undefined,
-  onShowFavorites: undefined,
+  onShowLibrary: undefined,
 };
 
 export default Brand;

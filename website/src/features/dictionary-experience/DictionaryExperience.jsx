@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
 import Layout from "@/components/Layout";
-import FavoritesView from "@/pages/App/FavoritesView.jsx";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
 import ChatInput from "@/components/ui/ChatInput";
 import ICP from "@/components/ui/ICP";
 import EmptyState from "@/components/ui/EmptyState";
+import LibraryLandingView from "@/pages/App/LibraryLandingView.jsx";
 import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
@@ -18,6 +18,7 @@ import useBottomPanelState, {
 import BottomPanelSwitcher from "./components/BottomPanelSwitcher.jsx";
 import DictionaryActionPanel from "./components/DictionaryActionPanel.jsx";
 import "@/pages/App/App.css";
+import { DICTIONARY_EXPERIENCE_VIEWS } from "./dictionaryExperienceViews.js";
 
 export default function DictionaryExperience() {
   const {
@@ -34,14 +35,11 @@ export default function DictionaryExperience() {
     handleSwapLanguages,
     handleSend,
     handleVoice,
-    showFavorites,
-    showHistory,
     handleShowDictionary,
-    handleShowFavorites,
+    handleShowLibrary,
     handleSelectHistory,
-    handleSelectFavorite,
-    handleUnfavorite,
-    favorites,
+    activeView,
+    viewState,
     focusInput,
     entry,
     finalText,
@@ -55,15 +53,23 @@ export default function DictionaryExperience() {
     dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel,
-    favoritesEmptyState,
     searchEmptyState,
     chatInputPlaceholder,
-    activeSidebarView,
+    libraryLandingLabel,
   } = useDictionaryExperience();
 
+  const viewShape = viewState ?? {};
+  const isDictionaryViewActive = viewShape.isDictionary ??
+    activeView === DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY;
+  const isHistoryViewActive = viewShape.isHistory ??
+    activeView === DICTIONARY_EXPERIENCE_VIEWS.HISTORY;
+  const isLibraryViewActive = viewShape.isLibrary ??
+    activeView === DICTIONARY_EXPERIENCE_VIEWS.LIBRARY;
+
   const previewContent = finalText || streamText;
-  const shouldRenderEntry = entry || previewContent || loading;
-  const hasDefinition = Boolean(entry);
+  const shouldRenderEntry =
+    isDictionaryViewActive && (entry || previewContent || loading);
+  const hasDefinition = isDictionaryViewActive && Boolean(entry);
 
   const {
     mode: bottomPanelMode,
@@ -99,74 +105,64 @@ export default function DictionaryExperience() {
     handleScrollEscape();
   };
 
+  const bottomPanelContent = (
+    <>
+      <BottomPanelSwitcher
+        mode={bottomPanelMode}
+        searchContent={
+          <ChatInput
+            inputRef={inputRef}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            onSubmit={handleSend}
+            onVoice={handleVoice}
+            placeholder={chatInputPlaceholder}
+            maxRows={5}
+            sourceLanguage={dictionarySourceLanguage}
+            sourceLanguageOptions={sourceLanguageOptions}
+            sourceLanguageLabel={dictionarySourceLanguageLabel}
+            onSourceLanguageChange={setDictionarySourceLanguage}
+            targetLanguage={dictionaryTargetLanguage}
+            targetLanguageOptions={targetLanguageOptions}
+            targetLanguageLabel={dictionaryTargetLanguageLabel}
+            onTargetLanguageChange={setDictionaryTargetLanguage}
+            onSwapLanguages={handleSwapLanguages}
+            swapLabel={dictionarySwapLanguagesLabel}
+            normalizeSourceLanguageFn={normalizeWordSourceLanguage}
+            normalizeTargetLanguageFn={normalizeWordTargetLanguage}
+            onFocusChange={handleInputFocusChange}
+          />
+        }
+        actionsContent={
+          hasDefinition ? (
+            <DictionaryActionPanel
+              actionBarProps={dictionaryActionBarProps ?? {}}
+              onRequestSearch={handleSearchButtonClick}
+              searchButtonLabel={t?.returnToSearch || "切换到搜索输入"}
+            />
+          ) : null
+        }
+      />
+      <ICP />
+    </>
+  );
+
   return (
     <>
       <Layout
         sidebarProps={{
           onShowDictionary: handleShowDictionary,
-          onShowFavorites: handleShowFavorites,
+          onShowLibrary: handleShowLibrary,
           onSelectHistory: handleSelectHistory,
-          activeView: activeSidebarView,
+          activeView,
         }}
         onMainMiddleScroll={handleMainScroll}
-        bottomContent={
-          <>
-            <BottomPanelSwitcher
-              mode={bottomPanelMode}
-              searchContent={
-                <ChatInput
-                  inputRef={inputRef}
-                  value={text}
-                  onChange={(event) => setText(event.target.value)}
-                  onSubmit={handleSend}
-                  onVoice={handleVoice}
-                  placeholder={chatInputPlaceholder}
-                  maxRows={5}
-                  sourceLanguage={dictionarySourceLanguage}
-                  sourceLanguageOptions={sourceLanguageOptions}
-                  sourceLanguageLabel={dictionarySourceLanguageLabel}
-                  onSourceLanguageChange={setDictionarySourceLanguage}
-                  targetLanguage={dictionaryTargetLanguage}
-                  targetLanguageOptions={targetLanguageOptions}
-                  targetLanguageLabel={dictionaryTargetLanguageLabel}
-                  onTargetLanguageChange={setDictionaryTargetLanguage}
-                  onSwapLanguages={handleSwapLanguages}
-                  swapLabel={dictionarySwapLanguagesLabel}
-                  normalizeSourceLanguageFn={normalizeWordSourceLanguage}
-                  normalizeTargetLanguageFn={normalizeWordTargetLanguage}
-                  onFocusChange={handleInputFocusChange}
-                />
-              }
-              actionsContent={
-                hasDefinition ? (
-                  <DictionaryActionPanel
-                    actionBarProps={dictionaryActionBarProps ?? {}}
-                    onRequestSearch={handleSearchButtonClick}
-                    searchButtonLabel={t?.returnToSearch || "切换到搜索输入"}
-                  />
-                ) : null
-              }
-            />
-            <ICP />
-          </>
-        }
+        bottomContent={isLibraryViewActive ? null : bottomPanelContent}
       >
         <div className={displayClassName}>
-          {showFavorites ? (
-            <FavoritesView
-              favorites={favorites}
-              onSelect={handleSelectFavorite}
-              onUnfavorite={handleUnfavorite}
-              emptyTitle={favoritesEmptyState.title}
-              emptyDescription={favoritesEmptyState.description}
-              emptyActionLabel={favoritesEmptyState.actionLabel}
-              onEmptyAction={() => {
-                handleShowDictionary();
-                focusInput();
-              }}
-              unfavoriteLabel={favoritesEmptyState.removeLabel}
-            />
-          ) : showHistory ? (
+          {isLibraryViewActive ? (
+            <LibraryLandingView label={libraryLandingLabel} />
+          ) : isHistoryViewActive ? (
             <HistoryDisplay
               onEmptyAction={() => {
                 handleShowDictionary();

@@ -42,6 +42,7 @@ function Layout({
   const contentRef = useRef(null);
   const dockerRef = useRef(null);
   const [dockerHeight, setDockerHeight] = useState(0);
+  const shouldRenderDocker = Boolean(bottomContent);
 
   useEffect(() => {
     if (isMobile) {
@@ -114,14 +115,15 @@ function Layout({
   );
 
   const containerStyle = useMemo(() => {
+    const resolvedDockerHeight = shouldRenderDocker ? dockerHeight : 0;
     const style = {
-      "--docker-h": `${dockerHeight}px`,
+      "--docker-h": `${resolvedDockerHeight}px`,
     };
     if (!isMobile && typeof sidebarWidth === "number") {
       style["--sidebar-w"] = `${Math.round(sidebarWidth)}px`;
     }
     return style;
-  }, [dockerHeight, isMobile, sidebarWidth]);
+  }, [dockerHeight, isMobile, sidebarWidth, shouldRenderDocker]);
 
   useEffect(() => {
     if (!onMainMiddleScroll) {
@@ -141,6 +143,10 @@ function Layout({
   }, [onMainMiddleScroll]);
 
   useEffect(() => {
+    if (!shouldRenderDocker) {
+      setDockerHeight((prev) => (prev === 0 ? prev : 0));
+      return undefined;
+    }
     const node = dockerRef.current;
     if (!node || typeof ResizeObserver === "undefined") {
       return undefined;
@@ -154,8 +160,9 @@ function Layout({
     observer.observe(node);
     return () => {
       observer.disconnect();
+      setDockerHeight((prev) => (prev === 0 ? prev : 0));
     };
-  }, []);
+  }, [shouldRenderDocker]);
 
   return (
     <div
@@ -200,14 +207,16 @@ function Layout({
         >
           <div className={styles["content-inner"]}>{children}</div>
         </section>
-        <div
-          id="docker"
-          ref={dockerRef}
-          className={styles.docker}
-          aria-label="底部工具条"
-        >
-          <div className={styles["docker-inner"]}>{bottomContent}</div>
-        </div>
+        {shouldRenderDocker ? (
+          <div
+            id="docker"
+            ref={dockerRef}
+            className={styles.docker}
+            aria-label="底部工具条"
+          >
+            <div className={styles["docker-inner"]}>{bottomContent}</div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

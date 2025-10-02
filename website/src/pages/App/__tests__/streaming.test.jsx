@@ -77,8 +77,8 @@ jest.unstable_mockModule("@/components/ui/ICP", () => ({
 jest.unstable_mockModule("@/components/ui/MessagePopup", () => ({
   default: () => null,
 }));
-jest.unstable_mockModule("@/pages/App/FavoritesView.jsx", () => ({
-  default: () => null,
+jest.unstable_mockModule("@/pages/App/LibraryLandingView.jsx", () => ({
+  default: ({ label }) => <div data-testid="library-landing">{label}</div>,
 }));
 jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
   default: ({ value, onChange, onSubmit, placeholder }) => (
@@ -138,6 +138,7 @@ jest.unstable_mockModule("@/context", () => ({
       dictionaryTargetLanguageChineseDescription: "输出中文解释",
       dictionaryTargetLanguageEnglish: "英文释义",
       dictionaryTargetLanguageEnglishDescription: "输出英文解释",
+      primaryNavLibraryLabel: "致用单词",
     },
     lang: "en",
     setLang: jest.fn(),

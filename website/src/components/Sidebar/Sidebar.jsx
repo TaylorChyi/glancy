@@ -25,7 +25,7 @@ function Sidebar(
     open,
     onClose,
     onShowDictionary,
-    onShowFavorites,
+    onShowLibrary,
     activeView,
     onSelectHistory,
   },
@@ -36,7 +36,7 @@ function Sidebar(
     open,
     onClose,
     onShowDictionary,
-    onShowFavorites,
+    onShowLibrary,
     activeView,
   });
 
@@ -69,7 +69,7 @@ Sidebar.propTypes = {
   open: PropTypes.bool,
   onClose: PropTypes.func,
   onShowDictionary: PropTypes.func,
-  onShowFavorites: PropTypes.func,
+  onShowLibrary: PropTypes.func,
   activeView: PropTypes.string,
   onSelectHistory: PropTypes.func,
 };
@@ -79,7 +79,7 @@ Sidebar.defaultProps = {
   open: false,
   onClose: undefined,
   onShowDictionary: undefined,
-  onShowFavorites: undefined,
+  onShowLibrary: undefined,
   activeView: undefined,
   onSelectHistory: undefined,
 };

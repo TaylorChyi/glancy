@@ -26,10 +26,6 @@ const translationFixture = {
   dictionaryTargetLanguageLabel: "目标语言",
   dictionarySourceLanguageLabel: "源语言",
   dictionarySwapLanguages: "切换",
-  favoritesEmptyTitle: "暂无收藏",
-  favoritesEmptyDescription: "收藏后可快速访问",
-  favoritesEmptyAction: "去查询",
-  favoriteRemove: "移除收藏",
   searchEmptyTitle: "开始探索",
   searchEmptyDescription: "输入任何词汇即可获取解释",
   inputPlaceholder: "输入查询内容",
@@ -47,6 +43,7 @@ const translationFixture = {
   reportFailed: "报告失败",
   report: "报告",
   reportSuccess: "报告成功",
+  primaryNavLibraryLabel: "致用单词",
 };
 const mockLanguageApi = {
   t: translationFixture,
@@ -269,22 +266,26 @@ describe("useDictionaryExperience", () => {
   });
 
   /**
-   * 测试路径：切换收藏面板时，侧栏视图状态应同步更新。
-   * 步骤：依次调用 handleShowFavorites 与 handleShowDictionary。
-   * 断言：activeSidebarView 从 favorites 变更为 dictionary。
+   * 测试路径：切换致用单词视图时，activeView 需同步更新。
+   * 步骤：依次调用 handleShowLibrary 与 handleShowDictionary。
+   * 断言：activeView 从 library 变更为 dictionary 且 viewState 标志同步。
    */
-  it("updates sidebar view state when toggling favorites", () => {
+  it("updates active view when toggling library", () => {
     const { result } = renderHook(() => useDictionaryExperience());
 
     act(() => {
-      result.current.handleShowFavorites();
+      result.current.handleShowLibrary();
     });
-    expect(result.current.activeSidebarView).toBe("favorites");
+    expect(result.current.activeView).toBe("library");
+    expect(result.current.viewState.isLibrary).toBe(true);
+    expect(result.current.viewState.isDictionary).toBe(false);
 
     act(() => {
       result.current.handleShowDictionary();
     });
-    expect(result.current.activeSidebarView).toBe("dictionary");
+    expect(result.current.activeView).toBe("dictionary");
+    expect(result.current.viewState.isDictionary).toBe(true);
+    expect(result.current.viewState.isLibrary).toBe(false);
   });
 
   /**
@@ -350,6 +351,7 @@ describe("useDictionaryExperience", () => {
     expect(result.current.dictionaryActionBarProps.versions).toHaveLength(0);
     expect(result.current.dictionaryActionBarProps.activeVersionId).toBeNull();
     expect(result.current.loading).toBe(false);
-    expect(result.current.activeSidebarView).toBe("dictionary");
+    expect(result.current.activeView).toBe("dictionary");
+    expect(result.current.viewState.isDictionary).toBe(true);
   });
 });
