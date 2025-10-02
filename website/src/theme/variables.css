@@ -56,8 +56,11 @@
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
 
-  /* search bar 在桌面稿中的最大内容宽度，供容器与输入组件共享 */
-  --sb-max-width: 960px;
+  /*
+   * search bar 在桌面稿中的最大内容宽度，统一复用布局主内容宽度令牌，
+   * 以避免 SearchBox 与 Layout 各自维护独立基准导致的双维护风险。
+   */
+  --sb-max-width: var(--layout-content-max, 960px);
   --sb-h: 56px;
   --sb-r: 28px;
   --sb-radius: var(--sb-r);
