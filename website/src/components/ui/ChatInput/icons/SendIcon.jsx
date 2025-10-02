@@ -11,47 +11,52 @@
  * 演进与TODO：
  *  - 如需支持主题化或动画，可在保持纯函数接口的前提下扩展 props。
  */
+import { useMemo } from "react";
 import PropTypes from "prop-types";
+
+import { useTheme } from "@/context";
 import ICONS from "@/assets/icons.js";
 
-const SEND_ICON_TOKEN = "paper-airplane";
+const SEND_ICON_TOKEN = "send-button";
 /**
  * 说明：
- *  - send-button 资产虽已切换为相同纸飞机几何，但其 light/dark 变体仍服务于按钮蒙版，
- *    若直接引用会让通用图标组件与按钮实现产生耦合；因此继续解析通用的 paper-airplane 令牌。
- *  - 一旦 icon manifest 支持别名或统一引用，可在保持向后兼容的前提下退化至 send-button 令牌以减少资源冗余。
+ *  - 发送按钮图标切换为 send-button 令牌，以便显式承载按钮专用的 light/dark 变体。
+ *  - 通过主题上下文选择对应资源，保留 single 作为降级路径，避免 dark/light 缺失时闪烁。
  */
 
-const resolveSendIconResource = (registry) => {
+const resolveSendIconResource = (registry, resolvedTheme) => {
   const entry = registry?.[SEND_ICON_TOKEN];
   if (!entry) {
     return null;
   }
-  return entry.single ?? entry.light ?? entry.dark ?? null;
+
+  const themeKey = resolvedTheme === "dark" ? "dark" : "light";
+  const themedResource = entry[themeKey];
+
+  if (themedResource) {
+    return themedResource;
+  }
+
+  if (entry.single) {
+    return entry.single;
+  }
+
+  const alternativeKey = themeKey === "dark" ? "light" : "dark";
+  return entry[alternativeKey] ?? null;
 };
 
-const buildSendIconMaskStyle = (resource) => {
+const buildSendIconInlineStyle = (resource) => {
   if (!resource) {
     return null;
   }
+
   const maskFragment = `url(${resource}) center / contain no-repeat`;
-  return Object.freeze({
+  return {
     mask: maskFragment,
     WebkitMask: maskFragment,
-  });
+    backgroundColor: "currentColor",
+  };
 };
-
-const SEND_ICON_MASK_STYLE = buildSendIconMaskStyle(
-  resolveSendIconResource(ICONS),
-);
-
-const SEND_ICON_INLINE_STYLE =
-  SEND_ICON_MASK_STYLE === null
-    ? null
-    : Object.freeze({
-        ...SEND_ICON_MASK_STYLE,
-        backgroundColor: "currentColor",
-      });
 
 const defaultFallback = ({ className }) => (
   <svg
@@ -66,7 +71,14 @@ const defaultFallback = ({ className }) => (
 );
 
 function SendIcon({ className, fallback }) {
-  if (!SEND_ICON_INLINE_STYLE) {
+  const { resolvedTheme = "light" } = useTheme() ?? {};
+
+  const inlineStyle = useMemo(() => {
+    const resource = resolveSendIconResource(ICONS, resolvedTheme);
+    return buildSendIconInlineStyle(resource);
+  }, [resolvedTheme]);
+
+  if (!inlineStyle) {
     return fallback({ className, iconName: SEND_ICON_TOKEN });
   }
 
@@ -75,7 +87,7 @@ function SendIcon({ className, fallback }) {
       aria-hidden="true"
       className={className}
       data-icon-name={SEND_ICON_TOKEN}
-      style={SEND_ICON_INLINE_STYLE}
+      style={inlineStyle}
     />
   );
 }
