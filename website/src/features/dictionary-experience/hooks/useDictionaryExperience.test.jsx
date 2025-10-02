@@ -125,6 +125,7 @@ jest.unstable_mockModule("@/config", () => ({
   SUPPORT_EMAIL: "",
 }));
 
+const utilsModule = await import("@/utils");
 const { useDictionaryExperience } = await import(
   "./useDictionaryExperience.js"
 );
@@ -137,6 +138,9 @@ beforeEach(() => {
   mockUserState.user = { id: "user-id" };
   mockFavoritesApi.favorites = [];
   mockStreamWord.mockImplementation(() => (async function* () {})());
+  mockGetRecord.mockImplementation(() => null);
+  mockGetEntry.mockImplementation(() => null);
+  utilsModule.extractMarkdownPreview.mockImplementation(() => null);
 });
 
 describe("useDictionaryExperience", () => {
@@ -280,6 +284,72 @@ describe("useDictionaryExperience", () => {
     act(() => {
       result.current.handleShowDictionary();
     });
+    expect(result.current.activeSidebarView).toBe("dictionary");
+  });
+
+  /**
+   * 测试目标：handleShowDictionary 需在存在释义内容时恢复空白首页。
+   * 前置条件：mockStreamWord 返回有效 JSON，词条记录命中缓存版本。
+   * 步骤：
+   *  1) 通过 setText 与 handleSend 触发查询并生成版本数据；
+   *  2) 调用 handleShowDictionary 重置视图。
+   * 断言：
+   *  - entry/finalText/streamText 归空；
+   *  - dictionaryActionBarProps.versions 清空且 activeVersionId 置空；
+   *  - activeSidebarView 恢复为 dictionary，loading 为 false。
+   * 边界/异常：
+   *  - 若取消查询逻辑未清理 loading，应导致断言失败提示状态未复位。
+   */
+  it("GivenDefinitionState_WhenHandleShowDictionary_ThenResetsToHome", async () => {
+    utilsModule.extractMarkdownPreview.mockImplementation(() => "Preview snippet");
+
+    const record = {
+      versions: [
+        {
+          id: "v1",
+          markdown: "## Meaning",
+          term: "alpha",
+        },
+      ],
+      activeVersionId: "v1",
+    };
+    mockGetRecord.mockReturnValue(record);
+    mockGetEntry.mockImplementation(() => record.versions[0]);
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield {
+          chunk: JSON.stringify(record.versions[0]),
+          language: "ENGLISH",
+        };
+      })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("alpha");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(result.current.entry).not.toBeNull();
+    expect(result.current.finalText).toBe("## Meaning");
+    expect(result.current.streamText).toBe("Preview snippet");
+    expect(result.current.dictionaryActionBarProps.versions).toHaveLength(1);
+    expect(result.current.dictionaryActionBarProps.activeVersionId).toBe("v1");
+
+    act(() => {
+      result.current.handleShowDictionary();
+    });
+
+    expect(result.current.entry).toBeNull();
+    expect(result.current.finalText).toBe("");
+    expect(result.current.streamText).toBe("");
+    expect(result.current.dictionaryActionBarProps.versions).toHaveLength(0);
+    expect(result.current.dictionaryActionBarProps.activeVersionId).toBeNull();
+    expect(result.current.loading).toBe(false);
     expect(result.current.activeSidebarView).toBe("dictionary");
   });
 });
