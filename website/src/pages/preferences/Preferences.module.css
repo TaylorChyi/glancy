@@ -93,7 +93,11 @@
   padding: 12px;
   border-radius: 18px;
   border: 1px solid var(--preferences-panel-border);
-  background: color-mix(in srgb, var(--preferences-panel-surface) 88%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 88%,
+    transparent
+  );
 }
 
 .tab {
@@ -115,26 +119,11 @@
   text-align: left;
 }
 
-.tab[data-state="active"] {
-  border-color: var(--preferences-panel-border);
-  background: var(--preferences-panel-surface);
-  color: var(--preferences-panel-text);
-}
-
-.tab[data-state="active"] .tab-summary {
-  color: var(--preferences-panel-muted);
-}
-
-.tab:not([disabled]):hover {
-  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
-  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
-  color: var(--preferences-panel-text);
-}
-
 .tab:focus-visible {
   outline: none;
   border-color: var(--preferences-panel-ring);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
 }
 
 .tab:disabled {
@@ -143,8 +132,24 @@
   opacity: 0.6;
 }
 
-.tab:disabled .tab-summary {
-  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
+.tab:not([disabled]):hover {
+  border-color: color-mix(
+    in srgb,
+    var(--preferences-panel-ring) 65%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 96%,
+    transparent
+  );
+  color: var(--preferences-panel-text);
+}
+
+.tab[data-state="active"] {
+  border-color: var(--preferences-panel-border);
+  background: var(--preferences-panel-surface);
+  color: var(--preferences-panel-text);
 }
 
 .tab-label {
@@ -157,6 +162,14 @@
 .tab-summary {
   font-size: 13px;
   line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
+.tab:disabled .tab-summary {
+  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
+}
+
+.tab[data-state="active"] .tab-summary {
   color: var(--preferences-panel-muted);
 }
 
