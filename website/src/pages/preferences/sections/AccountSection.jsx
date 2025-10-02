@@ -30,7 +30,7 @@ function AccountSection({
       className={styles.section}
     >
       <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]}>
+        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
           {title}
         </h3>
         {description ? (
