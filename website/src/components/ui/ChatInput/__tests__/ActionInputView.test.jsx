@@ -88,6 +88,77 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
 });
 
 /**
+ * 测试目标：语言触发器应绑定等宽徽标样式以稳定布局。
+ * 前置条件：提供可见的语言控件与中英选项。
+ * 步骤：
+ *  1) 渲染组件并定位语言触发按钮的徽标节点。
+ *  2) 读取类名与文本内容验证宽度约束钩子。
+ * 断言：
+ *  - 徽标节点存在且包含 language-trigger-code 类，证明宽度约束生效。
+ *  - 徽标文本与源语言缩写一致，便于自定义属性适配不同宽度。
+ * 边界/异常：
+ *  - 若类名缺失或徽标为空，将无法维持 4ch 节奏，应提示设计联动。
+ */
+test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () => {
+  const formRef = createRef();
+  const { container } = render(
+    <ActionInputView
+      formProps={{ ref: formRef, onSubmit: jest.fn() }}
+      textareaProps={{
+        ref: jest.fn(),
+        rows: 2,
+        placeholder: "Say something",
+        value: "example",
+        onChange: jest.fn(),
+        onKeyDown: jest.fn(),
+        onFocus: jest.fn(),
+        onBlur: jest.fn(),
+      }}
+      languageControls={{
+        isVisible: true,
+        props: {
+          sourceLanguage: "ZH",
+          sourceLanguageOptions: [
+            { value: "ZH", label: "中文" },
+            { value: "EN", label: "英文" },
+          ],
+          sourceLanguageLabel: "源语言",
+          onSourceLanguageChange: jest.fn(),
+          targetLanguage: "EN",
+          targetLanguageOptions: [
+            { value: "EN", label: "英文" },
+            { value: "ZH", label: "中文" },
+          ],
+          targetLanguageLabel: "目标语言",
+          onTargetLanguageChange: jest.fn(),
+          onSwapLanguages: jest.fn(),
+          swapLabel: "交换语向",
+          normalizeSourceLanguage: jest.fn((value) => value),
+          normalizeTargetLanguage: jest.fn((value) => value),
+          onMenuOpen: jest.fn(),
+        },
+      }}
+      actionButtonProps={{
+        value: "example",
+        isRecording: false,
+        voiceCooldownRef: { current: 0 },
+        onVoice: jest.fn(),
+        onSubmit: jest.fn(),
+        isVoiceDisabled: false,
+        sendLabel: "发送",
+        voiceLabel: "语音",
+      }}
+    />,
+  );
+
+  const triggerBadge = container.querySelector(".language-trigger-code");
+
+  expect(triggerBadge).not.toBeNull();
+  expect(triggerBadge?.classList.contains("language-trigger-code")).toBe(true);
+  expect(triggerBadge?.textContent).toBe("ZH");
+});
+
+/**
  * 测试目标：当语言区隐藏时，网格属性与语义标记应正确折叠。
  * 前置条件：languageControls.isVisible=false。
  * 步骤：
