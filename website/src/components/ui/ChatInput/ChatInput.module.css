@@ -199,6 +199,16 @@
 }
 
 .language-trigger-code {
+  /*
+   * 背景：语言切换按钮会展示缩写（如 EN、ZH），若宽度随字符波动会导致两端控件抖动。
+   * 取舍：统一以 4ch 作为默认宽度对齐所有语言，利用等宽数字排版避免视觉偏差；
+   *      通过 --seg-code-width 暴露自定义能力，后续可根据品牌或排版策略调整。
+   */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--seg-code-width, 4ch);
+  letter-spacing: normal;
   font-variant-numeric: tabular-nums;
 }
 

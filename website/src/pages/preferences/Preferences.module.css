@@ -115,6 +115,12 @@
   text-align: left;
 }
 
+.tab-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
 .tab[data-state="active"] {
   border-color: var(--preferences-panel-border);
   background: var(--preferences-panel-surface);
@@ -123,12 +129,6 @@
 
 .tab[data-state="active"] .tab-summary {
   color: var(--preferences-panel-muted);
-}
-
-.tab:not([disabled]):hover {
-  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
-  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
-  color: var(--preferences-panel-text);
 }
 
 .tab:focus-visible {
@@ -147,17 +147,26 @@
   color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
 }
 
+.tab:not([disabled]):hover {
+  border-color: color-mix(in srgb, var(--preferences-panel-ring) 65%, transparent);
+  background: color-mix(in srgb, var(--preferences-panel-surface) 96%, transparent);
+  color: var(--preferences-panel-text);
+}
+
+.tab:not([disabled]):hover:focus-visible {
+  /*
+   * 组合状态：保持 hover 提供的前景高亮，同时沿用 focus-visible 的描边用于键盘可达性。
+   * 若未来需要不同的交互优先级，可通过拆分变量调整两者的视觉权重。
+   */
+  border-color: var(--preferences-panel-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+}
+
 .tab-label {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.tab-summary {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--preferences-panel-muted);
 }
 
 .panel {
