@@ -25,11 +25,6 @@
   box-shadow: var(--sb-shadow-hover, var(--sb-shadow));
 }
 
-.search-box:focus-within {
-  outline-color: var(--sb-border-active);
-  box-shadow: var(--sb-ring), var(--sb-shadow);
-}
-
 .search-box :global(button),
 .search-box :global(input),
 .search-box :global(textarea) {
