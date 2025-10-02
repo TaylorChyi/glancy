@@ -18,6 +18,8 @@ function BaseModal({
   closeLabel,
   closeButton,
   hideDefaultCloseButton = false,
+  ariaLabelledBy,
+  ariaDescribedBy,
 }) {
   const { t } = useLanguage();
   if (!open) return null;
@@ -31,6 +33,8 @@ function BaseModal({
       closeLabel={resolvedCloseLabel}
       closeButton={closeButton}
       hideDefaultCloseButton={hideDefaultCloseButton}
+      ariaLabelledBy={ariaLabelledBy}
+      ariaDescribedBy={ariaDescribedBy}
     >
       {children}
     </Modal>
@@ -45,6 +49,8 @@ BaseModal.propTypes = {
   closeLabel: PropTypes.string,
   closeButton: PropTypes.node,
   hideDefaultCloseButton: PropTypes.bool,
+  ariaLabelledBy: PropTypes.string,
+  ariaDescribedBy: PropTypes.string,
 };
 
 export default BaseModal;
