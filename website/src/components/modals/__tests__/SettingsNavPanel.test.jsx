@@ -28,7 +28,7 @@ function TestSection({ headingId, title, actionLabel }) {
   );
 }
 
-function TestSettingsHarness() {
+function TestSettingsHarness({ withCloseAction = false }) {
   const sections = useMemo(
     () => [
       { id: "account", label: "Account", summary: "Account summary" },
@@ -53,6 +53,21 @@ function TestSettingsHarness() {
     [captureFocusOrigin],
   );
 
+  const closeRenderer = useMemo(() => {
+    if (!withCloseAction) {
+      return undefined;
+    }
+    return ({ className = "" } = {}) => (
+      <button
+        type="button"
+        aria-label="Close preferences"
+        className={className}
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+    );
+  }, [withCloseAction]);
+
   return (
     <div role="dialog" aria-modal="true">
       <SettingsNav
@@ -60,6 +75,7 @@ function TestSettingsHarness() {
         activeSectionId={activeSectionId}
         onSelect={handleSectionSelect}
         tablistLabel="Example sections"
+        renderCloseAction={closeRenderer}
       />
       <SettingsPanel
         panelId={`${activeSection.id}-panel`}
@@ -132,5 +148,30 @@ test("Given heading focus When tabbing Then focus remains within modal", async (
 
   await user.tab({ shift: true });
   expect(document.activeElement).toBe(privacyTab);
+});
+
+/**
+ * 测试目标：验证插入的关闭动作位于导航首位且可通过键盘聚焦。
+ * 前置条件：渲染 TestSettingsHarness 并启用 withCloseAction，使关闭按钮挂载在导航中。
+ * 步骤：
+ *  1) 执行一次 Tab 聚焦最先的交互元素。
+ *  2) 再次 Tab 聚焦后续的标签按钮。
+ * 断言：
+ *  - 第一次 Tab 后焦点位于关闭按钮。
+ *  - 第二次 Tab 后焦点切换到 Account 标签，保持线性键盘顺序。
+ * 边界/异常：
+ *  - 若未来在关闭按钮前新增可聚焦节点，此断言会失败提醒更新顺序。
+ */
+test("Given close action When tabbing forward Then focus visits close control before tabs", async () => {
+  const user = userEvent.setup();
+  render(<TestSettingsHarness withCloseAction />);
+
+  const closeButton = screen.getByRole("button", { name: "Close preferences" });
+  await user.tab();
+  expect(closeButton).toHaveFocus();
+
+  const accountTab = screen.getByRole("tab", { name: /^Account/ });
+  await user.tab();
+  expect(accountTab).toHaveFocus();
 });
 

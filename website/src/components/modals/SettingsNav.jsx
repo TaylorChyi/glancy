@@ -38,15 +38,17 @@ function SettingsNav({
 
   return (
     <div className={containerClassName}>
-      {closeActionNode ? (
-        <div className={actionWrapperClassName}>{closeActionNode}</div>
-      ) : null}
       <nav
         aria-label={tablistLabel}
         aria-orientation="vertical"
         className={navClassName}
         role="tablist"
       >
+        {closeActionNode ? (
+          <div role="presentation" className={actionWrapperClassName}>
+            {closeActionNode}
+          </div>
+        ) : null}
         {sections.map((section) => {
           const tabId = `${section.id}-tab`;
           const panelId = `${section.id}-panel`;
