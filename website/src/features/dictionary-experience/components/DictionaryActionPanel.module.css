@@ -21,7 +21,12 @@
     --sidebar-hover-bg,
     color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
   );
-  --padding-y: var(--chat-input-bottom-pad-y, 12px);
+  /*
+   * 背景：SearchBox 默认依赖 --padding-y 推导垂直留白，但词典面板需要与 ChatInput 底部壳同步。
+   * 取舍：将变量重置为 0，并在组件作用域内直接消费 ChatInput 的 padding-block 令牌，
+   *       避免 SearchBox 与动作面板各自维护高度导致交互态跳动。
+   */
+  --padding-y: 0;
   --slot-gap: var(--chat-input-bottom-gap, 12px);
 
   /*
@@ -74,6 +79,11 @@
   width: 100%;
   align-items: center;
   flex-wrap: nowrap;
+  /*
+   * 背景：词典面板需与 ChatInput 搜索态共用壳层高度，防止 search/actions 切换出现高度闪烁。
+   * 取舍：直接复用 ChatInput 的 padding-block 令牌，当主题覆写时可保持两端一致响应。
+   */
+  padding-block: var(--chat-input-bottom-pad-y, 12px);
   box-shadow: var(--sb-shadow), var(--dictionary-panel-elevation-shadow);
 }
 
