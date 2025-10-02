@@ -69,12 +69,7 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
       closeLabel={copy.closeLabel}
       hideDefaultCloseButton
     >
-      <form
-        aria-labelledby={header.headingId}
-        aria-describedby={header.descriptionId}
-        className={`${preferencesStyles.form} ${modalStyles["form-in-dialog"]}`}
-        onSubmit={handleSubmit}
-      >
+      <div className={modalStyles["header-region"]}>
         <SettingsHeader
           headingId={header.headingId}
           descriptionId={header.descriptionId}
@@ -95,23 +90,32 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
             description: preferencesStyles.description,
           }}
         />
-        <SettingsBody className={preferencesStyles.body}>
-          <SettingsNav
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onSelect={handleSectionSelectWithFocus}
-            tablistLabel={copy.tablistLabel}
-            renderCloseAction={renderCloseAction}
-            classes={{
-              container: preferencesStyles["tabs-region"],
-              action: preferencesStyles["close-action"],
-              nav: preferencesStyles.tabs,
-              button: preferencesStyles.tab,
-              label: preferencesStyles["tab-label"],
-              summary: preferencesStyles["tab-summary"],
-              actionButton: preferencesStyles["close-button"],
-            }}
-          />
+      </div>
+      <SettingsBody
+        className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
+      >
+        <SettingsNav
+          sections={sections}
+          activeSectionId={activeSectionId}
+          onSelect={handleSectionSelectWithFocus}
+          tablistLabel={copy.tablistLabel}
+          renderCloseAction={renderCloseAction}
+          classes={{
+            container: preferencesStyles["tabs-region"],
+            action: preferencesStyles["close-action"],
+            nav: preferencesStyles.tabs,
+            button: preferencesStyles.tab,
+            label: preferencesStyles["tab-label"],
+            summary: preferencesStyles["tab-summary"],
+            actionButton: preferencesStyles["close-button"],
+          }}
+        />
+        <form
+          aria-labelledby={header.headingId}
+          aria-describedby={header.descriptionId}
+          className={modalStyles.form}
+          onSubmit={handleSubmit}
+        >
           <SettingsPanel
             panelId={panel.panelId}
             tabId={panel.tabId}
@@ -127,8 +131,8 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
               />
             ) : null}
           </SettingsPanel>
-        </SettingsBody>
-      </form>
+        </form>
+      </SettingsBody>
     </BaseModal>
   );
 }
