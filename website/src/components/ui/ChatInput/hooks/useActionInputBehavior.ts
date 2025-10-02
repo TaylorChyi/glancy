@@ -12,12 +12,32 @@
  *  - 后续可在此处扩展动作策略映射或接入特性开关以支持更多输入模式。
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import type React from "react";
 
 export type LanguageValue = string | symbol | undefined;
 
 export interface LanguageOption {
   value: string | symbol;
   label: string;
+}
+
+export interface FocusChangeContext {
+  /**
+   * 聚焦态标记：true 表示 textarea 获得焦点，false 表示失焦。
+   */
+  isFocused: boolean;
+  /**
+   * 原始焦点事件，外部可借助 relatedTarget/currentTarget 等信息判断上下文。
+   */
+  event: React.FocusEvent<HTMLTextAreaElement>;
+  /**
+   * 当前 ChatInput 表单节点，用于执行 contains 判定。
+   */
+  formElement: HTMLFormElement | null;
+  /**
+   * 恢复输入框焦点的回调，供上层在必要时调用。
+   */
+  restoreFocus: () => void;
 }
 
 export interface UseActionInputBehaviorParams {
@@ -45,7 +65,7 @@ export interface UseActionInputBehaviorParams {
   normalizeSourceLanguageFn?: (value: LanguageValue) => LanguageValue;
   normalizeTargetLanguageFn?: (value: LanguageValue) => LanguageValue;
   onMenuOpen?: () => void;
-  onFocusChange?: (isFocused: boolean) => void;
+  onFocusChange?: (context: FocusChangeContext) => void;
 }
 
 export interface UseActionInputBehaviorResult {
@@ -60,8 +80,8 @@ export interface UseActionInputBehaviorResult {
     value: string;
     onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-    onFocus: () => void;
-    onBlur: () => void;
+    onFocus: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
+    onBlur: (event: React.FocusEvent<HTMLTextAreaElement>) => void;
   };
   languageControls: {
     isVisible: boolean;
@@ -90,7 +110,12 @@ export interface UseActionInputBehaviorResult {
     isVoiceDisabled: boolean;
     sendLabel: string;
     voiceLabel: string;
+    restoreFocus: () => void;
   };
+  /**
+   * 外部辅助调用，用于在其他行为（如按钮点击）后重新聚焦输入框。
+   */
+  restoreFocus: () => void;
 }
 
 const DEFAULT_LINE_HEIGHT = 20;
@@ -138,6 +163,25 @@ export default function useActionInputBehavior({
   const internalTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const voiceCooldownRef = useRef<number>(0);
 
+  /**
+   * 意图：提供稳定的聚焦恢复入口，避免按钮点击后焦点遗失。
+   * 输入：无；依赖内部 textarea 引用。
+   * 输出：调用时尝试将焦点移回 textarea。
+   * 流程：
+   *  1) 读取内部 ref，若存在则执行 focus(preventScroll)。
+   * 错误处理：若节点不存在则静默跳过。
+   * 复杂度：O(1)。
+   */
+  const restoreFocus = useCallback(() => {
+    const textarea = internalTextareaRef.current;
+    if (!textarea) {
+      return;
+    }
+    if (typeof textarea.focus === "function") {
+      textarea.focus({ preventScroll: true });
+    }
+  }, []);
+
   const setTextareaRef = useCallback(
     (node: HTMLTextAreaElement | null) => {
       internalTextareaRef.current = node;
@@ -179,13 +223,29 @@ export default function useActionInputBehavior({
     }
   }, [autoResize, value]);
 
-  const handleFocus = useCallback(() => {
-    onFocusChange?.(true);
-  }, [onFocusChange]);
+  const handleFocus = useCallback(
+    (event: React.FocusEvent<HTMLTextAreaElement>) => {
+      onFocusChange?.({
+        isFocused: true,
+        event,
+        formElement: formRef.current,
+        restoreFocus,
+      });
+    },
+    [onFocusChange, restoreFocus],
+  );
 
-  const handleBlur = useCallback(() => {
-    onFocusChange?.(false);
-  }, [onFocusChange]);
+  const handleBlur = useCallback(
+    (event: React.FocusEvent<HTMLTextAreaElement>) => {
+      onFocusChange?.({
+        isFocused: false,
+        event,
+        formElement: formRef.current,
+        restoreFocus,
+      });
+    },
+    [onFocusChange, restoreFocus],
+  );
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -273,6 +333,8 @@ export default function useActionInputBehavior({
       isVoiceDisabled,
       sendLabel: sendLabel ?? "Send",
       voiceLabel: voiceLabel ?? "Voice",
+      restoreFocus,
     },
+    restoreFocus,
   };
 }

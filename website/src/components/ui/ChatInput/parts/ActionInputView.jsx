@@ -124,6 +124,7 @@ ActionInputView.propTypes = {
     isVoiceDisabled: PropTypes.bool.isRequired,
     sendLabel: PropTypes.string.isRequired,
     voiceLabel: PropTypes.string.isRequired,
+    restoreFocus: PropTypes.func.isRequired,
   }).isRequired,
 };
 

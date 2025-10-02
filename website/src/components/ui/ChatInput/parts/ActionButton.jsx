@@ -28,6 +28,7 @@ function ActionButton({
   isVoiceDisabled,
   sendLabel,
   voiceLabel,
+  restoreFocus,
 }) {
   const trimmedLength = value.trim().length;
   const isSendState = trimmedLength > 0;
@@ -44,6 +45,7 @@ function ActionButton({
       event.preventDefault();
       if (isSendState) {
         onSubmit?.();
+        restoreFocus?.();
         return;
       }
       if (isVoiceDisabled) {
@@ -55,8 +57,16 @@ function ActionButton({
       }
       voiceCooldownRef.current = now;
       onVoice?.();
+      restoreFocus?.();
     },
-    [isSendState, isVoiceDisabled, onSubmit, onVoice, voiceCooldownRef],
+    [
+      isSendState,
+      isVoiceDisabled,
+      onSubmit,
+      onVoice,
+      voiceCooldownRef,
+      restoreFocus,
+    ],
   );
 
   return (
@@ -86,6 +96,7 @@ ActionButton.propTypes = {
   isVoiceDisabled: PropTypes.bool,
   sendLabel: PropTypes.string.isRequired,
   voiceLabel: PropTypes.string.isRequired,
+  restoreFocus: PropTypes.func,
 };
 
 ActionButton.defaultProps = {
@@ -93,6 +104,7 @@ ActionButton.defaultProps = {
   onVoice: undefined,
   onSubmit: undefined,
   isVoiceDisabled: false,
+  restoreFocus: undefined,
 };
 
 export default ActionButton;

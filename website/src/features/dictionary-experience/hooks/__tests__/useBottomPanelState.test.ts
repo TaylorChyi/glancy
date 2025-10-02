@@ -1,9 +1,40 @@
+import type React from "react";
+import { jest } from "@jest/globals";
 import { act, renderHook } from "@testing-library/react";
 
 import useBottomPanelState, {
   PANEL_MODE_ACTIONS,
   PANEL_MODE_SEARCH,
 } from "../useBottomPanelState";
+
+const createFocusEvent = (
+  overrides: Partial<React.FocusEvent<HTMLTextAreaElement>> = {},
+): React.FocusEvent<HTMLTextAreaElement> => {
+  const textarea = document.createElement("textarea");
+  return {
+    currentTarget: textarea,
+    target: textarea,
+    relatedTarget: null,
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+    ...overrides,
+  } as React.FocusEvent<HTMLTextAreaElement>;
+};
+
+const createFocusPayload = (
+  overrides: Partial<{
+    isFocused: boolean;
+    event: React.FocusEvent<HTMLTextAreaElement>;
+    formElement: HTMLFormElement | null;
+    restoreFocus: () => void;
+  }> = {},
+) => ({
+  isFocused: false,
+  event: createFocusEvent(),
+  formElement: null,
+  restoreFocus: jest.fn(),
+  ...overrides,
+});
 
 /**
  * 测试目标：在存在释义且输入为空时自动回落至动作面板。
@@ -49,13 +80,13 @@ test("GivenManualSearchRequest_WhenFocusGained_ThenStayInSearchMode", () => {
 
   act(() => {
     result.current.activateSearchMode();
-    result.current.handleFocusChange(true);
+    result.current.handleFocusChange(createFocusPayload({ isFocused: true }));
   });
 
   expect(result.current.mode).toBe(PANEL_MODE_SEARCH);
 
   act(() => {
-    result.current.handleFocusChange(false);
+    result.current.handleFocusChange(createFocusPayload({ isFocused: false }));
   });
 
   expect(result.current.mode).toBe(PANEL_MODE_ACTIONS);
@@ -78,7 +109,7 @@ test("GivenScrollEscape_WhenDefinitionExists_ThenReturnToActionsMode", () => {
   );
 
   act(() => {
-    result.current.handleFocusChange(true);
+    result.current.handleFocusChange(createFocusPayload({ isFocused: true }));
   });
 
   expect(result.current.mode).toBe(PANEL_MODE_SEARCH);
@@ -88,4 +119,44 @@ test("GivenScrollEscape_WhenDefinitionExists_ThenReturnToActionsMode", () => {
   });
 
   expect(result.current.mode).toBe(PANEL_MODE_ACTIONS);
+});
+
+/**
+ * 测试目标：当焦点在表单内元素之间切换时维持搜索模式。
+ * 前置条件：hasDefinition=true，text 为空字符串以触发潜在回退逻辑。
+ * 步骤：
+ *  1) 激活搜索模式并标记 textarea 已聚焦；
+ *  2) 模拟 relatedTarget 位于同一表单内的 blur 事件；
+ * 断言：
+ *  - mode 仍为 PANEL_MODE_SEARCH；
+ * 边界/异常：
+ *  - relatedTarget 不存在时应回退至动作模式（由既有用例覆盖）。
+ */
+test("GivenFocusTransfersInsideForm_WhenBlurred_ThenKeepSearchMode", () => {
+  const { result } = renderHook(() =>
+    useBottomPanelState({ hasDefinition: true, text: "" }),
+  );
+
+  const form = document.createElement("form");
+  const button = document.createElement("button");
+  form.appendChild(button);
+
+  act(() => {
+    result.current.activateSearchMode();
+    result.current.handleFocusChange(createFocusPayload({ isFocused: true }));
+  });
+
+  expect(result.current.mode).toBe(PANEL_MODE_SEARCH);
+
+  act(() => {
+    result.current.handleFocusChange(
+      createFocusPayload({
+        isFocused: false,
+        formElement: form,
+        event: createFocusEvent({ relatedTarget: button }),
+      }),
+    );
+  });
+
+  expect(result.current.mode).toBe(PANEL_MODE_SEARCH);
 });

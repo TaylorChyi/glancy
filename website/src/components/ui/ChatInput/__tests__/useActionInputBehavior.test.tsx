@@ -2,7 +2,23 @@ import { act, renderHook } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import type React from "react";
 
-import useActionInputBehavior from "../hooks/useActionInputBehavior";
+import useActionInputBehavior, {
+  type FocusChangeContext,
+} from "../hooks/useActionInputBehavior";
+
+const createFocusEvent = (
+  overrides: Partial<React.FocusEvent<HTMLTextAreaElement>> = {},
+): React.FocusEvent<HTMLTextAreaElement> => {
+  const textarea = document.createElement("textarea");
+  return {
+    currentTarget: textarea,
+    target: textarea,
+    relatedTarget: null,
+    preventDefault: jest.fn(),
+    stopPropagation: jest.fn(),
+    ...overrides,
+  } as React.FocusEvent<HTMLTextAreaElement>;
+};
 
 /**
  * 测试目标：空输入时提交被拦截且保留 preventDefault 语义。
@@ -214,15 +230,53 @@ test("GivenFocusTransitions_WhenHandlersInvoke_ThenEmitFocusChange", () => {
     useActionInputBehavior({ value: "", onFocusChange }),
   );
 
+  const focusEvent = createFocusEvent();
+  const blurEvent = createFocusEvent();
+
   act(() => {
-    result.current.textareaProps.onFocus();
+    result.current.textareaProps.onFocus(focusEvent);
   });
 
   act(() => {
-    result.current.textareaProps.onBlur();
+    result.current.textareaProps.onBlur(blurEvent);
   });
 
-  expect(onFocusChange).toHaveBeenNthCalledWith(1, true);
-  expect(onFocusChange).toHaveBeenNthCalledWith(2, false);
+  const firstPayload = onFocusChange.mock.calls[0][0] as FocusChangeContext;
+  const secondPayload = onFocusChange.mock.calls[1][0] as FocusChangeContext;
+
+  expect(firstPayload.isFocused).toBe(true);
+  expect(firstPayload.event).toBe(focusEvent);
+  expect(secondPayload.isFocused).toBe(false);
+  expect(secondPayload.event).toBe(blurEvent);
+});
+
+/**
+ * 测试目标：restoreFocus 在 textarea 关联后可重新聚焦输入框。
+ * 前置条件：创建 DOM textarea 并挂载到 Hook 的 ref。
+ * 步骤：
+ *  1) 绑定 textarea 至 textareaProps.ref；
+ *  2) 模拟按钮调用 restoreFocus；
+ * 断言：
+ *  - textarea.focus 被调用一次；
+ * 边界/异常：
+ *  - 若节点缺失则不抛出异常（由实现内提前返回）。
+ */
+test("GivenTextareaMounted_WhenRestoreFocusInvoked_ThenFocusesTextarea", () => {
+  const { result } = renderHook(() =>
+    useActionInputBehavior({ value: "draft" }),
+  );
+
+  const textarea = document.createElement("textarea");
+  const focusSpy = jest.spyOn(textarea, "focus");
+
+  act(() => {
+    result.current.textareaProps.ref(textarea);
+  });
+
+  act(() => {
+    result.current.restoreFocus();
+  });
+
+  expect(focusSpy).toHaveBeenCalledTimes(1);
 });
 

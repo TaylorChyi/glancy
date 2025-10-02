@@ -94,11 +94,27 @@ export default function DictionaryExperience() {
     activateSearchMode();
   };
 
-  const handleInputFocusChange = (focused) => {
-    handlePanelFocusChange(focused);
-    if (!focused) {
-      activateActionsMode();
+  /**
+   * @param {import("@/components/ui/ChatInput/hooks/useActionInputBehavior").FocusChangeContext} context
+   */
+  const handleInputFocusChange = (context) => {
+    handlePanelFocusChange(context);
+    if (context.isFocused) {
+      return;
     }
+    const { formElement, event } = context;
+    const relatedTarget = event.relatedTarget;
+    const isNodeTarget =
+      typeof Node !== "undefined" && relatedTarget instanceof Node;
+    const isWithinForm = Boolean(
+      formElement &&
+        isNodeTarget &&
+        formElement.contains(relatedTarget),
+    );
+    if (isWithinForm) {
+      return;
+    }
+    activateActionsMode();
   };
 
   const handleMainScroll = () => {
