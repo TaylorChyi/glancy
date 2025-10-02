@@ -2,7 +2,21 @@ import { render } from "@testing-library/react";
 import { createRef } from "react";
 import { jest } from "@jest/globals";
 
-import ActionInputView from "../parts/ActionInputView.jsx";
+const mockUseTheme = jest.fn();
+
+jest.unstable_mockModule("@/context", () => ({
+  useTheme: mockUseTheme,
+}));
+
+const { default: ActionInputView } = await import("../parts/ActionInputView.jsx");
+
+beforeEach(() => {
+  mockUseTheme.mockReturnValue({ theme: "system", resolvedTheme: "light", setTheme: () => {} });
+});
+
+afterEach(() => {
+  mockUseTheme.mockReset();
+});
 
 /**
  * 测试目标：视图层在注入标准 Props 时渲染结构保持稳定。
@@ -66,6 +80,9 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
       }}
     />,
   );
+
+  const sendIcon = container.querySelector('[data-icon-name="send-button"]');
+  expect(sendIcon).not.toBeNull();
 
   expect(container).toMatchSnapshot();
 });
@@ -139,4 +156,63 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
 
   const actionButton = container.querySelector(`.${"action-slot"} button`);
   expect(actionButton).toMatchSnapshot("VoiceActionButtonMarkup");
+});
+
+/**
+ * 测试目标：暗色主题下的发送态按钮应加载 send-button 资源并暴露一致蒙版。
+ * 前置条件：resolvedTheme 为 dark，输入区值非空。
+ * 步骤：
+ *  1) 通过 mocked useTheme 注入暗色主题。
+ *  2) 渲染组件并获取动作按钮与内部图标。
+ * 断言：
+ *  - send-button 图标被渲染且拥有蒙版样式。
+ *  - 快照稳定，覆盖暗色主题下的发送按钮结构。
+ * 边界/异常：
+ *  - 若暗色资源缺失则自动回退，测试将捕获为空的情况。
+ */
+test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
+  mockUseTheme.mockReturnValue({ theme: "system", resolvedTheme: "dark", setTheme: () => {} });
+  const formRef = createRef();
+  const { container } = render(
+    <ActionInputView
+      formProps={{ ref: formRef, onSubmit: jest.fn() }}
+      textareaProps={{
+        ref: jest.fn(),
+        rows: 2,
+        placeholder: "",
+        value: "dark theme message",
+        onChange: jest.fn(),
+        onKeyDown: jest.fn(),
+        onFocus: jest.fn(),
+        onBlur: jest.fn(),
+      }}
+      languageControls={{
+        isVisible: false,
+        props: {
+          sourceLanguage: undefined,
+          sourceLanguageOptions: [],
+          targetLanguage: undefined,
+          targetLanguageOptions: [],
+        },
+      }}
+      actionButtonProps={{
+        value: "dark theme message",
+        isRecording: false,
+        voiceCooldownRef: { current: 0 },
+        onVoice: jest.fn(),
+        onSubmit: jest.fn(),
+        isVoiceDisabled: false,
+        sendLabel: "发送",
+        voiceLabel: "语音",
+      }}
+    />,
+  );
+
+  const sendIcon = container.querySelector('[data-icon-name="send-button"]');
+  expect(sendIcon).not.toBeNull();
+  expect(sendIcon?.getAttribute("data-icon-name")).toBe("send-button");
+  expect(sendIcon?.getAttribute("style") ?? "").toContain("mask: url(");
+
+  const sendButton = container.querySelector(`.${"action-slot"} button`);
+  expect(sendButton).toMatchSnapshot("DarkSendActionButtonMarkup");
 });
