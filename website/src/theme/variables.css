@@ -106,14 +106,14 @@
   --chip-bg-hover: #2b323c;
   --chip-text: #d5dbe6;
   --divider-color: var(--sb-divider);
-  --menu-bg: var(--sb-inner);
+  --menu-bg: var(--sb-bg, var(--sb-inner));
   --menu-border: color-mix(in srgb, var(--sb-stroke) 80%, black 20%);
-  --menu-hover: color-mix(in srgb, var(--sb-inner) 88%, white 12%);
+  --menu-hover: color-mix(in srgb, var(--menu-bg) 88%, white 12%);
   --menu-code-color: #f1f4f8;
   --menu-name-color: #c6ccd7;
   --menu-check-color: #d9dee7;
-  --menu-scroll-track: color-mix(in srgb, var(--sb-inner) 70%, transparent);
-  --menu-scroll-thumb: color-mix(in srgb, var(--sb-inner) 20%, white 12%);
+  --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent);
+  --menu-scroll-thumb: color-mix(in srgb, var(--menu-bg) 20%, white 12%);
   --menu-scroll-thumb-hover: color-mix(
     in srgb,
     var(--menu-scroll-thumb) 70%,
@@ -234,7 +234,10 @@
   );
   --chip-text: color-mix(in srgb, var(--color-text) 84%, transparent 16%);
   --divider-color: var(--sb-divider);
-  --menu-bg: color-mix(in srgb, var(--color-surface-alt) 96%, white 4%);
+  --menu-bg: var(
+    --sb-bg,
+    color-mix(in srgb, var(--color-surface-alt) 96%, white 4%)
+  );
   --menu-border: color-mix(in srgb, var(--border-color) 78%, transparent 22%);
   --menu-hover: color-mix(in srgb, var(--menu-bg) 80%, var(--color-text) 20%);
   --menu-code-color: color-mix(in srgb, var(--color-text) 88%, transparent 12%);
@@ -328,7 +331,10 @@
   );
   --chip-text: color-mix(in srgb, var(--color-text) 84%, transparent 16%);
   --divider-color: var(--sb-divider);
-  --menu-bg: color-mix(in srgb, var(--color-surface-alt) 96%, white 4%);
+  --menu-bg: var(
+    --sb-bg,
+    color-mix(in srgb, var(--color-surface-alt) 96%, white 4%)
+  );
   --menu-border: color-mix(in srgb, var(--border-color) 78%, transparent 22%);
   --menu-hover: color-mix(in srgb, var(--menu-bg) 80%, var(--color-text) 20%);
   --menu-code-color: color-mix(in srgb, var(--color-text) 88%, transparent 12%);
@@ -398,14 +404,14 @@
   --chip-bg-hover: #2b323c;
   --chip-text: #d5dbe6;
   --divider-color: var(--sb-divider);
-  --menu-bg: var(--sb-inner);
+  --menu-bg: var(--sb-bg, var(--sb-inner));
   --menu-border: color-mix(in srgb, var(--sb-stroke) 80%, black 20%);
-  --menu-hover: color-mix(in srgb, var(--sb-inner) 88%, white 12%);
+  --menu-hover: color-mix(in srgb, var(--menu-bg) 88%, white 12%);
   --menu-code-color: #f1f4f8;
   --menu-name-color: #c6ccd7;
   --menu-check-color: #d9dee7;
-  --menu-scroll-track: color-mix(in srgb, var(--sb-inner) 70%, transparent);
-  --menu-scroll-thumb: color-mix(in srgb, var(--sb-inner) 20%, white 12%);
+  --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent);
+  --menu-scroll-thumb: color-mix(in srgb, var(--menu-bg) 20%, white 12%);
   --menu-scroll-thumb-hover: color-mix(
     in srgb,
     var(--menu-scroll-thumb) 70%,

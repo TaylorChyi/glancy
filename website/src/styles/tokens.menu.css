@@ -22,7 +22,7 @@
     --sidebar-shadow-elevated,
     0 12px 30px rgb(0 0 0 / 24%)
   );
-  --menu-bg: var(--sidebar-panel, var(--panel));
+  --menu-bg: var(--sb-bg, var(--sidebar-panel, var(--panel)));
   --menu-text: var(--sidebar-color, var(--text));
   --menu-muted: var(--sidebar-muted-color, var(--muted));
 
