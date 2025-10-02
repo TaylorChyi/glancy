@@ -141,6 +141,57 @@ export function useDictionaryExperience() {
     [copyPayload],
   );
 
+  /**
+   * 背景：
+   *  - 复制成功的反馈此前通过弹窗提示，与工具栏上的图标状态重复且分散。
+   * 目的：
+   *  - 以策略映射集中维护各状态对应的弹窗文案，便于未来扩展，同时允许在成功态下静默处理。
+   * 关键决策与取舍：
+   *  - 采用冻结对象提供不可变映射，确保回调依赖稳定；
+   *  - 针对 copied 状态返回 null，以保留弹窗通道但避免与按钮态重复提示。
+   */
+  const copyFeedbackMessages = useMemo(() => {
+    const base = t.copyAction || "Copy";
+    const failure = t.copyFailed || base;
+    return Object.freeze({
+      base,
+      fallback: failure,
+      statuses: Object.freeze({
+        copied: null,
+        empty: t.copyEmpty || failure,
+        unavailable: t.copyUnavailable || failure,
+        failed: failure,
+        default: failure,
+      }),
+    });
+  }, [t.copyAction, t.copyFailed, t.copyEmpty, t.copyUnavailable]);
+
+  const resolveCopyPopupMessage = useCallback(
+    (status) => {
+      const { base, fallback, statuses } = copyFeedbackMessages;
+      const resolvedFallback =
+        statuses.default ?? fallback ?? base ?? "Copy";
+      if (!status) {
+        return resolvedFallback;
+      }
+      if (Object.prototype.hasOwnProperty.call(statuses, status)) {
+        return statuses[status];
+      }
+      return resolvedFallback;
+    },
+    [copyFeedbackMessages],
+  );
+
+  const pushCopyPopup = useCallback(
+    (status) => {
+      const message = resolveCopyPopupMessage(status);
+      if (message) {
+        showPopup(message);
+      }
+    },
+    [resolveCopyPopupMessage, showPopup],
+  );
+
   const clearCopyFeedbackResetTimer = useCallback(() => {
     if (copyFeedbackResetTimerRef.current) {
       clearTimeout(copyFeedbackResetTimerRef.current);
@@ -157,10 +208,9 @@ export function useDictionaryExperience() {
   }, [clearCopyFeedbackResetTimer]);
 
   const handleCopy = useCallback(async () => {
-    const copyLabel = t.copyAction || "Copy";
     if (!canCopyDefinition) {
       setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      showPopup(t.copyEmpty || t.copyFailed || copyLabel);
+      pushCopyPopup("empty");
       return;
     }
 
@@ -169,36 +219,21 @@ export function useDictionaryExperience() {
       if (result.status === "copied") {
         setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
         scheduleCopyFeedbackReset();
-        showPopup(t.copySuccess || copyLabel);
+        pushCopyPopup("copied");
         return;
       }
 
       setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-
-      if (result.status === "empty") {
-        showPopup(t.copyEmpty || t.copyFailed || copyLabel);
-        return;
-      }
-      if (result.status === "unavailable") {
-        showPopup(t.copyUnavailable || t.copyFailed || copyLabel);
-        return;
-      }
-      showPopup(t.copyFailed || copyLabel);
+      pushCopyPopup(result.status || "default");
     } catch {
       setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      showPopup(t.copyFailed || copyLabel);
-      return;
+      pushCopyPopup("failed");
     }
   }, [
     canCopyDefinition,
     copyPayload,
     scheduleCopyFeedbackReset,
-    showPopup,
-    t.copySuccess,
-    t.copyEmpty,
-    t.copyFailed,
-    t.copyUnavailable,
-    t.copyAction,
+    pushCopyPopup,
   ]);
 
   const focusInput = useCallback(() => {

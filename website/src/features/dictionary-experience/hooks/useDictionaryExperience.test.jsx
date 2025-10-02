@@ -270,7 +270,8 @@ describe("useDictionaryExperience", () => {
   });
 
   /**
-   * 测试目标：复制成功后状态机应进入 success，并在延迟后恢复 idle。
+   * 测试目标：复制成功后状态机应进入 success，并在延迟后恢复 idle；
+   * 同时不再弹出成功提示，避免重复反馈。
    * 前置条件：mockStreamWord 返回含 markdown 的词条，clipboard 写入成功。
    * 步骤：
    *  1) 通过 handleSend 拉取词条；
@@ -278,6 +279,7 @@ describe("useDictionaryExperience", () => {
    *  3) 推进计时器 2 秒等待复位。
    * 断言：
    *  - copyTextToClipboard 被调用一次；
+   *  - popupOpen 保持 false，popupMsg 为空字符串；
    *  - copyFeedbackState 由 success 退回 idle，isCopySuccess 相应更新。
    * 边界/异常：
    *  - 若定时器未清理，状态将停留在 success 触发断言失败。
@@ -323,6 +325,8 @@ describe("useDictionaryExperience", () => {
       COPY_FEEDBACK_STATES.SUCCESS,
     );
     expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(true);
+    expect(result.current.popupOpen).toBe(false);
+    expect(result.current.popupMsg).toBe("");
 
     await act(async () => {
       jest.advanceTimersByTime(2000);
