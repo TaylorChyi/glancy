@@ -6,7 +6,7 @@ import styles from "./SettingsModal.module.css";
 import { SettingsSurface } from "@/components";
 import { useLanguage } from "@/context";
 
-function SettingsModal({ open, onClose, initialTab, onOpenAccountManager }) {
+function SettingsModal({ open, onClose, onOpenAccountManager }) {
   const { t } = useLanguage();
   const closeLabel = t.close ?? "Close";
   const surfaceTitle = t.prefTitle ?? "Preferences";
@@ -45,12 +45,7 @@ function SettingsModal({ open, onClose, initialTab, onOpenAccountManager }) {
         description={surfaceDescription}
         actions={closeAction}
       >
-        <Preferences
-          variant="dialog"
-          initialTab={initialTab}
-          onOpenAccountManager={onOpenAccountManager}
-          onClose={onClose}
-        />
+        <Preferences onOpenAccountManager={onOpenAccountManager} />
       </SettingsSurface>
     </BaseModal>
   );
@@ -59,12 +54,10 @@ function SettingsModal({ open, onClose, initialTab, onOpenAccountManager }) {
 SettingsModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  initialTab: PropTypes.string,
   onOpenAccountManager: PropTypes.func,
 };
 
 SettingsModal.defaultProps = {
-  initialTab: undefined,
   onOpenAccountManager: undefined,
 };
 
