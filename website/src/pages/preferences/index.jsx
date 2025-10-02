@@ -11,6 +11,7 @@
  *  - TODO: 随着更多分区上线，可在 usePreferenceSections 内扩展蓝图并按需引入懒加载策略。
  */
 import PropTypes from "prop-types";
+import { useCallback } from "react";
 import {
   SettingsBody,
   SettingsHeader,
@@ -19,6 +20,7 @@ import {
 } from "@/components/modals";
 import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
+import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
 function Preferences({
   onOpenAccountManager,
@@ -30,6 +32,19 @@ function Preferences({
       initialSectionId: initialSection,
       onOpenAccountManager,
     });
+
+  const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
+    activeSectionId,
+    headingId: panel.headingId,
+  });
+
+  const handleSectionSelectWithFocus = useCallback(
+    (section) => {
+      captureFocusOrigin();
+      handleSectionSelect(section);
+    },
+    [captureFocusOrigin, handleSectionSelect],
+  );
 
   const closeRenderer = renderCloseAction
     ? ({ className }) => renderCloseAction({ className })
@@ -63,7 +78,7 @@ function Preferences({
           <SettingsNav
             sections={sections}
             activeSectionId={activeSectionId}
-            onSelect={handleSectionSelect}
+            onSelect={handleSectionSelectWithFocus}
             tablistLabel={copy.tablistLabel}
             renderCloseAction={closeRenderer}
             classes={{
@@ -79,7 +94,9 @@ function Preferences({
           <SettingsPanel
             panelId={panel.panelId}
             tabId={panel.tabId}
+            headingId={panel.headingId}
             className={styles.panel}
+            onHeadingElementChange={registerHeading}
           >
             {activeSection ? (
               <activeSection.Component
