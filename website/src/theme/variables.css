@@ -193,10 +193,14 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
-  --sb-action-icon: var(--primary-color);
-  --sb-cta: var(--primary-bg);
-  --sb-cta-icon: var(--primary-color);
-  --sb-voice-color: var(--primary-color);
+  /*
+   * 交互背景：轻量主题下沿用白色系 CTA 壳体，避免深色按钮在浅底部产生突兀对比。
+   * 取舍：统一将 send/voice 按钮映射到中性白底 + 深色图标，保持与暗色主题的一致语义。
+   */
+  --sb-action-icon: var(--color-text);
+  --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
+  --sb-cta-icon: var(--color-text);
+  --sb-voice-color: var(--color-text);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -271,8 +275,8 @@
     var(--menu-scroll-thumb) 85%,
     transparent 15%
   );
-  --sb-send-bg: var(--primary-bg);
-  --sb-send-color: var(--primary-color);
+  --sb-send-bg: color-mix(in srgb, var(--neutral-0) 94%, transparent 6%);
+  --sb-send-color: var(--color-text);
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
@@ -292,10 +296,13 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
-  --sb-action-icon: var(--primary-color);
-  --sb-cta: var(--primary-bg);
-  --sb-cta-icon: var(--primary-color);
-  --sb-voice-color: var(--primary-color);
+  /*
+   * system 模式在浅色媒体查询下与 light 对齐，CTA 壳体同样采用白色系映射。
+   */
+  --sb-action-icon: var(--color-text);
+  --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
+  --sb-cta-icon: var(--color-text);
+  --sb-voice-color: var(--color-text);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -370,8 +377,8 @@
     var(--menu-scroll-thumb) 85%,
     transparent 15%
   );
-  --sb-send-bg: var(--primary-bg);
-  --sb-send-color: var(--primary-color);
+  --sb-send-bg: color-mix(in srgb, var(--neutral-0) 94%, transparent 6%);
+  --sb-send-color: var(--color-text);
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
