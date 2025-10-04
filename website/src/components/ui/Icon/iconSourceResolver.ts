@@ -19,13 +19,28 @@
 import ICONS from "@/assets/icons.js";
 import type { ResolvedTheme } from "@/theme/mode";
 
+export type IconVariantResource = {
+  url: string | null;
+  inline: string | null;
+};
+
 export type IconModuleEntry = {
-  single?: string;
-  [variant: string]: string | undefined;
+  single?: IconVariantResource;
+  [variant: string]: IconVariantResource | undefined;
+};
+
+const hasRenderablePayload = (resource: IconVariantResource | undefined) => {
+  if (!resource) {
+    return false;
+  }
+  return Boolean(resource.inline) || Boolean(resource.url);
 };
 
 interface IconVariantStrategy {
-  resolve(entry: IconModuleEntry | undefined, theme: ResolvedTheme): string | null;
+  resolve(
+    entry: IconModuleEntry | undefined,
+    theme: ResolvedTheme,
+  ): IconVariantResource | null;
 }
 
 class ThemedVariantStrategy implements IconVariantStrategy {
@@ -39,18 +54,22 @@ class ThemedVariantStrategy implements IconVariantStrategy {
    * 错误处理：全部 miss 时返回 null，由后续策略接管。
    * 复杂度：O(1)。
    */
-  resolve(entry: IconModuleEntry | undefined, theme: ResolvedTheme): string | null {
+  resolve(
+    entry: IconModuleEntry | undefined,
+    theme: ResolvedTheme,
+  ): IconVariantResource | null {
     if (!entry) {
       return null;
     }
 
     const direct = entry[theme];
-    if (direct) {
+    if (hasRenderablePayload(direct)) {
       return direct;
     }
 
     const fallbackVariant = theme === "dark" ? "light" : "dark";
-    return entry[fallbackVariant] ?? null;
+    const fallback = entry[fallbackVariant];
+    return hasRenderablePayload(fallback) ? fallback ?? null : null;
   }
 }
 
@@ -63,12 +82,16 @@ class SingleVariantStrategy implements IconVariantStrategy {
    * 错误处理：缺失则返回 null。
    * 复杂度：O(1)。
    */
-  resolve(entry: IconModuleEntry | undefined, _theme: ResolvedTheme): string | null {
+  resolve(
+    entry: IconModuleEntry | undefined,
+    _theme: ResolvedTheme,
+  ): IconVariantResource | null {
     void _theme;
     if (!entry) {
       return null;
     }
-    return entry.single ?? null;
+    const single = entry.single ?? null;
+    return hasRenderablePayload(single) ? single : null;
   }
 }
 
@@ -89,7 +112,7 @@ export class IconSourceResolver {
    * 错误处理：找不到记录时返回 null，交由调用方处理回退。
    * 复杂度：O(n)，n 为策略数量（当前为常量 2）。
    */
-  resolve(name: string, theme: ResolvedTheme): string | null {
+  resolve(name: string, theme: ResolvedTheme): IconVariantResource | null {
     const entry = this.registry[name];
     for (const strategy of this.strategies) {
       const resolved = strategy.resolve(entry, theme);

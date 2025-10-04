@@ -7,13 +7,21 @@ describe("buildDynamicRegistry", () => {
    * 仍能提取出正确的图标名称并关联到单一 SVG 素材，避免回退占位符。
    */
   test("normalises windows style paths to keep original svg assets", () => {
-    const registry = buildDynamicRegistry({
-      ".\\send-button.svg": "/assets/send-button.svg",
-    });
+    const registry = buildDynamicRegistry(
+      {
+        ".\\send-button.svg": "/assets/send-button.svg",
+      },
+      {
+        ".\\send-button.svg": "<svg data-token=\"send-button\"></svg>",
+      },
+    );
 
     expect(registry).toEqual({
       "send-button": {
-        single: "/assets/send-button.svg",
+        single: Object.freeze({
+          url: "/assets/send-button.svg",
+          inline: "<svg data-token=\"send-button\"></svg>",
+        }),
       },
     });
   });

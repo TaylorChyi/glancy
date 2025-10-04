@@ -12,12 +12,24 @@ jest.unstable_mockModule("@/context", () => ({
 jest.unstable_mockModule("@/assets/icons.js", () => ({
   default: {
     eye: {
-      light: "eye-light.svg",
-      dark: "eye-dark.svg",
+      light: Object.freeze({
+        url: null,
+        inline: '<svg data-variant="eye-light"></svg>',
+      }),
+      dark: Object.freeze({
+        url: null,
+        inline: '<svg data-variant="eye-dark"></svg>',
+      }),
     },
     "eye-off": {
-      light: "eye-off-light.svg",
-      dark: "eye-off-dark.svg",
+      light: Object.freeze({
+        url: null,
+        inline: '<svg data-variant="eye-off-light"></svg>',
+      }),
+      dark: Object.freeze({
+        url: null,
+        inline: '<svg data-variant="eye-off-dark"></svg>',
+      }),
     },
   },
 }));
@@ -87,17 +99,15 @@ describe("PasswordInput", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Show password" })).toHaveAttribute(
-      "src",
-      "eye-light.svg",
-    );
+    expect(
+      screen.getByRole("img", { name: "Show password" }).innerHTML,
+    ).toContain("eye-light");
 
     fireEvent.click(screen.getByRole("button", { name: "Show password" }));
 
-    expect(screen.getByRole("img", { name: "Hide password" })).toHaveAttribute(
-      "src",
-      "eye-off-light.svg",
-    );
+    expect(
+      screen.getByRole("img", { name: "Hide password" }).innerHTML,
+    ).toContain("eye-off-light");
 
     currentTheme = "dark";
     rerender(
@@ -108,16 +118,14 @@ describe("PasswordInput", () => {
       />,
     );
 
-    expect(screen.getByRole("img", { name: "Hide password" })).toHaveAttribute(
-      "src",
-      "eye-off-dark.svg",
-    );
+    expect(
+      screen.getByRole("img", { name: "Hide password" }).innerHTML,
+    ).toContain("eye-off-dark");
 
     fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
 
-    expect(screen.getByRole("img", { name: "Show password" })).toHaveAttribute(
-      "src",
-      "eye-dark.svg",
-    );
+    expect(
+      screen.getByRole("img", { name: "Show password" }).innerHTML,
+    ).toContain("eye-dark");
   });
 });

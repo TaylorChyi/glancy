@@ -38,6 +38,36 @@
   line-height: 1;
 }
 
+.inline {
+  /*
+   * 背景：
+   *  - 图标切换为内联 SVG 后需提供默认尺寸，同时允许调用方通过 CSS
+   *    或属性覆盖宽高，避免破坏现有布局。
+   * 目的：
+   *  - 以 CSS 变量暴露尺寸控制点，默认回退到 1.25em，可被外部样式或
+   *    ThemeIcon style 覆盖；保持 currentColor 继承语义。
+   */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  flex-shrink: 0;
+  color: inherit;
+
+  --icon-inline-size: 1.25em;
+
+  width: var(--icon-inline-width, var(--icon-inline-size));
+  height: var(--icon-inline-height, var(--icon-inline-size));
+}
+
+.inline > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: currentcolor;
+  stroke: currentcolor;
+}
+
 .fallback[data-variant="apple"] {
   letter-spacing: 0.04em;
 }
