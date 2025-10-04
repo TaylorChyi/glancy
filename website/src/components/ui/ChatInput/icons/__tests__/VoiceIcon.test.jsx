@@ -33,9 +33,7 @@ jest.unstable_mockModule("../useMaskSupport.js", () => ({
 
 const voiceRegistry = {
   "voice-button": {
-    light: "voice-light.svg",
-    dark: "voice-dark.svg",
-    single: "voice-single.svg",
+    single: "voice.svg",
   },
 };
 
@@ -68,39 +66,60 @@ describe("VoiceIcon", () => {
   });
 
   /**
-   * 测试目标：在浅色主题下应选择 light 变体并生成匹配的遮罩样式。
-   * 前置条件：resolvedTheme=light，注册表包含 light/dark/single 资源。
+   * 测试目标：在浅色主题下应选择单一变体并生成匹配的遮罩样式。
+   * 前置条件：resolvedTheme=light，注册表仅包含 single 资源。
    * 步骤：
    *  1) 渲染 VoiceIcon 并获取标记为 voice-button 的节点。
    *  2) 读取其 style.mask 属性。
    * 断言：
-   *  - mask 属性采用 light 资源并保持模板语法。
+   *  - mask 属性采用 single 资源并保持模板语法。
    * 边界/异常：
-   *  - 若注册表缺失或主题不匹配，应由其他用例覆盖。
+   *  - 主题切换由后续用例验证。
    */
-  test("GivenLightTheme_WhenRendering_ThenApplyLightVariantMask", () => {
+  test("GivenLightTheme_WhenRendering_ThenApplySingleVariantMask", () => {
     const { container } = render(<VoiceIcon className="icon" />);
 
     const node = container.querySelector('[data-icon-name="voice-button"]');
     expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe(
-      "url(voice-light.svg) center / contain no-repeat",
-    );
+    expect(node?.style.mask).toBe("url(voice.svg) center / contain no-repeat");
   });
 
   /**
-   * 测试目标：在深色主题下应回退到 dark 变体，证明策略依赖 resolvedTheme 生效。
+   * 测试目标：在深色主题下亦应使用 single 资源，验证主题分支不会导致空白。
    * 前置条件：resolvedTheme=dark，注册表与默认一致。
    * 步骤：
    *  1) 切换 mock 的主题值并重新渲染组件。
    *  2) 检查标记节点的 mask 属性。
    * 断言：
-   *  - mask 使用 dark 资源。
+   *  - mask 使用 single 资源。
    * 边界/异常：
    *  - 若未来新增高对比主题，应扩展断言覆盖。
    */
-  test("GivenDarkTheme_WhenRendering_ThenApplyDarkVariantMask", () => {
+  test("GivenDarkTheme_WhenRendering_ThenFallbackToSingleVariant", () => {
     currentResolvedTheme = "dark";
+
+    const { container } = render(<VoiceIcon className="icon" />);
+
+    const node = container.querySelector('[data-icon-name="voice-button"]');
+    expect(node).not.toBeNull();
+    expect(node?.style.mask).toBe("url(voice.svg) center / contain no-repeat");
+  });
+
+  /**
+   * 测试目标：当 single 资源缺失但存在主题特定资源时，仍能按 resolvedTheme 选择素材。
+   * 前置条件：临时替换注册表，仅保留 dark 资源，resolvedTheme=dark。
+   * 步骤：
+   *  1) 调整注册表后渲染组件。
+   *  2) 断言遮罩引用 dark 资源。
+   * 断言：
+   *  - mask 使用 dark 资源。
+   * 边界/异常：
+   *  - 用例结束后恢复注册表。
+   */
+  test("GivenOnlyThemeVariant_WhenRendering_ThenUseThemeSpecificResource", () => {
+    currentResolvedTheme = "dark";
+    const originalEntry = { ...voiceRegistry["voice-button"] };
+    voiceRegistry["voice-button"] = { dark: "voice-dark.svg" };
 
     const { container } = render(<VoiceIcon className="icon" />);
 
@@ -109,6 +128,8 @@ describe("VoiceIcon", () => {
     expect(node?.style.mask).toBe(
       "url(voice-dark.svg) center / contain no-repeat",
     );
+
+    voiceRegistry["voice-button"] = originalEntry;
   });
 
   /**

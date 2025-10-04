@@ -1,0 +1,22 @@
+<!--
+背景：
+ - VoiceIcon 过去依赖 light/dark 两份重复 SVG，通过 manifest 映射实现主题切换，维护成本高。
+目的：
+ - 将语音按钮图标压缩为单一 currentColor 资源，使主题色由 CSS 控制，同时与 send-button 的遮罩策略对齐。
+关键决策与取舍：
+ - 采用 24x24 视窗并描绘圆角矩形麦克风造型，兼顾在按钮遮罩与独立图标场景下的可辨识度。
+影响范围：
+ - ChatInput 以及任何引用 voice-button 令牌的组件将加载此资源，主题切换依赖颜色继承。
+演进与TODO：
+ - 如需动画或更复杂的音量态，可在后续新增前缀（如 voice-button-wave）扩展。
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  fill="currentColor"
+>
+  <path
+    d="M12 3a3 3 0 0 0-3 3v6a3 3 0 1 0 6 0V6a3 3 0 0 0-3-3Zm5 9a5 5 0 1 1-10 0H5a7 7 0 0 0 6 6.93V21h2v-2.07A7 7 0 0 0 19 12h-2Z"
+  />
+</svg>
