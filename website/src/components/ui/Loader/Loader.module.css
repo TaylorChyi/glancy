@@ -5,11 +5,17 @@
   min-block-size: var(--vh);
   padding: var(--space-4);
   background: transparent;
+
+  /* 采用扁平化矩形动画，通过变量让主题色与尺寸易于后续扩展。 */
+  --loader-bar-color: var(--loader-bar-tone);
+  --loader-bar-width: calc(var(--space-2) + var(--space-1));
+  --loader-bar-height: calc(var(--space-5) + var(--space-4));
+  --loader-bar-radius: var(--radius-lg);
 }
 
 .symbol {
   display: inline-flex;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-2);
   padding: calc(var(--space-2) + var(--space-1));
   border-radius: var(--radius-xl);
@@ -23,51 +29,42 @@
 }
 
 .bar {
-  inline-size: calc(var(--space-2) + var(--space-1));
-  border-radius: var(--radius-lg);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--highlight-color) 85%, transparent) 0%,
-    color-mix(in srgb, var(--highlight-color) 70%, transparent) 55%,
-    color-mix(in srgb, var(--highlight-color) 55%, transparent) 100%
-  );
-  filter: drop-shadow(
-    0 6px 12px color-mix(in srgb, var(--highlight-color) 35%, transparent)
-  );
-  transform-origin: center bottom;
-  animation: bar-pulse 1.4s ease-in-out infinite;
+  /* 矩形围绕中心伸缩，确保三者中心处于同一水平线。 */
+  inline-size: var(--loader-bar-width);
+  block-size: var(--loader-bar-height);
+  border-radius: var(--loader-bar-radius);
+  background: color-mix(in srgb, var(--loader-bar-color) 92%, transparent);
+  transform-origin: center;
+  animation: bar-wave 1.4s ease-in-out infinite;
 }
 
 .bar:nth-child(1) {
-  block-size: calc(var(--space-5) + var(--space-4));
   animation-delay: 0s;
 }
 
 .bar:nth-child(2) {
-  block-size: calc(var(--space-5) * 2);
   animation-delay: 0.18s;
 }
 
 .bar:nth-child(3) {
-  block-size: calc(var(--space-4) + var(--space-3));
   animation-delay: 0.36s;
 }
 
-@keyframes bar-pulse {
+@keyframes bar-wave {
   0%,
   100% {
-    transform: scaleY(0.65);
-    opacity: 0.45;
+    transform: scaleY(0.55);
+    opacity: 0.35;
   }
 
-  40% {
-    transform: scaleY(1);
+  35% {
+    transform: scaleY(1.1);
     opacity: 1;
   }
 
   60% {
-    transform: scaleY(0.85);
-    opacity: 0.75;
+    transform: scaleY(0.75);
+    opacity: 0.65;
   }
 }
 
@@ -84,6 +81,10 @@
 }
 
 @media (width <= 480px) {
+  .loader {
+    --loader-bar-height: calc(var(--space-4) + var(--space-3));
+  }
+
   .symbol {
     gap: var(--space-1);
     padding: var(--space-2);
@@ -91,17 +92,5 @@
 
   .bar {
     inline-size: var(--space-2);
-  }
-
-  .bar:nth-child(1) {
-    block-size: calc(var(--space-4) + var(--space-3));
-  }
-
-  .bar:nth-child(2) {
-    block-size: calc(var(--space-5) + var(--space-4));
-  }
-
-  .bar:nth-child(3) {
-    block-size: var(--space-4);
   }
 }

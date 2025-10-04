@@ -16,6 +16,9 @@
   --vh: 100vh;
   --highlight-color: var(--color-link-light);
   --shadow-color: rgb(0 0 0 / 15%);
+
+  /* Loader 动画需感知主题，默认以深色文字基调渲染扁平矩形。 */
+  --loader-bar-tone: var(--neutral-900);
   --color-overlay: color-mix(
     in srgb,
     var(--color-overlay-base),
@@ -78,6 +81,7 @@
   --border-color: var(--sys-border-dark);
   --text-muted: var(--sys-muted);
   --shadow-color: rgb(0 0 0 / 40%);
+  --loader-bar-tone: var(--neutral-0);
   --primary-bg: var(--neutral-50);
   --primary-color: var(--neutral-900);
   --color-text: var(--text-primary-dark);
@@ -120,6 +124,7 @@
   --border-color: var(--sys-border-light);
   --text-muted: var(--sys-muted);
   --shadow-color: rgb(0 0 0 / 15%);
+  --loader-bar-tone: var(--neutral-900);
   --primary-bg: var(--neutral-900);
   --primary-color: var(--neutral-50);
   --color-text: var(--text-primary-light);
