@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import lightIcon from "@/assets/brand/glancy-web-light.svg";
-import darkIcon from "@/assets/brand/glancy-web-dark.svg";
+import glancyWebIcon from "@/assets/glancy-web.svg";
+import { createFaviconRegistry } from "@/theme/faviconRegistry";
 import {
   ThemeModeOrchestrator,
   inferResolvedTheme,
@@ -45,6 +45,13 @@ export function ThemeProvider({ children }) {
   const storage = getStorage();
   const orchestratorRef = useRef(null);
   const initialPreferenceRef = useRef(null);
+  const faviconRegistryRef = useRef(
+    createFaviconRegistry({
+      default: glancyWebIcon,
+      light: glancyWebIcon,
+      dark: glancyWebIcon,
+    }),
+  );
 
   const ensureOrchestrator = useCallback(() => {
     if (!orchestratorRef.current) {
@@ -82,7 +89,7 @@ export function ThemeProvider({ children }) {
       return undefined;
     }
 
-    link.href = resolvedTheme === "dark" ? darkIcon : lightIcon;
+    link.href = faviconRegistryRef.current.resolve(resolvedTheme);
     return undefined;
   }, [resolvedTheme]);
 

@@ -1,5 +1,6 @@
 import { jest } from "@jest/globals";
 import { ThemeModeOrchestrator } from "@/theme/mode";
+import { createFaviconRegistry } from "@/theme/faviconRegistry";
 
 type MutableMediaQueryList = MediaQueryList & {
   dispatch: (matches: boolean) => void;
@@ -134,5 +135,48 @@ describe("ThemeModeOrchestrator", () => {
     expect(notify).toHaveBeenLastCalledWith("light");
 
     orchestrator.dispose();
+  });
+});
+
+describe("FaviconRegistry", () => {
+  /**
+   * 测试目标：验证已注册的暗色主题返回专属 favicon。
+   * 前置条件：使用默认注册表（暗亮同图），提供 dark 主题入参。
+   * 步骤：
+   *  1) 创建注册表；
+   *  2) 调用 registry.resolve("dark");
+   * 断言：
+   *  - 结果与 manifest.dark 相同，错误信息指向 dark 主题。
+   * 边界/异常：
+   *  - 暂无（依赖 registry 定义）。
+   */
+  test("Given_registered_manifest_When_resolving_dark_Then_return_variant", () => {
+    const registry = createFaviconRegistry({
+      default: "default.svg",
+      light: "default.svg",
+      dark: "dark.svg",
+    });
+    expect(registry.resolve("dark")).toBe("dark.svg");
+  });
+
+  /**
+   * 测试目标：未知主题或空值时应回退到默认 favicon。
+   * 前置条件：未在注册表中配置 unknown-theme。
+   * 步骤：
+   *  1) 调用 registry.resolve("unknown-theme");
+   *  2) 调用 registry.resolve(undefined);
+   * 断言：
+   *  - 均返回 manifest.default，便于未来挂载日志或指标。
+   * 边界/异常：
+   *  - 覆盖非字符串输入。
+   */
+  test("Given_unknown_theme_When_resolving_Then_fall_back_to_default", () => {
+    const registry = createFaviconRegistry({
+      default: "default.svg",
+      light: "default.svg",
+      dark: "dark.svg",
+    });
+    expect(registry.resolve("unknown-theme")).toBe("default.svg");
+    expect(registry.resolve(undefined)).toBe("default.svg");
   });
 });
