@@ -37,6 +37,13 @@ export default {
   settingsTabGeneral: "General",
   settingsGeneralDescription:
     "Tune interface languages, theme, and pronunciation defaults.",
+  settingsGeneralThemeLabel: "Theme",
+  settingsGeneralThemeLight: "Light",
+  settingsGeneralThemeDark: "Dark",
+  settingsGeneralThemeSystem: "System",
+  settingsGeneralLanguageLabel: "Interface language",
+  settingsGeneralLanguageOption_en: "English (US)",
+  settingsGeneralLanguageOption_zh: "Chinese (Simplified)",
   settingsTabPersonalization: "Personalization",
   settingsPersonalizationDescription:
     "Describe your background so answers feel bespoke.",

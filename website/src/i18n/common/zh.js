@@ -33,6 +33,13 @@ export default {
   settingsVoicePreviewTextZh: "你好，我是 Glancy。",
   settingsTabGeneral: "通用",
   settingsGeneralDescription: "协调界面语言、主题与默认发音。",
+  settingsGeneralThemeLabel: "界面主题",
+  settingsGeneralThemeLight: "浅色",
+  settingsGeneralThemeDark: "深色",
+  settingsGeneralThemeSystem: "跟随系统",
+  settingsGeneralLanguageLabel: "系统语言",
+  settingsGeneralLanguageOption_en: "英语（English）",
+  settingsGeneralLanguageOption_zh: "中文（简体）",
   settingsTabPersonalization: "个性化",
   settingsPersonalizationDescription:
     "描述你的身份与期待，生成更贴合的回答语气。",

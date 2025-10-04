@@ -166,13 +166,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
-    const generalSummary =
-      t.settingsGeneralDescription ??
-      "Tune interface languages, theme, and pronunciation defaults.";
-    const generalMessage = pickFirstMeaningfulString(
-      [t.prefDefaultsDescription, t.prefInterfaceDescription, generalSummary],
-      generalSummary,
-    );
 
     const personalizationLabel =
       t.settingsTabPersonalization ?? "Personalization";
@@ -193,8 +186,7 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       dataSummary,
     );
 
-    const keyboardLabel =
-      t.settingsTabKeyboard ?? "Keyboard shortcuts";
+    const keyboardLabel = t.settingsTabKeyboard ?? "Keyboard shortcuts";
     const keyboardSummary =
       t.settingsKeyboardDescription ??
       "Master Glancy with a curated set of command keys.";
@@ -203,7 +195,8 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
       keyboardSummary,
     );
 
-    const accountLabel = t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
+    const accountLabel =
+      t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
     const accountDescription = pickFirstMeaningfulString(
       [t.settingsAccountDescription],
       "Review and safeguard the basics that identify you in Glancy.",
@@ -246,7 +239,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
         Component: GeneralSection,
         componentProps: {
           title: generalLabel,
-          message: generalMessage,
         },
       },
       {
@@ -302,8 +294,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     profileMeta.age,
     profileMeta.gender,
     t.prefAccountTitle,
-    t.prefDefaultsDescription,
-    t.prefInterfaceDescription,
     t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
     t.settingsAccountAge,
@@ -314,7 +304,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     t.settingsAccountUsername,
     t.settingsDataDescription,
     t.settingsDataNotice,
-    t.settingsGeneralDescription,
     t.settingsKeyboardDescription,
     t.settingsPersonalizationDescription,
     t.settingsTabAccount,
@@ -346,7 +335,8 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   useEffect(() => {
     const nextInitial = sanitizeActiveSectionId(initialSectionId, sections);
     const initialChanged = previousInitialRef.current !== initialSectionId;
-    const sanitizedChanged = previousSanitizedInitialRef.current !== nextInitial;
+    const sanitizedChanged =
+      previousSanitizedInitialRef.current !== nextInitial;
     const shouldSync =
       !hasAppliedInitialRef.current || initialChanged || sanitizedChanged;
 
@@ -366,7 +356,8 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   }, [initialSectionId, sections]);
 
   const activeSection = useMemo(
-    () => sections.find((section) => section.id === activeSectionId) ?? sections[0],
+    () =>
+      sections.find((section) => section.id === activeSectionId) ?? sections[0],
     [activeSectionId, sections],
   );
 
@@ -374,7 +365,9 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     if (!section || section.disabled) {
       return;
     }
-    setActiveSectionId((current) => (current === section.id ? current : section.id));
+    setActiveSectionId((current) =>
+      current === section.id ? current : section.id,
+    );
   }, []);
 
   const handleSubmit = useCallback((event) => {
@@ -428,4 +421,3 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 }
 
 export default usePreferenceSections;
-
