@@ -35,6 +35,11 @@ function HistoryListView({ items, onSelect, onNavigate }) {
                 }
               }}
               className={styles.entryButton}
+              /*
+               * 背景：搜索记录需要完整呈现用户输入，避免记忆成本。
+               * 取舍：启用 NavItem 的多行模式，让排版与数据长度解耦，不影响其他入口。
+               */
+              allowMultilineLabel
               ref={navigationBindings.ref}
               onKeyDown={navigationBindings.onKeyDown}
             />
