@@ -21,6 +21,7 @@ function SettingsNav({
   renderCloseAction,
   classes,
 }) {
+  const sectionCount = sections.length;
   const containerClassName = classes?.container ?? "";
   const actionWrapperClassName = classes?.action ?? "";
   const navClassName = classes?.nav ?? "";
@@ -42,6 +43,14 @@ function SettingsNav({
         aria-orientation="vertical"
         className={navClassName}
         role="tablist"
+        /*
+         * 通过 CSS 变量暴露分区数量，便于窄屏布局在不引入额外脚本的情况下
+         * 等分标签宽度。相比在组件内写死栅格列数，此做法可随 sections 变化
+         * 自动适配未来新增的设置分区。
+         */
+        style={{
+          "--settings-nav-section-count": sectionCount,
+        }}
       >
         {closeActionNode ? (
           <div role="presentation" className={actionWrapperClassName}>
