@@ -1,24 +1,11 @@
-<!--
-背景：
- - 默认用户头像历史上使用 light/dark 两张 1024px 位图级 SVG 互换前景与背景颜色，负担加载与维护。
-目的：
- - 提供轻量的矢量轮廓并依赖 currentColor 着色，匹配 ThemeIcon 的主题适配策略。
-关键决策与取舍：
- - 选取 24x24 viewBox 并结合圆形外框与胸像轮廓，既保持识别度又避免多余填充。
-影响范围：
- - 用户列表与头像占位将继承父级颜色控制明暗态，原双份大尺寸资源废弃。
-演进与TODO：
- - 若需支持多头像风格，可在命名空间下增添 default-user-avatar-outline 等扩展。
--->
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 24 24"
+  viewBox="0 0 20 20"
   aria-hidden="true"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="1.5"
+  data-slot="icon"
+  fill="currentColor"
 >
-  <circle cx="12" cy="12" r="9.25" />
-  <path d="M15.5 16.75a3.5 3.5 0 0 0-7 0" />
-  <circle cx="12" cy="10" r="2.5" fill="currentColor" />
+  <path
+    d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z"
+  />
 </svg>
