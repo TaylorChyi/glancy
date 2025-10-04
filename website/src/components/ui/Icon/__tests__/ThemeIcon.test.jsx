@@ -16,6 +16,10 @@ const iconRegistry = {
   wechat: {
     single: "/assets/wechat.svg",
   },
+  apple: {
+    light: "/assets/apple-light.svg",
+    dark: "/assets/apple-dark.svg",
+  },
 };
 
 jest.unstable_mockModule("@/assets/icons.js", () => ({
@@ -49,6 +53,44 @@ describe("ThemeIcon", () => {
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon).toHaveAttribute("src", iconRegistry["glancy-web"].single);
     expect(icon.className).toContain("text-onsurface");
+  });
+
+  /**
+   * 测试目标：在 resolvedTheme=light 时优先渲染 light 变体。 
+   * 前置条件：iconRegistry.apple 同时提供 light/dark 资源。 
+   * 步骤：
+   *  1) 设置 currentTheme=light；
+   *  2) 渲染 ThemeIcon name="apple"；
+   *  3) 捕获 img 元素并检查 src。 
+   * 断言：
+   *  - src 指向 light 变体。
+   * 边界/异常：
+   *  - 若 light 缺失则会退到 dark（由后续测试覆盖）。
+   */
+  test("prefers light variant when theme resolves to light", () => {
+    currentTheme = "light";
+    render(<ThemeIcon name="apple" alt="apple" />);
+    const icon = screen.getByRole("img", { name: "apple" });
+    expect(icon).toHaveAttribute("src", iconRegistry.apple.light);
+  });
+
+  /**
+   * 测试目标：在 resolvedTheme=dark 时切换到暗色背景专用资源。 
+   * 前置条件：iconRegistry.apple 提供 dark 资源；currentTheme=dark。 
+   * 步骤：
+   *  1) 设置 currentTheme=dark；
+   *  2) 渲染 ThemeIcon name="apple"；
+   *  3) 捕获 img 并校验 src。 
+   * 断言：
+   *  - src 指向 dark 变体。
+   * 边界/异常：
+   *  - 若 dark 缺失应回退到 light（由上一测试覆盖逻辑）。
+   */
+  test("switches to dark variant when theme resolves to dark", () => {
+    currentTheme = "dark";
+    render(<ThemeIcon name="apple" alt="apple" />);
+    const icon = screen.getByRole("img", { name: "apple" });
+    expect(icon).toHaveAttribute("src", iconRegistry.apple.dark);
   });
 
   /**

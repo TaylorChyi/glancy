@@ -58,6 +58,13 @@ type FallbackPreset = {
   variant: FallbackPresetKey;
 };
 
+type IconModuleEntry = {
+  single?: string;
+  light?: string;
+  dark?: string;
+  [variant: string]: string | undefined;
+};
+
 const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
   Object.freeze({
     apple: { label: "A", variant: "apple" },
@@ -65,6 +72,17 @@ const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
     wechat: { label: "W", variant: "wechat" },
     default: { label: "•", variant: "default" },
   });
+
+/**
+ * 采用“主题 -> 资源优先级队列”的策略映射，确保未来扩展更多主题时仅需更新此处而无需触碰消费端组件。
+ * 当前按照 light/dark 双态设计，优先使用语义匹配的资源，缺失时自动回退到对立主题。
+ */
+const THEMED_VARIANT_PRIORITY: Readonly<
+  Record<ResolvedTheme, ReadonlyArray<keyof IconModuleEntry>>
+> = Object.freeze({
+  light: Object.freeze(["light", "dark"]),
+  dark: Object.freeze(["dark", "light"]),
+});
 
 const legacyToneToRole = (
   tone: LegacyTone | undefined,
@@ -85,12 +103,35 @@ const composeClassName = (
   external?: string,
 ) => [base, ROLE_CLASSNAME_MAP[roleClass], external].filter(Boolean).join(" ");
 
-const resolveIconSrc = (name: string) => {
-  const entry = ICONS[name];
+const pickVariantForTheme = (
+  entry: IconModuleEntry,
+  resolvedTheme: ResolvedTheme,
+) => {
+  /**
+   * 意图：按主题挑选最契合的图标资源，保证 dark 模式优先亮色资源、light 模式优先深色资源。
+   * 流程：遍历当前主题的候选列表，返回首个存在的资源；若都缺失则交由调用方处理回退。
+   */
+  const candidates = THEMED_VARIANT_PRIORITY[resolvedTheme];
+  for (const variantKey of candidates) {
+    const candidate = entry[variantKey];
+    if (candidate) {
+      return candidate;
+    }
+  }
+  return undefined;
+};
+
+const resolveIconSrc = (name: string, resolvedTheme: ResolvedTheme) => {
+  const entry = ICONS[name] as IconModuleEntry | undefined;
   if (!entry) {
     return undefined;
   }
-  return entry.single ?? entry.light ?? entry.dark;
+
+  if (entry.single) {
+    return entry.single;
+  }
+
+  return pickVariantForTheme(entry, resolvedTheme) ?? entry.light ?? entry.dark;
 };
 
 const resolveFallback = (name: string): FallbackPreset => {
@@ -131,7 +172,7 @@ export function ThemeIcon({
 }: IconProps) {
   const { resolvedTheme } = useTheme();
   const iconRole = roleClass ?? legacyToneToRole(tone, resolvedTheme);
-  const src = resolveIconSrc(name);
+  const src = resolveIconSrc(name, resolvedTheme);
   const commonClassName = composeClassName(
     "inline-block align-middle",
     iconRole,
