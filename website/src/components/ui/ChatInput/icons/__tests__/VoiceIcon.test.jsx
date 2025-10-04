@@ -8,7 +8,7 @@ import { jest } from "@jest/globals";
  * 目的：
  *  - 通过桩件控制主题、遮罩能力与图标注册表，确保新模板对语音图标的渲染路径完整覆盖。
  * 关键决策与取舍：
- *  - 延续策略模式测试：mock useTheme、useMaskSupport 与 icon registry，聚焦资源解析与降级行为；避免依赖真实资源文件导致测试脆弱。
+ *  - 延续策略模式测试：mock useTheme、useMaskSupport 与 icon registry，聚焦 single 资源解析与降级行为；避免依赖真实资源文件导致测试脆弱。
  * 影响范围：
  *  - 覆盖 VoiceIcon 的主题分支、遮罩降级与 fallback 调用逻辑，间接验证 createMaskedIconRenderer 的稳定性。
  * 演进与TODO：
@@ -66,70 +66,22 @@ describe("VoiceIcon", () => {
   });
 
   /**
-   * 测试目标：在浅色主题下应选择单一变体并生成匹配的遮罩样式。
-   * 前置条件：resolvedTheme=light，注册表仅包含 single 资源。
+   * 测试目标：应选择单一变体并生成匹配的遮罩样式。
+   * 前置条件：注册表仅包含 single 资源。
    * 步骤：
    *  1) 渲染 VoiceIcon 并获取标记为 voice-button 的节点。
    *  2) 读取其 style.mask 属性。
    * 断言：
    *  - mask 属性采用 single 资源并保持模板语法。
    * 边界/异常：
-   *  - 主题切换由后续用例验证。
+   *  - fallback 分支由后续用例验证。
    */
-  test("GivenLightTheme_WhenRendering_ThenApplySingleVariantMask", () => {
+  test("GivenRegistryWithSingle_WhenRendering_ThenApplyMask", () => {
     const { container } = render(<VoiceIcon className="icon" />);
 
-    const node = container.querySelector('[data-icon-name="voice-button"]');
+    const node = container.querySelector('span[data-icon-name="voice-button"]');
     expect(node).not.toBeNull();
     expect(node?.style.mask).toBe("url(voice.svg) center / contain no-repeat");
-  });
-
-  /**
-   * 测试目标：在深色主题下亦应使用 single 资源，验证主题分支不会导致空白。
-   * 前置条件：resolvedTheme=dark，注册表与默认一致。
-   * 步骤：
-   *  1) 切换 mock 的主题值并重新渲染组件。
-   *  2) 检查标记节点的 mask 属性。
-   * 断言：
-   *  - mask 使用 single 资源。
-   * 边界/异常：
-   *  - 若未来新增高对比主题，应扩展断言覆盖。
-   */
-  test("GivenDarkTheme_WhenRendering_ThenFallbackToSingleVariant", () => {
-    currentResolvedTheme = "dark";
-
-    const { container } = render(<VoiceIcon className="icon" />);
-
-    const node = container.querySelector('[data-icon-name="voice-button"]');
-    expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe("url(voice.svg) center / contain no-repeat");
-  });
-
-  /**
-   * 测试目标：当 single 资源缺失但存在主题特定资源时，仍能按 resolvedTheme 选择素材。
-   * 前置条件：临时替换注册表，仅保留 dark 资源，resolvedTheme=dark。
-   * 步骤：
-   *  1) 调整注册表后渲染组件。
-   *  2) 断言遮罩引用 dark 资源。
-   * 断言：
-   *  - mask 使用 dark 资源。
-   * 边界/异常：
-   *  - 用例结束后恢复注册表。
-   */
-  test("GivenOnlyThemeVariant_WhenRendering_ThenUseThemeSpecificResource", () => {
-    currentResolvedTheme = "dark";
-    const originalEntry = { ...voiceRegistry["voice-button"] };
-    voiceRegistry["voice-button"] = { dark: "voice-dark.svg" };
-
-    const { container } = render(<VoiceIcon className="icon" />);
-
-    const node = container.querySelector('[data-icon-name="voice-button"]');
-    expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe(
-      "url(voice-dark.svg) center / contain no-repeat",
-    );
-
-    voiceRegistry["voice-button"] = originalEntry;
   });
 
   /**
@@ -155,6 +107,33 @@ describe("VoiceIcon", () => {
       className: "icon",
       iconName: "voice-button",
     });
+
+    voiceRegistry["voice-button"] = originalEntry;
+  });
+
+  /**
+   * 测试目标：当条目存在但未提供 single 资源时，应走默认 fallback。
+   * 前置条件：注册表条目清空 single 字段。
+   * 步骤：
+   *  1) 将注册表条目替换为无 single 的对象。
+   *  2) 渲染组件并检查输出。
+   * 断言：
+   *  - 遮罩节点不存在，渲染 fallback SVG。
+   * 边界/异常：
+   *  - 用例结束后恢复注册表。
+   */
+  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallback", () => {
+    const originalEntry = { ...voiceRegistry["voice-button"] };
+    voiceRegistry["voice-button"] = {};
+
+    const { container } = render(<VoiceIcon className="icon" />);
+
+    expect(
+      container.querySelector('span[data-icon-name="voice-button"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('svg[data-icon-name="voice-button"]'),
+    ).not.toBeNull();
 
     voiceRegistry["voice-button"] = originalEntry;
   });

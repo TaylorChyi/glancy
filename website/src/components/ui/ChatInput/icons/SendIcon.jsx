@@ -4,7 +4,8 @@
  * 目的：
  *  - 基于统一的 createMaskedIconRenderer 模板方法，将资源解析与遮罩样式构建作为策略注入，确保发送图标与语音图标共享一致骨架。
  * 关键决策与取舍：
- *  - 采用策略函数描述主题资源选择与样式生成，保留模板对降级逻辑的控制，避免自定义实现偏离探测流程。
+ *  - 采用策略函数描述资源选择与样式生成，保留模板对降级逻辑的控制，避免自定义实现偏离探测流程。
+ *  - 在主题退化逻辑下仅消费单一矢量资源（single），统一样式来源，减少多态素材的维护成本。
  *  - 保留 SVG fallback 以应对遮罩不可用场景，并在注释中保留扩展点说明，确保未来动画或主题扩展有容纳空间。
  * 影响范围：
  *  - ChatInput 的发送按钮图标渲染逻辑及其单测；其他依赖 send-button 令牌的入口也将受益于统一策略。
@@ -17,23 +18,9 @@ import createMaskedIconRenderer from "./createMaskedIconRenderer.jsx";
 
 const SEND_ICON_TOKEN = "send-button";
 
-const resolveSendIconResource = ({ registry, resolvedTheme }) => {
+const resolveSendIconResource = ({ registry }) => {
   const entry = registry?.[SEND_ICON_TOKEN];
-  if (!entry) {
-    return null;
-  }
-
-  const themeKey = resolvedTheme === "dark" ? "dark" : "light";
-  if (entry[themeKey]) {
-    return entry[themeKey];
-  }
-
-  if (entry.single) {
-    return entry.single;
-  }
-
-  const alternativeKey = themeKey === "dark" ? "light" : "dark";
-  return entry[alternativeKey] ?? null;
+  return entry?.single ?? null;
 };
 
 const buildSendIconInlineStyle = ({ resource }) => {

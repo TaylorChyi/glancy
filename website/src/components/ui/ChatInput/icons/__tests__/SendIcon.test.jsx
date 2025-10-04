@@ -8,7 +8,7 @@ import { jest } from "@jest/globals";
  * 目的：
  *  - 模拟主题、遮罩能力与图标注册表，确保发送图标始终能渲染出正确的遮罩或回退 SVG，避免再次出现圆形占位问题。
  * 关键决策与取舍：
- *  - 复用与 VoiceIcon 一致的 mock 体系，降低测试认知成本；重点断言主题分支、跨主题回退与 fallback 调用。
+ *  - 复用与 VoiceIcon 一致的 mock 体系，降低测试认知成本；重点断言 single 资源路径与多重 fallback 调用。
  * 影响范围：
  *  - 覆盖发送按钮图标的主要渲染路径，为 ChatInput 的发送体验提供回归保障。
  * 演进与TODO：
@@ -66,68 +66,45 @@ describe("SendIcon", () => {
   });
 
   /**
-   * 测试目标：浅色主题下应解析单一资源并生成遮罩样式。
-   * 前置条件：resolvedTheme=light，注册表仅提供 single 资源。
+   * 测试目标：应解析单一资源并生成遮罩样式。
+   * 前置条件：注册表仅提供 single 资源。
    * 步骤：
    *  1) 渲染 SendIcon 并查询标记节点。
    *  2) 读取 style.mask。
    * 断言：
    *  - mask 使用 single 资源。
    * 边界/异常：
-   *  - 其他主题分支由后续用例覆盖。
+   *  - fallback 分支由后续用例覆盖。
    */
-  test("GivenLightTheme_WhenRendering_ThenApplySingleVariantMask", () => {
+  test("GivenRegistryWithSingle_WhenRendering_ThenApplyMask", () => {
     const { container } = render(<SendIcon className="icon" />);
 
-    const node = container.querySelector('[data-icon-name="send-button"]');
+    const node = container.querySelector('span[data-icon-name="send-button"]');
     expect(node).not.toBeNull();
     expect(node?.style.mask).toBe("url(send.svg) center / contain no-repeat");
   });
 
   /**
-   * 测试目标：深色主题同样应回落到 single 资源，验证主题分支不会导致空白。
-   * 前置条件：resolvedTheme=dark，注册表仅提供 single 资源。
+   * 测试目标：当 single 资源缺失时，应直接走 fallback，避免遮罩渲染。
+   * 前置条件：注册表条目存在但不含 single。
    * 步骤：
-   *  1) 切换主题 mock。
-   *  2) 渲染组件并读取遮罩。
+   *  1) 临时清空 single 字段后渲染组件。
+   *  2) 检查是否渲染 fallback SVG。
    * 断言：
-   *  - mask 依旧指向 single 资源。
-   * 边界/异常：
-   *  - 若未来新增主题专属资源，应扩充用例。
-   */
-  test("GivenDarkTheme_WhenRendering_ThenFallbackToSingleVariant", () => {
-    currentResolvedTheme = "dark";
-
-    const { container } = render(<SendIcon className="icon" />);
-
-    const node = container.querySelector('[data-icon-name="send-button"]');
-    expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe("url(send.svg) center / contain no-repeat");
-  });
-
-  /**
-   * 测试目标：当 single 资源缺失但存在主题特定资源时，应回退到任意可用主题素材。
-   * 前置条件：移除 single，补充 light 资源，resolvedTheme=dark。
-   * 步骤：
-   *  1) 修改注册表后渲染组件。
-   *  2) 检查遮罩是否使用 light 资源。
-   * 断言：
-   *  - mask 回退到 light 资源。
+   *  - 遮罩节点不存在，fallback SVG 被渲染。
    * 边界/异常：
    *  - 用例结束后恢复注册表。
    */
-  test("GivenMissingSingleVariant_WhenRendering_ThenFallbackToThemeSpecific", () => {
-    currentResolvedTheme = "dark";
+  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallback", () => {
     const originalEntry = { ...sendRegistry["send-button"] };
-    sendRegistry["send-button"] = { light: "send-light.svg" };
+    sendRegistry["send-button"] = {};
 
     const { container } = render(<SendIcon className="icon" />);
 
-    const node = container.querySelector('[data-icon-name="send-button"]');
-    expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe(
-      "url(send-light.svg) center / contain no-repeat",
-    );
+    expect(
+      container.querySelector('span[data-icon-name="send-button"]'),
+    ).toBeNull();
+    expect(container.querySelector("svg")).not.toBeNull();
 
     sendRegistry["send-button"] = originalEntry;
   });
