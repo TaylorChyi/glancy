@@ -33,8 +33,7 @@ jest.unstable_mockModule("../useMaskSupport.js", () => ({
 
 const sendRegistry = {
   "send-button": {
-    light: "send-light.svg",
-    dark: "send-dark.svg",
+    single: "send.svg",
   },
 };
 
@@ -67,52 +66,48 @@ describe("SendIcon", () => {
   });
 
   /**
-   * 测试目标：浅色主题下应解析 light 资源并生成遮罩样式。
-   * 前置条件：resolvedTheme=light，注册表提供 light/dark 资源。
+   * 测试目标：浅色主题下应解析单一资源并生成遮罩样式。
+   * 前置条件：resolvedTheme=light，注册表仅提供 single 资源。
    * 步骤：
    *  1) 渲染 SendIcon 并查询标记节点。
    *  2) 读取 style.mask。
    * 断言：
-   *  - mask 使用 light 资源。
+   *  - mask 使用 single 资源。
    * 边界/异常：
    *  - 其他主题分支由后续用例覆盖。
    */
-  test("GivenLightTheme_WhenRendering_ThenApplyLightVariantMask", () => {
+  test("GivenLightTheme_WhenRendering_ThenApplySingleVariantMask", () => {
     const { container } = render(<SendIcon className="icon" />);
 
     const node = container.querySelector('[data-icon-name="send-button"]');
     expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe(
-      "url(send-light.svg) center / contain no-repeat",
-    );
+    expect(node?.style.mask).toBe("url(send.svg) center / contain no-repeat");
   });
 
   /**
-   * 测试目标：深色主题应解析 dark 资源，验证策略与主题联动。
-   * 前置条件：resolvedTheme=dark，注册表提供 dark 资源。
+   * 测试目标：深色主题同样应回落到 single 资源，验证主题分支不会导致空白。
+   * 前置条件：resolvedTheme=dark，注册表仅提供 single 资源。
    * 步骤：
    *  1) 切换主题 mock。
    *  2) 渲染组件并读取遮罩。
    * 断言：
-   *  - mask 使用 dark 资源。
+   *  - mask 依旧指向 single 资源。
    * 边界/异常：
-   *  - 若未来新增 single 资源，应扩充用例。
+   *  - 若未来新增主题专属资源，应扩充用例。
    */
-  test("GivenDarkTheme_WhenRendering_ThenApplyDarkVariantMask", () => {
+  test("GivenDarkTheme_WhenRendering_ThenFallbackToSingleVariant", () => {
     currentResolvedTheme = "dark";
 
     const { container } = render(<SendIcon className="icon" />);
 
     const node = container.querySelector('[data-icon-name="send-button"]');
     expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe(
-      "url(send-dark.svg) center / contain no-repeat",
-    );
+    expect(node?.style.mask).toBe("url(send.svg) center / contain no-repeat");
   });
 
   /**
-   * 测试目标：当主题对应的资源缺失时，应回退到另一个可用主题资源。
-   * 前置条件：删除 dark 资源，resolvedTheme=dark。
+   * 测试目标：当 single 资源缺失但存在主题特定资源时，应回退到任意可用主题素材。
+   * 前置条件：移除 single，补充 light 资源，resolvedTheme=dark。
    * 步骤：
    *  1) 修改注册表后渲染组件。
    *  2) 检查遮罩是否使用 light 资源。
@@ -121,10 +116,10 @@ describe("SendIcon", () => {
    * 边界/异常：
    *  - 用例结束后恢复注册表。
    */
-  test("GivenMissingThemeVariant_WhenRendering_ThenFallbackToAlternateTheme", () => {
+  test("GivenMissingSingleVariant_WhenRendering_ThenFallbackToThemeSpecific", () => {
     currentResolvedTheme = "dark";
     const originalEntry = { ...sendRegistry["send-button"] };
-    delete sendRegistry["send-button"].dark;
+    sendRegistry["send-button"] = { light: "send-light.svg" };
 
     const { container } = render(<SendIcon className="icon" />);
 

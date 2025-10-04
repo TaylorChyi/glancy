@@ -3,14 +3,14 @@ import { buildDynamicRegistry } from "@/assets/icons.js";
 
 describe("buildDynamicRegistry", () => {
   /**
-   * 验证基础用例：同名资源的不同主题后缀被聚合到统一的图标实体中，
-   * 确保在浅色与深色主题间切换时能够命中既有素材。
+   * 验证基础用例：带有主题后缀的资源应聚合为同一图标实体，
+   * 即便所有 SVG 均位于 assets 根目录，也能正确推断明暗态。
    */
   test("aggregates theme variants into a single registry entry", () => {
     const registry = buildDynamicRegistry({
-      "./icons/eye-light.svg": "/assets/eye-light.svg",
-      "./icons/eye-dark.svg": "/assets/eye-dark.svg",
-      "./logos/wechat.svg": "/assets/wechat.svg",
+      "./eye-light.svg": "/assets/eye-light.svg",
+      "./eye-dark.svg": "/assets/eye-dark.svg",
+      "./wechat.svg": "/assets/wechat.svg",
     });
 
     expect(registry).toEqual({
@@ -25,14 +25,12 @@ describe("buildDynamicRegistry", () => {
    */
   test("normalises windows style paths to keep original svg assets", () => {
     const registry = buildDynamicRegistry({
-      ".\\icons\\send-button-light.svg": "/assets/send-button-light.svg",
-      ".\\icons\\send-button-dark.svg": "/assets/send-button-dark.svg",
+      ".\\send-button.svg": "/assets/send-button.svg",
     });
 
     expect(registry).toEqual({
       "send-button": {
-        light: "/assets/send-button-light.svg",
-        dark: "/assets/send-button-dark.svg",
+        single: "/assets/send-button.svg",
       },
     });
   });

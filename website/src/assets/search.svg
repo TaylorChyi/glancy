@@ -1,0 +1,25 @@
+<!--
+背景：
+ - 词典操作面板的放大镜按钮缺少匹配的矢量资源，导致 ThemeIcon 组件回退到排版占位符。
+目的：
+ - 提供遵循 currentColor 规范的放大镜图标，支持 SearchBox 与相关入口保持一致的视觉反馈。
+关键决策与取舍：
+ - 选用 24x24 视窗以对齐现有 Heroicons 尺寸，便于与其他操作图标统一排版；
+ - 采用实心路径并保留 fill-rule/clip-rule，以确保缩放时边缘平滑且在小尺寸下仍具可辨识度。
+影响范围：
+ - 所有引用 `ThemeIcon name="search"` 的入口将展示矢量资源，不再降级为字母占位。
+演进与TODO：
+ - 后续如需细化线框版本，可在 manifest 中注册额外变体，通过命名约定进行扩展。
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  fill="currentColor"
+>
+  <path
+    fill-rule="evenodd"
+    d="M10.5 3a7.5 7.5 0 0 1 5.916 12.027l4.778 4.778a.75.75 0 1 1-1.06 1.06l-4.778-4.777A7.5 7.5 0 1 1 10.5 3Zm0 1.5a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"
+    clip-rule="evenodd"
+  />
+</svg>

@@ -1,0 +1,25 @@
+<!--
+背景：
+ - Golang 品牌图标原以多块矩形组合并提供 light/dark 双份填充文件。
+目的：
+ - 以 currentColor 单色重绘，压缩资源同时保留原始几何节奏，方便在不同主题下复用。
+关键决策与取舍：
+ - 将原 1024 尺寸矩形阵列按比例映射至 24x24 viewBox，并保持圆角特征，避免视觉突兀。
+影响范围：
+ - 引用 golang 令牌的 UI 将继承父级颜色，删除历史多份 SVG。
+演进与TODO：
+ - 若需要官方彩色 gopher，可另建 golang-mascot 资源。
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  fill="currentColor"
+>
+  <rect x="5" y="5" width="4" height="4" rx="1.2" />
+  <rect x="15" y="5" width="4" height="4" rx="1.2" />
+  <rect x="5" y="10" width="4" height="4" rx="1.2" />
+  <rect x="10" y="14" width="4" height="5" rx="1.2" />
+  <rect x="10" y="5" width="4" height="5" rx="1.2" />
+  <rect x="15" y="10" width="4" height="4" rx="1.2" />
+</svg>

@@ -1,0 +1,22 @@
+<!--
+背景：
+ - Glancy Web 标识与主标识共享几何构成，仅在主题切换时使用不同颜色资源。
+目的：
+ - 输出单一 currentColor 版本，让主题色控制逻辑与 Icon 体系保持一致。
+关键决策与取舍：
+ - 维持三段竖条布局但略微调整比例以适配 24x24 viewBox；未引入外框以体现「Web」的简洁特征。
+影响范围：
+ - 引用 glancy-web 令牌的地方无需再区分明暗资源。
+演进与TODO：
+ - 后续如需动画或渐变，可引入 glancy-web-motion 变体。
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  fill="currentColor"
+>
+  <rect x="6" y="9" width="3.5" height="9" rx="1.75" />
+  <rect x="10.25" y="5" width="3.5" height="13" rx="1.75" />
+  <rect x="14.5" y="7" width="3.5" height="11" rx="1.75" />
+</svg>
