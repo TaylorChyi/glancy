@@ -1,0 +1,188 @@
+/**
+ * 背景：
+ *  - 语言菜单需在输入框与偏好设置间共享视觉语言，避免维护多份样式导致偏差。
+ * 目的：
+ *  - 抽离语言菜单的核心壳体、触发器与弹层样式，保持透明底与焦点节奏一致。
+ * 关键决策与取舍：
+ *  - 延续 ChatInput 中的透明壳体方案，通过自定义属性暴露尺寸/色板，方便不同容器调优；
+ *  - 新增 data-visible 控制标签显隐，满足桌面端偏好设置展示完整标签的诉求。
+ * 影响范围：
+ *  - 所有复用语言菜单的界面（ChatInput、Preferences 等）。
+ * 演进与TODO：
+ *  - TODO: 若未来引入移动端样式，需要针对触发器尺寸与滚动条进行适配。
+ */
+
+.language-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.language-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--seg-arrow-gap, 12px);
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: calc(var(--seg-r, 22px) - 6px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.language-trigger[data-open="true"],
+.language-trigger:hover {
+  color: var(
+    --seg-hover-foreground,
+    color-mix(in srgb, var(--sb-text, currentColor) 88%, white 12%)
+  );
+}
+
+.language-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus, 0 0 0 3px rgb(92 122 255 / 45%));
+}
+
+.language-trigger-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.language-trigger-code {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--seg-code-width, 4ch);
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.language-trigger-label {
+  display: none;
+  margin-inline-start: 8px;
+  font-weight: 600;
+}
+
+.language-trigger-label[data-visible="true"] {
+  display: inline-flex;
+  align-items: center;
+}
+
+.language-menu {
+  list-style: none;
+  margin: 0;
+  padding: var(--sb-menu-padding, 8px);
+  width: min(var(--sb-menu-width, 360px), calc(100vw - 32px));
+  max-height: var(--sb-menu-max-h, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: var(--sb-menu-radius, 16px);
+  background: var(--menu-bg, var(--night-panel));
+  border: 1px solid var(--menu-border, rgb(255 255 255 / 12%));
+  box-shadow: var(--sb-menu-shadow, 0 20px 40px rgb(15 17 21 / 35%));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--menu-scroll-thumb, rgb(120 132 160 / 45%))
+    var(--menu-scroll-track, transparent);
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  transform-origin: top center;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.language-menu[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.language-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.language-menu::-webkit-scrollbar-track {
+  background: var(--menu-scroll-track, transparent);
+  border-radius: 8px;
+}
+
+.language-menu::-webkit-scrollbar-thumb {
+  background: var(--menu-scroll-thumb, rgb(120 132 160 / 45%));
+  border-radius: 8px;
+}
+
+.language-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--menu-scroll-thumb-hover, rgb(120 132 160 / 60%));
+}
+
+.language-menu-item {
+  margin: 0;
+  padding: 0;
+}
+
+.language-menu-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 12ch 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding-inline: 16px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--menu-name-color, var(--night-text));
+  font-size: var(--sb-font-sm, 15px);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.language-menu-button:hover,
+.language-menu-button:focus-visible,
+.language-menu-button[data-active="true"] {
+  background: var(--menu-hover, rgb(255 255 255 / 8%));
+  outline: none;
+}
+
+.language-option-code {
+  color: var(--menu-code-color, var(--night-muted));
+  font-weight: 700;
+  letter-spacing: var(--sb-code-letter-spacing, 0.08em);
+  text-transform: uppercase;
+}
+
+.language-option-name {
+  color: var(--menu-name-color, var(--night-text));
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.language-option-check {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  color: var(--menu-check-color, var(--sb-icon, currentColor));
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.language-menu-button[data-active="true"] .language-option-check {
+  opacity: 1;
+}

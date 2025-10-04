@@ -16,6 +16,7 @@ import PropTypes from "prop-types";
 import { useLanguage, useTheme } from "@/context";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 import { SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
+import LanguageMenu from "@/components/ui/LanguageMenu";
 import styles from "../Preferences.module.css";
 
 const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
@@ -80,23 +81,42 @@ function GeneralSection({ title, headingId }) {
     [setTheme, theme],
   );
 
-  const handleLanguageChange = useCallback(
-    (event) => {
-      const value = event?.target?.value ?? SYSTEM_LANGUAGE_AUTO;
-      if (value === systemLanguage) {
+  const normalizeSystemLanguage = useCallback((value) => {
+    if (value == null) {
+      return SYSTEM_LANGUAGE_AUTO.toUpperCase();
+    }
+    if (value === SYSTEM_LANGUAGE_AUTO) {
+      return SYSTEM_LANGUAGE_AUTO.toUpperCase();
+    }
+    return String(value).toUpperCase();
+  }, []);
+
+  const handleLanguageSelect = useCallback(
+    (nextValue) => {
+      const fallback = SYSTEM_LANGUAGE_AUTO;
+      const normalized =
+        typeof nextValue === "string"
+          ? nextValue.toLowerCase()
+          : String(nextValue ?? fallback).toLowerCase();
+      const target = normalized || fallback;
+      if (target === systemLanguage) {
         return;
       }
-      setSystemLanguage(value);
+      setSystemLanguage(target);
     },
     [setSystemLanguage, systemLanguage],
   );
 
   return (
-    <section aria-labelledby={headingId} className={styles.section}>
+    <section
+      aria-labelledby={headingId}
+      className={composeClassName(styles.section, styles["section-plain"])}
+    >
       <div className={styles["section-header"]}>
         <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
           {title}
         </h3>
+        <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
       <div className={styles.controls}>
         <fieldset
@@ -135,19 +155,16 @@ function GeneralSection({ title, headingId }) {
           <label htmlFor={languageSelectId} className={styles["control-label"]}>
             {languageLabel}
           </label>
-          <div className={styles["select-wrapper"]}>
-            <select
+          <div className={styles["language-shell"]}>
+            <LanguageMenu
               id={languageSelectId}
-              className={styles.select}
+              options={languageOptions}
               value={systemLanguage ?? SYSTEM_LANGUAGE_AUTO}
-              onChange={handleLanguageChange}
-            >
-              {languageOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onChange={handleLanguageSelect}
+              ariaLabel={languageLabel}
+              normalizeValue={normalizeSystemLanguage}
+              showLabel
+            />
           </div>
         </div>
       </div>
