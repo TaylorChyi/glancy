@@ -304,6 +304,7 @@
 
   .docker-inner {
     width: 100%;
+
     --docker-row-max-width: 100%;
     --docker-row-width: 100%;
   }

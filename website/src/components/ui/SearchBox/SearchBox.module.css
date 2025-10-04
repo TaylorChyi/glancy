@@ -2,6 +2,7 @@
   position: relative;
   display: flex;
   align-items: center;
+
   /*
    * 背景：SearchBox 会嵌套于 ChatInput 与释义面板两种布局中，需要共享统一宽度约束。
    * 取舍：通过 --sb-shell-width 让调用方显式传入壳层宽度，默认仍保持主题 token 的最小值，
