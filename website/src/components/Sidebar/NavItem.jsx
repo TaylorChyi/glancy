@@ -44,6 +44,7 @@ const NavItem = forwardRef(function NavItem(
     type = "button",
     children = null,
     variant = "accent",
+    allowMultilineLabel = false,
     ...rest
   },
   ref,
@@ -52,11 +53,23 @@ const NavItem = forwardRef(function NavItem(
     INTERACTION_VARIANTS[variant] || INTERACTION_VARIANTS.accent;
   const baseVariantClass = variantStyles.baseClass;
   const activeVariantClass = variantStyles.activeClass;
+  // 通过可选的多行模式将视觉策略与业务容器解耦，避免在组件内部引入长度判断逻辑。
+  const multilineItemClass = allowMultilineLabel
+    ? styles["item-multiline"]
+    : "";
+  const labelClassName = useMemo(
+    () =>
+      joinClassNames(
+        styles.label,
+        allowMultilineLabel ? styles["label-multiline"] : "",
+      ),
+    [allowMultilineLabel],
+  );
 
   const content = (
     <>
       {renderIcon(icon, typeof label === "string" ? label : undefined)}
-      <span className={styles.label}>
+      <span className={labelClassName}>
         {label}
         {description ? (
           <span className={styles.description}>{description}</span>
@@ -71,12 +84,20 @@ const NavItem = forwardRef(function NavItem(
     () =>
       joinClassNames(
         styles.item,
+        multilineItemClass,
         toneClassName,
         baseVariantClass,
         active ? activeVariantClass : "",
         className,
       ),
-    [active, baseVariantClass, activeVariantClass, className, toneClassName],
+    [
+      active,
+      baseVariantClass,
+      activeVariantClass,
+      className,
+      multilineItemClass,
+      toneClassName,
+    ],
   );
 
   if (to) {
@@ -87,6 +108,7 @@ const NavItem = forwardRef(function NavItem(
         className={({ isActive }) =>
           joinClassNames(
             styles.item,
+            multilineItemClass,
             toneClassName,
             baseVariantClass,
             isActive || active ? activeVariantClass : "",
@@ -144,6 +166,7 @@ NavItem.propTypes = {
   children: PropTypes.node,
   tone: PropTypes.oneOf(["default", "muted"]),
   variant: PropTypes.oneOf(Object.keys(INTERACTION_VARIANTS)),
+  allowMultilineLabel: PropTypes.bool,
 };
 
 export default NavItem;

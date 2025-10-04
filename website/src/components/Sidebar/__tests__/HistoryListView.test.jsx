@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import styles from "../HistoryList.module.css";
+import navItemStyles from "../NavItem.module.css";
 
 const loadHistory = jest.fn();
 
@@ -153,5 +154,38 @@ describe("HistoryListView", () => {
     fireEvent.keyDown(firstItem, { key: "ArrowDown" });
 
     expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：验证历史词条启用 NavItem 的多行模式以完整展示文本。
+   * 前置条件：提供包含长词条的列表，并渲染默认视图。
+   * 步骤：
+   *  1) 渲染组件并获取长词条按钮与文本节点。
+   * 断言：
+   *  - 按钮含有多行布局类，文本节点具备多行标签类。
+   * 边界/异常：
+   *  - 若未来禁用该模式应及时更新断言，避免回归缺口。
+   */
+  test("Given_long_term_When_history_rendered_Then_enables_multiline_display", () => {
+    const onNavigate = jest.fn(() => ({}));
+    const items = [
+      {
+        termKey: "term-1",
+        term: "a very very long dictionary lookup that should not be truncated",
+        latestVersionId: "v1",
+      },
+    ];
+
+    render(<HistoryListView items={items} onNavigate={onNavigate} />);
+
+    const button = screen.getByRole("button", {
+      name: "a very very long dictionary lookup that should not be truncated",
+    });
+    const label = screen.getByText(
+      "a very very long dictionary lookup that should not be truncated",
+    );
+
+    expect(button).toHaveClass(navItemStyles["item-multiline"]);
+    expect(label).toHaveClass(navItemStyles["label-multiline"]);
   });
 });

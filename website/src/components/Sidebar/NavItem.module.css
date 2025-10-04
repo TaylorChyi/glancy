@@ -4,7 +4,9 @@
   align-items: center;
   justify-content: flex-start;
   gap: var(--sidebar-item-gap, 12px);
-  height: var(--sidebar-item-h);
+
+  /* 保持默认高度基准，同时允许多行模式扩展 */
+  min-height: var(--sidebar-item-h);
   padding: 0 var(--sidebar-pad-x);
   padding-left: calc(var(--sidebar-pad-x) + 3px);
   border: 0;
@@ -88,6 +90,27 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/*
+ * 背景：
+ *  - 搜索历史存在长度不定的词条，单行截断会导致信息缺失，影响复查与复用体验。
+ * 目的：
+ *  - 在保持默认单行样式的同时提供显式的多行模式，必要时允许内容扩展且不侵扰其他入口。
+ * 关键决策与取舍：
+ *  - 通过额外类控制高度与换行，避免在组件中直接写条件样式，便于未来扩展更多布局策略。
+ */
+.item-multiline {
+  align-items: flex-start;
+  padding-top: var(--sidebar-multiline-pad-y, 8px);
+  padding-bottom: var(--sidebar-multiline-pad-y, 8px);
+}
+
+.label-multiline {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
 }
 
 .description {
