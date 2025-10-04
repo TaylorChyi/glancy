@@ -4,7 +4,7 @@
  * 目的：
  *  - 借助 createMaskedIconRenderer 模板统一遮罩渲染流程，仅以策略函数定义语音资源的解析与样式构造，消除重复实现导致的偏差。
  * 关键决策与取舍：
- *  - 继续保留麦克风 SVG 作为 fallback，保证在遮罩不受支持时仍具备语义图形；策略函数优先选择主题匹配资源，兜底返回 single/light/dark 变体。
+ *  - 继续保留麦克风 SVG 作为 fallback，保证在遮罩不受支持时仍具备语义图形；策略函数仅依赖 single 资源，统一素材来源。
  * 影响范围：
  *  - ChatInput 语音按钮渲染行为与对应单元测试，修复部分浏览器下的黑块问题，并为未来语音动画扩展预留策略接口。
  * 演进与TODO：
@@ -16,18 +16,9 @@ import createMaskedIconRenderer from "./createMaskedIconRenderer.jsx";
 
 const VOICE_ICON_TOKEN = "voice-button";
 
-const resolveVoiceIconResource = ({ registry, resolvedTheme }) => {
+const resolveVoiceIconResource = ({ registry }) => {
   const entry = registry?.[VOICE_ICON_TOKEN];
-
-  if (!entry) {
-    return null;
-  }
-
-  if (resolvedTheme && entry?.[resolvedTheme]) {
-    return entry[resolvedTheme];
-  }
-
-  return entry.single ?? entry.light ?? entry.dark ?? null;
+  return entry?.single ?? null;
 };
 
 const buildVoiceIconMaskStyle = ({ resource }) => {
