@@ -36,17 +36,37 @@ const buildSendIconInlineStyle = ({ resource }) => {
   });
 };
 
-const defaultFallback = ({ className }) => (
-  <svg
-    aria-hidden="true"
-    className={className}
-    viewBox="0 0 18 18"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M2.25 15.75 16.5 9 2.25 2.25l4.5 6-4.5 7.5Z" />
-  </svg>
-);
+const defaultFallback = ({
+  className,
+  resource,
+  iconName = SEND_ICON_TOKEN,
+}) => {
+  if (resource) {
+    return (
+      <img
+        aria-hidden="true"
+        alt=""
+        className={className}
+        data-icon-name={iconName}
+        draggable={false}
+        src={resource}
+      />
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      data-icon-name={iconName}
+      viewBox="0 0 18 18"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M2.25 15.75 16.5 9 2.25 2.25l4.5 6-4.5 7.5Z" />
+    </svg>
+  );
+};
 
 const SendIcon = createMaskedIconRenderer({
   token: SEND_ICON_TOKEN,

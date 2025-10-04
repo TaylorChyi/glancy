@@ -95,7 +95,7 @@ describe("SendIcon", () => {
    * 边界/异常：
    *  - 用例结束后恢复注册表。
    */
-  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallback", () => {
+  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallbackSvg", () => {
     const originalEntry = { ...sendRegistry["send-button"] };
     sendRegistry["send-button"] = {};
 
@@ -104,7 +104,9 @@ describe("SendIcon", () => {
     expect(
       container.querySelector('span[data-icon-name="send-button"]'),
     ).toBeNull();
-    expect(container.querySelector("svg")).not.toBeNull();
+    expect(
+      container.querySelector('svg[data-icon-name="send-button"]'),
+    ).not.toBeNull();
 
     sendRegistry["send-button"] = originalEntry;
   });
@@ -120,12 +122,14 @@ describe("SendIcon", () => {
    * 边界/异常：
    *  - 如未来提供渐进增强，需要同步更新断言。
    */
-  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackSvg", () => {
+  test("GivenMaskUnsupported_WhenRendering_ThenRenderFallbackImage", () => {
     mockUseMaskSupport.mockReturnValueOnce(false);
 
     const { container } = render(<SendIcon className="icon" />);
 
-    expect(container.querySelector("svg")).not.toBeNull();
+    expect(
+      container.querySelector('img[data-icon-name="send-button"]'),
+    ).not.toBeNull();
   });
 
   /**
@@ -150,6 +154,8 @@ describe("SendIcon", () => {
     expect(fallback).toHaveBeenCalledWith({
       className: "icon",
       iconName: "send-button",
+      resource: null,
+      resolvedTheme: "light",
     });
 
     sendRegistry["send-button"] = originalEntry;
