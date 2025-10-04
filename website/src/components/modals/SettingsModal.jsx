@@ -82,9 +82,19 @@ function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) 
   const renderCloseAction = useMemo(
     () =>
       ({ className = "" } = {}) => {
-        const composedClassName = [modalStyles["close-button"], className]
-          .filter(Boolean)
-          .join(" ");
+        /**
+         * 背景：
+         *  - 偏好设置导航需要在模态中复用关闭按钮但移除描边与底色，
+         *    若继续强制追加模态局部样式会导致设计冲突。
+         * 取舍：
+         *  - 当调用方传入 className 时仅保留该类名，让调用方完全掌控视觉；
+         *    否则回落到模态默认样式，避免破坏其他场景的按钮体验。
+         */
+        const trimmedClassName = className.trim();
+        const composedClassName =
+          trimmedClassName.length > 0
+            ? trimmedClassName
+            : modalStyles["close-button"];
         return (
           <button
             type="button"
