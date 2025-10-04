@@ -254,16 +254,21 @@
 }
 
 .docker-inner {
-  width: min(100%, var(--sb-max-width));
+  width: var(
+    --docker-row-width,
+    min(100%, var(--sb-max-width))
+  );
 
   /*
-   * 背景：底部 docker 承载的搜索与释义区域需保持统一宽度比例，
-   *       避免在不同内容节点中重复硬编码宽度值。
-   * 取舍：通过暴露 --docker-row-width 变量，让子组件按需读取，
-   *       默认设置为父容器宽度的 90%，既满足本次需求又为未来调优保留入口。
+   * 背景：底部 docker 需要对搜索输入与释义操作提供一致的宽度基线，
+   *       过去直接下发 90% 宽度导致 SearchBox 与工具栏出现偏差与裁切。
+   * 取舍：通过集中定义 --docker-row-max-width 与 --docker-row-width，
+   *       让子组件统一消费“最大宽度 + 容器宽度”两类信号，既保证等宽，
+   *       又为未来在 Layout 处调整断点或内边距预留单一入口。
    */
 
-  --docker-row-width: 90%;
+  --docker-row-max-width: var(--sb-max-width);
+  --docker-row-width: min(100%, var(--docker-row-max-width));
 
   display: flex;
   flex-direction: column;
@@ -299,6 +304,8 @@
 
   .docker-inner {
     width: 100%;
+    --docker-row-max-width: 100%;
+    --docker-row-width: 100%;
   }
 }
 
