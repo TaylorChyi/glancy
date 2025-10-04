@@ -246,7 +246,7 @@
    * 背景：通过 CSS 变量统一动作按钮的填充与阴影，语音/发送共享壳层策略，方便后续扩展更多态。
    */
   --action-btn-bg: transparent;
-  --action-btn-color: var(--sb-icon);
+  --action-btn-color: var(--sb-action-icon, var(--sb-icon));
   --action-btn-shadow: none;
 
   background: var(--action-btn-bg);
@@ -294,7 +294,10 @@
 }
 
 .action-button-voice {
-  color: var(--sb-icon);
+  --action-btn-color: var(
+    --sb-voice-color,
+    var(--sb-action-icon, var(--sb-icon))
+  );
 }
 
 .action-button-voice[aria-pressed="true"] {
@@ -312,13 +315,13 @@
 .action-button-voice:hover,
 .action-button-voice:focus-visible {
   background: var(--action-btn-bg);
-  color: var(--sb-icon);
+  color: var(--action-btn-color);
   box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
 }
 
 .action-button-voice:active {
   background: var(--action-btn-bg);
-  color: var(--sb-icon);
+  color: var(--action-btn-color);
   box-shadow: var(--sb-cta-shadow);
 }
 
@@ -339,6 +342,7 @@
   width: 18px;
   height: 18px;
   display: block;
+  color: inherit;
 }
 
 .submit-proxy {

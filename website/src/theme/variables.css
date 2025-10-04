@@ -53,8 +53,10 @@
   --sb-text: #edeff2;
   --sb-muted: #9fa7b3;
   --sb-icon: #edeff2;
+  --sb-action-icon: var(--sb-icon);
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
+  --sb-voice-color: var(--sb-icon);
 
   /*
    * search bar 在桌面稿中的最大内容宽度，统一复用布局主内容宽度令牌，
@@ -191,8 +193,10 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
+  --sb-action-icon: var(--primary-color);
   --sb-cta: var(--primary-bg);
   --sb-cta-icon: var(--primary-color);
+  --sb-voice-color: var(--primary-color);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -288,8 +292,10 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
+  --sb-action-icon: var(--primary-color);
   --sb-cta: var(--primary-bg);
   --sb-cta-icon: var(--primary-color);
+  --sb-voice-color: var(--primary-color);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -382,8 +388,10 @@
   --sb-text: #edeff2;
   --sb-muted: #9fa7b3;
   --sb-icon: #edeff2;
+  --sb-action-icon: var(--sb-icon);
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
+  --sb-voice-color: var(--sb-icon);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(in srgb, var(--sb-stroke) 60%, white 40%);
   --sb-bg: var(--sidebar-panel, var(--sb-surface));
