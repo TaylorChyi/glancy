@@ -18,6 +18,11 @@ jest.unstable_mockModule("@/components/DictionaryEntryActionBar", () => ({
   __esModule: true,
   default: ({ renderRoot }) =>
     renderRoot({
+      className: "stubbed-toolbar",
+      role: "toolbar",
+      ariaLabel: "词条工具栏",
+      dataTestId: "output-toolbar",
+      "data-track-id": "dictionary-toolbar",
       children: <div data-testid="dictionary-entry-action-bar" />,
     }),
 }));
@@ -101,7 +106,7 @@ describe("DictionaryActionPanel", () => {
     );
 
     const searchBox = screen.getByTestId("dictionary-action-panel");
-    expect(searchBox.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBox.parentElement).toHaveClass(styles["panel-shell"]);
 
     rerender(
       <DictionaryActionPanel
@@ -117,6 +122,41 @@ describe("DictionaryActionPanel", () => {
     const searchBoxAfterRerender = screen.getByTestId(
       "dictionary-action-panel",
     );
-    expect(searchBoxAfterRerender.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBoxAfterRerender.parentElement).toHaveClass(
+      styles["panel-shell"],
+    );
+  });
+
+  /**
+   * 测试目标：验证自定义 toolbarRootRenderer 会为 OutputToolbar 根节点追加壳层样式并保留语义属性。
+   * 前置条件：DictionaryEntryActionBar 桩件提供 className/role/aria/data-testid 与额外 data-track-id 属性。
+   * 步骤：
+   *  1) 渲染 DictionaryActionPanel；
+   *  2) 获取 data-testid 为 output-toolbar 的节点；
+   *  3) 检查类名、语义属性与透传属性。
+   * 断言：
+   *  - 节点包含 styles["toolbar-shell"] 类；
+   *  - 仍然携带 stubbed-toolbar 类；
+   *  - role 与 aria-label 被保留；
+   *  - data-track-id 属性透传成功。
+   * 边界/异常：
+   *  - 未覆盖 renderRoot 返回 null 的路径，保持与生产一致的正向行为验证。
+   */
+  test("injects toolbar shell wrapper without losing toolbar semantics", () => {
+    render(
+      <DictionaryActionPanel
+        actionBarProps={{ className: "" }}
+        onRequestSearch={jest.fn()}
+        searchButtonLabel="返回搜索"
+      />,
+    );
+
+    const toolbarRoot = screen.getByTestId("output-toolbar");
+
+    expect(toolbarRoot).toHaveClass(styles["toolbar-shell"]);
+    expect(toolbarRoot).toHaveClass("stubbed-toolbar");
+    expect(toolbarRoot).toHaveAttribute("role", "toolbar");
+    expect(toolbarRoot).toHaveAttribute("aria-label", "词条工具栏");
+    expect(toolbarRoot).toHaveAttribute("data-track-id", "dictionary-toolbar");
   });
 });

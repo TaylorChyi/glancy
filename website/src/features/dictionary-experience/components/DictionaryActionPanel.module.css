@@ -90,6 +90,24 @@
   box-shadow: var(--sb-shadow), var(--dictionary-panel-elevation-shadow);
 }
 
+.toolbar-shell {
+  /*
+   * 背景：OutputToolbar 默认提供独立容器，但在词典面板内需要继承 SearchBox 的伸展策略以与搜索态一致。
+   * 取舍：通过专属壳层合并 flex 规则，避免直接覆写 OutputToolbar 样式；同时清空背景与阴影以复用父级视觉。 
+   */
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: var(--dictionary-panel-slot-gap, var(--sb-gap, 16px));
+  justify-content: space-between;
+  min-width: 0;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
 .search-toggle {
   --toolbar-button-size: var(--dictionary-panel-action-size);
   --tool-button-opacity-base: 0.7;

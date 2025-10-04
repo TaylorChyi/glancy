@@ -57,15 +57,27 @@ export default function DictionaryActionPanel({
   );
   const toolbarRootRenderer = useCallback(
     /**
-     * 意图：在 SearchBox 内内联 OutputToolbar 的子节点，
-     *       保持单一容器并复用上层的语义结构。
-     * 输入：来自 OutputToolbar 的根节点描述（仅取 children）。
-     * 输出：透传的子节点。
-     * 流程：直接返回 children，交由 SearchBox 负责排版。
-     * 错误处理：renderRoot 语义纯粹，无异常路径。
+     * 意图：在 SearchBox 的动作槽内托管 OutputToolbar，并补充统一的壳层样式以延续搜索态的伸展规则。
+     * 输入：来自 OutputToolbar 的根节点描述（className/role/aria/dataTestId/children 等属性）。
+     * 输出：包含 toolbar-shell 样式的包裹节点，保留原始语义属性并透传剩余字段。
+     * 流程：
+     *  1) 将 styles["toolbar-shell"] 与上游 className 合并；
+     *  2) 在包裹节点上恢复 role/aria/data-testid；
+     *  3) 透传其余属性，确保未来扩展（如 data-*）不被截断。
+     * 错误处理：renderRoot 的输入为纯粹对象，无副作用路径。
      * 复杂度：O(1)。
      */
-    ({ children }) => children,
+    ({ className, role, ariaLabel, dataTestId, children, ...restRootProps }) => (
+      <div
+        className={[styles["toolbar-shell"], className].filter(Boolean).join(" ")}
+        role={role}
+        aria-label={ariaLabel}
+        data-testid={dataTestId}
+        {...restRootProps}
+      >
+        {children}
+      </div>
+    ),
     [],
   );
   const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
