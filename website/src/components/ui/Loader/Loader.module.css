@@ -19,6 +19,7 @@
   gap: var(--space-2);
   padding: calc(var(--space-2) + var(--space-1));
   border-radius: var(--radius-xl);
+
   /* 保持透明底以让动效悬浮于背景之上，遵循 2024-03 视觉规范的“纯净等待”策略。 */
 
   /* 移除内嵌描边，避免等待态出现可见边框，同时暴露阴影配置便于后续无障碍或主题调整。 */
