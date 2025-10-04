@@ -193,6 +193,7 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
+
   /*
    * 交互背景：轻量主题下沿用白色系 CTA 壳体，避免深色按钮在浅底部产生突兀对比。
    * 取舍：统一将 send/voice 按钮映射到中性白底 + 深色图标，保持与暗色主题的一致语义。
@@ -296,6 +297,7 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
+
   /*
    * system 模式在浅色媒体查询下与 light 对齐，CTA 壳体同样采用白色系映射。
    */
