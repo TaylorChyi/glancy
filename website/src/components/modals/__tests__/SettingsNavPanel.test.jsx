@@ -114,6 +114,24 @@ test("Given navigation sections When rendering Then only primary label is expose
 });
 
 /**
+ * 测试目标：在渲染导航时暴露分区数量 CSS 变量供响应式样式消费。
+ * 前置条件：渲染默认的 TestSettingsHarness，提供两个分区。
+ * 步骤：
+ *  1) 查询 role 为 tablist 的导航元素。
+ *  2) 读取行内 style 中的 --settings-nav-section-count。
+ * 断言：
+ *  - CSS 自定义属性等于字符串 "2"，指示当前分区数量。
+ * 边界/异常：
+ *  - 若未来通过容器注入外部 style，需同步更新此断言以匹配最新接口。
+ */
+test("Given navigation sections When rendering Then exposes section count variable", () => {
+  render(<TestSettingsHarness />);
+
+  const tablist = screen.getByRole("tablist", { name: "Example sections" });
+  expect(tablist.style.getPropertyValue("--settings-nav-section-count")).toBe("2");
+});
+
+/**
  * 测试目标：切换分区后标题获得焦点并滚动至首部。
  * 前置条件：渲染 TestSettingsHarness，激活默认 account 分区。
  * 步骤：

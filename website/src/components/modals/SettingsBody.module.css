@@ -96,7 +96,12 @@
   }
 
   .nav-scroller > * {
-    min-width: max-content;
+    /*
+     * 当设置面板切换为单列布局时，让导航容器占满可用宽度，
+     * 避免 min-content 触发横向滚动并破坏等宽栅格。此处使用 100%
+     * 而非固定像素，方便未来根据内容动态扩展列数。
+     */
+    min-width: 100%;
   }
 
   .content-column {
