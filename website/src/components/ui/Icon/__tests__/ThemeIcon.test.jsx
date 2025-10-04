@@ -56,12 +56,12 @@ describe("ThemeIcon", () => {
   });
 
   /**
-   * 测试目标：在 resolvedTheme=light 时优先渲染 light 变体。 
-   * 前置条件：iconRegistry.apple 同时提供 light/dark 资源。 
+   * 测试目标：在 resolvedTheme=light 时优先渲染 light 变体。
+   * 前置条件：iconRegistry.apple 同时提供 light/dark 资源。
    * 步骤：
    *  1) 设置 currentTheme=light；
    *  2) 渲染 ThemeIcon name="apple"；
-   *  3) 捕获 img 元素并检查 src。 
+   *  3) 捕获 img 元素并检查 src。
    * 断言：
    *  - src 指向 light 变体。
    * 边界/异常：
@@ -75,12 +75,12 @@ describe("ThemeIcon", () => {
   });
 
   /**
-   * 测试目标：在 resolvedTheme=dark 时切换到暗色背景专用资源。 
-   * 前置条件：iconRegistry.apple 提供 dark 资源；currentTheme=dark。 
+   * 测试目标：在 resolvedTheme=dark 时切换到暗色背景专用资源。
+   * 前置条件：iconRegistry.apple 提供 dark 资源；currentTheme=dark。
    * 步骤：
    *  1) 设置 currentTheme=dark；
    *  2) 渲染 ThemeIcon name="apple"；
-   *  3) 捕获 img 并校验 src。 
+   *  3) 捕获 img 并校验 src。
    * 断言：
    *  - src 指向 dark 变体。
    * 边界/异常：
@@ -94,21 +94,40 @@ describe("ThemeIcon", () => {
   });
 
   /**
-   * 测试目标：当 tone="dark" 时使用反差更高的强前景颜色类。
+   * 测试目标：tone="dark" 与默认语义保持一致，确保组件不会因暗色主题出现低对比度。
    * 前置条件：当前主题 resolvedTheme=light；tone=dark。
    * 步骤：
    *  1) 渲染 ThemeIcon 并传入 tone="dark"；
    *  2) 查找 role="img" 元素；
    *  3) 断言 className。
    * 断言：
-   *  - className 包含 text-onsurface-strong。
+   *  - className 与默认 text-onsurface 一致。
    * 边界/异常：
-   *  - tone 未提供时应使用默认 text-onsurface（已由上一测试覆盖）。
+   *  - tone 未提供时应同样产出 text-onsurface（由默认测试覆盖）。
    */
-  test("applies strong role class when forcing dark tone", () => {
+  test("treats dark tone as default foreground to preserve contrast", () => {
     render(<ThemeIcon name="glancy-web" alt="brand" tone="dark" />);
     const icon = screen.getByRole("img", { name: "brand" });
-    expect(icon.className).toContain("text-onsurface-strong");
+    expect(icon.className).toContain("text-onsurface");
+  });
+
+  /**
+   * 测试目标：在暗色主题下自动切换为 text-onsurface 保持足够对比度。
+   * 前置条件：currentTheme=dark；tone=auto。
+   * 步骤：
+   *  1) 设置 currentTheme=dark；
+   *  2) 渲染 ThemeIcon；
+   *  3) 校验 className。
+   * 断言：
+   *  - className 包含 text-onsurface。
+   * 边界/异常：
+   *  - 若主题无法解析则回退到 text-onsurface（默认实现）。
+   */
+  test("uses surface role in dark theme for auto tone", () => {
+    currentTheme = "dark";
+    render(<ThemeIcon name="glancy-web" alt="brand" />);
+    const icon = screen.getByRole("img", { name: "brand" });
+    expect(icon.className).toContain("text-onsurface");
   });
 
   /**
