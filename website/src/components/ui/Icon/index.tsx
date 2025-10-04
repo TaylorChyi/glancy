@@ -28,6 +28,16 @@ const ROLE_CLASSNAME_MAP = Object.freeze({
   success: "text-onsuccess",
   warning: "text-onwarning",
   danger: "text-ondanger",
+  /**
+   * 背景：
+   *  - 侧边栏导航希望沿用自身的 muted → active 渐进策略，但默认 role class 会强行套用主题前景色，
+   *    导致品牌图标颜色与其他 icon 不一致。
+   * 目的：
+   *  - 提供显式的 inherit 角色以跳过语义色注入，让上层容器的 color 继承链能够生效。
+   * 取舍：
+   *  - 相比引入布尔开关（如 inheritColor），直接纳入角色映射可沿用既有策略模式与类型约束。
+   */
+  inherit: "",
 });
 
 type IconRoleClass = keyof typeof ROLE_CLASSNAME_MAP;
@@ -173,7 +183,8 @@ const pickRenderableAsset = (variant: IconVariantResource | null) => {
   if (!variant) {
     return { inline: null, url: null };
   }
-  const inline = variant.inline && variant.inline.length > 0 ? variant.inline : null;
+  const inline =
+    variant.inline && variant.inline.length > 0 ? variant.inline : null;
   const url = variant.url && variant.url.length > 0 ? variant.url : null;
   return { inline, url };
 };
