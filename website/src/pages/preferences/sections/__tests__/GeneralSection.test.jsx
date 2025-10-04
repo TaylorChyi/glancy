@@ -67,7 +67,10 @@ test("Given initial preferences When rendered Then current selection highlighted
     "aria-checked",
     "true",
   );
-  expect(screen.getByLabelText("Interface language")).toHaveValue("auto");
+  const languageTrigger = screen.getByRole("button", {
+    name: "Interface language",
+  });
+  expect(languageTrigger).toHaveTextContent(/Match device language/i);
 });
 
 /**
@@ -104,13 +107,16 @@ test("Given theme options When selecting another theme Then delegate invoked", a
  * 边界/异常：
  *  - 重复选择当前值不应重复触发。
  */
-test("Given language select When choosing locale Then system language updated", async () => {
+test("Given language menu When choosing locale Then system language updated", async () => {
   const user = userEvent.setup();
   render(
     <GeneralSection title="General" headingId="general-section-heading" />,
   );
 
-  await user.selectOptions(screen.getByLabelText("Interface language"), "en");
+  await user.click(screen.getByRole("button", { name: "Interface language" }));
+  await user.click(
+    screen.getByRole("menuitemradio", { name: /English \(US\)/i }),
+  );
 
   expect(mockSetSystemLanguage).toHaveBeenCalledTimes(1);
   expect(mockSetSystemLanguage).toHaveBeenCalledWith("en");
