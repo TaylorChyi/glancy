@@ -526,10 +526,11 @@
   .tabs {
     flex: none;
     display: grid;
+
     /*
      * 结合 SettingsNav 注入的分区数量，窄宽度时将标签横向等分，
      * 避免继续使用纵向布局导致挤压。auto-fit 无法保证与 sections 对齐，
-     * 因此采用 repeat(var(--settings-nav-section-count)) 精确匹配。 
+     * 因此采用 repeat(var(--settings-nav-section-count)) 精确匹配。
      */
     grid-template-columns: repeat(
       var(--settings-nav-section-count, 1),
