@@ -14,9 +14,12 @@
   padding: calc(var(--space-2) + var(--space-1));
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--app-bg) 65%, transparent);
-  box-shadow:
-    0 24px 48px color-mix(in srgb, var(--shadow-color) 35%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--border-color) 40%, transparent);
+
+  /* 移除内嵌描边，避免等待态出现可见边框，同时暴露阴影配置便于后续无障碍或主题调整。 */
+  box-shadow: var(
+    --loader-symbol-shadow,
+    0 24px 48px color-mix(in srgb, var(--shadow-color) 35%, transparent)
+  );
 }
 
 .bar {
