@@ -236,8 +236,17 @@
   height: var(--btn-action, 44px);
   border: none;
   border-radius: 999px;
-  background: transparent;
-  color: var(--sb-icon);
+
+  /*
+   * 背景：通过 CSS 变量统一动作按钮的填充与阴影，语音/发送共享壳层策略，方便后续扩展更多态。
+   */
+  --action-btn-bg: transparent;
+  --action-btn-color: var(--sb-icon);
+  --action-btn-shadow: none;
+
+  background: var(--action-btn-bg);
+  color: var(--action-btn-color);
+  box-shadow: var(--action-btn-shadow);
   cursor: pointer;
   transition:
     color 0.2s ease,
@@ -269,6 +278,16 @@
   color: var(--sb-muted-icon, currentColor);
 }
 
+.action-button-send,
+.action-button-voice {
+  --action-btn-bg: var(--sb-send-bg);
+  --action-btn-shadow: var(--sb-cta-shadow);
+}
+
+.action-button-send {
+  --action-btn-color: var(--sb-send-color);
+}
+
 .action-button-voice {
   color: var(--sb-icon);
 }
@@ -285,27 +304,29 @@
     );
 }
 
-.action-button-send {
-  background: var(--sb-send-bg);
-  color: var(--sb-send-color);
-  box-shadow: var(--sb-cta-shadow);
-}
-
-.action-button-send:hover {
-  background: var(--sb-send-bg);
-  color: var(--sb-send-color);
+.action-button-voice:hover,
+.action-button-voice:focus-visible {
+  background: var(--action-btn-bg);
+  color: var(--sb-icon);
   box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
 }
 
+.action-button-voice:active {
+  background: var(--action-btn-bg);
+  color: var(--sb-icon);
+  box-shadow: var(--sb-cta-shadow);
+}
+
+.action-button-send:hover,
 .action-button-send:focus-visible {
-  background: var(--sb-send-bg);
-  color: var(--sb-send-color);
+  background: var(--action-btn-bg);
+  color: var(--action-btn-color);
   box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
 }
 
 .action-button-send:active {
-  background: var(--sb-send-bg);
-  color: var(--sb-send-color);
+  background: var(--action-btn-bg);
+  color: var(--action-btn-color);
   box-shadow: var(--sb-cta-shadow);
 }
 
