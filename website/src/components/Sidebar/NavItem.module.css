@@ -69,13 +69,19 @@
   transform: scaleY(1);
 }
 
+/*
+ * 背景：
+ *  - 词典等入口在深浅主题下需要同步切换图标前景色，原先通过固定 muted 色值导致与文字断层。
+ * 目的：
+ *  - 让图标默认继承容器 currentColor，保持与标签文字一致，同时保留变量扩展能力以便未来覆盖。
+ */
 .icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
-  color: var(--sidebar-muted-color, var(--muted));
+  color: var(--sidebar-icon-color, currentColor);
   flex: 0 0 auto;
 }
 
