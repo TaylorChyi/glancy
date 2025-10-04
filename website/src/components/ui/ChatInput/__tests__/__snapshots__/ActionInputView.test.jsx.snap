@@ -8,11 +8,13 @@ exports[`GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot: Voi
   disabled=""
   type="button"
 >
-  <span
+  <img
+    alt=""
     aria-hidden="true"
     class="action-button-icon"
     data-icon-name="voice-button"
-    style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+    draggable="false"
+    src="file-mock"
   />
 </button>
 `;
@@ -142,11 +144,13 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
           class="action-button action-button-send"
           type="button"
         >
-          <span
+          <img
+            alt=""
             aria-hidden="true"
             class="action-button-icon"
             data-icon-name="send-button"
-            style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+            draggable="false"
+            src="file-mock"
           />
         </button>
       </div>
@@ -161,11 +165,13 @@ exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSen
   class="action-button action-button-send"
   type="button"
 >
-  <span
+  <img
+    alt=""
     aria-hidden="true"
     class="action-button-icon"
     data-icon-name="send-button"
-    style="mask: url(file-mock) center / contain no-repeat; background-color: currentcolor;"
+    draggable="false"
+    src="file-mock"
   />
 </button>
 `;

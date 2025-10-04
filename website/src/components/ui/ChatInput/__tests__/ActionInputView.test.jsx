@@ -223,6 +223,7 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
 
   const voiceIcon = container.querySelector('[data-icon-name="voice-button"]');
   expect(voiceIcon).not.toBeNull();
+  expect(voiceIcon?.tagName).toBe("IMG");
   expect(voiceIcon?.classList.contains("action-button-icon")).toBe(true);
 
   const actionButton = container.querySelector(`.${"action-slot"} button`);
@@ -281,8 +282,8 @@ test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
 
   const sendIcon = container.querySelector('[data-icon-name="send-button"]');
   expect(sendIcon).not.toBeNull();
+  expect(sendIcon?.tagName).toBe("IMG");
   expect(sendIcon?.getAttribute("data-icon-name")).toBe("send-button");
-  expect(sendIcon?.getAttribute("style") ?? "").toContain("mask: url(");
 
   const sendButton = container.querySelector(`.${"action-slot"} button`);
   expect(sendButton).toMatchSnapshot("DarkSendActionButtonMarkup");
