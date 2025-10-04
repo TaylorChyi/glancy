@@ -84,17 +84,31 @@ const THEMED_VARIANT_PRIORITY: Readonly<
   dark: Object.freeze(["dark", "light"]),
 });
 
+const DEFAULT_ROLE_BY_THEME: Record<ResolvedTheme, IconRoleClass> =
+  Object.freeze({
+    light: "onsurface",
+    dark: "onsurface",
+  });
+
 const legacyToneToRole = (
   tone: LegacyTone | undefined,
   resolvedTheme: ResolvedTheme,
 ): IconRoleClass => {
-  if (tone === "dark") {
-    return "onsurfaceStrong";
-  }
+  /**
+   * 背景：
+   *  - 旧版 tone="dark" 默认假设浅色主题，仅返回 text-onsurface-strong，导致暗色主题下图标仍为深色。
+   * 目的：
+   *  - 统一回落到与当前主题一致的基础前景色，保证 SearchBox 等通用组件在 dark 模式下依旧可读。
+   * 关键决策与取舍：
+   *  - “dark” 与默认 auto 等价，均采用按主题解析的标准前景色；
+   *  - “light” 保留遗留语义，仅在浅色主题下取高亮前景，在暗色主题中退回标准前景以避免反差不足。
+   * 影响范围：
+   *  - 所有未显式指定 roleClass 的 ThemeIcon 调用方。
+   */
   if (tone === "light") {
-    return "onsurface";
+    return resolvedTheme === "light" ? "onsurfaceStrong" : "onsurface";
   }
-  return resolvedTheme === "dark" ? "onsurfaceStrong" : "onsurface";
+  return DEFAULT_ROLE_BY_THEME[resolvedTheme] ?? "onsurface";
 };
 
 const composeClassName = (
