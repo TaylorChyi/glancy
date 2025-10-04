@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 import { useTheme } from "@/context";
-import ICONS from "@/assets/icons.js";
 import styles from "./ThemeIcon.module.css";
 import type { ResolvedTheme } from "@/theme/mode";
+import { iconSourceResolver } from "./iconSourceResolver";
 
 /**
  * 背景：
@@ -58,11 +58,6 @@ type FallbackPreset = {
   variant: FallbackPresetKey;
 };
 
-type IconModuleEntry = {
-  single?: string;
-  [variant: string]: string | undefined;
-};
-
 const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
   Object.freeze({
     apple: { label: "A", variant: "apple" },
@@ -104,11 +99,6 @@ const composeClassName = (
   external?: string,
 ) => [base, ROLE_CLASSNAME_MAP[roleClass], external].filter(Boolean).join(" ");
 
-const resolveIconSrc = (name: string) => {
-  const entry = ICONS[name] as IconModuleEntry | undefined;
-  return entry?.single;
-};
-
 const resolveFallback = (name: string): FallbackPreset => {
   if ((FALLBACK_PRESETS as Record<string, FallbackPreset>)[name]) {
     return FALLBACK_PRESETS[name as FallbackPresetKey];
@@ -147,7 +137,7 @@ export function ThemeIcon({
 }: IconProps) {
   const { resolvedTheme } = useTheme();
   const iconRole = roleClass ?? legacyToneToRole(tone, resolvedTheme);
-  const src = resolveIconSrc(name);
+  const src = iconSourceResolver.resolve(name, resolvedTheme);
   const commonClassName = composeClassName(
     "inline-block align-middle",
     iconRole,
