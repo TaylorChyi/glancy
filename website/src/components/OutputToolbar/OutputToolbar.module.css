@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: var(--space-3, 12px);
-  row-gap: var(--output-toolbar-row-gap, 0px);
+  row-gap: var(--output-toolbar-row-gap, 0);
   padding: 10px 12px;
   border-radius: var(--radius-xl, 16px);
   border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
@@ -13,6 +13,7 @@
     --shadow-elevated,
     0 12px 30px color-mix(in srgb, var(--shadow-color) 40%, transparent)
   );
+
   /*
    * 背景：不同调用方的按钮数量与布局节奏差异较大，固定 hidden+nowrap 会导致溢出裁切。
    * 取舍：开放 wrap/overflow/row-gap 三个变量，默认保持历史行为，
