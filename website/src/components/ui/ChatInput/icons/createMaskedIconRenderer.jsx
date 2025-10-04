@@ -32,14 +32,16 @@ const hasMaskDeclaration = (styleObject) =>
  *  - token：注册表中的图标标识。
  *  - resolveResource：策略函数，负责基于主题等上下文解析资源。
  *  - buildStyle：策略函数，接收解析到的资源并生成行内样式。
- *  - defaultFallback：当遮罩不可用或解析失败时使用的降级渲染函数。
+ *  - defaultFallback：当遮罩不可用或解析失败时使用的降级渲染函数，
+ *    将收到 { className, iconName, resource, resolvedTheme }。
  * 输出：
  *  - React 组件，接受 className 与 fallback，可直接用于按钮图标渲染。
  * 流程：
  *  1) 通过 useMaskSupport 判定能力。
  *  2) 使用 resolveResource 按策略获取资源。
  *  3) 交给 buildStyle 生成遮罩样式。
- *  4) 若任一步骤失败则回退到 fallback。
+ *  4) 若任一步骤失败则回退到 fallback，并尽可能传递解析到的资源，
+ *     以便 fallback 复用相同素材。
  * 错误处理：
  *  - resolveResource / buildStyle 内部由调用方负责兜底，组件仅在返回 null 或缺失遮罩声明时触发 fallback。
  * 复杂度：
@@ -74,30 +76,33 @@ export function createMaskedIconRenderer({
     const isMaskSupported = useMaskSupport();
     const effectiveFallback = fallback ?? defaultFallback;
 
-    const maskResource = useMemo(() => {
-      if (!isMaskSupported) {
-        return null;
-      }
-
-      return resolveResource({
-        registry: ICONS,
-        resolvedTheme,
-      });
-    }, [isMaskSupported, resolvedTheme]);
+    const resolvedResource = useMemo(
+      () =>
+        resolveResource({
+          registry: ICONS,
+          resolvedTheme,
+        }) ?? null,
+      [resolvedTheme],
+    );
 
     const inlineStyle = useMemo(() => {
-      if (!maskResource) {
+      if (!isMaskSupported || !resolvedResource) {
         return null;
       }
 
       return buildStyle({
-        resource: maskResource,
+        resource: resolvedResource,
         resolvedTheme,
       });
-    }, [maskResource, resolvedTheme]);
+    }, [isMaskSupported, resolvedResource, resolvedTheme]);
 
     if (!hasMaskDeclaration(inlineStyle)) {
-      return effectiveFallback({ className, iconName: token });
+      return effectiveFallback({
+        className,
+        iconName: token,
+        resource: resolvedResource,
+        resolvedTheme,
+      });
     }
 
     return (

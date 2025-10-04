@@ -106,6 +106,8 @@ describe("VoiceIcon", () => {
     expect(fallback).toHaveBeenCalledWith({
       className: "icon",
       iconName: "voice-button",
+      resource: null,
+      resolvedTheme: "light",
     });
 
     voiceRegistry["voice-button"] = originalEntry;
@@ -122,7 +124,7 @@ describe("VoiceIcon", () => {
    * 边界/异常：
    *  - 用例结束后恢复注册表。
    */
-  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallback", () => {
+  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallbackSvg", () => {
     const originalEntry = { ...voiceRegistry["voice-button"] };
     voiceRegistry["voice-button"] = {};
 
@@ -149,11 +151,13 @@ describe("VoiceIcon", () => {
    * 边界/异常：
    *  - 若未来引入渐进增强策略，此用例需同步调整断言。
    */
-  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackSvg", () => {
+  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackImage", () => {
     mockUseMaskSupport.mockReturnValueOnce(false);
 
     const { container } = render(<VoiceIcon className="icon" />);
 
-    expect(container.querySelector("svg")).not.toBeNull();
+    expect(
+      container.querySelector('img[data-icon-name="voice-button"]'),
+    ).not.toBeNull();
   });
 });

@@ -34,18 +34,37 @@ const buildVoiceIconMaskStyle = ({ resource }) => {
   });
 };
 
-const defaultFallback = ({ className, iconName = VOICE_ICON_TOKEN }) => (
-  <svg
-    aria-hidden="true"
-    className={className}
-    viewBox="0 0 1024 1024"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-    data-icon-name={iconName}
-  >
-    <path d="M512 128C417.707 128 341.333 204.373 341.333 298.667v256c0 94.293 76.373 170.667 170.667 170.667s170.667-76.373 170.667-170.667V298.667c0-94.293-76.373-170.667-170.667-170.667zm213.333 298.667v85.333c0 117.76-95.573 213.333-213.333 213.333s-213.333-95.573-213.333-213.333v-85.333H213.333v85.333c0 150.613 111.36 274.347 256 295.253V896h85.333v-88.747c144.64-20.907 256-144.64 256-295.253v-85.333h-85.333z" />
-  </svg>
-);
+const defaultFallback = ({
+  className,
+  resource,
+  iconName = VOICE_ICON_TOKEN,
+}) => {
+  if (resource) {
+    return (
+      <img
+        aria-hidden="true"
+        alt=""
+        className={className}
+        data-icon-name={iconName}
+        draggable={false}
+        src={resource}
+      />
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 1024 1024"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      data-icon-name={iconName}
+    >
+      <path d="M512 128C417.707 128 341.333 204.373 341.333 298.667v256c0 94.293 76.373 170.667 170.667 170.667s170.667-76.373 170.667-170.667V298.667c0-94.293-76.373-170.667-170.667-170.667zm213.333 298.667v85.333c0 117.76-95.573 213.333-213.333 213.333s-213.333-95.573-213.333-213.333v-85.333H213.333v85.333c0 150.613 111.36 274.347 256 295.253V896h85.333v-88.747c144.64-20.907 256-144.64 256-295.253v-85.333h-85.333z" />
+    </svg>
+  );
+};
 
 const VoiceIcon = createMaskedIconRenderer({
   token: VOICE_ICON_TOKEN,
