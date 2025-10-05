@@ -55,32 +55,57 @@ public class DoubaoStreamDecoder implements StreamDecoder {
 
     private List<String> normalize(String event) {
         List<String> lines = lines(event);
-        if (lines.size() == 1 && "data: [DONE]".equals(lines.get(0))) {
+        if (lines.size() == 1 && "data: [DONE]".equals(lines.get(0).strip())) {
             return List.of("event: end");
         }
         return lines;
     }
 
     private List<String> lines(String event) {
-        return event.lines().map(String::trim).toList();
+        return event.lines().toList();
     }
 
     private Event toEvent(List<String> lines) {
         Event evt = new Event();
         for (String line : lines) {
-            if (line.startsWith("event:")) {
-                evt.type = line.substring(6).trim();
-            } else if (line.startsWith("data:")) {
+            String eventType = extractFieldValue(line, "event:");
+            if (eventType != null) {
+                evt.type = eventType.strip();
+                continue;
+            }
+
+            String dataPayload = extractFieldValue(line, "data:");
+            if (dataPayload != null) {
                 if (evt.data.length() > 0) {
                     evt.data.append('\n');
                 }
-                evt.data.append(line.substring(5).trim());
+                evt.data.append(dataPayload);
             }
         }
         if (evt.type == null) {
             evt.type = "message";
         }
         return evt;
+    }
+
+    /**
+     * 背景：
+     *  - Doubao SSE 片段中的内容存在前导空格以维持 Markdown 间距；原实现直接 trim 会造成语句粘连。
+     * 目的：
+     *  - 仅剥离字段名前缀及其后约定的单个空格，其余字符一律保留，保证流式文本精确传递。
+     * 关键决策与取舍：
+     *  - 复用同一解析函数处理 event/data 等字段，避免在主循环内散布字符串操作；
+     *  - 使用 strip/substring 而非正则，确保在高频流式场景下性能稳定。
+     */
+    private String extractFieldValue(String line, String prefix) {
+        if (!line.startsWith(prefix)) {
+            return null;
+        }
+        String raw = line.substring(prefix.length());
+        if (!raw.isEmpty() && raw.charAt(0) == ' ') {
+            return raw.substring(1);
+        }
+        return raw;
     }
 
     private Flux<String> handleEvent(Event evt, StreamState state) {

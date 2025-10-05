@@ -34,6 +34,37 @@ class DoubaoStreamDecoderTest {
         StepVerifier.create(decoder.decode(Flux.just(body))).expectNext("hi").verifyComplete();
     }
 
+    /**
+     * 测试目标：验证解码后仍能保留跨 chunk 的前导空格，避免 Markdown 字段被粘连。
+     * 前置条件：构造包含前导空格的 Doubao message 事件序列。
+     * 步骤：
+     *  1) 通过单一 Flux 推送两个 message 事件，第二个事件的 content 以空格开头；
+     *  2) 订阅解码器输出并顺序消费两个片段；
+     * 断言：
+     *  - 第二个片段仍以空格开头，证明解码过程中未被 trim；
+     * 边界/异常：
+     *  - 场景涵盖最小化事件序列，无额外异常路径。
+     */
+    @Test
+    void preserveLeadingWhitespaceAcrossChunks() {
+        String body = """
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"content":"UsageInsight:"}]}}]}
+
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"content":" Introduction"}]}}]}
+
+            event: end
+            data: {"code":0}
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(body)))
+            .expectNext("UsageInsight:")
+            .expectNext(" Introduction")
+            .verifyComplete();
+    }
+
     /** 验证缺少内容的片段会记录 WARN 日志且不输出数据。 */
     @Test
     void decodeInvalidChunkLogsWarn() {
