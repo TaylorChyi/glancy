@@ -1,0 +1,127 @@
+.container {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: var(--text-secondary, #6b7280);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.viewport {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 0 auto;
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--surface-elevated, rgb(17 24 39 / 4%));
+  cursor: grab;
+  touch-action: none;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+  will-change: transform;
+  user-select: none;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+  border-radius: 16px;
+}
+
+.overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.zoom-controls {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.zoom-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgb(148 163 184 / 60%);
+  background: rgb(15 23 42 / 4%);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: inherit;
+}
+
+.zoom-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.action-button {
+  min-width: 96px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  padding: 0 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background: transparent;
+  border: 1px solid rgb(148 163 184 / 60%);
+}
+
+.confirm-button {
+  background: var(--primary, #111827);
+  color: var(--surface-default, #fff);
+}
+
+.confirm-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
