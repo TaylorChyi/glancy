@@ -42,7 +42,7 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
       clearUser={clearUser}
       clearHistory={clearHistory}
     >
-      {({ openSettings, openShortcuts, openUpgrade, openLogout }) => (
+      {({ openSettings, openUpgrade, openLogout }) => (
         <Trigger
           size={size}
           showName={showName}
@@ -58,7 +58,6 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
               isPro={isPro}
               onOpenSettings={() => openSettings("general")}
               onOpenUpgrade={openUpgrade}
-              onOpenKeyboard={openShortcuts}
               onOpenLogout={openLogout}
             />
           )}

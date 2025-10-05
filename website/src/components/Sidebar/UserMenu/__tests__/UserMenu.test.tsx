@@ -12,8 +12,6 @@ const labels = {
   help: "帮助",
   helpSection: "支持",
   settings: "设置",
-  shortcuts: "快捷键",
-  shortcutsDescription: "",
   upgrade: "升级",
   logout: "退出",
   accountSection: "账户",
@@ -101,7 +99,6 @@ const openUserMenu = () => {
       labels={labels}
       isPro={false}
       onOpenSettings={noop}
-      onOpenShortcuts={noop}
       onOpenUpgrade={noop}
       onOpenLogout={noop}
     />,
