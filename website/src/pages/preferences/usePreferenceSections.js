@@ -10,7 +10,14 @@
  * 演进与TODO：
  *  - TODO: 当新增分区或引入懒加载时，可在此处扩展蓝图数组或接入数据缓存策略。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLanguage, useUser } from "@/context";
 import AccountSection from "./sections/AccountSection.jsx";
 import DataSection from "./sections/DataSection.jsx";
@@ -301,15 +308,15 @@ function usePreferenceSections({ initialSectionId }) {
         id: "username",
         label: t.settingsAccountUsername ?? "Username",
         value: usernameValue,
-        renderValue: () => (
-          <UsernameEditor
-            username={sanitizedUsername}
-            emptyDisplayValue={fallbackValue}
-            t={usernameEditorTranslations}
-            onSubmit={handleUsernameSubmit}
-            onFailure={handleUsernameFailure}
-          />
-        ),
+        // 采用 createElement 保持 hook 文件不引入 JSX 语法，避免额外编译配置并便于在 Node 测试环境中复用。
+        renderValue: () =>
+          createElement(UsernameEditor, {
+            username: sanitizedUsername,
+            emptyDisplayValue: fallbackValue,
+            t: usernameEditorTranslations,
+            onSubmit: handleUsernameSubmit,
+            onFailure: handleUsernameFailure,
+          }),
       },
       {
         id: "email",
