@@ -98,7 +98,7 @@ function SubscriptionSection({
     <section
       aria-labelledby={headingId}
       aria-describedby={descriptionId}
-      className={`${styles.section} ${styles["subscription-section"]}`}
+      className={`${styles.section} ${styles["section-plain"]} ${styles["subscription-section"]}`}
     >
       <div className={styles["section-header"]}>
         <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
