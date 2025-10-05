@@ -200,6 +200,48 @@ public class SearchRecordService {
     }
 
     /**
+     * 意图：将指定搜索记录的展示词条更新为模型返回的规范词条，确保历史记录与最终呈现内容一致。\
+     * 输入：\
+     *  - userId：当前用户 ID，用于权限校验与日志定位；\
+     *  - recordId：需要同步的搜索记录主键；\
+     *  - canonicalTerm：模型返回的规范词条，可能为空或与原始输入不同。\
+     * 输出：更新后的 {@link SearchRecordResponse}，若记录不存在或规范词为空则返回 null。\
+     * 流程：\
+     *  1) 兜底校验 recordId 与 canonicalTerm 的可用性；\
+     *  2) 查询数据库中的搜索记录，若已被删除则记录日志并退出；\
+     *  3) 当规范词与现有词条不一致时执行更新并返回最新视图。\
+     * 错误处理：查询不到记录时仅记录警告而不抛出，避免影响用户检索主流程。\
+     * 复杂度：O(1) 数据库访问与常量级字符串处理。
+     */
+    @Transactional
+    public SearchRecordResponse synchronizeRecordTerm(Long userId, Long recordId, String canonicalTerm) {
+        if (recordId == null) {
+            log.debug("Skip synchronizing search record term because recordId is null for user {}", userId);
+            return null;
+        }
+        if (canonicalTerm == null) {
+            log.debug("Skip synchronizing search record {} because canonical term is null", recordId);
+            return null;
+        }
+        String sanitized = canonicalTerm.trim();
+        if (sanitized.isEmpty()) {
+            log.debug("Skip synchronizing search record {} because canonical term is blank", recordId);
+            return null;
+        }
+        SearchRecord record = searchRecordRepository.findByIdAndUserIdAndDeletedFalse(recordId, userId).orElse(null);
+        if (record == null) {
+            log.warn("Search record {} for user {} not found during term synchronization", recordId, userId);
+            return null;
+        }
+        if (!sanitized.equals(record.getTerm())) {
+            record.setTerm(sanitized);
+            record = searchRecordRepository.save(record);
+            log.info("Synchronized search record {} for user {} to canonical term '{}'", recordId, userId, sanitized);
+        }
+        return searchRecordViewAssembler.assembleSingle(userId, record);
+    }
+
+    /**
      * Delete a single search record belonging to the given user.
      */
     @Transactional

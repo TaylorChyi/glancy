@@ -82,6 +82,7 @@ class WordServiceStreamPersistenceTest {
         );
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
+        when(searchRecordService.synchronizeRecordTerm(anyLong(), anyLong(), any())).thenReturn(null);
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -256,6 +257,7 @@ class WordServiceStreamPersistenceTest {
             any(Word.class),
             any(DictionaryFlavor.class)
         );
+        verify(searchRecordService).synchronizeRecordTerm(eq(1L), eq(10L), eq("hi"));
     }
 
     /**

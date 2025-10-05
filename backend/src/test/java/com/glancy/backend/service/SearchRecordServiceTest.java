@@ -330,6 +330,46 @@ class SearchRecordServiceTest {
         assertTrue(deletedVersion.getDeleted());
     }
 
+    /**
+     * 测试目标：验证模型返回规范词条后同步更新搜索记录中的展示词条。\
+     * 前置条件：用户存在且已登录，初次保存的搜索记录词条为错误拼写。\
+     * 步骤：\
+     *  1) 保存词条 "recieve"；\
+     *  2) 调用 synchronizeRecordTerm 传入模型纠正后的 "receive"；\
+     * 断言：\
+     *  - 搜索记录中的 term 被更新为规范词；\
+     *  - 返回的响应同样反映最新词条。\
+     * 边界/异常：\
+     *  - 若返回 null 或仍为旧值则视为失败。
+     */
+    @Test
+    void synchronizeRecordTermUpdatesHistory() {
+        User user = new User();
+        user.setUsername("spell");
+        user.setPassword("p");
+        user.setEmail("spell@example.com");
+        user.setPhone("55");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest req = new SearchRecordRequest();
+        req.setTerm("recieve");
+        req.setLanguage(Language.ENGLISH);
+        SearchRecordResponse response = searchRecordService.saveRecord(user.getId(), req);
+
+        SearchRecordResponse synchronizedResponse = searchRecordService.synchronizeRecordTerm(
+            user.getId(),
+            response.id(),
+            "receive"
+        );
+
+        SearchRecord updated = searchRecordRepository.findById(response.id()).orElseThrow();
+        assertEquals("receive", updated.getTerm(), "数据库中的词条应为规范词");
+        assertNotNull(synchronizedResponse, "同步后响应不应为空");
+        assertEquals("receive", synchronizedResponse.term(), "返回结果应反映规范词条");
+    }
+
     private void persistVersion(SearchRecord record, User user, String model, int versionNumber, String content) {
         SearchResultVersion version = new SearchResultVersion();
         version.setSearchRecord(record);

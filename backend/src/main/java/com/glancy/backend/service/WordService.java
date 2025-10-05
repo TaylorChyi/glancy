@@ -89,6 +89,7 @@ public class WordService {
         resp.setFlavor(flavor);
         log.info("LLM search result: {}", resp);
         Word savedWord = saveWord(rawTerm, resp, language, flavor);
+        synchronizeRecordTermQuietly(userId, record, savedWord.getTerm());
         String content = resp.getMarkdown();
         if (content == null) {
             try {
@@ -124,6 +125,7 @@ public class WordService {
             );
             response.setFlavor(session.flavor());
             Word savedWord = saveWord(session.term(), response, session.language(), session.flavor());
+            synchronizeRecordTermQuietly(session.userId(), session.recordId(), savedWord.getTerm());
             SearchResultVersion version = persistVersion(
                 session.recordId(),
                 session.userId(),
@@ -164,6 +166,37 @@ public class WordService {
             word,
             flavor
         );
+    }
+
+    /**
+     * 意图：在词条被模型纠正后同步更新对应的搜索记录，避免历史记录出现旧词条。\
+     * 输入：\
+     *  - userId：当前用户 ID，用于校验及日志；\
+     *  - record：可选的搜索记录响应，当为 null 时说明当前上下文缺失完整响应；\
+     *  - canonicalTerm：模型返回的规范词条。\
+     * 输出：无返回值，最佳努力地调用 {@link SearchRecordService#synchronizeRecordTerm(Long, Long, String)}。\
+     * 流程：优先解析 recordId，若不可用则直接返回；若同步失败则记录警告并继续主流程。\
+     * 错误处理：捕获所有异常并写日志，确保不会影响查词主路径。\
+     * 复杂度：O(1)。
+     */
+    private void synchronizeRecordTermQuietly(Long userId, SearchRecordResponse record, String canonicalTerm) {
+        Long recordId = record != null ? record.id() : null;
+        synchronizeRecordTermQuietly(userId, recordId, canonicalTerm);
+    }
+
+    private void synchronizeRecordTermQuietly(Long userId, Long recordId, String canonicalTerm) {
+        try {
+            searchRecordService.synchronizeRecordTerm(userId, recordId, canonicalTerm);
+        } catch (Exception ex) {
+            log.warn(
+                "Failed to synchronize search record {} for user {} with canonical term '{}': {}",
+                recordId,
+                userId,
+                canonicalTerm,
+                ex.getMessage(),
+                ex
+            );
+        }
     }
 
     public record StreamPayload(String event, String data) {
