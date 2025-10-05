@@ -17,7 +17,7 @@
   --loader-bar-width: calc(var(--space-5) * 5);
   --loader-bar-height: calc(var(--space-5) + var(--space-4));
   --loader-bar-radius: var(--radius-xl);
-  --loader-bar-stroke: var(--space-1);
+  --loader-bar-stroke: var(--space-1); /* 控制矩形描边厚度，便于主题扩展。 */
 }
 
 .symbol {
@@ -30,7 +30,7 @@
 
   /* 保持透明底以让动效悬浮于背景之上，遵循 2024-03 视觉规范的“纯净等待”策略。 */
 
-  /* 移除内嵌描边，避免等待态出现可见边框，同时暴露阴影配置便于后续无障碍或主题调整。 */
+  /* 维持无底色，仅通过阴影拉开层级，便于后续针对无障碍主题微调。 */
   box-shadow: var(
     --loader-symbol-shadow,
     0 24px 48px color-mix(in srgb, var(--shadow-color) 35%, transparent)
@@ -38,7 +38,7 @@
 }
 
 .bar {
-  /* 矩形围绕中心伸缩，确保三者中心处于同一水平线。 */
+  /* 矩形围绕中心伸缩，确保所有矩形中心保持同一水平线。 */
   inline-size: var(--loader-bar-width);
   block-size: var(--loader-bar-height);
   border-radius: var(--loader-bar-radius);
@@ -46,34 +46,15 @@
   overflow: hidden;
 
   /*
-   * 背景：保持无填充，以免等待态覆盖底层画面。
-   * 取舍：使用伪元素绘制一条高亮中心脊线，既保留动效节奏又避免显式 border；
-   *       若后续需要更强存在感，可通过 --loader-bar-stroke 调整线宽。
+   * 背景：保持完全透明，呼应“纯净等待”策略。
+   * 取舍：以半透明描边替代内嵌色块，确保矩形轮廓在任意背景上仍具对比，
+   *       并复用 stroke 变量方便未来主题细化。
    */
   background: none;
+  border: var(--loader-bar-stroke)
+    solid color-mix(in srgb, var(--loader-bar-color) 78%, transparent);
   transform-origin: center;
   animation: bar-wave 1.4s ease-in-out infinite;
-}
-
-.bar::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-
-  /*
-   * 通过线性渐变在中央构造窄条高光，保证视觉聚焦同时维持透明底。
-   * 渐变左右区域保持透明，兼容深浅色背景，不引入新的图层遮罩。
-   */
-  background: linear-gradient(
-    to right,
-    transparent calc(50% - var(--loader-bar-stroke) / 2),
-    color-mix(in srgb, var(--loader-bar-color) 94%, transparent)
-      calc(50% - var(--loader-bar-stroke) / 2),
-    color-mix(in srgb, var(--loader-bar-color) 94%, transparent)
-      calc(50% + var(--loader-bar-stroke) / 2),
-    transparent calc(50% + var(--loader-bar-stroke) / 2)
-  );
 }
 
 .bar:nth-child(1) {
@@ -81,11 +62,19 @@
 }
 
 .bar:nth-child(2) {
-  animation-delay: 0.18s;
+  animation-delay: 0.12s;
 }
 
 .bar:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.bar:nth-child(4) {
   animation-delay: 0.36s;
+}
+
+.bar:nth-child(5) {
+  animation-delay: 0.48s;
 }
 
 @keyframes bar-wave {
