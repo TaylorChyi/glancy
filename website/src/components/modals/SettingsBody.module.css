@@ -58,7 +58,32 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
-  padding-right: 4px;
+
+  /*
+   * 通过暴露背景与边框变量，让调用方能够对导航列套底色，同时保持原有滚动余量。
+   * 默认保持透明以兼容历史调用场景，设置变量后可与 Sidebar 配色对齐。
+   */
+  background: var(--settings-body-nav-surface, transparent);
+  border-radius: var(--settings-body-nav-radius, 0);
+  border: var(--settings-body-nav-border-width, 0) solid
+    var(--settings-body-nav-border-color, transparent);
+  box-shadow: var(--settings-body-nav-shadow, none);
+  padding: var(
+    --settings-body-nav-padding-block-start,
+    var(--settings-body-nav-padding, 0)
+  ) calc(
+    var(
+        --settings-body-nav-padding-inline-end,
+        var(--settings-body-nav-padding, 0px)
+      ) +
+      var(--settings-body-nav-scrollbar-gutter, 4px)
+  ) var(
+    --settings-body-nav-padding-block-end,
+    var(--settings-body-nav-padding, 0)
+  ) var(
+    --settings-body-nav-padding-inline-start,
+    var(--settings-body-nav-padding, 0)
+  );
 }
 
 .nav-scroller > * {
@@ -88,7 +113,32 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
-  padding-right: 4px;
+
+  /*
+   * 右侧内容列同样开放背景/间距变量，便于偏好设置页面与模态统一底色。
+   * 默认保留原有 4px 滚动间隔，避免滚动条贴边。
+   */
+  background: var(--settings-body-content-surface, transparent);
+  border-radius: var(--settings-body-content-radius, 0);
+  border: var(--settings-body-content-border-width, 0) solid
+    var(--settings-body-content-border-color, transparent);
+  box-shadow: var(--settings-body-content-shadow, none);
+  padding: var(
+    --settings-body-content-padding-block-start,
+    var(--settings-body-content-padding, 0)
+  ) calc(
+    var(
+        --settings-body-content-padding-inline-end,
+        var(--settings-body-content-padding, 0px)
+      ) +
+      var(--settings-body-content-scrollbar-gutter, 4px)
+  ) var(
+    --settings-body-content-padding-block-end,
+    var(--settings-body-content-padding, 0)
+  ) var(
+    --settings-body-content-padding-inline-start,
+    var(--settings-body-content-padding, 0)
+  );
 }
 
 @media (width <= 1023px) {
@@ -108,8 +158,23 @@
     flex: none;
     max-height: none;
     overflow: hidden auto;
-    padding-right: 0;
-    padding-bottom: 6px;
+
+    --settings-body-nav-scrollbar-gutter: 0px;
+
+    padding-right: var(
+      --settings-body-nav-padding-inline-end-mobile,
+      var(
+        --settings-body-nav-padding-inline-end,
+        var(--settings-body-nav-padding, 0)
+      )
+    );
+    padding-bottom: calc(
+      var(
+          --settings-body-nav-padding-block-end,
+          var(--settings-body-nav-padding, 0px)
+        ) +
+        var(--settings-body-nav-mobile-bottom-offset, 6px)
+    );
     scroll-padding-inline: 16px;
     scrollbar-gutter: auto;
   }
@@ -129,6 +194,15 @@
 
   .content-scroller {
     max-height: none;
-    padding-right: 0;
+
+    --settings-body-content-scrollbar-gutter: 0px;
+
+    padding-right: var(
+      --settings-body-content-padding-inline-end-mobile,
+      var(
+        --settings-body-content-padding-inline-end,
+        var(--settings-body-content-padding, 0)
+      )
+    );
   }
 }
