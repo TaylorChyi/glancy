@@ -14,6 +14,8 @@ const INLINE_LABEL_BOUNDARY_PREFIX_RE =
   /[A-Za-z0-9\u4e00-\u9fff)\]}”’'".!?。，；：、]/u;
 const COLLAPSED_LABEL_CHAIN_PATTERN =
   /(:)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:[^\s])/gmu;
+const ADJACENT_LABEL_PATTERN =
+  /(?<=\S)[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*:/gmu;
 const LABEL_CHAIN_WITHOUT_COLON_PATTERN =
   /(^|[\n\r]|[.,，。！？!?:：；;])(\s*)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)([ \t]+)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)/gmu;
 const BARE_INLINE_LABEL_PATTERN =
@@ -212,6 +214,68 @@ function computeListIndentation(source, offset) {
   return `${leading}${visualizedMarker}${gap.replace(/[^\s]/g, " ")}`;
 }
 
+function deriveLineIndentation(source, offset) {
+  const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
+  if (lineStart < 0) {
+    return "";
+  }
+  const line = source.slice(lineStart, offset);
+  const match = line.match(/^[ \t]*/);
+  return match ? match[0] : "";
+}
+
+function resolveAdjacentLabelSplit(segment) {
+  const token = segment.slice(0, -1);
+  let best = null;
+  for (let i = 1; i < token.length; i += 1) {
+    const suffix = token.slice(i);
+    if (!shouldSplitInlineLabel(suffix)) {
+      continue;
+    }
+    const prefix = token.slice(0, i);
+    if (!prefix.trim()) {
+      continue;
+    }
+    const strongBoundary = /^[A-Z\u4e00-\u9fff]/u.test(suffix);
+    const normalized = normalizeInlineLabelCandidate(suffix);
+    const exactMatch = INLINE_LABEL_TOKENS.has(normalized);
+    const candidate = {
+      prefix,
+      label: suffix,
+      strong: strongBoundary,
+      exact: exactMatch,
+      length: suffix.length,
+      index: i,
+    };
+    if (!best) {
+      best = candidate;
+      continue;
+    }
+    if (candidate.exact !== best.exact) {
+      best = candidate.exact ? candidate : best;
+      continue;
+    }
+    if (candidate.strong !== best.strong) {
+      best = candidate.strong ? candidate : best;
+      continue;
+    }
+    if (candidate.length !== best.length) {
+      best = candidate.length > best.length ? candidate : best;
+      continue;
+    }
+    if (candidate.index < best.index) {
+      best = candidate;
+    }
+  }
+  if (!best) {
+    return null;
+  }
+  return {
+    prefix: best.prefix,
+    label: best.label,
+  };
+}
+
 /**
  * 背景：
  *  - 英译英字典输出会引入诸如“Pronunciation-British”或“AudioNotes”一类驼峰/连字符标签，
@@ -388,6 +452,44 @@ function expandCollapsedLabelChains(text) {
       }
       const indent = computeListIndentation(source, offset) || "";
       return `${colon}\n${indent}${label}`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - 新模型在序列化 Markdown 时，偶尔会把 `EntryType:SingleWordUsageInsight:` 这类字段直接拼接，
+ *    导致后续标签与前一个值之间没有任何空白字符，现有链式拆分逻辑无法生效。
+ * 目的：
+ *  - 识别紧邻在非空白字符后的标签，并补充换行与缩进，使标签重新回到独立行。
+ * 关键决策与取舍：
+ *  - 保留与 `computeListIndentation` 一致的缩进推导，避免破坏列表展示；
+ *  - 仅在标签命中词表时拆分，防止误伤普通缩略词或时间格式。
+ * 影响范围：
+ *  - Markdown 词典条目的元数据段落换行能力，特别是缺失分隔符的串联字段。
+ */
+function separateAdjacentInlineLabels(text) {
+  return text.replace(
+    ADJACENT_LABEL_PATTERN,
+    (segment, offset, source) => {
+      const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
+      const precedingSlice = source.slice(lineStart, offset);
+      if (!precedingSlice.includes(":") && !precedingSlice.includes("：")) {
+        return segment;
+      }
+      const boundaryChar = source[offset - 1];
+      const resolved =
+        boundaryChar === ":" || boundaryChar === "："
+          ? resolveAdjacentLabelSplit(segment)
+          : null;
+      const indent =
+        computeListIndentation(source, offset - 1) ||
+        deriveLineIndentation(source, offset);
+      if (!resolved) {
+        return `\n${indent}${segment}`;
+      }
+      const { prefix, label } = resolved;
+      return `${prefix}\n${indent}${label}:`;
     },
   );
 }
@@ -638,7 +740,10 @@ export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
   const withDelimitersRestored = restoreMissingLabelDelimiters(normalized);
-  const expanded = expandCollapsedLabelChains(withDelimitersRestored);
+  const withAdjacentSeparated = separateAdjacentInlineLabels(
+    withDelimitersRestored,
+  );
+  const expanded = expandCollapsedLabelChains(withAdjacentSeparated);
   const decorated = decorateBareInlineLabels(expanded);
   const separated = enforceInlineLabelBoundary(decorated);
   const spacedColon = ensureColonSpacing(separated);
