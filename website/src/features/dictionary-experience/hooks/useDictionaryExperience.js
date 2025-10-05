@@ -19,7 +19,7 @@ import {
   copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
-import { useWordStore } from "@/store";
+import { useWordStore, useDataGovernanceStore } from "@/store";
 import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
@@ -105,6 +105,9 @@ export function useDictionaryExperience() {
   const streamWord = useStreamWord();
   const { start: startSpeech } = useSpeechInput({ onResult: setText });
   const wordStoreApi = useWordStore;
+  const historyCaptureEnabled = useDataGovernanceStore(
+    (state) => state.historyCaptureEnabled,
+  );
   const activeTerm = entry?.term || currentTerm;
   const isDictionaryViewActive = isDictionaryView(activeView);
   const isHistoryViewActive = isHistoryView(activeView);
@@ -520,7 +523,8 @@ export function useDictionaryExperience() {
       setText("");
 
       const result = await executeLookup(inputValue);
-      if (result.status === "success") {
+      if (result.status === "success" && historyCaptureEnabled) {
+        // 这里同步使用数据治理开关，避免即便后端跳过持久化仍然在前端堆积本地历史。
         const historyTerm =
           result.term ?? result.queriedTerm ?? inputValue;
         addHistory(
@@ -537,6 +541,7 @@ export function useDictionaryExperience() {
       text,
       setText,
       executeLookup,
+      historyCaptureEnabled,
       addHistory,
       dictionaryFlavor,
     ],
