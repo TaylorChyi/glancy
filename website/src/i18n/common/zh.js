@@ -126,7 +126,7 @@ export default {
     "当你开始探索，最近的检索会在这里井然排列，随时回味。",
   historyEmptyAction: "回到搜索",
   searchEmptyTitle: "静候你的下一次好奇",
-  searchEmptyDescription: "输入词条、短语或句子，格律将为你呈现专属解读。",
+  searchEmptyDescription: "输入词条、短语或句子，格律词典将为你呈现专属解读。",
   searchEmptyAction: "聚焦搜索框",
   clearHistory: "清空记录",
   notifications: "通知",
