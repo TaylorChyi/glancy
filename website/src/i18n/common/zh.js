@@ -92,7 +92,7 @@ export default {
   settingsEraseHistory: "清除历史",
   settingsTabAccount: "账号",
   settingsAccountDescription: "梳理与你账户相关的基础身份信息。",
-  settingsAccountAvatarLabel: "更换头像",
+  settingsAccountAvatarLabel: "头像",
   settingsManageProfile: "更换用户名",
   settingsAccountUsername: "用户名",
   settingsAccountEmail: "邮箱",

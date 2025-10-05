@@ -4,11 +4,14 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
+const mockUseKeyboardShortcutContext = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
   useTheme: mockUseTheme,
+  useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
+  KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
 let usePreferenceSections;
@@ -140,6 +143,7 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
+  mockUseKeyboardShortcutContext.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -151,6 +155,10 @@ beforeEach(() => {
     },
   });
   mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
+  mockUseKeyboardShortcutContext.mockReturnValue({
+    register: jest.fn(),
+    unregister: jest.fn(),
+  });
 });
 
 /**
