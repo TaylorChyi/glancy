@@ -7,7 +7,56 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
-const INLINE_TRANSLATION = /([^\n])([ \t]+)(\*\*翻译\*\*:[^\n]*)/g;
+const INLINE_LABEL_PATTERN =
+  /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
+
+const INLINE_LABEL_NORMALIZATION = /[^a-z\u4e00-\u9fff]+/giu;
+
+// 说明：
+//  - 这些标签来自后端 Markdown 解析器的 Section 定义，覆盖了 LLM 输出中常见的段落元信息。
+//  - 目标是保持前后端对「需要独立换行的行内标签」的识别一致，避免前端额外维护语言分支。
+//  - 如需扩展新的标签，请与后端 `MarkdownWordExtractor` 的 `resolveSection` 保持同步，防止两端语义漂移。
+const INLINE_LABEL_TOKENS = new Set(
+  [
+    "translation",
+    "translations",
+    "definition",
+    "definitions",
+    "meaning",
+    "meanings",
+    "example",
+    "examples",
+    "synonym",
+    "synonyms",
+    "antonym",
+    "antonyms",
+    "related",
+    "relatedwords",
+    "variation",
+    "variations",
+    "phrase",
+    "phrases",
+    "phonetic",
+    "pronunciation",
+    "释义",
+    "解释",
+    "含义",
+    "例句",
+    "用法示例",
+    "用例",
+    "翻译",
+    "同义词",
+    "反义词",
+    "相关词",
+    "相关词汇",
+    "变体",
+    "变形",
+    "词形",
+    "常见词组",
+    "词组",
+    "发音",
+  ].map((token) => token.toLowerCase()),
+);
 
 function isLikelyJson(text) {
   if (!text) return false;
@@ -71,13 +120,32 @@ function computeListIndentation(source, offset) {
   return `${leading}${visualizedMarker}${gap.replace(/[^\s]/g, " ")}`;
 }
 
-function ensureTranslationLineBreak(text) {
+function normalizeInlineLabel(raw) {
+  return raw
+    .replace(/：/g, ":")
+    .toLowerCase()
+    .replace(INLINE_LABEL_NORMALIZATION, "")
+    .trim();
+}
+
+function shouldSplitInlineLabel(label) {
+  const normalized = normalizeInlineLabel(label);
+  if (!normalized) {
+    return false;
+  }
+  return INLINE_LABEL_TOKENS.has(normalized);
+}
+
+function ensureInlineLabelLineBreak(text) {
   return text.replace(
-    INLINE_TRANSLATION,
-    (match, before, spaces, translation, offset, source) => {
+    INLINE_LABEL_PATTERN,
+    (match, before, spaces, segment, label, offset, source) => {
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
       const indent =
         computeListIndentation(source, offset) || spaces.replace(/\S/g, " ");
-      return `${before}\n${indent}${translation}`;
+      return `${before}\n${indent}${segment}`;
     },
   );
 }
@@ -206,5 +274,5 @@ export function polishDictionaryMarkdown(source) {
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
   const padded = ensureHeadingPadding(withHeadingSpacing);
   const spaced = ensureListSpacing(padded);
-  return ensureTranslationLineBreak(spaced);
+  return ensureInlineLabelLineBreak(spaced);
 }
