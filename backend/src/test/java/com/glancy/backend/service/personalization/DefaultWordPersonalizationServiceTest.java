@@ -41,15 +41,30 @@ class DefaultWordPersonalizationServiceTest {
     }
 
     /**
-     * 验证个性化服务会整合用户画像、兴趣与历史记录生成完整叙述。
+     * 测试目标：验证个性化服务会在精简画像字段后仍能整合职业目标、兴趣与历史记录生成上下文。
+     * 前置条件：
+     *  - 用户画像含有高强度每日词汇目标、兴趣列表、学习目标；
+     *  - 搜索历史返回两个近期词条；
+     *  - 词条响应包含释义、示例与同义词。
+     * 步骤：
+     *  1) 通过 mock Repository 返回画像与历史；
+     *  2) 调用 `resolveContext` 获取个性化上下文；
+     *  3) 调用 `personalize` 构建个性化释义。
+     * 断言：
+     *  - Persona 源于画像且描述与每日目标策略匹配；
+     *  - 兴趣、目标与历史词条被保留；
+     *  - 个性化释义包含兴趣关键词、当前查询词与学习钩子。
+     * 边界/异常：
+     *  - 若画像缺失字段，应由服务回退到默认 Persona（此处不覆盖）。
      */
     @Test
     void personalizeMergesProfileAndHistory() {
         UserProfile profile = new UserProfile();
-        profile.setAge(29);
-        profile.setGender("女");
+        profile.setDailyWordTarget(70);
+        profile.setJob("产品设计师");
         profile.setInterest("金融, 设计");
-        profile.setGoal("通过商务演讲展示专业度");
+        profile.setGoal("赢得国际设计奖");
+        profile.setFuturePlan("打造沉浸式体验");
         profile.setUser(new User());
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
 
@@ -88,11 +103,11 @@ class DefaultWordPersonalizationServiceTest {
         WordPersonalizationContext context = service.resolveContext(1L);
         assertNotNull(context);
         assertTrue(context.personaDerivedFromProfile());
-        assertEquals("自驱力强的青年进阶者", context.personaDescriptor());
-        assertEquals("大学或初入职场的伙伴", context.audienceDescriptor());
+        assertEquals("高频冲刺的进阶学习者", context.personaDescriptor());
+        assertEquals("同样在冲刺高强度词汇目标的伙伴", context.audienceDescriptor());
         assertTrue(context.hasSignals());
-        assertEquals("通过商务演讲展示专业度", context.goal());
-        assertEquals("柔和而坚定", context.preferredTone());
+        assertEquals("赢得国际设计奖", context.goal());
+        assertEquals("节奏明快", context.preferredTone());
         assertEquals(List.of("金融", "设计"), context.interests());
         assertEquals(List.of("equity", "portfolio"), context.recentTerms());
 
@@ -100,12 +115,13 @@ class DefaultWordPersonalizationServiceTest {
 
         assertNotNull(result);
         assertTrue(result.personaSummary().contains("金融"));
+        assertTrue(result.personaSummary().contains("高频冲刺"));
         assertTrue(result.personaSummary().contains("leverage"));
         assertTrue(result.keyTakeaway().startsWith("核心释义"));
         assertTrue(result.contextualExplanation().contains("示例提示"));
         assertFalse(result.learningHooks().isEmpty());
         assertTrue(result.learningHooks().get(0).contains("equity"));
         assertEquals(2, result.reflectionPrompts().size());
-        assertTrue(result.reflectionPrompts().get(1).contains("商务演讲"));
+        assertTrue(result.reflectionPrompts().get(1).contains("赢得国际设计奖"));
     }
 }

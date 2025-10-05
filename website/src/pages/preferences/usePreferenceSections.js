@@ -12,14 +12,12 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage, useUser } from "@/context";
-import { useApi } from "@/hooks/useApi.js";
 import AccountSection from "./sections/AccountSection.jsx";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 
-const EMPTY_PROFILE = Object.freeze({ age: "", gender: "" });
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
 const sanitizeActiveSectionId = (candidateId, sections) => {
@@ -68,71 +66,17 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
  * 输出：
  *  - 包含文案、分区数组、激活态控制与表单守卫的组合对象。
  * 流程：
- *  1) 拉取 profile 元数据，构造账户字段。
+ *  1) 汇总用户上下文与翻译词条并构造账户字段。
  *  2) 结合国际化词条组装分区蓝本。
  *  3) 管理激活分区的受控状态并暴露切换方法。
  * 错误处理：
- *  - 数据拉取失败时重置 profileMeta 并输出 console.warn，确保回退文案生效。
+ *  - 当前仅依赖本地状态，若上下文缺失则自动回退至占位文案。
  * 复杂度：
- *  - 时间：O(n) 取决于分区数量；空间：O(1) 额外状态。当前瓶颈在接口请求而非本地计算。
+ *  - 时间：O(n) 取决于分区数量；空间：O(1) 额外状态。
  */
 function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   const { t } = useLanguage();
   const { user } = useUser();
-  const api = useApi();
-  const fetchProfile = api?.profiles?.fetchProfile;
-  const [profileMeta, setProfileMeta] = useState(EMPTY_PROFILE);
-
-  useEffect(() => {
-    if (!user?.token || !fetchProfile) {
-      setProfileMeta((previous) => {
-        if (previous.age === "" && previous.gender === "") {
-          return previous;
-        }
-        return EMPTY_PROFILE;
-      });
-      return undefined;
-    }
-
-    let mounted = true;
-
-    fetchProfile({ token: user.token })
-      .then((profile) => {
-        if (!mounted) {
-          return;
-        }
-        setProfileMeta({
-          age:
-            profile?.age === null ||
-            profile?.age === undefined ||
-            profile?.age === ""
-              ? ""
-              : String(profile.age),
-          gender:
-            profile?.gender === null ||
-            profile?.gender === undefined ||
-            profile?.gender === ""
-              ? ""
-              : String(profile.gender),
-        });
-      })
-      .catch((error) => {
-        console.warn("[preferences] Failed to load profile meta", error);
-        if (!mounted) {
-          return;
-        }
-        setProfileMeta((previous) => {
-          if (previous.age === "" && previous.gender === "") {
-            return previous;
-          }
-          return EMPTY_PROFILE;
-        });
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [fetchProfile, user?.token]);
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -217,16 +161,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
         label: t.settingsAccountPhone ?? "Phone",
         value: mapToDisplayValue(user?.phone, fallbackValue),
       },
-      {
-        id: "age",
-        label: t.settingsAccountAge ?? "Age",
-        value: mapToDisplayValue(profileMeta.age, fallbackValue),
-      },
-      {
-        id: "gender",
-        label: t.settingsAccountGender ?? "Gender",
-        value: mapToDisplayValue(profileMeta.gender, fallbackValue),
-      },
     ];
 
     //
@@ -291,15 +225,11 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     fallbackValue,
     manageLabel,
     onOpenAccountManager,
-    profileMeta.age,
-    profileMeta.gender,
     t.prefAccountTitle,
     t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
-    t.settingsAccountAge,
     t.settingsAccountDescription,
     t.settingsAccountEmail,
-    t.settingsAccountGender,
     t.settingsAccountPhone,
     t.settingsAccountUsername,
     t.settingsDataDescription,

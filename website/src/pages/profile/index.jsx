@@ -1,11 +1,22 @@
+/**
+ * 背景：
+ *  - Profile 页面此前承载年龄、性别等字段，且缺乏集中注释，难以追踪身份字段的演进历史。
+ * 目的：
+ *  - 只保留可编辑的身份核心信息与联系渠道，确保前端状态与后端字段一致。
+ * 关键决策与取舍：
+ *  - 继续复用 `EditableField` 等表单元件，避免一次性补丁；
+ *  - 移除年龄/性别后保留兴趣与目标字段，与新的画像结构对齐。
+ * 影响范围：
+ *  - 账户管理模态与偏好设置读取的身份字段，确保无遗留输入控件。
+ * 演进与TODO：
+ *  - TODO: 后续若支持更多画像字段，应通过配置驱动扩展而非硬编码。
+ */
 import { useState, useEffect } from "react";
 import "@/pages/App/App.css";
 import styles from "./Profile.module.css";
 import Avatar from "@/components/ui/Avatar";
 import { useLanguage } from "@/context";
 import MessagePopup from "@/components/ui/MessagePopup";
-import AgeStepper from "@/components/form/AgeStepper/AgeStepper.jsx";
-import GenderSelect from "@/components/form/GenderSelect/GenderSelect.jsx";
 import EditableField from "@/components/form/EditableField/EditableField.jsx";
 import FormField from "@/components/form/FormField.jsx";
 import { useEmailBinding } from "@/hooks";
@@ -22,8 +33,6 @@ function Profile({ onCancel }) {
   const api = useApi();
   const [username, setUsername] = useState(currentUser?.username || "");
   const [phone, setPhone] = useState(currentUser?.phone || "");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
   const [interests, setInterests] = useState("");
   const [goal, setGoal] = useState("");
   const [avatar, setAvatar] = useState("");
@@ -64,8 +73,6 @@ function Profile({ onCancel }) {
     api.profiles
       .fetchProfile({ token: currentUser.token })
       .then((data) => {
-        setAge(data.age);
-        setGender(data.gender);
         setInterests(data.interest);
         setGoal(data.goal);
         if (data.avatar) {
@@ -125,8 +132,6 @@ function Profile({ onCancel }) {
         api.profiles.saveProfile({
           token: currentUser.token,
           profile: {
-            age,
-            gender,
             job: "",
             interest: interests,
             goal,
@@ -270,40 +275,6 @@ function Profile({ onCancel }) {
           buttonText={t.editButton}
         />
         <div className={styles.basic}>
-          <FormField
-            label={
-              <>
-                <ThemeIcon
-                  name="cake"
-                  className={styles.icon}
-                  width={20}
-                  height={20}
-                />
-                {t.ageLabel}
-                <Tooltip text={t.ageHelp}>?</Tooltip>
-              </>
-            }
-            id="profile-age"
-          >
-            <AgeStepper value={age} onChange={setAge} />
-          </FormField>
-          <FormField
-            label={
-              <>
-                <ThemeIcon
-                  name="user"
-                  className={styles.icon}
-                  width={20}
-                  height={20}
-                />
-                {t.genderLabel}
-                <Tooltip text={t.genderHelp}>?</Tooltip>
-              </>
-            }
-            id="profile-gender"
-          >
-            <GenderSelect value={gender} onChange={setGender} />
-          </FormField>
           <FormField
             label={
               <>

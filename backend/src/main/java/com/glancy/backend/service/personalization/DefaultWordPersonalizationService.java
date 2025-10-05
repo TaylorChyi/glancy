@@ -20,16 +20,33 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * 背景：
+ *  - 画像字段裁剪后，词汇个性化仍需根据有限画像与搜索轨迹推导 Persona，以驱动 LLM 生成侧文案。
+ * 目的：
+ *  - 聚合用户画像、搜索历史与词条响应，生成个性化语境与行动建议。
+ * 关键决策与取舍：
+ *  - 采用责任链 + 策略混合模型：`PERSONA_CLASSIFIERS` 以先匹配先返回的顺序判定 Persona，便于按需扩展；
+ *  - 将文本拼装逻辑拆分为若干私有方法，确保可读性并便于未来引入多语言支持；
+ *  - 对兴趣字段使用不可变集合与去重策略，避免重复朗读。
+ * 影响范围：
+ *  - 影响偏好设置与解释生成流程中依赖的个性化上下文。
+ * 演进与TODO：
+ *  - TODO: 后续可引入外部特征（如学习进度），通过新增 `PersonaClassifier` 实现扩展链路。
+ */
 @Service
 public class DefaultWordPersonalizationService implements WordPersonalizationService {
 
     private static final int RECENT_HISTORY_LIMIT = 5;
     private static final int HOOK_LIMIT = 3;
     private static final Pattern INTEREST_SPLITTER = Pattern.compile("[,，;；/\\\\]+");
-    private static final int AGE_CHILD_MAX = 12;
-    private static final int AGE_TEEN_MAX = 18;
-    private static final int AGE_YOUNG_ADULT_MAX = 30;
-    private static final int AGE_ADULT_MAX = 55;
+    private static final int DAILY_TARGET_SPRINT = 60;
+    private static final int DAILY_TARGET_PROGRESSIVE = 30;
+    private static final List<PersonaClassifier> PERSONA_CLASSIFIERS = List.of(
+        new DailyTargetPersonaClassifier(),
+        new JobPersonaClassifier(),
+        new GoalPersonaClassifier()
+    );
 
     private final UserProfileRepository userProfileRepository;
     private final SearchRecordRepository searchRecordRepository;
@@ -45,35 +62,52 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
     @Override
     public WordPersonalizationContext resolveContext(Long userId) {
         Optional<UserProfile> profile = userProfileRepository.findByUserId(userId);
-        Integer age = profile.map(UserProfile::getAge).orElse(null);
-        AgeBand ageBand = AgeBand.fromAge(age);
+        PersonaProfile personaProfile = resolvePersonaProfile(profile);
         String goal = profile.map(UserProfile::getGoal).map(this::normalizeText).orElse(null);
-        String gender = profile.map(UserProfile::getGender).map(this::normalizeText).orElse(null);
         List<String> interests = profile.map(UserProfile::getInterest).map(this::parseInterests).orElseGet(List::of);
         List<String> recentTerms = fetchRecentTerms(userId);
-        String tone = gender != null ? resolveTone(gender) : null;
-        boolean personaDerived = age != null;
         return new WordPersonalizationContext(
-            ageBand.descriptor(),
-            personaDerived,
-            ageBand.audience(),
+            personaProfile.descriptor(),
+            personaProfile.derivedFromProfile(),
+            personaProfile.audience(),
             goal,
-            tone,
+            personaProfile.preferredTone(),
             interests,
             recentTerms
         );
     }
 
+    private PersonaProfile resolvePersonaProfile(Optional<UserProfile> profile) {
+        PersonaInput input = profile.map(this::toPersonaInput).orElse(PersonaInput.empty());
+        for (PersonaClassifier classifier : PERSONA_CLASSIFIERS) {
+            Optional<PersonaProfile> persona = classifier.classify(input);
+            if (persona.isPresent()) {
+                return persona.get();
+            }
+        }
+        return PersonaProfile.fallback();
+    }
+
+    private PersonaInput toPersonaInput(UserProfile profile) {
+        return new PersonaInput(
+            normalizeText(profile.getJob()),
+            profile.getDailyWordTarget(),
+            normalizeText(profile.getGoal()),
+            normalizeText(profile.getFuturePlan())
+        );
+    }
+
     @Override
     public PersonalizedWordExplanation personalize(WordPersonalizationContext context, WordResponse response) {
+        PersonaProfile fallbackPersona = PersonaProfile.fallback();
         WordPersonalizationContext effectiveContext = context != null
             ? context
             : new WordPersonalizationContext(
-                AgeBand.UNKNOWN.descriptor(),
+                fallbackPersona.descriptor(),
                 false,
-                AgeBand.UNKNOWN.audience(),
+                fallbackPersona.audience(),
                 null,
-                null,
+                fallbackPersona.preferredTone(),
                 List.of(),
                 List.of()
             );
@@ -224,17 +258,6 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return List.copyOf(prompts);
     }
 
-    private String resolveTone(String gender) {
-        String normalized = gender.toLowerCase(Locale.ROOT);
-        if (normalized.contains("女")) {
-            return "柔和而坚定";
-        }
-        if (normalized.contains("男")) {
-            return "干练且直接";
-        }
-        return "温和而自信";
-    }
-
     private String trimExample(String example) {
         String normalized = example.replaceAll("\n+", " ").trim();
         if (normalized.length() <= 60) {
@@ -270,52 +293,96 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return Collections.unmodifiableList(interests);
     }
 
-    private enum AgeBand {
-        CHILD("好奇心旺盛的小小探索者"),
-        TEEN("目标清晰的少年学习者"),
-        YOUNG_ADULT("自驱力强的青年进阶者"),
-        ADULT("经验沉淀的职场实践者"),
-        SENIOR("热爱分享的终身学习者"),
-        UNKNOWN("保持好奇的学习者");
+    private record PersonaInput(String job, Integer dailyWordTarget, String goal, String futurePlan) {
+        static PersonaInput empty() {
+            return new PersonaInput(null, null, null, null);
+        }
+    }
 
-        private final String descriptor;
-
-        AgeBand(String descriptor) {
-            this.descriptor = descriptor;
+    private record PersonaProfile(
+        String descriptor,
+        String audience,
+        String preferredTone,
+        boolean derivedFromProfile
+    ) {
+        PersonaProfile {
+            descriptor = normalizeField(descriptor, "保持好奇的学习者");
+            audience = normalizeField(audience, "身边的朋友");
+            preferredTone = normalizeField(preferredTone, "温和而自信");
         }
 
-        String descriptor() {
-            return descriptor;
+        private static String normalizeField(String candidate, String fallback) {
+            return StringUtils.hasText(candidate) ? candidate.trim() : fallback;
         }
 
-        String audience() {
-            return switch (this) {
-                case CHILD -> "小学阶段";
-                case TEEN -> "青少年";
-                case YOUNG_ADULT -> "大学或初入职场的伙伴";
-                case ADULT -> "资深同事";
-                case SENIOR -> "经验丰富的前辈";
-                case UNKNOWN -> "身边的朋友";
-            };
+        static PersonaProfile fallback() {
+            return new PersonaProfile("保持好奇的学习者", "身边的朋友", "温和而自信", false);
         }
+    }
 
-        static AgeBand fromAge(Integer age) {
-            if (age == null) {
-                return UNKNOWN;
+    private interface PersonaClassifier {
+        Optional<PersonaProfile> classify(PersonaInput input);
+    }
+
+    private static final class DailyTargetPersonaClassifier implements PersonaClassifier {
+
+        @Override
+        public Optional<PersonaProfile> classify(PersonaInput input) {
+            Integer target = input.dailyWordTarget();
+            if (target == null || target <= 0) {
+                return Optional.empty();
             }
-            if (age <= AGE_CHILD_MAX) {
-                return CHILD;
+            if (target >= DAILY_TARGET_SPRINT) {
+                return Optional.of(
+                    new PersonaProfile("高频冲刺的进阶学习者", "同样在冲刺高强度词汇目标的伙伴", "节奏明快", true)
+                );
             }
-            if (age <= AGE_TEEN_MAX) {
-                return TEEN;
+            if (target >= DAILY_TARGET_PROGRESSIVE) {
+                return Optional.of(new PersonaProfile("稳步进阶的自律学习者", "坚持每日积累的同伴", "条理清晰", true));
             }
-            if (age <= AGE_YOUNG_ADULT_MAX) {
-                return YOUNG_ADULT;
+            return Optional.of(new PersonaProfile("节奏分明的词汇积累者", "循序渐进的学习伙伴", "温和坚定", true));
+        }
+    }
+
+    private static final class JobPersonaClassifier implements PersonaClassifier {
+
+        @Override
+        public Optional<PersonaProfile> classify(PersonaInput input) {
+            String job = input.job();
+            if (!StringUtils.hasText(job)) {
+                return Optional.empty();
             }
-            if (age <= AGE_ADULT_MAX) {
-                return ADULT;
+            String normalized = job.toLowerCase(Locale.ROOT);
+            if (normalized.contains("学生") || normalized.contains("student")) {
+                return Optional.of(new PersonaProfile("专注进阶的校园学习者", "同班同学", "亲切易懂", true));
             }
-            return SENIOR;
+            if (normalized.contains("老师") || normalized.contains("教师") || normalized.contains("teacher")) {
+                return Optional.of(new PersonaProfile("经验分享型的教育者", "课堂上的学员", "严谨清晰", true));
+            }
+            if (normalized.contains("工程") || normalized.contains("engineer") || normalized.contains("开发")) {
+                return Optional.of(new PersonaProfile("注重逻辑的工程实践者", "协作的技术同事", "结构化且高效", true));
+            }
+            if (normalized.contains("设计") || normalized.contains("design")) {
+                return Optional.of(new PersonaProfile("敏锐的设计探索者", "创意共创的伙伴", "细腻而感性", true));
+            }
+            String descriptor = job + "领域的持续学习者";
+            String audience = "同行的" + job + "伙伴";
+            return Optional.of(new PersonaProfile(descriptor, audience, "专业稳重", true));
+        }
+    }
+
+    private static final class GoalPersonaClassifier implements PersonaClassifier {
+
+        @Override
+        public Optional<PersonaProfile> classify(PersonaInput input) {
+            String goal = StringUtils.hasText(input.goal()) ? input.goal() : input.futurePlan();
+            if (!StringUtils.hasText(goal)) {
+                return Optional.empty();
+            }
+            String trimmed = goal.trim();
+            return Optional.of(
+                new PersonaProfile("以" + trimmed + "为目标的进阶者", "同样专注" + trimmed + "的伙伴", "鼓舞人心", true)
+            );
         }
     }
 }

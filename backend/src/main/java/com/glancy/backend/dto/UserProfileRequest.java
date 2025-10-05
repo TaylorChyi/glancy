@@ -1,18 +1,30 @@
 package com.glancy.backend.dto;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Request body for saving user profile.
+ * 背景：
+ *  - 用户画像保存接口曾使用可变的 Lombok POJO，字段删除后仍保留 setter 容易产生并发与演进风险。
+ * 目的：
+ *  - 以不可变 record 承载保存画像所需字段，配合 Jackson 自动绑定确保序列化安全。
+ * 关键决策与取舍：
+ *  - 选择 record 而非传统类，借助 Java 平台的不可变语义提升线程安全并简化序列化；
+ *    同时保留 {@link JsonIgnoreProperties} 以兼容历史客户端冗余字段。
+ * 影响范围：
+ *  - `UserProfileService` 及控制器使用访问器方法替换原有 setter/getter。
+ * 演进与TODO：
+ *  - TODO: 若后续画像字段扩展，请评估版本化需求或新增可选配置对象。
  */
-@Data
-public class UserProfileRequest {
-
-    private Integer age;
-    private String gender;
-    private String job;
-    private String interest;
-    private String goal;
-    private Integer dailyWordTarget;
-    private String futurePlan;
-}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record UserProfileRequest(
+    /** 用户当前的职业角色描述 */
+    String job,
+    /** 用户填写的兴趣标签，使用分隔符拆分 */
+    String interest,
+    /** 学习或使用目标说明 */
+    String goal,
+    /** 每日词汇目标，单位：个 */
+    Integer dailyWordTarget,
+    /** 对未来规划或学习节奏的补充描述 */
+    String futurePlan
+) {}

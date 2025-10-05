@@ -85,7 +85,8 @@ final class TestEntityFactory {
     static UserProfile userProfile(User user) {
         UserProfile profile = new UserProfile();
         profile.setUser(user);
-        profile.setAge(20);
+        profile.setJob("engineer");
+        profile.setDailyWordTarget(30);
         return profile;
     }
 }
