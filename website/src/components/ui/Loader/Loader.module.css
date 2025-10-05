@@ -11,6 +11,7 @@
   --loader-bar-width: calc(var(--space-2) + var(--space-1));
   --loader-bar-height: calc(var(--space-5) + var(--space-4));
   --loader-bar-radius: var(--radius-lg);
+  --loader-bar-stroke: var(--space-1);
 }
 
 .symbol {
@@ -34,9 +35,38 @@
   inline-size: var(--loader-bar-width);
   block-size: var(--loader-bar-height);
   border-radius: var(--loader-bar-radius);
-  background: color-mix(in srgb, var(--loader-bar-color) 92%, transparent);
+  position: relative;
+  overflow: hidden;
+
+  /*
+   * 背景：保持无填充，以免等待态覆盖底层画面。
+   * 取舍：使用伪元素绘制一条高亮中心脊线，既保留动效节奏又避免显式 border；
+   *       若后续需要更强存在感，可通过 --loader-bar-stroke 调整线宽。
+   */
+  background: none;
   transform-origin: center;
   animation: bar-wave 1.4s ease-in-out infinite;
+}
+
+.bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  /*
+   * 通过线性渐变在中央构造窄条高光，保证视觉聚焦同时维持透明底。
+   * 渐变左右区域保持透明，兼容深浅色背景，不引入新的图层遮罩。
+   */
+  background: linear-gradient(
+    to right,
+    transparent calc(50% - var(--loader-bar-stroke) / 2),
+    color-mix(in srgb, var(--loader-bar-color) 94%, transparent)
+      calc(50% - var(--loader-bar-stroke) / 2),
+    color-mix(in srgb, var(--loader-bar-color) 94%, transparent)
+      calc(50% + var(--loader-bar-stroke) / 2),
+    transparent calc(50% + var(--loader-bar-stroke) / 2)
+  );
 }
 
 .bar:nth-child(1) {
