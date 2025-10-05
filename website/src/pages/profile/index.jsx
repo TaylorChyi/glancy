@@ -26,12 +26,12 @@ import { cacheBust } from "@/utils";
 import ThemeIcon from "@/components/ui/Icon";
 import Tooltip from "@/components/ui/Tooltip";
 import EmailBindingCard from "@/components/Profile/EmailBindingCard";
+import UsernameEditor from "@/components/Profile/UsernameEditor";
 
 function Profile({ onCancel }) {
   const { t } = useLanguage();
   const { user: currentUser, setUser } = useUser();
   const api = useApi();
-  const [username, setUsername] = useState(currentUser?.username || "");
   const [phone, setPhone] = useState(currentUser?.phone || "");
   const [interests, setInterests] = useState("");
   const [goal, setGoal] = useState("");
@@ -41,7 +41,6 @@ function Profile({ onCancel }) {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setUsername(currentUser?.username || "");
     setPhone(currentUser?.phone || "");
   }, [currentUser]);
 
@@ -96,21 +95,6 @@ function Profile({ onCancel }) {
 
     try {
       const updatePromises = [];
-
-      if (username && username !== currentUser.username) {
-        updatePromises.push(
-          api.users
-            .updateUsername({
-              userId: currentUser.id,
-              username,
-              token: currentUser.token,
-            })
-            .then(({ username: updatedUsername }) => {
-              nextUser.username = updatedUsername;
-              hasIdentityUpdates = true;
-            }),
-        );
-      }
 
       if (phone !== currentUser.phone) {
         updatePromises.push(
@@ -245,12 +229,29 @@ function Profile({ onCancel }) {
             style={{ position: "absolute", inset: 0, opacity: 0 }}
           />
         </div>
-        <EditableField
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder={t.usernamePlaceholder}
+        <UsernameEditor
+          username={currentUser?.username ?? ""}
           inputClassName={styles["username-input"]}
-          buttonText={t.editButton}
+          onSubmit={async (nextUsername) => {
+            if (!currentUser) {
+              throw new Error("User session is unavailable");
+            }
+            const response = await api.users.updateUsername({
+              userId: currentUser.id,
+              username: nextUsername,
+              token: currentUser.token,
+            });
+            const updatedUsername = response.username ?? nextUsername;
+            const nextUser = { ...currentUser, username: updatedUsername };
+            setUser(nextUser);
+            setPopupMsg(t.usernameUpdateSuccess);
+            setPopupOpen(true);
+            return updatedUsername;
+          }}
+          onFailure={(error) => {
+            console.error(error);
+          }}
+          t={t}
         />
         <EmailBindingCard
           email={currentUser?.email ?? ""}
