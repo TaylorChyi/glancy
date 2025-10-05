@@ -1,39 +1,35 @@
 /**
  * 背景：
- *  - Header 用户菜单在触控设备上通过鼠标事件无法触发帮助子菜单，导致交互不一致。
+ *  - 产品下线 Header 用户菜单中的帮助入口，仅保留账户核心操作。
  * 目的：
- *  - 通过单测覆盖 Pointer 悬浮展开与离开收起的关键路径，防止回归。
+ *  - 验证菜单在不同会员状态下的展示，以及点击操作后能关闭菜单。
  * 关键决策与取舍：
- *  - 引入 expectAttribute 辅助函数提供语义化断言信息，优先语义胜于简单 expect。
+ *  - 通过行为层断言（存在性与交互）替代 UI 细节截图，确保测试稳定且语义明确。
  * 影响范围：
- *  - Header/UserMenuDropdown 组件的帮助子菜单交互。
+ *  - Header/UserMenuDropdown 组件的主菜单按钮集合。
  * 演进与TODO：
- *  - TODO：补充键盘导航与辅助技术相关的交互测试。
+ *  - TODO：补充无障碍属性（aria-*）的覆盖与快捷键支持。
  */
 import { jest } from "@jest/globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 import UserMenuDropdown from "../UserMenuDropdown";
-import styles from "../Header.module.css";
 
-const expectAttribute = (element, attribute, expected, message) => {
-  const actual = element.getAttribute(attribute);
-  if (actual !== expected) {
-    throw new Error(
-      `${message}（期望：${expected}，实际：${actual ?? "null"}）`,
-    );
+const expectElementPresent = (element, message) => {
+  if (!element) {
+    throw new Error(message);
+  }
+};
+
+const expectElementAbsent = (element, message) => {
+  if (element) {
+    throw new Error(message);
   }
 };
 
 const baseTranslations = {
   upgrade: "升级",
   settings: "设置",
-  help: "帮助",
   logout: "退出",
-  helpCenter: "帮助中心",
-  releaseNotes: "更新日志",
-  termsPolicies: "条款与政策",
-  reportBug: "报告问题",
-  downloadApps: "客户端下载",
 };
 
 const renderDropdown = (overrideProps = {}) => {
@@ -56,73 +52,80 @@ describe("UserMenuDropdown", () => {
   });
 
   /**
-   * 测试目标：Pointer 悬浮帮助按钮时应立即展开帮助子菜单。
-   * 前置条件：渲染展开状态的菜单，帮助子菜单初始关闭。
+   * 测试目标：非 Pro 用户应看到“升级”“设置”“退出”三个操作。
+   * 前置条件：渲染 open 状态的菜单，传入非 Pro 用户标志。
    * 步骤：
-   *  1) 渲染组件并定位帮助按钮与子菜单容器。
-   *  2) 对帮助按钮触发 pointerEnter 事件。
+   *  1) 渲染组件并查找升级、设置、退出按钮。
    * 断言：
-   *  - 子菜单 data-open 属性应为 "true"（失败信息：悬浮后子菜单未打开）。
+   *  - 三个按钮均存在且语义化名称正确（失败信息指示缺失按钮）。
    * 边界/异常：
-   *  - 子菜单 aria-hidden 属性应同步为 "false"，确保可访问性状态正确。
+   *  - 升级按钮仅在非 Pro 状态下出现，避免误导已有会员。
    */
-  test("Given_HelpHovered_WhenPointerEnter_ThenSubmenuOpens", () => {
-    const { container } = renderDropdown();
-    const helpButton = screen.getByRole("menuitem", { name: /帮助/ });
-    const submenu = container.querySelector(`.${styles["submenu-panel"]}`);
+  test("Given_NonProUser_WhenRendered_ThenShowsCoreActions", () => {
+    renderDropdown({ isPro: false });
 
-    if (!(submenu instanceof HTMLElement)) {
-      throw new Error("未找到帮助子菜单容器");
-    }
-
-    expectAttribute(submenu, "data-open", "false", "初始状态子菜单应关闭");
-
-    fireEvent.pointerEnter(helpButton);
-
-    expectAttribute(submenu, "data-open", "true", "悬浮后子菜单未打开");
-    expectAttribute(
-      submenu,
-      "aria-hidden",
-      "false",
-      "子菜单可访问性状态未同步",
+    expectElementPresent(
+      screen.queryByRole("menuitem", { name: /升级/ }),
+      "非 Pro 用户应看到升级入口",
+    );
+    expectElementPresent(
+      screen.queryByRole("menuitem", { name: /设置/ }),
+      "应渲染账户设置入口",
+    );
+    expectElementPresent(
+      screen.queryByRole("menuitem", { name: /退出/ }),
+      "应渲染退出登录入口",
     );
   });
 
   /**
-   * 测试目标：在帮助项悬浮展开后，离开整个菜单区域应关闭子菜单。
-   * 前置条件：渲染展开状态的菜单并通过悬浮打开子菜单。
+   * 测试目标：Pro 用户不应看到升级入口。
+   * 前置条件：渲染 open 状态的菜单，并传入 isPro=true。
    * 步骤：
-   *  1) 渲染组件并触发帮助按钮 pointerEnter。
-   *  2) 对根节点触发 pointerLeave 事件模拟离开菜单区域。
+   *  1) 渲染组件后尝试查找“升级”按钮。
    * 断言：
-   *  - 子菜单 data-open 属性恢复为 "false"（失败信息：离开菜单后子菜单仍保持打开）。
+   *  - 查询应失败，说明按钮未渲染（失败信息：Pro 用户仍出现升级）。
    * 边界/异常：
-   *  - 子菜单 aria-hidden 属性同步为 "true"，确保对辅助技术友好。
+   *  - 同时校验设置与退出仍可用。
    */
-  test("Given_MenuPointerLeave_WhenPointerLeave_ThenSubmenuCloses", () => {
-    const { container } = renderDropdown();
-    const helpButton = screen.getByRole("menuitem", { name: /帮助/ });
-    const root = container.firstChild;
-    const submenu = container.querySelector(`.${styles["submenu-panel"]}`);
+  test("Given_ProUser_WhenRendered_ThenHidesUpgradeEntry", () => {
+    renderDropdown({ isPro: true });
 
-    if (!(root instanceof HTMLElement)) {
-      throw new Error("菜单根节点缺失");
-    }
-    if (!(submenu instanceof HTMLElement)) {
-      throw new Error("未找到帮助子菜单容器");
-    }
-
-    fireEvent.pointerEnter(helpButton);
-    expectAttribute(submenu, "data-open", "true", "子菜单应当在悬浮后打开");
-
-    fireEvent.pointerLeave(root);
-
-    expectAttribute(
-      submenu,
-      "data-open",
-      "false",
-      "离开菜单后子菜单仍保持打开",
+    expectElementAbsent(
+      screen.queryByRole("menuitem", { name: /升级/ }),
+      "Pro 用户不应看到升级入口",
     );
-    expectAttribute(submenu, "aria-hidden", "true", "子菜单可访问性状态未关闭");
+    expectElementPresent(
+      screen.queryByRole("menuitem", { name: /设置/ }),
+      "Pro 用户仍需访问设置",
+    );
+    expectElementPresent(
+      screen.queryByRole("menuitem", { name: /退出/ }),
+      "Pro 用户仍需退出登录",
+    );
+  });
+
+  /**
+   * 测试目标：点击任一菜单项应触发对应回调并关闭菜单。
+   * 前置条件：渲染 open 状态的菜单并注入自定义 setOpen。
+   * 步骤：
+   *  1) 渲染组件并点击“设置”按钮。
+   *  2) 观察回调与 setOpen 调用。
+   * 断言：
+   *  - onOpenSettings 被触发，setOpen(false) 被调用（失败信息：菜单未执行回调或未关闭）。
+   * 边界/异常：
+   *  - setOpen 应仅被调用一次且参数为 false，避免重复关闭。
+   */
+  test("Given_MenuAction_WhenClick_ThenInvokesHandlerAndClosesMenu", () => {
+    const onOpenSettings = jest.fn();
+    const setOpen = jest.fn();
+
+    renderDropdown({ onOpenSettings, setOpen });
+
+    fireEvent.click(screen.getByRole("menuitem", { name: /设置/ }));
+
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
+    expect(setOpen).toHaveBeenCalledTimes(1);
+    expect(setOpen).toHaveBeenCalledWith(false);
   });
 });
