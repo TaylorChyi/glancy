@@ -4,10 +4,7 @@
    * 取舍：优先消费 Layout 集中下发的 --docker-row-width/--docker-row-max-width，
    *       既保证搜索态与动作态的等宽，又在脱离 docker 时回落到 SearchBox 默认宽度。
    */
-  width: var(
-    --docker-row-width,
-    min(100%, var(--sb-max-width))
-  );
+  width: var(--docker-row-width, min(100%, var(--sb-max-width)));
   display: flex;
   justify-content: center;
   max-width: var(--docker-row-max-width, var(--sb-max-width));
@@ -336,6 +333,16 @@
   background: var(--action-btn-bg);
   color: var(--action-btn-color);
   box-shadow: var(--sb-cta-shadow);
+}
+
+/*
+ * 背景：
+ *  - 浅色主题下语音与发送按钮的壳体统一为近黑色，需要反相的图标色以满足对比度。
+ * 取舍：
+ *  - 通过单独的语义类覆写 currentColor，避免在按钮逻辑层撒入行内样式，同时保留暗色主题默认继承。
+ */
+.action-button-inverse-icon {
+  --action-btn-color: var(--color-text-inverse, var(--neutral-0));
 }
 
 .action-button-icon {

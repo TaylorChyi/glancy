@@ -14,6 +14,8 @@ const useTtsPlayer = jest.fn(() => ({
   error: null,
 }));
 
+const mockUseTheme = jest.fn(() => ({ resolvedTheme: "light" }));
+
 jest.unstable_mockModule("@/hooks/useTtsPlayer.js", () => ({ useTtsPlayer }));
 
 const navigate = jest.fn();
@@ -30,7 +32,7 @@ jest.unstable_mockModule("@/context", () => ({
     },
   }),
   useApiContext: () => ({}),
-  useTheme: () => ({ resolvedTheme: "light" }),
+  useTheme: mockUseTheme,
   useLocale: () => ({ locale: "en-US" }),
   useAppContext: () => ({}),
 }));
@@ -68,6 +70,8 @@ describe("TtsButton", () => {
     play.mockReset();
     stop.mockReset();
     useTtsPlayer.mockClear();
+    mockUseTheme.mockReset();
+    mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
   });
 
   /**
@@ -146,5 +150,22 @@ describe("TtsButton", () => {
       "aria-label",
       "Play sentence audio",
     );
+  });
+
+  /**
+   * Ensures light theme injects inverse tone class to safeguard icon contrast.
+   */
+  test("applies inverse tone class when theme is light", () => {
+    const { getByRole } = render(<TtsButton text="hi" lang="en" />);
+    expect(getByRole("button").className).toContain("icon-on-inverse");
+  });
+
+  /**
+   * Verifies dark theme keeps default tone without applying inverse styling.
+   */
+  test("keeps default tone when theme is dark", () => {
+    mockUseTheme.mockReturnValue({ resolvedTheme: "dark" });
+    const { getByRole } = render(<TtsButton text="hi" lang="en" />);
+    expect(getByRole("button").className).not.toContain("icon-on-inverse");
   });
 });
