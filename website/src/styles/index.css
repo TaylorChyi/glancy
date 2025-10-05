@@ -14,7 +14,10 @@
   -moz-osx-font-smoothing: grayscale;
 
   --vh: 100vh;
-  --highlight-color: var(--color-link-light);
+
+  /* 高亮统一走黑白体系，链接单独复用品牌色，避免语义混淆。 */
+  --highlight-color: var(--hl-dark);
+  --link-color: var(--color-link-light);
   --shadow-color: rgb(0 0 0 / 15%);
 
   /* Loader 动画需感知主题，默认以深色文字基调渲染扁平矩形。 */
@@ -58,7 +61,8 @@
   color: var(--sys-text-dark);
   background-color: var(--sys-bg-dark);
 
-  --highlight-color: var(--color-link-dark);
+  --highlight-color: var(--hl-light);
+  --link-color: var(--color-link-dark);
   --app-bg: var(--neutral-900);
   --app-color: var(--text-primary-dark);
   --chat-window-bg: var(--neutral-900);
@@ -97,7 +101,8 @@
   color: var(--sys-text-light);
   background-color: var(--sys-bg-light);
 
-  --highlight-color: var(--color-link-light);
+  --highlight-color: var(--hl-dark);
+  --link-color: var(--color-link-light);
   --app-bg: var(--neutral-50);
   --app-color: var(--text-primary-light);
   --chat-window-bg: var(--neutral-0);
@@ -137,16 +142,16 @@
 
 a {
   font-weight: 500;
-  color: var(--highlight-color);
+  color: var(--link-color);
   text-decoration: inherit;
 }
 
 a:hover {
-  color: var(--highlight-color);
+  color: var(--link-color);
 }
 
 :root[data-theme="light"] a:hover {
-  color: var(--highlight-color);
+  color: var(--link-color);
 }
 
 body {
