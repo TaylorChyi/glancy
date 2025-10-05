@@ -793,6 +793,8 @@
 
 .identity-row {
   align-items: center;
+  grid-template-columns: minmax(140px, 0.28fr) minmax(72px, max-content)
+    max-content;
 }
 
 .identity-avatar-image {
@@ -874,10 +876,9 @@
 }
 
 .identity-label {
-  margin: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .identity-value {
