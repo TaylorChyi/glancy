@@ -14,10 +14,26 @@
 
 .container {
   display: grid;
-  grid-template-columns: var(--settings-body-grid-template, minmax(220px, 0.36fr) minmax(0, 1fr));
+  grid-template-columns: var(
+    --settings-body-grid-template,
+    minmax(220px, 0.36fr) minmax(0, 1fr)
+  );
   grid-template-rows: minmax(0, 1fr);
   gap: var(--settings-body-column-gap, 36px);
-  max-height: calc(100vh - var(--settings-body-safe-area, 160px));
+
+  /*
+   * 通过锁定容器高度，确保模态在不同分区间切换时不发生跳动，
+   * 并在右侧内容溢出时依赖内部滚动容器承接滚动职责。
+   */
+  /* stylelint-disable-next-line declaration-empty-line-before */
+
+  --settings-body-height-fallback: calc(
+    100vh - var(--settings-body-safe-area, 160px)
+  );
+  /* stylelint-disable-next-line declaration-empty-line-before */
+  height: var(--settings-body-height, var(--settings-body-height-fallback));
+  /* stylelint-disable-next-line declaration-empty-line-before */
+  max-height: var(--settings-body-height, var(--settings-body-height-fallback));
   min-height: 0;
   width: 100%;
   align-items: stretch;
@@ -56,11 +72,13 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border-inline-start: var(--settings-body-divider-width, 1px)
-    solid
+  border-inline-start: var(--settings-body-divider-width, 1px) solid
     var(
       --settings-body-divider-color,
-      var(--sb-divider, color-mix(in srgb, var(--border-color, #1f2937) 70%, transparent 30%))
+      var(
+        --sb-divider,
+        color-mix(in srgb, var(--border-color, #1f2937) 70%, transparent 30%)
+      )
     );
 }
 
@@ -77,6 +95,7 @@
   .container {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
+    height: auto;
     max-height: none;
     gap: var(--settings-body-column-gap-mobile, 28px);
   }
