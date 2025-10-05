@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 await jest.unstable_mockModule("../UserMenu.module.css", () => ({
@@ -14,11 +14,6 @@ await jest.unstable_mockModule("../UserMenu.module.css", () => ({
     "primary-label": "primary-label",
     "secondary-label": "secondary-label",
     "meta-label": "meta-label",
-    "submenu-indicator": "submenu-indicator",
-    submenu: "submenu",
-    "submenu-list": "submenu-list",
-    "submenu-item": "submenu-item",
-    "submenu-item-icon": "submenu-item-icon",
   },
 }));
 
@@ -53,14 +48,8 @@ const { default: UserMenu } = await import("../UserMenu.tsx");
 
 describe("Sidebar/UserMenu", () => {
   const baseLabels = {
-    help: "帮助",
     settings: "设置",
     logout: "退出",
-    helpCenter: "帮助中心",
-    releaseNotes: "版本说明",
-    termsPolicies: "条款与政策",
-    reportBug: "问题反馈",
-    downloadApps: "下载应用",
   };
 
   const renderMenu = (overrides = {}) => {
@@ -77,68 +66,55 @@ describe("Sidebar/UserMenu", () => {
     return props;
   };
 
-  const openHelpSubmenu = async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Alice" }));
-    const helpTrigger = await screen.findByRole("menuitem", { name: /帮助/ });
-    fireEvent.pointerEnter(helpTrigger, { pointerType: "mouse" });
-    await waitFor(() => {
-      const menus = screen.getAllByRole("menu");
-      expect(menus.length).toBeGreaterThan(1);
-    });
-    const menus = screen.getAllByRole("menu");
-    return menus[menus.length - 1];
+  const openMenu = () => {
+    const trigger = screen.getByRole("button", { name: "Alice" });
+    fireEvent.click(trigger);
   };
 
   /**
-   * 测试目标：验证帮助子项点击后触发自定义事件协议。
-   * 前置条件：渲染登录态菜单并展开帮助子菜单。
+   * 测试目标：验证菜单仅渲染核心操作项且不再包含帮助入口。
+   * 前置条件：渲染登录态菜单并展开。
    * 步骤：
-   *  1) 打开主菜单与帮助子菜单。
-   *  2) 点击“帮助中心”子项。
+   *  1) 点击触发按钮展开菜单。
+   *  2) 查询所有菜单项文本。
    * 断言：
-   *  - window.dispatchEvent 收到 glancy-help 事件，且 action 为 center（失败信息：帮助中心事件未按协议触发）。
+   *  - 仅包含“设置”“退出”两项（失败信息：用户菜单仍包含已下线入口）。
    * 边界/异常：
-   *  - 若子菜单未展开将无法找到元素，本用例聚焦于正常路径。
+   *  - 若未来新增菜单项需同步更新断言集合。
    */
-  test("Given_help_center_item_When_selected_Then_dispatches_help_event", async () => {
+  test("Given_menu_open_When_rendered_Then_contains_only_core_actions", () => {
     renderMenu();
-    const dispatchSpy = jest.spyOn(window, "dispatchEvent");
+    openMenu();
 
-    try {
-      const submenu = await openHelpSubmenu();
-      const helpCenterItem = await within(submenu).findByRole("menuitem", {
-        name: /帮助中心/,
-      });
+    const items = screen.getAllByRole("menuitem");
+    const labels = items.map((item) => item.textContent?.trim());
 
-      dispatchSpy.mockClear();
-      fireEvent.click(helpCenterItem);
-
-      expect(dispatchSpy).toHaveBeenCalledTimes(1);
-      const event = dispatchSpy.mock.calls[0][0];
-      expect(event.type).toBe("glancy-help");
-      expect(event.detail).toEqual({ action: "center" });
-    } finally {
-      dispatchSpy.mockRestore();
-    }
+    expect(labels).toEqual(["设置", "退出"]);
+    expect(screen.queryByRole("menuitem", { name: /帮助/ })).toBeNull();
   });
 
   /**
-   * 测试目标：验证帮助子菜单不再渲染“快捷键”入口。
-   * 前置条件：渲染登录态菜单并展开帮助子菜单。
+   * 测试目标：验证点击菜单项时触发对应回调并关闭菜单。
+   * 前置条件：渲染菜单并注入 mock 回调。
    * 步骤：
-   *  1) 打开主菜单与帮助子菜单。
-   *  2) 查询是否存在“快捷键”菜单项。
+   *  1) 展开菜单。
+   *  2) 依次点击“设置”“退出”项。
    * 断言：
-   *  - 子菜单中不存在“快捷键”项（失败信息：快捷键入口未按要求移除）。
+   *  - onOpenSettings 收到参数 "general"（失败信息：设置入口未触发默认分区）。
+   *  - onOpenLogout 被调用一次（失败信息：退出入口未触发回调）。
    * 边界/异常：
-   *  - 若翻译缺失导致名称变化需同步更新断言，此处聚焦默认文案。
+   *  - 若菜单已关闭需先重新展开，本用例在正常流程内验证。
    */
-  test("Given_help_submenu_When_rendered_Then_excludes_shortcuts_entry", async () => {
-    renderMenu();
-    const submenu = await openHelpSubmenu();
+  test("Given_action_clicked_When_interacted_Then_invokes_callbacks_and_closes", () => {
+    const props = renderMenu();
+    openMenu();
 
-    expect(
-      within(submenu).queryByRole("menuitem", { name: /快捷键/ }),
-    ).toBeNull();
+    fireEvent.click(screen.getByRole("menuitem", { name: "设置" }));
+    expect(props.onOpenSettings).toHaveBeenCalledWith("general");
+    expect(screen.queryByRole("menuitem", { name: "退出" })).toBeNull();
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "退出" }));
+    expect(props.onOpenLogout).toHaveBeenCalledTimes(1);
   });
 });

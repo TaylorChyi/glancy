@@ -1,51 +1,7 @@
 import { jest } from "@jest/globals";
-import { act, fireEvent, render, screen } from "@testing-library/react";
-
-type ResizeObserverCallbackEntry = {
-  trigger: () => void;
-};
+import { fireEvent, render, screen } from "@testing-library/react";
 
 let UserMenu: (typeof import("../UserMenu"))["default"];
-const mockResizeObservers: ResizeObserverCallbackEntry[] = [];
-
-const labels = {
-  help: "帮助",
-  helpSection: "支持",
-  settings: "设置",
-  upgrade: "升级",
-  logout: "退出",
-  accountSection: "账户",
-  supportEmail: "邮件",
-  report: "反馈",
-};
-
-const noop = () => {};
-
-const createRect = ({
-  top,
-  bottom,
-  left = 0,
-  right = 0,
-  width = right - left,
-  height = bottom - top,
-}: {
-  top: number;
-  bottom: number;
-  left?: number;
-  right?: number;
-  width?: number;
-  height?: number;
-}) => ({
-  top,
-  bottom,
-  left,
-  right,
-  width,
-  height,
-  x: left,
-  y: top,
-  toJSON: () => ({}),
-});
 
 beforeAll(async () => {
   jest.unstable_mockModule("@/components/ui/Icon", () => ({
@@ -56,132 +12,91 @@ beforeAll(async () => {
     __esModule: true,
     default: () => null,
   }));
+  jest.unstable_mockModule("../UserMenu.module.css", () => ({
+    __esModule: true,
+    default: {
+      root: "root",
+      surface: "surface",
+      list: "list",
+      "menu-item": "menu-item",
+      icon: "icon",
+      labels: "labels",
+      "primary-label": "primary-label",
+      "secondary-label": "secondary-label",
+      "meta-label": "meta-label",
+    },
+  }));
+  jest.unstable_mockModule("../UserButton.module.css", () => ({
+    __esModule: true,
+    default: {
+      button: "button",
+      avatar: "avatar",
+      meta: "meta",
+      name: "name",
+      plan: "plan",
+    },
+  }));
   ({ default: UserMenu } = await import("../UserMenu"));
 });
 
-beforeEach(() => {
-  jest.useFakeTimers();
-  mockResizeObservers.length = 0;
-  class MockResizeObserver {
-    private callback: ResizeObserverCallback;
-
-    constructor(callback: ResizeObserverCallback) {
-      this.callback = callback;
-      mockResizeObservers.push({
-        trigger: () => {
-          this.callback([], this);
-        },
-      });
-    }
-
-    observe() {}
-
-    unobserve() {}
-
-    disconnect() {}
-  }
-
-  // @ts-expect-error override in test environment
-  global.ResizeObserver = MockResizeObserver;
-});
-
-afterEach(() => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
-  // @ts-expect-error cleanup mock
-  delete global.ResizeObserver;
-});
-
-const openUserMenu = () => {
-  const { container } = render(
+const renderUserMenu = () => {
+  render(
     <UserMenu
       displayName="测试用户"
-      labels={labels}
-      isPro={false}
-      onOpenSettings={noop}
-      onOpenUpgrade={noop}
-      onOpenLogout={noop}
+      labels={{ settings: "设置", logout: "退出" }}
+      onOpenSettings={() => {}}
+      onOpenLogout={() => {}}
     />,
   );
 
-  const root = container.firstChild as HTMLElement;
-  Object.defineProperty(root, "getBoundingClientRect", {
-    value: () => createRect({ top: 0, bottom: 600, right: 320, left: 0 }),
-  });
-
   const trigger = screen.getByRole("button", { name: /测试用户/ });
   fireEvent.click(trigger);
-
-  return { container };
-};
-
-const hoverHelpItem = (container: HTMLElement) => {
-  const helpItem = screen.getByRole("menuitem", { name: /帮助/ });
-  Object.defineProperty(helpItem, "getBoundingClientRect", {
-    value: () => createRect({ top: 180, bottom: 240, right: 280, left: 0 }),
-  });
-  fireEvent.pointerEnter(helpItem, { pointerType: "mouse" });
-  act(() => {
-    jest.advanceTimersByTime(40);
-  });
-
-  const menus = Array.from(
-    container.querySelectorAll('[role="menu"]'),
-  ) as HTMLElement[];
-  const submenu = menus[menus.length - 1];
-  Object.defineProperty(submenu, "offsetHeight", {
-    configurable: true,
-    value: 200,
-  });
-  act(() => {
-    mockResizeObservers.forEach((observer) => observer.trigger());
-  });
-  return { helpItem, submenu };
+  const menu = screen.getByRole("menu");
+  return { trigger, menu };
 };
 
 /**
- * 测试目标：鼠标悬浮帮助项后子菜单应立即打开并保持底边对齐。
- * 前置条件：用户菜单已展开且父节点位置信息已被模拟。
+ * 测试目标：按下 Escape 键时菜单应关闭并将焦点归还触发器。
+ * 前置条件：菜单已展开且触发按钮可用。
  * 步骤：
- *  1) 展开用户菜单。
- *  2) 悬浮帮助项并推进计时器。
- *  3) 触发子菜单高度回调。
+ *  1) 渲染并展开菜单。
+ *  2) 在菜单上分发 Escape 键盘事件。
  * 断言：
- *  - 子菜单 data-open 属性为 true。
- *  - 子菜单 top 样式等于父节点底边减子菜单高度。
+ *  - 菜单 aria-hidden 属性变为 true（失败信息：菜单未关闭）。
+ *  - 焦点回到触发按钮（失败信息：焦点未归还）。
  * 边界/异常：
- *  - 若高度更新迟缓，ResizeObserver 回调需保证最终位置正确。
+ *  - 若未来支持多触发器需同步调整焦点断言。
  */
-test("Given_HelpHovered_WhenDelayElapsed_ThenSubmenuOpensBottomAligned", () => {
-  const { container } = openUserMenu();
-  const { submenu } = hoverHelpItem(container);
+test("Given_menu_open_When_escape_pressed_Then_close_and_focus_trigger", () => {
+  const { trigger, menu } = renderUserMenu();
 
-  expect(submenu.getAttribute("data-open")).toBe("true");
-  expect(submenu.style.top).toBe("40px");
+  fireEvent.keyDown(menu, { key: "Escape" });
+
+  expect(menu).toHaveAttribute("aria-hidden", "true");
+  expect(trigger).toHaveFocus();
 });
 
 /**
- * 测试目标：快速从帮助项移动到子菜单时不得触发关闭。
- * 前置条件：子菜单已因悬浮打开。
+ * 测试目标：验证方向键切换菜单项时焦点与激活态同步更新。
+ * 前置条件：菜单已展开，存在至少两个菜单项。
  * 步骤：
- *  1) 悬浮帮助项并等待打开。
- *  2) 立即离开帮助项并进入子菜单。
- *  3) 推进关闭计时器。
+ *  1) 渲染并展开菜单。
+ *  2) 在菜单上分发向下方向键事件。
+ *  3) 检查第二项的激活态。
  * 断言：
- *  - 子菜单仍处于打开状态。
+ *  - 第一项失去 data-active（失败信息：激活态未更新）。
+ *  - 第二项获得 data-active（失败信息：未切换至下一项）。
  * 边界/异常：
- *  - 若未正确取消关闭计时器，此断言会失败。
+ *  - 若新增禁用项需补充额外断言覆盖跳过逻辑。
  */
-test("Given_SubmenuOpen_WhenPointerTransfersQuickly_ThenKeepVisible", () => {
-  const { container } = openUserMenu();
-  const { helpItem, submenu } = hoverHelpItem(container);
+test("Given_menu_open_When_arrow_down_pressed_Then_move_focus_to_next_item", () => {
+  const { menu } = renderUserMenu();
 
-  fireEvent.pointerLeave(helpItem, { pointerType: "mouse" });
-  fireEvent.pointerEnter(submenu, { pointerType: "mouse" });
+  const [settingsItem, logoutItem] = screen.getAllByRole("menuitem");
+  expect(settingsItem).toHaveAttribute("data-active", "true");
 
-  act(() => {
-    jest.advanceTimersByTime(100);
-  });
+  fireEvent.keyDown(menu, { key: "ArrowDown" });
 
-  expect(submenu.getAttribute("data-open")).toBe("true");
+  expect(settingsItem.getAttribute("data-active")).toBeNull();
+  expect(logoutItem).toHaveAttribute("data-active", "true");
 });

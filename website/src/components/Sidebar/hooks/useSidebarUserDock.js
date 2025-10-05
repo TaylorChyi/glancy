@@ -61,14 +61,8 @@ export function useSidebarUserDock() {
 
   const labels = useMemo(
     () => ({
-      help: t.help || "Help",
       settings: t.settings || "Settings",
       logout: t.logout || "Logout",
-      helpCenter: t.helpCenter || undefined,
-      releaseNotes: t.releaseNotes || undefined,
-      termsPolicies: t.termsPolicies || undefined,
-      reportBug: t.reportBug || t.report || undefined,
-      downloadApps: t.downloadApps || undefined,
     }),
     [t],
   );
