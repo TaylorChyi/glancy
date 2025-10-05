@@ -19,9 +19,11 @@ import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
+import com.glancy.backend.service.support.DictionaryTermNormalizer;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +44,7 @@ public class WordService {
     private final SearchResultService searchResultService;
     private final WordResponseParser parser;
     private final WordPersonalizationService wordPersonalizationService;
+    private final DictionaryTermNormalizer termNormalizer;
     private final ObjectMapper objectMapper;
 
     public WordService(
@@ -51,6 +54,7 @@ public class WordService {
         SearchResultService searchResultService,
         WordResponseParser parser,
         WordPersonalizationService wordPersonalizationService,
+        DictionaryTermNormalizer termNormalizer,
         ObjectMapper objectMapper
     ) {
         this.wordSearcher = wordSearcher;
@@ -59,6 +63,7 @@ public class WordService {
         this.searchResultService = searchResultService;
         this.parser = parser;
         this.wordPersonalizationService = wordPersonalizationService;
+        this.termNormalizer = termNormalizer;
         this.objectMapper = objectMapper;
     }
 
@@ -66,18 +71,24 @@ public class WordService {
 
     private WordResponse fetchAndPersistWord(
         Long userId,
-        String term,
+        String rawTerm,
+        String normalizedTerm,
         Language language,
         DictionaryFlavor flavor,
         String model,
         SearchRecordResponse record,
         WordPersonalizationContext personalizationContext
     ) {
-        log.info("Word '{}' not found locally or forceNew requested, searching via LLM model {}", term, model);
-        WordResponse resp = wordSearcher.search(term, language, flavor, model, personalizationContext);
+        log.info(
+            "Word '{}' (normalized '{}') not found locally or forceNew requested, searching via LLM model {}",
+            rawTerm,
+            normalizedTerm,
+            model
+        );
+        WordResponse resp = wordSearcher.search(rawTerm, language, flavor, model, personalizationContext);
         resp.setFlavor(flavor);
         log.info("LLM search result: {}", resp);
-        Word savedWord = saveWord(term, resp, language, flavor);
+        Word savedWord = saveWord(rawTerm, resp, language, flavor);
         String content = resp.getMarkdown();
         if (content == null) {
             try {
@@ -175,9 +186,11 @@ public class WordService {
         boolean forceNew
     ) {
         String resolvedModel = resolveModelName(model);
+        String normalizedTerm = termNormalizer.normalize(term);
         log.info(
-            "Finding word '{}' for user {} in language {} flavor {} using model {}",
+            "Finding word '{}' (normalized '{}') for user {} in language {} flavor {} using model {}",
             term,
+            normalizedTerm,
             userId,
             language,
             flavor,
@@ -190,19 +203,36 @@ public class WordService {
         req.setFlavor(flavor);
         SearchRecordResponse record = searchRecordService.saveRecord(userId, req);
         if (!forceNew) {
-            return wordRepository
-                .findByTermAndLanguageAndFlavorAndDeletedFalse(term, language, flavor)
+            return findCachedWord(normalizedTerm, language, flavor)
                 .map(word -> {
-                    log.info("Found word '{}' in local repository", term);
+                    log.info("Found word '{}' in local repository", word.getTerm());
                     WordResponse response = toResponse(word);
                     response.setFlavor(flavor);
                     return applyPersonalization(userId, response, personalizationContext);
                 })
                 .orElseGet(() ->
-                    fetchAndPersistWord(userId, term, language, flavor, resolvedModel, record, personalizationContext)
+                    fetchAndPersistWord(
+                        userId,
+                        term,
+                        normalizedTerm,
+                        language,
+                        flavor,
+                        resolvedModel,
+                        record,
+                        personalizationContext
+                    )
                 );
         }
-        return fetchAndPersistWord(userId, term, language, flavor, resolvedModel, record, personalizationContext);
+        return fetchAndPersistWord(
+            userId,
+            term,
+            normalizedTerm,
+            language,
+            flavor,
+            resolvedModel,
+            record,
+            personalizationContext
+        );
     }
 
     /**
@@ -218,9 +248,11 @@ public class WordService {
         boolean forceNew
     ) {
         String resolvedModel = resolveModelName(model);
+        String normalizedTerm = termNormalizer.normalize(term);
         log.info(
-            "Streaming word '{}' for user {} in language {} flavor {} using model {}",
+            "Streaming word '{}' (normalized '{}') for user {} in language {} flavor {} using model {}",
             term,
+            normalizedTerm,
             userId,
             language,
             flavor,
@@ -242,9 +274,9 @@ public class WordService {
         }
 
         if (!forceNew) {
-            var existing = wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(term, language, flavor);
+            Optional<Word> existing = findCachedWord(normalizedTerm, language, flavor);
             if (existing.isPresent()) {
-                log.info("Found cached word '{}' in language {}", term, language);
+                log.info("Found cached word '{}' in language {}", existing.get().getTerm(), language);
                 try {
                     WordResponse cached = applyPersonalization(
                         userId,
@@ -428,6 +460,14 @@ public class WordService {
         }
     }
 
+    // 统一通过归一化词条访问缓存，防止因输入噪声导致重复请求模型。
+    private Optional<Word> findCachedWord(String normalizedTerm, Language language, DictionaryFlavor flavor) {
+        if (normalizedTerm == null || normalizedTerm.isBlank()) {
+            return Optional.empty();
+        }
+        return wordRepository.findActiveByNormalizedTerm(normalizedTerm, language, flavor);
+    }
+
     private String serialize(Word word) throws JsonProcessingException {
         return serializeResponse(toResponse(word));
     }
@@ -437,13 +477,17 @@ public class WordService {
     }
 
     private Word saveWord(String requestedTerm, WordResponse resp, Language language, DictionaryFlavor flavor) {
-        String term = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
+        String preferredTerm = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
+        if (preferredTerm == null || preferredTerm.isBlank()) {
+            throw new IllegalArgumentException("Term must not be blank when persisting word");
+        }
+        String term = preferredTerm.trim();
         Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
         DictionaryFlavor resolvedFlavor = resp.getFlavor() != null ? resp.getFlavor() : flavor;
-        Word word = wordRepository
-            .findByTermAndLanguageAndFlavorAndDeletedFalse(term, lang, resolvedFlavor)
-            .orElseGet(Word::new);
+        String normalizedTerm = resolveNormalizedKey(requestedTerm, term);
+        Word word = findCachedWord(normalizedTerm, lang, resolvedFlavor).orElseGet(Word::new);
         word.setTerm(term);
+        word.setNormalizedTerm(normalizedTerm);
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
@@ -463,6 +507,30 @@ public class WordService {
         resp.setMarkdown(word.getMarkdown());
         resp.setFlavor(resolvedFlavor);
         return saved;
+    }
+
+    /**
+     * 意图：统一生成用于缓存命中的归一化键，确保保存与读取使用相同标准。\
+     * 输入：
+     *  - requestedTerm：用户原始查询词，可能包含噪声或为空。\
+     *  - persistedTerm：准备写入数据库的展示词，通常来自模型返回。\
+     * 输出：归一化后的缓存键字符串。
+     * 流程：
+     *  1) 优先使用用户输入执行归一化，保持与缓存命中一致。\
+     *  2) 若输入归一化为空，则回退到模型展示词。\
+     * 错误处理：当两者归一化结果均为空时抛出非法参数异常，以避免脏数据。\
+     * 复杂度：O(n)，n 为词条长度，主要由归一化流程开销决定。
+     */
+    private String resolveNormalizedKey(String requestedTerm, String persistedTerm) {
+        String requestedNormalized = termNormalizer.normalize(requestedTerm);
+        if (requestedNormalized != null && !requestedNormalized.isBlank()) {
+            return requestedNormalized;
+        }
+        String persistedNormalized = termNormalizer.normalize(persistedTerm);
+        if (persistedNormalized == null || persistedNormalized.isBlank()) {
+            throw new IllegalArgumentException("Normalized term must not be blank when persisting word");
+        }
+        return persistedNormalized;
     }
 
     private WordResponse toResponse(Word word) {

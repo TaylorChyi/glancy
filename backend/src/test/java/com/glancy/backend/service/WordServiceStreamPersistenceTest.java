@@ -16,9 +16,12 @@ import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
+import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
+import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import com.glancy.backend.service.support.SearchContentDictionaryTermNormalizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +61,7 @@ class WordServiceStreamPersistenceTest {
     private WordPersonalizationContext personalizationContext;
     private PersonalizedWordExplanation personalization;
     private ObjectMapper objectMapper;
+    private DictionaryTermNormalizer termNormalizer;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +81,7 @@ class WordServiceStreamPersistenceTest {
             personalization
         );
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -84,27 +89,37 @@ class WordServiceStreamPersistenceTest {
             searchResultService,
             parser,
             wordPersonalizationService,
+            termNormalizer,
             objectMapper
         );
     }
 
-    /** 验证已缓存词条时不调用模型。 */
+    /**
+     * 测试目标：验证命中缓存时直接返回缓存数据并跳过模型流式调用。
+     * 前置条件：
+     *  - wordRepository.findActiveByNormalizedTerm 返回目标词条；个性化上下文可正常解析。
+     * 步骤：
+     *  1) 构造缓存词条并触发 streamWordForUser。
+     *  2) 订阅单次事件流。
+     * 断言：
+     *  - 推送的数据与缓存序列化结果一致。
+     *  - 未触发 wordSearcher.streamSearch 调用。
+     * 边界/异常：
+     *  - 覆盖 forceNew=false 且缓存命中的路径。
+     */
     @Test
     void returnsCachedWord() {
         Word word = new Word();
         word.setId(1L);
         word.setTerm("cached");
+        word.setNormalizedTerm("cached");
         word.setLanguage(Language.ENGLISH);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(List.of("def"));
         word.setMarkdown("md");
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("cached"));
         when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
-                "cached",
-                Language.ENGLISH,
-                DictionaryFlavor.BILINGUAL
-            )
+            wordRepository.findActiveByNormalizedTerm("cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL)
         ).thenReturn(Optional.of(word));
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
@@ -148,17 +163,25 @@ class WordServiceStreamPersistenceTest {
         verify(searchRecordService).saveRecord(eq(1L), any());
     }
 
-    /** 验证流式结束后会持久化。 */
+    /**
+     * 测试目标：验证流式会话完整结束后会解析并持久化词条与版本。
+     * 前置条件：
+     *  - wordRepository.findActiveByNormalizedTerm 返回空；模型流返回带哨兵的内容。
+     * 步骤：
+     *  1) 调用 streamWordForUser 触发流式输出。
+     *  2) 订阅事件直至完成。
+     * 断言：
+     *  - 推送 version 事件且 ID 符合预期。
+     *  - wordRepository.save 与 searchResultService.createVersion 均被调用。
+     * 边界/异常：
+     *  - 覆盖正常流式持久化分支。
+     */
     @Test
     void savesAfterStreaming() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
-                "hi",
-                Language.ENGLISH,
-                DictionaryFlavor.BILINGUAL
-            )
-        ).thenReturn(Optional.empty());
+        when(wordRepository.findActiveByNormalizedTerm("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL)).thenReturn(
+            Optional.empty()
+        );
         when(
             wordSearcher.streamSearch(
                 eq("hi"),
@@ -235,17 +258,23 @@ class WordServiceStreamPersistenceTest {
         );
     }
 
-    /** 验证缺少哨兵时不会解析或持久化，等待上游补齐。 */
+    /**
+     * 测试目标：验证缺少完成哨兵时不会解析或持久化词条。
+     * 前置条件：
+     *  - wordRepository.findActiveByNormalizedTerm 返回空；流式输出缺失 CompletionSentinel。
+     * 步骤：
+     *  1) 触发 streamWordForUser 并消费单次输出。
+     * 断言：
+     *  - 未调用 parser.parse、wordRepository.save、searchResultService.createVersion。
+     * 边界/异常：
+     *  - 覆盖异常流中缺失哨兵的容错路径。
+     */
     @Test
     void skipPersistenceWhenSentinelMissing() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
-                "hi",
-                Language.ENGLISH,
-                DictionaryFlavor.BILINGUAL
-            )
-        ).thenReturn(Optional.empty());
+        when(wordRepository.findActiveByNormalizedTerm("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL)).thenReturn(
+            Optional.empty()
+        );
         when(
             wordSearcher.streamSearch(
                 eq("hi"),
@@ -282,17 +311,23 @@ class WordServiceStreamPersistenceTest {
         );
     }
 
-    /** 验证异常时不会写库。 */
+    /**
+     * 测试目标：验证流式过程中出现异常时不会触发持久化。
+     * 前置条件：
+     *  - wordRepository.findActiveByNormalizedTerm 返回空；流式过程中抛出异常。
+     * 步骤：
+     *  1) 发起 streamWordForUser 并观察异常终止。
+     * 断言：
+     *  - 未调用 wordRepository.save、parser.parse、searchResultService.createVersion。
+     * 边界/异常：
+     *  - 覆盖流式中途失败的分支。
+     */
     @Test
     void doesNotSaveOnError() {
         when(searchRecordService.saveRecord(eq(1L), any())).thenReturn(sampleRecordResponse("hi"));
-        when(
-            wordRepository.findByTermAndLanguageAndFlavorAndDeletedFalse(
-                "hi",
-                Language.ENGLISH,
-                DictionaryFlavor.BILINGUAL
-            )
-        ).thenReturn(Optional.empty());
+        when(wordRepository.findActiveByNormalizedTerm("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL)).thenReturn(
+            Optional.empty()
+        );
         when(
             wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq(DictionaryFlavor.BILINGUAL), any(), any())
         ).thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
