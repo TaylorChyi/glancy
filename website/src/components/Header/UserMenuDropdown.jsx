@@ -31,14 +31,24 @@ function UserMenuDropdown({
   const blurTimeoutRef = useRef(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
+  /**
+   * 背景说明：
+   *  - Header 的帮助入口需要与 Sidebar 一致地支持 Pointer 事件，以保证触控/触笔设备的悬浮能力。
+   * 设计取舍：
+   *  - 采用最小状态机（open/close）而非延时器方案，避免一次性补丁并保持可读性；
+   *    若未来需引入延时策略，可在此处扩展。
+   */
+  const openHelpSubmenu = useCallback(() => setHelpOpen(true), []);
+  const closeHelpSubmenu = useCallback(() => setHelpOpen(false), []);
+
   useEffect(() => {
     if (!open) {
-      setHelpOpen(false);
+      closeHelpSubmenu();
       return noop;
     }
     const handlePointerDown = (event) => {
       if (!rootRef.current?.contains(event.target)) {
-        setHelpOpen(false);
+        closeHelpSubmenu();
         setOpen(false);
       }
     };
@@ -46,7 +56,7 @@ function UserMenuDropdown({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [open, setOpen]);
+  }, [closeHelpSubmenu, open, setOpen]);
 
   useEffect(
     () => () => {
@@ -59,9 +69,9 @@ function UserMenuDropdown({
   );
 
   const closeMenu = useCallback(() => {
-    setHelpOpen(false);
+    closeHelpSubmenu();
     setOpen(false);
-  }, [setOpen]);
+  }, [closeHelpSubmenu, setOpen]);
 
   const handleMenuAction = useCallback(
     (callback) => () => {
@@ -88,10 +98,10 @@ function UserMenuDropdown({
     }
     blurTimeoutRef.current = window.setTimeout(() => {
       if (!rootRef.current?.contains(document.activeElement)) {
-        setHelpOpen(false);
+        closeHelpSubmenu();
       }
     }, 120);
-  }, []);
+  }, [closeHelpSubmenu]);
 
   const handleHelpItem = useCallback(
     (item) => () => {
@@ -109,7 +119,7 @@ function UserMenuDropdown({
     <div
       ref={rootRef}
       className={styles["user-menu-dropdown"]}
-      onMouseLeave={() => setHelpOpen(false)}
+      onPointerLeave={closeHelpSubmenu}
     >
       <div className={styles["menu-panel"]} role="menu">
         {!isPro ? (
@@ -154,8 +164,8 @@ function UserMenuDropdown({
           className={styles["menu-item"]}
           aria-haspopup="true"
           aria-expanded={helpOpen}
-          onMouseEnter={() => setHelpOpen(true)}
-          onFocus={() => setHelpOpen(true)}
+          onPointerEnter={openHelpSubmenu}
+          onFocus={openHelpSubmenu}
           onBlur={handleHelpBlur}
           onClick={() => setHelpOpen((prev) => !prev)}
         >
@@ -211,7 +221,8 @@ function UserMenuDropdown({
             role="menuitem"
             className={styles["submenu-item"]}
             onClick={handleHelpItem(item)}
-            onFocus={() => setHelpOpen(true)}
+            onPointerEnter={openHelpSubmenu}
+            onFocus={openHelpSubmenu}
           >
             <span className={styles["submenu-icon-wrapper"]} aria-hidden="true">
               <ThemeIcon
