@@ -21,6 +21,7 @@ import preferencesStyles from "@/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@/components/ui/Icon";
+import useStableSettingsPanelHeight from "./useStableSettingsPanelHeight.js";
 
 // 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
 const buildCloseLabel = (baseLabel, contextLabel) => {
@@ -43,10 +44,18 @@ const buildCloseLabel = (baseLabel, contextLabel) => {
 };
 
 function SettingsModal({ open, onClose, initialSection }) {
-  const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
-    usePreferenceSections({
-      initialSectionId: initialSection,
-    });
+  const {
+    copy,
+    header,
+    sections,
+    activeSection,
+    activeSectionId,
+    handleSectionSelect,
+    handleSubmit,
+    panel,
+  } = usePreferenceSections({
+    initialSectionId: initialSection,
+  });
 
   const resolvedHeadingId = panel.focusHeadingId || panel.modalHeadingId;
   const resolvedDescriptionId = panel.descriptionId || header.descriptionId;
@@ -77,6 +86,29 @@ function SettingsModal({ open, onClose, initialSection }) {
     },
     [panel.headingId, registerHeading],
   );
+
+  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
+    useStableSettingsPanelHeight({
+      sections,
+      activeSectionId,
+      referenceSectionId: "data",
+    });
+
+  const measurementProbe = useMemo(() => {
+    if (!referenceMeasurement) {
+      return null;
+    }
+    const {
+      Component: ReferenceComponent,
+      props,
+      registerNode,
+    } = referenceMeasurement;
+    return (
+      <div aria-hidden className={preferencesStyles.panel} ref={registerNode}>
+        <ReferenceComponent {...props} />
+      </div>
+    );
+  }, [referenceMeasurement]);
 
   const renderCloseAction = useMemo(
     () =>
@@ -111,6 +143,8 @@ function SettingsModal({ open, onClose, initialSection }) {
     >
       <SettingsBody
         className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
+        style={bodyStyle}
+        measurementProbe={measurementProbe}
       >
         <SettingsNav
           sections={sections}
@@ -149,6 +183,7 @@ function SettingsModal({ open, onClose, initialSection }) {
             headingId={panel.headingId}
             className={preferencesStyles.panel}
             onHeadingElementChange={registerHeading}
+            onPanelElementChange={registerActivePanelNode}
           >
             {activeSection ? (
               <activeSection.Component
@@ -175,4 +210,3 @@ SettingsModal.defaultProps = {
 };
 
 export default SettingsModal;
-

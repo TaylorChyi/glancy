@@ -20,8 +20,22 @@ function SettingsPanel({
   className,
   children,
   onHeadingElementChange,
+  onPanelElementChange,
 }) {
+  const panelElementRef = useRef(null);
   const headingElementRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (typeof onPanelElementChange !== "function") {
+      return undefined;
+    }
+
+    onPanelElementChange(panelElementRef.current ?? null);
+
+    return () => {
+      onPanelElementChange(null);
+    };
+  }, [onPanelElementChange, panelId, tabId]);
 
   useLayoutEffect(() => {
     if (typeof document === "undefined") {
@@ -55,7 +69,13 @@ function SettingsPanel({
   }, [headingId, onHeadingElementChange]);
 
   return (
-    <div role="tabpanel" id={panelId} aria-labelledby={tabId} className={className}>
+    <div
+      role="tabpanel"
+      id={panelId}
+      aria-labelledby={tabId}
+      className={className}
+      ref={panelElementRef}
+    >
       {children}
     </div>
   );
@@ -68,6 +88,7 @@ SettingsPanel.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node,
   onHeadingElementChange: PropTypes.func,
+  onPanelElementChange: PropTypes.func,
 };
 
 SettingsPanel.defaultProps = {
@@ -75,7 +96,7 @@ SettingsPanel.defaultProps = {
   className: "",
   children: null,
   onHeadingElementChange: undefined,
+  onPanelElementChange: undefined,
 };
 
 export default SettingsPanel;
-
