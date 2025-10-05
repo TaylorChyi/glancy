@@ -72,22 +72,24 @@ function AccountSection({
       </div>
       <dl className={styles.details}>
         <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
-          <dt className={styles["identity-label"]}>{normalizedIdentity.label}</dt>
+          <dt className={styles["identity-label"]}>
+            <span className={styles["visually-hidden"]}>
+              {normalizedIdentity.label}
+            </span>
+            <Avatar
+              width={AVATAR_SIZE}
+              height={AVATAR_SIZE}
+              aria-hidden={!normalizedIdentity.displayName}
+              alt={normalizedIdentity.avatarAlt}
+              className={styles["identity-avatar-image"]}
+            />
+          </dt>
           <dd
             className={`${styles["detail-value"]} ${styles["identity-value"]}`}
           >
-            <div className={styles["identity-figure"]}>
-              <Avatar
-                width={AVATAR_SIZE}
-                height={AVATAR_SIZE}
-                aria-hidden={!normalizedIdentity.displayName}
-                alt={normalizedIdentity.avatarAlt}
-                className={styles["identity-avatar-image"]}
-              />
-              <span className={styles["identity-display"]}>
-                {normalizedIdentity.displayName}
-              </span>
-            </div>
+            <span className={styles["visually-hidden"]}>
+              {normalizedIdentity.displayName}
+            </span>
           </dd>
           <div className={styles["detail-action"]}>
             <input
