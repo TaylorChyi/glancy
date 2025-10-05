@@ -68,7 +68,7 @@
   transform: none;
 }
 
-.button:not(:disabled):focus-visible {
+.button:where(:not(:disabled)):focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px
     color-mix(
@@ -79,7 +79,7 @@
   transform: translateY(-1px);
 }
 
-.button:not(:disabled):hover {
+.button:where(:not(:disabled)):hover {
   transform: translateY(-1px);
   border-color: color-mix(
     in srgb,
@@ -93,7 +93,7 @@
   );
 }
 
-.button:not(:disabled):active {
+.button:where(:not(:disabled)):active {
   transform: translateY(0);
   box-shadow: none;
 }
