@@ -337,6 +337,42 @@ describe("historyStore", () => {
   });
 
   /**
+   * 测试目标：当本地历史为空时仍能清除词条缓存中的指定语言记录。
+   * 前置条件：wordStore 预置中英文缓存，history 为空。
+   * 步骤：
+   *  1) 写入两条缓存词条；
+   *  2) 调用 clearHistoryByLanguage("ENGLISH")；
+   * 断言：
+   *  - 英文缓存被移除，中文缓存仍在；
+   * 边界/异常：
+   *  - 若逻辑提前返回则无法移除英文缓存。
+   */
+  test("Given empty history When clearing language Then word cache pruned", async () => {
+    mockWordStore.setState({
+      entries: {
+        "ENGLISH:BILINGUAL:alpha": {
+          versions: [{ id: "alpha-v1" }],
+          activeVersionId: "alpha-v1",
+          metadata: {},
+        },
+        "CHINESE:BILINGUAL:你好": {
+          versions: [{ id: "nihao-v1" }],
+          activeVersionId: "nihao-v1",
+          metadata: {},
+        },
+      },
+    });
+
+    await act(async () => {
+      await useHistoryStore.getState().clearHistoryByLanguage("ENGLISH");
+    });
+
+    const entries = mockWordStore.getState().entries;
+    expect(entries).not.toHaveProperty("ENGLISH:BILINGUAL:alpha");
+    expect(entries).toHaveProperty("CHINESE:BILINGUAL:你好");
+  });
+
+  /**
    * 测试目标：分页加载时仍能彻底清除某语言的全部历史记录。
    * 前置条件：后端第 1 页返回 20 条英文记录，第 2 页仍有额外英文记录。
    * 步骤：

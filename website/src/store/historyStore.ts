@@ -155,6 +155,44 @@ async function collectRemoteHistory(
   return matches;
 }
 
+/**
+ * 意图：按语言前缀批量剔除本地词条缓存，确保语言级清理与字典数据同步。
+ * 输入：language 需清理的语言标识（期望为大写）。
+ * 输出：无直接返回值，通过 store setState 原子性删除命中词条。
+ * 流程：
+ *  1) 解析语言前缀并检索当前缓存；
+ *  2) 基于前缀过滤词条并批量移除；
+ * 错误处理：当 language 为空或 store 尚未初始化时直接返回避免误删。
+ * 复杂度：O(n)，其中 n 为词条缓存数量。
+ */
+const pruneWordCacheByLanguage = (language: string) => {
+  const normalized = String(language ?? "").trim().toUpperCase();
+  if (!normalized) {
+    return;
+  }
+  const prefix = `${normalized}:`;
+  useWordStore.setState((state) => {
+    const entries = state.entries ?? {};
+    const keys = Object.keys(entries);
+    if (keys.length === 0) {
+      return {};
+    }
+    let mutated = false;
+    const nextEntries: typeof entries = {};
+    keys.forEach((termKey) => {
+      if (termKey.startsWith(prefix)) {
+        mutated = true;
+        return;
+      }
+      nextEntries[termKey] = entries[termKey];
+    });
+    if (!mutated) {
+      return {};
+    }
+    return { entries: nextEntries };
+  });
+};
+
 const sanitizeVersion = (
   version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,
   fallback: { createdAt?: string | null; favorite?: boolean | null },
@@ -429,6 +467,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         if (!normalized) {
           return;
         }
+        const wordState = wordStore.getState();
         const currentHistory = get().history;
         const localCandidates = currentHistory.filter(
           (item) => item.language === normalized,
@@ -443,8 +482,6 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
               nextPage: resolveNextPage(filtered.length),
             };
           });
-        } else if (!user?.token) {
-          return;
         }
 
         const aggregated = new Map<string, HistoryItem>();
@@ -461,7 +498,6 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             );
           } catch (err) {
             handleApiError(err, set);
-            return;
           }
           remoteCandidates.forEach((item) => {
             aggregated.set(item.termKey, item);
@@ -469,10 +505,16 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         }
 
         aggregated.forEach((item) => {
-          wordStore.getState().removeVersions(item.termKey);
+          wordState.removeVersions(item.termKey);
         });
 
-        if (user?.token && aggregated.size > 0) {
+        pruneWordCacheByLanguage(normalized);
+
+        if (!user?.token || aggregated.size === 0) {
+          return;
+        }
+
+        if (aggregated.size > 0) {
           const deleted = new Set<string>();
           for (const item of aggregated.values()) {
             const versionIds = item.versions.length
