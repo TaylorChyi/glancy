@@ -157,6 +157,7 @@ export default function DictionaryExperience() {
             onVoice={handleVoice}
             placeholder={chatInputPlaceholder}
             maxRows={5}
+            maxWidth="var(--docker-row-max-width, var(--sb-max-width))"
             sourceLanguage={dictionarySourceLanguage}
             sourceLanguageOptions={sourceLanguageOptions}
             sourceLanguageLabel={dictionarySourceLanguageLabel}
