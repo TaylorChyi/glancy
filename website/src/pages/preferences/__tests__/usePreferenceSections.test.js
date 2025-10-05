@@ -303,6 +303,28 @@ test("Given blank section titles When resolving modal heading Then fallback titl
 });
 
 /**
+ * 测试目标：当键盘分区无描述时，应移除面板描述语义以避免空引用。
+ * 前置条件：使用默认翻译渲染 Hook，并激活 keyboard 分区。
+ * 步骤：
+ *  1) 指定 initialSectionId 为 keyboard 渲染 Hook；
+ * 断言：
+ *  - activeSection 的 message 为空字符串；
+ *  - panel.descriptionId 为 undefined。
+ * 边界/异常：
+ *  - 若未来恢复描述，应同步更新该断言。
+ */
+test("Given keyboard section without summary When rendering Then panel description id clears", () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: "keyboard",
+    }),
+  );
+
+  expect(result.current.activeSection?.componentProps?.message).toBe("");
+  expect(result.current.panel.descriptionId).toBeUndefined();
+});
+
+/**
  * 测试目标：切换分区后备用标题随激活分区更新。
  * 前置条件：默认激活 general 分区。
  * 步骤：

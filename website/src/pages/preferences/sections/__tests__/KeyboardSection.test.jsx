@@ -150,3 +150,34 @@ test("Given reset button When clicked Then triggers resetShortcuts", () => {
   fireEvent.click(screen.getByRole("button", { name: "Reset" }));
   expect(resetShortcuts).toHaveBeenCalledTimes(1);
 });
+
+/**
+ * 测试目标：当 message 为空白时不渲染描述段落且列表不暴露 aria-describedby。
+ * 前置条件：提供包含默认快捷键的上下文，并传入仅包含空白的 message。
+ * 步骤：
+ *  1) 渲染组件；
+ * 断言：
+ *  - DOM 中不存在 descriptionId 对应元素；
+ *  - 列表缺少 aria-describedby 属性。
+ * 边界/异常：
+ *  - 若未来恢复描述，应更新断言确保属性重新出现。
+ */
+test("Given empty message When rendering Then omits description semantics", () => {
+  mockUseKeyboardShortcutContext.mockReturnValue({
+    shortcuts: [
+      { action: "FOCUS_SEARCH", keys: ["MOD", "SHIFT", "F"], defaultKeys: ["MOD", "SHIFT", "F"] },
+    ],
+    updateShortcut: jest.fn(),
+    resetShortcuts: jest.fn(),
+    pendingAction: null,
+    errors: {},
+    status: "ready",
+  });
+
+  render(
+    <KeyboardSection title="Keyboard" message="   " headingId="heading" descriptionId="desc" />,
+  );
+
+  expect(document.getElementById("desc")).toBeNull();
+  expect(screen.getByRole("list")).not.toHaveAttribute("aria-describedby");
+});

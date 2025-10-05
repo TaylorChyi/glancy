@@ -194,13 +194,8 @@ function usePreferenceSections({ initialSectionId }) {
     );
 
     const keyboardLabel = t.settingsTabKeyboard ?? "Keyboard shortcuts";
-    const keyboardSummary =
-      t.settingsKeyboardDescription ??
-      "Master Glancy with a curated set of command keys.";
-    const keyboardMessage = pickFirstMeaningfulString(
-      [t.settingsKeyboardDescription, t.prefKeyboardTitle],
-      keyboardSummary,
-    );
+    // 键盘分区根据最新交互规范不再展示额外描述，保留空字符串以便未来恢复时只需更新此处。
+    const keyboardMessage = "";
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
@@ -357,7 +352,6 @@ function usePreferenceSections({ initialSectionId }) {
     changeAvatarLabel,
     fallbackValue,
     t.prefAccountTitle,
-    t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
     t.settingsAccountBindingApple,
     t.settingsAccountBindingGoogle,
@@ -367,7 +361,6 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountUsername,
     t.settingsDataDescription,
     t.settingsDataNotice,
-    t.settingsKeyboardDescription,
     t.settingsPersonalizationDescription,
     t.settingsTabAccount,
     t.settingsTabData,
@@ -445,9 +438,14 @@ function usePreferenceSections({ initialSectionId }) {
   const panelHeadingId = activeSection
     ? `${activeSection.id}-section-heading`
     : "";
-  const panelDescriptionId = activeSection
+  const shouldExposePanelDescription = Boolean(
+    activeSection &&
+      typeof activeSection.componentProps?.message === "string" &&
+      activeSection.componentProps.message.trim().length > 0,
+  );
+  const panelDescriptionId = shouldExposePanelDescription
     ? `${activeSection.id}-section-description`
-    : "";
+    : undefined;
 
   const resolvedModalHeadingText = pickFirstMeaningfulString(
     [activeSection?.componentProps?.title, activeSection?.label],
