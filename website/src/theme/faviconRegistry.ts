@@ -15,7 +15,7 @@
 
 const FALLBACK_KEY = "default";
 
-type FaviconManifest = Record<string, string>;
+export type FaviconManifest = Record<string, string>;
 
 type RegistryOptions = {
   manifest: FaviconManifest;
