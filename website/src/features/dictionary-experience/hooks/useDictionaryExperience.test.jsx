@@ -111,9 +111,23 @@ useWordStore.getState = () => ({
 
 const useSettingsStore = (selector) => selector(mockSettingsState);
 
+const dataGovernanceState = { historyCaptureEnabled: true };
+const useDataGovernanceStore = (selector = (state) => state) =>
+  selector(dataGovernanceState);
+useDataGovernanceStore.getState = () => dataGovernanceState;
+useDataGovernanceStore.setState = (updater) => {
+  const partial =
+    typeof updater === "function" ? updater(dataGovernanceState) : updater;
+  if (!partial || typeof partial !== "object") {
+    return;
+  }
+  Object.assign(dataGovernanceState, partial);
+};
+
 jest.unstable_mockModule("@/store", () => ({
   useWordStore,
   useSettingsStore,
+  useDataGovernanceStore,
 }));
 
 jest.unstable_mockModule("@/config", () => ({
@@ -138,6 +152,7 @@ beforeEach(() => {
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
+  useDataGovernanceStore.setState({ historyCaptureEnabled: true });
 });
 
 afterEach(() => {
@@ -195,6 +210,42 @@ describe("useDictionaryExperience", () => {
 
     expect(mockHistoryApi.addHistory).toHaveBeenCalledTimes(1);
     expect(mockHistoryApi.addHistory.mock.calls[0][0]).toBe("student");
+  });
+
+  /**
+   * 测试目标：关闭历史采集后不应写入历史。
+   * 前置条件：historyCaptureEnabled 为 false。
+   * 步骤：
+   *  1) 关闭采集；
+   *  2) 触发查询流程。
+   * 断言：
+   *  - addHistory 未被调用。
+   * 边界/异常：
+   *  - 若调用说明前端未尊重治理策略。
+   */
+  it("skips history addition when capture disabled", async () => {
+    useDataGovernanceStore.setState({ historyCaptureEnabled: false });
+    mockStreamWord.mockImplementation(
+      () =>
+        (async function* () {
+          yield {
+            chunk: JSON.stringify({ term: "mute", markdown: "md" }),
+            language: "ENGLISH",
+          };
+        })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("mute");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(mockHistoryApi.addHistory).not.toHaveBeenCalled();
   });
 
   /**
