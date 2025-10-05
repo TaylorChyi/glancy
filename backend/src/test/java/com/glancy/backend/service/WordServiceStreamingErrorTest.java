@@ -11,11 +11,13 @@ import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
-import com.glancy.backend.entity.Word;
 import com.glancy.backend.llm.parser.WordResponseParser;
+import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
+import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import com.glancy.backend.service.support.SearchContentDictionaryTermNormalizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +55,7 @@ class WordServiceStreamingErrorTest {
 
     private WordPersonalizationContext personalizationContext;
     private ObjectMapper objectMapper;
+    private DictionaryTermNormalizer termNormalizer;
 
     @BeforeEach
     void setUp() {
@@ -71,6 +74,7 @@ class WordServiceStreamingErrorTest {
             new PersonalizedWordExplanation("persona", "key", "context", List.of(), List.of())
         );
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
+        termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -78,15 +82,22 @@ class WordServiceStreamingErrorTest {
             searchResultService,
             parser,
             wordPersonalizationService,
+            termNormalizer,
             objectMapper
         );
     }
 
     /**
+     * 测试目标：验证底层流式抛出异常时会包装为 IllegalStateException。
+     * 前置条件：
+     *  - searchRecordService.saveRecord 正常返回；wordRepository 无缓存命中。
      * 步骤：
-     * 1. 构造 searchRecordService 的保存返回，确保业务前置流程顺利通过。
-     * 2. 令 wordSearcher.streamSearch 抛出运行时异常模拟底层流式查询错误。
-     * 3. 调用 streamWordForUser 并断言最终异常被包装为 IllegalStateException，且包含原始信息。
+     *  1) 模拟 wordSearcher.streamSearch 抛出运行时异常。
+     *  2) 调用 streamWordForUser 获取结果。
+     * 断言：
+     *  - 观察到 IllegalStateException 且消息包含原始异常信息。
+     * 边界/异常：
+     *  - 覆盖流式异常包裹路径。
      */
     @Test
     void wrapsExceptionFromSearcher() {

@@ -11,7 +11,13 @@ import lombok.NoArgsConstructor;
  * Dictionary word entry cached from the external service.
  */
 @Entity
-@Table(name = "words", uniqueConstraints = @UniqueConstraint(columnNames = { "term", "language", "flavor" }))
+@Table(
+    name = "words",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "term", "language", "flavor" }),
+        @UniqueConstraint(columnNames = { "normalized_term", "language", "flavor" }),
+    }
+)
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
@@ -19,6 +25,9 @@ public class Word extends BaseEntity {
 
     @Column(nullable = false, length = 100)
     private String term;
+
+    @Column(name = "normalized_term", nullable = false, length = 120)
+    private String normalizedTerm;
 
     @ElementCollection
     @CollectionTable(name = "word_definitions", joinColumns = @JoinColumn(name = "word_id"))

@@ -34,6 +34,7 @@ final class TestEntityFactory {
     static Word word(String term, Language language) {
         Word word = new Word();
         word.setTerm(term);
+        word.setNormalizedTerm(term.toLowerCase());
         word.setLanguage(language);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(Collections.singletonList("def"));

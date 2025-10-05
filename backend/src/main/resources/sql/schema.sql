@@ -29,14 +29,17 @@ CREATE TABLE IF NOT EXISTS search_records (
 CREATE TABLE IF NOT EXISTS words (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   term VARCHAR(100) NOT NULL,
+  normalized_term VARCHAR(120) NOT NULL,
   language VARCHAR(10) NOT NULL,
+  flavor VARCHAR(32) NOT NULL,
   phonetic VARCHAR(100),
   example VARCHAR(255),
   markdown TEXT,
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   updatedAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  CONSTRAINT uk_words_term_language UNIQUE (term, language)
+  CONSTRAINT uk_words_term_language_flavor UNIQUE (term, language, flavor),
+  CONSTRAINT uk_words_normalized_language_flavor UNIQUE (normalized_term, language, flavor)
 );
 
 CREATE TABLE IF NOT EXISTS word_definitions (
