@@ -274,8 +274,6 @@ export default {
   subscriptionRedeemTitle: "兑换专享权益",
   subscriptionRedeemPlaceholder: "请输入兑换码（16 位）",
   subscriptionRedeemButton: "立即兑换",
-  subscriptionSubscribeButtonTemplate: "订阅 {plan}",
-  subscriptionSubscribeButtonDisabled: "已是当前套餐",
   subscriptionFeatureColumnLabel: "能力项",
   pricingFixedNote: "本地区价格为固定面额，不随汇率波动调整。",
   pricingTaxIncluded: "价格已含税",
