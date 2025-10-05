@@ -14,6 +14,7 @@
 import PropTypes from "prop-types";
 
 import voiceButtonAsset from "@/assets/voice-button.svg";
+import voiceButtonInline from "@/assets/voice-button.svg?raw";
 
 import renderStaticIcon from "./renderStaticIcon.jsx";
 
@@ -23,6 +24,7 @@ export default function VoiceIcon({ className }) {
   return renderStaticIcon({
     className,
     iconName: VOICE_ICON_NAME,
+    inline: voiceButtonInline,
     src: voiceButtonAsset,
   });
 }

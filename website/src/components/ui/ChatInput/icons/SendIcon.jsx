@@ -14,6 +14,7 @@
 import PropTypes from "prop-types";
 
 import sendButtonAsset from "@/assets/send-button.svg";
+import sendButtonInline from "@/assets/send-button.svg?raw";
 
 import renderStaticIcon from "./renderStaticIcon.jsx";
 
@@ -23,6 +24,7 @@ export default function SendIcon({ className }) {
   return renderStaticIcon({
     className,
     iconName: SEND_ICON_NAME,
+    inline: sendButtonInline,
     src: sendButtonAsset,
   });
 }
