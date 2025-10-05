@@ -1,5 +1,11 @@
 import { forwardRef } from "react";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 await jest.unstable_mockModule("../UserMenu.module.css", () => ({
@@ -55,8 +61,6 @@ describe("Sidebar/UserMenu", () => {
   const baseLabels = {
     help: "帮助",
     settings: "设置",
-    shortcuts: "快捷键",
-    shortcutsDescription: "快捷键说明",
     logout: "退出",
     helpCenter: "帮助中心",
     releaseNotes: "版本说明",
@@ -71,7 +75,6 @@ describe("Sidebar/UserMenu", () => {
       planLabel: "Plus",
       labels: baseLabels,
       onOpenSettings: jest.fn(),
-      onOpenShortcuts: jest.fn(),
       onOpenLogout: jest.fn(),
       ...overrides,
     };
@@ -83,15 +86,19 @@ describe("Sidebar/UserMenu", () => {
   const openHelpSubmenu = async () => {
     fireEvent.click(screen.getByRole("button", { name: "Alice" }));
     const helpTrigger = await screen.findByRole("menuitem", { name: /帮助/ });
-    fireEvent.click(helpTrigger);
-    let menus = [];
+    fireEvent.mouseEnter(helpTrigger);
+    fireEvent.focus(helpTrigger);
     await waitFor(() => {
-      menus = screen.getAllByRole("menu");
+      const menus = screen.getAllByRole("menu");
       if (menus.length < 2) {
         throw new Error("submenu not open");
       }
+      const submenu = menus[menus.length - 1];
+      if (submenu.getAttribute("data-open") !== "true") {
+        throw new Error("submenu not yet visible");
+      }
     });
-    menus = screen.getAllByRole("menu");
+    const menus = screen.getAllByRole("menu");
     return menus[menus.length - 1];
   };
 
@@ -123,39 +130,7 @@ describe("Sidebar/UserMenu", () => {
       const event = dispatchSpy.mock.calls[0][0];
       expect(event.type).toBe("glancy-help");
       expect(event.detail).toEqual({ action: "center" });
-      expect(props.onOpenShortcuts).not.toHaveBeenCalled();
-    } finally {
-      dispatchSpy.mockRestore();
-    }
-  });
-
-  /**
-   * 测试目标：验证快捷键子项继续走 onOpenShortcuts 回调而非派发事件。
-   * 前置条件：渲染登录态菜单并展开帮助子菜单。
-   * 步骤：
-   *  1) 打开主菜单与帮助子菜单。
-   *  2) 点击“快捷键”子项。
-   * 断言：
-   *  - onOpenShortcuts 被调用一次，window.dispatchEvent 未新增 glancy-help 事件（失败信息：快捷键项事件协议错误）。
-   * 边界/异常：
-   *  - 若菜单提前关闭则需重新展开，本用例聚焦一次操作。
-   */
-  test("Given_shortcuts_item_When_selected_Then_invokes_shortcuts_callback_only", async () => {
-    const onOpenShortcuts = jest.fn();
-    renderMenu({ onOpenShortcuts });
-    const dispatchSpy = jest.spyOn(window, "dispatchEvent");
-
-    try {
-      const submenu = await openHelpSubmenu();
-      const shortcutsItem = await within(submenu).findByRole("menuitem", {
-        name: /快捷键/,
-      });
-
-      dispatchSpy.mockClear();
-      fireEvent.click(shortcutsItem);
-
-      expect(onOpenShortcuts).toHaveBeenCalledTimes(1);
-      expect(dispatchSpy).not.toHaveBeenCalled();
+      expect(props.onOpenLogout).not.toHaveBeenCalled();
     } finally {
       dispatchSpy.mockRestore();
     }

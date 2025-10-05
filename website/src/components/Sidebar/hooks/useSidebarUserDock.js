@@ -63,8 +63,6 @@ export function useSidebarUserDock() {
     () => ({
       help: t.help || "Help",
       settings: t.settings || "Settings",
-      shortcuts: t.shortcuts || t.shortcutsTitle || "Keyboard shortcuts",
-      shortcutsDescription: t.shortcutsDescription || undefined,
       logout: t.logout || "Logout",
       helpCenter: t.helpCenter || undefined,
       releaseNotes: t.releaseNotes || undefined,
@@ -111,10 +109,9 @@ export function useSidebarUserDock() {
   );
 
   const buildAuthenticatedProps = useCallback(
-    ({ openSettings, openShortcuts, openLogout }) => ({
+    ({ openSettings, openLogout }) => ({
       ...authenticatedBaseProps,
       onOpenSettings: openSettings,
-      onOpenShortcuts: openShortcuts,
       onOpenLogout: openLogout,
     }),
     [authenticatedBaseProps],

@@ -12,8 +12,6 @@ interface UserMenuProps {
   labels: {
     help: string;
     settings: string;
-    shortcuts: string;
-    shortcutsDescription?: string;
     logout: string;
     helpCenter?: string;
     releaseNotes?: string;
@@ -22,7 +20,6 @@ interface UserMenuProps {
     downloadApps?: string;
   };
   onOpenSettings: (section?: string) => void;
-  onOpenShortcuts: () => void;
   onOpenLogout: () => void;
 }
 
@@ -71,7 +68,7 @@ const HELP_ITEMS = [
   { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
   { key: "bug", icon: "flag", labelKey: "reportBug" },
   { key: "apps", icon: "phone", labelKey: "downloadApps" },
-  { key: "shortcuts", icon: "command-line", labelKey: "shortcuts" },
+  // 说明：键盘快捷键入口改由全局事件与设置面板负责，故不在菜单层渲染，避免交互重复。
 ] as const;
 
 type HelpItemConfig = (typeof HELP_ITEMS)[number];
@@ -89,7 +86,6 @@ function UserMenu({
   planLabel,
   labels,
   onOpenSettings,
-  onOpenShortcuts,
   onOpenLogout,
 }: UserMenuProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -111,8 +107,6 @@ function UserMenu({
     helpCenter,
     releaseNotes,
     reportBug,
-    shortcuts,
-    shortcutsDescription,
     termsPolicies,
     downloadApps,
     settings,
@@ -124,7 +118,6 @@ function UserMenu({
       helpCenter,
       releaseNotes,
       reportBug,
-      shortcuts,
       termsPolicies,
       downloadApps,
     };
@@ -132,16 +125,7 @@ function UserMenu({
     return HELP_ITEMS.map<SubmenuLinkItem>((item) => {
       const labelKey = item.labelKey as HelpLabelKey;
       const rawLabel = labelMap[labelKey];
-      const label = item.key === "shortcuts" ? shortcuts : rawLabel ?? help;
-      if (item.key === "shortcuts") {
-        return {
-          id: item.key,
-          icon: item.icon,
-          label,
-          onSelect: onOpenShortcuts,
-        };
-      }
-
+      const label = rawLabel ?? help;
       return {
         id: item.key,
         icon: item.icon,
@@ -149,16 +133,7 @@ function UserMenu({
         onSelect: () => emitHelpEvent(item.key),
       };
     });
-  }, [
-    downloadApps,
-    help,
-    helpCenter,
-    onOpenShortcuts,
-    releaseNotes,
-    reportBug,
-    shortcuts,
-    termsPolicies,
-  ]);
+  }, [downloadApps, help, helpCenter, releaseNotes, reportBug, termsPolicies]);
 
   const menuItems = useMemo<MenuItem[]>(() => {
     const items: MenuItem[] = [
@@ -176,7 +151,6 @@ function UserMenu({
       id: "help",
       icon: "question-mark-circle",
       label: help,
-      description: shortcutsDescription,
       items: supportItems,
     };
 
@@ -193,15 +167,7 @@ function UserMenu({
     });
 
     return items;
-  }, [
-    help,
-    logout,
-    onOpenLogout,
-    onOpenSettings,
-    settings,
-    shortcutsDescription,
-    supportItems,
-  ]);
+  }, [help, logout, onOpenLogout, onOpenSettings, settings, supportItems]);
 
   const interactiveItems = menuItems;
 
@@ -312,7 +278,8 @@ function UserMenu({
       const parentRect = parentNode.getBoundingClientRect();
       const parentBottom = parentRect.bottom - rootRect.top;
       const measuredHeight =
-        submenuRef.current?.getCurrentHeight?.() ?? INITIAL_SUBMENU_STATE.height;
+        submenuRef.current?.getCurrentHeight?.() ??
+        INITIAL_SUBMENU_STATE.height;
       setSubmenuState({
         id: item.id,
         top: computeSubmenuTop(parentBottom, measuredHeight),
@@ -599,11 +566,7 @@ function UserMenu({
 
             if (item.kind === "submenu") {
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  {...commonProps}
-                >
+                <button key={item.id} type="button" {...commonProps}>
                   <span className={styles.icon}>
                     <ThemeIcon name={item.icon} width={18} height={18} />
                   </span>
