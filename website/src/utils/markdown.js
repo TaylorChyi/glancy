@@ -16,8 +16,6 @@ const COLLAPSED_LABEL_CHAIN_PATTERN =
   /(:)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:[^\s])/gmu;
 const ADJACENT_LABEL_PATTERN =
   /(?<=\S)[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*:/gmu;
-const LABEL_CHAIN_WITHOUT_COLON_PATTERN =
-  /(^|[\n\r]|[.,，。！？!?:：；;])(\s*)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)([ \t]+)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)/gmu;
 const BARE_INLINE_LABEL_PATTERN =
   /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
 const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
@@ -508,31 +506,106 @@ function separateAdjacentInlineLabels(text) {
  *  - LLM 字典响应中缺失冒号的标签链恢复能力，与 `expandCollapsedLabelChains`、`decorateBareInlineLabels` 协同生效。
  */
 function restoreMissingLabelDelimiters(text) {
-  return text.replace(
-    LABEL_CHAIN_WITHOUT_COLON_PATTERN,
-    (match, boundary, indent = "", first, _spacing, second, offset, source) => {
-      const isFirstSplittable = shouldSplitInlineLabel(first);
-      const isSecondSplittable = shouldSplitInlineLabel(second);
-      if (!isFirstSplittable || !isSecondSplittable) {
-        return match;
+  const LABEL_TOKEN_PATTERN = /[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*/gu;
+  const SAFE_PREFIX_PATTERN = /[([\{\-–—>•·,，.。!！?？:：;；“”"'‘’]/u;
+
+  const hasSafePrefix = (source, index) => {
+    if (index === 0) {
+      return true;
+    }
+    for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+      const char = source[cursor];
+      if (char === "\n") {
+        return true;
       }
-      const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
-      const prefix = source.slice(lineStart, offset).trim();
-      const atLineStart = prefix === "" || prefix === first;
-      const boundaryChar = (boundary || "").slice(-1);
-      const fromPunctuation =
-        Boolean(boundaryChar) &&
-        boundaryChar !== "\n" &&
-        boundaryChar !== "\r" &&
-        boundaryChar.trim() !== "";
-      if (!atLineStart && !fromPunctuation) {
-        return match;
+      if (/\s/.test(char)) {
+        continue;
       }
-      const prefixText =
-        (boundary || "") + (fromPunctuation && boundaryChar ? "\n" : "");
-      return `${prefixText}${indent}${first}:${second}`;
-    },
-  );
+      if (SAFE_PREFIX_PATTERN.test(char)) {
+        return true;
+      }
+      return false;
+    }
+    return true;
+  };
+
+  const rewriteLine = (line) => {
+    if (!line) {
+      return line;
+    }
+
+    let cursor = 0;
+    let result = "";
+    let carryLabelContext = false;
+
+    while (cursor < line.length) {
+      LABEL_TOKEN_PATTERN.lastIndex = cursor;
+      const match = LABEL_TOKEN_PATTERN.exec(line);
+      if (!match) {
+        result += line.slice(cursor);
+        break;
+      }
+
+      const [token] = match;
+      const start = match.index;
+      const end = start + token.length;
+
+      result += line.slice(cursor, start);
+
+      const isLabel = shouldSplitInlineLabel(token);
+      const canApply = isLabel && (carryLabelContext || hasSafePrefix(line, start));
+
+      if (!canApply) {
+        result += token;
+        cursor = end;
+        carryLabelContext = false;
+        continue;
+      }
+
+      const immediateNext = line[end];
+      if (immediateNext === ":" || immediateNext === "：") {
+        result += token;
+        cursor = end;
+        carryLabelContext = false;
+        continue;
+      }
+
+      let spacingEnd = end;
+      while (spacingEnd < line.length && /[ \t]/.test(line[spacingEnd])) {
+        spacingEnd += 1;
+      }
+      const spacing = line.slice(end, spacingEnd);
+      const nextIndex = spacingEnd;
+
+      LABEL_TOKEN_PATTERN.lastIndex = nextIndex;
+      const nextMatch = LABEL_TOKEN_PATTERN.exec(line);
+      const hasImmediateNext = Boolean(nextMatch && nextMatch.index === nextIndex);
+      const nextToken = hasImmediateNext ? nextMatch[0] : null;
+      const nextIsLabel = nextToken ? shouldSplitInlineLabel(nextToken) : false;
+
+      result += `${token}:`;
+
+      if (nextIsLabel) {
+        const indent = spacing.length > 1 ? spacing.replace(/\S/g, " ") : "";
+        result += `\n${indent}`;
+        cursor = nextIndex;
+        carryLabelContext = true;
+        continue;
+      }
+
+      const preservedSpacing = spacing.length > 0 ? spacing : " ";
+      result += preservedSpacing;
+      cursor = nextIndex;
+      carryLabelContext = false;
+    }
+
+    return result;
+  };
+
+  return text.replace(/(^|\n)([^\n]*)/g, (full, boundary, line) => {
+    const rewritten = rewriteLine(line);
+    return `${boundary}${rewritten}`;
+  });
 }
 
 /**
