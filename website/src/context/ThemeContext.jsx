@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import glancyWebIcon from "@/assets/glancy-web.svg";
-import { createFaviconRegistry } from "@/theme/faviconRegistry";
+import { createBrowserFaviconConfigurator } from "@/theme/browserFaviconConfigurator";
+import { createBrowserFaviconRegistry } from "@/theme/browserFaviconManifest";
 import {
   ThemeModeOrchestrator,
   inferResolvedTheme,
@@ -45,13 +45,8 @@ export function ThemeProvider({ children }) {
   const storage = getStorage();
   const orchestratorRef = useRef(null);
   const initialPreferenceRef = useRef(null);
-  const faviconRegistryRef = useRef(
-    createFaviconRegistry({
-      default: glancyWebIcon,
-      light: glancyWebIcon,
-      dark: glancyWebIcon,
-    }),
-  );
+  const faviconRegistryRef = useRef(createBrowserFaviconRegistry());
+  const browserFaviconConfiguratorRef = useRef(null);
 
   const ensureOrchestrator = useCallback(() => {
     if (!orchestratorRef.current) {
@@ -80,18 +75,23 @@ export function ThemeProvider({ children }) {
   }, [ensureOrchestrator, setResolvedTheme, storage, theme]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof document === "undefined") {
       return undefined;
     }
 
-    const link = document.getElementById("favicon");
-    if (!link) {
-      return undefined;
+    if (!browserFaviconConfiguratorRef.current) {
+      browserFaviconConfiguratorRef.current = createBrowserFaviconConfigurator({
+        registry: faviconRegistryRef.current,
+        document,
+      });
     }
 
-    link.href = faviconRegistryRef.current.resolve(resolvedTheme);
-    return undefined;
-  }, [resolvedTheme]);
+    const configurator = browserFaviconConfiguratorRef.current;
+    configurator.start();
+    return () => {
+      configurator.stop();
+    };
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
