@@ -1,22 +1,32 @@
 import { useMemo } from "react";
 import BaseModal from "./BaseModal.jsx";
 import styles from "./ShortcutsModal.module.css";
-import { getModifierKey } from "@/utils/device.js";
 import { useLanguage } from "@/context";
 import { SettingsSurface } from "@/components";
+import { useKeyboardShortcutContext } from "@/context/KeyboardShortcutContext.jsx";
+import {
+  DEFAULT_SHORTCUTS,
+  formatShortcutKeys,
+  translateShortcutAction,
+} from "@/utils/keyboardShortcuts.js";
 
 function ShortcutsModal({ open, onClose }) {
   const { t } = useLanguage();
-  const mod = getModifierKey();
+  const { shortcuts: shortcutList } = useKeyboardShortcutContext();
 
   const shortcuts = useMemo(
-    () => [
-      { keys: [mod, "Shift", "F"], action: t.shortcutsFocusSearch },
-      { keys: [mod, "Shift", "L"], action: t.shortcutsSwitchLanguage },
-      { keys: [mod, "Shift", "M"], action: t.shortcutsToggleTheme },
-      { keys: [mod, "Shift", "B"], action: t.shortcutsToggleFavorite },
-    ],
-    [mod, t],
+    () => {
+      const resolved = new Map(DEFAULT_SHORTCUTS.map((item) => [item.action, item.keys]));
+      (shortcutList ?? []).forEach((item) => {
+        resolved.set(item.action, item.keys);
+      });
+      return Array.from(resolved.entries()).map(([action, keys]) => ({
+        action,
+        keys: formatShortcutKeys(keys),
+        label: translateShortcutAction(t, action),
+      }));
+    },
+    [shortcutList, t],
   );
 
   return (
@@ -43,7 +53,7 @@ function ShortcutsModal({ open, onClose }) {
                   </kbd>
                 ))}
               </div>
-              <span className={styles.action}>{shortcut.action}</span>
+              <span className={styles.action}>{shortcut.label}</span>
             </li>
           ))}
         </ul>

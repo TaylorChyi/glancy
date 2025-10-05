@@ -109,3 +109,13 @@ CREATE TABLE IF NOT EXISTS user_preferences (
   searchLanguage VARCHAR(20) NOT NULL,
   CONSTRAINT fk_user_pref_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
+
+CREATE TABLE IF NOT EXISTS user_keyboard_shortcuts (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  action VARCHAR(40) NOT NULL,
+  binding VARCHAR(120) NOT NULL,
+  CONSTRAINT fk_user_shortcut_user FOREIGN KEY (user_id) REFERENCES users (id),
+  CONSTRAINT uk_user_action UNIQUE (user_id, action),
+  CONSTRAINT uk_user_binding UNIQUE (user_id, binding)
+);

@@ -57,6 +57,15 @@ export default {
   settingsTabKeyboard: "Keyboard shortcuts",
   settingsKeyboardDescription:
     "Master Glancy with a curated set of command keys.",
+  settingsKeyboardHint: "Click a shortcut then press keys to update.",
+  settingsKeyboardRecordingHint:
+    "Recording… press the new combination or Esc to cancel.",
+  settingsKeyboardRecording: "Press keys",
+  settingsKeyboardSaving: "Saving…",
+  settingsKeyboardReset: "Restore defaults",
+  settingsKeyboardOpenPalette: "Open shortcut guide",
+  settingsKeyboardEditLabel: "Edit shortcut for {label}",
+  settingsKeyboardConflict: "Shortcut already in use.",
   shortcutSearch: "Global search",
   shortcutSend: "Send current message",
   shortcutEdit: "Edit last message",
