@@ -10,7 +10,9 @@ const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
 
-const INLINE_LABEL_NORMALIZATION = /[^a-z\u4e00-\u9fff]+/giu;
+const INLINE_LABEL_CAMEL_CASE = /([a-z])(\p{Lu})/gu;
+
+const INLINE_LABEL_DELIMITER = /[^a-z\u4e00-\u9fff]+/giu;
 
 // 说明：
 //  - 这些标签来自后端 Markdown 解析器的 Section 定义，覆盖了 LLM 输出中常见的段落元信息。
@@ -55,6 +57,35 @@ const INLINE_LABEL_TOKENS = new Set(
     "常见词组",
     "词组",
     "发音",
+    "british",
+    "american",
+    "audio",
+    "audionotes",
+    "frequency",
+    "frequencyband",
+    "proficiency",
+    "benchmark",
+    "proficiencybenchmark",
+    "entry",
+    "entrytype",
+    "register",
+    "registerlabels",
+    "regional",
+    "regionalvariation",
+    "spelling",
+    "capitalization",
+    "variants",
+    "spellingorcapitalizationvariants",
+    "proper",
+    "propernounhandling",
+    "nuance",
+    "semantic",
+    "semanticfield",
+    "usage",
+    "usageinsight",
+    "insight",
+    "extended",
+    "extendednotes",
   ].map((token) => token.toLowerCase()),
 );
 
@@ -120,20 +151,41 @@ function computeListIndentation(source, offset) {
   return `${leading}${visualizedMarker}${gap.replace(/[^\s]/g, " ")}`;
 }
 
-function normalizeInlineLabel(raw) {
-  return raw
+/**
+ * 背景：
+ *  - 英译英字典输出会引入诸如“Pronunciation-British”或“AudioNotes”一类驼峰/连字符标签，
+ *    若仅做简单去符号匹配会导致行内标签无法断行。
+ * 目的：
+ *  - 将不同形态（驼峰、连字符、空格）的标签拆解为语义关键词，复用同一套词表判断是否需要换行。
+ * 关键决策与取舍：
+ *  - 通过正则在小写化前先断开驼峰，再按非字母分割，避免维护额外的语言分支。
+ * 影响范围：
+ *  - 行内标签换行判断逻辑，覆盖中英双语与英译英场景。
+ */
+function collectInlineLabelKeywords(raw) {
+  if (!raw) {
+    return [];
+  }
+  const camelSeparated = raw
     .replace(/：/g, ":")
-    .toLowerCase()
-    .replace(INLINE_LABEL_NORMALIZATION, "")
-    .trim();
+    .replace(INLINE_LABEL_CAMEL_CASE, "$1 $2")
+    .toLowerCase();
+  return camelSeparated
+    .split(INLINE_LABEL_DELIMITER)
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
 function shouldSplitInlineLabel(label) {
-  const normalized = normalizeInlineLabel(label);
-  if (!normalized) {
+  const keywords = collectInlineLabelKeywords(label);
+  if (keywords.length === 0) {
     return false;
   }
-  return INLINE_LABEL_TOKENS.has(normalized);
+  if (keywords.some((token) => INLINE_LABEL_TOKENS.has(token))) {
+    return true;
+  }
+  const collapsed = keywords.join("");
+  return INLINE_LABEL_TOKENS.has(collapsed);
 }
 
 function ensureInlineLabelLineBreak(text) {

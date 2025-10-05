@@ -71,7 +71,21 @@ test("polishDictionaryMarkdown enforces translation line break", () => {
 test("polishDictionaryMarkdown splits english inline labels", () => {
   const source = "- **Meaning**: to light  **Example**: She lights a candle";
   const result = polishDictionaryMarkdown(source);
-  expect(result).toBe("- **Meaning**: to light\n  **Example**: She lights a candle");
+  expect(result).toBe(
+    "- **Meaning**: to light\n  **Example**: She lights a candle",
+  );
+});
+
+/**
+ * 验证组合标签（如 Pronunciation-British 或 AudioNotes）在英译英场景中也会断行，保持缩进对齐。
+ */
+test("polishDictionaryMarkdown splits composite english inline labels", () => {
+  const source =
+    "- **Pronunciation-British**: /ˈhjuː.mən/  **AudioNotes**: authoritative archival";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    "- **Pronunciation-British**: /ˈhjuː.mən/\n  **AudioNotes**: authoritative archival",
+  );
 });
 
 /**
