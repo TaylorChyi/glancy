@@ -4,11 +4,14 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
+const mockUseKeyboardShortcutContext = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
   useTheme: mockUseTheme,
+  useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
+  KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
 let usePreferenceSections;
@@ -140,6 +143,7 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
+  mockUseKeyboardShortcutContext.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -292,6 +296,28 @@ test("Given blank section titles When resolving modal heading Then fallback titl
   expect(result.current.panel.modalHeadingId).toBe(
     "settings-modal-fallback-heading",
   );
+});
+
+/**
+ * 测试目标：当键盘分区无描述时，应移除面板描述语义以避免空引用。
+ * 前置条件：使用默认翻译渲染 Hook，并激活 keyboard 分区。
+ * 步骤：
+ *  1) 指定 initialSectionId 为 keyboard 渲染 Hook；
+ * 断言：
+ *  - activeSection 的 message 为空字符串；
+ *  - panel.descriptionId 为 undefined。
+ * 边界/异常：
+ *  - 若未来恢复描述，应同步更新该断言。
+ */
+test("Given keyboard section without summary When rendering Then panel description id clears", () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: "keyboard",
+    }),
+  );
+
+  expect(result.current.activeSection?.componentProps?.message).toBe("");
+  expect(result.current.panel.descriptionId).toBeUndefined();
 });
 
 /**

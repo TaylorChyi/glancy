@@ -31,6 +31,8 @@ function KeyboardSection({ title, message, headingId, descriptionId }) {
   const [recordingAction, setRecordingAction] = useState(null);
 
   const items = useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
+  // 键盘分区当前不展示描述文案，但保留 message 以兼容未来扩展，因此需显式判断。
+  const hasMessage = typeof message === "string" && message.trim().length > 0;
 
   const handleCaptureStart = useCallback((action) => {
     setRecordingAction(action);
@@ -93,7 +95,7 @@ function KeyboardSection({ title, message, headingId, descriptionId }) {
           {title}
         </h3>
         <div className={sectionStyles["section-divider"]} aria-hidden="true" />
-        {message ? (
+        {hasMessage ? (
           <p id={descriptionId} className={styles.description}>
             {message}
           </p>
@@ -101,7 +103,7 @@ function KeyboardSection({ title, message, headingId, descriptionId }) {
       </div>
       <div className={styles.body}>
         <div className={styles.hint}>{hint}</div>
-        <ul className={styles.list} aria-describedby={descriptionId}>
+        <ul className={styles.list} aria-describedby={hasMessage ? descriptionId : undefined}>
           {items.map((item) => {
             const label = translateShortcutAction(t, item.action);
             const displayKeys = formatShortcutKeys(item.keys);
@@ -162,9 +164,14 @@ function KeyboardSection({ title, message, headingId, descriptionId }) {
 
 KeyboardSection.propTypes = {
   title: PropTypes.string.isRequired,
-  message: PropTypes.string.isRequired,
+  message: PropTypes.string,
   headingId: PropTypes.string.isRequired,
-  descriptionId: PropTypes.string.isRequired,
+  descriptionId: PropTypes.string,
+};
+
+KeyboardSection.defaultProps = {
+  message: "",
+  descriptionId: undefined,
 };
 
 export default KeyboardSection;
