@@ -10,7 +10,7 @@
  * 演进与TODO：
  *  - TODO: 接入真实兑换与订阅 API 时补充加载/错误态，并与遥测打通。
  */
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
@@ -35,17 +35,17 @@ function SubscriptionSection({
   const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
   const [redeemCode, setRedeemCode] = useState("");
   const redeemInputRef = useRef(null);
+  const planCarouselRef = useRef(null);
   const navigate = useNavigate();
+  const [isPlanRailAtStart, setIsPlanRailAtStart] = useState(true);
+  const [isPlanRailAtEnd, setIsPlanRailAtEnd] = useState(false);
 
-  const handlePlanSelect = useCallback(
-    (planId, disabled) => {
-      if (disabled) {
-        return;
-      }
-      setSelectedPlanId(planId);
-    },
-    [],
-  );
+  const handlePlanSelect = useCallback((planId, disabled) => {
+    if (disabled) {
+      return;
+    }
+    setSelectedPlanId(planId);
+  }, []);
 
   const handleRedeemAction = useCallback(() => {
     if (onRedeem) {
@@ -80,6 +80,55 @@ function SubscriptionSection({
     navigate("/subscription", { state: { plan: selectedPlanId } });
   }, [navigate, onSubscribe, selectedPlanId, subscribeDisabled]);
 
+  /**
+   * 意图：复用单一的滚动同步逻辑，让横向滑动的套餐列表在不同视口下保持导航按钮状态正确。
+   * 取舍：相比为每个按钮单独计算可见性，集中在 scroll 事件中维护状态能避免重复布局查询；
+   *      考量到监听频率较低且节点数量有限，scroll 事件 + requestAnimationFrame 的额外优化暂不需要。
+   */
+  const syncPlanRailPosition = useCallback(() => {
+    const node = planCarouselRef.current;
+    if (!node) {
+      setIsPlanRailAtStart(true);
+      setIsPlanRailAtEnd(true);
+      return;
+    }
+    const { scrollLeft, clientWidth, scrollWidth } = node;
+    setIsPlanRailAtStart(scrollLeft <= 1);
+    setIsPlanRailAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    const node = planCarouselRef.current;
+    if (!node) {
+      return undefined;
+    }
+    const handleScroll = () => {
+      syncPlanRailPosition();
+    };
+    handleScroll();
+    node.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+    return () => {
+      node.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [syncPlanRailPosition]);
+
+  useEffect(() => {
+    syncPlanRailPosition();
+  }, [planCards.length, syncPlanRailPosition]);
+
+  const handlePlanRailNav = useCallback((direction) => {
+    const node = planCarouselRef.current;
+    if (!node) {
+      return;
+    }
+    const scrollAmount = node.clientWidth * 0.85;
+    node.scrollBy({ left: direction * scrollAmount, behavior: "smooth" });
+  }, []);
+
+  const shouldRenderPlanRailNav = planCards.length > 1;
+
   return (
     <section
       aria-labelledby={headingId}
@@ -93,44 +142,79 @@ function SubscriptionSection({
         <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
       <div className={styles["subscription-matrix"]}>
-        <div className={styles["subscription-plan-grid"]}>
-          {planCards.map((plan) => {
-            const isSelected = plan.id === selectedPlanId;
-            return (
-              <article
-                key={plan.id}
-                className={styles["subscription-plan"]}
-                data-state={plan.state}
-                data-selected={isSelected}
-              >
-                <div className={styles["subscription-plan-body"]}>
-                  <span className={styles["subscription-plan-badge"]}>
-                    {plan.badge}
-                  </span>
-                  <h4 className={styles["subscription-plan-title"]}>
-                    {plan.title}
-                  </h4>
-                  <p className={styles["subscription-plan-summary"]}>
-                    {plan.summary}
-                  </p>
-                  <ul className={styles["subscription-plan-pricing"]}>
-                    {plan.priceLines.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  type="button"
-                  className={styles["subscription-plan-cta"]}
-                  onClick={() => handlePlanSelect(plan.id, plan.disabled)}
-                  disabled={plan.disabled}
-                  aria-pressed={isSelected}
-                >
-                  {plan.ctaLabel}
-                </button>
-              </article>
-            );
-          })}
+        <div className={styles["subscription-plan-carousel"]}>
+          {shouldRenderPlanRailNav ? (
+            <button
+              type="button"
+              className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-previous"]}`}
+              onClick={() => handlePlanRailNav(-1)}
+              disabled={isPlanRailAtStart}
+              aria-label="查看前一个订阅方案"
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+          ) : null}
+          <div
+            className={styles["subscription-plan-viewport"]}
+            data-scroll-at-start={isPlanRailAtStart}
+            data-scroll-at-end={isPlanRailAtEnd}
+          >
+            <div
+              ref={planCarouselRef}
+              className={styles["subscription-plan-grid"]}
+              role="list"
+            >
+              {planCards.map((plan) => {
+                const isSelected = plan.id === selectedPlanId;
+                return (
+                  <article
+                    key={plan.id}
+                    className={styles["subscription-plan"]}
+                    data-state={plan.state}
+                    data-selected={isSelected}
+                    role="listitem"
+                  >
+                    <div className={styles["subscription-plan-body"]}>
+                      <span className={styles["subscription-plan-badge"]}>
+                        {plan.badge}
+                      </span>
+                      <h4 className={styles["subscription-plan-title"]}>
+                        {plan.title}
+                      </h4>
+                      <p className={styles["subscription-plan-summary"]}>
+                        {plan.summary}
+                      </p>
+                      <ul className={styles["subscription-plan-pricing"]}>
+                        {plan.priceLines.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles["subscription-plan-cta"]}
+                      onClick={() => handlePlanSelect(plan.id, plan.disabled)}
+                      disabled={plan.disabled}
+                      aria-pressed={isSelected}
+                    >
+                      {plan.ctaLabel}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+          {shouldRenderPlanRailNav ? (
+            <button
+              type="button"
+              className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-next"]}`}
+              onClick={() => handlePlanRailNav(1)}
+              disabled={isPlanRailAtEnd}
+              aria-label="查看后一个订阅方案"
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          ) : null}
         </div>
         <div className={styles["subscription-table-wrapper"]}>
           <table className={styles["subscription-table"]}>
