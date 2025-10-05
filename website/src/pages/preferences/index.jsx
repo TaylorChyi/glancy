@@ -24,6 +24,7 @@ import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
 function Preferences({
   onOpenAccountManager,
+  onOpenSubscription,
   initialSection,
   renderCloseAction,
 }) {
@@ -31,6 +32,7 @@ function Preferences({
     usePreferenceSections({
       initialSectionId: initialSection,
       onOpenAccountManager,
+      onOpenSubscription,
     });
 
   const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
@@ -113,12 +115,14 @@ function Preferences({
 
 Preferences.propTypes = {
   onOpenAccountManager: PropTypes.func,
+  onOpenSubscription: PropTypes.func,
   initialSection: PropTypes.string,
   renderCloseAction: PropTypes.func,
 };
 
 Preferences.defaultProps = {
   onOpenAccountManager: undefined,
+  onOpenSubscription: undefined,
   initialSection: undefined,
   renderCloseAction: undefined,
 };

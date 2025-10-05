@@ -4,10 +4,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseApi = jest.fn();
+const mockUseTheme = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
+  useTheme: mockUseTheme,
 }));
 
 jest.unstable_mockModule("@/hooks/useApi.js", () => ({
@@ -46,6 +48,96 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountAge: "Age",
   settingsAccountGender: "Gender",
   settingsTabAccount: "Account",
+  settingsTabSubscription: "Subscription",
+  settingsSubscriptionDescription: "Manage subscription plans.",
+  "plan.free.title": "FREE",
+  "plan.plus.title": "PLUS",
+  "plan.pro.title": "PRO",
+  "plan.premium.title": "PREMIUM",
+  "plan.free.desc": "Free tier",
+  "plan.plus.desc": "Plus tier",
+  "plan.pro.desc": "Pro tier",
+  "plan.premium.desc": "Premium tier",
+  "subscription.plan.free.cta": "Start",
+  "subscription.plan.plus.cta": "Upgrade",
+  "subscription.plan.pro.cta": "Upgrade",
+  "subscription.plan.premium.cta": "Unlocked",
+  subscriptionPlanCurrent: "Current",
+  subscriptionPriceMonthly: "{{value}}/mo",
+  subscriptionPriceYearly: "{{value}}/yr",
+  subscriptionPriceYearlyEquivalent: "≈ {{value}}/mo",
+  subscriptionPriceFree: "Free",
+  subscriptionMatrixTitle: "Plans",
+  subscriptionMatrixFeature: "Feature",
+  subscriptionRedeemTitle: "Redeem",
+  subscriptionRedeemPlaceholder: "Enter code",
+  subscriptionRedeemSubmit: "Redeem",
+  subscriptionSubscribeTitle: "Subscribe",
+  subscriptionSubscribeCta: "Go",
+  subscriptionSubscribeDisabled: "Already selected",
+  subscriptionFaqTitle: "FAQ",
+  subscriptionFaqFixed: "Pricing fixed.",
+  subscriptionFaqTaxIncluded: "Tax included.",
+  subscriptionFaqTaxExcluded: "Tax excluded.",
+  subscriptionFaqAutoRenew: "Auto renew.",
+  subscriptionFaqInvoice: "Invoice available.",
+  subscriptionFaqRefund: "Refund within {{days}} days.",
+  subscriptionFaqSupport: "Support.",
+  subscriptionCurrentHeadline: "{{plan}} · {{cycle}}",
+  subscriptionCurrentCycleFallback: "Monthly",
+  subscriptionMetaBillingCycle: "Cycle",
+  subscriptionMetaNextRenewalLabel: "Next",
+  subscriptionMetaRegionLabel: "Region",
+  subscriptionMetaCurrencyLabel: "Currency",
+  subscriptionMetaValidityLabel: "Validity",
+  subscriptionMetaNextRenewal: "Next: {{date}}",
+  subscriptionMetaNextRenewalPending: "Next: pending",
+  subscriptionMetaRegion: "Region: {{region}}",
+  subscriptionMetaCurrency: "Currency: {{currency}}",
+  subscriptionMetaValidUntil: "Valid until {{date}}",
+  subscriptionMetaValidUnlimited: "Unlimited",
+  subscriptionPremiumHighlight: "Premium active.",
+  subscriptionActionManage: "Manage",
+  subscriptionActionChangeRegion: "Change region",
+  subscriptionActionRedeem: "Redeem",
+  "subscription.feature.wordLookupsDaily": "Lookups",
+  "subscription.feature.llmCallsDaily": "AI",
+  "subscription.feature.ttsDaily": "TTS",
+  "subscription.feature.vocabularySize": "Notebook",
+  "subscription.feature.bilingualExamples": "Languages",
+  "subscription.feature.ocrMonthly": "OCR",
+  "subscription.feature.pdfMonthly": "PDF",
+  "subscription.feature.concurrency": "Concurrency",
+  "subscription.feature.priority": "Priority",
+  "subscription.feature.devices": "Devices",
+  "subscription.feature.ads": "Ads",
+  "subscription.feature.dataTools": "Data tools",
+  "subscription.feature.historyRetention": "History",
+  "subscription.feature.beta": "Beta",
+  "subscription.feature.support": "Support",
+  subscriptionValuePerDay: "{{value}}/day",
+  subscriptionValuePerMonth: "{{value}}/month",
+  subscriptionValueSoftLimit: " (soft)",
+  subscriptionValueLanguages: "{{value}} languages",
+  subscriptionValueSupport: "{{value}} h",
+  subscriptionValueNone: "None",
+  subscriptionValueUnavailable: "—",
+  "subscription.priority.standard": "Standard",
+  "subscription.priority.elevated": "Elevated",
+  "subscription.priority.high": "High",
+  "subscription.priority.highest": "Highest",
+  "subscription.boolean.yes": "Yes",
+  "subscription.boolean.no": "No",
+  "subscription.datatools.exportOnly": "Export only",
+  "subscription.datatools.importExport": "Import & export",
+  "subscription.datatools.importExportApi": "Import/export + API",
+  "subscription.history.days": "{{value}} days",
+  "subscription.history.year": "{{value}} year",
+  "subscription.history.unlimited": "Unlimited",
+  "subscription.beta.none": "No",
+  "subscription.beta.optin": "Opt-in",
+  "subscription.beta.default": "Default",
+  "subscription.beta.priority": "Priority",
   prefKeyboardTitle: "Shortcut playbook",
   settingsManageProfile: "Manage profile",
   ...overrides,
@@ -55,35 +147,38 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseApi.mockReset();
-  mockUseLanguage.mockReturnValue({ t: createTranslations() });
+  mockUseTheme.mockReset();
+  mockUseLanguage.mockReturnValue({ t: createTranslations(), lang: "en" });
   mockUseUser.mockReturnValue({
     user: { username: "amy", email: "amy@example.com", plan: "plus", isPro: true },
   });
   mockUseApi.mockReturnValue(null);
+  mockUseTheme.mockReturnValue({});
 });
 
 /**
- * 测试目标：默认渲染时分区顺序应为 general→personalization→data→keyboard→account，且默认激活 general。
+ * 测试目标：默认渲染时分区顺序应为 subscription→general→personalization→data→keyboard→account，且默认激活 subscription。
  * 前置条件：使用默认语言文案与账户信息渲染 Hook。
  * 步骤：
  *  1) 渲染 usePreferenceSections。
  *  2) 读取 sections 与 panel 结构。
  * 断言：
  *  - sections 顺序符合蓝图。
- *  - activeSectionId 为 general。
- *  - focusHeadingId 与 headingId 指向 general 分区。
- *  - modalHeadingText 等于 General 文案。
+ *  - activeSectionId 为 subscription。
+ *  - focusHeadingId 与 headingId 指向 subscription 分区。
+ *  - modalHeadingText 等于 Subscription 文案。
  * 边界/异常：
- *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
+ *  - 若 subscription 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
  */
 test(
-  "Given default sections When reading blueprint Then general leads navigation",
+  "Given default sections When reading blueprint Then subscription leads navigation",
   () => {
     const { result } = renderHook(() =>
       usePreferenceSections({ initialSectionId: undefined, onOpenAccountManager: jest.fn() }),
     );
 
     expect(result.current.sections.map((section) => section.id)).toEqual([
+      "subscription",
       "general",
       "personalization",
       "data",
@@ -95,11 +190,11 @@ test(
         (section) => !Object.prototype.hasOwnProperty.call(section, "summary"),
       ),
     ).toBe(true);
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
-    expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
+    expect(result.current.activeSectionId).toBe("subscription");
+    expect(result.current.panel.headingId).toBe("subscription-section-heading");
+    expect(result.current.panel.focusHeadingId).toBe("subscription-section-heading");
     expect(result.current.panel.modalHeadingId).toBe("settings-modal-fallback-heading");
-    expect(result.current.panel.modalHeadingText).toBe("General");
+    expect(result.current.panel.modalHeadingText).toBe("Subscription");
   },
 );
 
@@ -109,20 +204,20 @@ test(
  * 步骤：
  *  1) 渲染 usePreferenceSections 并读取激活分区。
  * 断言：
- *  - activeSectionId 回退为 general。
- *  - panel.headingId 对应 general 分区。
+ *  - activeSectionId 回退为 subscription。
+ *  - panel.headingId 对应 subscription 分区。
  * 边界/异常：
- *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 负责）。
+ *  - 若 subscription 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 负责）。
  */
 test(
-  "Given legacy section id When initializing Then selection falls back to general",
+  "Given legacy section id When initializing Then selection falls back to subscription",
   () => {
     const { result } = renderHook(() =>
       usePreferenceSections({ initialSectionId: "privacy", onOpenAccountManager: jest.fn() }),
     );
 
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
+    expect(result.current.activeSectionId).toBe("subscription");
+    expect(result.current.panel.headingId).toBe("subscription-section-heading");
   },
 );
 
@@ -144,6 +239,7 @@ test("Given blank section titles When resolving modal heading Then fallback titl
       settingsTabKeyboard: "   ",
       settingsKeyboardDescription: "   ",
     }),
+    lang: "en",
   });
 
   const { result } = renderHook(() =>
@@ -157,7 +253,7 @@ test("Given blank section titles When resolving modal heading Then fallback titl
 
 /**
  * 测试目标：切换分区后备用标题随激活分区更新。
- * 前置条件：默认激活 general 分区。
+ * 前置条件：默认激活 subscription 分区。
  * 步骤：
  *  1) 渲染 Hook 并调用 handleSectionSelect 选择 data 分区。
  *  2) 读取 panel 的标题字段。

@@ -48,6 +48,7 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
         }
         initialSection={settingsState.section}
         onOpenAccountManager={() => setProfileOpen(true)}
+        onOpenSubscription={() => setUpgradeOpen(true)}
       />
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <LogoutConfirmModal

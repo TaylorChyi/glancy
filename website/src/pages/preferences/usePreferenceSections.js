@@ -18,6 +18,9 @@ import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
+import SubscriptionSection from "./sections/SubscriptionSection.jsx";
+import { resolveRegionPricing } from "@/config/subscription.js";
+import { createSubscriptionViewModel } from "@/features/subscription/createSubscriptionViewModel.js";
 
 const EMPTY_PROFILE = Object.freeze({ age: "", gender: "" });
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
@@ -76,8 +79,12 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
  * 复杂度：
  *  - 时间：O(n) 取决于分区数量；空间：O(1) 额外状态。当前瓶颈在接口请求而非本地计算。
  */
-function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
-  const { t } = useLanguage();
+function usePreferenceSections({
+  initialSectionId,
+  onOpenAccountManager,
+  onOpenSubscription,
+}) {
+  const { t, lang } = useLanguage();
   const { user } = useUser();
   const api = useApi();
   const fetchProfile = api?.profiles?.fetchProfile;
@@ -164,6 +171,20 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 
   const manageLabel = t.settingsManageProfile ?? "Manage profile";
 
+  const locale = lang === "en" ? "en-US" : "zh-CN";
+  const pricing = useMemo(
+    () =>
+      resolveRegionPricing({
+        regionCode: user?.subscription?.regionCode || user?.region,
+      }),
+    [user?.region, user?.subscription?.regionCode],
+  );
+
+  const subscriptionViewModel = useMemo(
+    () => createSubscriptionViewModel({ t, pricing, user, locale }),
+    [locale, pricing, t, user],
+  );
+
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
@@ -233,6 +254,16 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     // 导航标签仅展示主标题，摘要内容由具体面板负责渲染，避免屏幕阅读器重复朗读。
     return [
       {
+        id: "subscription",
+        label: subscriptionViewModel.title,
+        disabled: false,
+        Component: SubscriptionSection,
+        componentProps: {
+          viewModel: subscriptionViewModel,
+          onOpenSubscription,
+        },
+      },
+      {
         id: "general",
         label: generalLabel,
         disabled: false,
@@ -291,6 +322,7 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     fallbackValue,
     manageLabel,
     onOpenAccountManager,
+    onOpenSubscription,
     profileMeta.age,
     profileMeta.gender,
     t.prefAccountTitle,
@@ -298,6 +330,8 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     t.prefPersonalizationTitle,
     t.settingsAccountAge,
     t.settingsAccountDescription,
+    subscriptionViewModel.title,
+    subscriptionViewModel,
     t.settingsAccountEmail,
     t.settingsAccountGender,
     t.settingsAccountPhone,
