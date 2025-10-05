@@ -14,6 +14,8 @@ const INLINE_LABEL_BOUNDARY_PREFIX_RE =
   /[A-Za-z0-9\u4e00-\u9fff)\]}”’'".!?。，；：、]/u;
 const COLLAPSED_LABEL_CHAIN_PATTERN =
   /(:)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:[^\s])/gmu;
+const LABEL_CHAIN_WITHOUT_COLON_PATTERN =
+  /(^|[\n\r]|[.,，。！？!?:：；;])(\s*)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)([ \t]+)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)/gmu;
 const BARE_INLINE_LABEL_PATTERN =
   /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
 const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
@@ -392,6 +394,47 @@ function expandCollapsedLabelChains(text) {
 
 /**
  * 背景：
+ *  - 新版模型在序列化 Markdown 时，会把 `Senses s1Verb`、`Examples Example1` 等字段改写为以空格分隔，
+ *    导致下游仅能识别冒号紧贴的链式标签逻辑失效。
+ * 目的：
+ *  - 在不破坏普通句子的前提下，将位于行首（或缩进行首）的标签对恢复为冒号连接形式，
+ *    以复用既有的标签换行与加粗流程。
+ * 关键决策与取舍：
+ *  - 仅当「首个 token」与「后续 token」均命中标签词表时才回写冒号，避免误伤自然语言；
+ *  - 保留原始缩进，保障列表项在恢复冒号后仍可计算正确的缩进层级。
+ * 影响范围：
+ *  - LLM 字典响应中缺失冒号的标签链恢复能力，与 `expandCollapsedLabelChains`、`decorateBareInlineLabels` 协同生效。
+ */
+function restoreMissingLabelDelimiters(text) {
+  return text.replace(
+    LABEL_CHAIN_WITHOUT_COLON_PATTERN,
+    (match, boundary, indent = "", first, _spacing, second, offset, source) => {
+      const isFirstSplittable = shouldSplitInlineLabel(first);
+      const isSecondSplittable = shouldSplitInlineLabel(second);
+      if (!isFirstSplittable || !isSecondSplittable) {
+        return match;
+      }
+      const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
+      const prefix = source.slice(lineStart, offset).trim();
+      const atLineStart = prefix === "" || prefix === first;
+      const boundaryChar = (boundary || "").slice(-1);
+      const fromPunctuation =
+        Boolean(boundaryChar) &&
+        boundaryChar !== "\n" &&
+        boundaryChar !== "\r" &&
+        boundaryChar.trim() !== "";
+      if (!atLineStart && !fromPunctuation) {
+        return match;
+      }
+      const prefixText =
+        (boundary || "") + (fromPunctuation && boundaryChar ? "\n" : "");
+      return `${prefixText}${indent}${first}:${second}`;
+    },
+  );
+}
+
+/**
+ * 背景：
  *  - 串联标签往往以裸文本形式出现（缺少 `**` 包裹），导致前端无法复用统一格式化策略。
  * 目的：
  *  - 将命中标签词表的裸标签转为粗体，并拆解驼峰/数字界限以增强可读性。
@@ -594,7 +637,8 @@ export function extractMarkdownPreview(buffer) {
 export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
-  const expanded = expandCollapsedLabelChains(normalized);
+  const withDelimitersRestored = restoreMissingLabelDelimiters(normalized);
+  const expanded = expandCollapsedLabelChains(withDelimitersRestored);
   const decorated = decorateBareInlineLabels(expanded);
   const separated = enforceInlineLabelBoundary(decorated);
   const spacedColon = ensureColonSpacing(separated);
