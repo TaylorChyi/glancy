@@ -801,7 +801,7 @@
 
 .identity-row {
   align-items: center;
-  grid-template-columns: minmax(140px, 0.28fr) minmax(72px, max-content)
+  grid-template-columns: minmax(140px, 0.28fr) minmax(72px, 1fr)
     max-content;
 }
 
