@@ -265,6 +265,48 @@ test("Given default sections When reading blueprint Then general leads navigatio
 });
 
 /**
+ * 测试目标：当用户仅暴露 member 标记时，订阅蓝图应回退到 PLUS 套餐。
+ * 前置条件：用户缺少 plan 字段但 member 为 true。
+ * 步骤：
+ *  1) 重置 useUser mock 仅返回 member；
+ *  2) 渲染 Hook 并获取订阅分区；
+ * 断言：
+ *  - 当前套餐牌面为 PLUS；
+ *  - planCards 中 PLUS 状态为 current。
+ * 边界/异常：
+ *  - 若未来提供更细颗粒度的 tier 字段，应优先使用新字段。
+ */
+test("Given member flag only When mapping subscription plan Then membership fallback resolves to paid plan", () => {
+  mockUseUser.mockReturnValue({
+    user: {
+      username: "amy",
+      email: "amy@example.com",
+      member: true,
+    },
+  });
+
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
+
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+
+  expect(subscriptionSection).toBeDefined();
+  expect(subscriptionSection.componentProps.currentPlanCard.planLine).toContain(
+    translations.subscriptionPlanPlusTitle,
+  );
+  const plusCard = subscriptionSection.componentProps.planCards.find(
+    (card) => card.id === "PLUS",
+  );
+  expect(plusCard).toBeDefined();
+  expect(plusCard.state).toBe("current");
+});
+
+/**
  * 测试目标：当传入历史分区 ID 时，应回退至首个可用分区以维持导航可用性。
  * 前置条件：initialSectionId 指向已下线的 privacy 分区。
  * 步骤：

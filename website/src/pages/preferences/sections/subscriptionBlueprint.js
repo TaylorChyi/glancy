@@ -11,6 +11,7 @@
  *  - TODO: 接入真实兑换/订阅 API 后，将 onRedeem/onSubscribe 替换为实际动作，并补充状态管理。
  */
 import {
+  PLAN_SEQUENCE,
   getPlanDefinition,
   listVisiblePlans,
   resolvePricing,
@@ -72,7 +73,12 @@ const formatQuota = (value, template, { zeroLabel, softLimitNote } = {}) => {
   return softLimitNote ? `${withTemplate}${softLimitNote}` : withTemplate;
 };
 
-const translateByMap = (translations, mapping, key, fallback = FALLBACK_VALUE) => {
+const translateByMap = (
+  translations,
+  mapping,
+  key,
+  fallback = FALLBACK_VALUE,
+) => {
   if (!key) {
     return fallback;
   }
@@ -82,6 +88,57 @@ const translateByMap = (translations, mapping, key, fallback = FALLBACK_VALUE) =
     return fallback;
   }
   return safeString(translations[translationKey], fallback);
+};
+
+const KNOWN_PLAN_IDS = new Set(PLAN_SEQUENCE);
+
+/**
+ * 意图：
+ *  - 根据用户上下文提炼订阅套餐标识，兼容历史字段与未来扩展。
+ * 输入：
+ *  - userProfile: 可能来自登录或偏好接口的用户对象；
+ *  - defaults: 覆盖默认套餐的配置（目前仅暴露 fallbackPlan）。
+ * 输出：
+ *  - 归一化后的套餐 ID（FREE/PLUS/PRO/PREMIUM）。
+ * 流程：
+ *  1) 收集 subscription.planId 等候选字段并标准化为大写；
+ *  2) 若存在会员布尔标记，将默认 PLUS 作为兜底候选；
+ *  3) 返回首个命中已知套餐序列的值，否则回退到 FREE。
+ * 错误处理：
+ *  - 对于非字符串或未知取值，自动忽略并继续尝试下一候选。
+ */
+const resolveCurrentPlanId = (userProfile, { fallbackPlan = "FREE" } = {}) => {
+  const subscriptionMeta = userProfile?.subscription ?? {};
+  const candidates = [
+    subscriptionMeta.planId,
+    subscriptionMeta.currentPlanId,
+    subscriptionMeta.plan,
+    subscriptionMeta.tier,
+    userProfile?.plan,
+  ]
+    .map((candidate) => {
+      if (typeof candidate !== "string") {
+        return null;
+      }
+      const trimmed = candidate.trim();
+      if (!trimmed) {
+        return null;
+      }
+      return trimmed.toUpperCase();
+    })
+    .filter(Boolean);
+
+  if (userProfile?.member === true) {
+    candidates.push("PLUS");
+  }
+
+  for (const candidate of candidates) {
+    if (KNOWN_PLAN_IDS.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return fallbackPlan;
 };
 
 const PRIORITY_KEY_MAP = {
@@ -135,7 +192,10 @@ const buildPlanCopy = (t) => ({
 const buildFeatureBlueprint = (t) => {
   const softLimitNote = safeString(t.subscriptionSoftLimitNote, "");
   const zeroLabel = safeString(t.subscriptionValueNone, FALLBACK_VALUE);
-  const unavailable = safeString(t.subscriptionValueUnavailable, FALLBACK_VALUE);
+  const unavailable = safeString(
+    t.subscriptionValueUnavailable,
+    FALLBACK_VALUE,
+  );
   const historyTemplate = safeString(
     t.subscriptionHistoryRetentionTemplate,
     "{value}",
@@ -152,16 +212,17 @@ const buildFeatureBlueprint = (t) => {
   return [
     {
       id: "wordLookupsDaily",
-      label: safeString(
-        t.subscriptionFeatureWordLookupsDaily,
-        "每日查词上限",
-      ),
+      label: safeString(t.subscriptionFeatureWordLookupsDaily, "每日查词上限"),
       resolve: (plan) =>
-        formatQuota(plan.quotas?.wordLookupsDaily, t.subscriptionUnitTimesPerDay, {
-          zeroLabel,
-          softLimitNote:
-            plan.id === "PREMIUM" && softLimitNote ? ` ${softLimitNote}` : "",
-        }),
+        formatQuota(
+          plan.quotas?.wordLookupsDaily,
+          t.subscriptionUnitTimesPerDay,
+          {
+            zeroLabel,
+            softLimitNote:
+              plan.id === "PREMIUM" && softLimitNote ? ` ${softLimitNote}` : "",
+          },
+        ),
     },
     {
       id: "llmCallsDaily",
@@ -185,10 +246,7 @@ const buildFeatureBlueprint = (t) => {
     },
     {
       id: "notebookCapacity",
-      label: safeString(
-        t.subscriptionFeatureNotebookCapacity,
-        "生词本容量",
-      ),
+      label: safeString(t.subscriptionFeatureNotebookCapacity, "生词本容量"),
       resolve: (plan) =>
         formatQuota(plan.quotas?.notebookCapacity, t.subscriptionUnitItems, {
           zeroLabel,
@@ -196,37 +254,43 @@ const buildFeatureBlueprint = (t) => {
     },
     {
       id: "alignedLanguages",
-      label: safeString(
-        t.subscriptionFeatureAlignedLanguages,
-        "多语对齐例句",
-      ),
+      label: safeString(t.subscriptionFeatureAlignedLanguages, "多语对齐例句"),
       resolve: (plan) =>
-        formatQuota(plan.quotas?.alignedLanguages, t.subscriptionUnitLanguages, {
-          zeroLabel,
-        }),
+        formatQuota(
+          plan.quotas?.alignedLanguages,
+          t.subscriptionUnitLanguages,
+          {
+            zeroLabel,
+          },
+        ),
     },
     {
       id: "ocrPagesMonthly",
       label: safeString(t.subscriptionFeatureOcrPages, "OCR / 图片取词"),
       resolve: (plan) =>
-        formatQuota(plan.quotas?.ocrPagesMonthly, t.subscriptionUnitPagesPerMonth, {
-          zeroLabel: unavailable,
-        }),
+        formatQuota(
+          plan.quotas?.ocrPagesMonthly,
+          t.subscriptionUnitPagesPerMonth,
+          {
+            zeroLabel: unavailable,
+          },
+        ),
     },
     {
       id: "pdfPagesMonthly",
       label: safeString(t.subscriptionFeaturePdfPages, "PDF 取词"),
       resolve: (plan) =>
-        formatQuota(plan.quotas?.pdfPagesMonthly, t.subscriptionUnitPagesPerMonth, {
-          zeroLabel: unavailable,
-        }),
+        formatQuota(
+          plan.quotas?.pdfPagesMonthly,
+          t.subscriptionUnitPagesPerMonth,
+          {
+            zeroLabel: unavailable,
+          },
+        ),
     },
     {
       id: "concurrentRequests",
-      label: safeString(
-        t.subscriptionFeatureConcurrentRequests,
-        "并发请求数",
-      ),
+      label: safeString(t.subscriptionFeatureConcurrentRequests, "并发请求数"),
       resolve: (plan) =>
         formatQuota(
           plan.quotas?.concurrentRequests,
@@ -240,7 +304,12 @@ const buildFeatureBlueprint = (t) => {
       id: "priority",
       label: safeString(t.subscriptionFeaturePriority, "队列优先级"),
       resolve: (plan) =>
-        translateByMap(t, PRIORITY_KEY_MAP, plan.benefits?.priority, FALLBACK_VALUE),
+        translateByMap(
+          t,
+          PRIORITY_KEY_MAP,
+          plan.benefits?.priority,
+          FALLBACK_VALUE,
+        ),
     },
     {
       id: "devices",
@@ -274,10 +343,7 @@ const buildFeatureBlueprint = (t) => {
     },
     {
       id: "historyRetentionDays",
-      label: safeString(
-        t.subscriptionFeatureHistoryRetention,
-        "历史记录保留",
-      ),
+      label: safeString(t.subscriptionFeatureHistoryRetention, "历史记录保留"),
       resolve: (plan) => {
         const value = plan.benefits?.historyRetentionDays;
         if (typeof value !== "number") {
@@ -336,10 +402,7 @@ const buildPlanCards = ({
     translations.subscriptionPlanLockedBadge,
     "仅兑换",
   );
-  const freePrice = safeString(
-    translations.subscriptionPlanFreePrice,
-    "免费",
-  );
+  const freePrice = safeString(translations.subscriptionPlanFreePrice, "免费");
   const monthlyTemplate = safeString(
     translations.subscriptionPriceMonthly,
     "{amount}/月",
@@ -348,7 +411,8 @@ const buildPlanCards = ({
     translations.subscriptionPriceYearly,
     "{amount}/年",
   );
-  const yearlyWithEquivalentTemplate = translations.subscriptionPriceYearlyWithEquivalent;
+  const yearlyWithEquivalentTemplate =
+    translations.subscriptionPriceYearlyWithEquivalent;
 
   return visiblePlanIds.map((planId) => {
     const plan = getPlanDefinition(pricing, planId);
@@ -416,11 +480,7 @@ const buildPlanCards = ({
   });
 };
 
-const buildFeatureMatrix = ({
-  blueprint,
-  visiblePlanIds,
-  pricing,
-}) =>
+const buildFeatureMatrix = ({ blueprint, visiblePlanIds, pricing }) =>
   blueprint.map((feature) => ({
     id: feature.id,
     label: feature.label,
@@ -443,11 +503,10 @@ export function buildSubscriptionSectionProps({
 }) {
   const t = translations ?? {};
   const userProfile = user ?? {};
-  const currentPlanId = safeString(
-    userProfile.plan ? String(userProfile.plan).toUpperCase() : "FREE",
-    "FREE",
-  );
   const subscriptionMeta = userProfile.subscription ?? {};
+  const currentPlanId = resolveCurrentPlanId(userProfile, {
+    fallbackPlan: "FREE",
+  });
   const regionCode =
     subscriptionMeta.regionCode ?? userProfile.regionCode ?? undefined;
   const pricing = resolvePricing({ regionCode });
@@ -468,15 +527,23 @@ export function buildSubscriptionSectionProps({
     pricing,
   });
 
-  const billingCycle = safeString(
-    subscriptionMeta.billingCycle === "yearly"
-      ? t.subscriptionBillingCycleYearly
-      : t.subscriptionBillingCycleMonthly,
-    FALLBACK_VALUE,
-  );
+  const hasBillingCycle =
+    currentPlanId !== "FREE" &&
+    typeof subscriptionMeta.billingCycle === "string";
+  const billingCycle = hasBillingCycle
+    ? safeString(
+        subscriptionMeta.billingCycle === "yearly"
+          ? t.subscriptionBillingCycleYearly
+          : t.subscriptionBillingCycleMonthly,
+        FALLBACK_VALUE,
+      )
+    : FALLBACK_VALUE;
 
   const currentPlanCopy = planCopy[currentPlanId] ?? { title: currentPlanId };
-  const planLine = `${currentPlanCopy.title} · ${billingCycle}`;
+  const planLine =
+    billingCycle && billingCycle !== FALLBACK_VALUE
+      ? `${currentPlanCopy.title} · ${billingCycle}`
+      : currentPlanCopy.title;
   const nextRenewalLabel = subscriptionMeta.nextRenewalDate
     ? formatWithTemplate(
         safeString(t.subscriptionNextRenewalTemplate, "下次扣费：{value}"),
@@ -493,26 +560,23 @@ export function buildSubscriptionSectionProps({
 
   const premiumHighlight =
     currentPlanId === "PREMIUM"
-      ? safeString(
-          t.subscriptionPremiumHighlight,
-          "已解锁最高级配额与优先级",
-        )
+      ? safeString(t.subscriptionPremiumHighlight, "已解锁最高级配额与优先级")
       : null;
 
   const taxNote = pricing.taxIncluded
     ? safeString(t.pricingTaxIncluded, "价格已含税")
     : safeString(t.pricingTaxExcluded, "价格不含税");
 
-  const currentTitle = safeString(
-    t.subscriptionCurrentTitle,
-    "当前订阅",
-  );
+  const currentTitle = safeString(t.subscriptionCurrentTitle, "当前订阅");
 
   const actions = [
     {
       id: "manage",
       label: safeString(t.subscriptionActionManage, "管理订阅"),
-      onClick: typeof onSubscribe === "function" ? () => onSubscribe(currentPlanId) : undefined,
+      onClick:
+        typeof onSubscribe === "function"
+          ? () => onSubscribe(currentPlanId)
+          : undefined,
     },
     {
       id: "upgrade",
@@ -532,24 +596,19 @@ export function buildSubscriptionSectionProps({
     {
       id: "redeem",
       label: safeString(t.subscriptionActionRedeem, "兑换码"),
-      onClick: typeof onRedeem === "function" ? () => onRedeem("focus") : undefined,
+      onClick:
+        typeof onRedeem === "function" ? () => onRedeem("focus") : undefined,
     },
   ];
 
   const redeemCopy = {
     title: safeString(t.subscriptionRedeemTitle, "兑换专享权益"),
-    placeholder: safeString(
-      t.subscriptionRedeemPlaceholder,
-      "请输入兑换码",
-    ),
+    placeholder: safeString(t.subscriptionRedeemPlaceholder, "请输入兑换码"),
     buttonLabel: safeString(t.subscriptionRedeemButton, "立即兑换"),
   };
 
   const subscribeCopy = {
-    template: safeString(
-      t.subscriptionSubscribeButtonTemplate,
-      "订阅 {plan}",
-    ),
+    template: safeString(t.subscriptionSubscribeButtonTemplate, "订阅 {plan}"),
     disabledLabel: safeString(
       t.subscriptionSubscribeButtonDisabled,
       "已是当前套餐",
@@ -563,10 +622,7 @@ export function buildSubscriptionSectionProps({
 
   return {
     title: safeString(t.settingsTabSubscription, "订阅"),
-    featureColumnLabel: safeString(
-      t.subscriptionFeatureColumnLabel,
-      "能力项",
-    ),
+    featureColumnLabel: safeString(t.subscriptionFeatureColumnLabel, "能力项"),
     currentPlanCard: {
       title: currentTitle,
       planLine,
