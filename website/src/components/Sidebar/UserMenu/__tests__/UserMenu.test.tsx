@@ -120,7 +120,7 @@ const hoverHelpItem = (container: HTMLElement) => {
   Object.defineProperty(helpItem, "getBoundingClientRect", {
     value: () => createRect({ top: 180, bottom: 240, right: 280, left: 0 }),
   });
-  fireEvent.mouseEnter(helpItem);
+  fireEvent.pointerEnter(helpItem, { pointerType: "mouse" });
   act(() => {
     jest.advanceTimersByTime(40);
   });
@@ -176,8 +176,8 @@ test("Given_SubmenuOpen_WhenPointerTransfersQuickly_ThenKeepVisible", () => {
   const { container } = openUserMenu();
   const { helpItem, submenu } = hoverHelpItem(container);
 
-  fireEvent.mouseLeave(helpItem);
-  fireEvent.mouseEnter(submenu);
+  fireEvent.pointerLeave(helpItem, { pointerType: "mouse" });
+  fireEvent.pointerEnter(submenu, { pointerType: "mouse" });
 
   act(() => {
     jest.advanceTimersByTime(100);
