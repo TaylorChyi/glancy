@@ -20,8 +20,8 @@ import lombok.Setter;
 @Table(
     name = "user_keyboard_shortcuts",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_action", columnNames = {"user_id", "action"}),
-        @UniqueConstraint(name = "uk_user_binding", columnNames = {"user_id", "binding"})
+        @UniqueConstraint(name = "uk_user_action", columnNames = { "user_id", "action" }),
+        @UniqueConstraint(name = "uk_user_binding", columnNames = { "user_id", "binding" }),
     }
 )
 @Getter

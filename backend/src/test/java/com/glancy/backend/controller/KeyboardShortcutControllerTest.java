@@ -76,8 +76,13 @@ class KeyboardShortcutControllerTest {
             List.of("CONTROL", "SHIFT", "P"),
             List.of("MOD", "SHIFT", "F")
         );
-        given(keyboardShortcutService.updateShortcut(eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class)))
-            .willReturn(new KeyboardShortcutResponse(List.of(view)));
+        given(
+            keyboardShortcutService.updateShortcut(
+                eq(2L),
+                eq(ShortcutAction.FOCUS_SEARCH),
+                any(KeyboardShortcutUpdateRequest.class)
+            )
+        ).willReturn(new KeyboardShortcutResponse(List.of(view)));
 
         mockMvc
             .perform(
@@ -89,7 +94,11 @@ class KeyboardShortcutControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
 
-        verify(keyboardShortcutService).updateShortcut(eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class));
+        verify(keyboardShortcutService).updateShortcut(
+            eq(2L),
+            eq(ShortcutAction.FOCUS_SEARCH),
+            any(KeyboardShortcutUpdateRequest.class)
+        );
     }
 
     /**

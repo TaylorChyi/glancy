@@ -109,8 +109,10 @@ class KeyboardShortcutServiceTest {
             response
                 .shortcuts()
                 .stream()
-                .anyMatch(view ->
-                    view.action().equals(ShortcutAction.FOCUS_SEARCH.name()) && view.keys().equals(List.of("CONTROL", "SHIFT", "P"))
+                .anyMatch(
+                    view ->
+                        view.action().equals(ShortcutAction.FOCUS_SEARCH.name()) &&
+                        view.keys().equals(List.of("CONTROL", "SHIFT", "P"))
                 ),
             "focus search should use updated binding"
         );
@@ -146,9 +148,8 @@ class KeyboardShortcutServiceTest {
             new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "Q"))
         );
 
-        InvalidRequestException exception = assertThrows(
-            InvalidRequestException.class,
-            () -> keyboardShortcutService.updateShortcut(
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            keyboardShortcutService.updateShortcut(
                 user.getId(),
                 ShortcutAction.FOCUS_SEARCH,
                 new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "Q"))
@@ -161,9 +162,10 @@ class KeyboardShortcutServiceTest {
             response
                 .shortcuts()
                 .stream()
-                .anyMatch(view ->
-                    view.action().equals(ShortcutAction.SWITCH_LANGUAGE.name())
-                        && view.keys().equals(List.of("CONTROL", "SHIFT", "Q"))
+                .anyMatch(
+                    view ->
+                        view.action().equals(ShortcutAction.SWITCH_LANGUAGE.name()) &&
+                        view.keys().equals(List.of("CONTROL", "SHIFT", "Q"))
                 )
         );
     }

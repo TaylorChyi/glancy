@@ -32,19 +32,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class KeyboardShortcutService {
 
-    private static final List<String> MODIFIER_ORDER =
-        List.of("MOD", "CONTROL", "META", "ALT", "SHIFT");
+    private static final List<String> MODIFIER_ORDER = List.of("MOD", "CONTROL", "META", "ALT", "SHIFT");
 
-    private static final Set<String> MODIFIERS =
-        Set.of("MOD", "CONTROL", "META", "ALT", "SHIFT");
+    private static final Set<String> MODIFIERS = Set.of("MOD", "CONTROL", "META", "ALT", "SHIFT");
 
     private final UserKeyboardShortcutRepository shortcutRepository;
     private final UserRepository userRepository;
 
-    public KeyboardShortcutService(
-        UserKeyboardShortcutRepository shortcutRepository,
-        UserRepository userRepository
-    ) {
+    public KeyboardShortcutService(UserKeyboardShortcutRepository shortcutRepository, UserRepository userRepository) {
         this.shortcutRepository = shortcutRepository;
         this.userRepository = userRepository;
     }
@@ -56,9 +51,7 @@ public class KeyboardShortcutService {
         KeyboardShortcutUpdateRequest request
     ) {
         log.info("Updating shortcut {} for user {}", action, userId);
-        User user = userRepository
-            .findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
 
         String normalizedBinding = normalizeBinding(request.keys());
         ensureBindingNotConflicting(userId, action, normalizedBinding);
@@ -101,33 +94,25 @@ public class KeyboardShortcutService {
             .stream()
             .collect(Collectors.toMap(UserKeyboardShortcut::getAction, shortcut -> shortcut));
 
-        List<KeyboardShortcutView> views = Arrays
-            .stream(ShortcutAction.values())
+        List<KeyboardShortcutView> views = Arrays.stream(ShortcutAction.values())
             .map(action -> {
                 UserKeyboardShortcut override = overrides.get(action);
-                List<String> keys = override != null
-                    ? decodeBinding(override.getBinding())
-                    : action.getDefaultKeys();
-                return new KeyboardShortcutView(
-                    action.name(),
-                    List.copyOf(keys),
-                    List.copyOf(action.getDefaultKeys())
-                );
+                List<String> keys = override != null ? decodeBinding(override.getBinding()) : action.getDefaultKeys();
+                return new KeyboardShortcutView(action.name(), List.copyOf(keys), List.copyOf(action.getDefaultKeys()));
             })
             .toList();
         return new KeyboardShortcutResponse(views);
     }
 
     private void ensureBindingNotConflicting(Long userId, ShortcutAction targetAction, String binding) {
-        Map<ShortcutAction, String> existingBindings = Arrays
-            .stream(ShortcutAction.values())
-            .collect(
+        Map<ShortcutAction, String> existingBindings = Arrays.stream(ShortcutAction.values()).collect(
                 Collectors.toMap(
                     action -> action,
-                    action -> shortcutRepository
-                        .findByUserIdAndAction(userId, action)
-                        .map(UserKeyboardShortcut::getBinding)
-                        .orElseGet(() -> String.join("+", action.getDefaultKeys()))
+                    action ->
+                        shortcutRepository
+                            .findByUserIdAndAction(userId, action)
+                            .map(UserKeyboardShortcut::getBinding)
+                            .orElseGet(() -> String.join("+", action.getDefaultKeys()))
                 )
             );
 
@@ -145,7 +130,10 @@ public class KeyboardShortcutService {
         if (binding == null || binding.isBlank()) {
             return List.of();
         }
-        return Arrays.stream(binding.split("\\+")).map(String::trim).filter(token -> !token.isEmpty()).toList();
+        return Arrays.stream(binding.split("\\+"))
+            .map(String::trim)
+            .filter(token -> !token.isEmpty())
+            .toList();
     }
 
     /**
