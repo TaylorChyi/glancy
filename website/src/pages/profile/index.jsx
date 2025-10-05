@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - TODO: 后续若支持更多画像字段，应通过配置驱动扩展而非硬编码。
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer, useMemo, useCallback } from "react";
 import "@/pages/App/App.css";
 import styles from "./Profile.module.css";
 import Avatar from "@/components/ui/Avatar";
@@ -27,18 +27,101 @@ import ThemeIcon from "@/components/ui/Icon";
 import Tooltip from "@/components/ui/Tooltip";
 import EmailBindingCard from "@/components/Profile/EmailBindingCard";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
+import CustomSectionsEditor from "@/components/Profile/CustomSectionsEditor";
+import {
+  createEmptyProfileDetails,
+  mapProfileDetailsToRequest,
+  mapResponseToProfileDetails,
+  profileDetailsReducer,
+} from "./profileDetailsModel.js";
 
 function Profile({ onCancel }) {
   const { t } = useLanguage();
   const { user: currentUser, setUser } = useUser();
   const api = useApi();
   const [phone, setPhone] = useState(currentUser?.phone || "");
-  const [interests, setInterests] = useState("");
-  const [goal, setGoal] = useState("");
+  const [details, dispatchDetails] = useReducer(
+    profileDetailsReducer,
+    undefined,
+    createEmptyProfileDetails,
+  );
+  const [persistedMeta, setPersistedMeta] = useState({
+    dailyWordTarget: null,
+    futurePlan: null,
+  });
   const [avatar, setAvatar] = useState("");
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const fieldGroups = useMemo(
+    () => [
+      {
+        key: "background",
+        fields: [
+          {
+            key: "education",
+            icon: "library",
+            label: t.educationLabel,
+            placeholder: t.educationPlaceholder,
+            help: t.educationHelp,
+          },
+          {
+            key: "job",
+            icon: "command-line",
+            label: t.jobLabel,
+            placeholder: t.jobPlaceholder,
+            help: t.jobHelp,
+          },
+        ],
+      },
+      {
+        key: "growth",
+        fields: [
+          {
+            key: "interests",
+            icon: "star-outline",
+            label: t.interestsLabel,
+            placeholder: t.interestsPlaceholder,
+            help: t.interestsHelp,
+          },
+          {
+            key: "goal",
+            icon: "flag",
+            label: t.goalLabel,
+            placeholder: t.goalPlaceholder,
+            help: t.goalHelp,
+          },
+          {
+            key: "currentAbility",
+            icon: "shield-check",
+            label: t.currentAbilityLabel,
+            placeholder: t.currentAbilityPlaceholder,
+            help: t.currentAbilityHelp,
+          },
+        ],
+      },
+    ],
+    [t],
+  );
+
+  const handleFieldChange = useCallback(
+    (field) => (event) => {
+      dispatchDetails({
+        type: "updateField",
+        field,
+        value: event.target.value,
+      });
+    },
+    [dispatchDetails],
+  );
+
+  const handleCustomSectionsChange = useCallback(
+    (sections) => {
+      dispatchDetails({ type: "setCustomSections", sections });
+    },
+    [dispatchDetails],
+  );
 
   useEffect(() => {
     setPhone(currentUser?.phone || "");
@@ -72,8 +155,14 @@ function Profile({ onCancel }) {
     api.profiles
       .fetchProfile({ token: currentUser.token })
       .then((data) => {
-        setInterests(data.interest);
-        setGoal(data.goal);
+        dispatchDetails({
+          type: "hydrate",
+          payload: mapResponseToProfileDetails(data),
+        });
+        setPersistedMeta({
+          dailyWordTarget: data.dailyWordTarget ?? null,
+          futurePlan: data.futurePlan ?? null,
+        });
         if (data.avatar) {
           const url = cacheBust(data.avatar);
           setAvatar(url);
@@ -112,13 +201,14 @@ function Profile({ onCancel }) {
         );
       }
 
+      const profilePayload = mapProfileDetailsToRequest(details);
       updatePromises.push(
         api.profiles.saveProfile({
           token: currentUser.token,
           profile: {
-            job: "",
-            interest: interests,
-            goal,
+            ...profilePayload,
+            dailyWordTarget: persistedMeta.dailyWordTarget,
+            futurePlan: persistedMeta.futurePlan,
           },
         }),
       );
@@ -275,50 +365,40 @@ function Profile({ onCancel }) {
           inputClassName={styles["phone-input"]}
           buttonText={t.editButton}
         />
-        <div className={styles.basic}>
-          <FormField
-            label={
-              <>
-                <ThemeIcon
-                  name="star-outline"
-                  className={styles.icon}
-                  width={20}
-                  height={20}
+        {fieldGroups.map((group) => (
+          <div className={styles.basic} key={group.key}>
+            {group.fields.map((field) => (
+              <FormField
+                key={field.key}
+                label={
+                  <>
+                    <ThemeIcon
+                      name={field.icon}
+                      className={styles.icon}
+                      width={20}
+                      height={20}
+                    />
+                    {field.label}
+                    {field.help ? <Tooltip text={field.help}>?</Tooltip> : null}
+                  </>
+                }
+                id={`profile-${field.key}`}
+              >
+                <input
+                  value={details[field.key] ?? ""}
+                  onChange={handleFieldChange(field.key)}
+                  placeholder={field.placeholder}
                 />
-                {t.interestsLabel}
-                <Tooltip text={t.interestsHelp}>?</Tooltip>
-              </>
-            }
-            id="profile-interests"
-          >
-            <input
-              value={interests}
-              onChange={(e) => setInterests(e.target.value)}
-              placeholder={t.interestsPlaceholder}
-            />
-          </FormField>
-          <FormField
-            label={
-              <>
-                <ThemeIcon
-                  name="target"
-                  className={styles.icon}
-                  width={20}
-                  height={20}
-                />
-                {t.goalLabel}
-                <Tooltip text={t.goalHelp}>?</Tooltip>
-              </>
-            }
-            id="profile-goal"
-          >
-            <input
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder={t.goalPlaceholder}
-            />
-          </FormField>
-        </div>
+              </FormField>
+            ))}
+          </div>
+        ))}
+        <CustomSectionsEditor
+          sections={details.customSections}
+          onChange={handleCustomSectionsChange}
+          t={t}
+          styles={styles}
+        />
         <div className={styles.actions}>
           <button
             type="submit"

@@ -24,8 +24,13 @@ public class UserProfile {
     private String job;
     private String interest;
     private String goal;
+    private String education;
+    private String currentAbility;
     private Integer dailyWordTarget;
 
     @Column(length = 1024)
     private String futurePlan;
+
+    @Column(name = "custom_sections", columnDefinition = "TEXT")
+    private String customSections;
 }

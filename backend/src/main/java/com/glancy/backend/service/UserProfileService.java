@@ -1,5 +1,6 @@
 package com.glancy.backend.service;
 
+import com.glancy.backend.dto.ProfileCustomSectionDto;
 import com.glancy.backend.dto.UserProfileRequest;
 import com.glancy.backend.dto.UserProfileResponse;
 import com.glancy.backend.entity.User;
@@ -7,6 +8,8 @@ import com.glancy.backend.entity.UserProfile;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.profile.ProfileSectionCodec;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +34,16 @@ public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserRepository userRepository;
+    private final ProfileSectionCodec profileSectionCodec;
 
-    public UserProfileService(UserProfileRepository userProfileRepository, UserRepository userRepository) {
+    public UserProfileService(
+        UserProfileRepository userProfileRepository,
+        UserRepository userRepository,
+        ProfileSectionCodec profileSectionCodec
+    ) {
         this.userProfileRepository = userProfileRepository;
         this.userRepository = userRepository;
+        this.profileSectionCodec = profileSectionCodec;
     }
 
     private UserProfile createDefaultProfile(Long userId) {
@@ -64,8 +73,11 @@ public class UserProfileService {
         profile.setJob(req.job());
         profile.setInterest(req.interest());
         profile.setGoal(req.goal());
+        profile.setEducation(req.education());
+        profile.setCurrentAbility(req.currentAbility());
         profile.setDailyWordTarget(req.dailyWordTarget());
         profile.setFuturePlan(req.futurePlan());
+        profile.setCustomSections(profileSectionCodec.serialize(req.customSections()));
         UserProfile saved = userProfileRepository.save(profile);
         return toResponse(saved);
     }
@@ -81,14 +93,18 @@ public class UserProfileService {
     }
 
     private UserProfileResponse toResponse(UserProfile profile) {
+        List<ProfileCustomSectionDto> customSections = profileSectionCodec.deserialize(profile.getCustomSections());
         return new UserProfileResponse(
             profile.getId(),
             profile.getUser().getId(),
             profile.getJob(),
             profile.getInterest(),
             profile.getGoal(),
+            profile.getEducation(),
+            profile.getCurrentAbility(),
             profile.getDailyWordTarget(),
-            profile.getFuturePlan()
+            profile.getFuturePlan(),
+            customSections
         );
     }
 }
