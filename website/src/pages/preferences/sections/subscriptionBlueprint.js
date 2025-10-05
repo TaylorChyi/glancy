@@ -139,7 +139,7 @@ const formatRenewalDate = (value) => {
         month: "short",
         day: "numeric",
       }).format(value);
-    } catch (error) {
+    } catch {
       return value.toISOString().slice(0, 10);
     }
   }
@@ -186,7 +186,7 @@ const formatRenewalDate = (value) => {
     }).format(safeDate);
     const normalized = normalizeDisplayValue(formatted, normalizedIso);
     return normalized;
-  } catch (error) {
+  } catch {
     return normalizedIso;
   }
 };

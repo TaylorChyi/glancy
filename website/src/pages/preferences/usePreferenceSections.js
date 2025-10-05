@@ -310,7 +310,7 @@ function usePreferenceSections({ initialSectionId }) {
         safeDispatch({ type: "failure", error });
       }
     },
-    [dispatchPersonalization, fetchProfile, user?.id, user?.token],
+    [dispatchPersonalization, fetchProfile, user?.token],
   );
 
   useEffect(() => {
