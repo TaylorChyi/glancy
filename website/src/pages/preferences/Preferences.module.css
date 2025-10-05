@@ -445,11 +445,6 @@
   gap: var(--space-3);
   padding: var(--space-5);
   border-radius: 16px;
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 96%,
-    transparent
-  );
 }
 
 .subscription-current-header {
