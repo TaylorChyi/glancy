@@ -7,15 +7,27 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
-const INLINE_LABEL_PATTERN =
-  /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
+// 背景：
+//  - 英译英场景下，LLM 经常使用“—”“-”等连接符代替冒号描述释义，
+//    若前端仅匹配冒号会导致行内标签换行逻辑失效。
+//  - 取舍：统一在同一位置扩展分隔符集合，避免在多个正则里重复维护冒号/破折号组合。
+//  - 影响：`normalizeInlineLabelSpacing` 与 `ensureInlineLabelLineBreak` 均复用该片段，
+//    以确保所有行内标签在新增分隔符时保持一致行为。
+const INLINE_LABEL_SEPARATOR_PATTERN = "\\s*(?::|：|[-–—])\\s*";
+
+const INLINE_LABEL_PATTERN = new RegExp(
+  `([^\\n])((?:[ \\t]*\\t[ \\t]*)|(?:[ \\t]{2,}))(\\*\\*([^*]+)\\*\\*${INLINE_LABEL_SEPARATOR_PATTERN}[^\\n]*)`,
+  "g",
+);
 
 // 说明：
 //  - LLM 在英译英响应中可能仅保留单个空格作为段落分隔。
 //  - 若仅依赖 `INLINE_LABEL_PATTERN`（要求至少两个空格），上述场景会漏判。
 //  - 为保持缩进计算逻辑复用，单空格匹配交由二次替换时处理。
-const INLINE_LABEL_SINGLE_SPACE_PATTERN =
-  /(\S)([ \t])(?=\*\*([^*]+)\*\*:[^\n]*)/g;
+const INLINE_LABEL_SINGLE_SPACE_PATTERN = new RegExp(
+  `(\\S)([ \\t])(?=\\*\\*([^*]+)\\*\\*${INLINE_LABEL_SEPARATOR_PATTERN}[^\\n]*)`,
+  "g",
+);
 
 const INLINE_LABEL_CAMEL_CASE = /([a-z])(\p{Lu})/gu;
 

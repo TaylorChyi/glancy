@@ -108,6 +108,23 @@ test("polishDictionaryMarkdown splits composite english inline labels", () => {
 });
 
 /**
+ * 测试目标：验证当释义标签使用破折号或连字符与正文连接时，仍能识别为需要换行的行内标签。
+ * 前置条件：行内结构包含 Definition 标签，且释义与例句之间仅以单个空格与破折号分隔。
+ * 步骤：
+ *  1) 构造带有破折号分隔的 markdown 字符串。
+ *  2) 调用 polishDictionaryMarkdown 处理文本。
+ * 断言：
+ *  - Example 标签会换行并保持列表缩进；若失败则说明破折号未被识别为合法分隔符。
+ * 边界/异常：
+ *  - 覆盖 LLM 输出常见的“—”与“-”混用场景，防止未来回退导致英译英释义粘连。
+ */
+test("polishDictionaryMarkdown splits definition labels joined by dash", () => {
+  const source = "- **Definition** — to light **Example**: She lights a candle";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("- **Definition** — to light\n  **Example**: She lights a candle");
+});
+
+/**
  * 验证翻译行会继承有序列表的缩进，使得“翻译”与“例句”保持列对齐。
  */
 test("translation line keeps ordered list indentation", () => {
