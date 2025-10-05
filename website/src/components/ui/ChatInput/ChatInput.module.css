@@ -4,10 +4,16 @@
    * 取舍：优先消费 Layout 集中下发的 --docker-row-width/--docker-row-max-width，
    *       既保证搜索态与动作态的等宽，又在脱离 docker 时回落到 SearchBox 默认宽度。
    */
-  width: var(--docker-row-width, min(100%, var(--sb-max-width)));
+  width: var(
+    --docker-row-width,
+    var(--chat-input-shell-width, var(--sb-shell-width, 100%))
+  );
   display: flex;
   justify-content: center;
-  max-width: var(--docker-row-max-width, var(--sb-max-width));
+  max-width: var(
+    --docker-row-max-width,
+    var(--chat-input-shell-max, var(--sb-max-width))
+  );
   margin-inline: auto;
 }
 
@@ -31,7 +37,7 @@
     --sidebar-hover-bg,
     color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
   );
-  --sb-shell-width: 100%;
+  --sb-shell-width: var(--chat-input-shell-width, 100%);
   --padding-y: 0;
   --slot-gap: 0;
 

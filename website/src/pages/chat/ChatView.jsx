@@ -71,6 +71,7 @@ export default function ChatView({ streamFn = streamChatMessage }) {
         placeholder={t.chatPlaceholder}
         sendLabel={t.sendButton}
         maxRows={5}
+        maxWidth="var(--layout-content-max, 960px)"
       />
     </div>
   );
