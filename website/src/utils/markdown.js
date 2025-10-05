@@ -9,10 +9,13 @@ const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
+const INLINE_LABEL_NO_BOUNDARY_PATTERN = /([^\s>\n])(\*\*([^*]+)\*\*:[^\n]*)/g;
+const INLINE_LABEL_BOUNDARY_PREFIX_RE =
+  /[A-Za-z0-9\u4e00-\u9fff)\]}”’'".!?。，；：、]/u;
 const COLLAPSED_LABEL_CHAIN_PATTERN =
   /(:)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:[^\s])/gmu;
 const BARE_INLINE_LABEL_PATTERN =
-  /(^|[^\S\n>])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
+  /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
 const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
 const DECORATED_LABEL_VALUE_PATTERN = /(\*\*([^*]+)\*\*):\s*([^\n]*)/g;
 
@@ -33,6 +36,8 @@ const INLINE_LABEL_DELIMITER = /[^a-z\u4e00-\u9fff]+/giu;
 //  - 如需扩展新的标签，请与后端 `MarkdownWordExtractor` 的 `resolveSection` 保持同步，防止两端语义漂移。
 const INLINE_LABEL_TOKENS = new Set(
   [
+    "sense",
+    "senses",
     "translation",
     "translations",
     "definition",
@@ -99,8 +104,49 @@ const INLINE_LABEL_TOKENS = new Set(
     "insight",
     "extended",
     "extendednotes",
+    "subsense",
+    "subsenses",
   ].map((token) => token.toLowerCase()),
 );
+
+const INLINE_LABEL_DYNAMIC_PATTERNS = [
+  /^(?:s|sense)\d+(?:[a-z]+)?$/,
+  /^example\d+$/,
+];
+
+function normalizeInlineLabelCandidate(raw) {
+  if (!raw) {
+    return "";
+  }
+  return raw
+    .toString()
+    .replace(/：/g, ":")
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "");
+}
+
+function matchesDynamicInlineLabel(candidate) {
+  if (!candidate) {
+    return false;
+  }
+  return INLINE_LABEL_DYNAMIC_PATTERNS.some((pattern) =>
+    pattern.test(candidate),
+  );
+}
+
+function collectInlineLabelCandidates(label) {
+  const keywords = collectInlineLabelKeywords(label);
+  const candidates = new Set();
+  candidates.add(normalizeInlineLabelCandidate(label));
+  if (keywords.length > 0) {
+    candidates.add(normalizeInlineLabelCandidate(keywords.join("")));
+  }
+  keywords.forEach((token) => {
+    candidates.add(normalizeInlineLabelCandidate(token));
+  });
+  candidates.delete("");
+  return candidates;
+}
 
 function isLikelyJson(text) {
   if (!text) return false;
@@ -190,15 +236,62 @@ function collectInlineLabelKeywords(raw) {
 }
 
 function shouldSplitInlineLabel(label) {
-  const keywords = collectInlineLabelKeywords(label);
-  if (keywords.length === 0) {
+  const candidates = collectInlineLabelCandidates(label);
+  if (candidates.size === 0) {
     return false;
   }
-  if (keywords.some((token) => INLINE_LABEL_TOKENS.has(token))) {
-    return true;
+  for (const candidate of candidates) {
+    if (INLINE_LABEL_TOKENS.has(candidate)) {
+      return true;
+    }
   }
-  const collapsed = keywords.join("");
-  return INLINE_LABEL_TOKENS.has(collapsed);
+  for (const candidate of candidates) {
+    if (matchesDynamicInlineLabel(candidate)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function humanizeLabelFragment(label) {
+  return label
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Za-z])(\d)/g, "$1 $2")
+    .replace(/(\d)([A-Za-z])/g, "$1 $2")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function formatSenseLabel(label) {
+  const normalized = normalizeInlineLabelCandidate(label);
+  const match = normalized.match(/^(?:s|sense)(\d+)([a-z]*)$/);
+  if (!match) {
+    return null;
+  }
+  const [, index] = match;
+  const categorySource = label.replace(/^[sS](?:ense)?\d+/, "");
+  const spacedCategory = humanizeLabelFragment(categorySource);
+  if (!spacedCategory) {
+    return `Sense ${index}`;
+  }
+  const normalizedCategory = spacedCategory
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+  return `Sense ${index} · ${normalizedCategory}`;
+}
+
+function deriveInlineLabelDisplay(label) {
+  const senseLabel = formatSenseLabel(label);
+  if (senseLabel) {
+    return senseLabel;
+  }
+  const normalized = normalizeInlineLabelCandidate(label);
+  if (/^example\d+$/.test(normalized)) {
+    const [, index = ""] = normalized.match(/^example(\d+)$/) || [];
+    return index ? `Example ${index}` : humanizeLabelFragment(label);
+  }
+  return humanizeLabelFragment(label);
 }
 
 // 背景：
@@ -253,6 +346,22 @@ function ensureInlineLabelLineBreak(text) {
   );
 }
 
+function enforceInlineLabelBoundary(text) {
+  return text.replace(
+    INLINE_LABEL_NO_BOUNDARY_PATTERN,
+    (match, before, segment, label, offset, source) => {
+      if (!INLINE_LABEL_BOUNDARY_PREFIX_RE.test(before)) {
+        return match;
+      }
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      const indent = computeListIndentation(source, offset) || "";
+      return `${before}\n${indent}${segment}`;
+    },
+  );
+}
+
 /**
  * 背景：
  *  - LLM 输出在 JSON 序列化后，常把 `Examples:Example1:...` 一类标签串联成单行。
@@ -300,12 +409,8 @@ function decorateBareInlineLabels(text) {
       if (precedingChar === "*" || !shouldSplitInlineLabel(label)) {
         return match;
       }
-      const humanized = label
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/([A-Za-z])(\d)/g, "$1 $2")
-        .replace(/(\d)([A-Za-z])/g, "$1 $2")
-        .trim();
-      return `${leading}**${humanized}**`;
+      const display = deriveInlineLabelDisplay(label);
+      return `${leading}**${display}**`;
     },
   );
 }
@@ -491,7 +596,8 @@ export function polishDictionaryMarkdown(source) {
   const normalized = normalizeNewlines(source);
   const expanded = expandCollapsedLabelChains(normalized);
   const decorated = decorateBareInlineLabels(expanded);
-  const spacedColon = ensureColonSpacing(decorated);
+  const separated = enforceInlineLabelBoundary(decorated);
+  const spacedColon = ensureColonSpacing(separated);
   const humanizedValues = humanizeCompactMetadataValues(spacedColon);
   const withLineBreak = ensureHeadingLineBreak(humanizedValues);
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
