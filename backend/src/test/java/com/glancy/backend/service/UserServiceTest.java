@@ -267,6 +267,104 @@ class UserServiceTest {
     }
 
     /**
+     * 测试目标：验证 requestEmailChangeCode 拒绝与当前邮箱相同的目标地址。
+     * 前置条件：数据库中存在已绑定邮箱的用户。
+     * 步骤：
+     *  1) 注册用户并记录初始邮箱；
+     *  2) 使用大小写不同但语义一致的邮箱调用 requestEmailChangeCode；
+     * 断言：
+     *  - 抛出 InvalidRequestException；
+     *  - 邮箱验证码服务无交互产生；
+     * 边界/异常：邮箱大小写差异也视为相同地址。
+     */
+    @Test
+    void Given_SameEmail_When_RequestEmailChangeCode_Then_Reject() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("sameEmailUser");
+        req.setPassword("pass123");
+        req.setEmail("primary@example.com");
+        req.setPhone("7777");
+        UserResponse created = userService.register(req);
+
+        clearInvocations(emailVerificationService);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            userService.requestEmailChangeCode(created.getId(), "Primary@Example.com")
+        );
+
+        assertEquals("新邮箱不能与当前邮箱相同", exception.getMessage());
+        verifyNoInteractions(emailVerificationService);
+    }
+
+    /**
+     * 测试目标：验证 requestEmailChangeCode 遇到其他账号已占用的邮箱时抛出重复资源异常。
+     * 前置条件：系统中存在另一位使用目标邮箱的用户。
+     * 步骤：
+     *  1) 注册用户 A；
+     *  2) 注册用户 B 并绑定目标邮箱；
+     *  3) 为用户 A 请求换绑到该邮箱；
+     * 断言：
+     *  - 抛出 DuplicateResourceException；
+     *  - 邮箱验证码服务未被调用；
+     * 边界/异常：邮箱大小写差异同样视为重复。
+     */
+    @Test
+    void Given_EmailOccupiedByOtherUser_When_RequestEmailChangeCode_Then_ThrowDuplicate() {
+        UserRegistrationRequest first = new UserRegistrationRequest();
+        first.setUsername("firstUser");
+        first.setPassword("pass123");
+        first.setEmail("first@example.com");
+        first.setPhone("8888");
+        UserResponse firstUser = userService.register(first);
+
+        UserRegistrationRequest second = new UserRegistrationRequest();
+        second.setUsername("secondUser");
+        second.setPassword("pass456");
+        second.setEmail("target@example.com");
+        second.setPhone("9999");
+        userService.register(second);
+
+        clearInvocations(emailVerificationService);
+
+        DuplicateResourceException exception = assertThrows(DuplicateResourceException.class, () ->
+            userService.requestEmailChangeCode(firstUser.getId(), "TARGET@example.com")
+        );
+
+        assertEquals("邮箱已被使用", exception.getMessage());
+        verifyNoInteractions(emailVerificationService);
+    }
+
+    /**
+     * 测试目标：验证 changeEmail 拒绝空验证码输入。
+     * 前置条件：数据库中存在待换绑邮箱的合法用户。
+     * 步骤：
+     *  1) 注册用户；
+     *  2) 使用全空格验证码调用 changeEmail；
+     * 断言：
+     *  - 抛出 InvalidRequestException 并提示验证码不能为空；
+     *  - 邮箱验证码服务未被调用；
+     * 边界/异常：null 与纯空格均视为非法输入。
+     */
+    @Test
+    void Given_BlankCode_When_ChangeEmail_Then_ThrowInvalidRequest() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("blankCodeUser");
+        req.setPassword("pass123");
+        req.setEmail("before-change@example.com");
+        req.setPhone("5555");
+        UserResponse created = userService.register(req);
+
+        clearInvocations(emailVerificationService);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            userService.changeEmail(created.getId(), "after-change@example.com", "   ")
+        );
+
+        assertEquals("验证码不能为空", exception.getMessage());
+        verifyNoInteractions(emailVerificationService);
+    }
+
+    /**
      * 测试目标：确保 requestEmailChangeCode 拒绝空邮箱输入。
      * 前置条件：数据库中存在合法用户。
      * 步骤：
