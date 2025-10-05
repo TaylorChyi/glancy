@@ -14,6 +14,15 @@ import { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage } from "@/context";
 import ThemeIcon from "@/components/ui/Icon/index.tsx";
+import { useMediaQuery } from "@/hooks";
+
+/**
+ * 关键决策与取舍：
+ *  - 当设置面板宽度收敛至单列时（<= 768px），导航需切换为顶部横排，仅保留图标以维持
+ *    视觉节奏；通过常量集中管理阈值，避免散落魔法数并与样式断点保持一致。
+ */
+const HORIZONTAL_NAV_BREAKPOINT = 768;
+const HORIZONTAL_NAV_QUERY = `(max-width: ${HORIZONTAL_NAV_BREAKPOINT}px)`;
 
 /**
  * 意图：针对英文环境生成 Title Case 文案，保证标签语气与设计规范一致。
@@ -97,11 +106,14 @@ function SettingsNav({
 }) {
   const { lang } = useLanguage();
   const sectionCount = sections.length;
+  const isHorizontalLayout = useMediaQuery(HORIZONTAL_NAV_QUERY);
+  const navOrientation = isHorizontalLayout ? "horizontal" : "vertical";
   const containerClassName = classes?.container ?? "";
   const actionWrapperClassName = classes?.action ?? "";
   const navClassName = classes?.nav ?? "";
   const buttonClassName = classes?.button ?? "";
   const labelClassName = classes?.label ?? "";
+  const labelTextClassName = classes?.labelText ?? "";
   const iconClassName = classes?.icon ?? "";
   const actionButtonClassName = classes?.actionButton ?? "";
 
@@ -113,10 +125,14 @@ function SettingsNav({
   }, [actionButtonClassName, renderCloseAction]);
 
   return (
-    <div className={containerClassName}>
+    <div
+      className={containerClassName}
+      data-orientation={navOrientation}
+      data-compact={isHorizontalLayout || undefined}
+    >
       <nav
         aria-label={tablistLabel}
-        aria-orientation="vertical"
+        aria-orientation={navOrientation}
         className={navClassName}
         role="tablist"
         /*
@@ -127,6 +143,7 @@ function SettingsNav({
         style={{
           "--settings-nav-section-count": sectionCount,
         }}
+        data-orientation={navOrientation}
       >
         {closeActionNode ? (
           <div role="presentation" className={actionWrapperClassName}>
@@ -138,6 +155,13 @@ function SettingsNav({
           const panelId = `${section.id}-panel`;
           const isActive = section.id === activeSectionId;
           const formattedLabel = formatSectionLabel(section.label, lang);
+          /*
+           * 关键决策与取舍：
+           *  - 窄屏时以图标承担主视觉，文本通过 aria-label 保留无障碍语义；
+           *    若缺失图标则回退保留文本，避免按钮出现无内容状态。
+           */
+          const hideLabelText =
+            isHorizontalLayout && Boolean(section.icon?.name);
           return (
             <button
               key={section.id}
@@ -150,6 +174,7 @@ function SettingsNav({
               disabled={section.disabled}
               className={buttonClassName}
               data-state={isActive ? "active" : "inactive"}
+              aria-label={hideLabelText ? formattedLabel : undefined}
               onClick={() => {
                 if (!section.disabled) {
                   onSelect(section);
@@ -165,7 +190,13 @@ function SettingsNav({
                   wrapperClassName: iconClassName,
                   labelText: formattedLabel,
                 })}
-                {formattedLabel}
+                <span
+                  className={labelTextClassName}
+                  data-element="label-text"
+                  aria-hidden={hideLabelText || undefined}
+                >
+                  {formattedLabel}
+                </span>
               </span>
             </button>
           );
@@ -204,6 +235,7 @@ SettingsNav.propTypes = {
     nav: PropTypes.string,
     button: PropTypes.string,
     label: PropTypes.string,
+    labelText: PropTypes.string,
     icon: PropTypes.string,
     actionButton: PropTypes.string,
   }),

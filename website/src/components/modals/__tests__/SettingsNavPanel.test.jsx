@@ -17,6 +17,68 @@ import SettingsNav from "../SettingsNav.jsx";
 import SettingsPanel from "../SettingsPanel.jsx";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
+const originalMatchMedia = window.matchMedia;
+const mediaQueryListeners = new Set();
+let compactViewportMatches = false;
+
+const notifyMediaQueryListeners = () => {
+  for (const listener of mediaQueryListeners) {
+    listener({ matches: compactViewportMatches });
+  }
+};
+
+const setCompactViewport = (matches) => {
+  compactViewportMatches = matches;
+  notifyMediaQueryListeners();
+};
+
+beforeAll(() => {
+  window.matchMedia = (query) => ({
+    media: query,
+    get matches() {
+      return compactViewportMatches;
+    },
+    addEventListener: (event, listener) => {
+      if (event === "change") {
+        mediaQueryListeners.add(listener);
+      }
+    },
+    removeEventListener: (event, listener) => {
+      if (event === "change") {
+        mediaQueryListeners.delete(listener);
+      }
+    },
+    addListener: (listener) => {
+      mediaQueryListeners.add(listener);
+    },
+    removeListener: (listener) => {
+      mediaQueryListeners.delete(listener);
+    },
+    dispatchEvent: (event) => {
+      if (event?.type === "change") {
+        const payload = {
+          matches:
+            typeof event.matches === "boolean"
+              ? event.matches
+              : compactViewportMatches,
+        };
+        for (const listener of mediaQueryListeners) {
+          listener(payload);
+        }
+      }
+      return true;
+    },
+  });
+});
+
+afterAll(() => {
+  window.matchMedia = originalMatchMedia;
+});
+
+beforeEach(() => {
+  setCompactViewport(false);
+});
+
 function TestSection({ headingId, title, actionLabel }) {
   return (
     <section aria-labelledby={headingId}>
@@ -239,5 +301,33 @@ test("Given section icon When rendering Then exposes decorative icon wrapper", (
   const iconWrapper = accountTab.querySelector('[data-section-icon="user"]');
   expect(iconWrapper).not.toBeNull();
   expect(iconWrapper).toHaveAttribute("aria-hidden", "true");
+});
+
+/**
+ * 测试目标：窄屏模式下导航切换为水平布局并隐藏文本，仅保留图标展示。
+ * 前置条件：设置 matchMedia 返回 matches=true，渲染带图标的分区。
+ * 步骤：
+ *  1) 渲染 TestSettingsHarness。
+ *  2) 查询 tablist 与标签文本节点。
+ * 断言：
+ *  - tablist 的 aria-orientation 为 horizontal。
+ *  - 标签按钮具备 aria-label 并保留可访问名称。
+ *  - 标签文本节点设置 aria-hidden="true" 以配合视觉隐藏。
+ * 边界/异常：
+ *  - 若未来部分分区缺少图标，应回退展示文本并更新断言。
+ */
+test("Given compact viewport When rendering Then switches to horizontal icon-only navigation", () => {
+  setCompactViewport(true);
+  render(<TestSettingsHarness sections={SECTIONS_WITH_ICONS} />);
+
+  const tablist = screen.getByRole("tablist", { name: "Example sections" });
+  expect(tablist).toHaveAttribute("aria-orientation", "horizontal");
+
+  const accountTab = screen.getByRole("tab", { name: "Account" });
+  expect(accountTab).toHaveAttribute("aria-label", "Account");
+
+  const labelTextNode = accountTab.querySelector('[data-element="label-text"]');
+  expect(labelTextNode).not.toBeNull();
+  expect(labelTextNode).toHaveAttribute("aria-hidden", "true");
 });
 

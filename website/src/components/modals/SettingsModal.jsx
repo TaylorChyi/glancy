@@ -171,6 +171,7 @@ function SettingsModal({ open, onClose, initialSection }) {
             nav: preferencesStyles.tabs,
             button: preferencesStyles.tab,
             label: preferencesStyles["tab-label"],
+            labelText: preferencesStyles["tab-label-text"],
             actionButton: preferencesStyles["close-button"],
           }}
         />

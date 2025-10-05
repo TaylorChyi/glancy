@@ -215,6 +215,11 @@
   text-transform: none;
 }
 
+.tab-label-text {
+  display: inline-flex;
+  align-items: center;
+}
+
 .tab-icon {
   display: inline-flex;
   align-items: center;
@@ -1209,6 +1214,42 @@
   .tab {
     min-width: 0;
     height: 100%;
+  }
+
+  /*
+   * 当 SettingsNav 报告水平布局时，仅展示图标并将标签等宽分布，
+   * 通过视觉隐藏文本保留无障碍名称由 aria-label 提供。
+   */
+  .tabs[data-orientation="horizontal"] {
+    align-items: center;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab {
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-label {
+    justify-content: center;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-label-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 
   .section {
