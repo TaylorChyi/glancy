@@ -47,11 +47,11 @@ const createIconConfig = (name) =>
  */
 const SECTION_ICON_REGISTRY = Object.freeze({
   general: createIconConfig("cog-6-tooth"),
-  personalization: createIconConfig("star-outline"),
+  personalization: createIconConfig("personalization"),
   data: createIconConfig("shield-check"),
   keyboard: createIconConfig("command-line"),
   account: createIconConfig("user"),
-  subscription: createIconConfig("star-solid"),
+  subscription: createIconConfig("subscription"),
 });
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
