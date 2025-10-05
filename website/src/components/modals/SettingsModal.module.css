@@ -11,6 +11,8 @@
   --preferences-panel-shadow: 0 24px 60px rgb(0 0 0 / 45%);
   --preferences-panel-accent: linear-gradient(135deg, #5a8bff, #4c6fff);
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
   --modal-surface: var(--preferences-panel-bg);
   --modal-color: var(--preferences-panel-text);
   --modal-shadow: var(--preferences-panel-shadow);
@@ -40,6 +42,8 @@
     0 18px 42px rgb(31 35 43 / 16%)
   );
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
 }
 
 .close-button {

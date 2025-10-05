@@ -27,20 +27,89 @@ const safeString = (value, fallback = FALLBACK_VALUE) => {
   return trimmed.length > 0 ? trimmed : fallback;
 };
 
-const formatWithTemplate = (template, value) => {
-  if (!template) {
-    return value ?? FALLBACK_VALUE;
+const normalizeDisplayValue = (value, fallback = FALLBACK_VALUE) => {
+  if (value === null || value === undefined) {
+    return fallback;
   }
-  return template.replace("{value}", value ?? FALLBACK_VALUE);
+  const stringified = `${value}`.trim();
+  return stringified.length > 0 ? stringified : fallback;
+};
+
+/**
+ * 意图：在订阅文案中统一处理 {value}/{amount}/{equivalent} 等占位符，避免组件散落手写替换。
+ * 输入：
+ *  - template: 允许为空的字符串模板；
+ *  - replacements: 需要注入模板的键值对，自动兼容大小写及 value↔amount 同名映射；
+ *  - fallbackValue: 占位符缺失或模板无效时的兜底文案。
+ * 输出：
+ *  - 插值后的最终字符串。
+ * 流程：
+ *  1) 模板为空或非字符串时直接返回 fallbackValue；
+ *  2) 使用单个正则遍历 {token} 占位符；
+ *  3) 兼容 token 的原始/大小写形式，并在 value/amount 间互为后备，未命中时回退 fallbackValue。
+ * 错误处理：
+ *  - 不抛出异常，任何非法输入均退化为 fallbackValue，保障界面稳定。
+ * 复杂度：O(n)，其中 n 为模板长度。
+ */
+const interpolateTemplate = (
+  template,
+  replacements,
+  fallbackValue = FALLBACK_VALUE,
+) => {
+  if (typeof template !== "string" || template.trim().length === 0) {
+    return fallbackValue;
+  }
+
+  const resolvedFallback = normalizeDisplayValue(fallbackValue, FALLBACK_VALUE);
+  const candidatePairs = new Map();
+
+  Object.entries(replacements ?? {}).forEach(([key, value]) => {
+    if (!key) {
+      return;
+    }
+    candidatePairs.set(key, value);
+    candidatePairs.set(key.toLowerCase(), value);
+    candidatePairs.set(key.toUpperCase(), value);
+  });
+
+  return template.replace(/\{(\w+)\}/g, (_match, token) => {
+    if (candidatePairs.has(token)) {
+      return normalizeDisplayValue(candidatePairs.get(token), resolvedFallback);
+    }
+    if (token === "value" && candidatePairs.has("amount")) {
+      return normalizeDisplayValue(
+        candidatePairs.get("amount"),
+        resolvedFallback,
+      );
+    }
+    if (token === "amount" && candidatePairs.has("value")) {
+      return normalizeDisplayValue(
+        candidatePairs.get("value"),
+        resolvedFallback,
+      );
+    }
+    return resolvedFallback;
+  });
+};
+
+const formatWithTemplate = (template, value) => {
+  const fallback = normalizeDisplayValue(value, FALLBACK_VALUE);
+  if (!template) {
+    return fallback;
+  }
+  return interpolateTemplate(template, { value, amount: value }, fallback);
 };
 
 const formatTemplateWithPair = (template, amount, equivalent) => {
+  const fallback = normalizeDisplayValue(amount, FALLBACK_VALUE);
   if (!template) {
-    return `${amount ?? FALLBACK_VALUE}`;
+    return fallback;
   }
-  return template
-    .replace("{amount}", amount ?? FALLBACK_VALUE)
-    .replace("{equivalent}", equivalent ?? FALLBACK_VALUE);
+  return interpolateTemplate(
+    template,
+    { amount, value: amount, equivalent },
+    fallback,
+  );
 };
 
 const formatCurrency = (amount, { currency, currencySymbol }) => {

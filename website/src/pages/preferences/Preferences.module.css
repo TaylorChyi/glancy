@@ -26,6 +26,8 @@
   --preferences-panel-surface: rgb(255 255 255 / 6%);
   --preferences-panel-accent: linear-gradient(135deg, #5a8bff, #4c6fff);
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
 
   width: min(720px, 100%);
   padding: 44px;
@@ -43,6 +45,8 @@
   --preferences-panel-ring: var(--sidebar-input-ring, #cfd4e2);
   --preferences-panel-surface: rgb(15 17 21 / 6%);
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
 }
 
 .header {
@@ -622,8 +626,8 @@
   padding: 12px 16px;
   border-radius: 14px;
   border: none;
-  background: var(--preferences-panel-text);
-  color: var(--night-elevated, #0f1115);
+  background: var(--preferences-button-contrast-bg);
+  color: var(--preferences-button-contrast-text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -719,8 +723,8 @@
   padding: 10px 18px;
   border-radius: 14px;
   border: none;
-  background: var(--preferences-panel-text);
-  color: var(--night-elevated, #0f1115);
+  background: var(--preferences-button-contrast-bg);
+  color: var(--preferences-button-contrast-text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -738,7 +742,7 @@
   border: none;
   background: var(--preferences-panel-accent);
   box-shadow: var(--preferences-panel-accent-shadow);
-  color: white;
+  color: var(--preferences-button-contrast-text);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
