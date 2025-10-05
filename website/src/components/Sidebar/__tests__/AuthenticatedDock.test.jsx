@@ -40,7 +40,6 @@ describe("AuthenticatedDock", () => {
     const labels = {
       help: "帮助",
       settings: "设置",
-      shortcuts: "快捷键",
       logout: "退出",
     };
     const props = {
@@ -48,13 +47,20 @@ describe("AuthenticatedDock", () => {
       planLabel: "Plus",
       labels,
       onOpenSettings: jest.fn(),
-      onOpenShortcuts: jest.fn(),
       onOpenLogout: jest.fn(),
     };
 
     render(<AuthenticatedDock {...props} />);
 
     expect(screen.getByTestId("sidebar-user-dock")).toHaveClass("wrapper");
-    expect(mockUserMenu).toHaveBeenCalledWith(expect.objectContaining(props));
+    expect(mockUserMenu).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayName: props.displayName,
+        planLabel: props.planLabel,
+        labels: props.labels,
+        onOpenSettings: props.onOpenSettings,
+        onOpenLogout: props.onOpenLogout,
+      }),
+    );
   });
 });

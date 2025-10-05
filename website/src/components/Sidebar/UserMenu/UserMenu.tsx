@@ -12,8 +12,6 @@ interface UserMenuProps {
   labels: {
     help: string;
     settings: string;
-    shortcuts: string;
-    shortcutsDescription?: string;
     logout: string;
     helpCenter?: string;
     releaseNotes?: string;
@@ -22,7 +20,6 @@ interface UserMenuProps {
     downloadApps?: string;
   };
   onOpenSettings: (section?: string) => void;
-  onOpenShortcuts: () => void;
   onOpenLogout: () => void;
 }
 
@@ -71,7 +68,6 @@ const HELP_ITEMS = [
   { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
   { key: "bug", icon: "flag", labelKey: "reportBug" },
   { key: "apps", icon: "phone", labelKey: "downloadApps" },
-  { key: "shortcuts", icon: "command-line", labelKey: "shortcuts" },
 ] as const;
 
 type HelpItemConfig = (typeof HELP_ITEMS)[number];
@@ -89,7 +85,6 @@ function UserMenu({
   planLabel,
   labels,
   onOpenSettings,
-  onOpenShortcuts,
   onOpenLogout,
 }: UserMenuProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -111,8 +106,6 @@ function UserMenu({
     helpCenter,
     releaseNotes,
     reportBug,
-    shortcuts,
-    shortcutsDescription,
     termsPolicies,
     downloadApps,
     settings,
@@ -124,24 +117,13 @@ function UserMenu({
       helpCenter,
       releaseNotes,
       reportBug,
-      shortcuts,
       termsPolicies,
       downloadApps,
     };
 
     return HELP_ITEMS.map<SubmenuLinkItem>((item) => {
       const labelKey = item.labelKey as HelpLabelKey;
-      const rawLabel = labelMap[labelKey];
-      const label = item.key === "shortcuts" ? shortcuts : rawLabel ?? help;
-      if (item.key === "shortcuts") {
-        return {
-          id: item.key,
-          icon: item.icon,
-          label,
-          onSelect: onOpenShortcuts,
-        };
-      }
-
+      const label = labelMap[labelKey] ?? help;
       return {
         id: item.key,
         icon: item.icon,
@@ -153,10 +135,8 @@ function UserMenu({
     downloadApps,
     help,
     helpCenter,
-    onOpenShortcuts,
     releaseNotes,
     reportBug,
-    shortcuts,
     termsPolicies,
   ]);
 
@@ -176,7 +156,6 @@ function UserMenu({
       id: "help",
       icon: "question-mark-circle",
       label: help,
-      description: shortcutsDescription,
       items: supportItems,
     };
 
@@ -199,7 +178,6 @@ function UserMenu({
     onOpenLogout,
     onOpenSettings,
     settings,
-    shortcutsDescription,
     supportItems,
   ]);
 
