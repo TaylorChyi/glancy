@@ -13,6 +13,7 @@ import { useWordStore } from "./wordStore.js";
 import { useDataGovernanceStore } from "./dataGovernanceStore.js";
 
 const HISTORY_PAGE_SIZE = 20;
+const REMOTE_HISTORY_PAGE_LIMIT = 50;
 
 type SearchRecordDto = {
   id?: string | number | null;
@@ -102,6 +103,57 @@ const normalizeFlavor = (flavor?: string | null) => {
   const upper = String(flavor).trim().toUpperCase();
   return upper || WORD_FLAVOR_BILINGUAL;
 };
+
+/**
+ * 意图：使用模板方法遍历服务端分页历史，收集满足谓词的记录。
+ * 输入：用户凭证 user、过滤函数 predicate。
+ * 输出：匹配的历史项集合；若接口异常则抛出错误交由调用方处理。
+ * 流程：
+ *  1) 逐页请求搜索历史，每页大小沿用 HISTORY_PAGE_SIZE；
+ *  2) 将响应映射为 HistoryItem 并根据 predicate 过滤；
+ *  3) 达到上限页数或最后一页时终止循环。
+ * 错误处理：透传请求异常，由上层统一交由 handleApiError 处理。
+ * 复杂度：最坏 O(P)，P 为遍历的页数；空间为匹配项个数。
+ */
+async function collectRemoteHistory(
+  user: User,
+  predicate: (item: HistoryItem) => boolean,
+): Promise<HistoryItem[]> {
+  const matches: HistoryItem[] = [];
+  let page = 0;
+
+  for (let visited = 0; visited < REMOTE_HISTORY_PAGE_LIMIT; visited += 1) {
+    const response = await api.searchRecords.fetchSearchRecords({
+      token: user.token,
+      page,
+      size: HISTORY_PAGE_SIZE,
+    });
+    const payload: SearchRecordDto[] = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.items)
+        ? response.items
+        : [];
+
+    if (payload.length === 0) {
+      break;
+    }
+
+    const items = payload.map(toHistoryItem);
+    items.forEach((item) => {
+      if (predicate(item)) {
+        matches.push(item);
+      }
+    });
+
+    if (payload.length < HISTORY_PAGE_SIZE) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return matches;
+}
 
 const sanitizeVersion = (
   version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,
@@ -378,45 +430,77 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           return;
         }
         const currentHistory = get().history;
-        const candidates = currentHistory.filter(
+        const localCandidates = currentHistory.filter(
           (item) => item.language === normalized,
         );
-        if (candidates.length === 0) {
+        if (localCandidates.length > 0) {
+          set((state) => {
+            const filtered = state.history.filter(
+              (item) => item.language !== normalized,
+            );
+            return {
+              history: filtered,
+              nextPage: resolveNextPage(filtered.length),
+            };
+          });
+        } else if (!user?.token) {
           return;
         }
 
-        set((state) => {
-          const filtered = state.history.filter(
-            (item) => item.language !== normalized,
-          );
-          return {
-            history: filtered,
-            nextPage: resolveNextPage(filtered.length),
-          };
-        });
-
-        candidates.forEach((item) => {
-          wordStore.getState().removeVersions(item.termKey);
+        const aggregated = new Map<string, HistoryItem>();
+        localCandidates.forEach((item) => {
+          aggregated.set(item.termKey, item);
         });
 
         if (user?.token) {
-          for (const item of candidates) {
+          let remoteCandidates: HistoryItem[] = [];
+          try {
+            remoteCandidates = await collectRemoteHistory(
+              user,
+              (item) => item.language === normalized,
+            );
+          } catch (err) {
+            handleApiError(err, set);
+            return;
+          }
+          remoteCandidates.forEach((item) => {
+            aggregated.set(item.termKey, item);
+          });
+        }
+
+        aggregated.forEach((item) => {
+          wordStore.getState().removeVersions(item.termKey);
+        });
+
+        if (user?.token && aggregated.size > 0) {
+          const deleted = new Set<string>();
+          for (const item of aggregated.values()) {
             const versionIds = item.versions.length
               ? item.versions.map((version) => version.id)
               : item.latestVersionId
                 ? [item.latestVersionId]
                 : [];
             for (const versionId of versionIds) {
+              if (!versionId || deleted.has(versionId)) {
+                continue;
+              }
               try {
                 await api.searchRecords.deleteSearchRecord({
                   recordId: versionId,
                   token: user.token,
                 });
+                deleted.add(versionId);
               } catch (err) {
                 handleApiError(err, set);
                 return;
               }
             }
+          }
+
+          try {
+            await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+          } catch (err) {
+            handleApiError(err, set);
           }
         }
       },

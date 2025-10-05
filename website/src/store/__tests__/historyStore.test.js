@@ -261,6 +261,38 @@ describe("historyStore", () => {
    */
   test("Given bilingual history When clearing language Then scoped records removed", async () => {
     const createdAt = "2024-05-01T10:00:00Z";
+    mockApi.searchRecords.fetchSearchRecords
+      .mockResolvedValueOnce([
+        {
+          id: "en-1",
+          term: "hello",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          createdAt,
+          favorite: false,
+          versions: [{ id: "en-1", createdAt, favorite: false }],
+        },
+        {
+          id: "zh-1",
+          term: "你好",
+          language: "CHINESE",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          createdAt,
+          favorite: false,
+          versions: [{ id: "zh-1", createdAt, favorite: false }],
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "en-1",
+          term: "hello",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          createdAt,
+          favorite: false,
+          versions: [{ id: "en-1", createdAt, favorite: false }],
+        },
+      ]);
     useHistoryStore.setState({
       history: [
         {
@@ -302,6 +334,72 @@ describe("historyStore", () => {
     });
     expect(removeSpy).toHaveBeenCalledWith("CHINESE:BILINGUAL:你好");
     removeSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：分页加载时仍能彻底清除某语言的全部历史记录。
+   * 前置条件：后端第 1 页返回 20 条英文记录，第 2 页仍有额外英文记录。
+   * 步骤：
+   *  1) 预置一条英文历史以激活清理流程；
+   *  2) 模拟分页接口返回两页英文记录；
+   *  3) 调用 clearHistoryByLanguage("ENGLISH")。
+   * 断言：
+   *  - deleteSearchRecord 覆盖到第 2 页的版本 ID；
+   *  - fetchSearchRecords 被调用 3 次（两页收集 + 重载首屏）。
+   * 边界/异常：
+   *  - 若遍历提前终止，将遗漏尾页导致记录残留。
+   */
+  test("Given paginated history When clearing language Then remote pages removed", async () => {
+    const createdAt = "2024-05-01T10:00:00Z";
+    const firstPage = Array.from({ length: 20 }, (_, idx) => ({
+      id: `en-${idx}`,
+      term: `term-${idx}`,
+      language: "ENGLISH",
+      flavor: WORD_FLAVOR_BILINGUAL,
+      createdAt,
+      favorite: false,
+      versions: [{ id: `en-${idx}`, createdAt, favorite: false }],
+    }));
+    const extra = {
+      id: "en-extra",
+      term: "beyond",
+      language: "ENGLISH",
+      flavor: WORD_FLAVOR_BILINGUAL,
+      createdAt,
+      favorite: false,
+      versions: [{ id: "en-extra", createdAt, favorite: false }],
+    };
+    mockApi.searchRecords.fetchSearchRecords
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce([extra])
+      .mockResolvedValueOnce([]);
+
+    useHistoryStore.setState({
+      history: [
+        {
+          term: "seed",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:seed",
+          createdAt,
+          favorite: false,
+          versions: [{ id: "en-seed", createdAt, favorite: false }],
+          latestVersionId: "en-seed",
+        },
+      ],
+      error: null,
+    });
+
+    await act(async () => {
+      await useHistoryStore.getState().clearHistoryByLanguage("ENGLISH", user);
+    });
+
+    expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
+      recordId: "en-extra",
+      token: user.token,
+    });
+    expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(3);
+    expect(useHistoryStore.getState().history).toHaveLength(0);
   });
 
   /**
