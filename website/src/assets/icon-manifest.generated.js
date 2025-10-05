@@ -43,30 +43,40 @@ import iconAsset40 from "./library.svg";
 import iconAsset41 from "./library.svg?raw";
 import iconAsset42 from "./link.svg";
 import iconAsset43 from "./link.svg?raw";
-import iconAsset44 from "./phone.svg";
-import iconAsset45 from "./phone.svg?raw";
-import iconAsset46 from "./question-mark-circle.svg";
-import iconAsset47 from "./question-mark-circle.svg?raw";
-import iconAsset48 from "./refresh.svg";
-import iconAsset49 from "./refresh.svg?raw";
-import iconAsset50 from "./search.svg";
-import iconAsset51 from "./search.svg?raw";
-import iconAsset52 from "./send-button.svg";
-import iconAsset53 from "./send-button.svg?raw";
-import iconAsset54 from "./shield-check.svg";
-import iconAsset55 from "./shield-check.svg?raw";
-import iconAsset56 from "./star-outline.svg";
-import iconAsset57 from "./star-outline.svg?raw";
-import iconAsset58 from "./star-solid.svg";
-import iconAsset59 from "./star-solid.svg?raw";
-import iconAsset60 from "./trash.svg";
-import iconAsset61 from "./trash.svg?raw";
-import iconAsset62 from "./user.svg";
-import iconAsset63 from "./user.svg?raw";
-import iconAsset64 from "./voice-button.svg";
-import iconAsset65 from "./voice-button.svg?raw";
-import iconAsset66 from "./wechat.svg";
-import iconAsset67 from "./wechat.svg?raw";
+import iconAsset44 from "./personalization.svg";
+import iconAsset45 from "./personalization.svg?raw";
+import iconAsset46 from "./phone.svg";
+import iconAsset47 from "./phone.svg?raw";
+import iconAsset48 from "./question-mark-circle.svg";
+import iconAsset49 from "./question-mark-circle.svg?raw";
+import iconAsset50 from "./refresh.svg";
+import iconAsset51 from "./refresh.svg?raw";
+import iconAsset52 from "./search.svg";
+import iconAsset53 from "./search.svg?raw";
+import iconAsset54 from "./send-button.svg";
+import iconAsset55 from "./send-button.svg?raw";
+import iconAsset56 from "./shield-check.svg";
+import iconAsset57 from "./shield-check.svg?raw";
+import iconAsset58 from "./star-outline.svg";
+import iconAsset59 from "./star-outline.svg?raw";
+import iconAsset60 from "./star-solid.svg";
+import iconAsset61 from "./star-solid.svg?raw";
+import iconAsset62 from "./subscription.svg";
+import iconAsset63 from "./subscription.svg?raw";
+import iconAsset64 from "./trash.svg";
+import iconAsset65 from "./trash.svg?raw";
+import iconAsset66 from "./user.svg";
+import iconAsset67 from "./user.svg?raw";
+import iconAsset68 from "./voice-button.svg";
+import iconAsset69 from "./voice-button.svg?raw";
+import iconAsset70 from "./waiting-frame-1.svg";
+import iconAsset71 from "./waiting-frame-1.svg?raw";
+import iconAsset72 from "./waiting-frame-2.svg";
+import iconAsset73 from "./waiting-frame-2.svg?raw";
+import iconAsset74 from "./waiting-frame-3.svg";
+import iconAsset75 from "./waiting-frame-3.svg?raw";
+import iconAsset76 from "./wechat.svg";
+import iconAsset77 from "./wechat.svg?raw";
 
 const registry = Object.freeze({
   "adjustments-horizontal": Object.freeze({
@@ -135,41 +145,56 @@ const registry = Object.freeze({
   "link": Object.freeze({
     single: Object.freeze({ url: iconAsset42, inline: iconAsset43 })
   }),
-  "phone": Object.freeze({
+  "personalization": Object.freeze({
     single: Object.freeze({ url: iconAsset44, inline: iconAsset45 })
   }),
-  "question-mark-circle": Object.freeze({
+  "phone": Object.freeze({
     single: Object.freeze({ url: iconAsset46, inline: iconAsset47 })
   }),
-  "refresh": Object.freeze({
+  "question-mark-circle": Object.freeze({
     single: Object.freeze({ url: iconAsset48, inline: iconAsset49 })
   }),
-  "search": Object.freeze({
+  "refresh": Object.freeze({
     single: Object.freeze({ url: iconAsset50, inline: iconAsset51 })
   }),
-  "send-button": Object.freeze({
+  "search": Object.freeze({
     single: Object.freeze({ url: iconAsset52, inline: iconAsset53 })
   }),
-  "shield-check": Object.freeze({
+  "send-button": Object.freeze({
     single: Object.freeze({ url: iconAsset54, inline: iconAsset55 })
   }),
-  "star-outline": Object.freeze({
+  "shield-check": Object.freeze({
     single: Object.freeze({ url: iconAsset56, inline: iconAsset57 })
   }),
-  "star-solid": Object.freeze({
+  "star-outline": Object.freeze({
     single: Object.freeze({ url: iconAsset58, inline: iconAsset59 })
   }),
-  "trash": Object.freeze({
+  "star-solid": Object.freeze({
     single: Object.freeze({ url: iconAsset60, inline: iconAsset61 })
   }),
-  "user": Object.freeze({
+  "subscription": Object.freeze({
     single: Object.freeze({ url: iconAsset62, inline: iconAsset63 })
   }),
-  "voice-button": Object.freeze({
+  "trash": Object.freeze({
     single: Object.freeze({ url: iconAsset64, inline: iconAsset65 })
   }),
-  "wechat": Object.freeze({
+  "user": Object.freeze({
     single: Object.freeze({ url: iconAsset66, inline: iconAsset67 })
+  }),
+  "voice-button": Object.freeze({
+    single: Object.freeze({ url: iconAsset68, inline: iconAsset69 })
+  }),
+  "waiting-frame-1": Object.freeze({
+    single: Object.freeze({ url: iconAsset70, inline: iconAsset71 })
+  }),
+  "waiting-frame-2": Object.freeze({
+    single: Object.freeze({ url: iconAsset72, inline: iconAsset73 })
+  }),
+  "waiting-frame-3": Object.freeze({
+    single: Object.freeze({ url: iconAsset74, inline: iconAsset75 })
+  }),
+  "wechat": Object.freeze({
+    single: Object.freeze({ url: iconAsset76, inline: iconAsset77 })
   })
 });
 
