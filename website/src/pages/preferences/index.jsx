@@ -23,6 +23,8 @@ import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import useStableSettingsPanelHeight from "@/components/modals/useStableSettingsPanelHeight.js";
 
+const composeClassName = (...classNames) => classNames.filter(Boolean).join(" ");
+
 function Preferences({ initialSection, renderCloseAction }) {
   const {
     copy,
@@ -61,7 +63,14 @@ function Preferences({ initialSection, renderCloseAction }) {
       referenceSectionId: "data",
     });
 
-  const panelClassName = styles.panel;
+  const sizedPanelClassName = composeClassName(
+    styles.panel,
+    styles["panel-surface"],
+  );
+  const probePanelClassName = composeClassName(
+    styles.panel,
+    styles["panel-probe"],
+  );
 
   const measurementProbe = useMemo(() => {
     if (!referenceMeasurement) {
@@ -73,11 +82,11 @@ function Preferences({ initialSection, renderCloseAction }) {
       registerNode,
     } = referenceMeasurement;
     return (
-      <div aria-hidden className={panelClassName} ref={registerNode}>
+      <div aria-hidden className={probePanelClassName} ref={registerNode}>
         <ReferenceComponent {...props} />
       </div>
     );
-  }, [panelClassName, referenceMeasurement]);
+  }, [probePanelClassName, referenceMeasurement]);
 
   return (
     <div className={styles.content}>
@@ -127,7 +136,7 @@ function Preferences({ initialSection, renderCloseAction }) {
             panelId={panel.panelId}
             tabId={panel.tabId}
             headingId={panel.headingId}
-            className={styles.panel}
+            className={sizedPanelClassName}
             onHeadingElementChange={registerHeading}
             onPanelElementChange={registerActivePanelNode}
           >
