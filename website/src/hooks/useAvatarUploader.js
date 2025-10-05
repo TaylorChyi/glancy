@@ -15,7 +15,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useApi } from "@/hooks/useApi.js";
 import { useUser } from "@/context";
-import { cacheBust } from "@/utils";
+import { cacheBust, normalizeFiles } from "@/utils";
 
 export const AVATAR_UPLOAD_STATUS = Object.freeze({
   idle: "idle",
@@ -23,19 +23,6 @@ export const AVATAR_UPLOAD_STATUS = Object.freeze({
   succeeded: "succeeded",
   failed: "failed",
 });
-
-const normalizeFiles = (files) => {
-  if (!files) {
-    return [];
-  }
-  if (typeof files[Symbol.iterator] === "function") {
-    return Array.from(files);
-  }
-  if (typeof files.length === "number") {
-    return Array.from({ length: files.length }, (_, index) => files[index]);
-  }
-  return Array.isArray(files) ? files : [files];
-};
 
 /**
  * 意图：统一处理头像文件上传并在成功后刷新用户上下文。

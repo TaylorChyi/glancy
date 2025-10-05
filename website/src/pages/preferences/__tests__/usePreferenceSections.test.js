@@ -5,7 +5,7 @@ const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
 const mockUseKeyboardShortcutContext = jest.fn();
-const mockUseAvatarUploader = jest.fn();
+const mockUseAvatarEditorFlow = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -15,9 +15,9 @@ jest.unstable_mockModule("@/context", () => ({
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
-jest.unstable_mockModule("@/hooks/useAvatarUploader.js", () => ({
+jest.unstable_mockModule("@/hooks/useAvatarEditorFlow.js", () => ({
   __esModule: true,
-  default: mockUseAvatarUploader,
+  default: mockUseAvatarEditorFlow,
 }));
 
 let usePreferenceSections;
@@ -150,7 +150,7 @@ beforeEach(() => {
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
   mockUseKeyboardShortcutContext.mockReset();
-  mockUseAvatarUploader.mockReset();
+  mockUseAvatarEditorFlow.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -166,12 +166,20 @@ beforeEach(() => {
     register: jest.fn(),
     unregister: jest.fn(),
   });
-  mockUseAvatarUploader.mockReturnValue({
+  mockUseAvatarEditorFlow.mockReturnValue({
     onSelectAvatar: jest.fn(),
-    isUploading: false,
-    status: "idle",
-    error: null,
-    reset: jest.fn(),
+    isBusy: false,
+    avatarEditor: {
+      open: false,
+      status: "idle",
+      imageUrl: "",
+      imageWidth: 0,
+      imageHeight: 0,
+      isPreparing: false,
+      isProcessing: false,
+      handleCancel: jest.fn(),
+      handleConfirm: jest.fn(),
+    },
   });
 });
 

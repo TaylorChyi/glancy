@@ -16,6 +16,7 @@ import BaseModal from "./BaseModal.jsx";
 import SettingsBody from "./SettingsBody.jsx";
 import SettingsNav from "./SettingsNav.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
+import AvatarEditorDialog from "./AvatarEditorDialog.jsx";
 import modalStyles from "./SettingsModal.module.css";
 import preferencesStyles from "@/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js";
@@ -53,6 +54,7 @@ function SettingsModal({ open, onClose, initialSection }) {
     handleSectionSelect,
     handleSubmit,
     panel,
+    avatarEditor,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -132,70 +134,73 @@ function SettingsModal({ open, onClose, initialSection }) {
   );
 
   return (
-    <BaseModal
-      open={open}
-      onClose={onClose}
-      className={`${modalStyles.dialog} modal-content`}
-      closeLabel={resolvedCloseLabel}
-      hideDefaultCloseButton
-      ariaLabelledBy={resolvedHeadingId}
-      ariaDescribedBy={resolvedDescriptionId}
-    >
-      <SettingsBody
-        className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
-        style={bodyStyle}
-        measurementProbe={measurementProbe}
+    <>
+      <BaseModal
+        open={open}
+        onClose={onClose}
+        className={`${modalStyles.dialog} modal-content`}
+        closeLabel={resolvedCloseLabel}
+        hideDefaultCloseButton
+        ariaLabelledBy={resolvedHeadingId}
+        ariaDescribedBy={resolvedDescriptionId}
       >
-        <SettingsNav
-          sections={sections}
-          activeSectionId={activeSectionId}
-          onSelect={handleSectionSelectWithFocus}
-          tablistLabel={copy.tablistLabel}
-          renderCloseAction={renderCloseAction}
-          classes={{
-            container: preferencesStyles["tabs-region"],
-            action: preferencesStyles["close-action"],
-            nav: preferencesStyles.tabs,
-            button: preferencesStyles.tab,
-            label: preferencesStyles["tab-label"],
-            actionButton: preferencesStyles["close-button"],
-          }}
-        />
-        <form
-          aria-labelledby={resolvedHeadingId}
-          aria-describedby={resolvedDescriptionId}
-          className={modalStyles.form}
-          onSubmit={handleSubmit}
+        <SettingsBody
+          className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
+          style={bodyStyle}
+          measurementProbe={measurementProbe}
         >
-          {!panel.headingId ? (
-            <h2
-              id={panel.modalHeadingId}
-              className={modalStyles["visually-hidden"]}
-              ref={registerFallbackHeading}
-            >
-              {/* 在缺失业务 heading 时提供隐藏标题以维持无障碍语义。 */}
-              {panel.modalHeadingText || copy.title}
-            </h2>
-          ) : null}
-          <SettingsPanel
-            panelId={panel.panelId}
-            tabId={panel.tabId}
-            headingId={panel.headingId}
-            className={preferencesStyles.panel}
-            onHeadingElementChange={registerHeading}
-            onPanelElementChange={registerActivePanelNode}
+          <SettingsNav
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelect={handleSectionSelectWithFocus}
+            tablistLabel={copy.tablistLabel}
+            renderCloseAction={renderCloseAction}
+            classes={{
+              container: preferencesStyles["tabs-region"],
+              action: preferencesStyles["close-action"],
+              nav: preferencesStyles.tabs,
+              button: preferencesStyles.tab,
+              label: preferencesStyles["tab-label"],
+              actionButton: preferencesStyles["close-button"],
+            }}
+          />
+          <form
+            aria-labelledby={resolvedHeadingId}
+            aria-describedby={resolvedDescriptionId}
+            className={modalStyles.form}
+            onSubmit={handleSubmit}
           >
-            {activeSection ? (
-              <activeSection.Component
-                headingId={panel.headingId || panel.modalHeadingId}
-                descriptionId={panel.descriptionId}
-                {...activeSection.componentProps}
-              />
+            {!panel.headingId ? (
+              <h2
+                id={panel.modalHeadingId}
+                className={modalStyles["visually-hidden"]}
+                ref={registerFallbackHeading}
+              >
+                {/* 在缺失业务 heading 时提供隐藏标题以维持无障碍语义。 */}
+                {panel.modalHeadingText || copy.title}
+              </h2>
             ) : null}
-          </SettingsPanel>
-        </form>
-      </SettingsBody>
-    </BaseModal>
+            <SettingsPanel
+              panelId={panel.panelId}
+              tabId={panel.tabId}
+              headingId={panel.headingId}
+              className={preferencesStyles.panel}
+              onHeadingElementChange={registerHeading}
+              onPanelElementChange={registerActivePanelNode}
+            >
+              {activeSection ? (
+                <activeSection.Component
+                  headingId={panel.headingId || panel.modalHeadingId}
+                  descriptionId={panel.descriptionId}
+                  {...activeSection.componentProps}
+                />
+              ) : null}
+            </SettingsPanel>
+          </form>
+        </SettingsBody>
+      </BaseModal>
+      <AvatarEditorDialog editor={avatarEditor} />
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import { act, renderHook } from "@testing-library/react";
 const mockUseApi = jest.fn();
 const mockUseUser = jest.fn();
 const mockCacheBust = jest.fn();
+const mockNormalizeFiles = jest.fn();
 
 jest.unstable_mockModule("@/hooks/useApi.js", () => ({
   useApi: mockUseApi,
@@ -15,6 +16,7 @@ jest.unstable_mockModule("@/context", () => ({
 
 jest.unstable_mockModule("@/utils", () => ({
   cacheBust: mockCacheBust,
+  normalizeFiles: mockNormalizeFiles,
 }));
 
 let useAvatarUploader;
@@ -31,7 +33,17 @@ describe("useAvatarUploader", () => {
     mockUseApi.mockReset();
     mockUseUser.mockReset();
     mockCacheBust.mockReset();
+    mockNormalizeFiles.mockReset();
     mockCacheBust.mockImplementation((url) => `${url}?cache`);
+    mockNormalizeFiles.mockImplementation((files) => {
+      if (!files) {
+        return [];
+      }
+      if (Array.isArray(files)) {
+        return files.filter(Boolean);
+      }
+      return [files].filter(Boolean);
+    });
   });
 
   /**

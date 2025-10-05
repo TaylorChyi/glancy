@@ -35,3 +35,5 @@ export {
 } from "./markdown.js";
 export { resolveShareTarget, attemptShareLink } from "./share.js";
 export { copyTextToClipboard } from "./clipboard.js";
+export { normalizeFiles } from "./fileList.js";
+export { normalizeImageOrientation } from "./imageOrientation.js";

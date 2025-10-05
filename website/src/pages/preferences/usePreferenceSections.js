@@ -19,7 +19,7 @@ import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
-import useAvatarUploader from "@/hooks/useAvatarUploader.js";
+import useAvatarEditorFlow from "@/hooks/useAvatarEditorFlow.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -131,8 +131,8 @@ function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
   const { user } = userStore ?? {};
-  const { onSelectAvatar, isUploading: isAvatarUploading } =
-    useAvatarUploader();
+  const { onSelectAvatar, avatarEditor, isBusy: isAvatarBusy } =
+    useAvatarEditorFlow();
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -254,7 +254,7 @@ function usePreferenceSections({ initialSectionId }) {
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,
       onSelectAvatar,
-      isUploading: isAvatarUploading,
+      isUploading: isAvatarBusy,
     };
 
     const accountBindings = {
@@ -372,7 +372,7 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabPersonalization,
     subscriptionSection,
     onSelectAvatar,
-    isAvatarUploading,
+    isAvatarBusy,
     user?.email,
     user?.phone,
     user?.username,
@@ -484,6 +484,7 @@ function usePreferenceSections({ initialSectionId }) {
       modalHeadingId: FALLBACK_MODAL_HEADING_ID,
       modalHeadingText: resolvedModalHeadingText,
     },
+    avatarEditor,
   };
 }
 

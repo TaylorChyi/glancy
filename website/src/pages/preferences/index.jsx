@@ -18,6 +18,7 @@ import {
   SettingsNav,
   SettingsPanel,
 } from "@/components/modals";
+import AvatarEditorDialog from "@/components/modals/AvatarEditorDialog.jsx";
 import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
@@ -33,6 +34,7 @@ function Preferences({ initialSection, renderCloseAction }) {
     handleSectionSelect,
     handleSubmit,
     panel,
+    avatarEditor,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -80,68 +82,71 @@ function Preferences({ initialSection, renderCloseAction }) {
   }, [panelClassName, referenceMeasurement]);
 
   return (
-    <div className={styles.content}>
-      <form
-        aria-labelledby={header.headingId}
-        aria-describedby={header.descriptionId}
-        className={styles.form}
-        onSubmit={handleSubmit}
-      >
-        <SettingsHeader
-          headingId={header.headingId}
-          descriptionId={header.descriptionId}
-          title={copy.title}
-          description={copy.description}
-          planLabel={header.planLabel}
-          avatarProps={{ width: 56, height: 56, className: styles.avatar }}
-          classes={{
-            container: styles.header,
-            identity: styles.identity,
-            identityCopy: styles["identity-copy"],
-            plan: styles.plan,
-            title: styles.title,
-            description: styles.description,
-          }}
-        />
-        <SettingsBody
-          className={styles.body}
-          style={bodyStyle}
-          measurementProbe={measurementProbe}
+    <>
+      <div className={styles.content}>
+        <form
+          aria-labelledby={header.headingId}
+          aria-describedby={header.descriptionId}
+          className={styles.form}
+          onSubmit={handleSubmit}
         >
-          <SettingsNav
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onSelect={handleSectionSelectWithFocus}
-            tablistLabel={copy.tablistLabel}
-            renderCloseAction={closeRenderer}
+          <SettingsHeader
+            headingId={header.headingId}
+            descriptionId={header.descriptionId}
+            title={copy.title}
+            description={copy.description}
+            planLabel={header.planLabel}
+            avatarProps={{ width: 56, height: 56, className: styles.avatar }}
             classes={{
-              container: styles["tabs-region"],
-              action: styles["close-action"],
-              nav: styles.tabs,
-              button: styles.tab,
-              label: styles["tab-label"],
-              actionButton: styles["close-button"],
+              container: styles.header,
+              identity: styles.identity,
+              identityCopy: styles["identity-copy"],
+              plan: styles.plan,
+              title: styles.title,
+              description: styles.description,
             }}
           />
-          <SettingsPanel
-            panelId={panel.panelId}
-            tabId={panel.tabId}
-            headingId={panel.headingId}
-            className={styles.panel}
-            onHeadingElementChange={registerHeading}
-            onPanelElementChange={registerActivePanelNode}
+          <SettingsBody
+            className={styles.body}
+            style={bodyStyle}
+            measurementProbe={measurementProbe}
           >
-            {activeSection ? (
-              <activeSection.Component
-                headingId={panel.headingId}
-                descriptionId={panel.descriptionId}
-                {...activeSection.componentProps}
-              />
-            ) : null}
-          </SettingsPanel>
-        </SettingsBody>
-      </form>
-    </div>
+            <SettingsNav
+              sections={sections}
+              activeSectionId={activeSectionId}
+              onSelect={handleSectionSelectWithFocus}
+              tablistLabel={copy.tablistLabel}
+              renderCloseAction={closeRenderer}
+              classes={{
+                container: styles["tabs-region"],
+                action: styles["close-action"],
+                nav: styles.tabs,
+                button: styles.tab,
+                label: styles["tab-label"],
+                actionButton: styles["close-button"],
+              }}
+            />
+            <SettingsPanel
+              panelId={panel.panelId}
+              tabId={panel.tabId}
+              headingId={panel.headingId}
+              className={styles.panel}
+              onHeadingElementChange={registerHeading}
+              onPanelElementChange={registerActivePanelNode}
+            >
+              {activeSection ? (
+                <activeSection.Component
+                  headingId={panel.headingId}
+                  descriptionId={panel.descriptionId}
+                  {...activeSection.componentProps}
+                />
+              ) : null}
+            </SettingsPanel>
+          </SettingsBody>
+        </form>
+      </div>
+      <AvatarEditorDialog editor={avatarEditor} />
+    </>
   );
 }
 
