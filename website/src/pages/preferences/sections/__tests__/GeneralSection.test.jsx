@@ -70,6 +70,7 @@ test("Given initial preferences When rendered Then current selection highlighted
   const languageTrigger = screen.getByRole("button", {
     name: "Interface language",
   });
+  expect(languageTrigger).toHaveAttribute("data-fullwidth", "true");
   expect(languageTrigger).toHaveTextContent(/Match device language/i);
 });
 

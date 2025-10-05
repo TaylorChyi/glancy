@@ -10,6 +10,7 @@
  *  - ChatInput、Preferences 等引用语言菜单的模块；
  * 演进与TODO：
  *  - TODO: 后续可在 options 内支持图标或分组信息，需同步拓展菜单项模板。
+ *  - 近期扩展：fullWidth 策略用于让触发器撑满父容器，避免偏好设置等场景出现仅文字可点的体验断层。
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
@@ -108,6 +109,7 @@ export default function LanguageMenu({
   showLabel,
   variant,
   onOpen,
+  fullWidth,
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
@@ -191,7 +193,10 @@ export default function LanguageMenu({
   const showTriggerLabel = Boolean(showLabel);
 
   return (
-    <div className={styles["language-select-wrapper"]}>
+    <div
+      className={styles["language-select-wrapper"]}
+      data-fullwidth={fullWidth ? "true" : undefined}
+    >
       <button
         type="button"
         id={id}
@@ -205,6 +210,7 @@ export default function LanguageMenu({
         ref={triggerRef}
         data-open={open}
         data-variant={variant}
+        data-fullwidth={fullWidth ? "true" : undefined}
       >
         <span className={styles["language-trigger-content"]}>
           <span className={styles["language-trigger-code"]}>
@@ -291,6 +297,7 @@ LanguageMenu.propTypes = {
   showLabel: PropTypes.bool,
   variant: PropTypes.oneOf(["source", "target"]),
   onOpen: PropTypes.func,
+  fullWidth: PropTypes.bool,
 };
 
 LanguageMenu.defaultProps = {
@@ -303,4 +310,5 @@ LanguageMenu.defaultProps = {
   showLabel: false,
   variant: "source",
   onOpen: undefined,
+  fullWidth: false,
 };
