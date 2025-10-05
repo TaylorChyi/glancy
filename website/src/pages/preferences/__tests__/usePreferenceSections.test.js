@@ -318,9 +318,7 @@ test("Given member flag only When mapping subscription plan Then membership fall
   );
 
   expect(subscriptionSection).toBeDefined();
-  expect(subscriptionSection.componentProps.currentPlanCard.planLine).toContain(
-    translations.subscriptionPlanPlusTitle,
-  );
+  expect(subscriptionSection.componentProps.defaultSelectedPlanId).toBe("PLUS");
   const plusCard = subscriptionSection.componentProps.planCards.find(
     (card) => card.id === "PLUS",
   );

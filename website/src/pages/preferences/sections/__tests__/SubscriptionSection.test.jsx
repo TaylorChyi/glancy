@@ -22,17 +22,6 @@ const baseProps = {
   title: "Subscription",
   headingId: "subscription-heading",
   descriptionId: undefined,
-  currentPlanCard: {
-    title: "Current plan",
-    planLine: "Plus · Monthly",
-    nextRenewalLabel: "Next: 2025-01-01",
-    regionLine: "Region: CN · CNY",
-    premiumHighlight: null,
-    actions: [
-      { id: "manage", label: "Manage" },
-      { id: "redeem", label: "Redeem" },
-    ],
-  },
   planCards: [
     {
       id: "FREE",
