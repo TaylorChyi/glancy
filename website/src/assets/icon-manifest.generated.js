@@ -69,14 +69,10 @@ import iconAsset66 from "./user.svg";
 import iconAsset67 from "./user.svg?raw";
 import iconAsset68 from "./voice-button.svg";
 import iconAsset69 from "./voice-button.svg?raw";
-import iconAsset70 from "./waiting-frame-1.svg";
-import iconAsset71 from "./waiting-frame-1.svg?raw";
-import iconAsset72 from "./waiting-frame-2.svg";
-import iconAsset73 from "./waiting-frame-2.svg?raw";
-import iconAsset74 from "./waiting-frame-3.svg";
-import iconAsset75 from "./waiting-frame-3.svg?raw";
-import iconAsset76 from "./wechat.svg";
-import iconAsset77 from "./wechat.svg?raw";
+import iconAsset70 from "./waitting-frame.svg";
+import iconAsset71 from "./waitting-frame.svg?raw";
+import iconAsset72 from "./wechat.svg";
+import iconAsset73 from "./wechat.svg?raw";
 
 const registry = Object.freeze({
   "adjustments-horizontal": Object.freeze({
@@ -184,17 +180,11 @@ const registry = Object.freeze({
   "voice-button": Object.freeze({
     single: Object.freeze({ url: iconAsset68, inline: iconAsset69 })
   }),
-  "waiting-frame-1": Object.freeze({
+  "waitting-frame": Object.freeze({
     single: Object.freeze({ url: iconAsset70, inline: iconAsset71 })
   }),
-  "waiting-frame-2": Object.freeze({
-    single: Object.freeze({ url: iconAsset72, inline: iconAsset73 })
-  }),
-  "waiting-frame-3": Object.freeze({
-    single: Object.freeze({ url: iconAsset74, inline: iconAsset75 })
-  }),
   "wechat": Object.freeze({
-    single: Object.freeze({ url: iconAsset76, inline: iconAsset77 })
+    single: Object.freeze({ url: iconAsset72, inline: iconAsset73 })
   })
 });
 
