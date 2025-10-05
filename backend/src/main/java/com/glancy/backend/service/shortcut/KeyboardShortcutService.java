@@ -116,14 +116,47 @@ public class KeyboardShortcutService {
                 )
             );
 
+        Set<String> candidateAliases = expandBindingAliases(binding);
         for (Map.Entry<ShortcutAction, String> entry : existingBindings.entrySet()) {
             if (entry.getKey() == targetAction) {
                 continue;
             }
-            if (entry.getValue().equals(binding)) {
+            Set<String> existingAliases = expandBindingAliases(entry.getValue());
+            boolean conflicting = existingAliases.stream().anyMatch(alias -> candidateAliases.contains(alias));
+            if (conflicting) {
                 throw new InvalidRequestException("快捷键已被其他功能占用");
             }
         }
+    }
+
+    /**
+     * 意图：为冲突校验生成同一快捷键的等价表示，解决 MOD 与具体修饰键的别名问题。
+     * 输入：规范化后的绑定字符串，例如 "MOD+SHIFT+F" 或 "CONTROL+SHIFT+F"。
+     * 输出：包含所有可能等价组合的集合，元素形如 "CONTROL+SHIFT+F"。
+     * 流程：
+     *  1) 将绑定拆分为 token；
+     *  2) 若存在 MOD，则同时生成 CONTROL 与 META 的组合；
+     *  3) 其余场景保持原样返回；
+     * 错误处理：输入为空字符串时返回空集合，由上层逻辑保证不会出现；
+     * 复杂度：O(n) —— token 数量通常不超过 4，计算成本可忽略。
+     */
+    private Set<String> expandBindingAliases(String binding) {
+        if (binding == null || binding.isBlank()) {
+            return Set.of();
+        }
+        List<String> tokens = decodeBinding(binding);
+        if (tokens.stream().noneMatch(token -> token.equals("MOD"))) {
+            return Set.of(binding);
+        }
+        Set<String> aliases = new HashSet<>();
+        for (String replacement : List.of("CONTROL", "META")) {
+            List<String> replaced = tokens
+                .stream()
+                .map(token -> token.equals("MOD") ? replacement : token)
+                .toList();
+            aliases.add(String.join("+", replaced));
+        }
+        return aliases;
     }
 
     private List<String> decodeBinding(String binding) {

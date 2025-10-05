@@ -18,7 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+@SpringBootTest(
+    properties = {
+        "oss.endpoint=https://oss-cn-hangzhou.aliyuncs.com",
+        "oss.bucket=test-bucket",
+        "oss.access-key-id=dummy",
+        "oss.access-key-secret=dummy",
+        "oss.verify-location=false",
+    }
+)
 @Transactional
 class KeyboardShortcutServiceTest {
 
@@ -167,6 +175,44 @@ class KeyboardShortcutServiceTest {
                         view.action().equals(ShortcutAction.SWITCH_LANGUAGE.name()) &&
                         view.keys().equals(List.of("CONTROL", "SHIFT", "Q"))
                 )
+        );
+    }
+
+    /**
+     * 测试目标：当客户端尝试使用与 MOD 默认键等价的组合时应识别冲突。
+     * 前置条件：用户存在且尚未自定义 OPEN_SHORTCUTS，默认键位为 MOD+SHIFT+K。
+     * 步骤：
+     *  1) 以 CONTROL+SHIFT+F 更新 OPEN_SHORTCUTS；
+     * 断言：
+     *  - 服务抛出 InvalidRequestException；
+     *  - OPEN_SHORTCUTS 仍维持默认绑定。
+     * 边界/异常：
+     *  - 若先修改冲突方（FOCUS_SEARCH）应允许后续操作，此处不覆盖。
+     */
+    @Test
+    void Given_modAliasConflict_When_updateShortcut_Then_throwInvalidRequest() {
+        User user = createUser();
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            keyboardShortcutService.updateShortcut(
+                user.getId(),
+                ShortcutAction.OPEN_SHORTCUTS,
+                new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "F"))
+            )
+        );
+        assertEquals("快捷键已被其他功能占用", exception.getMessage());
+
+        KeyboardShortcutResponse response = keyboardShortcutService.getShortcuts(user.getId());
+        assertTrue(
+            response
+                .shortcuts()
+                .stream()
+                .anyMatch(
+                    view ->
+                        view.action().equals(ShortcutAction.OPEN_SHORTCUTS.name()) &&
+                        view.keys().equals(view.defaultKeys())
+                ),
+            "open shortcuts should remain default after conflict"
         );
     }
 }
