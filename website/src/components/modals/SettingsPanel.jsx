@@ -10,8 +10,9 @@
  * 演进与TODO：
  *  - TODO: 若未来需要延迟加载，可在此扩展 loading/empty 状态插槽。
  */
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
+import useStableHeight from "@/hooks/useStableHeight.js";
 
 function SettingsPanel({
   panelId,
@@ -22,6 +23,12 @@ function SettingsPanel({
   onHeadingElementChange,
 }) {
   const headingElementRef = useRef(null);
+  const heightDependencies = useMemo(() => [panelId], [panelId]);
+  const { containerRef, style: stableHeightStyle } = useStableHeight({
+    //
+    // 采用 retain-max 策略在切换分区时锁定历史最大高度，确保面板不随内容收缩。
+    dependencies: heightDependencies,
+  });
 
   useLayoutEffect(() => {
     if (typeof document === "undefined") {
@@ -55,7 +62,14 @@ function SettingsPanel({
   }, [headingId, onHeadingElementChange]);
 
   return (
-    <div role="tabpanel" id={panelId} aria-labelledby={tabId} className={className}>
+    <div
+      role="tabpanel"
+      id={panelId}
+      aria-labelledby={tabId}
+      className={className}
+      ref={containerRef}
+      style={stableHeightStyle}
+    >
       {children}
     </div>
   );
