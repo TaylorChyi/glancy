@@ -44,12 +44,15 @@ function AccountSection({
   );
 
   const normalizedIdentity = useMemo(
-    () => ({
-      label: identity?.label ?? identity?.changeLabel ?? title,
-      displayName: identity?.displayName ?? "",
-      changeLabel: identity?.changeLabel ?? "Change avatar",
-      avatarAlt: identity?.avatarAlt ?? title,
-    }),
+    () => {
+      const fallbackLabel = identity?.changeLabel ?? "Avatar";
+      return {
+        label: identity?.label ?? fallbackLabel,
+        displayName: identity?.displayName ?? "",
+        changeLabel: identity?.changeLabel ?? "Change avatar",
+        avatarAlt: identity?.avatarAlt ?? title,
+      };
+    },
     [
       identity?.avatarAlt,
       identity?.changeLabel,

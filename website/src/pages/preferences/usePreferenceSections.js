@@ -252,7 +252,7 @@ function usePreferenceSections({ initialSectionId }) {
     ];
 
     const accountIdentity = {
-      label: t.settingsAccountAvatarLabel ?? changeAvatarLabel,
+      label: t.settingsAccountAvatarLabel ?? "Avatar",
       displayName: usernameValue,
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,

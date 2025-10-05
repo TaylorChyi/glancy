@@ -10,7 +10,7 @@ const mockLanguage = {
   prefAccountTitle: "Account",
   prefTablistLabel: "Preference sections",
   settingsAccountDescription: "Details that travel with your workspace.",
-  settingsAccountAvatarLabel: "Change avatar",
+  settingsAccountAvatarLabel: "Avatar",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
@@ -37,6 +37,11 @@ jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
   useUser: () => ({ user: mockUser }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
+  useKeyboardShortcutContext: () => ({
+    register: jest.fn(),
+    unregister: jest.fn(),
+  }),
+  KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
@@ -91,7 +96,7 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   ).toBeInTheDocument();
   expect(
     within(activePanel).getAllByText(mockLanguage.settingsAccountAvatarLabel),
-  ).toHaveLength(2);
+  ).toHaveLength(1);
   expect(within(activePanel).getAllByText(mockUser.username)).toHaveLength(2);
   expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
   expect(within(activePanel).getByText("+1 111")).toBeInTheDocument();

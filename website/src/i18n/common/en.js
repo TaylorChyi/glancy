@@ -101,7 +101,7 @@ export default {
   settingsTabAccount: "Account",
   settingsAccountDescription:
     "Review and safeguard the basics that identify you in Glancy.",
-  settingsAccountAvatarLabel: "Change avatar",
+  settingsAccountAvatarLabel: "Avatar",
   settingsManageProfile: "Manage profile",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
