@@ -2,6 +2,13 @@ export default {
   profileTitle: "Profile",
   avatar: "Avatar",
   avatarHint: "Click to change avatar",
+  avatarEditorTitle: "Adjust avatar",
+  avatarEditorDescription:
+    "Drag to align your portrait. The square and its inscribed circle preview the final crop.",
+  avatarZoomIn: "Zoom in",
+  avatarZoomOut: "Zoom out",
+  avatarConfirm: "Confirm",
+  avatarCancel: "Cancel",
   saveButton: "Save",
   saveSuccess: "Save success",
   cancelButton: "Cancel",

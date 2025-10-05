@@ -11,7 +11,14 @@
  * 演进与TODO：
  *  - TODO: 后续若支持更多画像字段，应通过配置驱动扩展而非硬编码。
  */
-import { useState, useEffect, useReducer, useMemo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useReducer,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import "@/pages/App/App.css";
 import styles from "./Profile.module.css";
 import Avatar from "@/components/ui/Avatar";
@@ -28,12 +35,85 @@ import Tooltip from "@/components/ui/Tooltip";
 import EmailBindingCard from "@/components/Profile/EmailBindingCard";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
 import CustomSectionsEditor from "@/components/Profile/CustomSectionsEditor";
+import AvatarEditorModal from "@/components/AvatarEditorModal";
 import {
   createEmptyProfileDetails,
   mapProfileDetailsToRequest,
   mapResponseToProfileDetails,
   profileDetailsReducer,
 } from "./profileDetailsModel.js";
+
+const avatarEditorInitialState = Object.freeze({
+  phase: "idle",
+  source: "",
+  fileName: "avatar.png",
+  fileType: "image/png",
+});
+
+function createAvatarEditorInitialState() {
+  return { ...avatarEditorInitialState };
+}
+
+/**
+ * 意图：通过轻量状态机管理头像编辑流程，保障模态在打开/上传/失败间的状态一致性。
+ * 输入：当前状态与动作对象。
+ * 输出：返回下一个状态。
+ * 流程：
+ *  1) open -> 进入预览；
+ *  2) startUpload -> 标记上传中；
+ *  3) fail -> 回退至预览；
+ *  4) complete/close -> 回归空闲。
+ * 错误处理：未知动作回退为当前状态。
+ * 复杂度：O(1)。
+ */
+function avatarEditorReducer(state = avatarEditorInitialState, action) {
+  switch (action.type) {
+    case "open": {
+      return {
+        phase: "preview",
+        source: action.payload?.source ?? "",
+        fileName: action.payload?.fileName || "avatar.png",
+        fileType: action.payload?.fileType || "image/png",
+      };
+    }
+    case "startUpload":
+      return { ...state, phase: "uploading" };
+    case "fail":
+      return { ...state, phase: "preview" };
+    case "complete":
+    case "close":
+      return createAvatarEditorInitialState();
+    default:
+      return state;
+  }
+}
+
+const MIME_EXTENSION_MAP = Object.freeze({
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/webp": "webp",
+});
+
+function normalizeAvatarFileName(originalName, mimeType) {
+  const fallbackBase = "avatar";
+  const sanitized = (originalName || fallbackBase)
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+  const base = sanitized || fallbackBase;
+  const extension = MIME_EXTENSION_MAP[mimeType] || "png";
+  const lowerBase = base.toLowerCase();
+  if (lowerBase.endsWith(`.${extension}`)) {
+    return base;
+  }
+  const withoutExt = base.includes(".")
+    ? base.slice(0, base.lastIndexOf("."))
+    : base;
+  const safeBase = withoutExt || fallbackBase;
+  return `${safeBase}.${extension}`;
+}
 
 function Profile({ onCancel }) {
   const { t } = useLanguage();
@@ -53,6 +133,21 @@ function Profile({ onCancel }) {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const previousAvatarRef = useRef("");
+
+  const [avatarEditor, dispatchAvatarEditor] = useReducer(
+    avatarEditorReducer,
+    undefined,
+    createAvatarEditorInitialState,
+  );
+
+  useEffect(() => {
+    return () => {
+      if (avatarEditor.source) {
+        URL.revokeObjectURL(avatarEditor.source);
+      }
+    };
+  }, [avatarEditor.source]);
 
   const fieldGroups = useMemo(
     () => [
@@ -127,28 +222,88 @@ function Profile({ onCancel }) {
     setPhone(currentUser?.phone || "");
   }, [currentUser]);
 
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !currentUser) return;
-    const preview = URL.createObjectURL(file);
-    setAvatar(preview);
-    try {
-      const data = await api.users.uploadAvatar({
-        userId: currentUser.id,
-        file,
-        token: currentUser.token,
-      });
-      const url = cacheBust(data.avatar);
-      setAvatar(url);
-      setUser({ ...currentUser, avatar: url });
-    } catch (err) {
-      console.error(err);
-      setPopupMsg(t.fail);
-      setPopupOpen(true);
-    } finally {
-      URL.revokeObjectURL(preview);
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !currentUser) {
+      return;
     }
+    const source = URL.createObjectURL(file);
+    dispatchAvatarEditor({
+      type: "open",
+      payload: {
+        source,
+        fileName: file.name,
+        fileType: file.type,
+      },
+    });
   };
+
+  const handleAvatarModalClose = useCallback(() => {
+    previousAvatarRef.current = "";
+    dispatchAvatarEditor({ type: "close" });
+  }, []);
+
+  const avatarEditorLabels = useMemo(
+    () => ({
+      title: t.avatarEditorTitle,
+      description: t.avatarEditorDescription,
+      zoomIn: t.avatarZoomIn,
+      zoomOut: t.avatarZoomOut,
+      cancel: t.avatarCancel,
+      confirm: t.avatarConfirm,
+    }),
+    [t],
+  );
+
+  const handleAvatarConfirm = useCallback(
+    async ({ blob, previewUrl }) => {
+      if (!currentUser) {
+        URL.revokeObjectURL(previewUrl);
+        handleAvatarModalClose();
+        return;
+      }
+      dispatchAvatarEditor({ type: "startUpload" });
+      previousAvatarRef.current = avatar;
+      setAvatar(previewUrl);
+      try {
+        const preferredType = blob.type || avatarEditor.fileType || "image/png";
+        const normalizedName = normalizeAvatarFileName(
+          avatarEditor.fileName,
+          preferredType,
+        );
+        const file = new File([blob], normalizedName, { type: preferredType });
+        const data = await api.users.uploadAvatar({
+          userId: currentUser.id,
+          file,
+          token: currentUser.token,
+        });
+        const url = cacheBust(data.avatar);
+        setAvatar(url);
+        setUser({ ...currentUser, avatar: url });
+        dispatchAvatarEditor({ type: "complete" });
+      } catch (error) {
+        console.error(error);
+        setPopupMsg(t.fail);
+        setPopupOpen(true);
+        setAvatar(previousAvatarRef.current);
+        dispatchAvatarEditor({ type: "fail" });
+      } finally {
+        previousAvatarRef.current = "";
+        URL.revokeObjectURL(previewUrl);
+      }
+    },
+    [
+      api,
+      avatar,
+      avatarEditor.fileName,
+      avatarEditor.fileType,
+      currentUser,
+      handleAvatarModalClose,
+      setUser,
+      t.fail,
+    ],
+  );
 
   useEffect(() => {
     if (!currentUser) return;
@@ -416,6 +571,14 @@ function Profile({ onCancel }) {
           </button>
         </div>
       </form>
+      <AvatarEditorModal
+        open={avatarEditor.phase !== "idle"}
+        source={avatarEditor.source}
+        onCancel={handleAvatarModalClose}
+        onConfirm={handleAvatarConfirm}
+        labels={avatarEditorLabels}
+        isProcessing={avatarEditor.phase === "uploading"}
+      />
       <MessagePopup
         open={popupOpen}
         message={popupMsg}
