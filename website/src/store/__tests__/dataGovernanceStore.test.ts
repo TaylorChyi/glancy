@@ -1,20 +1,38 @@
-import { afterEach, beforeEach, describe, expect, test } from "@jest/globals";
-import { useDataGovernanceStore } from "@/store";
 import {
-  DATA_RETENTION_POLICIES,
-  getRetentionPolicyById,
-} from "@/store/dataGovernanceStore";
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  jest,
+  test,
+} from "@jest/globals";
+
+const STORAGE_KEY = "dataGovernance";
+
+type StoreModule = typeof import("@/store/dataGovernanceStore");
+
+let storeModule: StoreModule | null = null;
+
+const importStoreModule = async () => {
+  if (storeModule) {
+    return storeModule;
+  }
+  storeModule = await import("@/store/dataGovernanceStore");
+  return storeModule;
+};
 
 describe("dataGovernanceStore", () => {
   beforeEach(() => {
     localStorage.clear();
-    useDataGovernanceStore.setState({
-      retentionPolicyId: "90d",
-      historyCaptureEnabled: true,
-    });
+    jest.resetModules();
+    storeModule = null;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    if (!storeModule) {
+      return;
+    }
+    const { useDataGovernanceStore } = await importStoreModule();
     useDataGovernanceStore.setState({
       retentionPolicyId: "90d",
       historyCaptureEnabled: true,
@@ -32,7 +50,8 @@ describe("dataGovernanceStore", () => {
    * 边界/异常：
    *  - 若默认值发生变化需同步更新测试预期。
    */
-  test("Given fresh store When reading defaults Then policy and capture initialized", () => {
+  test("Given fresh store When reading defaults Then policy and capture initialized", async () => {
+    const { useDataGovernanceStore } = await importStoreModule();
     const state = useDataGovernanceStore.getState();
     expect(state.retentionPolicyId).toBe("90d");
     expect(state.historyCaptureEnabled).toBe(true);
@@ -48,7 +67,8 @@ describe("dataGovernanceStore", () => {
    * 边界/异常：
    *  - 重复设置相同值不应引发副作用。
    */
-  test("Given toggle request When disabling capture Then store reflects change", () => {
+  test("Given toggle request When disabling capture Then store reflects change", async () => {
+    const { useDataGovernanceStore } = await importStoreModule();
     useDataGovernanceStore.getState().setHistoryCaptureEnabled(false);
     expect(useDataGovernanceStore.getState().historyCaptureEnabled).toBe(false);
   });
@@ -65,7 +85,12 @@ describe("dataGovernanceStore", () => {
    * 边界/异常：
    *  - DATA_RETENTION_POLICIES 需包含至少一项可选策略。
    */
-  test("Given retention selection When applying policy Then store guards invalid ids", () => {
+  test("Given retention selection When applying policy Then store guards invalid ids", async () => {
+    const {
+      useDataGovernanceStore,
+      DATA_RETENTION_POLICIES,
+      getRetentionPolicyById,
+    } = await importStoreModule();
     const alternative = DATA_RETENTION_POLICIES.find(
       (policy) => policy.id !== "90d",
     );
@@ -81,5 +106,35 @@ describe("dataGovernanceStore", () => {
     useDataGovernanceStore.getState().setRetentionPolicy("invalid");
     expect(useDataGovernanceStore.getState().retentionPolicyId).toBe("90d");
     expect(getRetentionPolicyById(alternative.id)).toEqual(alternative);
+  });
+
+  /**
+   * 测试目标：
+   *  - 若持久化中保存了关闭历史采集的偏好，Store 初始化应立即采纳，避免窗口期写入。
+   * 前置条件：
+   *  - localStorage 预置 historyCaptureEnabled=false 且策略为 30d。
+   * 步骤：
+   *  1) 在导入 Store 模块前写入持久化快照；
+   *  2) 初始化 Store 并读取状态。
+   * 断言：
+   *  - historyCaptureEnabled 为 false；
+   *  - retentionPolicyId 为 30d。
+   * 边界/异常：
+   *  - 若解析失败需回退到默认值，本测试亦可捕捉异常行为。
+   */
+  test("Given persisted disabled capture When initializing store Then adopt snapshot", async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: { retentionPolicyId: "30d", historyCaptureEnabled: false },
+        version: 0,
+      }),
+    );
+
+    const { useDataGovernanceStore } = await importStoreModule();
+    const state = useDataGovernanceStore.getState();
+
+    expect(state.historyCaptureEnabled).toBe(false);
+    expect(state.retentionPolicyId).toBe("30d");
   });
 });
