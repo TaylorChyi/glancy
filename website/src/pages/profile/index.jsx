@@ -20,12 +20,14 @@ import MessagePopup from "@/components/ui/MessagePopup";
 import EditableField from "@/components/form/EditableField/EditableField.jsx";
 import FormField from "@/components/form/FormField.jsx";
 import { useEmailBinding } from "@/hooks";
+import { useProfileSections } from "@/hooks/useProfileSections.js";
 import { useApi } from "@/hooks/useApi.js";
 import { useUser } from "@/context";
 import { cacheBust } from "@/utils";
 import ThemeIcon from "@/components/ui/Icon";
 import Tooltip from "@/components/ui/Tooltip";
 import EmailBindingCard from "@/components/Profile/EmailBindingCard";
+import ProfileCustomSection from "@/components/Profile/CustomSection";
 
 function Profile({ onCancel }) {
   const { t } = useLanguage();
@@ -33,17 +35,34 @@ function Profile({ onCancel }) {
   const api = useApi();
   const [username, setUsername] = useState(currentUser?.username || "");
   const [phone, setPhone] = useState(currentUser?.phone || "");
+  const [education, setEducation] = useState("");
+  const [job, setJob] = useState("");
   const [interests, setInterests] = useState("");
   const [goal, setGoal] = useState("");
+  const [currentAbility, setCurrentAbility] = useState("");
   const [avatar, setAvatar] = useState("");
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupMsg, setPopupMsg] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { sections, resetSections, updateItem, toPayload } =
+    useProfileSections();
+
+  const toNullable = (value) => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
 
   useEffect(() => {
     setUsername(currentUser?.username || "");
     setPhone(currentUser?.phone || "");
-  }, [currentUser]);
+    setEducation("");
+    setJob("");
+    setInterests("");
+    setGoal("");
+    setCurrentAbility("");
+    resetSections([]);
+  }, [currentUser, resetSections]);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
@@ -73,8 +92,12 @@ function Profile({ onCancel }) {
     api.profiles
       .fetchProfile({ token: currentUser.token })
       .then((data) => {
-        setInterests(data.interest);
-        setGoal(data.goal);
+        setEducation(data.education ?? "");
+        setJob(data.job ?? "");
+        setInterests(data.interest ?? "");
+        setGoal(data.goal ?? "");
+        setCurrentAbility(data.currentAbility ?? "");
+        resetSections(data.customSections ?? []);
         if (data.avatar) {
           const url = cacheBust(data.avatar);
           setAvatar(url);
@@ -85,7 +108,7 @@ function Profile({ onCancel }) {
         setPopupMsg(t.fail);
         setPopupOpen(true);
       });
-  }, [api, t, currentUser]);
+  }, [api, t, currentUser, resetSections]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -128,14 +151,21 @@ function Profile({ onCancel }) {
         );
       }
 
+      const profilePayload = {
+        education: toNullable(education),
+        job: toNullable(job),
+        interest: toNullable(interests),
+        goal: toNullable(goal),
+        currentAbility: toNullable(currentAbility),
+        dailyWordTarget: null,
+        futurePlan: null,
+        customSections: toPayload(),
+      };
+
       updatePromises.push(
         api.profiles.saveProfile({
           token: currentUser.token,
-          profile: {
-            job: "",
-            interest: interests,
-            goal,
-          },
+          profile: profilePayload,
         }),
       );
 
@@ -274,6 +304,72 @@ function Profile({ onCancel }) {
           inputClassName={styles["phone-input"]}
           buttonText={t.editButton}
         />
+        <div className={styles.identity}>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="library"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.educationLabel}
+                <Tooltip text={t.educationHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-education"
+          >
+            <input
+              value={education}
+              onChange={(e) => setEducation(e.target.value)}
+              placeholder={t.educationPlaceholder}
+            />
+          </FormField>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="user"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.jobLabel}
+                <Tooltip text={t.jobHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-job"
+          >
+            <input
+              value={job}
+              onChange={(e) => setJob(e.target.value)}
+              placeholder={t.jobPlaceholder}
+            />
+          </FormField>
+          <FormField
+            label={
+              <>
+                <ThemeIcon
+                  name="cog-6-tooth"
+                  className={styles.icon}
+                  width={20}
+                  height={20}
+                />
+                {t.currentAbilityLabel}
+                <Tooltip text={t.currentAbilityHelp}>?</Tooltip>
+              </>
+            }
+            id="profile-ability"
+          >
+            <textarea
+              value={currentAbility}
+              onChange={(e) => setCurrentAbility(e.target.value)}
+              placeholder={t.currentAbilityPlaceholder}
+              rows={3}
+            />
+          </FormField>
+        </div>
         <div className={styles.basic}>
           <FormField
             label={
@@ -317,6 +413,16 @@ function Profile({ onCancel }) {
               placeholder={t.goalPlaceholder}
             />
           </FormField>
+        </div>
+        <div className={styles.sections}>
+          {sections.map((section) => (
+            <ProfileCustomSection
+              key={section.id}
+              section={section}
+              onItemChange={updateItem}
+              t={t}
+            />
+          ))}
         </div>
         <div className={styles.actions}>
           <button

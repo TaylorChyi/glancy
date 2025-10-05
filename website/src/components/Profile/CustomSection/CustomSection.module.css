@@ -1,0 +1,66 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  background: color-mix(in srgb, var(--color-surface-alt) 82%, transparent);
+}
+
+.header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.icon {
+  color: var(--primary-bg);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+
+.description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.items {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.input,
+.multiline {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+  background: color-mix(in srgb, var(--color-surface-muted) 80%, transparent);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.multiline {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.input:focus,
+.multiline:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary-bg) 60%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-bg) 20%, transparent);
+}

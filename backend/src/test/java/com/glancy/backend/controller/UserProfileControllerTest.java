@@ -7,9 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.dto.ProfileSectionDto;
+import com.glancy.backend.dto.ProfileSectionItemDto;
 import com.glancy.backend.dto.UserProfileRequest;
 import com.glancy.backend.dto.UserProfileResponse;
 import com.glancy.backend.service.UserProfileService;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -56,10 +59,37 @@ class UserProfileControllerTest {
      */
     @Test
     void saveProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
+        List<ProfileSectionDto> customSections = List.of(
+            new ProfileSectionDto(
+                "learning-plan",
+                "Plan",
+                List.of(new ProfileSectionItemDto("milestone", "Milestone", "Complete 50 words"))
+            )
+        );
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            "Bachelor",
+            "dev",
+            "code",
+            "learn",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
 
-        UserProfileRequest req = new UserProfileRequest("dev", "code", "learn", 15, "exchange study");
+        UserProfileRequest req = new UserProfileRequest(
+            "Bachelor",
+            "dev",
+            "code",
+            "learn",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
@@ -85,7 +115,18 @@ class UserProfileControllerTest {
      */
     @Test
     void getProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            "Bachelor",
+            "dev",
+            "code",
+            "learn",
+            "B2",
+            15,
+            "exchange study",
+            List.of()
+        );
         when(userProfileService.getProfile(2L)).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);

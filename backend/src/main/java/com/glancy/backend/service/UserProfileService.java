@@ -7,6 +7,7 @@ import com.glancy.backend.entity.UserProfile;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.profile.ProfileSectionCodec;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +32,16 @@ public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
     private final UserRepository userRepository;
+    private final ProfileSectionCodec profileSectionCodec;
 
-    public UserProfileService(UserProfileRepository userProfileRepository, UserRepository userRepository) {
+    public UserProfileService(
+        UserProfileRepository userProfileRepository,
+        UserRepository userRepository,
+        ProfileSectionCodec profileSectionCodec
+    ) {
         this.userProfileRepository = userProfileRepository;
         this.userRepository = userRepository;
+        this.profileSectionCodec = profileSectionCodec;
     }
 
     private UserProfile createDefaultProfile(Long userId) {
@@ -61,11 +68,14 @@ public class UserProfileService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         UserProfile profile = userProfileRepository.findByUserId(userId).orElseGet(UserProfile::new);
         profile.setUser(user);
+        profile.setEducation(req.education());
         profile.setJob(req.job());
         profile.setInterest(req.interest());
         profile.setGoal(req.goal());
+        profile.setCurrentAbility(req.currentAbility());
         profile.setDailyWordTarget(req.dailyWordTarget());
         profile.setFuturePlan(req.futurePlan());
+        profile.setCustomSections(profileSectionCodec.encode(req.customSections()));
         UserProfile saved = userProfileRepository.save(profile);
         return toResponse(saved);
     }
@@ -84,11 +94,14 @@ public class UserProfileService {
         return new UserProfileResponse(
             profile.getId(),
             profile.getUser().getId(),
+            profile.getEducation(),
             profile.getJob(),
             profile.getInterest(),
             profile.getGoal(),
+            profile.getCurrentAbility(),
             profile.getDailyWordTarget(),
-            profile.getFuturePlan()
+            profile.getFuturePlan(),
+            profileSectionCodec.decode(profile.getCustomSections())
         );
     }
 }

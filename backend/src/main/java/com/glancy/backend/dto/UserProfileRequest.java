@@ -1,6 +1,7 @@
 package com.glancy.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 
 /**
  * 背景：
@@ -17,14 +18,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UserProfileRequest(
+    /** 用户最高学历或教育背景描述 */
+    String education,
     /** 用户当前的职业角色描述 */
     String job,
     /** 用户填写的兴趣标签，使用分隔符拆分 */
     String interest,
     /** 学习或使用目标说明 */
     String goal,
+    /** 当前能力或熟练度自评 */
+    String currentAbility,
     /** 每日词汇目标，单位：个 */
     Integer dailyWordTarget,
     /** 对未来规划或学习节奏的补充描述 */
-    String futurePlan
+    String futurePlan,
+    /** 自定义区块内容，支持配置化扩展 */
+    List<ProfileSectionDto> customSections
 ) {}

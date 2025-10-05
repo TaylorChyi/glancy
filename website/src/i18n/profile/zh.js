@@ -42,4 +42,57 @@ export default {
   emailCodeRequired: "请输入验证码。",
   emailCodeNotRequested: "请先获取验证码，再提交换绑。",
   emailCodeMismatch: "请使用收到验证码的邮箱地址完成换绑。",
+  educationLabel: "学历",
+  educationPlaceholder: "如：本科 / 计算机科学",
+  educationHelp: "用于帮助导师快速了解你的理论基础。",
+  jobLabel: "职业",
+  jobPlaceholder: "如：产品经理 / 在读研究生",
+  jobHelp: "告诉我们你的日常语境，便于定制练习场景。",
+  currentAbilityLabel: "当前能力",
+  currentAbilityPlaceholder: "如：雅思 6.5 / 能进行商务演示",
+  currentAbilityHelp: "描述你对语言或技能的掌握程度，便于匹配内容难度。",
+  customSections: {
+    learningPlan: {
+      title: "学习计划",
+      description: "记录阶段性目标和节奏，系统会据此安排提醒。",
+      items: {
+        milestone: {
+          label: "关键里程碑",
+          placeholder: "例如：第 4 周完成行业演示稿",
+        },
+        cadence: {
+          label: "学习节奏",
+          placeholder: "如：工作日 1 小时，周末复盘",
+        },
+      },
+    },
+    resourcePreference: {
+      title: "资源偏好",
+      description: "说明你更喜欢的学习素材或形式。",
+      items: {
+        primary: {
+          label: "首选资源",
+          placeholder: "如：播客 / 会议纪要",
+        },
+        secondary: {
+          label: "备选资源",
+          placeholder: "如：原版书籍 / 视频课程",
+        },
+      },
+    },
+    practiceScenarios: {
+      title: "实践场景",
+      description: "描述你将在何种场合使用语言或技能。",
+      items: {
+        realWorld: {
+          label: "真实场景",
+          placeholder: "如：每周产品例会",
+        },
+        collaboration: {
+          label: "协作对象",
+          placeholder: "如：海外设计团队",
+        },
+      },
+    },
+  },
 };
