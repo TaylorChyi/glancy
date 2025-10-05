@@ -109,6 +109,35 @@ afterEach(() => {
 });
 
 /**
+ * 测试目标：渲染 message 时 Section 会暴露辅助描述并建立 aria 关联。
+ * 前置条件：传入 message 与 descriptionId。
+ * 步骤：
+ *  1) 渲染 DataSection；
+ *  2) 查询 section 与描述元素。
+ * 断言：
+ *  - 描述元素的 id 与传入 descriptionId 一致；
+ *  - section 上的 aria-describedby 指向该 id。
+ * 边界/异常：
+ *  - 若缺失关联则会影响屏幕阅读器理解上下文。
+ */
+test("Given section message When rendering Then description linked for accessibility", () => {
+  render(
+    <DataSection
+      title="Data"
+      message="Control your data"
+      headingId="data-heading"
+      descriptionId="data-description"
+    />,
+  );
+
+  const section = screen.getByRole("region", { name: "Data" });
+  const description = screen.getByText("Control your data");
+
+  expect(description).toHaveAttribute("id", "data-description");
+  expect(section).toHaveAttribute("aria-describedby", "data-description");
+});
+
+/**
  * 测试目标：点击“暂停采集”会关闭历史采集开关。
  * 前置条件：采集开关默认为开启。
  * 步骤：

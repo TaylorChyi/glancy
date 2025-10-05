@@ -154,10 +154,17 @@ const toLanguageOptions = (history, translations) => {
     .sort((a, b) => a.label.localeCompare(b.label));
 };
 
-function DataSection({ title, message: _message, headingId, descriptionId: _descriptionId }) {
+function DataSection({ title, message, headingId, descriptionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
   const user = userStore?.user;
+
+  const fallbackSectionDescriptionId = useId();
+  const hasSectionMessage =
+    typeof message === "string" && message.trim().length > 0;
+  const sectionDescriptionId = hasSectionMessage
+    ? descriptionId ?? fallbackSectionDescriptionId
+    : undefined;
 
   const {
     historyCaptureEnabled,
@@ -347,6 +354,7 @@ function DataSection({ title, message: _message, headingId, descriptionId: _desc
   return (
     <section
       aria-labelledby={headingId}
+      aria-describedby={sectionDescriptionId}
       className={composeClassName(styles.section, styles["section-plain"])}
     >
       <div className={styles["section-header"]}>
@@ -355,6 +363,15 @@ function DataSection({ title, message: _message, headingId, descriptionId: _desc
         </h3>
         <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
+      {hasSectionMessage ? (
+        // 使用视觉隐藏的描述串联 message，确保屏幕阅读器获得上下文而不干扰视觉布局。
+        <p
+          id={sectionDescriptionId}
+          className={styles["visually-hidden"]}
+        >
+          {message}
+        </p>
+      ) : null}
       <div className={styles.controls}>
         <fieldset
           className={styles["control-field"]}
