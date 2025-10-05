@@ -241,14 +241,32 @@ function usePreferenceSections({ initialSectionId }) {
     [t, user],
   );
 
-  const usernameValue = mapToDisplayValue(user?.username, fallbackValue);
-  const sanitizedUsername =
-    typeof user?.username === "string" ? user.username.trim() : "";
-  const emailValue = mapToDisplayValue(user?.email, fallbackValue);
-  const phoneValue = formatPhoneDisplay(user?.phone, {
-    fallbackValue,
-    defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
-  });
+  /**
+   * 关键决策与取舍：
+   *  - 借助 memoized snapshot 统一收敛账户字段的展示值，确保后续扩展编辑态或批量更新时
+   *    只需调整此处逻辑即可；
+   *  - 备选方案是分散在 useMemo 之外逐项计算，但会让 `sections` 依赖列表不断膨胀且难以追踪。
+   */
+  const accountFieldSnapshot = useMemo(() => {
+    const sanitizedUsernameCandidate =
+      typeof user?.username === "string" ? user.username.trim() : "";
+
+    return Object.freeze({
+      sanitizedUsername: sanitizedUsernameCandidate,
+      usernameValue: mapToDisplayValue(
+        sanitizedUsernameCandidate,
+        fallbackValue,
+      ),
+      emailValue: mapToDisplayValue(user?.email, fallbackValue),
+      phoneValue: formatPhoneDisplay(user?.phone, {
+        fallbackValue,
+        defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
+      }),
+    });
+  }, [fallbackValue, t.settingsAccountDefaultPhoneCode, user]);
+
+  const { sanitizedUsername, usernameValue, emailValue, phoneValue } =
+    accountFieldSnapshot;
 
   const usernameEditorTranslations = useMemo(
     () => ({
