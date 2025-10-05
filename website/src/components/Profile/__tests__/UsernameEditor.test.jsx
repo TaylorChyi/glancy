@@ -18,7 +18,9 @@ const t = {
 };
 
 function renderEditor(props = {}) {
-  return render(<UsernameEditor username="taylor" t={t} {...props} />);
+  return render(
+    <UsernameEditor username="taylor" emptyDisplayValue="Not set" t={t} {...props} />,
+  );
 }
 
 describe("UsernameEditor", () => {
@@ -42,6 +44,7 @@ describe("UsernameEditor", () => {
     const input = screen.getByPlaceholderText("Enter username");
 
     expect(input).toBeDisabled();
+    expect(input).toHaveValue("taylor");
 
     fireEvent.click(button);
     expect(input).not.toBeDisabled();
@@ -110,5 +113,37 @@ describe("UsernameEditor", () => {
     expect(error).toBeInTheDocument();
     expect(input).toHaveAttribute("aria-invalid", "true");
     expect(input).toHaveClass(styles.input, styles["input-invalid"]);
+  });
+
+  /**
+   * 测试目标：当用户名为空时应展示占位值且进入编辑后清空输入。
+   * 前置条件：传入 username 为空字符串，并提供 emptyDisplayValue。
+   * 步骤：
+   *  1) 渲染组件并验证查看态显示占位文本；
+   *  2) 点击按钮进入编辑态；
+   *  3) 验证输入框被清空。
+   * 断言：
+   *  - 查看态 input value 为占位值；
+   *  - 编辑态 input value 为空字符串。
+   * 边界/异常：
+   *  - 若缺失 emptyDisplayValue，应维持空字符串（由默认逻辑覆盖）。
+   */
+  test("renders empty display value while keeping edit draft clean", () => {
+    render(
+      <UsernameEditor
+        username=""
+        emptyDisplayValue="Not set"
+        t={t}
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Change username" });
+    const input = screen.getByDisplayValue("Not set");
+    expect(input).toBeDisabled();
+
+    fireEvent.click(button);
+    const editableInput = screen.getByPlaceholderText("Enter username");
+    expect(editableInput).toHaveValue("");
   });
 });

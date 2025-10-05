@@ -2,6 +2,8 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import PropTypes from "prop-types";
+import styles from "../Preferences.module.css";
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   __esModule: true,
@@ -18,6 +20,16 @@ const baseBindings = Object.freeze({
   title: "Connected accounts",
   items: [],
 });
+
+function createFieldRendererMock() {
+  const Component = ({ value }) => (
+    <div data-testid="custom-renderer">{value ?? "rendered"}</div>
+  );
+  Component.propTypes = {
+    value: PropTypes.string,
+  };
+  return (field) => <Component value={field.value} />;
+}
 
 /**
  * 测试目标：头像行展示为“标签-头像-操作”三列结构且按钮可用。
@@ -38,7 +50,14 @@ test("GivenIdentityRow_WhenRendered_ThenLabelAvatarAndActionArranged", () => {
     <AccountSection
       title="Account"
       headingId="account-heading"
-      fields={[]}
+      fields={[
+        {
+          id: "username",
+          label: "用户名",
+          value: "Taylor",
+          renderValue: createFieldRendererMock(),
+        },
+      ]}
       identity={{
         label: "头像",
         displayName: "Taylor",
@@ -110,4 +129,51 @@ test("GivenUploadingIdentity_WhenRendered_ThenChangeButtonDisabled", () => {
   const actionButton = screen.getByRole("button", { name: "更换头像" });
   expect(actionButton).toBeDisabled();
   expect(actionButton).toHaveAttribute("aria-disabled", "true");
+});
+
+/**
+ * 测试目标：字段 renderValue 回调应被调用以渲染自定义值区块。
+ * 前置条件：传入包含 renderValue 的字段数组。
+ * 步骤：
+ *  1) 渲染组件；
+ *  2) 查询自定义渲染结果。
+ * 断言：
+ *  - detail-value 容器包含自定义渲染节点；
+ *  - action 区域为空。
+ * 边界/异常：
+ *  - 若 renderValue 缺失应回退到 value 文本（在其它用例覆盖）。
+ */
+test("GivenFieldWithRenderer_WhenRendering_ThenCustomNodeAppears", () => {
+  const customField = {
+    id: "username",
+    label: "用户名",
+    value: "Taylor",
+    renderValue: createFieldRendererMock(),
+  };
+
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[customField]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: false,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const valueCell = screen.getByTestId("custom-renderer").closest("dd");
+  expect(valueCell).toHaveClass(styles["detail-value"]);
+  const actionCell = valueCell?.parentElement?.querySelector(
+    `.${styles["detail-action"]}`,
+  );
+  if (actionCell) {
+    expect(actionCell.querySelector("button")).toBeNull();
+  }
 });

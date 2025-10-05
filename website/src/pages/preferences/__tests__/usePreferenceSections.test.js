@@ -6,6 +6,7 @@ const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
 const mockUseKeyboardShortcutContext = jest.fn();
 const mockUseAvatarUploader = jest.fn();
+const mockUseUsersApi = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -18,6 +19,10 @@ jest.unstable_mockModule("@/context", () => ({
 jest.unstable_mockModule("@/hooks/useAvatarUploader.js", () => ({
   __esModule: true,
   default: mockUseAvatarUploader,
+}));
+
+jest.unstable_mockModule("@/api/users.js", () => ({
+  useUsersApi: mockUseUsersApi,
 }));
 
 let usePreferenceSections;
@@ -54,7 +59,6 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountPhone: "Phone",
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
-  settingsManageProfile: "Manage profile",
   changeAvatar: "Change avatar",
   settingsAccountBindingTitle: "Connected accounts",
   settingsAccountBindingApple: "Apple",
@@ -142,6 +146,14 @@ const createTranslations = (overrides = {}) => ({
   pricingFixedNote: "Fixed",
   pricingTaxIncluded: "Tax included",
   pricingTaxExcluded: "Tax excluded",
+  usernamePlaceholder: "Enter username",
+  changeUsernameButton: "Change username",
+  saveUsernameButton: "Save username",
+  saving: "Saving...",
+  usernameValidationEmpty: "Username cannot be empty",
+  usernameValidationTooShort: "Username must be at least {{min}} characters",
+  usernameValidationTooLong: "Username must be at most {{max}} characters",
+  usernameUpdateFailed: "Unable to update username",
   ...overrides,
 });
 
@@ -151,15 +163,19 @@ beforeEach(() => {
   mockUseTheme.mockReset();
   mockUseKeyboardShortcutContext.mockReset();
   mockUseAvatarUploader.mockReset();
+  mockUseUsersApi.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
     user: {
+      id: "user-1",
       username: "amy",
       email: "amy@example.com",
       plan: "plus",
       isPro: true,
+      token: "token-123",
     },
+    setUser: jest.fn(),
   });
   mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
   mockUseKeyboardShortcutContext.mockReturnValue({
@@ -172,6 +188,9 @@ beforeEach(() => {
     status: "idle",
     error: null,
     reset: jest.fn(),
+  });
+  mockUseUsersApi.mockReturnValue({
+    updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
   });
 });
 
@@ -232,6 +251,9 @@ test("Given default sections When reading blueprint Then general leads navigatio
     "function",
   );
   expect(accountSection.componentProps.identity.isUploading).toBe(false);
+  expect(
+    typeof accountSection.componentProps.fields[0].renderValue,
+  ).toBe("function");
   expect(accountSection.componentProps.bindings.title).toBe(
     translations.settingsAccountBindingTitle,
   );

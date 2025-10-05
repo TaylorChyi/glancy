@@ -107,6 +107,7 @@ function resolveErrorMessage(t, error) {
 
 function UsernameEditor({
   username,
+  emptyDisplayValue,
   className = "",
   inputClassName = "",
   buttonClassName = "",
@@ -201,7 +202,11 @@ function UsernameEditor({
         ? t.saving
         : t.saveUsernameButton;
 
-  const inputValue = mode === MODES.VIEW ? value : draft;
+  const viewValue =
+    mode === MODES.VIEW && (!value || value.trim().length === 0)
+      ? emptyDisplayValue ?? ""
+      : value;
+  const inputValue = mode === MODES.VIEW ? viewValue : draft;
   const isButtonDisabled = mode === MODES.SAVING;
 
   return (
@@ -238,6 +243,7 @@ function UsernameEditor({
 
 UsernameEditor.propTypes = {
   username: PropTypes.string,
+  emptyDisplayValue: PropTypes.string,
   className: PropTypes.string,
   inputClassName: PropTypes.string,
   buttonClassName: PropTypes.string,

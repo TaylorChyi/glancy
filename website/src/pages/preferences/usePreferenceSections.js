@@ -20,6 +20,8 @@ import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
 import useAvatarUploader from "@/hooks/useAvatarUploader.js";
+import UsernameEditor from "@/components/Profile/UsernameEditor/index.jsx";
+import { useUsersApi } from "@/api/users.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -130,7 +132,9 @@ const formatPhoneDisplay = (
 function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
-  const { user } = userStore ?? {};
+  const { user, setUser } = userStore ?? {};
+  const usersApi = useUsersApi();
+  const updateUsernameRequest = usersApi?.updateUsername;
   const { onSelectAvatar, isUploading: isAvatarUploading } =
     useAvatarUploader();
 
@@ -174,6 +178,83 @@ function usePreferenceSections({ initialSectionId }) {
     [t, user],
   );
 
+  const usernameValue = mapToDisplayValue(user?.username, fallbackValue);
+  const sanitizedUsername =
+    typeof user?.username === "string" ? user.username.trim() : "";
+  const emailValue = mapToDisplayValue(user?.email, fallbackValue);
+  const phoneValue = formatPhoneDisplay(user?.phone, {
+    fallbackValue,
+    defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
+  });
+
+  const usernameEditorTranslations = useMemo(
+    () => ({
+      usernamePlaceholder:
+        t.usernamePlaceholder ?? t.settingsAccountUsername ?? "Enter username",
+      changeUsernameButton:
+        t.changeUsernameButton ?? t.settingsManageProfile ?? "Change username",
+      saveUsernameButton: t.saveUsernameButton ?? "Save username",
+      saving: t.saving ?? "Saving...",
+      usernameValidationEmpty:
+        t.usernameValidationEmpty ?? "Username cannot be empty",
+      usernameValidationTooShort:
+        t.usernameValidationTooShort ?? "Username is too short",
+      usernameValidationTooLong:
+        t.usernameValidationTooLong ?? "Username is too long",
+      usernameUpdateFailed:
+        t.usernameUpdateFailed ?? "Unable to update username",
+    }),
+    [
+      t.changeUsernameButton,
+      t.saving,
+      t.saveUsernameButton,
+      t.settingsAccountUsername,
+      t.settingsManageProfile,
+      t.usernamePlaceholder,
+      t.usernameValidationEmpty,
+      t.usernameValidationTooLong,
+      t.usernameValidationTooShort,
+      t.usernameUpdateFailed,
+    ],
+  );
+
+  const handleUsernameFailure = useCallback((error) => {
+    console.error("Failed to update username from preferences", error);
+  }, []);
+
+  const handleUsernameSubmit = useCallback(
+    async (nextUsername) => {
+      if (!user?.id || !user?.token) {
+        throw new Error("User session is unavailable");
+      }
+
+      if (typeof updateUsernameRequest !== "function") {
+        if (typeof setUser === "function") {
+          setUser({ ...user, username: nextUsername });
+        }
+        return nextUsername;
+      }
+
+      const response = await updateUsernameRequest({
+        userId: user.id,
+        username: nextUsername,
+        token: user.token,
+      });
+
+      const resolvedUsername =
+        typeof response?.username === "string"
+          ? response.username
+          : nextUsername;
+
+      if (typeof setUser === "function") {
+        setUser({ ...user, username: resolvedUsername });
+      }
+
+      return resolvedUsername;
+    },
+    [setUser, updateUsernameRequest, user],
+  );
+
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
@@ -201,11 +282,6 @@ function usePreferenceSections({ initialSectionId }) {
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
-    const manageProfileAction = {
-      id: "manage-profile",
-      label: t.settingsManageProfile ?? "Manage profile",
-      disabled: true,
-    };
     const emailUnbindAction = {
       id: "unbind-email",
       label:
@@ -220,19 +296,20 @@ function usePreferenceSections({ initialSectionId }) {
       disabled: true,
     };
 
-    const usernameValue = mapToDisplayValue(user?.username, fallbackValue);
-    const emailValue = mapToDisplayValue(user?.email, fallbackValue);
-    const phoneValue = formatPhoneDisplay(user?.phone, {
-      fallbackValue,
-      defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
-    });
-
     const accountFields = [
       {
         id: "username",
         label: t.settingsAccountUsername ?? "Username",
         value: usernameValue,
-        action: manageProfileAction,
+        renderValue: () => (
+          <UsernameEditor
+            username={sanitizedUsername}
+            emptyDisplayValue={fallbackValue}
+            t={usernameEditorTranslations}
+            onSubmit={handleUsernameSubmit}
+            onFailure={handleUsernameFailure}
+          />
+        ),
       },
       {
         id: "email",
@@ -346,14 +423,17 @@ function usePreferenceSections({ initialSectionId }) {
     accountBindingActionLabel,
     accountBindingStatus,
     accountBindingsTitle,
+    fallbackValue,
     t.settingsAccountAvatarLabel,
     t.settingsAccountDefaultPhoneCode,
     t.settingsAccountEmailUnbind,
     t.settingsAccountEmailUnbindAction,
     t.settingsAccountPhoneRebindAction,
     t.settingsManageProfile,
+    handleUsernameFailure,
+    handleUsernameSubmit,
+    usernameEditorTranslations,
     changeAvatarLabel,
-    fallbackValue,
     t.prefAccountTitle,
     t.prefPersonalizationTitle,
     t.settingsAccountBindingApple,
@@ -373,6 +453,7 @@ function usePreferenceSections({ initialSectionId }) {
     subscriptionSection,
     onSelectAvatar,
     isAvatarUploading,
+    sanitizedUsername,
     user?.email,
     user?.phone,
     user?.username,
