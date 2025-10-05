@@ -23,7 +23,17 @@ import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
 function Preferences({ initialSection, renderCloseAction }) {
-  const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
+  const {
+    copy,
+    header,
+    sections,
+    activeSection,
+    activeSectionId,
+    handleSectionSelect,
+    handleSubmit,
+    panel,
+    overlays,
+  } =
     usePreferenceSections({
       initialSectionId: initialSection,
     });
@@ -44,6 +54,8 @@ function Preferences({ initialSection, renderCloseAction }) {
   const closeRenderer = renderCloseAction
     ? ({ className }) => renderCloseAction({ className })
     : undefined;
+
+  const overlayNodes = overlays ?? [];
 
   return (
     <div className={styles.content}>
@@ -102,6 +114,7 @@ function Preferences({ initialSection, renderCloseAction }) {
           </SettingsPanel>
         </SettingsBody>
       </form>
+      {overlayNodes.map((overlay) => overlay)}
     </div>
   );
 }

@@ -14,3 +14,4 @@ export {
 export { default as useIconToneController } from "./useIconToneController.js";
 export { default as useInfiniteScroll } from "./useInfiniteScroll.js";
 export { default as useAvatarUploader } from "./useAvatarUploader.js";
+export { default as useAvatarChangeFlow } from "./useAvatarChangeFlow.js";

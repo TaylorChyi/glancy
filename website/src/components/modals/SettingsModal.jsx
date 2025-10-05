@@ -43,7 +43,17 @@ const buildCloseLabel = (baseLabel, contextLabel) => {
 };
 
 function SettingsModal({ open, onClose, initialSection }) {
-  const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
+  const {
+    copy,
+    header,
+    sections,
+    activeSection,
+    activeSectionId,
+    handleSectionSelect,
+    handleSubmit,
+    panel,
+    overlays,
+  } =
     usePreferenceSections({
       initialSectionId: initialSection,
     });
@@ -98,6 +108,8 @@ function SettingsModal({ open, onClose, initialSection }) {
       },
     [onClose, resolvedCloseLabel],
   );
+
+  const overlayNodes = overlays ?? [];
 
   return (
     <BaseModal
@@ -160,6 +172,7 @@ function SettingsModal({ open, onClose, initialSection }) {
           </SettingsPanel>
         </form>
       </SettingsBody>
+      {overlayNodes.map((overlay) => overlay)}
     </BaseModal>
   );
 }

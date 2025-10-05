@@ -19,7 +19,7 @@ import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
-import useAvatarUploader from "@/hooks/useAvatarUploader.js";
+import useAvatarChangeFlow from "@/hooks/useAvatarChangeFlow.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -131,8 +131,28 @@ function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
   const { user } = userStore ?? {};
-  const { onSelectAvatar, isUploading: isAvatarUploading } =
-    useAvatarUploader();
+  const avatarFlow = useAvatarChangeFlow({
+    copy: {
+      title: t.avatarCropperTitle ?? "调整头像",
+      subtitle:
+        t.avatarCropperSubtitle ?? "拖动以适配正方形取景区域。",
+      orientation:
+        t.avatarCropperOrientation ?? "请旋转至正确朝向并保持人物居中。",
+      cancel: t.cancel ?? "取消",
+      confirm: t.confirm ?? "确认",
+      zoomIn: t.avatarCropperZoomIn ?? "放大",
+      zoomOut: t.avatarCropperZoomOut ?? "缩小",
+      rotateLeft: t.avatarCropperRotateLeft ?? "向左旋转",
+      rotateRight: t.avatarCropperRotateRight ?? "向右旋转",
+      zoomLabel: t.avatarCropperZoomLabel ?? "缩放",
+      rotationLabel: t.avatarCropperRotationLabel ?? "旋转",
+      previewAlt: t.avatarCropperPreviewAlt ?? "头像预览",
+      helper:
+        t.avatarCropperHelper ?? "拖动、缩放或旋转，圆圈区域即为最终头像。",
+    },
+  });
+  const avatarIdentity = avatarFlow.identity;
+  const avatarOverlays = avatarFlow.overlays;
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -253,8 +273,8 @@ function usePreferenceSections({ initialSectionId }) {
       displayName: usernameValue,
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,
-      onSelectAvatar,
-      isUploading: isAvatarUploading,
+      onSelectAvatar: avatarIdentity.onSelectAvatar,
+      isUploading: avatarIdentity.isUploading,
     };
 
     const accountBindings = {
@@ -371,8 +391,8 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
     subscriptionSection,
-    onSelectAvatar,
-    isAvatarUploading,
+    avatarIdentity.onSelectAvatar,
+    avatarIdentity.isUploading,
     user?.email,
     user?.phone,
     user?.username,
@@ -484,6 +504,7 @@ function usePreferenceSections({ initialSectionId }) {
       modalHeadingId: FALLBACK_MODAL_HEADING_ID,
       modalHeadingText: resolvedModalHeadingText,
     },
+    overlays: avatarOverlays,
   };
 }
 
