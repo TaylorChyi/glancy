@@ -201,7 +201,15 @@
   --sb-action-icon: var(--color-text);
   --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
   --sb-cta-icon: var(--color-text);
-  --sb-voice-color: var(--text-inverse-light);
+  /*
+   * 语音/发送按钮在浅色主题下采用深色壳体，为避免再度出现黑色前景与黑底冲突，
+   * 这里将前景显式映射到“反相文字”语义，并通过 neutral-0 令牌兜底，
+   * 以保证在未引入 colors.css 的隔离样式中依旧能读取到正确颜色。
+   */
+  --sb-voice-color: var(
+    --color-text-inverse,
+    var(--neutral-0)
+  );
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -277,7 +285,10 @@
     transparent 15%
   );
   --sb-send-bg: color-mix(in srgb, var(--neutral-950) 92%, transparent 8%);
-  --sb-send-color: var(--text-inverse-light);
+  --sb-send-color: var(
+    --color-text-inverse,
+    var(--neutral-0)
+  );
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
@@ -304,7 +315,10 @@
   --sb-action-icon: var(--color-text);
   --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
   --sb-cta-icon: var(--color-text);
-  --sb-voice-color: var(--text-inverse-light);
+  --sb-voice-color: var(
+    --color-text-inverse,
+    var(--neutral-0)
+  );
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -380,7 +394,10 @@
     transparent 15%
   );
   --sb-send-bg: color-mix(in srgb, var(--neutral-950) 92%, transparent 8%);
-  --sb-send-color: var(--text-inverse-light);
+  --sb-send-color: var(
+    --color-text-inverse,
+    var(--neutral-0)
+  );
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
