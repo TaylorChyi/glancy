@@ -23,6 +23,7 @@ import {
   computeDisplayMetrics,
   computeOffsetBounds,
 } from "@/utils/avatarCropBox.js";
+import { extractSvgIntrinsicSize } from "@/utils/svgIntrinsicSize.js";
 
 const VIEWPORT_SIZE = 320;
 const OUTPUT_SIZE = 512;
@@ -55,6 +56,8 @@ function AvatarEditorModal({
   const containerRef = useRef(null);
   const pointerIdRef = useRef(null);
   const lastPointRef = useRef({ x: 0, y: 0 });
+  const fallbackSizeControllerRef = useRef(null);
+  const latestSourceRef = useRef(source);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
@@ -91,10 +94,69 @@ function AvatarEditorModal({
     setOffset((prev) => clampOffset(prev, bounds));
   }, [bounds]);
 
-  const handleImageLoad = useCallback((event) => {
-    const image = event.currentTarget;
-    setNaturalSize({ width: image.naturalWidth, height: image.naturalHeight });
-  }, []);
+  const handleImageLoad = useCallback(
+    async (event) => {
+      const image = event.currentTarget;
+      const width = image.naturalWidth;
+      const height = image.naturalHeight;
+      if (width > 0 && height > 0) {
+        setNaturalSize({ width, height });
+        return;
+      }
+
+      if (!source) {
+        setNaturalSize({ width: 0, height: 0 });
+        return;
+      }
+
+      if (fallbackSizeControllerRef.current) {
+        fallbackSizeControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      fallbackSizeControllerRef.current = controller;
+      latestSourceRef.current = source;
+
+      try {
+        if (typeof fetch !== "function") {
+          setNaturalSize({ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE });
+          return;
+        }
+        const response = await fetch(source, { signal: controller.signal });
+        if (!response.ok) {
+          setNaturalSize({ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE });
+          return;
+        }
+        const svgText = await response.text();
+        if (controller.signal.aborted || latestSourceRef.current !== source) {
+          return;
+        }
+        const svgSize = extractSvgIntrinsicSize(svgText);
+        setNaturalSize(
+          svgSize ?? { width: VIEWPORT_SIZE, height: VIEWPORT_SIZE },
+        );
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("avatar-editor-resolve-intrinsic-size", error);
+        }
+      } finally {
+        if (fallbackSizeControllerRef.current === controller) {
+          fallbackSizeControllerRef.current = null;
+        }
+      }
+    },
+    [source],
+  );
+
+  useEffect(() => {
+    latestSourceRef.current = source;
+    return () => {
+      if (fallbackSizeControllerRef.current) {
+        fallbackSizeControllerRef.current.abort();
+        fallbackSizeControllerRef.current = null;
+      }
+    };
+  }, [source]);
 
   const updateOffset = useCallback(
     (deltaX, deltaY) => {
