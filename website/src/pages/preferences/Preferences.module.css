@@ -206,10 +206,24 @@
 }
 
 .tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: none;
+}
+
+.tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  line-height: 0;
+  color: inherit;
 }
 
 .tab[data-state="active"] .tab-summary {

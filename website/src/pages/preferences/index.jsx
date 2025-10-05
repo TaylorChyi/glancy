@@ -129,6 +129,7 @@ function Preferences({ initialSection, renderCloseAction }) {
               nav: styles.tabs,
               button: styles.tab,
               label: styles["tab-label"],
+              icon: styles["tab-icon"],
               actionButton: styles["close-button"],
             }}
           />
