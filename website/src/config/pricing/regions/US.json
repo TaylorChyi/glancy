@@ -1,0 +1,100 @@
+{
+  "country": "US",
+  "regionLabel": "United States",
+  "currency": "USD",
+  "currencySymbol": "$",
+  "taxIncluded": false,
+  "plans": {
+    "FREE": {
+      "price": 0,
+      "quotas": {
+        "wordLookupsDaily": 50,
+        "llmCallsDaily": 10,
+        "ttsDaily": 50,
+        "notebookCapacity": 1000,
+        "alignedLanguages": 2,
+        "ocrPagesMonthly": 0,
+        "pdfPagesMonthly": 0,
+        "concurrentRequests": 1,
+        "devices": 2
+      },
+      "benefits": {
+        "adFree": false,
+        "bulkExport": "export-only",
+        "historyRetentionDays": 30,
+        "betaAccess": "no",
+        "supportSloHours": 72,
+        "priority": "standard"
+      }
+    },
+    "PLUS": {
+      "monthly": 2.49,
+      "yearly": 24.99,
+      "quotas": {
+        "wordLookupsDaily": 500,
+        "llmCallsDaily": 200,
+        "ttsDaily": 1000,
+        "notebookCapacity": 5000,
+        "alignedLanguages": 5,
+        "ocrPagesMonthly": 50,
+        "pdfPagesMonthly": 50,
+        "concurrentRequests": 2,
+        "devices": 3
+      },
+      "benefits": {
+        "adFree": true,
+        "bulkExport": "import-export",
+        "historyRetentionDays": 180,
+        "betaAccess": "apply",
+        "supportSloHours": 48,
+        "priority": "higher"
+      }
+    },
+    "PRO": {
+      "monthly": 4.99,
+      "yearly": 49.99,
+      "quotas": {
+        "wordLookupsDaily": 5000,
+        "llmCallsDaily": 2000,
+        "ttsDaily": 10000,
+        "notebookCapacity": 50000,
+        "alignedLanguages": 10,
+        "ocrPagesMonthly": 500,
+        "pdfPagesMonthly": 500,
+        "concurrentRequests": 5,
+        "devices": 5
+      },
+      "benefits": {
+        "adFree": true,
+        "bulkExport": "import-export-api",
+        "historyRetentionDays": 365,
+        "betaAccess": "default",
+        "supportSloHours": 24,
+        "priority": "high"
+      }
+    },
+    "PREMIUM": {
+      "purchase": "redeem_only",
+      "quotas": {
+        "wordLookupsDaily": 20000,
+        "llmCallsDaily": 20000,
+        "ttsDaily": 100000,
+        "notebookCapacity": 500000,
+        "alignedLanguages": 20,
+        "ocrPagesMonthly": 5000,
+        "pdfPagesMonthly": 5000,
+        "concurrentRequests": 10,
+        "devices": 10
+      },
+      "benefits": {
+        "adFree": true,
+        "bulkExport": "import-export-api",
+        "historyRetentionDays": -1,
+        "betaAccess": "priority",
+        "supportSloHours": 12,
+        "priority": "highest"
+      }
+    }
+  },
+  "updatedAt": "2025-10-05T00:00:00Z"
+}

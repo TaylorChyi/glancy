@@ -17,6 +17,8 @@ import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
+import SubscriptionSection from "./sections/SubscriptionSection.jsx";
+import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -75,7 +77,8 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
  */
 function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
-  const { user } = useUser();
+  const userStore = useUser();
+  const { user } = userStore ?? {};
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -107,6 +110,15 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountBindingStatusUnlinked ?? "Not linked";
   const accountBindingActionLabel =
     t.settingsAccountBindingActionPlaceholder ?? "Coming soon";
+
+  const subscriptionSection = useMemo(
+    () =>
+      buildSubscriptionSectionProps({
+        translations: t,
+        user,
+      }),
+    [t, user],
+  );
 
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
@@ -243,6 +255,13 @@ function usePreferenceSections({ initialSectionId }) {
           bindings: accountBindings,
         },
       },
+      {
+        id: "subscription",
+        label: subscriptionSection.title,
+        disabled: false,
+        Component: SubscriptionSection,
+        componentProps: subscriptionSection,
+      },
     ];
   }, [
     accountBindingActionLabel,
@@ -255,10 +274,7 @@ function usePreferenceSections({ initialSectionId }) {
     t.prefPersonalizationTitle,
     t.settingsAccountBindingApple,
     t.settingsAccountBindingGoogle,
-    t.settingsAccountBindingTitle,
     t.settingsAccountBindingWeChat,
-    t.settingsAccountBindingStatusUnlinked,
-    t.settingsAccountBindingActionPlaceholder,
     t.settingsAccountEmail,
     t.settingsAccountPhone,
     t.settingsAccountUsername,
@@ -271,6 +287,7 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
+    subscriptionSection,
     user?.email,
     user?.phone,
     user?.username,
