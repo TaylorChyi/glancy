@@ -9,9 +9,10 @@
  * 影响范围：
  *  - Loader 组件与测试共享该策略对象，减少重复配置。
  * 演进与TODO：
- *  - TODO：支持根据主题动态切换不同节奏策略。
+ *  - TODO：支持根据主题动态切换不同节奏策略或在夜间模式中缩短节奏。
  */
-const FRAME_INTERVAL_MS = 500;
+// 设计约束：根据品牌节奏需求，将单帧展示时长固定为 1.5 秒，便于与呼吸动画同步。
+const FRAME_INTERVAL_MS = 1500;
 
 const CANVAS_DIMENSIONS = Object.freeze({
   width: 682,
