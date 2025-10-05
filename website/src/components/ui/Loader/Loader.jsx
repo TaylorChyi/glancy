@@ -1,3 +1,17 @@
+/**
+ * 背景：
+ *  - 等待动画素材从三帧轮播收敛为单帧遮罩动画，旧实现通过滤镜闪烁黑底影响质感。
+ * 目的：
+ *  - 采用分层渲染策略让灰度底图与黑色覆盖独立控制，并借助 Hook 管理帧节奏与揭示时机。
+ * 关键决策与取舍：
+ *  - 选用策略模式（waitingAnimationStrategy）集中封装节奏与画布尺寸，Loader 仅负责渲染结构；
+ *  - 以 useWaitingFrameCycle 提供 shouldSchedule 钩子，确保单帧素材跳过调度避免无意义重置；
+ *  - 通过 useFrameReveal 搭配 CSS clip-path 实现自下而上的遮罩动画，替代难维护的滤镜方案。
+ * 影响范围：
+ *  - Loader 组件调用链、等待动画 Hook 与样式模块；外部 API 未变化，仍暴露标准状态语义。
+ * 演进与TODO：
+ *  - TODO：后续可在覆盖层加速率、节奏策略中引入主题自定义或低性能设备降级逻辑。
+ */
 import { useMemo } from "react";
 import waittingFrame from "@/assets/waitting-frame.svg";
 import styles from "./Loader.module.css";
