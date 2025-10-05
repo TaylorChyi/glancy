@@ -7,6 +7,7 @@
  *  - 采用状态模式思路：Hook 内部维护当前帧索引与响应动画迭代事件的转换函数，保持组件层纯展示。
  *  - 提供可注入的随机函数，便于单测时复现确定性场景，同时保证默认实现零依赖。
  *  - 2025-02：补充调度策略注入口（scheduler/cancel/autoStart），让 Hook 自行掌控节奏，Loader 不再关心定时细节。
+ *  - 2025-03：新增 shouldSchedule 开关，以便在单帧模式下跳过调度，避免无意义的动画重置。
  * 影响范围：
  *  - Loader 组件通过该 Hook 接收当前帧与迭代回调；未来若引入更多素材池或节奏策略，可在 Hook 内扩展。
  * 演进与TODO：
@@ -69,19 +70,24 @@ export default function useWaitingFrameCycle(frames, options = {}) {
   const schedulerRef = useRef(options.scheduler ?? setTimeout);
   const cancelRef = useRef(options.cancel ?? clearTimeout);
   const autoStart = options.autoStart ?? true;
+  const shouldSchedule = options.shouldSchedule ?? framePool.length > 1;
+  const allowScheduling = autoStart && shouldSchedule && framePool.length > 1;
 
   const [state, setState] = useState(() =>
     createInitialState(framePool, randomFn),
   );
 
   const handleCycleComplete = useCallback(() => {
+    if (framePool.length <= 1) {
+      return;
+    }
     setState((previous) =>
       deriveNextState(framePool, randomFn, previous.frameIndex),
     );
   }, [framePool, randomFn]);
 
   useEffect(() => {
-    if (!autoStart) {
+    if (!allowScheduling) {
       return undefined;
     }
     const scheduler = schedulerRef.current;
@@ -92,7 +98,7 @@ export default function useWaitingFrameCycle(frames, options = {}) {
       );
     }, WAITING_CYCLE_INTERVAL_MS);
     return () => cancel(timerId);
-  }, [autoStart, framePool, randomFn, state.frameIndex]);
+  }, [allowScheduling, framePool, randomFn, state.frameIndex]);
 
   return useMemo(
     () => ({

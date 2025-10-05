@@ -94,4 +94,57 @@ describe("useWaitingFrameCycle", () => {
     expect(scheduler).toHaveBeenCalledTimes(2);
     expect(result.current.currentFrame).toBe("frame-c.svg");
   });
+
+  it("GivenSingleFramePool_WhenUsingDefaultOptions_ThenSkipsScheduling", () => {
+    /**
+     * 测试目标：单帧模式下默认关闭调度，避免 requestAnimationFrame 被无意义触发。
+     * 前置条件：仅提供一个素材帧，并注入可观察调用次数的 scheduler。
+     * 步骤：
+     *  1) 通过 renderHook 渲染 useWaitingFrameCycle，传入单帧数组与自定义 scheduler。
+     *  2) 读取 currentFrame 并确认 scheduler 未被调用。
+     * 断言：
+     *  - currentFrame 返回唯一素材；
+     *  - scheduler 保持零调用次数。
+     * 边界/异常：
+     *  - 单帧场景无需重置动画，因此若触发调度应视为失败。
+     */
+    const scheduler = jest.fn();
+    const cancel = jest.fn();
+    const singleFrame = ["solo-frame.svg"];
+
+    const { result } = renderHook(() =>
+      useWaitingFrameCycle(singleFrame, {
+        random: () => 0.4,
+        scheduler,
+        cancel,
+      }),
+    );
+
+    expect(result.current.currentFrame).toBe("solo-frame.svg");
+    expect(scheduler).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it("GivenStrategyConfiguration_WhenReadingCycleDuration_ThenReturnsFixedInterval", () => {
+    /**
+     * 测试目标：确认 Hook 返回的 cycleDurationMs 与策略文件设定的 1500ms 常量一致。
+     * 前置条件：提供至少两帧素材以启用调度逻辑，但禁用自动调度避免副作用。
+     * 步骤：
+     *  1) 渲染 Hook 并传入 autoStart=false；
+     *  2) 读取返回的 cycleDurationMs。
+     * 断言：
+     *  - cycleDurationMs 恰为 1500；
+     *  - 行为与等待策略定义保持同步。
+     * 边界/异常：
+     *  - 若策略值调整，该测试提醒同步更新 Hook 或策略文件。
+     */
+    const { result } = renderHook(() =>
+      useWaitingFrameCycle(frames, {
+        random: () => 0.2,
+        autoStart: false,
+      }),
+    );
+
+    expect(result.current.cycleDurationMs).toBe(1500);
+  });
 });

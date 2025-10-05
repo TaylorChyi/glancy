@@ -1,7 +1,5 @@
 import { useMemo } from "react";
-import waitingFrame1 from "@/assets/waiting-frame-1.svg";
-import waitingFrame2 from "@/assets/waiting-frame-2.svg";
-import waitingFrame3 from "@/assets/waiting-frame-3.svg";
+import waittingFrame from "@/assets/waitting-frame.svg";
 import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";
@@ -20,11 +18,11 @@ const WAITING_FRAME_DIMENSIONS = WAITING_ANIMATION_STRATEGY.canvas;
 const WAITING_FRAME_ASPECT_RATIO = Number(
   (WAITING_FRAME_DIMENSIONS.width / WAITING_FRAME_DIMENSIONS.height).toFixed(6),
 );
-const WAITING_FRAMES = Object.freeze([
-  waitingFrame1,
-  waitingFrame2,
-  waitingFrame3,
-]);
+const WAITING_FRAMES = Object.freeze([waittingFrame]);
+// 设计说明：单帧素材默认不触发调度，依赖 Hook 内的 shouldSchedule 控制节奏。
+const WAITING_CYCLE_OPTIONS = Object.freeze({
+  shouldSchedule: WAITING_FRAMES.length > 1,
+});
 
 // 设计取舍：33vh 为视觉规范要求的显示高度，同时保留像素级上限避免 SVG 溢出。
 const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
@@ -33,17 +31,19 @@ const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
 });
 const WAITING_REVEAL_DURATION_RATIO = 0.65; // 经验值：色彩过渡占节奏 65%，避免突兀闪烁。
 
-function composeFrameClassName(isRevealed) {
-  const baseClassName = styles["frame-image"];
+function composeOverlayClassName(isRevealed) {
+  const baseClassName = styles["frame-overlay"];
   if (!isRevealed) {
     return baseClassName;
   }
-  return `${baseClassName} ${styles["frame-image-revealed"]}`;
+  return `${baseClassName} ${styles["frame-overlay-revealed"]}`;
 }
 
 function Loader() {
-  const { currentFrame, cycleDurationMs } =
-    useWaitingFrameCycle(WAITING_FRAMES);
+  const { currentFrame, cycleDurationMs } = useWaitingFrameCycle(
+    WAITING_FRAMES,
+    WAITING_CYCLE_OPTIONS,
+  );
   const isRevealed = useFrameReveal(currentFrame);
 
   const waitingSymbolStyle = useMemo(() => {
@@ -69,8 +69,23 @@ function Loader() {
         style={waitingSymbolStyle}
       >
         <div className={styles.frame}>
+          {/*
+           * 分层策略说明：
+           *  - 背景：单帧素材需呈现“灰底-黑色覆盖”自下而上揭示效果，若仅靠滤镜会导致色彩不稳定且难以扩展。
+           *  - 方案：采用双图层组合，底层应用灰阶滤镜，覆盖层使用 clip-path 控制揭示，便于未来替换素材时复用同一逻辑。
+           *  - 取舍：额外渲染一次 <img>，但换取动画可控性与更清晰的职责分离，符合后续扩展多主题的预期。
+           */}
           <img
-            className={composeFrameClassName(isRevealed)}
+            className={styles["frame-base"]}
+            src={currentFrame}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            width={WAITING_FRAME_DIMENSIONS.width}
+            height={WAITING_FRAME_DIMENSIONS.height}
+          />
+          <img
+            className={composeOverlayClassName(isRevealed)}
             src={currentFrame}
             alt=""
             loading="lazy"

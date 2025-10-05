@@ -29,19 +29,32 @@
   position: relative;
   inline-size: 100%;
   block-size: 100%;
+  overflow: hidden;
 }
 
-.frame-image {
+.frame-base,
+.frame-overlay {
   inline-size: 100%;
   block-size: 100%;
   display: block;
   object-fit: contain;
-  filter: grayscale(1) brightness(1.2);
-  transition: filter var(--waiting-reveal-duration, 900ms) ease-out;
 }
 
-.frame-image-revealed {
-  filter: grayscale(0) brightness(1);
+.frame-base {
+  filter: grayscale(1) brightness(1.2);
+}
+
+.frame-overlay {
+  position: absolute;
+  inset: 0;
+  filter: none;
+  pointer-events: none;
+  transition: clip-path var(--waiting-reveal-duration, 900ms) ease-out;
+  clip-path: inset(100% 0 0 0);
+}
+
+.frame-overlay-revealed {
+  clip-path: inset(0 0 0 0);
 }
 
 .label {
