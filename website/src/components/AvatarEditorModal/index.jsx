@@ -20,12 +20,13 @@ import styles from "./AvatarEditorModal.module.css";
 import {
   clampOffset,
   clampZoom,
+  computeCropSourceRect,
   computeDisplayMetrics,
   computeOffsetBounds,
 } from "@/utils/avatarCropBox.js";
 import { extractSvgIntrinsicSize } from "@/utils/svgIntrinsicSize.js";
 
-const VIEWPORT_SIZE = 320;
+const DEFAULT_VIEWPORT_SIZE = 320;
 const OUTPUT_SIZE = 512;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -61,14 +62,27 @@ function AvatarEditorModal({
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
+
+  const resetView = useCallback(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  }, []);
 
   useEffect(() => {
     if (!open) {
       return;
     }
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
-  }, [open, source]);
+    resetView();
+  }, [open, resetView, source]);
+
+  useEffect(() => {
+    if (open) {
+      return;
+    }
+    resetView();
+    setNaturalSize({ width: 0, height: 0 });
+  }, [open, resetView]);
 
   const {
     scaleFactor,
@@ -79,20 +93,58 @@ function AvatarEditorModal({
       computeDisplayMetrics({
         naturalWidth: naturalSize.width,
         naturalHeight: naturalSize.height,
-        viewportSize: VIEWPORT_SIZE,
+        viewportSize,
         zoom,
       }),
-    [naturalSize.height, naturalSize.width, zoom],
+    [naturalSize.height, naturalSize.width, viewportSize, zoom],
   );
 
   const bounds = useMemo(
-    () => computeOffsetBounds(displayWidth, displayHeight, VIEWPORT_SIZE),
-    [displayHeight, displayWidth],
+    () => computeOffsetBounds(displayWidth, displayHeight, viewportSize),
+    [displayHeight, displayWidth, viewportSize],
   );
 
   useEffect(() => {
     setOffset((prev) => clampOffset(prev, bounds));
   }, [bounds]);
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+    const element = containerRef.current;
+    if (!element) {
+      return undefined;
+    }
+
+    const updateSize = () => {
+      const nextSize = element.clientWidth;
+      if (!Number.isFinite(nextSize) || nextSize <= 0) {
+        return;
+      }
+      setViewportSize((previous) =>
+        Math.abs(previous - nextSize) < 0.5 ? previous : nextSize,
+      );
+    };
+
+    updateSize();
+
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(() => updateSize());
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    if (typeof window !== "undefined") {
+      const handleResize = () => updateSize();
+      window.addEventListener("resize", handleResize);
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }
+
+    return undefined;
+  }, [open]);
 
   const handleImageLoad = useCallback(
     async (event) => {
@@ -116,15 +168,22 @@ function AvatarEditorModal({
       const controller = new AbortController();
       fallbackSizeControllerRef.current = controller;
       latestSourceRef.current = source;
+      const fallbackViewportSize = viewportSize || DEFAULT_VIEWPORT_SIZE;
 
       try {
         if (typeof fetch !== "function") {
-          setNaturalSize({ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE });
+          setNaturalSize({
+            width: fallbackViewportSize,
+            height: fallbackViewportSize,
+          });
           return;
         }
         const response = await fetch(source, { signal: controller.signal });
         if (!response.ok) {
-          setNaturalSize({ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE });
+          setNaturalSize({
+            width: fallbackViewportSize,
+            height: fallbackViewportSize,
+          });
           return;
         }
         const svgText = await response.text();
@@ -133,7 +192,10 @@ function AvatarEditorModal({
         }
         const svgSize = extractSvgIntrinsicSize(svgText);
         setNaturalSize(
-          svgSize ?? { width: VIEWPORT_SIZE, height: VIEWPORT_SIZE },
+          svgSize ?? {
+            width: fallbackViewportSize,
+            height: fallbackViewportSize,
+          },
         );
       } catch (error) {
         if (error.name !== "AbortError") {
@@ -145,7 +207,7 @@ function AvatarEditorModal({
         }
       }
     },
-    [source],
+    [source, viewportSize],
   );
 
   useEffect(() => {
@@ -205,15 +267,20 @@ function AvatarEditorModal({
 
   const computeCrop = useCallback(async () => {
     const image = imageRef.current;
-    if (!image || scaleFactor <= 0) {
+    if (!image || scaleFactor <= 0 || viewportSize <= 0) {
       return null;
     }
-    const sourceWidth = VIEWPORT_SIZE / scaleFactor;
-    const sourceHeight = VIEWPORT_SIZE / scaleFactor;
-    const sourceX =
-      naturalSize.width / 2 + (-VIEWPORT_SIZE / 2 - offset.x) / scaleFactor;
-    const sourceY =
-      naturalSize.height / 2 + (-VIEWPORT_SIZE / 2 - offset.y) / scaleFactor;
+    const cropRect = computeCropSourceRect({
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+      viewportSize,
+      scaleFactor,
+      offset,
+    });
+
+    if (cropRect.width <= 0 || cropRect.height <= 0) {
+      return null;
+    }
 
     const canvas = ensureCanvas();
     canvas.width = OUTPUT_SIZE;
@@ -225,10 +292,10 @@ function AvatarEditorModal({
 
     ctx.drawImage(
       image,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
+      cropRect.x,
+      cropRect.y,
+      cropRect.width,
+      cropRect.height,
       0,
       0,
       OUTPUT_SIZE,
@@ -247,7 +314,13 @@ function AvatarEditorModal({
 
     const previewUrl = URL.createObjectURL(blob);
     return { blob, previewUrl };
-  }, [naturalSize.height, naturalSize.width, offset.x, offset.y, scaleFactor]);
+  }, [
+    naturalSize.height,
+    naturalSize.width,
+    offset,
+    scaleFactor,
+    viewportSize,
+  ]);
 
   const handleConfirm = useCallback(async () => {
     try {

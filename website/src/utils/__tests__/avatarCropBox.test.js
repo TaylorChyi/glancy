@@ -13,6 +13,7 @@ import {
   clampOffset,
   clampZoom,
   computeCoverScale,
+  computeCropSourceRect,
   computeDisplayMetrics,
   computeOffsetBounds,
 } from "../avatarCropBox.js";
@@ -73,5 +74,65 @@ describe("avatarCropBox geometry helpers", () => {
     expect(clampZoom(5, 1, 3)).toBe(3);
     expect(clampZoom(0.5, 1, 3)).toBe(1);
     expect(clampZoom(2, 1, 3)).toBe(2);
+  });
+
+  /**
+   * 测试目标：验证 computeCropSourceRect 在默认居中场景下计算正确矩形。
+   * 前置条件：原图 800×600，视窗 320×320，缩放系数覆盖视窗且无平移。
+   * 步骤：
+   *  1) 调用 computeCropSourceRect 传入居中偏移；
+   * 断言：
+   *  - 宽高等于 600，x=100，y=0（允许浮点误差）。
+   * 边界/异常：
+   *  - 无额外边界。
+   */
+  it("Given centered state When computeCropSourceRect Then derives middle square", () => {
+    const scaleFactor = computeDisplayMetrics({
+      naturalWidth: 800,
+      naturalHeight: 600,
+      viewportSize: 320,
+      zoom: 1,
+    }).scaleFactor;
+    const rect = computeCropSourceRect({
+      naturalWidth: 800,
+      naturalHeight: 600,
+      viewportSize: 320,
+      scaleFactor,
+      offset: { x: 0, y: 0 },
+    });
+    expect(rect.width).toBeCloseTo(600);
+    expect(rect.height).toBeCloseTo(600);
+    expect(rect.x).toBeCloseTo(100);
+    expect(rect.y).toBeCloseTo(0);
+  });
+
+  /**
+   * 测试目标：验证 computeCropSourceRect 会将平移后的矩形钳制在原图边界内。
+   * 前置条件：沿 X 轴平移至极限，其他参数同上。
+   * 步骤：
+   *  1) 使用最大平移量计算裁剪矩形；
+   * 断言：
+   *  - x 被钳制为 0，width 不变，y 仍为 0。
+   * 边界/异常：
+   *  - 覆盖极限平移场景。
+   */
+  it("Given extreme offset When computeCropSourceRect Then clamps to image bounds", () => {
+    const { scaleFactor, width } = computeDisplayMetrics({
+      naturalWidth: 800,
+      naturalHeight: 600,
+      viewportSize: 320,
+      zoom: 1,
+    });
+    const { maxX } = computeOffsetBounds(width, 320, 320);
+    const rect = computeCropSourceRect({
+      naturalWidth: 800,
+      naturalHeight: 600,
+      viewportSize: 320,
+      scaleFactor,
+      offset: { x: maxX, y: 0 },
+    });
+    expect(rect.x).toBeCloseTo(0);
+    expect(rect.width).toBeCloseTo(600);
+    expect(rect.y).toBeCloseTo(0);
   });
 });
