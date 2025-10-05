@@ -30,6 +30,30 @@ import useAvatarUploader from "@/hooks/useAvatarUploader.js";
 import UsernameEditor from "@/components/Profile/UsernameEditor/index.jsx";
 import { useUsersApi } from "@/api/users.js";
 
+const createIconConfig = (name) =>
+  Object.freeze({
+    name,
+    roleClass: "inherit",
+    decorative: true,
+    width: 20,
+    height: 20,
+  });
+
+/**
+ * 关键决策与取舍：
+ *  - 通过 SECTION_ICON_REGISTRY 作为轻量适配器，隔离分区蓝图与底层资产文件名，
+ *    以便未来替换或按主题扩展图标时仅需更新注册表；
+ *  - 保留 createIconConfig 工厂确保尺寸与语义默认值一致，避免调用方散落魔法常量。
+ */
+const SECTION_ICON_REGISTRY = Object.freeze({
+  general: createIconConfig("cog-6-tooth"),
+  personalization: createIconConfig("star-outline"),
+  data: createIconConfig("shield-check"),
+  keyboard: createIconConfig("command-line"),
+  account: createIconConfig("user"),
+  subscription: createIconConfig("star-solid"),
+});
+
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
 const sanitizeActiveSectionId = (candidateId, sections) => {
@@ -376,6 +400,7 @@ function usePreferenceSections({ initialSectionId }) {
         componentProps: {
           title: generalLabel,
         },
+        icon: SECTION_ICON_REGISTRY.general,
       },
       {
         id: "personalization",
@@ -386,6 +411,7 @@ function usePreferenceSections({ initialSectionId }) {
           title: personalizationLabel,
           message: personalizationMessage,
         },
+        icon: SECTION_ICON_REGISTRY.personalization,
       },
       {
         id: "data",
@@ -396,6 +422,7 @@ function usePreferenceSections({ initialSectionId }) {
           title: dataLabel,
           message: dataMessage,
         },
+        icon: SECTION_ICON_REGISTRY.data,
       },
       {
         id: "keyboard",
@@ -405,6 +432,7 @@ function usePreferenceSections({ initialSectionId }) {
         componentProps: {
           title: keyboardLabel,
         },
+        icon: SECTION_ICON_REGISTRY.keyboard,
       },
       {
         id: "account",
@@ -417,6 +445,7 @@ function usePreferenceSections({ initialSectionId }) {
           identity: accountIdentity,
           bindings: accountBindings,
         },
+        icon: SECTION_ICON_REGISTRY.account,
       },
       {
         id: "subscription",
@@ -424,6 +453,7 @@ function usePreferenceSections({ initialSectionId }) {
         disabled: false,
         Component: SubscriptionSection,
         componentProps: subscriptionSection,
+        icon: SECTION_ICON_REGISTRY.subscription,
       },
     ];
   }, [

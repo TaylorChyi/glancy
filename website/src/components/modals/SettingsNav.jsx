@@ -13,6 +13,7 @@
 import { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage } from "@/context";
+import ThemeIcon from "@/components/ui/Icon/index.tsx";
 
 /**
  * 意图：针对英文环境生成 Title Case 文案，保证标签语气与设计规范一致。
@@ -44,6 +45,48 @@ const formatSectionLabel = (label, locale) => {
     .join("");
 };
 
+const resolveSectionIconNode = (
+  iconDescriptor,
+  {
+    wrapperClassName,
+    labelText,
+  },
+) => {
+  if (!iconDescriptor || typeof iconDescriptor.name !== "string") {
+    return null;
+  }
+
+  const width = iconDescriptor.width ?? 20;
+  const height = iconDescriptor.height ?? 20;
+  const decorative = iconDescriptor.decorative !== false;
+  const roleClass = iconDescriptor.roleClass ?? "inherit";
+  const title = iconDescriptor.title;
+  const altText = decorative
+    ? ""
+    : iconDescriptor.alt ?? `${labelText} icon`;
+
+  return (
+    <span
+      aria-hidden={decorative || undefined}
+      className={wrapperClassName}
+      data-section-icon={iconDescriptor.name}
+      key={iconDescriptor.name}
+    >
+      <ThemeIcon
+        name={iconDescriptor.name}
+        width={width}
+        height={height}
+        decorative={decorative}
+        roleClass={roleClass}
+        alt={altText}
+        title={title}
+        className={iconDescriptor.className}
+        style={iconDescriptor.style}
+      />
+    </span>
+  );
+};
+
 function SettingsNav({
   sections,
   activeSectionId,
@@ -59,6 +102,7 @@ function SettingsNav({
   const navClassName = classes?.nav ?? "";
   const buttonClassName = classes?.button ?? "";
   const labelClassName = classes?.label ?? "";
+  const iconClassName = classes?.icon ?? "";
   const actionButtonClassName = classes?.actionButton ?? "";
 
   const closeActionNode = useMemo(() => {
@@ -93,6 +137,7 @@ function SettingsNav({
           const tabId = `${section.id}-tab`;
           const panelId = `${section.id}-panel`;
           const isActive = section.id === activeSectionId;
+          const formattedLabel = formatSectionLabel(section.label, lang);
           return (
             <button
               key={section.id}
@@ -116,7 +161,11 @@ function SettingsNav({
                * 如需补充副标题，应改由 tab 内容区域呈现而非按钮内部。
                */}
               <span className={labelClassName}>
-                {formatSectionLabel(section.label, lang)}
+                {resolveSectionIconNode(section.icon, {
+                  wrapperClassName: iconClassName,
+                  labelText: formattedLabel,
+                })}
+                {formattedLabel}
               </span>
             </button>
           );
@@ -132,6 +181,17 @@ SettingsNav.propTypes = {
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
       disabled: PropTypes.bool,
+      icon: PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        decorative: PropTypes.bool,
+        roleClass: PropTypes.string,
+        alt: PropTypes.string,
+        title: PropTypes.string,
+        className: PropTypes.string,
+        style: PropTypes.object,
+      }),
     }).isRequired,
   ).isRequired,
   activeSectionId: PropTypes.string,
@@ -144,6 +204,7 @@ SettingsNav.propTypes = {
     nav: PropTypes.string,
     button: PropTypes.string,
     label: PropTypes.string,
+    icon: PropTypes.string,
     actionButton: PropTypes.string,
   }),
 };

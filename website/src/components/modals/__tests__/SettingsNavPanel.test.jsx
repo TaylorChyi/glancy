@@ -28,13 +28,15 @@ function TestSection({ headingId, title, actionLabel }) {
   );
 }
 
-function TestSettingsHarness({ withCloseAction = false }) {
+const DEFAULT_TEST_SECTIONS = Object.freeze([
+  { id: "account", label: "Account" },
+  { id: "privacy", label: "Privacy" },
+]);
+
+function TestSettingsHarness({ withCloseAction = false, sections: overrideSections }) {
   const sections = useMemo(
-    () => [
-      { id: "account", label: "Account" },
-      { id: "privacy", label: "Privacy" },
-    ],
-    [],
+    () => overrideSections ?? DEFAULT_TEST_SECTIONS,
+    [overrideSections],
   );
   const [activeSectionId, setActiveSectionId] = useState(sections[0].id);
   const activeSection = sections.find((section) => section.id === activeSectionId) ?? sections[0];
@@ -211,5 +213,31 @@ test("Given close action When tabbing forward Then focus visits close control be
   const accountTab = screen.getByRole("tab", { name: /^Account/ });
   await user.tab();
   expect(accountTab).toHaveFocus();
+});
+
+const SECTIONS_WITH_ICONS = Object.freeze([
+  { id: "account", label: "Account", icon: { name: "user" } },
+  { id: "privacy", label: "Privacy" },
+]);
+
+/**
+ * 测试目标：验证导航图标渲染为装饰元素且不影响标签可访问名称。
+ * 前置条件：渲染带 icon 配置的 TestSettingsHarness，默认激活 account 分区。
+ * 步骤：
+ *  1) 查询 Account 标签按钮。
+ *  2) 检查图标包装元素的可访问属性。
+ * 断言：
+ *  - 存在 data-section-icon="user" 的节点。
+ *  - 图标包装节点具备 aria-hidden="true"，保证读屏器忽略。
+ * 边界/异常：
+ *  - 若未来允许非装饰性图标，应根据 alt 逻辑调整断言。
+ */
+test("Given section icon When rendering Then exposes decorative icon wrapper", () => {
+  render(<TestSettingsHarness sections={SECTIONS_WITH_ICONS} />);
+
+  const accountTab = screen.getByRole("tab", { name: "Account" });
+  const iconWrapper = accountTab.querySelector('[data-section-icon="user"]');
+  expect(iconWrapper).not.toBeNull();
+  expect(iconWrapper).toHaveAttribute("aria-hidden", "true");
 });
 
