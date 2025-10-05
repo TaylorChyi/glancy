@@ -37,6 +37,7 @@
   display: block;
   object-fit: contain;
   opacity: 0;
+
   /* 通过缩放 + 透明度营造柔和的呼吸节奏，降低帧切换突兀感。 */
   animation-duration: var(--waiting-animation-duration);
   animation-timing-function: ease-in-out;
