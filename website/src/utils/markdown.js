@@ -10,6 +10,13 @@ const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
 
+// 说明：
+//  - LLM 在英译英响应中可能仅保留单个空格作为段落分隔。
+//  - 若仅依赖 `INLINE_LABEL_PATTERN`（要求至少两个空格），上述场景会漏判。
+//  - 为保持缩进计算逻辑复用，单空格匹配交由二次替换时处理。
+const INLINE_LABEL_SINGLE_SPACE_PATTERN =
+  /(\S)([ \t])(?=\*\*([^*]+)\*\*:[^\n]*)/g;
+
 const INLINE_LABEL_CAMEL_CASE = /([a-z])(\p{Lu})/gu;
 
 const INLINE_LABEL_DELIMITER = /[^a-z\u4e00-\u9fff]+/giu;
@@ -188,12 +195,48 @@ function shouldSplitInlineLabel(label) {
   return INLINE_LABEL_TOKENS.has(collapsed);
 }
 
-function ensureInlineLabelLineBreak(text) {
+// 背景：
+//  - 英译英响应在压缩空格后，常仅保留一个空格连接释义与后续标签。
+//  - 为避免破坏列表结构，需在转换前对这些「单空格」进行定向扩充，
+//    使其满足统一的换行判定条件。
+function normalizeInlineLabelSpacing(text) {
   return text.replace(
+    INLINE_LABEL_SINGLE_SPACE_PATTERN,
+    (match, before, space, label, offset, source) => {
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      const lineStart = source.lastIndexOf("\n", offset) + 1;
+      const prefix = source.slice(lineStart, offset + 1).trim();
+      const isListMarker =
+        prefix.length > 0 && (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
+      if (isListMarker) {
+        return match;
+      }
+      return `${before}${space}${space}`;
+    },
+  );
+}
+
+function ensureInlineLabelLineBreak(text) {
+  const normalizedSpacing = normalizeInlineLabelSpacing(text);
+  return normalizedSpacing.replace(
     INLINE_LABEL_PATTERN,
     (match, before, spaces, segment, label, offset, source) => {
       if (!shouldSplitInlineLabel(label)) {
         return match;
+      }
+      if (spaces.length === 1) {
+        // 背景：列表项首个标签通常仅由一个空格与标记（-、1. 等）分隔，
+        // 若直接换行会破坏列表结构并阻断后续标签的匹配。
+        // 取舍：通过回溯行首判断当前匹配是否仍在列表标记后，若是则保持原样。
+        const lineStart = source.lastIndexOf("\n", offset) + 1;
+        const prefix = source.slice(lineStart, offset + 1).trim();
+        const isListMarker =
+          prefix.length > 0 && (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
+        if (isListMarker) {
+          return match;
+        }
       }
       const indent =
         computeListIndentation(source, offset) || spaces.replace(/\S/g, " ");

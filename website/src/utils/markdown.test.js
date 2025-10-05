@@ -77,6 +77,25 @@ test("polishDictionaryMarkdown splits english inline labels", () => {
 });
 
 /**
+ * 测试目标：验证英译英标签在只有单个空格分隔时也能断行，避免释义与例句连在一起。
+ * 前置条件：使用 markdown 行内展示的例句与释义，且分隔符仅包含单个空格。
+ * 步骤：
+ *  1) 构造仅含单个空格的行内标签 markdown。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 例句标签会换行并继承列表缩进，若失败则表示正则未覆盖精简空格场景。
+ * 边界/异常：
+ *  - 此用例覆盖最紧凑的空格场景，可防止未来格式化逻辑回退。
+ */
+test("polishDictionaryMarkdown splits labels separated by single space", () => {
+  const source = "- **Meaning**: to light **Example**: She lights a candle";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    "- **Meaning**: to light\n  **Example**: She lights a candle",
+  );
+});
+
+/**
  * 验证组合标签（如 Pronunciation-British 或 AudioNotes）在英译英场景中也会断行，保持缩进对齐。
  */
 test("polishDictionaryMarkdown splits composite english inline labels", () => {
