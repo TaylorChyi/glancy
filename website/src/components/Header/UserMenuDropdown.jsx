@@ -11,7 +11,7 @@ const HELP_ITEMS = [
   { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
   { key: "bug", icon: "flag", labelKey: "reportBug" },
   { key: "apps", icon: "phone", labelKey: "downloadApps" },
-  { key: "shortcuts", icon: "command-line", labelKey: "shortcuts" },
+  // 说明：快捷键入口由设置面板统一承载，避免在帮助层级重复展示。
 ];
 
 const emitHelpEvent = (action) => {
@@ -26,7 +26,6 @@ function UserMenuDropdown({
   isPro,
   onOpenSettings,
   onOpenUpgrade,
-  onOpenKeyboard,
   onOpenLogout,
 }) {
   const rootRef = useRef(null);
@@ -97,17 +96,10 @@ function UserMenuDropdown({
 
   const handleHelpItem = useCallback(
     (item) => () => {
-      if (item.key === "shortcuts") {
-        if (typeof onOpenKeyboard === "function") {
-          onOpenKeyboard();
-        }
-        closeMenu();
-        return;
-      }
       emitHelpEvent(item.key);
       closeMenu();
     },
-    [closeMenu, onOpenKeyboard],
+    [closeMenu],
   );
 
   if (!open) {
@@ -246,7 +238,6 @@ UserMenuDropdown.propTypes = {
   isPro: PropTypes.bool,
   onOpenSettings: PropTypes.func,
   onOpenUpgrade: PropTypes.func,
-  onOpenKeyboard: PropTypes.func,
   onOpenLogout: PropTypes.func,
 };
 
@@ -254,7 +245,6 @@ UserMenuDropdown.defaultProps = {
   isPro: false,
   onOpenSettings: undefined,
   onOpenUpgrade: undefined,
-  onOpenKeyboard: undefined,
   onOpenLogout: undefined,
 };
 

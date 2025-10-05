@@ -25,7 +25,6 @@ describe("useSidebarUserDock", () => {
         navRegister: "注册",
         help: "帮助",
         settings: "设置",
-        shortcuts: "快捷键",
         logout: "退出",
       },
     };
@@ -72,7 +71,6 @@ describe("useSidebarUserDock", () => {
    */
   test("Given_pro_user_When_build_props_Then_maps_modal_controls", () => {
     const openSettings = jest.fn();
-    const openShortcuts = jest.fn();
     const openLogout = jest.fn();
 
     userState = {
@@ -84,7 +82,6 @@ describe("useSidebarUserDock", () => {
       t: {
         help: "帮助",
         settings: "设置",
-        shortcuts: "快捷键",
         logout: "退出",
         helpCenter: "帮助中心",
         releaseNotes: "版本说明",
@@ -103,21 +100,18 @@ describe("useSidebarUserDock", () => {
 
     const props = result.current.buildAuthenticatedProps({
       openSettings,
-      openShortcuts,
       openLogout,
     });
 
     expect(props.displayName).toBe("alice");
     expect(props.planLabel).toBe("Plus");
     expect(props.labels).not.toHaveProperty("upgrade");
-    expect(props).not.toHaveProperty("onOpenUpgrade");
     expect(props.labels.helpCenter).toBe("帮助中心");
     expect(props.labels.releaseNotes).toBe("版本说明");
     expect(props.labels.termsPolicies).toBe("条款与政策");
     expect(props.labels.reportBug).toBe("反馈");
     expect(props.labels.downloadApps).toBe("下载应用");
     expect(props.onOpenSettings).toBe(openSettings);
-    expect(props.onOpenShortcuts).toBe(openShortcuts);
     expect(props.onOpenLogout).toBe(openLogout);
   });
 
@@ -141,7 +135,6 @@ describe("useSidebarUserDock", () => {
       t: {
         help: "帮助",
         settings: "设置",
-        shortcuts: "快捷键",
         logout: "退出",
         helpCenter: "帮助中心",
         report: "举报",
@@ -152,7 +145,6 @@ describe("useSidebarUserDock", () => {
 
     const props = result.current.buildAuthenticatedProps({
       openSettings: jest.fn(),
-      openShortcuts: jest.fn(),
       openLogout: jest.fn(),
     });
 
@@ -166,8 +158,6 @@ describe("useSidebarUserDock", () => {
         "releaseNotes",
         "reportBug",
         "settings",
-        "shortcuts",
-        "shortcutsDescription",
         "termsPolicies",
       ].sort(),
     );
