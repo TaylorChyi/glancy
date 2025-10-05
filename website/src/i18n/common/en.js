@@ -66,6 +66,27 @@ export default {
     "Manage how Glancy stores and purges your historical traces.",
   settingsDataNotice:
     "Export and deletion workflows are coming soon. Our concierge team can assist via support@glancy.ai.",
+  settingsDataHistoryToggleLabel: "History collection",
+  settingsDataHistoryToggleDescription:
+    "When enabled, new lookups are stored locally and in your account history for quick recall.",
+  settingsDataHistoryToggleOn: "Capture history",
+  settingsDataHistoryToggleOff: "Pause history",
+  settingsDataRetentionLabel: "Retention window",
+  settingsDataRetentionDescription:
+    "Choose how long Glancy keeps search records before pruning older entries.",
+  settingsDataRetentionOption_30d: "30 days",
+  settingsDataRetentionOption_90d: "90 days",
+  settingsDataRetentionOption_365d: "365 days",
+  settingsDataRetentionOption_forever: "Keep forever",
+  settingsDataLanguageLabel: "Language history",
+  settingsDataClearLanguagePlaceholder: "No language-specific history yet",
+  settingsDataActionsLabel: "Data actions",
+  settingsDataClearAll: "Erase all history",
+  settingsDataClearLanguage: "Clear selected language",
+  settingsDataExport: "Export data",
+  settingsDataExportDescription:
+    "Download a JSON snapshot of your history, capture policy, and retention window.",
+  settingsDataExportFileName: "glancy-data-export",
   settingsExportData: "Export data",
   settingsEraseHistory: "Erase history",
   settingsTabAccount: "Account",
@@ -182,7 +203,8 @@ export default {
   subscriptionPlanPlusSummary: "Ad-free · higher limits · cloud sync",
   subscriptionPlanPlusCta: "Upgrade to Plus",
   subscriptionPlanProTitle: "Pro",
-  subscriptionPlanProSummary: "OCR/PDF capture · concurrency · pro-grade quotas",
+  subscriptionPlanProSummary:
+    "OCR/PDF capture · concurrency · pro-grade quotas",
   subscriptionPlanProCta: "Upgrade to Pro",
   subscriptionPlanPremiumTitle: "Premium",
   subscriptionPlanPremiumSummary:

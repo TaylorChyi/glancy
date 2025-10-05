@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import { act } from "@testing-library/react";
 import api from "@/api/index.js";
-import { useHistoryStore, useWordStore } from "@/store";
+import { useHistoryStore, useWordStore, useDataGovernanceStore } from "@/store";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 
 const mockWordStore = useWordStore;
@@ -65,6 +65,10 @@ describe("historyStore", () => {
       nextPage: 0,
     });
     mockWordStore.setState({ entries: {} });
+    useDataGovernanceStore.setState({
+      retentionPolicyId: "90d",
+      historyCaptureEnabled: true,
+    });
   });
 
   /**
@@ -187,6 +191,29 @@ describe("historyStore", () => {
   });
 
   /**
+   * 测试目标：当历史采集开关关闭时，不应触发持久化与 API 调用。
+   * 前置条件：historyCaptureEnabled 设为 false。
+   * 步骤：
+   *  1) 关闭采集开关；
+   *  2) 调用 addHistory。
+   * 断言：
+   *  - store.history 仍为空；
+   *  - saveSearchRecord 未被调用。
+   * 边界/异常：
+   *  - 若仍被调用则说明与数据治理开关未对齐。
+   */
+  test("Given capture disabled When adding history Then skip persistence", async () => {
+    useDataGovernanceStore.setState({ historyCaptureEnabled: false });
+
+    await act(async () => {
+      await useHistoryStore.getState().addHistory("mute", user);
+    });
+
+    expect(useHistoryStore.getState().history).toHaveLength(0);
+    expect(mockApi.searchRecords.saveSearchRecord).not.toHaveBeenCalled();
+  });
+
+  /**
    * 验证删除历史后会同步清理词条缓存并移除对应分组。
    */
   test("removeHistory clears cache versions", async () => {
@@ -217,6 +244,124 @@ describe("historyStore", () => {
 
     expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:hello");
     expect(useHistoryStore.getState().history).toHaveLength(0);
+    removeSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：按语言清除历史时，仅移除对应语言的记录并调用删除接口。
+   * 前置条件：历史包含英文与中文两种语言。
+   * 步骤：
+   *  1) 预置两条记录；
+   *  2) 调用 clearHistoryByLanguage("CHINESE")。
+   * 断言：
+   *  - 中文记录被删除、英文记录保留；
+   *  - deleteSearchRecord 按版本被调用。
+   * 边界/异常：
+   *  - 若筛选失败则可能误删全部记录。
+   */
+  test("Given bilingual history When clearing language Then scoped records removed", async () => {
+    const createdAt = "2024-05-01T10:00:00Z";
+    useHistoryStore.setState({
+      history: [
+        {
+          term: "hello",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:hello",
+          createdAt,
+          favorite: false,
+          versions: [{ id: "en-1", createdAt, favorite: false }],
+          latestVersionId: "en-1",
+        },
+        {
+          term: "你好",
+          language: "CHINESE",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "CHINESE:BILINGUAL:你好",
+          createdAt,
+          favorite: false,
+          versions: [{ id: "zh-1", createdAt, favorite: false }],
+          latestVersionId: "zh-1",
+        },
+      ],
+      error: null,
+    });
+
+    const removeSpy = jest.spyOn(mockWordStore.getState(), "removeVersions");
+
+    await act(async () => {
+      await useHistoryStore.getState().clearHistoryByLanguage("CHINESE", user);
+    });
+
+    const remaining = useHistoryStore.getState().history;
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].language).toBe("ENGLISH");
+    expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
+      recordId: "zh-1",
+      token: user.token,
+    });
+    expect(removeSpy).toHaveBeenCalledWith("CHINESE:BILINGUAL:你好");
+    removeSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：应用保留策略时，早于窗口的记录会被剔除。
+   * 前置条件：历史包含一条 10 天前、一条今日记录，保留期 7 天。
+   * 步骤：
+   *  1) 预置两条记录；
+   *  2) 调用 applyRetentionPolicy(7)。
+   * 断言：
+   *  - 旧记录被移除，新记录保留；
+   *  - deleteSearchRecord 为旧版本调用。
+   * 边界/异常：
+   *  - 若时间解析失败，策略应宽松地跳过该记录。
+   */
+  test("Given retention window When applying policy Then prune stale history", async () => {
+    const now = new Date();
+    const oldDate = new Date(
+      now.getTime() - 10 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const newDate = now.toISOString();
+    useHistoryStore.setState({
+      history: [
+        {
+          term: "legacy",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:legacy",
+          createdAt: oldDate,
+          favorite: false,
+          versions: [{ id: "legacy-1", createdAt: oldDate, favorite: false }],
+          latestVersionId: "legacy-1",
+        },
+        {
+          term: "fresh",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:fresh",
+          createdAt: newDate,
+          favorite: false,
+          versions: [{ id: "fresh-1", createdAt: newDate, favorite: false }],
+          latestVersionId: "fresh-1",
+        },
+      ],
+      error: null,
+    });
+
+    const removeSpy = jest.spyOn(mockWordStore.getState(), "removeVersions");
+
+    await act(async () => {
+      await useHistoryStore.getState().applyRetentionPolicy(7, user);
+    });
+
+    const history = useHistoryStore.getState().history;
+    expect(history).toHaveLength(1);
+    expect(history[0].term).toBe("fresh");
+    expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
+      recordId: "legacy-1",
+      token: user.token,
+    });
+    expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:legacy");
     removeSpy.mockRestore();
   });
 });

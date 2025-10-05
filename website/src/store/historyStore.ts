@@ -10,6 +10,7 @@ import {
   WORD_FLAVOR_BILINGUAL,
 } from "@/utils/language.js";
 import { useWordStore } from "./wordStore.js";
+import { useDataGovernanceStore } from "./dataGovernanceStore.js";
 
 const HISTORY_PAGE_SIZE = 20;
 
@@ -59,6 +60,10 @@ interface HistoryState {
     flavor?: string,
   ) => Promise<void>;
   clearHistory: (user?: User | null) => Promise<void>;
+  clearHistoryByLanguage: (
+    language: string,
+    user?: User | null,
+  ) => Promise<void>;
   removeHistory: (
     identifier: string | HistoryItem,
     user?: User | null,
@@ -72,6 +77,10 @@ interface HistoryState {
     identifier: string,
     user?: User | null,
     versionId?: string,
+  ) => Promise<void>;
+  applyRetentionPolicy: (
+    retentionDays: number | null,
+    user?: User | null,
   ) => Promise<void>;
 }
 
@@ -300,6 +309,10 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         language?: string,
         flavor?: string,
       ) => {
+        const { historyCaptureEnabled } = useDataGovernanceStore.getState();
+        if (!historyCaptureEnabled) {
+          return;
+        }
         const normalizedLanguage = normalizeLanguage(term, language);
         const normalizedFlavor = normalizeFlavor(flavor);
         const termKey = createTermKey(
@@ -356,6 +369,56 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           isLoading: false,
           nextPage: 0,
         });
+      },
+      clearHistoryByLanguage: async (language: string, user?: User | null) => {
+        const normalized = String(language ?? "")
+          .trim()
+          .toUpperCase();
+        if (!normalized) {
+          return;
+        }
+        const currentHistory = get().history;
+        const candidates = currentHistory.filter(
+          (item) => item.language === normalized,
+        );
+        if (candidates.length === 0) {
+          return;
+        }
+
+        set((state) => {
+          const filtered = state.history.filter(
+            (item) => item.language !== normalized,
+          );
+          return {
+            history: filtered,
+            nextPage: resolveNextPage(filtered.length),
+          };
+        });
+
+        candidates.forEach((item) => {
+          wordStore.getState().removeVersions(item.termKey);
+        });
+
+        if (user?.token) {
+          for (const item of candidates) {
+            const versionIds = item.versions.length
+              ? item.versions.map((version) => version.id)
+              : item.latestVersionId
+                ? [item.latestVersionId]
+                : [];
+            for (const versionId of versionIds) {
+              try {
+                await api.searchRecords.deleteSearchRecord({
+                  recordId: versionId,
+                  token: user.token,
+                });
+              } catch (err) {
+                handleApiError(err, set);
+                return;
+              }
+            }
+          }
+        }
       },
       removeHistory: async (identifier: string, user?: User | null) => {
         const historyItems = get().history;
@@ -442,6 +505,67 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
         } catch (err) {
           handleApiError(err, set);
+        }
+      },
+      applyRetentionPolicy: async (
+        retentionDays: number | null,
+        user?: User | null,
+      ) => {
+        if (retentionDays == null || retentionDays <= 0) {
+          return;
+        }
+        const threshold = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+        const historyItems = get().history;
+        const candidates = historyItems.filter((item) => {
+          if (!item.createdAt) {
+            return false;
+          }
+          const timestamp = Date.parse(item.createdAt);
+          if (Number.isNaN(timestamp)) {
+            return false;
+          }
+          return timestamp < threshold;
+        });
+        if (candidates.length === 0) {
+          return;
+        }
+
+        set((state) => {
+          const filtered = state.history.filter(
+            (item) =>
+              !candidates.some(
+                (candidate) => candidate.termKey === item.termKey,
+              ),
+          );
+          return {
+            history: filtered,
+            nextPage: resolveNextPage(filtered.length),
+          };
+        });
+
+        candidates.forEach((item) => {
+          wordStore.getState().removeVersions(item.termKey);
+        });
+
+        if (user?.token) {
+          for (const item of candidates) {
+            const versionIds = item.versions.length
+              ? item.versions.map((version) => version.id)
+              : item.latestVersionId
+                ? [item.latestVersionId]
+                : [];
+            for (const versionId of versionIds) {
+              try {
+                await api.searchRecords.deleteSearchRecord({
+                  recordId: versionId,
+                  token: user.token,
+                });
+              } catch (err) {
+                handleApiError(err, set);
+                return;
+              }
+            }
+          }
         }
       },
     };
