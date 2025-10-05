@@ -367,24 +367,23 @@
 }
 
 .language-shell {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  height: var(--preferences-language-height, 48px);
-  padding-inline: 14px;
-  border-radius: 20px;
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 82%,
-    transparent
-  );
+  display: block;
+  width: 100%;
   color: var(--preferences-panel-text);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
 
+  --language-trigger-height: var(--preferences-language-height, 48px);
+  --language-trigger-padding-inline: 14px;
+  --language-trigger-padding-block: 0px;
+  --language-trigger-radius: 20px;
+  --language-trigger-background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 82%,
+    transparent
+  );
   --seg-r: 22px;
   --seg-arrow-gap: 12px;
   --seg-code-width: 4ch;

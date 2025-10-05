@@ -164,6 +164,7 @@ function GeneralSection({ title, headingId }) {
               ariaLabel={languageLabel}
               normalizeValue={normalizeSystemLanguage}
               showLabel
+              fullWidth
             />
           </div>
         </div>
