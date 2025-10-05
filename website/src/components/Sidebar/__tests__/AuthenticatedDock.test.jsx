@@ -18,7 +18,9 @@ await jest.unstable_mockModule("../UserDock.module.css", () => ({
   },
 }));
 
-const { default: AuthenticatedDock } = await import("../user/AuthenticatedDock.jsx");
+const { default: AuthenticatedDock } = await import(
+  "../user/AuthenticatedDock.jsx"
+);
 
 describe("AuthenticatedDock", () => {
   beforeEach(() => {
@@ -38,7 +40,6 @@ describe("AuthenticatedDock", () => {
    */
   test("Given_props_When_rendered_Then_forwards_to_user_menu", () => {
     const labels = {
-      help: "帮助",
       settings: "设置",
       logout: "退出",
     };

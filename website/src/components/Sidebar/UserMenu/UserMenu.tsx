@@ -2,84 +2,43 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import ThemeIcon from "@/components/ui/Icon";
 import UserButton from "./UserButton";
-import UserSubmenu, { type UserSubmenuHandle } from "./UserSubmenu";
-import type { MenuItem, MenuSubmenuItem, SubmenuLinkItem } from "./types";
 import styles from "./UserMenu.module.css";
 
 interface UserMenuProps {
   displayName: string;
   planLabel?: string;
   labels: {
-    help: string;
     settings: string;
     logout: string;
-    helpCenter?: string;
-    releaseNotes?: string;
-    termsPolicies?: string;
-    reportBug?: string;
-    downloadApps?: string;
   };
   onOpenSettings: (section?: string) => void;
   onOpenLogout: () => void;
 }
 
-type TimeoutHandle = ReturnType<typeof setTimeout>;
-
-type SubmenuState = {
-  id: string | null;
-  top: number;
-  focusOnMount: boolean;
-  parentIndex: number;
-  parentBottom: number;
-  height: number;
+type MenuActionItem = {
+  id: string;
+  icon: string;
+  label: string;
+  description?: string;
+  secondaryLabel?: string;
+  disabled?: boolean;
+  onSelect: () => void;
 };
 
-const INITIAL_SUBMENU_STATE: SubmenuState = {
-  id: null,
-  top: 0,
-  focusOnMount: false,
-  parentIndex: -1,
-  parentBottom: 0,
-  height: 0,
-};
-
-/**
- * 意图：根据父级项的底边对齐子菜单，保持视觉上沿底贴合。
- * 输入：父项底边相对于菜单根节点的偏移量与子菜单高度。
- * 输出：用于定位子菜单的 top 偏移，保证不越界。
- */
-const computeSubmenuTop = (parentBottom: number, height: number) =>
-  Math.max(parentBottom - height, 0);
-
-const SUBMENU_DELAY_IN = 40;
-const SUBMENU_DELAY_OUT = 100;
+const MENU_MAX_HEIGHT = 420;
 
 /**
  * 背景：
- *  - Header 已通过统一的 HELP_ITEMS 配置驱动帮助入口，Sidebar 需复用同一事件协议。
+ *  - 帮助入口及子菜单被下线后，原有的多级菜单机制与调度逻辑成为冗余负担。
  * 目的：
- *  - 维护相同的 key/icon/labelKey 映射，确保后续仅在配置层即可新增帮助项。
+ *  - 以纯动作列表呈现用户菜单，仅保留设置与退出等核心操作，降低未来维护成本。
  * 关键决策与取舍：
- *  - 选择以常量表述策略集合而非散落条件判断，便于未来扩展或复用到其它入口。
+ *  - 仍通过数组配置驱动菜单项，保留组合弹性；放弃子菜单组件以消除空转状态与定时器管理。
+ * 影响范围：
+ *  - Sidebar 登录态用户菜单，UserSubmenu 组件同步下线。
+ * 演进与TODO：
+ *  - 若后续需要重新引入分组或多级结构，可在此基础上抽象渲染器并通过特性开关恢复子菜单能力。
  */
-const HELP_ITEMS = [
-  { key: "center", icon: "question-mark-circle", labelKey: "helpCenter" },
-  { key: "notes", icon: "refresh", labelKey: "releaseNotes" },
-  { key: "terms", icon: "shield-check", labelKey: "termsPolicies" },
-  { key: "bug", icon: "flag", labelKey: "reportBug" },
-  { key: "apps", icon: "phone", labelKey: "downloadApps" },
-] as const;
-
-type HelpItemConfig = (typeof HELP_ITEMS)[number];
-type HelpAction = HelpItemConfig["key"];
-type HelpLabelKey = HelpItemConfig["labelKey"];
-
-const emitHelpEvent = (action: HelpAction) => {
-  // 复用 Header 的自定义事件协议，让监听方无需感知入口差异。
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("glancy-help", { detail: { action } }));
-};
-
 function UserMenu({
   displayName,
   planLabel,
@@ -90,171 +49,31 @@ function UserMenu({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const submenuRef = useRef<UserSubmenuHandle | null>(null);
-  const itemRefs = useRef<Array<HTMLButtonElement | HTMLAnchorElement | null>>(
-    [],
-  );
-  const timers = useRef<{ open?: TimeoutHandle; close?: TimeoutHandle }>({});
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [submenuState, setSubmenuState] = useState<SubmenuState>(
-    INITIAL_SUBMENU_STATE,
-  );
   const [placement, setPlacement] = useState<"up" | "down">("up");
-  const {
-    help,
-    helpCenter,
-    releaseNotes,
-    reportBug,
-    termsPolicies,
-    downloadApps,
-    settings,
-    logout,
-  } = labels;
+  const { settings, logout } = labels;
 
-  const supportItems = useMemo<SubmenuLinkItem[]>(() => {
-    const labelMap: Partial<Record<HelpLabelKey, string | undefined>> = {
-      helpCenter,
-      releaseNotes,
-      reportBug,
-      termsPolicies,
-      downloadApps,
-    };
-
-    return HELP_ITEMS.map<SubmenuLinkItem>((item) => {
-      const labelKey = item.labelKey as HelpLabelKey;
-      const label = labelMap[labelKey] ?? help;
-      return {
-        id: item.key,
-        icon: item.icon,
-        label,
-        onSelect: () => emitHelpEvent(item.key),
-      };
-    });
-  }, [
-    downloadApps,
-    help,
-    helpCenter,
-    releaseNotes,
-    reportBug,
-    termsPolicies,
-  ]);
-
-  const menuItems = useMemo<MenuItem[]>(() => {
-    const items: MenuItem[] = [
+  const menuItems = useMemo<MenuActionItem[]>(
+    () => [
       {
-        kind: "action",
         id: "settings",
         icon: "cog-6-tooth",
         label: settings,
         onSelect: () => onOpenSettings("general"),
       },
-    ];
-
-    const helpItem: MenuSubmenuItem = {
-      kind: "submenu",
-      id: "help",
-      icon: "question-mark-circle",
-      label: help,
-      items: supportItems,
-    };
-
-    if (helpItem.items.length > 0) {
-      items.push(helpItem);
-    }
-
-    items.push({
-      kind: "action",
-      id: "logout",
-      icon: "arrow-right-on-rectangle",
-      label: logout,
-      onSelect: onOpenLogout,
-    });
-
-    return items;
-  }, [
-    help,
-    logout,
-    onOpenLogout,
-    onOpenSettings,
-    settings,
-    supportItems,
-  ]);
+      {
+        id: "logout",
+        icon: "arrow-right-on-rectangle",
+        label: logout,
+        onSelect: onOpenLogout,
+      },
+    ],
+    [logout, onOpenLogout, onOpenSettings, settings],
+  );
 
   const interactiveItems = menuItems;
-
-  const clearTimers = useCallback(() => {
-    if (timers.current.open) {
-      window.clearTimeout(timers.current.open);
-      timers.current.open = undefined;
-    }
-    if (timers.current.close) {
-      window.clearTimeout(timers.current.close);
-      timers.current.close = undefined;
-    }
-  }, []);
-
-  const cancelScheduledClose = useCallback(() => {
-    if (timers.current.close) {
-      window.clearTimeout(timers.current.close);
-      timers.current.close = undefined;
-    }
-  }, []);
-
-  const updateSubmenuPosition = useCallback(() => {
-    setSubmenuState((prev) => {
-      if (!prev.id || prev.parentIndex < 0) return prev;
-      const rootNode = rootRef.current;
-      const parentNode = itemRefs.current[prev.parentIndex];
-      if (!rootNode || !parentNode) return prev;
-      const rootRect = rootNode.getBoundingClientRect();
-      const parentRect = parentNode.getBoundingClientRect();
-      const parentBottom = parentRect.bottom - rootRect.top;
-      const nextTop = computeSubmenuTop(parentBottom, prev.height);
-      if (
-        Math.abs(nextTop - prev.top) < 0.5 &&
-        Math.abs(parentBottom - prev.parentBottom) < 0.5
-      ) {
-        return prev;
-      }
-      return { ...prev, top: nextTop, parentBottom };
-    });
-  }, []);
-
-  const handleSubmenuHeightChange = useCallback((height: number) => {
-    setSubmenuState((prev) => {
-      if (!prev.id) return prev;
-      const nextTop = computeSubmenuTop(prev.parentBottom, height);
-      if (
-        Math.abs(nextTop - prev.top) < 0.5 &&
-        Math.abs(height - prev.height) < 0.5
-      ) {
-        return prev;
-      }
-      return { ...prev, top: nextTop, height };
-    });
-  }, []);
-
-  useEffect(() => {
-    updateSubmenuPosition();
-  }, [activeIndex, updateSubmenuPosition]);
-
-  useEffect(() => {
-    const node = menuRef.current;
-    if (!node) return undefined;
-    const handleScroll = () => updateSubmenuPosition();
-    node.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      node.removeEventListener("scroll", handleScroll);
-    };
-  }, [updateSubmenuPosition]);
-
-  useEffect(() => {
-    if (!open) {
-      setSubmenuState(INITIAL_SUBMENU_STATE);
-      clearTimers();
-    }
-  }, [open, clearTimers]);
 
   const computeDefaultIndex = useCallback(() => {
     if (interactiveItems.length === 0) return 0;
@@ -262,75 +81,9 @@ function UserMenu({
     return firstEnabled >= 0 ? firstEnabled : 0;
   }, [interactiveItems]);
 
-  const closeSubmenu = useCallback(
-    (focusParent = false) => {
-      clearTimers();
-      setSubmenuState((prev) => {
-        if (focusParent && prev.parentIndex >= 0) {
-          const parentNode = itemRefs.current[prev.parentIndex];
-          if (parentNode) {
-            parentNode.focus();
-            setActiveIndex(prev.parentIndex);
-          }
-        }
-        return INITIAL_SUBMENU_STATE;
-      });
-    },
-    [clearTimers],
-  );
-
-  const openSubmenu = useCallback(
-    (item: MenuSubmenuItem, index: number, focusOnMount: boolean) => {
-      if (!item.items.length) return;
-      clearTimers();
-      const rootNode = rootRef.current;
-      const parentNode = itemRefs.current[index];
-      if (!rootNode || !parentNode) return;
-      const rootRect = rootNode.getBoundingClientRect();
-      const parentRect = parentNode.getBoundingClientRect();
-      const parentBottom = parentRect.bottom - rootRect.top;
-      const measuredHeight =
-        submenuRef.current?.getCurrentHeight?.() ?? INITIAL_SUBMENU_STATE.height;
-      setSubmenuState({
-        id: item.id,
-        top: computeSubmenuTop(parentBottom, measuredHeight),
-        focusOnMount,
-        parentIndex: index,
-        parentBottom,
-        height: measuredHeight,
-      });
-    },
-    [clearTimers],
-  );
-
-  const scheduleSubmenuOpen = useCallback(
-    (item: MenuSubmenuItem, index: number) => {
-      cancelScheduledClose();
-      if (timers.current.open) {
-        window.clearTimeout(timers.current.open);
-      }
-      timers.current.open = window.setTimeout(() => {
-        openSubmenu(item, index, false);
-      }, SUBMENU_DELAY_IN);
-    },
-    [cancelScheduledClose, openSubmenu],
-  );
-
-  const scheduleSubmenuClose = useCallback(() => {
-    cancelScheduledClose();
-    if (timers.current.open) {
-      window.clearTimeout(timers.current.open);
-      timers.current.open = undefined;
-    }
-    timers.current.close = window.setTimeout(() => {
-      closeSubmenu();
-    }, SUBMENU_DELAY_OUT);
-  }, [cancelScheduledClose, closeSubmenu]);
-
   const closeMenu = useCallback(() => {
     setOpen(false);
-    closeSubmenu();
-  }, [closeSubmenu]);
+  }, []);
 
   const handleToggle = useCallback(() => {
     if (open) {
@@ -349,8 +102,6 @@ function UserMenu({
     previousOpenRef.current = open;
   }, [open]);
 
-  useEffect(() => () => clearTimers(), [clearTimers]);
-
   useEffect(() => {
     if (!open) return undefined;
 
@@ -366,20 +117,21 @@ function UserMenu({
       if (event.key === "Escape") {
         event.preventDefault();
         closeMenu();
-      } else if (event.key === "Tab") {
-        const focusables: HTMLElement[] = [];
-        itemRefs.current.forEach((node) => {
-          if (node) focusables.push(node);
-        });
-        if (submenuState.id && submenuRef.current) {
-          focusables.push(...submenuRef.current.getFocusable());
-        }
+        return;
+      }
+
+      if (event.key === "Tab") {
+        const focusables = itemRefs.current.filter(
+          (node): node is HTMLButtonElement => Boolean(node),
+        );
         if (focusables.length === 0) {
           event.preventDefault();
           return;
         }
         const currentNode = document.activeElement as HTMLElement | null;
-        const currentIndex = currentNode ? focusables.indexOf(currentNode) : -1;
+        const currentIndex = currentNode
+          ? focusables.indexOf(currentNode as HTMLButtonElement)
+          : -1;
         const delta = event.shiftKey ? -1 : 1;
         const nextIndex =
           currentIndex === -1
@@ -397,7 +149,15 @@ function UserMenu({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [closeMenu, open, submenuState.id]);
+  }, [closeMenu, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const current = itemRefs.current[activeIndex];
+    if (current) {
+      current.focus();
+    }
+  }, [activeIndex, open]);
 
   const updatePlacement = useCallback(() => {
     if (!open) return;
@@ -409,7 +169,7 @@ function UserMenu({
       window.innerHeight || document.documentElement.clientHeight;
     const menuHeight = Math.min(
       surfaceNode.scrollHeight,
-      Math.min(viewportHeight * 0.6, 420),
+      Math.min(viewportHeight * 0.6, MENU_MAX_HEIGHT),
     );
     const spaceAbove = triggerRect.top;
     const spaceBelow = viewportHeight - triggerRect.bottom;
@@ -425,21 +185,12 @@ function UserMenu({
     updatePlacement();
     const handleResize = () => {
       updatePlacement();
-      updateSubmenuPosition();
     };
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [open, updatePlacement, updateSubmenuPosition]);
-
-  useEffect(() => {
-    if (!open) return;
-    const current = itemRefs.current[activeIndex];
-    if (current) {
-      current.focus();
-    }
-  }, [activeIndex, open]);
+  }, [open, updatePlacement]);
 
   const moveFocus = useCallback(
     (direction: 1 | -1) => {
@@ -469,49 +220,22 @@ function UserMenu({
       if (event.key === "ArrowDown") {
         event.preventDefault();
         moveFocus(1);
-        if (currentItem.kind !== "submenu") {
-          closeSubmenu();
-        }
       } else if (event.key === "ArrowUp") {
         event.preventDefault();
         moveFocus(-1);
-        if (currentItem.kind !== "submenu") {
-          closeSubmenu();
-        }
-      } else if (event.key === "ArrowRight") {
-        if (currentItem.kind === "submenu") {
-          event.preventDefault();
-          openSubmenu(currentItem, activeIndex, true);
-        }
-      } else if (event.key === "ArrowLeft") {
-        if (submenuState.id) {
-          event.preventDefault();
-          closeSubmenu(true);
-        }
       } else if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        if (currentItem.kind === "submenu") {
-          openSubmenu(currentItem, activeIndex, true);
-        } else if (!currentItem.disabled) {
+        if (!currentItem.disabled) {
           currentItem.onSelect();
           closeMenu();
         }
       }
     },
-    [
-      activeIndex,
-      closeMenu,
-      closeSubmenu,
-      interactiveItems,
-      moveFocus,
-      open,
-      openSubmenu,
-      submenuState.id,
-    ],
+    [activeIndex, closeMenu, interactiveItems, moveFocus, open],
   );
 
   const setItemRef = useCallback(
-    (index: number) => (node: HTMLButtonElement | HTMLAnchorElement | null) => {
+    (index: number) => (node: HTMLButtonElement | null) => {
       itemRefs.current[index] = node;
     },
     [],
@@ -535,78 +259,26 @@ function UserMenu({
         aria-hidden={!open}
         tabIndex={-1}
         onKeyDown={handleMenuKeyDown}
-        onPointerEnter={cancelScheduledClose}
-        onPointerLeave={() => {
-          if (submenuState.id) {
-            scheduleSubmenuClose();
-          }
-        }}
       >
         <div className={styles.list}>
-          {menuItems.map((item, interactiveIndex) => {
+          {interactiveItems.map((item, interactiveIndex) => {
             const isActive = activeIndex === interactiveIndex;
-
-            const commonProps = {
-              ref: setItemRef(interactiveIndex),
-              className: styles["menu-item"],
-              "data-active": isActive,
-              role: "menuitem" as const,
-              tabIndex: isActive ? 0 : -1,
-              onFocus: () => {
-                setActiveIndex(interactiveIndex);
-                if (item.kind === "submenu") {
-                  scheduleSubmenuOpen(item, interactiveIndex);
-                } else {
-                  closeSubmenu();
-                }
-              },
-              // 统一切换到 Pointer 事件，避免在 pen/touch 等输入设备下遗漏悬浮态，
-              // 解决“帮助”项悬浮不触发子菜单的问题；Mouse 事件由 Pointer 兼容层兜底。
-              onPointerEnter: () => {
-                setActiveIndex(interactiveIndex);
-                if (item.kind === "submenu") {
-                  scheduleSubmenuOpen(item, interactiveIndex);
-                } else {
-                  closeSubmenu();
-                }
-              },
-              onPointerLeave: () => {
-                if (item.kind === "submenu") {
-                  scheduleSubmenuClose();
-                }
-              },
-            };
-
-            if (item.kind === "submenu") {
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  {...commonProps}
-                >
-                  <span className={styles.icon}>
-                    <ThemeIcon name={item.icon} width={18} height={18} />
-                  </span>
-                  <span className={styles.labels}>
-                    <span className={styles["primary-label"]}>
-                      {item.label}
-                    </span>
-                    {item.description ? (
-                      <span className={styles["secondary-label"]}>
-                        {item.description}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className={styles["submenu-indicator"]}>›</span>
-                </button>
-              );
-            }
 
             return (
               <button
                 key={item.id}
                 type="button"
-                {...commonProps}
+                ref={setItemRef(interactiveIndex)}
+                className={styles["menu-item"]}
+                data-active={isActive || undefined}
+                role="menuitem"
+                tabIndex={isActive ? 0 : -1}
+                onFocus={() => {
+                  setActiveIndex(interactiveIndex);
+                }}
+                onPointerEnter={() => {
+                  setActiveIndex(interactiveIndex);
+                }}
                 onClick={() => {
                   if (!item.disabled) {
                     item.onSelect();
@@ -636,34 +308,6 @@ function UserMenu({
           })}
         </div>
       </div>
-      <UserSubmenu
-        ref={submenuRef}
-        open={Boolean(submenuState.id)}
-        top={submenuState.top}
-        items={
-          submenuState.id
-            ? ((
-                interactiveItems.find(
-                  (item) =>
-                    item.kind === "submenu" && item.id === submenuState.id,
-                ) as MenuSubmenuItem | undefined
-              )?.items ?? [])
-            : []
-        }
-        onAction={() => {
-          closeMenu();
-        }}
-        onClose={closeSubmenu}
-        onPointerEnter={cancelScheduledClose}
-        onPointerLeave={() => {
-          scheduleSubmenuClose();
-        }}
-        requestCloseFromKeyboard={() => {
-          closeSubmenu(true);
-        }}
-        focusOnMount={submenuState.focusOnMount}
-        onHeightChange={handleSubmenuHeightChange}
-      />
     </div>
   );
 }
