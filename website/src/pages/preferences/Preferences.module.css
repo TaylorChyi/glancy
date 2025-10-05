@@ -67,7 +67,14 @@
   gap: 16px;
   align-self: stretch;
   min-height: 0;
-  padding-block: 4px;
+
+  /*
+   * 通过 tabs-top-offset 统一左侧导航与右侧内容首屏的对齐点，
+   * 避免模态与偏好设置页面出现关闭按钮与标题错位。
+   */
+  --preferences-tabs-top-offset: 0px;
+
+  padding-block: var(--preferences-tabs-top-offset) 4px;
 
   --preferences-close-offset: calc(var(--btn-action, 44px) + 24px);
 }
@@ -78,7 +85,7 @@
  */
 .close-action {
   position: sticky;
-  top: 12px;
+  top: var(--preferences-tabs-top-offset);
   z-index: 2;
   display: flex;
   justify-content: flex-start;
@@ -489,11 +496,8 @@
 .subscription-action {
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 65%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 65%, transparent);
   background: transparent;
   color: var(--preferences-panel-text);
   font-size: 13px;
@@ -535,11 +539,8 @@
   gap: var(--space-4);
   padding: var(--space-4);
   border-radius: 18px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 55%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
   background: color-mix(
     in srgb,
     var(--preferences-panel-surface) 92%,
@@ -625,11 +626,8 @@
 .subscription-table-wrapper {
   overflow-x: auto;
   border-radius: 16px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 45%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 45%, transparent);
 }
 
 .subscription-table {
@@ -641,11 +639,8 @@
 .subscription-table th,
 .subscription-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 45%,
-    transparent
-  );
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 45%, transparent);
   font-size: 13px;
   text-align: left;
   color: var(--preferences-panel-text);
@@ -698,11 +693,8 @@
   flex: 1;
   padding: 10px 14px;
   border-radius: 14px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 55%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
   background: transparent;
   color: var(--preferences-panel-text);
 }
@@ -801,7 +793,8 @@
 
 .identity-row {
   align-items: center;
-  grid-template-columns: minmax(140px, 0.28fr) minmax(72px, 1fr)
+  grid-template-columns:
+    minmax(140px, 0.28fr) minmax(72px, 1fr)
     max-content;
 }
 
@@ -976,11 +969,7 @@
   border: 1px dashed
     color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
   background: transparent;
-  color: color-mix(
-    in srgb,
-    var(--preferences-panel-muted) 82%,
-    transparent
-  );
+  color: color-mix(in srgb, var(--preferences-panel-muted) 82%, transparent);
   font-size: 13px;
   font-weight: 600;
   cursor: not-allowed;
