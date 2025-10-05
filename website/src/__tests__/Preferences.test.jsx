@@ -10,6 +10,7 @@ const mockLanguage = {
   prefAccountTitle: "Account",
   prefTablistLabel: "Preference sections",
   settingsAccountDescription: "Details that travel with your workspace.",
+  settingsAccountAvatarLabel: "Change avatar",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
@@ -26,6 +27,8 @@ const mockLanguage = {
   settingsAccountBindingWeChat: "WeChat",
   settingsAccountBindingStatusUnlinked: "Not linked",
   settingsAccountBindingActionPlaceholder: "Coming soon",
+  settingsAccountEmailUnbindAction: "Unlink email",
+  settingsAccountPhoneRebindAction: "Change phone",
 };
 
 let mockUser;
@@ -86,17 +89,24 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(
     within(activePanel).getByText(mockLanguage.settingsAccountUsername),
   ).toBeInTheDocument();
-  expect(within(activePanel).getByText(mockUser.username)).toBeInTheDocument();
+  expect(
+    within(activePanel).getAllByText(mockLanguage.settingsAccountAvatarLabel),
+  ).toHaveLength(2);
+  expect(within(activePanel).getAllByText(mockUser.username)).toHaveLength(2);
   expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
-  expect(within(activePanel).getByText(mockUser.phone)).toBeInTheDocument();
+  expect(within(activePanel).getByText("+1 111")).toBeInTheDocument();
   expect(
     within(activePanel).getByRole("button", { name: mockLanguage.changeAvatar }),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).queryByRole("button", {
-      name: mockLanguage.settingsManageProfile,
-    }),
-  ).not.toBeInTheDocument();
+    within(activePanel).getByRole("button", { name: mockLanguage.settingsManageProfile }),
+  ).toBeInTheDocument();
+  expect(
+    within(activePanel).getByRole("button", { name: mockLanguage.settingsAccountEmailUnbindAction }),
+  ).toBeInTheDocument();
+  expect(
+    within(activePanel).getByRole("button", { name: mockLanguage.settingsAccountPhoneRebindAction }),
+  ).toBeInTheDocument();
   expect(within(activePanel).getByTestId("avatar")).toBeInTheDocument();
   expect(
     within(activePanel).getByText(mockLanguage.settingsAccountBindingTitle),
