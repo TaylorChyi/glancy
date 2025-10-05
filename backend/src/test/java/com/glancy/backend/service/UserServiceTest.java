@@ -13,6 +13,7 @@ import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
+import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
@@ -236,7 +237,16 @@ class UserServiceTest {
     }
 
     /**
-     * 验证 unbindEmail 会清空用户邮箱字段。
+     * 测试目标：验证 unbindEmail 在首次解绑后清空邮箱并在重复调用时保持幂等。
+     * 前置条件：已注册且绑定邮箱的用户；邮箱验证码服务未产生交互。
+     * 步骤：
+     *  1) 注册用户并确认邮箱已设置；
+     *  2) 调用 unbindEmail 完成解绑；
+     *  3) 再次调用 unbindEmail 验证幂等性；
+     * 断言：
+     *  - 第一次返回值中的邮箱为 null；
+     *  - 第二次调用仍返回 null 且数据库中邮箱字段保持为空；
+     * 边界/异常：已解绑的账号再次解绑不会抛出异常。
      */
     @Test
     void testUnbindEmail() {
@@ -250,8 +260,76 @@ class UserServiceTest {
         UserEmailResponse response = userService.unbindEmail(created.getId());
 
         assertNull(response.email());
+        UserEmailResponse second = userService.unbindEmail(created.getId());
+        assertNull(second.email());
         User persisted = userRepository.findById(created.getId()).orElseThrow();
         assertNull(persisted.getEmail());
+    }
+
+    /**
+     * 测试目标：确保 requestEmailChangeCode 拒绝空邮箱输入。
+     * 前置条件：数据库中存在合法用户。
+     * 步骤：
+     *  1) 注册用户；
+     *  2) 清理邮箱验证码服务的交互记录；
+     *  3) 传入空格字符串调用 requestEmailChangeCode；
+     * 断言：
+     *  - 抛出 InvalidRequestException 且提示邮箱不能为空；
+     *  - 邮箱验证码服务无交互产生；
+     * 边界/异常：输入为空或全空格均触发同一异常。
+     */
+    @Test
+    void Given_BlankEmail_When_RequestEmailChangeCode_Then_ThrowInvalidRequest() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("blankemail");
+        req.setPassword("pass123");
+        req.setEmail("blank@example.com");
+        req.setPhone("0000");
+        UserResponse created = userService.register(req);
+
+        clearInvocations(emailVerificationService);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            userService.requestEmailChangeCode(created.getId(), "   ")
+        );
+
+        assertEquals("邮箱不能为空", exception.getMessage());
+        verifyNoInteractions(emailVerificationService);
+    }
+
+    /**
+     * 测试目标：验证 changeEmail 会裁剪验证码中的空白并调用校验服务。
+     * 前置条件：数据库已有绑定邮箱的用户，验证码服务被 Stub 为通过。
+     * 步骤：
+     *  1) 注册用户；
+     *  2) 配置验证码服务在接收到去空白后的验证码时返回成功；
+     *  3) 携带前后空格的验证码调用 changeEmail；
+     * 断言：
+     *  - 返回结果中的邮箱更新为新邮箱；
+     *  - 验证码服务收到去空白后的验证码；
+     * 边界/异常：验证码全空格时将由 sanitizeVerificationCode 抛出异常（另测覆盖）。
+     */
+    @Test
+    void Given_CodeWithWhitespace_When_ChangeEmail_Then_TrimBeforeConsume() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("trimcode");
+        req.setPassword("pass123");
+        req.setEmail("trim-before@example.com");
+        req.setPhone("1111");
+        UserResponse created = userService.register(req);
+
+        doNothing()
+            .when(emailVerificationService)
+            .consumeCode("after@example.com", "654321", EmailVerificationPurpose.CHANGE_EMAIL);
+
+        UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", " 654321 ");
+
+        assertEquals("after@example.com", response.email());
+        verify(emailVerificationService).consumeCode(
+            "after@example.com",
+            "654321",
+            EmailVerificationPurpose.CHANGE_EMAIL
+        );
     }
 
     /**
