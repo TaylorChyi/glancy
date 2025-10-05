@@ -10,10 +10,11 @@
   --loader-bar-color: var(--loader-bar-tone);
 
   /*
-   * 取舍：放大竖条宽度以提升等待反馈辨识度，同时保持间距不变；
-   *       使用 4px 体系组合的 20px 让动效与圆角 20px 形成统一视觉张力。
+   * 取舍：配合等待页面的新版交互稿，将每个矩形统一拉伸至 160px
+   *      （以 calc(var(--space-5) * 5) 取代硬编码），并以主题 radius-xl
+   *       token 维持 20px 圆角；高度沿用既有 token，保持节奏感。
    */
-  --loader-bar-width: calc(var(--space-3) + var(--space-1));
+  --loader-bar-width: calc(var(--space-5) * 5);
   --loader-bar-height: calc(var(--space-5) + var(--space-4));
   --loader-bar-radius: var(--radius-xl);
   --loader-bar-stroke: var(--space-1);
@@ -22,6 +23,7 @@
 .symbol {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
   padding: calc(var(--space-2) + var(--space-1));
   border-radius: var(--radius-xl);
@@ -119,7 +121,7 @@
 @media (width <= 480px) {
   .loader {
     --loader-bar-height: calc(var(--space-4) + var(--space-3));
-    --loader-bar-width: calc(var(--space-2) + var(--space-1));
+    --loader-bar-width: calc(var(--space-5) * 5);
   }
 
   .symbol {
