@@ -46,6 +46,19 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+
+  /*
+   * 通过可配置令牌承载导航栏的背景与内边距，使 SettingsBody 能够
+   * 在页面与模态间复用同一套结构，同时遵循 Sidebar 的配色规范。
+   * 默认回退为透明，避免对旧有容器产生破坏性影响。
+   */
+  padding: var(--settings-body-nav-padding, 0);
+  background: var(--settings-body-nav-surface, transparent);
+  border-radius: var(--settings-body-nav-radius, 0);
+  border: var(--settings-body-nav-border-width, 0) solid
+    var(--settings-body-nav-border-color, transparent);
+  box-shadow: var(--settings-body-nav-shadow, none);
+  background-clip: padding-box;
 }
 
 .nav-scroller {
@@ -80,6 +93,18 @@
         color-mix(in srgb, var(--border-color, #1f2937) 70%, transparent 30%)
       )
     );
+
+  /*
+   * 右侧内容区复用与导航区一致的主题令牌，确保“tab 详情”与主内容
+   * 背景同步，避免出现块状割裂感。
+   */
+  padding: var(--settings-body-content-padding, 0);
+  background: var(--settings-body-content-surface, transparent);
+  border-radius: var(--settings-body-content-radius, 0);
+  border: var(--settings-body-content-border-width, 0) solid
+    var(--settings-body-content-border-color, transparent);
+  box-shadow: var(--settings-body-content-shadow, none);
+  background-clip: padding-box;
 }
 
 .content-scroller {
