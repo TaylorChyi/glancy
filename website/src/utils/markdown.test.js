@@ -171,3 +171,29 @@ test("polishDictionaryMarkdown preserves url colon usage", () => {
   const result = polishDictionaryMarkdown(source);
   expect(result).toBe(source);
 });
+
+/**
+ * 测试目标：验证带编号义项标签（如 S1Verb）会被识别并换行，确保义项层级清晰。
+ * 前置条件：输入为无换行的 Markdown 串，包含 `Senses:S1Verb`、`Example1` 等标签。
+ * 步骤：
+ *  1) 构造紧贴的义项、例句、用法说明字段字符串。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 输出中每个标签独占一行，义项标签被格式化为 “Sense {编号} · {词性}”。
+ * 边界/异常：
+ *  - 覆盖义项编号扩展场景，防止后续解析逻辑回退到单行输出。
+ */
+test("polishDictionaryMarkdown formats sense label chains", () => {
+  const source =
+    "Senses:S1Verb:to move toward the speaker.Examples:Example1:She came home immediately.UsageInsight:Common in storytelling.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Senses**:",
+      "**Sense 1 · Verb**: to move toward the speaker.",
+      "**Examples**:",
+      "**Example 1**: She came home immediately.",
+      "**Usage Insight**: Common in storytelling.",
+    ].join("\n"),
+  );
+});
