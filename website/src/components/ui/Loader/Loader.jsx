@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import waitingFrame1 from "@/assets/waiting-frame-1.svg";
 import waitingFrame2 from "@/assets/waiting-frame-2.svg";
 import waitingFrame3 from "@/assets/waiting-frame-3.svg";
 import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
+import useWaitingFrameCycle from "./useWaitingFrameCycle";
 
 /*
  * 策略模式：
@@ -17,22 +19,27 @@ const WAITING_FRAME_DIMENSIONS = WAITING_ANIMATION_STRATEGY.canvas;
 const WAITING_FRAME_ASPECT_RATIO = Number(
   (WAITING_FRAME_DIMENSIONS.width / WAITING_FRAME_DIMENSIONS.height).toFixed(6),
 );
-const WAITING_FRAMES = [waitingFrame1, waitingFrame2, waitingFrame3];
-const WAITING_TIMELINE = WAITING_ANIMATION_STRATEGY.buildTimeline(
-  WAITING_FRAMES.length,
-);
-
-// 语义化映射：统一导出 CSS 自定义属性，避免在 JSX 中散落常量格式化逻辑。
-// 节奏同步：高度与节奏变量同时暴露给样式层，以保证 1.5 秒轮换时三帧素材保持绝对等高与柔和渐变。
-const WAITING_SYMBOL_STYLE = Object.freeze({
-  "--waiting-frame-count": WAITING_TIMELINE.frameCount,
-  "--waiting-frame-interval": WAITING_TIMELINE.interval,
-  "--waiting-animation-duration": WAITING_TIMELINE.duration,
+const WAITING_FRAMES = Object.freeze([
+  waitingFrame1,
+  waitingFrame2,
+  waitingFrame3,
+]);
+const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
   "--waiting-frame-height": `min(65vh, ${WAITING_FRAME_DIMENSIONS.height}px)`,
   "--waiting-frame-aspect-ratio": WAITING_FRAME_ASPECT_RATIO,
 });
 
 function Loader() {
+  const { currentFrame, handleCycleComplete, cycleDurationMs } =
+    useWaitingFrameCycle(WAITING_FRAMES);
+  const waitingSymbolStyle = useMemo(
+    () => ({
+      ...WAITING_SYMBOL_STYLE_BASE,
+      "--waiting-fill-duration": `${cycleDurationMs}ms`,
+    }),
+    [cycleDurationMs],
+  );
+
   return (
     <div
       className={styles.loader}
@@ -43,23 +50,29 @@ function Loader() {
       <div
         className={styles.symbol}
         aria-hidden="true"
-        style={WAITING_SYMBOL_STYLE}
+        style={waitingSymbolStyle}
       >
-        {WAITING_FRAMES.map((frameSrc, index) => (
+        <div className={styles.frame}>
           <img
-            key={frameSrc}
-            className={styles.frame}
-            src={frameSrc}
+            className={styles["frame-base"]}
+            src={currentFrame}
             alt=""
             loading="lazy"
             decoding="async"
             width={WAITING_FRAME_DIMENSIONS.width}
             height={WAITING_FRAME_DIMENSIONS.height}
-            style={{
-              "--waiting-frame-delay": WAITING_TIMELINE.delays[index],
-            }}
           />
-        ))}
+          <img
+            className={styles["frame-overlay"]}
+            src={currentFrame}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            width={WAITING_FRAME_DIMENSIONS.width}
+            height={WAITING_FRAME_DIMENSIONS.height}
+            onAnimationIteration={handleCycleComplete}
+          />
+        </div>
       </div>
       <span className={styles.label}>Loading…</span>
     </div>
