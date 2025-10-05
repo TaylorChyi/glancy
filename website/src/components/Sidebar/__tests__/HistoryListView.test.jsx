@@ -8,6 +8,7 @@ const loadHistory = jest.fn();
 const historyMock = [
   {
     term: "alpha",
+    displayTerm: "alpha",
     language: "ENGLISH",
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:alpha",
@@ -20,6 +21,7 @@ const historyMock = [
   },
   {
     term: "beta",
+    displayTerm: "beta",
     language: "ENGLISH",
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:beta",
@@ -73,15 +75,25 @@ describe("HistoryListView", () => {
     const onNavigate = jest.fn(() => ({}));
 
     const items = [
-      { termKey: "term-1", term: "alpha", latestVersionId: "v1" },
-      { termKey: "term-2", term: "beta", latestVersionId: "v2" },
+      {
+        termKey: "term-1",
+        term: "alpha",
+        displayTerm: "student-alpha",
+        latestVersionId: "v1",
+      },
+      {
+        termKey: "term-2",
+        term: "beta",
+        displayTerm: "student-beta",
+        latestVersionId: "v2",
+      },
     ];
 
     render(<HistoryListView items={items} onNavigate={onNavigate} />);
 
     expect(screen.getByRole("listbox")).toBeInTheDocument();
-    const firstButton = screen.getByRole("button", { name: "alpha" });
-    const secondButton = screen.getByRole("button", { name: "beta" });
+    const firstButton = screen.getByRole("button", { name: "student-alpha" });
+    const secondButton = screen.getByRole("button", { name: "student-beta" });
 
     expect(firstButton).toBeInTheDocument();
     expect(secondButton).toBeInTheDocument();
@@ -106,8 +118,18 @@ describe("HistoryListView", () => {
     const onNavigate = jest.fn(() => ({}));
 
     const items = [
-      { termKey: "term-1", term: "alpha", latestVersionId: "v1" },
-      { termKey: "term-2", term: "beta", latestVersionId: "v2" },
+      {
+        termKey: "term-1",
+        term: "alpha",
+        displayTerm: "student-alpha",
+        latestVersionId: "v1",
+      },
+      {
+        termKey: "term-2",
+        term: "beta",
+        displayTerm: "student-beta",
+        latestVersionId: "v2",
+      },
     ];
 
     render(
@@ -118,7 +140,7 @@ describe("HistoryListView", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "alpha" }));
+    fireEvent.click(screen.getByRole("button", { name: "student-alpha" }));
     expect(handleSelect).toHaveBeenCalledWith(items[0]);
   });
 
@@ -138,8 +160,18 @@ describe("HistoryListView", () => {
     const onNavigate = jest.fn(() => ({ onKeyDown }));
 
     const items = [
-      { termKey: "term-1", term: "alpha", latestVersionId: "v1" },
-      { termKey: "term-2", term: "beta", latestVersionId: "v2" },
+      {
+        termKey: "term-1",
+        term: "alpha",
+        displayTerm: "student-alpha",
+        latestVersionId: "v1",
+      },
+      {
+        termKey: "term-2",
+        term: "beta",
+        displayTerm: "student-beta",
+        latestVersionId: "v2",
+      },
     ];
 
     render(
@@ -150,7 +182,7 @@ describe("HistoryListView", () => {
       />,
     );
 
-    const firstItem = screen.getByRole("button", { name: "alpha" });
+    const firstItem = screen.getByRole("button", { name: "student-alpha" });
     fireEvent.keyDown(firstItem, { key: "ArrowDown" });
 
     expect(onKeyDown).toHaveBeenCalledTimes(1);
@@ -172,6 +204,8 @@ describe("HistoryListView", () => {
       {
         termKey: "term-1",
         term: "a very very long dictionary lookup that should not be truncated",
+        displayTerm:
+          "a very very long dictionary lookup that should not be truncated",
         latestVersionId: "v1",
       },
     ];

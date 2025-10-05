@@ -36,6 +36,14 @@ export interface HistoryVersion {
 
 export interface HistoryItem {
   term: string;
+  /**
+   * 展示用词条，通常为模型纠正后的结果；若缺失则回退 term。
+   */
+  displayTerm: string;
+  /**
+   * 用户原始查询词，便于与后端记录对齐及后续追踪。
+   */
+  queriedTerm?: string | null;
   language: string;
   flavor: string;
   termKey: string;
@@ -45,20 +53,26 @@ export interface HistoryItem {
   latestVersionId: string | null;
 }
 
+interface CanonicalTermRegistry {
+  [termKey: string]: string;
+}
+
 interface HistoryState {
   history: HistoryItem[];
   error: string | null;
   isLoading: boolean;
   hasMore: boolean;
   nextPage: number;
+  canonicalTerms: CanonicalTermRegistry;
   loadHistory: (user?: User | null) => Promise<void>;
   loadMoreHistory: (user?: User | null) => Promise<void>;
-  addHistory: (
-    term: string,
-    user?: User | null,
-    language?: string,
-    flavor?: string,
-  ) => Promise<void>;
+  addHistory: (payload: {
+    term: string;
+    queriedTerm?: string;
+    user?: User | null;
+    language?: string;
+    flavor?: string;
+  }) => Promise<void>;
   clearHistory: (user?: User | null) => Promise<void>;
   clearHistoryByLanguage: (
     language: string,
@@ -147,6 +161,8 @@ const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
   const latestVersionId = versions.length ? versions[0].id : null;
   return {
     term: record.term,
+    displayTerm: record.term,
+    queriedTerm: record.term,
     language,
     flavor,
     termKey: createTermKey(record.term, language, flavor),
@@ -165,6 +181,30 @@ const compareByCreatedAtDesc = (a: HistoryItem, b: HistoryItem) => {
   if (!right) return -1;
   return right.localeCompare(left);
 };
+
+const normalizeDisplayTerm = (term?: string | null) => {
+  if (typeof term !== "string") return "";
+  const trimmed = term.trim();
+  return trimmed;
+};
+
+const applyDisplayTerm = (
+  item: HistoryItem,
+  canonicalTerms: CanonicalTermRegistry,
+): HistoryItem => {
+  const candidate = canonicalTerms[item.termKey];
+  const normalized = normalizeDisplayTerm(candidate);
+  const resolved = normalized || item.displayTerm || item.term;
+  if (item.displayTerm === resolved && item.term === resolved) {
+    return item;
+  }
+  return { ...item, term: resolved, displayTerm: resolved };
+};
+
+const withCanonicalTerms = (
+  items: HistoryItem[],
+  canonicalTerms: CanonicalTermRegistry,
+) => items.map((item) => applyDisplayTerm(item, canonicalTerms));
 
 const mergeHistory = (existing: HistoryItem[], incoming: HistoryItem[]) => {
   const map = new Map<string, HistoryItem>();
@@ -200,6 +240,7 @@ function handleApiError(err: unknown, set: SetState) {
       hasMore: false,
       isLoading: false,
       nextPage: 0,
+      canonicalTerms: {},
     });
     return;
   }
@@ -261,9 +302,17 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             : [];
         const incoming = payload.map(toHistoryItem);
         set((state) => {
-          const merged = reducer(state.history, incoming);
-          const ordered = [...merged].sort(compareByCreatedAtDesc);
-          const hasMore = incoming.length === HISTORY_PAGE_SIZE;
+          const canonicalTerms = state.canonicalTerms;
+          const normalizedIncoming = withCanonicalTerms(
+            incoming,
+            canonicalTerms,
+          );
+          const merged = reducer(state.history, normalizedIncoming);
+          const ordered = withCanonicalTerms(
+            [...merged].sort(compareByCreatedAtDesc),
+            canonicalTerms,
+          );
+          const hasMore = normalizedIncoming.length === HISTORY_PAGE_SIZE;
           const nextPage = resolveNextPage(ordered.length);
           return {
             history: ordered,
@@ -284,6 +333,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       isLoading: false,
       hasMore: false,
       nextPage: 0,
+      canonicalTerms: {},
       loadHistory: async (user?: User | null) => {
         if (user?.token) {
           await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
@@ -295,6 +345,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           hasMore: false,
           nextPage: 0,
           isLoading: false,
+          canonicalTerms: {},
         });
       },
       loadMoreHistory: async (user?: User | null) => {
@@ -303,26 +354,41 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         if (isLoading || !hasMore) return;
         await loadHistoryPage(user, nextPage, PAGINATION_MODES.APPEND);
       },
-      addHistory: async (
-        term: string,
-        user?: User | null,
-        language?: string,
-        flavor?: string,
-      ) => {
+      addHistory: async ({
+        term,
+        queriedTerm,
+        user,
+        language,
+        flavor,
+      }: {
+        term: string;
+        queriedTerm?: string;
+        user?: User | null;
+        language?: string;
+        flavor?: string;
+      }) => {
         const { historyCaptureEnabled } = useDataGovernanceStore.getState();
         if (!historyCaptureEnabled) {
           return;
         }
-        const normalizedLanguage = normalizeLanguage(term, language);
+        const normalizedQuery =
+          normalizeDisplayTerm(queriedTerm) || term.trim();
+        const canonicalTerm = normalizeDisplayTerm(term) || normalizedQuery;
+        if (!canonicalTerm) {
+          return;
+        }
+        const normalizedLanguage = normalizeLanguage(normalizedQuery, language);
         const normalizedFlavor = normalizeFlavor(flavor);
         const termKey = createTermKey(
-          term,
+          normalizedQuery,
           normalizedLanguage,
           normalizedFlavor,
         );
         const now = new Date().toISOString();
         const placeholder: HistoryItem = {
-          term,
+          term: canonicalTerm,
+          displayTerm: canonicalTerm,
+          queriedTerm: normalizedQuery,
           language: normalizedLanguage,
           flavor: normalizedFlavor,
           termKey,
@@ -332,12 +398,20 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           latestVersionId: null,
         };
         set((state) => {
+          const canonicalTerms = {
+            ...state.canonicalTerms,
+            [termKey]: canonicalTerm,
+          };
           const filtered = state.history.filter(
             (item) => item.termKey !== termKey,
           );
-          const next = [placeholder, ...filtered];
+          const hydrated = filtered.map((item) =>
+            applyDisplayTerm(item, canonicalTerms),
+          );
+          const next = [placeholder, ...hydrated];
           return {
             history: next,
+            canonicalTerms,
             nextPage: resolveNextPage(next.length),
           };
         });
@@ -346,7 +420,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           try {
             await api.searchRecords.saveSearchRecord({
               token: user.token,
-              term,
+              term: canonicalTerm,
               language: normalizedLanguage,
               flavor: normalizedFlavor,
             });
@@ -368,6 +442,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           hasMore: false,
           isLoading: false,
           nextPage: 0,
+          canonicalTerms: {},
         });
       },
       clearHistoryByLanguage: async (language: string, user?: User | null) => {
@@ -389,8 +464,15 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           const filtered = state.history.filter(
             (item) => item.language !== normalized,
           );
+          const canonicalTerms = { ...state.canonicalTerms };
+          state.history
+            .filter((item) => item.language === normalized)
+            .forEach((item) => {
+              delete canonicalTerms[item.termKey];
+            });
           return {
             history: filtered,
+            canonicalTerms,
             nextPage: resolveNextPage(filtered.length),
           };
         });
@@ -431,8 +513,18 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             const filtered = state.history.filter(
               (item) => item.termKey !== identifier && item.term !== identifier,
             );
+            const canonicalTerms = { ...state.canonicalTerms };
+            state.history
+              .filter(
+                (item) =>
+                  item.termKey === identifier || item.term === identifier,
+              )
+              .forEach((item) => {
+                delete canonicalTerms[item.termKey];
+              });
             return {
               history: filtered,
+              canonicalTerms,
               nextPage: resolveNextPage(filtered.length),
             };
           });
@@ -462,8 +554,11 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           const filtered = state.history.filter(
             (item) => item.termKey !== target.termKey,
           );
+          const canonicalTerms = { ...state.canonicalTerms };
+          delete canonicalTerms[target.termKey];
           return {
             history: filtered,
+            canonicalTerms,
             nextPage: resolveNextPage(filtered.length),
           };
         });
@@ -537,8 +632,13 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
                 (candidate) => candidate.termKey === item.termKey,
               ),
           );
+          const canonicalTerms = { ...state.canonicalTerms };
+          candidates.forEach((item) => {
+            delete canonicalTerms[item.termKey];
+          });
           return {
             history: filtered,
+            canonicalTerms,
             nextPage: resolveNextPage(filtered.length),
           };
         });
@@ -571,8 +671,8 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
     };
   },
   persistOptions: {
-    partialize: pickState(["history"]),
-    version: 3,
+    partialize: pickState(["history", "canonicalTerms"]),
+    version: 4,
     migrate: (persistedState, version) => {
       if (!persistedState) return persistedState;
       let nextState = persistedState;
@@ -628,6 +728,36 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             })
           : [];
         nextState = { ...nextState, history: upgraded };
+      }
+      if (version !== undefined && version < 4) {
+        const upgraded = Array.isArray(nextState.history)
+          ? nextState.history.map((item: any) => {
+              if (!item || typeof item !== "object") {
+                return item;
+              }
+              const term = typeof item.term === "string" ? item.term : "";
+              const normalizedTerm = term.trim();
+              const displayTerm =
+                typeof item.displayTerm === "string" && item.displayTerm.trim()
+                  ? item.displayTerm.trim()
+                  : normalizedTerm;
+              const queriedTerm =
+                typeof item.queriedTerm === "string" && item.queriedTerm.trim()
+                  ? item.queriedTerm.trim()
+                  : normalizedTerm;
+              return {
+                ...item,
+                term: normalizedTerm,
+                displayTerm: displayTerm || normalizedTerm,
+                queriedTerm: queriedTerm || normalizedTerm,
+              } as HistoryItem;
+            })
+          : [];
+        nextState = {
+          ...nextState,
+          history: upgraded,
+          canonicalTerms: {},
+        };
       }
       return nextState;
     },

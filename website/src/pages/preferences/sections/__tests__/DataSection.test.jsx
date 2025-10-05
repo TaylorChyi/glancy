@@ -66,6 +66,8 @@ let originalApplyRetentionPolicy;
 
 const createHistoryItem = (overrides = {}) => ({
   term: "hello",
+  displayTerm: "hello",
+  queriedTerm: "hello",
   language: "ENGLISH",
   flavor: "BILINGUAL",
   termKey: "ENGLISH:BILINGUAL:hello",
@@ -95,6 +97,7 @@ beforeEach(() => {
     clearHistory: jest.fn().mockResolvedValue(undefined),
     clearHistoryByLanguage: jest.fn().mockResolvedValue(undefined),
     applyRetentionPolicy: jest.fn().mockResolvedValue(undefined),
+    canonicalTerms: {},
   });
 });
 
@@ -105,6 +108,7 @@ afterEach(() => {
     clearHistory: originalClearHistory,
     clearHistoryByLanguage: originalClearHistoryByLanguage,
     applyRetentionPolicy: originalApplyRetentionPolicy,
+    canonicalTerms: {},
   });
 });
 
@@ -290,7 +294,9 @@ test("Given export action When clicking export Then browser download initiated",
   const csvText = (blobCalls[0]?.parts ?? [])
     .map((part) => (typeof part === "string" ? part : ""))
     .join("");
-  expect(csvText).toContain("generatedAt,historyCaptureEnabled,retentionPolicyId,retentionDays");
+  expect(csvText).toContain(
+    "generatedAt,historyCaptureEnabled,retentionPolicyId,retentionDays",
+  );
   expect(csvText).toContain("term,language,flavor,createdAt,favorite,versions");
 
   const appendedElements = appendSpy.mock.calls

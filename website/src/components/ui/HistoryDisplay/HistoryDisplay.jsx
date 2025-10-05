@@ -63,6 +63,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
       <ul className={styles.grid}>
         {items.map((item) => {
           const displayDate = resolveDisplayDate(item.createdAt);
+          const label = item.displayTerm ?? item.term;
           return (
             <li key={item.termKey} className={styles.card}>
               <button
@@ -70,7 +71,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
                 className={styles.term}
                 onClick={() => handleSelect(item)}
               >
-                <span className={styles["term-text"]}>{item.term}</span>
+                <span className={styles["term-text"]}>{label}</span>
                 <span className={styles.trailing}>
                   {displayDate ? (
                     <time

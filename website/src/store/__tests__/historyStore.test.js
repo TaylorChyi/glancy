@@ -63,6 +63,7 @@ describe("historyStore", () => {
       isLoading: false,
       hasMore: false,
       nextPage: 0,
+      canonicalTerms: {},
     });
     mockWordStore.setState({ entries: {} });
     useDataGovernanceStore.setState({
@@ -93,7 +94,12 @@ describe("historyStore", () => {
       },
     ]);
     await act(async () => {
-      await useHistoryStore.getState().addHistory("test", user, "ENGLISH");
+      await useHistoryStore.getState().addHistory({
+        term: "test",
+        queriedTerm: "test",
+        user,
+        language: "ENGLISH",
+      });
     });
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled();
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledWith({
@@ -106,6 +112,66 @@ describe("historyStore", () => {
     expect(item.flavor).toBe(WORD_FLAVOR_BILINGUAL);
     expect(item.versions).toHaveLength(1);
     expect(item.versions[0].id).toBe("r1");
+  });
+
+  /**
+   * 测试目标：新增历史时保留原始查询并记录纠正词条，方便后续渲染。
+   */
+  test("addHistory preserves canonical term alongside queried term", async () => {
+    await act(async () => {
+      await useHistoryStore.getState().addHistory({
+        term: "student",
+        queriedTerm: "studdent",
+        language: "ENGLISH",
+      });
+    });
+
+    const [item] = useHistoryStore.getState().history;
+    expect(item.term).toBe("student");
+    expect(item.displayTerm).toBe("student");
+    expect(item.queriedTerm).toBe("studdent");
+    expect(item.termKey).toBe("ENGLISH:BILINGUAL:studdent");
+    expect(useHistoryStore.getState().canonicalTerms[item.termKey]).toBe(
+      "student",
+    );
+  });
+
+  /**
+   * 测试目标：服务端返回旧记录时，客户端仍以纠正后的词条展示。
+   */
+  test("loadHistory retains canonical display when server returns queried term", async () => {
+    await act(async () => {
+      await useHistoryStore.getState().addHistory({
+        term: "student",
+        queriedTerm: "studdent",
+        user,
+        language: "ENGLISH",
+      });
+    });
+
+    mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce([
+      {
+        id: "r2",
+        term: "studdent",
+        language: "ENGLISH",
+        flavor: WORD_FLAVOR_BILINGUAL,
+        createdAt: "2024-06-01T12:00:00Z",
+        favorite: false,
+        versions: [
+          { id: "r2", createdAt: "2024-06-01T12:00:00Z", favorite: false },
+        ],
+      },
+    ]);
+
+    await act(async () => {
+      await useHistoryStore.getState().loadHistory(user);
+    });
+
+    const [item] = useHistoryStore.getState().history;
+    expect(item.term).toBe("student");
+    expect(item.displayTerm).toBe("student");
+    expect(item.queriedTerm).toBe("studdent");
+    expect(item.termKey).toBe("ENGLISH:BILINGUAL:studdent");
   });
 
   /**
@@ -167,7 +233,7 @@ describe("historyStore", () => {
    */
   test("addHistory infers language when missing", async () => {
     await act(async () => {
-      await useHistoryStore.getState().addHistory("word", user);
+      await useHistoryStore.getState().addHistory({ term: "word", user });
     });
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalledWith({
       token: user.token,
@@ -182,7 +248,7 @@ describe("historyStore", () => {
    */
   test("clearHistory empties store", async () => {
     await act(async () => {
-      await useHistoryStore.getState().addHistory("a", user);
+      await useHistoryStore.getState().addHistory({ term: "a", user });
     });
     await act(async () => {
       await useHistoryStore.getState().clearHistory(user);
@@ -206,7 +272,7 @@ describe("historyStore", () => {
     useDataGovernanceStore.setState({ historyCaptureEnabled: false });
 
     await act(async () => {
-      await useHistoryStore.getState().addHistory("mute", user);
+      await useHistoryStore.getState().addHistory({ term: "mute", user });
     });
 
     expect(useHistoryStore.getState().history).toHaveLength(0);
@@ -222,6 +288,8 @@ describe("historyStore", () => {
       history: [
         {
           term: "hello",
+          displayTerm: "hello",
+          queriedTerm: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:hello",
@@ -265,6 +333,8 @@ describe("historyStore", () => {
       history: [
         {
           term: "hello",
+          displayTerm: "hello",
+          queriedTerm: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:hello",
@@ -275,6 +345,8 @@ describe("historyStore", () => {
         },
         {
           term: "你好",
+          displayTerm: "你好",
+          queriedTerm: "你好",
           language: "CHINESE",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "CHINESE:BILINGUAL:你好",
@@ -326,6 +398,8 @@ describe("historyStore", () => {
       history: [
         {
           term: "legacy",
+          displayTerm: "legacy",
+          queriedTerm: "legacy",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:legacy",
@@ -336,6 +410,8 @@ describe("historyStore", () => {
         },
         {
           term: "fresh",
+          displayTerm: "fresh",
+          queriedTerm: "fresh",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:fresh",

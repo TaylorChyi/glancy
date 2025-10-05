@@ -13,6 +13,7 @@ let isLoadingState = false;
 const historyMock = [
   {
     term: "alpha",
+    displayTerm: "alpha",
     language: "ENGLISH",
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:alpha",
@@ -25,6 +26,7 @@ const historyMock = [
   },
   {
     term: "beta",
+    displayTerm: "beta",
     language: "ENGLISH",
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:beta",

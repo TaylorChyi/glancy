@@ -176,8 +176,7 @@ export function useDictionaryExperience() {
   const resolveCopyPopupMessage = useCallback(
     (status) => {
       const { base, fallback, statuses } = copyFeedbackMessages;
-      const resolvedFallback =
-        statuses.default ?? fallback ?? base ?? "Copy";
+      const resolvedFallback = statuses.default ?? fallback ?? base ?? "Copy";
       if (!status) {
         return resolvedFallback;
       }
@@ -448,10 +447,7 @@ export function useDictionaryExperience() {
             record.activeVersionId,
           );
           if (hydratedRecord?.term) {
-            resolvedTerm = coerceResolvedTerm(
-              hydratedRecord.term,
-              normalized,
-            );
+            resolvedTerm = coerceResolvedTerm(hydratedRecord.term, normalized);
           }
         } else if (parsedEntry) {
           setEntry(parsedEntry);
@@ -521,14 +517,14 @@ export function useDictionaryExperience() {
 
       const result = await executeLookup(inputValue);
       if (result.status === "success") {
-        const historyTerm =
-          result.term ?? result.queriedTerm ?? inputValue;
-        addHistory(
-          historyTerm,
+        const historyTerm = result.term ?? result.queriedTerm ?? inputValue;
+        addHistory({
+          term: historyTerm,
+          queriedTerm: inputValue,
           user,
-          result.detectedLanguage,
-          result.flavor ?? dictionaryFlavor,
-        );
+          language: result.detectedLanguage,
+          flavor: result.flavor ?? dictionaryFlavor,
+        });
       }
     },
     [

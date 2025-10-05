@@ -25,10 +25,11 @@ function HistoryListView({ items, onSelect, onNavigate }) {
       {items.map((item, index) => {
         const navigationBindings = onNavigate(index) || {};
 
+        const label = item.displayTerm ?? item.term;
         return (
           <li key={item.termKey} className={styles.item} role="presentation">
             <NavItem
-              label={item.term}
+              label={label}
               onClick={() => {
                 if (typeof onSelect === "function") {
                   onSelect(item);
@@ -36,8 +37,8 @@ function HistoryListView({ items, onSelect, onNavigate }) {
               }}
               className={styles.entryButton}
               /*
-               * 背景：搜索记录需要完整呈现用户输入，避免记忆成本。
-               * 取舍：启用 NavItem 的多行模式，让排版与数据长度解耦，不影响其他入口。
+               * 背景：需呈现纠正后的标准词条，同时兼顾较长文本的排版。
+               * 取舍：启用 NavItem 多行模式，避免截断模型返回的规范词。
                */
               allowMultilineLabel
               ref={navigationBindings.ref}
@@ -55,6 +56,8 @@ HistoryListView.propTypes = {
     PropTypes.shape({
       termKey: PropTypes.string.isRequired,
       term: PropTypes.string.isRequired,
+      displayTerm: PropTypes.string,
+      queriedTerm: PropTypes.string,
       latestVersionId: PropTypes.string,
     }),
   ),
