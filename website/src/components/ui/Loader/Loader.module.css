@@ -8,9 +8,13 @@
 
   /* 采用扁平化矩形动画，通过变量让主题色与尺寸易于后续扩展。 */
   --loader-bar-color: var(--loader-bar-tone);
-  --loader-bar-width: calc(var(--space-2) + var(--space-1));
+  /*
+   * 取舍：放大竖条宽度以提升等待反馈辨识度，同时保持间距不变；
+   *       使用 4px 体系组合的 20px 让动效与圆角 20px 形成统一视觉张力。
+   */
+  --loader-bar-width: calc(var(--space-3) + var(--space-1));
   --loader-bar-height: calc(var(--space-5) + var(--space-4));
-  --loader-bar-radius: var(--radius-lg);
+  --loader-bar-radius: var(--radius-xl);
   --loader-bar-stroke: var(--space-1);
 }
 
@@ -114,14 +118,11 @@
 @media (width <= 480px) {
   .loader {
     --loader-bar-height: calc(var(--space-4) + var(--space-3));
+    --loader-bar-width: calc(var(--space-2) + var(--space-1));
   }
 
   .symbol {
     gap: var(--space-1);
     padding: var(--space-2);
-  }
-
-  .bar {
-    inline-size: var(--space-2);
   }
 }
