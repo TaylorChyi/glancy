@@ -507,7 +507,7 @@ function separateAdjacentInlineLabels(text) {
  */
 function restoreMissingLabelDelimiters(text) {
   const LABEL_TOKEN_PATTERN = /[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*/gu;
-  const SAFE_PREFIX_PATTERN = /[([\{\-–—>•·,，.。!！?？:：;；“”"'‘’]/u;
+  const SAFE_PREFIX_PATTERN = /[([{-–—>•·,，.。!！?？:：;；“”"'‘’]/u;
 
   const hasSafePrefix = (source, index) => {
     if (index === 0) {
