@@ -28,7 +28,7 @@ function HistoryListView({ items, onSelect, onNavigate }) {
         return (
           <li key={item.termKey} className={styles.item} role="presentation">
             <NavItem
-              label={item.term}
+              label={item.displayTerm ?? item.term}
               onClick={() => {
                 if (typeof onSelect === "function") {
                   onSelect(item);
@@ -36,8 +36,8 @@ function HistoryListView({ items, onSelect, onNavigate }) {
               }}
               className={styles.entryButton}
               /*
-               * 背景：搜索记录需要完整呈现用户输入，避免记忆成本。
-               * 取舍：启用 NavItem 的多行模式，让排版与数据长度解耦，不影响其他入口。
+               * 背景：搜索记录需展示模型识别后的规范词形，以保持历史与查询结果一致。
+               * 取舍：仍保留多行模式，确保较长词形在视觉上完整展示且不影响其他入口。
                */
               allowMultilineLabel
               ref={navigationBindings.ref}
@@ -55,6 +55,7 @@ HistoryListView.propTypes = {
     PropTypes.shape({
       termKey: PropTypes.string.isRequired,
       term: PropTypes.string.isRequired,
+      displayTerm: PropTypes.string,
       latestVersionId: PropTypes.string,
     }),
   ),

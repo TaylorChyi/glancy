@@ -3,12 +3,17 @@ import { jest } from "@jest/globals";
 
 const loadHistory = jest.fn();
 const loadMoreHistory = jest.fn();
+const mockUseWordStore = jest.fn();
 
 let historyState = [];
 let errorState = null;
 let userState = { user: { token: "tkn" } };
 let hasMoreState = false;
 let isLoadingState = false;
+let wordStoreState = {
+  getEntry: jest.fn(() => null),
+  getRecord: jest.fn(() => ({ metadata: {}, versions: [] })),
+};
 
 const historyMock = [
   {
@@ -49,6 +54,10 @@ jest.unstable_mockModule("@/context", () => ({
   useUser: () => userState,
 }));
 
+jest.unstable_mockModule("@/store", () => ({
+  useWordStore: mockUseWordStore,
+}));
+
 const { default: useSidebarHistory } = await import(
   "../hooks/useSidebarHistory.js"
 );
@@ -57,11 +66,22 @@ describe("useSidebarHistory", () => {
   beforeEach(() => {
     loadHistory.mockClear();
     loadMoreHistory.mockClear();
+    mockUseWordStore.mockClear();
+    mockUseWordStore.mockImplementation((selector) => {
+      if (typeof selector === "function") {
+        return selector(wordStoreState);
+      }
+      return wordStoreState;
+    });
     historyState = historyMock;
     errorState = null;
     userState = { user: { token: "tkn" } };
     hasMoreState = true;
     isLoadingState = false;
+    wordStoreState = {
+      getEntry: jest.fn(() => null),
+      getRecord: jest.fn(() => ({ metadata: {}, versions: [] })),
+    };
   });
 
   /**
@@ -182,5 +202,38 @@ describe("useSidebarHistory", () => {
     });
 
     expect(loadMoreHistory).toHaveBeenCalledWith(userState.user);
+  });
+
+  /**
+   * 测试目标：验证词条缓存提供规范词形时，Hook 会暴露 displayTerm 以供展示层使用。
+   * 前置条件：wordStore 返回 term="student"，历史项 term 为 "studdent"。
+   * 步骤：
+   *  1) 构造包含错拼词条的历史数据；
+   *  2) 渲染 Hook 并读取返回的 items。
+   * 断言：
+   *  - items[0].displayTerm 为 "student"；
+   *  - 原 term 保留为 "studdent" 以兼容现有逻辑。
+   * 边界/异常：
+   *  - 若缓存缺失，应回退到原 term（在默认用例覆盖）。
+   */
+  test("Given_canonical_term_When_available_Then_exposes_display_term", () => {
+    wordStoreState.getEntry.mockImplementation((termKey) => {
+      if (termKey === "ENGLISH:BILINGUAL:studdent") {
+        return { term: "student" };
+      }
+      return null;
+    });
+    historyState = [
+      {
+        ...historyMock[0],
+        term: "studdent",
+        termKey: "ENGLISH:BILINGUAL:studdent",
+      },
+    ];
+
+    const { result } = renderHook(() => useSidebarHistory());
+
+    expect(result.current.items[0].term).toBe("studdent");
+    expect(result.current.items[0].displayTerm).toBe("student");
   });
 });
