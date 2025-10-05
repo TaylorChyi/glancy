@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { act, renderHook } from "@testing-library/react";
 import useWaitingFrameCycle from "../useWaitingFrameCycle";
 
@@ -21,6 +22,7 @@ describe("useWaitingFrameCycle", () => {
     const { result } = renderHook(() =>
       useWaitingFrameCycle(frames, {
         random: () => randomValues.shift() ?? 0,
+        autoStart: false,
       }),
     );
 
@@ -32,6 +34,7 @@ describe("useWaitingFrameCycle", () => {
     const { result } = renderHook(() =>
       useWaitingFrameCycle(frames, {
         random: () => randomValues.shift() ?? 0,
+        autoStart: false,
       }),
     );
 
@@ -49,6 +52,7 @@ describe("useWaitingFrameCycle", () => {
     const { result } = renderHook(() =>
       useWaitingFrameCycle(singleFrame, {
         random: () => 0.9,
+        autoStart: false,
       }),
     );
 
@@ -59,5 +63,35 @@ describe("useWaitingFrameCycle", () => {
     });
 
     expect(result.current.currentFrame).toBe("only-frame.svg");
+  });
+
+  it("GivenCustomScheduler_WhenAutoStartEnabled_ThenInvokesAndCleansUp", () => {
+    const randomValues = [0.1, 0.8];
+    let scheduledCallback;
+    const scheduler = jest.fn((callback) => {
+      scheduledCallback = callback;
+      return 42;
+    });
+    const cancel = jest.fn();
+
+    const { result } = renderHook(() =>
+      useWaitingFrameCycle(frames, {
+        random: () => randomValues.shift() ?? 0,
+        scheduler,
+        cancel,
+      }),
+    );
+
+    expect(result.current.currentFrame).toBe("frame-a.svg");
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    expect(typeof scheduledCallback).toBe("function");
+
+    act(() => {
+      scheduledCallback();
+    });
+
+    expect(cancel).toHaveBeenCalledWith(42);
+    expect(scheduler).toHaveBeenCalledTimes(2);
+    expect(result.current.currentFrame).toBe("frame-c.svg");
   });
 });

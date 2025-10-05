@@ -6,12 +6,13 @@
  * 关键决策与取舍：
  *  - 采用状态模式思路：Hook 内部维护当前帧索引与响应动画迭代事件的转换函数，保持组件层纯展示。
  *  - 提供可注入的随机函数，便于单测时复现确定性场景，同时保证默认实现零依赖。
+ *  - 2025-02：补充调度策略注入口（scheduler/cancel/autoStart），让 Hook 自行掌控节奏，Loader 不再关心定时细节。
  * 影响范围：
  *  - Loader 组件通过该 Hook 接收当前帧与迭代回调；未来若引入更多素材池或节奏策略，可在 Hook 内扩展。
  * 演进与TODO：
  *  - TODO：支持基于用户偏好/主题的素材分组与加权随机，提供更贴合语境的等待体验。
  */
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 
 const { frameIntervalMs: WAITING_CYCLE_INTERVAL_MS } = waitingAnimationStrategy;
@@ -65,6 +66,9 @@ export default function useWaitingFrameCycle(frames, options = {}) {
   const framePool = useMemo(() => frames.slice(), [frames]);
   const randomRef = useRef(options.random ?? Math.random);
   const randomFn = randomRef.current;
+  const schedulerRef = useRef(options.scheduler ?? setTimeout);
+  const cancelRef = useRef(options.cancel ?? clearTimeout);
+  const autoStart = options.autoStart ?? true;
 
   const [state, setState] = useState(() =>
     createInitialState(framePool, randomFn),
@@ -75,6 +79,20 @@ export default function useWaitingFrameCycle(frames, options = {}) {
       deriveNextState(framePool, randomFn, previous.frameIndex),
     );
   }, [framePool, randomFn]);
+
+  useEffect(() => {
+    if (!autoStart) {
+      return undefined;
+    }
+    const scheduler = schedulerRef.current;
+    const cancel = cancelRef.current;
+    const timerId = scheduler(() => {
+      setState((previous) =>
+        deriveNextState(framePool, randomFn, previous.frameIndex),
+      );
+    }, WAITING_CYCLE_INTERVAL_MS);
+    return () => cancel(timerId);
+  }, [autoStart, framePool, randomFn, state.frameIndex]);
 
   return useMemo(
     () => ({

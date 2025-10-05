@@ -2,22 +2,15 @@
   display: grid;
   place-items: center;
   inline-size: 100%;
-  min-block-size: var(--vh);
+  min-block-size: var(--vh, 100vh);
   padding: var(--space-4);
   background: transparent;
-
-  /*
-   * 背景：等待动画需改为缩放渐隐效果，避免出现底色遮挡与突兀闪烁。
-   * 取舍：沿用三帧序列，通过统一变量控制时长与缩放范围，保持素材可插拔。
-   */
-  --waiting-frame-max-width: calc(var(--space-5) * 9);
 }
 
 .symbol {
   position: relative;
   inline-size: min(
     80vw,
-    var(--waiting-frame-max-width),
     calc(var(--waiting-frame-aspect-ratio) * var(--waiting-frame-height))
   );
   block-size: var(--waiting-frame-height);
@@ -25,12 +18,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /*
-   * 设计对齐：等待动画素材需裸呈不带底板，因此移除背景、圆角、阴影等装饰性元素。
-   * 影响：后续若需恢复容器化呈现，可改为引入独立包裹层，避免污染素材本身。
-   * 等高策略：通过 height 自定义属性约束容器尺寸，确保不同帧在任何节奏下保持绝对高度一致。
-   */
   background: none;
   border: none;
   box-shadow: none;
@@ -42,54 +29,19 @@
   position: relative;
   inline-size: 100%;
   block-size: 100%;
-  max-inline-size: calc(
-    var(--waiting-frame-aspect-ratio) * var(--waiting-frame-height)
-  );
 }
 
-.frame-base,
-.frame-overlay {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  inline-size: auto;
+.frame-image {
+  inline-size: 100%;
   block-size: 100%;
   display: block;
   object-fit: contain;
+  filter: grayscale(1) brightness(1.2);
+  transition: filter var(--waiting-reveal-duration, 900ms) ease-out;
 }
 
-.frame-base {
-  z-index: 1;
-}
-
-.frame-overlay {
-  z-index: 2;
-  transform-origin: 50% 100%;
-  animation-name: waiting-fill-cycle;
-  animation-duration: var(--waiting-fill-duration, 1500ms);
-  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
-  animation-iteration-count: infinite;
-  animation-fill-mode: both;
-  filter: grayscale(1) brightness(1.8);
-  opacity: 1;
-  will-change: transform, opacity;
-}
-
-@keyframes waiting-fill-cycle {
-  0% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-
-  65% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scaleY(0);
-    opacity: 0;
-  }
+.frame-image-revealed {
+  filter: grayscale(0) brightness(1);
 }
 
 .label {
@@ -108,7 +60,6 @@
   .symbol {
     inline-size: min(
       90vw,
-      calc(var(--space-5) * 7),
       calc(var(--waiting-frame-aspect-ratio) * var(--waiting-frame-height))
     );
   }
