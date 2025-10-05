@@ -936,11 +936,22 @@
   padding: 0;
   display: grid;
   gap: 18px;
+  /*
+   * 通过列宽变量确保操作列分得固定比例空间，
+   * 让动作按钮能与数值列拉开距离并自然贴齐右缘，
+   * 也为后续响应式/密集布局提供统一调整入口。
+   */
+  --preferences-detail-label-column: minmax(140px, 0.28fr);
+  --preferences-detail-value-column: minmax(0, 1fr);
+  --preferences-detail-action-column: minmax(0, 0.3fr);
 }
 
 .detail-row {
   display: grid;
-  grid-template-columns: minmax(140px, 0.28fr) minmax(0, 1fr) max-content;
+  grid-template-columns:
+    var(--preferences-detail-label-column)
+    var(--preferences-detail-value-column)
+    var(--preferences-detail-action-column);
   gap: 24px;
   align-items: center;
 }
@@ -965,8 +976,9 @@
 .identity-row {
   align-items: center;
   grid-template-columns:
-    minmax(140px, 0.28fr) minmax(72px, 1fr)
-    max-content;
+    var(--preferences-detail-label-column)
+    minmax(72px, 1fr)
+    var(--preferences-detail-action-column);
 }
 
 .identity-avatar-image {
