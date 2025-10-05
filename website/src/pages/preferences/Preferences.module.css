@@ -866,7 +866,6 @@
 }
 
 .detail-action-button {
-  composes: avatar-trigger;
   white-space: nowrap;
 }
 
