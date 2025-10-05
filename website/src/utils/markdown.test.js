@@ -156,6 +156,31 @@ test("polishDictionaryMarkdown expands collapsed dictionary metadata", () => {
 });
 
 /**
+ * 测试目标：验证当字段标签与上一个值直接拼接时仍能拆行、加粗并补足空格。
+ * 前置条件：构造 `EntryType:SingleWordUsageInsight:...` 等缺失分隔符的字段串。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 进行格式化。
+ *  2) 对比输出与预期结构化 Markdown。
+ * 断言：
+ *  - 每个标签独占一行，值保持原语义且冒号后有空格。
+ * 边界/异常：
+ *  - 覆盖无空白串联场景，防止未来回归导致再次输出为单行文本。
+ */
+test("polishDictionaryMarkdown separates labels merged into values", () => {
+  const source =
+    "EntryType:SingleWordUsageInsight:Often used in narratives.Register:FormalExtendedNotes:Retains period usage.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Entry Type**: Single Word",
+      "**Usage Insight**: Often used in narratives.",
+      "**Register**: Formal",
+      "**Extended Notes**: Retains period usage.",
+    ].join("\n"),
+  );
+});
+
+/**
  * 测试目标：确保冒号补空格逻辑不会破坏 URL 语法。
  * 前置条件：输入文本包含 `http://` 链接。
  * 步骤：
