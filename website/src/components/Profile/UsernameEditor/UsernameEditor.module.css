@@ -68,6 +68,17 @@
   transform: none;
 }
 
+.button:not(:disabled):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px
+    color-mix(
+      in srgb,
+      var(--preferences-panel-ring, var(--primary-bg, #2c3540)) 45%,
+      transparent
+    );
+  transform: translateY(-1px);
+}
+
 .button:not(:disabled):hover {
   transform: translateY(-1px);
   border-color: color-mix(
@@ -82,18 +93,7 @@
   );
 }
 
-.button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px
-    color-mix(
-      in srgb,
-      var(--preferences-panel-ring, var(--primary-bg, #2c3540)) 45%,
-      transparent
-    );
-  transform: translateY(-1px);
-}
-
-.button:active {
+.button:not(:disabled):active {
   transform: translateY(0);
   box-shadow: none;
 }
