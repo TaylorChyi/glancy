@@ -128,10 +128,72 @@ export function clampZoom(value, min, max) {
   return clampNumber(value, min, max);
 }
 
+/**
+ * 意图：在当前视图状态下计算 Canvas 裁剪所需的源图像矩形。
+ * 输入：
+ *  - naturalWidth/naturalHeight：原图尺寸；
+ *  - viewportSize：视窗的实际 CSS 像素边长；
+ *  - scaleFactor：展示时的综合缩放倍数（coverScale * zoom）；
+ *  - offset：展示层记录的平移向量，单位为 CSS 像素。
+ * 输出：返回 drawImage 所需的 x/y/width/height。
+ * 流程：
+ *  1) 先基于缩放换算视窗对应的原图尺寸；
+ *  2) 再利用平移向量反推出窗口左上角在原图中的坐标；
+ *  3) 最后对结果做边界钳制，避免因浮点误差溢出。
+ * 错误处理：若输入非法，退回全图范围并保持非负结果。
+ * 复杂度：O(1)。
+ */
+export function computeCropSourceRect({
+  naturalWidth,
+  naturalHeight,
+  viewportSize,
+  scaleFactor,
+  offset,
+}) {
+  if (
+    naturalWidth <= 0 ||
+    naturalHeight <= 0 ||
+    viewportSize <= 0 ||
+    scaleFactor <= 0 ||
+    !Number.isFinite(scaleFactor)
+  ) {
+    return {
+      x: 0,
+      y: 0,
+      width: Math.max(0, naturalWidth),
+      height: Math.max(0, naturalHeight),
+    };
+  }
+
+  const safeOffsetX = offset?.x ?? 0;
+  const safeOffsetY = offset?.y ?? 0;
+  const halfViewport = viewportSize / 2;
+  const rawWidth = viewportSize / scaleFactor;
+  const rawHeight = viewportSize / scaleFactor;
+  const rawX =
+    naturalWidth / 2 + (-halfViewport - safeOffsetX) / scaleFactor;
+  const rawY =
+    naturalHeight / 2 + (-halfViewport - safeOffsetY) / scaleFactor;
+
+  const maxX = Math.max(0, naturalWidth - rawWidth);
+  const maxY = Math.max(0, naturalHeight - rawHeight);
+
+  const width = Math.min(rawWidth, naturalWidth);
+  const height = Math.min(rawHeight, naturalHeight);
+
+  return {
+    x: clampNumber(rawX, 0, maxX),
+    y: clampNumber(rawY, 0, maxY),
+    width,
+    height,
+  };
+}
+
 export default {
   computeCoverScale,
   computeDisplayMetrics,
   computeOffsetBounds,
   clampOffset,
   clampZoom,
+  computeCropSourceRect,
 };
