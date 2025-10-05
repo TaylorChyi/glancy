@@ -3,19 +3,9 @@ import { createRef } from "react";
 import { jest } from "@jest/globals";
 
 const mockUseTheme = jest.fn();
-const mockUseIconToneController = jest.fn(() => ({
-  tone: "inverse",
-  isInverse: true,
-  colorToken: "var(--color-text-inverse, var(--neutral-0))",
-}));
 
 jest.unstable_mockModule("@/context", () => ({
   useTheme: mockUseTheme,
-}));
-
-jest.unstable_mockModule("@/hooks/useIconToneController.js", () => ({
-  __esModule: true,
-  default: mockUseIconToneController,
 }));
 
 let ActionInputView;
@@ -30,7 +20,6 @@ beforeEach(() => {
 
 afterEach(() => {
   mockUseTheme.mockReset();
-  mockUseIconToneController.mockClear();
 });
 
 /**

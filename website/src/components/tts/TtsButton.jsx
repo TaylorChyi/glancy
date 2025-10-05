@@ -7,7 +7,6 @@ import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import { useTtsPlayer } from "@/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@/store";
 import { useLanguage } from "@/context";
-import useIconToneController from "@/hooks/useIconToneController.js";
 import styles from "./TtsButton.module.css";
 
 /**
@@ -24,9 +23,6 @@ export default function TtsButton({
 }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { isInverse: shouldInvertIconTone } = useIconToneController({
-    tone: "inverse",
-  });
   const { play, stop, loading, playing, error } = useTtsPlayer({ scope });
   const [toastMsg, setToastMsg] = useState("");
   const [popupMsg, setPopupMsg] = useState("");
@@ -48,15 +44,14 @@ export default function TtsButton({
 
   //
   // 背景：
-  //  - TTS 触发按钮与 ChatInput 共享 voice 图标，视觉稿要求在两种主题下都与圆形背景形成强对比。
+  //  - UI 仅展示裸图标，按钮配色由 CSS 模块依据语义类自洽计算，逻辑层只负责组合基础状态。
   // 取舍：
-  //  - 依托图标色调控制器统一注入 inverse 语义，避免在组件内部追加主题判断逻辑，并允许播放态继续覆写变量。
+  //  - 保留 playing/loading/disabled 类用于覆盖色彩，其余语义交由样式统一治理。
   const btnClass = [
     styles.button,
     playing && styles.playing,
     loading && styles.loading,
     disabled && styles.disabled,
-    shouldInvertIconTone && styles["icon-on-inverse"],
   ]
     .filter(Boolean)
     .join(" ");

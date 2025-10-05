@@ -240,7 +240,7 @@
   border-radius: 999px;
 
   /*
-   * 背景：通过 CSS 变量统一动作按钮的填充与阴影，语音/发送共享壳层策略，方便后续扩展更多态。
+   * 背景：按钮已移除实心壳体，仍保留变量以便未来扩展描边/阴影等表现时复用统一入口。
    */
   --action-btn-bg: transparent;
   --action-btn-color: var(--sb-action-icon, var(--sb-icon));
@@ -280,12 +280,6 @@
   color: var(--sb-muted-icon, currentColor);
 }
 
-.action-button-send,
-.action-button-voice {
-  --action-btn-bg: var(--sb-send-bg);
-  --action-btn-shadow: var(--sb-cta-shadow);
-}
-
 .action-button-send {
   --action-btn-color: var(--sb-send-color);
 }
@@ -307,42 +301,6 @@
       --sb-cta-outline-active,
       color-mix(in srgb, var(--sb-cta-icon) 60%, white 40%)
     );
-}
-
-.action-button-voice:hover,
-.action-button-voice:focus-visible {
-  background: var(--action-btn-bg);
-  color: var(--action-btn-color);
-  box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
-}
-
-.action-button-voice:active {
-  background: var(--action-btn-bg);
-  color: var(--action-btn-color);
-  box-shadow: var(--sb-cta-shadow);
-}
-
-.action-button-send:hover,
-.action-button-send:focus-visible {
-  background: var(--action-btn-bg);
-  color: var(--action-btn-color);
-  box-shadow: var(--sb-cta-shadow-hover, var(--sb-cta-shadow));
-}
-
-.action-button-send:active {
-  background: var(--action-btn-bg);
-  color: var(--action-btn-color);
-  box-shadow: var(--sb-cta-shadow);
-}
-
-/*
- * 背景：
- *  - 浅色主题下语音与发送按钮的壳体统一为近黑色，需要反相的图标色以满足对比度。
- * 取舍：
- *  - 通过单独的语义类覆写 currentColor，避免在按钮逻辑层撒入行内样式，同时保留暗色主题默认继承。
- */
-.action-button-inverse-icon {
-  --action-btn-color: var(--color-text-inverse, var(--neutral-0));
 }
 
 .action-button-icon {

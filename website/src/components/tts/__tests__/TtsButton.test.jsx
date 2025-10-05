@@ -153,33 +153,37 @@ describe("TtsButton", () => {
   });
 
   /**
-   * 测试目标：浅色主题下按钮应启用 inverse 语义类，保证图标在深色背景上为白色。
-   * 前置条件：mockUseTheme 返回 resolvedTheme 为 light。
+   * 测试目标：默认态按钮仅暴露基础类名，符合无背景设计。
+   * 前置条件：使用默认主题与属性。
    * 步骤：
-   *  1) 渲染 TtsButton 并获取按钮节点。
+   *  1) 渲染按钮并读取 className。
    * 断言：
-   *  - className 包含 icon-on-inverse。
+   *  - className 仅包含 button 基础类。
    * 边界/异常：
-   *  - 若控制器未注入 inverse tone，断言会失败提示缺少类名。
+   *  - 若未来新增视觉语义，需要同步调整期望集合。
    */
-  test("GivenLightTheme_WhenRenderingButton_ThenUsesInverseToneClass", () => {
+  test("GivenDefaultState_WhenRenderingButton_ThenUsesBaseClass", () => {
     const { getByRole } = render(<TtsButton text="hi" lang="en" />);
-    expect(getByRole("button").className).toContain("icon-on-inverse");
+    expect(getByRole("button").className.split(" ").sort()).toEqual([
+      "button",
+    ]);
   });
 
   /**
-   * 测试目标：暗色主题下按钮同样应启用 inverse 语义，使白色背景上的图标反转为深色。
+   * 测试目标：暗色主题下同样维持基础类，表明色调不再依赖主题差异。
    * 前置条件：mockUseTheme 返回 resolvedTheme 为 dark。
    * 步骤：
-   *  1) 渲染 TtsButton 后读取按钮 className。
+   *  1) 渲染按钮并读取 className。
    * 断言：
-   *  - className 仍包含 icon-on-inverse。
+   *  - className 仍然仅包含 button。
    * 边界/异常：
-   *  - 若控制器退化为默认 tone，将缺失类名导致断言失败。
+   *  - 若未来恢复主题化样式，应更新断言。
    */
-  test("GivenDarkTheme_WhenRenderingButton_ThenStillUsesInverseToneClass", () => {
+  test("GivenDarkTheme_WhenRenderingButton_ThenKeepsBaseClass", () => {
     mockUseTheme.mockReturnValue({ resolvedTheme: "dark" });
     const { getByRole } = render(<TtsButton text="hi" lang="en" />);
-    expect(getByRole("button").className).toContain("icon-on-inverse");
+    expect(getByRole("button").className.split(" ").sort()).toEqual([
+      "button",
+    ]);
   });
 });
