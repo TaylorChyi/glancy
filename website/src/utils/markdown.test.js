@@ -66,6 +66,15 @@ test("polishDictionaryMarkdown enforces translation line break", () => {
 });
 
 /**
+ * 验证英译英 Markdown 中的行内标签（如 Example）也会断行，保证可读性。
+ */
+test("polishDictionaryMarkdown splits english inline labels", () => {
+  const source = "- **Meaning**: to light  **Example**: She lights a candle";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("- **Meaning**: to light\n  **Example**: She lights a candle");
+});
+
+/**
  * 验证翻译行会继承有序列表的缩进，使得“翻译”与“例句”保持列对齐。
  */
 test("translation line keeps ordered list indentation", () => {
