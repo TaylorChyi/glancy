@@ -181,6 +181,39 @@ test("polishDictionaryMarkdown separates labels merged into values", () => {
 });
 
 /**
+ * 测试目标：验证当标签之间仅以空格分隔时，仍可恢复冒号与段落换行，确保层级结构清晰可读。
+ * 前置条件：构造由 Senses、Examples、UsageInsight 等标签组成的行，标签和值之间只保留单个空格。
+ * 步骤：
+ *  1) 组合缺失冒号的词典 Markdown 字符串。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 每个标签会补齐冒号，并在遇到下一个标签时换行；释义与例句标签会恢复加粗与编号。
+ * 边界/异常：
+ *  - 覆盖全量空格分隔的场景，可防止未来回归导致再度输出为单行文本。
+ */
+test("polishDictionaryMarkdown restores space separated label chains", () => {
+  const source = [
+    "Senses s1Verb to move toward a place",
+    "Examples Example1 The train came at exactly 3:15 PM as scheduled.",
+    "UsageInsight Often used when describing precise arrivals.",
+    "Register Formal",
+    "EntryType SingleWord",
+  ].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Senses**:",
+      "**Sense 1 · Verb**: to move toward a place",
+      "**Examples**:",
+      "**Example 1**: The train came at exactly 3:15 PM as scheduled.",
+      "**Usage Insight**: Often used when describing precise arrivals.",
+      "**Register**: Formal",
+      "**Entry Type**: Single Word",
+    ].join("\n"),
+  );
+});
+
+/**
  * 测试目标：确保冒号补空格逻辑不会破坏 URL 语法。
  * 前置条件：输入文本包含 `http://` 链接。
  * 步骤：
