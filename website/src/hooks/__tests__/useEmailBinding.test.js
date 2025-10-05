@@ -127,6 +127,38 @@ describe("useEmailBinding", () => {
   });
 
   /**
+   * 测试目标：验证 requestCode 在邮箱未变化时直接抛错而不会触发接口调用。
+   * 前置条件：当前用户已绑定邮箱，API 客户端为 jest mock。
+   * 步骤：
+   *  1) 请求与当前邮箱大小写不同但语义一致的验证码；
+   * 断言：
+   *  - 抛出 email-binding-email-unchanged 错误；
+   *  - requestEmailChangeCode 未被调用；
+   * 边界/异常：邮箱大小写差异不应视为新邮箱。
+   */
+  test("rejects requesting code for unchanged email", async () => {
+    const apiClient = {
+      requestEmailChangeCode: jest.fn(),
+      confirmEmailChange: jest.fn(),
+      unbindEmail: jest.fn(),
+    };
+
+    const { result } = renderHook(() =>
+      useEmailBinding({ user: baseUser, apiClient, onUserUpdate: jest.fn() }),
+    );
+
+    await expect(
+      act(() => result.current.requestCode("Current@Example.com")),
+    ).rejects.toMatchObject({
+      message: "email-binding-email-unchanged",
+      code: "email-binding-email-unchanged",
+    });
+
+    expect(apiClient.requestEmailChangeCode).not.toHaveBeenCalled();
+    expect(result.current.isAwaitingVerification).toBe(false);
+  });
+
+  /**
    * 验证 unbindEmail 会清空绑定邮箱并触发回调。
    */
   test("unbinds email", async () => {

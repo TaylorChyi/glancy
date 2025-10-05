@@ -157,4 +157,24 @@ public class EmailVerificationService {
             throw new IllegalStateException("邮件发送失败，请稍后重试");
         }
     }
+
+    /**
+     * 意图：基于模板方法复用 {@link #invalidateExisting(String, EmailVerificationPurpose, LocalDateTime)} 的核心流程，
+     *      为解绑或业务取消场景快速失效验证码，避免遗留请求继续生效。
+     * 输入：email（需要清理验证码的邮箱地址），purpose（验证码用途枚举）。
+     * 输出：无显式返回，通过持久层将相关验证码标记为已使用。
+     * 流程：
+     *  1) 归一化邮箱，确保大小写和空白一致；
+     *  2) 计算当前时间戳；
+     *  3) 调用模板方法统一完成过期与活跃验证码的失效处理。
+     * 错误处理：邮箱为空时抛出业务异常，底层数据库或邮件异常向上传递。
+     * 复杂度：O(n) —— n 为同一邮箱、用途下仍活跃验证码数量，通常极小。
+     */
+    @Transactional
+    public void invalidateCodes(String email, EmailVerificationPurpose purpose) {
+        String normalizedEmail = normalize(email);
+        LocalDateTime now = LocalDateTime.now(clock);
+        log.info("Invalidating verification codes for {} with purpose {} at {}", normalizedEmail, purpose, now);
+        invalidateExisting(normalizedEmail, purpose, now);
+    }
 }

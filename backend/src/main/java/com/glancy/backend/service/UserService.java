@@ -473,6 +473,9 @@ public class UserService {
             return new UserEmailResponse(null);
         }
 
+        String currentEmail = user.getEmail();
+        // 解绑视作终止当前换绑流程，主动失效残留验证码，避免用户误用旧验证码再次提交。
+        emailVerificationService.invalidateCodes(currentEmail, EmailVerificationPurpose.CHANGE_EMAIL);
         user.setEmail(null);
         User saved = userRepository.save(user);
         return new UserEmailResponse(saved.getEmail());
