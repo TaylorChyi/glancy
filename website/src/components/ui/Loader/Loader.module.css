@@ -44,15 +44,7 @@
   border-radius: var(--loader-bar-radius);
   position: relative;
   overflow: hidden;
-
-  /*
-   * 背景：保持完全透明，呼应“纯净等待”策略。
-   * 取舍：以半透明描边替代内嵌色块，确保矩形轮廓在任意背景上仍具对比，
-   *       并复用 stroke 变量方便未来主题细化。
-   */
   background: none;
-  border: var(--loader-bar-stroke)
-    solid color-mix(in srgb, var(--loader-bar-color) 78%, transparent);
   transform-origin: center;
   animation: bar-wave 1.4s ease-in-out infinite;
 }
