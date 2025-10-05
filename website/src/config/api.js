@@ -12,6 +12,7 @@ export const API_PATHS = {
   notifications: `${API_BASE}/notifications`,
   profiles: `${API_BASE}/profiles`,
   preferences: `${API_BASE}/preferences`,
+  keyboardShortcuts: `${API_BASE}/preferences/shortcuts`,
   contact: `${API_BASE}/contact`,
   searchRecords: `${API_BASE}/search-records`,
   emailVerificationCode: `${API_BASE}/users/email/verification-code`,

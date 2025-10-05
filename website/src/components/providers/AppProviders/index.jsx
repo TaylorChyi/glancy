@@ -10,6 +10,7 @@ import {
   ThemeProvider,
   AppProvider,
   ApiProvider,
+  KeyboardShortcutProvider,
 } from "@/context";
 
 function AppProviders({ children }) {
@@ -18,15 +19,17 @@ function AppProviders({ children }) {
   return (
     <AppProvider>
       <ApiProvider>
-        <LanguageProvider>
-          <ThemeProvider>
-            <CookieConsent />
-            <AuthWatcher />
-            <ErrorBoundary resetKeys={[location.key]}>
-              <Suspense fallback={<Loader />}>{children}</Suspense>
-            </ErrorBoundary>
-          </ThemeProvider>
-        </LanguageProvider>
+        <KeyboardShortcutProvider>
+          <LanguageProvider>
+            <ThemeProvider>
+              <CookieConsent />
+              <AuthWatcher />
+              <ErrorBoundary resetKeys={[location.key]}>
+                <Suspense fallback={<Loader />}>{children}</Suspense>
+              </ErrorBoundary>
+            </ThemeProvider>
+          </LanguageProvider>
+        </KeyboardShortcutProvider>
       </ApiProvider>
     </AppProvider>
   );

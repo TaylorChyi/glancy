@@ -1,5 +1,10 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import translations from "@/i18n/index.js";
+import { useKeyboardShortcutContext } from "@/context";
+import {
+  doesEventMatchShortcut,
+  DEFAULT_SHORTCUTS,
+} from "@/utils/keyboardShortcuts.js";
 
 export function useAppShortcuts({
   inputRef,
@@ -11,6 +16,7 @@ export function useAppShortcuts({
   isDictionaryViewActive,
   toggleFavorite,
 }) {
+  const { shortcuts } = useKeyboardShortcutContext();
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
   }, [inputRef]);
@@ -36,47 +42,47 @@ export function useAppShortcuts({
     document.dispatchEvent(new Event("open-shortcuts"));
   }, []);
 
+  const shortcutMap = useMemo(() => {
+    const base = new Map(DEFAULT_SHORTCUTS.map((shortcut) => [shortcut.action, shortcut.keys]));
+    shortcuts.forEach((shortcut) => {
+      base.set(shortcut.action, shortcut.keys);
+    });
+    return base;
+  }, [shortcuts]);
+
+  const handlers = useMemo(
+    () => ({
+      FOCUS_SEARCH: focusInput,
+      SWITCH_LANGUAGE: cycleLanguage,
+      TOGGLE_THEME: cycleTheme,
+      TOGGLE_FAVORITE: toggleFavoriteEntry,
+      OPEN_SHORTCUTS: openShortcuts,
+    }),
+    [focusInput, cycleLanguage, cycleTheme, toggleFavoriteEntry, openShortcuts],
+  );
+
   useEffect(() => {
     function handleShortcut(e) {
-      const platform =
-        navigator.userAgentData?.platform || navigator.platform || "";
-      const mod = /Mac|iPhone|iPod|iPad/i.test(platform)
-        ? e.metaKey
-        : e.ctrlKey;
-      if (!mod || !e.shiftKey) return;
-      switch (e.key.toLowerCase()) {
-        case "f":
+      if (e.defaultPrevented) {
+        return;
+      }
+      for (const [action, handler] of Object.entries(handlers)) {
+        const keys = shortcutMap.get(action) ?? [];
+        if (keys.length === 0) {
+          continue;
+        }
+        if (doesEventMatchShortcut(keys, e)) {
           e.preventDefault();
-          focusInput();
+          handler();
           break;
-        case "l":
-          e.preventDefault();
-          cycleLanguage();
-          break;
-        case "m":
-          e.preventDefault();
-          cycleTheme();
-          break;
-        case "b":
-          e.preventDefault();
-          toggleFavoriteEntry();
-          break;
-        case "k":
-          e.preventDefault();
-          openShortcuts();
-          break;
-        default:
-          break;
+        }
       }
     }
     document.addEventListener("keydown", handleShortcut);
     return () => document.removeEventListener("keydown", handleShortcut);
   }, [
-    focusInput,
-    cycleLanguage,
-    cycleTheme,
-    toggleFavoriteEntry,
-    openShortcuts,
+    handlers,
+    shortcutMap,
   ]);
 
   return {
