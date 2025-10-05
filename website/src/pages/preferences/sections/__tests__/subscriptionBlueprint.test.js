@@ -118,3 +118,32 @@ test("Given missing templates When building plan cards Then fallback formatting 
     expect(line.includes("{")).toBe(false);
   });
 });
+
+/**
+ * 测试目标：当前套餐为付费方案且提供续订日期时，卡片应生成到期提示文案。
+ * 前置条件：用户订阅信息包含 planId=PLUS 与 nextRenewalDate。
+ * 步骤：
+ *  1) 构建订阅分区 props；
+ *  2) 读取 PLUS 与 FREE 套餐卡片；
+ * 断言：
+ *  - PLUS 卡片的 subscriptionExpiryLine 含有 Next: 字样；
+ *  - FREE 卡片不应包含 subscriptionExpiryLine。
+ * 边界/异常：
+ *  - 若日期不可解析，应回退到模板 fallback（由 formatRenewalDate 覆盖）。
+ */
+test("Given paid subscription When building cards Then expiry line attaches to current plan", () => {
+  const props = buildSubscriptionSectionProps({
+    translations: createTranslations(),
+    user: createUser({ planId: "PLUS" }),
+    onRedeem: jest.fn(),
+  });
+
+  const plusCard = props.planCards.find((plan) => plan.id === "PLUS");
+  const freeCard = props.planCards.find((plan) => plan.id === "FREE");
+
+  expect(plusCard).toBeDefined();
+  expect(plusCard.subscriptionExpiryLine).toMatch(/Next:/);
+  expect(plusCard.subscriptionExpiryLine).toMatch(/2025/);
+  expect(freeCard).toBeDefined();
+  expect(freeCard.subscriptionExpiryLine).toBeUndefined();
+});

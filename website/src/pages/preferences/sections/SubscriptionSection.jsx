@@ -135,6 +135,13 @@ function SubscriptionSection({
             >
               {planCards.map((plan) => {
                 const isSelected = plan.id === selectedPlanId;
+                const priceLineEntries = Array.isArray(plan.priceLines)
+                  ? plan.priceLines
+                  : [];
+                const linesToRender =
+                  isSelected && plan.subscriptionExpiryLine
+                    ? [...priceLineEntries, plan.subscriptionExpiryLine]
+                    : priceLineEntries;
                 return (
                   <article
                     key={plan.id}
@@ -154,8 +161,8 @@ function SubscriptionSection({
                         {plan.summary}
                       </p>
                       <ul className={styles["subscription-plan-pricing"]}>
-                        {plan.priceLines.map((line) => (
-                          <li key={line}>{line}</li>
+                        {linesToRender.map((line, index) => (
+                          <li key={`${plan.id}-line-${index}`}>{line}</li>
                         ))}
                       </ul>
                     </div>
@@ -263,6 +270,7 @@ SubscriptionSection.propTypes = {
       badge: PropTypes.string.isRequired,
       ctaLabel: PropTypes.string.isRequired,
       disabled: PropTypes.bool.isRequired,
+      subscriptionExpiryLine: PropTypes.string,
     }),
   ).isRequired,
   featureMatrix: PropTypes.arrayOf(

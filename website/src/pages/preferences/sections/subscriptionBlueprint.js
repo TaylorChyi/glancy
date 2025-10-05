@@ -112,6 +112,85 @@ const formatTemplateWithPair = (template, amount, equivalent) => {
   );
 };
 
+/**
+ * 意图：在不引入第三方依赖的前提下，将订阅到期日期规范化为稳定可读的格式。
+ * 输入：
+ *  - value: 可能为字符串或 Date 实例的日期输入；
+ * 输出：
+ *  - 适合展示的字符串，若无法解析则返回 null。该字符串优先使用本地化格式，退化为 ISO-8601。 
+ * 流程：
+ *  1) 解析形如 YYYY-MM-DD 的字符串并提取年月日；
+ *  2) 利用 UTC 正午构建 Date，规避因时区偏移导致的跨日；
+ *  3) 使用 Intl.DateTimeFormat 输出本地化日期文本，失败时回退为 ISO 字符串；
+ *  4) 对于无法识别的输入直接退化为字符串本身。
+ * 错误处理：
+ *  - 捕获所有异常并返回 null，确保到期信息缺失时不会破坏界面。
+ * 复杂度：O(1)。
+ */
+const formatRenewalDate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }).format(value);
+    } catch (error) {
+      return value.toISOString().slice(0, 10);
+    }
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/);
+  if (!isoMatch) {
+    return trimmed;
+  }
+
+  const [, yearString, monthString, dayString] = isoMatch;
+  const year = Number(yearString);
+  const month = Number(monthString);
+  const day = Number(dayString);
+
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return `${yearString}-${monthString}-${dayString}`;
+  }
+
+  const normalizedIso = `${yearString}-${monthString}-${dayString}`;
+
+  try {
+    const safeDate = new Date(Date.UTC(year, month - 1, day, 12));
+    const formatted = new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(safeDate);
+    const normalized = normalizeDisplayValue(formatted, normalizedIso);
+    return normalized;
+  } catch (error) {
+    return normalizedIso;
+  }
+};
+
 const formatCurrency = (amount, { currency, currencySymbol }) => {
   if (amount === null || amount === undefined) {
     return null;
@@ -458,6 +537,7 @@ const buildPlanCards = ({
   pricing,
   translations,
   currentPlanId,
+  subscriptionMeta,
 }) => {
   const badgeCurrent = safeString(
     translations.subscriptionPlanCurrentBadge,
@@ -482,6 +562,10 @@ const buildPlanCards = ({
   );
   const yearlyWithEquivalentTemplate =
     translations.subscriptionPriceYearlyWithEquivalent;
+  const nextRenewalTemplate = safeString(
+    translations.subscriptionNextRenewalTemplate,
+    "Next renewal: {value}",
+  );
 
   return visiblePlanIds.map((planId) => {
     const plan = getPlanDefinition(pricing, planId);
@@ -524,6 +608,23 @@ const buildPlanCards = ({
     const isCurrent = planId === currentPlanId;
     const isRedeemOnly = plan?.purchase === "redeem_only" && !isCurrent;
 
+    let subscriptionExpiryLine = null;
+    if (
+      isCurrent &&
+      planId !== "FREE" &&
+      subscriptionMeta?.nextRenewalDate
+    ) {
+      const formattedRenewalDate = formatRenewalDate(
+        subscriptionMeta.nextRenewalDate,
+      );
+      if (formattedRenewalDate) {
+        subscriptionExpiryLine = formatWithTemplate(
+          nextRenewalTemplate,
+          formattedRenewalDate,
+        );
+      }
+    }
+
     const badge = isCurrent
       ? badgeCurrent
       : isRedeemOnly
@@ -545,6 +646,7 @@ const buildPlanCards = ({
       badge,
       ctaLabel,
       disabled: isCurrent || isRedeemOnly,
+      subscriptionExpiryLine: subscriptionExpiryLine ?? undefined,
     };
   });
 };
@@ -582,6 +684,7 @@ export function buildSubscriptionSectionProps({ translations, user, onRedeem }) 
     pricing,
     translations: t,
     currentPlanId,
+    subscriptionMeta,
   });
 
   const featureBlueprint = buildFeatureBlueprint(t);

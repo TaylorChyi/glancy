@@ -31,6 +31,7 @@ const baseProps = {
       badge: "Current",
       ctaLabel: "Current plan",
       disabled: true,
+      subscriptionExpiryLine: "Next: 2025-01-01",
     },
     {
       id: "PRO",
@@ -113,4 +114,26 @@ test("Given another plan When selecting it Then aria pressed reflects selection"
 
   expect(proButton).toHaveAttribute("aria-pressed", "true");
   expect(freeButton).toHaveAttribute("aria-pressed", "false");
+});
+
+/**
+ * 测试目标：当当前套餐存在到期时间时，选中态卡片应展示该信息，并在切换到其他套餐后隐藏。
+ * 前置条件：PLUS 套餐为当前套餐且提供 subscriptionExpiryLine。
+ * 步骤：
+ *  1) 渲染组件并确认默认选中 PLUS 卡片。
+ *  2) 切换选中到 PRO 套餐。
+ * 断言：
+ *  - 初始渲染时可以看到 Next: 2025-01-01 文案。
+ *  - 选中 PRO 后该文案消失，确保仅在选中状态展示。
+ * 边界/异常：
+ *  - 若文案未出现或无法隐藏，说明展示条件判断失效。
+ */
+test("Given subscription expiry When toggling selection Then expiry line only visible on active card", () => {
+  render(<SubscriptionSection {...baseProps} />);
+
+  expect(screen.getByText("Next: 2025-01-01")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Choose Pro" }));
+
+  expect(screen.queryByText("Next: 2025-01-01")).toBeNull();
 });
