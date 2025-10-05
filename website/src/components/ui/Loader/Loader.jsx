@@ -3,6 +3,8 @@ import waitingFrame2 from "@/assets/waiting-frame-2.svg";
 import waitingFrame3 from "@/assets/waiting-frame-3.svg";
 import styles from "./Loader.module.css";
 
+// 设计说明：统一声明序列帧画布尺寸，确保所有素材在等高策略下共享同一纵横比。
+const WAITING_FRAME_DIMENSIONS = Object.freeze({ width: 682, height: 454 });
 const WAITING_FRAMES = [waitingFrame1, waitingFrame2, waitingFrame3];
 
 function Loader() {
@@ -22,6 +24,8 @@ function Loader() {
             alt=""
             loading="lazy"
             decoding="async"
+            width={WAITING_FRAME_DIMENSIONS.width}
+            height={WAITING_FRAME_DIMENSIONS.height}
           />
         ))}
       </div>
