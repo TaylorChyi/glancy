@@ -198,7 +198,7 @@ test("Given language actions When clearing selected language Then scoped command
 });
 
 /**
- * 测试目标：点击导出按钮会创建 JSON Blob 并调用 URL API。
+ * 测试目标：点击导出按钮会创建 CSV Blob 并调用 URL API。
  * 前置条件：URL.createObjectURL 已被 stub。
  * 步骤：
  *  1) Stub URL API；
@@ -230,6 +230,14 @@ test("Given export action When clicking export Then browser download initiated",
   const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
   const appendSpy = jest.spyOn(document.body, "appendChild");
   const removeSpy = jest.spyOn(Element.prototype, "remove");
+  const OriginalBlob = Blob;
+  const blobCalls = [];
+  const blobSpy = jest
+    .spyOn(globalThis, "Blob")
+    .mockImplementation((parts = [], options) => {
+      blobCalls.push({ parts, options });
+      return Reflect.construct(OriginalBlob, [parts, options]);
+    });
 
   render(
     <DataSection
@@ -247,8 +255,26 @@ test("Given export action When clicking export Then browser download initiated",
   expect(appendSpy).toHaveBeenCalled();
   expect(removeSpy).toHaveBeenCalled();
 
+  const blob = createUrl.mock.calls[0][0];
+  expect(blob).toBeInstanceOf(OriginalBlob);
+  expect(blob.type).toBe("text/csv;charset=utf-8");
+  const csvText = (blobCalls[0]?.parts ?? [])
+    .map((part) => (typeof part === "string" ? part : ""))
+    .join("");
+  expect(csvText).toContain("generatedAt,historyCaptureEnabled,retentionPolicyId,retentionDays");
+  expect(csvText).toContain("term,language,flavor,createdAt,favorite,versions");
+
+  const appendedElements = appendSpy.mock.calls
+    .map((call) => call?.[0])
+    .filter(Boolean);
+  const appendedAnchor = appendedElements.find(
+    (element) => element?.tagName === "A",
+  );
+  expect(appendedAnchor).toBeDefined();
+
   createUrl.mockRestore();
   revokeUrl.mockRestore();
   appendSpy.mockRestore();
   removeSpy.mockRestore();
+  blobSpy.mockRestore();
 });

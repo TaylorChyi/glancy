@@ -28,6 +28,99 @@ import styles from "../Preferences.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
+const formatHistoryVersionsForCsv = (versions = []) => {
+  if (!Array.isArray(versions) || versions.length === 0) {
+    return "";
+  }
+  return versions
+    .map((version) => {
+      const id = version?.id ?? "";
+      const timestamp = version?.createdAt ?? "";
+      const favoriteLabel = version?.favorite ? "favorite" : "regular";
+      return `${id} [${timestamp}] {${favoriteLabel}}`;
+    })
+    .join(" | ");
+};
+
+const normalizeCsvValue = (value) => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  const stringValue = String(value);
+  if (/[",\n\r]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
+const toCsvRow = (values) => values.map(normalizeCsvValue).join(",");
+
+/**
+ * 意图：
+ *  - 将数据治理快照序列化为 CSV 字符串，确保下载命令仍与 UI 解耦且易于替换为后端导出实现。
+ * 输入：
+ *  - generatedAt: 导出时间戳；
+ *  - historyCaptureEnabled: 历史采集开关状态；
+ *  - retentionPolicy: 当前保留策略的标识与时长；
+ *  - history: 本地历史记录集合。
+ * 输出：
+ *  - 符合 RFC4180 的 CSV 文本，前两行用于元信息，其余为历史记录行。
+ * 流程：
+ *  1) 构建元信息头部与数据行；
+ *  2) 插入空行以分隔元信息与明细；
+ *  3) 逐条映射历史记录并格式化版本摘要。
+ * 错误处理：
+ *  - 输入缺失时回退到安全的空值，避免阻塞导出流程。
+ * 复杂度：
+ *  - 时间 O(n)，取决于历史记录条目数；空间 O(n) 用于缓冲输出行。
+ */
+const serializeSnapshotToCsv = ({
+  generatedAt,
+  historyCaptureEnabled,
+  retentionPolicy,
+  history,
+}) => {
+  const normalizedPolicy = {
+    id: retentionPolicy?.id ? String(retentionPolicy.id) : "",
+    days:
+      retentionPolicy?.days === 0 || retentionPolicy?.days
+        ? String(retentionPolicy.days)
+        : "",
+  };
+  const metaHeader = [
+    "generatedAt",
+    "historyCaptureEnabled",
+    "retentionPolicyId",
+    "retentionDays",
+  ];
+  const metaRow = [
+    generatedAt,
+    historyCaptureEnabled ? "true" : "false",
+    normalizedPolicy.id,
+    normalizedPolicy.days,
+  ];
+  const historyHeader = [
+    "term",
+    "language",
+    "flavor",
+    "createdAt",
+    "favorite",
+    "versions",
+  ];
+  const historyRows = Array.isArray(history)
+    ? history.map((item) => [
+        item?.term ?? "",
+        item?.language ?? "",
+        item?.flavor ?? "",
+        item?.createdAt ?? "",
+        item?.favorite ? "true" : "false",
+        formatHistoryVersionsForCsv(item?.versions ?? []),
+      ])
+    : [];
+  const rows = [metaHeader, metaRow, [], historyHeader, ...historyRows];
+  return rows.map((row) => toCsvRow(row)).join("\r\n");
+};
+
 const mapHistoryLanguageLabel = (translations, language) => {
   const normalized = String(language ?? "").toUpperCase();
   if (normalized === "ENGLISH") {
@@ -61,7 +154,7 @@ const toLanguageOptions = (history, translations) => {
     .sort((a, b) => a.label.localeCompare(b.label));
 };
 
-function DataSection({ title, message, headingId, descriptionId }) {
+function DataSection({ title, message: _message, headingId, descriptionId: _descriptionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
   const user = userStore?.user;
@@ -90,11 +183,6 @@ function DataSection({ title, message, headingId, descriptionId }) {
     applyRetentionPolicy: state.applyRetentionPolicy,
   }));
 
-  const sectionDescription =
-    message?.trim() ||
-    t.settingsDataDescription ||
-    "Manage your historical traces across Glancy.";
-
   const toggleLabel = t.settingsDataHistoryToggleLabel || "History collection";
   const toggleDescription =
     t.settingsDataHistoryToggleDescription ||
@@ -118,11 +206,9 @@ function DataSection({ title, message, headingId, descriptionId }) {
   const exportLabel = t.settingsDataExport || "Export data";
   const exportDescription =
     t.settingsDataExportDescription ||
-    "Download a JSON snapshot of your preferences and history.";
+    "Download a CSV snapshot of your preferences and history.";
   const exportFileName = t.settingsDataExportFileName || "glancy-data-export";
 
-  const fallbackDescriptionId = useId();
-  const sectionDescriptionId = descriptionId ?? fallbackDescriptionId;
   const toggleFieldId = useId();
   const retentionFieldId = useId();
   const languageFieldId = useId();
@@ -221,22 +307,24 @@ function DataSection({ title, message, headingId, descriptionId }) {
       return;
     }
     try {
-      const snapshot = {
-        generatedAt: new Date().toISOString(),
-        retentionPolicy: selectedPolicy
-          ? { id: selectedPolicy.id, days: selectedPolicy.days }
-          : { id: retentionPolicyId, days: null },
+      const generatedAt = new Date().toISOString();
+      const retentionSnapshot = selectedPolicy
+        ? { id: selectedPolicy.id, days: selectedPolicy.days }
+        : { id: retentionPolicyId, days: null };
+      const csv = serializeSnapshotToCsv({
+        generatedAt,
         historyCaptureEnabled,
+        retentionPolicy: retentionSnapshot,
         history,
-      };
-      const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
-        type: "application/json",
+      });
+      const blob = new Blob([`\ufeff${csv}`], {
+        type: "text/csv;charset=utf-8",
       });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       anchor.href = url;
-      anchor.download = `${exportFileName}-${timestamp}.json`;
+      anchor.download = `${exportFileName}-${timestamp}.csv`;
       anchor.rel = "noopener";
       document.body.appendChild(anchor);
       anchor.click();
@@ -259,21 +347,12 @@ function DataSection({ title, message, headingId, descriptionId }) {
   return (
     <section
       aria-labelledby={headingId}
-      aria-describedby={sectionDescription ? sectionDescriptionId : undefined}
-      className={styles.section}
+      className={composeClassName(styles.section, styles["section-plain"])}
     >
       <div className={styles["section-header"]}>
         <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
           {title}
         </h3>
-        {sectionDescription ? (
-          <p
-            id={sectionDescriptionId}
-            className={styles["section-description"]}
-          >
-            {sectionDescription}
-          </p>
-        ) : null}
         <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
       <div className={styles.controls}>
@@ -391,7 +470,10 @@ function DataSection({ title, message, headingId, descriptionId }) {
           <div className={styles["subscription-current-actions"]}>
             <button
               type="button"
-              className={styles["subscription-action"]}
+              className={composeClassName(
+                styles["subscription-action"],
+                styles["subscription-action-danger"],
+              )}
               onClick={handleClearAll}
               disabled={!canClearAll || isActionPending("clear-all")}
             >
