@@ -70,9 +70,12 @@
 
   /*
    * 通过 tabs-top-offset 统一左侧导航与右侧内容首屏的对齐点，
+   * 使用 space 令牌的差值确保关闭按钮与面板首行 padding 顶部对齐，
    * 避免模态与偏好设置页面出现关闭按钮与标题错位。
    */
-  --preferences-tabs-top-offset: 0px;
+  --preferences-tabs-top-offset: calc(
+    var(--space-5) - (var(--space-2) + var(--space-1))
+  );
 
   padding-block: var(--preferences-tabs-top-offset) 4px;
 
