@@ -16,6 +16,7 @@ import PropTypes from "prop-types";
 
 import styles from "../ChatInput.module.css";
 import { SendIcon, VoiceIcon } from "../icons";
+import { useTheme } from "@/context";
 
 const ACTION_BUTTON_COOLDOWN_MS = 500;
 
@@ -33,9 +34,18 @@ function ActionButton({
   const trimmedLength = value.trim().length;
   const isSendState = trimmedLength > 0;
   const ariaLabel = isSendState ? sendLabel : voiceLabel;
+  const { resolvedTheme } = useTheme();
+
+  //
+  // 背景：
+  //  - 浅色主题下语音/发送按钮采用深色壳体，若继续继承文本色会出现黑底黑字的对比问题。
+  // 取舍：
+  //  - 通过读取主题上下文，仅在解析结果为 light 时注入反相语义类，避免为暗色主题带来额外分支。
+  const shouldInvertIconTone = resolvedTheme === "light";
   const actionClassName = [
     styles["action-button"],
     styles[isSendState ? "action-button-send" : "action-button-voice"],
+    shouldInvertIconTone ? styles["action-button-inverse-icon"] : null,
   ]
     .filter(Boolean)
     .join(" ");

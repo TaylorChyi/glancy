@@ -6,7 +6,7 @@ import Toast from "@/components/ui/Toast";
 import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import { useTtsPlayer } from "@/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@/store";
-import { useLanguage } from "@/context";
+import { useLanguage, useTheme } from "@/context";
 import styles from "./TtsButton.module.css";
 
 /**
@@ -23,6 +23,7 @@ export default function TtsButton({
 }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { resolvedTheme } = useTheme();
   const { play, stop, loading, playing, error } = useTtsPlayer({ scope });
   const [toastMsg, setToastMsg] = useState("");
   const [popupMsg, setPopupMsg] = useState("");
@@ -42,11 +43,19 @@ export default function TtsButton({
     await play({ text, lang, voice: selectedVoice });
   };
 
+  //
+  // 背景：
+  //  - 浅色主题下语音按钮被包裹在深色圆形容器内，保持默认文本色会导致图标与背景对比不足。
+  // 取舍：
+  //  - 依赖主题上下文推导反相色，并通过样式类注入语义化变量，避免直接写入内联颜色。
+  const shouldInvertIconTone = resolvedTheme === "light";
+
   const btnClass = [
     styles.button,
     playing && styles.playing,
     loading && styles.loading,
     disabled && styles.disabled,
+    shouldInvertIconTone && styles["icon-on-inverse"],
   ]
     .filter(Boolean)
     .join(" ");
