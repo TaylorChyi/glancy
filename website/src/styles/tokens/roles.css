@@ -22,8 +22,8 @@
   --role-on-surface-strong: var(--neutral-1);
   --role-success: #16a34a;
   --role-on-success: #fff;
-  --role-warning: #f59e0b;
-  --role-on-warning: #111;
+  --role-warning: color-mix(in srgb, var(--brand-primary) 80%, white 20%);
+  --role-on-warning: var(--hl-dark);
   --role-danger: #dc2626;
   --role-on-danger: #fff;
   --role-focus: var(--brand-10);
@@ -40,8 +40,8 @@
   --role-on-surface-strong: var(--neutral-1);
   --role-success: #22c55e;
   --role-on-success: #0b0d10;
-  --role-warning: #fbbf24;
-  --role-on-warning: #0b0d10;
+  --role-warning: color-mix(in srgb, var(--brand-primary) 68%, black 32%);
+  --role-on-warning: var(--hl-light);
   --role-danger: #ef4444;
   --role-on-danger: #0b0d10;
   --role-focus: var(--brand-10);

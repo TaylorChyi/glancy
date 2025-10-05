@@ -15,18 +15,21 @@
   --neutral-950: #121212;
 
   /* brand palette */
-  --brand-primary: #facc15;
-  --brand-primary-emphasis: #d4a20a;
-  --brand-primary-soft: #fff4c2;
-  --brand-primary-contrast: var(--neutral-950);
-  --brand-secondary: #f7d46b;
-  --brand-surface-light: #fff8da;
-  --brand-surface-dark: #5a4303;
-  --brand-outline: #d4a20a;
-  --brand-glow: rgb(250 204 21 / 40%);
+  --brand-primary: var(--brand-9);
+  --brand-primary-emphasis: var(--brand-10);
+  --brand-primary-soft: var(--brand-3);
+  --brand-primary-contrast: var(--neutral-1);
+  --brand-secondary: var(--brand-8);
+  --brand-surface-light: var(--brand-2);
+  --brand-surface-dark: color-mix(in srgb, var(--brand-9) 78%, black 22%);
+  --brand-outline: var(--brand-10);
+  --brand-glow: rgb(37 99 235 / 40%);
   --brand-color: var(--brand-primary);
 
-  /* highlight colors */
+  /* highlight colors
+   *  - 响应「高亮不再使用黄色」的设计军规，统一将高亮语义映射到黑白对比，
+   *    以便跨主题保持一致的视觉节奏。
+   */
   --hl-light: var(--neutral-0);
   --hl-dark: var(--neutral-950);
 
@@ -58,8 +61,8 @@
   --surface: var(--panel);
 
   /* link colors */
-  --color-link-light: #d49f0a;
-  --color-link-dark: #ffe899;
+  --color-link-light: var(--brand-primary);
+  --color-link-dark: color-mix(in srgb, var(--brand-primary) 82%, white 18%);
 
   /* system colors */
   --sys-text-light: var(--neutral-900);
