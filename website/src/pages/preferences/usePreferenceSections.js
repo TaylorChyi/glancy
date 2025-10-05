@@ -194,8 +194,7 @@ function usePreferenceSections({ initialSectionId }) {
     );
 
     const keyboardLabel = t.settingsTabKeyboard ?? "Keyboard shortcuts";
-    // 键盘分区根据最新交互规范不再展示额外描述，保留空字符串以便未来恢复时只需更新此处。
-    const keyboardMessage = "";
+    // 键盘分区根据最新交互规范仅暴露标题，摘要信息交由上下文提示（hint）呈现。
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
@@ -316,7 +315,6 @@ function usePreferenceSections({ initialSectionId }) {
         Component: KeyboardSection,
         componentProps: {
           title: keyboardLabel,
-          message: keyboardMessage,
         },
       },
       {

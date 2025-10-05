@@ -58,14 +58,7 @@ test("Given focused shortcut When pressing new combo Then invokes update", async
     status: "ready",
   });
 
-  render(
-    <KeyboardSection
-      title="Keyboard"
-      message="message"
-      headingId="heading"
-      descriptionId="desc"
-    />,
-  );
+  render(<KeyboardSection title="Keyboard" headingId="heading" />);
 
   const button = screen.getByRole("button", { name: "Edit shortcut for Focus search" });
   fireEvent.click(button);
@@ -102,14 +95,7 @@ test("Given conflict error When rendering Then shows conflict message", () => {
     status: "ready",
   });
 
-  render(
-    <KeyboardSection
-      title="Keyboard"
-      message="message"
-      headingId="heading"
-      descriptionId="desc"
-    />,
-  );
+  render(<KeyboardSection title="Keyboard" headingId="heading" />);
 
   expect(screen.getByText("Conflict")).toBeInTheDocument();
 });
@@ -138,31 +124,24 @@ test("Given reset button When clicked Then triggers resetShortcuts", () => {
     status: "ready",
   });
 
-  render(
-    <KeyboardSection
-      title="Keyboard"
-      message="message"
-      headingId="heading"
-      descriptionId="desc"
-    />,
-  );
+  render(<KeyboardSection title="Keyboard" headingId="heading" />);
 
   fireEvent.click(screen.getByRole("button", { name: "Reset" }));
   expect(resetShortcuts).toHaveBeenCalledTimes(1);
 });
 
 /**
- * 测试目标：当 message 为空白时不渲染描述段落且列表不暴露 aria-describedby。
- * 前置条件：提供包含默认快捷键的上下文，并传入仅包含空白的 message。
+ * 测试目标：组件渲染时应仅暴露标题，不生成描述段落或 aria-describedby 语义。
+ * 前置条件：提供包含默认快捷键的上下文，并模拟传入 descriptionId。
  * 步骤：
  *  1) 渲染组件；
  * 断言：
- *  - DOM 中不存在 descriptionId 对应元素；
+ *  - DOM 中不存在传入 descriptionId 对应的描述元素；
  *  - 列表缺少 aria-describedby 属性。
  * 边界/异常：
- *  - 若未来恢复描述，应更新断言确保属性重新出现。
+ *  - 若未来交互重新引入描述，应同步更新断言覆盖。
  */
-test("Given empty message When rendering Then omits description semantics", () => {
+test("Given keyboard section When rendering Then description semantics stay hidden", () => {
   mockUseKeyboardShortcutContext.mockReturnValue({
     shortcuts: [
       { action: "FOCUS_SEARCH", keys: ["MOD", "SHIFT", "F"], defaultKeys: ["MOD", "SHIFT", "F"] },
@@ -174,9 +153,7 @@ test("Given empty message When rendering Then omits description semantics", () =
     status: "ready",
   });
 
-  render(
-    <KeyboardSection title="Keyboard" message="   " headingId="heading" descriptionId="desc" />,
-  );
+  render(<KeyboardSection title="Keyboard" headingId="heading" descriptionId="desc" />);
 
   expect(document.getElementById("desc")).toBeNull();
   expect(screen.getByRole("list")).not.toHaveAttribute("aria-describedby");
