@@ -156,6 +156,57 @@ test("polishDictionaryMarkdown expands collapsed dictionary metadata", () => {
 });
 
 /**
+ * 测试目标：PracticePrompts 标签应被识别为行内标签并自动加粗换行。
+ * 前置条件：构造含 PracticePrompts 与 Answer 的多行 Markdown 文本。
+ * 步骤：
+ *  1) 使用 polishDictionaryMarkdown 处理原始文本。
+ *  2) 读取格式化结果。
+ * 断言：
+ *  - Practice Prompts 与 Answer 标签加粗，Sentence Correction 作为子标签换行展示。
+ * 边界/异常：
+ *  - 覆盖含数字与句点的标签，避免未来回退导致渲染失效。
+ */
+test("polishDictionaryMarkdown formats practice prompts metadata", () => {
+  const source = [
+    "PracticePrompts1.SentenceCorrection:",
+    "Identify the error in the presentation.",
+    "Answer: Replace 'her' with 'their'.",
+  ].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Practice Prompts 1**:",
+      "**Sentence Correction**:",
+      "Identify the error in the presentation.",
+      "**Answer**: Replace 'her' with 'their'.",
+    ].join("\n"),
+  );
+});
+
+/**
+ * 测试目标：PracticePrompts 与 Answer 串联在同一行时需拆分换行，避免长行阻塞滚动。
+ * 前置条件：构造同一行包含两个标签的 Markdown 文本。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 进行格式化。
+ *  2) 读取格式化后的行间结构。
+ * 断言：
+ *  - Practice Prompts 与 Answer 分处独立行且继承列表缩进。
+ * 边界/异常：
+ *  - 防止未来正则遗漏带数字标签导致再次连成单行。
+ */
+test("polishDictionaryMarkdown splits inline practice prompts chains", () => {
+  const source =
+    "- PracticePrompts1.ContextualTranslation: Translate.  Answer: Provide context.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "- **Practice Prompts 1 Contextual Translation**: Translate.",
+      "  **Answer**: Provide context.",
+    ].join("\n"),
+  );
+});
+
+/**
  * 测试目标：验证当字段标签与上一个值直接拼接时仍能拆行、加粗并补足空格。
  * 前置条件：构造 `EntryType:SingleWordUsageInsight:...` 等缺失分隔符的字段串。
  * 步骤：

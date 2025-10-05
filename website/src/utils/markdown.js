@@ -17,7 +17,7 @@ const COLLAPSED_LABEL_CHAIN_PATTERN =
 const ADJACENT_LABEL_PATTERN =
   /(?<=\S)[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*:/gmu;
 const BARE_INLINE_LABEL_PATTERN =
-  /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
+  /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w.\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
 const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
 const DECORATED_LABEL_VALUE_PATTERN = /(\*\*([^*]+)\*\*):\s*([^\n]*)/g;
 
@@ -106,6 +106,11 @@ const INLINE_LABEL_TOKENS = new Set(
     "insight",
     "extended",
     "extendednotes",
+    // Practice prompts 与答案标签来自新版释义流数据，需参与排版以维持可滚动的可读布局。
+    "answer",
+    "practiceprompts",
+    "sentencecorrection",
+    "contextualtranslation",
     "subsense",
     "subsenses",
   ].map((token) => token.toLowerCase()),
@@ -114,6 +119,8 @@ const INLINE_LABEL_TOKENS = new Set(
 const INLINE_LABEL_DYNAMIC_PATTERNS = [
   /^(?:s|sense)\d+(?:[a-z]+)?$/,
   /^example\d+$/,
+  // PracticePrompts1.SentenceCorrection -> practiceprompts1sentencecorrection
+  /^practiceprompts\d+(?:[a-z]+)?$/,
 ];
 
 function normalizeInlineLabelCandidate(raw) {
@@ -322,6 +329,7 @@ function humanizeLabelFragment(label) {
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/([A-Za-z])(\d)/g, "$1 $2")
     .replace(/(\d)([A-Za-z])/g, "$1 $2")
+    .replace(/[.]/g, " ")
     .trim()
     .replace(/\s+/g, " ");
 }
@@ -408,6 +416,27 @@ function ensureInlineLabelLineBreak(text) {
       return `${before}\n${indent}${segment}`;
     },
   );
+}
+
+/**
+ * 背景：
+ *  - restoreMissingLabelDelimiters 会在冒号后补空格，再由 separateAdjacentInlineLabels 拆行。
+ *    遇到 PracticePrompts1.SentenceCorrection 这类场景时，regex lookbehind 会遗留首字母到上一行，
+ *    造成 `: S\nentence` 的断裂，影响 Markdown 渲染与滚动。
+ * 目的：
+ *  - 将 `: <非空格>\n` 的异常格式回写为换行后首字母紧随，恢复期望的 `:\nSentence` 排布。
+ * 关键决策与取舍：
+ *  - 仅在冒号后跟随单个非空白字符且立即换行时触发，避免误伤正常句子。
+ * 影响范围：
+ *  - Practice Prompts 等多段标签的换行整理，确保 MarkdownRenderer 可正确折叠与滚动。
+ */
+function normalizeLabelBreakArtifacts(text) {
+  return text
+    .replace(/: ([\p{Lu}])\n/gu, (_match, labelStart) => `:\n${labelStart}`)
+    .replace(
+      /([ \t]+)([\p{Lu}])\n([ \t]+)([\p{Ll}])/gu,
+      (_match, _leading, upper, indent, lower) => `\n${indent}${upper}${lower}`,
+    );
 }
 
 function enforceInlineLabelBoundary(text) {
@@ -550,10 +579,26 @@ function restoreMissingLabelDelimiters(text) {
       const start = match.index;
       const end = start + token.length;
 
-      result += line.slice(cursor, start);
-
+      const separator = line.slice(cursor, start);
       const isLabel = shouldSplitInlineLabel(token);
       const canApply = isLabel && (carryLabelContext || hasSafePrefix(line, start));
+
+      let shouldDropSeparator = false;
+      if (canApply && separator && /^[.·]+$/.test(separator.trim())) {
+        const lookahead = line
+          .slice(end)
+          .match(/^[.·]+([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)/u);
+        shouldDropSeparator = Boolean(
+          lookahead && shouldSplitInlineLabel(lookahead[1]),
+        );
+      }
+
+      const isStructuralSeparator = shouldDropSeparator;
+
+
+      if (!isStructuralSeparator) {
+        result += separator;
+      }
 
       if (!canApply) {
         result += token;
@@ -579,7 +624,15 @@ function restoreMissingLabelDelimiters(text) {
 
       LABEL_TOKEN_PATTERN.lastIndex = nextIndex;
       const nextMatch = LABEL_TOKEN_PATTERN.exec(line);
-      const hasImmediateNext = Boolean(nextMatch && nextMatch.index === nextIndex);
+      let hasImmediateNext = Boolean(
+        nextMatch && nextMatch.index === nextIndex,
+      );
+      if (!hasImmediateNext && nextMatch) {
+        const bridge = line.slice(nextIndex, nextMatch.index);
+        if (/^[.·]+$/.test(bridge)) {
+          hasImmediateNext = true;
+        }
+      }
       const nextToken = hasImmediateNext ? nextMatch[0] : null;
       const nextIsLabel = nextToken ? shouldSplitInlineLabel(nextToken) : false;
 
@@ -589,6 +642,12 @@ function restoreMissingLabelDelimiters(text) {
         const indent = spacing.length > 1 ? spacing.replace(/\S/g, " ") : "";
         result += `\n${indent}`;
         cursor = nextIndex;
+        while (
+          cursor < line.length &&
+          (line[cursor] === "." || line[cursor] === "·")
+        ) {
+          cursor += 1;
+        }
         carryLabelContext = true;
         continue;
       }
@@ -816,7 +875,10 @@ export function polishDictionaryMarkdown(source) {
   const withAdjacentSeparated = separateAdjacentInlineLabels(
     withDelimitersRestored,
   );
-  const expanded = expandCollapsedLabelChains(withAdjacentSeparated);
+  const withLabelBreaksNormalized = normalizeLabelBreakArtifacts(
+    withAdjacentSeparated,
+  );
+  const expanded = expandCollapsedLabelChains(withLabelBreaksNormalized);
   const decorated = decorateBareInlineLabels(expanded);
   const separated = enforceInlineLabelBoundary(decorated);
   const spacedColon = ensureColonSpacing(separated);
