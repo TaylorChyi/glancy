@@ -11,7 +11,7 @@
  *  - TODO: 随着更多分区上线，可在 usePreferenceSections 内扩展蓝图并按需引入懒加载策略。
  */
 import PropTypes from "prop-types";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   SettingsBody,
   SettingsHeader,
@@ -21,12 +21,21 @@ import {
 import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
+import useStableSettingsPanelHeight from "@/components/modals/useStableSettingsPanelHeight.js";
 
 function Preferences({ initialSection, renderCloseAction }) {
-  const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
-    usePreferenceSections({
-      initialSectionId: initialSection,
-    });
+  const {
+    copy,
+    header,
+    sections,
+    activeSection,
+    activeSectionId,
+    handleSectionSelect,
+    handleSubmit,
+    panel,
+  } = usePreferenceSections({
+    initialSectionId: initialSection,
+  });
 
   const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
     activeSectionId,
@@ -44,6 +53,31 @@ function Preferences({ initialSection, renderCloseAction }) {
   const closeRenderer = renderCloseAction
     ? ({ className }) => renderCloseAction({ className })
     : undefined;
+
+  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
+    useStableSettingsPanelHeight({
+      sections,
+      activeSectionId,
+      referenceSectionId: "data",
+    });
+
+  const panelClassName = styles.panel;
+
+  const measurementProbe = useMemo(() => {
+    if (!referenceMeasurement) {
+      return null;
+    }
+    const {
+      Component: ReferenceComponent,
+      props,
+      registerNode,
+    } = referenceMeasurement;
+    return (
+      <div aria-hidden className={panelClassName} ref={registerNode}>
+        <ReferenceComponent {...props} />
+      </div>
+    );
+  }, [panelClassName, referenceMeasurement]);
 
   return (
     <div className={styles.content}>
@@ -69,7 +103,11 @@ function Preferences({ initialSection, renderCloseAction }) {
             description: styles.description,
           }}
         />
-        <SettingsBody className={styles.body}>
+        <SettingsBody
+          className={styles.body}
+          style={bodyStyle}
+          measurementProbe={measurementProbe}
+        >
           <SettingsNav
             sections={sections}
             activeSectionId={activeSectionId}
@@ -91,6 +129,7 @@ function Preferences({ initialSection, renderCloseAction }) {
             headingId={panel.headingId}
             className={styles.panel}
             onHeadingElementChange={registerHeading}
+            onPanelElementChange={registerActivePanelNode}
           >
             {activeSection ? (
               <activeSection.Component
@@ -117,4 +156,3 @@ Preferences.defaultProps = {
 };
 
 export default Preferences;
-

@@ -72,6 +72,7 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  position: relative;
   border-inline-start: var(--settings-body-divider-width, 1px) solid
     var(
       --settings-body-divider-color,
@@ -89,6 +90,25 @@
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
   padding-right: 4px;
+}
+
+/*
+ * 通过绝对定位的探针容器测量参考分区高度，确保主区域保持稳定高度。
+ * visibility: hidden 避免干扰键盘与屏幕阅读器；contain: layout 限制重排影响范围。
+ */
+.measurement-probe {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  pointer-events: none;
+  visibility: hidden;
+  overflow: hidden;
+  contain: layout;
+}
+
+.measurement-probe > * {
+  display: block;
+  width: 100%;
 }
 
 @media (width <= 1023px) {
