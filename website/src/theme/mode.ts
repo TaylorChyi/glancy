@@ -71,10 +71,31 @@ const addMediaListener = (
   return noop;
 };
 
+/**
+ * 意图：统一同步根节点的主题数据属性，确保 data-theme 始终指向解析后的主题，
+ *       同时保留用户偏好以便未来调试或界面展示。
+ * 输入：root - 主题挂载根节点；preference/resolved - 用户偏好与解析结果。
+ * 输出：无返回值，通过 DOM 副作用更新 data 属性与 dark class。
+ * 流程：
+ *  1) 写入 data-theme-preference 便于消费层识别真实偏好；
+ *  2) 写入 data-theme 为解析后的 light/dark，以复用同一套 tokens；
+ *  3) 根据解析结果决定 dark 类是否存在。
+ * 错误处理：无显式异常路径，依赖调用方保证 root 存在。
+ * 复杂度：O(1)。
+ */
+const syncRootState = (
+  root: HTMLElement,
+  preference: ThemePreference,
+  resolved: ResolvedTheme,
+) => {
+  root.dataset.themePreference = preference;
+  root.dataset.theme = resolved;
+  root.classList.toggle(DARK_CLASS, resolved === "dark");
+};
+
 const buildLightStrategy = (): ThemeStrategy => ({
   apply(root, notify) {
-    root.dataset.theme = "light";
-    root.classList.remove(DARK_CLASS);
+    syncRootState(root, "light", "light");
     notify("light");
     return { resolved: "light", detach: noop };
   },
@@ -83,8 +104,7 @@ const buildLightStrategy = (): ThemeStrategy => ({
 
 const buildDarkStrategy = (): ThemeStrategy => ({
   apply(root, notify) {
-    root.dataset.theme = "dark";
-    root.classList.add(DARK_CLASS);
+    syncRootState(root, "dark", "dark");
     notify("dark");
     return { resolved: "dark", detach: noop };
   },
@@ -97,11 +117,10 @@ const resolveSystemTheme = (
 
 const buildSystemStrategy = (env: ThemeEnvironment): ThemeStrategy => ({
   apply(root, notify) {
-    root.dataset.theme = "system";
     const media = env.matchMedia ? env.matchMedia(DARK_MEDIA_QUERY) : null;
     const applyFromMedia = (targetMedia: MediaQueryList | null | undefined) => {
       const next = resolveSystemTheme(targetMedia);
-      root.classList.toggle(DARK_CLASS, next === "dark");
+      syncRootState(root, "system", next);
       notify(next);
       return next;
     };

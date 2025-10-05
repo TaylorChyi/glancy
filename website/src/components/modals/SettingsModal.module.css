@@ -35,24 +35,6 @@
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
 }
 
-:global(:root[data-theme="system"]) .dialog {
-  --preferences-panel-bg: var(--sidebar-panel, var(--night-panel));
-  --preferences-panel-border: var(--sidebar-border-color, var(--night-border));
-  --preferences-panel-text: var(--sidebar-text-color, var(--night-text));
-  --preferences-panel-muted: var(--sidebar-muted-color, var(--night-muted));
-  --preferences-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
-  --preferences-panel-surface: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--night-panel)) 92%,
-    transparent
-  );
-  --preferences-panel-shadow: var(
-    --sidebar-shadow-elevated,
-    0 24px 60px rgb(0 0 0 / 45%)
-  );
-  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 30%);
-}
-
 .close-button {
   display: inline-flex;
   align-items: center;
