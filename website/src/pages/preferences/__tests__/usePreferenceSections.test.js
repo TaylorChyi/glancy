@@ -12,6 +12,7 @@ jest.unstable_mockModule("@/context", () => ({
 }));
 
 let usePreferenceSections;
+let translations;
 
 beforeAll(async () => {
   ({ default: usePreferenceSections } = await import(
@@ -45,6 +46,13 @@ const createTranslations = (overrides = {}) => ({
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
   settingsManageProfile: "Manage profile",
+  changeAvatar: "Change avatar",
+  settingsAccountBindingTitle: "Connected accounts",
+  settingsAccountBindingApple: "Apple",
+  settingsAccountBindingGoogle: "Google",
+  settingsAccountBindingWeChat: "WeChat",
+  settingsAccountBindingStatusUnlinked: "Not linked",
+  settingsAccountBindingActionPlaceholder: "Coming soon",
   ...overrides,
 });
 
@@ -52,7 +60,8 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
-  mockUseLanguage.mockReturnValue({ t: createTranslations() });
+  translations = createTranslations();
+  mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
     user: {
       username: "amy",
@@ -82,7 +91,6 @@ test("Given default sections When reading blueprint Then general leads navigatio
   const { result } = renderHook(() =>
     usePreferenceSections({
       initialSectionId: undefined,
-      onOpenAccountManager: jest.fn(),
     }),
   );
 
@@ -105,6 +113,37 @@ test("Given default sections When reading blueprint Then general leads navigatio
     "settings-modal-fallback-heading",
   );
   expect(result.current.panel.modalHeadingText).toBe("General");
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  expect(accountSection).toBeDefined();
+  expect(accountSection.Component).toBeDefined();
+  expect(accountSection.componentProps.identity.displayName).toBe("amy");
+  expect(accountSection.componentProps.identity.changeLabel).toBe(
+    translations.changeAvatar,
+  );
+  expect(accountSection.componentProps.identity.avatarAlt).toBe(
+    translations.prefAccountTitle,
+  );
+  expect(accountSection.componentProps.bindings.title).toBe(
+    translations.settingsAccountBindingTitle,
+  );
+  expect(accountSection.componentProps.bindings.items).toHaveLength(3);
+  expect(
+    accountSection.componentProps.bindings.items.map((item) => item.name),
+  ).toEqual([
+    translations.settingsAccountBindingApple,
+    translations.settingsAccountBindingGoogle,
+    translations.settingsAccountBindingWeChat,
+  ]);
+  expect(
+    accountSection.componentProps.bindings.items.every(
+      (item) =>
+        item.status === translations.settingsAccountBindingStatusUnlinked &&
+        item.actionLabel ===
+          translations.settingsAccountBindingActionPlaceholder,
+    ),
+  ).toBe(true);
 });
 
 /**
@@ -122,7 +161,6 @@ test("Given legacy section id When initializing Then selection falls back to gen
   const { result } = renderHook(() =>
     usePreferenceSections({
       initialSectionId: "privacy",
-      onOpenAccountManager: jest.fn(),
     }),
   );
 
@@ -143,17 +181,17 @@ test("Given legacy section id When initializing Then selection falls back to gen
  *  - 若 copy.title 为空，也应保持非空字符串（由 Hook 内默认值保障）。
  */
 test("Given blank section titles When resolving modal heading Then fallback title is used", () => {
+  translations = createTranslations({
+    settingsTabKeyboard: "   ",
+    settingsKeyboardDescription: "   ",
+  });
   mockUseLanguage.mockReturnValue({
-    t: createTranslations({
-      settingsTabKeyboard: "   ",
-      settingsKeyboardDescription: "   ",
-    }),
+    t: translations,
   });
 
   const { result } = renderHook(() =>
     usePreferenceSections({
       initialSectionId: "keyboard",
-      onOpenAccountManager: jest.fn(),
     }),
   );
 
@@ -180,7 +218,6 @@ test("Given section switch When selecting data Then heading metadata updates", a
   const { result } = renderHook(() =>
     usePreferenceSections({
       initialSectionId: undefined,
-      onOpenAccountManager: jest.fn(),
     }),
   );
 

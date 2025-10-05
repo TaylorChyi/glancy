@@ -42,11 +42,10 @@ const buildCloseLabel = (baseLabel, contextLabel) => {
   return `${normalizedBase} ${normalizedContext}`;
 };
 
-function SettingsModal({ open, onClose, initialSection, onOpenAccountManager }) {
+function SettingsModal({ open, onClose, initialSection }) {
   const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
     usePreferenceSections({
       initialSectionId: initialSection,
-      onOpenAccountManager,
     });
 
   const resolvedHeadingId = panel.focusHeadingId || panel.modalHeadingId;
@@ -169,12 +168,10 @@ SettingsModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   initialSection: PropTypes.string,
-  onOpenAccountManager: PropTypes.func,
 };
 
 SettingsModal.defaultProps = {
   initialSection: undefined,
-  onOpenAccountManager: undefined,
 };
 
 export default SettingsModal;

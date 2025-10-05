@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import SettingsModal from "@/components/modals/SettingsModal.jsx";
-import ProfileModal from "@/components/modals/ProfileModal.jsx";
 import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import LogoutConfirmModal from "@/components/modals/LogoutConfirmModal.jsx";
 
 function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
-  const [profileOpen, setProfileOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [settingsState, setSettingsState] = useState({
@@ -47,9 +45,7 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
           setSettingsState((previous) => ({ ...previous, open: false }))
         }
         initialSection={settingsState.section}
-        onOpenAccountManager={() => setProfileOpen(true)}
       />
-      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <LogoutConfirmModal
         open={logoutOpen}
         onConfirm={() => {

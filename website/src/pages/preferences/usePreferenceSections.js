@@ -62,11 +62,10 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
  *  - 生成偏好设置分区蓝图，统一管理激活分区、表头文案与账户数据。
  * 输入：
  *  - initialSectionId: 初始分区标识。
- *  - onOpenAccountManager: 打开账户管理模态的回调。
  * 输出：
  *  - 包含文案、分区数组、激活态控制与表单守卫的组合对象。
  * 流程：
- *  1) 汇总用户上下文与翻译词条并构造账户字段。
+ *  1) 汇总用户上下文与翻译词条并构造账户字段、头像与绑定占位信息。
  *  2) 结合国际化词条组装分区蓝本。
  *  3) 管理激活分区的受控状态并暴露切换方法。
  * 错误处理：
@@ -74,7 +73,7 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
  * 复杂度：
  *  - 时间：O(n) 取决于分区数量；空间：O(1) 额外状态。
  */
-function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
+function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const { user } = useUser();
 
@@ -101,12 +100,13 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }, [user]);
 
-  const canManageProfile = useMemo(
-    () => Boolean(user && typeof onOpenAccountManager === "function"),
-    [onOpenAccountManager, user],
-  );
-
-  const manageLabel = t.settingsManageProfile ?? "Manage profile";
+  const changeAvatarLabel = t.changeAvatar ?? "Change avatar";
+  const accountBindingsTitle =
+    t.settingsAccountBindingTitle ?? "Connected accounts";
+  const accountBindingStatus =
+    t.settingsAccountBindingStatusUnlinked ?? "Not linked";
+  const accountBindingActionLabel =
+    t.settingsAccountBindingActionPlaceholder ?? "Coming soon";
 
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
@@ -141,10 +141,6 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
-    const accountDescription = pickFirstMeaningfulString(
-      [t.settingsAccountDescription],
-      "Review and safeguard the basics that identify you in Glancy.",
-    );
     const accountFields = [
       {
         id: "username",
@@ -162,6 +158,36 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
         value: mapToDisplayValue(user?.phone, fallbackValue),
       },
     ];
+
+    const accountIdentity = {
+      displayName: accountFields[0]?.value ?? fallbackValue,
+      changeLabel: changeAvatarLabel,
+      avatarAlt: accountLabel,
+    };
+
+    const accountBindings = {
+      title: accountBindingsTitle,
+      items: [
+        {
+          id: "apple",
+          name: t.settingsAccountBindingApple ?? "Apple",
+          status: accountBindingStatus,
+          actionLabel: accountBindingActionLabel,
+        },
+        {
+          id: "google",
+          name: t.settingsAccountBindingGoogle ?? "Google",
+          status: accountBindingStatus,
+          actionLabel: accountBindingActionLabel,
+        },
+        {
+          id: "wechat",
+          name: t.settingsAccountBindingWeChat ?? "WeChat",
+          status: accountBindingStatus,
+          actionLabel: accountBindingActionLabel,
+        },
+      ],
+    };
 
     //
     // 导航标签仅展示主标题，摘要内容由具体面板负责渲染，避免屏幕阅读器重复朗读。
@@ -212,23 +238,27 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
         Component: AccountSection,
         componentProps: {
           title: accountLabel,
-          description: accountDescription,
           fields: accountFields,
-          manageLabel,
-          canManageProfile,
-          onOpenAccountManager,
+          identity: accountIdentity,
+          bindings: accountBindings,
         },
       },
     ];
   }, [
-    canManageProfile,
+    accountBindingActionLabel,
+    accountBindingStatus,
+    accountBindingsTitle,
+    changeAvatarLabel,
     fallbackValue,
-    manageLabel,
-    onOpenAccountManager,
     t.prefAccountTitle,
     t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
-    t.settingsAccountDescription,
+    t.settingsAccountBindingApple,
+    t.settingsAccountBindingGoogle,
+    t.settingsAccountBindingTitle,
+    t.settingsAccountBindingWeChat,
+    t.settingsAccountBindingStatusUnlinked,
+    t.settingsAccountBindingActionPlaceholder,
     t.settingsAccountEmail,
     t.settingsAccountPhone,
     t.settingsAccountUsername,
