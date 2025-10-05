@@ -109,24 +109,29 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
             </button>
           </div>
         </div>
-        {fields.map((field) => (
-          <div key={field.id} className={styles["detail-row"]}>
-            <dt className={styles["detail-label"]}>{field.label}</dt>
-            <dd className={styles["detail-value"]}>{field.value}</dd>
-            <div className={styles["detail-action"]}>
-              {field.action ? (
-                <button
-                  type="button"
-                  className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
-                  aria-disabled={field.action.disabled}
-                  disabled={field.action.disabled}
-                >
-                  {field.action.label}
-                </button>
-              ) : null}
+        {fields.map((field) => {
+          const renderValue = field.renderValue;
+          return (
+            <div key={field.id} className={styles["detail-row"]}>
+              <dt className={styles["detail-label"]}>{field.label}</dt>
+              <dd className={styles["detail-value"]}>
+                {typeof renderValue === "function" ? renderValue(field) : field.value}
+              </dd>
+              <div className={styles["detail-action"]}>
+                {field.action ? (
+                  <button
+                    type="button"
+                    className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+                    aria-disabled={field.action.disabled}
+                    disabled={field.action.disabled}
+                  >
+                    {field.action.label}
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </dl>
       {bindings ? (
         <div className={styles.bindings} aria-live="polite">
@@ -164,6 +169,7 @@ AccountSection.propTypes = {
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
       value: PropTypes.string.isRequired,
+      renderValue: PropTypes.func,
       action: PropTypes.shape({
         id: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,

@@ -19,7 +19,6 @@ const mockLanguage = {
   settingsTabData: "Data controls",
   settingsTabGeneral: "General",
   settingsEmptyValue: "Not set",
-  settingsManageProfile: "Manage profile",
   changeAvatar: "Change avatar",
   settingsAccountBindingTitle: "Connected accounts",
   settingsAccountBindingApple: "Apple",
@@ -29,19 +28,33 @@ const mockLanguage = {
   settingsAccountBindingActionPlaceholder: "Coming soon",
   settingsAccountEmailUnbindAction: "Unlink email",
   settingsAccountPhoneRebindAction: "Change phone",
+  usernamePlaceholder: "Enter username",
+  changeUsernameButton: "Change username",
+  saveUsernameButton: "Save username",
+  saving: "Saving...",
+  usernameValidationEmpty: "Username cannot be empty",
+  usernameValidationTooShort: "Username must be at least {{min}} characters",
+  usernameValidationTooLong: "Username must be at most {{max}} characters",
+  usernameUpdateFailed: "Unable to update username",
 };
 
 let mockUser;
+let mockSetUser;
+let updateUsernameMock;
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
-  useUser: () => ({ user: mockUser }),
+  useUser: () => ({ user: mockUser, setUser: mockSetUser }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
   useKeyboardShortcutContext: () => ({
     register: jest.fn(),
     unregister: jest.fn(),
   }),
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
+}));
+
+jest.unstable_mockModule("@/api/users.js", () => ({
+  useUsersApi: () => ({ updateUsername: updateUsernameMock }),
 }));
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
@@ -56,7 +69,10 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
 const { default: Preferences } = await import("@/pages/preferences");
 
 beforeEach(() => {
+  updateUsernameMock = jest.fn().mockResolvedValue({ username: "ada" });
+  mockSetUser = jest.fn();
   mockUser = {
+    id: "user-1",
     username: "Ada",
     email: "ada@example.com",
     phone: "+1-111",
@@ -97,14 +113,16 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(
     within(activePanel).getAllByText(mockLanguage.settingsAccountAvatarLabel),
   ).toHaveLength(1);
-  expect(within(activePanel).getAllByText(mockUser.username)).toHaveLength(2);
+  expect(
+    within(activePanel).getByDisplayValue(mockUser.username),
+  ).toBeInTheDocument();
   expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
   expect(within(activePanel).getByText("+1 111")).toBeInTheDocument();
   expect(
     within(activePanel).getByRole("button", { name: mockLanguage.changeAvatar }),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).getByRole("button", { name: mockLanguage.settingsManageProfile }),
+    within(activePanel).getByRole("button", { name: mockLanguage.changeUsernameButton }),
   ).toBeInTheDocument();
   expect(
     within(activePanel).getByRole("button", { name: mockLanguage.settingsAccountEmailUnbindAction }),
@@ -145,6 +163,7 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
  */
 test("GivenMissingAccountData_WhenSwitchingToAccountTab_ThenFallbackShown", async () => {
   mockUser = {
+    id: "user-1",
     username: "Ada",
     email: "",
     phone: undefined,
@@ -164,4 +183,115 @@ test("GivenMissingAccountData_WhenSwitchingToAccountTab_ThenFallbackShown", asyn
   const fallback = mockLanguage.settingsEmptyValue;
   const activePanel = screen.getByRole("tabpanel");
   expect(within(activePanel).getAllByText(fallback)).toHaveLength(2);
+});
+
+/**
+ * 测试目标：点击更换用户名后输入框可编辑并成功保存调用 API。
+ * 前置条件：mockUser 包含 id/token，updateUsernameMock 成功解析用户名。
+ * 步骤：
+ *  1) 渲染页面并切换到账户分区；
+ *  2) 点击更换用户名按钮进入编辑态；
+ *  3) 修改用户名并保存；
+ * 断言：
+ *  - updateUsernameMock 收到规范化后的用户名；
+ *  - setUser 被调用并带有新用户名；
+ *  - 按钮文案恢复为更换用户名且输入禁用。
+ * 边界/异常：
+ *  - 若 API 缺失返回用户名，应以输入值为准（由 Hook 行为覆盖）。
+ */
+test("GivenAccountTab_WhenSavingUsername_ThenApiInvokedAndStoreUpdated", async () => {
+  const user = userEvent.setup();
+  render(<Preferences />);
+
+  await user.click(
+    screen.getByRole("tab", {
+      name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+    }),
+  );
+
+  const panel = screen.getByRole("tabpanel");
+  const input = within(panel).getByPlaceholderText(
+    mockLanguage.usernamePlaceholder,
+  );
+  expect(input).toBeDisabled();
+  expect(input).toHaveValue(mockUser.username);
+
+  await user.click(
+    within(panel).getByRole("button", {
+      name: mockLanguage.changeUsernameButton,
+    }),
+  );
+
+  expect(input).not.toBeDisabled();
+  await user.clear(input);
+  await user.type(input, "  ada.glancy  ");
+
+  await user.click(
+    within(panel).getByRole("button", {
+      name: mockLanguage.saveUsernameButton,
+    }),
+  );
+
+  await screen.findByRole("button", {
+    name: mockLanguage.changeUsernameButton,
+  });
+
+  expect(updateUsernameMock).toHaveBeenCalledWith({
+    userId: mockUser.id,
+    username: "ada.glancy",
+    token: mockUser.token,
+  });
+  expect(mockSetUser).toHaveBeenCalledWith({
+    ...mockUser,
+    username: "ada",
+  });
+  expect(input).toBeDisabled();
+});
+
+/**
+ * 测试目标：非法用户名应展示错误信息并阻止请求发送。
+ * 前置条件：updateUsernameMock 重置但不应被调用。
+ * 步骤：
+ *  1) 进入编辑态后输入两位字符；
+ *  2) 点击保存按钮；
+ * 断言：
+ *  - 出现最小长度错误文案；
+ *  - 输入 aria-invalid 为 true；
+ *  - updateUsernameMock 未被调用。
+ * 边界/异常：
+ *  - 错误信息应结合翻译模板插值最小长度。
+ */
+test("GivenInvalidUsername_WhenSaving_ThenInlineErrorShown", async () => {
+  const user = userEvent.setup();
+  render(<Preferences />);
+
+  await user.click(
+    screen.getByRole("tab", {
+      name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+    }),
+  );
+
+  const panel = screen.getByRole("tabpanel");
+  const input = within(panel).getByPlaceholderText(
+    mockLanguage.usernamePlaceholder,
+  );
+
+  await user.click(
+    within(panel).getByRole("button", {
+      name: mockLanguage.changeUsernameButton,
+    }),
+  );
+
+  await user.clear(input);
+  await user.type(input, "ab");
+  await user.click(
+    within(panel).getByRole("button", {
+      name: mockLanguage.saveUsernameButton,
+    }),
+  );
+
+  const error = await within(panel).findByText(/at least 3 characters/);
+  expect(error).toBeInTheDocument();
+  expect(input).toHaveAttribute("aria-invalid", "true");
+  expect(updateUsernameMock).not.toHaveBeenCalled();
 });
