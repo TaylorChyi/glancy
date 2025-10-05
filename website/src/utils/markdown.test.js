@@ -197,3 +197,29 @@ test("polishDictionaryMarkdown formats sense label chains", () => {
     ].join("\n"),
   );
 });
+
+/**
+ * 测试目标：验证缺失冒号的标签链（如 `Senses s1Verb`、`Examples Example1`）会被回写冒号，以触发既有换行逻辑。
+ * 前置条件：输入为单行 Markdown，标签之间仅以空格连接且未显式包含冒号。
+ * 步骤：
+ *  1) 构造含 `Senses s1Verb`、`Examples Example1` 的紧凑文本。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 输出应等价于冒号原本存在时的格式，确保 `restoreMissingLabelDelimiters` 生效。
+ * 边界/异常：
+ *  - 覆盖行首标签缺失冒号的退化情形，防止未来回归导致再次输出单行。
+ */
+test("polishDictionaryMarkdown restores missing label delimiters", () => {
+  const source =
+    "Senses s1Verb:to move toward the speaker.Examples Example1:She came home immediately.UsageInsight:Common in storytelling.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Senses**:",
+      "**Sense 1 · Verb**: to move toward the speaker.",
+      "**Examples**:",
+      "**Example 1**: She came home immediately.",
+      "**Usage Insight**: Common in storytelling.",
+    ].join("\n"),
+  );
+});
