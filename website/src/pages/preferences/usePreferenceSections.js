@@ -494,11 +494,9 @@ function usePreferenceSections({ initialSectionId }) {
     accountBindingsTitle,
     fallbackValue,
     t.settingsAccountAvatarLabel,
-    t.settingsAccountDefaultPhoneCode,
     t.settingsAccountEmailUnbind,
     t.settingsAccountEmailUnbindAction,
     t.settingsAccountPhoneRebindAction,
-    t.settingsManageProfile,
     handleUsernameFailure,
     handleUsernameSubmit,
     usernameEditorTranslations,
@@ -523,9 +521,9 @@ function usePreferenceSections({ initialSectionId }) {
     handleAvatarSelection,
     isAvatarUploading,
     sanitizedUsername,
-    user?.email,
-    user?.phone,
-    user?.username,
+    usernameValue,
+    emailValue,
+    phoneValue,
   ]);
 
   const [activeSectionId, setActiveSectionId] = useState(() =>
