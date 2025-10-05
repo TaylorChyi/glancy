@@ -9,6 +9,12 @@ const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
+const COLLAPSED_LABEL_CHAIN_PATTERN =
+  /(:)([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:[^\s])/gmu;
+const BARE_INLINE_LABEL_PATTERN =
+  /(^|[^\S\n>])([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
+const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
+const DECORATED_LABEL_VALUE_PATTERN = /(\*\*([^*]+)\*\*):\s*([^\n]*)/g;
 
 // 说明：
 //  - LLM 在英译英响应中可能仅保留单个空格作为段落分隔。
@@ -209,7 +215,8 @@ function normalizeInlineLabelSpacing(text) {
       const lineStart = source.lastIndexOf("\n", offset) + 1;
       const prefix = source.slice(lineStart, offset + 1).trim();
       const isListMarker =
-        prefix.length > 0 && (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
+        prefix.length > 0 &&
+        (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
       if (isListMarker) {
         return match;
       }
@@ -233,7 +240,8 @@ function ensureInlineLabelLineBreak(text) {
         const lineStart = source.lastIndexOf("\n", offset) + 1;
         const prefix = source.slice(lineStart, offset + 1).trim();
         const isListMarker =
-          prefix.length > 0 && (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
+          prefix.length > 0 &&
+          (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
         if (isListMarker) {
           return match;
         }
@@ -241,6 +249,122 @@ function ensureInlineLabelLineBreak(text) {
       const indent =
         computeListIndentation(source, offset) || spaces.replace(/\S/g, " ");
       return `${before}\n${indent}${segment}`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - LLM 输出在 JSON 序列化后，常把 `Examples:Example1:...` 一类标签串联成单行。
+ * 目的：
+ *  - 识别「冒号紧邻标签」的串联模式，并在保持列表缩进的前提下拆行，恢复章节语义。
+ * 关键决策与取舍：
+ *  - 复用列表缩进推导逻辑，确保拆行后的补齐与既有列表渲染一致；
+ *  - 仅在标签命中既有词表时生效，避免误拆普通冒号句。
+ * 影响范围：
+ *  - Markdown 词典条目中串联标签的换行处理。
+ */
+function expandCollapsedLabelChains(text) {
+  return text.replace(
+    COLLAPSED_LABEL_CHAIN_PATTERN,
+    (match, colon, label, offset, source) => {
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      const nextChar = source[offset + colon.length];
+      if (nextChar === "\n") {
+        return match;
+      }
+      const indent = computeListIndentation(source, offset) || "";
+      return `${colon}\n${indent}${label}`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - 串联标签往往以裸文本形式出现（缺少 `**` 包裹），导致前端无法复用统一格式化策略。
+ * 目的：
+ *  - 将命中标签词表的裸标签转为粗体，并拆解驼峰/数字界限以增强可读性。
+ * 关键决策与取舍：
+ *  - 保留原有大小写展示，同时仅在匹配词表时改写，避免误伤普通冒号句。
+ * 影响范围：
+ *  - 词典 Markdown 渲染的标签装饰逻辑。
+ */
+function decorateBareInlineLabels(text) {
+  return text.replace(
+    BARE_INLINE_LABEL_PATTERN,
+    (match, leading, label, offset, source) => {
+      const labelStart = offset + leading.length;
+      const precedingChar = source[labelStart - 1];
+      if (precedingChar === "*" || !shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      const humanized = label
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Za-z])(\d)/g, "$1 $2")
+        .replace(/(\d)([A-Za-z])/g, "$1 $2")
+        .trim();
+      return `${leading}**${humanized}**`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - 新增的 JSON 字段常以 `EntryType:SingleWord` 形式紧贴，缺乏冒号后的空格。
+ * 目的：
+ *  - 在不破坏 URL（`https://`）等合法用法的前提下，为冒号添加必要的视觉间隔。
+ * 关键决策与取舍：
+ *  - 通过回调判断冒号后是否为 `//`，保留协议格式；其它情况一律补空格以保证可读性。
+ * 影响范围：
+ *  - Markdown 词典条目中键值对的冒号展示样式。
+ */
+function ensureColonSpacing(text) {
+  return text.replace(
+    COLON_WITHOUT_SPACE_PATTERN,
+    (match, next, offset, source) => {
+      const previous = offset > 0 ? source[offset - 1] : "";
+      if (next === "/" && source[offset + 2] === "/") {
+        return match;
+      }
+      if (/\d/.test(previous) && /\d/.test(next)) {
+        return match;
+      }
+      return `: ${next}`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - `EntryType:SingleWord` 等字段的值同样缺少空格，直接渲染可读性差。
+ * 目的：
+ *  - 在标签已加粗的前提下，仅对「无空格且驼峰/数字混排」的值进行语义化拆分。
+ * 关键决策与取舍：
+ *  - 依赖既有标签词表过滤作用范围，并保留含空格或标点的原始值，避免误改自然语言内容。
+ * 影响范围：
+ *  - 词典条目中的紧凑型元数据值展示。
+ */
+function humanizeCompactMetadataValues(text) {
+  return text.replace(
+    DECORATED_LABEL_VALUE_PATTERN,
+    (match, labelToken, rawLabel, rawValue) => {
+      if (!rawValue || /\s/.test(rawValue)) {
+        return match;
+      }
+      if (!shouldSplitInlineLabel(rawLabel)) {
+        return match;
+      }
+      const humanizedValue = rawValue
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Za-z])(\d)/g, "$1 $2")
+        .replace(/(\d)([A-Za-z])/g, "$1 $2")
+        .trim();
+      if (humanizedValue === rawValue) {
+        return match;
+      }
+      return `**${rawLabel}**: ${humanizedValue}`;
     },
   );
 }
@@ -365,7 +489,11 @@ export function extractMarkdownPreview(buffer) {
 export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
-  const withLineBreak = ensureHeadingLineBreak(normalized);
+  const expanded = expandCollapsedLabelChains(normalized);
+  const decorated = decorateBareInlineLabels(expanded);
+  const spacedColon = ensureColonSpacing(decorated);
+  const humanizedValues = humanizeCompactMetadataValues(spacedColon);
+  const withLineBreak = ensureHeadingLineBreak(humanizedValues);
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
   const padded = ensureHeadingPadding(withHeadingSpacing);
   const spaced = ensureListSpacing(padded);

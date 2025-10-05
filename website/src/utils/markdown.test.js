@@ -124,3 +124,50 @@ test("translation line keeps nested unordered list indentation", () => {
   const result = polishDictionaryMarkdown(source);
   expect(result).toBe("  - **例句**: Nested sample\n    **翻译**: 嵌套示例");
 });
+
+/**
+ * 测试目标：验证串联的英译英标签会被拆行并恢复空格，提升词条可读性。
+ * 前置条件：行内包含 `Examples:Example1:...`、`UsageInsight:...` 等紧贴字段。
+ * 步骤：
+ *  1) 构造含多个紧贴字段的字典 Markdown 文本。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 每个字段单独换行，标签被加粗且冒号后带空格，若失败则表示新解析逻辑未生效。
+ * 边界/异常：
+ *  - 覆盖多字段连缀场景，可防止未来回归导致再次合并成单行。
+ */
+test("polishDictionaryMarkdown expands collapsed dictionary metadata", () => {
+  const source = [
+    "Examples:Example1:The train came at exactly 3:15 PM as scheduled.",
+    "UsageInsight:Often used when describing precise arrivals.",
+    "Register:Formal",
+    "EntryType:SingleWord",
+  ].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Examples**:",
+      "**Example 1**: The train came at exactly 3:15 PM as scheduled.",
+      "**Usage Insight**: Often used when describing precise arrivals.",
+      "**Register**: Formal",
+      "**Entry Type**: Single Word",
+    ].join("\n"),
+  );
+});
+
+/**
+ * 测试目标：确保冒号补空格逻辑不会破坏 URL 语法。
+ * 前置条件：输入文本包含 `http://` 链接。
+ * 步骤：
+ *  1) 传入带 URL 的字符串。
+ *  2) 调用 polishDictionaryMarkdown。
+ * 断言：
+ *  - 输出与原始字符串一致，若失败说明误处理了协议前缀。
+ * 边界/异常：
+ *  - 涵盖最常见的协议格式，可避免未来修改误伤链接。
+ */
+test("polishDictionaryMarkdown preserves url colon usage", () => {
+  const source = "See http://example.com for details";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(source);
+});
