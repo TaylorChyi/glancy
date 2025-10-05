@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import waitingFrame1 from "@/assets/waiting-frame-1.svg";
-import waitingFrame2 from "@/assets/waiting-frame-2.svg";
-import waitingFrame3 from "@/assets/waiting-frame-3.svg";
 import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";
 import useFrameReveal from "./useFrameReveal";
+import WAITING_FRAMES from "./waitingFrameAssets";
 
 /*
  * 策略模式：
@@ -20,12 +18,6 @@ const WAITING_FRAME_DIMENSIONS = WAITING_ANIMATION_STRATEGY.canvas;
 const WAITING_FRAME_ASPECT_RATIO = Number(
   (WAITING_FRAME_DIMENSIONS.width / WAITING_FRAME_DIMENSIONS.height).toFixed(6),
 );
-const WAITING_FRAMES = Object.freeze([
-  waitingFrame1,
-  waitingFrame2,
-  waitingFrame3,
-]);
-
 // 设计取舍：33vh 为视觉规范要求的显示高度，同时保留像素级上限避免 SVG 溢出。
 const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
   "--waiting-frame-height": `min(33vh, ${WAITING_FRAME_DIMENSIONS.height}px)`,
