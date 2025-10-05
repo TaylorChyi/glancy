@@ -7,6 +7,7 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
+const HEADING_INLINE_LABEL_PATTERN = /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
 const INLINE_LABEL_NO_BOUNDARY_PATTERN = /([^\s>\n])(\*\*([^*]+)\*\*:[^\n]*)/g;
@@ -195,6 +196,30 @@ function ensureHeadingLineBreak(text) {
         }
       }
       return `${before}\n${hashes}`;
+    },
+  );
+}
+
+/**
+ * 背景：
+ *  - LLM 生成的标题常与元信息标签紧贴，导致整段文本被视为同一标题行。
+ * 目的：
+ *  - 将标题后的首个可识别行内标签拆分到新行，恢复段落结构与 Markdown 渲染能力。
+ * 关键决策与取舍：
+ *  - 仅当标签命中既有词表时才拆分，避免误伤正常含粗体的标题内容。
+ * 影响范围：
+ *  - 词典页面的标题区块格式化逻辑，与后续标签换行流程协同生效。
+ */
+function separateHeadingInlineLabels(text) {
+  return text.replace(
+    HEADING_INLINE_LABEL_PATTERN,
+    (match, heading, segment, label) => {
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      const trimmedHeading = heading.replace(/\s+$/g, "");
+      const normalizedSegment = segment.replace(/^\s+/, "");
+      return `${trimmedHeading}\n${normalizedSegment}`;
     },
   );
 }
@@ -885,7 +910,8 @@ export function polishDictionaryMarkdown(source) {
   const humanizedValues = humanizeCompactMetadataValues(spacedColon);
   const withLineBreak = ensureHeadingLineBreak(humanizedValues);
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
-  const padded = ensureHeadingPadding(withHeadingSpacing);
+  const headingsSeparated = separateHeadingInlineLabels(withHeadingSpacing);
+  const padded = ensureHeadingPadding(headingsSeparated);
   const spaced = ensureListSpacing(padded);
   return ensureInlineLabelLineBreak(spaced);
 }
