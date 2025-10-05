@@ -596,79 +596,9 @@ export function buildSubscriptionSectionProps({
     pricing,
   });
 
-  const hasBillingCycle =
-    currentPlanId !== "FREE" &&
-    typeof subscriptionMeta.billingCycle === "string";
-  const billingCycle = hasBillingCycle
-    ? safeString(
-        subscriptionMeta.billingCycle === "yearly"
-          ? t.subscriptionBillingCycleYearly
-          : t.subscriptionBillingCycleMonthly,
-        FALLBACK_VALUE,
-      )
-    : FALLBACK_VALUE;
-
-  const currentPlanCopy = planCopy[currentPlanId] ?? { title: currentPlanId };
-  const planLine =
-    billingCycle && billingCycle !== FALLBACK_VALUE
-      ? `${currentPlanCopy.title} · ${billingCycle}`
-      : currentPlanCopy.title;
-  const nextRenewalLabel = subscriptionMeta.nextRenewalDate
-    ? formatWithTemplate(
-        safeString(t.subscriptionNextRenewalTemplate, "下次扣费：{value}"),
-        subscriptionMeta.nextRenewalDate,
-      )
-    : FALLBACK_VALUE;
-  const regionLabel = subscriptionMeta.regionLabel ?? pricing.regionLabel;
-  const regionLine = formatWithTemplate(
-    safeString(t.subscriptionRegionLineTemplate, "地区：{value}"),
-    regionLabel
-      ? `${regionLabel} · ${pricing.currency}`
-      : `${pricing.currency}`,
-  );
-
-  const premiumHighlight =
-    currentPlanId === "PREMIUM"
-      ? safeString(t.subscriptionPremiumHighlight, "已解锁最高级配额与优先级")
-      : null;
-
   const taxNote = pricing.taxIncluded
     ? safeString(t.pricingTaxIncluded, "价格已含税")
     : safeString(t.pricingTaxExcluded, "价格不含税");
-
-  const currentTitle = safeString(t.subscriptionCurrentTitle, "当前订阅");
-
-  const actions = [
-    {
-      id: "manage",
-      label: safeString(t.subscriptionActionManage, "管理订阅"),
-      onClick:
-        typeof onSubscribe === "function"
-          ? () => onSubscribe(currentPlanId)
-          : undefined,
-    },
-    {
-      id: "upgrade",
-      label: safeString(t.subscriptionActionUpgrade, "升级"),
-      onClick: undefined,
-    },
-    {
-      id: "downgrade",
-      label: safeString(t.subscriptionActionDowngrade, "降级"),
-      onClick: undefined,
-    },
-    {
-      id: "change-region",
-      label: safeString(t.subscriptionActionChangeRegion, "切换地区"),
-      onClick: undefined,
-    },
-    {
-      id: "redeem",
-      label: safeString(t.subscriptionActionRedeem, "兑换码"),
-      onClick:
-        typeof onRedeem === "function" ? () => onRedeem("focus") : undefined,
-    },
-  ];
 
   const redeemCopy = {
     title: safeString(t.subscriptionRedeemTitle, "兑换专享权益"),
@@ -692,14 +622,6 @@ export function buildSubscriptionSectionProps({
   return {
     title: safeString(t.settingsTabSubscription, "订阅"),
     featureColumnLabel: safeString(t.subscriptionFeatureColumnLabel, "能力项"),
-    currentPlanCard: {
-      title: currentTitle,
-      planLine,
-      nextRenewalLabel,
-      regionLine,
-      premiumHighlight,
-      actions,
-    },
     planCards,
     featureMatrix,
     visiblePlanIds,

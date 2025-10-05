@@ -19,7 +19,6 @@ function SubscriptionSection({
   title,
   headingId,
   descriptionId,
-  currentPlanCard,
   planCards,
   featureMatrix,
   visiblePlanIds,
@@ -53,19 +52,6 @@ function SubscriptionSection({
       onRedeem(redeemCode.trim());
     }
   }, [onRedeem, redeemCode]);
-
-  const handleTopAction = useCallback(
-    (action) => {
-      if (!action) {
-        return;
-      }
-      if (action.id === "redeem" && redeemInputRef.current) {
-        redeemInputRef.current.focus();
-      }
-      action.onClick?.();
-    },
-    [],
-  );
 
   const subscribeDisabled = selectedPlanId === defaultSelectedPlanId;
 
@@ -105,39 +91,6 @@ function SubscriptionSection({
           {title}
         </h3>
         <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
-      <div className={styles["subscription-current"]}>
-        <div className={styles["subscription-current-header"]}>
-          <h4 className={styles["subscription-current-title"]}>
-            {currentPlanCard.title}
-          </h4>
-          <p className={styles["subscription-current-plan"]}>
-            {currentPlanCard.planLine}
-          </p>
-        </div>
-        <p className={styles["subscription-current-meta"]}>
-          {currentPlanCard.nextRenewalLabel}
-        </p>
-        <p className={styles["subscription-current-meta"]}>
-          {currentPlanCard.regionLine}
-        </p>
-        {currentPlanCard.premiumHighlight ? (
-          <p className={styles["subscription-premium"]}>
-            {currentPlanCard.premiumHighlight}
-          </p>
-        ) : null}
-        <div className={styles["subscription-current-actions"]}>
-          {currentPlanCard.actions.map((action) => (
-            <button
-              key={action.id}
-              type="button"
-              className={styles["subscription-action"]}
-              onClick={() => handleTopAction(action)}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
       </div>
       <div className={styles["subscription-matrix"]}>
         <div className={styles["subscription-plan-grid"]}>
@@ -257,20 +210,6 @@ SubscriptionSection.propTypes = {
   title: PropTypes.string.isRequired,
   headingId: PropTypes.string.isRequired,
   descriptionId: PropTypes.string,
-  currentPlanCard: PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    planLine: PropTypes.string.isRequired,
-    nextRenewalLabel: PropTypes.string.isRequired,
-    regionLine: PropTypes.string.isRequired,
-    premiumHighlight: PropTypes.string,
-    actions: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        label: PropTypes.string.isRequired,
-        onClick: PropTypes.func,
-      }),
-    ).isRequired,
-  }).isRequired,
   planCards: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
