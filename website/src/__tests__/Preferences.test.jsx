@@ -19,6 +19,13 @@ const mockLanguage = {
   settingsTabGeneral: "General",
   settingsEmptyValue: "Not set",
   settingsManageProfile: "Manage profile",
+  changeAvatar: "Change avatar",
+  settingsAccountBindingTitle: "Connected accounts",
+  settingsAccountBindingApple: "Apple",
+  settingsAccountBindingGoogle: "Google",
+  settingsAccountBindingWeChat: "WeChat",
+  settingsAccountBindingStatusUnlinked: "Not linked",
+  settingsAccountBindingActionPlaceholder: "Coming soon",
 };
 
 let mockUser;
@@ -82,6 +89,30 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(within(activePanel).getByText(mockUser.username)).toBeInTheDocument();
   expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
   expect(within(activePanel).getByText(mockUser.phone)).toBeInTheDocument();
+  expect(
+    within(activePanel).getByRole("button", { name: mockLanguage.changeAvatar }),
+  ).toBeInTheDocument();
+  expect(
+    within(activePanel).queryByRole("button", {
+      name: mockLanguage.settingsManageProfile,
+    }),
+  ).not.toBeInTheDocument();
+  expect(within(activePanel).getByTestId("avatar")).toBeInTheDocument();
+  expect(
+    within(activePanel).getByText(mockLanguage.settingsAccountBindingTitle),
+  ).toBeInTheDocument();
+  expect(
+    within(activePanel).getAllByText(
+      mockLanguage.settingsAccountBindingStatusUnlinked,
+    ),
+  ).toHaveLength(3);
+  const bindingActions = within(activePanel).getAllByRole("button", {
+    name: mockLanguage.settingsAccountBindingActionPlaceholder,
+  });
+  expect(bindingActions).toHaveLength(3);
+  bindingActions.forEach((action) => {
+    expect(action).toBeDisabled();
+  });
 });
 
 /**

@@ -22,15 +22,10 @@ import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 
-function Preferences({
-  onOpenAccountManager,
-  initialSection,
-  renderCloseAction,
-}) {
+function Preferences({ initialSection, renderCloseAction }) {
   const { copy, header, sections, activeSection, activeSectionId, handleSectionSelect, handleSubmit, panel } =
     usePreferenceSections({
       initialSectionId: initialSection,
-      onOpenAccountManager,
     });
 
   const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
@@ -112,13 +107,11 @@ function Preferences({
 }
 
 Preferences.propTypes = {
-  onOpenAccountManager: PropTypes.func,
   initialSection: PropTypes.string,
   renderCloseAction: PropTypes.func,
 };
 
 Preferences.defaultProps = {
-  onOpenAccountManager: undefined,
   initialSection: undefined,
   renderCloseAction: undefined,
 };

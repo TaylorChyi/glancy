@@ -488,43 +488,179 @@
   overflow-wrap: break-word;
 }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: var(--space-4);
+.identity-row {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+  gap: var(--space-4);
 }
 
-.manage-button {
+.identity-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.identity-avatar-image {
+  border-radius: 999px;
+  box-shadow: 0 16px 32px
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+}
+
+.avatar-input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.avatar-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 176px;
-  min-height: 44px;
-  padding: 0 28px;
-  border: none;
+  min-width: 144px;
+  min-height: 38px;
+  padding: 0 20px;
   border-radius: 999px;
-  background: var(--preferences-panel-accent);
-  color: #fff;
-  font-size: 15px;
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 90%,
+    transparent
+  );
+  color: var(--preferences-panel-text);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition:
     transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.manage-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--preferences-panel-ring);
-}
-
-.manage-button:hover {
+.avatar-trigger:hover {
   transform: translateY(-1px);
-  box-shadow: var(--preferences-panel-accent-shadow);
+  border-color: color-mix(
+    in srgb,
+    var(--preferences-panel-ring) 60%,
+    transparent
+  );
 }
 
-.manage-button:active {
+.avatar-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.avatar-trigger:active {
   transform: translateY(0);
+  box-shadow: none;
+}
+
+.identity-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--preferences-panel-muted);
+}
+
+.identity-value {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--preferences-panel-text);
+  word-break: break-word;
+}
+
+.bindings {
+  margin-top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bindings-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
+}
+
+.bindings-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.binding-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 45%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 85%,
+    transparent
+  );
+}
+
+.binding-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.binding-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
+}
+
+.binding-status {
+  font-size: 13px;
+  color: var(--preferences-panel-muted);
+}
+
+.binding-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  min-height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px dashed
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+  background: transparent;
+  color: color-mix(
+    in srgb,
+    var(--preferences-panel-muted) 82%,
+    transparent
+  );
+  font-size: 13px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.binding-action[disabled] {
+  opacity: 1;
 }
 
 @media (width <= 768px) {
@@ -592,11 +728,16 @@
     gap: 10px;
   }
 
-  .footer {
-    justify-content: stretch;
+  .identity-row {
+    gap: var(--space-3);
   }
 
-  .manage-button {
+  .binding-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .binding-action {
     width: 100%;
   }
 }
