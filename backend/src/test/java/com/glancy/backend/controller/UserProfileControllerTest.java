@@ -7,9 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.dto.ProfileCustomSectionDto;
+import com.glancy.backend.dto.ProfileCustomSectionItemDto;
 import com.glancy.backend.dto.UserProfileRequest;
 import com.glancy.backend.dto.UserProfileResponse;
 import com.glancy.backend.service.UserProfileService;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -41,10 +44,10 @@ class UserProfileControllerTest {
     private ObjectMapper objectMapper;
 
     /**
-     * 测试目标：确认保存画像接口在无年龄/性别字段时仍能成功持久化并返回用户标识。
+     * 测试目标：确认保存画像接口在新增学历、能力与自定义大项后仍能成功持久化并返回用户标识。
      * 前置条件：
      *  - 模拟鉴权成功返回用户 ID；
-     *  - UserProfileService.saveProfile 预置返回含职业、兴趣等字段的响应。
+     *  - UserProfileService.saveProfile 预置返回包含新增字段的响应。
      * 步骤：
      *  1) 构造 `UserProfileRequest` record 并通过 POST /api/profiles/user 提交；
      *  2) 捕获响应并校验状态码。
@@ -56,10 +59,33 @@ class UserProfileControllerTest {
      */
     @Test
     void saveProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
+        List<ProfileCustomSectionDto> customSections = List.of(
+            new ProfileCustomSectionDto("作品集", List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练")))
+        );
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            "dev",
+            "code",
+            "learn",
+            "master",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
 
-        UserProfileRequest req = new UserProfileRequest("dev", "code", "learn", 15, "exchange study");
+        UserProfileRequest req = new UserProfileRequest(
+            "dev",
+            "code",
+            "learn",
+            "master",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
@@ -75,8 +101,8 @@ class UserProfileControllerTest {
     }
 
     /**
-     * 测试目标：确认查询画像接口返回的字段集合已移除年龄与性别。
-     * 前置条件：鉴权成功，服务层返回含职业、兴趣、目标的画像响应。
+     * 测试目标：确认查询画像接口返回的字段集合包含新增的学历、能力与自定义大项字段。
+     * 前置条件：鉴权成功，服务层返回含新增字段的画像响应。
      * 步骤：调用 GET /api/profiles/user。
      * 断言：
      *  - HTTP 状态为 200；
@@ -85,7 +111,21 @@ class UserProfileControllerTest {
      */
     @Test
     void getProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
+        List<ProfileCustomSectionDto> customSections = List.of(
+            new ProfileCustomSectionDto("作品集", List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练")))
+        );
+        UserProfileResponse resp = new UserProfileResponse(
+            1L,
+            2L,
+            "dev",
+            "code",
+            "learn",
+            "master",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
         when(userProfileService.getProfile(2L)).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);

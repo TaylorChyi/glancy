@@ -2,21 +2,33 @@ package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.glancy.backend.dto.ProfileCustomSectionDto;
+import com.glancy.backend.dto.ProfileCustomSectionItemDto;
 import com.glancy.backend.dto.UserProfileRequest;
 import com.glancy.backend.dto.UserProfileResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @Transactional
+@TestPropertySource(
+    properties = {
+        "oss.access-key-id=test-access-key",
+        "oss.access-key-secret=test-access-secret",
+        "oss.bucket=test-bucket",
+        "oss.verify-location=false",
+    }
+)
 class UserProfileServiceTest {
 
     @Autowired
@@ -44,10 +56,10 @@ class UserProfileServiceTest {
     }
 
     /**
-     * 测试目标：验证保存后再次读取画像时字段保持一致且默认 ID 被写入。
+     * 测试目标：验证保存后再次读取画像时所有字段（含自定义大项）保持一致且默认 ID 被写入。
      * 前置条件：
      *  - 新增一个用户实体；
-     *  - 使用包含职业、兴趣、目标与学习计划的请求记录。
+     *  - 使用包含职业、兴趣、目标、学历、能力与自定义大项的请求记录。
      * 步骤：
      *  1) 调用 `saveProfile` 持久化请求；
      *  2) 调用 `getProfile` 再次读取；
@@ -68,17 +80,34 @@ class UserProfileServiceTest {
         user.setPhone("111");
         userRepository.save(user);
 
-        UserProfileRequest req = new UserProfileRequest("dev", "code", "learn", 15, "exchange study");
+        List<ProfileCustomSectionDto> customSections = List.of(
+            new ProfileCustomSectionDto("作品集", List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练")))
+        );
+        UserProfileRequest req = new UserProfileRequest(
+            "dev",
+            "code",
+            "learn",
+            "master",
+            "B2",
+            15,
+            "exchange study",
+            customSections
+        );
         UserProfileResponse saved = userProfileService.saveProfile(user.getId(), req);
 
         assertNotNull(saved.id());
         assertEquals("dev", saved.job());
         assertEquals("code", saved.interest());
+        assertEquals("master", saved.education());
+        assertEquals("B2", saved.currentAbility());
+        assertEquals(1, saved.customSections().size());
 
         UserProfileResponse fetched = userProfileService.getProfile(user.getId());
         assertEquals(saved.id(), fetched.id());
         assertEquals(saved.job(), fetched.job());
         assertEquals(user.getId(), fetched.userId());
+        assertEquals("master", fetched.education());
+        assertEquals(1, fetched.customSections().size());
     }
 
     /**
@@ -104,5 +133,6 @@ class UserProfileServiceTest {
         assertNull(fetched.id());
         assertNull(fetched.job());
         assertEquals(user.getId(), fetched.userId());
+        assertTrue(fetched.customSections().isEmpty(), "custom sections should default to empty list");
     }
 }
