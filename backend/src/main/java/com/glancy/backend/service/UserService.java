@@ -438,26 +438,8 @@ public class UserService {
     @Transactional
     public void requestEmailChangeCode(Long userId, String email) {
         log.info("Requesting email change code for user {}", userId);
-        if (email == null || email.isBlank()) {
-            throw new InvalidRequestException("邮箱不能为空");
-        }
-
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        String normalizedEmail = normalizeEmail(email);
-        String currentEmail = user.getEmail();
-        if (currentEmail != null && currentEmail.equals(normalizedEmail)) {
-            log.warn("User {} attempted to rebind identical email {}", userId, normalizedEmail);
-            throw new InvalidRequestException("新邮箱不能与当前邮箱相同");
-        }
-
-        userRepository
-            .findByEmailAndDeletedFalse(normalizedEmail)
-            .ifPresent(existing -> {
-                if (!existing.getId().equals(userId)) {
-                    log.warn("Email {} already in use when user {} requested change", normalizedEmail, userId);
-                    throw new DuplicateResourceException("邮箱已被使用");
-                }
-            });
+        String normalizedEmail = prepareBindingTargetEmail(userId, user, email);
 
         emailVerificationService.issueCode(normalizedEmail, EmailVerificationPurpose.CHANGE_EMAIL);
     }
@@ -468,31 +450,11 @@ public class UserService {
     @Transactional
     public UserEmailResponse changeEmail(Long userId, String email, String code) {
         log.info("Changing email for user {}", userId);
-        if (email == null || email.isBlank()) {
-            throw new InvalidRequestException("邮箱不能为空");
-        }
-        if (code == null || code.isBlank()) {
-            throw new InvalidRequestException("验证码不能为空");
-        }
-
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        String normalizedEmail = normalizeEmail(email);
-        String currentEmail = user.getEmail();
-        if (currentEmail != null && currentEmail.equals(normalizedEmail)) {
-            log.warn("User {} attempted to change to identical email {}", userId, normalizedEmail);
-            throw new InvalidRequestException("新邮箱不能与当前邮箱相同");
-        }
+        String normalizedEmail = prepareBindingTargetEmail(userId, user, email);
+        String sanitizedCode = sanitizeVerificationCode(code);
 
-        userRepository
-            .findByEmailAndDeletedFalse(normalizedEmail)
-            .ifPresent(existing -> {
-                if (!existing.getId().equals(userId)) {
-                    log.warn("Email {} already bound to another user", normalizedEmail);
-                    throw new DuplicateResourceException("邮箱已被使用");
-                }
-            });
-
-        emailVerificationService.consumeCode(normalizedEmail, code.trim(), EmailVerificationPurpose.CHANGE_EMAIL);
+        emailVerificationService.consumeCode(normalizedEmail, sanitizedCode, EmailVerificationPurpose.CHANGE_EMAIL);
         user.setEmail(normalizedEmail);
         User saved = userRepository.save(user);
         log.info("Email changed for user {}", userId);
@@ -506,9 +468,76 @@ public class UserService {
     public UserEmailResponse unbindEmail(Long userId) {
         log.info("Unbinding email for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+        if (user.getEmail() == null) {
+            log.info("User {} requested email unbind but no email was associated", userId);
+            return new UserEmailResponse(null);
+        }
+
         user.setEmail(null);
         User saved = userRepository.save(user);
         return new UserEmailResponse(saved.getEmail());
+    }
+
+    /**
+     * 意图：统一处理用户换绑邮箱前的合法性校验与归一化。
+     * 输入：userId（当前用户主键）、user（数据库实体）、email（用户输入的邮箱，允许包含多余空白）。
+     * 输出：返回去除空白并小写化后的邮箱字符串。
+     * 流程：
+     *  1) 校验原始邮箱非空，否则视为非法请求；
+     *  2) 归一化邮箱格式，确保大小写一致；
+     *  3) 校验新邮箱与当前邮箱不重复；
+     *  4) 校验邮箱在系统中唯一，仅允许同一用户占用。
+     * 错误处理：发现非法输入或唯一性冲突时抛出业务异常，并带结构化日志。
+     * 关键决策：采用模板方法模式集中校验逻辑，避免在发送验证码与确认绑定两个调用点分别维护重复流程。
+     * 复杂度：O(1) —— 仅进行一次数据库唯一性检查。
+     */
+    private String prepareBindingTargetEmail(Long userId, User user, String email) {
+        if (email == null || email.isBlank()) {
+            log.warn("User {} attempted to operate email binding with blank target", userId);
+            throw new InvalidRequestException("邮箱不能为空");
+        }
+
+        String normalizedEmail = normalizeEmail(email);
+        String currentEmail = user.getEmail();
+        if (currentEmail != null && currentEmail.equals(normalizedEmail)) {
+            log.warn("User {} attempted to reuse existing email {}", userId, normalizedEmail);
+            throw new InvalidRequestException("新邮箱不能与当前邮箱相同");
+        }
+
+        userRepository
+            .findByEmailAndDeletedFalse(normalizedEmail)
+            .ifPresent(existing -> {
+                if (!existing.getId().equals(userId)) {
+                    log.warn("Email {} already occupied when user {} attempted to bind", normalizedEmail, userId);
+                    throw new DuplicateResourceException("邮箱已被使用");
+                }
+            });
+
+        return normalizedEmail;
+    }
+
+    /**
+     * 意图：保证验证码在消费前被裁剪并校验有效性。
+     * 输入：code（用户输入的验证码字符串，允许包含前后空白）。
+     * 输出：去除空白后的验证码字符串。
+     * 流程：
+     *  1) 判空；
+     *  2) 去除首尾空白；
+     *  3) 再次判空，防止纯空白字符串。
+     * 错误处理：若验证码为空或仅包含空白字符，则抛出业务异常。
+     * 关键决策：将验证码清洗作为模板方法链中的单独步骤，后续若扩展多因子的验证流程，可在此扩展策略实现。
+     * 复杂度：O(n) —— 受限于字符串长度的遍历。
+     */
+    private String sanitizeVerificationCode(String code) {
+        if (code == null) {
+            throw new InvalidRequestException("验证码不能为空");
+        }
+
+        String trimmed = code.trim();
+        if (trimmed.isEmpty()) {
+            throw new InvalidRequestException("验证码不能为空");
+        }
+        return trimmed;
     }
 
     /**
