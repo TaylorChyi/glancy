@@ -148,6 +148,11 @@ function UsernameEditor({
       return;
     }
 
+    if (normalized === value) {
+      dispatch({ type: ACTIONS.SUBMIT_SUCCESS, value });
+      return;
+    }
+
     if (typeof onSubmit !== "function") {
       dispatch({ type: ACTIONS.SUBMIT_SUCCESS, value: normalized });
       return;

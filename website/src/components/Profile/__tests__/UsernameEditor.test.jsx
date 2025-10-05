@@ -146,4 +146,30 @@ describe("UsernameEditor", () => {
     const editableInput = screen.getByPlaceholderText("Enter username");
     expect(editableInput).toHaveValue("");
   });
+
+  /**
+   * 测试目标：当用户未修改草稿就点击保存时，应跳过 onSubmit 并恢复查看态。
+   * 前置条件：初始用户名为 taylor，onSubmit 为 jest mock。
+   * 步骤：
+   *  1) 点击按钮进入编辑态；
+   *  2) 直接点击保存而不修改输入。
+   * 断言：
+   *  - onSubmit 未被调用；
+   *  - 按钮文案恢复为 Change username；
+   *  - 输入重新禁用。
+   * 边界/异常：
+   *  - 覆盖在保存路径中跳过 API 调用的分支。
+   */
+  test("GivenUnchangedDraft_WhenSaving_ThenSkipSubmitAndResetView", () => {
+    const handleSubmit = jest.fn();
+    renderEditor({ onSubmit: handleSubmit });
+
+    fireEvent.click(screen.getByRole("button", { name: "Change username" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save username" }));
+
+    expect(handleSubmit).not.toHaveBeenCalled();
+    const button = screen.getByRole("button", { name: "Change username" });
+    expect(button).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Enter username")).toBeDisabled();
+  });
 });

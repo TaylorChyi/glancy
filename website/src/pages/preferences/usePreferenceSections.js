@@ -26,7 +26,7 @@ import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
-import useAvatarUploader from "@/hooks/useAvatarUploader.js";
+import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
 import UsernameEditor from "@/components/Profile/UsernameEditor/index.jsx";
 import { useUsersApi } from "@/api/users.js";
 
@@ -142,8 +142,40 @@ function usePreferenceSections({ initialSectionId }) {
   const { user, setUser } = userStore ?? {};
   const usersApi = useUsersApi();
   const updateUsernameRequest = usersApi?.updateUsername;
-  const { onSelectAvatar, isUploading: isAvatarUploading } =
-    useAvatarUploader();
+
+  const avatarEditorLabels = useMemo(
+    () => ({
+      title: t.avatarEditorTitle ?? "调整头像位置",
+      description:
+        t.avatarEditorDescription ??
+        "拖动图片以确认正方向，放大后可观察正方形及其内切圆的呈现。",
+      zoomIn: t.avatarZoomIn ?? "放大",
+      zoomOut: t.avatarZoomOut ?? "缩小",
+      cancel: t.avatarCancel ?? "取消",
+      confirm: t.avatarConfirm ?? "确认",
+    }),
+    [
+      t.avatarCancel,
+      t.avatarConfirm,
+      t.avatarEditorDescription,
+      t.avatarEditorTitle,
+      t.avatarZoomIn,
+      t.avatarZoomOut,
+    ],
+  );
+
+  const handleAvatarUploadError = useCallback((error) => {
+    console.error("Failed to upload avatar from preferences", error);
+  }, []);
+
+  const {
+    selectAvatar: handleAvatarSelection,
+    modalProps: avatarEditorModalProps,
+    isBusy: isAvatarUploading,
+  } = useAvatarEditorWorkflow({
+    labels: avatarEditorLabels,
+    uploaderOptions: { onError: handleAvatarUploadError },
+  });
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -337,7 +369,7 @@ function usePreferenceSections({ initialSectionId }) {
       displayName: usernameValue,
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,
-      onSelectAvatar,
+      onSelectAvatar: handleAvatarSelection,
       isUploading: isAvatarUploading,
     };
 
@@ -458,7 +490,7 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
     subscriptionSection,
-    onSelectAvatar,
+    handleAvatarSelection,
     isAvatarUploading,
     sanitizedUsername,
     user?.email,
@@ -571,6 +603,9 @@ function usePreferenceSections({ initialSectionId }) {
       focusHeadingId,
       modalHeadingId: FALLBACK_MODAL_HEADING_ID,
       modalHeadingText: resolvedModalHeadingText,
+    },
+    avatarEditor: {
+      modalProps: avatarEditorModalProps,
     },
   };
 }

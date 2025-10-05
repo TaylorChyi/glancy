@@ -5,7 +5,7 @@ const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
 const mockUseKeyboardShortcutContext = jest.fn();
-const mockUseAvatarUploader = jest.fn();
+const mockUseAvatarEditorWorkflow = jest.fn();
 const mockUseUsersApi = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
@@ -16,9 +16,9 @@ jest.unstable_mockModule("@/context", () => ({
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
-jest.unstable_mockModule("@/hooks/useAvatarUploader.js", () => ({
+jest.unstable_mockModule("@/hooks/useAvatarEditorWorkflow.js", () => ({
   __esModule: true,
-  default: mockUseAvatarUploader,
+  default: mockUseAvatarEditorWorkflow,
 }));
 
 jest.unstable_mockModule("@/api/users.js", () => ({
@@ -162,7 +162,7 @@ beforeEach(() => {
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
   mockUseKeyboardShortcutContext.mockReset();
-  mockUseAvatarUploader.mockReset();
+  mockUseAvatarEditorWorkflow.mockReset();
   mockUseUsersApi.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
@@ -182,12 +182,17 @@ beforeEach(() => {
     register: jest.fn(),
     unregister: jest.fn(),
   });
-  mockUseAvatarUploader.mockReturnValue({
-    onSelectAvatar: jest.fn(),
-    isUploading: false,
-    status: "idle",
-    error: null,
-    reset: jest.fn(),
+  mockUseAvatarEditorWorkflow.mockReturnValue({
+    selectAvatar: jest.fn(),
+    modalProps: {
+      open: false,
+      source: "",
+      onCancel: jest.fn(),
+      onConfirm: jest.fn(),
+      labels: {},
+      isProcessing: false,
+    },
+    isBusy: false,
   });
   mockUseUsersApi.mockReturnValue({
     updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
@@ -273,6 +278,11 @@ test("Given default sections When reading blueprint Then general leads navigatio
           translations.settingsAccountBindingActionPlaceholder,
     ),
   ).toBe(true);
+  expect(result.current.avatarEditor).toBeDefined();
+  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+    "function",
+  );
+  expect(result.current.avatarEditor.modalProps.open).toBe(false);
   const subscriptionSection = result.current.sections.find(
     (section) => section.id === "subscription",
   );
