@@ -526,6 +526,8 @@
 }
 
 .subscription-action-danger {
+  /* 保持危险操作按钮的文字颜色与边框一致，强化警示语义 */
+  color: var(--color-danger);
   border-color: color-mix(in srgb, var(--color-danger) 78%, transparent);
 }
 
