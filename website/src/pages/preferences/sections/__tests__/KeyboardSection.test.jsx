@@ -7,12 +7,8 @@ const mockUseKeyboardShortcutContext = jest.fn();
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
-  useTheme: () => ({ theme: "dark", setTheme: jest.fn() }),
-}));
-
-jest.unstable_mockModule("@/context/KeyboardShortcutContext.jsx", () => ({
-  useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
+  useTheme: () => ({ theme: "dark", setTheme: jest.fn() }),
 }));
 
 let KeyboardSection;
