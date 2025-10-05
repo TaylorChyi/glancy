@@ -579,7 +579,7 @@
   font-size: 20px;
   line-height: 1.6;
   color: var(--preferences-panel-text);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .bindings {
