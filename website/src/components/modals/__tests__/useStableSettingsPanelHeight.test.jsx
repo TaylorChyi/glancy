@@ -166,3 +166,25 @@ test("Given missing reference section When measuring height Then falls back to a
 
   expect(container.firstChild).toHaveStyle("--settings-body-height: 480px");
 });
+
+/**
+ * 测试目标：参考分区高度小于回退高度时优先使用实际测量值。
+ * 前置条件：渲染 HeightHarness，参考高度 280，小于激活分区高度 640。
+ * 步骤：
+ *  1) 渲染组件；
+ *  2) 读取根节点 style。
+ * 断言：
+ *  - --settings-body-height 使用 280px 而非 640px。
+ * 边界/异常：
+ *  - 若参考测量逻辑调整为包含其他因子需同步更新断言。
+ */
+test(
+  "Given smaller reference section When measuring height Then uses measured reference height",
+  () => {
+    const { container } = render(
+      <HeightHarness activeHeight={640} referenceHeight={280} />,
+    );
+
+    expect(container.firstChild).toHaveStyle("--settings-body-height: 280px");
+  },
+);

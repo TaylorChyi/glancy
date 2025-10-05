@@ -43,6 +43,8 @@ const buildCloseLabel = (baseLabel, contextLabel) => {
   return `${normalizedBase} ${normalizedContext}`;
 };
 
+const composeClassName = (...classNames) => classNames.filter(Boolean).join(" ");
+
 function SettingsModal({ open, onClose, initialSection }) {
   const {
     copy,
@@ -94,6 +96,15 @@ function SettingsModal({ open, onClose, initialSection }) {
       referenceSectionId: "data",
     });
 
+  const sizedPanelClassName = composeClassName(
+    preferencesStyles.panel,
+    preferencesStyles["panel-surface"],
+  );
+  const probePanelClassName = composeClassName(
+    preferencesStyles.panel,
+    preferencesStyles["panel-probe"],
+  );
+
   const measurementProbe = useMemo(() => {
     if (!referenceMeasurement) {
       return null;
@@ -104,11 +115,11 @@ function SettingsModal({ open, onClose, initialSection }) {
       registerNode,
     } = referenceMeasurement;
     return (
-      <div aria-hidden className={preferencesStyles.panel} ref={registerNode}>
+      <div aria-hidden className={probePanelClassName} ref={registerNode}>
         <ReferenceComponent {...props} />
       </div>
     );
-  }, [referenceMeasurement]);
+  }, [probePanelClassName, referenceMeasurement]);
 
   const renderCloseAction = useMemo(
     () =>
@@ -181,7 +192,7 @@ function SettingsModal({ open, onClose, initialSection }) {
             panelId={panel.panelId}
             tabId={panel.tabId}
             headingId={panel.headingId}
-            className={preferencesStyles.panel}
+            className={sizedPanelClassName}
             onHeadingElementChange={registerHeading}
             onPanelElementChange={registerActivePanelNode}
           >
