@@ -6,7 +6,8 @@ import Toast from "@/components/ui/Toast";
 import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import { useTtsPlayer } from "@/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@/store";
-import { useLanguage, useTheme } from "@/context";
+import { useLanguage } from "@/context";
+import useIconToneController from "@/hooks/useIconToneController.js";
 import styles from "./TtsButton.module.css";
 
 /**
@@ -23,7 +24,9 @@ export default function TtsButton({
 }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { resolvedTheme } = useTheme();
+  const { isInverse: shouldInvertIconTone } = useIconToneController({
+    tone: "inverse",
+  });
   const { play, stop, loading, playing, error } = useTtsPlayer({ scope });
   const [toastMsg, setToastMsg] = useState("");
   const [popupMsg, setPopupMsg] = useState("");
@@ -45,11 +48,9 @@ export default function TtsButton({
 
   //
   // 背景：
-  //  - 浅色主题下语音按钮被包裹在深色圆形容器内，保持默认文本色会导致图标与背景对比不足。
+  //  - TTS 触发按钮与 ChatInput 共享 voice 图标，视觉稿要求在两种主题下都与圆形背景形成强对比。
   // 取舍：
-  //  - 依赖主题上下文推导反相色，并通过样式类注入语义化变量，避免直接写入内联颜色。
-  const shouldInvertIconTone = resolvedTheme === "light";
-
+  //  - 依托图标色调控制器统一注入 inverse 语义，避免在组件内部追加主题判断逻辑，并允许播放态继续覆写变量。
   const btnClass = [
     styles.button,
     playing && styles.playing,

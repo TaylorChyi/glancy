@@ -11,3 +11,4 @@ export {
   useEmailBinding,
   default as useEmailBindingHook,
 } from "./useEmailBinding.js";
+export { default as useIconToneController } from "./useIconToneController.js";
