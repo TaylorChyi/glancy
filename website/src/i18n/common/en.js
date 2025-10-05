@@ -94,7 +94,7 @@ export default {
   settingsDataClearLanguage: "Clear selected language",
   settingsDataExport: "Export data",
   settingsDataExportDescription:
-    "Download a JSON snapshot of your history, capture policy, and retention window.",
+    "Download a CSV snapshot of your history, capture policy, and retention window.",
   settingsDataExportFileName: "glancy-data-export",
   settingsExportData: "Export data",
   settingsEraseHistory: "Erase history",
