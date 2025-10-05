@@ -7,8 +7,8 @@
   background: transparent;
 
   /*
-   * 背景：等待页动画从矩形波动升级为三帧往返的 SVG 序列。
-   * 取舍：通过变量固定最大宽度与节奏，让后续更换素材时只需替换帧图。
+   * 背景：等待动画需改为缩放渐隐效果，避免出现底色遮挡与突兀闪烁。
+   * 取舍：沿用三帧序列，通过统一变量控制时长与缩放范围，保持素材可插拔。
    */
   --waiting-frame-max-width: calc(var(--space-5) * 9);
   --waiting-animation-duration: 2.4s;
@@ -20,6 +20,7 @@
   aspect-ratio: 682 / 454;
   display: grid;
   place-items: center;
+  background: transparent; /* 移除旧版底色，避免与渐变冲突。 */
   border-radius: var(--radius-xl);
   box-shadow: var(
     --loader-symbol-shadow,
@@ -36,12 +37,14 @@
   display: block;
   object-fit: contain;
   opacity: 0;
+  /* 通过缩放 + 透明度营造柔和的呼吸节奏，降低帧切换突兀感。 */
   animation-duration: var(--waiting-animation-duration);
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   animation-direction: alternate;
   animation-fill-mode: both;
-  will-change: opacity;
+  transform-origin: center;
+  will-change: opacity, transform;
 }
 
 .frame:nth-child(1) {
@@ -57,14 +60,21 @@
 }
 
 @keyframes waiting-animation-frame-one {
-  0%,
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  12%,
   24% {
     opacity: 1;
+    transform: scale(1.02);
   }
 
   40%,
   100% {
     opacity: 0;
+    transform: scale(0.9);
   }
 }
 
@@ -72,16 +82,19 @@
   0%,
   28% {
     opacity: 0;
+    transform: scale(0.9);
   }
 
   38%,
-  62% {
+  60% {
     opacity: 1;
+    transform: scale(1.04);
   }
 
   72%,
   100% {
     opacity: 0;
+    transform: scale(0.94);
   }
 }
 
@@ -89,11 +102,18 @@
   0%,
   60% {
     opacity: 0;
+    transform: scale(0.88);
   }
 
   76%,
-  100% {
+  88% {
     opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
   }
 }
 
