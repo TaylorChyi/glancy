@@ -11,7 +11,9 @@
    * 取舍：沿用三帧序列，通过统一变量控制时长与缩放范围，保持素材可插拔。
    */
   --waiting-frame-max-width: calc(var(--space-5) * 9);
-  --waiting-animation-duration: 2.4s;
+  --waiting-frame-scale-rest: 0.92;
+  --waiting-frame-scale-active: 1;
+  --waiting-frame-scale-peak: 1.04;
 }
 
 .symbol {
@@ -36,94 +38,48 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  inline-size: 100%;
-  block-size: auto;
+  inline-size: auto;
+  block-size: 100%;
+  max-inline-size: 100%;
   display: block;
   object-fit: contain;
   opacity: 0;
 
   /* 通过缩放 + 透明度营造柔和的呼吸节奏，降低帧切换突兀感。 */
-  animation-duration: var(--waiting-animation-duration);
+  animation-name: waiting-animation-frame;
+  animation-duration: var(--waiting-animation-duration, 1.5s);
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
-  animation-direction: alternate;
   animation-fill-mode: both;
+  animation-delay: var(--waiting-frame-delay, 0ms);
   transform-origin: center;
 
   /*
    * 居中策略：利用 50% 位移 + translate 校准基准，配合高度自适应保证三帧素材等高无拉伸。
    */
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(var(--waiting-frame-scale-rest));
   will-change: opacity, transform;
 }
 
-.frame:nth-child(1) {
-  animation-name: waiting-animation-frame-one;
-}
-
-.frame:nth-child(2) {
-  animation-name: waiting-animation-frame-two;
-}
-
-.frame:nth-child(3) {
-  animation-name: waiting-animation-frame-three;
-}
-
-@keyframes waiting-animation-frame-one {
+@keyframes waiting-animation-frame {
   0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.92);
-  }
-
-  12%,
-  24% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.02);
+    transform: translate(-50%, -50%) scale(var(--waiting-frame-scale-active));
   }
 
-  40%,
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-}
-
-@keyframes waiting-animation-frame-two {
-  0%,
-  28% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-
-  38%,
-  60% {
+  20% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.04);
+    transform: translate(-50%, -50%) scale(var(--waiting-frame-scale-peak));
   }
 
-  72%,
-  100% {
+  33% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.94);
-  }
-}
-
-@keyframes waiting-animation-frame-three {
-  0%,
-  60% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.88);
-  }
-
-  76%,
-  88% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.06);
+    transform: translate(-50%, -50%) scale(var(--waiting-frame-scale-rest));
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.98);
+    transform: translate(-50%, -50%) scale(var(--waiting-frame-scale-rest));
   }
 }
 
