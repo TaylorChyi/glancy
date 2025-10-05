@@ -875,33 +875,30 @@
 
 .identity-label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--preferences-panel-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .identity-value {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.6;
-  color: var(--preferences-panel-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow-wrap: break-word;
-  display: flex;
-  align-items: center;
 }
 
-.identity-figure {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.identity-display {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--preferences-panel-text);
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .bindings {
