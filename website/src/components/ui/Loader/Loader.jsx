@@ -12,6 +12,8 @@ function Loader() {
         <span className={styles.bar} />
         <span className={styles.bar} />
         <span className={styles.bar} />
+        <span className={styles.bar} />
+        <span className={styles.bar} />
       </div>
       <span className={styles.label}>Loading…</span>
     </div>
