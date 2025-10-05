@@ -2,7 +2,7 @@
  * 背景：
  *  - 偏好设置升级为双栏多标签布局，原单列面板无法承载导航节奏。
  * 目的：
- *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅/系统三种主题令牌。
+ *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅主题（系统模式复用解析后的主题令牌）。
  * 关键决策与取舍：
  *  - 沿用原有设置面板配色变量，新增 tabs 状态样式覆盖默认/悬停/激活/禁用。
  *  - 本轮去除容器底色/描边，改以 spacing/shadow 令牌维持结构节奏并贴合全局主题。
@@ -43,19 +43,6 @@
   --preferences-panel-ring: var(--sidebar-input-ring, #cfd4e2);
   --preferences-panel-surface: rgb(15 17 21 / 6%);
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
-}
-
-:global(:root[data-theme="system"]) .form {
-  --preferences-panel-border: var(--sidebar-border-color, var(--night-border));
-  --preferences-panel-text: var(--sidebar-text-color, var(--night-text));
-  --preferences-panel-muted: var(--sidebar-muted-color, var(--night-muted));
-  --preferences-panel-ring: var(--sidebar-input-ring, var(--night-input-ring));
-  --preferences-panel-surface: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--night-panel)) 92%,
-    transparent
-  );
-  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 30%);
 }
 
 .header {

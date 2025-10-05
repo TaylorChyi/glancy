@@ -67,6 +67,7 @@ describe("ThemeModeOrchestrator", () => {
     orchestrator.apply("dark", notify);
 
     expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.themePreference).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(notify).toHaveBeenCalledWith("dark");
     orchestrator.dispose();
@@ -97,6 +98,7 @@ describe("ThemeModeOrchestrator", () => {
     orchestrator.apply("light", notify);
 
     expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.themePreference).toBe("light");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(notify).toHaveBeenLastCalledWith("light");
     orchestrator.dispose();
@@ -110,7 +112,8 @@ describe("ThemeModeOrchestrator", () => {
    *  2) 触发媒体查询变更；
    *  3) 观察 DOM 与回调。
    * 断言：
-   *  - 初始 dataset.theme === "system" 且包含 dark；
+   *  - dataset.themePreference === "system"；
+   *  - dataset.theme 与 dark 类同步反映媒体查询；
    *  - 更新后去除 dark 并通知 "light"。
    * 边界/异常：
    *  - 确认 dispose 后可安全停止监听（这里通过最终状态验证）。
@@ -125,12 +128,15 @@ describe("ThemeModeOrchestrator", () => {
 
     orchestrator.apply("system", notify);
 
-    expect(document.documentElement.dataset.theme).toBe("system");
+    expect(document.documentElement.dataset.themePreference).toBe("system");
+    expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     expect(notify).toHaveBeenLastCalledWith("dark");
 
     media.dispatch(false);
 
+    expect(document.documentElement.dataset.themePreference).toBe("system");
+    expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(notify).toHaveBeenLastCalledWith("light");
 

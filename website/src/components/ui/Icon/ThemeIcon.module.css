@@ -95,28 +95,3 @@
   );
 }
 
-:root[data-theme="system"] .fallback {
-  --icon-fallback-bg: color-mix(in oklab, var(--role-surface) 92%, transparent);
-  --icon-fallback-color: var(--role-on-surface);
-  --icon-fallback-ring: color-mix(
-    in oklab,
-    var(--role-border) 70%,
-    transparent
-  );
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] .fallback {
-    --icon-fallback-bg: color-mix(
-      in oklab,
-      var(--role-surface-strong) 82%,
-      transparent
-    );
-    --icon-fallback-color: var(--role-on-surface-strong);
-    --icon-fallback-ring: color-mix(
-      in oklab,
-      var(--role-border) 55%,
-      transparent
-    );
-  }
-}

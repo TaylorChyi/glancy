@@ -63,6 +63,7 @@ const resolveResolvedTheme = (preference: string, prefersDark: boolean) => {
 
   const prefersDark = window.matchMedia(DARK_MEDIA_QUERY).matches;
   const resolvedTheme = resolveResolvedTheme(preference, prefersDark);
+  document.documentElement.dataset.themePreference = preference;
   document.documentElement.dataset.theme = resolvedTheme;
 
   const registry = createBrowserFaviconRegistry(globalScope);
