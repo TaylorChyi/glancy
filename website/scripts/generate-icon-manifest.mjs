@@ -85,9 +85,15 @@ const buildModuleSource = (manifest) => {
     const variantAssignments = [];
 
     for (const [variant, relativeImportPath] of sortedVariants) {
-      const importName = `iconAsset${importIndex++}`;
-      importLines.push(`import ${importName} from "${relativeImportPath}";`);
-      variantAssignments.push(`    ${variant}: ${importName}`);
+      const urlImport = `iconAsset${importIndex++}`;
+      const inlineImport = `iconAsset${importIndex++}`;
+      importLines.push(`import ${urlImport} from "${relativeImportPath}";`);
+      importLines.push(
+        `import ${inlineImport} from "${relativeImportPath}?raw";`,
+      );
+      variantAssignments.push(
+        `    ${variant}: Object.freeze({ url: ${urlImport}, inline: ${inlineImport} })`,
+      );
     }
 
     registryLines.push(

@@ -53,8 +53,10 @@
   --sb-text: #edeff2;
   --sb-muted: #9fa7b3;
   --sb-icon: #edeff2;
+  --sb-action-icon: var(--sb-icon);
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
+  --sb-voice-color: var(--sb-icon);
 
   /*
    * search bar 在桌面稿中的最大内容宽度，统一复用布局主内容宽度令牌，
@@ -191,8 +193,15 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
-  --sb-cta: var(--primary-bg);
-  --sb-cta-icon: var(--primary-color);
+
+  /*
+   * 交互背景：轻量主题需在浅色面板上提供足够对比度，语音/发送按钮统一使用深色壳体。
+   * 取舍：按钮底色改为接近中性黑，图标采用反相白，维持与暗色主题互为对偶的语义层级。
+   */
+  --sb-action-icon: var(--color-text);
+  --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
+  --sb-cta-icon: var(--color-text);
+  --sb-voice-color: var(--text-inverse-light);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -267,8 +276,8 @@
     var(--menu-scroll-thumb) 85%,
     transparent 15%
   );
-  --sb-send-bg: var(--primary-bg);
-  --sb-send-color: var(--primary-color);
+  --sb-send-bg: color-mix(in srgb, var(--neutral-950) 92%, transparent 8%);
+  --sb-send-color: var(--text-inverse-light);
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
@@ -288,8 +297,14 @@
   --sb-text: var(--color-text);
   --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
   --sb-icon: var(--color-text);
-  --sb-cta: var(--primary-bg);
-  --sb-cta-icon: var(--primary-color);
+
+  /*
+   * system 模式在浅色媒体查询下复用 light 策略，确保语音/发送按钮对比度一致。
+   */
+  --sb-action-icon: var(--color-text);
+  --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
+  --sb-cta-icon: var(--color-text);
+  --sb-voice-color: var(--text-inverse-light);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(
     in srgb,
@@ -364,8 +379,8 @@
     var(--menu-scroll-thumb) 85%,
     transparent 15%
   );
-  --sb-send-bg: var(--primary-bg);
-  --sb-send-color: var(--primary-color);
+  --sb-send-bg: color-mix(in srgb, var(--neutral-950) 92%, transparent 8%);
+  --sb-send-color: var(--text-inverse-light);
   --sb-cta-shadow: 0 18px 40px
     color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
   --sb-cta-shadow-hover: 0 22px 48px
@@ -382,8 +397,10 @@
   --sb-text: #edeff2;
   --sb-muted: #9fa7b3;
   --sb-icon: #edeff2;
+  --sb-action-icon: var(--sb-icon);
   --sb-cta: #fff;
   --sb-cta-icon: #0e1116;
+  --sb-voice-color: var(--sb-icon);
   --sb-border: var(--sb-stroke);
   --sb-border-active: color-mix(in srgb, var(--sb-stroke) 60%, white 40%);
   --sb-bg: var(--sidebar-panel, var(--sb-surface));

@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
 import { useTheme } from "@/context";
-import ICONS from "@/assets/icons.js";
 import styles from "./ThemeIcon.module.css";
 import type { ResolvedTheme } from "@/theme/mode";
+import { iconSourceResolver } from "./iconSourceResolver";
+import type { IconVariantResource } from "./iconSourceResolver";
 
 /**
  * 背景：
@@ -27,6 +28,16 @@ const ROLE_CLASSNAME_MAP = Object.freeze({
   success: "text-onsuccess",
   warning: "text-onwarning",
   danger: "text-ondanger",
+  /**
+   * 背景：
+   *  - 侧边栏导航希望沿用自身的 muted → active 渐进策略，但默认 role class 会强行套用主题前景色，
+   *    导致品牌图标颜色与其他 icon 不一致。
+   * 目的：
+   *  - 提供显式的 inherit 角色以跳过语义色注入，让上层容器的 color 继承链能够生效。
+   * 取舍：
+   *  - 相比引入布尔开关（如 inheritColor），直接纳入角色映射可沿用既有策略模式与类型约束。
+   */
+  inherit: "",
 });
 
 type IconRoleClass = keyof typeof ROLE_CLASSNAME_MAP;
@@ -56,11 +67,6 @@ type FallbackPresetKey = "apple" | "google" | "wechat" | "default";
 type FallbackPreset = {
   label: string;
   variant: FallbackPresetKey;
-};
-
-type IconModuleEntry = {
-  single?: string;
-  [variant: string]: string | undefined;
 };
 
 const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
@@ -104,16 +110,37 @@ const composeClassName = (
   external?: string,
 ) => [base, ROLE_CLASSNAME_MAP[roleClass], external].filter(Boolean).join(" ");
 
-const resolveIconSrc = (name: string) => {
-  const entry = ICONS[name] as IconModuleEntry | undefined;
-  return entry?.single;
-};
-
 const resolveFallback = (name: string): FallbackPreset => {
   if ((FALLBACK_PRESETS as Record<string, FallbackPreset>)[name]) {
     return FALLBACK_PRESETS[name as FallbackPresetKey];
   }
   return FALLBACK_PRESETS.default;
+};
+
+const toCssDimension = (value: number | string | undefined) => {
+  if (value == null) {
+    return undefined;
+  }
+  return typeof value === "number" ? `${value}px` : String(value);
+};
+
+const mergeDimensionStyle = (
+  style: CSSProperties | undefined,
+  width?: number | string,
+  height?: number | string,
+): CSSProperties | undefined => {
+  const resolvedWidth = toCssDimension(width);
+  const resolvedHeight = toCssDimension(height);
+
+  if (!resolvedWidth && !resolvedHeight) {
+    return style;
+  }
+
+  return {
+    ...style,
+    ...(resolvedWidth ? { width: resolvedWidth } : {}),
+    ...(resolvedHeight ? { height: resolvedHeight } : {}),
+  } as CSSProperties;
 };
 
 const computeFallbackStyle = (
@@ -122,15 +149,44 @@ const computeFallbackStyle = (
   height?: number | string,
 ) => {
   const sizeToken = width ?? height;
+  const mergedStyle = mergeDimensionStyle(style, width, height);
   if (sizeToken == null) {
+    return mergedStyle;
+  }
+  const resolvedSize = toCssDimension(sizeToken);
+  return {
+    ...mergedStyle,
+    "--icon-fallback-size": resolvedSize,
+  } as CSSProperties;
+};
+
+const computeInlineStyle = (
+  style: CSSProperties | undefined,
+  width?: number | string,
+  height?: number | string,
+) => {
+  const resolvedWidth = toCssDimension(width);
+  const resolvedHeight = toCssDimension(height);
+
+  if (!resolvedWidth && !resolvedHeight) {
     return style;
   }
-  const resolved =
-    typeof sizeToken === "number" ? `${sizeToken}px` : String(sizeToken);
+
   return {
     ...style,
-    "--icon-fallback-size": resolved,
+    ...(resolvedWidth ? { "--icon-inline-width": resolvedWidth } : {}),
+    ...(resolvedHeight ? { "--icon-inline-height": resolvedHeight } : {}),
   } as CSSProperties;
+};
+
+const pickRenderableAsset = (variant: IconVariantResource | null) => {
+  if (!variant) {
+    return { inline: null, url: null };
+  }
+  const inline =
+    variant.inline && variant.inline.length > 0 ? variant.inline : null;
+  const url = variant.url && variant.url.length > 0 ? variant.url : null;
+  return { inline, url };
 };
 
 export function ThemeIcon({
@@ -147,7 +203,8 @@ export function ThemeIcon({
 }: IconProps) {
   const { resolvedTheme } = useTheme();
   const iconRole = roleClass ?? legacyToneToRole(tone, resolvedTheme);
-  const src = resolveIconSrc(name);
+  const resolvedVariant = iconSourceResolver.resolve(name, resolvedTheme);
+  const { inline, url } = pickRenderableAsset(resolvedVariant);
   const commonClassName = composeClassName(
     "inline-block align-middle",
     iconRole,
@@ -155,10 +212,28 @@ export function ThemeIcon({
   );
   const altText = decorative ? "" : (alt ?? name);
 
-  if (src) {
+  if (inline) {
+    return (
+      <span
+        role={decorative ? undefined : "img"}
+        aria-label={decorative ? undefined : altText}
+        className={composeClassName(
+          `inline-block align-middle ${styles.inline}`,
+          iconRole,
+          className,
+        )}
+        style={computeInlineStyle(style, width, height)}
+        aria-hidden={decorative || undefined}
+        title={title}
+        dangerouslySetInnerHTML={{ __html: inline }}
+      />
+    );
+  }
+
+  if (url) {
     return (
       <img
-        src={src}
+        src={url}
         alt={altText}
         className={commonClassName}
         width={width}

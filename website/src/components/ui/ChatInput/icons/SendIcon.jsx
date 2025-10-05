@@ -1,70 +1,34 @@
 /**
  * 背景：
- *  - ChatInput 的发送动作依赖纸飞机符号，但历史实现将遮罩解析与组件逻辑耦合，导致与 VoiceIcon 等同类组件存在重复代码，维护困难。
+ *  - 既有发送按钮图标依赖遮罩检测与多级降级策略，逻辑冗长且与设计稿当前的单色 SVG 方案不再匹配。
  * 目的：
- *  - 基于统一的 createMaskedIconRenderer 模板方法，将资源解析与遮罩样式构建作为策略注入，确保发送图标与语音图标共享一致骨架。
+ *  - 以静态资源直出方式渲染 send-button 图标，配合按钮样式直接继承主题色，减少运行时分支。
  * 关键决策与取舍：
- *  - 采用策略函数描述资源选择与样式生成，保留模板对降级逻辑的控制，避免自定义实现偏离探测流程。
- *  - 在主题退化逻辑下仅消费单一矢量资源（single），统一样式来源，减少多态素材的维护成本。
- *  - 保留 SVG fallback 以应对遮罩不可用场景，并在注释中保留扩展点说明，确保未来动画或主题扩展有容纳空间。
+ *  - 采用简单的静态渲染器而非模板方法，确保本次重构与旧有遮罩逻辑完全解耦。
+ *  - 通过语义化常量集中定义 data 属性，避免魔法字符串散落。
  * 影响范围：
- *  - ChatInput 的发送按钮图标渲染逻辑及其单测；其他依赖 send-button 令牌的入口也将受益于统一策略。
+ *  - ChatInput 发送按钮的图标渲染；去除遮罩探测后减少潜在兼容分支。
  * 演进与TODO：
- *  - 若后续需要为发送图标增加动态效果，可通过扩展 buildStyle 或 fallback 注入额外类名与属性。
+ *  - 如后续需要根据主题切换多份资源，可在 renderStaticIcon 中扩展 src 选择策略。
  */
 import PropTypes from "prop-types";
 
-import createMaskedIconRenderer from "./createMaskedIconRenderer.jsx";
+import sendButtonAsset from "@/assets/send-button.svg";
+import sendButtonInline from "@/assets/send-button.svg?raw";
 
-const SEND_ICON_TOKEN = "send-button";
+import renderStaticIcon from "./renderStaticIcon.jsx";
 
-const resolveSendIconResource = ({ registry }) => {
-  const entry = registry?.[SEND_ICON_TOKEN];
-  return entry?.single ?? null;
-};
+const SEND_ICON_NAME = "send-button";
 
-const buildSendIconInlineStyle = ({ resource }) => {
-  if (!resource) {
-    return null;
-  }
-
-  const maskFragment = `url(${resource}) center / contain no-repeat`;
-  return Object.freeze({
-    mask: maskFragment,
-    WebkitMask: maskFragment,
-    backgroundColor: "currentColor",
+export default function SendIcon({ className }) {
+  return renderStaticIcon({
+    className,
+    iconName: SEND_ICON_NAME,
+    inline: sendButtonInline,
+    src: sendButtonAsset,
   });
-};
-
-const defaultFallback = ({ className }) => (
-  <svg
-    aria-hidden="true"
-    className={className}
-    viewBox="0 0 18 18"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M2.25 15.75 16.5 9 2.25 2.25l4.5 6-4.5 7.5Z" />
-  </svg>
-);
-
-const SendIcon = createMaskedIconRenderer({
-  token: SEND_ICON_TOKEN,
-  resolveResource: resolveSendIconResource,
-  buildStyle: buildSendIconInlineStyle,
-  defaultFallback,
-});
-
-// 说明：导出具名组件以补充 PropTypes，保持接口语义清晰，可在无需主题的环境中强制传入 className。
-export default function SendIconWrapper({ className, fallback }) {
-  return <SendIcon className={className} fallback={fallback} />;
 }
 
-SendIconWrapper.propTypes = {
+SendIcon.propTypes = {
   className: PropTypes.string.isRequired,
-  fallback: PropTypes.func,
-};
-
-SendIconWrapper.defaultProps = {
-  fallback: undefined,
 };

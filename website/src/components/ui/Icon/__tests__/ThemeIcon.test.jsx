@@ -11,14 +11,26 @@ jest.unstable_mockModule("@/context", () => ({
 
 const iconRegistry = {
   "glancy-web": {
-    single: "/assets/glancy-web.svg",
+    single: Object.freeze({
+      url: "/assets/glancy-web.svg",
+      inline: '<svg data-icon="glancy"></svg>',
+    }),
   },
   wechat: {
-    single: "/assets/wechat.svg",
+    single: Object.freeze({
+      url: null,
+      inline: '<svg data-icon="wechat"></svg>',
+    }),
   },
   apple: {
-    light: "/assets/apple-light.svg",
-    dark: "/assets/apple-dark.svg",
+    light: Object.freeze({
+      url: null,
+      inline: '<svg data-variant="light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: null,
+      inline: '<svg data-variant="dark"></svg>',
+    }),
   },
 };
 
@@ -41,7 +53,7 @@ describe("ThemeIcon", () => {
    * 步骤：
    *  1) 渲染 ThemeIcon；
    *  2) 查找 role="img" 元素；
-   *  3) 断言 className 与 src。
+   *  3) 断言 className 与内联 SVG。
    * 断言：
    *  - 元素拥有 text-onsurface 类；
    *  - 元素的 src 指向 single 资源。
@@ -51,7 +63,7 @@ describe("ThemeIcon", () => {
   test("renders single-source icon with semantic role class", () => {
     render(<ThemeIcon name="glancy-web" alt="brand" />);
     const icon = screen.getByRole("img", { name: "brand" });
-    expect(icon).toHaveAttribute("src", iconRegistry["glancy-web"].single);
+    expect(icon.innerHTML).toContain('data-icon="glancy"');
     expect(icon.className).toContain("text-onsurface");
   });
 
@@ -71,7 +83,7 @@ describe("ThemeIcon", () => {
     currentTheme = "light";
     render(<ThemeIcon name="apple" alt="apple" />);
     const icon = screen.getByRole("img", { name: "apple" });
-    expect(icon).toHaveAttribute("src", iconRegistry.apple.light);
+    expect(icon.innerHTML).toContain('data-variant="light"');
   });
 
   /**
@@ -90,7 +102,7 @@ describe("ThemeIcon", () => {
     currentTheme = "dark";
     render(<ThemeIcon name="apple" alt="apple" />);
     const icon = screen.getByRole("img", { name: "apple" });
-    expect(icon).toHaveAttribute("src", iconRegistry.apple.dark);
+    expect(icon.innerHTML).toContain('data-variant="dark"');
   });
 
   /**
@@ -146,6 +158,23 @@ describe("ThemeIcon", () => {
     render(<ThemeIcon name="glancy-web" alt="brand" roleClass="danger" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-ondanger");
+  });
+
+  /**
+   * 测试目标：当 roleClass 指定为 inherit 时不再覆盖外层 color，保证侧边栏等场景的色彩继承链一致。
+   * 前置条件：roleClass="inherit"；iconRegistry 存在 glancy-web 的 single 资源。
+   * 步骤：
+   *  1) 渲染 ThemeIcon，并传入 roleClass="inherit"；
+   *  2) 获取 role="img" 元素；
+   * 断言：
+   *  - className 不包含 text-onsurface（即未注入语义色类名）。
+   * 边界/异常：
+   *  - inherit 仅跳过语义色注入，其余属性保持默认处理。
+   */
+  test("skips semantic role classes when inherit is requested", () => {
+    render(<ThemeIcon name="glancy-web" alt="brand" roleClass="inherit" />);
+    const icon = screen.getByRole("img", { name: "brand" });
+    expect(icon.className).not.toContain("text-onsurface");
   });
 
   /**

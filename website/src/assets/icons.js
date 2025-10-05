@@ -10,17 +10,44 @@ const glob =
     ? import.meta.glob
     : () => ({});
 
-const modules = glob("./**/*.svg", {
+const urlModules = glob("./**/*.svg", {
   eager: true,
   import: "default",
 });
+
+const inlineModules =
+  typeof glob === "function"
+    ? glob("./**/*.svg", {
+        eager: true,
+        as: "raw",
+      })
+    : {};
 
 const NORMALISED_SEPARATOR = "/";
 
 const normaliseResourcePath = (resourcePath) =>
   resourcePath.replace(/\\/g, NORMALISED_SEPARATOR);
 
-const extractIconName = (resourcePath) => {
+const VARIANT_SUFFIXES = Object.freeze({
+  light: "-light",
+  dark: "-dark",
+});
+
+const inferVariantFromBasename = (basename) => {
+  if (!basename) {
+    return null;
+  }
+
+  for (const [variant, suffix] of Object.entries(VARIANT_SUFFIXES)) {
+    if (basename.endsWith(suffix)) {
+      return { name: basename.slice(0, -suffix.length), variant };
+    }
+  }
+
+  return { name: basename, variant: "single" };
+};
+
+const extractIconDescriptor = (resourcePath) => {
   if (!resourcePath) {
     return null;
   }
@@ -32,20 +59,51 @@ const extractIconName = (resourcePath) => {
     return null;
   }
 
-  return filename.replace(/\.svg$/i, "");
+  const basename = filename.replace(/\.svg$/i, "");
+  return inferVariantFromBasename(basename);
 };
 
-export const buildDynamicRegistry = (moduleEntries) => {
+const composeVariantEntry = (urlEntry, inlineEntry) => {
+  const hasUrl = typeof urlEntry === "string" && urlEntry.length > 0;
+  const hasInline = typeof inlineEntry === "string" && inlineEntry.length > 0;
+
+  if (!hasUrl && !hasInline) {
+    return null;
+  }
+
+  return Object.freeze({
+    url: hasUrl ? urlEntry : null,
+    inline: hasInline ? inlineEntry : null,
+  });
+};
+
+export const buildDynamicRegistry = (urlEntries = {}, inlineEntries = {}) => {
   const collected = {};
 
-  for (const [path, mod] of Object.entries(moduleEntries || {})) {
-    const iconName = extractIconName(path);
+  const allPaths = new Set([
+    ...Object.keys(urlEntries || {}),
+    ...Object.keys(inlineEntries || {}),
+  ]);
 
-    if (!iconName) {
+  for (const path of allPaths) {
+    const descriptor = extractIconDescriptor(path);
+
+    if (!descriptor || !descriptor.name || !descriptor.variant) {
       continue;
     }
 
-    collected[iconName] = { single: mod };
+    const current = collected[descriptor.name] ?? {};
+    const variantEntry = composeVariantEntry(
+      urlEntries?.[path],
+      inlineEntries?.[path],
+    );
+
+    if (!variantEntry) {
+      continue;
+    }
+
+    current[descriptor.variant] = variantEntry;
+    collected[descriptor.name] = current;
   }
 
   return collected;
@@ -67,7 +125,7 @@ const mergeVariantMaps = (...sources) => {
   return merged;
 };
 
-const dynamicRegistry = buildDynamicRegistry(modules);
+const dynamicRegistry = buildDynamicRegistry(urlModules, inlineModules);
 const hasDynamicEntries = Object.keys(dynamicRegistry).length > 0;
 
 const combinedRegistry = mergeVariantMaps(

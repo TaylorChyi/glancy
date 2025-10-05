@@ -32,40 +32,94 @@ jest.unstable_mockModule("@/context", () => ({
 
 const iconRegistry = {
   "glancy-web": {
-    light: "/assets/glancy-web-light.svg",
-    dark: "/assets/glancy-web-dark.svg",
+    light: Object.freeze({
+      url: "/assets/glancy-web-light.svg",
+      inline: '<svg data-token="glancy-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/glancy-web-dark.svg",
+      inline: '<svg data-token="glancy-dark"></svg>',
+    }),
   },
   user: {
-    light: "/assets/user-light.svg",
-    dark: "/assets/user-dark.svg",
+    light: Object.freeze({
+      url: "/assets/user-light.svg",
+      inline: '<svg data-token="user-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/user-dark.svg",
+      inline: '<svg data-token="user-dark"></svg>',
+    }),
   },
   email: {
-    light: "/assets/email-light.svg",
-    dark: "/assets/email-dark.svg",
+    light: Object.freeze({
+      url: "/assets/email-light.svg",
+      inline: '<svg data-token="email-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/email-dark.svg",
+      inline: '<svg data-token="email-dark"></svg>',
+    }),
   },
   phone: {
-    light: "/assets/phone-light.svg",
-    dark: "/assets/phone-dark.svg",
+    light: Object.freeze({
+      url: "/assets/phone-light.svg",
+      inline: '<svg data-token="phone-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/phone-dark.svg",
+      inline: '<svg data-token="phone-dark"></svg>',
+    }),
   },
   wechat: {
-    light: "/assets/wechat-light.svg",
-    dark: "/assets/wechat-dark.svg",
+    light: Object.freeze({
+      url: "/assets/wechat-light.svg",
+      inline: '<svg data-token="wechat-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/wechat-dark.svg",
+      inline: '<svg data-token="wechat-dark"></svg>',
+    }),
   },
   apple: {
-    light: "/assets/apple-light.svg",
-    dark: "/assets/apple-dark.svg",
+    light: Object.freeze({
+      url: "/assets/apple-light.svg",
+      inline: '<svg data-token="apple-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/apple-dark.svg",
+      inline: '<svg data-token="apple-dark"></svg>',
+    }),
   },
   google: {
-    light: "/assets/google-light.svg",
-    dark: "/assets/google-dark.svg",
+    light: Object.freeze({
+      url: "/assets/google-light.svg",
+      inline: '<svg data-token="google-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/google-dark.svg",
+      inline: '<svg data-token="google-dark"></svg>',
+    }),
   },
   eye: {
-    light: "/assets/eye-light.svg",
-    dark: "/assets/eye-dark.svg",
+    light: Object.freeze({
+      url: "/assets/eye-light.svg",
+      inline: '<svg data-token="eye-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/eye-dark.svg",
+      inline: '<svg data-token="eye-dark"></svg>',
+    }),
   },
   "eye-off": {
-    light: "/assets/eye-off-light.svg",
-    dark: "/assets/eye-off-dark.svg",
+    light: Object.freeze({
+      url: "/assets/eye-off-light.svg",
+      inline: '<svg data-token="eye-off-light"></svg>',
+    }),
+    dark: Object.freeze({
+      url: "/assets/eye-off-dark.svg",
+      inline: '<svg data-token="eye-off-dark"></svg>',
+    }),
   },
 };
 
@@ -111,10 +165,9 @@ describe("AuthForm", () => {
         method: "username",
       }),
     );
-    expect(screen.getByAltText("Glancy")).toHaveAttribute(
-      "src",
-      iconRegistry["glancy-web"].light,
-    );
+    expect(
+      screen.getByRole("img", { name: "Glancy" }).innerHTML,
+    ).toContain("glancy-light");
     expect(asFragment()).toMatchSnapshot();
   });
 

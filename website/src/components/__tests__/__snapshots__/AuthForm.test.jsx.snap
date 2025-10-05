@@ -5,12 +5,15 @@ exports[`AuthForm submits valid credentials 1`] = `
   <div
     class="auth-page"
   >
-    <img
-      alt="Glancy"
-      class="inline-block align-middle text-onsurface auth-logo"
-      loading="lazy"
-      src="/assets/glancy-web-light.svg"
-    />
+    <span
+      aria-label="Glancy"
+      class="inline-block align-middle inline text-onsurface auth-logo"
+      role="img"
+    >
+      <svg
+        data-token="glancy-light"
+      />
+    </span>
     <div
       class="auth-brand"
     >
@@ -49,14 +52,16 @@ exports[`AuthForm submits valid credentials 1`] = `
             class="toggle"
             type="button"
           >
-            <img
-              alt="Show password"
-              class="inline-block align-middle text-onsurface"
-              height="20"
-              loading="lazy"
-              src="/assets/eye-light.svg"
-              width="20"
-            />
+            <span
+              aria-label="Show password"
+              class="inline-block align-middle inline text-onsurface"
+              role="img"
+              style="--icon-inline-width: 20px; --icon-inline-height: 20px;"
+            >
+              <svg
+                data-token="eye-light"
+              />
+            </span>
           </button>
         </div>
       </div>
@@ -97,12 +102,15 @@ exports[`AuthForm submits valid credentials 1`] = `
         data-variant="secondary"
         type="button"
       >
-        <img
-          alt="wechat"
-          class="inline-block align-middle text-onsurface"
-          loading="lazy"
-          src="/assets/wechat-light.svg"
-        />
+        <span
+          aria-label="wechat"
+          class="inline-block align-middle inline text-onsurface"
+          role="img"
+        >
+          <svg
+            data-token="wechat-light"
+          />
+        </span>
       </button>
     </div>
     <div

@@ -4,156 +4,53 @@ import { jest } from "@jest/globals";
 
 /**
  * 背景：
- *  - VoiceIcon 通过 createMaskedIconRenderer 共享遮罩模板，需要验证策略函数在不同主题与降级场景下仍然生效。
+ *  - VoiceIcon 现采用静态 SVG 方案，需校验语义属性是否与发送按钮保持一致。
  * 目的：
- *  - 通过桩件控制主题、遮罩能力与图标注册表，确保新模板对语音图标的渲染路径完整覆盖。
+ *  - 确保语音按钮渲染出可继承主题色的 inline SVG，并标记为 voice-button，避免回退逻辑残留。
  * 关键决策与取舍：
- *  - 延续策略模式测试：mock useTheme、useMaskSupport 与 icon registry，聚焦 single 资源解析与降级行为；避免依赖真实资源文件导致测试脆弱。
+ *  - 模拟资源导入以固定 inline 内容，聚焦节点结构验证。
  * 影响范围：
- *  - 覆盖 VoiceIcon 的主题分支、遮罩降级与 fallback 调用逻辑，间接验证 createMaskedIconRenderer 的稳定性。
+ *  - ChatInput 语音态按钮视觉回归测试。
  * 演进与TODO：
- *  - 若未来引入录音态动画，应扩展测试验证 buildStyle 返回的额外样式字段。
+ *  - 若未来语音按钮需要多状态资源，应在此扩展变体断言。
  */
 
-let currentResolvedTheme = "light";
-const mockUseTheme = jest.fn(() => ({
-  resolvedTheme: currentResolvedTheme,
-}));
-const mockUseMaskSupport = jest.fn(() => true);
-
-jest.unstable_mockModule("@/context", () => ({
-  useTheme: mockUseTheme,
-}));
-
-jest.unstable_mockModule("../useMaskSupport.js", () => ({
+jest.unstable_mockModule("@/assets/voice-button.svg", () => ({
   __esModule: true,
-  default: mockUseMaskSupport,
-  useMaskSupport: mockUseMaskSupport,
+  default: "voice-asset.svg",
 }));
 
-const voiceRegistry = {
-  "voice-button": {
-    single: "voice.svg",
-  },
-};
-
-jest.unstable_mockModule("@/assets/icons.js", () => ({
-  default: voiceRegistry,
+jest.unstable_mockModule("@/assets/voice-button.svg?raw", () => ({
+  __esModule: true,
+  default: "<svg data-token=\"voice-inline\"></svg>",
 }));
 
 const { default: VoiceIcon } = await import("../VoiceIcon.jsx");
 
 describe("VoiceIcon", () => {
-  beforeAll(() => {
-    const cssSupport = {
-      supports: jest.fn(() => true),
-    };
-    global.CSS = cssSupport;
-    if (typeof window !== "undefined") {
-      window.CSS = cssSupport;
-    }
-  });
-
-  beforeEach(() => {
-    currentResolvedTheme = "light";
-    mockUseTheme.mockClear();
-    mockUseMaskSupport.mockReset();
-    mockUseMaskSupport.mockReturnValue(true);
-  });
-
-  afterEach(() => {
-    mockUseMaskSupport.mockReset();
-  });
-
   /**
-   * 测试目标：应选择单一变体并生成匹配的遮罩样式。
-   * 前置条件：注册表仅包含 single 资源。
+   * 测试目标：语音图标应渲染装饰性 inline 节点并正确暴露 data 属性。
+   * 前置条件：传入标准 className。
    * 步骤：
-   *  1) 渲染 VoiceIcon 并获取标记为 voice-button 的节点。
-   *  2) 读取其 style.mask 属性。
+   *  1) 渲染组件后查询 voice-button 节点。
+   *  2) 校验属性与类名。
    * 断言：
-   *  - mask 属性采用 single 资源并保持模板语法。
+   *  - 节点为 inline 容器且标记 data-render-mode=inline。
+   *  - 节点输出非空 inline 内容并设置 aria-hidden=true。
    * 边界/异常：
-   *  - fallback 分支由后续用例验证。
+   *  - 暂无额外分支，未来如增加可视文案需同步调整。
    */
-  test("GivenRegistryWithSingle_WhenRendering_ThenApplyMask", () => {
+  test("GivenClassName_WhenRendering_ThenPreferInlinePayload", () => {
     const { container } = render(<VoiceIcon className="icon" />);
 
-    const node = container.querySelector('span[data-icon-name="voice-button"]');
+    const node = container.querySelector('[data-icon-name="voice-button"]');
+
     expect(node).not.toBeNull();
-    expect(node?.style.mask).toBe("url(voice.svg) center / contain no-repeat");
-  });
-
-  /**
-   * 测试目标：当注册表缺失目标资源时，应触发 fallback，保障降级体验。
-   * 前置条件：临时移除 voice-button 注册项。
-   * 步骤：
-   *  1) 删除注册表条目并渲染组件，注入自定义 fallback。
-   *  2) 观察 fallback 是否以预期参数被调用。
-   * 断言：
-   *  - fallback 至少调用一次，参数包含 className 与 iconName。
-   * 边界/异常：
-   *  - 用例结束后恢复注册表，避免污染后续测试。
-   */
-  test("GivenMissingRegistry_WhenRendering_ThenInvokeFallback", () => {
-    const originalEntry = voiceRegistry["voice-button"];
-    delete voiceRegistry["voice-button"];
-
-    const fallback = jest.fn(() => null);
-    render(<VoiceIcon className="icon" fallback={fallback} />);
-
-    expect(fallback).toHaveBeenCalledTimes(1);
-    expect(fallback).toHaveBeenCalledWith({
-      className: "icon",
-      iconName: "voice-button",
-    });
-
-    voiceRegistry["voice-button"] = originalEntry;
-  });
-
-  /**
-   * 测试目标：当条目存在但未提供 single 资源时，应走默认 fallback。
-   * 前置条件：注册表条目清空 single 字段。
-   * 步骤：
-   *  1) 将注册表条目替换为无 single 的对象。
-   *  2) 渲染组件并检查输出。
-   * 断言：
-   *  - 遮罩节点不存在，渲染 fallback SVG。
-   * 边界/异常：
-   *  - 用例结束后恢复注册表。
-   */
-  test("GivenEntryWithoutSingle_WhenRendering_ThenRenderFallback", () => {
-    const originalEntry = { ...voiceRegistry["voice-button"] };
-    voiceRegistry["voice-button"] = {};
-
-    const { container } = render(<VoiceIcon className="icon" />);
-
-    expect(
-      container.querySelector('span[data-icon-name="voice-button"]'),
-    ).toBeNull();
-    expect(
-      container.querySelector('svg[data-icon-name="voice-button"]'),
-    ).not.toBeNull();
-
-    voiceRegistry["voice-button"] = originalEntry;
-  });
-
-  /**
-   * 测试目标：当 useMaskSupport 返回 false 时，应直接渲染 fallback SVG，避免空白按钮。
-   * 前置条件：mockUseMaskSupport 返回 false，注册表仍提供资源。
-   * 步骤：
-   *  1) 将 mockUseMaskSupport mock 为 false。
-   *  2) 渲染 VoiceIcon 并查询 SVG。
-   * 断言：
-   *  - 组件渲染 fallback SVG 元素。
-   * 边界/异常：
-   *  - 若未来引入渐进增强策略，此用例需同步调整断言。
-   */
-  test("GivenMaskHookDisabled_WhenRendering_ThenRenderFallbackSvg", () => {
-    mockUseMaskSupport.mockReturnValueOnce(false);
-
-    const { container } = render(<VoiceIcon className="icon" />);
-
-    expect(container.querySelector("svg")).not.toBeNull();
+    expect(node?.tagName).toBe("SPAN");
+    expect(node?.getAttribute("data-render-mode")).toBe("inline");
+    expect(node?.getAttribute("src")).toBeNull();
+    expect(node?.innerHTML).not.toHaveLength(0);
+    expect(node?.getAttribute("aria-hidden")).toBe("true");
+    expect(node?.classList.contains("icon")).toBe(true);
   });
 });
