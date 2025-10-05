@@ -5,6 +5,7 @@
  *  - 以纯展示 Section 组件承载账号字段、描述及管理入口，供偏好设置的组合式布局复用。
  * 关键决策与取舍：
  *  - 组件保持无状态，仅依赖 props 渲染；拒绝在此处触发数据请求，使其适合作为策略模式中的具体策略。
+ *  - 头部排版遵循 Settings 通用分区规范，统一加入视觉分隔符以匹配全局节奏。
  * 影响范围：
  *  - 偏好设置页面与 SettingsModal 的账号分区渲染逻辑。
  * 演进与TODO：
@@ -38,6 +39,7 @@ function AccountSection({
             {description}
           </p>
         ) : null}
+        <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
       <dl className={styles.details}>
         {fields.map((field) => (
@@ -87,4 +89,3 @@ AccountSection.defaultProps = {
 };
 
 export default AccountSection;
-

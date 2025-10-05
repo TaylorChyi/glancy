@@ -21,8 +21,6 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    private Integer age;
-    private String gender;
     private String job;
     private String interest;
     private String goal;

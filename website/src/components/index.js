@@ -23,8 +23,6 @@ export {
 } from "./settings/SettingsSurface";
 
 export { default as AuthForm } from "./form/AuthForm.jsx";
-export { default as AgeStepper } from "./form/AgeStepper/AgeStepper.jsx";
-export { default as GenderSelect } from "./form/GenderSelect/GenderSelect.jsx";
 export { default as EditableField } from "./form/EditableField/EditableField.jsx";
 export { default as FormField } from "./form/FormField.jsx";
 export { default as SelectField } from "./form/SelectField.jsx";

@@ -3,21 +3,20 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
-const mockUseApi = jest.fn();
+const mockUseTheme = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
-}));
-
-jest.unstable_mockModule("@/hooks/useApi.js", () => ({
-  useApi: mockUseApi,
+  useTheme: mockUseTheme,
 }));
 
 let usePreferenceSections;
 
 beforeAll(async () => {
-  ({ default: usePreferenceSections } = await import("../usePreferenceSections.js"));
+  ({ default: usePreferenceSections } = await import(
+    "../usePreferenceSections.js"
+  ));
 });
 
 const createTranslations = (overrides = {}) => ({
@@ -43,8 +42,6 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
-  settingsAccountAge: "Age",
-  settingsAccountGender: "Gender",
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
   settingsManageProfile: "Manage profile",
@@ -54,12 +51,17 @@ const createTranslations = (overrides = {}) => ({
 beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
-  mockUseApi.mockReset();
+  mockUseTheme.mockReset();
   mockUseLanguage.mockReturnValue({ t: createTranslations() });
   mockUseUser.mockReturnValue({
-    user: { username: "amy", email: "amy@example.com", plan: "plus", isPro: true },
+    user: {
+      username: "amy",
+      email: "amy@example.com",
+      plan: "plus",
+      isPro: true,
+    },
   });
-  mockUseApi.mockReturnValue(null);
+  mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
 });
 
 /**
@@ -76,32 +78,34 @@ beforeEach(() => {
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
  */
-test(
-  "Given default sections When reading blueprint Then general leads navigation",
-  () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined, onOpenAccountManager: jest.fn() }),
-    );
+test("Given default sections When reading blueprint Then general leads navigation", () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+      onOpenAccountManager: jest.fn(),
+    }),
+  );
 
-    expect(result.current.sections.map((section) => section.id)).toEqual([
-      "general",
-      "personalization",
-      "data",
-      "keyboard",
-      "account",
-    ]);
-    expect(
-      result.current.sections.every(
-        (section) => !Object.prototype.hasOwnProperty.call(section, "summary"),
-      ),
-    ).toBe(true);
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
-    expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-    expect(result.current.panel.modalHeadingId).toBe("settings-modal-fallback-heading");
-    expect(result.current.panel.modalHeadingText).toBe("General");
-  },
-);
+  expect(result.current.sections.map((section) => section.id)).toEqual([
+    "general",
+    "personalization",
+    "data",
+    "keyboard",
+    "account",
+  ]);
+  expect(
+    result.current.sections.every(
+      (section) => !Object.prototype.hasOwnProperty.call(section, "summary"),
+    ),
+  ).toBe(true);
+  expect(result.current.activeSectionId).toBe("general");
+  expect(result.current.panel.headingId).toBe("general-section-heading");
+  expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
+  expect(result.current.panel.modalHeadingText).toBe("General");
+});
 
 /**
  * 测试目标：当传入历史分区 ID 时，应回退至首个可用分区以维持导航可用性。
@@ -114,17 +118,17 @@ test(
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 负责）。
  */
-test(
-  "Given legacy section id When initializing Then selection falls back to general",
-  () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: "privacy", onOpenAccountManager: jest.fn() }),
-    );
+test("Given legacy section id When initializing Then selection falls back to general", () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: "privacy",
+      onOpenAccountManager: jest.fn(),
+    }),
+  );
 
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
-  },
-);
+  expect(result.current.activeSectionId).toBe("general");
+  expect(result.current.panel.headingId).toBe("general-section-heading");
+});
 
 /**
  * 测试目标：当分区标题文案为空白时，模态备用标题应回退至 copy.title。
@@ -147,12 +151,17 @@ test("Given blank section titles When resolving modal heading Then fallback titl
   });
 
   const { result } = renderHook(() =>
-    usePreferenceSections({ initialSectionId: "keyboard", onOpenAccountManager: jest.fn() }),
+    usePreferenceSections({
+      initialSectionId: "keyboard",
+      onOpenAccountManager: jest.fn(),
+    }),
   );
 
   expect(result.current.panel.focusHeadingId).toBe("keyboard-section-heading");
   expect(result.current.panel.modalHeadingText).toBe(result.current.copy.title);
-  expect(result.current.panel.modalHeadingId).toBe("settings-modal-fallback-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
 });
 
 /**
@@ -169,7 +178,10 @@ test("Given blank section titles When resolving modal heading Then fallback titl
  */
 test("Given section switch When selecting data Then heading metadata updates", async () => {
   const { result } = renderHook(() =>
-    usePreferenceSections({ initialSectionId: undefined, onOpenAccountManager: jest.fn() }),
+    usePreferenceSections({
+      initialSectionId: undefined,
+      onOpenAccountManager: jest.fn(),
+    }),
   );
 
   act(() => {

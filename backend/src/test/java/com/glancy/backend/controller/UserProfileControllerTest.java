@@ -41,34 +41,25 @@ class UserProfileControllerTest {
     private ObjectMapper objectMapper;
 
     /**
-     * 测试 saveProfile 接口：
-     * 1. 构造包含完整画像信息的请求体并模拟用户身份认证；
-     * 2. 预置 UserProfileService 保存逻辑返回的画像响应；
-     * 3. 通过 MockMvc 触发 POST 请求，断言 HTTP 状态码以及响应中的 userId 字段与预期一致。
+     * 测试目标：确认保存画像接口在无年龄/性别字段时仍能成功持久化并返回用户标识。
+     * 前置条件：
+     *  - 模拟鉴权成功返回用户 ID；
+     *  - UserProfileService.saveProfile 预置返回含职业、兴趣等字段的响应。
+     * 步骤：
+     *  1) 构造 `UserProfileRequest` record 并通过 POST /api/profiles/user 提交；
+     *  2) 捕获响应并校验状态码。
+     * 断言：
+     *  - HTTP 状态为 201；
+     *  - 响应 JSON 中的 userId 为 2。
+     * 边界/异常：
+     *  - 若缺失可选字段，由 record 默认为 null 并由服务层处理。
      */
     @Test
     void saveProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(
-            1L,
-            2L,
-            20,
-            "M",
-            "dev",
-            "code",
-            "learn",
-            15,
-            "exchange study"
-        );
+        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
 
-        UserProfileRequest req = new UserProfileRequest();
-        req.setAge(20);
-        req.setGender("M");
-        req.setJob("dev");
-        req.setInterest("code");
-        req.setGoal("learn");
-        req.setDailyWordTarget(15);
-        req.setFuturePlan("exchange study");
+        UserProfileRequest req = new UserProfileRequest("dev", "code", "learn", 15, "exchange study");
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
@@ -84,24 +75,17 @@ class UserProfileControllerTest {
     }
 
     /**
-     * 测试 getProfile 接口：
-     * 1. 模拟用户身份认证返回用户主键；
-     * 2. 预置画像查询服务返回完整画像信息；
-     * 3. 通过 GET 请求校验接口响应状态码及 userId 字段。
+     * 测试目标：确认查询画像接口返回的字段集合已移除年龄与性别。
+     * 前置条件：鉴权成功，服务层返回含职业、兴趣、目标的画像响应。
+     * 步骤：调用 GET /api/profiles/user。
+     * 断言：
+     *  - HTTP 状态为 200；
+     *  - 响应 JSON 中的 userId 为 2。
+     * 边界/异常：若服务层返回空画像，控制器仍返回 200，交由前端处理占位文案。
      */
     @Test
     void getProfile() throws Exception {
-        UserProfileResponse resp = new UserProfileResponse(
-            1L,
-            2L,
-            20,
-            "M",
-            "dev",
-            "code",
-            "learn",
-            15,
-            "exchange study"
-        );
+        UserProfileResponse resp = new UserProfileResponse(1L, 2L, "dev", "code", "learn", 15, "exchange study");
         when(userProfileService.getProfile(2L)).thenReturn(resp);
 
         when(userService.authenticateToken("tkn")).thenReturn(2L);
