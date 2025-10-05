@@ -86,8 +86,8 @@ export default {
   settingsDataClearLanguage: "清空所选语言",
   settingsDataExport: "导出数据",
   settingsDataExportDescription:
-    "导出包含历史记录、采集开关与保留策略的 JSON 快照。",
-  settingsDataExportFileName: "glancy-数据导出",
+    "导出包含历史记录、采集开关与保留策略的 CSV 快照。",
+  settingsDataExportFileName: "glancy-data-export",
   settingsExportData: "导出数据",
   settingsEraseHistory: "清除历史",
   settingsTabAccount: "账号",
