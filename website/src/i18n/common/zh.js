@@ -65,7 +65,7 @@ export default {
   settingsTabAccount: "账号",
   settingsAccountDescription: "梳理与你账户相关的基础身份信息。",
   settingsAccountAvatarLabel: "更换头像",
-  settingsManageProfile: "管理资料",
+  settingsManageProfile: "更换用户名",
   settingsAccountUsername: "用户名",
   settingsAccountEmail: "邮箱",
   settingsAccountPhone: "手机号",
