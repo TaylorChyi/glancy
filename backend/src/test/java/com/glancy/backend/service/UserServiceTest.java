@@ -1,6 +1,7 @@
 package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import com.glancy.backend.dto.AvatarResponse;
@@ -24,12 +25,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @SpringBootTest
 @Transactional
+@TestPropertySource(
+    properties = {
+        "oss.endpoint=http://localhost",
+        "oss.bucket=test-bucket",
+        "oss.access-key-id=test-access",
+        "oss.access-key-secret=test-secret",
+        "oss.verify-location=false",
+    }
+)
 class UserServiceTest {
 
     @Autowired
@@ -66,6 +77,7 @@ class UserServiceTest {
     void setUp() {
         loginDeviceRepository.deleteAll();
         userRepository.deleteAll();
+        when(avatarStorage.resolveUrl(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     /**
@@ -173,7 +185,7 @@ class UserServiceTest {
     }
 
     /**
-     * 测试 updateContact 能更新用户的邮箱和手机号并持久化。
+     * 测试目标：验证 updateContact 支持更新手机号但拒绝直接修改邮箱。
      */
     @Test
     void testUpdateContact() {
@@ -184,14 +196,19 @@ class UserServiceTest {
         req.setPhone("1234567");
         UserResponse created = userService.register(req);
 
-        UserContactResponse updated = userService.updateContact(created.getId(), "changed@example.com", "7654321");
+        UserContactResponse updated = userService.updateContact(created.getId(), "contact@example.com", "7654321");
 
-        assertEquals("changed@example.com", updated.email());
+        assertEquals("contact@example.com", updated.email());
         assertEquals("7654321", updated.phone());
 
         User persisted = userRepository.findById(created.getId()).orElseThrow();
-        assertEquals("changed@example.com", persisted.getEmail());
+        assertEquals("contact@example.com", persisted.getEmail());
         assertEquals("7654321", persisted.getPhone());
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+            userService.updateContact(created.getId(), "changed@example.com", "7654321")
+        );
+        assertEquals("请通过邮箱换绑流程完成更新", exception.getMessage());
     }
 
     /**
@@ -260,8 +277,10 @@ class UserServiceTest {
         UserEmailResponse response = userService.unbindEmail(created.getId());
 
         assertNull(response.email());
+        verify(emailVerificationService).invalidateCodes("unbind@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
         UserEmailResponse second = userService.unbindEmail(created.getId());
         assertNull(second.email());
+        verifyNoMoreInteractions(emailVerificationService);
         User persisted = userRepository.findById(created.getId()).orElseThrow();
         assertNull(persisted.getEmail());
     }
