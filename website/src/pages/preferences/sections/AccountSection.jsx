@@ -18,13 +18,7 @@ import styles from "../Preferences.module.css";
 
 const AVATAR_SIZE = 72;
 
-function AccountSection({
-  title,
-  fields,
-  headingId,
-  identity,
-  bindings,
-}) {
+function AccountSection({ title, fields, headingId, identity, bindings }) {
   const avatarInputId = useId();
   const avatarInputRef = useRef(null);
   const handleAvatarTrigger = useCallback(() => {
@@ -43,24 +37,23 @@ function AccountSection({
     [identity],
   );
 
-  const normalizedIdentity = useMemo(
-    () => {
-      const fallbackLabel = identity?.changeLabel ?? "Avatar";
-      return {
-        label: identity?.label ?? fallbackLabel,
-        displayName: identity?.displayName ?? "",
-        changeLabel: identity?.changeLabel ?? "Change avatar",
-        avatarAlt: identity?.avatarAlt ?? title,
-      };
-    },
-    [
-      identity?.avatarAlt,
-      identity?.changeLabel,
-      identity?.displayName,
-      identity?.label,
-      title,
-    ],
-  );
+  const normalizedIdentity = useMemo(() => {
+    const fallbackLabel = identity?.changeLabel ?? "Avatar";
+    return {
+      label: identity?.label ?? fallbackLabel,
+      displayName: identity?.displayName ?? "",
+      changeLabel: identity?.changeLabel ?? "Change avatar",
+      avatarAlt: identity?.avatarAlt ?? title,
+      isUploading: Boolean(identity?.isUploading),
+    };
+  }, [
+    identity?.avatarAlt,
+    identity?.changeLabel,
+    identity?.displayName,
+    identity?.label,
+    identity?.isUploading,
+    title,
+  ]);
 
   return (
     <section
@@ -108,6 +101,8 @@ function AccountSection({
             <button
               type="button"
               className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+              aria-disabled={normalizedIdentity.isUploading}
+              disabled={normalizedIdentity.isUploading}
               onClick={handleAvatarTrigger}
             >
               {normalizedIdentity.changeLabel}
@@ -183,6 +178,7 @@ AccountSection.propTypes = {
     changeLabel: PropTypes.string.isRequired,
     avatarAlt: PropTypes.string,
     onSelectAvatar: PropTypes.func,
+    isUploading: PropTypes.bool,
   }).isRequired,
   bindings: PropTypes.shape({
     title: PropTypes.string.isRequired,

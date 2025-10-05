@@ -19,6 +19,7 @@ import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
+import useAvatarUploader from "@/hooks/useAvatarUploader.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -102,7 +103,7 @@ const formatPhoneDisplay = (
     return withCode;
   }
 
-  const [, code,, numberPart] = match;
+  const [, code, , numberPart] = match;
   const digits = numberPart.replace(/[^0-9]/g, "");
   if (!digits) {
     return code;
@@ -130,6 +131,8 @@ function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
   const { user } = userStore ?? {};
+  const { onSelectAvatar, isUploading: isAvatarUploading } =
+    useAvatarUploader();
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -250,6 +253,8 @@ function usePreferenceSections({ initialSectionId }) {
       displayName: usernameValue,
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,
+      onSelectAvatar,
+      isUploading: isAvatarUploading,
     };
 
     const accountBindings = {
@@ -366,6 +371,8 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
     subscriptionSection,
+    onSelectAvatar,
+    isAvatarUploading,
     user?.email,
     user?.phone,
     user?.username,
