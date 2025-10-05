@@ -4,11 +4,19 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
+const mockUseApi = jest.fn();
+const mockUseKeyboardShortcutContext = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
   useTheme: mockUseTheme,
+  useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
+  KEYBOARD_SHORTCUT_RESET_ACTION: "reset",
+}));
+
+jest.unstable_mockModule("@/hooks/useApi.js", () => ({
+  useApi: mockUseApi,
 }));
 
 let usePreferenceSections;
@@ -53,6 +61,12 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountBindingWeChat: "WeChat",
   settingsAccountBindingStatusUnlinked: "Not linked",
   settingsAccountBindingActionPlaceholder: "Coming soon",
+  settingsAccountUsernameSaveAction: "Save username",
+  settingsAccountUsernameRequired: "Username required",
+  settingsAccountUsernameInvalid: "Invalid username",
+  settingsAccountUsernameConflict: "Username exists",
+  settingsAccountUsernameUpdateError: "Save failed",
+  usernamePlaceholder: "Enter username",
   settingsTabSubscription: "Subscription",
   subscriptionCurrentTitle: "Current plan",
   subscriptionPlanFreeTitle: "Free",
@@ -140,6 +154,8 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
+  mockUseApi.mockReset();
+  mockUseKeyboardShortcutContext.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -151,6 +167,19 @@ beforeEach(() => {
     },
   });
   mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
+  mockUseApi.mockReturnValue({
+    users: {
+      updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
+    },
+  });
+  mockUseKeyboardShortcutContext.mockReturnValue({
+    shortcuts: [],
+    updateShortcut: jest.fn().mockResolvedValue(undefined),
+    resetShortcuts: jest.fn().mockResolvedValue(undefined),
+    pendingAction: null,
+    errors: {},
+    status: "idle",
+  });
 });
 
 /**
@@ -199,6 +228,15 @@ test("Given default sections When reading blueprint Then general leads navigatio
   );
   expect(accountSection).toBeDefined();
   expect(accountSection.Component).toBeDefined();
+  const usernameField = accountSection.componentProps.fields.find(
+    (field) => field.id === "username",
+  );
+  expect(usernameField).toBeDefined();
+  expect(usernameField.editable).toBeDefined();
+  expect(usernameField.editable.mode).toBe("view");
+  expect(usernameField.editable.buttonLabel).toBe(
+    translations.settingsManageProfile,
+  );
   expect(accountSection.componentProps.identity.displayName).toBe("amy");
   expect(accountSection.componentProps.identity.changeLabel).toBe(
     translations.changeAvatar,

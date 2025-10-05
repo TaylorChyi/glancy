@@ -103,6 +103,13 @@ export default {
     "Review and safeguard the basics that identify you in Glancy.",
   settingsAccountAvatarLabel: "Change avatar",
   settingsManageProfile: "Manage profile",
+  settingsAccountUsernameSaveAction: "Save username",
+  settingsAccountUsernameRequired: "Username is required",
+  settingsAccountUsernameInvalid:
+    "Use 3-20 letters, numbers or underscores",
+  settingsAccountUsernameConflict: "Username is already taken",
+  settingsAccountUsernameUpdateError:
+    "We couldn't update your username. Try again.",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",

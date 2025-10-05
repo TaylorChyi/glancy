@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage, useUser } from "@/context";
+import { useApi } from "@/hooks/useApi.js";
 import AccountSection from "./sections/AccountSection.jsx";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
@@ -19,6 +20,7 @@ import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
+import useUsernameFieldController from "./sections/useUsernameFieldController.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -129,7 +131,8 @@ const formatPhoneDisplay = (
 function usePreferenceSections({ initialSectionId }) {
   const { t } = useLanguage();
   const userStore = useUser();
-  const { user } = userStore ?? {};
+  const api = useApi();
+  const { user, setUser } = userStore ?? {};
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -155,6 +158,8 @@ function usePreferenceSections({ initialSectionId }) {
   }, [user]);
 
   const changeAvatarLabel = t.changeAvatar ?? "Change avatar";
+  const usernameSaveLabel =
+    t.settingsAccountUsernameSaveAction ?? "Save username";
   const accountBindingsTitle =
     t.settingsAccountBindingTitle ?? "Connected accounts";
   const accountBindingStatus =
@@ -170,6 +175,48 @@ function usePreferenceSections({ initialSectionId }) {
       }),
     [t, user],
   );
+
+  const persistUsername = useCallback(
+    async (nextUsername) => {
+      if (!user || !api?.users?.updateUsername) {
+        throw new Error("Username update unavailable");
+      }
+      const response = await api.users.updateUsername({
+        userId: user.id,
+        username: nextUsername,
+        token: user.token,
+      });
+      const resolvedUsername =
+        typeof response?.username === "string"
+          ? response.username
+          : nextUsername;
+      if (typeof setUser === "function") {
+        setUser({ ...user, username: resolvedUsername });
+      }
+      return resolvedUsername;
+    },
+    [api, setUser, user],
+  );
+
+  const usernameField = useUsernameFieldController({
+    username: user?.username,
+    fallbackValue,
+    changeLabel: t.settingsManageProfile ?? "Change username",
+    saveLabel: usernameSaveLabel,
+    placeholder: t.usernamePlaceholder ?? "Enter username",
+    messages: {
+      required: t.settingsAccountUsernameRequired ?? "Username is required",
+      invalid:
+        t.settingsAccountUsernameInvalid ??
+        "Use 3-20 letters, numbers or underscores",
+      conflict:
+        t.settingsAccountUsernameConflict ?? "Username is already taken",
+      generic:
+        t.settingsAccountUsernameUpdateError ??
+        "Unable to update username",
+    },
+    persistUsername,
+  });
 
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
@@ -204,11 +251,6 @@ function usePreferenceSections({ initialSectionId }) {
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
-    const manageProfileAction = {
-      id: "manage-profile",
-      label: t.settingsManageProfile ?? "Manage profile",
-      disabled: true,
-    };
     const emailUnbindAction = {
       id: "unbind-email",
       label:
@@ -223,7 +265,7 @@ function usePreferenceSections({ initialSectionId }) {
       disabled: true,
     };
 
-    const usernameValue = mapToDisplayValue(user?.username, fallbackValue);
+    const usernameValue = usernameField.displayValue;
     const emailValue = mapToDisplayValue(user?.email, fallbackValue);
     const phoneValue = formatPhoneDisplay(user?.phone, {
       fallbackValue,
@@ -235,7 +277,10 @@ function usePreferenceSections({ initialSectionId }) {
         id: "username",
         label: t.settingsAccountUsername ?? "Username",
         value: usernameValue,
-        action: manageProfileAction,
+        editable: {
+          ...usernameField.controller,
+          name: "username",
+        },
       },
       {
         id: "email",
@@ -355,16 +400,23 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountPhoneRebindAction,
     t.settingsManageProfile,
     changeAvatarLabel,
+    usernameSaveLabel,
     fallbackValue,
     t.prefAccountTitle,
     t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
+    t.settingsAccountUsername,
+    t.settingsAccountUsernameConflict,
+    t.settingsAccountUsernameInvalid,
+    t.settingsAccountUsernameRequired,
+    t.settingsAccountUsernameSaveAction,
+    t.settingsAccountUsernameUpdateError,
+    t.usernamePlaceholder,
     t.settingsAccountBindingApple,
     t.settingsAccountBindingGoogle,
     t.settingsAccountBindingWeChat,
     t.settingsAccountEmail,
     t.settingsAccountPhone,
-    t.settingsAccountUsername,
     t.settingsDataDescription,
     t.settingsDataNotice,
     t.settingsKeyboardDescription,
@@ -375,6 +427,7 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
     subscriptionSection,
+    usernameField,
     user?.email,
     user?.phone,
     user?.username,

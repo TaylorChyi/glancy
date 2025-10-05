@@ -111,24 +111,82 @@ function AccountSection({
             </button>
           </div>
         </div>
-        {fields.map((field) => (
-          <div key={field.id} className={styles["detail-row"]}>
-            <dt className={styles["detail-label"]}>{field.label}</dt>
-            <dd className={styles["detail-value"]}>{field.value}</dd>
-            <div className={styles["detail-action"]}>
-              {field.action ? (
-                <button
-                  type="button"
-                  className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
-                  aria-disabled={field.action.disabled}
-                  disabled={field.action.disabled}
-                >
-                  {field.action.label}
-                </button>
-              ) : null}
+        {fields.map((field) => {
+          const isEditableField = Boolean(field.editable);
+          const inputId = `${field.id}-input`;
+          const errorId = `${field.id}-error`;
+          const editable = field.editable;
+
+          const renderValue = () => {
+            if (!isEditableField || editable.mode === "view") {
+              return field.value;
+            }
+
+            const inputClassNames = [styles["editable-input"]];
+            if (editable.errorMessage) {
+              inputClassNames.push(styles["editable-input-error"]);
+            }
+
+            return (
+              <div className={styles["editable-value"]}>
+                <input
+                  id={inputId}
+                  name={editable.name ?? field.id}
+                  type="text"
+                  value={editable.draftValue}
+                  onChange={editable.onChange}
+                  placeholder={editable.placeholder}
+                  disabled={editable.isBusy}
+                  autoFocus={editable.mode === "edit"}
+                  aria-invalid={Boolean(editable.errorMessage)}
+                  aria-describedby={
+                    editable.errorMessage ? errorId : undefined
+                  }
+                  className={inputClassNames.join(" ")}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      editable.onSubmit();
+                    }
+                  }}
+                />
+                {editable.errorMessage ? (
+                  <p id={errorId} className={styles["editable-error"]}>
+                    {editable.errorMessage}
+                  </p>
+                ) : null}
+              </div>
+            );
+          };
+
+          return (
+            <div key={field.id} className={styles["detail-row"]}>
+              <dt className={styles["detail-label"]}>{field.label}</dt>
+              <dd className={styles["detail-value"]}>{renderValue()}</dd>
+              <div className={styles["detail-action"]}>
+                {isEditableField ? (
+                  <button
+                    type="button"
+                    className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+                    onClick={editable.onSubmit}
+                    disabled={editable.isBusy}
+                  >
+                    {editable.buttonLabel}
+                  </button>
+                ) : field.action ? (
+                  <button
+                    type="button"
+                    className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+                    aria-disabled={field.action.disabled}
+                    disabled={field.action.disabled}
+                  >
+                    {field.action.label}
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </dl>
       {bindings ? (
         <div className={styles.bindings} aria-live="polite">
@@ -170,6 +228,17 @@ AccountSection.propTypes = {
         id: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,
         disabled: PropTypes.bool,
+      }),
+      editable: PropTypes.shape({
+        mode: PropTypes.oneOf(["view", "edit", "saving"]).isRequired,
+        draftValue: PropTypes.string.isRequired,
+        placeholder: PropTypes.string,
+        buttonLabel: PropTypes.string.isRequired,
+        isBusy: PropTypes.bool,
+        errorMessage: PropTypes.string,
+        onChange: PropTypes.func.isRequired,
+        onSubmit: PropTypes.func.isRequired,
+        name: PropTypes.string,
       }),
     }),
   ).isRequired,

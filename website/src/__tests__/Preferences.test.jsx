@@ -29,6 +29,12 @@ const mockLanguage = {
   settingsAccountBindingActionPlaceholder: "Coming soon",
   settingsAccountEmailUnbindAction: "Unlink email",
   settingsAccountPhoneRebindAction: "Change phone",
+  settingsAccountUsernameSaveAction: "Save username",
+  settingsAccountUsernameRequired: "Username required",
+  settingsAccountUsernameInvalid: "Invalid username",
+  settingsAccountUsernameConflict: "Username exists",
+  settingsAccountUsernameUpdateError: "Save failed",
+  usernamePlaceholder: "Enter username",
 };
 
 let mockUser;
@@ -37,6 +43,23 @@ jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
   useUser: () => ({ user: mockUser }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
+  useKeyboardShortcutContext: () => ({
+    shortcuts: [],
+    updateShortcut: jest.fn().mockResolvedValue(undefined),
+    resetShortcuts: jest.fn().mockResolvedValue(undefined),
+    pendingAction: null,
+    errors: {},
+    status: "idle",
+  }),
+  KEYBOARD_SHORTCUT_RESET_ACTION: "reset",
+}));
+
+jest.unstable_mockModule("@/hooks/useApi.js", () => ({
+  useApi: () => ({
+    users: {
+      updateUsername: jest.fn().mockResolvedValue({ username: "Ada" }),
+    },
+  }),
 }));
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
