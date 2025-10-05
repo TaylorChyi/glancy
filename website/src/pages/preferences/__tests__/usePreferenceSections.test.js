@@ -4,11 +4,16 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
+const mockUseSubscriptionPlans = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useUser: mockUseUser,
   useTheme: mockUseTheme,
+}));
+
+jest.unstable_mockModule("@/hooks/useSubscriptionPlans.js", () => ({
+  default: mockUseSubscriptionPlans,
 }));
 
 let usePreferenceSections;
@@ -45,6 +50,53 @@ const createTranslations = (overrides = {}) => ({
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
   settingsManageProfile: "Manage profile",
+  settingsTabSubscription: "Subscription",
+  "subscription.section.title": "Subscription",
+  "subscription.section.description": "Pick a plan that suits you.",
+  "subscription.price.free": "Free",
+  "subscription.price.redeemOnly": "Redeem only",
+  "subscription.price.perMonth": "{value}/mo",
+  "subscription.price.perYear": "{value}/yr",
+  "subscription.price.perYearEquivalent": "({value}/mo)",
+  "subscription.price.pending": "Contact support",
+  "subscription.price.premiumExpiry": "Valid until {date}",
+  "subscription.premium.perpetual": "No expiry",
+  "subscription.current.title": "Current subscription",
+  "subscription.current.planLine": "{plan} · {cycle}",
+  "subscription.billingCycle.none": "Not set",
+  "subscription.current.nextRenewal": "Next renewal: {date}",
+  "subscription.current.renewalUnknown": "Not scheduled",
+  "subscription.current.regionCurrency": "Region: {region} · Currency: {currency}",
+  "subscription.current.regionUnknown": "Unknown region",
+  "subscription.current.currencyUnknown": "Unknown currency",
+  "subscription.premium.status": "Premium access — expires {date}",
+  "subscription.action.manage": "Manage subscription",
+  "subscription.action.changePlan": "Change plan",
+  "subscription.action.changeRegion": "Change region",
+  "subscription.action.redeem": "Redeem",
+  "subscription.badge.current": "Current",
+  "subscription.badge.selected": "Selected",
+  "subscription.matrix.caption": "Compare plan benefits",
+  "subscription.matrix.feature": "Capability",
+  "subscription.redeem.title": "Redeem benefits",
+  "subscription.redeem.description": "Unlock Premium with an access code.",
+  "subscription.redeem.placeholder": "Enter code (16 characters)",
+  "subscription.redeem.button": "Redeem now",
+  "subscription.subscribe.title": "Choose subscription",
+  "subscription.subscribe.description": "Upgrade to unlock more capacity.",
+  "subscription.subscribe.button": "Continue to checkout",
+  "subscription.subscribe.disabled": "Select a different plan to continue.",
+  "subscription.faq.title": "Subscription notes",
+  "subscription.feature.wordLookupsDaily": "Daily lookups",
+  "subscription.unit.timesPerDay": "per day",
+  "pricing.fixedNote": "Pricing is fixed per region.",
+  "pricing.tax.included": "Prices include tax.",
+  "pricing.tax.excluded": "Prices exclude tax.",
+  "subscription.policy.autoRenew": "Plans renew automatically unless cancelled.",
+  "subscription.policy.invoice": "Invoices are available after each purchase.",
+  "subscription.policy.refund": "Refunds accepted within {days} days.",
+  "subscription.policy.support": "Contact support for tailored assistance.",
+  "plan.free.title": "Free",
   ...overrides,
 });
 
@@ -52,6 +104,7 @@ beforeEach(() => {
   mockUseLanguage.mockReset();
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
+  mockUseSubscriptionPlans.mockReset();
   mockUseLanguage.mockReturnValue({ t: createTranslations() });
   mockUseUser.mockReturnValue({
     user: {
@@ -62,6 +115,68 @@ beforeEach(() => {
     },
   });
   mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
+  mockUseSubscriptionPlans.mockReturnValue({
+    plans: [
+      {
+        id: "free",
+        labelKey: "plan.free.title",
+        descriptionKey: "plan.free.desc",
+        actionKey: "plan.free.action",
+        purchaseType: "free",
+        monthly: 0,
+        yearly: "",
+        yearlyEquivalent: "",
+      },
+      {
+        id: "plus",
+        labelKey: "plan.plus.title",
+        descriptionKey: "plan.plus.desc",
+        actionKey: "plan.plus.action",
+        purchaseType: "paid",
+        monthly: 18,
+        yearly: 168,
+        yearlyEquivalent: 14,
+      },
+      {
+        id: "pro",
+        labelKey: "plan.pro.title",
+        descriptionKey: "plan.pro.desc",
+        actionKey: "plan.pro.action",
+        purchaseType: "paid",
+        monthly: 38,
+        yearly: 368,
+        yearlyEquivalent: 30.67,
+      },
+    ],
+    featureMatrix: [
+      {
+        id: "word-lookups-daily",
+        labelKey: "subscription.feature.wordLookupsDaily",
+        unitKey: "subscription.unit.timesPerDay",
+        values: {
+          free: "50",
+          plus: "500",
+          pro: "5,000",
+        },
+      },
+    ],
+    region: {
+      regionLabel: "United States",
+      currency: "USD",
+      currencySymbol: "$",
+      taxIncluded: false,
+      policies: { refundWindowDays: 7 },
+    },
+    policyCopy: {
+      pricingNoteKey: "pricing.fixedNote",
+      taxIncludedKey: "pricing.tax.included",
+      taxExcludedKey: "pricing.tax.excluded",
+      autoRenewKey: "subscription.policy.autoRenew",
+      invoiceKey: "subscription.policy.invoice",
+      refundKey: "subscription.policy.refund",
+      supportKey: "subscription.policy.support",
+    },
+  });
 });
 
 /**
@@ -91,6 +206,7 @@ test("Given default sections When reading blueprint Then general leads navigatio
     "personalization",
     "data",
     "keyboard",
+    "subscription",
     "account",
   ]);
   expect(

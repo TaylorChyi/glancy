@@ -17,6 +17,8 @@ import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
 import PersonalizationSection from "./sections/PersonalizationSection.jsx";
+import SubscriptionSection from "./sections/SubscriptionSection.jsx";
+import useSubscriptionPlans from "@/hooks/useSubscriptionPlans.js";
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";
 
@@ -57,6 +59,57 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
   return typeof fallbackValue === "string" ? fallbackValue.trim() : "";
 };
 
+const normalizePlanId = (user) => {
+  if (!user) {
+    return "free";
+  }
+  if (typeof user.plan === "string" && user.plan.trim().length > 0) {
+    return user.plan.trim().toLowerCase();
+  }
+  if (user.isPro) {
+    return "plus";
+  }
+  return "free";
+};
+
+const formatCurrencyValue = (value, region) => {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+  const numeric = Number.parseFloat(String(value).replace(/,/g, ""));
+  if (Number.isNaN(numeric)) {
+    return String(value);
+  }
+  const currency = region?.currency ?? "USD";
+  const hasDecimals = Math.abs(numeric % 1) > Number.EPSILON;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      currencyDisplay: "symbol",
+      minimumFractionDigits: hasDecimals ? 2 : 0,
+      maximumFractionDigits: 2,
+    }).format(numeric);
+  } catch (error) {
+    const symbol = region?.currencySymbol ?? "";
+    const formatted = hasDecimals ? numeric.toFixed(2) : numeric.toString();
+    return `${symbol}${formatted}`;
+  }
+};
+
+const formatNextRenewal = (value, fallback) => {
+  if (!value) {
+    return fallback;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return fallback;
+  }
+  return date.toLocaleDateString();
+};
+
+const noop = () => {};
+
 /**
  * 意图：
  *  - 生成偏好设置分区蓝图，统一管理激活分区、表头文案与账户数据。
@@ -77,6 +130,32 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
 function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
   const { t } = useLanguage();
   const { user } = useUser();
+
+  const currentPlanId = useMemo(() => normalizePlanId(user), [user]);
+  const subscriptionRegionCode = useMemo(() => {
+    if (user?.subscription && typeof user.subscription.regionCode === "string") {
+      return user.subscription.regionCode;
+    }
+    if (typeof user?.regionCode === "string") {
+      return user.regionCode;
+    }
+    return undefined;
+  }, [user?.regionCode, user?.subscription]);
+
+  const subscriptionBlueprint = useSubscriptionPlans({
+    regionCode: subscriptionRegionCode,
+    currentPlanId,
+  });
+
+  const translate = useCallback(
+    (key) => {
+      if (!key) {
+        return "";
+      }
+      return t[key] ?? key;
+    },
+    [t],
+  );
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -108,6 +187,245 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
 
   const manageLabel = t.settingsManageProfile ?? "Manage profile";
 
+  const subscriptionPlans = useMemo(() => {
+    return subscriptionBlueprint.plans.map((plan) => {
+      const title = translate(plan.labelKey);
+      const descriptionCopy = translate(plan.descriptionKey);
+      let pricePrimary = "";
+      let priceSecondary = "";
+
+      if (plan.purchaseType === "free") {
+        pricePrimary = translate("subscription.price.free");
+      } else if (plan.purchaseType === "redeem_only") {
+        pricePrimary = translate("subscription.price.redeemOnly");
+        if (plan.id === "premium" && user?.subscription?.expiresAt) {
+          const expiry = formatNextRenewal(
+            user.subscription.expiresAt,
+            translate("subscription.premium.perpetual"),
+          );
+          priceSecondary = translate("subscription.price.premiumExpiry").replace(
+            "{date}",
+            expiry,
+          );
+        }
+      } else {
+        const monthlyFormatted = formatCurrencyValue(
+          plan.monthly,
+          subscriptionBlueprint.region,
+        );
+        const yearlyFormatted = formatCurrencyValue(
+          plan.yearly,
+          subscriptionBlueprint.region,
+        );
+        const yearlyEquivalentFormatted = formatCurrencyValue(
+          plan.yearlyEquivalent,
+          subscriptionBlueprint.region,
+        );
+
+        if (monthlyFormatted) {
+          pricePrimary = (translate("subscription.price.perMonth") ?? "{value}").replace(
+            "{value}",
+            monthlyFormatted,
+          );
+        }
+        if (yearlyFormatted) {
+          const yearlyCopy = (translate("subscription.price.perYear") ?? "{value}").replace(
+            "{value}",
+            yearlyFormatted,
+          );
+          if (yearlyEquivalentFormatted) {
+            const equivalentCopy = (
+              translate("subscription.price.perYearEquivalent") ?? "{value}"
+            ).replace("{value}", yearlyEquivalentFormatted);
+            priceSecondary = `${yearlyCopy} ${equivalentCopy}`.trim();
+          } else {
+            priceSecondary = yearlyCopy;
+          }
+        }
+      }
+
+      if (!pricePrimary && priceSecondary) {
+        pricePrimary = priceSecondary;
+        priceSecondary = "";
+      }
+
+      if (!pricePrimary) {
+        pricePrimary = translate("subscription.price.pending");
+      }
+
+      return {
+        id: plan.id,
+        title,
+        shortTitle: title,
+        description: descriptionCopy,
+        pricePrimary,
+        priceSecondary,
+      };
+    });
+  }, [
+    subscriptionBlueprint.plans,
+    subscriptionBlueprint.region,
+    translate,
+    user?.subscription?.expiresAt,
+  ]);
+
+  const subscriptionFeatures = useMemo(() => {
+    const planIds = subscriptionPlans.map((plan) => plan.id);
+    return subscriptionBlueprint.featureMatrix.map((feature) => {
+      const label = translate(feature.labelKey);
+      const values = {};
+      const unitSuffixes = {};
+
+      planIds.forEach((planId) => {
+        const rawValue = feature.values[planId];
+        if (rawValue === undefined) {
+          return;
+        }
+        values[planId] = rawValue;
+        if (
+          feature.unitKey &&
+          typeof rawValue === "string" &&
+          rawValue.trim() !== "" &&
+          rawValue.trim() !== "—" &&
+          !rawValue.startsWith("subscription.")
+        ) {
+          const unitLabel = translate(feature.unitKey);
+          if (unitLabel && unitLabel !== feature.unitKey) {
+            unitSuffixes[planId] = unitLabel;
+          }
+        }
+      });
+
+      return {
+        id: feature.id,
+        label,
+        values,
+        unitSuffixes: Object.keys(unitSuffixes).length > 0 ? unitSuffixes : undefined,
+      };
+    });
+  }, [subscriptionBlueprint.featureMatrix, subscriptionPlans, translate]);
+
+  const subscriptionCopy = useMemo(() => {
+    const planName =
+      subscriptionPlans.find((plan) => plan.id === currentPlanId)?.title ??
+      translate("plan.free.title");
+    const billingCycleKey = user?.subscription?.billingCycle
+      ? `subscription.billingCycle.${user.subscription.billingCycle}`
+      : "subscription.billingCycle.none";
+    const billingCycleLabel = translate(billingCycleKey);
+    const nextRenewal = formatNextRenewal(
+      user?.subscription?.nextRenewalDate,
+      translate("subscription.current.renewalUnknown"),
+    );
+    const planLine = (translate("subscription.current.planLine") ?? "{plan}")
+      .replace("{plan}", planName)
+      .replace("{cycle}", billingCycleLabel);
+    const billingLine = (translate("subscription.current.nextRenewal") ?? "{date}")
+      .replace("{date}", nextRenewal);
+    const regionLabel =
+      subscriptionBlueprint.region.regionLabel ||
+      translate("subscription.current.regionUnknown");
+    const currencyLabel =
+      subscriptionBlueprint.region.currency ||
+      translate("subscription.current.currencyUnknown");
+    const regionLine = (
+      translate("subscription.current.regionCurrency") ?? "{region}"
+    )
+      .replace("{region}", regionLabel)
+      .replace("{currency}", currencyLabel);
+
+    let statusLine = "";
+    if (currentPlanId === "premium") {
+      const expiry = formatNextRenewal(
+        user?.subscription?.expiresAt,
+        translate("subscription.premium.perpetual"),
+      );
+      statusLine = (
+        translate("subscription.premium.status") ?? "{date}"
+      ).replace("{date}", expiry);
+    }
+
+    const actions = [
+      { id: "manage", label: translate("subscription.action.manage"), onClick: noop },
+      { id: "change-plan", label: translate("subscription.action.changePlan"), onClick: noop },
+      {
+        id: "change-region",
+        label: translate("subscription.action.changeRegion"),
+        onClick: noop,
+      },
+    ];
+
+    if (currentPlanId !== "premium") {
+      actions.push({
+        id: "redeem",
+        label: translate("subscription.action.redeem"),
+        onClick: noop,
+      });
+    }
+
+    const faqItems = [
+      {
+        id: "pricing",
+        text: translate(subscriptionBlueprint.policyCopy.pricingNoteKey),
+      },
+      {
+        id: "tax",
+        text: translate(
+          subscriptionBlueprint.region.taxIncluded
+            ? subscriptionBlueprint.policyCopy.taxIncludedKey
+            : subscriptionBlueprint.policyCopy.taxExcludedKey,
+        ),
+      },
+      { id: "auto-renew", text: translate(subscriptionBlueprint.policyCopy.autoRenewKey) },
+      { id: "invoice", text: translate(subscriptionBlueprint.policyCopy.invoiceKey) },
+      {
+        id: "refund",
+        text: (translate(subscriptionBlueprint.policyCopy.refundKey) ?? "{days}").replace(
+          "{days}",
+          String(subscriptionBlueprint.region.policies?.refundWindowDays ?? "—"),
+        ),
+      },
+      { id: "support", text: translate(subscriptionBlueprint.policyCopy.supportKey) },
+    ].filter((item) => typeof item.text === "string" && item.text.trim().length > 0);
+
+    return {
+      currentPlanTitle: translate("subscription.current.title"),
+      planLine,
+      billingLine,
+      regionLine,
+      statusLine,
+      badges: {
+        current: translate("subscription.badge.current"),
+        selected: translate("subscription.badge.selected"),
+      },
+      actions,
+      matrixCaption: translate("subscription.matrix.caption"),
+      featureHeading: translate("subscription.matrix.feature"),
+      translate,
+      redeem: {
+        title: translate("subscription.redeem.title"),
+        description: translate("subscription.redeem.description"),
+        placeholder: translate("subscription.redeem.placeholder"),
+        button: translate("subscription.redeem.button"),
+      },
+      subscribe: {
+        title: translate("subscription.subscribe.title"),
+        description: translate("subscription.subscribe.description"),
+        button: translate("subscription.subscribe.button"),
+        disabledHint: translate("subscription.subscribe.disabled"),
+      },
+      faqTitle: translate("subscription.faq.title"),
+      faqItems,
+    };
+  }, [
+    currentPlanId,
+    subscriptionBlueprint.policyCopy,
+    subscriptionBlueprint.region,
+    subscriptionPlans,
+    translate,
+    user?.subscription,
+  ]);
+
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
@@ -137,6 +455,13 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     const keyboardMessage = pickFirstMeaningfulString(
       [t.settingsKeyboardDescription, t.prefKeyboardTitle],
       keyboardSummary,
+    );
+
+    const subscriptionLabel =
+      t.settingsTabSubscription ?? translate("subscription.section.title");
+    const subscriptionDescription = pickFirstMeaningfulString(
+      [translate("subscription.section.description")],
+      translate("subscription.section.description"),
     );
 
     const accountLabel =
@@ -206,6 +531,20 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
         },
       },
       {
+        id: "subscription",
+        label: subscriptionLabel,
+        disabled: false,
+        Component: SubscriptionSection,
+        componentProps: {
+          title: subscriptionLabel,
+          description: subscriptionDescription,
+          plans: subscriptionPlans,
+          featureMatrix: subscriptionFeatures,
+          copy: subscriptionCopy,
+          currentPlanId,
+        },
+      },
+      {
         id: "account",
         label: accountLabel,
         disabled: false,
@@ -225,6 +564,11 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     fallbackValue,
     manageLabel,
     onOpenAccountManager,
+    subscriptionCopy,
+    subscriptionFeatures,
+    subscriptionPlans,
+    translate,
+    currentPlanId,
     t.prefAccountTitle,
     t.prefKeyboardTitle,
     t.prefPersonalizationTitle,
@@ -241,6 +585,7 @@ function usePreferenceSections({ initialSectionId, onOpenAccountManager }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
+    t.settingsTabSubscription,
     user?.email,
     user?.phone,
     user?.username,
