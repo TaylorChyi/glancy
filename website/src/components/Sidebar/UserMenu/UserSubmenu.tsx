@@ -153,8 +153,9 @@ const UserSubmenu = forwardRef<UserSubmenuHandle, UserSubmenuProps>(
         style={{ top }}
         role="menu"
         aria-hidden={!open}
-        onMouseEnter={onPointerEnter}
-        onMouseLeave={onPointerLeave}
+        // 子菜单保持与父级一致的 Pointer 事件，以统一处理多输入设备的悬浮与离开判定。
+        onPointerEnter={onPointerEnter}
+        onPointerLeave={onPointerLeave}
         onKeyDown={handleKeyDown}
       >
         <div className={styles["submenu-list"]}>

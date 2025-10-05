@@ -535,8 +535,8 @@ function UserMenu({
         aria-hidden={!open}
         tabIndex={-1}
         onKeyDown={handleMenuKeyDown}
-        onMouseEnter={cancelScheduledClose}
-        onMouseLeave={() => {
+        onPointerEnter={cancelScheduledClose}
+        onPointerLeave={() => {
           if (submenuState.id) {
             scheduleSubmenuClose();
           }
@@ -560,7 +560,9 @@ function UserMenu({
                   closeSubmenu();
                 }
               },
-              onMouseEnter: () => {
+              // 统一切换到 Pointer 事件，避免在 pen/touch 等输入设备下遗漏悬浮态，
+              // 解决“帮助”项悬浮不触发子菜单的问题；Mouse 事件由 Pointer 兼容层兜底。
+              onPointerEnter: () => {
                 setActiveIndex(interactiveIndex);
                 if (item.kind === "submenu") {
                   scheduleSubmenuOpen(item, interactiveIndex);
@@ -568,7 +570,7 @@ function UserMenu({
                   closeSubmenu();
                 }
               },
-              onMouseLeave: () => {
+              onPointerLeave: () => {
                 if (item.kind === "submenu") {
                   scheduleSubmenuClose();
                 }
