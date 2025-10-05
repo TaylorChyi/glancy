@@ -10,7 +10,7 @@
  * 演进与TODO：
  *  - TODO: 后续可接入 SWR/React Query 等数据层以实现乐观更新与缓存驱逐策略。
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useCallback, useEffect, useMemo, useReducer } from "react";
 import PropTypes from "prop-types";
 import { useKeyboardShortcutsApi } from "@/api/keyboardShortcuts.js";
 import { useUser } from "@/context/AppContext.jsx";
@@ -18,6 +18,7 @@ import {
   mergeShortcutLists,
   DEFAULT_SHORTCUTS,
 } from "@/utils/keyboardShortcuts.js";
+import { KEYBOARD_SHORTCUT_RESET_ACTION } from "./keyboardShortcutContextTokens.js";
 
 const KeyboardShortcutContext = createContext({
   shortcuts: [],
@@ -38,8 +39,6 @@ const ACTIONS = {
   UPDATE_SUCCESS: "update_success",
   UPDATE_FAILURE: "update_failure",
 };
-
-const GLOBAL_RESET_ACTION = "__GLOBAL_RESET__";
 
 const initialState = {
   shortcuts: [],
@@ -185,12 +184,12 @@ export function KeyboardShortcutProvider({ children }) {
     if (!userId || !token) {
       return;
     }
-    dispatch({ type: ACTIONS.UPDATE_START, action: GLOBAL_RESET_ACTION });
+    dispatch({ type: ACTIONS.UPDATE_START, action: KEYBOARD_SHORTCUT_RESET_ACTION });
     try {
       const response = await api.resetShortcuts({ token });
       dispatch({
         type: ACTIONS.UPDATE_SUCCESS,
-        action: GLOBAL_RESET_ACTION,
+        action: KEYBOARD_SHORTCUT_RESET_ACTION,
         payload: mergeShortcutLists(response?.shortcuts),
       });
     } catch (error) {
@@ -198,7 +197,7 @@ export function KeyboardShortcutProvider({ children }) {
       const message = error?.message ?? "Failed to reset shortcuts";
       dispatch({
         type: ACTIONS.UPDATE_FAILURE,
-        action: GLOBAL_RESET_ACTION,
+        action: KEYBOARD_SHORTCUT_RESET_ACTION,
         errorMessage: message,
       });
       throw error;
@@ -230,10 +229,4 @@ KeyboardShortcutProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export function useKeyboardShortcutContext() {
-  return useContext(KeyboardShortcutContext);
-}
-
 export default KeyboardShortcutContext;
-
-export const KEYBOARD_SHORTCUT_RESET_ACTION = GLOBAL_RESET_ACTION;

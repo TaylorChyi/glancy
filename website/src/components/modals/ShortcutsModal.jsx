@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import BaseModal from "./BaseModal.jsx";
 import styles from "./ShortcutsModal.module.css";
-import { useLanguage } from "@/context";
+import { useLanguage, useKeyboardShortcutContext } from "@/context";
 import { SettingsSurface } from "@/components";
-import { useKeyboardShortcutContext } from "@/context/KeyboardShortcutContext.jsx";
 import {
   DEFAULT_SHORTCUTS,
   formatShortcutKeys,

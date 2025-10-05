@@ -12,11 +12,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { useLanguage } from "@/context";
-import {
-  useKeyboardShortcutContext,
-  KEYBOARD_SHORTCUT_RESET_ACTION,
-} from "@/context/KeyboardShortcutContext.jsx";
+import { useLanguage, useKeyboardShortcutContext, KEYBOARD_SHORTCUT_RESET_ACTION } from "@/context";
 import {
   captureKeysFromEvent,
   formatShortcutKeys,
