@@ -51,6 +51,13 @@ export const COPY_FEEDBACK_STATES = Object.freeze({
 
 const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
 
+// 确保词条统一走修剪流程，避免出现空白历史条目并便于后续复用。
+const coerceResolvedTerm = (candidate, fallback) => {
+  if (typeof candidate !== "string") return fallback;
+  const trimmed = candidate.trim();
+  return trimmed || fallback;
+};
+
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
@@ -306,11 +313,11 @@ export function useDictionaryExperience() {
 
   const applyRecord = useCallback(
     (termKey, record, preferredVersionId) => {
-      if (!termKey || !record || !Array.isArray(record.versions)) return false;
+      if (!termKey || !record || !Array.isArray(record.versions)) return null;
       if (record.versions.length === 0) {
         setVersions([]);
         setActiveVersionId(null);
-        return false;
+        return null;
       }
       const fallbackId =
         record.versions[0]?.id ?? record.versions[0]?.versionId ?? null;
@@ -331,7 +338,7 @@ export function useDictionaryExperience() {
           setCurrentTerm(resolvedEntry.term);
         }
       }
-      return !!resolvedEntry;
+      return resolvedEntry ?? null;
     },
     [wordStoreApi],
   );
@@ -382,17 +389,22 @@ export function useDictionaryExperience() {
         setActiveVersionId(null);
       }
 
+      let resolvedTerm = normalized;
+
       if (!forceNew && versionId) {
         const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
         if (cachedRecord) {
           const hydrated = applyRecord(cacheKey, cachedRecord, versionId);
           if (hydrated) {
+            resolvedTerm = coerceResolvedTerm(hydrated.term, normalized);
             setLoading(false);
             clearActiveLookup();
             return {
               status: "success",
-              term: normalized,
+              term: resolvedTerm,
+              queriedTerm: normalized,
               detectedLanguage: resolvedLanguage,
+              flavor: targetFlavor,
             };
           }
         }
@@ -430,19 +442,32 @@ export function useDictionaryExperience() {
 
         const record = wordStoreApi.getState().getRecord?.(cacheKey);
         if (record) {
-          applyRecord(cacheKey, record, record.activeVersionId);
+          const hydratedRecord = applyRecord(
+            cacheKey,
+            record,
+            record.activeVersionId,
+          );
+          if (hydratedRecord?.term) {
+            resolvedTerm = coerceResolvedTerm(
+              hydratedRecord.term,
+              normalized,
+            );
+          }
         } else if (parsedEntry) {
           setEntry(parsedEntry);
           setFinalText(parsedEntry.markdown ?? "");
+          resolvedTerm = coerceResolvedTerm(parsedEntry.term, normalized);
         } else {
           setFinalText(preview);
         }
 
-        setCurrentTerm(normalized);
+        const detectedLanguage = detected ?? resolvedLanguage;
+        setCurrentTerm(resolvedTerm);
         return {
           status: "success",
-          term: normalized,
-          detectedLanguage: detected ?? resolvedLanguage,
+          term: resolvedTerm,
+          queriedTerm: normalized,
+          detectedLanguage,
           flavor: targetFlavor,
         };
       } catch (error) {
@@ -496,8 +521,10 @@ export function useDictionaryExperience() {
 
       const result = await executeLookup(inputValue);
       if (result.status === "success") {
+        const historyTerm =
+          result.term ?? result.queriedTerm ?? inputValue;
         addHistory(
-          inputValue,
+          historyTerm,
           user,
           result.detectedLanguage,
           result.flavor ?? dictionaryFlavor,

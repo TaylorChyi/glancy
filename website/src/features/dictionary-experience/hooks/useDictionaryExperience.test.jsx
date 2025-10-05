@@ -163,6 +163,41 @@ describe("useDictionaryExperience", () => {
   });
 
   /**
+   * 测试目标：当模型返回纠正后的词条时，历史写入应以纠正词条为准。
+   * 前置条件：mockStreamWord 产出 term 为 "student" 的词条数据，用户输入 "studdent"。
+   * 步骤：
+   *  1) 设置输入框文本为 "studdent"；
+   *  2) 调用 handleSend 触发查询流程；
+   * 断言：
+   *  - addHistory 首个参数为 "student"；
+   *  - addHistory 仅被调用一次。
+   * 边界/异常：
+   *  - 若模型未返回 term，应退回原始输入（此用例不覆盖）。
+   */
+  it("writes corrected term into history when lookup normalizes input", async () => {
+    const correctedEntry = { term: "student", markdown: "definition" };
+    mockStreamWord.mockImplementation(
+      () =>
+        (async function* () {
+          yield { chunk: JSON.stringify(correctedEntry), language: "ENGLISH" };
+        })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("studdent");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(mockHistoryApi.addHistory).toHaveBeenCalledTimes(1);
+    expect(mockHistoryApi.addHistory.mock.calls[0][0]).toBe("student");
+  });
+
+  /**
    * 测试路径：查询过程中卸载组件，需调用 AbortController.abort 并避免卸载后 setState。
    * 步骤：启动查询但不等待结束，随后立即卸载 Hook。
    * 断言：AbortController.abort 被调用一次，且控制台无卸载后更新的警告。
