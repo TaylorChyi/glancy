@@ -47,6 +47,11 @@ export default {
   settingsTabPersonalization: "Personalization",
   settingsPersonalizationDescription:
     "Describe your background so answers feel bespoke.",
+  loading: "Loading...",
+  settingsPersonalizationEmpty:
+    "Add a few notes about yourself to tailor every response.",
+  settingsPersonalizationLoadError:
+    "We couldn't load your personalization details. Please try again shortly.",
   settingsEnableCustomization: "Enable customization",
   settingsOccupation: "Occupation",
   settingsOccupationPlaceholder: "e.g. Student",

@@ -43,6 +43,9 @@ export default {
   settingsTabPersonalization: "个性化",
   settingsPersonalizationDescription:
     "描述你的身份与期待，生成更贴合的回答语气。",
+  loading: "加载中...",
+  settingsPersonalizationEmpty: "完善画像信息以便回答更贴近你。",
+  settingsPersonalizationLoadError: "个性化详情暂时无法加载，请稍后再试。",
   settingsEnableCustomization: "启用个性化",
   settingsOccupation: "职业身份",
   settingsOccupationPlaceholder: "例如 学生",

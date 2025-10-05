@@ -7,6 +7,7 @@ const mockUseTheme = jest.fn();
 const mockUseKeyboardShortcutContext = jest.fn();
 const mockUseAvatarEditorWorkflow = jest.fn();
 const mockUseUsersApi = jest.fn();
+const mockUseProfilesApi = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -25,8 +26,14 @@ jest.unstable_mockModule("@/api/users.js", () => ({
   useUsersApi: mockUseUsersApi,
 }));
 
+jest.unstable_mockModule("@/api/profiles.js", () => ({
+  useProfilesApi: mockUseProfilesApi,
+}));
+
 let usePreferenceSections;
 let translations;
+let fetchProfileMock;
+let consoleErrorStub;
 
 beforeAll(async () => {
   ({ default: usePreferenceSections } = await import(
@@ -47,6 +54,9 @@ const createTranslations = (overrides = {}) => ({
   settingsTabPersonalization: "Personalization",
   settingsPersonalizationDescription: "Personalization summary",
   prefPersonalizationTitle: "Personal context",
+  loading: "Loading...",
+  settingsPersonalizationEmpty: "No personalization yet",
+  settingsPersonalizationLoadError: "Unable to load personalization",
   settingsTabData: "Data controls",
   settingsDataDescription: "Data summary",
   settingsDataNotice: "Data notice",
@@ -162,6 +172,8 @@ beforeEach(() => {
   mockUseKeyboardShortcutContext.mockReset();
   mockUseAvatarEditorWorkflow.mockReset();
   mockUseUsersApi.mockReset();
+  mockUseProfilesApi.mockReset();
+  consoleErrorStub = jest.spyOn(console, "error").mockImplementation(() => {});
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -195,6 +207,21 @@ beforeEach(() => {
   mockUseUsersApi.mockReturnValue({
     updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
   });
+  fetchProfileMock = jest.fn().mockResolvedValue({
+    job: "Engineer",
+    goal: "B2",
+    currentAbility: "B1",
+    education: "Bachelor",
+    interest: "AI",
+    customSections: [],
+  });
+  mockUseProfilesApi.mockReturnValue({ fetchProfile: fetchProfileMock });
+});
+
+afterEach(() => {
+  if (consoleErrorStub) {
+    consoleErrorStub.mockRestore();
+  }
 });
 
 /**
@@ -211,88 +238,164 @@ beforeEach(() => {
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
  */
-test("Given default sections When reading blueprint Then general leads navigation", () => {
-  const { result } = renderHook(() =>
-    usePreferenceSections({
-      initialSectionId: undefined,
-    }),
-  );
+test(
+  "Given default sections When reading blueprint Then general leads navigation",
+  async () => {
+    const { result } = renderHook(() =>
+      usePreferenceSections({
+        initialSectionId: undefined,
+      }),
+    );
 
-  expect(result.current.sections.map((section) => section.id)).toEqual([
-    "general",
-    "personalization",
-    "data",
-    "keyboard",
-    "account",
-    "subscription",
-  ]);
-  expect(
-    result.current.sections.every(
-      (section) => !Object.prototype.hasOwnProperty.call(section, "summary"),
-    ),
-  ).toBe(true);
-  expect(result.current.activeSectionId).toBe("general");
-  expect(result.current.panel.headingId).toBe("general-section-heading");
-  expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-  expect(result.current.panel.modalHeadingId).toBe(
-    "settings-modal-fallback-heading",
-  );
-  expect(result.current.panel.modalHeadingText).toBe("General");
-  const accountSection = result.current.sections.find(
-    (section) => section.id === "account",
-  );
-  expect(accountSection).toBeDefined();
-  expect(accountSection.Component).toBeDefined();
-  expect(accountSection.componentProps.identity.displayName).toBe("amy");
-  expect(accountSection.componentProps.identity.changeLabel).toBe(
-    translations.changeAvatar,
-  );
-  expect(accountSection.componentProps.identity.avatarAlt).toBe(
-    translations.prefAccountTitle,
-  );
-  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
-    "function",
-  );
-  expect(accountSection.componentProps.identity.isUploading).toBe(false);
-  expect(
-    typeof accountSection.componentProps.fields[0].renderValue,
-  ).toBe("function");
-  expect(accountSection.componentProps.bindings.title).toBe(
-    translations.settingsAccountBindingTitle,
-  );
-  expect(accountSection.componentProps.bindings.items).toHaveLength(3);
-  expect(
-    accountSection.componentProps.bindings.items.map((item) => item.name),
-  ).toEqual([
-    translations.settingsAccountBindingApple,
-    translations.settingsAccountBindingGoogle,
-    translations.settingsAccountBindingWeChat,
-  ]);
-  expect(
-    accountSection.componentProps.bindings.items.every(
-      (item) =>
-        item.status === translations.settingsAccountBindingStatusUnlinked &&
-        item.actionLabel ===
-          translations.settingsAccountBindingActionPlaceholder,
-    ),
-  ).toBe(true);
-  expect(result.current.avatarEditor).toBeDefined();
-  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
-    "function",
-  );
-  expect(result.current.avatarEditor.modalProps.open).toBe(false);
-  const subscriptionSection = result.current.sections.find(
-    (section) => section.id === "subscription",
-  );
-  expect(subscriptionSection).toBeDefined();
-  expect(subscriptionSection.Component).toBeDefined();
-  expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
-  expect(
-    subscriptionSection.componentProps.planCards.some(
-      (card) => card.id === "PLUS" && card.state === "current",
-    ),
-  ).toBe(true);
-});
+    await waitFor(() => {
+      expect(fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
+    });
+
+    await waitFor(() => {
+      const personalizationSection = result.current.sections.find(
+        (section) => section.id === "personalization",
+      );
+      expect(personalizationSection.componentProps.state.status).toBe("ready");
+    });
+
+    expect(result.current.sections.map((section) => section.id)).toEqual([
+      "general",
+      "personalization",
+      "data",
+      "keyboard",
+      "account",
+      "subscription",
+    ]);
+    expect(result.current.activeSectionId).toBe("general");
+    expect(result.current.panel.headingId).toBe("general-section-heading");
+    expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
+    expect(result.current.panel.modalHeadingId).toBe(
+      "settings-modal-fallback-heading",
+    );
+    expect(result.current.panel.modalHeadingText).toBe("General");
+    const accountSection = result.current.sections.find(
+      (section) => section.id === "account",
+    );
+    expect(accountSection).toBeDefined();
+    expect(accountSection.Component).toBeDefined();
+    expect(accountSection.componentProps.identity.displayName).toBe("amy");
+    expect(accountSection.componentProps.identity.changeLabel).toBe(
+      translations.changeAvatar,
+    );
+    expect(accountSection.componentProps.identity.avatarAlt).toBe(
+      translations.prefAccountTitle,
+    );
+    expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+      "function",
+    );
+    expect(accountSection.componentProps.identity.isUploading).toBe(false);
+    expect(
+      typeof accountSection.componentProps.fields[0].renderValue,
+    ).toBe("function");
+    expect(accountSection.componentProps.bindings.title).toBe(
+      translations.settingsAccountBindingTitle,
+    );
+    expect(accountSection.componentProps.bindings.items).toHaveLength(3);
+    expect(
+      accountSection.componentProps.bindings.items.map((item) => item.name),
+    ).toEqual([
+      translations.settingsAccountBindingApple,
+      translations.settingsAccountBindingGoogle,
+      translations.settingsAccountBindingWeChat,
+    ]);
+    expect(
+      accountSection.componentProps.bindings.items.every(
+        (item) =>
+          item.status === translations.settingsAccountBindingStatusUnlinked &&
+          item.actionLabel ===
+            translations.settingsAccountBindingActionPlaceholder,
+      ),
+    ).toBe(true);
+    expect(result.current.avatarEditor).toBeDefined();
+    expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+      "function",
+    );
+    expect(result.current.avatarEditor.modalProps.open).toBe(false);
+    const subscriptionSection = result.current.sections.find(
+      (section) => section.id === "subscription",
+    );
+    expect(subscriptionSection).toBeDefined();
+    expect(subscriptionSection.Component).toBeDefined();
+    expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
+    expect(
+      subscriptionSection.componentProps.planCards.some(
+        (card) => card.id === "PLUS" && card.state === "current",
+      ),
+    ).toBe(true);
+    const personalizationSection = result.current.sections.find(
+      (section) => section.id === "personalization",
+    );
+    expect(personalizationSection.componentProps.copy.emptyLabel).toBe(
+      translations.settingsPersonalizationEmpty,
+    );
+    expect(
+      personalizationSection.componentProps.state.snapshot.summary.includes(
+        "Engineer",
+      ),
+    ).toBe(true);
+  },
+);
+
+/**
+ * 测试目标：画像请求失败后暴露 error 状态并可通过 onRetry 重试。
+ * 前置条件：首次请求抛出异常。
+ * 步骤：
+ *  1) 渲染 Hook；
+ *  2) 等待状态变为 error；
+ *  3) 调用 onRetry；
+ * 断言：
+ *  - onRetry 触发后再次调用 fetchProfile；
+ *  - 状态最终回到 ready。
+ * 边界/异常：
+ *  - 若重试未恢复则断言失败。
+ */
+test(
+  "Given personalization fetch fails When retry invoked Then status recovers",
+  async () => {
+    fetchProfileMock
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce({
+        job: "Writer",
+        goal: "C1",
+        currentAbility: "B2",
+        education: "Master",
+        interest: "Literature",
+        customSections: [],
+      });
+
+    const { result } = renderHook(() =>
+      usePreferenceSections({ initialSectionId: undefined }),
+    );
+
+    await waitFor(() => {
+      const personalizationSection = result.current.sections.find(
+        (section) => section.id === "personalization",
+      );
+      expect(personalizationSection.componentProps.state.status).toBe("error");
+    });
+
+    await act(async () => {
+      const personalizationSection = result.current.sections.find(
+        (section) => section.id === "personalization",
+      );
+      await personalizationSection.componentProps.onRetry();
+    });
+
+    await waitFor(() => {
+      const personalizationSection = result.current.sections.find(
+        (section) => section.id === "personalization",
+      );
+      expect(personalizationSection.componentProps.state.status).toBe("ready");
+    });
+
+    expect(fetchProfileMock).toHaveBeenCalledTimes(2);
+  },
+);
 
 /**
  * 测试目标：当用户仅暴露 member 标记时，订阅蓝图应回退到 PLUS 套餐。

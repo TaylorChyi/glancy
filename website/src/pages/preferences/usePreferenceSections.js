@@ -15,6 +15,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -29,6 +30,16 @@ import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.
 import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
 import UsernameEditor from "@/components/Profile/UsernameEditor/index.jsx";
 import { useUsersApi } from "@/api/users.js";
+import { useProfilesApi } from "@/api/profiles.js";
+import {
+  mapResponseToProfileDetails,
+  createEmptyProfileDetails,
+} from "@/pages/profile/profileDetailsModel.js";
+import {
+  createPersonalizationInitialState,
+  personalizationReducer,
+  resolveSnapshotFromState,
+} from "./sections/personalizationModel.js";
 
 const createIconConfig = (name) =>
   Object.freeze({
@@ -166,6 +177,8 @@ function usePreferenceSections({ initialSectionId }) {
   const { user, setUser } = userStore ?? {};
   const usersApi = useUsersApi();
   const updateUsernameRequest = usersApi?.updateUsername;
+  const profilesApi = useProfilesApi();
+  const fetchProfile = profilesApi?.fetchProfile;
 
   const avatarEditorLabels = useMemo(
     () => ({
@@ -201,6 +214,12 @@ function usePreferenceSections({ initialSectionId }) {
     uploaderOptions: { onError: handleAvatarUploadError },
   });
 
+  const [personalizationState, dispatchPersonalization] = useReducer(
+    personalizationReducer,
+    undefined,
+    createPersonalizationInitialState,
+  );
+
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
   const hasDescription = Boolean(description && description.trim());
@@ -231,6 +250,87 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountBindingStatusUnlinked ?? "Not linked";
   const accountBindingActionLabel =
     t.settingsAccountBindingActionPlaceholder ?? "Coming soon";
+
+  const personalizationCopy = useMemo(
+    () => ({
+      loadingLabel: t.loading ?? t.saving ?? "Loading...",
+      errorLabel:
+        t.settingsPersonalizationLoadError ??
+        t.fail ??
+        "Unable to load personalization",
+      retryLabel: t.refresh ?? "Refresh",
+      emptyLabel: t.settingsPersonalizationEmpty ?? fallbackValue,
+      summaryLabel: t.prefPersonalizationTitle ?? "Personal context",
+    }),
+    [
+      fallbackValue,
+      t.fail,
+      t.loading,
+      t.prefPersonalizationTitle,
+      t.refresh,
+      t.saving,
+      t.settingsPersonalizationEmpty,
+      t.settingsPersonalizationLoadError,
+    ],
+  );
+
+  const requestPersonalization = useCallback(
+    async ({ signal, withLoading = true } = {}) => {
+      const abortRequested = () => Boolean(signal?.aborted);
+      const safeDispatch = (action) => {
+        if (!abortRequested()) {
+          dispatchPersonalization(action);
+        }
+      };
+
+      if (!user?.token || typeof fetchProfile !== "function") {
+        safeDispatch({
+          type: "hydrate",
+          details: createEmptyProfileDetails(),
+        });
+        return;
+      }
+
+      if (withLoading) {
+        safeDispatch({ type: "loading" });
+      }
+
+      try {
+        const response = await fetchProfile({ token: user.token });
+        if (abortRequested()) {
+          return;
+        }
+        const details = mapResponseToProfileDetails(response);
+        safeDispatch({ type: "success", details });
+      } catch (error) {
+        console.error("Failed to load personalization details", error);
+        if (abortRequested()) {
+          return;
+        }
+        safeDispatch({ type: "failure", error });
+      }
+    },
+    [dispatchPersonalization, fetchProfile, user?.id, user?.token],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    requestPersonalization({ signal: controller.signal });
+    return () => controller.abort();
+  }, [requestPersonalization]);
+
+  const handlePersonalizationRetry = useCallback(() => {
+    requestPersonalization({ withLoading: true });
+  }, [requestPersonalization]);
+
+  const personalizationSnapshot = useMemo(
+    () =>
+      resolveSnapshotFromState(personalizationState, {
+        translations: t,
+        fallbackValue,
+      }),
+    [fallbackValue, personalizationState, t],
+  );
 
   const subscriptionSection = useMemo(
     () =>
@@ -460,6 +560,13 @@ function usePreferenceSections({ initialSectionId }) {
         componentProps: {
           title: personalizationLabel,
           message: personalizationMessage,
+          state: {
+            status: personalizationState.status,
+            snapshot: personalizationSnapshot,
+            error: personalizationState.error,
+          },
+          copy: personalizationCopy,
+          onRetry: handlePersonalizationRetry,
         },
         icon: SECTION_ICON_REGISTRY.personalization,
       },
@@ -535,6 +642,11 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
+    personalizationCopy,
+    personalizationSnapshot,
+    personalizationState.error,
+    personalizationState.status,
+    handlePersonalizationRetry,
     subscriptionSection,
     handleAvatarSelection,
     isAvatarUploading,
