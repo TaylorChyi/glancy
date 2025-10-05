@@ -20,20 +20,24 @@
   aspect-ratio: 682 / 454;
   display: grid;
   place-items: center;
-  background: transparent; /* 移除旧版底色，避免与渐变冲突。 */
-  border-radius: var(--radius-xl);
-  box-shadow: var(
-    --loader-symbol-shadow,
-    0 24px 48px color-mix(in srgb, var(--shadow-color) 35%, transparent)
-  );
-  isolation: isolate; /* 确保帧间叠加时阴影不受混合干扰。 */
+
+  /*
+   * 设计对齐：等待动画素材需裸呈不带底板，因此移除背景、圆角、阴影等装饰性元素。
+   * 影响：后续若需恢复容器化呈现，可改为引入独立包裹层，避免污染素材本身。
+   */
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  isolation: isolate;
 }
 
 .frame {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   inline-size: 100%;
-  block-size: 100%;
+  block-size: auto;
   display: block;
   object-fit: contain;
   opacity: 0;
@@ -45,6 +49,11 @@
   animation-direction: alternate;
   animation-fill-mode: both;
   transform-origin: center;
+
+  /*
+   * 居中策略：利用 50% 位移 + translate 校准基准，配合高度自适应保证三帧素材等高无拉伸。
+   */
+  transform: translate(-50%, -50%);
   will-change: opacity, transform;
 }
 
@@ -63,19 +72,19 @@
 @keyframes waiting-animation-frame-one {
   0% {
     opacity: 0;
-    transform: scale(0.92);
+    transform: translate(-50%, -50%) scale(0.92);
   }
 
   12%,
   24% {
     opacity: 1;
-    transform: scale(1.02);
+    transform: translate(-50%, -50%) scale(1.02);
   }
 
   40%,
   100% {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translate(-50%, -50%) scale(0.9);
   }
 }
 
@@ -83,19 +92,19 @@
   0%,
   28% {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translate(-50%, -50%) scale(0.9);
   }
 
   38%,
   60% {
     opacity: 1;
-    transform: scale(1.04);
+    transform: translate(-50%, -50%) scale(1.04);
   }
 
   72%,
   100% {
     opacity: 0;
-    transform: scale(0.94);
+    transform: translate(-50%, -50%) scale(0.94);
   }
 }
 
@@ -103,18 +112,18 @@
   0%,
   60% {
     opacity: 0;
-    transform: scale(0.88);
+    transform: translate(-50%, -50%) scale(0.88);
   }
 
   76%,
   88% {
     opacity: 1;
-    transform: scale(1.06);
+    transform: translate(-50%, -50%) scale(1.06);
   }
 
   100% {
     opacity: 0;
-    transform: scale(0.98);
+    transform: translate(-50%, -50%) scale(0.98);
   }
 }
 
