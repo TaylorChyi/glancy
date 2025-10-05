@@ -1,4 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+
+const stripZeroWidth = (value) => value.replace(/\u200B/g, "");
+const getButtonByLabel = (label) =>
+  screen.getByRole("button", {
+    name: (value) => stripZeroWidth(value) === label,
+  });
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 
 /**
@@ -6,7 +12,7 @@ import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
  */
 test("renders GFM syntax", () => {
   render(<MarkdownRenderer>{"~~gone~~"}</MarkdownRenderer>);
-  const del = screen.getByText("gone");
+  const del = screen.getByText((content) => stripZeroWidth(content) === "gone");
   expect(del.tagName).toBe("DEL");
 });
 
@@ -22,7 +28,7 @@ test("wraps second level headings into expandable sections", () => {
   const markdown = "## Overview\n\nParagraph";
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
 
-  const toggle = screen.getByRole("button", { name: "Overview" });
+  const toggle = getButtonByLabel("Overview");
   expect(toggle).toHaveAttribute("aria-expanded", "true");
 
   fireEvent.click(toggle);
@@ -36,9 +42,78 @@ test("nests collapsible sections for deeper headings", () => {
   const markdown = "## Parent\n\n### Child\n\nDetail";
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
 
-  const parentToggle = screen.getByRole("button", { name: "Parent" });
-  const childToggle = screen.getByRole("button", { name: "Child" });
+  const parentToggle = getButtonByLabel("Parent");
+  const childToggle = getButtonByLabel("Child");
 
   expect(parentToggle).toHaveAttribute("aria-expanded", "true");
   expect(childToggle).toHaveAttribute("aria-expanded", "false");
+});
+
+/**
+ * 测试目标：英文长词标题在折叠摘要内被注入零宽断行符，避免宽度溢出。
+ * 前置条件：提供无空格的英文词组作为二级标题。
+ * 步骤：
+ *  1) 渲染包含长词标题的 Markdown。
+ *  2) 获取折叠按钮节点。
+ * 断言：
+ *  - 按钮名保持原始字符串。
+ *  - 文本内容包含零宽空格作为断行点。
+ * 边界/异常：
+ *  - 长词应至少插入一个可选断点。
+ */
+test("injects break opportunities for long english headings", () => {
+  const markdown = "## SightseeingExperienceHighlights\n\nBody";
+  render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  const toggle = screen.getByRole("button", {
+    name: (value) => stripZeroWidth(value) === "SightseeingExperienceHighlights",
+  });
+  expect(stripZeroWidth(toggle.getAttribute("aria-label") ?? toggle.textContent)).toBe(
+    "SightseeingExperienceHighlights",
+  );
+  expect(toggle.textContent).toContain("\u200B");
+});
+
+/**
+ * 测试目标：多字节语言（中文）标题亦能注入零宽断行符，保持可读性。
+ * 前置条件：提供含标点的中文标题。
+ * 步骤：
+ *  1) 渲染包含中文标题的 Markdown。
+ *  2) 定位折叠按钮。
+ * 断言：
+ *  - 折叠按钮的辅助名称与原文一致。
+ *  - 标题内部存在至少一个零宽空格。
+ * 边界/异常：
+ *  - 中文字符间均应具备断行能力。
+ */
+test("injects break opportunities for cjk headings", () => {
+  const markdown = "## 单词：观光体验合集\n\n内容";
+  render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  const toggle = screen.getByRole("button", {
+    name: (value) => stripZeroWidth(value) === "单词：观光体验合集",
+  });
+  expect(stripZeroWidth(toggle.getAttribute("aria-label") ?? toggle.textContent)).toBe(
+    "单词：观光体验合集",
+  );
+  expect(toggle.textContent).toContain("\u200B");
+});
+
+/**
+ * 测试目标：代码块内文本不应被插入断行点，保证语法原样输出。
+ * 前置条件：Markdown 含多行代码块。
+ * 步骤：
+ *  1) 渲染代码块 Markdown。
+ *  2) 查询 `<code>` 节点。
+ * 断言：
+ *  - 代码节点下不存在 `<wbr>`。
+ * 边界/异常：
+ *  - 若解析失败，应快速定位具体代码块。
+ */
+test("skips break injection inside code blocks", () => {
+  const markdown = "```js\nconst sightseeing = true;\n```";
+  render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  const code = screen.getByText("const sightseeing = true;");
+  expect(code.textContent).not.toContain("\u200B");
 });
