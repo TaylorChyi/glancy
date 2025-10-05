@@ -501,12 +501,20 @@
   transition: border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.subscription-action-danger {
+  border-color: color-mix(in srgb, var(--color-danger) 78%, transparent);
+}
+
 .subscription-action:hover {
   border-color: color-mix(
     in srgb,
     var(--preferences-panel-ring) 65%,
     transparent
   );
+}
+
+.subscription-action-danger:hover {
+  border-color: var(--color-danger);
 }
 
 .subscription-matrix {
