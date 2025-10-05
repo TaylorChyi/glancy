@@ -71,10 +71,13 @@ export default {
   settingsTabAccount: "Account",
   settingsAccountDescription:
     "Review and safeguard the basics that identify you in Glancy.",
+  settingsAccountAvatarLabel: "Change avatar",
   settingsManageProfile: "Manage profile",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
+  settingsAccountEmailUnbindAction: "Unlink email",
+  settingsAccountPhoneRebindAction: "Change phone",
   settingsEmptyValue: "Not set",
   saving: "Saving...",
   saveButton: "Save changes",

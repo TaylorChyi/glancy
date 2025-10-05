@@ -43,16 +43,20 @@ function AccountSection({
     [identity],
   );
 
-  const primaryField = fields && fields.length > 0 ? fields[0] : null;
-  const otherFields = fields && fields.length > 1 ? fields.slice(1) : [];
-
   const normalizedIdentity = useMemo(
     () => ({
+      label: identity?.label ?? identity?.changeLabel ?? title,
       displayName: identity?.displayName ?? "",
       changeLabel: identity?.changeLabel ?? "Change avatar",
       avatarAlt: identity?.avatarAlt ?? title,
     }),
-    [identity?.avatarAlt, identity?.changeLabel, identity?.displayName, title],
+    [
+      identity?.avatarAlt,
+      identity?.changeLabel,
+      identity?.displayName,
+      identity?.label,
+      title,
+    ],
   );
 
   return (
@@ -67,12 +71,12 @@ function AccountSection({
         <div className={styles["section-divider"]} aria-hidden="true" />
       </div>
       <dl className={styles.details}>
-        {primaryField ? (
-          <div
-            key={primaryField.id}
-            className={`${styles["detail-row"]} ${styles["identity-row"]}`}
+        <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
+          <dt className={styles["identity-label"]}>{normalizedIdentity.label}</dt>
+          <dd
+            className={`${styles["detail-value"]} ${styles["identity-value"]}`}
           >
-            <div className={styles["identity-avatar"]}>
+            <div className={styles["identity-figure"]}>
               <Avatar
                 width={AVATAR_SIZE}
                 height={AVATAR_SIZE}
@@ -80,30 +84,45 @@ function AccountSection({
                 alt={normalizedIdentity.avatarAlt}
                 className={styles["identity-avatar-image"]}
               />
-              <input
-                id={avatarInputId}
-                ref={avatarInputRef}
-                className={styles["avatar-input"]}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-              />
-              <button
-                type="button"
-                className={styles["avatar-trigger"]}
-                onClick={handleAvatarTrigger}
-              >
-                {normalizedIdentity.changeLabel}
-              </button>
+              <span className={styles["identity-display"]}>
+                {normalizedIdentity.displayName}
+              </span>
             </div>
-            <dt className={styles["identity-label"]}>{primaryField.label}</dt>
-            <dd className={styles["identity-value"]}>{primaryField.value}</dd>
+          </dd>
+          <div className={styles["detail-action"]}>
+            <input
+              id={avatarInputId}
+              ref={avatarInputRef}
+              className={styles["avatar-input"]}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+            />
+            <button
+              type="button"
+              className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+              onClick={handleAvatarTrigger}
+            >
+              {normalizedIdentity.changeLabel}
+            </button>
           </div>
-        ) : null}
-        {otherFields.map((field) => (
+        </div>
+        {fields.map((field) => (
           <div key={field.id} className={styles["detail-row"]}>
             <dt className={styles["detail-label"]}>{field.label}</dt>
             <dd className={styles["detail-value"]}>{field.value}</dd>
+            <div className={styles["detail-action"]}>
+              {field.action ? (
+                <button
+                  type="button"
+                  className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+                  aria-disabled={field.action.disabled}
+                  disabled={field.action.disabled}
+                >
+                  {field.action.label}
+                </button>
+              ) : null}
+            </div>
           </div>
         ))}
       </dl>
@@ -143,10 +162,16 @@ AccountSection.propTypes = {
       id: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
       value: PropTypes.string.isRequired,
+      action: PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        label: PropTypes.string.isRequired,
+        disabled: PropTypes.bool,
+      }),
     }),
   ).isRequired,
   headingId: PropTypes.string.isRequired,
   identity: PropTypes.shape({
+    label: PropTypes.string,
     displayName: PropTypes.string.isRequired,
     changeLabel: PropTypes.string.isRequired,
     avatarAlt: PropTypes.string,

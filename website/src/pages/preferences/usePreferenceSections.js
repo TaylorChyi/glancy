@@ -61,6 +61,57 @@ const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
 
 /**
  * 意图：
+ *  - 统一手机号的国际区号展示策略，保证偏好设置与后续账户模块风格一致。
+ * 输入：
+ *  - rawPhone: 原始手机号字符串，可能包含空格或分隔符；
+ *  - fallbackValue: 当手机号缺失时展示的占位文案；
+ *  - defaultCode: 缺失国际区号时自动补全的默认区号。
+ * 输出：
+ *  - 形如“+86 13800000000”的字符串或占位文案。
+ * 流程：
+ *  1) 若缺失手机号直接返回占位；
+ *  2) 若存在国际区号，提取首段 `+` 开头的数字；
+ *  3) 去除区号后的分隔符，仅保留数字并保留一个空格分隔。
+ * 错误处理：
+ *  - 输入非字符串或无法解析时回退到占位或原值。
+ */
+const formatPhoneDisplay = (
+  rawPhone,
+  { fallbackValue, defaultCode = "+86" } = {},
+) => {
+  const normalized = mapToDisplayValue(rawPhone, fallbackValue);
+  if (normalized === fallbackValue) {
+    return fallbackValue;
+  }
+
+  if (typeof normalized !== "string") {
+    return normalized;
+  }
+
+  const trimmed = normalized.trim();
+  if (trimmed.length === 0) {
+    return fallbackValue;
+  }
+
+  const withCode = trimmed.startsWith("+")
+    ? trimmed
+    : `${defaultCode} ${trimmed.replace(/\s+/g, " ").trim()}`;
+
+  const match = withCode.match(/^(\+\d{1,4})([\s-]?)(.*)$/);
+  if (!match) {
+    return withCode;
+  }
+
+  const [, code,, numberPart] = match;
+  const digits = numberPart.replace(/[^0-9]/g, "");
+  if (!digits) {
+    return code;
+  }
+  return `${code} ${digits}`;
+};
+
+/**
+ * 意图：
  *  - 生成偏好设置分区蓝图，统一管理激活分区、表头文案与账户数据。
  * 输入：
  *  - initialSectionId: 初始分区标识。
@@ -153,26 +204,56 @@ function usePreferenceSections({ initialSectionId }) {
 
     const accountLabel =
       t.prefAccountTitle ?? t.settingsTabAccount ?? "Account";
+    const manageProfileAction = {
+      id: "manage-profile",
+      label: t.settingsManageProfile ?? "Manage profile",
+      disabled: true,
+    };
+    const emailUnbindAction = {
+      id: "unbind-email",
+      label:
+        t.settingsAccountEmailUnbindAction ??
+        t.settingsAccountEmailUnbind ??
+        "Unbind email",
+      disabled: true,
+    };
+    const phoneRebindAction = {
+      id: "rebind-phone",
+      label: t.settingsAccountPhoneRebindAction ?? "Change phone",
+      disabled: true,
+    };
+
+    const usernameValue = mapToDisplayValue(user?.username, fallbackValue);
+    const emailValue = mapToDisplayValue(user?.email, fallbackValue);
+    const phoneValue = formatPhoneDisplay(user?.phone, {
+      fallbackValue,
+      defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
+    });
+
     const accountFields = [
       {
         id: "username",
         label: t.settingsAccountUsername ?? "Username",
-        value: mapToDisplayValue(user?.username, fallbackValue),
+        value: usernameValue,
+        action: manageProfileAction,
       },
       {
         id: "email",
         label: t.settingsAccountEmail ?? "Email",
-        value: mapToDisplayValue(user?.email, fallbackValue),
+        value: emailValue,
+        action: emailUnbindAction,
       },
       {
         id: "phone",
         label: t.settingsAccountPhone ?? "Phone",
-        value: mapToDisplayValue(user?.phone, fallbackValue),
+        value: phoneValue,
+        action: phoneRebindAction,
       },
     ];
 
     const accountIdentity = {
-      displayName: accountFields[0]?.value ?? fallbackValue,
+      label: t.settingsAccountAvatarLabel ?? changeAvatarLabel,
+      displayName: usernameValue,
       changeLabel: changeAvatarLabel,
       avatarAlt: accountLabel,
     };

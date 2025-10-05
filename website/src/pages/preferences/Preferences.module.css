@@ -769,9 +769,9 @@
 
 .detail-row {
   display: grid;
-  grid-template-columns: minmax(140px, 0.35fr) minmax(0, 1fr);
-  gap: 28px;
-  align-items: baseline;
+  grid-template-columns: minmax(140px, 0.28fr) minmax(0, 1fr) max-content;
+  gap: 24px;
+  align-items: center;
 }
 
 .detail-label {
@@ -792,17 +792,7 @@
 }
 
 .identity-row {
-  grid-template-columns: 1fr;
-  justify-items: center;
-  text-align: center;
-  gap: var(--space-4);
-}
-
-.identity-avatar {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
 }
 
 .identity-avatar-image {
@@ -869,6 +859,21 @@
   box-shadow: none;
 }
 
+.detail-action {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.detail-action-button {
+  composes: avatar-trigger;
+  white-space: nowrap;
+}
+
+.detail-action-button[disabled] {
+  cursor: not-allowed;
+}
+
 .identity-label {
   margin: 0;
   font-size: 12px;
@@ -884,6 +889,20 @@
   line-height: 1.6;
   color: var(--preferences-panel-text);
   overflow-wrap: break-word;
+  display: flex;
+  align-items: center;
+}
+
+.identity-figure {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.identity-display {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
 }
 
 .bindings {
@@ -1033,6 +1052,18 @@
 
   .identity-row {
     gap: var(--space-3);
+  }
+
+  .identity-value {
+    justify-content: flex-start;
+  }
+
+  .detail-action {
+    justify-content: flex-start;
+  }
+
+  .detail-action-button {
+    width: 100%;
   }
 
   .binding-item {
