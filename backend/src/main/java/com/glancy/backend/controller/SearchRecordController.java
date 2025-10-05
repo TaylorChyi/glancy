@@ -4,6 +4,7 @@ import com.glancy.backend.config.auth.AuthenticatedUser;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.service.SearchRecordService;
+import com.glancy.backend.service.support.SearchRecordPageRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +45,13 @@ public class SearchRecordController {
      * Get a user's search history ordered by latest first.
      */
     @GetMapping("/user")
-    public ResponseEntity<List<SearchRecordResponse>> list(@AuthenticatedUser Long userId) {
-        List<SearchRecordResponse> resp = searchRecordService.getRecords(userId);
+    public ResponseEntity<List<SearchRecordResponse>> list(
+        @AuthenticatedUser Long userId,
+        @RequestParam(name = "page", required = false) Integer page,
+        @RequestParam(name = "size", required = false) Integer size
+    ) {
+        SearchRecordPageRequest pageRequest = SearchRecordPageRequest.of(page, size);
+        List<SearchRecordResponse> resp = searchRecordService.getRecords(userId, pageRequest);
         log.info("List search records response for user {}: {}", userId, resp);
         return ResponseEntity.ok(resp);
     }

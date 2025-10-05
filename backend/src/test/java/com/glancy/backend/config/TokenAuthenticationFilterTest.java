@@ -1,11 +1,14 @@
 package com.glancy.backend.config;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
+import com.glancy.backend.service.support.SearchRecordPageRequest;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +50,9 @@ class TokenAuthenticationFilterTest {
     @Test
     void validTokenReturnsOk() throws Exception {
         when(userService.authenticateToken("good")).thenReturn(7L);
-        when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
+        when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class))).thenReturn(
+            Collections.emptyList()
+        );
 
         mockMvc.perform(get("/api/search-records/user").header("X-USER-TOKEN", "good")).andExpect(status().isOk());
     }
@@ -70,7 +75,9 @@ class TokenAuthenticationFilterTest {
     @Test
     void tokenQueryParamAccepted() throws Exception {
         when(userService.authenticateToken("tkn")).thenReturn(7L);
-        when(searchRecordService.getRecords(7L)).thenReturn(Collections.emptyList());
+        when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class))).thenReturn(
+            Collections.emptyList()
+        );
 
         mockMvc.perform(get("/api/search-records/user").param("token", "tkn")).andExpect(status().isOk());
     }

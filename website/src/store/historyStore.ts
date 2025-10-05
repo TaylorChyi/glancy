@@ -11,7 +11,7 @@ import {
 } from "@/utils/language.js";
 import { useWordStore } from "./wordStore.js";
 
-const HISTORY_LIMIT = 20;
+const HISTORY_PAGE_SIZE = 20;
 
 type SearchRecordDto = {
   id?: string | number | null;
@@ -47,7 +47,11 @@ export interface HistoryItem {
 interface HistoryState {
   history: HistoryItem[];
   error: string | null;
+  isLoading: boolean;
+  hasMore: boolean;
+  nextPage: number;
   loadHistory: (user?: User | null) => Promise<void>;
+  loadMoreHistory: (user?: User | null) => Promise<void>;
   addHistory: (
     term: string,
     user?: User | null,
@@ -167,6 +171,13 @@ const mergeHistory = (existing: HistoryItem[], incoming: HistoryItem[]) => {
   return Array.from(map.values());
 };
 
+const PAGINATION_MODES = Object.freeze({
+  RESET: "reset",
+  APPEND: "append",
+} as const);
+
+type PaginationMode = (typeof PAGINATION_MODES)[keyof typeof PAGINATION_MODES];
+
 function handleApiError(err: unknown, set: SetState) {
   if (err instanceof ApiError && err.status === 401) {
     const { clearUser } = useUserStore.getState();
@@ -174,13 +185,19 @@ function handleApiError(err: unknown, set: SetState) {
     const message = err.message?.trim()
       ? err.message
       : "登录状态已失效，请重新登录";
-    set({ error: message, history: [] });
+    set({
+      error: message,
+      history: [],
+      hasMore: false,
+      isLoading: false,
+      nextPage: 0,
+    });
     return;
   }
 
   console.error(err);
   const message = err instanceof Error ? err.message : String(err);
-  set({ error: message });
+  set({ error: message, isLoading: false });
 }
 
 const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
@@ -195,11 +212,38 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
   key: "searchHistory",
   initializer: (set, get) => {
     const wordStore = useWordStore;
+    const paginationReducers: Record<
+      PaginationMode,
+      (current: HistoryItem[], incoming: HistoryItem[]) => HistoryItem[]
+    > = {
+      [PAGINATION_MODES.RESET]: (_current, incoming) => incoming,
+      [PAGINATION_MODES.APPEND]: (current, incoming) =>
+        mergeHistory(current, incoming),
+    };
 
-    async function refreshHistory(user: User) {
+    const resolveNextPage = (length: number) => {
+      if (length <= 0) return 0;
+      return Math.ceil(length / HISTORY_PAGE_SIZE);
+    };
+
+    async function loadHistoryPage(
+      user: User,
+      page: number,
+      mode: PaginationMode,
+    ) {
+      const normalizedPage = Math.max(page, 0);
+      const reducer = paginationReducers[mode];
+      set(() => ({
+        isLoading: true,
+        ...(mode === PAGINATION_MODES.RESET
+          ? { history: [], error: null, hasMore: true, nextPage: 0 }
+          : {}),
+      }));
       try {
         const response = await api.searchRecords.fetchSearchRecords({
           token: user.token,
+          page: normalizedPage,
+          size: HISTORY_PAGE_SIZE,
         });
         const payload: SearchRecordDto[] = Array.isArray(response)
           ? response
@@ -208,13 +252,16 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             : [];
         const incoming = payload.map(toHistoryItem);
         set((state) => {
-          const merged = mergeHistory(state.history, incoming);
-          const ordered = [...merged]
-            .sort(compareByCreatedAtDesc)
-            .slice(0, HISTORY_LIMIT);
+          const merged = reducer(state.history, incoming);
+          const ordered = [...merged].sort(compareByCreatedAtDesc);
+          const hasMore = incoming.length === HISTORY_PAGE_SIZE;
+          const nextPage = resolveNextPage(ordered.length);
           return {
             history: ordered,
             error: null,
+            isLoading: false,
+            hasMore,
+            nextPage,
           };
         });
       } catch (err) {
@@ -225,12 +272,27 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
     return {
       history: [],
       error: null,
+      isLoading: false,
+      hasMore: false,
+      nextPage: 0,
       loadHistory: async (user?: User | null) => {
-        if (user) {
-          await refreshHistory(user);
-        } else {
-          set({ error: null });
+        if (user?.token) {
+          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+          return;
         }
+        set({
+          error: null,
+          history: [],
+          hasMore: false,
+          nextPage: 0,
+          isLoading: false,
+        });
+      },
+      loadMoreHistory: async (user?: User | null) => {
+        if (!user?.token) return;
+        const { isLoading, hasMore, nextPage } = get();
+        if (isLoading || !hasMore) return;
+        await loadHistoryPage(user, nextPage, PAGINATION_MODES.APPEND);
       },
       addHistory: async (
         term: string,
@@ -260,8 +322,11 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           const filtered = state.history.filter(
             (item) => item.termKey !== termKey,
           );
-          const next = [placeholder, ...filtered].slice(0, HISTORY_LIMIT);
-          return { history: next };
+          const next = [placeholder, ...filtered];
+          return {
+            history: next,
+            nextPage: resolveNextPage(next.length),
+          };
         });
 
         if (user) {
@@ -272,7 +337,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
               language: normalizedLanguage,
               flavor: normalizedFlavor,
             });
-            await refreshHistory(user);
+            await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
           } catch (err) {
             handleApiError(err, set);
           }
@@ -284,7 +349,13 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             .clearSearchRecords({ token: user.token })
             .catch((err) => handleApiError(err, set));
         }
-        set({ history: [], error: null });
+        set({
+          history: [],
+          error: null,
+          hasMore: false,
+          isLoading: false,
+          nextPage: 0,
+        });
       },
       removeHistory: async (identifier: string, user?: User | null) => {
         const historyItems = get().history;
@@ -293,11 +364,15 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             ? identifier
             : resolveHistoryItem(historyItems, identifier);
         if (!target) {
-          set((state) => ({
-            history: state.history.filter(
+          set((state) => {
+            const filtered = state.history.filter(
               (item) => item.termKey !== identifier && item.term !== identifier,
-            ),
-          }));
+            );
+            return {
+              history: filtered,
+              nextPage: resolveNextPage(filtered.length),
+            };
+          });
           return;
         }
 
@@ -320,11 +395,15 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           }
         }
 
-        set((state) => ({
-          history: state.history.filter(
+        set((state) => {
+          const filtered = state.history.filter(
             (item) => item.termKey !== target.termKey,
-          ),
-        }));
+          );
+          return {
+            history: filtered,
+            nextPage: resolveNextPage(filtered.length),
+          };
+        });
         wordStore.getState().removeVersions(target.termKey);
       },
       favoriteHistory: async (
@@ -341,7 +420,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             token: user.token,
             recordId: idToUse,
           });
-          await refreshHistory(user);
+          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
         } catch (err) {
           handleApiError(err, set);
         }
@@ -360,7 +439,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             token: user.token,
             recordId: idToUse,
           });
-          await refreshHistory(user);
+          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
         } catch (err) {
           handleApiError(err, set);
         }

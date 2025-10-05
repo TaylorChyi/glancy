@@ -32,11 +32,38 @@ mockApi.searchRecords = {
 
 const user = { id: "u1", token: "t" };
 
+const makeRecord = (idx) => {
+  const createdAt = new Date(
+    Date.UTC(2024, 0, idx + 1, 10, 0, 0),
+  ).toISOString();
+  return {
+    id: `r${idx}`,
+    term: `term-${idx}`,
+    language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
+    createdAt,
+    favorite: false,
+    versions: [
+      {
+        id: `r${idx}`,
+        createdAt,
+        favorite: false,
+      },
+    ],
+  };
+};
+
 describe("historyStore", () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
-    useHistoryStore.setState({ history: [], error: null });
+    useHistoryStore.setState({
+      history: [],
+      error: null,
+      isLoading: false,
+      hasMore: false,
+      nextPage: 0,
+    });
     mockWordStore.setState({ entries: {} });
   });
 
@@ -65,11 +92,70 @@ describe("historyStore", () => {
       await useHistoryStore.getState().addHistory("test", user, "ENGLISH");
     });
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled();
+    expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledWith({
+      token: user.token,
+      page: 0,
+      size: 20,
+    });
     const item = useHistoryStore.getState().history[0];
     expect(item.term).toBe("test");
     expect(item.flavor).toBe(WORD_FLAVOR_BILINGUAL);
     expect(item.versions).toHaveLength(1);
     expect(item.versions[0].id).toBe("r1");
+  });
+
+  /**
+   * 验证首次加载历史会按分页策略请求并更新分页元数据。
+   */
+  test("loadHistory fetches first page and updates pagination", async () => {
+    const pageItems = Array.from({ length: 20 }, (_, idx) => makeRecord(idx));
+    mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce(pageItems);
+
+    await act(async () => {
+      await useHistoryStore.getState().loadHistory(user);
+    });
+
+    expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledWith({
+      token: user.token,
+      page: 0,
+      size: 20,
+    });
+    const state = useHistoryStore.getState();
+    expect(state.history).toHaveLength(20);
+    expect(state.hasMore).toBe(true);
+    expect(state.nextPage).toBe(1);
+    expect(state.isLoading).toBe(false);
+  });
+
+  /**
+   * 验证向下滚动触发分页加载时会累积历史并在无更多数据后停止请求。
+   */
+  test("loadMoreHistory appends next page and stops when depleted", async () => {
+    const firstPage = Array.from({ length: 20 }, (_, idx) => makeRecord(idx));
+    const secondPage = Array.from({ length: 3 }, (_, idx) =>
+      makeRecord(20 + idx),
+    );
+    mockApi.searchRecords.fetchSearchRecords
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce(secondPage);
+
+    await act(async () => {
+      await useHistoryStore.getState().loadHistory(user);
+    });
+    await act(async () => {
+      await useHistoryStore.getState().loadMoreHistory(user);
+    });
+
+    const state = useHistoryStore.getState();
+    expect(state.history).toHaveLength(23);
+    expect(state.hasMore).toBe(false);
+    expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      await useHistoryStore.getState().loadMoreHistory(user);
+    });
+
+    expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(2);
   });
 
   /**

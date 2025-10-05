@@ -18,6 +18,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -237,6 +238,57 @@ class SearchRecordServiceTest {
             .orElseThrow();
         assertEquals(1, betaResponse.versions().size());
         assertEquals(1, betaResponse.latestVersion().versionNumber());
+    }
+
+    /**
+     * 测试目标：验证分页查询按照页码与条数返回固定规模的数据集并保持去重排序。
+     * 前置条件：同一用户写入 25 条不同搜索记录，均带有登录态。
+     * 步骤：
+     *  1) 循环调用 saveRecord 创建 25 条记录；
+     *  2) 分别以 page=0/1 size=10 拉取两页数据；
+     * 断言：
+     *  - 两页均返回 10 条记录且不重复；
+     *  - 第二页最新项的创建时间不晚于第一页最旧项，确保倒序排序；
+     * 边界/异常：
+     *  - 如第二页不足 10 条则说明分页未按预期生效，应当失败。
+     */
+    @Test
+    void getRecordsHonorsPagination() {
+        User user = new User();
+        user.setUsername("pager");
+        user.setPassword("p");
+        user.setEmail("pager@example.com");
+        user.setPhone("46");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        user.setMember(true);
+        userRepository.save(user);
+
+        for (int i = 0; i < 25; i++) {
+            SearchRecordRequest req = new SearchRecordRequest();
+            req.setTerm("term-" + i);
+            req.setLanguage(Language.ENGLISH);
+            searchRecordService.saveRecord(user.getId(), req);
+        }
+
+        List<SearchRecordResponse> firstPage = searchRecordService.getRecords(user.getId(), 0, 10);
+        List<SearchRecordResponse> secondPage = searchRecordService.getRecords(user.getId(), 1, 10);
+
+        assertEquals(10, firstPage.size(), "第一页应返回 10 条记录");
+        assertEquals(10, secondPage.size(), "第二页应返回 10 条记录");
+
+        long distinctCount = Stream.concat(firstPage.stream(), secondPage.stream())
+            .map(SearchRecordResponse::id)
+            .distinct()
+            .count();
+        assertEquals(20, distinctCount, "前两页记录应互不重复");
+
+        LocalDateTime firstPageOldest = firstPage.get(firstPage.size() - 1).createdAt();
+        LocalDateTime secondPageNewest = secondPage.get(0).createdAt();
+        assertTrue(
+            secondPageNewest.isBefore(firstPageOldest) || secondPageNewest.isEqual(firstPageOldest),
+            "第二页最新项的时间不应晚于第一页最旧项"
+        );
     }
 
     /**

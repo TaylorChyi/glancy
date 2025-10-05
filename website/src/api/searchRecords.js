@@ -5,8 +5,20 @@ import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 
 export function createSearchRecordsApi(request = apiRequest) {
   const jsonRequest = createJsonRequest(request);
-  const fetchSearchRecords = ({ token }) =>
-    request(`${API_PATHS.searchRecords}/user`, { token });
+  const fetchSearchRecords = ({ token, page, size }) => {
+    const params = new URLSearchParams();
+    if (Number.isInteger(page)) {
+      params.set("page", String(Math.max(0, page)));
+    }
+    if (Number.isInteger(size) && size > 0) {
+      params.set("size", String(size));
+    }
+    const query = params.toString();
+    const url = query
+      ? `${API_PATHS.searchRecords}/user?${query}`
+      : `${API_PATHS.searchRecords}/user`;
+    return request(url, { token });
+  };
 
   const saveSearchRecord = ({
     token,
