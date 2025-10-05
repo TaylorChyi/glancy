@@ -1,5 +1,22 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSendActionButtonMarkup 1`] = `
+<button
+  aria-label="发送"
+  class="action-button action-button-send action-button-inverse-icon"
+  type="button"
+>
+  <img
+    alt=""
+    aria-hidden="true"
+    class="action-button-icon"
+    data-icon-name="send-button"
+    draggable="false"
+    src="file-mock"
+  />
+</button>
+`;
+
 exports[`GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot: VoiceActionButtonMarkup 1`] = `
 <button
   aria-label="语音"
@@ -157,21 +174,4 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
     </div>
   </form>
 </div>
-`;
-
-exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSendActionButtonMarkup 1`] = `
-<button
-  aria-label="发送"
-  class="action-button action-button-send"
-  type="button"
->
-  <img
-    alt=""
-    aria-hidden="true"
-    class="action-button-icon"
-    data-icon-name="send-button"
-    draggable="false"
-    src="file-mock"
-  />
-</button>
 `;

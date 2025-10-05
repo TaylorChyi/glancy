@@ -16,7 +16,7 @@ import PropTypes from "prop-types";
 
 import styles from "../ChatInput.module.css";
 import { SendIcon, VoiceIcon } from "../icons";
-import { useTheme } from "@/context";
+import useIconToneController from "@/hooks/useIconToneController.js";
 
 const ACTION_BUTTON_COOLDOWN_MS = 500;
 
@@ -34,14 +34,15 @@ function ActionButton({
   const trimmedLength = value.trim().length;
   const isSendState = trimmedLength > 0;
   const ariaLabel = isSendState ? sendLabel : voiceLabel;
-  const { resolvedTheme } = useTheme();
+  const { isInverse: shouldInvertIconTone } = useIconToneController({
+    tone: "inverse",
+  });
 
   //
   // 背景：
-  //  - 浅色主题下语音/发送按钮采用深色壳体，若继续继承文本色会出现黑底黑字的对比问题。
+  //  - 语音/发送按钮的壳体在两种主题下都会与整体主题色形成对比色，如果直接继承文本色会出现低对比。
   // 取舍：
-  //  - 通过读取主题上下文，仅在解析结果为 light 时注入反相语义类，避免为暗色主题带来额外分支。
-  const shouldInvertIconTone = resolvedTheme === "light";
+  //  - 复用图标色调控制器统一注入 inverse 语义，避免组件内分散维护 theme 判断，并为后续扩展更多 tone 预留空间。
   const actionClassName = [
     styles["action-button"],
     styles[isSendState ? "action-button-send" : "action-button-voice"],
