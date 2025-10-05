@@ -195,7 +195,7 @@
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .tab[data-state="active"] .tab-summary {
@@ -292,6 +292,14 @@
   border: none;
   display: grid;
   gap: var(--space-3);
+}
+
+/*
+ * fieldset 在多数浏览器中不会响应 gap，需要手动补齐 legend 与控件之间的竖向间距，
+ * 以维持与 label 对应控件一致的节奏。
+ */
+.control-field legend + * {
+  margin-top: var(--space-3);
 }
 
 .control-label {

@@ -15,6 +15,13 @@
   --modal-color: var(--preferences-panel-text);
   --modal-shadow: var(--preferences-panel-shadow);
 
+  /*
+   * 预先扣除模态内边距，为内容区提供稳定高度，避免切换分区时
+   * 发生跳动并确保滚动条始终驻留在右侧内容区域。
+   */
+
+  --settings-body-height: max(0px, calc(var(--modal-max-height, 86vh) - 88px));
+
   padding: 44px;
   box-sizing: border-box;
   border: 1px solid var(--preferences-panel-border);
@@ -42,11 +49,8 @@
   inline-size: var(--btn-action, 44px);
   block-size: var(--btn-action, 44px);
   border-radius: 999px;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--preferences-panel-border) 68%,
-    transparent
-  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 68%, transparent);
   background: color-mix(
     in srgb,
     var(--preferences-panel-surface) 94%,

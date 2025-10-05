@@ -12,6 +12,37 @@
  */
 import { useMemo } from "react";
 import PropTypes from "prop-types";
+import { useLanguage } from "@/context";
+
+/**
+ * 意图：针对英文环境生成 Title Case 文案，保证标签语气与设计规范一致。
+ * 复杂度：O(n) 取决于词条长度；空间：O(1)。
+ */
+const formatSectionLabel = (label, locale) => {
+  if (typeof label !== "string") {
+    return label;
+  }
+  if (locale !== "en") {
+    return label;
+  }
+  return label
+    .split(/(\s+)/)
+    .map((segment) => {
+      if (!segment.trim()) {
+        return segment;
+      }
+      const characters = Array.from(segment);
+      const [first, ...rest] = characters;
+      if (!first) {
+        return segment;
+      }
+      return (
+        first.toLocaleUpperCase("en-US") +
+        rest.join("").toLocaleLowerCase("en-US")
+      );
+    })
+    .join("");
+};
 
 function SettingsNav({
   sections,
@@ -21,6 +52,7 @@ function SettingsNav({
   renderCloseAction,
   classes,
 }) {
+  const { lang } = useLanguage();
   const sectionCount = sections.length;
   const containerClassName = classes?.container ?? "";
   const actionWrapperClassName = classes?.action ?? "";
@@ -83,7 +115,9 @@ function SettingsNav({
                * 偏好设置导航仅展示主标签文本，避免双列信息导致键盘导航朗读冗余。
                * 如需补充副标题，应改由 tab 内容区域呈现而非按钮内部。
                */}
-              <span className={labelClassName}>{section.label}</span>
+              <span className={labelClassName}>
+                {formatSectionLabel(section.label, lang)}
+              </span>
             </button>
           );
         })}
@@ -121,4 +155,3 @@ SettingsNav.defaultProps = {
 };
 
 export default SettingsNav;
-
