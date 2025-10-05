@@ -13,7 +13,7 @@
  *  - TODO: 若引入企业级策略（按角色差异化），需扩展策略结构以承载条件。
  */
 import { createPersistentStore } from "./createPersistentStore.js";
-import { pickState } from "./persistUtils.js";
+import { pickState, resolveStateStorage } from "./persistUtils.js";
 
 export type DataRetentionPolicy = {
   id: string;
@@ -53,12 +53,78 @@ const sanitizePolicyId = (candidate?: string | null) => {
     : DEFAULT_RETENTION_POLICY_ID;
 };
 
+type PersistedGovernanceSnapshot = Partial<
+  Pick<DataGovernanceState, "retentionPolicyId" | "historyCaptureEnabled">
+>;
+
+/**
+ * 意图：
+ *  - 在 Store 初始化前同步读取持久化偏好，避免 rehydrate 过程中的默认值闪烁导致误判采集状态。
+ * 输入：
+ *  - 无（内部根据固定 storage key 访问持久化存储）。
+ * 输出：
+ *  - 若存在持久化数据则返回偏好快照，否则返回 null。
+ * 流程：
+ *  1) 访问 storage 读取原始 JSON；
+ *  2) 解析 state 字段并抽取关心的属性；
+ *  3) 过滤非布尔/字符串类型，确保结果可安全用于初始化。
+ * 错误处理：
+ *  - 捕获解析异常并返回 null，避免阻塞 Store 初始化。
+ * 复杂度：
+ *  - 时间 O(1)，空间 O(1)。
+ */
+const loadPersistedGovernanceSnapshot =
+  (): PersistedGovernanceSnapshot | null => {
+    try {
+      const storage = resolveStateStorage(DATA_GOVERNANCE_STORAGE_KEY);
+      const raw = storage.getItem?.(DATA_GOVERNANCE_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") {
+        return null;
+      }
+      const state = (parsed as { state?: unknown }).state;
+      if (!state || typeof state !== "object") {
+        return null;
+      }
+      const snapshot: PersistedGovernanceSnapshot = {};
+      const retentionCandidate = (state as Record<string, unknown>)[
+        "retentionPolicyId"
+      ];
+      if (typeof retentionCandidate === "string") {
+        snapshot.retentionPolicyId = retentionCandidate;
+      }
+      const captureCandidate = (state as Record<string, unknown>)[
+        "historyCaptureEnabled"
+      ];
+      if (typeof captureCandidate === "boolean") {
+        snapshot.historyCaptureEnabled = captureCandidate;
+      } else if (typeof captureCandidate === "string") {
+        snapshot.historyCaptureEnabled = captureCandidate === "true";
+      }
+      return snapshot;
+    } catch {
+      return null;
+    }
+  };
+
+const persistedSnapshot = loadPersistedGovernanceSnapshot();
+const INITIAL_HISTORY_CAPTURE =
+  typeof persistedSnapshot?.historyCaptureEnabled === "boolean"
+    ? persistedSnapshot.historyCaptureEnabled
+    : true;
+const INITIAL_RETENTION_POLICY_ID = sanitizePolicyId(
+  persistedSnapshot?.retentionPolicyId,
+);
+
 export const useDataGovernanceStore =
   createPersistentStore<DataGovernanceState>({
     key: DATA_GOVERNANCE_STORAGE_KEY,
     initializer: (set) => ({
-      retentionPolicyId: DEFAULT_RETENTION_POLICY_ID,
-      historyCaptureEnabled: true,
+      retentionPolicyId: INITIAL_RETENTION_POLICY_ID,
+      historyCaptureEnabled: INITIAL_HISTORY_CAPTURE,
       setRetentionPolicy: (policyId: string) => {
         const normalized = sanitizePolicyId(policyId);
         set((state) => {
