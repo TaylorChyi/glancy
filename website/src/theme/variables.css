@@ -201,6 +201,7 @@
   --sb-action-icon: var(--color-text);
   --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
   --sb-cta-icon: var(--color-text);
+
   /*
    * 语音/发送按钮在浅色主题下采用深色壳体，为避免再度出现黑色前景与黑底冲突，
    * 这里将前景显式映射到“反相文字”语义，并通过 neutral-0 令牌兜底，
