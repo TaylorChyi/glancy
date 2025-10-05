@@ -41,6 +41,7 @@ const mockLanguage = {
 let mockUser;
 let mockSetUser;
 let updateUsernameMock;
+const mockUseAvatarEditorWorkflow = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
@@ -66,6 +67,11 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   ),
 }));
 
+jest.unstable_mockModule("@/hooks/useAvatarEditorWorkflow.js", () => ({
+  __esModule: true,
+  default: mockUseAvatarEditorWorkflow,
+}));
+
 const { default: Preferences } = await import("@/pages/preferences");
 
 beforeEach(() => {
@@ -79,6 +85,19 @@ beforeEach(() => {
     plan: "plus",
     token: "token-123",
   };
+  mockUseAvatarEditorWorkflow.mockReset();
+  mockUseAvatarEditorWorkflow.mockReturnValue({
+    selectAvatar: jest.fn(),
+    modalProps: {
+      open: false,
+      source: "",
+      onCancel: jest.fn(),
+      onConfirm: jest.fn(),
+      labels: {},
+      isProcessing: false,
+    },
+    isBusy: false,
+  });
 });
 
 /**

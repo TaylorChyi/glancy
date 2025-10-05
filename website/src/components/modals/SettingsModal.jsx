@@ -22,6 +22,7 @@ import usePreferenceSections from "@/pages/preferences/usePreferenceSections.js"
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@/components/ui/Icon";
 import useStableSettingsPanelHeight from "./useStableSettingsPanelHeight.js";
+import AvatarEditorModal from "@/components/AvatarEditorModal";
 
 // 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
 const buildCloseLabel = (baseLabel, contextLabel) => {
@@ -55,6 +56,7 @@ function SettingsModal({ open, onClose, initialSection }) {
     handleSectionSelect,
     handleSubmit,
     panel,
+    avatarEditor,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -205,6 +207,9 @@ function SettingsModal({ open, onClose, initialSection }) {
             ) : null}
           </SettingsPanel>
         </form>
+        {avatarEditor ? (
+          <AvatarEditorModal {...avatarEditor.modalProps} />
+        ) : null}
       </SettingsBody>
     </BaseModal>
   );

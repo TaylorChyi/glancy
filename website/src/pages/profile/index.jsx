@@ -36,6 +36,7 @@ import EmailBindingCard from "@/components/Profile/EmailBindingCard";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
 import CustomSectionsEditor from "@/components/Profile/CustomSectionsEditor";
 import AvatarEditorModal from "@/components/AvatarEditorModal";
+import { normalizeAvatarFileName } from "@/utils/avatarFile.js";
 import {
   createEmptyProfileDetails,
   mapProfileDetailsToRequest,
@@ -86,33 +87,6 @@ function avatarEditorReducer(state = avatarEditorInitialState, action) {
     default:
       return state;
   }
-}
-
-const MIME_EXTENSION_MAP = Object.freeze({
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/webp": "webp",
-});
-
-function normalizeAvatarFileName(originalName, mimeType) {
-  const fallbackBase = "avatar";
-  const sanitized = (originalName || fallbackBase)
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-  const base = sanitized || fallbackBase;
-  const extension = MIME_EXTENSION_MAP[mimeType] || "png";
-  const lowerBase = base.toLowerCase();
-  if (lowerBase.endsWith(`.${extension}`)) {
-    return base;
-  }
-  const withoutExt = base.includes(".")
-    ? base.slice(0, base.lastIndexOf("."))
-    : base;
-  const safeBase = withoutExt || fallbackBase;
-  return `${safeBase}.${extension}`;
 }
 
 function Profile({ onCancel }) {

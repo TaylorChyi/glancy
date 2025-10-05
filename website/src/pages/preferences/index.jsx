@@ -22,6 +22,7 @@ import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import useStableSettingsPanelHeight from "@/components/modals/useStableSettingsPanelHeight.js";
+import AvatarEditorModal from "@/components/AvatarEditorModal";
 
 const composeClassName = (...classNames) => classNames.filter(Boolean).join(" ");
 
@@ -35,6 +36,7 @@ function Preferences({ initialSection, renderCloseAction }) {
     handleSectionSelect,
     handleSubmit,
     panel,
+    avatarEditor,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -151,6 +153,9 @@ function Preferences({ initialSection, renderCloseAction }) {
           </SettingsPanel>
         </SettingsBody>
       </form>
+      {avatarEditor ? (
+        <AvatarEditorModal {...avatarEditor.modalProps} />
+      ) : null}
     </div>
   );
 }
