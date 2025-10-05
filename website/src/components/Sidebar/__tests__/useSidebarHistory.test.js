@@ -2,10 +2,13 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const loadHistory = jest.fn();
+const loadMoreHistory = jest.fn();
 
 let historyState = [];
 let errorState = null;
 let userState = { user: { token: "tkn" } };
+let hasMoreState = false;
+let isLoadingState = false;
 
 const historyMock = [
   {
@@ -38,19 +41,27 @@ jest.unstable_mockModule("@/context", () => ({
   useHistory: () => ({
     history: historyState,
     loadHistory,
+    loadMoreHistory,
     error: errorState,
+    hasMore: hasMoreState,
+    isLoading: isLoadingState,
   }),
   useUser: () => userState,
 }));
 
-const { default: useSidebarHistory } = await import("../hooks/useSidebarHistory.js");
+const { default: useSidebarHistory } = await import(
+  "../hooks/useSidebarHistory.js"
+);
 
 describe("useSidebarHistory", () => {
   beforeEach(() => {
     loadHistory.mockClear();
+    loadMoreHistory.mockClear();
     historyState = historyMock;
     errorState = null;
     userState = { user: { token: "tkn" } };
+    hasMoreState = true;
+    isLoadingState = false;
   });
 
   /**
@@ -151,5 +162,25 @@ describe("useSidebarHistory", () => {
     });
 
     expect(secondButton.focus).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：验证 loadMore 会在具备用户信息时触发 store 的分页加载。
+   * 前置条件：mock useHistory 返回 hasMore=true、用户存在。
+   * 步骤：
+   *  1) 渲染 Hook 并调用 loadMore。
+   * 断言：
+   *  - loadMoreHistory 接收用户对象。
+   * 边界/异常：
+   *  - 若无 token 将不会调用（未在此用例覆盖）。
+   */
+  test("Given_user_and_more_data_When_loadMore_invoked_Then_calls_store", () => {
+    const { result } = renderHook(() => useSidebarHistory());
+
+    act(() => {
+      result.current.loadMore();
+    });
+
+    expect(loadMoreHistory).toHaveBeenCalledWith(userState.user);
   });
 });

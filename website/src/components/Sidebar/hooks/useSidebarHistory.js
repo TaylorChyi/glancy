@@ -15,7 +15,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory, useUser } from "@/context";
 
 export default function useSidebarHistory({ onSelectHistory } = {}) {
-  const { history, loadHistory, error } = useHistory();
+  const { history, loadHistory, loadMoreHistory, error, hasMore, isLoading } =
+    useHistory();
   const { user } = useUser();
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -91,6 +92,11 @@ export default function useSidebarHistory({ onSelectHistory } = {}) {
     [handleNavigateKey, registerItemRef],
   );
 
+  const handleLoadMore = useCallback(() => {
+    if (!user?.token) return;
+    loadMoreHistory(user);
+  }, [loadMoreHistory, user]);
+
   const handleSelect = useCallback(
     (item) => {
       if (typeof onSelectHistory !== "function") return;
@@ -118,5 +124,8 @@ export default function useSidebarHistory({ onSelectHistory } = {}) {
     onSelect: handleSelect,
     onNavigate,
     toast,
+    hasMore,
+    isLoading,
+    loadMore: handleLoadMore,
   };
 }

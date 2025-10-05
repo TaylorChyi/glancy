@@ -12,20 +12,44 @@
  *  - 后续可在此容器内注入空状态或筛选器组件，而无需影响展示层接口。
  */
 import PropTypes from "prop-types";
+import { useRef } from "react";
 import Toast from "@/components/ui/Toast";
+import useInfiniteScroll from "@/hooks/useInfiniteScroll.js";
 import styles from "./Sidebar.module.css";
 import HistoryListView from "./HistoryListView.jsx";
 import useSidebarHistory from "./hooks/useSidebarHistory.js";
 
 function SidebarHistorySection({ onSelectHistory }) {
-  const { items, onSelect, onNavigate, toast } = useSidebarHistory({
-    onSelectHistory,
+  const scrollContainerRef = useRef(null);
+  const { items, onSelect, onNavigate, toast, hasMore, isLoading, loadMore } =
+    useSidebarHistory({
+      onSelectHistory,
+    });
+
+  useInfiniteScroll({
+    containerRef: scrollContainerRef,
+    hasMore,
+    isLoading,
+    onLoadMore: loadMore,
+    threshold: 72,
   });
 
   return (
-    <div className={styles.entries} data-testid="sidebar-history-section">
-      <HistoryListView items={items} onSelect={onSelect} onNavigate={onNavigate} />
-      <Toast open={toast.open} message={toast.message} onClose={toast.onClose} />
+    <div
+      ref={scrollContainerRef}
+      className={styles.entries}
+      data-testid="sidebar-history-section"
+    >
+      <HistoryListView
+        items={items}
+        onSelect={onSelect}
+        onNavigate={onNavigate}
+      />
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        onClose={toast.onClose}
+      />
     </div>
   );
 }

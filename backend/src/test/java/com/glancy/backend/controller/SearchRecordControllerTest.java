@@ -1,6 +1,8 @@
 package com.glancy.backend.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -12,6 +14,7 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.UserService;
+import com.glancy.backend.service.support.SearchRecordPageRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -116,7 +119,7 @@ class SearchRecordControllerTest {
             latestVersion,
             List.of(previousVersion, latestVersion)
         );
-        when(searchRecordService.getRecords(1L)).thenReturn(List.of(resp));
+        when(searchRecordService.getRecords(eq(1L), any(SearchRecordPageRequest.class))).thenReturn(List.of(resp));
 
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
@@ -126,5 +129,22 @@ class SearchRecordControllerTest {
             .andExpect(jsonPath("$[0].id").value(1))
             .andExpect(jsonPath("$[0].term").value("hello"))
             .andExpect(jsonPath("$[0].versions").isArray());
+
+        verify(searchRecordService).getRecords(eq(1L), eq(SearchRecordPageRequest.firstPage()));
+    }
+
+    /**
+     * 模拟自定义分页参数请求，断言服务层收到归一化后的 page 与 size。
+     */
+    @Test
+    void testListWithPagination() throws Exception {
+        when(searchRecordService.getRecords(eq(1L), any(SearchRecordPageRequest.class))).thenReturn(List.of());
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
+
+        mockMvc
+            .perform(get("/api/search-records/user?page=2&size=50").header("X-USER-TOKEN", "tkn"))
+            .andExpect(status().isOk());
+
+        verify(searchRecordService).getRecords(eq(1L), eq(new SearchRecordPageRequest(2, 50)));
     }
 }

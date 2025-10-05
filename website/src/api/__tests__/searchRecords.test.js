@@ -3,13 +3,23 @@ import { API_PATHS } from "@/config/api.js";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { jest } from "@jest/globals";
 
-test("fetchSearchRecords calls with token", async () => {
+test("fetchSearchRecords calls without query when pagination omitted", async () => {
   const request = jest.fn().mockResolvedValue([]);
   const api = createSearchRecordsApi(request);
   await api.fetchSearchRecords({ token: "t" });
   expect(request).toHaveBeenCalledWith(`${API_PATHS.searchRecords}/user`, {
     token: "t",
   });
+});
+
+test("fetchSearchRecords appends pagination params when provided", async () => {
+  const request = jest.fn().mockResolvedValue([]);
+  const api = createSearchRecordsApi(request);
+  await api.fetchSearchRecords({ token: "t", page: 2, size: 40 });
+  expect(request).toHaveBeenCalledWith(
+    `${API_PATHS.searchRecords}/user?page=2&size=40`,
+    { token: "t" },
+  );
 });
 
 test("saveSearchRecord posts flavor payload", async () => {

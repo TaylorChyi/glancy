@@ -10,12 +10,15 @@ import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.support.SearchRecordPageRequest;
 import com.glancy.backend.service.support.SearchRecordViewAssembler;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,12 +128,37 @@ public class SearchRecordService {
     }
 
     /**
-     * Retrieve a user's search history ordered by creation time.
+     * Retrieve the first page of a user's search history with the default size.
      */
     @Transactional(readOnly = true)
     public List<SearchRecordResponse> getRecords(Long userId) {
-        log.info("Fetching search records for user {}", userId);
-        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(userId);
+        return getRecords(userId, SearchRecordPageRequest.firstPage());
+    }
+
+    /**
+     * Retrieve a specific page of a user's search history ordered by creation time.
+     */
+    @Transactional(readOnly = true)
+    public List<SearchRecordResponse> getRecords(Long userId, int page, int size) {
+        return getRecords(userId, SearchRecordPageRequest.of(page, size));
+    }
+
+    /**
+     * Retrieve a specific page of a user's search history ordered by creation time.
+     */
+    @Transactional(readOnly = true)
+    public List<SearchRecordResponse> getRecords(Long userId, SearchRecordPageRequest pageRequest) {
+        Pageable pageable = pageRequest.toPageable(Sort.by(Sort.Direction.DESC, "createdAt"));
+        log.info(
+            "Fetching search records for user {} with page {} and size {}",
+            userId,
+            pageRequest.page(),
+            pageRequest.size()
+        );
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(
+            userId,
+            pageable
+        );
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", describeRecord(r)));
         return searchRecordViewAssembler

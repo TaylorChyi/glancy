@@ -12,3 +12,4 @@ export {
   default as useEmailBindingHook,
 } from "./useEmailBinding.js";
 export { default as useIconToneController } from "./useIconToneController.js";
+export { default as useInfiniteScroll } from "./useInfiniteScroll.js";
