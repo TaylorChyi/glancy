@@ -39,8 +39,6 @@ const createTranslations = (overrides = {}) => ({
   subscriptionRedeemTitle: "Redeem",
   subscriptionRedeemPlaceholder: "Code",
   subscriptionRedeemButton: "Redeem now",
-  subscriptionSubscribeButtonTemplate: "Subscribe {plan}",
-  subscriptionSubscribeButtonDisabled: "Current plan",
   subscriptionFeatureColumnLabel: "Feature",
   pricingFixedNote: "Fixed pricing",
   pricingTaxIncluded: "Tax included",
@@ -78,7 +76,6 @@ test("Given amount placeholders When building plan cards Then price lines interp
     translations: createTranslations(),
     user: createUser(),
     onRedeem: jest.fn(),
-    onSubscribe: jest.fn(),
   });
 
   const plusCard = props.planCards.find((plan) => plan.id === "PLUS");
@@ -88,6 +85,7 @@ test("Given amount placeholders When building plan cards Then price lines interp
   plusCard.priceLines.forEach((line) => {
     expect(line.includes("{")).toBe(false);
   });
+  expect(props.subscribeCopy).toBeUndefined();
 });
 
 /**
@@ -110,7 +108,6 @@ test("Given missing templates When building plan cards Then fallback formatting 
     }),
     user: createUser(),
     onRedeem: jest.fn(),
-    onSubscribe: jest.fn(),
   });
 
   const plusCard = props.planCards.find((plan) => plan.id === "PLUS");

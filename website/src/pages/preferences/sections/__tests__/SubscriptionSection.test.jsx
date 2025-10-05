@@ -1,21 +1,10 @@
 import { jest } from "@jest/globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-const mockNavigate = jest.fn();
-
-jest.unstable_mockModule("react-router-dom", async () => ({
-  ...(await jest.requireActual("react-router-dom")),
-  useNavigate: () => mockNavigate,
-}));
-
 let SubscriptionSection;
 
 beforeAll(async () => {
   ({ default: SubscriptionSection } = await import("../SubscriptionSection.jsx"));
-});
-
-beforeEach(() => {
-  mockNavigate.mockClear();
 });
 
 const baseProps = {
@@ -78,66 +67,50 @@ const baseProps = {
     placeholder: "Code",
     buttonLabel: "Redeem now",
   },
-  subscribeCopy: {
-    template: "Subscribe {plan}",
-    disabledLabel: "Current",
-  },
   defaultSelectedPlanId: "PLUS",
   onRedeem: jest.fn(),
   featureColumnLabel: "Feature",
 };
 
 /**
- * 测试目标：初始状态下订阅按钮禁用，切换套餐后启用并触发回调。
- * 前置条件：默认选中套餐为 PLUS，提供 onSubscribe 模拟函数。
+ * 测试目标：确认订阅 CTA 已移除，仅保留兑换按钮。
+ * 前置条件：使用默认属性渲染 SubscriptionSection。
  * 步骤：
- *  1) 渲染 SubscriptionSection。
- *  2) 点击 PRO 套餐按钮。
- *  3) 点击订阅按钮。
+ *  1) 渲染组件。
+ *  2) 断言兑换按钮存在且不存在包含 Subscribe 文案的按钮。
  * 断言：
- *  - 初始订阅按钮禁用。
- *  - 切换后按钮启用并显示新文案。
- *  - onSubscribe 收到 PRO。
+ *  - Redeem now 按钮存在。
+ *  - 不再渲染订阅相关按钮。
  * 边界/异常：
- *  - 若按钮仍禁用则说明选中状态未更新。
+ *  - 若仍找到 Subscribe 按钮，则说明 CTA 未被移除。
  */
-test("Given current plan When selecting another plan Then subscribe button enables", () => {
-  const onSubscribe = jest.fn();
-  render(<SubscriptionSection {...baseProps} onSubscribe={onSubscribe} />);
+test("Given subscription section When rendered Then subscribe CTA is absent", () => {
+  render(<SubscriptionSection {...baseProps} />);
 
-  const subscribeButton = screen.getByRole("button", { name: "Current" });
-  expect(subscribeButton).toBeDisabled();
-
-  fireEvent.click(screen.getByRole("button", { name: "Choose Pro" }));
-
-  const updatedButton = screen.getByRole("button", { name: "Subscribe Pro" });
-  expect(updatedButton).toBeEnabled();
-
-  fireEvent.click(updatedButton);
-  expect(onSubscribe).toHaveBeenCalledWith("PRO");
-  expect(mockNavigate).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Redeem now" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /subscribe/i })).toBeNull();
 });
 
 /**
- * 测试目标：未提供 onSubscribe 时，订阅按钮触发默认导航逻辑。
- * 前置条件：使用默认 props，未传入 onSubscribe。
+ * 测试目标：选择不同套餐时，按钮 aria-pressed 状态会更新，便于样式与辅助功能联动。
+ * 前置条件：默认选中 PLUS 套餐。
  * 步骤：
- *  1) 渲染组件并选择 PRO 套餐。
- *  2) 点击订阅按钮。
+ *  1) 渲染组件。
+ *  2) 点击 PRO 套餐按钮。
  * 断言：
- *  - useNavigate 被调用，路径为 /subscription，state 含 plan。
+ *  - PRO 按钮的 aria-pressed 为 true。
+ *  - FREE 按钮的 aria-pressed 为 false（保持未选中状态）。
  * 边界/异常：
- *  - 若未调用 navigate，则默认行为失效。
+ *  - 若 aria-pressed 未更新，则表示选中态逻辑失效。
  */
-test("Given no onSubscribe When subscribing Then navigates to subscription route", () => {
-  mockNavigate.mockClear();
+test("Given another plan When selecting it Then aria pressed reflects selection", () => {
   render(<SubscriptionSection {...baseProps} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "Choose Pro" }));
-  const updatedButton = screen.getByRole("button", { name: "Subscribe Pro" });
-  fireEvent.click(updatedButton);
+  const proButton = screen.getByRole("button", { name: "Choose Pro" });
+  const freeButton = screen.getByRole("button", { name: "Choose Free" });
 
-  expect(mockNavigate).toHaveBeenCalledWith("/subscription", {
-    state: { plan: "PRO" },
-  });
+  fireEvent.click(proButton);
+
+  expect(proButton).toHaveAttribute("aria-pressed", "true");
+  expect(freeButton).toHaveAttribute("aria-pressed", "false");
 });

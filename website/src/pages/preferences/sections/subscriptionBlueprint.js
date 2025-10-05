@@ -6,9 +6,9 @@
  * 关键决策与取舍：
  *  - 采用建造者模式集中整理文案与格式化逻辑，组件保持纯展示；拒绝在组件内硬编码套餐或数值。
  * 影响范围：
- *  - Preferences 页及 SettingsModal 中的订阅分区，未来扩展兑换与订阅流程时亦可复用本构造器。
+ *  - Preferences 页及 SettingsModal 中的订阅分区，未来扩展兑换流程时亦可复用本构造器。
  * 演进与TODO：
- *  - TODO: 接入真实兑换/订阅 API 后，将 onRedeem/onSubscribe 替换为实际动作，并补充状态管理。
+ *  - TODO: 接入真实兑换 API 后，将 onRedeem 替换为实际动作，并补充状态管理。
  */
 import {
   PLAN_SEQUENCE,
@@ -564,12 +564,7 @@ const buildFeatureMatrix = ({ blueprint, visiblePlanIds, pricing }) =>
     }, {}),
   }));
 
-export function buildSubscriptionSectionProps({
-  translations,
-  user,
-  onRedeem,
-  onSubscribe,
-}) {
+export function buildSubscriptionSectionProps({ translations, user, onRedeem }) {
   const t = translations ?? {};
   const userProfile = user ?? {};
   const subscriptionMeta = userProfile.subscription ?? {};
@@ -606,14 +601,6 @@ export function buildSubscriptionSectionProps({
     buttonLabel: safeString(t.subscriptionRedeemButton, "立即兑换"),
   };
 
-  const subscribeCopy = {
-    template: safeString(t.subscriptionSubscribeButtonTemplate, "订阅 {plan}"),
-    disabledLabel: safeString(
-      t.subscriptionSubscribeButtonDisabled,
-      "已是当前套餐",
-    ),
-  };
-
   const pricingNote = safeString(
     t.pricingFixedNote,
     "本地区价格为固定面额，不随汇率波动调整。",
@@ -632,9 +619,7 @@ export function buildSubscriptionSectionProps({
     pricingNote,
     taxNote,
     redeemCopy,
-    subscribeCopy,
     defaultSelectedPlanId: currentPlanId,
     onRedeem,
-    onSubscribe,
   };
 }

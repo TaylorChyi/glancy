@@ -140,8 +140,6 @@ const createTranslations = (overrides = {}) => ({
   subscriptionRedeemTitle: "Redeem",
   subscriptionRedeemPlaceholder: "Code",
   subscriptionRedeemButton: "Redeem now",
-  subscriptionSubscribeButtonTemplate: "Subscribe {plan}",
-  subscriptionSubscribeButtonDisabled: "Current",
   subscriptionFeatureColumnLabel: "Feature",
   pricingFixedNote: "Fixed",
   pricingTaxIncluded: "Tax included",

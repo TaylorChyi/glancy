@@ -839,7 +839,11 @@
 
 .subscription-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /*
+    说明：使用 auto-fit 可在仅保留兑换区域时铺满整行，同时保留未来扩展多个操作位的弹性；
+    若恢复额外动作，列布局会自动平均分配，无需再次调整样式。
+  */
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
@@ -879,35 +883,6 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-}
-
-.subscription-cta {
-  display: flex;
-  align-items: flex-end;
-}
-
-.subscription-cta-button {
-  width: 100%;
-  padding: 14px 18px;
-  border-radius: 16px;
-  border: none;
-  background: var(--preferences-panel-accent);
-  box-shadow: var(--preferences-panel-accent-shadow);
-  color: var(--preferences-button-contrast-text);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.subscription-cta-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  box-shadow: none;
-}
-
-.subscription-cta-button:not(:disabled):hover {
-  transform: translateY(-1px);
 }
 
 .section-title {

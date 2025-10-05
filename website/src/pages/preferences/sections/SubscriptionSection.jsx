@@ -8,10 +8,9 @@
  * 影响范围：
  *  - 偏好设置页面与 SettingsModal 的订阅分区展示。
  * 演进与TODO：
- *  - TODO: 接入真实兑换与订阅 API 时补充加载/错误态，并与遥测打通。
+ *  - TODO: 接入真实兑换 API 时补充加载/错误态，并与遥测打通。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
 
@@ -26,17 +25,14 @@ function SubscriptionSection({
   pricingNote,
   taxNote,
   redeemCopy,
-  subscribeCopy,
   defaultSelectedPlanId,
   onRedeem,
-  onSubscribe,
   featureColumnLabel,
 }) {
   const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
   const [redeemCode, setRedeemCode] = useState("");
   const redeemInputRef = useRef(null);
   const planCarouselRef = useRef(null);
-  const navigate = useNavigate();
   const [isPlanRailAtStart, setIsPlanRailAtStart] = useState(true);
   const [isPlanRailAtEnd, setIsPlanRailAtEnd] = useState(false);
 
@@ -52,33 +48,6 @@ function SubscriptionSection({
       onRedeem(redeemCode.trim());
     }
   }, [onRedeem, redeemCode]);
-
-  const subscribeDisabled = selectedPlanId === defaultSelectedPlanId;
-
-  const subscribeLabel = useMemo(() => {
-    if (subscribeDisabled) {
-      return subscribeCopy.disabledLabel;
-    }
-    const selectedPlanLabel = planLabels[selectedPlanId] ?? selectedPlanId;
-    return subscribeCopy.template.replace("{plan}", selectedPlanLabel);
-  }, [
-    subscribeDisabled,
-    subscribeCopy.disabledLabel,
-    subscribeCopy.template,
-    planLabels,
-    selectedPlanId,
-  ]);
-
-  const handleSubscribe = useCallback(() => {
-    if (subscribeDisabled) {
-      return;
-    }
-    if (onSubscribe) {
-      onSubscribe(selectedPlanId);
-      return;
-    }
-    navigate("/subscription", { state: { plan: selectedPlanId } });
-  }, [navigate, onSubscribe, selectedPlanId, subscribeDisabled]);
 
   /**
    * 意图：复用单一的滚动同步逻辑，让横向滑动的套餐列表在不同视口下保持导航按钮状态正确。
@@ -275,16 +244,6 @@ function SubscriptionSection({
             </button>
           </div>
         </div>
-        <div className={styles["subscription-cta"]}>
-          <button
-            type="button"
-            className={styles["subscription-cta-button"]}
-            onClick={handleSubscribe}
-            disabled={subscribeDisabled}
-          >
-            {subscribeLabel}
-          </button>
-        </div>
       </div>
     </section>
   );
@@ -322,20 +281,14 @@ SubscriptionSection.propTypes = {
     placeholder: PropTypes.string.isRequired,
     buttonLabel: PropTypes.string.isRequired,
   }).isRequired,
-  subscribeCopy: PropTypes.shape({
-    template: PropTypes.string.isRequired,
-    disabledLabel: PropTypes.string.isRequired,
-  }).isRequired,
   defaultSelectedPlanId: PropTypes.string.isRequired,
   onRedeem: PropTypes.func,
-  onSubscribe: PropTypes.func,
   featureColumnLabel: PropTypes.string.isRequired,
 };
 
 SubscriptionSection.defaultProps = {
   descriptionId: undefined,
   onRedeem: undefined,
-  onSubscribe: undefined,
 };
 
 export default SubscriptionSection;

@@ -287,8 +287,6 @@ export default {
   subscriptionRedeemTitle: "Redeem exclusive benefits",
   subscriptionRedeemPlaceholder: "Enter 16-character code",
   subscriptionRedeemButton: "Redeem now",
-  subscriptionSubscribeButtonTemplate: "Subscribe to {plan}",
-  subscriptionSubscribeButtonDisabled: "Already on this plan",
   subscriptionFeatureColumnLabel: "Feature",
   pricingFixedNote: "Pricing is pegged per region and not tied to FX rates.",
   pricingTaxIncluded: "Tax included",
