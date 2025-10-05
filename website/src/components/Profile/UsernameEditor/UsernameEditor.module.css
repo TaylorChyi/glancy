@@ -121,6 +121,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  /* 保持操作按钮贴齐信息行右侧，符合偏好设置详情行布局约定。 */
+  margin-left: auto;
   min-width: 144px;
   min-height: 38px;
   padding: 0 20px;
