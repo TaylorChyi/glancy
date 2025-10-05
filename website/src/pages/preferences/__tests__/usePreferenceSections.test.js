@@ -5,6 +5,7 @@ const mockUseLanguage = jest.fn();
 const mockUseUser = jest.fn();
 const mockUseTheme = jest.fn();
 const mockUseKeyboardShortcutContext = jest.fn();
+const mockUseAvatarUploader = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -12,6 +13,11 @@ jest.unstable_mockModule("@/context", () => ({
   useTheme: mockUseTheme,
   useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
+}));
+
+jest.unstable_mockModule("@/hooks/useAvatarUploader.js", () => ({
+  __esModule: true,
+  default: mockUseAvatarUploader,
 }));
 
 let usePreferenceSections;
@@ -144,6 +150,7 @@ beforeEach(() => {
   mockUseUser.mockReset();
   mockUseTheme.mockReset();
   mockUseKeyboardShortcutContext.mockReset();
+  mockUseAvatarUploader.mockReset();
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
   mockUseUser.mockReturnValue({
@@ -158,6 +165,13 @@ beforeEach(() => {
   mockUseKeyboardShortcutContext.mockReturnValue({
     register: jest.fn(),
     unregister: jest.fn(),
+  });
+  mockUseAvatarUploader.mockReturnValue({
+    onSelectAvatar: jest.fn(),
+    isUploading: false,
+    status: "idle",
+    error: null,
+    reset: jest.fn(),
   });
 });
 
@@ -214,6 +228,10 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(accountSection.componentProps.identity.avatarAlt).toBe(
     translations.prefAccountTitle,
   );
+  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+    "function",
+  );
+  expect(accountSection.componentProps.identity.isUploading).toBe(false);
   expect(accountSection.componentProps.bindings.title).toBe(
     translations.settingsAccountBindingTitle,
   );

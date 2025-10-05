@@ -45,6 +45,7 @@ test("GivenIdentityRow_WhenRendered_ThenLabelAvatarAndActionArranged", () => {
         changeLabel: "更换头像",
         avatarAlt: "Taylor 的头像",
         onSelectAvatar: jest.fn(),
+        isUploading: false,
       }}
       bindings={baseBindings}
     />,
@@ -73,5 +74,40 @@ test("GivenIdentityRow_WhenRendered_ThenLabelAvatarAndActionArranged", () => {
   expect(actionColumn).toContainElement(actionButton);
   expect(actionButton).toBeEnabled();
 
-  expect(container.querySelectorAll("input[type=\"file\"]")).toHaveLength(1);
+  expect(container.querySelectorAll('input[type="file"]')).toHaveLength(1);
+});
+
+/**
+ * 测试目标：当上传进行中时，按钮应禁用且 aria-disabled 为 true。
+ * 前置条件：传入 identity.isUploading 为 true。
+ * 步骤：
+ *  1) 渲染组件；
+ *  2) 查询“更换头像”按钮。
+ * 断言：
+ *  - 按钮被禁用；
+ *  - aria-disabled 属性为 "true"。
+ * 边界/异常：
+ *  - 上传完成后应重新启用（由主流程测试覆盖）。
+ */
+test("GivenUploadingIdentity_WhenRendered_ThenChangeButtonDisabled", () => {
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: true,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const actionButton = screen.getByRole("button", { name: "更换头像" });
+  expect(actionButton).toBeDisabled();
+  expect(actionButton).toHaveAttribute("aria-disabled", "true");
 });

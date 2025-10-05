@@ -13,3 +13,4 @@ export {
 } from "./useEmailBinding.js";
 export { default as useIconToneController } from "./useIconToneController.js";
 export { default as useInfiniteScroll } from "./useInfiniteScroll.js";
+export { default as useAvatarUploader } from "./useAvatarUploader.js";
