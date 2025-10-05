@@ -125,6 +125,36 @@ describe("useWaitingFrameCycle", () => {
     expect(cancel).not.toHaveBeenCalled();
   });
 
+  it("GivenMultiFramePool_WhenSchedulingDisabled_ThenNeverEnqueuesTimer", () => {
+    /**
+     * 测试目标：覆盖 shouldSchedule=false 分支，确认多帧素材在禁用调度时不会排程。
+     * 前置条件：提供两帧素材、自定义 scheduler/cancel 以追踪调用次数。
+     * 步骤：
+     *  1) 渲染 Hook 并显式传入 shouldSchedule=false；
+     *  2) 读取 currentFrame 并检查 scheduler/cancel 调用计数。
+     * 断言：
+     *  - scheduler 与 cancel 均未被调用；
+     *  - Hook 仍返回首帧用于静态展示。
+     * 边界/异常：
+     *  - 若未来重新引入调度，应更新该测试以匹配新的节奏策略。
+     */
+    const scheduler = jest.fn();
+    const cancel = jest.fn();
+
+    const { result } = renderHook(() =>
+      useWaitingFrameCycle(frames, {
+        random: () => 0.1,
+        scheduler,
+        cancel,
+        shouldSchedule: false,
+      }),
+    );
+
+    expect(result.current.currentFrame).toBe("frame-a.svg");
+    expect(scheduler).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
   it("GivenStrategyConfiguration_WhenReadingCycleDuration_ThenReturnsFixedInterval", () => {
     /**
      * 测试目标：确认 Hook 返回的 cycleDurationMs 与策略文件设定的 1500ms 常量一致。
