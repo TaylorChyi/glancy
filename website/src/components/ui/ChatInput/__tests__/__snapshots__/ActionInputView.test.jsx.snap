@@ -3,7 +3,7 @@
 exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSendActionButtonMarkup 1`] = `
 <button
   aria-label="发送"
-  class="action-button action-button-send action-button-inverse-icon"
+  class="action-button action-button-send"
   type="button"
 >
   <img
@@ -21,7 +21,7 @@ exports[`GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot: Voi
 <button
   aria-label="语音"
   aria-pressed="false"
-  class="action-button action-button-voice action-button-inverse-icon"
+  class="action-button action-button-voice"
   disabled=""
   type="button"
 >

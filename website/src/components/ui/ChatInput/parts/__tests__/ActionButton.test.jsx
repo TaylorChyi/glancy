@@ -1,24 +1,18 @@
 /**
  * 背景：
- *  - ActionButton 新增的主题感知逻辑需确保在测试层面有稳定保障，避免未来回归导致浅色主题下对比度倒退。
+ *  - 发送/语音按钮移除壳体背景后，组件仅依赖语义类驱动配色。
  * 目的：
- *  - 针对浅色与暗色两种主题分别断言图标语义类是否正确注入，同时覆盖语音态分支。
+ *  - 验证输入态切换时的类名是否仍然准确，并确保语音触发的节流行为未受样式调整影响。
  * 关键决策与取舍：
- *  - 通过独立测试文件隔离 ActionButton，避免在 ActionInputView 快照中混入过多行为断言；
- *  - 使用 jest 模块模拟以减轻对真实 Icon 资源的依赖，保持测试专注于类名。
+ *  - 使用独立测试聚焦按钮逻辑，避免在上层视图快照中引入多余断言；
+ *  - 通过伪造图标组件保持测试纯粹关注 className 与交互回调。
  * 影响范围：
- *  - ChatInput 动作按钮的主题覆盖逻辑及其回归测试基线。
+ *  - ChatInput 动作按钮的状态切换与语音触发。
  * 演进与TODO：
- *  - 如未来引入更多主题态或动画，需要扩展测试覆盖新的 className 与行为。
+ *  - 若未来重新引入多主题色或额外态，需要补充对应断言。
  */
 import { render, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
-
-const mockUseTheme = jest.fn();
-
-jest.unstable_mockModule("@/context", () => ({
-  useTheme: mockUseTheme,
-}));
 
 jest.unstable_mockModule("../../icons", () => ({
   SendIcon: ({ className }) => (
@@ -31,26 +25,18 @@ jest.unstable_mockModule("../../icons", () => ({
 
 const { default: ActionButton } = await import("../ActionButton.jsx");
 
-beforeEach(() => {
-  mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
-});
-
-afterEach(() => {
-  mockUseTheme.mockReset();
-});
-
 /**
- * 测试目标：亮色主题下发送态按钮应加入反相类以保障图标对比度。
- * 前置条件：resolvedTheme="light"，输入值非空触发发送态。
+ * 测试目标：输入非空时按钮呈发送态并仅包含发送语义类。
+ * 前置条件：value 为非空字符串。
  * 步骤：
- *  1) 渲染 ActionButton，传入非空 value。
- *  2) 查询按钮并读取 className。
+ *  1) 渲染组件并获取按钮节点。
+ *  2) 读取 className。
  * 断言：
- *  - className 包含 action-button-inverse-icon。
+ *  - className 仅包含 action-button 与 action-button-send。
  * 边界/异常：
- *  - 若未来调整类名，需要同步更新断言避免误报。
+ *  - 若未来新增语义类，需要同步更新断言集合。
  */
-test("GivenLightThemeAndSendState_WhenRendering_ThenApplyInverseToneClass", () => {
+test("GivenNonEmptyInput_WhenRendering_ThenExposeSendClass", () => {
   const { getByRole } = render(
     <ActionButton
       value="hello"
@@ -65,26 +51,27 @@ test("GivenLightThemeAndSendState_WhenRendering_ThenApplyInverseToneClass", () =
     />,
   );
 
-  expect(getByRole("button").className).toContain("action-button-inverse-icon");
+  expect(getByRole("button").className.split(" ").sort()).toEqual([
+    "action-button",
+    "action-button-send",
+  ]);
 });
 
 /**
- * 测试目标：暗色主题下保持默认色彩，不应附加反相类。
- * 前置条件：resolvedTheme="dark"，输入值非空保证发送态。
+ * 测试目标：输入为空时按钮回落到语音态，仅包含语音语义类。
+ * 前置条件：value 为空字符串。
  * 步骤：
- *  1) mockUseTheme 返回暗色主题。
- *  2) 渲染组件并读取 className。
+ *  1) 渲染组件并获取按钮节点。
+ *  2) 读取 className。
  * 断言：
- *  - className 不包含 action-button-inverse-icon。
+ *  - className 仅包含 action-button 与 action-button-voice。
  * 边界/异常：
- *  - 如未来引入高对比主题，需扩展此用例覆盖新逻辑。
+ *  - 若未来扩展录音态类，需要补充断言。
  */
-test("GivenDarkThemeAndSendState_WhenRendering_ThenKeepDefaultTone", () => {
-  mockUseTheme.mockReturnValueOnce({ resolvedTheme: "dark" });
-
+test("GivenEmptyInput_WhenRendering_ThenExposeVoiceClass", () => {
   const { getByRole } = render(
     <ActionButton
-      value="hello"
+      value=""
       isRecording={false}
       voiceCooldownRef={{ current: 0 }}
       onVoice={jest.fn()}
@@ -96,23 +83,24 @@ test("GivenDarkThemeAndSendState_WhenRendering_ThenKeepDefaultTone", () => {
     />,
   );
 
-  expect(getByRole("button").className).not.toContain(
-    "action-button-inverse-icon",
-  );
+  expect(getByRole("button").className.split(" ").sort()).toEqual([
+    "action-button",
+    "action-button-voice",
+  ]);
 });
 
 /**
- * 测试目标：亮色主题下语音态同样继承反相类，保证空输入时按钮对比度。
- * 前置条件：resolvedTheme="light"，value 为空触发语音态。
+ * 测试目标：语音态点击应遵循节流策略，避免重复触发。
+ * 前置条件：value 为空、voiceCooldownRef 初始值为 0。
  * 步骤：
- *  1) 渲染组件并点击按钮触发语音逻辑。
- *  2) 查询按钮的 className。
+ *  1) 渲染组件并连续点击两次按钮。
+ *  2) 统计 onVoice 调用次数。
  * 断言：
- *  - className 包含 action-button-inverse-icon。
+ *  - onVoice 仅被调用一次。
  * 边界/异常：
- *  - 若未来为语音态提供独立色彩，应更新此断言。
+ *  - 若未来调整冷却窗口，需要同步修改测试触发节奏。
  */
-test("GivenLightThemeAndVoiceState_WhenRendering_ThenApplyInverseToneClass", () => {
+test("GivenVoiceState_WhenClickingTwice_ThenThrottleVoiceHandler", () => {
   const onVoice = jest.fn();
   const { getByRole } = render(
     <ActionButton
@@ -129,8 +117,8 @@ test("GivenLightThemeAndVoiceState_WhenRendering_ThenApplyInverseToneClass", () 
   );
 
   const button = getByRole("button");
-  expect(button.className).toContain("action-button-inverse-icon");
-
   fireEvent.click(button);
+  fireEvent.click(button);
+
   expect(onVoice).toHaveBeenCalledTimes(1);
 });

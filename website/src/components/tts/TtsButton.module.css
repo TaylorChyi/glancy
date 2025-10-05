@@ -47,16 +47,6 @@
   cursor: not-allowed;
 }
 
-/*
- * 背景：
- *  - 语音按钮在浅色主题下采用深色圆形背景，需要将图标色反转为浅色才能满足可读性。
- * 取舍：
- *  - 通过 CSS 变量覆写方式注入反相色，允许播放态等其他状态继续覆盖 --tts-icon-color，避免相互冲突。
- */
-.icon-on-inverse {
-  --tts-icon-color: var(--color-text-inverse, var(--neutral-0));
-}
-
 .upgrade-btn {
   margin-top: var(--space-3);
   background: var(--brand-primary);
