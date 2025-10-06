@@ -3,7 +3,8 @@ import { API_PATHS } from "../../config/api.js";
 import { DEFAULT_MODEL } from "../../config/index.js";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { useWordStore } from "@/store/wordStore.js";
-import { useDataGovernanceStore } from "@/store";
+// 直接引用数据治理 store，保持与生产依赖一致并防止 barrel 循环。
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { jest } from "@jest/globals";
 
 /**

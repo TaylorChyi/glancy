@@ -15,7 +15,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/context";
-import { useIsMobile } from "@/utils";
+// 避免通过 utils/index 的桶状导出造成 rollup chunk 循环，直接引用具体实现。
+import { useIsMobile } from "@/utils/device.js";
 
 const NAVIGATION_KEYS = {
   DICTIONARY: "dictionary",

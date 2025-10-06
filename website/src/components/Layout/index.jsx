@@ -24,7 +24,8 @@ import {
 import PropTypes from "prop-types";
 import Sidebar from "@/components/Sidebar";
 import ThemeIcon from "@/components/ui/Icon";
-import { useIsMobile } from "@/utils";
+// 直接引用移动端判断 Hook，避免 utils 桶状导出的循环依赖在移动端首屏触发。
+import { useIsMobile } from "@/utils/device.js";
 import styles from "./Layout.module.css";
 
 function Layout({

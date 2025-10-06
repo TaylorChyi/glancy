@@ -19,7 +19,10 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useLanguage, useUser } from "@/context";
 import LanguageMenu from "@/components/ui/LanguageMenu";
-import { useDataGovernanceStore, useHistoryStore } from "@/store";
+// 避免经由 store/index 桶状导出的路径，确保页面依赖在打包拆分时保持拓扑稳定
+// 并为后续按需加载各 store 留出空间。
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
+import { useHistoryStore } from "@/store/historyStore.ts";
 import {
   DATA_RETENTION_POLICIES,
   getRetentionPolicyById,

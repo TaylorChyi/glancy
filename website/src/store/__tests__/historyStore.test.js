@@ -1,7 +1,10 @@
 import { jest } from "@jest/globals";
 import { act } from "@testing-library/react";
 import api from "@/api/index.js";
-import { useHistoryStore, useWordStore, useDataGovernanceStore } from "@/store";
+// 直接引用具体 store 以规避 barrel 引入的循环依赖并保持测试与生产实现等价。
+import { useHistoryStore } from "@/store/historyStore.ts";
+import { useWordStore } from "@/store/wordStore.js";
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 
 const mockWordStore = useWordStore;

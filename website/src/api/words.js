@@ -4,7 +4,8 @@ import { useApi } from "@/hooks/useApi.js";
 import { createCachedFetcher, parseSse } from "@/utils";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { useWordStore } from "@/store/wordStore.js";
-import { useDataGovernanceStore } from "@/store";
+// 直接引用数据治理 store，避免 utils/store 桶状导出间的循环依赖在 SSR 或打包阶段触发。
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 
 export const WORD_CACHE_VERSION = "md1";
 

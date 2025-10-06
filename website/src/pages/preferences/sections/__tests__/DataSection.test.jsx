@@ -3,7 +3,9 @@ import { jest } from "@jest/globals";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { useDataGovernanceStore, useHistoryStore } from "@/store";
+// 测试同样直接引用具体 Store，保证与生产实现一致且规避 barrel 带来的循环依赖。
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
+import { useHistoryStore } from "@/store/historyStore.ts";
 
 const translations = {
   settingsDataDescription: "Data stewardship",

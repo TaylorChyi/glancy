@@ -1,9 +1,8 @@
-import {
-  useFavoritesStore,
-  useHistoryStore,
-  useVoiceStore,
-  useWordStore,
-} from "@/store";
+// 为避免桶状导出导致的循环依赖，在会话生命周期模块中直接依赖各 store。
+import { useFavoritesStore } from "@/store/favoritesStore.ts";
+import { useHistoryStore } from "@/store/historyStore.ts";
+import { useVoiceStore } from "@/store/voiceStore.ts";
+import { useWordStore } from "@/store/wordStore.js";
 
 function clearHistoryState() {
   const historyStore = useHistoryStore.getState();
