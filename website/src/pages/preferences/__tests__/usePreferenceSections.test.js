@@ -31,6 +31,7 @@ jest.unstable_mockModule("@/api/profiles.js", () => ({
 }));
 
 let usePreferenceSections;
+let ACCOUNT_USERNAME_FIELD_TYPE;
 let translations;
 let fetchProfileMock;
 let saveProfileMock;
@@ -39,6 +40,9 @@ let consoleErrorStub;
 beforeAll(async () => {
   ({ default: usePreferenceSections } = await import(
     "../usePreferenceSections.js"
+  ));
+  ({ ACCOUNT_USERNAME_FIELD_TYPE } = await import(
+    "../sections/AccountSection.jsx"
   ));
 });
 
@@ -325,9 +329,14 @@ test(
       "function",
     );
     expect(accountSection.componentProps.identity.isUploading).toBe(false);
+    expect(accountSection.componentProps.fields[0].type).toBe(
+      ACCOUNT_USERNAME_FIELD_TYPE,
+    );
     expect(
-      typeof accountSection.componentProps.fields[0].renderValue,
-    ).toBe("function");
+      accountSection.componentProps.fields[0].usernameEditorProps,
+    ).toMatchObject({
+      username: "amy",
+    });
     expect(accountSection.componentProps.bindings.title).toBe(
       translations.settingsAccountBindingTitle,
     );
