@@ -12,7 +12,7 @@
  * 演进与TODO：
  *  - 后续可引入配置驱动策略选择或接入 A/B 开关，支持灰度验证不同格式化方案。
  */
-import { polishDictionaryMarkdown } from "@/utils";
+import { createStreamingTextBuffer, polishDictionaryMarkdown } from "@/utils";
 
 const FALLBACK_STRATEGY = {
   matches() {
@@ -57,7 +57,7 @@ function createDoubaoDictionaryStrategy() {
  */
 export function createAssistantMessageFormatter({ strategies } = {}) {
   const availableStrategies = strategies ?? [createDoubaoDictionaryStrategy(), FALLBACK_STRATEGY];
-  let buffer = "";
+  const streamBuffer = createStreamingTextBuffer();
 
   function applyStrategies(text) {
     for (const strategy of availableStrategies) {
@@ -74,13 +74,11 @@ export function createAssistantMessageFormatter({ strategies } = {}) {
 
   return {
     append(chunk) {
-      if (chunk) {
-        buffer += chunk;
-      }
-      return applyStrategies(buffer);
+      const aggregated = streamBuffer.append(chunk);
+      return applyStrategies(aggregated);
     },
     reset() {
-      buffer = "";
+      streamBuffer.reset();
     },
   };
 }
