@@ -259,7 +259,6 @@ function usePreferenceSections({ initialSectionId }) {
     () => ({
       loadingLabel: t.loading ?? t.saving ?? "Loading...",
       savingLabel: t.saving ?? "Saving...",
-      savedLabel: t.settingsResponseStyleSaved ?? "Saved",
       errorLabel:
         t.settingsResponseStyleError ??
         t.fail ??
@@ -271,8 +270,7 @@ function usePreferenceSections({ initialSectionId }) {
           value: "default",
           label: t.responseStyleOptionDefault ?? "Default",
           description:
-            t.responseStyleOptionDefaultDescription ??
-            "Cheerful and adaptive",
+            t.responseStyleOptionDefaultDescription ?? "Cheerful and adaptive",
         },
         {
           value: "cynic",
@@ -303,19 +301,8 @@ function usePreferenceSections({ initialSectionId }) {
       ],
       fields: [
         {
-          id: "goal",
-          label:
-            t.responseStyleFieldGoalLabel ??
-            t.goalLabel ??
-            "Goal",
-          placeholder: t.responseStyleFieldGoalPlaceholder ?? "",
-        },
-        {
           id: "job",
-          label:
-            t.responseStyleFieldJobLabel ??
-            t.jobLabel ??
-            "Occupation",
+          label: t.responseStyleFieldJobLabel ?? t.jobLabel ?? "Occupation",
           placeholder: t.responseStyleFieldJobPlaceholder ?? "",
         },
         {
@@ -327,20 +314,29 @@ function usePreferenceSections({ initialSectionId }) {
           placeholder: t.responseStyleFieldEducationPlaceholder ?? "",
         },
         {
-          id: "interests",
-          label:
-            t.responseStyleFieldInterestsLabel ??
-            t.interestsLabel ??
-            "Interests",
-          placeholder: t.responseStyleFieldInterestsPlaceholder ?? "",
-        },
-        {
           id: "currentAbility",
           label:
             t.responseStyleFieldAbilityLabel ??
             t.currentAbilityLabel ??
             "Current ability",
           placeholder: t.responseStyleFieldAbilityPlaceholder ?? "",
+        },
+        {
+          id: "goal",
+          label: t.responseStyleFieldGoalLabel ?? t.goalLabel ?? "Goal",
+          placeholder: t.responseStyleFieldGoalPlaceholder ?? "",
+          multiline: true,
+          rows: 3,
+        },
+        {
+          id: "interests",
+          label:
+            t.responseStyleFieldInterestsLabel ??
+            t.interestsLabel ??
+            "Interests",
+          placeholder: t.responseStyleFieldInterestsPlaceholder ?? "",
+          multiline: true,
+          rows: 3,
         },
       ],
     }),
@@ -376,7 +372,6 @@ function usePreferenceSections({ initialSectionId }) {
       t.responseStyleSelectLabel,
       t.saving,
       t.settingsResponseStyleError,
-      t.settingsResponseStyleSaved,
     ],
   );
 
@@ -436,7 +431,11 @@ function usePreferenceSections({ initialSectionId }) {
 
   const handleResponseStyleChange = useCallback(
     (field, value) => {
-      dispatchResponseStyle({ type: RESPONSE_STYLE_ACTIONS.change, field, value });
+      dispatchResponseStyle({
+        type: RESPONSE_STYLE_ACTIONS.change,
+        field,
+        value,
+      });
       dispatchResponseStyle({ type: RESPONSE_STYLE_ACTIONS.clearError });
     },
     [dispatchResponseStyle],
@@ -617,9 +616,7 @@ function usePreferenceSections({ initialSectionId }) {
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
-    const responseStyleLabel =
-      t.settingsTabPersonalization ??
-      "Response style";
+    const responseStyleLabel = t.settingsTabPersonalization ?? "Response style";
     const responseStyleSummary =
       t.settingsResponseStyleDescription ??
       t.prefPersonalizationTitle ??

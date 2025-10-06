@@ -55,12 +55,12 @@ export default {
     "Please request a verification code before submitting.",
   emailCodeMismatch:
     "Please use the email that received the verification code.",
-  educationLabel: "Education",
+  educationLabel: "Education background",
   educationPlaceholder: "e.g. Master's in Linguistics",
   educationHelp: "Share your highest degree or ongoing program.",
-  jobLabel: "Occupation",
-  jobPlaceholder: "e.g. Product Manager",
-  jobHelp: "Let us know your current role to tailor vocabulary.",
+  jobLabel: "Professional role",
+  jobPlaceholder: "e.g. Product manager or language coach",
+  jobHelp: "Describe your professional focus so we can tailor vocabulary.",
   currentAbilityLabel: "Current proficiency",
   currentAbilityPlaceholder: "e.g. CEFR B1",
   currentAbilityHelp:

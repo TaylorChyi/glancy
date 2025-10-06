@@ -76,11 +76,11 @@ const createTranslations = (overrides = {}) => ({
   responseStyleOptionListenerDescription: "Supportive",
   responseStyleOptionNerd: "Nerd",
   responseStyleOptionNerdDescription: "Enthusiastic",
-  responseStyleFieldGoalLabel: "Tagline",
+  responseStyleFieldGoalLabel: "Personal goals",
   responseStyleFieldGoalPlaceholder: "Goal placeholder",
-  responseStyleFieldJobLabel: "Occupation",
+  responseStyleFieldJobLabel: "Professional role",
   responseStyleFieldJobPlaceholder: "Job placeholder",
-  responseStyleFieldEducationLabel: "Education",
+  responseStyleFieldEducationLabel: "Education background",
   responseStyleFieldEducationPlaceholder: "Education placeholder",
   responseStyleFieldInterestsLabel: "Interests",
   responseStyleFieldInterestsPlaceholder: "Interests placeholder",
@@ -247,11 +247,9 @@ beforeEach(() => {
     customSections: [],
   };
   fetchProfileMock = jest.fn().mockResolvedValue(profileResponse);
-  saveProfileMock = jest
-    .fn()
-    .mockResolvedValue({
-      ...profileResponse,
-    });
+  saveProfileMock = jest.fn().mockResolvedValue({
+    ...profileResponse,
+  });
   mockUseProfilesApi.mockReturnValue({
     fetchProfile: fetchProfileMock,
     saveProfile: saveProfileMock,
@@ -278,113 +276,123 @@ afterEach(() => {
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
  */
-test(
-  "Given default sections When reading blueprint Then general leads navigation",
-  async () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({
-        initialSectionId: undefined,
-      }),
-    );
+test("Given default sections When reading blueprint Then general leads navigation", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
 
-    await waitFor(() => {
-      expect(fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
-    });
+  await waitFor(() => {
+    expect(fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
+  });
 
-    await waitFor(() => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      expect(responseStyleSection.componentProps.state.status).toBe("ready");
-    });
-
-    expect(result.current.sections.map((section) => section.id)).toEqual([
-      "general",
-      "responseStyle",
-      "data",
-      "keyboard",
-      "account",
-      "subscription",
-    ]);
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
-    expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-    expect(result.current.panel.modalHeadingId).toBe(
-      "settings-modal-fallback-heading",
-    );
-    expect(result.current.panel.modalHeadingText).toBe("General");
-    const accountSection = result.current.sections.find(
-      (section) => section.id === "account",
-    );
-    expect(accountSection).toBeDefined();
-    expect(accountSection.Component).toBeDefined();
-    expect(accountSection.componentProps.identity.displayName).toBe("amy");
-    expect(accountSection.componentProps.identity.changeLabel).toBe(
-      translations.changeAvatar,
-    );
-    expect(accountSection.componentProps.identity.avatarAlt).toBe(
-      translations.prefAccountTitle,
-    );
-    expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
-      "function",
-    );
-    expect(accountSection.componentProps.identity.isUploading).toBe(false);
-    expect(accountSection.componentProps.fields[0].type).toBe(
-      ACCOUNT_USERNAME_FIELD_TYPE,
-    );
-    expect(
-      accountSection.componentProps.fields[0].usernameEditorProps,
-    ).toMatchObject({
-      username: "amy",
-    });
-    expect(accountSection.componentProps.bindings.title).toBe(
-      translations.settingsAccountBindingTitle,
-    );
-    expect(accountSection.componentProps.bindings.items).toHaveLength(3);
-    expect(
-      accountSection.componentProps.bindings.items.map((item) => item.name),
-    ).toEqual([
-      translations.settingsAccountBindingApple,
-      translations.settingsAccountBindingGoogle,
-      translations.settingsAccountBindingWeChat,
-    ]);
-    expect(
-      accountSection.componentProps.bindings.items.every(
-        (item) =>
-          item.status === translations.settingsAccountBindingStatusUnlinked &&
-          item.actionLabel ===
-            translations.settingsAccountBindingActionPlaceholder,
-      ),
-    ).toBe(true);
-    expect(result.current.avatarEditor).toBeDefined();
-    expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
-      "function",
-    );
-    expect(result.current.avatarEditor.modalProps.open).toBe(false);
-    const subscriptionSection = result.current.sections.find(
-      (section) => section.id === "subscription",
-    );
-    expect(subscriptionSection).toBeDefined();
-    expect(subscriptionSection.Component).toBeDefined();
-    expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
-    expect(
-      subscriptionSection.componentProps.planCards.some(
-        (card) => card.id === "PLUS" && card.state === "current",
-      ),
-    ).toBe(true);
+  await waitFor(() => {
     const responseStyleSection = result.current.sections.find(
       (section) => section.id === "responseStyle",
     );
-    expect(responseStyleSection.componentProps.copy.dropdownLabel).toBe(
-      translations.responseStyleSelectLabel,
-    );
-    expect(responseStyleSection.componentProps.copy.options).toHaveLength(5);
-    expect(responseStyleSection.componentProps.state.values.goal).toBe("B2");
-    expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
-      "default",
-    );
-  },
-);
+    expect(responseStyleSection.componentProps.state.status).toBe("ready");
+  });
+
+  expect(result.current.sections.map((section) => section.id)).toEqual([
+    "general",
+    "responseStyle",
+    "data",
+    "keyboard",
+    "account",
+    "subscription",
+  ]);
+  expect(result.current.activeSectionId).toBe("general");
+  expect(result.current.panel.headingId).toBe("general-section-heading");
+  expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
+  expect(result.current.panel.modalHeadingText).toBe("General");
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  expect(accountSection).toBeDefined();
+  expect(accountSection.Component).toBeDefined();
+  expect(accountSection.componentProps.identity.displayName).toBe("amy");
+  expect(accountSection.componentProps.identity.changeLabel).toBe(
+    translations.changeAvatar,
+  );
+  expect(accountSection.componentProps.identity.avatarAlt).toBe(
+    translations.prefAccountTitle,
+  );
+  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+    "function",
+  );
+  expect(accountSection.componentProps.identity.isUploading).toBe(false);
+  expect(accountSection.componentProps.fields[0].type).toBe(
+    ACCOUNT_USERNAME_FIELD_TYPE,
+  );
+  expect(
+    accountSection.componentProps.fields[0].usernameEditorProps,
+  ).toMatchObject({
+    username: "amy",
+  });
+  expect(accountSection.componentProps.bindings.title).toBe(
+    translations.settingsAccountBindingTitle,
+  );
+  expect(accountSection.componentProps.bindings.items).toHaveLength(3);
+  expect(
+    accountSection.componentProps.bindings.items.map((item) => item.name),
+  ).toEqual([
+    translations.settingsAccountBindingApple,
+    translations.settingsAccountBindingGoogle,
+    translations.settingsAccountBindingWeChat,
+  ]);
+  expect(
+    accountSection.componentProps.bindings.items.every(
+      (item) =>
+        item.status === translations.settingsAccountBindingStatusUnlinked &&
+        item.actionLabel ===
+          translations.settingsAccountBindingActionPlaceholder,
+    ),
+  ).toBe(true);
+  expect(result.current.avatarEditor).toBeDefined();
+  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+    "function",
+  );
+  expect(result.current.avatarEditor.modalProps.open).toBe(false);
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+  expect(subscriptionSection).toBeDefined();
+  expect(subscriptionSection.Component).toBeDefined();
+  expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
+  expect(
+    subscriptionSection.componentProps.planCards.some(
+      (card) => card.id === "PLUS" && card.state === "current",
+    ),
+  ).toBe(true);
+  const responseStyleSection = result.current.sections.find(
+    (section) => section.id === "responseStyle",
+  );
+  expect(responseStyleSection.componentProps.copy.dropdownLabel).toBe(
+    translations.responseStyleSelectLabel,
+  );
+  expect(responseStyleSection.componentProps.copy.options).toHaveLength(5);
+  expect(
+    responseStyleSection.componentProps.copy.fields.map((field) => field.id),
+  ).toEqual(["job", "education", "currentAbility", "goal", "interests"]);
+  expect(
+    responseStyleSection.componentProps.copy.fields
+      .filter((field) => field.multiline)
+      .map((field) => field.id),
+  ).toEqual(["goal", "interests"]);
+  expect(
+    responseStyleSection.componentProps.copy.fields.find(
+      (field) => field.id === "goal",
+    ).rows,
+  ).toBe(3);
+  expect(responseStyleSection.componentProps.state.values.goal).toBe("B2");
+  expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
+    "default",
+  );
+});
 
 /**
  * 测试目标：账户信息存在邮箱时偏好设置应暴露可用的解绑操作。
@@ -398,35 +406,32 @@ test(
  * 边界/异常：
  *  - 若分区尚未生成或字段缺失则测试失败。
  */
-test(
-  "Given bound email When inspecting account field Then unbind action enabled",
-  async () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
-    );
+test("Given bound email When inspecting account field Then unbind action enabled", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
 
-    await waitFor(() => {
-      const accountSection = result.current.sections.find(
-        (section) => section.id === "account",
-      );
-      expect(accountSection).toBeDefined();
-    });
-
+  await waitFor(() => {
     const accountSection = result.current.sections.find(
       (section) => section.id === "account",
     );
-    const emailField = accountSection.componentProps.fields.find(
-      (field) => field.id === "email",
-    );
+    expect(accountSection).toBeDefined();
+  });
 
-    expect(emailField).toBeDefined();
-    expect(emailField.action).toBeDefined();
-    expect(emailField.action.disabled).toBe(false);
-    expect(emailField.action.label).toBe(
-      translations.settingsAccountEmailUnbindAction,
-    );
-  },
-);
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  expect(emailField).toBeDefined();
+  expect(emailField.action).toBeDefined();
+  expect(emailField.action.disabled).toBe(false);
+  expect(emailField.action.label).toBe(
+    translations.settingsAccountEmailUnbindAction,
+  );
+});
 
 /**
  * 测试目标：缺少邮箱时解绑操作需保持禁用，避免误导性交互。
@@ -439,44 +444,41 @@ test(
  * 边界/异常：
  *  - 若 email 字段不存在则测试失败。
  */
-test(
-  "Given missing email When inspecting account field Then unbind action disabled",
-  async () => {
-    mockUseUser.mockReturnValue({
-      user: {
-        id: "user-1",
-        username: "amy",
-        email: "",
-        plan: "plus",
-        isPro: true,
-        token: "token-123",
-      },
-      setUser: jest.fn(),
-    });
+test("Given missing email When inspecting account field Then unbind action disabled", async () => {
+  mockUseUser.mockReturnValue({
+    user: {
+      id: "user-1",
+      username: "amy",
+      email: "",
+      plan: "plus",
+      isPro: true,
+      token: "token-123",
+    },
+    setUser: jest.fn(),
+  });
 
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
-    );
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
 
-    await waitFor(() => {
-      const accountSection = result.current.sections.find(
-        (section) => section.id === "account",
-      );
-      expect(accountSection).toBeDefined();
-    });
-
+  await waitFor(() => {
     const accountSection = result.current.sections.find(
       (section) => section.id === "account",
     );
-    const emailField = accountSection.componentProps.fields.find(
-      (field) => field.id === "email",
-    );
+    expect(accountSection).toBeDefined();
+  });
 
-    expect(emailField).toBeDefined();
-    expect(emailField.action).toBeDefined();
-    expect(emailField.action.disabled).toBe(true);
-  },
-);
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  expect(emailField).toBeDefined();
+  expect(emailField.action).toBeDefined();
+  expect(emailField.action.disabled).toBe(true);
+});
 
 /**
  * 测试目标：响应风格请求失败后暴露 error 状态并可通过 onRetry 重试。
@@ -491,9 +493,7 @@ test(
  * 边界/异常：
  *  - 若重试未恢复则断言失败。
  */
-test(
-  "Given response style fetch fails When retry invoked Then status recovers",
-  async () => {
+test("Given response style fetch fails When retry invoked Then status recovers", async () => {
   fetchProfileMock
     .mockRejectedValueOnce(new Error("network"))
     .mockResolvedValueOnce({
@@ -506,37 +506,36 @@ test(
       customSections: [],
     });
 
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
+
+  await waitFor(() => {
+    const responseStyleSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
     );
+    expect(responseStyleSection.componentProps.state.status).toBe("error");
+  });
 
-    await waitFor(() => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      expect(responseStyleSection.componentProps.state.status).toBe("error");
-    });
+  await act(async () => {
+    const responseStyleSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
+    );
+    await responseStyleSection.componentProps.onRetry();
+  });
 
-    await act(async () => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      await responseStyleSection.componentProps.onRetry();
-    });
+  await waitFor(() => {
+    const responseStyleSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
+    );
+    expect(responseStyleSection.componentProps.state.status).toBe("ready");
+    expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
+      "nerd",
+    );
+  });
 
-    await waitFor(() => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      expect(responseStyleSection.componentProps.state.status).toBe("ready");
-      expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
-        "nerd",
-      );
-    });
-
-    expect(fetchProfileMock).toHaveBeenCalledTimes(2);
-  },
-);
+  expect(fetchProfileMock).toHaveBeenCalledTimes(2);
+});
 
 /**
  * 测试目标：更新响应风格字段时应触发保存请求并传递裁剪后的值。
@@ -549,50 +548,47 @@ test(
  *  - 请求体包含去除首尾空格后的值。
  * 边界/异常：无。
  */
-test(
-  "Given response style edit When committing field Then saveProfile dispatches sanitized payload",
-  async () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
-    );
+test("Given response style edit When committing field Then saveProfile dispatches sanitized payload", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
 
-    await waitFor(() => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      expect(responseStyleSection.componentProps.state.status).toBe("ready");
-    });
-
-    act(() => {
-      const responseStyleSection = result.current.sections.find(
-        (section) => section.id === "responseStyle",
-      );
-      responseStyleSection.componentProps.onFieldChange("goal", "  IELTS  ");
-    });
-
-    const latestSection = result.current.sections.find(
+  await waitFor(() => {
+    const responseStyleSection = result.current.sections.find(
       (section) => section.id === "responseStyle",
     );
+    expect(responseStyleSection.componentProps.state.status).toBe("ready");
+  });
 
-    await act(async () => {
-      await latestSection.componentProps.onFieldCommit("goal");
-    });
+  act(() => {
+    const responseStyleSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
+    );
+    responseStyleSection.componentProps.onFieldChange("goal", "  IELTS  ");
+  });
 
-    expect(saveProfileMock).toHaveBeenCalledTimes(1);
-    expect(saveProfileMock).toHaveBeenCalledWith({
-      token: "token-123",
-      profile: {
-        job: "Engineer",
-        interest: "AI",
-        goal: "IELTS",
-        education: "Bachelor",
-        currentAbility: "B1",
-        responseStyle: "default",
-        customSections: [],
-      },
-    });
-  },
-);
+  const latestSection = result.current.sections.find(
+    (section) => section.id === "responseStyle",
+  );
+
+  await act(async () => {
+    await latestSection.componentProps.onFieldCommit("goal");
+  });
+
+  expect(saveProfileMock).toHaveBeenCalledTimes(1);
+  expect(saveProfileMock).toHaveBeenCalledWith({
+    token: "token-123",
+    profile: {
+      job: "Engineer",
+      interest: "AI",
+      goal: "IELTS",
+      education: "Bachelor",
+      currentAbility: "B1",
+      responseStyle: "default",
+      customSections: [],
+    },
+  });
+});
 
 /**
  * 测试目标：当用户仅暴露 member 标记时，订阅蓝图应回退到 PLUS 套餐。

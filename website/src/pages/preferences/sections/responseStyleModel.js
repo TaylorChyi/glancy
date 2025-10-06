@@ -17,11 +17,11 @@ import { createEmptyProfileDetails } from "@/pages/profile/profileDetailsModel.j
 
 const RESPONSE_STYLE_FIELDS = Object.freeze([
   "responseStyle",
-  "goal",
   "job",
   "education",
-  "interests",
   "currentAbility",
+  "goal",
+  "interests",
 ]);
 
 const sanitizeText = (value) => {
