@@ -31,6 +31,9 @@ public class UserProfile {
     @Column(length = 1024)
     private String futurePlan;
 
+    @Column(name = "response_style")
+    private String responseStyle;
+
     @Column(name = "custom_sections", columnDefinition = "TEXT")
     private String customSections;
 }

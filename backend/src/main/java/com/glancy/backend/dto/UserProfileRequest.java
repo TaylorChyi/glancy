@@ -32,6 +32,8 @@ public record UserProfileRequest(
     Integer dailyWordTarget,
     /** 对未来规划或学习节奏的补充描述 */
     String futurePlan,
+    /** 首选的释义回应语气 */
+    String responseStyle,
     /** 用户自定义维度的配置集合 */
     List<ProfileCustomSectionDto> customSections
 ) {}

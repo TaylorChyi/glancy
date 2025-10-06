@@ -65,6 +65,7 @@ class DefaultWordPersonalizationServiceTest {
         profile.setInterest("金融, 设计");
         profile.setGoal("赢得国际设计奖");
         profile.setFuturePlan("打造沉浸式体验");
+        profile.setResponseStyle("沉稳");
         profile.setUser(new User());
         when(userProfileRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
 
@@ -107,7 +108,7 @@ class DefaultWordPersonalizationServiceTest {
         assertEquals("同样在冲刺高强度词汇目标的伙伴", context.audienceDescriptor());
         assertTrue(context.hasSignals());
         assertEquals("赢得国际设计奖", context.goal());
-        assertEquals("节奏明快", context.preferredTone());
+        assertEquals("沉稳", context.preferredTone());
         assertEquals(List.of("金融", "设计"), context.interests());
         assertEquals(List.of("equity", "portfolio"), context.recentTerms());
 

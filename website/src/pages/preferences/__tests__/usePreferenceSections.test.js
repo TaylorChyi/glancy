@@ -33,6 +33,7 @@ jest.unstable_mockModule("@/api/profiles.js", () => ({
 let usePreferenceSections;
 let translations;
 let fetchProfileMock;
+let saveProfileMock;
 let consoleErrorStub;
 
 beforeAll(async () => {
@@ -57,6 +58,31 @@ const createTranslations = (overrides = {}) => ({
   loading: "Loading...",
   settingsPersonalizationEmpty: "No personalization yet",
   settingsPersonalizationLoadError: "Unable to load personalization",
+  settingsTabResponseStyle: "Response style",
+  settingsResponseStyleDescription: "Response style summary",
+  settingsResponseStyleError: "Unable to save response style",
+  settingsResponseStyleSaved: "Saved",
+  responseStyleSelectLabel: "Response tone",
+  responseStyleOptionDefault: "Default",
+  responseStyleOptionDefaultDescription: "Cheerful",
+  responseStyleOptionCynic: "Cynic",
+  responseStyleOptionCynicDescription: "Critical",
+  responseStyleOptionRobot: "Robot",
+  responseStyleOptionRobotDescription: "Blunt",
+  responseStyleOptionListener: "Listener",
+  responseStyleOptionListenerDescription: "Supportive",
+  responseStyleOptionNerd: "Nerd",
+  responseStyleOptionNerdDescription: "Enthusiastic",
+  responseStyleFieldGoalLabel: "Tagline",
+  responseStyleFieldGoalPlaceholder: "Goal placeholder",
+  responseStyleFieldJobLabel: "Occupation",
+  responseStyleFieldJobPlaceholder: "Job placeholder",
+  responseStyleFieldEducationLabel: "Education",
+  responseStyleFieldEducationPlaceholder: "Education placeholder",
+  responseStyleFieldInterestsLabel: "Interests",
+  responseStyleFieldInterestsPlaceholder: "Interests placeholder",
+  responseStyleFieldAbilityLabel: "Current ability",
+  responseStyleFieldAbilityPlaceholder: "Ability placeholder",
   settingsTabData: "Data controls",
   settingsDataDescription: "Data summary",
   settingsDataNotice: "Data notice",
@@ -208,15 +234,25 @@ beforeEach(() => {
   mockUseUsersApi.mockReturnValue({
     updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
   });
-  fetchProfileMock = jest.fn().mockResolvedValue({
+  const profileResponse = {
     job: "Engineer",
     goal: "B2",
     currentAbility: "B1",
     education: "Bachelor",
     interest: "AI",
+    responseStyle: "default",
     customSections: [],
+  };
+  fetchProfileMock = jest.fn().mockResolvedValue(profileResponse);
+  saveProfileMock = jest
+    .fn()
+    .mockResolvedValue({
+      ...profileResponse,
+    });
+  mockUseProfilesApi.mockReturnValue({
+    fetchProfile: fetchProfileMock,
+    saveProfile: saveProfileMock,
   });
-  mockUseProfilesApi.mockReturnValue({ fetchProfile: fetchProfileMock });
 });
 
 afterEach(() => {
@@ -226,7 +262,7 @@ afterEach(() => {
 });
 
 /**
- * 测试目标：默认渲染时分区顺序应为 general→personalization→data→keyboard→account，且默认激活 general。
+ * 测试目标：默认渲染时分区顺序应为 general→response style→data→keyboard→account，且默认激活 general。
  * 前置条件：使用默认语言文案与账户信息渲染 Hook。
  * 步骤：
  *  1) 渲染 usePreferenceSections。
@@ -253,15 +289,15 @@ test(
     });
 
     await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
       );
-      expect(personalizationSection.componentProps.state.status).toBe("ready");
+      expect(responseStyleSection.componentProps.state.status).toBe("ready");
     });
 
     expect(result.current.sections.map((section) => section.id)).toEqual([
       "general",
-      "personalization",
+      "responseStyle",
       "data",
       "keyboard",
       "account",
@@ -328,17 +364,17 @@ test(
         (card) => card.id === "PLUS" && card.state === "current",
       ),
     ).toBe(true);
-    const personalizationSection = result.current.sections.find(
-      (section) => section.id === "personalization",
+    const responseStyleSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
     );
-    expect(personalizationSection.componentProps.copy.emptyLabel).toBe(
-      translations.settingsPersonalizationEmpty,
+    expect(responseStyleSection.componentProps.copy.dropdownLabel).toBe(
+      translations.responseStyleSelectLabel,
     );
-    expect(
-      personalizationSection.componentProps.state.snapshot.summary.includes(
-        "Engineer",
-      ),
-    ).toBe(true);
+    expect(responseStyleSection.componentProps.copy.options).toHaveLength(5);
+    expect(responseStyleSection.componentProps.state.values.goal).toBe("B2");
+    expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
+      "default",
+    );
   },
 );
 
@@ -435,7 +471,7 @@ test(
 );
 
 /**
- * 测试目标：画像请求失败后暴露 error 状态并可通过 onRetry 重试。
+ * 测试目标：响应风格请求失败后暴露 error 状态并可通过 onRetry 重试。
  * 前置条件：首次请求抛出异常。
  * 步骤：
  *  1) 渲染 Hook；
@@ -448,45 +484,105 @@ test(
  *  - 若重试未恢复则断言失败。
  */
 test(
-  "Given personalization fetch fails When retry invoked Then status recovers",
+  "Given response style fetch fails When retry invoked Then status recovers",
   async () => {
-    fetchProfileMock
-      .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValueOnce({
-        job: "Writer",
-        goal: "C1",
-        currentAbility: "B2",
-        education: "Master",
-        interest: "Literature",
-        customSections: [],
-      });
+  fetchProfileMock
+    .mockRejectedValueOnce(new Error("network"))
+    .mockResolvedValueOnce({
+      job: "Writer",
+      goal: "C1",
+      currentAbility: "B2",
+      education: "Master",
+      interest: "Literature",
+      responseStyle: "nerd",
+      customSections: [],
+    });
 
     const { result } = renderHook(() =>
       usePreferenceSections({ initialSectionId: undefined }),
     );
 
     await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
       );
-      expect(personalizationSection.componentProps.state.status).toBe("error");
+      expect(responseStyleSection.componentProps.state.status).toBe("error");
     });
 
     await act(async () => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
       );
-      await personalizationSection.componentProps.onRetry();
+      await responseStyleSection.componentProps.onRetry();
     });
 
     await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
       );
-      expect(personalizationSection.componentProps.state.status).toBe("ready");
+      expect(responseStyleSection.componentProps.state.status).toBe("ready");
+      expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
+        "nerd",
+      );
     });
 
     expect(fetchProfileMock).toHaveBeenCalledTimes(2);
+  },
+);
+
+/**
+ * 测试目标：更新响应风格字段时应触发保存请求并传递裁剪后的值。
+ * 前置条件：默认 mock 返回的档案已加载完成。
+ * 步骤：
+ *  1) 修改 goal 字段；
+ *  2) 触发 onFieldCommit；
+ * 断言：
+ *  - saveProfile 被调用一次；
+ *  - 请求体包含去除首尾空格后的值。
+ * 边界/异常：无。
+ */
+test(
+  "Given response style edit When committing field Then saveProfile dispatches sanitized payload",
+  async () => {
+    const { result } = renderHook(() =>
+      usePreferenceSections({ initialSectionId: undefined }),
+    );
+
+    await waitFor(() => {
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
+      );
+      expect(responseStyleSection.componentProps.state.status).toBe("ready");
+    });
+
+    act(() => {
+      const responseStyleSection = result.current.sections.find(
+        (section) => section.id === "responseStyle",
+      );
+      responseStyleSection.componentProps.onFieldChange("goal", "  IELTS  ");
+    });
+
+    const latestSection = result.current.sections.find(
+      (section) => section.id === "responseStyle",
+    );
+
+    await act(async () => {
+      await latestSection.componentProps.onFieldCommit("goal");
+    });
+
+    expect(saveProfileMock).toHaveBeenCalledTimes(1);
+    expect(saveProfileMock).toHaveBeenCalledWith({
+      token: "token-123",
+      profile: {
+        job: "Engineer",
+        interest: "AI",
+        goal: "IELTS",
+        education: "Bachelor",
+        currentAbility: "B1",
+        responseStyle: "default",
+        customSections: [],
+      },
+    });
   },
 );
 

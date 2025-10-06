@@ -33,6 +33,8 @@ public record UserProfileResponse(
     Integer dailyWordTarget,
     /** 用户未来学习或规划描述 */
     String futurePlan,
+    /** 用户偏好的释义回应语气 */
+    String responseStyle,
     /** 自定义维度的层级配置 */
     List<ProfileCustomSectionDto> customSections
 ) {
