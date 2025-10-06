@@ -50,10 +50,7 @@ function ReportIssueModal({
         type="button"
         role="radio"
         aria-checked={active}
-        className={[
-          styles.segment,
-          active ? styles["segment-active"] : "",
-        ]
+        className={[styles.segment, active ? styles["segment-active"] : ""]
           .filter(Boolean)
           .join(" ")}
         onClick={() => onCategoryChange(option.value)}
@@ -168,12 +165,22 @@ function ReportIssueModal({
         onSubmit={handleSubmit}
         title={t.reportTitle ?? "Report an issue"}
         actions={
-          <div className={styles["action-row"]}>
-            {error ? (
-              <p className={styles.error} role="alert">
-                {t.reportErrorMessage ?? error}
-              </p>
-            ) : null}
+          <div className={styles["action-bar"]}>
+            {/*
+             * 通过占满 actions 区域来与 SettingsSurface 保持左右对齐的栅格节奏，
+             * 既方便在左侧展示错误消息，也能在右侧维持操作按钮的视觉稳定。
+             */}
+            <div
+              className={styles["action-status"]}
+              aria-live="assertive"
+              aria-atomic="true"
+            >
+              {error ? (
+                <p className={styles.error} role="alert">
+                  {t.reportErrorMessage ?? error}
+                </p>
+              ) : null}
+            </div>
             <div className={styles["action-buttons"]}>
               <button
                 type="button"
