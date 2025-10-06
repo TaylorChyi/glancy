@@ -31,6 +31,7 @@ import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
 import useEmailBinding from "@/hooks/useEmailBinding.js";
 import { useUsersApi } from "@/api/users.js";
 import { useProfilesApi } from "@/api/profiles.js";
+import { useRedemptionCodesApi } from "@/api/redemptionCodes.js";
 import {
   mapResponseToProfileDetails,
   createEmptyProfileDetails,
@@ -158,6 +159,66 @@ const formatPhoneDisplay = (
   return `${code} ${digits}`;
 };
 
+const MEMBERSHIP_EFFECT_TYPE = "MEMBERSHIP";
+
+/**
+ * 意图：
+ *  - 将兑换接口返回的会员奖励合并到用户上下文中，保持订阅蓝图与全局导航的会员状态一致。
+ * 输入：
+ *  - user: 当前登录用户的快照；
+ *  - reward: 兑换接口返回的 membership 字段，包含等级与到期时间。
+ * 输出：
+ *  - 合并后的用户对象；若 reward 缺失则原样返回。
+ * 流程：
+ *  1) 归一化会员等级为大写计划 ID；
+ *  2) 根据奖励刷新 member/isPro/plan 字段；
+ *  3) 合并订阅元信息（planId/currentPlanId/nextRenewalDate）。
+ * 错误处理：
+ *  - 当 reward 不合法时直接返回原对象，避免破坏现有状态。
+ * 复杂度：
+ *  - O(1)。
+ */
+const mergeMembershipRewardIntoUser = (user, reward) => {
+  if (!user || !reward) {
+    return user;
+  }
+
+  const membershipType = reward.membershipType;
+  const expiresAt = reward.expiresAt ?? null;
+  const normalizedPlan =
+    typeof membershipType === "string" && membershipType.trim().length > 0
+      ? membershipType.trim().toUpperCase()
+      : "";
+
+  const hasPaidMembership =
+    normalizedPlan && normalizedPlan !== "FREE" && normalizedPlan !== "NONE";
+
+  const subscriptionUpdates = {};
+  if (normalizedPlan) {
+    subscriptionUpdates.planId = normalizedPlan;
+    subscriptionUpdates.currentPlanId = normalizedPlan;
+    subscriptionUpdates.tier = normalizedPlan;
+  }
+  if (expiresAt) {
+    subscriptionUpdates.nextRenewalDate = expiresAt;
+  }
+
+  const nextSubscription =
+    Object.keys(subscriptionUpdates).length > 0
+      ? { ...(user.subscription ?? {}), ...subscriptionUpdates }
+      : user.subscription;
+
+  return {
+    ...user,
+    member: hasPaidMembership,
+    isPro: hasPaidMembership || user.isPro === true,
+    plan: normalizedPlan || user.plan,
+    membershipType: membershipType ?? user.membershipType,
+    membershipExpiresAt: expiresAt ?? user.membershipExpiresAt ?? null,
+    subscription: nextSubscription,
+  };
+};
+
 /**
  * 意图：
  *  - 生成偏好设置分区蓝图，统一管理激活分区、表头文案与账户数据。
@@ -193,6 +254,55 @@ function usePreferenceSections({ initialSectionId }) {
   const profilesApi = useProfilesApi();
   const fetchProfile = profilesApi?.fetchProfile;
   const saveProfileRequest = profilesApi?.saveProfile;
+  const redemptionApi = useRedemptionCodesApi();
+  const redeemCodeRequest = redemptionApi?.redeem;
+
+  const handleSubscriptionRedeem = useCallback(
+    async (rawCode) => {
+      const normalizedCode =
+        typeof rawCode === "string" ? rawCode.trim() : "";
+      if (!normalizedCode) {
+        return undefined;
+      }
+
+      if (!user?.token) {
+        const error = new Error("redeem-auth-missing");
+        console.error("Failed to redeem subscription code", error);
+        throw error;
+      }
+
+      if (typeof redeemCodeRequest !== "function") {
+        const error = new Error("redeem-api-unavailable");
+        console.error("Failed to redeem subscription code", error);
+        throw error;
+      }
+
+      try {
+        const response = await redeemCodeRequest({
+          token: user.token,
+          code: normalizedCode,
+        });
+
+        if (
+          response?.effectType === MEMBERSHIP_EFFECT_TYPE &&
+          response?.membership &&
+          typeof setUser === "function"
+        ) {
+          const nextUser = mergeMembershipRewardIntoUser(
+            user,
+            response.membership,
+          );
+          setUser(nextUser);
+        }
+
+        return response;
+      } catch (error) {
+        console.error("Failed to redeem subscription code", error);
+        throw error;
+      }
+    },
+    [redeemCodeRequest, setUser, user],
+  );
 
   const avatarEditorLabels = useMemo(
     () => ({
@@ -516,8 +626,9 @@ function usePreferenceSections({ initialSectionId }) {
       buildSubscriptionSectionProps({
         translations: t,
         user,
+        onRedeem: handleSubscriptionRedeem,
       }),
-    [t, user],
+    [handleSubscriptionRedeem, t, user],
   );
 
   /**
