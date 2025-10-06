@@ -19,9 +19,8 @@ import {
   useState,
 } from "react";
 import { useLanguage, useUser } from "@/context";
-import AccountSection, {
-  ACCOUNT_USERNAME_FIELD_TYPE,
-} from "./sections/AccountSection.jsx";
+import AccountSection from "./sections/AccountSection.jsx";
+import { ACCOUNT_USERNAME_FIELD_TYPE } from "./sections/accountSection.constants.js";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
@@ -362,6 +361,7 @@ function usePreferenceSections({ initialSectionId }) {
       t.responseStyleFieldInterestsLabel,
       t.responseStyleFieldInterestsPlaceholder,
       t.responseStyleFieldJobLabel,
+      t.jobLabel,
       t.responseStyleFieldJobPlaceholder,
       t.responseStyleOptionCynic,
       t.responseStyleOptionCynicDescription,
@@ -814,7 +814,6 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountUsername,
     t.settingsDataDescription,
     t.settingsDataNotice,
-    t.settingsPersonalizationDescription,
     t.settingsTabAccount,
     t.settingsTabData,
     t.settingsTabGeneral,

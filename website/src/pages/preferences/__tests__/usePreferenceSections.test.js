@@ -42,7 +42,7 @@ beforeAll(async () => {
     "../usePreferenceSections.js"
   ));
   ({ ACCOUNT_USERNAME_FIELD_TYPE } = await import(
-    "../sections/AccountSection.jsx"
+    "../sections/accountSection.constants.js"
   ));
 });
 
