@@ -59,14 +59,25 @@ function AvatarEditorModal({
   const lastPointRef = useRef({ x: 0, y: 0 });
   const fallbackSizeControllerRef = useRef(null);
   const latestSourceRef = useRef(source);
+  const shouldRecenterRef = useRef(true);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
 
   const resetView = useCallback(() => {
+    /**
+     * 背景说明：
+     *  - 头像选图在切换图片时曾出现初始偏移量遗留，导致图像停留在边缘且需放大才可拖回中心。
+     * 设计取舍：
+     *  - 通过 shouldRecenterRef 标记触发一次性的居中重算，
+     *    避免引入全局状态或耦合到父级；若直接 setOffset(0) 会在几何数据尚未更新时生效失效。
+     */
+    shouldRecenterRef.current = true;
     setZoom(1);
     setOffset({ x: 0, y: 0 });
+    pointerIdRef.current = null;
+    lastPointRef.current = { x: 0, y: 0 };
   }, []);
 
   useEffect(() => {
@@ -107,6 +118,31 @@ function AvatarEditorModal({
   useEffect(() => {
     setOffset((prev) => clampOffset(prev, bounds));
   }, [bounds]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    if (!shouldRecenterRef.current) {
+      return;
+    }
+    if (
+      naturalSize.width <= 0 ||
+      naturalSize.height <= 0 ||
+      viewportSize <= 0
+    ) {
+      return;
+    }
+    setOffset(clampOffset({ x: 0, y: 0 }, bounds));
+    shouldRecenterRef.current = false;
+  }, [
+    bounds,
+    naturalSize.height,
+    naturalSize.width,
+    open,
+    viewportSize,
+    source,
+  ]);
 
   useEffect(() => {
     if (!open) {
