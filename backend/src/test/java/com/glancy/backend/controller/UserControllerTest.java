@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.*;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,16 @@ class UserControllerTest {
      */
     @Test
     void register() throws Exception {
-        UserResponse resp = new UserResponse(1L, "testuser", "test@example.com", null, "555");
+        UserResponse resp = new UserResponse(
+            1L,
+            "testuser",
+            "test@example.com",
+            null,
+            "555",
+            false,
+            MembershipType.NONE,
+            null
+        );
         when(userService.register(any(UserRegistrationRequest.class))).thenReturn(resp);
 
         UserRegistrationRequest req = new UserRegistrationRequest();
@@ -98,7 +108,7 @@ class UserControllerTest {
      */
     @Test
     void login() throws Exception {
-        LoginResponse resp = new LoginResponse(1L, "u", "e", null, null, false, "tkn");
+        LoginResponse resp = new LoginResponse(1L, "u", "e", null, null, false, MembershipType.NONE, null, "tkn");
         when(userService.login(any(LoginRequest.class))).thenReturn(resp);
 
         LoginRequest req = new LoginRequest();
@@ -120,7 +130,7 @@ class UserControllerTest {
      */
     @Test
     void loginWithPhone() throws Exception {
-        LoginResponse resp = new LoginResponse(1L, "u", "e", null, "555", false, "tkn");
+        LoginResponse resp = new LoginResponse(1L, "u", "e", null, "555", false, MembershipType.NONE, null, "tkn");
         when(userService.login(any(LoginRequest.class))).thenReturn(resp);
 
         LoginRequest req = new LoginRequest();

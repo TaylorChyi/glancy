@@ -85,7 +85,7 @@ public class SearchRecordService {
             return response;
         }
 
-        if (Boolean.FALSE.equals(user.getMember())) {
+        if (!user.hasActiveMembershipAt(LocalDateTime.now())) {
             LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(

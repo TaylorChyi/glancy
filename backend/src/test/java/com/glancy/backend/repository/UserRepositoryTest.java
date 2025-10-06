@@ -2,7 +2,9 @@ package com.glancy.backend.repository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,8 @@ class UserRepositoryTest {
     @Test
     void countAndLoginTokenQueries() {
         User active = TestEntityFactory.user(2);
-        active.setMember(true);
+        LocalDateTime now = LocalDateTime.now();
+        active.updateMembership(MembershipType.PLUS, now.plusDays(1), now);
         active.setLoginToken("token123");
         User deleted = TestEntityFactory.user(3);
         deleted.setDeleted(true);
@@ -36,7 +39,7 @@ class UserRepositoryTest {
 
         assertEquals(1, userRepository.countByDeletedFalse());
         assertEquals(1, userRepository.countByDeletedTrue());
-        assertEquals(1, userRepository.countByDeletedFalseAndMemberTrue());
+        assertEquals(1, userRepository.countActiveMembers(LocalDateTime.now()));
         assertTrue(userRepository.findByLoginToken("token123").isPresent());
     }
 }

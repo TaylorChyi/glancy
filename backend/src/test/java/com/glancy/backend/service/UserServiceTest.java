@@ -12,6 +12,7 @@ import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
 import com.glancy.backend.exception.InvalidRequestException;
@@ -19,6 +20,7 @@ import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,6 +99,9 @@ class UserServiceTest {
 
         assertNotNull(resp.getId());
         assertEquals("testuser", resp.getUsername());
+        assertFalse(resp.getMember());
+        assertEquals(MembershipType.NONE, resp.getMembershipType());
+        assertNull(resp.getMembershipExpiresAt());
 
         // 验证数据库中未删除
         User user = userRepository.findById(resp.getId()).orElseThrow();
@@ -596,13 +601,18 @@ class UserServiceTest {
         req.setPhone("203");
         UserResponse resp = userService.register(req);
 
-        userService.activateMembership(resp.getId());
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
+        userService.activateMembership(resp.getId(), MembershipType.PRO, expiresAt);
         User user = userRepository.findById(resp.getId()).orElseThrow();
-        assertTrue(user.getMember());
+        assertEquals(MembershipType.PRO, user.getMembershipType());
+        assertEquals(expiresAt, user.getMembershipExpiresAt());
+        assertTrue(user.hasActiveMembershipAt(LocalDateTime.now()));
 
         userService.removeMembership(resp.getId());
         User user2 = userRepository.findById(resp.getId()).orElseThrow();
-        assertFalse(user2.getMember());
+        assertEquals(MembershipType.NONE, user2.getMembershipType());
+        assertNull(user2.getMembershipExpiresAt());
+        assertFalse(user2.hasActiveMembershipAt(LocalDateTime.now()));
     }
 
     /**

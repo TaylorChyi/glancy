@@ -5,11 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import com.glancy.backend.dto.TtsRequest;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.ForbiddenException;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +55,6 @@ class TtsRequestValidatorTest {
     @Test
     void rejectUnknownLanguage() {
         User user = new User();
-        user.setMember(false);
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("fr-FR");
@@ -66,7 +67,6 @@ class TtsRequestValidatorTest {
     @Test
     void rejectUnknownVoice() {
         User user = new User();
-        user.setMember(false);
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("en-US");
@@ -80,7 +80,6 @@ class TtsRequestValidatorTest {
     @Test
     void rejectProVoiceForFreeUser() {
         User user = new User();
-        user.setMember(false);
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("en-US");
@@ -89,12 +88,27 @@ class TtsRequestValidatorTest {
     }
 
     /**
+     * resolveVoice should allow pro voices for users with active pro membership.
+     */
+    @Test
+    void allowProVoiceForEligibleMember() {
+        User user = new User();
+        LocalDateTime now = LocalDateTime.now();
+        user.updateMembership(MembershipType.PRO, now.plusDays(1), now);
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en-US");
+        req.setVoice("pro");
+        String voice = validator.resolveVoice(user, req);
+        assertEquals("pro", voice);
+    }
+
+    /**
      * resolveVoice should return default voice when none provided and user has access.
      */
     @Test
     void resolveDefaultVoice() {
         User user = new User();
-        user.setMember(false);
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("en-US");
@@ -109,7 +123,6 @@ class TtsRequestValidatorTest {
     @Test
     void resolveDefaultVoiceWithLanguagePrefix() {
         User user = new User();
-        user.setMember(false);
         TtsRequest req = new TtsRequest();
         req.setText("hi");
         req.setLang("en");
@@ -126,7 +139,6 @@ class TtsRequestValidatorTest {
         try (TtsConfigManager mgr = new TtsConfigManager("")) {
             TtsRequestValidator realValidator = new TtsRequestValidator(mgr);
             User user = new User();
-            user.setMember(false);
             TtsRequest req = new TtsRequest();
             req.setText("hi");
             req.setLang("en-US");

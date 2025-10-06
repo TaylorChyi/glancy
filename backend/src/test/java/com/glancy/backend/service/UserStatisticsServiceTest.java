@@ -3,9 +3,11 @@ package com.glancy.backend.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.glancy.backend.dto.UserStatisticsResponse;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +49,8 @@ class UserStatisticsServiceTest {
         u1.setPassword("p");
         u1.setEmail("u1@example.com");
         u1.setPhone("31");
-        u1.setMember(true);
+        LocalDateTime now = LocalDateTime.now();
+        u1.updateMembership(MembershipType.PLUS, now.plusDays(30), now);
         userRepository.save(u1);
 
         User u2 = new User();

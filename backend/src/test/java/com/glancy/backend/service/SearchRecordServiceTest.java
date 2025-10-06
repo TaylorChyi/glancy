@@ -7,6 +7,7 @@ import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.User;
@@ -260,8 +261,9 @@ class SearchRecordServiceTest {
         user.setEmail("pager@example.com");
         user.setPhone("46");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setMember(true);
+        LocalDateTime now = LocalDateTime.now();
+        user.setLastLoginAt(now);
+        user.updateMembership(MembershipType.PRO, now.plusDays(1), now);
         userRepository.save(user);
 
         for (int i = 0; i < 25; i++) {

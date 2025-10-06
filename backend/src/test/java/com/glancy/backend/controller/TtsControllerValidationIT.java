@@ -5,9 +5,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.client.VolcengineTtsClient;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,7 +42,7 @@ class TtsControllerValidationIT {
     void synthesizeWordWithUnsupportedLanguageReturns422() throws Exception {
         User user = new User();
         user.setId(1L);
-        user.setMember(true);
+        user.updateMembership(MembershipType.PRO, null, LocalDateTime.now());
         when(userService.getUserRaw(1L)).thenReturn(user);
         doNothing().when(userService).validateToken(1L, "tkn");
 
@@ -62,7 +64,6 @@ class TtsControllerValidationIT {
     void synthesizeSentenceWithProVoiceByFreeUserReturns403() throws Exception {
         User user = new User();
         user.setId(1L);
-        user.setMember(false);
         when(userService.getUserRaw(1L)).thenReturn(user);
         doNothing().when(userService).validateToken(1L, "tkn");
 
