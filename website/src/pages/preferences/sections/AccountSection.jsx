@@ -15,10 +15,10 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Avatar from "@/components/ui/Avatar";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
+import { ACCOUNT_USERNAME_FIELD_TYPE } from "./accountSection.constants.js";
 import styles from "../Preferences.module.css";
 
 const AVATAR_SIZE = 72;
-const USERNAME_FIELD_TYPE = "username-editor";
 
 /**
  * 意图：在账号详情表格中以分栏布局呈现用户名编辑能力，确保操作按钮落位于统一的动作列。
@@ -191,7 +191,7 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
           </div>
         </div>
         {fields.map((field) => {
-          if (field.type === USERNAME_FIELD_TYPE) {
+          if (field.type === ACCOUNT_USERNAME_FIELD_TYPE) {
             return <UsernameFieldRow key={field.id} field={field} />;
           }
 
@@ -292,7 +292,5 @@ AccountSection.propTypes = {
     ).isRequired,
   }).isRequired,
 };
-
-export const ACCOUNT_USERNAME_FIELD_TYPE = USERNAME_FIELD_TYPE;
 
 export default AccountSection;

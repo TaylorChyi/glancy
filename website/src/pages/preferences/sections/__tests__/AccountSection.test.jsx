@@ -14,8 +14,9 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   ),
 }));
 
-const { default: AccountSection, ACCOUNT_USERNAME_FIELD_TYPE } = await import(
-  "../AccountSection.jsx",
+const { default: AccountSection } = await import("../AccountSection.jsx");
+const { ACCOUNT_USERNAME_FIELD_TYPE } = await import(
+  "../accountSection.constants.js",
 );
 
 const baseBindings = Object.freeze({
