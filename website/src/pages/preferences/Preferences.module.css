@@ -1029,9 +1029,9 @@
    * 让动作按钮能与数值列拉开距离并自然贴齐右缘，
    * 也为后续响应式/密集布局提供统一调整入口。
    */
-  --preferences-detail-label-column: minmax(140px, 0.28fr);
+  --preferences-detail-label-column: minmax(120px, max-content);
   --preferences-detail-value-column: minmax(0, 1fr);
-  --preferences-detail-action-column: minmax(0, 0.3fr);
+  --preferences-detail-action-column: max-content;
 }
 
 .detail-row {
@@ -1158,6 +1158,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  justify-self: center;
+  inline-size: 100%;
   overflow-wrap: break-word;
 }
 
