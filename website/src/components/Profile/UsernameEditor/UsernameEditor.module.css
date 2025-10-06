@@ -7,9 +7,18 @@
 }
 
 .controls {
-  display: flex;
+  /*
+   * 背景：
+   *  - 按钮在部分浏览器中因 flex 可用空间计算误差，无法紧贴用户名行右缘。
+   * 设计取舍：
+   *  - 改用二维网格锁定「输入框占满剩余空间 + 操作按钮自适应」布局，
+   *    避免再依赖 margin:auto 等启发式手段。
+   *  - 保持列间距统一，兼容未来追加的辅助图标或提示气泡。
+   */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  column-gap: 6px;
   width: 100%;
 }
 
