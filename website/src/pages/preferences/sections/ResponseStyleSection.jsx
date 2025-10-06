@@ -135,20 +135,30 @@ function ResponseStyleSection({
                 <label htmlFor="response-style-select">{copy.dropdownLabel}</label>
               </dt>
               <dd className={styles["detail-value"]}>
-                <select
-                  id="response-style-select"
-                  value={values.responseStyle ?? ""}
-                  onChange={handleChange("responseStyle")}
-                  onBlur={handleBlur("responseStyle")}
+                <div
+                  className={styles["field-shell"]}
+                  data-interactive="select"
+                  data-has-arrow="true"
                 >
-                  {(copy.options ?? []).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {isMeaningful(option.description)
-                        ? `${option.label} — ${option.description}`
-                        : option.label}
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    id="response-style-select"
+                    className={composeClassName(
+                      styles["field-control"],
+                      styles["field-control-select"],
+                    )}
+                    value={values.responseStyle ?? ""}
+                    onChange={handleChange("responseStyle")}
+                    onBlur={handleBlur("responseStyle")}
+                  >
+                    {(copy.options ?? []).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {isMeaningful(option.description)
+                          ? `${option.label} — ${option.description}`
+                          : option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </dd>
               <div className={styles["detail-action"]} aria-live="polite">
                 {renderFieldAction("responseStyle")}
@@ -160,14 +170,23 @@ function ResponseStyleSection({
                   <label htmlFor={`${field.id}-input`}>{field.label}</label>
                 </dt>
                 <dd className={styles["detail-value"]}>
-                  <input
-                    id={`${field.id}-input`}
-                    type="text"
-                    value={values[field.id] ?? ""}
-                    onChange={handleChange(field.id)}
-                    onBlur={handleBlur(field.id)}
-                    placeholder={field.placeholder}
-                  />
+                  <div
+                    className={styles["field-shell"]}
+                    data-interactive="input"
+                  >
+                    <input
+                      id={`${field.id}-input`}
+                      type="text"
+                      className={composeClassName(
+                        styles["field-control"],
+                        styles["field-control-input"],
+                      )}
+                      value={values[field.id] ?? ""}
+                      onChange={handleChange(field.id)}
+                      onBlur={handleBlur(field.id)}
+                      placeholder={field.placeholder}
+                    />
+                  </div>
                 </dd>
                 <div className={styles["detail-action"]} aria-live="polite">
                   {renderFieldAction(field.id)}
