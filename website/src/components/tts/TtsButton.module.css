@@ -20,7 +20,15 @@
 .playing {
   opacity: 1;
 
-  --tts-icon-color: var(--brand-primary);
+  /*
+   * 采用 hl-dark 作为播放高亮基准色：
+   *  - 背景：交互稿要求播放态使用黑色视觉，避免品牌蓝干扰语义。
+   *  - 取舍：不直接引用 #000，使用设计令牌确保主题切换时可统一治理。
+   */
+  --tts-accent-tone: var(--hl-dark);
+  --tts-icon-color: var(--tts-accent-tone);
+  --tts-ring-color: color-mix(in srgb, var(--tts-accent-tone) 55%, transparent);
+  --tts-glow-color: color-mix(in srgb, var(--tts-accent-tone) 28%, transparent);
 }
 
 .playing::after {
@@ -29,8 +37,8 @@
   inset: 0;
   border-radius: 50%;
   box-shadow:
-    0 0 0 2px var(--brand-outline),
-    0 0 12px var(--brand-glow);
+    0 0 0 2px var(--tts-ring-color),
+    0 0 12px var(--tts-glow-color);
   animation: ripple 1.4s ease-out infinite;
 }
 
