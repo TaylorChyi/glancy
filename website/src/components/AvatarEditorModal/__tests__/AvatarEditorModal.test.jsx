@@ -13,6 +13,14 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import AvatarEditorModal from "../index.jsx";
 
+const parseTranslate3d = (value) => {
+  const regex = /translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\)/g;
+  return Array.from(value.matchAll(regex), ([, x, y]) => ({
+    x: Number(x),
+    y: Number(y),
+  }));
+};
+
 const DEFAULT_LABELS = Object.freeze({
   title: "Avatar viewport",
   description: "Drag to adjust",
@@ -86,7 +94,13 @@ describe("AvatarEditorModal viewport interactions", () => {
 
     loadImage(image, { width: 1280, height: 720 });
 
-    expect(image.style.transform).toContain("translate3d(0px, 0px, 0)");
+    const translations = parseTranslate3d(image.style.transform);
+
+    expect(translations[0]).toEqual({ x: 0, y: 0 });
+    expect(translations[1].x).toBeCloseTo(translations[1].y, 3);
+    expect(translations[1].x).toBeGreaterThan(0);
+    expect(translations[2].x).toBeLessThan(0);
+    expect(translations[2].y).toBeLessThan(0);
   });
 
   /**
@@ -123,7 +137,10 @@ describe("AvatarEditorModal viewport interactions", () => {
       fireEvent.pointerUp(viewport, { pointerId: 2 });
     });
 
-    expect(image.style.transform).not.toContain("translate3d(0px, 0px, 0)");
+    expect(parseTranslate3d(image.style.transform)[0]).not.toEqual({
+      x: 0,
+      y: 0,
+    });
 
     rerender(
       <AvatarEditorModal
@@ -137,9 +154,10 @@ describe("AvatarEditorModal viewport interactions", () => {
     loadImage(updatedImage, { width: 1200, height: 800 });
 
     await waitFor(() => {
-      expect(updatedImage.style.transform).toContain(
-        "translate3d(0px, 0px, 0)",
-      );
+      expect(parseTranslate3d(updatedImage.style.transform)[0]).toEqual({
+        x: 0,
+        y: 0,
+      });
     });
   });
 });
