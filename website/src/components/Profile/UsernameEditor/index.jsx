@@ -12,7 +12,7 @@
  * 演进与TODO：
  *  - TODO: 后续若引入服务端节流或自动保存，可在状态机中增加 debouncing/remote-validating 分支。
  */
-import { useEffect, useId, useReducer } from "react";
+import { useCallback, useEffect, useId, useMemo, useReducer } from "react";
 import PropTypes from "prop-types";
 import styles from "./UsernameEditor.module.css";
 import {
@@ -115,6 +115,8 @@ function UsernameEditor({
   onSuccess,
   onFailure,
   t,
+  renderInlineAction = true,
+  onResolveAction,
 }) {
   const [state, dispatch] = useReducer(
     reducer,
@@ -130,18 +132,11 @@ function UsernameEditor({
     dispatch({ type: ACTIONS.SYNC_VALUE, value: username ?? "" });
   }, [username]);
 
-  const handleChange = (event) => {
+  const handleChange = useCallback((event) => {
     dispatch({ type: ACTIONS.CHANGE, value: event.target.value });
-  };
+  }, []);
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter" && mode !== MODES.VIEW) {
-      event.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const { valid, code, normalized } = validateUsername(draft);
     if (!valid) {
       dispatch({ type: ACTIONS.SUBMIT_FAILURE, error: { code } });
@@ -175,15 +170,25 @@ function UsernameEditor({
       });
       onFailure?.(err);
     }
-  };
+  }, [draft, onFailure, onSubmit, onSuccess, value]);
 
-  const handleButtonClick = () => {
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter" && mode !== MODES.VIEW) {
+        event.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit, mode],
+  );
+
+  const handleButtonClick = useCallback(() => {
     if (mode === MODES.VIEW) {
       dispatch({ type: ACTIONS.START_EDIT });
     } else if (mode === MODES.EDIT || mode === MODES.SAVING) {
       handleSubmit();
     }
-  };
+  }, [handleSubmit, mode]);
 
   const containerClassName = [styles.container, className]
     .filter(Boolean)
@@ -214,6 +219,22 @@ function UsernameEditor({
   const inputValue = mode === MODES.VIEW ? viewValue : draft;
   const isButtonDisabled = mode === MODES.SAVING;
 
+  const actionDescriptor = useMemo(
+    () => ({
+      label: buttonLabel,
+      onClick: handleButtonClick,
+      disabled: isButtonDisabled,
+      mode,
+    }),
+    [buttonLabel, handleButtonClick, isButtonDisabled, mode],
+  );
+
+  useEffect(() => {
+    if (typeof onResolveAction === "function") {
+      onResolveAction(actionDescriptor);
+    }
+  }, [actionDescriptor, onResolveAction]);
+
   return (
     <div className={containerClassName}>
       <div className={styles.controls}>
@@ -228,14 +249,16 @@ function UsernameEditor({
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? messageId : undefined}
         />
-        <button
-          type="button"
-          className={buttonClassNames}
-          onClick={handleButtonClick}
-          disabled={isButtonDisabled}
-        >
-          {buttonLabel}
-        </button>
+        {renderInlineAction ? (
+          <button
+            type="button"
+            className={buttonClassNames}
+            onClick={handleButtonClick}
+            disabled={isButtonDisabled}
+          >
+            {buttonLabel}
+          </button>
+        ) : null}
       </div>
       {errorMessage ? (
         <p className={styles["error-message"]} id={messageId} role="alert">
@@ -255,6 +278,8 @@ UsernameEditor.propTypes = {
   onSubmit: PropTypes.func,
   onSuccess: PropTypes.func,
   onFailure: PropTypes.func,
+  renderInlineAction: PropTypes.bool,
+  onResolveAction: PropTypes.func,
   t: PropTypes.shape({
     usernamePlaceholder: PropTypes.string.isRequired,
     changeUsernameButton: PropTypes.string.isRequired,
@@ -265,6 +290,11 @@ UsernameEditor.propTypes = {
     usernameValidationTooLong: PropTypes.string.isRequired,
     usernameUpdateFailed: PropTypes.string.isRequired,
   }).isRequired,
+};
+
+UsernameEditor.defaultProps = {
+  renderInlineAction: true,
+  onResolveAction: undefined,
 };
 
 export default UsernameEditor;

@@ -14,11 +14,24 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   ),
 }));
 
-const { default: AccountSection } = await import("../AccountSection.jsx");
+const { default: AccountSection, ACCOUNT_USERNAME_FIELD_TYPE } = await import(
+  "../AccountSection.jsx",
+);
 
 const baseBindings = Object.freeze({
   title: "Connected accounts",
   items: [],
+});
+
+const usernameEditorTranslations = Object.freeze({
+  usernamePlaceholder: "请输入用户名",
+  changeUsernameButton: "更换用户名",
+  saveUsernameButton: "保存用户名",
+  saving: "保存中…",
+  usernameValidationEmpty: "用户名不能为空",
+  usernameValidationTooShort: "至少 {{min}} 个字符",
+  usernameValidationTooLong: "最多 {{max}} 个字符",
+  usernameUpdateFailed: "更新失败",
 });
 
 function createFieldRendererMock() {
@@ -94,6 +107,62 @@ test("GivenIdentityRow_WhenRendered_ThenLabelAvatarAndActionArranged", () => {
   expect(actionButton).toBeEnabled();
 
   expect(container.querySelectorAll('input[type="file"]')).toHaveLength(1);
+});
+
+/**
+ * 测试目标：用户名字段的“更换用户名”按钮应呈现在第三列动作区域并右对齐。
+ * 前置条件：字段声明 type=ACCOUNT_USERNAME_FIELD_TYPE，提供 UsernameEditor 所需翻译与回调。
+ * 步骤：
+ *  1) 渲染 AccountSection；
+ *  2) 获取用户名行的三个列节点；
+ *  3) 查询更换用户名按钮所在列。
+ * 断言：
+ *  - detail-action 列包含按钮；
+ *  - 按钮具备统一的动作样式类。
+ * 边界/异常：
+ *  - 若 onResolveAction 未返回按钮描述，应降级为空列（此处默认路径覆盖）。
+ */
+test("GivenUsernameField_WhenRendered_ThenActionButtonOccupiesThirdColumn", () => {
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[
+        {
+          id: "username",
+          label: "用户名",
+          value: "Taylor",
+          type: ACCOUNT_USERNAME_FIELD_TYPE,
+          usernameEditorProps: {
+            username: "Taylor",
+            emptyDisplayValue: "未设置",
+            t: usernameEditorTranslations,
+            onSubmit: jest.fn(),
+            onFailure: jest.fn(),
+          },
+        },
+      ]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: false,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const usernameLabel = screen.getByText("用户名");
+  const usernameRow = usernameLabel.closest("div");
+  const columns = usernameRow ? [...usernameRow.children] : [];
+  expect(columns).toHaveLength(3);
+  const actionButton = screen.getByRole("button", { name: "更换用户名" });
+  expect(columns[2]).toHaveClass(styles["detail-action"]);
+  expect(columns[2]).toContainElement(actionButton);
+  expect(actionButton).toHaveClass(styles["detail-action-button"]);
+  expect(actionButton).toHaveClass(styles["avatar-trigger"]);
 });
 
 /**

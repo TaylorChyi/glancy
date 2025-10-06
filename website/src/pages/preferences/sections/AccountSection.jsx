@@ -11,12 +11,93 @@
  * 演进与TODO：
  *  - TODO: 当后续支持编辑态，可在此扩展表单控件与验证反馈。
  */
-import { useCallback, useId, useMemo, useRef } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Avatar from "@/components/ui/Avatar";
+import UsernameEditor from "@/components/Profile/UsernameEditor";
 import styles from "../Preferences.module.css";
 
 const AVATAR_SIZE = 72;
+const USERNAME_FIELD_TYPE = "username-editor";
+
+/**
+ * 意图：在账号详情表格中以分栏布局呈现用户名编辑能力，确保操作按钮落位于统一的动作列。
+ * 输入：field —— AccountSection 字段配置，包含用户名展示与编辑所需的 props。
+ * 输出：返回包含标签、值列（输入框）与动作列（按钮）的行节点。
+ * 流程：
+ *  1) 通过 UsernameEditor 的 onResolveAction 回调提取按钮交互描述；
+ *  2) 在值列渲染输入控件，动作列渲染统一风格的按钮；
+ *  3) 根据描述更新按钮禁用态与点击行为。
+ * 错误处理：用户名校验与异步错误交由 UsernameEditor 内部处理。
+ * 复杂度：O(1)。
+ */
+function UsernameFieldRow({ field }) {
+  const [actionDescriptor, setActionDescriptor] = useState(null);
+
+  const handleResolveAction = useCallback((descriptor) => {
+    if (!descriptor) {
+      setActionDescriptor(null);
+      return;
+    }
+
+    setActionDescriptor((current) => {
+      if (
+        current &&
+        current.label === descriptor.label &&
+        current.disabled === descriptor.disabled &&
+        current.mode === descriptor.mode &&
+        current.onClick === descriptor.onClick
+      ) {
+        return current;
+      }
+      return descriptor;
+    });
+  }, []);
+
+  const buttonClassName = `${styles["avatar-trigger"]} ${styles["detail-action-button"]}`;
+  const isDisabled = Boolean(actionDescriptor?.disabled);
+
+  return (
+    <div className={styles["detail-row"]}>
+      <dt className={styles["detail-label"]}>{field.label}</dt>
+      <dd className={styles["detail-value"]}>
+        <UsernameEditor
+          {...field.usernameEditorProps}
+          renderInlineAction={false}
+          onResolveAction={handleResolveAction}
+        />
+      </dd>
+      <div className={styles["detail-action"]}>
+        {actionDescriptor ? (
+          <button
+            type="button"
+            className={buttonClassName}
+            onClick={actionDescriptor.onClick}
+            disabled={isDisabled}
+            aria-disabled={isDisabled ? "true" : "false"}
+          >
+            {actionDescriptor.label}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+UsernameFieldRow.propTypes = {
+  field: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    usernameEditorProps: PropTypes.shape({
+      username: PropTypes.string,
+      emptyDisplayValue: PropTypes.string,
+      onSubmit: PropTypes.func,
+      onSuccess: PropTypes.func,
+      onFailure: PropTypes.func,
+      t: UsernameEditor.propTypes.t,
+    }).isRequired,
+  }).isRequired,
+};
 
 function AccountSection({ title, fields, headingId, identity, bindings }) {
   const avatarInputId = useId();
@@ -110,6 +191,10 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
           </div>
         </div>
         {fields.map((field) => {
+          if (field.type === USERNAME_FIELD_TYPE) {
+            return <UsernameFieldRow key={field.id} field={field} />;
+          }
+
           const renderValue = field.renderValue;
           return (
             <div key={field.id} className={styles["detail-row"]}>
@@ -170,6 +255,15 @@ AccountSection.propTypes = {
       label: PropTypes.string.isRequired,
       value: PropTypes.string.isRequired,
       renderValue: PropTypes.func,
+      type: PropTypes.string,
+      usernameEditorProps: PropTypes.shape({
+        username: PropTypes.string,
+        emptyDisplayValue: PropTypes.string,
+        onSubmit: PropTypes.func,
+        onSuccess: PropTypes.func,
+        onFailure: PropTypes.func,
+        t: UsernameEditor.propTypes.t,
+      }),
       action: PropTypes.shape({
         id: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,
@@ -198,5 +292,7 @@ AccountSection.propTypes = {
     ).isRequired,
   }).isRequired,
 };
+
+export const ACCOUNT_USERNAME_FIELD_TYPE = USERNAME_FIELD_TYPE;
 
 export default AccountSection;

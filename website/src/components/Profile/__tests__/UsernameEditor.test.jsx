@@ -1,6 +1,6 @@
 /* eslint-env jest */
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
 import styles from "@/components/Profile/UsernameEditor/UsernameEditor.module.css";
@@ -171,5 +171,44 @@ describe("UsernameEditor", () => {
     const button = screen.getByRole("button", { name: "Change username" });
     expect(button).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter username")).toBeDisabled();
+  });
+
+  /**
+   * 测试目标：当 renderInlineAction=false 时，组件需通过 onResolveAction 暴露外部按钮描述。
+   * 前置条件：传入 onResolveAction mock 并关闭内联按钮渲染。
+   * 步骤：
+   *  1) 渲染组件；
+   *  2) 读取 onResolveAction 回调参数并触发 onClick；
+   *  3) 验证输入进入编辑态。
+   * 断言：
+   *  - 内联按钮不存在；
+   *  - 调用 onResolveAction 时提供 label/onClick/disabled 信息；
+   *  - 调用 onClick 后输入变为可编辑。
+   * 边界/异常：
+   *  - 若回调未返回对象应安全忽略（默认路径已覆盖）。
+   */
+  test("GivenExternalActionMode_WhenResolved_ThenExposeActionDescriptor", async () => {
+    const handleResolve = jest.fn();
+    renderEditor({ renderInlineAction: false, onResolveAction: handleResolve });
+
+    expect(
+      screen.queryByRole("button", { name: "Change username" }),
+    ).not.toBeInTheDocument();
+
+    const calls = handleResolve.mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    const descriptor = calls[calls.length - 1][0];
+    expect(descriptor.label).toBe("Change username");
+    expect(typeof descriptor.onClick).toBe("function");
+    expect(descriptor.disabled).toBe(false);
+
+    await act(async () => {
+      descriptor.onClick();
+    });
+
+    await waitFor(() => {
+      const input = screen.getByPlaceholderText("Enter username");
+      expect(input).not.toBeDisabled();
+    });
   });
 });

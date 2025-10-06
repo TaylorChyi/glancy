@@ -11,7 +11,6 @@
  *  - TODO: 当新增分区或引入懒加载时，可在此处扩展蓝图数组或接入数据缓存策略。
  */
 import {
-  createElement,
   useCallback,
   useEffect,
   useMemo,
@@ -20,7 +19,9 @@ import {
   useState,
 } from "react";
 import { useLanguage, useUser } from "@/context";
-import AccountSection from "./sections/AccountSection.jsx";
+import AccountSection, {
+  ACCOUNT_USERNAME_FIELD_TYPE,
+} from "./sections/AccountSection.jsx";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
@@ -28,7 +29,6 @@ import ResponseStyleSection from "./sections/ResponseStyleSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
 import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
-import UsernameEditor from "@/components/Profile/UsernameEditor/index.jsx";
 import { useUsersApi } from "@/api/users.js";
 import { useProfilesApi } from "@/api/profiles.js";
 import {
@@ -663,15 +663,14 @@ function usePreferenceSections({ initialSectionId }) {
         id: "username",
         label: t.settingsAccountUsername ?? "Username",
         value: usernameValue,
-        // 采用 createElement 保持 hook 文件不引入 JSX 语法，避免额外编译配置并便于在 Node 测试环境中复用。
-        renderValue: () =>
-          createElement(UsernameEditor, {
-            username: sanitizedUsername,
-            emptyDisplayValue: fallbackValue,
-            t: usernameEditorTranslations,
-            onSubmit: handleUsernameSubmit,
-            onFailure: handleUsernameFailure,
-          }),
+        type: ACCOUNT_USERNAME_FIELD_TYPE,
+        usernameEditorProps: {
+          username: sanitizedUsername,
+          emptyDisplayValue: fallbackValue,
+          t: usernameEditorTranslations,
+          onSubmit: handleUsernameSubmit,
+          onFailure: handleUsernameFailure,
+        },
       },
       {
         id: "email",
