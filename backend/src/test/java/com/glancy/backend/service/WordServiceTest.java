@@ -216,15 +216,7 @@ class WordServiceTest {
      */
     @Test
     void testFindWordSkipsHistoryWhenDisabled() {
-        wordService.findWordForUser(
-            userId,
-            "skip",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            false
-        );
+        wordService.findWordForUser(userId, "skip", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false);
 
         assertEquals(0, searchRecordRepository.count(), "搜索记录应保持为空");
         assertEquals(0, searchResultVersionRepository.count(), "版本记录应保持为空");

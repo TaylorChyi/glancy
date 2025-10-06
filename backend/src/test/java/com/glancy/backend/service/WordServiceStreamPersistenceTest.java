@@ -307,10 +307,10 @@ class WordServiceStreamPersistenceTest {
             new ParsedWord(resp, "{\"term\":\"hi\"}")
         );
         when(wordRepository.save(any())).thenAnswer(invocation -> {
-            Word w = invocation.getArgument(0);
-            w.setId(2L);
-            return w;
-        });
+                Word w = invocation.getArgument(0);
+                w.setId(2L);
+                return w;
+            });
 
         Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
             1L,

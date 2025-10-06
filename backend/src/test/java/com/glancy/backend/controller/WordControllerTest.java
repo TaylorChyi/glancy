@@ -268,19 +268,14 @@ class WordControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value("1"));
 
-        verify(
-            wordService,
-            times(1)
-        )
-            .findWordForUser(
-                eq(1L),
-                eq("hello"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                isNull(),
-                eq(false),
-                eq(false)
-            );
+        verify(wordService, times(1)).findWordForUser(
+            eq(1L),
+            eq("hello"),
+            eq(Language.ENGLISH),
+            eq(DictionaryFlavor.BILINGUAL),
+            isNull(),
+            eq(false),
+            eq(false)
+        );
     }
-
 }
