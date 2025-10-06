@@ -356,3 +356,40 @@ test("polishDictionaryMarkdown restores missing label delimiters", () => {
     ].join("\n"),
   );
 });
+
+/**
+ * 测试目标：验证英文标点后会自动补空格，避免释义文本紧贴导致阅读困难。
+ * 前置条件：构造逗号与感叹号后缺少空格的 Markdown 行。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 处理原始字符串。
+ *  2) 读取格式化后的释义行。
+ * 断言：
+ *  - 逗号与感叹号后补齐单个空格，若失败将仍旧粘连在一起。
+ * 边界/异常：
+ *  - 覆盖多种英文标点组合，防止未来修改回退到无空格状态。
+ */
+test("polishDictionaryMarkdown enforces spacing after english punctuation", () => {
+  const source = "- **释义**: Follow me,please!Keep pace.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("- **释义**: Follow me, please! Keep pace.");
+});
+
+/**
+ * 测试目标：例句正文中的分词标注需自动补空格，确保中英混排保持清晰断句。
+ * 前置条件：例句行包含 [[专有名词]]、#词组#、{{补充信息}} 等分词符号以及英文标点。
+ * 步骤：
+ *  1) 使用 polishDictionaryMarkdown 处理例句行。
+ *  2) 比对处理后的行是否在标记与正文之间插入空格。
+ * 断言：
+ *  - 分词标记与正文间存在单个空格，英文标点后补齐空格。
+ * 边界/异常：
+ *  - 覆盖多种分词标记组合，防止未来新增逻辑破坏现有排版。
+ */
+test("polishDictionaryMarkdown applies segmentation spacing to example content", () => {
+  const source =
+    "- **例句（中文）**: [[大熊猫]]栖息在#竹林#里,并且很可爱!还有{{保护区}}。";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    "- **例句（中文）**: [[大熊猫]] 栖息在 #竹林# 里, 并且很可爱! 还有 {{保护区}}。",
+  );
+});

@@ -41,6 +41,37 @@ const INLINE_LABEL_CAMEL_CASE = /([a-z])(\p{Lu})/gu;
 
 const INLINE_LABEL_DELIMITER = /[^a-z\u4e00-\u9fff]+/giu;
 
+const ASCII_PUNCTUATION = new Set([",", ".", "!", "?", ";"]);
+
+const ASCII_PUNCTUATION_BOUNDARY = new Set([
+  "\t",
+  " ",
+  "\n",
+  "\r",
+  ")",
+  "]",
+  "}",
+  ">",
+  "'",
+  '"',
+  "*",
+  "_",
+]);
+
+const EXAMPLE_LABEL_TOKENS = new Set([
+  "example",
+  "examples",
+  "例句",
+  "用法示例",
+  "用例",
+]);
+
+const SEGMENTATION_MARKER_PATTERNS = [
+  /\[\[[^\]]+\]\]/g,
+  /\{\{[^}]+\}\}/g,
+  /#[^#\s]+#/g,
+];
+
 // 说明：
 //  - 这些标签来自后端 Markdown 解析器的 Section 定义，覆盖了 LLM 输出中常见的段落元信息。
 //  - 目标是保持前后端对「需要独立换行的行内标签」的识别一致，避免前端额外维护语言分支。
@@ -974,6 +1005,263 @@ export function extractMarkdownPreview(buffer) {
   return decodeJsonString(value.raw);
 }
 
+function countBackticks(source, startIndex) {
+  let length = 0;
+  while (source[startIndex + length] === "`") {
+    length += 1;
+  }
+  return length;
+}
+
+function isAsciiDigit(char) {
+  return char >= "0" && char <= "9";
+}
+
+function isAsciiUppercase(char) {
+  return char >= "A" && char <= "Z";
+}
+
+function isAsciiLetter(char) {
+  return (char >= "A" && char <= "Z") || (char >= "a" && char <= "z");
+}
+
+function isHanChar(char) {
+  return /\p{Script=Han}/u.test(char);
+}
+
+function isCjkPunctuation(char) {
+  return /[\u3000-\u303F\uFF00-\uFF65。，；：！？、（）「」『』《》〈〉【】]/u.test(char);
+}
+
+function isSpacingCandidate(char) {
+  if (!char) {
+    return false;
+  }
+  if (isAsciiLetter(char) || isAsciiDigit(char)) {
+    return true;
+  }
+  return isHanChar(char);
+}
+
+function shouldSkipPeriodSpacing(source, index) {
+  const prev = source[index - 1];
+  const next = source[index + 1];
+  if (prev === "." || next === ".") {
+    return true;
+  }
+  if (prev && next && isAsciiDigit(prev) && isAsciiDigit(next)) {
+    return true;
+  }
+  if (prev && next && isAsciiUppercase(prev) && isAsciiUppercase(next)) {
+    return true;
+  }
+  return false;
+}
+
+function shouldInsertPeriodSpace(prev, next) {
+  if (!isSpacingCandidate(prev)) {
+    return false;
+  }
+  if (isHanChar(next)) {
+    return true;
+  }
+  return isAsciiUppercase(next);
+}
+
+/**
+ * 意图：为英式标点补足空格，避免 Markdown 中文本与标点紧贴导致可读性下降。
+ * 输入：原始 Markdown 文本字符串。
+ * 输出：在允许位置补足空格后的 Markdown。
+ * 流程：
+ *  1) 顺序遍历字符并跟踪是否位于反引号包裹的代码段。
+ *  2) 对于逗号、句号、感叹号、问号、分号，若后续紧跟文字则补充空格。
+ * 错误处理：函数不抛出异常，遇到 nullish 输入直接返回原值。
+ * 复杂度：O(n)，n 为文本长度；仅使用常数额外空间。
+ */
+function ensureEnglishPunctuationSpacing(text) {
+  if (!text) {
+    return text;
+  }
+  let result = "";
+  let activeFenceSize = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (char === "`") {
+      const fenceSize = countBackticks(text, i);
+      result += "`".repeat(fenceSize);
+      i += fenceSize - 1;
+      if (activeFenceSize === 0) {
+        activeFenceSize = fenceSize;
+      } else if (fenceSize >= activeFenceSize) {
+        activeFenceSize = 0;
+      }
+      continue;
+    }
+    result += char;
+    if (activeFenceSize > 0) {
+      continue;
+    }
+    if (!ASCII_PUNCTUATION.has(char)) {
+      continue;
+    }
+    const prev = text[i - 1];
+    const next = text[i + 1];
+    if (char === "." && shouldSkipPeriodSpacing(text, i)) {
+      continue;
+    }
+    if (!next) {
+      continue;
+    }
+    if (/\s/.test(next)) {
+      continue;
+    }
+    if (ASCII_PUNCTUATION.has(next)) {
+      continue;
+    }
+    if (ASCII_PUNCTUATION_BOUNDARY.has(next)) {
+      continue;
+    }
+    if (isCjkPunctuation(next)) {
+      continue;
+    }
+    if (!isSpacingCandidate(prev) || !isSpacingCandidate(next)) {
+      continue;
+    }
+    if (char === "." && !shouldInsertPeriodSpace(prev, next)) {
+      continue;
+    }
+    result += " ";
+  }
+  return result;
+}
+
+function isExampleLabel(label) {
+  const candidates = collectInlineLabelCandidates(label);
+  if (candidates.size === 0) {
+    return false;
+  }
+  for (const candidate of candidates) {
+    if (EXAMPLE_LABEL_TOKENS.has(candidate)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function ensureSegmentationMarkerSpacing(value) {
+  let result = value;
+  for (const pattern of SEGMENTATION_MARKER_PATTERNS) {
+    result = result.replace(pattern, (match, offset, source) => {
+      let prefix = "";
+      if (offset > 0 && !/\s/.test(source[offset - 1])) {
+        prefix = " ";
+      }
+      const end = offset + match.length;
+      let suffix = "";
+      const nextChar = source[end];
+      if (
+        end < source.length &&
+        !/\s/.test(nextChar) &&
+        !isCjkPunctuation(nextChar) &&
+        !ASCII_PUNCTUATION.has(nextChar)
+      ) {
+        suffix = " ";
+      }
+      return `${prefix}${match}${suffix}`;
+    });
+  }
+  return result;
+}
+
+function separateHanAndLatinTokens(value) {
+  let result = value.replace(/(\p{Script=Han})([A-Za-z0-9])/gu, "$1 $2");
+  result = result.replace(/([A-Za-z0-9])(\p{Script=Han})/gu, "$1 $2");
+  return result;
+}
+
+/**
+ * 意图：对例句正文增加分词空格，使分段标注与中英混排更加清晰。
+ * 输入：例句正文文本（不含标签与冒号）。
+ * 输出：经标注拆分与空格规整后的正文。
+ * 流程：
+ *  1) 为分词标记（[[ ]]/{{ }}/# #）补齐前后空格。
+ *  2) 在汉字与拉丁字符的分界处插入空格，并压缩多余空格。
+ * 错误处理：若正文为空则直接返回原值。
+ * 复杂度：O(m)，m 为例句长度，仅使用常数空间。
+ */
+function normalizeExampleContent(value) {
+  if (!value) {
+    return value;
+  }
+  const withMarkerSpacing = ensureSegmentationMarkerSpacing(value);
+  const separated = separateHanAndLatinTokens(withMarkerSpacing);
+  return separated.replace(/\s{2,}/g, " ").trim();
+}
+
+/**
+ * 意图：在字典 Markdown 中定位例句行并补齐分词空格。
+ * 输入：格式化前的 Markdown 字符串。
+ * 输出：例句段落完成分词空格后的 Markdown。
+ * 流程：
+ *  1) 按行扫描，识别出包含例句标签的行。
+ *  2) 对命中行的正文部分调用 `normalizeExampleContent` 进行空格规整。
+ * 错误处理：对无法识别的行保持原样，确保 Markdown 不被破坏。
+ * 复杂度：O(n)，n 为文本总长度。
+ */
+function applyExampleSegmentationSpacing(text) {
+  if (!text) {
+    return text;
+  }
+  const lines = text.split("\n");
+  const normalized = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const match = line.match(
+      /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
+    );
+    if (!match) {
+      normalized.push(line);
+      continue;
+    }
+    const [, prefix, label, rest] = match;
+    if (!isExampleLabel(label)) {
+      normalized.push(line);
+      continue;
+    }
+    let combined = rest;
+    let consumed = 0;
+    const attachments = [];
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const candidate = lines[j];
+      const trimmed = candidate.trimStart();
+      if (trimmed === "") {
+        consumed += 1;
+        continue;
+      }
+      if (!/^(#|\{\{|\[\[)/.test(trimmed)) {
+        break;
+      }
+      consumed += 1;
+      if (trimmed.startsWith("#")) {
+        attachments.push(trimmed.replace(/^#\s+/, "#"));
+      } else {
+        attachments.push(trimmed);
+      }
+    }
+    if (attachments.length > 0) {
+      combined = `${combined}${attachments.join("")}`;
+    }
+    const normalizedContent = normalizeExampleContent(combined);
+    if (!normalizedContent) {
+      normalized.push(prefix.trimEnd());
+    } else {
+      normalized.push(`${prefix}${normalizedContent}`);
+    }
+    i += consumed;
+  }
+  return normalized.join("\n");
+}
+
 export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
@@ -995,5 +1283,11 @@ export function polishDictionaryMarkdown(source) {
   const padded = ensureHeadingPadding(headingsSeparated);
   const spaced = ensureListSpacing(padded);
   const withInlineBreaks = ensureInlineLabelLineBreak(spaced);
-  return resolveDanglingLabelSeparators(withInlineBreaks);
+  const withoutDanglingSeparators = resolveDanglingLabelSeparators(
+    withInlineBreaks,
+  );
+  const withPunctuationSpacing = ensureEnglishPunctuationSpacing(
+    withoutDanglingSeparators,
+  );
+  return applyExampleSegmentationSpacing(withPunctuationSpacing);
 }
