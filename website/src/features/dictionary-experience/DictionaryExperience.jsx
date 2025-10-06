@@ -17,6 +17,7 @@ import useBottomPanelState, {
 } from "./hooks/useBottomPanelState";
 import BottomPanelSwitcher from "./components/BottomPanelSwitcher.jsx";
 import DictionaryActionPanel from "./components/DictionaryActionPanel.jsx";
+import ReportIssueModal from "./components/ReportIssueModal.jsx";
 import "@/pages/App/App.css";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "./dictionaryExperienceViews.js";
 
@@ -56,6 +57,8 @@ export default function DictionaryExperience() {
     searchEmptyState,
     chatInputPlaceholder,
     libraryLandingLabel,
+    reportDialog,
+    reportDialogHandlers,
   } = useDictionaryExperience();
 
   const viewShape = viewState ?? {};
@@ -225,6 +228,21 @@ export default function DictionaryExperience() {
           )}
         </div>
       </Layout>
+      <ReportIssueModal
+        open={reportDialog.open}
+        term={reportDialog.term}
+        language={reportDialog.language}
+        flavor={reportDialog.flavor}
+        category={reportDialog.category}
+        categories={reportDialog.categories ?? []}
+        description={reportDialog.description}
+        submitting={reportDialog.submitting}
+        error={reportDialog.error ?? ""}
+        onClose={reportDialogHandlers.close}
+        onCategoryChange={reportDialogHandlers.setCategory}
+        onDescriptionChange={reportDialogHandlers.setDescription}
+        onSubmit={reportDialogHandlers.submit}
+      />
       <MessagePopup open={popupOpen} message={popupMsg} onClose={closePopup} />
     </>
   );

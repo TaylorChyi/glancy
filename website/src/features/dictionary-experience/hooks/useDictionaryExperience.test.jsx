@@ -64,6 +64,8 @@ const mockSettingsState = {
 };
 const mockWordStoreState = { entries: [] };
 
+const submitWordReportMock = jest.fn();
+
 jest.unstable_mockModule("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
@@ -80,6 +82,10 @@ jest.unstable_mockModule("@/hooks", () => ({
   useStreamWord: () => mockStreamWord,
   useSpeechInput: () => ({ start: mockStartSpeech }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: mockToggleFavoriteEntry }),
+}));
+
+jest.unstable_mockModule("@/hooks/useApi.js", () => ({
+  useApi: () => ({ wordReports: { submitWordReport: submitWordReportMock } }),
 }));
 
 jest.unstable_mockModule("@/utils", () => ({
@@ -141,8 +147,6 @@ jest.unstable_mockModule("@/store/dataGovernanceStore.ts", () => ({
 
 jest.unstable_mockModule("@/config", () => ({
   DEFAULT_MODEL: "test-model",
-  REPORT_FORM_URL: "",
-  SUPPORT_EMAIL: "",
 }));
 
 const utilsModule = await import("@/utils");
@@ -162,6 +166,7 @@ beforeEach(() => {
   mockGetEntry.mockImplementation(() => null);
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });
+  submitWordReportMock.mockReset();
 });
 
 afterEach(() => {
