@@ -408,9 +408,12 @@ function Profile({ onCancel }) {
   };
 
   const handleEmailConfirm = async ({ email: nextEmail, code }) => {
+    const hadEmailBeforeSubmit = Boolean(currentUser?.email);
     try {
       await emailBinding.confirmChange({ email: nextEmail, code });
-      setPopupMsg(t.emailChangeSuccess);
+      setPopupMsg(
+        hadEmailBeforeSubmit ? t.emailChangeSuccess : t.emailBindSuccess,
+      );
       setPopupOpen(true);
     } catch (error) {
       console.error(error);
@@ -422,6 +425,7 @@ function Profile({ onCancel }) {
   const handleEmailUnbind = async () => {
     try {
       await emailBinding.unbindEmail();
+      emailBinding.startEditing();
       setPopupMsg(t.emailUnbindSuccess);
       setPopupOpen(true);
     } catch (error) {

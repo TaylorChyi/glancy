@@ -94,9 +94,16 @@ function EmailBindingCard({
   };
 
   const isEditing = mode === "editing";
-  const summaryLabel = email
+  const hasBoundEmail = Boolean(email);
+  const summaryLabel = hasBoundEmail
     ? t.emailBoundDescription
     : t.emailUnboundDescription;
+  const primaryActionLabel = hasBoundEmail
+    ? t.emailChangeAction
+    : t.emailBindAction;
+  const confirmButtonLabel = hasBoundEmail
+    ? t.emailConfirmChange
+    : t.emailConfirmBind;
 
   const verificationMessage = useMemo(() => {
     if (!isAwaitingVerification) {
@@ -127,10 +134,10 @@ function EmailBindingCard({
         </div>
         <span
           className={
-            email ? styles["status-active"] : styles["status-inactive"]
+            hasBoundEmail ? styles["status-active"] : styles["status-inactive"]
           }
         >
-          {email ? t.emailStatusBound : t.emailStatusUnbound}
+          {hasBoundEmail ? t.emailStatusBound : t.emailStatusUnbound}
         </span>
       </header>
       {isEditing ? (
@@ -198,7 +205,7 @@ function EmailBindingCard({
               className={styles["primary-button"]}
               disabled={isSubmitDisabled}
             >
-              {isVerifying ? t.emailVerifying : t.emailConfirm}
+              {isVerifying ? t.emailVerifying : confirmButtonLabel}
             </button>
             <button
               type="button"
@@ -216,7 +223,7 @@ function EmailBindingCard({
               {t.emailCurrentLabel}
             </span>
             <span className={styles["summary-value"]}>
-              {email || t.emailEmptyValue}
+              {hasBoundEmail ? email : t.emailEmptyValue}
             </span>
           </div>
           <div className={styles.actions}>
@@ -225,7 +232,7 @@ function EmailBindingCard({
               className={styles["primary-button"]}
               onClick={onStart}
             >
-              {t.emailChangeAction}
+              {primaryActionLabel}
             </button>
             <button
               type="button"
@@ -268,11 +275,13 @@ EmailBindingCard.propTypes = {
     emailSendCode: PropTypes.string.isRequired,
     emailSendingCode: PropTypes.string.isRequired,
     emailVerifying: PropTypes.string.isRequired,
-    emailConfirm: PropTypes.string.isRequired,
+    emailConfirmBind: PropTypes.string.isRequired,
+    emailConfirmChange: PropTypes.string.isRequired,
     emailCancel: PropTypes.string.isRequired,
     emailCurrentLabel: PropTypes.string.isRequired,
     emailEmptyValue: PropTypes.string.isRequired,
     emailChangeAction: PropTypes.string.isRequired,
+    emailBindAction: PropTypes.string.isRequired,
     emailUnbindAction: PropTypes.string.isRequired,
     emailUnbinding: PropTypes.string.isRequired,
     emailVerificationIntro: PropTypes.string.isRequired,
