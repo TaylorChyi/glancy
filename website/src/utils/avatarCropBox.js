@@ -129,6 +129,60 @@ export function clampZoom(value, min, max) {
 }
 
 /**
+ * 意图：推导以图片中心对齐的视图状态，供头像裁剪视窗初始化与重置复用。
+ * 输入：
+ *  - naturalWidth/naturalHeight：原图尺寸；
+ *  - viewportSize：正方形视窗边长；
+ *  - zoom：期望的缩放倍数；
+ *  - minZoom/maxZoom：允许的缩放上下限。
+ * 输出：返回包含钳制后的缩放值、中心偏移量与平移边界的对象。
+ * 流程：
+ *  1) 钳制缩放倍数，确保后续展示不超出限制；
+ *  2) 计算当前缩放下的展示宽高与平移边界；
+ *  3) 将零偏移量钳制在边界内，得到以中心为原点的偏移。
+ * 错误处理：
+ *  - 尺寸或视窗非法时，返回零偏移与钳制后的缩放，交由调用方决定是否重试。
+ * 复杂度：O(1)。
+ */
+export function deriveCenteredViewportState({
+  naturalWidth,
+  naturalHeight,
+  viewportSize,
+  zoom = 1,
+  minZoom = 1,
+  maxZoom = 1,
+}) {
+  const safeMinZoom = minZoom > 0 && Number.isFinite(minZoom) ? minZoom : 1;
+  const safeMaxZoom =
+    maxZoom >= safeMinZoom && Number.isFinite(maxZoom)
+      ? maxZoom
+      : safeMinZoom;
+  const safeZoom = clampZoom(zoom, safeMinZoom, safeMaxZoom);
+
+  if (naturalWidth <= 0 || naturalHeight <= 0 || viewportSize <= 0) {
+    return {
+      zoom: safeZoom,
+      offset: { x: 0, y: 0 },
+      bounds: { maxX: 0, maxY: 0 },
+    };
+  }
+
+  const { width, height } = computeDisplayMetrics({
+    naturalWidth,
+    naturalHeight,
+    viewportSize,
+    zoom: safeZoom,
+  });
+  const bounds = computeOffsetBounds(width, height, viewportSize);
+
+  return {
+    zoom: safeZoom,
+    offset: clampOffset({ x: 0, y: 0 }, bounds),
+    bounds,
+  };
+}
+
+/**
  * 意图：在当前视图状态下计算 Canvas 裁剪所需的源图像矩形。
  * 输入：
  *  - naturalWidth/naturalHeight：原图尺寸；
@@ -196,4 +250,5 @@ export default {
   clampOffset,
   clampZoom,
   computeCropSourceRect,
+  deriveCenteredViewportState,
 };

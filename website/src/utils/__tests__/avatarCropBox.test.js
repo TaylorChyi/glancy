@@ -16,6 +16,7 @@ import {
   computeCropSourceRect,
   computeDisplayMetrics,
   computeOffsetBounds,
+  deriveCenteredViewportState,
 } from "../avatarCropBox.js";
 
 describe("avatarCropBox geometry helpers", () => {
@@ -74,6 +75,74 @@ describe("avatarCropBox geometry helpers", () => {
     expect(clampZoom(5, 1, 3)).toBe(3);
     expect(clampZoom(0.5, 1, 3)).toBe(1);
     expect(clampZoom(2, 1, 3)).toBe(2);
+  });
+
+  /**
+   * 测试目标：验证 deriveCenteredViewportState 会输出以图片中心为原点的偏移与合法缩放值。
+   * 前置条件：提供 1200×800 的原图，视窗为 320，期望缩放 1.6，缩放上下限为 [1, 3]。
+   * 步骤：
+   *  1) 调用 deriveCenteredViewportState 并获取返回值；
+   * 断言：
+   *  - zoom 保持在 1.6；
+   *  - offset 为 {x:0,y:0}；
+   *  - bounds.maxX 与 bounds.maxY 大于 0；
+   * 边界/异常：
+   *  - 覆盖横向大图场景。
+   */
+  it("Given rectangular source When deriveCenteredViewportState Then centers offset", () => {
+    const state = deriveCenteredViewportState({
+      naturalWidth: 1200,
+      naturalHeight: 800,
+      viewportSize: 320,
+      zoom: 1.6,
+      minZoom: 1,
+      maxZoom: 3,
+    });
+
+    expect(state.zoom).toBeCloseTo(1.6);
+    expect(state.offset).toEqual({ x: 0, y: 0 });
+    expect(state.bounds.maxX).toBeGreaterThan(0);
+    expect(state.bounds.maxY).toBeGreaterThan(0);
+  });
+
+  /**
+   * 测试目标：验证 deriveCenteredViewportState 在尺寸非法时仍返回零偏移且缩放被钳制至下限。
+   * 前置条件：视窗或尺寸为非正值，期望缩放为 2。 
+   * 步骤：
+   *  1) 调用 deriveCenteredViewportState，分别传入零尺寸与零视窗；
+   * 断言：
+   *  - zoom 等于钳制后的 2；
+   *  - offset 为 {x:0,y:0}；
+   *  - bounds 为 {maxX:0,maxY:0}；
+   * 边界/异常：
+   *  - 覆盖异常输入场景。
+   */
+  it("Given invalid dimensions When deriveCenteredViewportState Then returns origin offset", () => {
+    const zeroSizeState = deriveCenteredViewportState({
+      naturalWidth: 0,
+      naturalHeight: 800,
+      viewportSize: 320,
+      zoom: 2,
+      minZoom: 1,
+      maxZoom: 3,
+    });
+
+    expect(zeroSizeState.zoom).toBe(2);
+    expect(zeroSizeState.offset).toEqual({ x: 0, y: 0 });
+    expect(zeroSizeState.bounds).toEqual({ maxX: 0, maxY: 0 });
+
+    const zeroViewportState = deriveCenteredViewportState({
+      naturalWidth: 800,
+      naturalHeight: 800,
+      viewportSize: 0,
+      zoom: 2,
+      minZoom: 1,
+      maxZoom: 3,
+    });
+
+    expect(zeroViewportState.zoom).toBe(2);
+    expect(zeroViewportState.offset).toEqual({ x: 0, y: 0 });
+    expect(zeroViewportState.bounds).toEqual({ maxX: 0, maxY: 0 });
   });
 
   /**
