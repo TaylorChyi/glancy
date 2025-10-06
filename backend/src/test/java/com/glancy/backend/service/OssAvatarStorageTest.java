@@ -7,7 +7,6 @@ import com.aliyun.oss.OSSException;
 import com.aliyun.oss.model.CannedAccessControlList;
 import com.aliyun.oss.model.GeneratePresignedUrlRequest;
 import com.glancy.backend.config.OssProperties;
-import java.util.Date;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -34,14 +33,15 @@ class OssAvatarStorageTest {
         when(client.putObject(eq("bucket"), anyString(), any(java.io.InputStream.class))).thenReturn(null);
         OSSException ex = new OSSException("AccessDenied");
         doThrow(ex).when(client).setObjectAcl(eq("bucket"), anyString(), eq(CannedAccessControlList.PublicRead));
-        when(client.generatePresignedUrl(eq("bucket"), anyString(), any(Date.class))).thenReturn(
+        when(client.generatePresignedUrl(any(GeneratePresignedUrlRequest.class))).thenReturn(
             new java.net.URL("https://example.com")
         );
 
         MockMultipartFile file = new MockMultipartFile("file", "avatar.jpg", "image/jpeg", "data".getBytes());
-        storage.upload(file);
+        String objectKey = storage.upload(file);
+        storage.resolveUrl(objectKey);
         verify(client).setObjectAcl(eq("bucket"), anyString(), eq(CannedAccessControlList.PublicRead));
-        verify(client).generatePresignedUrl(eq("bucket"), anyString(), any(Date.class));
+        verify(client).generatePresignedUrl(any(GeneratePresignedUrlRequest.class));
     }
 
     @Test
@@ -57,14 +57,15 @@ class OssAvatarStorageTest {
         OSS client = mock(OSS.class);
         OssAvatarStorage storage = new OssAvatarStorage(client, props);
         when(client.putObject(eq("bucket"), anyString(), any(java.io.InputStream.class))).thenReturn(null);
-        when(client.generatePresignedUrl(eq("bucket"), anyString(), any(Date.class))).thenReturn(
+        when(client.generatePresignedUrl(any(GeneratePresignedUrlRequest.class))).thenReturn(
             new java.net.URL("https://example.com")
         );
 
         MockMultipartFile file = new MockMultipartFile("file", "avatar.jpg", "image/jpeg", "data".getBytes());
-        storage.upload(file);
+        String objectKey = storage.upload(file);
+        storage.resolveUrl(objectKey);
         verify(client, never()).setObjectAcl(eq("bucket"), anyString(), any());
-        verify(client).generatePresignedUrl(eq("bucket"), anyString(), any(Date.class));
+        verify(client).generatePresignedUrl(any(GeneratePresignedUrlRequest.class));
     }
 
     @Test
@@ -86,7 +87,8 @@ class OssAvatarStorageTest {
         );
 
         MockMultipartFile file = new MockMultipartFile("file", "avatar.jpg", "image/jpeg", "data".getBytes());
-        storage.upload(file);
+        String objectKey = storage.upload(file);
+        storage.resolveUrl(objectKey);
         verify(client, never()).setObjectAcl(eq("bucket"), anyString(), any());
         verify(client).generatePresignedUrl(any(GeneratePresignedUrlRequest.class));
     }

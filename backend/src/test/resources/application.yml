@@ -27,8 +27,8 @@ oss:
   public-read: true
   signed-url-expiration-minutes: 60
   verify-location: true
-  access-key-id:
-  access-key-secret:
+  access-key-id: test-access
+  access-key-secret: test-secret
 
 llm:
   default-client: doubao
