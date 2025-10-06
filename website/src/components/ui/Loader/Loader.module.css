@@ -1,10 +1,10 @@
 /**
  * 背景：
- *  - Loader 视觉升级为呼吸式淡入淡出，需让灰底与黑色覆盖在透明度层面往复切换。
+ *  - Loader 动画从“双层遮罩”升级为“整幅素材淡入淡出”，强调完整素材的呼吸节奏。
  * 目的：
- *  - 通过 CSS 模块配置透明度动画，保持尺寸 token 与动画节奏可配置，确保与策略层解耦。
+ *  - 通过 CSS 模块统一管理透明度过渡与尺寸 token，使 Hook 输出布尔态即可驱动渐隐渐显。
  * 关键决策与取舍：
- *  - 使用 opacity + transition，而非额外 keyframes，以便随 Hook 切换布尔态即可驱动动画；
+ *  - 继续使用 opacity + transition，避免引入额外 keyframes，保持渲染栈纯粹；
  *  - 所有时长仍交由 CSS 变量控制，方便主题或无障碍场景动态调整。
  */
 .loader {
@@ -39,31 +39,19 @@
   inline-size: 100%;
   block-size: 100%;
   overflow: hidden;
-}
-
-.frame-base,
-.frame-overlay {
-  inline-size: 100%;
-  block-size: 100%;
-  display: block;
-  object-fit: contain;
-}
-
-.frame-base {
-  filter: grayscale(1) brightness(1.2);
-}
-
-.frame-overlay {
-  position: absolute;
-  inset: 0;
-  filter: none;
-  pointer-events: none;
   opacity: 0;
   transition: opacity var(--waiting-fade-duration, 750ms) ease-in-out;
 }
 
-.frame-overlay-visible {
+.frame-visible {
   opacity: 1;
+}
+
+.frame-asset {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+  object-fit: contain;
 }
 
 .label {
