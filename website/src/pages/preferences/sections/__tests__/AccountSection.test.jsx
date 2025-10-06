@@ -1,6 +1,7 @@
 /* eslint-env jest */
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
@@ -16,7 +17,7 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
 
 const { default: AccountSection } = await import("../AccountSection.jsx");
 const { ACCOUNT_USERNAME_FIELD_TYPE } = await import(
-  "../accountSection.constants.js",
+  "../accountSection.constants.js"
 );
 
 const baseBindings = Object.freeze({
@@ -246,4 +247,98 @@ test("GivenFieldWithRenderer_WhenRendering_ThenCustomNodeAppears", () => {
   if (actionCell) {
     expect(actionCell.querySelector("button")).toBeNull();
   }
+});
+
+/**
+ * 测试目标：字段动作按钮需在点击时触发传入的 onClick 回调。
+ * 前置条件：提供带 onClick 的字段 action；按钮初始为可用状态。
+ * 步骤：
+ *  1) 渲染 AccountSection 并定位动作按钮；
+ *  2) 触发一次点击事件。
+ * 断言：
+ *  - onClick 回调被调用一次；
+ * 边界/异常：
+ *  - 若按钮被禁用或未渲染则测试失败。
+ */
+test("GivenActionHandler_WhenClickingButton_ThenInvokeCallback", async () => {
+  const handleClick = jest.fn();
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[
+        {
+          id: "email",
+          label: "邮箱",
+          value: "ada@example.com",
+          action: {
+            id: "unbind-email",
+            label: "解绑邮箱",
+            onClick: handleClick,
+          },
+        },
+      ]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: false,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const user = userEvent.setup();
+  const actionButton = screen.getByRole("button", { name: "解绑邮箱" });
+  await user.click(actionButton);
+  expect(handleClick).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * 测试目标：当动作处于 pending 态时按钮需禁用并展示 pendingLabel。
+ * 前置条件：字段 action 提供 isPending 与 pendingLabel。
+ * 步骤：
+ *  1) 渲染 AccountSection；
+ *  2) 获取动作按钮。
+ * 断言：
+ *  - 按钮禁用且 aria-disabled 为 true；
+ *  - 按钮文案替换为 pendingLabel。
+ * 边界/异常：
+ *  - 若 pendingLabel 缺失则应回退到原 label（另行覆盖）。
+ */
+test("GivenPendingAction_WhenRendering_ThenButtonDisabledWithPendingLabel", () => {
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[
+        {
+          id: "email",
+          label: "邮箱",
+          value: "ada@example.com",
+          action: {
+            id: "unbind-email",
+            label: "解绑邮箱",
+            pendingLabel: "解绑中…",
+            isPending: true,
+          },
+        },
+      ]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: false,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const actionButton = screen.getByRole("button", { name: "解绑中…" });
+  expect(actionButton).toBeDisabled();
+  expect(actionButton).toHaveAttribute("aria-disabled", "true");
 });

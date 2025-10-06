@@ -125,6 +125,7 @@ export default {
   settingsAccountEmail: "邮箱",
   settingsAccountPhone: "手机号",
   settingsAccountEmailUnbindAction: "解绑邮箱",
+  settingsAccountEmailUnbinding: "解绑中…",
   settingsAccountPhoneRebindAction: "换绑手机号",
   settingsEmptyValue: "未填写",
   saving: "保存中...",

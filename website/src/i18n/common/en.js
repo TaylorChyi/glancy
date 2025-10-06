@@ -140,6 +140,7 @@ export default {
   settingsAccountEmail: "Email",
   settingsAccountPhone: "Phone",
   settingsAccountEmailUnbindAction: "Unlink email",
+  settingsAccountEmailUnbinding: "Removing…",
   settingsAccountPhoneRebindAction: "Change phone",
   settingsEmptyValue: "Not set",
   saving: "Saving...",

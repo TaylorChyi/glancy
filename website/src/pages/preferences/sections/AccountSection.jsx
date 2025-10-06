@@ -200,17 +200,24 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
             <div key={field.id} className={styles["detail-row"]}>
               <dt className={styles["detail-label"]}>{field.label}</dt>
               <dd className={styles["detail-value"]}>
-                {typeof renderValue === "function" ? renderValue(field) : field.value}
+                {typeof renderValue === "function"
+                  ? renderValue(field)
+                  : field.value}
               </dd>
               <div className={styles["detail-action"]}>
                 {field.action ? (
                   <button
                     type="button"
                     className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
-                    aria-disabled={field.action.disabled}
-                    disabled={field.action.disabled}
+                    aria-disabled={
+                      field.action.disabled || field.action.isPending
+                    }
+                    disabled={field.action.disabled || field.action.isPending}
+                    onClick={field.action.onClick}
                   >
-                    {field.action.label}
+                    {field.action.isPending && field.action.pendingLabel
+                      ? field.action.pendingLabel
+                      : field.action.label}
                   </button>
                 ) : null}
               </div>
@@ -268,6 +275,9 @@ AccountSection.propTypes = {
         id: PropTypes.string.isRequired,
         label: PropTypes.string.isRequired,
         disabled: PropTypes.bool,
+        onClick: PropTypes.func,
+        isPending: PropTypes.bool,
+        pendingLabel: PropTypes.string,
       }),
     }),
   ).isRequired,
