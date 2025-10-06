@@ -77,6 +77,7 @@ public class WordService {
         DictionaryFlavor flavor,
         String model,
         SearchRecordResponse record,
+        boolean captureHistory,
         WordPersonalizationContext personalizationContext
     ) {
         log.info(
@@ -89,19 +90,22 @@ public class WordService {
         resp.setFlavor(flavor);
         log.info("LLM search result: {}", resp);
         Word savedWord = saveWord(rawTerm, resp, language, flavor);
-        synchronizeRecordTermQuietly(userId, record, savedWord.getTerm());
-        String content = resp.getMarkdown();
-        if (content == null) {
-            try {
-                content = serialize(savedWord);
-            } catch (JsonProcessingException e) {
-                log.warn("Failed to serialize word '{}' for version content", savedWord.getTerm(), e);
-                content = SensitiveDataUtil.previewText(savedWord.getMarkdown());
+        if (captureHistory) {
+            synchronizeRecordTermQuietly(userId, record, savedWord.getTerm());
+            String content = resp.getMarkdown();
+            if (content == null) {
+                try {
+                    content = serialize(savedWord);
+                } catch (JsonProcessingException e) {
+                    log.warn("Failed to serialize word '{}' for version content", savedWord.getTerm(), e);
+                    content = SensitiveDataUtil.previewText(savedWord.getMarkdown());
+                }
             }
-        }
-        SearchResultVersion version = persistVersion(record.id(), userId, model, content, savedWord, flavor);
-        if (version != null) {
-            resp.setVersionId(version.getId());
+            Long recordId = record != null ? record.id() : null;
+            SearchResultVersion version = persistVersion(recordId, userId, model, content, savedWord, flavor);
+            if (version != null) {
+                resp.setVersionId(version.getId());
+            }
         }
         return applyPersonalization(userId, resp, personalizationContext);
     }
@@ -125,6 +129,14 @@ public class WordService {
             );
             response.setFlavor(session.flavor());
             Word savedWord = saveWord(session.term(), response, session.language(), session.flavor());
+            if (!session.captureHistory()) {
+                log.info(
+                    "History capture disabled for streaming session user {} term '{}' - skipping record persistence",
+                    session.userId(),
+                    session.term()
+                );
+                return Mono.empty();
+            }
             synchronizeRecordTermQuietly(session.userId(), session.recordId(), savedWord.getTerm());
             SearchResultVersion version = persistVersion(
                 session.recordId(),
@@ -216,7 +228,8 @@ public class WordService {
         Language language,
         DictionaryFlavor flavor,
         String model,
-        boolean forceNew
+        boolean forceNew,
+        boolean captureHistory
     ) {
         String resolvedModel = resolveModelName(model);
         String normalizedTerm = termNormalizer.normalize(term);
@@ -234,7 +247,7 @@ public class WordService {
         req.setTerm(term);
         req.setLanguage(language);
         req.setFlavor(flavor);
-        SearchRecordResponse record = searchRecordService.saveRecord(userId, req);
+        final SearchRecordResponse record = captureHistory ? searchRecordService.saveRecord(userId, req) : null;
         if (!forceNew) {
             return findCachedWord(normalizedTerm, language, flavor)
                 .map(word -> {
@@ -252,6 +265,7 @@ public class WordService {
                         flavor,
                         resolvedModel,
                         record,
+                        captureHistory,
                         personalizationContext
                     )
                 );
@@ -264,6 +278,7 @@ public class WordService {
             flavor,
             resolvedModel,
             record,
+            captureHistory,
             personalizationContext
         );
     }
@@ -278,7 +293,8 @@ public class WordService {
         Language language,
         DictionaryFlavor flavor,
         String model,
-        boolean forceNew
+        boolean forceNew,
+        boolean captureHistory
     ) {
         String resolvedModel = resolveModelName(model);
         String normalizedTerm = termNormalizer.normalize(term);
@@ -296,14 +312,18 @@ public class WordService {
         req.setTerm(term);
         req.setLanguage(language);
         req.setFlavor(flavor);
-        SearchRecordResponse record;
-        try {
-            record = searchRecordService.saveRecord(userId, req);
-        } catch (BusinessException e) {
-            return Flux.error(e);
-        } catch (Exception e) {
-            log.error("Failed to save search record for user {}", userId, e);
-            return Flux.error(new IllegalStateException("Failed to save search record", e));
+        final SearchRecordResponse record;
+        if (captureHistory) {
+            try {
+                record = searchRecordService.saveRecord(userId, req);
+            } catch (BusinessException e) {
+                return Flux.error(e);
+            } catch (Exception e) {
+                log.error("Failed to save search record for user {}", userId, e);
+                return Flux.error(new IllegalStateException("Failed to save search record", e));
+            }
+        } else {
+            record = null;
         }
 
         if (!forceNew) {
@@ -326,12 +346,13 @@ public class WordService {
 
         StreamingAccumulator session = new StreamingAccumulator(
             userId,
-            record.id(),
+            record != null ? record.id() : null,
             term,
             language,
             flavor,
             resolvedModel,
-            personalizationContext
+            personalizationContext,
+            captureHistory
         );
         Flux<String> stream;
         try {
@@ -389,6 +410,7 @@ public class WordService {
         private final DictionaryFlavor flavor;
         private final String model;
         private final WordPersonalizationContext personalizationContext;
+        private final boolean captureHistory;
         private final Instant startedAt = Instant.now();
         private final StringBuilder transcript = new StringBuilder();
         private int chunkCount;
@@ -403,7 +425,8 @@ public class WordService {
             Language language,
             DictionaryFlavor flavor,
             String model,
-            WordPersonalizationContext personalizationContext
+            WordPersonalizationContext personalizationContext,
+            boolean captureHistory
         ) {
             this.userId = userId;
             this.recordId = recordId;
@@ -412,6 +435,7 @@ public class WordService {
             this.flavor = flavor;
             this.model = model;
             this.personalizationContext = personalizationContext;
+            this.captureHistory = captureHistory;
         }
 
         DictionaryFlavor flavor() {
@@ -490,6 +514,10 @@ public class WordService {
 
         WordPersonalizationContext personalizationContext() {
             return personalizationContext;
+        }
+
+        boolean captureHistory() {
+            return captureHistory;
         }
     }
 

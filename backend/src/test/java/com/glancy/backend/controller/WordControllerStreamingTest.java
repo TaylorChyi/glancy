@@ -62,7 +62,8 @@ class WordControllerStreamingTest {
                 eq(Language.ENGLISH),
                 eq(com.glancy.backend.entity.DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(Flux.just(StreamPayload.data("part1"), StreamPayload.version("77")));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
@@ -98,7 +99,8 @@ class WordControllerStreamingTest {
                 eq(Language.ENGLISH),
                 eq(com.glancy.backend.entity.DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(Flux.error(new IllegalStateException("boom")));
         when(userService.authenticateToken("tkn")).thenReturn(1L);

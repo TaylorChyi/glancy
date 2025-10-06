@@ -109,7 +109,8 @@ class WordServiceStreamingErrorTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
         StepVerifier.create(result)
             .expectErrorMatches(e -> e instanceof IllegalStateException && e.getMessage().contains("boom"))

@@ -6,6 +6,7 @@ import {
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
+import { useDataGovernanceStore } from "@/store";
 import { DEFAULT_MODEL } from "@/config";
 
 const safeParseJson = (input) => {
@@ -31,6 +32,15 @@ export function useStreamWord() {
   const api = useApi();
   const { streamWord } = api.words;
   const store = useWordStore;
+  const governanceStore = useDataGovernanceStore;
+
+  /**
+   * 意图：在每次流式查询前读取最新的历史采集偏好，保证客户端决策与后端参数一致。\
+   * 输出：布尔值，true 表示允许保存历史。\
+   * 复杂度：O(1)，直接访问 Zustand store。\
+   */
+  const readCaptureHistoryPreference = () =>
+    Boolean(governanceStore.getState().historyCaptureEnabled);
 
   return async function* streamWordWithHandling({
     user,
@@ -41,6 +51,7 @@ export function useStreamWord() {
     language = WORD_LANGUAGE_AUTO,
     flavor = WORD_FLAVOR_BILINGUAL,
   }) {
+    const captureHistory = readCaptureHistoryPreference();
     const resolvedLanguage = resolveWordLanguage(term, language);
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
     const model = DEFAULT_MODEL;
@@ -65,6 +76,7 @@ export function useStreamWord() {
         signal,
         forceNew,
         versionId,
+        captureHistory,
         onChunk: (chunk) => {
           console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
         },

@@ -4,6 +4,7 @@ import { useApi } from "@/hooks/useApi.js";
 import { createCachedFetcher, parseSse } from "@/utils";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { useWordStore } from "@/store/wordStore.js";
+import { useDataGovernanceStore } from "@/store";
 
 export const WORD_CACHE_VERSION = "md1";
 
@@ -25,6 +26,15 @@ export const wordCacheKey = ({
  */
 export function createWordsApi(request = apiRequest) {
   const store = useWordStore;
+  const governanceStore = useDataGovernanceStore;
+
+  /**
+   * 意图：统一读取历史采集偏好，确保同步/流式接口共享同一策略。\
+   * 输出：布尔值，指示是否允许记录查询历史。\
+   * 复杂度：O(1)，直接访问 Zustand store。\
+   */
+  const resolveCaptureHistory = () =>
+    Boolean(governanceStore.getState().historyCaptureEnabled);
 
   const resolveKey = ({
     term,
@@ -74,12 +84,14 @@ export function createWordsApi(request = apiRequest) {
     token,
   }) => {
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
+    const captureHistory = resolveCaptureHistory();
     const key = resolveKey({ term, language, flavor: resolvedFlavor, model });
     const cached = store.getState().getEntry(key);
     if (cached) return cached;
     const params = new URLSearchParams({ userId, term, language });
     if (resolvedFlavor) params.append("flavor", resolvedFlavor);
     if (model) params.append("model", model);
+    params.append("captureHistory", captureHistory ? "true" : "false");
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
       token,
     });
@@ -115,13 +127,20 @@ export function createWordsApi(request = apiRequest) {
     onChunk,
     forceNew = false,
     versionId,
+    captureHistory,
   }) {
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
+    const shouldCaptureHistory =
+      captureHistory ?? resolveCaptureHistory();
     const params = new URLSearchParams({ userId, term, language });
     if (resolvedFlavor) params.append("flavor", resolvedFlavor);
     if (model) params.append("model", model);
     if (forceNew) params.append("forceNew", "true");
     if (versionId) params.append("versionId", versionId);
+    params.append(
+      "captureHistory",
+      shouldCaptureHistory ? "true" : "false",
+    );
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
     const headers = {
       Accept: "text/event-stream",
