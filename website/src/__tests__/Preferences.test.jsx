@@ -27,6 +27,7 @@ const mockLanguage = {
   settingsAccountBindingStatusUnlinked: "Not linked",
   settingsAccountBindingActionPlaceholder: "Coming soon",
   settingsAccountEmailUnbindAction: "Unlink email",
+  settingsAccountEmailUnbinding: "Removing…",
   settingsAccountPhoneRebindAction: "Change phone",
   usernamePlaceholder: "Enter username",
   changeUsernameButton: "Change username",
@@ -42,6 +43,21 @@ let mockUser;
 let mockSetUser;
 let updateUsernameMock;
 const mockUseAvatarEditorWorkflow = jest.fn();
+const mockUseEmailBinding = jest.fn();
+let unbindEmailMock;
+
+beforeAll(() => {
+  if (typeof window !== "undefined" && !window.matchMedia) {
+    window.matchMedia = () => ({
+      matches: false,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    });
+  }
+});
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
@@ -55,7 +71,10 @@ jest.unstable_mockModule("@/context", () => ({
 }));
 
 jest.unstable_mockModule("@/api/users.js", () => ({
-  useUsersApi: () => ({ updateUsername: updateUsernameMock }),
+  useUsersApi: () => ({
+    updateUsername: updateUsernameMock,
+    unbindEmail: jest.fn(),
+  }),
 }));
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
@@ -70,6 +89,12 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
 jest.unstable_mockModule("@/hooks/useAvatarEditorWorkflow.js", () => ({
   __esModule: true,
   default: mockUseAvatarEditorWorkflow,
+}));
+
+jest.unstable_mockModule("@/hooks/useEmailBinding.js", () => ({
+  __esModule: true,
+  default: mockUseEmailBinding,
+  useEmailBinding: mockUseEmailBinding,
 }));
 
 const { default: Preferences } = await import("@/pages/preferences");
@@ -97,6 +122,23 @@ beforeEach(() => {
       isProcessing: false,
     },
     isBusy: false,
+  });
+  unbindEmailMock = jest.fn().mockResolvedValue({ email: null });
+  mockUseEmailBinding.mockReset();
+  mockUseEmailBinding.mockReturnValue({
+    mode: "idle",
+    startEditing: jest.fn(),
+    cancelEditing: jest.fn(),
+    requestCode: jest.fn(),
+    confirmChange: jest.fn(),
+    unbindEmail: unbindEmailMock,
+    isSendingCode: false,
+    isVerifying: false,
+    isUnbinding: false,
+    codeIssuedAt: null,
+    lastRequestedEmail: null,
+    requestedEmail: null,
+    hasBoundEmail: true,
   });
 });
 
@@ -138,16 +180,24 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
   expect(within(activePanel).getByText("+1 111")).toBeInTheDocument();
   expect(
-    within(activePanel).getByRole("button", { name: mockLanguage.changeAvatar }),
+    within(activePanel).getByRole("button", {
+      name: mockLanguage.changeAvatar,
+    }),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).getByRole("button", { name: mockLanguage.changeUsernameButton }),
+    within(activePanel).getByRole("button", {
+      name: mockLanguage.changeUsernameButton,
+    }),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).getByRole("button", { name: mockLanguage.settingsAccountEmailUnbindAction }),
+    within(activePanel).getByRole("button", {
+      name: mockLanguage.settingsAccountEmailUnbindAction,
+    }),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).getByRole("button", { name: mockLanguage.settingsAccountPhoneRebindAction }),
+    within(activePanel).getByRole("button", {
+      name: mockLanguage.settingsAccountPhoneRebindAction,
+    }),
   ).toBeInTheDocument();
   expect(within(activePanel).getByTestId("avatar")).toBeInTheDocument();
   expect(
@@ -165,6 +215,40 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   bindingActions.forEach((action) => {
     expect(action).toBeDisabled();
   });
+});
+
+/**
+ * 测试目标：在偏好设置页面点击“解绑邮箱”应触发 emailBinding.unbindEmail。
+ * 前置条件：mockUseEmailBinding 返回带 unbindEmail 的命令；用户拥有邮箱。
+ * 步骤：
+ *  1) 渲染 Preferences 并切换到账户分区；
+ *  2) 点击解绑邮箱按钮。
+ * 断言：
+ *  - unbindEmail 被调用一次；
+ * 边界/异常：
+ *  - 若按钮禁用或未触发事件则测试失败。
+ */
+test("GivenBoundEmail_WhenClickingUnbind_ThenInvokeEmailBindingCommand", async () => {
+  const user = userEvent.setup();
+
+  render(<Preferences />);
+
+  await user.click(
+    screen.getByRole("tab", {
+      name: (name) => name.startsWith(mockLanguage.prefAccountTitle),
+    }),
+  );
+
+  const unbindButton = within(screen.getByRole("tabpanel")).getByRole(
+    "button",
+    {
+      name: mockLanguage.settingsAccountEmailUnbindAction,
+    },
+  );
+
+  await user.click(unbindButton);
+
+  expect(unbindEmailMock).toHaveBeenCalledTimes(1);
 });
 
 /**

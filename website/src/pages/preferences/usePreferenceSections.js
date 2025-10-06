@@ -28,6 +28,7 @@ import ResponseStyleSection from "./sections/ResponseStyleSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
 import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
+import useEmailBinding from "@/hooks/useEmailBinding.js";
 import { useUsersApi } from "@/api/users.js";
 import { useProfilesApi } from "@/api/profiles.js";
 import { useRedemptionCodesApi } from "@/api/redemptionCodes.js";
@@ -240,6 +241,16 @@ function usePreferenceSections({ initialSectionId }) {
   const { user, setUser } = userStore ?? {};
   const usersApi = useUsersApi();
   const updateUsernameRequest = usersApi?.updateUsername;
+  const emailBinding = useEmailBinding({
+    user,
+    onUserUpdate: setUser,
+    apiClient: usersApi,
+  });
+  const {
+    unbindEmail: performEmailUnbind,
+    isUnbinding: isEmailUnbinding,
+    startEditing: beginEmailRebinding,
+  } = emailBinding ?? {};
   const profilesApi = useProfilesApi();
   const fetchProfile = profilesApi?.fetchProfile;
   const saveProfileRequest = profilesApi?.saveProfile;
@@ -656,6 +667,38 @@ function usePreferenceSections({ initialSectionId }) {
     hasBoundEmail,
   } = accountFieldSnapshot;
 
+  /**
+   * 意图：以命令对象形式封装解绑邮箱流程，避免展示层直接依赖底层 Hook 并利于未来扩展确认弹窗。
+   * 输入：无显式入参（依赖闭包中的 hasBoundEmail 与 performEmailUnbind）。
+   * 输出：Promise —— 解绑完成后的异步链路。
+   * 流程：
+   *  1) 若当前无邮箱则直接返回，保持幂等；
+   *  2) 调用 useEmailBinding 暴露的 unbindEmail 完成后端交互；
+   *  3) 若 Hook 提供 startEditing，复位状态以支持后续换绑；
+   *  4) 捕获异常并记录日志，避免静默失败。
+   * 错误处理：记录结构化错误日志，供后续可观测性接入扩展。
+   * 复杂度：O(1)。
+   */
+  const handleEmailUnbind = useCallback(async () => {
+    if (!hasBoundEmail) {
+      return;
+    }
+
+    if (typeof performEmailUnbind !== "function") {
+      console.error("Email unbind command unavailable in preferences context");
+      return;
+    }
+
+    try {
+      await performEmailUnbind();
+      if (typeof beginEmailRebinding === "function") {
+        beginEmailRebinding();
+      }
+    } catch (error) {
+      console.error("Failed to unbind email from preferences", error);
+    }
+  }, [beginEmailRebinding, hasBoundEmail, performEmailUnbind]);
+
   const usernameEditorTranslations = useMemo(
     () => ({
       usernamePlaceholder:
@@ -759,6 +802,10 @@ function usePreferenceSections({ initialSectionId }) {
         "Unbind email",
       // 将可操作性与真实绑定态同步，避免展示“解绑”却无法点击的交互悖论。
       disabled: !hasBoundEmail,
+      onClick: handleEmailUnbind,
+      isPending: Boolean(isEmailUnbinding),
+      pendingLabel:
+        t.settingsAccountEmailUnbinding ?? t.emailUnbinding ?? "Removing…",
     };
     const phoneRebindAction = {
       id: "rebind-phone",
@@ -907,6 +954,8 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsAccountAvatarLabel,
     t.settingsAccountEmailUnbind,
     t.settingsAccountEmailUnbindAction,
+    t.settingsAccountEmailUnbinding,
+    t.emailUnbinding,
     t.settingsAccountPhoneRebindAction,
     handleUsernameFailure,
     handleUsernameSubmit,
@@ -941,6 +990,8 @@ function usePreferenceSections({ initialSectionId }) {
     emailValue,
     phoneValue,
     hasBoundEmail,
+    handleEmailUnbind,
+    isEmailUnbinding,
   ]);
 
   const [activeSectionId, setActiveSectionId] = useState(() =>

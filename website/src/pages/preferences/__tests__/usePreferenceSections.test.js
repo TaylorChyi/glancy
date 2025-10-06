@@ -9,6 +9,7 @@ const mockUseAvatarEditorWorkflow = jest.fn();
 const mockUseUsersApi = jest.fn();
 const mockUseProfilesApi = jest.fn();
 const mockUseRedemptionCodesApi = jest.fn();
+const mockUseEmailBinding = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -21,6 +22,12 @@ jest.unstable_mockModule("@/context", () => ({
 jest.unstable_mockModule("@/hooks/useAvatarEditorWorkflow.js", () => ({
   __esModule: true,
   default: mockUseAvatarEditorWorkflow,
+}));
+
+jest.unstable_mockModule("@/hooks/useEmailBinding.js", () => ({
+  __esModule: true,
+  default: mockUseEmailBinding,
+  useEmailBinding: mockUseEmailBinding,
 }));
 
 jest.unstable_mockModule("@/api/users.js", () => ({
@@ -43,6 +50,7 @@ let saveProfileMock;
 let consoleErrorStub;
 let redeemMock;
 let setUserMock;
+let unbindEmailMock;
 
 beforeAll(async () => {
   ({ default: usePreferenceSections } = await import(
@@ -103,6 +111,7 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
   settingsAccountEmailUnbindAction: "Unbind email",
+  settingsAccountEmailUnbinding: "Removing…",
   settingsAccountPhone: "Phone",
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
@@ -211,6 +220,7 @@ beforeEach(() => {
   mockUseUsersApi.mockReset();
   mockUseProfilesApi.mockReset();
   mockUseRedemptionCodesApi.mockReset();
+  mockUseEmailBinding.mockReset();
   consoleErrorStub = jest.spyOn(console, "error").mockImplementation(() => {});
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
@@ -243,8 +253,25 @@ beforeEach(() => {
     },
     isBusy: false,
   });
+  unbindEmailMock = jest.fn().mockResolvedValue({ email: null });
   mockUseUsersApi.mockReturnValue({
     updateUsername: jest.fn().mockResolvedValue({ username: "amy" }),
+    unbindEmail: unbindEmailMock,
+  });
+  mockUseEmailBinding.mockReturnValue({
+    mode: "idle",
+    startEditing: jest.fn(),
+    cancelEditing: jest.fn(),
+    requestCode: jest.fn(),
+    confirmChange: jest.fn(),
+    unbindEmail: unbindEmailMock,
+    isSendingCode: false,
+    isVerifying: false,
+    isUnbinding: false,
+    codeIssuedAt: null,
+    lastRequestedEmail: null,
+    requestedEmail: null,
+    hasBoundEmail: true,
   });
   const profileResponse = {
     job: "Engineer",
@@ -555,6 +582,7 @@ test("Given bound email When inspecting account field Then unbind action enabled
   expect(emailField.action.label).toBe(
     translations.settingsAccountEmailUnbindAction,
   );
+  expect(typeof emailField.action.onClick).toBe("function");
 });
 
 /**
@@ -602,6 +630,96 @@ test("Given missing email When inspecting account field Then unbind action disab
   expect(emailField).toBeDefined();
   expect(emailField.action).toBeDefined();
   expect(emailField.action.disabled).toBe(true);
+});
+
+/**
+ * 测试目标：account 分区解绑命令应委托给 useEmailBinding 返回的 unbindEmail。
+ * 前置条件：mockUseEmailBinding 返回可解析的 unbindEmail。
+ * 步骤：
+ *  1) 渲染 Hook；
+ *  2) 调用 email 字段 action.onClick。
+ * 断言：
+ *  - unbindEmailMock 被调用一次；
+ * 边界/异常：
+ *  - 若 action 缺失或未执行则测试失败。
+ */
+test("GivenAccountSection_WhenTriggeringEmailAction_ThenDelegateToEmailBinding", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
+
+  await waitFor(() => {
+    const accountSection = result.current.sections.find(
+      (section) => section.id === "account",
+    );
+    expect(accountSection).toBeDefined();
+  });
+
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  await act(async () => {
+    await emailField.action.onClick();
+  });
+
+  expect(unbindEmailMock).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * 测试目标：解绑流程进行中时按钮需展示等待文案并保持禁用态。
+ * 前置条件：mockUseEmailBinding 返回 isUnbinding=true。
+ * 步骤：
+ *  1) 调整 mockUseEmailBinding 返回值；
+ *  2) 渲染 Hook 并读取 email 字段 action。
+ * 断言：
+ *  - action.isPending 为 true；
+ *  - action.pendingLabel 使用翻译词条。
+ * 边界/异常：
+ *  - 若未生成 email 字段则测试失败。
+ */
+test("GivenEmailUnbindInFlight_WhenInspectingAction_ThenExposePendingState", async () => {
+  mockUseEmailBinding.mockReturnValue({
+    mode: "idle",
+    startEditing: jest.fn(),
+    cancelEditing: jest.fn(),
+    requestCode: jest.fn(),
+    confirmChange: jest.fn(),
+    unbindEmail: unbindEmailMock,
+    isSendingCode: false,
+    isVerifying: false,
+    isUnbinding: true,
+    codeIssuedAt: null,
+    lastRequestedEmail: null,
+    requestedEmail: null,
+    hasBoundEmail: true,
+  });
+
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
+
+  await waitFor(() => {
+    const accountSection = result.current.sections.find(
+      (section) => section.id === "account",
+    );
+    expect(accountSection).toBeDefined();
+  });
+
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  expect(emailField.action.isPending).toBe(true);
+  expect(emailField.action.pendingLabel).toBe(
+    translations.settingsAccountEmailUnbinding,
+  );
 });
 
 /**
