@@ -10,7 +10,7 @@ const mockApi = api;
 mockApi.searchRecords = {
   fetchSearchRecords: jest.fn().mockResolvedValue([]),
   saveSearchRecord: jest.fn().mockResolvedValue({
-    id: "r1",
+    id: "rec-1",
     term: "test",
     language: "ENGLISH",
     flavor: WORD_FLAVOR_BILINGUAL,
@@ -18,7 +18,7 @@ mockApi.searchRecords = {
     favorite: false,
     versions: [
       {
-        id: "r1",
+        id: "ver-1",
         createdAt: "2024-05-01T10:00:00Z",
         favorite: false,
       },
@@ -37,7 +37,7 @@ const makeRecord = (idx) => {
     Date.UTC(2024, 0, idx + 1, 10, 0, 0),
   ).toISOString();
   return {
-    id: `r${idx}`,
+    id: `rec-${idx}`,
     term: `term-${idx}`,
     language: "ENGLISH",
     flavor: WORD_FLAVOR_BILINGUAL,
@@ -45,7 +45,7 @@ const makeRecord = (idx) => {
     favorite: false,
     versions: [
       {
-        id: `r${idx}`,
+        id: `ver-${idx}`,
         createdAt,
         favorite: false,
       },
@@ -77,7 +77,7 @@ describe("historyStore", () => {
   test("addHistory stores item and calls api", async () => {
     mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce([
       {
-        id: "r1",
+        id: "rec-1",
         term: "test",
         language: "ENGLISH",
         flavor: WORD_FLAVOR_BILINGUAL,
@@ -85,7 +85,7 @@ describe("historyStore", () => {
         favorite: false,
         versions: [
           {
-            id: "r1",
+            id: "ver-1",
             createdAt: "2024-05-01T10:00:00Z",
             favorite: false,
           },
@@ -105,7 +105,8 @@ describe("historyStore", () => {
     expect(item.term).toBe("test");
     expect(item.flavor).toBe(WORD_FLAVOR_BILINGUAL);
     expect(item.versions).toHaveLength(1);
-    expect(item.versions[0].id).toBe("r1");
+    expect(item.recordId).toBe("rec-1");
+    expect(item.versions[0].id).toBe("ver-1");
   });
 
   /**
@@ -221,6 +222,7 @@ describe("historyStore", () => {
     useHistoryStore.setState({
       history: [
         {
+          recordId: "rec-hello",
           term: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
@@ -228,9 +230,9 @@ describe("historyStore", () => {
           createdAt: "2024-05-01T10:00:00Z",
           favorite: false,
           versions: [
-            { id: "v1", createdAt: "2024-05-01T10:00:00Z", favorite: false },
+            { id: "ver-hello", createdAt: "2024-05-01T10:00:00Z", favorite: false },
           ],
-          latestVersionId: "v1",
+          latestVersionId: "ver-hello",
         },
       ],
       error: null,
@@ -244,6 +246,10 @@ describe("historyStore", () => {
 
     expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:hello");
     expect(useHistoryStore.getState().history).toHaveLength(0);
+    expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
+      recordId: "rec-hello",
+      token: user.token,
+    });
     removeSpy.mockRestore();
   });
 
@@ -264,56 +270,58 @@ describe("historyStore", () => {
     mockApi.searchRecords.fetchSearchRecords
       .mockResolvedValueOnce([
         {
-          id: "en-1",
+          id: "rec-en-1",
           term: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
           favorite: false,
-          versions: [{ id: "en-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
         },
         {
-          id: "zh-1",
+          id: "rec-zh-1",
           term: "你好",
           language: "CHINESE",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
           favorite: false,
-          versions: [{ id: "zh-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-zh-1", createdAt, favorite: false }],
         },
       ])
       .mockResolvedValueOnce([
         {
-          id: "en-1",
+          id: "rec-en-1",
           term: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
           favorite: false,
-          versions: [{ id: "en-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
         },
       ]);
     useHistoryStore.setState({
       history: [
         {
+          recordId: "rec-en-1",
           term: "hello",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:hello",
           createdAt,
           favorite: false,
-          versions: [{ id: "en-1", createdAt, favorite: false }],
-          latestVersionId: "en-1",
+          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
+          latestVersionId: "ver-en-1",
         },
         {
+          recordId: "rec-zh-1",
           term: "你好",
           language: "CHINESE",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "CHINESE:BILINGUAL:你好",
           createdAt,
           favorite: false,
-          versions: [{ id: "zh-1", createdAt, favorite: false }],
-          latestVersionId: "zh-1",
+          versions: [{ id: "ver-zh-1", createdAt, favorite: false }],
+          latestVersionId: "ver-zh-1",
         },
       ],
       error: null,
@@ -329,7 +337,7 @@ describe("historyStore", () => {
     expect(remaining).toHaveLength(1);
     expect(remaining[0].language).toBe("ENGLISH");
     expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
-      recordId: "zh-1",
+      recordId: "rec-zh-1",
       token: user.token,
     });
     expect(removeSpy).toHaveBeenCalledWith("CHINESE:BILINGUAL:你好");
@@ -380,7 +388,7 @@ describe("historyStore", () => {
    *  2) 模拟分页接口返回两页英文记录；
    *  3) 调用 clearHistoryByLanguage("ENGLISH")。
    * 断言：
-   *  - deleteSearchRecord 覆盖到第 2 页的版本 ID；
+   *  - deleteSearchRecord 覆盖到第 2 页的记录 ID；
    *  - fetchSearchRecords 被调用 3 次（两页收集 + 重载首屏）。
    * 边界/异常：
    *  - 若遍历提前终止，将遗漏尾页导致记录残留。
@@ -388,22 +396,22 @@ describe("historyStore", () => {
   test("Given paginated history When clearing language Then remote pages removed", async () => {
     const createdAt = "2024-05-01T10:00:00Z";
     const firstPage = Array.from({ length: 20 }, (_, idx) => ({
-      id: `en-${idx}`,
+      id: `rec-en-${idx}`,
       term: `term-${idx}`,
       language: "ENGLISH",
       flavor: WORD_FLAVOR_BILINGUAL,
       createdAt,
       favorite: false,
-      versions: [{ id: `en-${idx}`, createdAt, favorite: false }],
+      versions: [{ id: `ver-en-${idx}`, createdAt, favorite: false }],
     }));
     const extra = {
-      id: "en-extra",
+      id: "rec-en-extra",
       term: "beyond",
       language: "ENGLISH",
       flavor: WORD_FLAVOR_BILINGUAL,
       createdAt,
       favorite: false,
-      versions: [{ id: "en-extra", createdAt, favorite: false }],
+      versions: [{ id: "ver-en-extra", createdAt, favorite: false }],
     };
     mockApi.searchRecords.fetchSearchRecords
       .mockResolvedValueOnce(firstPage)
@@ -413,14 +421,15 @@ describe("historyStore", () => {
     useHistoryStore.setState({
       history: [
         {
+          recordId: "rec-seed",
           term: "seed",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:seed",
           createdAt,
           favorite: false,
-          versions: [{ id: "en-seed", createdAt, favorite: false }],
-          latestVersionId: "en-seed",
+          versions: [{ id: "ver-en-seed", createdAt, favorite: false }],
+          latestVersionId: "ver-en-seed",
         },
       ],
       error: null,
@@ -431,7 +440,7 @@ describe("historyStore", () => {
     });
 
     expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
-      recordId: "en-extra",
+      recordId: "rec-en-extra",
       token: user.token,
     });
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(3);
@@ -459,24 +468,26 @@ describe("historyStore", () => {
     useHistoryStore.setState({
       history: [
         {
+          recordId: "rec-legacy",
           term: "legacy",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:legacy",
           createdAt: oldDate,
           favorite: false,
-          versions: [{ id: "legacy-1", createdAt: oldDate, favorite: false }],
-          latestVersionId: "legacy-1",
+          versions: [{ id: "ver-legacy-1", createdAt: oldDate, favorite: false }],
+          latestVersionId: "ver-legacy-1",
         },
         {
+          recordId: "rec-fresh",
           term: "fresh",
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:fresh",
           createdAt: newDate,
           favorite: false,
-          versions: [{ id: "fresh-1", createdAt: newDate, favorite: false }],
-          latestVersionId: "fresh-1",
+          versions: [{ id: "ver-fresh-1", createdAt: newDate, favorite: false }],
+          latestVersionId: "ver-fresh-1",
         },
       ],
       error: null,
@@ -492,7 +503,7 @@ describe("historyStore", () => {
     expect(history).toHaveLength(1);
     expect(history[0].term).toBe("fresh");
     expect(mockApi.searchRecords.deleteSearchRecord).toHaveBeenCalledWith({
-      recordId: "legacy-1",
+      recordId: "rec-legacy",
       token: user.token,
     });
     expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:legacy");
