@@ -13,7 +13,14 @@
  * 演进与TODO：
  *  - TODO: 后续可在此扩展旋转与键盘操作支持，以提升无障碍体验。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import PropTypes from "prop-types";
 import Modal from "@/components/modals/Modal.jsx";
 import styles from "./AvatarEditorModal.module.css";
@@ -65,6 +72,45 @@ function AvatarEditorModal({
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
 
+  const recenterViewport = useCallback(
+    ({
+      naturalWidth: nextWidth,
+      naturalHeight: nextHeight,
+      viewport = viewportSize,
+      zoom: targetZoom = MIN_ZOOM,
+    } = {}) => {
+      const safeViewport = viewport > 0 ? viewport : viewportSize;
+      if (
+        nextWidth <= 0 ||
+        nextHeight <= 0 ||
+        safeViewport <= 0 ||
+        targetZoom <= 0 ||
+        !Number.isFinite(targetZoom)
+      ) {
+        return false;
+      }
+
+      const { width: displayWidth, height: displayHeight } =
+        computeDisplayMetrics({
+          naturalWidth: nextWidth,
+          naturalHeight: nextHeight,
+          viewportSize: safeViewport,
+          zoom: targetZoom,
+        });
+
+      const nextBounds = computeOffsetBounds(
+        displayWidth,
+        displayHeight,
+        safeViewport,
+      );
+
+      setOffset(clampOffset({ x: 0, y: 0 }, nextBounds));
+      shouldRecenterRef.current = false;
+      return true;
+    },
+    [viewportSize],
+  );
+
   const resetView = useCallback(() => {
     /**
      * 背景说明：
@@ -80,7 +126,7 @@ function AvatarEditorModal({
     lastPointRef.current = { x: 0, y: 0 };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       return;
     }
@@ -120,26 +166,20 @@ function AvatarEditorModal({
   }, [bounds]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !shouldRecenterRef.current) {
       return;
     }
-    if (!shouldRecenterRef.current) {
-      return;
-    }
-    if (
-      naturalSize.width <= 0 ||
-      naturalSize.height <= 0 ||
-      viewportSize <= 0
-    ) {
-      return;
-    }
-    setOffset(clampOffset({ x: 0, y: 0 }, bounds));
-    shouldRecenterRef.current = false;
+
+    recenterViewport({
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+      viewport: viewportSize,
+    });
   }, [
-    bounds,
     naturalSize.height,
     naturalSize.width,
     open,
+    recenterViewport,
     viewportSize,
     source,
   ]);
@@ -189,6 +229,13 @@ function AvatarEditorModal({
       const height = image.naturalHeight;
       if (width > 0 && height > 0) {
         setNaturalSize({ width, height });
+        if (shouldRecenterRef.current) {
+          recenterViewport({
+            naturalWidth: width,
+            naturalHeight: height,
+            viewport: viewportSize,
+          });
+        }
         return;
       }
 
@@ -212,6 +259,13 @@ function AvatarEditorModal({
             width: fallbackViewportSize,
             height: fallbackViewportSize,
           });
+          if (shouldRecenterRef.current) {
+            recenterViewport({
+              naturalWidth: fallbackViewportSize,
+              naturalHeight: fallbackViewportSize,
+              viewport: fallbackViewportSize,
+            });
+          }
           return;
         }
         const response = await fetch(source, { signal: controller.signal });
@@ -220,19 +274,31 @@ function AvatarEditorModal({
             width: fallbackViewportSize,
             height: fallbackViewportSize,
           });
+          if (shouldRecenterRef.current) {
+            recenterViewport({
+              naturalWidth: fallbackViewportSize,
+              naturalHeight: fallbackViewportSize,
+              viewport: fallbackViewportSize,
+            });
+          }
           return;
         }
         const svgText = await response.text();
         if (controller.signal.aborted || latestSourceRef.current !== source) {
           return;
         }
-        const svgSize = extractSvgIntrinsicSize(svgText);
-        setNaturalSize(
-          svgSize ?? {
-            width: fallbackViewportSize,
-            height: fallbackViewportSize,
-          },
-        );
+        const svgSize = extractSvgIntrinsicSize(svgText) ?? {
+          width: fallbackViewportSize,
+          height: fallbackViewportSize,
+        };
+        setNaturalSize(svgSize);
+        if (shouldRecenterRef.current) {
+          recenterViewport({
+            naturalWidth: svgSize.width,
+            naturalHeight: svgSize.height,
+            viewport: viewportSize || fallbackViewportSize,
+          });
+        }
       } catch (error) {
         if (error.name !== "AbortError") {
           console.error("avatar-editor-resolve-intrinsic-size", error);
@@ -243,7 +309,7 @@ function AvatarEditorModal({
         }
       }
     },
-    [source, viewportSize],
+    [recenterViewport, source, viewportSize],
   );
 
   useEffect(() => {

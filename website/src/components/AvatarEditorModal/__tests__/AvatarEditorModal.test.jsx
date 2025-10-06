@@ -70,6 +70,26 @@ function loadImage(element, { width, height }) {
 
 describe("AvatarEditorModal viewport interactions", () => {
   /**
+   * 测试目标：首次加载图片后视口应立即回到中心，避免出现初始偏移残留。
+   * 前置条件：模态已打开，传入固定 source；图片尺寸为 1280×720。
+   * 步骤：
+   *  1) 渲染组件；
+   *  2) 触发 load 事件并注入 naturalWidth/naturalHeight；
+   * 断言：
+   *  - transform 立即包含 translate3d(0px, 0px, 0) 而无需等待异步钳制；
+   * 边界/异常：
+   *  - 本用例覆盖首次打开场景，无异常分支。
+   */
+  it("Given first image When load event fires Then viewport centers instantly", () => {
+    const { getByAltText } = render(<AvatarEditorModal {...baseProps} />);
+    const image = getByAltText("avatar-preview");
+
+    loadImage(image, { width: 1280, height: 720 });
+
+    expect(image.style.transform).toContain("translate3d(0px, 0px, 0)");
+  });
+
+  /**
    * 测试目标：验证切换到新图片后视口会自动居中。
    * 前置条件：先拖拽形成偏移，再更新 source 并触发 onLoad。
    * 步骤：
