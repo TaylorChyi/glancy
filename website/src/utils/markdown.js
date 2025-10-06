@@ -21,6 +21,12 @@ const BARE_INLINE_LABEL_PATTERN =
   /(^|[^\S\n>]|[)\]}”’'".!?。，；：、])([A-Za-z\p{L}\u4e00-\u9fff][\w.\u4e00-\u9fff-]*)(?=:(?!\/\/))/gmu;
 const COLON_WITHOUT_SPACE_PATTERN = /:([^\s])/g;
 const DECORATED_LABEL_VALUE_PATTERN = /(\*\*([^*]+)\*\*):\s*([^\n]*)/g;
+const DANGLING_LABEL_SEPARATOR_PATTERN =
+  /([^\n]*?)(?:\s*-\s*)\n([ \t]*)(\*\*([^*]+)\*\*:[^\n]*)/g;
+const DANGLING_LABEL_INLINE_CHAIN_PATTERN =
+  /(?<=\S)([ \t]*-)[ \t]*(\*\*([^*]+)\*\*:[^\n]*)/g;
+const DANGLING_LABEL_SPACE_CHAIN_PATTERN =
+  /(?<=\S)([ \t]{2,})(\*\*([^*]+)\*\*:[^\n]*)/g;
 
 // 说明：
 //  - LLM 在英译英响应中可能仅保留单个空格作为段落分隔。
@@ -28,6 +34,8 @@ const DECORATED_LABEL_VALUE_PATTERN = /(\*\*([^*]+)\*\*):\s*([^\n]*)/g;
 //  - 为保持缩进计算逻辑复用，单空格匹配交由二次替换时处理。
 const INLINE_LABEL_SINGLE_SPACE_PATTERN =
   /(\S)([ \t])(?=\*\*([^*]+)\*\*:[^\n]*)/g;
+const INLINE_LABEL_HYPHEN_GAP_PATTERN =
+  /(?<=\S)([ \t]*-[ \t]*)(?=\*\*([^*]+)\*\*:[^\n]*)/gu;
 
 const INLINE_LABEL_CAMEL_CASE = /([a-z])(\p{Lu})/gu;
 
@@ -396,7 +404,16 @@ function deriveInlineLabelDisplay(label) {
 //  - 为避免破坏列表结构，需在转换前对这些「单空格」进行定向扩充，
 //    使其满足统一的换行判定条件。
 function normalizeInlineLabelSpacing(text) {
-  return text.replace(
+  const hyphenNormalized = text.replace(
+    INLINE_LABEL_HYPHEN_GAP_PATTERN,
+    (match, separator, label) => {
+      if (!shouldSplitInlineLabel(label)) {
+        return match;
+      }
+      return " ".repeat(Math.max(2, separator.length));
+    },
+  );
+  return hyphenNormalized.replace(
     INLINE_LABEL_SINGLE_SPACE_PATTERN,
     (match, before, space, label, offset, source) => {
       if (!shouldSplitInlineLabel(label)) {
@@ -441,6 +458,70 @@ function ensureInlineLabelLineBreak(text) {
       return `${before}\n${indent}${segment}`;
     },
   );
+}
+
+/**
+ * 背景：
+ *  - LLM 经常以 `Label: value - NextLabel: ...` 的形式串联词条元数据，
+ *    在换行拆分后会遗留行尾连字符，导致 Markdown 渲染成 `value-` 的错误展示。
+ * 目的：
+ *  - 识别并移除这类“悬挂连字符”，维持原有缩进结构，恢复分隔标签的语义。
+ * 关键决策与取舍：
+ *  - 仅在上一行与下一行均命中受控的行内标签词表时才改写，
+ *    避免误删自然语言中的合法连字符；
+ *  - 保留下一行的既有缩进，确保列表与段落结构不受影响。
+ * 影响范围：
+ *  - 字典 Markdown 渲染阶段的标签段落拆分，可读性与换行逻辑更稳定。
+ */
+function resolveDanglingLabelSeparators(text) {
+  const withoutTrailingHyphen = text.replace(
+    DANGLING_LABEL_SEPARATOR_PATTERN,
+    (match, previousLine, indent, segment, nextLabel) => {
+      const hasLabeledPrefix = /\*\*([^*]+)\*\*:/u.test(previousLine);
+      if (!hasLabeledPrefix) {
+        return match;
+      }
+      if (!shouldSplitInlineLabel(nextLabel)) {
+        return match;
+      }
+      const trimmedLine = previousLine.replace(/\s+$/u, "");
+      return `${trimmedLine}\n${indent}${segment}`;
+    },
+  );
+  const applyInlineRewrites = (input, pattern) => {
+    let current = input;
+    for (let iteration = 0; iteration < 4; iteration += 1) {
+      let mutated = false;
+      current = current.replace(
+        pattern,
+        (match, marker, segment, nextLabel, offset, source) => {
+          if (!shouldSplitInlineLabel(nextLabel)) {
+            return match;
+          }
+          mutated = true;
+          const indent =
+            deriveLineIndentation(source, offset) ||
+            computeListIndentation(source, offset) ||
+            "  ";
+          return `\n${indent}${segment}`;
+        },
+      );
+      if (!mutated) {
+        break;
+      }
+    }
+    return current;
+  };
+
+  let normalized = applyInlineRewrites(
+    withoutTrailingHyphen,
+    DANGLING_LABEL_INLINE_CHAIN_PATTERN,
+  );
+  normalized = applyInlineRewrites(
+    normalized,
+    DANGLING_LABEL_SPACE_CHAIN_PATTERN,
+  );
+  return normalized;
 }
 
 /**
@@ -913,5 +994,6 @@ export function polishDictionaryMarkdown(source) {
   const headingsSeparated = separateHeadingInlineLabels(withHeadingSpacing);
   const padded = ensureHeadingPadding(headingsSeparated);
   const spaced = ensureListSpacing(padded);
-  return ensureInlineLabelLineBreak(spaced);
+  const withInlineBreaks = ensureInlineLabelLineBreak(spaced);
+  return resolveDanglingLabelSeparators(withInlineBreaks);
 }

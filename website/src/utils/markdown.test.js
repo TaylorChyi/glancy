@@ -108,6 +108,30 @@ test("polishDictionaryMarkdown splits composite english inline labels", () => {
 });
 
 /**
+ * 测试目标：验证拆分后的连字符不会残留在标签行尾，避免渲染出 `value-`。
+ * 前置条件：原始 Markdown 以连字符连接多个行内标签，如 Pronunciation 与 American。
+ * 步骤：
+ *  1) 构造带有行尾连字符的 Markdown 字串。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 连字符被移除且下一行保留缩进；若失败则会看到行尾仍带 `-`。
+ * 边界/异常：
+ *  - 覆盖多级标签串联场景，防止未来回归导致 Markdown 渲染错位。
+ */
+test("polishDictionaryMarkdown removes dangling label separators", () => {
+  const source =
+    "- **Pronunciation-British**: /deɪt/ - **American**: /deɪt/ - **AudioNotes**: crisp";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "- **Pronunciation-British**: /deɪt/",
+      "  **American**: /deɪt/",
+      "  **AudioNotes**: crisp",
+    ].join("\n"),
+  );
+});
+
+/**
  * 验证翻译行会继承有序列表的缩进，使得“翻译”与“例句”保持列对齐。
  */
 test("translation line keeps ordered list indentation", () => {
