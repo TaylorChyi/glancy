@@ -22,7 +22,7 @@ import { wordCacheKey } from "@/api/words.js";
 // 直接依赖各 store，避免桶状导出拆分 chunk 时的循环依赖影响首屏渲染。
 import { useWordStore } from "@/store/wordStore.js";
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
-import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
+import { DEFAULT_MODEL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
@@ -32,6 +32,7 @@ import {
   isHistoryView,
   isLibraryView,
 } from "../dictionaryExperienceViews.js";
+import { useWordIssueReportDialog } from "./useWordIssueReportDialog.js";
 
 /**
  * 背景：
@@ -99,6 +100,24 @@ export function useDictionaryExperience() {
     handleSwapLanguages,
   } = useDictionaryLanguageConfig({ t });
   const { popupOpen, popupMsg, showPopup, closePopup } = useDictionaryPopup();
+  const {
+    state: reportDialogState,
+    categories: reportDialogCategories,
+    openDialog: openReportDialog,
+    closeDialog: closeReportDialog,
+    setCategory: setReportCategory,
+    setDescription: setReportDescription,
+    submit: submitWordIssueReport,
+  } = useWordIssueReportDialog({
+    onSuccess: () => {
+      const message = t.reportSuccess ?? t.report ?? "Report";
+      showPopup(message);
+    },
+    onError: () => {
+      const message = t.reportFailed ?? t.report ?? "Report";
+      showPopup(message);
+    },
+  });
 
   const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
     useDictionaryLookupController();
@@ -151,6 +170,37 @@ export function useDictionaryExperience() {
   const canCopyDefinition = useMemo(
     () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
     [copyPayload],
+  );
+
+  const reportDialog = useMemo(() => {
+    const context = reportDialogState.context ?? {};
+    return {
+      open: reportDialogState.open,
+      submitting: reportDialogState.submitting,
+      error: reportDialogState.error,
+      term: context.term ?? "",
+      language: context.language ?? null,
+      flavor: context.flavor ?? null,
+      sourceUrl: context.sourceUrl ?? "",
+      category: reportDialogState.form.category,
+      description: reportDialogState.form.description,
+      categories: reportDialogCategories,
+    };
+  }, [reportDialogState, reportDialogCategories]);
+
+  const reportDialogHandlers = useMemo(
+    () => ({
+      setCategory: setReportCategory,
+      setDescription: setReportDescription,
+      submit: submitWordIssueReport,
+      close: closeReportDialog,
+    }),
+    [
+      setReportCategory,
+      setReportDescription,
+      submitWordIssueReport,
+      closeReportDialog,
+    ],
   );
 
   /**
@@ -616,83 +666,31 @@ export function useDictionaryExperience() {
   const handleReport = useCallback(() => {
     if (!activeTerm) return;
 
-    const currentUrl =
+    const fallback = resolveDictionaryConfig(activeTerm, {
+      sourceLanguage: dictionarySourceLanguage,
+      targetLanguage: dictionaryTargetLanguage,
+    });
+
+    const contextLanguage = entry?.language ?? fallback.language;
+    const contextFlavor = entry?.flavor ?? dictionaryFlavor;
+    const sourceUrl =
       typeof window !== "undefined" && window.location
         ? window.location.href
         : "";
 
-    const buildReportTarget = () => {
-      if (REPORT_FORM_URL) {
-        try {
-          const base =
-            currentUrl ||
-            (typeof window !== "undefined" && window.location
-              ? `${window.location.origin}/`
-              : "http://localhost/");
-          const reportUrl = new URL(REPORT_FORM_URL, base);
-          reportUrl.searchParams.set("term", activeTerm);
-          if (currentUrl) {
-            reportUrl.searchParams.set("source", currentUrl);
-          }
-          return reportUrl.toString();
-        } catch (error) {
-          console.error(
-            "[DictionaryExperience] report url resolution failed",
-            error,
-          );
-        }
-      }
-
-      if (SUPPORT_EMAIL) {
-        const subject = encodeURIComponent(`[Glancy] Report: ${activeTerm}`);
-        const lines = [
-          `Term: ${activeTerm}`,
-          currentUrl ? `Page: ${currentUrl}` : null,
-          "",
-          "Describe the issue here:",
-        ].filter(Boolean);
-        const body = encodeURIComponent(lines.join("\n"));
-        return `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
-      }
-
-      return "";
-    };
-
-    const target = buildReportTarget();
-
-    if (!target) {
-      showPopup(t.reportUnavailable ?? t.reportFailed ?? t.report ?? "Report");
-      return;
-    }
-
-    const openReportChannel = () => {
-      if (typeof window === "undefined") return false;
-      if (target.startsWith("mailto:")) {
-        window.location.href = target;
-        return true;
-      }
-      const newWindow = window.open(target, "_blank", "noopener,noreferrer");
-      return newWindow != null;
-    };
-
-    try {
-      const opened = openReportChannel();
-      if (opened) {
-        showPopup(t.reportSuccess ?? t.report ?? "Report");
-      } else {
-        showPopup(t.reportFailed ?? t.report ?? "Report");
-      }
-    } catch (error) {
-      console.error("[DictionaryExperience] report open failed", error);
-      showPopup(t.reportFailed ?? t.report ?? "Report");
-    }
+    openReportDialog({
+      term: activeTerm,
+      language: contextLanguage,
+      flavor: contextFlavor,
+      sourceUrl,
+    });
   }, [
     activeTerm,
-    showPopup,
-    t.reportUnavailable,
-    t.reportFailed,
-    t.report,
-    t.reportSuccess,
+    entry,
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    dictionaryFlavor,
+    openReportDialog,
   ]);
 
   /**
@@ -862,8 +860,9 @@ export function useDictionaryExperience() {
     if (!user) {
       resetDictionaryHomeState();
       setText("");
+      closeReportDialog();
     }
-  }, [user, resetDictionaryHomeState]);
+  }, [user, resetDictionaryHomeState, closeReportDialog]);
 
   const isEntryViewActive = isDictionaryViewActive;
   const resolvedTerm = activeTerm;
@@ -970,6 +969,8 @@ export function useDictionaryExperience() {
     popupMsg,
     closePopup,
     handleCopy,
+    reportDialog,
+    reportDialogHandlers,
     canCopyDefinition,
     lang,
     dictionaryFlavor,

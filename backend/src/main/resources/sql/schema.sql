@@ -42,6 +42,20 @@ CREATE TABLE IF NOT EXISTS words (
   CONSTRAINT uk_words_normalized_language_flavor UNIQUE (normalized_term, language, flavor)
 );
 
+CREATE TABLE IF NOT EXISTS word_issue_reports (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  term VARCHAR(120) NOT NULL,
+  language VARCHAR(16) NOT NULL,
+  flavor VARCHAR(32) NOT NULL,
+  issue_category VARCHAR(40) NOT NULL,
+  description TEXT,
+  source_url VARCHAR(500),
+  report_user_id BIGINT,
+  deleted BOOLEAN NOT NULL DEFAULT FALSE,
+  createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updatedAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
+);
+
 CREATE TABLE IF NOT EXISTS word_definitions (
   word_id BIGINT NOT NULL,
   definition TEXT NOT NULL,

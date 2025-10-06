@@ -20,6 +20,7 @@ import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";
 import useFrameReveal from "./useFrameReveal";
 import frameVisibilityClassName from "./frameVisibilityClassName";
+import { deriveRevealTiming } from "./waitingRevealStrategy";
 
 /*
  * 策略模式：
@@ -45,19 +46,14 @@ const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
   "--waiting-frame-height": `min(33vh, ${WAITING_FRAME_DIMENSIONS.height}px)`,
   "--waiting-frame-aspect-ratio": WAITING_FRAME_ASPECT_RATIO,
 });
-const WAITING_FADE_INTERVAL_RATIO = 0.5; // 经验值：淡入淡出各占半个节奏，营造平缓呼吸感。
-
-function computeFadeIntervalMs(cycleDurationMs) {
-  const interval = Math.round(cycleDurationMs * WAITING_FADE_INTERVAL_RATIO);
-  return interval > 0 ? interval : cycleDurationMs;
-}
 
 function Loader() {
   const { currentFrame, cycleDurationMs } = useWaitingFrameCycle(
     WAITING_FRAMES,
     WAITING_CYCLE_OPTIONS,
   );
-  const fadeIntervalMs = computeFadeIntervalMs(cycleDurationMs);
+  const { intervalMs: fadeIntervalMs, durationMs: fadeDurationMs } =
+    deriveRevealTiming(cycleDurationMs);
   const isRevealed = useFrameReveal(currentFrame, {
     intervalMs: fadeIntervalMs,
   });
@@ -65,9 +61,9 @@ function Loader() {
   const waitingSymbolStyle = useMemo(() => {
     return {
       ...WAITING_SYMBOL_STYLE_BASE,
-      "--waiting-fade-duration": `${fadeIntervalMs}ms`,
+      "--waiting-fade-duration": `${fadeDurationMs}ms`,
     };
-  }, [fadeIntervalMs]);
+  }, [fadeDurationMs]);
 
   return (
     <div

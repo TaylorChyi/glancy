@@ -7,6 +7,7 @@ import { createUsersApi } from "./users.js";
 import { createProfilesApi } from "./profiles.js";
 import { createTtsApi } from "./tts.js";
 import { createKeyboardShortcutsApi } from "./keyboardShortcuts.js";
+import { createWordReportsApi } from "./wordReports.js";
 
 export function createApi(config) {
   const request = createApiClient(config);
@@ -22,6 +23,7 @@ export function createApi(config) {
     profiles: createProfilesApi(request),
     tts: createTtsApi(request),
     keyboardShortcuts: createKeyboardShortcutsApi(request),
+    wordReports: createWordReportsApi(request),
   };
 }
 

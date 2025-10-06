@@ -40,6 +40,17 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.2;
 
+const formatPixels = (value) => {
+  if (!Number.isFinite(value)) {
+    return "0px";
+  }
+  const rounded = Number(Math.abs(value) < 1e-4 ? 0 : value.toFixed(3));
+  return `${Object.is(rounded, -0) ? 0 : rounded}px`;
+};
+
+const composeTranslate3d = (x, y) =>
+  `translate3d(${formatPixels(x)}, ${formatPixels(y)}, 0)`;
+
 function ensureCanvas() {
   return document.createElement("canvas");
 }
@@ -72,6 +83,7 @@ function AvatarEditorModal({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
+  const { x: offsetX, y: offsetY } = offset;
 
   const recenterViewport = useCallback(
     ({
@@ -162,6 +174,44 @@ function AvatarEditorModal({
   useEffect(() => {
     setOffset((prev) => clampOffset(prev, bounds));
   }, [bounds]);
+
+  const imageTransform = useMemo(() => {
+    /**
+     * 背景说明：
+     *  - 旧版 transform 依赖 CSS 百分比换算，缩放后会产生浮点误差，导致视觉中心与 cropBox 推导中心存在偏差。
+     * 设计取舍：
+     *  - 使用组合模式拆分出 composeTranslate3d，使“中心定位 + 偏移 + 原点归位”在数学上与 computeCropSourceRect 完全一致，
+     *    避免补丁式写死样式顺序；若未来扩展旋转/镜像，只需在此追加对应矩阵片段。
+     */
+    const safeViewport = Number.isFinite(viewportSize) ? viewportSize : 0;
+    const halfViewport = safeViewport / 2;
+    const safeScale =
+      Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : 1;
+    const halfWidth =
+      naturalSize.width > 0 && Number.isFinite(naturalSize.width)
+        ? naturalSize.width / 2
+        : 0;
+    const halfHeight =
+      naturalSize.height > 0 && Number.isFinite(naturalSize.height)
+        ? naturalSize.height / 2
+        : 0;
+    const safeOffsetX = Number.isFinite(offsetX) ? offsetX : 0;
+    const safeOffsetY = Number.isFinite(offsetY) ? offsetY : 0;
+
+    return [
+      composeTranslate3d(safeOffsetX, safeOffsetY),
+      composeTranslate3d(halfViewport, halfViewport),
+      `scale(${safeScale})`,
+      composeTranslate3d(-halfWidth, -halfHeight),
+    ].join(" ");
+  }, [
+    offsetX,
+    offsetY,
+    scaleFactor,
+    viewportSize,
+    naturalSize.width,
+    naturalSize.height,
+  ]);
 
   useEffect(() => {
     if (!open || !shouldRecenterRef.current) {
@@ -463,7 +513,7 @@ function AvatarEditorModal({
           draggable={false}
           onLoad={handleImageLoad}
           style={{
-            transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scaleFactor}) translate(-50%, -50%)`,
+            transform: imageTransform,
           }}
         />
         <div className={styles.overlay} aria-hidden />
