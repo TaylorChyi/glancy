@@ -618,7 +618,6 @@ function usePreferenceSections({ initialSectionId }) {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
     const responseStyleLabel =
-      t.settingsTabResponseStyle ??
       t.settingsTabPersonalization ??
       "Response style";
     const responseStyleSummary =
@@ -822,7 +821,6 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
-    t.settingsTabResponseStyle,
     t.settingsResponseStyleDescription,
     responseStyleCopy,
     responseStyleState,

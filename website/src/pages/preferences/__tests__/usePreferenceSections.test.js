@@ -58,7 +58,6 @@ const createTranslations = (overrides = {}) => ({
   loading: "Loading...",
   settingsPersonalizationEmpty: "No personalization yet",
   settingsPersonalizationLoadError: "Unable to load personalization",
-  settingsTabResponseStyle: "Response style",
   settingsResponseStyleDescription: "Response style summary",
   settingsResponseStyleError: "Unable to save response style",
   settingsResponseStyleSaved: "Saved",
