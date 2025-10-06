@@ -93,7 +93,8 @@ class WordServiceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         assertNotNull(result.getId());
@@ -130,7 +131,8 @@ class WordServiceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         assertEquals(String.valueOf(word.getId()), result.getId());
@@ -165,7 +167,8 @@ class WordServiceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         assertEquals(String.valueOf(word.getId()), result.getId());
@@ -191,13 +194,40 @@ class WordServiceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         assertEquals(Language.ENGLISH, result.getLanguage());
         assertTrue(
             wordRepository.findActiveByNormalizedTerm("bye", Language.ENGLISH, DictionaryFlavor.BILINGUAL).isPresent()
         );
+    }
+
+    /**
+     * 测试目标：禁用历史采集时不会写入搜索记录。\
+     * 前置条件：数据库为空。\
+     * 步骤：\
+     *  1) 调用 findWordForUser 且 captureHistory=false。\
+     * 断言：\
+     *  - SearchRecordRepository 仍为空。\
+     *  - SearchResultVersionRepository 仍为空。\
+     * 边界/异常：覆盖禁用历史采集的主路径。\
+     */
+    @Test
+    void testFindWordSkipsHistoryWhenDisabled() {
+        wordService.findWordForUser(
+            userId,
+            "skip",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false,
+            false
+        );
+
+        assertEquals(0, searchRecordRepository.count(), "搜索记录应保持为空");
+        assertEquals(0, searchResultVersionRepository.count(), "版本记录应保持为空");
     }
 
     /**
@@ -266,7 +296,8 @@ class WordServiceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         assertEquals(String.valueOf(word.getId()), result.getId());

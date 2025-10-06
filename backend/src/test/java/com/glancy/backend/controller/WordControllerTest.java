@@ -1,7 +1,7 @@
 package com.glancy.backend.controller;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -68,7 +68,8 @@ class WordControllerTest {
                 eq(Language.ENGLISH),
                 eq(DictionaryFlavor.BILINGUAL),
                 eq(null),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(resp);
 
@@ -117,7 +118,8 @@ class WordControllerTest {
                 eq(Language.ENGLISH),
                 eq(DictionaryFlavor.BILINGUAL),
                 eq("doubao"),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(resp);
 
@@ -196,7 +198,8 @@ class WordControllerTest {
                 eq(Language.ENGLISH),
                 eq(DictionaryFlavor.BILINGUAL),
                 eq(null),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(resp);
 
@@ -211,4 +214,73 @@ class WordControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.term").value("hi"));
     }
+
+    /**
+     * 测试目标：验证 captureHistory 参数可关闭历史记录。\
+     * 前置条件：模拟鉴权成功。\
+     * 步骤：\
+     *  1) 携带 captureHistory=false 发起请求。\
+     * 断言：\
+     *  - 服务层接收到 false。\
+     * 边界/异常：覆盖禁用历史采集路径。\
+     */
+    @Test
+    void testGetWordWithCaptureHistoryDisabled() throws Exception {
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        WordResponse resp = new WordResponse(
+            "1",
+            "hello",
+            List.of("g"),
+            Language.ENGLISH,
+            "ex",
+            "həˈloʊ",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null,
+            null,
+            DictionaryFlavor.BILINGUAL
+        );
+        when(
+            wordService.findWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                isNull(),
+                eq(false),
+                eq(false)
+            )
+        ).thenReturn(resp);
+
+        mockMvc
+            .perform(
+                get("/api/words")
+                    .header("X-USER-TOKEN", "tkn")
+                    .param("term", "hello")
+                    .param("language", "ENGLISH")
+                    .param("captureHistory", "false")
+                    .accept(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value("1"));
+
+        verify(
+            wordService,
+            times(1)
+        )
+            .findWordForUser(
+                eq(1L),
+                eq("hello"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                isNull(),
+                eq(false),
+                eq(false)
+            );
+    }
+
 }

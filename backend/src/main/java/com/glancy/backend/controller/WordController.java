@@ -43,10 +43,19 @@ public class WordController {
         @RequestParam Language language,
         @RequestParam(required = false) String flavor,
         @RequestParam(required = false) String model,
-        @RequestParam(defaultValue = "false") boolean forceNew
+        @RequestParam(defaultValue = "false") boolean forceNew,
+        @RequestParam(defaultValue = "true") boolean captureHistory
     ) {
         DictionaryFlavor resolvedFlavor = DictionaryFlavor.fromNullable(flavor, DictionaryFlavor.BILINGUAL);
-        WordResponse resp = wordService.findWordForUser(userId, term, language, resolvedFlavor, model, forceNew);
+        WordResponse resp = wordService.findWordForUser(
+            userId,
+            term,
+            language,
+            resolvedFlavor,
+            model,
+            forceNew,
+            captureHistory
+        );
         return ResponseEntity.ok(resp);
     }
 
@@ -61,13 +70,14 @@ public class WordController {
         @RequestParam(required = false) String flavor,
         @RequestParam(required = false) String model,
         HttpServletResponse response,
-        @RequestParam(defaultValue = "false") boolean forceNew
+        @RequestParam(defaultValue = "false") boolean forceNew,
+        @RequestParam(defaultValue = "true") boolean captureHistory
     ) {
         response.setHeader(HttpHeaders.CACHE_CONTROL, CacheControl.noStore().getHeaderValue());
         response.setHeader("X-Accel-Buffering", "no");
         DictionaryFlavor resolvedFlavor = DictionaryFlavor.fromNullable(flavor, DictionaryFlavor.BILINGUAL);
         return wordService
-            .streamWordForUser(userId, term, language, resolvedFlavor, model, forceNew)
+            .streamWordForUser(userId, term, language, resolvedFlavor, model, forceNew, captureHistory)
             .doOnNext(payload ->
                 log.info(
                     "Controller streaming chunk for user {} term '{}' event {}: {}",

@@ -129,7 +129,8 @@ class WordServiceStreamPersistenceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         WordResponse expected = new WordResponse(
@@ -238,7 +239,8 @@ class WordServiceStreamPersistenceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         StepVerifier.create(flux)
@@ -258,6 +260,84 @@ class WordServiceStreamPersistenceTest {
             any(DictionaryFlavor.class)
         );
         verify(searchRecordService).synchronizeRecordTerm(eq(1L), eq(10L), eq("hi"));
+    }
+
+    /**
+     * 测试目标：captureHistory=false 时跳过流式持久化流程。\
+     * 前置条件：缓存未命中且模型输出包含完成哨兵。\
+     * 步骤：\
+     *  1) 调用 streamWordForUser 并消费生成器。\
+     * 断言：\
+     *  - 仅收到数据事件，无 version 事件；\
+     *  - searchRecordService.saveRecord 与 searchResultService.createVersion 均未被调用。\
+     * 边界/异常：覆盖禁用历史采集的流式路径。\
+     */
+    @Test
+    void skipsPersistenceWhenHistoryDisabled() {
+        when(wordRepository.findActiveByNormalizedTerm("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL)).thenReturn(
+            Optional.empty()
+        );
+        when(
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq("doubao"),
+                any()
+            )
+        ).thenReturn(Flux.just("{\"term\":\"hi\"}", "<END>"));
+        WordResponse resp = new WordResponse(
+            null,
+            "hi",
+            List.of("greet"),
+            Language.ENGLISH,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            "{\"term\":\"hi\"}",
+            null,
+            null,
+            DictionaryFlavor.BILINGUAL
+        );
+        when(parser.parse("{\"term\":\"hi\"}", "hi", Language.ENGLISH)).thenReturn(
+            new ParsedWord(resp, "{\"term\":\"hi\"}")
+        );
+        when(wordRepository.save(any())).thenAnswer(invocation -> {
+            Word w = invocation.getArgument(0);
+            w.setId(2L);
+            return w;
+        });
+
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "hi",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false,
+            false
+        );
+
+        StepVerifier.create(flux)
+            .expectNextMatches(payload -> payload.event() == null && payload.data().contains("\"term\""))
+            .expectNextMatches(payload -> payload.event() == null && "<END>".equals(payload.data()))
+            .verifyComplete();
+
+        verify(searchRecordService, never()).saveRecord(anyLong(), any());
+        verify(searchResultService, never()).createVersion(
+            anyLong(),
+            anyLong(),
+            anyString(),
+            any(Language.class),
+            anyString(),
+            anyString(),
+            any(Word.class),
+            any(DictionaryFlavor.class)
+        );
     }
 
     /**
@@ -293,7 +373,8 @@ class WordServiceStreamPersistenceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         StepVerifier.create(flux)
@@ -340,7 +421,8 @@ class WordServiceStreamPersistenceTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL,
             null,
-            false
+            false,
+            true
         );
 
         StepVerifier.create(flux)

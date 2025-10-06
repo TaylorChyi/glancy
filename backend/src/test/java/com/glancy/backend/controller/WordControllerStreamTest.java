@@ -68,7 +68,8 @@ class WordControllerStreamTest {
                 eq(Language.ENGLISH),
                 eq(DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(Flux.error(new InvalidRequestException("参数不合法")));
 
@@ -110,7 +111,8 @@ class WordControllerStreamTest {
                 eq(Language.ENGLISH),
                 eq(DictionaryFlavor.BILINGUAL),
                 isNull(String.class),
-                eq(false)
+                eq(false),
+                eq(true)
             )
         ).thenReturn(Flux.error(new IllegalStateException("unexpected")));
 
