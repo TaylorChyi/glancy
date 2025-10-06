@@ -8,6 +8,7 @@ import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -69,8 +70,7 @@ public class TtsQuotaService {
 
     private int quotaLimit(User user) {
         TtsConfig cfg = configManager.current();
-        return Boolean.TRUE.equals(user.getMember())
-            ? cfg.getQuota().getDaily().getPro()
-            : cfg.getQuota().getDaily().getFree();
+        boolean activeMembership = user.hasActiveMembershipAt(LocalDateTime.now(clock));
+        return activeMembership ? cfg.getQuota().getDaily().getPro() : cfg.getQuota().getDaily().getFree();
     }
 }

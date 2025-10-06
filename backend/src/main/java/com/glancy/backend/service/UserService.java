@@ -18,6 +18,7 @@ import com.glancy.backend.dto.UserStatisticsResponse;
 import com.glancy.backend.dto.UsernameResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.ThirdPartyAccount;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
@@ -108,13 +109,17 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDetailResponse getUserDetail(Long id) {
         User user = getUserRaw(id);
+        LocalDateTime now = LocalDateTime.now();
+        boolean activeMembership = user.hasActiveMembershipAt(now);
         return new UserDetailResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
             resolveOutboundAvatar(user.getAvatar()),
             user.getPhone(),
-            user.getMember(),
+            activeMembership,
+            user.getMembershipType(),
+            user.getMembershipExpiresAt(),
             user.getDeleted(),
             user.getCreatedAt(),
             user.getUpdatedAt(),
@@ -299,7 +304,7 @@ public class UserService {
     public UserStatisticsResponse getStatistics() {
         long total = userRepository.count();
         long deleted = userRepository.countByDeletedTrue();
-        long members = userRepository.countByDeletedFalseAndMemberTrue();
+        long members = userRepository.countActiveMembers(LocalDateTime.now());
         return new UserStatisticsResponse(total, members, deleted);
     }
 
@@ -547,10 +552,12 @@ public class UserService {
      * Set a user as member.
      */
     @Transactional
-    public void activateMembership(Long userId) {
-        log.info("Activating membership for user {}", userId);
+    public void activateMembership(Long userId, MembershipType membershipType, LocalDateTime expiresAt) {
+        MembershipType resolvedType = membershipType == null ? MembershipType.PLUS : membershipType;
+        log.info("Activating membership for user {} with tier {} until {}", userId, resolvedType, expiresAt);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        user.setMember(true);
+        LocalDateTime now = LocalDateTime.now();
+        user.updateMembership(resolvedType, expiresAt, now);
         userRepository.save(user);
     }
 
@@ -561,7 +568,7 @@ public class UserService {
     public void removeMembership(Long userId) {
         log.info("Removing membership for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        user.setMember(false);
+        user.updateMembership(MembershipType.NONE, null, LocalDateTime.now());
         userRepository.save(user);
     }
 
@@ -611,7 +618,9 @@ public class UserService {
             }
         }
 
-        user.setLastLoginAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        user.setLastLoginAt(now);
+        user.synchronizeMembershipStatus(now);
         String token = UUID.randomUUID().toString();
         user.setLoginToken(token);
         userRepository.save(user);
@@ -623,7 +632,9 @@ public class UserService {
             user.getEmail(),
             resolveOutboundAvatar(user.getAvatar()),
             user.getPhone(),
-            user.getMember(),
+            user.hasActiveMembershipAt(now),
+            user.getMembershipType(),
+            user.getMembershipExpiresAt(),
             token
         );
     }
@@ -665,12 +676,16 @@ public class UserService {
     }
 
     private UserResponse toUserResponse(User user) {
+        LocalDateTime now = LocalDateTime.now();
         return new UserResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
             resolveOutboundAvatar(user.getAvatar()),
-            user.getPhone()
+            user.getPhone(),
+            user.hasActiveMembershipAt(now),
+            user.getMembershipType(),
+            user.getMembershipExpiresAt()
         );
     }
 }

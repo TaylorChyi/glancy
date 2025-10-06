@@ -17,7 +17,6 @@ final class TestEntityFactory {
         user.setPassword("pass" + idx);
         user.setEmail("user" + idx + "@example.com");
         user.setPhone("1000" + idx);
-        user.setMember(false);
         return user;
     }
 

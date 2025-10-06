@@ -1,14 +1,17 @@
 package com.glancy.backend.service.tts;
 
 import com.glancy.backend.dto.TtsRequest;
+import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.ForbiddenException;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
 import com.glancy.backend.util.SensitiveDataUtil;
+import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -79,9 +82,21 @@ public class TtsRequestValidator {
             throw new InvalidRequestException("无效的音色");
         }
 
-        if ("pro".equalsIgnoreCase(voice.getPlan()) && Boolean.FALSE.equals(user.getMember())) {
-            log.warn("Voice={} requires pro plan for user={}", voice.getId(), user.getId());
-            throw new ForbiddenException("该音色仅对 Pro 用户开放");
+        String planLabel = voice.getPlan();
+        MembershipType userType = Optional.ofNullable(user.getMembershipType()).orElse(MembershipType.NONE);
+        boolean activeMembership = user.hasActiveMembershipAt(LocalDateTime.now());
+        Optional<MembershipType> requiredPlan = MembershipType.fromPlanLabel(planLabel);
+        if (requiredPlan.isPresent() && (!activeMembership || !userType.canAccess(requiredPlan.get()))) {
+            log.warn(
+                "Voice={} requires plan={} for user={}, userType={}, activeMembership={}",
+                voice.getId(),
+                planLabel,
+                user.getId(),
+                userType,
+                activeMembership
+            );
+            String readablePlan = requiredPlan.get().name().toLowerCase(Locale.ROOT);
+            throw new ForbiddenException("该音色仅对 " + readablePlan + " 及以上会员开放");
         }
 
         log.debug("Resolved voice={} for user={}", voice.getId(), user.getId());
