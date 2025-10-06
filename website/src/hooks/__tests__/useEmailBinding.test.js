@@ -187,4 +187,50 @@ describe("useEmailBinding", () => {
       email: null,
     });
   });
+
+  /**
+   * 测试目标：解绑后重新请求验证码，应允许绑定新邮箱并重置校验状态。
+   * 前置条件：初始用户已绑定邮箱，提供模拟 API 客户端。
+   * 步骤：
+   *  1) 调用 unbindEmail 并模拟父组件更新用户邮箱为空；
+   *  2) 请求新邮箱验证码。
+   * 断言：
+   *  - requestEmailChangeCode 收到新邮箱；
+   *  - Hook 进入等待验证码状态。
+   * 边界/异常：
+   *  - 覆盖解绑后的重新绑定路径。
+   */
+  test("GivenUnboundEmail_WhenRequestingCode_ThenAllowRebindingFlow", async () => {
+    const apiClient = {
+      requestEmailChangeCode: jest.fn().mockResolvedValue(undefined),
+      confirmEmailChange: jest.fn(),
+      unbindEmail: jest.fn().mockResolvedValue({ email: null }),
+    };
+    const onUserUpdate = jest.fn();
+
+    const { result, rerender } = renderHook(
+      ({ user }) => useEmailBinding({ user, apiClient, onUserUpdate }),
+      { initialProps: { user: baseUser } },
+    );
+
+    await act(async () => {
+      await result.current.unbindEmail();
+    });
+
+    expect(onUserUpdate).toHaveBeenCalledWith({ ...baseUser, email: null });
+
+    rerender({ user: { ...baseUser, email: null } });
+
+    await act(async () => {
+      await result.current.requestCode("rebinding@example.com");
+    });
+
+    expect(apiClient.requestEmailChangeCode).toHaveBeenLastCalledWith({
+      userId: 1,
+      email: "rebinding@example.com",
+      token: "token",
+    });
+    expect(result.current.isAwaitingVerification).toBe(true);
+    expect(result.current.lastRequestedEmail).toBe("rebinding@example.com");
+  });
 });
