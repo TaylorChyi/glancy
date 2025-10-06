@@ -40,7 +40,7 @@
   block-size: 100%;
   overflow: hidden;
   opacity: 0;
-  transition: opacity var(--waiting-fade-duration, 750ms) ease-in-out;
+  transition: opacity var(--waiting-fade-duration, 1000ms) ease-in-out;
 }
 
 .frame-visible {
