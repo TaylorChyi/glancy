@@ -1,8 +1,9 @@
 import PropTypes from "prop-types";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useCallback } from "react";
 import { TtsButton } from "@/components";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage, useUser } from "@/context";
+import SelectMenu from "@/components/ui/SelectMenu";
 import styles from "./OutputToolbar.module.css";
 
 const ACTION_BLUEPRINTS = [
@@ -91,6 +92,7 @@ function OutputToolbar({
   versions,
   activeVersionId,
   onNavigate,
+  onSelectVersion,
   ttsComponent = TtsButton,
   onCopy,
   canCopy = false,
@@ -112,6 +114,7 @@ function OutputToolbar({
 }) {
   const { t } = useLanguage();
   const { user } = useUser();
+  const normalizedTerm = typeof term === "string" ? term.trim() : "";
   const TtsComponent = ttsComponent;
   const copySuccessActive = Boolean(
     isCopySuccess || copyFeedbackState === "success",
@@ -130,6 +133,63 @@ function OutputToolbar({
     const index = resolvedIndex >= 0 ? resolvedIndex + 1 : versions.length;
     return { currentIndex: index, total: versions.length };
   }, [versions, activeVersionId]);
+
+  /**
+   * 背景：
+   *  - 工具栏需在多版本词条之间切换，同时保持视觉节奏与语义可读性。
+   * 目的：
+   *  - 将版本集合映射为 SelectMenu 识别的选项结构，并按照本地化格式化时间。
+   * 关键决策与取舍：
+   *  - 复用 Intl.DateTimeFormat（策略模式的具体实现）以抽象不同语言的时间格式，
+   *    放弃手写格式化逻辑以降低维护成本；
+   *  - 当缺失时间戳时退化到差异化的 term 标签，保证选项仍具区分度。
+   */
+  const versionOptions = useMemo(() => {
+    if (!Array.isArray(versions) || versions.length === 0) {
+      return [];
+    }
+
+    const locale = lang === "en" ? "en-US" : "zh-CN";
+    let formatter = null;
+    try {
+      formatter = new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      formatter = null;
+    }
+
+    const template = t.versionOptionLabel || "Version {index}";
+
+    return versions.map((candidate, index) => {
+      const value = candidate?.id ?? candidate?.versionId ?? String(index);
+      const label = template.replace("{index}", String(index + 1));
+      const timestamp = candidate?.createdAt ?? candidate?.metadata?.createdAt;
+      let description;
+      if (timestamp && formatter) {
+        try {
+          description = formatter.format(new Date(timestamp));
+        } catch {
+          description = undefined;
+        }
+      }
+      if (!description) {
+        const versionTerm =
+          typeof candidate?.term === "string" ? candidate.term.trim() : "";
+        if (versionTerm && versionTerm !== normalizedTerm) {
+          description = versionTerm;
+        }
+      }
+      return {
+        value: value != null ? String(value) : String(index),
+        label,
+        description,
+      };
+    });
+  }, [versions, lang, t.versionOptionLabel, normalizedTerm]);
 
   const hasPrevious = total > 1 && currentIndex > 1;
   const hasNext = total > 1 && currentIndex < total;
@@ -246,6 +306,22 @@ function OutputToolbar({
     .filter(Boolean)
     .join(" ");
 
+  const canSelectVersion =
+    typeof onSelectVersion === "function" &&
+    !disabled &&
+    versionOptions.length > 1;
+  const versionSelectValue =
+    activeVersionId != null ? String(activeVersionId) : "";
+  const versionMenuLabel = t.versionMenuLabel || "Select version";
+  const handleVersionSelect = useCallback(
+    (value) => {
+      if (!canSelectVersion) return;
+      if (value == null) return;
+      onSelectVersion?.(String(value));
+    },
+    [canSelectVersion, onSelectVersion],
+  );
+
   const toolbarContent = (
     <>
       {showLeftCluster ? (
@@ -333,6 +409,17 @@ function OutputToolbar({
             aria-hidden="true"
           />
         </button>
+        {canSelectVersion ? (
+          <div className={styles["version-menu"]}>
+            <SelectMenu
+              id="output-toolbar-version-menu"
+              options={versionOptions}
+              value={versionSelectValue}
+              onChange={handleVersionSelect}
+              ariaLabel={versionMenuLabel}
+            />
+          </div>
+        ) : null}
         <span
           className={styles.indicator}
           aria-live="polite"
@@ -369,6 +456,7 @@ OutputToolbar.propTypes = {
   versions: PropTypes.arrayOf(PropTypes.object),
   activeVersionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onNavigate: PropTypes.func,
+  onSelectVersion: PropTypes.func,
   ttsComponent: PropTypes.elementType,
   onCopy: PropTypes.func,
   canCopy: PropTypes.bool,
@@ -397,6 +485,7 @@ OutputToolbar.defaultProps = {
   versions: [],
   activeVersionId: undefined,
   onNavigate: undefined,
+  onSelectVersion: undefined,
   ttsComponent: TtsButton,
   onCopy: undefined,
   canCopy: false,

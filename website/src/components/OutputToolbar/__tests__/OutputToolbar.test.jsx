@@ -14,6 +14,8 @@ jest.unstable_mockModule("@/context", () => ({
       nextVersion: "下一版本",
       versionIndicator: "{current} / {total}",
       versionIndicatorEmpty: "0 / 0",
+      versionMenuLabel: "选择版本",
+      versionOptionLabel: "版本 {index}",
       copyAction: "复制",
       copySuccess: "复制完成",
       favoriteAction: "收藏",
@@ -101,6 +103,32 @@ describe("OutputToolbar", () => {
     expect(onNavigate).toHaveBeenCalledWith("next");
     fireEvent.click(screen.getByRole("button", { name: "上一版本" }));
     expect(onNavigate).toHaveBeenCalledWith("previous");
+  });
+
+  /**
+   * 验证版本下拉菜单在多版本场景下渲染，并正确透出选择事件。
+   */
+  test("renders version menu and delegates selection", () => {
+    const onSelectVersion = jest.fn();
+    render(
+      <OutputToolbar
+        term="hello"
+        versions={[
+          { id: "v1", createdAt: "2024-05-01T08:00:00Z" },
+          { id: "v2", createdAt: "2024-05-02T09:00:00Z" },
+        ]}
+        activeVersionId="v1"
+        onSelectVersion={onSelectVersion}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "选择版本" });
+    expect(trigger).toHaveTextContent("版本 1");
+
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /版本 2/ }));
+
+    expect(onSelectVersion).toHaveBeenCalledWith("v2");
   });
 
   /**

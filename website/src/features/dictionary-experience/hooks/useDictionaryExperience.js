@@ -181,8 +181,7 @@ export function useDictionaryExperience() {
   const resolveCopyPopupMessage = useCallback(
     (status) => {
       const { base, fallback, statuses } = copyFeedbackMessages;
-      const resolvedFallback =
-        statuses.default ?? fallback ?? base ?? "Copy";
+      const resolvedFallback = statuses.default ?? fallback ?? base ?? "Copy";
       if (!status) {
         return resolvedFallback;
       }
@@ -453,10 +452,7 @@ export function useDictionaryExperience() {
             record.activeVersionId,
           );
           if (hydratedRecord?.term) {
-            resolvedTerm = coerceResolvedTerm(
-              hydratedRecord.term,
-              normalized,
-            );
+            resolvedTerm = coerceResolvedTerm(hydratedRecord.term, normalized);
           }
         } else if (parsedEntry) {
           setEntry(parsedEntry);
@@ -527,8 +523,7 @@ export function useDictionaryExperience() {
       const result = await executeLookup(inputValue);
       if (result.status === "success" && historyCaptureEnabled) {
         // 这里同步使用数据治理开关，避免即便后端跳过持久化仍然在前端堆积本地历史。
-        const historyTerm =
-          result.term ?? result.queriedTerm ?? inputValue;
+        const historyTerm = result.term ?? result.queriedTerm ?? inputValue;
         addHistory(
           historyTerm,
           user,
@@ -700,6 +695,44 @@ export function useDictionaryExperience() {
     t.reportSuccess,
   ]);
 
+  /**
+   * 意图：统一封装版本切换的副作用，确保所有入口（翻页/菜单）共享一致流程。
+   * 输入：nextVersion - 目标版本对象，需包含 id/versionId 与 markdown。
+   * 输出：布尔值，true 表示完成切换。
+   * 流程：
+   *  1) 写入全局 word store 的 activeVersionId；
+   *  2) 更新本地 entry/finalText/term 状态并清空流式文本；
+   *  3) 返回是否成功切换。
+   * 错误处理：缺失 termKey、版本 ID 或对象为空时直接返回 false。
+   * 复杂度：O(1)。
+   */
+  const commitVersionSelection = useCallback(
+    (nextVersion) => {
+      if (!currentTermKey || !nextVersion) return false;
+      const nextId = nextVersion.id ?? nextVersion.versionId;
+      if (nextId == null) return false;
+
+      wordStoreApi.getState().setActiveVersion?.(currentTermKey, nextId);
+      setActiveVersionId(nextId ?? null);
+      setEntry(nextVersion);
+      setFinalText(nextVersion.markdown ?? "");
+      setStreamText("");
+      if (nextVersion.term) {
+        setCurrentTerm(nextVersion.term);
+      }
+      return true;
+    },
+    [
+      currentTermKey,
+      wordStoreApi,
+      setActiveVersionId,
+      setEntry,
+      setFinalText,
+      setStreamText,
+      setCurrentTerm,
+    ],
+  );
+
   const handleNavigateVersion = useCallback(
     (direction) => {
       if (!currentTermKey || versions.length === 0) return;
@@ -715,24 +748,21 @@ export function useDictionaryExperience() {
       if (nextIndex === safeIndex) return;
       const nextVersion = versions[nextIndex];
       if (!nextVersion) return;
-      const nextId = nextVersion.id ?? nextVersion.versionId;
-      wordStoreApi.getState().setActiveVersion?.(currentTermKey, nextId);
-      setActiveVersionId(nextId ?? null);
-      setEntry(nextVersion);
-      setFinalText(nextVersion.markdown ?? "");
-      setStreamText("");
-      if (nextVersion.term) {
-        setCurrentTerm(nextVersion.term);
-      }
+      commitVersionSelection(nextVersion);
     },
-    [
-      currentTermKey,
-      versions,
-      activeVersionId,
-      wordStoreApi,
-      setEntry,
-      setFinalText,
-    ],
+    [currentTermKey, versions, activeVersionId, commitVersionSelection],
+  );
+
+  const handleSelectVersion = useCallback(
+    (versionId) => {
+      if (!currentTermKey || !versionId || versions.length === 0) return;
+      const target = versions.find(
+        (item) => String(item.id ?? item.versionId) === String(versionId ?? ""),
+      );
+      if (!target) return;
+      commitVersionSelection(target);
+    },
+    [commitVersionSelection, currentTermKey, versions],
   );
 
   const handleSelectHistory = useCallback(
@@ -864,6 +894,7 @@ export function useDictionaryExperience() {
       versions: isEntryViewActive ? versions : [],
       activeVersionId: isEntryViewActive ? activeVersionId : null,
       onNavigate: isEntryViewActive ? handleNavigateVersion : undefined,
+      onSelectVersion: isEntryViewActive ? handleSelectVersion : undefined,
       onCopy: handleCopy,
       canCopy: canCopyDefinition,
       copyFeedbackState,
@@ -889,6 +920,7 @@ export function useDictionaryExperience() {
       versions,
       activeVersionId,
       handleNavigateVersion,
+      handleSelectVersion,
       handleCopy,
       canCopyDefinition,
       copyFeedbackState,
