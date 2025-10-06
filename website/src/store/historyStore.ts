@@ -36,6 +36,11 @@ export interface HistoryVersion {
 }
 
 export interface HistoryItem {
+  /**
+   * 搜索记录在服务端的主键，用于删除/收藏等变更操作。
+   * 老版本缓存可能不存在该字段，因此需在命令中做降级处理。
+   */
+  recordId: string | null;
   term: string;
   language: string;
   flavor: string;
@@ -236,6 +241,7 @@ const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
   const versions = ensureVersions(record);
   const latestVersionId = versions.length ? versions[0].id : null;
   return {
+    recordId: record.id == null ? null : String(record.id),
     term: record.term,
     language,
     flavor,
@@ -302,6 +308,7 @@ function handleApiError(err: unknown, set: SetState) {
 const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
   history.find(
     (item) =>
+      item.recordId === identifier ||
       item.termKey === identifier ||
       item.term === identifier ||
       `${item.language}:${item.term}` === identifier,
@@ -412,6 +419,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         );
         const now = new Date().toISOString();
         const placeholder: HistoryItem = {
+          recordId: null,
           term,
           language: normalizedLanguage,
           flavor: normalizedFlavor,
@@ -515,27 +523,23 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         }
 
         if (aggregated.size > 0) {
-          const deleted = new Set<string>();
-          for (const item of aggregated.values()) {
-            const versionIds = item.versions.length
-              ? item.versions.map((version) => version.id)
-              : item.latestVersionId
-                ? [item.latestVersionId]
-                : [];
-            for (const versionId of versionIds) {
-              if (!versionId || deleted.has(versionId)) {
-                continue;
-              }
-              try {
-                await api.searchRecords.deleteSearchRecord({
-                  recordId: versionId,
-                  token: user.token,
-                });
-                deleted.add(versionId);
-              } catch (err) {
-                handleApiError(err, set);
-                return;
-              }
+          // 采集 recordId 集合确保针对真实记录主键发起删除，避免旧实现误用版本 ID。
+          const recordIds = new Set<string>();
+          aggregated.forEach((item) => {
+            if (item.recordId) {
+              recordIds.add(item.recordId);
+            }
+          });
+
+          for (const recordId of recordIds.values()) {
+            try {
+              await api.searchRecords.deleteSearchRecord({
+                recordId,
+                token: user.token,
+              });
+            } catch (err) {
+              handleApiError(err, set);
+              return;
             }
           }
 
@@ -566,20 +570,15 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         }
 
         if (user) {
-          const versionIds = target.versions.length
-            ? target.versions.map((version) => version.id)
-            : target.latestVersionId
-              ? [target.latestVersionId]
-              : [];
-          for (const versionId of versionIds) {
+          const recordId = target.recordId ?? target.latestVersionId;
+          if (recordId) {
             try {
               await api.searchRecords.deleteSearchRecord({
-                recordId: versionId,
+                recordId,
                 token: user.token,
               });
             } catch (err) {
               handleApiError(err, set);
-              break;
             }
           }
         }
@@ -602,7 +601,8 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       ) => {
         if (!user) return;
         const target = resolveHistoryItem(get().history, identifier);
-        const idToUse = versionId ?? target?.latestVersionId;
+        const idToUse =
+          versionId ?? target?.recordId ?? target?.latestVersionId ?? null;
         if (!idToUse) return;
         try {
           await api.searchRecords.favoriteSearchRecord({
@@ -621,7 +621,8 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       ) => {
         if (!user) return;
         const target = resolveHistoryItem(get().history, identifier);
-        const idToUse = versionId ?? target?.latestVersionId;
+        const idToUse =
+          versionId ?? target?.recordId ?? target?.latestVersionId ?? null;
         if (!idToUse) return;
         try {
           await api.searchRecords.unfavoriteSearchRecord({
@@ -674,22 +675,23 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         });
 
         if (user?.token) {
-          for (const item of candidates) {
-            const versionIds = item.versions.length
-              ? item.versions.map((version) => version.id)
-              : item.latestVersionId
-                ? [item.latestVersionId]
-                : [];
-            for (const versionId of versionIds) {
-              try {
-                await api.searchRecords.deleteSearchRecord({
-                  recordId: versionId,
-                  token: user.token,
-                });
-              } catch (err) {
-                handleApiError(err, set);
-                return;
-              }
+          const recordIds = new Set<string>();
+          candidates.forEach((item) => {
+            if (item.recordId) {
+              recordIds.add(item.recordId);
+            } else if (item.latestVersionId) {
+              recordIds.add(item.latestVersionId);
+            }
+          });
+          for (const recordId of recordIds.values()) {
+            try {
+              await api.searchRecords.deleteSearchRecord({
+                recordId,
+                token: user.token,
+              });
+            } catch (err) {
+              handleApiError(err, set);
+              return;
             }
           }
         }
@@ -754,6 +756,19 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             })
           : [];
         nextState = { ...nextState, history: upgraded };
+      }
+      if (Array.isArray(nextState.history)) {
+        const normalized = nextState.history.map((item: any) => {
+          if (!item || typeof item !== "object") {
+            return item;
+          }
+          const recordId =
+            item.recordId == null
+              ? null
+              : String(item.recordId);
+          return { ...item, recordId } as HistoryItem;
+        });
+        nextState = { ...nextState, history: normalized };
       }
       return nextState;
     },
