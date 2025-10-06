@@ -27,6 +27,7 @@ import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.ThirdPartyAccountRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.membership.MembershipLifecycleService;
 import com.glancy.backend.service.support.AvatarReferenceResolver;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -55,6 +56,7 @@ public class UserService {
     private final UserProfileService userProfileService;
     private final EmailVerificationService emailVerificationService;
     private final AvatarReferenceResolver avatarReferenceResolver;
+    private final MembershipLifecycleService membershipLifecycleService;
 
     public UserService(
         UserRepository userRepository,
@@ -63,7 +65,8 @@ public class UserService {
         AvatarStorage avatarStorage,
         UserProfileService userProfileService,
         EmailVerificationService emailVerificationService,
-        AvatarReferenceResolver avatarReferenceResolver
+        AvatarReferenceResolver avatarReferenceResolver,
+        MembershipLifecycleService membershipLifecycleService
     ) {
         this.userRepository = userRepository;
         this.loginDeviceRepository = loginDeviceRepository;
@@ -72,6 +75,7 @@ public class UserService {
         this.userProfileService = userProfileService;
         this.emailVerificationService = emailVerificationService;
         this.avatarReferenceResolver = avatarReferenceResolver;
+        this.membershipLifecycleService = membershipLifecycleService;
     }
 
     /**
@@ -553,12 +557,7 @@ public class UserService {
      */
     @Transactional
     public void activateMembership(Long userId, MembershipType membershipType, LocalDateTime expiresAt) {
-        MembershipType resolvedType = membershipType == null ? MembershipType.PLUS : membershipType;
-        log.info("Activating membership for user {} with tier {} until {}", userId, resolvedType, expiresAt);
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        LocalDateTime now = LocalDateTime.now();
-        user.updateMembership(resolvedType, expiresAt, now);
-        userRepository.save(user);
+        membershipLifecycleService.activateMembership(userId, membershipType, expiresAt, LocalDateTime.now());
     }
 
     /**
@@ -566,10 +565,7 @@ public class UserService {
      */
     @Transactional
     public void removeMembership(Long userId) {
-        log.info("Removing membership for user {}", userId);
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        user.updateMembership(MembershipType.NONE, null, LocalDateTime.now());
-        userRepository.save(user);
+        membershipLifecycleService.removeMembership(userId, LocalDateTime.now());
     }
 
     private UserResponse createUser(String username, String rawPassword, String email, String avatar, String phone) {

@@ -361,7 +361,9 @@ public class WordService {
             return Flux.error(e);
         } catch (Exception e) {
             log.error("Error initiating streaming search for term '{}'", term, e);
-            return Flux.error(new IllegalStateException("Failed to initiate streaming search", e));
+            return Flux.error(
+                new IllegalStateException(String.format("Failed to initiate streaming search: %s", e.getMessage()), e)
+            );
         }
 
         Flux<StreamPayload> main = stream

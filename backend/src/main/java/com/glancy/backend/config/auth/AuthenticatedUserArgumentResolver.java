@@ -3,6 +3,7 @@ package com.glancy.backend.config.auth;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.service.UserService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -26,10 +27,10 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
 
     private static final String ERROR_INVALID_PRINCIPAL = "Invalid authentication principal type";
 
-    private final UserService userService;
+    private final ObjectProvider<UserService> userServiceProvider;
 
-    public AuthenticatedUserArgumentResolver(UserService userService) {
-        this.userService = userService;
+    public AuthenticatedUserArgumentResolver(ObjectProvider<UserService> userServiceProvider) {
+        this.userServiceProvider = userServiceProvider;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
         if (Long.class.equals(parameter.getParameterType())) {
             return userId;
         }
-        return userService.getUserRaw(userId);
+        return resolveUserService().getUserRaw(userId);
     }
 
     private Long resolveUserId(@Nullable Authentication authentication) {
@@ -78,5 +79,15 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
             }
         }
         throw new UnauthorizedException(ERROR_INVALID_PRINCIPAL);
+    }
+
+    private UserService resolveUserService() {
+        UserService userService = userServiceProvider.getIfAvailable();
+        if (userService == null) {
+            throw new IllegalStateException(
+                "UserService bean is required to resolve @AuthenticatedUser User parameters"
+            );
+        }
+        return userService;
     }
 }

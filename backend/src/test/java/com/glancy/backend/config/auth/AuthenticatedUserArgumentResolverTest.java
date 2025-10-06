@@ -10,12 +10,15 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.service.UserService;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,9 +41,9 @@ class AuthenticatedUserArgumentResolverTest {
 
     @BeforeEach
     void setUp() throws NoSuchMethodException {
-        resolver = new AuthenticatedUserArgumentResolver(userService);
-        Method idMethod = FixtureController.class.getMethod("handleWithId", Long.class);
-        Method userMethod = FixtureController.class.getMethod("handleWithUser", User.class);
+        resolver = new AuthenticatedUserArgumentResolver(new FixedObjectProvider<>(userService));
+        Method idMethod = FixtureController.class.getDeclaredMethod("handleWithId", Long.class);
+        Method userMethod = FixtureController.class.getDeclaredMethod("handleWithUser", User.class);
         userIdParameter = new MethodParameter(idMethod, 0);
         userParameter = new MethodParameter(userMethod, 0);
     }
@@ -76,7 +79,7 @@ class AuthenticatedUserArgumentResolverTest {
 
         assertThatThrownBy(() -> resolver.resolveArgument(userIdParameter, null, WEB_REQUEST, null))
             .isInstanceOf(UnauthorizedException.class)
-            .hasMessage("Missing authentication token");
+            .hasMessage("Invalid authentication principal type");
     }
 
     private static class FixtureController {
@@ -84,5 +87,39 @@ class AuthenticatedUserArgumentResolverTest {
         void handleWithId(@AuthenticatedUser Long userId) {}
 
         void handleWithUser(@AuthenticatedUser User user) {}
+    }
+
+    private static final class FixedObjectProvider<T> implements ObjectProvider<T> {
+
+        private final T instance;
+
+        private FixedObjectProvider(T instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public T getObject() {
+            return instance;
+        }
+
+        @Override
+        public T getObject(Object... args) {
+            return instance;
+        }
+
+        @Override
+        public T getIfAvailable() {
+            return instance;
+        }
+
+        @Override
+        public T getIfUnique() {
+            return instance;
+        }
+
+        @Override
+        public java.util.Iterator<T> iterator() {
+            return instance == null ? Collections.<T>emptyIterator() : List.of(instance).iterator();
+        }
     }
 }
