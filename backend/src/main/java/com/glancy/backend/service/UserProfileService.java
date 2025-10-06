@@ -77,6 +77,7 @@ public class UserProfileService {
         profile.setCurrentAbility(req.currentAbility());
         profile.setDailyWordTarget(req.dailyWordTarget());
         profile.setFuturePlan(req.futurePlan());
+        profile.setResponseStyle(req.responseStyle());
         profile.setCustomSections(profileSectionCodec.serialize(req.customSections()));
         UserProfile saved = userProfileRepository.save(profile);
         return toResponse(saved);
@@ -104,6 +105,7 @@ public class UserProfileService {
             profile.getCurrentAbility(),
             profile.getDailyWordTarget(),
             profile.getFuturePlan(),
+            profile.getResponseStyle(),
             customSections
         );
     }

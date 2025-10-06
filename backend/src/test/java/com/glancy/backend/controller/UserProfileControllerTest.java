@@ -72,6 +72,7 @@ class UserProfileControllerTest {
             "B2",
             15,
             "exchange study",
+            "沉稳而有条理",
             customSections
         );
         when(userProfileService.saveProfile(eq(2L), any(UserProfileRequest.class))).thenReturn(resp);
@@ -84,6 +85,7 @@ class UserProfileControllerTest {
             "B2",
             15,
             "exchange study",
+            "沉稳而有条理",
             customSections
         );
 
@@ -124,6 +126,7 @@ class UserProfileControllerTest {
             "B2",
             15,
             "exchange study",
+            "沉稳而有条理",
             customSections
         );
         when(userProfileService.getProfile(2L)).thenReturn(resp);

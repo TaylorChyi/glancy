@@ -17,6 +17,7 @@ export const CORE_FIELDS = [
   "interests",
   "goal",
   "currentAbility",
+  "responseStyle",
 ];
 
 export function createLocalId(prefix = "profile") {
@@ -51,6 +52,7 @@ export function createEmptyProfileDetails() {
     interests: "",
     goal: "",
     currentAbility: "",
+    responseStyle: "",
     customSections: [],
   };
 }
@@ -97,6 +99,7 @@ export function mapResponseToProfileDetails(response) {
     interests: response.interest ?? "",
     goal: response.goal ?? "",
     currentAbility: response.currentAbility ?? "",
+    responseStyle: response.responseStyle ?? "",
     customSections: (response.customSections ?? []).map((section) =>
       createCustomSection({
         title: section.title,
@@ -122,6 +125,7 @@ export function mapProfileDetailsToRequest(details) {
     goal: sanitizeText(details.goal),
     education: sanitizeText(details.education),
     currentAbility: sanitizeText(details.currentAbility),
+    responseStyle: sanitizeText(details.responseStyle),
     customSections: (details.customSections ?? [])
       .map((section) => {
         const title = sanitizeText(section.title);
@@ -148,6 +152,7 @@ export function mapProfileDetailsToRequest(details) {
     goal: normalized.goal || null,
     education: normalized.education || null,
     currentAbility: normalized.currentAbility || null,
+    responseStyle: normalized.responseStyle || null,
     customSections: normalized.customSections,
   };
 }

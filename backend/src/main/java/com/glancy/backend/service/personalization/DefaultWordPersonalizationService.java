@@ -65,13 +65,18 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         PersonaProfile personaProfile = resolvePersonaProfile(profile);
         String goal = profile.map(UserProfile::getGoal).map(this::normalizeText).orElse(null);
         List<String> interests = profile.map(UserProfile::getInterest).map(this::parseInterests).orElseGet(List::of);
+        String responseStyle = profile
+            .map(UserProfile::getResponseStyle)
+            .map(this::normalizeText)
+            .filter(StringUtils::hasText)
+            .orElse(null);
         List<String> recentTerms = fetchRecentTerms(userId);
         return new WordPersonalizationContext(
             personaProfile.descriptor(),
             personaProfile.derivedFromProfile(),
             personaProfile.audience(),
             goal,
-            personaProfile.preferredTone(),
+            responseStyle != null ? responseStyle : personaProfile.preferredTone(),
             interests,
             recentTerms
         );

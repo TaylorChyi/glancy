@@ -23,6 +23,7 @@ test("mapResponseToProfileDetails populates state", () => {
     interest: "AI, 辩论",
     goal: "冲刺 B2",
     currentAbility: "B1",
+    responseStyle: "沉稳",
     customSections: [
       {
         title: "项目",
@@ -37,6 +38,7 @@ test("mapResponseToProfileDetails populates state", () => {
   const state = mapResponseToProfileDetails(response);
   expect(state.job).toBe("工程师");
   expect(state.education).toBe("硕士");
+  expect(state.responseStyle).toBe("沉稳");
   expect(state.customSections).toHaveLength(1);
   expect(state.customSections[0].items).toHaveLength(2);
 });
@@ -58,6 +60,7 @@ test("mapProfileDetailsToRequest normalizes data", () => {
     goal: " 提升",
     education: " 本科 ",
     currentAbility: " B1 ",
+    responseStyle: " 温和 ",
     customSections: [
       createCustomSection({ title: " ", items: [{ label: "", value: "" }] }),
       createCustomSection({
@@ -76,6 +79,7 @@ test("mapProfileDetailsToRequest normalizes data", () => {
   expect(payload.goal).toBe("提升");
   expect(payload.education).toBe("本科");
   expect(payload.currentAbility).toBe("B1");
+  expect(payload.responseStyle).toBe("温和");
   expect(payload.customSections).toHaveLength(1);
   expect(payload.customSections[0].items).toHaveLength(1);
 });
@@ -101,6 +105,13 @@ test("profileDetailsReducer hydrates and updates fields", () => {
     value: "硕士",
   });
   expect(updated.education).toBe("硕士");
+
+  const toneUpdated = profileDetailsReducer(updated, {
+    type: "updateField",
+    field: "responseStyle",
+    value: "沉稳",
+  });
+  expect(toneUpdated.responseStyle).toBe("沉稳");
 
   const untouched = profileDetailsReducer(updated, { type: "unknown" });
   expect(untouched).toBe(updated);

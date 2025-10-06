@@ -24,7 +24,7 @@ import AccountSection from "./sections/AccountSection.jsx";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
-import PersonalizationSection from "./sections/PersonalizationSection.jsx";
+import ResponseStyleSection from "./sections/ResponseStyleSection.jsx";
 import SubscriptionSection from "./sections/SubscriptionSection.jsx";
 import { buildSubscriptionSectionProps } from "./sections/subscriptionBlueprint.js";
 import useAvatarEditorWorkflow from "@/hooks/useAvatarEditorWorkflow.js";
@@ -34,12 +34,15 @@ import { useProfilesApi } from "@/api/profiles.js";
 import {
   mapResponseToProfileDetails,
   createEmptyProfileDetails,
+  mapProfileDetailsToRequest,
 } from "@/pages/profile/profileDetailsModel.js";
 import {
-  createPersonalizationInitialState,
-  personalizationReducer,
-  resolveSnapshotFromState,
-} from "./sections/personalizationModel.js";
+  RESPONSE_STYLE_ACTIONS,
+  buildRequestPayload,
+  createResponseStyleInitialState,
+  hasFieldChanged,
+  responseStyleReducer,
+} from "./sections/responseStyleModel.js";
 
 const createIconConfig = (name) =>
   Object.freeze({
@@ -58,7 +61,7 @@ const createIconConfig = (name) =>
  */
 const SECTION_ICON_REGISTRY = Object.freeze({
   general: createIconConfig("cog-6-tooth"),
-  personalization: createIconConfig("personalization"),
+  responseStyle: createIconConfig("personalization"),
   data: createIconConfig("shield-check"),
   keyboard: createIconConfig("command-line"),
   account: createIconConfig("user"),
@@ -179,6 +182,7 @@ function usePreferenceSections({ initialSectionId }) {
   const updateUsernameRequest = usersApi?.updateUsername;
   const profilesApi = useProfilesApi();
   const fetchProfile = profilesApi?.fetchProfile;
+  const saveProfileRequest = profilesApi?.saveProfile;
 
   const avatarEditorLabels = useMemo(
     () => ({
@@ -214,11 +218,12 @@ function usePreferenceSections({ initialSectionId }) {
     uploaderOptions: { onError: handleAvatarUploadError },
   });
 
-  const [personalizationState, dispatchPersonalization] = useReducer(
-    personalizationReducer,
+  const [responseStyleState, dispatchResponseStyle] = useReducer(
+    responseStyleReducer,
     undefined,
-    createPersonalizationInitialState,
+    createResponseStyleInitialState,
   );
+  const profileDetailsRef = useRef(createEmptyProfileDetails());
 
   const headingId = "settings-heading";
   const description = t.prefDescription ?? "";
@@ -251,48 +256,150 @@ function usePreferenceSections({ initialSectionId }) {
   const accountBindingActionLabel =
     t.settingsAccountBindingActionPlaceholder ?? "Coming soon";
 
-  const personalizationCopy = useMemo(
+  const responseStyleCopy = useMemo(
     () => ({
       loadingLabel: t.loading ?? t.saving ?? "Loading...",
+      savingLabel: t.saving ?? "Saving...",
+      savedLabel: t.settingsResponseStyleSaved ?? "Saved",
       errorLabel:
-        t.settingsPersonalizationLoadError ??
+        t.settingsResponseStyleError ??
         t.fail ??
-        "Unable to load personalization",
+        "Unable to load response preferences",
       retryLabel: t.refresh ?? "Refresh",
-      emptyLabel: t.settingsPersonalizationEmpty ?? fallbackValue,
-      summaryLabel: t.prefPersonalizationTitle ?? "Personal context",
+      dropdownLabel: t.responseStyleSelectLabel ?? "Response tone",
+      options: [
+        {
+          value: "default",
+          label: t.responseStyleOptionDefault ?? "Default",
+          description:
+            t.responseStyleOptionDefaultDescription ??
+            "Cheerful and adaptive",
+        },
+        {
+          value: "cynic",
+          label: t.responseStyleOptionCynic ?? "Cynic",
+          description:
+            t.responseStyleOptionCynicDescription ?? "Critical and sarcastic",
+        },
+        {
+          value: "robot",
+          label: t.responseStyleOptionRobot ?? "Robot",
+          description:
+            t.responseStyleOptionRobotDescription ?? "Efficient and blunt",
+        },
+        {
+          value: "listener",
+          label: t.responseStyleOptionListener ?? "Listener",
+          description:
+            t.responseStyleOptionListenerDescription ??
+            "Thoughtful and supportive",
+        },
+        {
+          value: "nerd",
+          label: t.responseStyleOptionNerd ?? "Nerd",
+          description:
+            t.responseStyleOptionNerdDescription ??
+            "Exploratory and enthusiastic",
+        },
+      ],
+      fields: [
+        {
+          id: "goal",
+          label:
+            t.responseStyleFieldGoalLabel ??
+            t.goalLabel ??
+            "Goal",
+          placeholder: t.responseStyleFieldGoalPlaceholder ?? "",
+        },
+        {
+          id: "job",
+          label:
+            t.responseStyleFieldJobLabel ??
+            t.jobLabel ??
+            "Occupation",
+          placeholder: t.responseStyleFieldJobPlaceholder ?? "",
+        },
+        {
+          id: "education",
+          label:
+            t.responseStyleFieldEducationLabel ??
+            t.educationLabel ??
+            "Education",
+          placeholder: t.responseStyleFieldEducationPlaceholder ?? "",
+        },
+        {
+          id: "interests",
+          label:
+            t.responseStyleFieldInterestsLabel ??
+            t.interestsLabel ??
+            "Interests",
+          placeholder: t.responseStyleFieldInterestsPlaceholder ?? "",
+        },
+        {
+          id: "currentAbility",
+          label:
+            t.responseStyleFieldAbilityLabel ??
+            t.currentAbilityLabel ??
+            "Current ability",
+          placeholder: t.responseStyleFieldAbilityPlaceholder ?? "",
+        },
+      ],
     }),
     [
-      fallbackValue,
+      t.currentAbilityLabel,
+      t.educationLabel,
       t.fail,
+      t.goalLabel,
+      t.interestsLabel,
       t.loading,
-      t.prefPersonalizationTitle,
       t.refresh,
+      t.responseStyleFieldAbilityLabel,
+      t.responseStyleFieldAbilityPlaceholder,
+      t.responseStyleFieldEducationLabel,
+      t.responseStyleFieldEducationPlaceholder,
+      t.responseStyleFieldGoalLabel,
+      t.responseStyleFieldGoalPlaceholder,
+      t.responseStyleFieldInterestsLabel,
+      t.responseStyleFieldInterestsPlaceholder,
+      t.responseStyleFieldJobLabel,
+      t.responseStyleFieldJobPlaceholder,
+      t.responseStyleOptionCynic,
+      t.responseStyleOptionCynicDescription,
+      t.responseStyleOptionDefault,
+      t.responseStyleOptionDefaultDescription,
+      t.responseStyleOptionListener,
+      t.responseStyleOptionListenerDescription,
+      t.responseStyleOptionNerd,
+      t.responseStyleOptionNerdDescription,
+      t.responseStyleOptionRobot,
+      t.responseStyleOptionRobotDescription,
+      t.responseStyleSelectLabel,
       t.saving,
-      t.settingsPersonalizationEmpty,
-      t.settingsPersonalizationLoadError,
+      t.settingsResponseStyleError,
+      t.settingsResponseStyleSaved,
     ],
   );
 
-  const requestPersonalization = useCallback(
+  const requestResponseStyle = useCallback(
     async ({ signal, withLoading = true } = {}) => {
       const abortRequested = () => Boolean(signal?.aborted);
       const safeDispatch = (action) => {
         if (!abortRequested()) {
-          dispatchPersonalization(action);
+          dispatchResponseStyle(action);
         }
       };
 
       if (!user?.token || typeof fetchProfile !== "function") {
+        profileDetailsRef.current = createEmptyProfileDetails();
         safeDispatch({
-          type: "hydrate",
-          details: createEmptyProfileDetails(),
+          type: RESPONSE_STYLE_ACTIONS.hydrate,
+          payload: profileDetailsRef.current,
         });
         return;
       }
 
       if (withLoading) {
-        safeDispatch({ type: "loading" });
+        safeDispatch({ type: RESPONSE_STYLE_ACTIONS.loading });
       }
 
       try {
@@ -301,35 +408,97 @@ function usePreferenceSections({ initialSectionId }) {
           return;
         }
         const details = mapResponseToProfileDetails(response);
-        safeDispatch({ type: "success", details });
+        profileDetailsRef.current = details;
+        safeDispatch({
+          type: RESPONSE_STYLE_ACTIONS.hydrate,
+          payload: details,
+        });
       } catch (error) {
-        console.error("Failed to load personalization details", error);
+        console.error("Failed to load response style preferences", error);
         if (abortRequested()) {
           return;
         }
-        safeDispatch({ type: "failure", error });
+        safeDispatch({ type: RESPONSE_STYLE_ACTIONS.failure, error });
       }
     },
-    [dispatchPersonalization, fetchProfile, user?.token],
+    [dispatchResponseStyle, fetchProfile, user?.token],
   );
 
   useEffect(() => {
     const controller = new AbortController();
-    requestPersonalization({ signal: controller.signal });
+    requestResponseStyle({ signal: controller.signal });
     return () => controller.abort();
-  }, [requestPersonalization]);
+  }, [requestResponseStyle]);
 
-  const handlePersonalizationRetry = useCallback(() => {
-    requestPersonalization({ withLoading: true });
-  }, [requestPersonalization]);
+  const handleResponseStyleRetry = useCallback(() => {
+    requestResponseStyle({ withLoading: true });
+  }, [requestResponseStyle]);
 
-  const personalizationSnapshot = useMemo(
-    () =>
-      resolveSnapshotFromState(personalizationState, {
-        translations: t,
-        fallbackValue,
-      }),
-    [fallbackValue, personalizationState, t],
+  const handleResponseStyleChange = useCallback(
+    (field, value) => {
+      dispatchResponseStyle({ type: RESPONSE_STYLE_ACTIONS.change, field, value });
+      dispatchResponseStyle({ type: RESPONSE_STYLE_ACTIONS.clearError });
+    },
+    [dispatchResponseStyle],
+  );
+
+  const handleResponseStyleCommit = useCallback(
+    async (field) => {
+      if (!hasFieldChanged(responseStyleState, field)) {
+        const normalized = (responseStyleState.values[field] ?? "").trim();
+        profileDetailsRef.current = {
+          ...profileDetailsRef.current,
+          [field]: normalized,
+        };
+        dispatchResponseStyle({
+          type: RESPONSE_STYLE_ACTIONS.synchronize,
+          field,
+          value: normalized,
+        });
+        return;
+      }
+
+      if (!user?.token || typeof saveProfileRequest !== "function") {
+        dispatchResponseStyle({
+          type: RESPONSE_STYLE_ACTIONS.failure,
+          error: new Error("response-style-save-auth-missing"),
+        });
+        return;
+      }
+
+      dispatchResponseStyle({
+        type: RESPONSE_STYLE_ACTIONS.saving,
+        field,
+      });
+
+      try {
+        const mergedDetails = buildRequestPayload(
+          responseStyleState,
+          profileDetailsRef.current,
+        );
+        profileDetailsRef.current = mergedDetails;
+        const payload = mapProfileDetailsToRequest(mergedDetails);
+        const response = await saveProfileRequest({
+          token: user.token,
+          profile: payload,
+        });
+        const nextDetails = mapResponseToProfileDetails(response);
+        profileDetailsRef.current = nextDetails;
+        dispatchResponseStyle({
+          type: RESPONSE_STYLE_ACTIONS.success,
+          payload: nextDetails,
+        });
+      } catch (error) {
+        console.error("Failed to save response style preferences", error);
+        dispatchResponseStyle({ type: RESPONSE_STYLE_ACTIONS.failure, error });
+      }
+    },
+    [
+      dispatchResponseStyle,
+      responseStyleState,
+      saveProfileRequest,
+      user?.token,
+    ],
   );
 
   const subscriptionSection = useMemo(
@@ -448,14 +617,17 @@ function usePreferenceSections({ initialSectionId }) {
   const sections = useMemo(() => {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
-    const personalizationLabel =
-      t.settingsTabPersonalization ?? "Personalization";
-    const personalizationSummary =
-      t.settingsPersonalizationDescription ??
-      "Describe your background so answers feel bespoke.";
-    const personalizationMessage = pickFirstMeaningfulString(
-      [t.settingsPersonalizationDescription, t.prefPersonalizationTitle],
-      personalizationSummary,
+    const responseStyleLabel =
+      t.settingsTabResponseStyle ??
+      t.settingsTabPersonalization ??
+      "Response style";
+    const responseStyleSummary =
+      t.settingsResponseStyleDescription ??
+      t.prefPersonalizationTitle ??
+      "Choose how explanations should sound.";
+    const responseStyleMessage = pickFirstMeaningfulString(
+      [t.settingsResponseStyleDescription, t.prefPersonalizationTitle],
+      responseStyleSummary,
     );
 
     const dataLabel = t.settingsTabData ?? "Data controls";
@@ -563,22 +735,20 @@ function usePreferenceSections({ initialSectionId }) {
         icon: SECTION_ICON_REGISTRY.general,
       },
       {
-        id: "personalization",
-        label: personalizationLabel,
+        id: "responseStyle",
+        label: responseStyleLabel,
         disabled: false,
-        Component: PersonalizationSection,
+        Component: ResponseStyleSection,
         componentProps: {
-          title: personalizationLabel,
-          message: personalizationMessage,
-          state: {
-            status: personalizationState.status,
-            snapshot: personalizationSnapshot,
-            error: personalizationState.error,
-          },
-          copy: personalizationCopy,
-          onRetry: handlePersonalizationRetry,
+          title: responseStyleLabel,
+          message: responseStyleMessage,
+          state: responseStyleState,
+          copy: responseStyleCopy,
+          onRetry: handleResponseStyleRetry,
+          onFieldChange: handleResponseStyleChange,
+          onFieldCommit: handleResponseStyleCommit,
         },
-        icon: SECTION_ICON_REGISTRY.personalization,
+        icon: SECTION_ICON_REGISTRY.responseStyle,
       },
       {
         id: "data",
@@ -652,11 +822,13 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
-    personalizationCopy,
-    personalizationSnapshot,
-    personalizationState.error,
-    personalizationState.status,
-    handlePersonalizationRetry,
+    t.settingsTabResponseStyle,
+    t.settingsResponseStyleDescription,
+    responseStyleCopy,
+    responseStyleState,
+    handleResponseStyleRetry,
+    handleResponseStyleChange,
+    handleResponseStyleCommit,
     subscriptionSection,
     handleAvatarSelection,
     isAvatarUploading,

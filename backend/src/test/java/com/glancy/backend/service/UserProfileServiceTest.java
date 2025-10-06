@@ -91,6 +91,7 @@ class UserProfileServiceTest {
             "B2",
             15,
             "exchange study",
+            "沉稳而有条理",
             customSections
         );
         UserProfileResponse saved = userProfileService.saveProfile(user.getId(), req);
@@ -100,6 +101,7 @@ class UserProfileServiceTest {
         assertEquals("code", saved.interest());
         assertEquals("master", saved.education());
         assertEquals("B2", saved.currentAbility());
+        assertEquals("沉稳而有条理", saved.responseStyle());
         assertEquals(1, saved.customSections().size());
 
         UserProfileResponse fetched = userProfileService.getProfile(user.getId());
@@ -108,6 +110,7 @@ class UserProfileServiceTest {
         assertEquals(user.getId(), fetched.userId());
         assertEquals("master", fetched.education());
         assertEquals(1, fetched.customSections().size());
+        assertEquals("沉稳而有条理", fetched.responseStyle());
     }
 
     /**
@@ -134,5 +137,6 @@ class UserProfileServiceTest {
         assertNull(fetched.job());
         assertEquals(user.getId(), fetched.userId());
         assertTrue(fetched.customSections().isEmpty(), "custom sections should default to empty list");
+        assertNull(fetched.responseStyle());
     }
 }
