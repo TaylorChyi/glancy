@@ -70,7 +70,9 @@ class WordIssueReportControllerTest {
             LocalDateTime.now()
         );
         when(userService.authenticateToken("token")).thenReturn(9L);
-        when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class))).thenReturn(response);
+        when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class))).thenReturn(
+            response
+        );
 
         WordIssueReportRequest request = new WordIssueReportRequest(
             "hello",
