@@ -203,6 +203,24 @@ export default function useActionInputBehavior({
     [inputRef],
   );
 
+  /**
+   * 意图：在提交触发时主动释放输入焦点，驱动底部面板回落至释义模式。
+   * 输入：依赖内部 textarea 引用。
+   * 输出：若存在 textarea，调用其 blur 方法。
+   * 流程：
+   *  1) 读取内部 textarea；
+   *  2) 若具备 blur 能力则执行以触发 onBlur 链路；
+   * 错误处理：节点缺失或不具备 blur 时静默退化；
+   * 复杂度：O(1)。
+   */
+  const releaseFocusForSubmission = useCallback(() => {
+    const textarea = internalTextareaRef.current;
+    if (!textarea || typeof textarea.blur !== "function") {
+      return;
+    }
+    textarea.blur();
+  }, []);
+
   const autoResize = useCallback(
     (element: HTMLTextAreaElement) => {
       if (!element) {
@@ -261,9 +279,15 @@ export default function useActionInputBehavior({
       if (value.trim() === "") {
         return;
       }
+      /**
+       * 背景：仅依赖 useBottomPanelState 的文本侦测无法立即切换释义模式；
+       * 取舍：提交时直接触发 blur 以沿既有 onFocusChange 通道进入 actions，
+       *       避免在多个层级重复维护模式切换逻辑。
+       */
+      releaseFocusForSubmission();
       onSubmit?.(event);
     },
-    [onSubmit, value],
+    [onSubmit, releaseFocusForSubmission, value],
   );
 
   const handleKeyDown = useCallback(

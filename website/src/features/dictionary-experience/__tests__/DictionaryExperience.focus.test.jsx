@@ -22,9 +22,8 @@ const inputRef = { current: null };
 const handleVoiceMock = jest.fn();
 const handleReoutputMock = jest.fn();
 
-jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
-  __esModule: true,
-  useDictionaryExperience: jest.fn(() => ({
+function createDictionaryExperienceState(overrides = {}) {
+  return {
     inputRef,
     t: { returnToSearch: "返回搜索", reoutput: "重试释义" },
     text: "",
@@ -64,7 +63,13 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
     searchEmptyState: { title: "", description: "" },
     chatInputPlaceholder: "",
     libraryLandingLabel: "致用单词",
-  })),
+    ...overrides,
+  };
+}
+
+jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
+  __esModule: true,
+  useDictionaryExperience: jest.fn(() => createDictionaryExperienceState()),
 }));
 
 jest.unstable_mockModule("@/components/Layout", () => ({
@@ -197,6 +202,9 @@ describe("DictionaryExperience focus management", () => {
     handleVoiceMock.mockClear();
     handleReoutputMock.mockClear();
     inputRef.current = null;
+    useDictionaryExperience.mockImplementation(() =>
+      createDictionaryExperienceState(),
+    );
   });
 
   /**
@@ -297,6 +305,62 @@ describe("DictionaryExperience focus management", () => {
   });
 
   /**
+   * 测试目标：验证在搜索模式下通过 Enter 提交后，底部面板立即切换至释义模式并清空输入值。
+   * 前置条件：词典体验存在释义数据，ChatInput 初始填充非空文本。
+   * 步骤：
+   *  1) 覆盖 useDictionaryExperience 使 text 为非空且 handleSend 清空文本；
+   *  2) 聚焦 textarea；
+   *  3) 通过键入 Enter 触发表单提交；
+   * 断言：
+   *  - ChatInput 被卸载，说明面板进入释义模式；
+   *  - “返回搜索”按钮重新出现；
+   *  - handleSend 与 setText 被调用一次且文本被清空。
+   * 边界/异常：
+   *  - 若未来回车提交逻辑新增组合键，需要同步调整触发输入。
+   */
+  test("Given_searchSubmission_When_pressEnter_Then_showActionsAndResetInput", async () => {
+    const user = userEvent.setup();
+    const setTextMock = jest.fn();
+    const handleSendMock = jest.fn((event) => {
+      event.preventDefault();
+      setTextMock("");
+    });
+
+    useDictionaryExperience.mockImplementation(() =>
+      createDictionaryExperienceState({
+        text: "mock term",
+        setText: setTextMock,
+        handleSend: handleSendMock,
+      }),
+    );
+
+    render(<DictionaryExperience />);
+
+    expect(
+      screen.queryByRole("button", { name: "返回搜索" }),
+    ).not.toBeInTheDocument();
+
+    const textarea = screen.getByRole("textbox");
+    await user.click(textarea);
+    expect(textarea).toHaveFocus();
+    await waitFor(() => {
+      expect(textarea).toHaveValue("mock term");
+    });
+
+    await user.type(textarea, "{enter}");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "返回搜索" }),
+      ).toBeInTheDocument();
+    });
+
+    expect(handleSendMock).toHaveBeenCalledTimes(1);
+    expect(setTextMock).toHaveBeenCalledWith("");
+  });
+
+  /**
    * 测试目标：当视图切换至“致用单词”时，底栏应被移除且占位标签居中展示。
    * 前置条件：useDictionaryExperience 返回 activeView 为 library 的桩数据。
    * 步骤：
@@ -309,47 +373,23 @@ describe("DictionaryExperience focus management", () => {
    *  - 若未来 LibraryLandingView 支持更多插槽需同步更新断言。
    */
   test("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
-    useDictionaryExperience.mockReturnValueOnce({
-      inputRef,
-      t: {},
-      text: "",
-      setText: jest.fn(),
-      dictionarySourceLanguage: "en",
-      setDictionarySourceLanguage: jest.fn(),
-      dictionaryTargetLanguage: "zh",
-      setDictionaryTargetLanguage: jest.fn(),
-      sourceLanguageOptions: [],
-      targetLanguageOptions: [],
-      handleSwapLanguages: jest.fn(),
-      handleSend: jest.fn(),
-      handleVoice: jest.fn(),
-      handleShowDictionary: jest.fn(),
-      handleShowLibrary: jest.fn(),
-      handleSelectHistory: jest.fn(),
-      activeView: "library",
-      viewState: {
-        active: "library",
-        isDictionary: false,
-        isHistory: false,
-        isLibrary: true,
-      },
-      focusInput: jest.fn(),
-      entry: null,
-      finalText: "",
-      streamText: "",
-      loading: false,
-      dictionaryActionBarProps: { onReoutput: jest.fn() },
-      displayClassName: "library-view",
-      popupOpen: false,
-      popupMsg: "",
-      closePopup: jest.fn(),
-      dictionaryTargetLanguageLabel: "目标语言",
-      dictionarySourceLanguageLabel: "源语言",
-      dictionarySwapLanguagesLabel: "切换",
-      searchEmptyState: { title: "", description: "" },
-      chatInputPlaceholder: "",
-      libraryLandingLabel: "致用单词",
-    });
+    useDictionaryExperience.mockReturnValueOnce(
+      createDictionaryExperienceState({
+        t: {},
+        handleVoice: jest.fn(),
+        activeView: "library",
+        viewState: {
+          active: "library",
+          isDictionary: false,
+          isHistory: false,
+          isLibrary: true,
+        },
+        focusInput: jest.fn(),
+        entry: null,
+        dictionaryActionBarProps: { onReoutput: jest.fn() },
+        displayClassName: "library-view",
+      }),
+    );
 
     render(<DictionaryExperience />);
 
