@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "@/components/modals/BaseModal.jsx";
 import { SettingsSurface } from "@/components";
@@ -19,6 +19,8 @@ function ReportIssueModal({
   term,
   language,
   flavor,
+  sourceLanguage,
+  targetLanguage,
   category,
   categories,
   description,
@@ -63,21 +65,101 @@ function ReportIssueModal({
   };
 
   const languageKey = typeof language === "string" ? language.toUpperCase() : "";
-  const languageLabels = {
-    ENGLISH: t.reportLanguageValueEnglish ?? "English",
-    CHINESE: t.reportLanguageValueChinese ?? "Chinese",
-  };
-  const resolvedLanguageLabel = languageLabels[languageKey] ?? language ?? "";
-
   const flavorKey = typeof flavor === "string" ? flavor.toUpperCase() : "";
-  const flavorLabels = {
-    BILINGUAL: t.reportFlavorValueBilingual ?? "Bilingual", // default flavor
-    MONOLINGUAL_ENGLISH:
-      t.reportFlavorValueMonolingualEnglish ?? "English only",
-    MONOLINGUAL_CHINESE:
-      t.reportFlavorValueMonolingualChinese ?? "Chinese only",
-  };
-  const resolvedFlavorLabel = flavorLabels[flavorKey] ?? flavor ?? "";
+  const sourcePreferenceKey =
+    typeof sourceLanguage === "string" ? sourceLanguage.toUpperCase() : "";
+  const targetPreferenceKey =
+    typeof targetLanguage === "string" ? targetLanguage.toUpperCase() : "";
+
+  const languageLabels = useMemo(
+    () => ({
+      ENGLISH: t.reportLanguageValueEnglish ?? "English",
+      CHINESE: t.reportLanguageValueChinese ?? "Chinese",
+      AUTO: t.dictionarySourceLanguageAuto ?? "Auto",
+    }),
+    [
+      t.reportLanguageValueEnglish,
+      t.reportLanguageValueChinese,
+      t.dictionarySourceLanguageAuto,
+    ],
+  );
+
+  const resolvedLanguageLabel =
+    languageLabels[languageKey] ?? language ?? "";
+
+  // 词典模式展示需要呈现具体语言方向；在用户选择“自动检测”时，
+  // 回退到当前词条识别的语言，并基于口味选择推断默认方向。
+  const resolvedSourceKey = (() => {
+    if (sourcePreferenceKey && sourcePreferenceKey !== "AUTO") {
+      return sourcePreferenceKey;
+    }
+    if (languageKey) {
+      return languageKey;
+    }
+    if (flavorKey === "MONOLINGUAL_CHINESE") {
+      return "CHINESE";
+    }
+    return "ENGLISH";
+  })();
+
+  const resolvedTargetKey = (() => {
+    if (targetPreferenceKey) {
+      return targetPreferenceKey;
+    }
+    if (flavorKey === "MONOLINGUAL_ENGLISH") {
+      return "ENGLISH";
+    }
+    if (flavorKey === "MONOLINGUAL_CHINESE") {
+      return "CHINESE";
+    }
+    if (resolvedSourceKey === "ENGLISH") {
+      return "CHINESE";
+    }
+    return "ENGLISH";
+  })();
+
+  const dictionaryModeLabel = useMemo(() => {
+    const sourceLabel = languageLabels[resolvedSourceKey] ?? resolvedSourceKey;
+    const targetLabel = languageLabels[resolvedTargetKey] ?? resolvedTargetKey;
+    if (!targetLabel) {
+      return sourceLabel;
+    }
+    return `${sourceLabel} → ${targetLabel}`;
+  }, [languageLabels, resolvedSourceKey, resolvedTargetKey]);
+
+  const summaryItems = useMemo(
+    () =>
+      [
+        {
+          key: "term",
+          label: t.reportTermLabel ?? "Term",
+          value: term,
+        },
+        language
+          ? {
+              key: "language",
+              label: t.reportLanguageLabel ?? "Language",
+              value: resolvedLanguageLabel,
+            }
+          : null,
+        dictionaryModeLabel
+          ? {
+              key: "dictionary-mode",
+              label: t.reportFlavorLabel ?? "Dictionary",
+              value: dictionaryModeLabel,
+            }
+          : null,
+      ].filter(Boolean),
+    [
+      dictionaryModeLabel,
+      language,
+      resolvedLanguageLabel,
+      t.reportFlavorLabel,
+      t.reportLanguageLabel,
+      t.reportTermLabel,
+      term,
+    ],
+  );
 
   return (
     <BaseModal open={open} onClose={onClose} className="modal-content">
@@ -85,7 +167,6 @@ function ReportIssueModal({
         as="form"
         onSubmit={handleSubmit}
         title={t.reportTitle ?? "Report an issue"}
-        description={t.reportDescription ?? "Describe the problem with this entry."}
         actions={
           <div className={styles["action-row"]}>
             {error ? (
@@ -114,42 +195,20 @@ function ReportIssueModal({
             </div>
           </div>
         }
+        className={styles["plain-surface"]}
       >
         <dl className={styles.summary}>
-          <div className={styles["summary-item"]}>
-            <dt className={styles["summary-label"]}>
-              {t.reportTermLabel ?? "Term"}
-            </dt>
-            <dd className={styles["summary-value"]}>{term}</dd>
-          </div>
-          {language ? (
-            <div className={styles["summary-item"]}>
-              <dt className={styles["summary-label"]}>
-                {t.reportLanguageLabel ?? "Language"}
-              </dt>
-              <dd className={styles["summary-value"]}>{resolvedLanguageLabel}</dd>
+          {summaryItems.map((item) => (
+            <div key={item.key} className={styles["summary-item"]}>
+              <dt className={styles["summary-label"]}>{item.label}</dt>
+              <dd className={styles["summary-value"]}>{item.value}</dd>
             </div>
-          ) : null}
-          {flavor ? (
-            <div className={styles["summary-item"]}>
-              <dt className={styles["summary-label"]}>
-                {t.reportFlavorLabel ?? "Dictionary"}
-              </dt>
-              <dd className={styles["summary-value"]}>{resolvedFlavorLabel}</dd>
-            </div>
-          ) : null}
+          ))}
         </dl>
-        <fieldset className={styles.fieldset} aria-describedby="report-category-hint">
+        <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>
             {t.reportCategoryLabel ?? "Issue type"}
           </legend>
-          <div
-            id="report-category-hint"
-            className={styles["field-hint"]}
-            aria-live="polite"
-          >
-            {t.reportCategoryHint ?? "Select the most relevant option."}
-          </div>
           <div role="radiogroup" className={styles["segment-group"]}>
             {categories.map(renderCategoryOption)}
           </div>
@@ -180,6 +239,14 @@ ReportIssueModal.propTypes = {
   term: PropTypes.string.isRequired,
   language: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
   flavor: PropTypes.oneOfType([PropTypes.string, PropTypes.oneOf([null])]),
+  sourceLanguage: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.oneOf([null]),
+  ]),
+  targetLanguage: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.oneOf([null]),
+  ]),
   category: PropTypes.string.isRequired,
   categories: PropTypes.arrayOf(
     PropTypes.shape({
@@ -201,6 +268,8 @@ ReportIssueModal.defaultProps = {
   error: "",
   language: null,
   flavor: null,
+  sourceLanguage: null,
+  targetLanguage: null,
 };
 
 export default ReportIssueModal;

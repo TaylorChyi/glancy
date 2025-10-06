@@ -181,6 +181,8 @@ export function useDictionaryExperience() {
       term: context.term ?? "",
       language: context.language ?? null,
       flavor: context.flavor ?? null,
+      sourceLanguage: context.sourceLanguage ?? null,
+      targetLanguage: context.targetLanguage ?? null,
       sourceUrl: context.sourceUrl ?? "",
       category: reportDialogState.form.category,
       description: reportDialogState.form.description,
@@ -682,6 +684,8 @@ export function useDictionaryExperience() {
       term: activeTerm,
       language: contextLanguage,
       flavor: contextFlavor,
+      sourceLanguage: dictionarySourceLanguage,
+      targetLanguage: dictionaryTargetLanguage,
       sourceUrl,
     });
   }, [
