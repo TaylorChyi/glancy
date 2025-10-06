@@ -233,6 +233,8 @@ export default function DictionaryExperience() {
         term={reportDialog.term}
         language={reportDialog.language}
         flavor={reportDialog.flavor}
+        sourceLanguage={reportDialog.sourceLanguage}
+        targetLanguage={reportDialog.targetLanguage}
         category={reportDialog.category}
         categories={reportDialog.categories ?? []}
         description={reportDialog.description}
