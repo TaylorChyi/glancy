@@ -66,6 +66,7 @@ const createTranslations = (overrides = {}) => ({
   settingsAccountDescription: "Account summary",
   settingsAccountUsername: "Username",
   settingsAccountEmail: "Email",
+  settingsAccountEmailUnbindAction: "Unbind email",
   settingsAccountPhone: "Phone",
   settingsTabAccount: "Account",
   prefKeyboardTitle: "Shortcut playbook",
@@ -338,6 +339,98 @@ test(
         "Engineer",
       ),
     ).toBe(true);
+  },
+);
+
+/**
+ * 测试目标：账户信息存在邮箱时偏好设置应暴露可用的解绑操作。
+ * 前置条件：mockUseUser 返回包含 email 的用户对象。
+ * 步骤：
+ *  1) 渲染 usePreferenceSections；
+ *  2) 读取 account 分区内 email 字段的操作配置。
+ * 断言：
+ *  - email 字段 action.disabled 为 false；
+ *  - action.label 与翻译词条保持一致。
+ * 边界/异常：
+ *  - 若分区尚未生成或字段缺失则测试失败。
+ */
+test(
+  "Given bound email When inspecting account field Then unbind action enabled",
+  async () => {
+    const { result } = renderHook(() =>
+      usePreferenceSections({ initialSectionId: undefined }),
+    );
+
+    await waitFor(() => {
+      const accountSection = result.current.sections.find(
+        (section) => section.id === "account",
+      );
+      expect(accountSection).toBeDefined();
+    });
+
+    const accountSection = result.current.sections.find(
+      (section) => section.id === "account",
+    );
+    const emailField = accountSection.componentProps.fields.find(
+      (field) => field.id === "email",
+    );
+
+    expect(emailField).toBeDefined();
+    expect(emailField.action).toBeDefined();
+    expect(emailField.action.disabled).toBe(false);
+    expect(emailField.action.label).toBe(
+      translations.settingsAccountEmailUnbindAction,
+    );
+  },
+);
+
+/**
+ * 测试目标：缺少邮箱时解绑操作需保持禁用，避免误导性交互。
+ * 前置条件：mockUseUser 返回 email 为空字符串的用户对象。
+ * 步骤：
+ *  1) 覆盖 mockUseUser；
+ *  2) 渲染 usePreferenceSections 并获取 email 字段。
+ * 断言：
+ *  - email 字段 action.disabled 为 true。
+ * 边界/异常：
+ *  - 若 email 字段不存在则测试失败。
+ */
+test(
+  "Given missing email When inspecting account field Then unbind action disabled",
+  async () => {
+    mockUseUser.mockReturnValue({
+      user: {
+        id: "user-1",
+        username: "amy",
+        email: "",
+        plan: "plus",
+        isPro: true,
+        token: "token-123",
+      },
+      setUser: jest.fn(),
+    });
+
+    const { result } = renderHook(() =>
+      usePreferenceSections({ initialSectionId: undefined }),
+    );
+
+    await waitFor(() => {
+      const accountSection = result.current.sections.find(
+        (section) => section.id === "account",
+      );
+      expect(accountSection).toBeDefined();
+    });
+
+    const accountSection = result.current.sections.find(
+      (section) => section.id === "account",
+    );
+    const emailField = accountSection.componentProps.fields.find(
+      (field) => field.id === "email",
+    );
+
+    expect(emailField).toBeDefined();
+    expect(emailField.action).toBeDefined();
+    expect(emailField.action.disabled).toBe(true);
   },
 );
 

@@ -345,11 +345,14 @@ function usePreferenceSections({ initialSectionId }) {
    * 关键决策与取舍：
    *  - 借助 memoized snapshot 统一收敛账户字段的展示值，确保后续扩展编辑态或批量更新时
    *    只需调整此处逻辑即可；
+   *  - 同步沉淀 hasBoundEmail 等派生状态，避免在渲染阶段重复解析用户数据导致交互状态与业务判定脱节；
    *  - 备选方案是分散在 useMemo 之外逐项计算，但会让 `sections` 依赖列表不断膨胀且难以追踪。
    */
   const accountFieldSnapshot = useMemo(() => {
     const sanitizedUsernameCandidate =
       typeof user?.username === "string" ? user.username.trim() : "";
+    const hasBoundEmail =
+      typeof user?.email === "string" && user.email.trim().length > 0;
 
     return Object.freeze({
       sanitizedUsername: sanitizedUsernameCandidate,
@@ -362,11 +365,17 @@ function usePreferenceSections({ initialSectionId }) {
         fallbackValue,
         defaultCode: t.settingsAccountDefaultPhoneCode ?? "+86",
       }),
+      hasBoundEmail,
     });
   }, [fallbackValue, t.settingsAccountDefaultPhoneCode, user]);
 
-  const { sanitizedUsername, usernameValue, emailValue, phoneValue } =
-    accountFieldSnapshot;
+  const {
+    sanitizedUsername,
+    usernameValue,
+    emailValue,
+    phoneValue,
+    hasBoundEmail,
+  } = accountFieldSnapshot;
 
   const usernameEditorTranslations = useMemo(
     () => ({
@@ -469,7 +478,8 @@ function usePreferenceSections({ initialSectionId }) {
         t.settingsAccountEmailUnbindAction ??
         t.settingsAccountEmailUnbind ??
         "Unbind email",
-      disabled: true,
+      // 将可操作性与真实绑定态同步，避免展示“解绑”却无法点击的交互悖论。
+      disabled: !hasBoundEmail,
     };
     const phoneRebindAction = {
       id: "rebind-phone",
@@ -654,6 +664,7 @@ function usePreferenceSections({ initialSectionId }) {
     usernameValue,
     emailValue,
     phoneValue,
+    hasBoundEmail,
   ]);
 
   const [activeSectionId, setActiveSectionId] = useState(() =>
