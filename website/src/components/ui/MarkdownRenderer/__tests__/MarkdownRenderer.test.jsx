@@ -100,6 +100,27 @@ test("injects break opportunities for cjk headings", () => {
 });
 
 /**
+ * 测试目标：注入零宽断行的同时保留原有空格，避免英文句子出现连写。
+ * 前置条件：Markdown 段落包含常规空格分隔的英文文本。
+ * 步骤：
+ *  1) 渲染包含英文句子的 Markdown。
+ *  2) 获取段落节点。
+ * 断言：
+ *  - 段落文本保留至少一个显式空格字符；若缺失则说明断行逻辑破坏空格。
+ * 边界/异常：
+ *  - 覆盖最常见的英文句子场景，防止未来回归导致可读性下降。
+ */
+test("keeps regular spaces intact while injecting breaks", () => {
+  const markdown = "Hello world from markdown.";
+  render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  const paragraph = screen.getByText(
+    (content) => stripZeroWidth(content) === markdown,
+  );
+  expect(paragraph.textContent).toContain(" ");
+});
+
+/**
  * 测试目标：代码块内文本不应被插入断行点，保证语法原样输出。
  * 前置条件：Markdown 含多行代码块。
  * 步骤：
