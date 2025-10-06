@@ -5,7 +5,6 @@ import ResponseStyleSection from "@/pages/preferences/sections/ResponseStyleSect
 const baseCopy = {
   loadingLabel: "Loading...",
   savingLabel: "Saving...",
-  savedLabel: "Saved",
   errorLabel: "Failed to load",
   retryLabel: "Retry",
   dropdownLabel: "Response tone",
@@ -14,8 +13,14 @@ const baseCopy = {
     { value: "nerd", label: "Nerd", description: "Curious" },
   ],
   fields: [
-    { id: "goal", label: "Tagline", placeholder: "Goal" },
-    { id: "job", label: "Occupation", placeholder: "Job" },
+    { id: "job", label: "Professional role", placeholder: "Job" },
+    {
+      id: "goal",
+      label: "Personal goals",
+      placeholder: "Goal",
+      multiline: true,
+      rows: 3,
+    },
   ],
 };
 
@@ -53,7 +58,7 @@ test("Given ready state When editing text field Then change and commit handlers 
     />,
   );
 
-  const tagline = screen.getByLabelText("Tagline");
+  const tagline = screen.getByLabelText("Personal goals");
   fireEvent.change(tagline, { target: { value: "IELTS" } });
   fireEvent.blur(tagline);
 
@@ -80,6 +85,38 @@ test("Given loading state When rendering Then placeholder text appears", () => {
   );
 
   expect(screen.getByText("Loading...")).toBeInTheDocument();
+});
+
+/**
+ * 测试目标：选择响应风格时触发变更与提交事件。
+ * 前置条件：提供 ready 状态与多个响应风格选项。
+ * 步骤：
+ *  1) 点击下拉触发器展开菜单；
+ *  2) 选择第二个选项。
+ * 断言：
+ *  - onFieldChange 收到新的响应风格值；
+ *  - onFieldCommit 在选择后被调用。
+ * 边界/异常：无。
+ */
+test("Given ready state When selecting response style Then change and commit fire", () => {
+  const handleChange = jest.fn();
+  const handleCommit = jest.fn();
+  render(
+    <ResponseStyleSection
+      title="Response style"
+      headingId="response-style"
+      state={createState()}
+      copy={baseCopy}
+      onFieldChange={handleChange}
+      onFieldCommit={handleCommit}
+    />,
+  );
+
+  fireEvent.click(screen.getByLabelText("Response tone"));
+  fireEvent.click(screen.getByRole("menuitemradio", { name: /Default/ }));
+
+  expect(handleChange).toHaveBeenCalledWith("responseStyle", "default");
+  expect(handleCommit).toHaveBeenCalledWith("responseStyle");
 });
 
 /**

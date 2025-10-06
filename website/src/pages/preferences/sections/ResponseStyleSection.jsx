@@ -14,11 +14,13 @@
  */
 import { useId } from "react";
 import PropTypes from "prop-types";
+import SelectMenu from "@/components/ui/SelectMenu";
 import styles from "../Preferences.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
-const isMeaningful = (value) => typeof value === "string" && value.trim().length > 0;
+const isMeaningful = (value) =>
+  typeof value === "string" && value.trim().length > 0;
 
 const ResponseOptionShape = PropTypes.shape({
   value: PropTypes.string.isRequired,
@@ -30,6 +32,8 @@ const ResponseFieldShape = PropTypes.shape({
   id: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   placeholder: PropTypes.string,
+  multiline: PropTypes.bool,
+  rows: PropTypes.number,
 });
 
 function ResponseStyleSection({
@@ -46,12 +50,11 @@ function ResponseStyleSection({
   const fallbackDescriptionId = useId();
   const hasMessage = isMeaningful(message);
   const resolvedDescriptionId = hasMessage
-    ? descriptionId ?? fallbackDescriptionId
+    ? (descriptionId ?? fallbackDescriptionId)
     : undefined;
 
   const status = state?.status ?? "idle";
   const values = state?.values ?? {};
-  const persisted = state?.persisted ?? {};
   const savingField = state?.savingField ?? null;
   const error = state?.error ?? null;
   const hasLoadedValues = Object.keys(values).length > 0;
@@ -59,10 +62,15 @@ function ResponseStyleSection({
   const shouldShowPlaceholder = isLoading && !hasLoadedValues;
   const shouldShowError = Boolean(error);
 
-  const handleChange = (fieldId) => (event) => {
-    if (typeof onFieldChange === "function") {
-      onFieldChange(fieldId, event?.target?.value ?? "");
+  const handleChange = (fieldId) => (candidate) => {
+    if (typeof onFieldChange !== "function") {
+      return;
     }
+    if (candidate && typeof candidate === "object" && "target" in candidate) {
+      onFieldChange(fieldId, candidate.target?.value ?? "");
+      return;
+    }
+    onFieldChange(fieldId, typeof candidate === "string" ? candidate : "");
   };
 
   const handleBlur = (fieldId) => () => {
@@ -71,15 +79,16 @@ function ResponseStyleSection({
     }
   };
 
+  const handleSelect = (fieldId) => (value) => {
+    handleChange(fieldId)(value);
+    if (typeof onFieldCommit === "function") {
+      onFieldCommit(fieldId);
+    }
+  };
+
   const renderFieldAction = (fieldId) => {
     if (status === "saving" && savingField === fieldId) {
       return <span className={styles.placeholder}>{copy.savingLabel}</span>;
-    }
-
-    const nextValue = (values[fieldId] ?? "").trim();
-    const persistedValue = (persisted[fieldId] ?? "").trim();
-    if (status === "ready" && nextValue === persistedValue) {
-      return <span className={styles.placeholder}>{copy.savedLabel}</span>;
     }
 
     return null;
@@ -132,32 +141,24 @@ function ResponseStyleSection({
           <dl className={styles.details}>
             <div className={styles["detail-row"]}>
               <dt className={styles["detail-label"]}>
-                <label htmlFor="response-style-select">{copy.dropdownLabel}</label>
+                <label htmlFor="response-style-select">
+                  {copy.dropdownLabel}
+                </label>
               </dt>
               <dd className={styles["detail-value"]}>
                 <div
                   className={styles["field-shell"]}
-                  data-interactive="select"
+                  data-interactive="menu"
                   data-has-arrow="true"
                 >
-                  <select
+                  <SelectMenu
                     id="response-style-select"
-                    className={composeClassName(
-                      styles["field-control"],
-                      styles["field-control-select"],
-                    )}
+                    options={copy.options}
                     value={values.responseStyle ?? ""}
-                    onChange={handleChange("responseStyle")}
-                    onBlur={handleBlur("responseStyle")}
-                  >
-                    {(copy.options ?? []).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {isMeaningful(option.description)
-                          ? `${option.label} — ${option.description}`
-                          : option.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={handleSelect("responseStyle")}
+                    ariaLabel={copy.dropdownLabel}
+                    fullWidth
+                  />
                 </div>
               </dd>
               <div className={styles["detail-action"]} aria-live="polite">
@@ -172,20 +173,35 @@ function ResponseStyleSection({
                 <dd className={styles["detail-value"]}>
                   <div
                     className={styles["field-shell"]}
-                    data-interactive="input"
+                    data-interactive={field.multiline ? "textarea" : "input"}
                   >
-                    <input
-                      id={`${field.id}-input`}
-                      type="text"
-                      className={composeClassName(
-                        styles["field-control"],
-                        styles["field-control-input"],
-                      )}
-                      value={values[field.id] ?? ""}
-                      onChange={handleChange(field.id)}
-                      onBlur={handleBlur(field.id)}
-                      placeholder={field.placeholder}
-                    />
+                    {field.multiline ? (
+                      <textarea
+                        id={`${field.id}-input`}
+                        className={composeClassName(
+                          styles["field-control"],
+                          styles["field-control-textarea"],
+                        )}
+                        value={values[field.id] ?? ""}
+                        onChange={handleChange(field.id)}
+                        onBlur={handleBlur(field.id)}
+                        placeholder={field.placeholder}
+                        rows={field.rows ?? 3}
+                      />
+                    ) : (
+                      <input
+                        id={`${field.id}-input`}
+                        type="text"
+                        className={composeClassName(
+                          styles["field-control"],
+                          styles["field-control-input"],
+                        )}
+                        value={values[field.id] ?? ""}
+                        onChange={handleChange(field.id)}
+                        onBlur={handleBlur(field.id)}
+                        placeholder={field.placeholder}
+                      />
+                    )}
                   </div>
                 </dd>
                 <div className={styles["detail-action"]} aria-live="polite">
@@ -215,7 +231,6 @@ ResponseStyleSection.propTypes = {
   copy: PropTypes.shape({
     loadingLabel: PropTypes.string.isRequired,
     savingLabel: PropTypes.string.isRequired,
-    savedLabel: PropTypes.string.isRequired,
     errorLabel: PropTypes.string.isRequired,
     retryLabel: PropTypes.string.isRequired,
     dropdownLabel: PropTypes.string.isRequired,
