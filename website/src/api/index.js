@@ -8,6 +8,7 @@ import { createProfilesApi } from "./profiles.js";
 import { createTtsApi } from "./tts.js";
 import { createKeyboardShortcutsApi } from "./keyboardShortcuts.js";
 import { createWordReportsApi } from "./wordReports.js";
+import { createRedemptionCodesApi } from "./redemptionCodes.js";
 
 export function createApi(config) {
   const request = createApiClient(config);
@@ -24,6 +25,7 @@ export function createApi(config) {
     tts: createTtsApi(request),
     keyboardShortcuts: createKeyboardShortcutsApi(request),
     wordReports: createWordReportsApi(request),
+    redemptionCodes: createRedemptionCodesApi(request),
   };
 }
 

@@ -8,6 +8,7 @@ const mockUseKeyboardShortcutContext = jest.fn();
 const mockUseAvatarEditorWorkflow = jest.fn();
 const mockUseUsersApi = jest.fn();
 const mockUseProfilesApi = jest.fn();
+const mockUseRedemptionCodesApi = jest.fn();
 
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
@@ -30,12 +31,18 @@ jest.unstable_mockModule("@/api/profiles.js", () => ({
   useProfilesApi: mockUseProfilesApi,
 }));
 
+jest.unstable_mockModule("@/api/redemptionCodes.js", () => ({
+  useRedemptionCodesApi: mockUseRedemptionCodesApi,
+}));
+
 let usePreferenceSections;
 let ACCOUNT_USERNAME_FIELD_TYPE;
 let translations;
 let fetchProfileMock;
 let saveProfileMock;
 let consoleErrorStub;
+let redeemMock;
+let setUserMock;
 
 beforeAll(async () => {
   ({ default: usePreferenceSections } = await import(
@@ -203,9 +210,11 @@ beforeEach(() => {
   mockUseAvatarEditorWorkflow.mockReset();
   mockUseUsersApi.mockReset();
   mockUseProfilesApi.mockReset();
+  mockUseRedemptionCodesApi.mockReset();
   consoleErrorStub = jest.spyOn(console, "error").mockImplementation(() => {});
   translations = createTranslations();
   mockUseLanguage.mockReturnValue({ t: translations });
+  setUserMock = jest.fn();
   mockUseUser.mockReturnValue({
     user: {
       id: "user-1",
@@ -215,7 +224,7 @@ beforeEach(() => {
       isPro: true,
       token: "token-123",
     },
-    setUser: jest.fn(),
+    setUser: setUserMock,
   });
   mockUseTheme.mockReturnValue({ theme: "light", setTheme: jest.fn() });
   mockUseKeyboardShortcutContext.mockReturnValue({
@@ -254,6 +263,8 @@ beforeEach(() => {
     fetchProfile: fetchProfileMock,
     saveProfile: saveProfileMock,
   });
+  redeemMock = jest.fn().mockResolvedValue({});
+  mockUseRedemptionCodesApi.mockReturnValue({ redeem: redeemMock });
 });
 
 afterEach(() => {
@@ -392,6 +403,119 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
     "default",
   );
+});
+
+/**
+ * 测试目标：
+ *  - 兑换成功后应调用兑换接口并刷新用户的会员信息。
+ * 前置条件：
+ *  - 兑换 API 返回会员奖励。
+ * 步骤：
+ *  1) 渲染 usePreferenceSections；
+ *  2) 调用订阅分区的 onRedeem；
+ *  3) 捕获接口与 setUser 调用。
+ * 断言：
+ *  - redeem API 被传入去除空格后的兑换码与 token；
+ *  - setUser 收到更新后的会员/订阅字段。
+ * 边界/异常：
+ *  - 若 onRedeem 不返回 Promise 或未更新用户则测试失败。
+ */
+test("Given valid code When redeem resolves Then membership snapshot merges into user", async () => {
+  const reward = {
+    membershipType: "PRO",
+    expiresAt: "2025-12-31T00:00:00Z",
+  };
+  redeemMock.mockResolvedValueOnce({
+    effectType: "MEMBERSHIP",
+    membership: reward,
+  });
+
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
+
+  await waitFor(() => {
+    expect(
+      result.current.sections.find((section) => section.id === "subscription"),
+    ).toBeDefined();
+  });
+
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+
+  await act(async () => {
+    await subscriptionSection.componentProps.onRedeem("  vip-pro-2025  ");
+  });
+
+  expect(redeemMock).toHaveBeenCalledWith({
+    token: "token-123",
+    code: "vip-pro-2025",
+  });
+  expect(setUserMock).toHaveBeenCalledWith(
+    expect.objectContaining({
+      member: true,
+      isPro: true,
+      plan: "PRO",
+      membershipType: "PRO",
+      membershipExpiresAt: reward.expiresAt,
+      subscription: expect.objectContaining({
+        planId: "PRO",
+        currentPlanId: "PRO",
+        tier: "PRO",
+        nextRenewalDate: reward.expiresAt,
+      }),
+    }),
+  );
+});
+
+/**
+ * 测试目标：
+ *  - 当兑换接口抛出异常时 onRedeem 应透传错误并避免更新用户状态。
+ * 前置条件：
+ *  - redeem API 抛出错误。
+ * 步骤：
+ *  1) 渲染 usePreferenceSections；
+ *  2) 调用 onRedeem；
+ *  3) 捕获抛出的异常。
+ * 断言：
+ *  - Promise 拒绝并包含原始错误；
+ *  - 控制台记录错误日志；
+ *  - setUser 未被调用。
+ * 边界/异常：
+ *  - 若错误被吞掉或 setUser 被调用则测试失败。
+ */
+test("Given redeem failure When onRedeem invoked Then error bubbles without user mutation", async () => {
+  const failure = new Error("invalid-code");
+  redeemMock.mockRejectedValueOnce(failure);
+
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
+
+  await waitFor(() => {
+    expect(
+      result.current.sections.find((section) => section.id === "subscription"),
+    ).toBeDefined();
+  });
+
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+
+  await expect(
+    subscriptionSection.componentProps.onRedeem("bad-code"),
+  ).rejects.toThrow("invalid-code");
+
+  expect(consoleErrorStub).toHaveBeenCalledWith(
+    "Failed to redeem subscription code",
+    failure,
+  );
+  expect(setUserMock).not.toHaveBeenCalled();
 });
 
 /**
