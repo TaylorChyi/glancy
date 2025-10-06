@@ -17,7 +17,9 @@ const DEFAULT_NEWLINE_TOKENS = new Set();
 
 const WORD_LIKE_CHAR = /[A-Za-z\d]/;
 const HAN_SCRIPT = /\p{Script=Han}/u;
-const TRAILING_SPACE_PUNCTUATION = /[,:;!?]/;
+// 说明：追加句号以覆盖「英文释义以句号结束后紧跟新句」的流式场景，
+//       避免 Doubao 词典输出在 `.` 与下一个单词之间缺失空格。
+const TRAILING_SPACE_PUNCTUATION = /[.,:;!?]/;
 const WHITESPACE_RE = /\s/u;
 
 function normalizeNewlines(text, newlineTokens) {

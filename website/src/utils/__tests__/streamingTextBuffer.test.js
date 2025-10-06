@@ -73,3 +73,21 @@ test("inserts spacing after punctuation when needed", () => {
   const result = buffer.append("there");
   expect(result).toBe("Hi, there");
 });
+
+/**
+ * 测试目标：验证句号结尾的分片在下一个英文单词到来时同样会补空格。
+ * 前置条件：首个分片以句号收尾，第二个分片以英文单词开头且缺少前导空格。
+ * 步骤：
+ *  1) 追加 "Done."；
+ *  2) 追加 "Next"；
+ * 断言：
+ *  - 聚合结果为 "Done. Next"，若失败说明句号未被识别为需要补空格的标点。
+ * 边界/异常：
+ *  - 覆盖英语释义常见的句号断句场景，防止词典动态渲染出现单词粘连。
+ */
+test("inserts spacing after periods between english sentences", () => {
+  const buffer = createStreamingTextBuffer();
+  buffer.append("Done.");
+  const result = buffer.append("Next");
+  expect(result).toBe("Done. Next");
+});
