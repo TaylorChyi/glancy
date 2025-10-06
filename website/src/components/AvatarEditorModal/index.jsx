@@ -30,6 +30,7 @@ import {
   computeCropSourceRect,
   computeDisplayMetrics,
   computeOffsetBounds,
+  deriveCenteredViewportState,
 } from "@/utils/avatarCropBox.js";
 import { extractSvgIntrinsicSize } from "@/utils/svgIntrinsicSize.js";
 
@@ -80,31 +81,28 @@ function AvatarEditorModal({
       zoom: targetZoom = MIN_ZOOM,
     } = {}) => {
       const safeViewport = viewport > 0 ? viewport : viewportSize;
-      if (
-        nextWidth <= 0 ||
-        nextHeight <= 0 ||
-        safeViewport <= 0 ||
-        targetZoom <= 0 ||
-        !Number.isFinite(targetZoom)
-      ) {
+      if (nextWidth <= 0 || nextHeight <= 0 || safeViewport <= 0) {
         return false;
       }
 
-      const { width: displayWidth, height: displayHeight } =
-        computeDisplayMetrics({
-          naturalWidth: nextWidth,
-          naturalHeight: nextHeight,
-          viewportSize: safeViewport,
-          zoom: targetZoom,
-        });
+      /**
+       * 背景说明：
+       *  - 默认居中逻辑此前散落在组件内，zoom 与 offset 更新存在竞态风险。
+       * 设计取舍：
+       *  - 通过 deriveCenteredViewportState 聚合“缩放钳制 + 中心偏移”策略，
+       *    保证任何重算场景均遵循一致的中心对齐规则。
+       */
+      const nextState = deriveCenteredViewportState({
+        naturalWidth: nextWidth,
+        naturalHeight: nextHeight,
+        viewportSize: safeViewport,
+        zoom: targetZoom,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
+      });
 
-      const nextBounds = computeOffsetBounds(
-        displayWidth,
-        displayHeight,
-        safeViewport,
-      );
-
-      setOffset(clampOffset({ x: 0, y: 0 }, nextBounds));
+      setZoom(nextState.zoom);
+      setOffset(nextState.offset);
       shouldRecenterRef.current = false;
       return true;
     },
