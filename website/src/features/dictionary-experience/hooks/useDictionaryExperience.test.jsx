@@ -29,6 +29,8 @@ const translationFixture = {
   searchEmptyTitle: "开始探索",
   searchEmptyDescription: "输入任何词汇即可获取解释",
   inputPlaceholder: "输入查询内容",
+  versionMenuLabel: "选择版本",
+  versionOptionLabel: "版本 {index}",
   copyAction: "复制",
   copySuccess: "复制成功",
   copyEmpty: "无内容",
@@ -166,6 +168,7 @@ beforeEach(() => {
   mockGetEntry.mockImplementation(() => null);
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });
+  mockWordStoreState.entries = {};
   submitWordReportMock.mockReset();
 });
 
@@ -205,11 +208,10 @@ describe("useDictionaryExperience", () => {
    */
   it("writes corrected term into history when lookup normalizes input", async () => {
     const correctedEntry = { term: "student", markdown: "definition" };
-    mockStreamWord.mockImplementation(
-      () =>
-        (async function* () {
-          yield { chunk: JSON.stringify(correctedEntry), language: "ENGLISH" };
-        })(),
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: JSON.stringify(correctedEntry), language: "ENGLISH" };
+      })(),
     );
 
     const { result } = renderHook(() => useDictionaryExperience());
@@ -239,14 +241,13 @@ describe("useDictionaryExperience", () => {
    */
   it("skips history addition when capture disabled", async () => {
     useDataGovernanceStore.setState({ historyCaptureEnabled: false });
-    mockStreamWord.mockImplementation(
-      () =>
-        (async function* () {
-          yield {
-            chunk: JSON.stringify({ term: "mute", markdown: "md" }),
-            language: "ENGLISH",
-          };
-        })(),
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield {
+          chunk: JSON.stringify({ term: "mute", markdown: "md" }),
+          language: "ENGLISH",
+        };
+      })(),
     );
 
     const { result } = renderHook(() => useDictionaryExperience());
@@ -519,6 +520,85 @@ describe("useDictionaryExperience", () => {
       COPY_FEEDBACK_STATES.IDLE,
     );
     expect(result.current.dictionaryActionBarProps.isCopySuccess).toBe(false);
+  });
+
+  /**
+   * 测试目标：验证版本选择入口会同步更新词条与缓存。
+   * 前置条件：mockStreamWord 返回含双版本记录，缓存命中 activeVersionId。
+   * 步骤：
+   *  1) 设置查询词并触发 handleSend；
+   *  2) 通过 onSelectVersion 选择第二个版本。
+   * 断言：
+   *  - setActiveVersion 收到缓存键与目标版本 ID；
+   *  - dictionaryActionBarProps.activeVersionId 更新为目标 ID；
+   *  - entry 与 finalText 对应目标版本，streamText 被清空。
+   * 边界/异常：
+   *  - 若缓存缺失或版本 ID 不存在，应保持当前版本不变。
+   */
+  it("GivenMultipleVersions_WhenSelectingFromMenu_ThenUpdatesActiveEntry", async () => {
+    const entryV1 = {
+      id: "v1",
+      term: "omega",
+      markdown: "First meaning",
+    };
+    const entryV2 = {
+      id: "v2",
+      term: "omega",
+      markdown: "Second meaning",
+    };
+
+    mockStreamWord.mockImplementation(({ term, language }) => {
+      const cacheKey = `${term}-${language}`;
+      mockWordStoreState.entries = {
+        ...mockWordStoreState.entries,
+        [cacheKey]: {
+          versions: [entryV1, entryV2],
+          activeVersionId: entryV1.id,
+        },
+      };
+      return (async function* () {
+        yield {
+          chunk: JSON.stringify({
+            ...entryV1,
+            versions: [entryV1, entryV2],
+            activeVersionId: entryV1.id,
+          }),
+          language: "ENGLISH",
+        };
+      })();
+    });
+    mockGetRecord.mockImplementation((key) => mockWordStoreState.entries[key]);
+    mockGetEntry.mockImplementation((key, versionId) => {
+      const record = mockWordStoreState.entries[key];
+      return (
+        record?.versions.find(
+          (candidate) => String(candidate.id) === String(versionId),
+        ) ?? null
+      );
+    });
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("omega");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(result.current.dictionaryActionBarProps.versions).toHaveLength(2);
+    expect(result.current.dictionaryActionBarProps.activeVersionId).toBe("v1");
+
+    await act(() => {
+      result.current.dictionaryActionBarProps.onSelectVersion?.("v2");
+    });
+
+    expect(mockSetActiveVersion).toHaveBeenCalledWith("omega-ENGLISH", "v2");
+    expect(result.current.dictionaryActionBarProps.activeVersionId).toBe("v2");
+    expect(result.current.entry?.id).toBe("v2");
+    expect(result.current.finalText).toBe(entryV2.markdown);
+    expect(result.current.streamText).toBe("");
   });
 
   /**

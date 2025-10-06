@@ -387,5 +387,7 @@ export default {
   nextVersion: "下一版本",
   versionIndicator: "{current} / {total}",
   versionIndicatorEmpty: "暂无版本",
+  versionMenuLabel: "选择版本",
+  versionOptionLabel: "版本 {index}",
   favoriteRemove: "取消收藏",
 };

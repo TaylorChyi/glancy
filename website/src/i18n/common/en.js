@@ -409,5 +409,7 @@ export default {
   nextVersion: "Next version",
   versionIndicator: "{current} / {total}",
   versionIndicatorEmpty: "No versions",
+  versionMenuLabel: "Select version",
+  versionOptionLabel: "Version {index}",
   favoriteRemove: "Remove from favorites",
 };
