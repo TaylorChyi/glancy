@@ -1,8 +1,9 @@
 /**
  * 背景：
  *  - 等待动画素材从三帧轮播收敛为单帧遮罩动画，旧实现通过滤镜闪烁黑底影响质感。
+ *  - 2025-03：设计强调“整幅素材淡入淡出”，需在保持架构解耦的前提下调整渲染结构。
  * 目的：
- *  - 采用分层渲染策略让灰度底图与黑色覆盖独立控制，并借助 Hook 管理帧节奏与透明度往复。
+ *  - 采用策略模式与 Hook 管理节奏，同时通过透明度往复实现整幅素材渐隐渐显。
  * 关键决策与取舍：
  *  - 选用策略模式（waitingAnimationStrategy）集中封装节奏与画布尺寸，Loader 仅负责渲染结构；
  *  - 以 useWaitingFrameCycle 提供 shouldSchedule 钩子，确保单帧素材跳过调度避免无意义重置；
@@ -10,7 +11,7 @@
  * 影响范围：
  *  - Loader 组件调用链、等待动画 Hook 与样式模块；外部 API 未变化，仍暴露标准状态语义。
  * 演进与TODO：
- *  - TODO：后续可在覆盖层加速率、节奏策略中引入主题自定义或低性能设备降级逻辑。
+ *  - TODO：引入主题化节奏或低性能设备降级策略，必要时为渐隐渐显增加特性开关。
  */
 import { useMemo } from "react";
 import waittingFrame from "@/assets/waitting-frame.svg";
@@ -18,6 +19,7 @@ import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";
 import useFrameReveal from "./useFrameReveal";
+import frameVisibilityClassName from "./frameVisibilityClassName";
 
 /*
  * 策略模式：
@@ -50,14 +52,6 @@ function computeFadeIntervalMs(cycleDurationMs) {
   return interval > 0 ? interval : cycleDurationMs;
 }
 
-function composeOverlayClassName(isRevealed) {
-  const baseClassName = styles["frame-overlay"];
-  if (!isRevealed) {
-    return baseClassName;
-  }
-  return `${baseClassName} ${styles["frame-overlay-visible"]}`;
-}
-
 function Loader() {
   const { currentFrame, cycleDurationMs } = useWaitingFrameCycle(
     WAITING_FRAMES,
@@ -87,24 +81,21 @@ function Loader() {
         aria-hidden="true"
         style={waitingSymbolStyle}
       >
-        <div className={styles.frame}>
+        <div
+          className={frameVisibilityClassName(
+            styles.frame,
+            styles["frame-visible"],
+            isRevealed,
+          )}
+        >
           {/*
-           * 分层策略说明：
-           *  - 背景：淡入淡出需在灰底与黑色覆盖之间往复切换透明度，以呼应品牌“呼吸感”演绎。
-           *  - 方案：保留双图层结构，底层应用灰阶滤镜，覆盖层通过透明度变换展现节奏，避免引入额外 DOM。
-           *  - 取舍：沿用双 <img> 成本极低，却可复用缓存并保持主题扩展弹性。
+           * 视觉策略：
+           *  - 背景：品牌提出“素材整体淡入淡出”的节奏，要求素材在可见与不可见之间往复切换。
+           *  - 方案：移除双图层堆叠，直接对素材容器应用透明度过渡，使整幅素材随 Hook 输出布尔态渐隐渐显。
+           *  - 取舍：整体淡出意味着等待区短暂留白，但换来动画语义与实现的一致性，后续若需叠加滤镜可在 CSS 中扩展。
            */}
           <img
-            className={styles["frame-base"]}
-            src={currentFrame}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            width={WAITING_FRAME_DIMENSIONS.width}
-            height={WAITING_FRAME_DIMENSIONS.height}
-          />
-          <img
-            className={composeOverlayClassName(isRevealed)}
+            className={styles["frame-asset"]}
             src={currentFrame}
             alt=""
             loading="lazy"
