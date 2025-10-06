@@ -18,6 +18,7 @@ import com.glancy.backend.dto.UserStatisticsResponse;
 import com.glancy.backend.dto.UsernameResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.MembershipTier;
 import com.glancy.backend.entity.ThirdPartyAccount;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
@@ -27,7 +28,9 @@ import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.ThirdPartyAccountRepository;
 import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.service.support.AvatarReferenceResolver;
+import com.glancy.backend.service.support.MembershipStatus;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +57,7 @@ public class UserService {
     private final UserProfileService userProfileService;
     private final EmailVerificationService emailVerificationService;
     private final AvatarReferenceResolver avatarReferenceResolver;
+    private final Clock clock;
 
     public UserService(
         UserRepository userRepository,
@@ -62,7 +66,8 @@ public class UserService {
         AvatarStorage avatarStorage,
         UserProfileService userProfileService,
         EmailVerificationService emailVerificationService,
-        AvatarReferenceResolver avatarReferenceResolver
+        AvatarReferenceResolver avatarReferenceResolver,
+        Clock clock
     ) {
         this.userRepository = userRepository;
         this.loginDeviceRepository = loginDeviceRepository;
@@ -71,6 +76,7 @@ public class UserService {
         this.userProfileService = userProfileService;
         this.emailVerificationService = emailVerificationService;
         this.avatarReferenceResolver = avatarReferenceResolver;
+        this.clock = clock;
     }
 
     /**
@@ -108,13 +114,16 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserDetailResponse getUserDetail(Long id) {
         User user = getUserRaw(id);
+        MembershipStatus membership = MembershipStatus.from(user, clock);
         return new UserDetailResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
             resolveOutboundAvatar(user.getAvatar()),
             user.getPhone(),
-            user.getMember(),
+            membership.active(),
+            membership.tier(),
+            membership.expiresAt(),
             user.getDeleted(),
             user.getCreatedAt(),
             user.getUpdatedAt(),
@@ -299,7 +308,10 @@ public class UserService {
     public UserStatisticsResponse getStatistics() {
         long total = userRepository.count();
         long deleted = userRepository.countByDeletedTrue();
-        long members = userRepository.countByDeletedFalseAndMemberTrue();
+        long members =
+            userRepository.countByDeletedFalseAndMembershipTierIsNotNullAndMembershipExpiresAtGreaterThanEqual(
+                LocalDateTime.now(clock)
+            );
         return new UserStatisticsResponse(total, members, deleted);
     }
 
@@ -544,13 +556,20 @@ public class UserService {
     }
 
     /**
-     * Set a user as member.
+     * Assign a membership tier with an explicit expiry to the target user.
      */
     @Transactional
-    public void activateMembership(Long userId) {
-        log.info("Activating membership for user {}", userId);
+    public void activateMembership(Long userId, MembershipTier tier, LocalDateTime expiresAt) {
+        log.info("Activating membership {} for user {} until {}", tier, userId, expiresAt);
+        if (tier == null || expiresAt == null) {
+            throw new InvalidRequestException("会员等级与有效期不能为空");
+        }
+        if (expiresAt.isBefore(LocalDateTime.now(clock))) {
+            throw new InvalidRequestException("会员有效期必须晚于当前时间");
+        }
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        user.setMember(true);
+        user.setMembershipTier(tier);
+        user.setMembershipExpiresAt(expiresAt);
         userRepository.save(user);
     }
 
@@ -561,7 +580,8 @@ public class UserService {
     public void removeMembership(Long userId) {
         log.info("Removing membership for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        user.setMember(false);
+        user.setMembershipTier(null);
+        user.setMembershipExpiresAt(null);
         userRepository.save(user);
     }
 
@@ -611,19 +631,22 @@ public class UserService {
             }
         }
 
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         String token = UUID.randomUUID().toString();
         user.setLoginToken(token);
         userRepository.save(user);
 
         log.info("User {} logged in", user.getId());
+        MembershipStatus membership = MembershipStatus.from(user, clock);
         return new LoginResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
             resolveOutboundAvatar(user.getAvatar()),
             user.getPhone(),
-            user.getMember(),
+            membership.active(),
+            membership.tier(),
+            membership.expiresAt(),
             token
         );
     }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useApi } from "@/hooks/useApi.js";
 import { useLanguage } from "@/context";
+import { deriveMembershipSnapshot } from "@/utils/membership";
 import { useUserStore, useVoiceStore } from "@/store";
 import fieldStyles from "../form/Form.module.css";
 import styles from "./VoiceSelector.module.css";
@@ -20,13 +21,18 @@ export default function VoiceSelector({
   const api = useApi();
   const { t } = useLanguage();
   const user = useUserStore((s) => s.user);
+  const membership = deriveMembershipSnapshot(user);
   const [voices, setVoices] = useState([]);
   const selected = useVoiceStore((s) => s.getVoice(lang));
   const setVoice = useVoiceStore((s) => s.setVoice);
   const sessionToken = user?.token;
-  const subscriptionSignature = `${user?.id ?? ""}|${user?.plan ?? ""}|${
-    user?.member ? "1" : "0"
-  }|${user?.isPro ? "1" : "0"}`;
+  const subscriptionSignature = [
+    user?.id ?? "",
+    user?.plan ?? "",
+    membership.planId,
+    membership.expiresAt ?? "",
+    user?.isPro ? "1" : "0",
+  ].join("|");
 
   useEffect(() => {
     let cancelled = false;
@@ -55,11 +61,10 @@ export default function VoiceSelector({
     };
   }, [lang, api, sessionToken, subscriptionSignature]);
 
-  const isPro = !!(
-    user?.member ||
-    user?.isPro ||
-    (user?.plan && user.plan !== "free")
-  );
+  const isPro =
+    membership.planId !== "FREE" ||
+    user?.isPro === true ||
+    (typeof user?.plan === "string" && user.plan !== "free");
 
   const normalizedVariant = variant === "pill" ? "pill" : "form";
   const baseClassNames =

@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByDeletedFalse();
 
-    long countByDeletedFalseAndMemberTrue();
+    long countByDeletedFalseAndMembershipTierIsNotNullAndMembershipExpiresAtGreaterThanEqual(LocalDateTime time);
 
     long countByDeletedFalseAndLastLoginAtAfter(LocalDateTime time);
 

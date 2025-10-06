@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.glancy.backend.entity.MembershipTier;
 import com.glancy.backend.entity.TtsUsage;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.QuotaExceededException;
@@ -16,6 +17,7 @@ import com.glancy.backend.service.tts.config.TtsConfigManager;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +65,6 @@ class TtsQuotaServiceTest {
     void verifyQuotaRejectsWhenLimitReached() {
         User user = new User();
         user.setId(1L);
-        user.setMember(false);
         TtsUsage usage = new TtsUsage();
         usage.setCount(5);
         when(usageRepository.findByUserIdAndDate(eq(1L), any(LocalDate.class))).thenReturn(Optional.of(usage));
@@ -78,7 +79,8 @@ class TtsQuotaServiceTest {
     void recordUsageIncrementsCount() {
         User user = new User();
         user.setId(1L);
-        user.setMember(true);
+        user.setMembershipTier(MembershipTier.PLUS);
+        user.setMembershipExpiresAt(LocalDateTime.now(clock).plusDays(1));
         TtsUsage usage = new TtsUsage();
         usage.setUser(user);
         usage.setDate(LocalDate.of(2024, 1, 2));

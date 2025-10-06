@@ -1,5 +1,7 @@
 package com.glancy.backend.dto;
 
+import com.glancy.backend.entity.MembershipTier;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -16,5 +18,7 @@ public class LoginResponse {
     private String avatar;
     private String phone;
     private Boolean member;
+    private MembershipTier membershipTier;
+    private LocalDateTime membershipExpiresAt;
     private String token;
 }

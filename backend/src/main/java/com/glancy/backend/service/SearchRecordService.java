@@ -10,8 +10,10 @@ import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.support.MembershipStatus;
 import com.glancy.backend.service.support.SearchRecordPageRequest;
 import com.glancy.backend.service.support.SearchRecordViewAssembler;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,19 +37,22 @@ public class SearchRecordService {
     private final SearchResultService searchResultService;
     private final SearchRecordViewAssembler searchRecordViewAssembler;
     private final int nonMemberSearchLimit;
+    private final Clock clock;
 
     public SearchRecordService(
         SearchRecordRepository searchRecordRepository,
         UserRepository userRepository,
         SearchProperties properties,
         SearchResultService searchResultService,
-        SearchRecordViewAssembler searchRecordViewAssembler
+        SearchRecordViewAssembler searchRecordViewAssembler,
+        Clock clock
     ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
         this.searchResultService = searchResultService;
         this.searchRecordViewAssembler = searchRecordViewAssembler;
         this.nonMemberSearchLimit = properties.getLimit().getNonMember();
+        this.clock = clock;
     }
 
     /**
@@ -77,7 +82,7 @@ public class SearchRecordService {
             );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
-            existing.setCreatedAt(LocalDateTime.now());
+            existing.setCreatedAt(LocalDateTime.now(clock));
             SearchRecord updated = searchRecordRepository.save(existing);
             log.info("Updated record persisted: {}", describeRecord(updated));
             SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, updated);
@@ -85,8 +90,9 @@ public class SearchRecordService {
             return response;
         }
 
-        if (Boolean.FALSE.equals(user.getMember())) {
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        MembershipStatus membership = MembershipStatus.from(user, clock);
+        if (membership.isNonMember()) {
+            LocalDateTime startOfDay = LocalDate.now(clock).atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
                 userId,

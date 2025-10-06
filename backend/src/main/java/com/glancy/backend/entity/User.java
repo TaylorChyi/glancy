@@ -34,8 +34,10 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String phone;
 
-    @Column(nullable = false)
-    private Boolean member = false;
+    @Enumerated(EnumType.STRING)
+    private MembershipTier membershipTier;
+
+    private LocalDateTime membershipExpiresAt;
 
     private LocalDateTime lastLoginAt;
 

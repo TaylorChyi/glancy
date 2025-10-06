@@ -7,6 +7,7 @@ import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.MembershipTier;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.User;
@@ -15,6 +16,7 @@ import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -52,6 +54,9 @@ class SearchRecordServiceTest {
     @Autowired
     private SearchProperties searchProperties;
 
+    @Autowired
+    private Clock clock;
+
     @BeforeAll
     static void loadEnv() {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
@@ -86,7 +91,7 @@ class SearchRecordServiceTest {
         user.setEmail("s@example.com");
         user.setPhone("41");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req = new SearchRecordRequest();
@@ -137,7 +142,7 @@ class SearchRecordServiceTest {
         user.setEmail("l@example.com");
         user.setPhone("43");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req1 = new SearchRecordRequest();
@@ -169,7 +174,7 @@ class SearchRecordServiceTest {
         user.setEmail("d@example.com");
         user.setPhone("44");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req = new SearchRecordRequest();
@@ -197,7 +202,7 @@ class SearchRecordServiceTest {
         user.setEmail("batch@example.com");
         user.setPhone("45");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req1 = new SearchRecordRequest();
@@ -260,8 +265,9 @@ class SearchRecordServiceTest {
         user.setEmail("pager@example.com");
         user.setPhone("46");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setMember(true);
+        user.setLastLoginAt(LocalDateTime.now(clock));
+        user.setMembershipTier(MembershipTier.PLUS);
+        user.setMembershipExpiresAt(LocalDateTime.now(clock).plusDays(1));
         userRepository.save(user);
 
         for (int i = 0; i < 25; i++) {
@@ -302,7 +308,7 @@ class SearchRecordServiceTest {
         user.setEmail("del@example.com");
         user.setPhone("99");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req = new SearchRecordRequest();
@@ -350,7 +356,7 @@ class SearchRecordServiceTest {
         user.setEmail("spell@example.com");
         user.setPhone("55");
         userRepository.save(user);
-        user.setLastLoginAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now(clock));
         userRepository.save(user);
 
         SearchRecordRequest req = new SearchRecordRequest();

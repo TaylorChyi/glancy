@@ -16,6 +16,7 @@ import {
   listVisiblePlans,
   resolvePricing,
 } from "@/config/pricing";
+import { deriveMembershipSnapshot } from "@/utils/membership";
 
 const FALLBACK_VALUE = "—";
 
@@ -117,7 +118,7 @@ const formatTemplateWithPair = (template, amount, equivalent) => {
  * 输入：
  *  - value: 可能为字符串或 Date 实例的日期输入；
  * 输出：
- *  - 适合展示的字符串，若无法解析则返回 null。该字符串优先使用本地化格式，退化为 ISO-8601。 
+ *  - 适合展示的字符串，若无法解析则返回 null。该字符串优先使用本地化格式，退化为 ISO-8601。
  * 流程：
  *  1) 解析形如 YYYY-MM-DD 的字符串并提取年月日；
  *  2) 利用 UTC 正午构建 Date，规避因时区偏移导致的跨日；
@@ -256,6 +257,7 @@ const KNOWN_PLAN_IDS = new Set(PLAN_SEQUENCE);
  *  - 对于非字符串或未知取值，自动忽略并继续尝试下一候选。
  */
 const resolveCurrentPlanId = (userProfile, { fallbackPlan = "FREE" } = {}) => {
+  const membership = deriveMembershipSnapshot(userProfile);
   const subscriptionMeta = userProfile?.subscription ?? {};
   const candidates = [
     subscriptionMeta.planId,
@@ -276,8 +278,8 @@ const resolveCurrentPlanId = (userProfile, { fallbackPlan = "FREE" } = {}) => {
     })
     .filter(Boolean);
 
-  if (userProfile?.member === true) {
-    candidates.push("PLUS");
+  if (membership.planId !== "FREE") {
+    candidates.push(membership.planId);
   }
 
   for (const candidate of candidates) {
@@ -538,6 +540,7 @@ const buildPlanCards = ({
   translations,
   currentPlanId,
   subscriptionMeta,
+  membership,
 }) => {
   const badgeCurrent = safeString(
     translations.subscriptionPlanCurrentBadge,
@@ -609,14 +612,11 @@ const buildPlanCards = ({
     const isRedeemOnly = plan?.purchase === "redeem_only" && !isCurrent;
 
     let subscriptionExpiryLine = null;
-    if (
-      isCurrent &&
-      planId !== "FREE" &&
-      subscriptionMeta?.nextRenewalDate
-    ) {
-      const formattedRenewalDate = formatRenewalDate(
-        subscriptionMeta.nextRenewalDate,
-      );
+    if (isCurrent && planId !== "FREE") {
+      const renewalSource =
+        subscriptionMeta?.nextRenewalDate ??
+        (membership?.planId === planId ? membership.expiresAt : null);
+      const formattedRenewalDate = formatRenewalDate(renewalSource);
       if (formattedRenewalDate) {
         subscriptionExpiryLine = formatWithTemplate(
           nextRenewalTemplate,
@@ -666,9 +666,14 @@ const buildFeatureMatrix = ({ blueprint, visiblePlanIds, pricing }) =>
     }, {}),
   }));
 
-export function buildSubscriptionSectionProps({ translations, user, onRedeem }) {
+export function buildSubscriptionSectionProps({
+  translations,
+  user,
+  onRedeem,
+}) {
   const t = translations ?? {};
   const userProfile = user ?? {};
+  const membership = deriveMembershipSnapshot(userProfile);
   const subscriptionMeta = userProfile.subscription ?? {};
   const currentPlanId = resolveCurrentPlanId(userProfile, {
     fallbackPlan: "FREE",
@@ -685,6 +690,7 @@ export function buildSubscriptionSectionProps({ translations, user, onRedeem }) 
     translations: t,
     currentPlanId,
     subscriptionMeta,
+    membership,
   });
 
   const featureBlueprint = buildFeatureBlueprint(t);

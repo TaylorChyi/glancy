@@ -1,19 +1,26 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { useUser, useHistory, useLanguage } from "@/context";
+import { deriveMembershipSnapshot } from "@/utils/membership";
 import styles from "./Header.module.css";
 import UserMenuButton from "./UserMenuButton.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
 import UserMenuModals from "./UserMenuModals.jsx";
 
 function UserMenu({ size = 24, showName = false, TriggerComponent }) {
-  const { user, clearUser } = useUser();
+  const userStore = useUser();
+  const { user, clearUser } = userStore ?? {};
   const { clearHistory } = useHistory();
   const { t } = useLanguage();
   const username = user?.username || "";
+  const membership = deriveMembershipSnapshot(user);
   const isPro =
-    user?.member || user?.isPro || (user?.plan && user.plan !== "free");
-  const planName = user?.plan || (isPro ? "plus" : "free");
+    membership.planId !== "FREE" ||
+    user?.isPro === true ||
+    (typeof user?.plan === "string" && user.plan !== "free");
+  const planName =
+    user?.plan ||
+    (membership.planId !== "FREE" ? membership.planId.toLowerCase() : "free");
   const planLabel = planName
     ? planName.charAt(0).toUpperCase() + planName.slice(1)
     : "";

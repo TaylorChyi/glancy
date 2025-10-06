@@ -13,6 +13,7 @@
  */
 import { useCallback, useMemo } from "react";
 import { useHistory, useLanguage, useUser } from "@/context";
+import { deriveMembershipSnapshot } from "@/utils/membership";
 
 export function useSidebarUserDock() {
   const { user, clearUser } = useUser();
@@ -21,12 +22,14 @@ export function useSidebarUserDock() {
 
   const hasUser = Boolean(user);
 
+  const membership = useMemo(() => deriveMembershipSnapshot(user), [user]);
+
   const isPro = useMemo(() => {
     if (!user) {
       return false;
     }
 
-    if (user.member || user.isPro) {
+    if (membership.planId !== "FREE" || user.isPro) {
       return true;
     }
 
@@ -35,7 +38,7 @@ export function useSidebarUserDock() {
     }
 
     return false;
-  }, [user]);
+  }, [membership.planId, user]);
 
   const displayName = useMemo(() => {
     if (!user) {
@@ -50,14 +53,16 @@ export function useSidebarUserDock() {
       return "";
     }
 
-    const planName = user?.plan || (isPro ? "plus" : "free");
+    const planName =
+      user?.plan ||
+      (membership.planId !== "FREE" ? membership.planId.toLowerCase() : "free");
 
     if (!planName) {
       return "";
     }
 
     return planName.charAt(0).toUpperCase() + planName.slice(1);
-  }, [isPro, user]);
+  }, [isPro, membership.planId, user]);
 
   const labels = useMemo(
     () => ({
@@ -89,8 +94,9 @@ export function useSidebarUserDock() {
       user,
       clearUser,
       clearHistory,
+      membership,
     }),
-    [clearHistory, clearUser, isPro, user],
+    [clearHistory, clearUser, isPro, membership, user],
   );
 
   const authenticatedBaseProps = useMemo(

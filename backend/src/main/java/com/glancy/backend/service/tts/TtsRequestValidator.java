@@ -4,9 +4,11 @@ import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.ForbiddenException;
 import com.glancy.backend.exception.InvalidRequestException;
+import com.glancy.backend.service.support.MembershipStatus;
 import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
 import com.glancy.backend.util.SensitiveDataUtil;
+import java.time.Clock;
 import java.util.Locale;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +24,11 @@ import org.springframework.util.StringUtils;
 public class TtsRequestValidator {
 
     private final TtsConfigManager configManager;
+    private final Clock clock;
 
-    public TtsRequestValidator(TtsConfigManager configManager) {
+    public TtsRequestValidator(TtsConfigManager configManager, Clock clock) {
         this.configManager = configManager;
+        this.clock = clock;
     }
 
     /**
@@ -79,7 +83,8 @@ public class TtsRequestValidator {
             throw new InvalidRequestException("无效的音色");
         }
 
-        if ("pro".equalsIgnoreCase(voice.getPlan()) && Boolean.FALSE.equals(user.getMember())) {
+        MembershipStatus membership = MembershipStatus.from(user, clock);
+        if ("pro".equalsIgnoreCase(voice.getPlan()) && membership.isNonMember()) {
             log.warn("Voice={} requires pro plan for user={}", voice.getId(), user.getId());
             throw new ForbiddenException("该音色仅对 Pro 用户开放");
         }

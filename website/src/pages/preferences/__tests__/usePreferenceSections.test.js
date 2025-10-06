@@ -239,108 +239,105 @@ afterEach(() => {
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
  */
-test(
-  "Given default sections When reading blueprint Then general leads navigation",
-  async () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({
-        initialSectionId: undefined,
-      }),
-    );
+test("Given default sections When reading blueprint Then general leads navigation", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
 
-    await waitFor(() => {
-      expect(fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
-    });
+  await waitFor(() => {
+    expect(fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
+  });
 
-    await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
-      );
-      expect(personalizationSection.componentProps.state.status).toBe("ready");
-    });
-
-    expect(result.current.sections.map((section) => section.id)).toEqual([
-      "general",
-      "personalization",
-      "data",
-      "keyboard",
-      "account",
-      "subscription",
-    ]);
-    expect(result.current.activeSectionId).toBe("general");
-    expect(result.current.panel.headingId).toBe("general-section-heading");
-    expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-    expect(result.current.panel.modalHeadingId).toBe(
-      "settings-modal-fallback-heading",
-    );
-    expect(result.current.panel.modalHeadingText).toBe("General");
-    const accountSection = result.current.sections.find(
-      (section) => section.id === "account",
-    );
-    expect(accountSection).toBeDefined();
-    expect(accountSection.Component).toBeDefined();
-    expect(accountSection.componentProps.identity.displayName).toBe("amy");
-    expect(accountSection.componentProps.identity.changeLabel).toBe(
-      translations.changeAvatar,
-    );
-    expect(accountSection.componentProps.identity.avatarAlt).toBe(
-      translations.prefAccountTitle,
-    );
-    expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
-      "function",
-    );
-    expect(accountSection.componentProps.identity.isUploading).toBe(false);
-    expect(
-      typeof accountSection.componentProps.fields[0].renderValue,
-    ).toBe("function");
-    expect(accountSection.componentProps.bindings.title).toBe(
-      translations.settingsAccountBindingTitle,
-    );
-    expect(accountSection.componentProps.bindings.items).toHaveLength(3);
-    expect(
-      accountSection.componentProps.bindings.items.map((item) => item.name),
-    ).toEqual([
-      translations.settingsAccountBindingApple,
-      translations.settingsAccountBindingGoogle,
-      translations.settingsAccountBindingWeChat,
-    ]);
-    expect(
-      accountSection.componentProps.bindings.items.every(
-        (item) =>
-          item.status === translations.settingsAccountBindingStatusUnlinked &&
-          item.actionLabel ===
-            translations.settingsAccountBindingActionPlaceholder,
-      ),
-    ).toBe(true);
-    expect(result.current.avatarEditor).toBeDefined();
-    expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
-      "function",
-    );
-    expect(result.current.avatarEditor.modalProps.open).toBe(false);
-    const subscriptionSection = result.current.sections.find(
-      (section) => section.id === "subscription",
-    );
-    expect(subscriptionSection).toBeDefined();
-    expect(subscriptionSection.Component).toBeDefined();
-    expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
-    expect(
-      subscriptionSection.componentProps.planCards.some(
-        (card) => card.id === "PLUS" && card.state === "current",
-      ),
-    ).toBe(true);
+  await waitFor(() => {
     const personalizationSection = result.current.sections.find(
       (section) => section.id === "personalization",
     );
-    expect(personalizationSection.componentProps.copy.emptyLabel).toBe(
-      translations.settingsPersonalizationEmpty,
-    );
-    expect(
-      personalizationSection.componentProps.state.snapshot.summary.includes(
-        "Engineer",
-      ),
-    ).toBe(true);
-  },
-);
+    expect(personalizationSection.componentProps.state.status).toBe("ready");
+  });
+
+  expect(result.current.sections.map((section) => section.id)).toEqual([
+    "general",
+    "personalization",
+    "data",
+    "keyboard",
+    "account",
+    "subscription",
+  ]);
+  expect(result.current.activeSectionId).toBe("general");
+  expect(result.current.panel.headingId).toBe("general-section-heading");
+  expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
+  expect(result.current.panel.modalHeadingText).toBe("General");
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  expect(accountSection).toBeDefined();
+  expect(accountSection.Component).toBeDefined();
+  expect(accountSection.componentProps.identity.displayName).toBe("amy");
+  expect(accountSection.componentProps.identity.changeLabel).toBe(
+    translations.changeAvatar,
+  );
+  expect(accountSection.componentProps.identity.avatarAlt).toBe(
+    translations.prefAccountTitle,
+  );
+  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+    "function",
+  );
+  expect(accountSection.componentProps.identity.isUploading).toBe(false);
+  expect(typeof accountSection.componentProps.fields[0].renderValue).toBe(
+    "function",
+  );
+  expect(accountSection.componentProps.bindings.title).toBe(
+    translations.settingsAccountBindingTitle,
+  );
+  expect(accountSection.componentProps.bindings.items).toHaveLength(3);
+  expect(
+    accountSection.componentProps.bindings.items.map((item) => item.name),
+  ).toEqual([
+    translations.settingsAccountBindingApple,
+    translations.settingsAccountBindingGoogle,
+    translations.settingsAccountBindingWeChat,
+  ]);
+  expect(
+    accountSection.componentProps.bindings.items.every(
+      (item) =>
+        item.status === translations.settingsAccountBindingStatusUnlinked &&
+        item.actionLabel ===
+          translations.settingsAccountBindingActionPlaceholder,
+    ),
+  ).toBe(true);
+  expect(result.current.avatarEditor).toBeDefined();
+  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+    "function",
+  );
+  expect(result.current.avatarEditor.modalProps.open).toBe(false);
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+  expect(subscriptionSection).toBeDefined();
+  expect(subscriptionSection.Component).toBeDefined();
+  expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
+  expect(
+    subscriptionSection.componentProps.planCards.some(
+      (card) => card.id === "PLUS" && card.state === "current",
+    ),
+  ).toBe(true);
+  const personalizationSection = result.current.sections.find(
+    (section) => section.id === "personalization",
+  );
+  expect(personalizationSection.componentProps.copy.emptyLabel).toBe(
+    translations.settingsPersonalizationEmpty,
+  );
+  expect(
+    personalizationSection.componentProps.state.snapshot.summary.includes(
+      "Engineer",
+    ),
+  ).toBe(true);
+});
 
 /**
  * 测试目标：账户信息存在邮箱时偏好设置应暴露可用的解绑操作。
@@ -354,35 +351,32 @@ test(
  * 边界/异常：
  *  - 若分区尚未生成或字段缺失则测试失败。
  */
-test(
-  "Given bound email When inspecting account field Then unbind action enabled",
-  async () => {
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
-    );
+test("Given bound email When inspecting account field Then unbind action enabled", async () => {
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
 
-    await waitFor(() => {
-      const accountSection = result.current.sections.find(
-        (section) => section.id === "account",
-      );
-      expect(accountSection).toBeDefined();
-    });
-
+  await waitFor(() => {
     const accountSection = result.current.sections.find(
       (section) => section.id === "account",
     );
-    const emailField = accountSection.componentProps.fields.find(
-      (field) => field.id === "email",
-    );
+    expect(accountSection).toBeDefined();
+  });
 
-    expect(emailField).toBeDefined();
-    expect(emailField.action).toBeDefined();
-    expect(emailField.action.disabled).toBe(false);
-    expect(emailField.action.label).toBe(
-      translations.settingsAccountEmailUnbindAction,
-    );
-  },
-);
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  expect(emailField).toBeDefined();
+  expect(emailField.action).toBeDefined();
+  expect(emailField.action.disabled).toBe(false);
+  expect(emailField.action.label).toBe(
+    translations.settingsAccountEmailUnbindAction,
+  );
+});
 
 /**
  * 测试目标：缺少邮箱时解绑操作需保持禁用，避免误导性交互。
@@ -395,44 +389,41 @@ test(
  * 边界/异常：
  *  - 若 email 字段不存在则测试失败。
  */
-test(
-  "Given missing email When inspecting account field Then unbind action disabled",
-  async () => {
-    mockUseUser.mockReturnValue({
-      user: {
-        id: "user-1",
-        username: "amy",
-        email: "",
-        plan: "plus",
-        isPro: true,
-        token: "token-123",
-      },
-      setUser: jest.fn(),
-    });
+test("Given missing email When inspecting account field Then unbind action disabled", async () => {
+  mockUseUser.mockReturnValue({
+    user: {
+      id: "user-1",
+      username: "amy",
+      email: "",
+      plan: "plus",
+      isPro: true,
+      token: "token-123",
+    },
+    setUser: jest.fn(),
+  });
 
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
-    );
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
 
-    await waitFor(() => {
-      const accountSection = result.current.sections.find(
-        (section) => section.id === "account",
-      );
-      expect(accountSection).toBeDefined();
-    });
-
+  await waitFor(() => {
     const accountSection = result.current.sections.find(
       (section) => section.id === "account",
     );
-    const emailField = accountSection.componentProps.fields.find(
-      (field) => field.id === "email",
-    );
+    expect(accountSection).toBeDefined();
+  });
 
-    expect(emailField).toBeDefined();
-    expect(emailField.action).toBeDefined();
-    expect(emailField.action.disabled).toBe(true);
-  },
-);
+  const accountSection = result.current.sections.find(
+    (section) => section.id === "account",
+  );
+  const emailField = accountSection.componentProps.fields.find(
+    (field) => field.id === "email",
+  );
+
+  expect(emailField).toBeDefined();
+  expect(emailField.action).toBeDefined();
+  expect(emailField.action.disabled).toBe(true);
+});
 
 /**
  * 测试目标：画像请求失败后暴露 error 状态并可通过 onRetry 重试。
@@ -447,48 +438,45 @@ test(
  * 边界/异常：
  *  - 若重试未恢复则断言失败。
  */
-test(
-  "Given personalization fetch fails When retry invoked Then status recovers",
-  async () => {
-    fetchProfileMock
-      .mockRejectedValueOnce(new Error("network"))
-      .mockResolvedValueOnce({
-        job: "Writer",
-        goal: "C1",
-        currentAbility: "B2",
-        education: "Master",
-        interest: "Literature",
-        customSections: [],
-      });
+test("Given personalization fetch fails When retry invoked Then status recovers", async () => {
+  fetchProfileMock
+    .mockRejectedValueOnce(new Error("network"))
+    .mockResolvedValueOnce({
+      job: "Writer",
+      goal: "C1",
+      currentAbility: "B2",
+      education: "Master",
+      interest: "Literature",
+      customSections: [],
+    });
 
-    const { result } = renderHook(() =>
-      usePreferenceSections({ initialSectionId: undefined }),
+  const { result } = renderHook(() =>
+    usePreferenceSections({ initialSectionId: undefined }),
+  );
+
+  await waitFor(() => {
+    const personalizationSection = result.current.sections.find(
+      (section) => section.id === "personalization",
     );
+    expect(personalizationSection.componentProps.state.status).toBe("error");
+  });
 
-    await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
-      );
-      expect(personalizationSection.componentProps.state.status).toBe("error");
-    });
+  await act(async () => {
+    const personalizationSection = result.current.sections.find(
+      (section) => section.id === "personalization",
+    );
+    await personalizationSection.componentProps.onRetry();
+  });
 
-    await act(async () => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
-      );
-      await personalizationSection.componentProps.onRetry();
-    });
+  await waitFor(() => {
+    const personalizationSection = result.current.sections.find(
+      (section) => section.id === "personalization",
+    );
+    expect(personalizationSection.componentProps.state.status).toBe("ready");
+  });
 
-    await waitFor(() => {
-      const personalizationSection = result.current.sections.find(
-        (section) => section.id === "personalization",
-      );
-      expect(personalizationSection.componentProps.state.status).toBe("ready");
-    });
-
-    expect(fetchProfileMock).toHaveBeenCalledTimes(2);
-  },
-);
+  expect(fetchProfileMock).toHaveBeenCalledTimes(2);
+});
 
 /**
  * 测试目标：当用户仅暴露 member 标记时，订阅蓝图应回退到 PLUS 套餐。
@@ -528,6 +516,48 @@ test("Given member flag only When mapping subscription plan Then membership fall
   );
   expect(plusCard).toBeDefined();
   expect(plusCard.state).toBe("current");
+});
+
+/**
+ * 测试目标：当会员返回有效期字段时，套餐卡片应渲染对应的到期提示。
+ * 前置条件：用户缺少订阅续费信息但暴露 membershipExpiresAt。
+ * 步骤：
+ *  1) 伪造 membershipTier 与 membershipExpiresAt；
+ *  2) 渲染 usePreferenceSections 并获取订阅分区；
+ * 断言：
+ *  - PRO 套餐的 subscriptionExpiryLine 包含到期年份。
+ * 边界/异常：
+ *  - 若日期格式异常，蓝图会返回 undefined，本用例不覆盖该路径。
+ */
+test("Given membership expiry When building subscription cards Then expiry line reflects metadata", () => {
+  const expiry = "2030-05-01T00:00:00Z";
+  mockUseUser.mockReturnValue({
+    user: {
+      username: "mia",
+      membershipTier: "PRO",
+      membershipExpiresAt: expiry,
+    },
+  });
+
+  const { result } = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
+
+  const subscriptionSection = result.current.sections.find(
+    (section) => section.id === "subscription",
+  );
+
+  expect(subscriptionSection).toBeDefined();
+  expect(subscriptionSection.componentProps.defaultSelectedPlanId).toBe("PRO");
+  const proCard = subscriptionSection.componentProps.planCards.find(
+    (card) => card.id === "PRO",
+  );
+  expect(proCard).toBeDefined();
+  expect(proCard.subscriptionExpiryLine).toEqual(
+    expect.stringContaining("2030"),
+  );
 });
 
 /**

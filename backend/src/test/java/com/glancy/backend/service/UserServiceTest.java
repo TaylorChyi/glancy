@@ -12,6 +12,7 @@ import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.MembershipTier;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
 import com.glancy.backend.exception.InvalidRequestException;
@@ -19,6 +20,8 @@ import com.glancy.backend.repository.LoginDeviceRepository;
 import com.glancy.backend.repository.UserProfileRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +57,9 @@ class UserServiceTest {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
+
+    @Autowired
+    private Clock clock;
 
     @MockitoBean
     private AvatarStorage avatarStorage;
@@ -596,13 +602,16 @@ class UserServiceTest {
         req.setPhone("203");
         UserResponse resp = userService.register(req);
 
-        userService.activateMembership(resp.getId());
+        LocalDateTime expiresAt = LocalDateTime.now(clock).plusDays(7);
+        userService.activateMembership(resp.getId(), MembershipTier.PLUS, expiresAt);
         User user = userRepository.findById(resp.getId()).orElseThrow();
-        assertTrue(user.getMember());
+        assertEquals(MembershipTier.PLUS, user.getMembershipTier());
+        assertEquals(expiresAt, user.getMembershipExpiresAt());
 
         userService.removeMembership(resp.getId());
         User user2 = userRepository.findById(resp.getId()).orElseThrow();
-        assertFalse(user2.getMember());
+        assertNull(user2.getMembershipTier());
+        assertNull(user2.getMembershipExpiresAt());
     }
 
     /**

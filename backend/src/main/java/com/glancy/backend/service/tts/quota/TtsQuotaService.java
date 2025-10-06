@@ -4,6 +4,7 @@ import com.glancy.backend.entity.TtsUsage;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.QuotaExceededException;
 import com.glancy.backend.repository.TtsUsageRepository;
+import com.glancy.backend.service.support.MembershipStatus;
 import com.glancy.backend.service.tts.config.TtsConfig;
 import com.glancy.backend.service.tts.config.TtsConfigManager;
 import java.time.Clock;
@@ -69,8 +70,7 @@ public class TtsQuotaService {
 
     private int quotaLimit(User user) {
         TtsConfig cfg = configManager.current();
-        return Boolean.TRUE.equals(user.getMember())
-            ? cfg.getQuota().getDaily().getPro()
-            : cfg.getQuota().getDaily().getFree();
+        MembershipStatus membership = MembershipStatus.from(user, clock);
+        return membership.active() ? cfg.getQuota().getDaily().getPro() : cfg.getQuota().getDaily().getFree();
     }
 }
