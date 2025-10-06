@@ -19,7 +19,9 @@ import {
   copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
-import { useWordStore, useDataGovernanceStore } from "@/store";
+// 直接依赖各 store，避免桶状导出拆分 chunk 时的循环依赖影响首屏渲染。
+import { useWordStore } from "@/store/wordStore.js";
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { DEFAULT_MODEL, REPORT_FORM_URL, SUPPORT_EMAIL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";

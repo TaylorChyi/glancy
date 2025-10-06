@@ -6,7 +6,8 @@ import {
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
 import { useWordStore } from "@/store/wordStore.js";
-import { useDataGovernanceStore } from "@/store";
+// 直接引用治理 store，避免桶状导出拆分 chunk 后的执行先后错位。
+import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { DEFAULT_MODEL } from "@/config";
 
 const safeParseJson = (input) => {

@@ -53,7 +53,7 @@ jest.unstable_mockModule("@/components/ui/Icon", () => ({
   default: () => null,
 }));
 
-jest.unstable_mockModule("@/utils", () => ({
+jest.unstable_mockModule("@/utils/device.js", () => ({
   __esModule: true,
   useIsMobile: () => false,
 }));

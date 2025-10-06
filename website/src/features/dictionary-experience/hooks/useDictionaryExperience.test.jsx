@@ -125,8 +125,17 @@ useDataGovernanceStore.setState = (updater) => {
 };
 
 jest.unstable_mockModule("@/store", () => ({
-  useWordStore,
+  // 仅暴露 settings store 以匹配 useDictionaryLanguageConfig 的依赖，其他 store 由具体模块 mock。
   useSettingsStore,
+}));
+
+jest.unstable_mockModule("@/store/wordStore.js", () => ({
+  __esModule: true,
+  useWordStore,
+}));
+
+jest.unstable_mockModule("@/store/dataGovernanceStore.ts", () => ({
+  __esModule: true,
   useDataGovernanceStore,
 }));
 
