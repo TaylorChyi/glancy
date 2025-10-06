@@ -155,6 +155,10 @@ function useBreakableContent() {
 
 function createBreakInjector() {
   const ZERO_WIDTH_SPACE = "\u200B";
+  // 说明：
+  //  - Markdown 中的原始空格需要保持占位，否则会出现单词连写。
+  //  - 仅针对非空白字符注入零宽断行，以兼顾换行能力与视觉留白。
+  const WHITESPACE_ONLY = /^\s+$/u;
   const segmenter =
     typeof Intl !== "undefined" && typeof Intl.Segmenter === "function"
       ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
@@ -180,7 +184,22 @@ function createBreakInjector() {
         return text;
       }
 
-      return segments.join(ZERO_WIDTH_SPACE);
+      const shouldJoinWithBreak = (previous, current) => {
+        if (typeof previous !== "string" || typeof current !== "string") {
+          return false;
+        }
+        return !(WHITESPACE_ONLY.test(previous) || WHITESPACE_ONLY.test(current));
+      };
+
+      let result = segments[0];
+      for (let index = 1; index < segments.length; index += 1) {
+        const segment = segments[index];
+        if (shouldJoinWithBreak(segments[index - 1], segment)) {
+          result += ZERO_WIDTH_SPACE;
+        }
+        result += segment;
+      }
+      return result;
     }
 
     if (isValidElement(node)) {
