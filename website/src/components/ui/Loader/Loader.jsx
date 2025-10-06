@@ -2,11 +2,11 @@
  * 背景：
  *  - 等待动画素材从三帧轮播收敛为单帧遮罩动画，旧实现通过滤镜闪烁黑底影响质感。
  * 目的：
- *  - 采用分层渲染策略让灰度底图与黑色覆盖独立控制，并借助 Hook 管理帧节奏与揭示时机。
+ *  - 采用分层渲染策略让灰度底图与黑色覆盖独立控制，并借助 Hook 管理帧节奏与透明度往复。
  * 关键决策与取舍：
  *  - 选用策略模式（waitingAnimationStrategy）集中封装节奏与画布尺寸，Loader 仅负责渲染结构；
  *  - 以 useWaitingFrameCycle 提供 shouldSchedule 钩子，确保单帧素材跳过调度避免无意义重置；
- *  - 通过 useFrameReveal 搭配 CSS clip-path 实现自下而上的遮罩动画，替代难维护的滤镜方案。
+ *  - 通过 useFrameReveal 与渐隐动画组合打造往复呼吸效果，保持组件职责纯粹与动画语义分离。
  * 影响范围：
  *  - Loader 组件调用链、等待动画 Hook 与样式模块；外部 API 未变化，仍暴露标准状态语义。
  * 演进与TODO：
@@ -43,14 +43,19 @@ const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
   "--waiting-frame-height": `min(33vh, ${WAITING_FRAME_DIMENSIONS.height}px)`,
   "--waiting-frame-aspect-ratio": WAITING_FRAME_ASPECT_RATIO,
 });
-const WAITING_REVEAL_DURATION_RATIO = 0.65; // 经验值：色彩过渡占节奏 65%，避免突兀闪烁。
+const WAITING_FADE_INTERVAL_RATIO = 0.5; // 经验值：淡入淡出各占半个节奏，营造平缓呼吸感。
+
+function computeFadeIntervalMs(cycleDurationMs) {
+  const interval = Math.round(cycleDurationMs * WAITING_FADE_INTERVAL_RATIO);
+  return interval > 0 ? interval : cycleDurationMs;
+}
 
 function composeOverlayClassName(isRevealed) {
   const baseClassName = styles["frame-overlay"];
   if (!isRevealed) {
     return baseClassName;
   }
-  return `${baseClassName} ${styles["frame-overlay-revealed"]}`;
+  return `${baseClassName} ${styles["frame-overlay-visible"]}`;
 }
 
 function Loader() {
@@ -58,17 +63,17 @@ function Loader() {
     WAITING_FRAMES,
     WAITING_CYCLE_OPTIONS,
   );
-  const isRevealed = useFrameReveal(currentFrame);
+  const fadeIntervalMs = computeFadeIntervalMs(cycleDurationMs);
+  const isRevealed = useFrameReveal(currentFrame, {
+    intervalMs: fadeIntervalMs,
+  });
 
   const waitingSymbolStyle = useMemo(() => {
-    const revealDuration = Math.round(
-      cycleDurationMs * WAITING_REVEAL_DURATION_RATIO,
-    );
     return {
       ...WAITING_SYMBOL_STYLE_BASE,
-      "--waiting-reveal-duration": `${revealDuration}ms`,
+      "--waiting-fade-duration": `${fadeIntervalMs}ms`,
     };
-  }, [cycleDurationMs]);
+  }, [fadeIntervalMs]);
 
   return (
     <div
@@ -85,9 +90,9 @@ function Loader() {
         <div className={styles.frame}>
           {/*
            * 分层策略说明：
-           *  - 背景：单帧素材需呈现“灰底-黑色覆盖”自下而上揭示效果，若仅靠滤镜会导致色彩不稳定且难以扩展。
-           *  - 方案：采用双图层组合，底层应用灰阶滤镜，覆盖层使用 clip-path 控制揭示，便于未来替换素材时复用同一逻辑。
-           *  - 取舍：额外渲染一次 <img>，但换取动画可控性与更清晰的职责分离，符合后续扩展多主题的预期。
+           *  - 背景：淡入淡出需在灰底与黑色覆盖之间往复切换透明度，以呼应品牌“呼吸感”演绎。
+           *  - 方案：保留双图层结构，底层应用灰阶滤镜，覆盖层通过透明度变换展现节奏，避免引入额外 DOM。
+           *  - 取舍：沿用双 <img> 成本极低，却可复用缓存并保持主题扩展弹性。
            */}
           <img
             className={styles["frame-base"]}

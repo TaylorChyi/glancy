@@ -1,11 +1,11 @@
 /**
  * 背景：
- *  - Loader 视觉体系改为“灰底 + 黑色遮罩”双层结构，需避免旧版滤镜导致的闪烁与色偏。
+ *  - Loader 视觉升级为呼吸式淡入淡出，需让灰底与黑色覆盖在透明度层面往复切换。
  * 目的：
- *  - 通过 CSS 模块定义基础层、覆盖层与遮罩动画，统一尺寸 token 并控制揭示节奏。
+ *  - 通过 CSS 模块配置透明度动画，保持尺寸 token 与动画节奏可配置，确保与策略层解耦。
  * 关键决策与取舍：
- *  - 采用 clip-path 而非 mask，减少浏览器兼容性差异；
- *  - 使用 CSS 变量承载策略层传递的尺寸与动画时长，便于未来主题扩展。
+ *  - 使用 opacity + transition，而非额外 keyframes，以便随 Hook 切换布尔态即可驱动动画；
+ *  - 所有时长仍交由 CSS 变量控制，方便主题或无障碍场景动态调整。
  */
 .loader {
   display: grid;
@@ -58,12 +58,12 @@
   inset: 0;
   filter: none;
   pointer-events: none;
-  transition: clip-path var(--waiting-reveal-duration, 900ms) ease-out;
-  clip-path: inset(100% 0 0 0);
+  opacity: 0;
+  transition: opacity var(--waiting-fade-duration, 750ms) ease-in-out;
 }
 
-.frame-overlay-revealed {
-  clip-path: inset(0 0 0 0);
+.frame-overlay-visible {
+  opacity: 1;
 }
 
 .label {
