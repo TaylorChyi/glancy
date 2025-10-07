@@ -1,5 +1,5 @@
 export default {
-  welcomeTitle: "Glancy Dictionary",
+  welcomeTitle: "Glancy",
   welcomeMsg: "Welcome to Glancy, a dictionary focused on vocabulary learning.",
   userCount: "Total Users",
   userList: "User List",

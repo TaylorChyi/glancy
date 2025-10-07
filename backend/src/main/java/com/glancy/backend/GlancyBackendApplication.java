@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Application entry point for the Glancy dictionary backend.
+ * Application entry point for the Glancy backend.
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan

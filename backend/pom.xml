@@ -6,7 +6,7 @@
 	<artifactId>glancy-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>glancy-backend</name>
-	<description>Backend service for Glancy dictionary application</description>
+	<description>Backend service for Glancy application</description>
 	<url/>
 	<licenses>
 		<license/>
