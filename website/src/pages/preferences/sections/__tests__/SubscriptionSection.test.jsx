@@ -137,3 +137,30 @@ test("Given subscription expiry When toggling selection Then expiry line only vi
 
   expect(screen.queryByText("Next: 2025-01-01")).toBeNull();
 });
+
+/**
+ * 测试目标：输入兑换码时按四位分组展示，但提交时回传未分隔的原始值。
+ * 前置条件：渲染组件并传入可观察的 onRedeem 回调。
+ * 步骤：
+ *  1) 在输入框中输入包含分隔符的兑换码。
+ *  2) 触发兑换按钮。
+ * 断言：
+ *  - 输入框展示的值被自动插入短横线分组。
+ *  - onRedeem 收到的参数不含分隔符，保持纯兑换码。
+ * 边界/异常：
+ *  - 若展示值与原始值混淆，说明输入/输出解耦失败。
+ */
+test("Given redeem code input When formatting Then display groups but callback receives raw code", () => {
+  const onRedeem = jest.fn();
+  render(<SubscriptionSection {...baseProps} onRedeem={onRedeem} />);
+
+  const input = screen.getByPlaceholderText("Code");
+  fireEvent.change(input, { target: { value: "abcd1234efgh5678" } });
+
+  expect(input).toHaveValue("abcd-1234-efgh-5678");
+
+  fireEvent.change(input, { target: { value: "abcd-1234-efgh-5678" } });
+  fireEvent.click(screen.getByRole("button", { name: "Redeem now" }));
+
+  expect(onRedeem).toHaveBeenCalledWith("abcd1234efgh5678");
+});

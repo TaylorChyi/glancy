@@ -10,9 +10,50 @@
  * 演进与TODO：
  *  - TODO: 接入真实兑换 API 时补充加载/错误态，并与遥测打通。
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
+
+const REDEEM_CODE_GROUP_SIZE = 4;
+const REDEEM_CODE_MAX_LENGTH = 16;
+
+/**
+ * 意图：保持输入与展示解耦，确保兑换码内部存储为纯净值，展示时再进行分组。
+ * 输入：原始用户输入（可能包含空格、短横线或其他分隔符）。
+ * 输出：去除分隔符后的纯兑换码，长度受限于 REDEEM_CODE_MAX_LENGTH。
+ * 流程：
+ *  1) 移除除字母数字外的字符。
+ *  2) 截断至最大长度，避免溢出后续 API 限制。
+ * 关键决策与取舍：基于受控组件 + 纯函数完成格式化，比引入输入掩码库（例如 cleave.js）更轻量，也避免未来在多端维护额外依赖。
+ * 错误处理：若输入为空则返回空字符串，便于受控组件回退。
+ * 复杂度：O(n)，n 为输入长度，兑换码长度受限因此成本可控。
+ */
+function normalizeRedeemCodeInput(rawValue) {
+  if (!rawValue) {
+    return "";
+  }
+  return rawValue.replace(/[^0-9a-zA-Z]/g, "").slice(0, REDEEM_CODE_MAX_LENGTH);
+}
+
+/**
+ * 意图：为兑换码提供视觉分组，提升可读性且不影响实际提交数据。
+ * 输入：normalize 后的纯兑换码。
+ * 输出：每四位插入短横线的字符串，仅用于 UI 展示。
+ * 流程：遍历字符串并按固定分组注入分隔符。
+ * 关键决策与取舍：采用静态分组逻辑以符合当前 16 位兑换码约束；若后续改为配置化长度，可通过注入分组策略函数扩展，无需更改调用方。
+ * 错误处理：空字符串时直接返回空，避免渲染 "undefined"。
+ * 复杂度：O(n)，n 为兑换码长度。
+ */
+function formatRedeemCodeForDisplay(code) {
+  if (!code) {
+    return "";
+  }
+  const groups = [];
+  for (let index = 0; index < code.length; index += REDEEM_CODE_GROUP_SIZE) {
+    groups.push(code.slice(index, index + REDEEM_CODE_GROUP_SIZE));
+  }
+  return groups.join("-");
+}
 
 function SubscriptionSection({
   title,
@@ -36,6 +77,11 @@ function SubscriptionSection({
   const [isPlanRailAtStart, setIsPlanRailAtStart] = useState(true);
   const [isPlanRailAtEnd, setIsPlanRailAtEnd] = useState(false);
 
+  const formattedRedeemCode = useMemo(
+    () => formatRedeemCodeForDisplay(redeemCode),
+    [redeemCode],
+  );
+
   const handlePlanSelect = useCallback((planId, disabled) => {
     if (disabled) {
       return;
@@ -45,7 +91,7 @@ function SubscriptionSection({
 
   const handleRedeemAction = useCallback(() => {
     if (onRedeem) {
-      onRedeem(redeemCode.trim());
+      onRedeem(redeemCode);
     }
   }, [onRedeem, redeemCode]);
 
@@ -239,8 +285,10 @@ function SubscriptionSection({
               type="text"
               className={styles["subscription-redeem-input"]}
               placeholder={redeemCopy.placeholder}
-              value={redeemCode}
-              onChange={(event) => setRedeemCode(event.target.value)}
+              value={formattedRedeemCode}
+              onChange={(event) =>
+                setRedeemCode(normalizeRedeemCodeInput(event.target.value))
+              }
             />
             <button
               type="button"
