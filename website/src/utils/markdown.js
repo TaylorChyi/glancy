@@ -75,7 +75,8 @@ const SEGMENTATION_MARKER_PATTERNS = [
 // 说明：
 //  - 这些标签来自后端 Markdown 解析器的 Section 定义，覆盖了 LLM 输出中常见的段落元信息。
 //  - 目标是保持前后端对「需要独立换行的行内标签」的识别一致，避免前端额外维护语言分支。
-//  - 如需扩展新的标签，请与后端 `MarkdownWordExtractor` 的 `resolveSection` 保持同步，防止两端语义漂移。
+//  - 2025-02 抖宝协议修订新增 Recommended Audience 等教学标签，后端已在 `MarkdownWordExtractor.resolveSection` 对应扩展；此处同步前端词表。
+//  - 同步机制：后续若 Doubao 协议再扩展 Section，请先更新后端解析映射，再按原顺序在此常量补齐，确保排版规则与解析语义锁步演进。
 const INLINE_LABEL_TOKENS = new Set(
   [
     "sense",
@@ -146,6 +147,12 @@ const INLINE_LABEL_TOKENS = new Set(
     "insight",
     "extended",
     "extendednotes",
+    "recommendedaudience",
+    "collocations",
+    "setexpressions",
+    "derivatives",
+    "extendedforms",
+    "historicalresonance",
     // Practice prompts 与答案标签来自新版释义流数据，需参与排版以维持可滚动的可读布局。
     "answer",
     "practiceprompts",
@@ -157,7 +164,7 @@ const INLINE_LABEL_TOKENS = new Set(
 );
 
 const INLINE_LABEL_DYNAMIC_PATTERNS = [
-  /^(?:s|sense)\d+(?:[a-z]+)?$/,
+  /^(?:s|sense)\d+(?:[a-z]+\d*)*$/,
   /^example\d+$/,
   // PracticePrompts1.SentenceCorrection -> practiceprompts1sentencecorrection
   /^practiceprompts\d+(?:[a-z]+)?$/,
@@ -295,6 +302,11 @@ function deriveLineIndentation(source, offset) {
 
 function resolveAdjacentLabelSplit(segment) {
   const token = segment.slice(0, -1);
+  // Sense 编号标签需要整体交给 formatSenseLabel 处理，否则 `S1Definition` 会被拆成 `S` 与 `Definition`，
+  // 导致编号丢失并与后端 Section 映射不一致。
+  if (formatSenseLabel(token)) {
+    return null;
+  }
   let best = null;
   for (let i = 1; i < token.length; i += 1) {
     const suffix = token.slice(i);
