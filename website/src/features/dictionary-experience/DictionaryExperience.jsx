@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import MessagePopup from "@/components/ui/MessagePopup";
+import Toast from "@/components/ui/Toast";
 import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
@@ -51,6 +52,8 @@ export default function DictionaryExperience() {
     popupOpen,
     popupMsg,
     closePopup,
+    toast,
+    closeToast,
     dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel,
@@ -246,6 +249,15 @@ export default function DictionaryExperience() {
         onSubmit={reportDialogHandlers.submit}
       />
       <MessagePopup open={popupOpen} message={popupMsg} onClose={closePopup} />
+      <Toast
+        open={toast?.open}
+        message={toast?.message}
+        duration={toast?.duration}
+        backgroundColor={toast?.backgroundColor}
+        textColor={toast?.textColor}
+        closeLabel={toast?.closeLabel}
+        onClose={closeToast}
+      />
     </>
   );
 }

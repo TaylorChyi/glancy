@@ -23,6 +23,7 @@ import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { DEFAULT_MODEL } from "@/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
+import { useDictionaryToast } from "./useDictionaryToast.js";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
 import {
   DICTIONARY_EXPERIENCE_VIEWS,
@@ -143,6 +144,7 @@ export function useDictionaryExperience() {
     handleSwapLanguages,
   } = useDictionaryLanguageConfig({ t });
   const { popupOpen, popupMsg, showPopup, closePopup } = useDictionaryPopup();
+  const { state: toastState, showToast, closeToast } = useDictionaryToast();
   const {
     state: reportDialogState,
     categories: reportDialogCategories,
@@ -154,7 +156,7 @@ export function useDictionaryExperience() {
   } = useWordIssueReportDialog({
     onSuccess: () => {
       const message = t.reportSuccess ?? t.report ?? "Report";
-      showPopup(message);
+      showToast(message);
     },
     onError: () => {
       const message = t.reportFailed ?? t.report ?? "Report";
@@ -379,11 +381,13 @@ export function useDictionaryExperience() {
     setCurrentTerm("");
     setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
     focusInput();
+    closeToast();
   }, [
     cancelActiveLookup,
     clearCopyFeedbackResetTimer,
     focusInput,
     setActiveView,
+    closeToast,
   ]);
 
   const { toggleFavoriteEntry } = useAppShortcuts({
@@ -1079,6 +1083,8 @@ export function useDictionaryExperience() {
     popupOpen,
     popupMsg,
     closePopup,
+    toast: toastState,
+    closeToast,
     handleCopy,
     reportDialog,
     reportDialogHandlers,
