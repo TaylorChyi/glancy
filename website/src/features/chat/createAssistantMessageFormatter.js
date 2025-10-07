@@ -14,6 +14,31 @@
  */
 import { createStreamingTextBuffer, polishDictionaryMarkdown } from "@/utils";
 
+/**
+ * 背景：
+ *  - 抖宝词典在 2024Q4 起持续扩展字段集，除早期的 senses/example 外，又新增英文释义、适用人群等模块。
+ * 关键决策与取舍：
+ *  - 采用字段名信号+命中计数策略，既能覆盖大小写差异，又能避免单个关键词偶然出现导致误判。
+ *  - 选取当前最稳定的结构化段落标题（含历史与新增字段），并统一使用不区分大小写的冒号匹配形式。
+ * 演进与维护：
+ *  - 若后续 Doubao 字段再演进，只需在下方数组补充新的字段名正则，同时评估是否需要调整最小命中阈值，
+ *    确保至少两项结构化信号成立后再触发字典格式化，维持高置信度识别。
+ */
+const DOUBAO_DICTIONARY_SIGNAL_PATTERNS = Object.freeze([
+  /\bSenses\b/i,
+  /\bExample\d*\s*:/i,
+  /\bUsageInsight\s*:/i,
+  /\bRegister\s*:/i,
+  /\bEntryType\s*:/i,
+  /\bEnglishDefinitions?\s*:/i,
+  /\bRecommendedAudience\s*:/i,
+  /\bCollocations?\s*:/i,
+  /\bDerivatives?\s*:/i,
+  /\bPracticePrompts?\s*:/i,
+]);
+
+const MIN_DOUBAO_DICTIONARY_SIGNAL_MATCHES = 2;
+
 const FALLBACK_STRATEGY = {
   matches() {
     return true;
@@ -29,14 +54,10 @@ function createDoubaoDictionaryStrategy() {
       if (!text || text.length < 20) {
         return false;
       }
-      const signals = [
-        /\bSenses\b/i,
-        /\bExample\d*:/,
-        /\bUsageInsight:/,
-        /\bRegister:/,
-        /\bEntryType:/,
-      ];
-      return signals.some((pattern) => pattern.test(text));
+      const matches = DOUBAO_DICTIONARY_SIGNAL_PATTERNS.filter((pattern) =>
+        pattern.test(text),
+      ).length;
+      return matches >= MIN_DOUBAO_DICTIONARY_SIGNAL_MATCHES;
     },
     format(text) {
       return polishDictionaryMarkdown(text);
