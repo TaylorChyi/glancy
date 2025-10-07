@@ -9,6 +9,9 @@ jest.unstable_mockModule("@/context", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
   useLocale: () => ({ locale: "en-US" }),
   useApiContext: () => ({ request: async () => {} }),
+  useUser: () => ({ setUser: jest.fn() }),
+  useHistory: () => ({ entries: [] }),
+  useFavorites: () => ({ items: [] }),
   useLanguage: () => ({
     lang: "en",
     t: {
@@ -26,8 +29,11 @@ jest.unstable_mockModule("@/context", () => ({
       codeRequestSuccess: "Verification code sent. Please check your inbox.",
       codeRequestFailed: "Failed to send verification code",
       codeRequestInvalidMethod: "Unavailable",
+      toastDismissLabel: "Dismiss notification",
     },
   }),
+  useKeyboardShortcutContext: () => ({ shortcuts: [] }),
+  KEYBOARD_SHORTCUT_RESET_ACTION: "reset",
 }));
 
 const iconRegistry = {
@@ -233,11 +239,11 @@ describe("AuthForm", () => {
       }),
     );
 
-    expect(
-      await screen.findByText(
-        "Verification code sent. Please check your inbox.",
-      ),
-    ).toBeInTheDocument();
+    const toast = await screen.findByRole("status");
+    expect(toast).toHaveTextContent(
+      "Verification code sent. Please check your inbox.",
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   /**
