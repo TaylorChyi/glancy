@@ -334,6 +334,50 @@ describe("OutputToolbar", () => {
   });
 
   /**
+   * 测试目标：父组件未传入 canShare 时依旧可依据 shareModel 开启分享菜单。
+   * 前置条件：shareModel 同时提供链接复制与图片导出能力。
+   * 步骤：
+   *  1) 渲染组件但不显式传入 canShare；
+   *  2) 点击分享按钮后等待菜单出现；
+   *  3) 触发复制并验证回调执行。
+   * 断言：
+   *  - 分享按钮保持可用并可展开菜单；
+   *  - onCopyLink 被调用一次。
+   * 边界/异常：
+   *  - 若 shareModel.canShare === false，应由其他用例覆盖禁用路径。
+   */
+  test("WhenCanSharePropOmitted_MenuFallsBackToShareModel", async () => {
+    const onCopyLink = jest.fn(() => Promise.resolve());
+    render(
+      <OutputToolbar
+        term="epsilon"
+        shareModel={{
+          onCopyLink,
+          onExportImage: jest.fn(() => Promise.resolve()),
+          canExportImage: true,
+        }}
+      />,
+    );
+
+    const shareButton = screen.getByRole("button", { name: "分享" });
+    expect(shareButton).not.toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(shareButton);
+    });
+
+    const copyItem = await screen.findByRole("menuitem", {
+      name: /复制分享链接/,
+    });
+
+    await act(async () => {
+      fireEvent.click(copyItem);
+    });
+
+    expect(onCopyLink).toHaveBeenCalledTimes(1);
+  });
+
+  /**
    * 验证 renderRoot 策略可替换默认容器，且仍保留 aria 语义。
    */
   test("supports custom root renderer", () => {
