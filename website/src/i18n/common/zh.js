@@ -106,6 +106,8 @@ export default {
   settingsDataRetentionOption_365d: "365 天",
   settingsDataRetentionOption_forever: "永久保留",
   settingsDataLanguageLabel: "按语言清理",
+  settingsDataLanguageDescription:
+    "仅删除所选语言的查询历史，不影响其他语种的留存。",
   settingsDataClearLanguagePlaceholder: "暂无按语言分类的历史记录",
   settingsDataActionsLabel: "数据操作",
   settingsDataClearAll: "清空全部历史",

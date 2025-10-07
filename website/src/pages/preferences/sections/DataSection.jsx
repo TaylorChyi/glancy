@@ -206,6 +206,9 @@ function DataSection({ title, message, headingId, descriptionId }) {
     "Choose how long records stay before we prune them.";
 
   const languageLabel = t.settingsDataLanguageLabel || "Language history";
+  const languageDescription =
+    t.settingsDataLanguageDescription ||
+    "Only clears saved lookups for the selected language.";
   const languagePlaceholder =
     t.settingsDataClearLanguagePlaceholder || "No language history yet";
 
@@ -453,6 +456,7 @@ function DataSection({ title, message, headingId, descriptionId }) {
           <label htmlFor={languageFieldId} className={styles["control-label"]}>
             {languageLabel}
           </label>
+          <p className={styles.description}>{languageDescription}</p>
           {languageOptions.length > 0 ? (
             <div className={styles["language-shell"]}>
               <LanguageMenu
