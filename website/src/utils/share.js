@@ -42,18 +42,60 @@ const normaliseBase = (baseUrl, fallbackUrl) => {
   }
 };
 
+const sanitizeParamValue = (value) => {
+  if (value == null) return "";
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return String(value).trim();
+};
+
+const appendQueryParams = (targetUrl, params) => {
+  if (!targetUrl) return "";
+  const entries = Object.entries(params || {}).filter(([, value]) =>
+    Boolean(sanitizeParamValue(value)),
+  );
+
+  if (entries.length === 0) {
+    return targetUrl;
+  }
+
+  try {
+    const url = new URL(targetUrl);
+    entries.forEach(([key, value]) => {
+      url.searchParams.set(key, sanitizeParamValue(value));
+    });
+    return url.toString();
+  } catch {
+    const separator = targetUrl.includes("?") ? "&" : "?";
+    const query = new URLSearchParams();
+    entries.forEach(([key, value]) => {
+      query.set(key, sanitizeParamValue(value));
+    });
+    return `${targetUrl}${separator}${query.toString()}`;
+  }
+};
+
 export function resolveShareTarget({
   baseUrl = SHARE_BASE_URL,
   currentUrl,
+  term,
+  language,
+  versionId,
 } = {}) {
   const fallbackUrl = resolveFallbackUrl(currentUrl);
   const normalisedBase = normaliseBase(baseUrl, fallbackUrl);
 
-  if (normalisedBase) {
-    return normalisedBase;
+  const target = normalisedBase || fallbackUrl;
+  if (!target) {
+    return "";
   }
 
-  return fallbackUrl;
+  return appendQueryParams(target, {
+    term,
+    lang: language,
+    versionId,
+  });
 }
 
 const getNavigator = (nav) => {
@@ -112,3 +154,8 @@ export async function attemptShareLink({
 
   return { status: "failed", error: lastError };
 }
+
+export const __INTERNAL__ = Object.freeze({
+  appendQueryParams,
+  sanitizeParamValue,
+});

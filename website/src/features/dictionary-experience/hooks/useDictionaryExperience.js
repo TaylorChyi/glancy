@@ -14,7 +14,6 @@ import {
   resolveDictionaryFlavor,
   WORD_LANGUAGE_AUTO,
   resolveShareTarget,
-  attemptShareLink,
   copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
@@ -36,6 +35,7 @@ import {
   normalizeDictionaryMarkdown,
   normalizeMarkdownEntity,
 } from "../markdown/dictionaryMarkdownNormalizer.js";
+import { exportDictionaryShareImage } from "../share/dictionaryShareImage.js";
 
 /**
  * 背景：
@@ -72,6 +72,7 @@ export function useDictionaryExperience() {
   const [copyFeedbackState, setCopyFeedbackState] = useState(
     COPY_FEEDBACK_STATES.IDLE,
   );
+  const [shareImageState, setShareImageState] = useState("idle");
   const { user } = useUser();
   const {
     history: historyItems,
@@ -613,52 +614,92 @@ export function useDictionaryExperience() {
     executeLookup(currentTerm, { forceNew: true });
   }, [currentTerm, executeLookup]);
 
-  const handleShare = useCallback(async () => {
-    if (!activeTerm) return;
-
+  const shareUrl = useMemo(() => {
+    if (!activeTerm) return "";
     const currentUrl =
       typeof window !== "undefined" && window.location
         ? window.location.href
         : "";
+    return resolveShareTarget({
+      currentUrl,
+      term: activeTerm,
+      language: dictionaryTargetLanguage,
+      versionId: activeVersionId,
+    });
+  }, [activeTerm, dictionaryTargetLanguage, activeVersionId]);
 
-    const shareUrl = resolveShareTarget({ currentUrl });
-    const applyTermTemplate = (template, fallback) => {
-      if (typeof template === "string" && template.length > 0) {
-        return template.split("{term}").join(activeTerm);
-      }
-      return fallback;
-    };
-
-    const shareText = applyTermTemplate(t.shareMessage, activeTerm);
-    const shareTitle = activeTerm;
+  const handleShareLinkCopy = useCallback(async () => {
+    if (!activeTerm) return;
+    const targetUrl = shareUrl;
+    const fallbackMessage = t.shareFailed ?? t.share ?? activeTerm;
+    if (!targetUrl) {
+      showPopup(fallbackMessage);
+      return;
+    }
 
     try {
-      const result = await attemptShareLink({
-        title: shareTitle,
-        text: shareText,
-        url: shareUrl,
-      });
-
-      if (result.status === "shared") {
-        showPopup(t.shareSuccess ?? t.share ?? shareTitle);
-      } else if (result.status === "copied") {
-        showPopup(t.shareCopySuccess ?? t.shareSuccess ?? shareTitle);
-      } else if (result.status === "failed") {
-        showPopup(t.shareFailed ?? t.share ?? shareTitle);
+      const result = await copyTextToClipboard(targetUrl);
+      if (result.status === "copied") {
+        const successMessage =
+          t.shareCopySuccess ?? t.shareSuccess ?? t.share ?? activeTerm;
+        showPopup(successMessage);
+      } else {
+        showPopup(fallbackMessage);
       }
     } catch (error) {
-      console.error("[DictionaryExperience] share failed", error);
-      showPopup(t.shareFailed ?? t.share ?? shareTitle);
+      console.error("[DictionaryExperience] share link copy failed", error);
+      showPopup(fallbackMessage);
     }
   }, [
     activeTerm,
-    t.shareMessage,
+    shareUrl,
+    showPopup,
+    t.shareCopySuccess,
     t.shareSuccess,
     t.share,
-    t.shareCopySuccess,
     t.shareFailed,
-    showPopup,
   ]);
+
+  const handleShareImageExport = useCallback(async () => {
+    if (!activeTerm) return;
+    if (shareImageState === "pending") return;
+    if (!entry && !finalText) {
+      const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
+      showPopup(failureMessage ?? activeTerm);
+      return;
+    }
+
+    const preparingMessage = t.shareImagePreparing;
+    try {
+      setShareImageState("pending");
+      if (preparingMessage) {
+        showPopup(preparingMessage);
+      }
+      const result = await exportDictionaryShareImage({
+        term: activeTerm,
+        entry,
+        finalText,
+        t,
+        user,
+        appName: t.shareAppName ?? "Glancy",
+      });
+
+      if (result.status === "success") {
+        const successMessage =
+          t.shareImageSuccess ?? t.shareSuccess ?? t.share ?? activeTerm;
+        showPopup(successMessage);
+      } else if (result.status === "empty") {
+        const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
+        showPopup(failureMessage ?? activeTerm);
+      }
+    } catch (error) {
+      console.error("[DictionaryExperience] share image export failed", error);
+      const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
+      showPopup(failureMessage ?? activeTerm);
+    } finally {
+      setShareImageState("idle");
+    }
+  }, [activeTerm, entry, finalText, shareImageState, showPopup, t, user]);
 
   const handleDeleteHistory = useCallback(async () => {
     const identifier = activeTerm;
@@ -921,7 +962,17 @@ export function useDictionaryExperience() {
       canDelete: isTermActionable,
       onDelete: isEntryViewActive ? handleDeleteHistory : undefined,
       canShare: isTermActionable,
-      onShare: isEntryViewActive ? handleShare : undefined,
+      shareModel:
+        isEntryViewActive && isTermActionable
+          ? {
+              canShare: Boolean(shareUrl),
+              onCopyLink: handleShareLinkCopy,
+              onExportImage: handleShareImageExport,
+              isImageExporting: shareImageState === "pending",
+              canExportImage: Boolean(entry || finalText),
+              shareUrl,
+            }
+          : null,
       canReport: isTermActionable,
       onReport: isEntryViewActive ? handleReport : undefined,
     }),
@@ -944,7 +995,12 @@ export function useDictionaryExperience() {
       favorites,
       toggleFavoriteEntry,
       handleDeleteHistory,
-      handleShare,
+      shareUrl,
+      handleShareLinkCopy,
+      handleShareImageExport,
+      shareImageState,
+      entry,
+      finalText,
       handleReport,
     ],
   );

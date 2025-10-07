@@ -1,9 +1,11 @@
 import PropTypes from "prop-types";
-import { memo, useMemo, useCallback } from "react";
+import { memo, useMemo, useCallback, useState, useRef, useEffect } from "react";
 import { TtsButton } from "@/components";
 import ThemeIcon from "@/components/ui/Icon";
 import { useLanguage, useUser } from "@/context";
 import SelectMenu from "@/components/ui/SelectMenu";
+import Popover from "@/components/ui/Popover/Popover.jsx";
+import useMenuNavigation from "@/hooks/useMenuNavigation.js";
 import styles from "./OutputToolbar.module.css";
 
 const ACTION_BLUEPRINTS = [
@@ -33,15 +35,6 @@ const ACTION_BLUEPRINTS = [
     getIcon: () => <ThemeIcon name="trash" width={20} height={20} />,
     canUse: ({ canDelete }) => Boolean(canDelete),
     getHandler: ({ onDelete }) => onDelete,
-  },
-  {
-    key: "share",
-    variant: "share",
-    requiresUser: true,
-    getLabel: ({ t }) => t.share || "Share",
-    getIcon: () => <ThemeIcon name="link" width={20} height={20} />,
-    canUse: ({ canShare }) => Boolean(canShare),
-    getHandler: ({ onShare }) => onShare,
   },
   {
     key: "report",
@@ -104,7 +97,7 @@ function OutputToolbar({
   canDelete = false,
   onDelete,
   canShare = false,
-  onShare,
+  shareModel = null,
   canReport = false,
   onReport,
   className,
@@ -209,8 +202,6 @@ function OutputToolbar({
       onToggleFavorite,
       canDelete,
       onDelete,
-      canShare,
-      onShare,
       canReport,
       onReport,
       disabled,
@@ -223,12 +214,80 @@ function OutputToolbar({
       onToggleFavorite,
       canDelete,
       onDelete,
-      canShare,
-      onShare,
       canReport,
       onReport,
       disabled,
     ],
+  );
+
+  const shareCapabilities = useMemo(() => {
+    if (!shareModel || typeof shareModel !== "object") return null;
+    const {
+      canShare: shareEnabled = true,
+      onCopyLink,
+      onExportImage,
+      isImageExporting = false,
+      canExportImage = true,
+      shareUrl: shareTarget,
+    } = shareModel;
+    return {
+      hasCopy: typeof onCopyLink === "function",
+      hasImage: typeof onExportImage === "function",
+      onCopyLink,
+      onExportImage,
+      isImageExporting: Boolean(isImageExporting),
+      canExportImage: Boolean(canExportImage),
+      canShare: Boolean(shareEnabled),
+      shareUrl: shareTarget,
+    };
+  }, [shareModel]);
+
+  const shareTriggerRef = useRef(null);
+  const shareMenuRef = useRef(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+
+  useMenuNavigation(
+    shareMenuOpen,
+    shareMenuRef,
+    shareTriggerRef,
+    setShareMenuOpen,
+  );
+
+  const shareMenuAvailable = Boolean(
+    shareCapabilities &&
+      (shareCapabilities.hasCopy || shareCapabilities.hasImage),
+  );
+  const shareButtonDisabled =
+    disabled ||
+    !user ||
+    !canShare ||
+    !shareMenuAvailable ||
+    shareCapabilities?.canShare === false;
+
+  useEffect(() => {
+    if (!shareMenuAvailable || shareButtonDisabled) {
+      setShareMenuOpen(false);
+    }
+  }, [shareMenuAvailable, shareButtonDisabled]);
+
+  const closeShareMenu = useCallback(() => {
+    setShareMenuOpen(false);
+  }, []);
+
+  const handleShareTriggerClick = useCallback(() => {
+    if (shareButtonDisabled) return;
+    setShareMenuOpen((open) => !open);
+  }, [shareButtonDisabled]);
+
+  const handleShareTriggerKeyDown = useCallback(
+    (event) => {
+      if (shareButtonDisabled) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        setShareMenuOpen(true);
+      }
+    },
+    [shareButtonDisabled],
   );
 
   const actionItems = useMemo(() => {
@@ -251,6 +310,21 @@ function OutputToolbar({
       },
     ];
 
+    const shareItem = shareMenuAvailable
+      ? {
+          key: "share",
+          label: t.share || "Share",
+          icon: <ThemeIcon name="link" width={20} height={20} />,
+          onClick: handleShareTriggerClick,
+          active: shareMenuOpen,
+          variant: "share",
+          disabled: shareButtonDisabled,
+          anchorRef: shareTriggerRef,
+          hasMenu: true,
+        }
+      : null;
+    let shareInserted = false;
+
     ACTION_BLUEPRINTS.forEach((blueprint) => {
       const handler = blueprint.getHandler?.(actionContext);
       const label = blueprint.getLabel(actionContext);
@@ -264,6 +338,11 @@ function OutputToolbar({
         return;
       }
 
+      if (blueprint.key === "report" && shareItem && !shareInserted) {
+        items.push(shareItem);
+        shareInserted = true;
+      }
+
       items.push({
         key: blueprint.key,
         label,
@@ -275,6 +354,10 @@ function OutputToolbar({
       });
     });
 
+    if (shareItem && !shareInserted) {
+      items.push(shareItem);
+    }
+
     return items;
   }, [
     actionContext,
@@ -282,7 +365,12 @@ function OutputToolbar({
     copyResolvedLabel,
     copySuccessActive,
     disabled,
+    handleShareTriggerClick,
+    shareMenuAvailable,
+    shareMenuOpen,
+    shareButtonDisabled,
     onCopy,
+    t.share,
     user,
   ]);
 
@@ -353,42 +441,128 @@ function OutputToolbar({
         </div>
       ) : null}
       {hasActions ? (
-        <div className={styles["action-strip"]}>
-          {actionItems.map(
-            ({
-              key,
-              label,
-              onClick,
-              icon,
-              active,
-              variant,
-              disabled: itemDisabled,
-            }) => {
-              const variantClassName =
-                variant && styles[`tool-button-${variant}`]
-                  ? styles[`tool-button-${variant}`]
-                  : "";
-              const buttonClassName = [baseToolButtonClass, variantClassName]
-                .filter(Boolean)
-                .join(" ");
+        <>
+          <div className={styles["action-strip"]}>
+            {actionItems.map(
+              ({
+                key,
+                label,
+                onClick,
+                icon,
+                active,
+                variant,
+                disabled: itemDisabled,
+                anchorRef,
+                hasMenu,
+              }) => {
+                const variantClassName =
+                  variant && styles[`tool-button-${variant}`]
+                    ? styles[`tool-button-${variant}`]
+                    : "";
+                const buttonClassName = [baseToolButtonClass, variantClassName]
+                  .filter(Boolean)
+                  .join(" ");
+                const buttonProps = {};
+                if (anchorRef) {
+                  buttonProps.ref = anchorRef;
+                }
+                if (hasMenu) {
+                  buttonProps["aria-haspopup"] = "menu";
+                  buttonProps["aria-expanded"] = shareMenuOpen
+                    ? "true"
+                    : "false";
+                  buttonProps.onKeyDown = handleShareTriggerKeyDown;
+                }
 
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={buttonClassName}
-                  data-active={active ? "true" : undefined}
-                  onClick={onClick}
-                  aria-label={label}
-                  title={label}
-                  disabled={itemDisabled}
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={buttonClassName}
+                    data-active={active ? "true" : undefined}
+                    onClick={onClick}
+                    aria-label={label}
+                    title={label}
+                    disabled={itemDisabled}
+                    {...buttonProps}
+                  >
+                    {icon}
+                  </button>
+                );
+              },
+            )}
+          </div>
+          {shareMenuAvailable ? (
+            <Popover
+              isOpen={shareMenuOpen}
+              anchorRef={shareTriggerRef}
+              onClose={closeShareMenu}
+              placement="top"
+              align="end"
+              offset={8}
+            >
+              {shareMenuOpen ? (
+                <div
+                  className={styles["share-menu"]}
+                  role="menu"
+                  aria-label={t.shareMenuLabel || t.share || "Share options"}
+                  ref={shareMenuRef}
                 >
-                  {icon}
-                </button>
-              );
-            },
-          )}
-        </div>
+                  {shareCapabilities?.hasCopy ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles["share-menu-item"]}
+                      onClick={() => {
+                        if (typeof shareCapabilities.onCopyLink !== "function")
+                          return;
+                        Promise.resolve(shareCapabilities.onCopyLink()).finally(
+                          closeShareMenu,
+                        );
+                      }}
+                    >
+                      <ThemeIcon name="copy" width={18} height={18} />
+                      <span>
+                        {t.shareOptionLink ||
+                          t.shareCopySuccess ||
+                          t.share ||
+                          "Copy link"}
+                      </span>
+                    </button>
+                  ) : null}
+                  {shareCapabilities?.hasImage ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles["share-menu-item"]}
+                      onClick={() => {
+                        if (
+                          typeof shareCapabilities.onExportImage !== "function"
+                        )
+                          return;
+                        Promise.resolve(
+                          shareCapabilities.onExportImage(),
+                        ).finally(closeShareMenu);
+                      }}
+                      disabled={
+                        shareCapabilities.isImageExporting ||
+                        !shareCapabilities.canExportImage
+                      }
+                      aria-busy={
+                        shareCapabilities.isImageExporting ? "true" : undefined
+                      }
+                    >
+                      <ThemeIcon name="glancy" width={18} height={18} />
+                      <span>
+                        {t.shareOptionImage || t.share || "Export image"}
+                      </span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </Popover>
+          ) : null}
+        </>
       ) : null}
       <div
         className={`${styles["version-dial"]} entry__pager`}
@@ -468,7 +642,14 @@ OutputToolbar.propTypes = {
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
   canShare: PropTypes.bool,
-  onShare: PropTypes.func,
+  shareModel: PropTypes.shape({
+    canShare: PropTypes.bool,
+    onCopyLink: PropTypes.func,
+    onExportImage: PropTypes.func,
+    isImageExporting: PropTypes.bool,
+    canExportImage: PropTypes.bool,
+    shareUrl: PropTypes.string,
+  }),
   canReport: PropTypes.bool,
   onReport: PropTypes.func,
   className: PropTypes.string,
@@ -497,7 +678,7 @@ OutputToolbar.defaultProps = {
   canDelete: false,
   onDelete: undefined,
   canShare: false,
-  onShare: undefined,
+  shareModel: null,
   canReport: false,
   onReport: undefined,
   className: "",
