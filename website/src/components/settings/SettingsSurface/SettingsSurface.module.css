@@ -14,7 +14,11 @@
 }
 
 .surface-modal {
-  width: min(96vw, 880px);
+  /*
+   * 保持内容在模态容器内自适应，避免 SettingsSurface 的固有宽度超出弹窗最大宽度。
+   * 这里额外引入 100% 上限确保在任何父容器收窄时也能正确收缩。
+   */
+  width: min(100%, 96vw, 880px);
 }
 
 .surface-page {
