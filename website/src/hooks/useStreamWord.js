@@ -9,25 +9,11 @@ import { useWordStore } from "@/store/wordStore.js";
 // 直接引用治理 store，避免桶状导出拆分 chunk 后的执行先后错位。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { DEFAULT_MODEL } from "@/config";
-import { normalizeMarkdownEntity } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
-
-const safeParseJson = (input) => {
-  if (input == null) return null;
-  if (typeof input !== "string") {
-    if (typeof input === "object") return input;
-    return null;
-  }
-  try {
-    return JSON.parse(input);
-  } catch {
-    return null;
-  }
-};
+import { StreamWordSession } from "@/features/dictionary-experience/streaming/streamWordSession.js";
 
 /**
  * 提供基于 SSE 的词汇查询流式接口，并输出统一格式日志。
- * 日志格式:
- *   console.info("[streamWordWithHandling] <阶段>", { userId, term, chunk?, error? })
+ * 日志由 StreamWordSession 统一输出，保证所有调用点具备一致的可观测性。
  * 对每个流片段返回文本及检测语言。
  */
 export function useStreamWord() {
@@ -37,9 +23,9 @@ export function useStreamWord() {
   const governanceStore = useDataGovernanceStore;
 
   /**
-   * 意图：在每次流式查询前读取最新的历史采集偏好，保证客户端决策与后端参数一致。\
-   * 输出：布尔值，true 表示允许保存历史。\
-   * 复杂度：O(1)，直接访问 Zustand store。\
+   * 意图：在每次流式查询前读取最新的历史采集偏好，保证客户端决策与后端参数一致。
+   * 输出：布尔值，true 表示允许保存历史。
+   * 复杂度：O(1)，直接访问 Zustand store。
    */
   const readCaptureHistoryPreference = () =>
     Boolean(governanceStore.getState().historyCaptureEnabled);
@@ -57,104 +43,38 @@ export function useStreamWord() {
     const resolvedLanguage = resolveWordLanguage(term, language);
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
     const model = DEFAULT_MODEL;
-    const logCtx = { userId: user.id, term };
-    const key = wordCacheKey({
+    const cacheKey = wordCacheKey({
       term,
       language: resolvedLanguage,
       flavor: resolvedFlavor,
       model,
     });
-    let acc = "";
-    let metadataPayload = null;
-    console.info("[streamWordWithHandling] start", logCtx);
-    try {
-      for await (const event of streamWord({
+
+    // 关键步骤：将流式细节收敛到 StreamWordSession，替代方案是保留旧有的内联解析逻辑，但那会让 Hook 与领域逻辑强耦合。
+    const session = new StreamWordSession({
+      request: {
         userId: user.id,
+        token: user.token,
         term,
         language: resolvedLanguage,
-        model,
         flavor: resolvedFlavor,
-        token: user.token,
         signal,
         forceNew,
         versionId,
         captureHistory,
-        onChunk: (chunk) => {
-          console.info("[streamWordWithHandling] chunk", { ...logCtx, chunk });
-        },
-      })) {
-        if (event?.type === "metadata") {
-          metadataPayload = event.data;
-          continue;
-        }
-        const chunk = event?.data ?? "";
-        acc += chunk;
-        yield { chunk, language: resolvedLanguage };
-      }
-      const parsedEntry = safeParseJson(acc);
-      const metadata = safeParseJson(metadataPayload);
-      const entryBase =
-        parsedEntry && typeof parsedEntry === "object"
-          ? parsedEntry
-          : { term, language: resolvedLanguage, markdown: acc };
-      const normalizedEntryBase = normalizeMarkdownEntity(entryBase);
-      const entryFlavor =
-        normalizedEntryBase.flavor ?? metadata?.flavor ?? resolvedFlavor;
-      const entry = { ...normalizedEntryBase, flavor: entryFlavor };
-      const versionsSource =
-        (metadata && Array.isArray(metadata.versions) && metadata.versions) ||
-        (parsedEntry &&
-          Array.isArray(parsedEntry.versions) &&
-          parsedEntry.versions);
-      const derivedVersions =
-        versionsSource && versionsSource.length > 0 ? versionsSource : [entry];
-      const activeVersionId =
-        metadata?.activeVersionId ??
-        parsedEntry?.activeVersionId ??
-        entry.id ??
-        entry.versionId;
-      const metadataBase =
-        metadata && typeof metadata === "object"
-          ? Object.fromEntries(
-              Object.entries(metadata).filter(
-                ([key]) => key !== "versions" && key !== "activeVersionId",
-              ),
-            )
-          : {};
-      const metaPayload = {
-        ...metadataBase,
-        ...(parsedEntry?.metadata ?? {}),
-        flavor: entryFlavor,
-      };
-      const entryId = entry.id ?? entry.versionId;
-      const applyFlavor = (version) => {
-        const normalizedVersion = normalizeMarkdownEntity(version);
-        return {
-          ...normalizedVersion,
-          flavor: normalizedVersion.flavor ?? entryFlavor,
-        };
-      };
-      const mergedVersions = derivedVersions.some(
-        (version) =>
-          String(version.id ?? version.versionId) === String(entryId) ||
-          version === entry,
-      )
-        ? derivedVersions.map((version) => {
-            const versionId = version.id ?? version.versionId;
-            if (entryId && String(versionId) === String(entryId)) {
-              return applyFlavor({ ...version, ...entry });
-            }
-            return applyFlavor(version);
-          })
-        : [...derivedVersions.map(applyFlavor), entry];
-      store.getState().setVersions(key, mergedVersions, {
-        activeVersionId,
-        metadata: metaPayload,
-      });
-      console.info("[streamWordWithHandling] end", logCtx);
-    } catch (error) {
-      console.info("[streamWordWithHandling] error", { ...logCtx, error });
-      throw error;
+        model,
+        key: cacheKey,
+      },
+      dependencies: {
+        streamWordApi: streamWord,
+      },
+    });
+
+    const iterator = session.stream();
+    for await (const payload of iterator) {
+      yield payload;
     }
+    const { key, versions, options } = session.getStorePayload();
+    store.getState().setVersions(key, versions, options);
   };
 }
