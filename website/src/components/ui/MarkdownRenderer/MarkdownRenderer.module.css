@@ -8,24 +8,15 @@
   /*
    * 背景：释义区块在嵌套折叠时存在不同容器宽度的默认值。
    * 目的：强制所有子元素继承 section 的宽度，避免横向溢出。
+   * 取舍：统一回落到无边框、透明背景以适配最新设计基调，同时保留圆角与布局节奏。
    */
   margin-block: 16px;
   border-radius: var(--radius-lg, 14px);
-  border: 1px solid
-    color-mix(in srgb, var(--color-surface-alt) 46%, transparent);
-  background: color-mix(in srgb, var(--color-surface-muted) 74%, transparent);
-  box-shadow: 0 12px 32px
-    color-mix(in srgb, var(--surface-dark) 10%, transparent);
+  border: none;
+  background: none;
+  box-shadow: none;
   overflow: hidden;
   width: 100%;
-}
-
-.section[data-depth="3"] {
-  background: color-mix(in srgb, var(--color-surface-muted) 66%, transparent);
-}
-
-.section[data-depth="4"] {
-  background: color-mix(in srgb, var(--color-surface-muted) 58%, transparent);
 }
 
 .summary {
@@ -36,11 +27,7 @@
   gap: 12px;
   padding: 20px 24px;
   border: none;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-surface-alt) 65%, transparent) 0%,
-    color-mix(in srgb, var(--color-surface-muted) 85%, transparent) 100%
-  );
+  background: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
@@ -108,14 +95,14 @@
     grid-template-rows 0.32s ease,
     padding 0.32s ease;
   padding: 0 28px;
-  background: color-mix(in srgb, var(--color-surface-alt) 78%, transparent);
+  background: none;
   width: 100%;
 }
 
 .body[data-open="true"] {
   grid-template-rows: 1fr;
   padding: 24px 28px 28px;
-  background: color-mix(in srgb, var(--color-surface-muted) 82%, transparent);
+  background: none;
 }
 
 .body-inner {
