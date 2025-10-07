@@ -259,10 +259,10 @@ function OutputToolbar({
   );
   const shareButtonDisabled =
     disabled ||
-    !user ||
     !canShare ||
     !shareMenuAvailable ||
     shareCapabilities?.canShare === false;
+  // 设计取舍：分享需向未注册访客开放，因而不再依赖 user；仍保留其他禁用条件避免误触。
 
   useEffect(() => {
     if (!shareMenuAvailable || shareButtonDisabled) {
