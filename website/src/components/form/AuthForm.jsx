@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import MultiLineText from "@/components/ui/MultiLineText.jsx";
 import styles from "./AuthForm.module.css";
 import MessagePopup from "@/components/ui/MessagePopup";
+import Toast from "@/components/ui/Toast";
 import ThemeIcon from "@/components/ui/Icon";
 import ICP from "@/components/ui/ICP";
 import PasswordInput from "@/components/ui/PasswordInput";
@@ -74,6 +75,30 @@ function AuthForm({
   );
   const [showNotice, setShowNotice] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState("");
+  const [toastFeedback, setToastFeedback] = useState({
+    open: false,
+    message: "",
+  });
+  const toastDismissLabel =
+    t.toastDismissLabel || t.close || "Dismiss notification";
+  /**
+   * 采用“策略模式”调度不同的用户提示通道：
+   *  - popupChannel：保留原遮罩式弹框以承载表单校验与错误提示；
+   *  - toastChannel：用于成功类的轻量通知，下拉提示小框可减轻流程阻断。
+   * 通过集中定义，后续若扩展 Snackbar/Inline 提示，可在此扩容而无需侵入主流程。
+   */
+  const feedbackChannels = {
+    popup: (message) => {
+      setNoticeMsg(message);
+      setShowNotice(Boolean(message));
+    },
+    toast: (message) => {
+      setToastFeedback({
+        open: Boolean(message),
+        message: message || "",
+      });
+    },
+  };
   const fallbackOtherOptionsLabel =
     t.otherLoginOptions ?? "Other login options";
   const trimmedOtherOptionsLabel =
@@ -89,8 +114,7 @@ function AuthForm({
     }
 
     if (!validateAccount(sanitizedAccount, method)) {
-      setNoticeMsg(t.invalidAccount || "Invalid account");
-      setShowNotice(true);
+      feedbackChannels.popup(t.invalidAccount || "Invalid account");
       return false;
     }
 
@@ -99,29 +123,26 @@ function AuthForm({
         t.codeRequestInvalidMethod ||
         t.notImplementedYet ||
         "Verification code request is unavailable";
-      setNoticeMsg(fallbackMessage);
-      setShowNotice(true);
+      feedbackChannels.popup(fallbackMessage);
       return false;
     }
 
-    setNoticeMsg("");
-    setShowNotice(false);
+    feedbackChannels.popup("");
+    feedbackChannels.toast("");
 
     try {
       await onRequestCode({ account: sanitizedAccount, method });
       const successMessage =
         t.codeRequestSuccess ||
         "Verification code sent. Please check your inbox.";
-      setNoticeMsg(successMessage);
-      setShowNotice(true);
+      feedbackChannels.toast(successMessage);
       return true;
     } catch (err) {
       const errorMessage =
         (typeof err?.message === "string" && err.message.trim()) ||
         t.codeRequestFailed ||
         "Failed to send verification code";
-      setNoticeMsg(errorMessage);
-      setShowNotice(true);
+      feedbackChannels.popup(errorMessage);
       return false;
     }
   };
@@ -141,17 +162,15 @@ function AuthForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setNoticeMsg("");
+    feedbackChannels.popup("");
     if (!validateAccount(account, method)) {
-      setNoticeMsg(t.invalidAccount || "Invalid account");
-      setShowNotice(true);
+      feedbackChannels.popup(t.invalidAccount || "Invalid account");
       return;
     }
     try {
       await onSubmit({ account, password, method });
     } catch (err) {
-      setNoticeMsg(err.message);
-      setShowNotice(true);
+      feedbackChannels.popup(err.message);
     }
   };
 
@@ -259,6 +278,12 @@ function AuthForm({
         open={showNotice}
         message={noticeMsg}
         onClose={() => setShowNotice(false)}
+      />
+      <Toast
+        open={toastFeedback.open}
+        message={toastFeedback.message}
+        onClose={() => setToastFeedback({ open: false, message: "" })}
+        closeLabel={toastDismissLabel}
       />
     </div>
   );
