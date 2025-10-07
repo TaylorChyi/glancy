@@ -64,6 +64,45 @@ const coerceResolvedTerm = (candidate, fallback) => {
   return trimmed || fallback;
 };
 
+/**
+ * 背景：
+ *  - 分享菜单既要覆盖链接复制又要覆盖长图导出，历史上各入口各自判断导致禁用条件分散且易出错。
+ * 目的：
+ *  - 以集中构建 shareModel 的方式确保至少有一个通道可用时即可开启菜单，降低 UI 与业务状态脱节概率。
+ * 关键决策与取舍：
+ *  - 采用构建者模式统一归一化各布尔条件，避免调用方重复推导；
+ *  - 将链接与长图的可用性拆分处理，允许链接暂缺但长图可用的场景依旧展示菜单。
+ * 影响范围：
+ *  - OutputToolbar 接收到的 shareModel 结构被规范化，Share 按钮启用逻辑由此函数主导。
+ * 演进与TODO：
+ *  - 若未来新增分享载体（如 PDF），可在此扩展新的通道判定并保持菜单启用逻辑一致。
+ */
+const createDictionaryShareModel = ({
+  shareUrl,
+  onCopyLink,
+  onExportImage,
+  isImageExporting,
+  canExportImage,
+}) => {
+  const normalisedShareUrl =
+    typeof shareUrl === "string" ? shareUrl.trim() : "";
+  const copyChannelReady =
+    normalisedShareUrl.length > 0 && typeof onCopyLink === "function";
+  const exportableImage = Boolean(canExportImage);
+  const imageChannelReady =
+    exportableImage && typeof onExportImage === "function";
+  const menuEnabled = copyChannelReady || imageChannelReady;
+
+  return {
+    canShare: menuEnabled,
+    shareUrl: normalisedShareUrl,
+    onCopyLink,
+    onExportImage,
+    isImageExporting: isImageExporting === true,
+    canExportImage: exportableImage,
+  };
+};
+
 export function useDictionaryExperience() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
@@ -964,14 +1003,13 @@ export function useDictionaryExperience() {
       canShare: isTermActionable,
       shareModel:
         isEntryViewActive && isTermActionable
-          ? {
-              canShare: Boolean(shareUrl),
+          ? createDictionaryShareModel({
+              shareUrl,
               onCopyLink: handleShareLinkCopy,
               onExportImage: handleShareImageExport,
               isImageExporting: shareImageState === "pending",
               canExportImage: Boolean(entry || finalText),
-              shareUrl,
-            }
+            })
           : null,
       canReport: isTermActionable,
       onReport: isEntryViewActive ? handleReport : undefined,

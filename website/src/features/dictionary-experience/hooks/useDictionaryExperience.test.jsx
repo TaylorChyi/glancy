@@ -190,6 +190,7 @@ beforeEach(() => {
   shareImageModule.exportDictionaryShareImage.mockResolvedValue({
     status: "success",
   });
+  utilsModule.resolveShareTarget.mockReturnValue("https://example.com");
 });
 
 afterEach(() => {
@@ -276,6 +277,49 @@ describe("useDictionaryExperience", () => {
       expect.objectContaining({ term: "prism" }),
     );
     expect(result.current.popupMsg).toBe("图片导出完成");
+  });
+
+  /**
+   * 测试目标：当分享链接暂未生成但释义内容可导出时，分享菜单仍需保持可点状态。
+   * 前置条件：resolveShareTarget 返回空串，流式输出生成 finalText。
+   * 步骤：
+   *  1) 配置 Markdown 解析返回文本并触发一次查询；
+   *  2) 调用 shareModel.onCopyLink 触发降级提示。
+   * 断言：
+   *  - shareModel.canShare 为 true；
+   *  - copyTextToClipboard 未被调用且弹窗提示 shareFailed。
+   * 边界/异常：
+   *  - 若链接恢复生成应由其他用例验证复制成功路径。
+   */
+  it("keeps share menu enabled when link missing but image export ready", async () => {
+    utilsModule.resolveShareTarget.mockReturnValueOnce("");
+    utilsModule.extractMarkdownPreview.mockImplementation(() => "# heading");
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: "partial" };
+      })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("spectrum");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    const shareModel = result.current.dictionaryActionBarProps.shareModel;
+    expect(shareModel).not.toBeNull();
+    expect(shareModel.canShare).toBe(true);
+
+    await act(async () => {
+      await shareModel.onCopyLink();
+    });
+
+    expect(utilsModule.copyTextToClipboard).not.toHaveBeenCalled();
+    expect(result.current.popupMsg).toBe("分享失败");
   });
 
   /**
