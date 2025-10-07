@@ -1,4 +1,5 @@
 .modal-shell {
+
   /*
    * 为举报弹窗提供独立的色彩令牌，既强化层级感，也避免影响共用的 modal-content 基线样式。
    */
@@ -7,6 +8,7 @@
     var(--app-bg) 90%,
     var(--color-surface-alt)
   );
+
   /*
    * 复用 SettingsSurface 的边框对比度，确保举报弹窗与偏好设置面板在视觉上保持一致的厚度与明暗层级。
    * 备选方案：单独定义举报弹窗的色板，但会造成主题维护分叉，故放弃。
@@ -44,6 +46,7 @@
 }
 
 :global(.modal-content) :where(.plain-surface) {
+
   /*
    * 在模态容器作用域内确保内层面板继承我们定义的底色与阴影，
    * 以呼应 SettingsSurface 的玻璃化质感并保持视觉统一。
