@@ -8,7 +8,7 @@ export { default as DictionaryEntry } from "./ui/DictionaryEntry";
 export { default as EmptyState } from "./ui/EmptyState";
 export { default as ErrorBoundary } from "./ui/ErrorBoundary";
 export { default as HistoryDisplay } from "./ui/HistoryDisplay";
-export { default as ICP } from "./ui/ICP";
+export { default as ICP, DockedICP } from "./ui/ICP";
 export { default as Loader } from "./ui/Loader";
 export { default as MessagePopup } from "./ui/MessagePopup";
 export { default as Toast } from "./ui/Toast";

@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import HistoryDisplay from "@/components/ui/HistoryDisplay";
 import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
 import ChatInput from "@/components/ui/ChatInput";
-import ICP from "@/components/ui/ICP";
+import { DockedICP } from "@/components/ui/ICP";
 import EmptyState from "@/components/ui/EmptyState";
 import LibraryLandingView from "@/pages/App/LibraryLandingView.jsx";
 import {
@@ -65,12 +65,13 @@ export default function DictionaryExperience() {
   } = useDictionaryExperience();
 
   const viewShape = viewState ?? {};
-  const isDictionaryViewActive = viewShape.isDictionary ??
+  const isDictionaryViewActive =
+    viewShape.isDictionary ??
     activeView === DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY;
-  const isHistoryViewActive = viewShape.isHistory ??
-    activeView === DICTIONARY_EXPERIENCE_VIEWS.HISTORY;
-  const isLibraryViewActive = viewShape.isLibrary ??
-    activeView === DICTIONARY_EXPERIENCE_VIEWS.LIBRARY;
+  const isHistoryViewActive =
+    viewShape.isHistory ?? activeView === DICTIONARY_EXPERIENCE_VIEWS.HISTORY;
+  const isLibraryViewActive =
+    viewShape.isLibrary ?? activeView === DICTIONARY_EXPERIENCE_VIEWS.LIBRARY;
 
   const previewContent = finalText || streamText;
   const shouldRenderEntry =
@@ -86,7 +87,10 @@ export default function DictionaryExperience() {
   } = useBottomPanelState({ hasDefinition, text });
 
   const dictionaryActionBarViewModel = useMemo(() => {
-    if (!dictionaryActionBarProps || typeof dictionaryActionBarProps !== "object") {
+    if (
+      !dictionaryActionBarProps ||
+      typeof dictionaryActionBarProps !== "object"
+    ) {
       return dictionaryActionBarProps;
     }
 
@@ -136,9 +140,7 @@ export default function DictionaryExperience() {
     const isNodeTarget =
       typeof Node !== "undefined" && relatedTarget instanceof Node;
     const isWithinForm = Boolean(
-      formElement &&
-        isNodeTarget &&
-        formElement.contains(relatedTarget),
+      formElement && isNodeTarget && formElement.contains(relatedTarget),
     );
     if (isWithinForm) {
       return;
@@ -189,7 +191,7 @@ export default function DictionaryExperience() {
           ) : null
         }
       />
-      <ICP />
+      <DockedICP />
     </>
   );
 
