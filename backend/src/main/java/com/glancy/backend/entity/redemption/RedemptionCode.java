@@ -113,7 +113,7 @@ public class RedemptionCode extends BaseEntity {
     }
 
     public Integer getTotalRedeemed() {
-        return totalRedeemed;
+        return safeTotalRedeemed();
     }
 
     public void setTotalRedeemed(Integer totalRedeemed) {
@@ -187,14 +187,25 @@ public class RedemptionCode extends BaseEntity {
      * 意图：判断兑换是否还有剩余额度。
      */
     public boolean hasRemainingQuota() {
-        return totalRedeemed < totalQuota;
+        return safeTotalRedeemed() < safeTotalQuota();
     }
 
     /**
      * 意图：累加总兑换次数。
      */
     public void increaseRedemptionCount() {
-        this.totalRedeemed = Math.addExact(this.totalRedeemed, 1);
+        this.totalRedeemed = Math.addExact(safeTotalRedeemed(), 1);
+    }
+
+    /**
+     * 意图：兼容历史数据中的空值，确保兑换次数相关运算稳健。
+     */
+    private int safeTotalRedeemed() {
+        return totalRedeemed == null ? 0 : totalRedeemed;
+    }
+
+    private int safeTotalQuota() {
+        return totalQuota == null ? 0 : totalQuota;
     }
 
     /**

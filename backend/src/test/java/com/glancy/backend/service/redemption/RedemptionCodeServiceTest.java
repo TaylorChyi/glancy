@@ -11,7 +11,9 @@ import com.glancy.backend.dto.redemption.RedemptionRedeemRequest;
 import com.glancy.backend.dto.redemption.RedemptionRedeemResponse;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
+import com.glancy.backend.entity.redemption.RedemptionCode;
 import com.glancy.backend.entity.redemption.RedemptionEffectType;
+import com.glancy.backend.entity.redemption.RedemptionRecord;
 import com.glancy.backend.entity.redemption.UserDiscountBenefit;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.RedemptionCodeRepository;
@@ -196,6 +198,46 @@ class RedemptionCodeServiceTest {
         assertThat(benefits.get(0).getDiscountPercentage()).isEqualByComparingTo(BigDecimal.valueOf(20));
         assertThat(benefits.get(0).getValidFrom()).isEqualTo(discountFrom);
         assertThat(benefits.get(0).getValidUntil()).isEqualTo(discountUntil);
+    }
+
+    /**
+     * 测试目标：验证历史数据中未统一大小写的兑换码仍可被识别兑换。
+     * 前置条件：构造 code 字段为小写的会员兑换码。
+     * 步骤：
+     *  1) 持久化 legacy 兑换码并保留小写 code；
+     *  2) 触发兑换流程。
+     * 断言：
+     *  - 返回会员权益信息不为空；
+     *  - 生成一条兑换记录；
+     *  - 兑换码累计次数更新为 1。
+     * 边界/异常：
+     *  - 覆盖大小写不一致的迁移兼容场景。
+     */
+    @Test
+    void GivenLegacyCodeWithLowercase_WhenRedeem_ThenNormalizeAndPersistRecord() {
+        User user = persistUser("legacy-user");
+        LocalDateTime now = LocalDateTime.now();
+        RedemptionCode legacy = new RedemptionCode();
+        legacy.setCode("legacy1");
+        legacy.setRedeemableFrom(now.minusHours(2));
+        legacy.setRedeemableUntil(now.plusDays(1));
+        legacy.setTotalQuota(5);
+        legacy.setPerUserQuota(2);
+        legacy.setEffectType(RedemptionEffectType.MEMBERSHIP);
+        legacy.setMembershipType(MembershipType.PLUS);
+        legacy.setMembershipExtensionHours(12);
+        redemptionCodeRepository.saveAndFlush(legacy);
+
+        RedemptionRedeemResponse response = redemptionCodeService.redeem(
+            user.getId(),
+            new RedemptionRedeemRequest("LEGACY1")
+        );
+
+        List<RedemptionRecord> records = redemptionRecordRepository.findAll();
+        RedemptionCode refreshed = redemptionCodeRepository.findById(legacy.getId()).orElseThrow();
+        assertThat(response.membership()).isNotNull();
+        assertThat(records).hasSize(1);
+        assertThat(refreshed.getTotalRedeemed()).isEqualTo(1);
     }
 
     private User persistUser(String username) {
