@@ -51,7 +51,7 @@ public class EmailVerificationService {
      * Issue a new verification code for the given email and invalidate previous active codes.
      */
     @Transactional
-    public void issueCode(String email, EmailVerificationPurpose purpose) {
+    public void issueCode(String email, EmailVerificationPurpose purpose, String clientIp) {
         String normalizedEmail = normalize(email);
         LocalDateTime now = LocalDateTime.now(clock);
         log.info("Starting verification code issuance for {} with purpose {} at {}", normalizedEmail, purpose, now);
@@ -70,7 +70,7 @@ public class EmailVerificationService {
             code.getExpiresAt()
         );
 
-        dispatchEmail(normalizedEmail, purpose, code.getCode(), code.getExpiresAt());
+        dispatchEmail(normalizedEmail, purpose, code.getCode(), code.getExpiresAt(), clientIp);
     }
 
     /**
@@ -140,7 +140,13 @@ public class EmailVerificationService {
         return builder.toString();
     }
 
-    private void dispatchEmail(String email, EmailVerificationPurpose purpose, String code, LocalDateTime expiresAt) {
+    private void dispatchEmail(
+        String email,
+        EmailVerificationPurpose purpose,
+        String code,
+        LocalDateTime expiresAt,
+        String clientIp
+    ) {
         MimeMessage message = emailDeliveryService.createMessage();
         try {
             log.info(
@@ -149,7 +155,7 @@ public class EmailVerificationService {
                 purpose,
                 expiresAt
             );
-            emailComposer.populate(message, email, purpose, code, expiresAt);
+            emailComposer.populate(message, email, purpose, code, expiresAt, clientIp);
             emailDeliveryService.sendTransactional(message, email);
             log.info("Dispatched verification email to {} for purpose {} with expiry {}", email, purpose, expiresAt);
         } catch (MessagingException | MailException e) {

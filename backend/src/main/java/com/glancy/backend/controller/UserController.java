@@ -22,6 +22,8 @@ import com.glancy.backend.dto.UsernameRequest;
 import com.glancy.backend.dto.UsernameResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;
+import com.glancy.backend.util.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,9 +41,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
+    private final ClientIpResolver clientIpResolver;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, ClientIpResolver clientIpResolver) {
         this.userService = userService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     /**
@@ -57,9 +61,13 @@ public class UserController {
      * Request an email verification code for registration or login.
      */
     @PostMapping("/email/verification-code")
-    public ResponseEntity<Void> sendVerificationCode(@Valid @RequestBody EmailVerificationCodeRequest req) {
+    public ResponseEntity<Void> sendVerificationCode(
+        @Valid @RequestBody EmailVerificationCodeRequest req,
+        HttpServletRequest httpRequest
+    ) {
         log.info("Email verification code request received for purpose {}", req.purpose());
-        userService.sendVerificationCode(req);
+        String clientIp = clientIpResolver.resolve(httpRequest);
+        userService.sendVerificationCode(req, clientIp);
         log.info(
             "Email verification code request processed for purpose {} with response status {}",
             req.purpose(),
@@ -194,10 +202,12 @@ public class UserController {
     @PostMapping("/{id}/email/change-code")
     public ResponseEntity<Void> requestEmailChangeCode(
         @PathVariable Long id,
-        @Valid @RequestBody EmailChangeInitiationRequest req
+        @Valid @RequestBody EmailChangeInitiationRequest req,
+        HttpServletRequest httpRequest
     ) {
         log.info("Received email change code request for user {}", id);
-        userService.requestEmailChangeCode(id, req.email());
+        String clientIp = clientIpResolver.resolve(httpRequest);
+        userService.requestEmailChangeCode(id, req.email(), clientIp);
         return ResponseEntity.accepted().build();
     }
 
