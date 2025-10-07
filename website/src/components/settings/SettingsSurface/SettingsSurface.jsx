@@ -20,6 +20,7 @@ const SettingsSurface = forwardRef(function SettingsSurface(
     descriptionId: providedDescriptionId,
     as,
     className = "",
+    renderHeader,
   },
   ref,
 ) {
@@ -41,6 +42,29 @@ const SettingsSurface = forwardRef(function SettingsSurface(
     .filter(Boolean)
     .join(" ");
 
+  /**
+   * 意图：
+   *  - 当上层需要自定义抬头布局（如插入关闭按钮或多列信息）时，允许通过 renderHeader 覆盖默认结构。
+   * 流程：
+   *  1) 优先调用 renderHeader，并注入 headingId/descriptionId/title/description 等上下文。
+   *  2) 未提供时回退到原有的语义化标题与描述栈，确保默认路径无感知。
+   */
+  const headerContent =
+    typeof renderHeader === "function"
+      ? renderHeader({ headingId, descriptionId, title, description })
+      : (
+          <header className={styles.header}>
+            <h2 id={headingId} className={styles.title}>
+              {title}
+            </h2>
+            {description ? (
+              <p id={descriptionId} className={styles.description}>
+                {description}
+              </p>
+            ) : null}
+          </header>
+        );
+
   return (
     <Component
       ref={ref}
@@ -49,16 +73,7 @@ const SettingsSurface = forwardRef(function SettingsSurface(
       aria-describedby={descriptionId}
       onSubmit={onSubmit}
     >
-      <header className={styles.header}>
-        <h2 id={headingId} className={styles.title}>
-          {title}
-        </h2>
-        {description ? (
-          <p id={descriptionId} className={styles.description}>
-            {description}
-          </p>
-        ) : null}
-      </header>
+      {headerContent}
       <div className={styles.content}>{children}</div>
       {actions ? <footer className={styles.actions}>{actions}</footer> : null}
     </Component>
@@ -76,6 +91,7 @@ SettingsSurface.propTypes = {
   descriptionId: PropTypes.string,
   as: PropTypes.elementType,
   className: PropTypes.string,
+  renderHeader: PropTypes.func,
 };
 
 export default SettingsSurface;

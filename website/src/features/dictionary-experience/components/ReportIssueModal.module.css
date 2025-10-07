@@ -1,31 +1,123 @@
 .modal-shell {
   /*
-   * 作为挂载在 Modal 容器上的局部类，便于在不影响其他对话框的前提下重置背景与阴影。
+   * 为举报弹窗提供独立的色彩令牌，既强化层级感，也避免影响共用的 modal-content 基线样式。
    */
+  --report-modal-surface: color-mix(
+    in srgb,
+    var(--app-bg) 90%,
+    var(--color-surface-alt)
+  );
+  --report-modal-border: color-mix(in srgb, var(--border-color) 38%, transparent);
+  --report-modal-shadow: 0 48px 120px
+    color-mix(in srgb, var(--shadow-color) 32%, transparent);
+  --report-modal-inner-surface: color-mix(
+    in srgb,
+    var(--preferences-panel-surface, var(--app-bg)) 94%,
+    transparent
+  );
+  --report-modal-inner-border: color-mix(
+    in srgb,
+    var(--preferences-panel-border, var(--border-color)) 46%,
+    transparent
+  );
+  --report-modal-inner-shadow: 0 36px 96px
+    color-mix(in srgb, var(--shadow-color) 24%, transparent);
 }
 
 :global(.modal-content).modal-shell {
-  background: transparent;
+  background: var(--report-modal-surface);
   color: var(--preferences-panel-text, var(--color-text));
   padding: clamp(var(--space-6), 5vw, var(--space-7));
   border-radius: var(--radius-2xl);
-  box-shadow: none;
+  border: 1px solid var(--report-modal-border);
+  box-shadow: var(--report-modal-shadow);
 }
 
 .plain-surface {
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: var(--report-modal-inner-surface);
+  border: 1px solid var(--report-modal-inner-border);
+  box-shadow: var(--report-modal-inner-shadow);
 }
 
 :global(.modal-content) :where(.plain-surface) {
   /*
-   * 通过在模态容器作用域内提高优先级，彻底移除 SettingsSurface 默认的渐变底色，
-   * 避免举报面板出现与外层背景冲突的叠色。
+   * 在模态容器作用域内确保内层面板继承我们定义的底色与阴影，
+   * 以呼应 SettingsSurface 的玻璃化质感并保持视觉统一。
    */
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: var(--report-modal-inner-surface);
+  border: 1px solid var(--report-modal-inner-border);
+  box-shadow: var(--report-modal-inner-shadow);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(var(--space-2), 2.4vw, var(--space-3));
+  padding-bottom: clamp(var(--space-3), 3vw, var(--space-4));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border, var(--border-color)) 32%, transparent);
+}
+
+.header-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36px, 6vw, 44px);
+  height: clamp(36px, 6vw, 44px);
+  border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface, var(--app-bg)) 80%,
+    transparent
+  );
+  color: var(--preferences-panel-text, var(--color-text));
+  font-size: clamp(20px, 3vw, 22px);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.header-close:hover {
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-ring, var(--highlight-color)) 18%,
+    var(--app-bg)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--preferences-panel-ring, var(--highlight-color)) 45%,
+    transparent
+  );
+  transform: translateY(-1px);
+}
+
+.header-close:focus-visible {
+  outline: none;
+  border-color: var(--preferences-panel-ring, var(--highlight-color));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring, var(--highlight-color)) 28%, transparent);
+}
+
+.header-title {
+  margin: 0;
+  font-size: clamp(var(--text-xl), 3vw, var(--text-2xl));
+  font-weight: var(--font-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--preferences-panel-text, var(--color-text));
+}
+
+.header-spacer {
+  display: inline-flex;
+  width: clamp(36px, 6vw, 44px);
+  height: clamp(36px, 6vw, 44px);
 }
 
 .summary {
