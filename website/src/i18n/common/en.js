@@ -171,7 +171,7 @@ export default {
   prefTheme: "Theme",
   searchTitle: "Word Search",
   searchButton: "Search",
-  primaryNavDictionaryLabel: "Glancy Dictionary",
+  primaryNavDictionaryLabel: "Glancy",
   primaryNavDictionaryDescription: "Immersive lexical intelligence",
   primaryNavLibraryLabel: "Goyoo",
   primaryNavLibraryDescription: "Your private word atelier",
