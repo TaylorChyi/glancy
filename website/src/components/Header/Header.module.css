@@ -172,7 +172,12 @@
   height: 36px;
   border-radius: 12px;
   background: var(--sidebar-hover-bg, var(--sb-bg-hover));
-  box-shadow: inset 0 0 0 1px var(--sidebar-border-color, var(--sb-border));
+
+  /*
+    移除描边避免在菜单项左侧出现加粗边框，并保留背景高亮用于暗示点击区域。
+    若未来需要恢复描边，可通过为 --sidebar-leading-shadow 提供非 none 值实现。
+  */
+  box-shadow: var(--sidebar-leading-shadow, none);
 }
 
 .menu-icon {
@@ -192,8 +197,7 @@
 
 .menu-item-danger .menu-item-leading {
   background: color-mix(in srgb, var(--color-danger) 22%, transparent);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--color-danger) 38%, transparent);
+  box-shadow: var(--sidebar-leading-danger-shadow, none);
 }
 
 .menu-divider {
