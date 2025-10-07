@@ -77,8 +77,6 @@
   align-items: center;
   gap: clamp(var(--space-2), 2.4vw, var(--space-3));
   padding-bottom: clamp(var(--space-3), 3vw, var(--space-4));
-  border-bottom: 1px solid
-    color-mix(in srgb, var(--preferences-panel-border, var(--border-color)) 32%, transparent);
 }
 
 .header-close {

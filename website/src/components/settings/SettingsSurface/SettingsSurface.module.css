@@ -63,7 +63,6 @@
   display: flex;
   justify-content: flex-end;
   padding-top: clamp(var(--space-3), 3vw, var(--space-4));
-  border-top: 1px solid color-mix(in srgb, var(--border-color) 32%, transparent);
 }
 
 @media (width <= 599px) {
