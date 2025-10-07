@@ -254,6 +254,8 @@ public class WordService {
                     log.info("Found word '{}' in local repository", word.getTerm());
                     WordResponse response = toResponse(word);
                     response.setFlavor(flavor);
+                    // 兜底：命中缓存同样需要同步历史记录展示词条，避免大小写差异导致的重复记录。
+                    synchronizeRecordTermQuietly(userId, record, word.getTerm());
                     return applyPersonalization(userId, response, personalizationContext);
                 })
                 .orElseGet(() ->
@@ -329,13 +331,12 @@ public class WordService {
         if (!forceNew) {
             Optional<Word> existing = findCachedWord(normalizedTerm, language, flavor);
             if (existing.isPresent()) {
-                log.info("Found cached word '{}' in language {}", existing.get().getTerm(), language);
+                Word cachedWord = existing.get();
+                log.info("Found cached word '{}' in language {}", cachedWord.getTerm(), language);
+                // 兜底：流式查询命中缓存时也需纠正历史记录词条，保证记录去重。
+                synchronizeRecordTermQuietly(userId, record, cachedWord.getTerm());
                 try {
-                    WordResponse cached = applyPersonalization(
-                        userId,
-                        toResponse(existing.get()),
-                        personalizationContext
-                    );
+                    WordResponse cached = applyPersonalization(userId, toResponse(cachedWord), personalizationContext);
                     return Flux.just(StreamPayload.data(serializeResponse(cached)));
                 } catch (JsonProcessingException e) {
                     log.error("Failed to serialize cached word '{}'", term, e);
