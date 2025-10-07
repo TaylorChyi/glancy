@@ -1,4 +1,8 @@
+import { useMemo } from "react";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+import MarkdownStream, {
+  STREAM_SEGMENTATION_PROP,
+} from "@/components/ui/MarkdownStream";
 import styles from "./DictionaryMarkdown.module.css";
 
 function joinClassNames(...tokens) {
@@ -25,7 +29,7 @@ const headingFactory = (level) => {
   };
 };
 
-const components = {
+export const dictionaryMarkdownComponents = {
   h1: headingFactory(1),
   h2: headingFactory(2),
   h3: headingFactory(3),
@@ -104,11 +108,51 @@ const components = {
   },
 };
 
-export default function DictionaryMarkdown({ children }) {
+export default function DictionaryMarkdown({ children, className }) {
   if (!children) return null;
+  const wrapperClassName = joinClassNames(styles.wrapper, className);
   return (
-    <div className={styles.wrapper}>
-      <MarkdownRenderer components={components}>{children}</MarkdownRenderer>
+    <div className={wrapperClassName}>
+      <MarkdownRenderer components={dictionaryMarkdownComponents}>
+        {children}
+      </MarkdownRenderer>
     </div>
   );
+}
+
+function createDictionaryMarkdownStreamRenderer(additionalClassName) {
+  return function DictionaryMarkdownStreamRenderer({
+    className,
+    children,
+    ...rendererProps
+  }) {
+    const wrapperClassName = joinClassNames(
+      styles.wrapper,
+      additionalClassName,
+      className,
+    );
+    const streamRenderer = (
+      <div className={wrapperClassName}>
+        <MarkdownRenderer
+          {...rendererProps}
+          components={dictionaryMarkdownComponents}
+        >
+          {children}
+        </MarkdownRenderer>
+      </div>
+    );
+    return streamRenderer;
+  };
+}
+
+export function DictionaryMarkdownStream({ text, className }) {
+  const Renderer = useMemo(() => {
+    const renderer = createDictionaryMarkdownStreamRenderer(className);
+    renderer[STREAM_SEGMENTATION_PROP] = true;
+    return renderer;
+  }, [className]);
+
+  if (!text) return null;
+
+  return <MarkdownStream text={text} renderer={Renderer} />;
 }
