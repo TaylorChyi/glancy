@@ -23,6 +23,7 @@ import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@/components/ui/Icon";
 import useStableSettingsPanelHeight from "./useStableSettingsPanelHeight.js";
 import AvatarEditorModal from "@/components/AvatarEditorModal";
+import Toast from "@/components/ui/Toast";
 
 // 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
 const buildCloseLabel = (baseLabel, contextLabel) => {
@@ -57,6 +58,7 @@ function SettingsModal({ open, onClose, initialSection }) {
     handleSubmit,
     panel,
     avatarEditor,
+    feedback,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -123,6 +125,8 @@ function SettingsModal({ open, onClose, initialSection }) {
     );
   }, [probePanelClassName, referenceMeasurement]);
 
+  const redeemToast = feedback?.redeemToast;
+
   const renderCloseAction = useMemo(
     () =>
       ({ className = "" } = {}) => {
@@ -145,74 +149,87 @@ function SettingsModal({ open, onClose, initialSection }) {
   );
 
   return (
-    <BaseModal
-      open={open}
-      onClose={onClose}
-      className={`${modalStyles.dialog} modal-content`}
-      closeLabel={resolvedCloseLabel}
-      hideDefaultCloseButton
-      ariaLabelledBy={resolvedHeadingId}
-      ariaDescribedBy={resolvedDescriptionId}
-    >
-      <SettingsBody
-        className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
-        style={bodyStyle}
-        measurementProbe={measurementProbe}
+    <>
+      <BaseModal
+        open={open}
+        onClose={onClose}
+        className={`${modalStyles.dialog} modal-content`}
+        closeLabel={resolvedCloseLabel}
+        hideDefaultCloseButton
+        ariaLabelledBy={resolvedHeadingId}
+        ariaDescribedBy={resolvedDescriptionId}
       >
-        <SettingsNav
-          sections={sections}
-          activeSectionId={activeSectionId}
-          onSelect={handleSectionSelectWithFocus}
-          tablistLabel={copy.tablistLabel}
-          renderCloseAction={renderCloseAction}
-          classes={{
-            container: preferencesStyles["tabs-region"],
-            action: preferencesStyles["close-action"],
-            nav: preferencesStyles.tabs,
-            button: preferencesStyles.tab,
-            label: preferencesStyles["tab-label"],
-            labelText: preferencesStyles["tab-label-text"],
-            actionButton: preferencesStyles["close-button"],
-          }}
-        />
-        <form
-          aria-labelledby={resolvedHeadingId}
-          aria-describedby={resolvedDescriptionId}
-          className={modalStyles.form}
-          onSubmit={handleSubmit}
+        <SettingsBody
+          className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
+          style={bodyStyle}
+          measurementProbe={measurementProbe}
         >
-          {!panel.headingId ? (
-            <h2
-              id={panel.modalHeadingId}
-              className={modalStyles["visually-hidden"]}
-              ref={registerFallbackHeading}
-            >
-              {/* 在缺失业务 heading 时提供隐藏标题以维持无障碍语义。 */}
-              {panel.modalHeadingText || copy.title}
-            </h2>
-          ) : null}
-          <SettingsPanel
-            panelId={panel.panelId}
-            tabId={panel.tabId}
-            headingId={panel.headingId}
-            className={sizedPanelClassName}
-            onHeadingElementChange={registerHeading}
-            onPanelElementChange={registerActivePanelNode}
+          <SettingsNav
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSelect={handleSectionSelectWithFocus}
+            tablistLabel={copy.tablistLabel}
+            renderCloseAction={renderCloseAction}
+            classes={{
+              container: preferencesStyles["tabs-region"],
+              action: preferencesStyles["close-action"],
+              nav: preferencesStyles.tabs,
+              button: preferencesStyles.tab,
+              label: preferencesStyles["tab-label"],
+              labelText: preferencesStyles["tab-label-text"],
+              actionButton: preferencesStyles["close-button"],
+            }}
+          />
+          <form
+            aria-labelledby={resolvedHeadingId}
+            aria-describedby={resolvedDescriptionId}
+            className={modalStyles.form}
+            onSubmit={handleSubmit}
           >
-            {activeSection ? (
-              <activeSection.Component
-                headingId={panel.headingId || panel.modalHeadingId}
-                descriptionId={panel.descriptionId}
-                {...activeSection.componentProps}
-              />
+            {!panel.headingId ? (
+              <h2
+                id={panel.modalHeadingId}
+                className={modalStyles["visually-hidden"]}
+                ref={registerFallbackHeading}
+              >
+                {/* 在缺失业务 heading 时提供隐藏标题以维持无障碍语义。 */}
+                {panel.modalHeadingText || copy.title}
+              </h2>
             ) : null}
-          </SettingsPanel>
-        </form>
-        {avatarEditor ? (
-          <AvatarEditorModal {...avatarEditor.modalProps} />
-        ) : null}
-      </SettingsBody>
-    </BaseModal>
+            <SettingsPanel
+              panelId={panel.panelId}
+              tabId={panel.tabId}
+              headingId={panel.headingId}
+              className={sizedPanelClassName}
+              onHeadingElementChange={registerHeading}
+              onPanelElementChange={registerActivePanelNode}
+            >
+              {activeSection ? (
+                <activeSection.Component
+                  headingId={panel.headingId || panel.modalHeadingId}
+                  descriptionId={panel.descriptionId}
+                  {...activeSection.componentProps}
+                />
+              ) : null}
+            </SettingsPanel>
+          </form>
+          {avatarEditor ? (
+            <AvatarEditorModal {...avatarEditor.modalProps} />
+          ) : null}
+        </SettingsBody>
+      </BaseModal>
+      {redeemToast ? (
+        <Toast
+          open={redeemToast.open}
+          message={redeemToast.message}
+          duration={redeemToast.duration}
+          backgroundColor={redeemToast.backgroundColor}
+          textColor={redeemToast.textColor}
+          closeLabel={redeemToast.closeLabel}
+          onClose={redeemToast.onClose}
+        />
+      ) : null}
+    </>
   );
 }
 

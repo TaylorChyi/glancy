@@ -23,6 +23,7 @@ import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@/hooks/useSectionFocusManager.js";
 import useStableSettingsPanelHeight from "@/components/modals/useStableSettingsPanelHeight.js";
 import AvatarEditorModal from "@/components/AvatarEditorModal";
+import Toast from "@/components/ui/Toast";
 
 const composeClassName = (...classNames) => classNames.filter(Boolean).join(" ");
 
@@ -37,6 +38,7 @@ function Preferences({ initialSection, renderCloseAction }) {
     handleSubmit,
     panel,
     avatarEditor,
+    feedback,
   } = usePreferenceSections({
     initialSectionId: initialSection,
   });
@@ -90,74 +92,89 @@ function Preferences({ initialSection, renderCloseAction }) {
     );
   }, [probePanelClassName, referenceMeasurement]);
 
+  const redeemToast = feedback?.redeemToast;
+
   return (
-    <div className={styles.content}>
-      <form
-        aria-labelledby={header.headingId}
-        aria-describedby={header.descriptionId}
-        className={styles.form}
-        onSubmit={handleSubmit}
-      >
-        <SettingsHeader
-          headingId={header.headingId}
-          descriptionId={header.descriptionId}
-          title={copy.title}
-          description={copy.description}
-          planLabel={header.planLabel}
-          avatarProps={{ width: 56, height: 56, className: styles.avatar }}
-          classes={{
-            container: styles.header,
-            identity: styles.identity,
-            identityCopy: styles["identity-copy"],
-            plan: styles.plan,
-            title: styles.title,
-            description: styles.description,
-          }}
-        />
-        <SettingsBody
-          className={styles.body}
-          style={bodyStyle}
-          measurementProbe={measurementProbe}
+    <>
+      <div className={styles.content}>
+        <form
+          aria-labelledby={header.headingId}
+          aria-describedby={header.descriptionId}
+          className={styles.form}
+          onSubmit={handleSubmit}
         >
-          <SettingsNav
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onSelect={handleSectionSelectWithFocus}
-            tablistLabel={copy.tablistLabel}
-            renderCloseAction={closeRenderer}
+          <SettingsHeader
+            headingId={header.headingId}
+            descriptionId={header.descriptionId}
+            title={copy.title}
+            description={copy.description}
+            planLabel={header.planLabel}
+            avatarProps={{ width: 56, height: 56, className: styles.avatar }}
             classes={{
-              container: styles["tabs-region"],
-              action: styles["close-action"],
-              nav: styles.tabs,
-              button: styles.tab,
-              label: styles["tab-label"],
-              labelText: styles["tab-label-text"],
-              icon: styles["tab-icon"],
-              actionButton: styles["close-button"],
+              container: styles.header,
+              identity: styles.identity,
+              identityCopy: styles["identity-copy"],
+              plan: styles.plan,
+              title: styles.title,
+              description: styles.description,
             }}
           />
-          <SettingsPanel
-            panelId={panel.panelId}
-            tabId={panel.tabId}
-            headingId={panel.headingId}
-            className={sizedPanelClassName}
-            onHeadingElementChange={registerHeading}
-            onPanelElementChange={registerActivePanelNode}
+          <SettingsBody
+            className={styles.body}
+            style={bodyStyle}
+            measurementProbe={measurementProbe}
           >
-            {activeSection ? (
-              <activeSection.Component
-                headingId={panel.headingId}
-                descriptionId={panel.descriptionId}
-                {...activeSection.componentProps}
-              />
-            ) : null}
-          </SettingsPanel>
-        </SettingsBody>
-      </form>
-      {avatarEditor ? (
-        <AvatarEditorModal {...avatarEditor.modalProps} />
+            <SettingsNav
+              sections={sections}
+              activeSectionId={activeSectionId}
+              onSelect={handleSectionSelectWithFocus}
+              tablistLabel={copy.tablistLabel}
+              renderCloseAction={closeRenderer}
+              classes={{
+                container: styles["tabs-region"],
+                action: styles["close-action"],
+                nav: styles.tabs,
+                button: styles.tab,
+                label: styles["tab-label"],
+                labelText: styles["tab-label-text"],
+                icon: styles["tab-icon"],
+                actionButton: styles["close-button"],
+              }}
+            />
+            <SettingsPanel
+              panelId={panel.panelId}
+              tabId={panel.tabId}
+              headingId={panel.headingId}
+              className={sizedPanelClassName}
+              onHeadingElementChange={registerHeading}
+              onPanelElementChange={registerActivePanelNode}
+            >
+              {activeSection ? (
+                <activeSection.Component
+                  headingId={panel.headingId}
+                  descriptionId={panel.descriptionId}
+                  {...activeSection.componentProps}
+                />
+              ) : null}
+            </SettingsPanel>
+          </SettingsBody>
+        </form>
+        {avatarEditor ? (
+          <AvatarEditorModal {...avatarEditor.modalProps} />
+        ) : null}
+      </div>
+      {redeemToast ? (
+        <Toast
+          open={redeemToast.open}
+          message={redeemToast.message}
+          duration={redeemToast.duration}
+          backgroundColor={redeemToast.backgroundColor}
+          textColor={redeemToast.textColor}
+          closeLabel={redeemToast.closeLabel}
+          onClose={redeemToast.onClose}
+        />
       ) : null}
-    </div>
+    </>
   );
 }
 
