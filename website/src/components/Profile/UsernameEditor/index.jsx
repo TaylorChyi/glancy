@@ -12,7 +12,14 @@
  * 演进与TODO：
  *  - TODO: 后续若引入服务端节流或自动保存，可在状态机中增加 debouncing/remote-validating 分支。
  */
-import { useCallback, useEffect, useId, useMemo, useReducer } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import PropTypes from "prop-types";
 import styles from "./UsernameEditor.module.css";
 import {
@@ -34,6 +41,7 @@ const ACTIONS = Object.freeze({
   SUBMIT_START: "SUBMIT_START",
   SUBMIT_SUCCESS: "SUBMIT_SUCCESS",
   SUBMIT_FAILURE: "SUBMIT_FAILURE",
+  CANCEL_EDIT: "CANCEL_EDIT",
 });
 
 function createInitialState(username = "") {
@@ -60,6 +68,9 @@ function reducer(state, action) {
     case ACTIONS.CHANGE:
       if (state.mode === MODES.VIEW) return state;
       return { ...state, draft: action.value, error: null };
+    case ACTIONS.CANCEL_EDIT:
+      if (state.mode !== MODES.EDIT) return state;
+      return { ...state, mode: MODES.VIEW, draft: state.value, error: null };
     case ACTIONS.SUBMIT_START:
       return { ...state, mode: MODES.SAVING, error: null };
     case ACTIONS.SUBMIT_SUCCESS: {
@@ -125,12 +136,26 @@ function UsernameEditor({
   );
   const controlId = useId();
   const messageId = useId();
+  const inputRef = useRef(null);
+  const previousModeRef = useRef(state.mode);
 
   const { mode, value, draft, error } = state;
 
   useEffect(() => {
     dispatch({ type: ACTIONS.SYNC_VALUE, value: username ?? "" });
   }, [username]);
+
+  useEffect(() => {
+    if (mode === MODES.EDIT && previousModeRef.current !== MODES.EDIT) {
+      const node = inputRef.current;
+      if (node) {
+        // 聚焦并选中文本以支撑快速覆盖输入，避免用户额外操作。
+        node.focus();
+        node.select();
+      }
+    }
+    previousModeRef.current = mode;
+  }, [mode]);
 
   const handleChange = useCallback((event) => {
     dispatch({ type: ACTIONS.CHANGE, value: event.target.value });
@@ -181,6 +206,15 @@ function UsernameEditor({
     },
     [handleSubmit, mode],
   );
+
+  const handleBlur = useCallback(() => {
+    if (mode !== MODES.EDIT) {
+      return;
+    }
+    if (draft === value) {
+      dispatch({ type: ACTIONS.CANCEL_EDIT });
+    }
+  }, [draft, mode, value]);
 
   const handleButtonClick = useCallback(() => {
     if (mode === MODES.VIEW) {
@@ -240,10 +274,12 @@ function UsernameEditor({
       <div className={styles.controls}>
         <input
           id={controlId}
+          ref={inputRef}
           className={inputClassNames}
           value={inputValue}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder={t.usernamePlaceholder}
           disabled={mode === MODES.VIEW}
           aria-invalid={error ? "true" : "false"}

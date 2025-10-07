@@ -174,6 +174,61 @@ describe("UsernameEditor", () => {
   });
 
   /**
+   * 测试目标：进入编辑态后应自动聚焦并选中文本，确保外部触发也具备就绪输入体验。
+   * 前置条件：使用默认内联按钮触发编辑。
+   * 步骤：
+   *  1) 点击“Change username”按钮；
+   *  2) 等待输入启用。
+   * 断言：
+   *  - 输入框获得焦点；
+   *  - 输入框仍保留原始值以供覆盖。
+   * 边界/异常：
+   *  - 保障在状态切换过程中不会因异步渲染导致焦点丢失。
+   */
+  test("GivenEditTriggered_WhenEnteringEditMode_ThenFocusesInput", async () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByRole("button", { name: "Change username" }));
+
+    const input = screen.getByPlaceholderText("Enter username");
+    await waitFor(() => {
+      expect(input).not.toBeDisabled();
+      expect(input).toHaveFocus();
+    });
+    expect(input).toHaveValue("taylor");
+  });
+
+  /**
+   * 测试目标：当编辑后未修改任何字符即失焦时，应恢复查看态并重置按钮文案。
+   * 前置条件：初始用户名为 taylor，未调用 onSubmit。
+   * 步骤：
+   *  1) 点击进入编辑态；
+   *  2) 触发输入框失焦但不修改内容。
+   * 断言：
+   *  - 输入重新禁用；
+   *  - 按钮文案回到“Change username”。
+   * 边界/异常：
+   *  - 确认未意外触发提交逻辑。
+   */
+  test("GivenUnchangedDraft_WhenBlurred_ThenRevertsToViewMode", async () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByRole("button", { name: "Change username" }));
+    const input = screen.getByPlaceholderText("Enter username");
+
+    await waitFor(() => expect(input).not.toBeDisabled());
+
+    fireEvent.blur(input);
+
+    await waitFor(() => {
+      expect(input).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Change username" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  /**
    * 测试目标：当 renderInlineAction=false 时，组件需通过 onResolveAction 暴露外部按钮描述。
    * 前置条件：传入 onResolveAction mock 并关闭内联按钮渲染。
    * 步骤：
