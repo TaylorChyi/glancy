@@ -127,8 +127,11 @@ export default {
   settingsDataClearLanguage: "Clear selected language",
   settingsDataExport: "Export data",
   settingsDataExportDescription:
-    "Download a CSV snapshot of your history, capture policy, and retention window.",
+    "Export detailed definitions for every word in your history, grouped by chapter.",
   settingsDataExportFileName: "glancy-data-export",
+  settingsDataExportDefaultChapter: "General",
+  settingsDataExportChapterColumn: "chapter",
+  settingsDataExportContentColumn: "content",
   settingsExportData: "Export data",
   settingsEraseHistory: "Erase history",
   settingsTabAccount: "Account",

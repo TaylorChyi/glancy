@@ -114,8 +114,11 @@ export default {
   settingsDataClearLanguage: "清空所选语言",
   settingsDataExport: "导出数据",
   settingsDataExportDescription:
-    "导出包含历史记录、采集开关与保留策略的 CSV 快照。",
+    "导出历史里所有单词的详细释义，并按章节分类存储到单元格。",
   settingsDataExportFileName: "glancy-data-export",
+  settingsDataExportDefaultChapter: "通用",
+  settingsDataExportChapterColumn: "章节",
+  settingsDataExportContentColumn: "内容",
   settingsExportData: "导出数据",
   settingsEraseHistory: "清除历史",
   settingsTabAccount: "账号",
