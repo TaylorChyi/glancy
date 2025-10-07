@@ -57,7 +57,8 @@
 .summary-title {
   /*
    * 背景：折叠标题在包含长文本时会收缩宽度，导致内容溢出。
-   * 目的：让标题文本填满剩余空间，并启用两端对齐的字符分布。
+   * 目的：让标题文本填满剩余空间，同时保持视觉对齐的稳定性。
+   * 取舍：放弃两端对齐，改为统一左对齐，以匹配 collapsible-summary 的排版需求。
    */
   display: inline-flex;
   flex-direction: column;
@@ -66,9 +67,8 @@
   letter-spacing: 0.02em;
   flex: 1 1 auto;
   min-width: 0;
-  text-align: justify;
-  text-align-last: justify;
-  text-justify: inter-character;
+  text-align: left;
+  text-align-last: left;
   overflow-wrap: anywhere;
 }
 
@@ -135,4 +135,15 @@
 .body-inner > :global(*) {
   margin: 0;
   width: 100%;
+}
+
+/*
+ * 背景：折叠正文中包含的标题默认继承两端对齐样式，导致视觉偏移。
+ * 目的：限定标题类标签回落到左对齐，以保持层级标题的阅读顺序。
+ */
+.summary-title :global(h1, h2, h3, h4, h5),
+.body-inner :global(h1, h2, h3, h4, h5) {
+  text-align: left;
+  text-align-last: left;
+  text-justify: auto;
 }
