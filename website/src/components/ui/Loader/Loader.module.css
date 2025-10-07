@@ -1,10 +1,11 @@
 /**
  * 背景：
- *  - Loader 动画从“双层遮罩”升级为“整幅素材淡入淡出”，强调完整素材的呼吸节奏。
+ *  - Loader 动画自 2025-03 起强调“中心显现、向外扩展，再向内收束”的节奏，需更精细的遮罩控制。
  * 目的：
- *  - 通过 CSS 模块统一管理透明度过渡与尺寸 token，使 Hook 输出布尔态即可驱动渐隐渐显。
+ *  - 通过 CSS 模块统一管理透明度与 clip-path 过渡，让 Hook 输出布尔态即可驱动方向性渐隐渐显。
+ *  - 引入 mask + currentColor 的组合，将素材颜色响应式映射到当前主题文本色。
  * 关键决策与取舍：
- *  - 继续使用 opacity + transition，避免引入额外 keyframes，保持渲染栈纯粹；
+ *  - 继续使用过渡属性组合（opacity + clip-path），避免额外 keyframes 造成维护负担；
  *  - 所有时长仍交由 CSS 变量控制，方便主题或无障碍场景动态调整。
  */
 .loader {
@@ -14,6 +15,7 @@
   min-block-size: var(--vh, 100vh);
   padding: var(--space-4);
   background: transparent;
+  color: var(--loader-symbol-color, var(--role-on-surface, currentColor));
 }
 
 .symbol {
@@ -32,6 +34,7 @@
   box-shadow: none;
   border-radius: 0;
   isolation: isolate;
+  color: inherit;
 }
 
 .frame {
@@ -40,18 +43,33 @@
   block-size: 100%;
   overflow: hidden;
   opacity: 0;
-  transition: opacity var(--waiting-fade-duration, 1000ms) ease-in-out;
+  clip-path: inset(0 50% 0 50%);
+  transition:
+    opacity var(--waiting-fade-duration, 1000ms) ease-in-out,
+    clip-path var(--waiting-fade-duration, 1000ms) ease-in-out;
 }
 
 .frame-visible {
   opacity: 1;
+  clip-path: inset(0 0 0 0);
 }
 
 .frame-asset {
   inline-size: 100%;
   block-size: 100%;
   display: block;
-  object-fit: contain;
+  color: inherit;
+  background-color: currentcolor;
+  mask-image: var(--waiting-frame-image);
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  mask-position: center;
+  /* stylelint-disable property-no-vendor-prefix */
+  -webkit-mask-image: var(--waiting-frame-image);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  /* stylelint-enable property-no-vendor-prefix */
 }
 
 .label {

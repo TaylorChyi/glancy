@@ -1,13 +1,14 @@
 /**
  * 背景：
  *  - 等待动画素材从三帧轮播收敛为单帧遮罩动画，旧实现通过滤镜闪烁黑底影响质感。
- *  - 2025-03：设计强调“整幅素材淡入淡出”，需在保持架构解耦的前提下调整渲染结构。
+ *  - 2025-03：设计强调“中心显现、向外扩展，再向内收束”的等待节奏，需在保持架构解耦的前提下调整渲染结构。
  * 目的：
  *  - 采用策略模式与 Hook 管理节奏，同时通过透明度往复实现整幅素材渐隐渐显。
  * 关键决策与取舍：
  *  - 选用策略模式（waitingAnimationStrategy）集中封装节奏与画布尺寸，Loader 仅负责渲染结构；
  *  - 以 useWaitingFrameCycle 提供 shouldSchedule 钩子，确保单帧素材跳过调度避免无意义重置；
- *  - 通过 useFrameReveal 与渐隐动画组合打造往复呼吸效果，保持组件职责纯粹与动画语义分离。
+ *  - 通过 useFrameReveal 与方向性渐隐动画组合打造往复呼吸效果，保持组件职责纯粹与动画语义分离。
+ *  - 引入 mask + currentColor 映射，确保等待素材随主题前景色自适应。
  * 影响范围：
  *  - Loader 组件调用链、等待动画 Hook 与样式模块；外部 API 未变化，仍暴露标准状态语义。
  * 演进与TODO：
@@ -21,6 +22,7 @@ import useWaitingFrameCycle from "./useWaitingFrameCycle";
 import useFrameReveal from "./useFrameReveal";
 import frameVisibilityClassName from "./frameVisibilityClassName";
 import { deriveRevealTiming } from "./waitingRevealStrategy";
+import { buildWaitingSymbolStyle } from "./waitingSymbolStyle";
 
 /*
  * 策略模式：
@@ -30,22 +32,13 @@ import { deriveRevealTiming } from "./waitingRevealStrategy";
  */
 const WAITING_ANIMATION_STRATEGY = waitingAnimationStrategy;
 
-// 设计说明：统一声明序列帧画布尺寸，确保所有素材在等高策略下共享同一纵横比。
 const WAITING_FRAME_DIMENSIONS = WAITING_ANIMATION_STRATEGY.canvas;
-const WAITING_FRAME_ASPECT_RATIO = Number(
-  (WAITING_FRAME_DIMENSIONS.width / WAITING_FRAME_DIMENSIONS.height).toFixed(6),
-);
 const WAITING_FRAMES = Object.freeze([waittingFrame]);
 // 设计说明：单帧素材默认不触发调度，依赖 Hook 内的 shouldSchedule 控制节奏。
 const WAITING_CYCLE_OPTIONS = Object.freeze({
   shouldSchedule: WAITING_FRAMES.length > 1,
 });
-
-// 设计取舍：33vh 为视觉规范要求的显示高度，同时保留像素级上限避免 SVG 溢出。
-const WAITING_SYMBOL_STYLE_BASE = Object.freeze({
-  "--waiting-frame-height": `min(33vh, ${WAITING_FRAME_DIMENSIONS.height}px)`,
-  "--waiting-frame-aspect-ratio": WAITING_FRAME_ASPECT_RATIO,
-});
+const WAITING_FRAME_IMAGE_VALUE = `url("${waittingFrame}")`;
 
 function Loader() {
   const { currentFrame, cycleDurationMs } = useWaitingFrameCycle(
@@ -59,10 +52,11 @@ function Loader() {
   });
 
   const waitingSymbolStyle = useMemo(() => {
-    return {
-      ...WAITING_SYMBOL_STYLE_BASE,
-      "--waiting-fade-duration": `${fadeDurationMs}ms`,
-    };
+    return buildWaitingSymbolStyle(
+      WAITING_FRAME_DIMENSIONS,
+      fadeDurationMs,
+      WAITING_FRAME_IMAGE_VALUE,
+    );
   }, [fadeDurationMs]);
 
   return (
@@ -86,18 +80,14 @@ function Loader() {
         >
           {/*
            * 视觉策略：
-           *  - 背景：品牌提出“素材整体淡入淡出”的节奏，要求素材在可见与不可见之间往复切换。
-           *  - 方案：移除双图层堆叠，直接对素材容器应用透明度过渡，使整幅素材随 Hook 输出布尔态渐隐渐显。
-           *  - 取舍：整体淡出意味着等待区短暂留白，但换来动画语义与实现的一致性，后续若需叠加滤镜可在 CSS 中扩展。
+           *  - 背景：品牌将等待动画升级为“中部启动、向两侧延展，再向中心收束”的节奏；
+           *  - 方案：改用 SVG 轮廓作为 mask，让背景色（currentColor）透出并配合 clip-path 提供方向性渐隐渐显；
+           *  - 取舍：mask 方案保留单帧素材复用能力，同时避免 dangerouslySetInnerHTML 带来的安全审查负担。
            */}
-          <img
+          <span
             className={styles["frame-asset"]}
-            src={currentFrame}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            width={WAITING_FRAME_DIMENSIONS.width}
-            height={WAITING_FRAME_DIMENSIONS.height}
+            role="presentation"
+            aria-hidden="true"
           />
         </div>
       </div>
