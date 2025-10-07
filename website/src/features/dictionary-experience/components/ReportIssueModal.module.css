@@ -202,20 +202,18 @@
 }
 
 .segment-group {
+  /*
+   * 将举报弹窗的问题类型段控件与 Preferences 主题选择复用同一视觉语言，
+   * 避免不同上下文出现不一致的形态；保留 wrap 以兼容移动端窄屏排列。
+   */
   display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: clamp(var(--space-1), 1.6vw, var(--space-2));
   padding: clamp(var(--space-1), 1.6vw, var(--space-2));
   border-radius: var(--radius-2xl);
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--preferences-panel-border, var(--border-color)) 55%,
-      transparent
-    );
   background: color-mix(
     in srgb,
-    var(--preferences-panel-surface, var(--app-bg)) 70%,
+    var(--preferences-panel-surface, var(--app-bg)) 82%,
     transparent
   );
 }
@@ -224,14 +222,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 108px;
-  padding: 0.65rem 1.25rem;
-  border: 1px solid transparent;
+  min-width: 96px;
+  padding:
+    clamp(var(--space-2), 2.6vw, var(--space-3))
+    clamp(var(--space-4), 4vw, var(--space-5));
+  border: none;
   border-radius: var(--radius-xl);
   background: transparent;
   color: color-mix(
     in srgb,
-    var(--preferences-panel-muted, currentColor) 82%,
+    var(--preferences-panel-muted, currentColor) 90%,
     transparent
   );
   font-size: var(--text-sm);
@@ -241,16 +241,14 @@
   transition:
     background 160ms ease,
     color 160ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    border-color 160ms ease;
+    transform 160ms ease;
 }
 
 .segment:focus-visible {
   outline: none;
-  border-color: var(--preferences-panel-ring, var(--highlight-color));
   box-shadow: 0 0 0 3px
     color-mix(in srgb, var(--preferences-panel-ring, var(--highlight-color)) 32%, transparent);
+  transform: translateY(-1px);
 }
 
 .segment:disabled {
@@ -259,30 +257,18 @@
 }
 
 .segment:hover:not(:disabled) {
-  color: var(--preferences-panel-text, var(--color-text));
-  border-color: color-mix(
-    in srgb,
-    var(--preferences-panel-ring, var(--highlight-color)) 42%,
-    transparent
-  );
   transform: translateY(-1px);
+  color: var(--preferences-panel-text, var(--color-text));
 }
 
 .segment-active {
   background: color-mix(
     in srgb,
-    var(--preferences-panel-ring, var(--highlight-color)) 24%,
-    var(--app-bg)
-  );
-  color: var(--preferences-panel-text, var(--color-text));
-  border-color: color-mix(
-    in srgb,
-    var(--preferences-panel-ring, var(--highlight-color)) 55%,
+    var(--preferences-panel-surface, var(--app-bg)) 96%,
     transparent
   );
-  transform: translateY(-2px);
-  box-shadow: 0 18px 36px
-    color-mix(in srgb, var(--shadow-color) 22%, transparent);
+  color: var(--preferences-panel-text, var(--color-text));
+  transform: translateY(-1px);
 }
 
 .textarea {
@@ -296,7 +282,12 @@
   color: var(--preferences-panel-text, var(--color-text));
   font-size: var(--text-sm);
   line-height: 1.7;
-  resize: vertical;
+
+  /*
+   * 举报描述需要维持统一高度便于设计排版，此处禁用浏览器 resize，
+   * 以防用户拉伸后破坏整体节奏；后续如需扩展可考虑提供密度配置。
+   */
+  resize: none;
 }
 
 .textarea:focus-visible {
