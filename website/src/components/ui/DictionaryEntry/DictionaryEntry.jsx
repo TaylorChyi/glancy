@@ -2,7 +2,9 @@ import { useLanguage } from "@/context";
 import { TtsButton, PronounceableWord } from "@/components";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
 import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
-import { polishDictionaryMarkdown } from "@/utils";
+import {
+  normalizeDictionaryMarkdown,
+} from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 import styles from "./DictionaryEntry.module.css";
 
 function tryParseJson(text) {
@@ -27,7 +29,7 @@ function DictionaryEntry({ entry, className }) {
     if (parsed) {
       return <DictionaryEntry entry={parsed} className={className} />;
     }
-    const polished = polishDictionaryMarkdown(entry.markdown);
+    const polished = normalizeDictionaryMarkdown(entry.markdown);
     return (
       <article className={entryClassName}>
         <DictionaryMarkdown>{polished}</DictionaryMarkdown>

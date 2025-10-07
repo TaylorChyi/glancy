@@ -9,6 +9,7 @@ import { useWordStore } from "@/store/wordStore.js";
 // 直接引用治理 store，避免桶状导出拆分 chunk 后的执行先后错位。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { DEFAULT_MODEL } from "@/config";
+import { normalizeMarkdownEntity } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 
 const safeParseJson = (input) => {
   if (input == null) return null;
@@ -96,9 +97,10 @@ export function useStreamWord() {
         parsedEntry && typeof parsedEntry === "object"
           ? parsedEntry
           : { term, language: resolvedLanguage, markdown: acc };
+      const normalizedEntryBase = normalizeMarkdownEntity(entryBase);
       const entryFlavor =
-        entryBase.flavor ?? metadata?.flavor ?? resolvedFlavor;
-      const entry = { ...entryBase, flavor: entryFlavor };
+        normalizedEntryBase.flavor ?? metadata?.flavor ?? resolvedFlavor;
+      const entry = { ...normalizedEntryBase, flavor: entryFlavor };
       const versionsSource =
         (metadata && Array.isArray(metadata.versions) && metadata.versions) ||
         (parsedEntry &&
@@ -125,10 +127,13 @@ export function useStreamWord() {
         flavor: entryFlavor,
       };
       const entryId = entry.id ?? entry.versionId;
-      const applyFlavor = (version) => ({
-        ...version,
-        flavor: version.flavor ?? entryFlavor,
-      });
+      const applyFlavor = (version) => {
+        const normalizedVersion = normalizeMarkdownEntity(version);
+        return {
+          ...normalizedVersion,
+          flavor: normalizedVersion.flavor ?? entryFlavor,
+        };
+      };
       const mergedVersions = derivedVersions.some(
         (version) =>
           String(version.id ?? version.versionId) === String(entryId) ||
