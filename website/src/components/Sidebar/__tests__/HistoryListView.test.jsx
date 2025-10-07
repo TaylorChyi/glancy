@@ -157,24 +157,21 @@ describe("HistoryListView", () => {
   });
 
   /**
-   * 测试目标：当传入 displayTerm 时，组件应优先展示规范词形。
-   * 前置条件：items 中包含 term 与 displayTerm 不同的项。
+   * 测试目标：组件直接展示传入项的 term，确保与 Store 归一化后的值一致。
+   * 前置条件：items 含有 term="student"。
    * 步骤：
-   *  1) 渲染组件并传入带 displayTerm 的列表。
-   *  2) 查询渲染按钮的可访问名称。
+   *  1) 渲染组件并获取按钮。
    * 断言：
-   *  - 按钮名称为 displayTerm；
-   *  - 原 term 不作为可访问名称出现。
+   *  - 可访问名称等于 term。
    * 边界/异常：
-   *  - 若 displayTerm 缺失，应继续显示 term（其他用例覆盖）。
+   *  - 若未来引入额外显示字段，此用例需同步调整。
    */
-  test("Given_display_term_When_present_Then_prefers_canonical_label", () => {
+  test("Given_normalized_term_When_rendered_Then_uses_term_label", () => {
     const onNavigate = jest.fn(() => ({}));
     const items = [
       {
         termKey: "term-1",
-        term: "studdent",
-        displayTerm: "student",
+        term: "student",
         latestVersionId: "v1",
       },
     ];
@@ -182,7 +179,6 @@ describe("HistoryListView", () => {
     render(<HistoryListView items={items} onNavigate={onNavigate} />);
 
     expect(screen.getByRole("button", { name: "student" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "studdent" })).not.toBeInTheDocument();
   });
 
   /**
