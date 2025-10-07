@@ -11,3 +11,4 @@
  *  - 后续若字段类型扩展，可在此模块集中维护并暴露枚举式接口。
  */
 export const ACCOUNT_USERNAME_FIELD_TYPE = "username-editor";
+export const ACCOUNT_STATIC_FIELD_TYPE = "static-readonly";

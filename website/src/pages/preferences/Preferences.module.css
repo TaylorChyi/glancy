@@ -1061,6 +1061,18 @@
   overflow-wrap: break-word;
 }
 
+/*
+ * 背景：
+ *  - 账户分区的邮箱/手机号需与用户名输入保持统一样式，避免信息密度不一致。
+ * 设计取舍：
+ *  - 复用 UsernameEditor 的输入基样式并叠加 center 对齐，确保跨组件视觉一致且文本聚焦。
+ */
+.detail-input {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
 .identity-row {
   align-items: center;
   grid-template-columns:

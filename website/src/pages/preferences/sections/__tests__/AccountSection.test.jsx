@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
+import usernameEditorStyles from "@/components/Profile/UsernameEditor/UsernameEditor.module.css";
 
 jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   __esModule: true,
@@ -16,7 +17,7 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
 }));
 
 const { default: AccountSection } = await import("../AccountSection.jsx");
-const { ACCOUNT_USERNAME_FIELD_TYPE } = await import(
+const { ACCOUNT_STATIC_FIELD_TYPE, ACCOUNT_USERNAME_FIELD_TYPE } = await import(
   "../accountSection.constants.js"
 );
 
@@ -160,6 +161,9 @@ test("GivenUsernameField_WhenRendered_ThenActionButtonOccupiesThirdColumn", () =
   const usernameRow = usernameLabel.closest("div");
   const columns = usernameRow ? [...usernameRow.children] : [];
   expect(columns).toHaveLength(3);
+  const usernameInput = screen.getByDisplayValue("Taylor");
+  expect(usernameInput).toHaveClass(styles["detail-input"]);
+  expect(usernameInput).toHaveClass(usernameEditorStyles.input);
   const actionButton = screen.getByRole("button", { name: "更换用户名" });
   expect(columns[2]).toHaveClass(styles["detail-action"]);
   expect(columns[2]).toContainElement(actionButton);
@@ -341,4 +345,59 @@ test("GivenPendingAction_WhenRendering_ThenButtonDisabledWithPendingLabel", () =
   const actionButton = screen.getByRole("button", { name: "解绑中…" });
   expect(actionButton).toBeDisabled();
   expect(actionButton).toHaveAttribute("aria-disabled", "true");
+});
+
+/**
+ * 测试目标：静态邮箱/手机号字段以禁用输入框呈现并保持文本居中。
+ * 前置条件：字段声明 type=ACCOUNT_STATIC_FIELD_TYPE 且提供 value。
+ * 步骤：
+ *  1) 渲染 AccountSection 并传入邮箱、手机号字段；
+ *  2) 获取对应的输入框元素。
+ * 断言：
+ *  - 输入框被禁用且 aria-readonly 为 true；
+ *  - 输入框包含 detail-input 与 UsernameEditor 输入基类；
+ *  - 输入文本值正确显示。
+ * 边界/异常：
+ *  - 若字段缺少 value，应回退为占位符（由其它单测覆盖）。
+ */
+test("GivenStaticFields_WhenRendered_ThenDisabledInputsMirrorUsernameStyle", () => {
+  render(
+    <AccountSection
+      title="Account"
+      headingId="account-heading"
+      fields={[
+        {
+          id: "email",
+          label: "邮箱",
+          value: "ada@example.com",
+          type: ACCOUNT_STATIC_FIELD_TYPE,
+        },
+        {
+          id: "phone",
+          label: "手机号",
+          value: "+86 1234567890",
+          type: ACCOUNT_STATIC_FIELD_TYPE,
+        },
+      ]}
+      identity={{
+        label: "头像",
+        displayName: "Taylor",
+        changeLabel: "更换头像",
+        avatarAlt: "Taylor 的头像",
+        onSelectAvatar: jest.fn(),
+        isUploading: false,
+      }}
+      bindings={baseBindings}
+    />,
+  );
+
+  const emailInput = screen.getByDisplayValue("ada@example.com");
+  const phoneInput = screen.getByDisplayValue("+86 1234567890");
+
+  for (const input of [emailInput, phoneInput]) {
+    expect(input).toBeDisabled();
+    expect(input).toHaveAttribute("aria-readonly", "true");
+    expect(input).toHaveClass(styles["detail-input"]);
+    expect(input).toHaveClass(usernameEditorStyles.input);
+  }
 });

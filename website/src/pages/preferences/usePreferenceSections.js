@@ -20,7 +20,10 @@ import {
 } from "react";
 import { useLanguage, useUser } from "@/context";
 import AccountSection from "./sections/AccountSection.jsx";
-import { ACCOUNT_USERNAME_FIELD_TYPE } from "./sections/accountSection.constants.js";
+import {
+  ACCOUNT_STATIC_FIELD_TYPE,
+  ACCOUNT_USERNAME_FIELD_TYPE,
+} from "./sections/accountSection.constants.js";
 import DataSection from "./sections/DataSection.jsx";
 import GeneralSection from "./sections/GeneralSection.jsx";
 import KeyboardSection from "./sections/KeyboardSection.jsx";
@@ -823,12 +826,24 @@ function usePreferenceSections({ initialSectionId }) {
         id: "email",
         label: t.settingsAccountEmail ?? "Email",
         value: emailValue,
+        type: ACCOUNT_STATIC_FIELD_TYPE,
+        readOnlyInputProps: {
+          type: "email",
+          inputMode: "email",
+          autoComplete: "email",
+        },
         action: emailUnbindAction,
       },
       {
         id: "phone",
         label: t.settingsAccountPhone ?? "Phone",
         value: phoneValue,
+        type: ACCOUNT_STATIC_FIELD_TYPE,
+        readOnlyInputProps: {
+          type: "tel",
+          inputMode: "tel",
+          autoComplete: "tel", // 复用浏览器电话联想能力，尽管字段不可编辑。
+        },
         action: phoneRebindAction,
       },
     ];
