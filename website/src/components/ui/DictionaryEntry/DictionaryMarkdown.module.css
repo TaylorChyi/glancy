@@ -1,17 +1,25 @@
 .wrapper {
   display: grid;
   gap: var(--space-3, 16px);
-  text-align: left;
   color: var(--app-color);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+
+  /*
+   * Markdown 片段也需要继承 display 宽度约束并保证中英文文本对齐；
+   * overflow-wrap 覆盖所有块级元素，避免长串字符导致溢出。
+   */
+  text-align: justify;
+  text-align-last: justify;
+  overflow-wrap: anywhere;
 }
 
 .heading {
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: var(--line-height-snug);
+  text-align: left;
 }
 
 .heading-primary {
@@ -35,6 +43,8 @@
   line-height: var(--line-height-relaxed);
   font-size: 1rem;
   color: inherit;
+  text-align: justify;
+  text-align-last: justify;
 }
 
 .ordered-list,
@@ -43,11 +53,15 @@
   padding-left: var(--space-5, 32px);
   display: grid;
   gap: var(--space-2, 8px);
+  text-align: justify;
+  text-align-last: justify;
 }
 
 .list-item {
   line-height: var(--line-height-comfortable);
   font-size: 1rem;
+  text-align: justify;
+  text-align-last: justify;
 }
 
 .blockquote {
@@ -58,6 +72,8 @@
   font-style: italic;
   background: color-mix(in srgb, var(--color-surface) 80%, transparent);
   border-radius: var(--radius-md, 8px);
+  text-align: justify;
+  text-align-last: justify;
 }
 
 .strong {

@@ -9,7 +9,13 @@
    */
   margin: 0;
   text-align: justify;
-  text-align-last: left;
+  text-align-last: justify;
+
+  /*
+   * 字典释义往往包含长段中文文本；通过 overflow-wrap 强制在容器内断行，
+   * 以满足“display 区域不出现横向滚动或截断”的产品要求，同时兼顾未来多语言场景。
+   */
+  overflow-wrap: anywhere;
   font-size: 1rem;
   font-weight: normal;
 }
