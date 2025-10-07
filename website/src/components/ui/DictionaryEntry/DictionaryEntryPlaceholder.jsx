@@ -1,18 +1,21 @@
 import { useMemo } from "react";
-import DictionaryEntry from "./DictionaryEntry.jsx";
 import DictionaryEntrySkeleton from "./DictionaryEntrySkeleton.jsx";
+import { DictionaryMarkdownStream } from "./DictionaryMarkdown.jsx";
+import {
+  normalizeDictionaryMarkdown,
+} from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 import styles from "./DictionaryEntryPlaceholder.module.css";
 
 function DictionaryEntryPlaceholder({ preview, isLoading }) {
-  const previewEntry = useMemo(() => {
-    if (!preview) return null;
-    return { markdown: preview };
+  const previewMarkdown = useMemo(() => {
+    if (!preview) return "";
+    return normalizeDictionaryMarkdown(preview);
   }, [preview]);
 
-  if (previewEntry) {
+  if (previewMarkdown) {
     return (
       <div className={styles["preview-wrapper"]}>
-        <DictionaryEntry entry={previewEntry} />
+        <DictionaryMarkdownStream text={previewMarkdown} />
       </div>
     );
   }
