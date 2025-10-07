@@ -182,6 +182,48 @@ describe("historyStore", () => {
   });
 
   /**
+   * 测试目标：当服务端返回的历史包含规范词形元数据时，Store 会直接使用该词形。
+   * 前置条件：接口返回 term="studdent" 但 metadata.term="student"。
+   * 步骤：
+   *  1) 模拟接口响应；
+   *  2) 调用 loadHistory；
+   * 断言：
+   *  - history[0].term 为 "student"，termKey 使用规范词形。
+   * 边界/异常：
+   *  - 若缺少 metadata，应回退至原始 term（其他用例覆盖）。
+   */
+  test("Given canonical metadata When loading history Then store normalized term", async () => {
+    mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce([
+      {
+        id: "rec-1",
+        term: "studdent",
+        language: "ENGLISH",
+        flavor: WORD_FLAVOR_BILINGUAL,
+        metadata: { term: "student" },
+        createdAt: "2024-05-01T10:00:00Z",
+        favorite: false,
+        versions: [
+          {
+            id: "ver-1",
+            term: "student",
+            metadata: { term: "student" },
+            createdAt: "2024-05-01T10:00:00Z",
+            favorite: false,
+          },
+        ],
+      },
+    ]);
+
+    await act(async () => {
+      await useHistoryStore.getState().loadHistory(user);
+    });
+
+    const item = useHistoryStore.getState().history[0];
+    expect(item.term).toBe("student");
+    expect(item.termKey).toBe("ENGLISH:BILINGUAL:student");
+  });
+
+  /**
    * 确认清空历史时会调用接口并重置本地状态列表。
    */
   test("clearHistory empties store", async () => {

@@ -15,6 +15,14 @@ import { useDataGovernanceStore } from "./dataGovernanceStore.js";
 const HISTORY_PAGE_SIZE = 20;
 const REMOTE_HISTORY_PAGE_LIMIT = 50;
 
+type HistoryVersionPayload = {
+  id?: string | number | null;
+  term?: string | null;
+  metadata?: { term?: string | null } | null;
+  createdAt?: string | null;
+  favorite?: boolean | null;
+};
+
 type SearchRecordDto = {
   id?: string | number | null;
   term: string;
@@ -22,11 +30,8 @@ type SearchRecordDto = {
   flavor?: string | null;
   createdAt?: string | null;
   favorite?: boolean | null;
-  versions?: Array<{
-    id?: string | number | null;
-    createdAt?: string | null;
-    favorite?: boolean | null;
-  }> | null;
+  metadata?: { term?: string | null } | null;
+  versions?: HistoryVersionPayload[] | null;
 };
 
 export interface HistoryVersion {
@@ -107,6 +112,69 @@ const normalizeFlavor = (flavor?: string | null) => {
   if (!flavor) return WORD_FLAVOR_BILINGUAL;
   const upper = String(flavor).trim().toUpperCase();
   return upper || WORD_FLAVOR_BILINGUAL;
+};
+
+/**
+ * 意图：在历史存储层统一修剪词形输入，避免展示端出现前后空白并为规范词形解析提供基线。
+ * 输入：任意候选值。
+ * 输出：去除首尾空白的字符串，若无法转换则返回空串。
+ */
+const sanitizeHistoryTerm = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  return value.trim();
+};
+
+/**
+ * 意图：在可用时从版本集合中挑选服务端提供的规范词形，优先匹配最新版本。
+ * 输入：原始版本数组、latestVersionId（若存在）。
+ * 输出：规范词形字符串，若无法确定则返回空串交由上层回退。
+ */
+const resolveTermFromVersions = (
+  versions: SearchRecordDto["versions"],
+  latestVersionId: string | null,
+): string => {
+  if (!Array.isArray(versions) || versions.length === 0) {
+    return "";
+  }
+
+  const preferred = versions.find((candidate) => {
+    if (!candidate) return false;
+    const candidateTerm = sanitizeHistoryTerm(
+      candidate.term ?? candidate.metadata?.term,
+    );
+    if (!candidateTerm) {
+      return false;
+    }
+    if (!latestVersionId) {
+      return true;
+    }
+    return String(candidate.id) === String(latestVersionId);
+  });
+
+  if (!preferred) {
+    return "";
+  }
+
+  return (
+    sanitizeHistoryTerm(preferred.term) ||
+    sanitizeHistoryTerm(preferred.metadata?.term)
+  );
+};
+
+const resolveCanonicalTerm = (
+  record: SearchRecordDto,
+  latestVersionId: string | null,
+): string => {
+  // 服务端会在 metadata 或版本元数据中附带规范词形，优先读取该字段保持与词典正文一致。
+  const metadataTerm = sanitizeHistoryTerm(record.metadata?.term);
+  if (metadataTerm) {
+    return metadataTerm;
+  }
+  const versionTerm = resolveTermFromVersions(record.versions, latestVersionId);
+  if (versionTerm) {
+    return versionTerm;
+  }
+  return sanitizeHistoryTerm(record.term);
 };
 
 /**
@@ -236,16 +304,19 @@ const ensureVersions = (record: SearchRecordDto): HistoryVersion[] => {
 };
 
 const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
-  const language = normalizeLanguage(record.term, record.language);
   const flavor = normalizeFlavor(record.flavor);
   const versions = ensureVersions(record);
   const latestVersionId = versions.length ? versions[0].id : null;
+  const canonicalTerm = resolveCanonicalTerm(record, latestVersionId);
+  const fallbackTerm = sanitizeHistoryTerm(record.term) || record.term || "";
+  const term = canonicalTerm || fallbackTerm;
+  const language = normalizeLanguage(term, record.language);
   return {
     recordId: record.id == null ? null : String(record.id),
-    term: record.term,
+    term,
     language,
     flavor,
-    termKey: createTermKey(record.term, language, flavor),
+    termKey: createTermKey(term, language, flavor),
     createdAt: record.createdAt ?? versions[0]?.createdAt ?? null,
     favorite: Boolean(record.favorite ?? versions[0]?.favorite ?? false),
     versions,
@@ -410,17 +481,18 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         if (!historyCaptureEnabled) {
           return;
         }
-        const normalizedLanguage = normalizeLanguage(term, language);
+        const sanitizedTerm = sanitizeHistoryTerm(term) || term;
+        const normalizedLanguage = normalizeLanguage(sanitizedTerm, language);
         const normalizedFlavor = normalizeFlavor(flavor);
         const termKey = createTermKey(
-          term,
+          sanitizedTerm,
           normalizedLanguage,
           normalizedFlavor,
         );
         const now = new Date().toISOString();
         const placeholder: HistoryItem = {
           recordId: null,
-          term,
+          term: sanitizedTerm,
           language: normalizedLanguage,
           flavor: normalizedFlavor,
           termKey,
@@ -444,7 +516,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           try {
             await api.searchRecords.saveSearchRecord({
               token: user.token,
-              term,
+              term: sanitizedTerm,
               language: normalizedLanguage,
               flavor: normalizedFlavor,
             });
