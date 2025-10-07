@@ -58,12 +58,14 @@
   /*
    * 背景：折叠标题在包含长文本时会收缩宽度，导致内容溢出。
    * 目的：让标题文本填满剩余空间，同时保持视觉对齐的稳定性。
-   * 取舍：放弃两端对齐，改为统一左对齐，以匹配 collapsible-summary 的排版需求。
+   * 取舍：放弃两端对齐，改为统一左对齐，以匹配 collapsible-summary 的排版需求；
+   *       同时保持加粗以突出层级标题的视觉锚点。
    */
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
   font-size: 1rem;
+  font-weight: var(--font-bold);
   letter-spacing: 0.02em;
   flex: 1 1 auto;
   min-width: 0;
@@ -146,4 +148,5 @@
   text-align: left;
   text-align-last: left;
   text-justify: auto;
+  font-weight: var(--font-bold);
 }

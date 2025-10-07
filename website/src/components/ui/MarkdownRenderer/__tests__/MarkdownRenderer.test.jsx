@@ -138,3 +138,39 @@ test("skips break injection inside code blocks", () => {
   const code = screen.getByText("const sightseeing = true;");
   expect(code.textContent).not.toContain("\u200B");
 });
+
+/**
+ * 测试目标：传入自定义组件时仍保留折叠摘要渲染器。
+ * 前置条件：覆盖段落标签并渲染包含二级标题的 Markdown。
+ * 步骤：
+ *  1) 渲染 MarkdownRenderer 并通过 components 覆写段落。
+ *  2) 捕获折叠按钮与自定义段落节点。
+ * 断言：
+ *  - DOM 中不存在原生 <collapsible-summary> 标签。
+ *  - 折叠按钮可用且 aria-expanded 属性默认为 true。
+ * 边界/异常：
+ *  - 若折叠结构失效，应能立即定位此测试失败。
+ */
+test("merges custom components with collapsible summaries", () => {
+  const markdown = "## Custom Heading\n\nParagraph";
+  const CustomParagraph = ({ children, ...paragraphProps }) => (
+    <p data-testid="custom-paragraph" {...paragraphProps}>
+      {children}
+    </p>
+  );
+
+  render(
+    <MarkdownRenderer
+      components={{
+        p: CustomParagraph,
+      }}
+    >
+      {markdown}
+    </MarkdownRenderer>,
+  );
+
+  const toggle = getButtonByLabel("Custom Heading");
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(document.querySelector("collapsible-summary")).toBeNull();
+  expect(screen.getByTestId("custom-paragraph")).toBeInTheDocument();
+});
