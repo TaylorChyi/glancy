@@ -324,7 +324,10 @@ export default {
   subscriptionRedeemTitle: "Redeem exclusive benefits",
   subscriptionRedeemPlaceholder: "Enter 16-character code",
   subscriptionRedeemButton: "Redeem now",
-  subscriptionRedeemSuccessToast: "Redeemed successfully. Your benefits are active.",
+  subscriptionRedeemSuccessToast:
+    "Redeemed successfully. Your benefits are active.",
+  subscriptionRedeemFailureToast:
+    "Unable to redeem at the moment. Please try again.",
   subscriptionFeatureColumnLabel: "Feature",
   toastDismissLabel: "Dismiss notification",
   pricingFixedNote: "Pricing is pegged per region and not tied to FX rates.",
