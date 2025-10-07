@@ -196,6 +196,7 @@ const createTranslations = (overrides = {}) => ({
   subscriptionRedeemPlaceholder: "Code",
   subscriptionRedeemButton: "Redeem now",
   subscriptionRedeemSuccessToast: "Redeemed successfully",
+  subscriptionRedeemFailureToast: "Redeem failed. Try again.",
   subscriptionFeatureColumnLabel: "Feature",
   pricingFixedNote: "Fixed",
   pricingTaxIncluded: "Tax included",
@@ -548,16 +549,24 @@ test("Given redeem failure When onRedeem invoked Then error bubbles without user
     (section) => section.id === "subscription",
   );
 
-  await expect(
-    subscriptionSection.componentProps.onRedeem("bad-code"),
-  ).rejects.toThrow("invalid-code");
+  await act(async () => {
+    await expect(
+      subscriptionSection.componentProps.onRedeem("bad-code"),
+    ).rejects.toThrow("invalid-code");
+  });
 
   expect(consoleErrorStub).toHaveBeenCalledWith(
     "Failed to redeem subscription code",
     failure,
   );
   expect(setUserMock).not.toHaveBeenCalled();
-  expect(result.current.feedback.redeemToast.open).toBe(false);
+  await waitFor(() => {
+    expect(result.current.feedback.redeemToast).toMatchObject({
+      open: true,
+      message: `${translations.subscriptionRedeemFailureToast} (invalid-code)`,
+      closeLabel: translations.toastDismissLabel,
+    });
+  });
 });
 
 /**

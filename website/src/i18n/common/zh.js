@@ -307,6 +307,7 @@ export default {
   subscriptionRedeemPlaceholder: "请输入兑换码（16 位）",
   subscriptionRedeemButton: "立即兑换",
   subscriptionRedeemSuccessToast: "兑换成功，专享权益已立即生效。",
+  subscriptionRedeemFailureToast: "兑换失败，请稍后重试。",
   subscriptionFeatureColumnLabel: "能力项",
   toastDismissLabel: "关闭提示",
   pricingFixedNote: "本地区价格为固定面额，不随汇率波动调整。",

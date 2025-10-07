@@ -165,12 +165,85 @@ const formatPhoneDisplay = (
 const MEMBERSHIP_EFFECT_TYPE = "MEMBERSHIP";
 
 const DEFAULT_REDEEM_SUCCESS_MESSAGE = "兑换成功，权益已生效。";
+const DEFAULT_REDEEM_FAILURE_MESSAGE = "兑换失败，请稍后重试。";
 const DEFAULT_TOAST_DISMISS_LABEL = "Dismiss notification";
-const REDEEM_SUCCESS_TOAST_APPEARANCE = Object.freeze({
-  backgroundColor: "var(--brand-primary)",
-  textColor: "var(--text-inverse-light)",
+/**
+ * 背景：
+ *  - 成功与失败的兑换反馈需要呈现不同语义色，原先仅支持成功路径，难以扩展。
+ * 关键决策与取舍：
+ *  - 采用“策略模式”将不同状态的视觉样式映射到常量表，便于后续扩展更多状态（如处理中、部分成功）。
+ *  - 若继续使用条件拼接将导致样式散落在业务逻辑中，可维护性差，因此舍弃。
+ */
+const REDEEM_TOAST_VARIANTS = Object.freeze({
+  success: Object.freeze({
+    backgroundColor: "var(--brand-primary)",
+    textColor: "var(--text-inverse-light)",
+  }),
+  failure: Object.freeze({
+    backgroundColor: "var(--role-danger)",
+    textColor: "var(--role-on-danger)",
+  }),
 });
-const REDEEM_SUCCESS_TOAST_DURATION = 3000;
+const REDEEM_TOAST_DURATION = 3000;
+
+/**
+ * 意图：
+ *  - 将后端返回的错误信息提炼为用户可读的失败原因，并与兜底文案组合。
+ * 输入：
+ *  - error: 兑换流程抛出的错误对象；
+ *  - fallbackMessage: 当错误缺乏语义时展示的默认提示。
+ * 输出：
+ *  - 一段最终用于通知的字符串。
+ * 流程：
+ *  1) 从 error 中提取首个非空字符串作为原因；
+ *  2) 对内部错误码或无意义提示过滤；
+ *  3) 若存在原因，将其附加在兜底文案之后。
+ * 错误处理：
+ *  - 当 error 结构未知或内容为空时，仅返回 fallbackMessage。
+ */
+const composeRedeemFailureMessage = (error, fallbackMessage) => {
+  const fallback = typeof fallbackMessage === "string" ? fallbackMessage : "";
+  const candidates = [];
+  if (typeof error === "string") {
+    candidates.push(error);
+  } else if (error && typeof error === "object") {
+    if (typeof error.message === "string") {
+      candidates.push(error.message);
+    }
+    if (typeof error.reason === "string") {
+      candidates.push(error.reason);
+    }
+    if (typeof error.detail === "string") {
+      candidates.push(error.detail);
+    }
+  }
+
+  const noiseTokens = new Set([
+    "",
+    "redeem-auth-missing",
+    "redeem-api-unavailable",
+    "network error",
+    "request failed",
+  ]);
+  const reason = candidates
+    .map((candidate) => (typeof candidate === "string" ? candidate.trim() : ""))
+    .find((candidate) => {
+      if (!candidate) {
+        return false;
+      }
+      return !noiseTokens.has(candidate.toLowerCase());
+    });
+
+  if (!reason) {
+    return fallback;
+  }
+
+  if (!fallback) {
+    return reason;
+  }
+
+  return `${fallback} (${reason})`;
+};
 
 /**
  * 意图：
@@ -276,6 +349,14 @@ function usePreferenceSections({ initialSectionId }) {
       ),
     [t.subscriptionRedeemSuccessToast],
   );
+  const redeemFailureMessage = useMemo(
+    () =>
+      pickFirstMeaningfulString(
+        [t.subscriptionRedeemFailureToast],
+        DEFAULT_REDEEM_FAILURE_MESSAGE,
+      ),
+    [t.subscriptionRedeemFailureToast],
+  );
 
   const toastDismissLabel = useMemo(
     () =>
@@ -289,6 +370,7 @@ function usePreferenceSections({ initialSectionId }) {
   const [redeemToastState, setRedeemToastState] = useState({
     open: false,
     message: "",
+    variant: "success",
   });
 
   const handleRedeemToastClose = useCallback(() => {
@@ -297,21 +379,35 @@ function usePreferenceSections({ initialSectionId }) {
     );
   }, []);
 
-  const redeemToast = useMemo(
-    () => ({
-      ...REDEEM_SUCCESS_TOAST_APPEARANCE,
-      ...redeemToastState,
-      duration: REDEEM_SUCCESS_TOAST_DURATION,
+  const redeemToast = useMemo(() => {
+    const { variant, ...rest } = redeemToastState;
+    const appearance =
+      (variant && REDEEM_TOAST_VARIANTS[variant]) ||
+      REDEEM_TOAST_VARIANTS.success;
+    return {
+      ...appearance,
+      ...rest,
+      duration: REDEEM_TOAST_DURATION,
       closeLabel: toastDismissLabel,
       onClose: handleRedeemToastClose,
-    }),
-    [redeemToastState, toastDismissLabel, handleRedeemToastClose],
+    };
+  }, [redeemToastState, toastDismissLabel, handleRedeemToastClose]);
+
+  const emitRedeemFailureToast = useCallback(
+    (error) => {
+      setRedeemToastState({
+        open: true,
+        message: composeRedeemFailureMessage(error, redeemFailureMessage),
+        variant: "failure",
+      });
+      return error;
+    },
+    [redeemFailureMessage],
   );
 
   const handleSubscriptionRedeem = useCallback(
     async (rawCode) => {
-      const normalizedCode =
-        typeof rawCode === "string" ? rawCode.trim() : "";
+      const normalizedCode = typeof rawCode === "string" ? rawCode.trim() : "";
       if (!normalizedCode) {
         return undefined;
       }
@@ -319,13 +415,13 @@ function usePreferenceSections({ initialSectionId }) {
       if (!user?.token) {
         const error = new Error("redeem-auth-missing");
         console.error("Failed to redeem subscription code", error);
-        throw error;
+        throw emitRedeemFailureToast(error);
       }
 
       if (typeof redeemCodeRequest !== "function") {
         const error = new Error("redeem-api-unavailable");
         console.error("Failed to redeem subscription code", error);
-        throw error;
+        throw emitRedeemFailureToast(error);
       }
 
       try {
@@ -349,15 +445,23 @@ function usePreferenceSections({ initialSectionId }) {
         setRedeemToastState({
           open: true,
           message: redeemSuccessMessage,
+          variant: "success",
         });
 
         return response;
       } catch (error) {
         console.error("Failed to redeem subscription code", error);
+        emitRedeemFailureToast(error);
         throw error;
       }
     },
-    [redeemCodeRequest, redeemSuccessMessage, setUser, user],
+    [
+      emitRedeemFailureToast,
+      redeemCodeRequest,
+      redeemSuccessMessage,
+      setUser,
+      user,
+    ],
   );
 
   const avatarEditorLabels = useMemo(
