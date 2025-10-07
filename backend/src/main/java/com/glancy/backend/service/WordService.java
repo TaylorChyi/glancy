@@ -20,6 +20,12 @@ import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import com.glancy.backend.service.support.ResponseMarkdownOrSerializedWordStrategy;
+import com.glancy.backend.service.support.SanitizedStreamingMarkdownStrategy;
+import com.glancy.backend.service.support.WordPersistenceCoordinator;
+import com.glancy.backend.service.support.WordPersistenceCoordinator.PersistenceContext;
+import com.glancy.backend.service.support.WordPersistenceCoordinator.PersistenceOutcome;
+import com.glancy.backend.service.support.WordVersionContentStrategy;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,6 +52,9 @@ public class WordService {
     private final WordPersonalizationService wordPersonalizationService;
     private final DictionaryTermNormalizer termNormalizer;
     private final ObjectMapper objectMapper;
+    private final WordPersistenceCoordinator wordPersistenceCoordinator;
+    private final WordVersionContentStrategy defaultVersionContentStrategy;
+    private final WordVersionContentStrategy streamingVersionContentStrategy;
 
     public WordService(
         WordSearcher wordSearcher,
@@ -55,7 +64,8 @@ public class WordService {
         WordResponseParser parser,
         WordPersonalizationService wordPersonalizationService,
         DictionaryTermNormalizer termNormalizer,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        WordPersistenceCoordinator wordPersistenceCoordinator
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -65,6 +75,9 @@ public class WordService {
         this.wordPersonalizationService = wordPersonalizationService;
         this.termNormalizer = termNormalizer;
         this.objectMapper = objectMapper;
+        this.wordPersistenceCoordinator = wordPersistenceCoordinator;
+        this.defaultVersionContentStrategy = new ResponseMarkdownOrSerializedWordStrategy();
+        this.streamingVersionContentStrategy = new SanitizedStreamingMarkdownStrategy();
     }
 
     private static final String DEFAULT_MODEL = DictionaryModel.DOUBAO.getClientName();
@@ -89,25 +102,22 @@ public class WordService {
         WordResponse resp = wordSearcher.search(rawTerm, language, flavor, model, personalizationContext);
         resp.setFlavor(flavor);
         log.info("LLM search result: {}", resp);
-        Word savedWord = saveWord(rawTerm, resp, language, flavor);
-        if (captureHistory) {
-            synchronizeRecordTermQuietly(userId, record, savedWord.getTerm());
-            String content = resp.getMarkdown();
-            if (content == null) {
-                try {
-                    content = serialize(savedWord);
-                } catch (JsonProcessingException e) {
-                    log.warn("Failed to serialize word '{}' for version content", savedWord.getTerm(), e);
-                    content = SensitiveDataUtil.previewText(savedWord.getMarkdown());
-                }
-            }
-            Long recordId = record != null ? record.id() : null;
-            SearchResultVersion version = persistVersion(recordId, userId, model, content, savedWord, flavor);
-            if (version != null) {
-                resp.setVersionId(version.getId());
-            }
-        }
-        return applyPersonalization(userId, resp, personalizationContext);
+        PersistenceOutcome outcome = wordPersistenceCoordinator.persist(
+            buildPersistenceContext(
+                userId,
+                rawTerm,
+                language,
+                flavor,
+                model,
+                record != null ? record.id() : null,
+                captureHistory,
+                resp,
+                personalizationContext,
+                null
+            ),
+            defaultVersionContentStrategy
+        );
+        return outcome.response();
     }
 
     private Mono<StreamPayload> finalizeStreamingSession(StreamingAccumulator session) {
@@ -122,30 +132,31 @@ public class WordService {
         }
         try {
             ParsedWord parsed = parser.parse(completion.sanitizedContent(), session.term(), session.language());
-            WordResponse response = applyPersonalization(
-                session.userId(),
-                parsed.parsed(),
-                session.personalizationContext()
-            );
+            WordResponse response = parsed.parsed();
             response.setFlavor(session.flavor());
-            Word savedWord = saveWord(session.term(), response, session.language(), session.flavor());
             if (!session.captureHistory()) {
                 log.info(
                     "History capture disabled for streaming session user {} term '{}' - skipping record persistence",
                     session.userId(),
                     session.term()
                 );
-                return Mono.empty();
             }
-            synchronizeRecordTermQuietly(session.userId(), session.recordId(), savedWord.getTerm());
-            SearchResultVersion version = persistVersion(
-                session.recordId(),
-                session.userId(),
-                session.model(),
-                parsed.markdown(),
-                savedWord,
-                session.flavor()
+            PersistenceOutcome outcome = wordPersistenceCoordinator.persist(
+                buildPersistenceContext(
+                    session.userId(),
+                    session.term(),
+                    session.language(),
+                    session.flavor(),
+                    session.model(),
+                    session.recordId(),
+                    session.captureHistory(),
+                    response,
+                    session.personalizationContext(),
+                    parsed.markdown()
+                ),
+                streamingVersionContentStrategy
             );
+            SearchResultVersion version = outcome.version();
             if (version == null) {
                 return Mono.empty();
             }
@@ -191,11 +202,6 @@ public class WordService {
      * 错误处理：捕获所有异常并写日志，确保不会影响查词主路径。\
      * 复杂度：O(1)。
      */
-    private void synchronizeRecordTermQuietly(Long userId, SearchRecordResponse record, String canonicalTerm) {
-        Long recordId = record != null ? record.id() : null;
-        synchronizeRecordTermQuietly(userId, recordId, canonicalTerm);
-    }
-
     private void synchronizeRecordTermQuietly(Long userId, Long recordId, String canonicalTerm) {
         try {
             searchRecordService.synchronizeRecordTerm(userId, recordId, canonicalTerm);
@@ -209,6 +215,37 @@ public class WordService {
                 ex
             );
         }
+    }
+
+    private PersistenceContext buildPersistenceContext(
+        Long userId,
+        String requestedTerm,
+        Language language,
+        DictionaryFlavor flavor,
+        String model,
+        Long recordId,
+        boolean captureHistory,
+        WordResponse response,
+        WordPersonalizationContext personalizationContext,
+        String sanitizedMarkdown
+    ) {
+        return WordPersistenceCoordinator.builder()
+            .userId(userId)
+            .requestedTerm(requestedTerm)
+            .language(language)
+            .flavor(flavor)
+            .model(model)
+            .recordId(recordId)
+            .captureHistory(captureHistory)
+            .response(response)
+            .personalizationContext(personalizationContext)
+            .saveWordStep(this::saveWord)
+            .recordSynchronizationStep(this::synchronizeRecordTermQuietly)
+            .versionPersistStep(this::persistVersion)
+            .personalizationStep(this::applyPersonalization)
+            .wordSerializationStep(this::serialize)
+            .sanitizedMarkdown(sanitizedMarkdown)
+            .build();
     }
 
     public record StreamPayload(String event, String data) {
@@ -255,7 +292,7 @@ public class WordService {
                     WordResponse response = toResponse(word);
                     response.setFlavor(flavor);
                     // 兜底：命中缓存同样需要同步历史记录展示词条，避免大小写差异导致的重复记录。
-                    synchronizeRecordTermQuietly(userId, record, word.getTerm());
+                    synchronizeRecordTermQuietly(userId, record != null ? record.id() : null, word.getTerm());
                     return applyPersonalization(userId, response, personalizationContext);
                 })
                 .orElseGet(() ->
@@ -334,7 +371,7 @@ public class WordService {
                 Word cachedWord = existing.get();
                 log.info("Found cached word '{}' in language {}", cachedWord.getTerm(), language);
                 // 兜底：流式查询命中缓存时也需纠正历史记录词条，保证记录去重。
-                synchronizeRecordTermQuietly(userId, record, cachedWord.getTerm());
+                synchronizeRecordTermQuietly(userId, record != null ? record.id() : null, cachedWord.getTerm());
                 try {
                     WordResponse cached = applyPersonalization(userId, toResponse(cachedWord), personalizationContext);
                     return Flux.just(StreamPayload.data(serializeResponse(cached)));
