@@ -1,5 +1,4 @@
 .modal-shell {
-
   /*
    * 为举报弹窗提供独立的色彩令牌，既强化层级感，也避免影响共用的 modal-content 基线样式。
    */
@@ -46,7 +45,6 @@
 }
 
 :global(.modal-content) :where(.plain-surface) {
-
   /*
    * 在模态容器作用域内确保内层面板继承我们定义的底色与阴影，
    * 以呼应 SettingsSurface 的玻璃化质感并保持视觉统一。
