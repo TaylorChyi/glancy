@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,9 +32,16 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
     private final ObjectMapper mapper;
+    private final HttpStatusAwareErrorMessageResolver messageResolver;
 
+    @Autowired
     public GlobalExceptionHandler(ObjectMapper mapper) {
+        this(mapper, HttpStatusAwareErrorMessageResolver.defaultResolver());
+    }
+
+    GlobalExceptionHandler(ObjectMapper mapper, HttpStatusAwareErrorMessageResolver messageResolver) {
         this.mapper = mapper;
+        this.messageResolver = messageResolver;
     }
 
     private boolean isSseRequest() {
@@ -46,9 +54,10 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<?> buildResponse(Object body, HttpStatus status) {
+        Object sanitizedBody = sanitizeBody(body, status);
         if (isSseRequest()) {
             try {
-                String json = mapper.writeValueAsString(body);
+                String json = mapper.writeValueAsString(sanitizedBody);
                 String event = "event: error\n" + "data: " + json + "\n\n";
                 return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(event);
             } catch (JsonProcessingException e) {
@@ -56,7 +65,17 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(fallback);
             }
         }
-        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(sanitizedBody);
+    }
+
+    private Object sanitizeBody(Object body, HttpStatus status) {
+        if (body instanceof ErrorResponse error) {
+            String sanitized = messageResolver.resolve(status, error.getMessage());
+            if (!sanitized.equals(error.getMessage())) {
+                return new ErrorResponse(sanitized);
+            }
+        }
+        return body;
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

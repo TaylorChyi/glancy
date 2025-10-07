@@ -3,12 +3,12 @@ package com.glancy.backend.exception;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,16 +20,25 @@ import org.springframework.web.bind.annotation.RestController;
  * 2. 控制器抛出 ResourceNotFoundException。
  * 3. 验证响应为 SSE 格式错误事件。
  */
-@WebMvcTest(controllers = GlobalExceptionHandlerSseTest.DummyController.class)
-@Import(GlobalExceptionHandler.class)
 class GlobalExceptionHandlerSseTest {
 
-    @Autowired
     private MockMvc mvc;
+
+    @BeforeEach
+    void setUp() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler(
+            new ObjectMapper(),
+            HttpStatusAwareErrorMessageResolver.defaultResolver()
+        );
+        mvc = MockMvcBuilders.standaloneSetup(new DummyController())
+            .setControllerAdvice(handler)
+            .defaultRequest(get("/").accept(MediaType.APPLICATION_JSON))
+            .build();
+    }
 
     @RestController
     @RequestMapping("/dummy")
-    static class DummyController {
+    public static class DummyController {
 
         @GetMapping("/boom")
         String boom() {
