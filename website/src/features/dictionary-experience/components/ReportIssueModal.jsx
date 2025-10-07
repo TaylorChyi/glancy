@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useId } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "@/components/modals/BaseModal.jsx";
 import { SettingsSurface } from "@/components";
@@ -32,6 +32,7 @@ function ReportIssueModal({
   onSubmit,
 }) {
   const { t } = useLanguage();
+  const headingId = useId();
 
   const handleSubmit = useCallback(
     (event) => {
@@ -158,15 +159,47 @@ function ReportIssueModal({
     ],
   );
 
-  // 通过挂载局部样式类，重置 ModalContent 注入的背景色，避免举报弹窗出现额外底色。
+  // 通过挂载局部样式类，为举报弹窗注入专属的表面与阴影令牌，确保视觉与语义双重聚焦。
   const modalClassName = `modal-content ${styles["modal-shell"]}`;
 
+  const handleClose = useCallback(() => {
+    onClose?.();
+  }, [onClose]);
+
+  const renderHeader = useCallback(
+    ({ headingId: surfaceHeadingId, title }) => (
+      <header className={styles.header}>
+        <button
+          type="button"
+          className={styles["header-close"]}
+          aria-label={t.close ?? "Close"}
+          onClick={handleClose}
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h2 id={surfaceHeadingId} className={styles["header-title"]}>
+          {title}
+        </h2>
+        <span aria-hidden="true" className={styles["header-spacer"]} />
+      </header>
+    ),
+    [handleClose, t.close],
+  );
+
   return (
-    <BaseModal open={open} onClose={onClose} className={modalClassName}>
+    <BaseModal
+      open={open}
+      onClose={onClose}
+      className={modalClassName}
+      hideDefaultCloseButton
+      ariaLabelledBy={headingId}
+    >
       <SettingsSurface
         as="form"
         onSubmit={handleSubmit}
         title={t.reportTitle ?? "Report an issue"}
+        headingId={headingId}
+        renderHeader={renderHeader}
         actions={
           <div className={styles["action-bar"]}>
             {/*
