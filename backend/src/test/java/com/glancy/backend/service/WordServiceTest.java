@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.SearchRecordRepository;
@@ -172,6 +173,42 @@ class WordServiceTest {
         );
 
         assertEquals(String.valueOf(word.getId()), result.getId());
+    }
+
+    /**
+     * 测试目标：验证命中缓存时仍能将搜索历史同步为规范词条并避免重复记录。\
+     * 前置条件：数据库已有规范词条缓存，且用户尚未产生历史记录。\
+     * 步骤：\
+     *  1) 使用大写词条触发第一次查询并命中缓存；\
+     *  2) 使用小写词条再次查询。\
+     * 断言：\
+     *  - 两次查询仅生成一条历史记录；\
+     *  - 历史记录中的词条被规范化为缓存中的小写形式。\
+     * 边界/异常：\
+     *  - 若存在多条记录或词条未被纠正则视为失败。
+     */
+    @Test
+    void reuseHistoryWhenCacheHitWithDifferentCase() {
+        Word word = new Word();
+        word.setTerm("cached");
+        word.setNormalizedTerm("cached");
+        word.setLanguage(Language.ENGLISH);
+        word.setFlavor(DictionaryFlavor.BILINGUAL);
+        word.setDefinitions(List.of("store"));
+        word.setMarkdown("md");
+        wordRepository.save(word);
+
+        wordService.findWordForUser(userId, "CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
+
+        List<SearchRecord> afterFirstQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
+        assertEquals(1, afterFirstQuery.size(), "首次命中缓存时应只创建一条历史记录");
+        assertEquals("cached", afterFirstQuery.get(0).getTerm(), "历史记录词条应被同步为规范小写形式");
+
+        wordService.findWordForUser(userId, "cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
+
+        List<SearchRecord> afterSecondQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
+        assertEquals(1, afterSecondQuery.size(), "再次查询不应生成新的历史记录");
+        assertEquals("cached", afterSecondQuery.get(0).getTerm(), "历史记录词条应保持规范形式");
     }
 
     /**
