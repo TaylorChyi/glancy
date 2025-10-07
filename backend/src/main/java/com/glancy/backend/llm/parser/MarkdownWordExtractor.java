@@ -1,19 +1,41 @@
 package com.glancy.backend.llm.parser;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 背景：
+ *  - Doubao LLM 以 Markdown 章节组织词条释义，新协议频繁迭代导致章节标题不断扩张。
+ * 目的：
+ *  - 通过集中式映射策略，将多源标题规范化为后端可消费的领域枚举，确保解析结果稳定输出。
+ * 关键决策与取舍：
+ *  - 采用不可变映射维护标题->领域段落的绑定，方便未来新增标题时只需扩展映射表。
+ *  - 将 Collocations 等新标题复用现有语义槽位（phrases/definitions），避免破坏现有 API 契约。
+ * 影响范围：
+ *  - 所有依赖 MarkdownWordSnapshot 的前后端词表展示模块。
+ * 演进与TODO：
+ *  - 协议若新增需前后端同步的字段（如真正独立的历史沿革版块），需扩展 MarkdownWordSnapshot 结构并更新映射表。
+ */
 final class MarkdownWordExtractor {
 
     private static final Pattern NUMBERED_LIST_PATTERN = Pattern.compile("^(\\d+)[\\.)]\\s*(.+)$");
     private static final Pattern KEY_VALUE_PATTERN = Pattern.compile(
         "^(?<key>[\\p{L}\\p{IsHan}\\s]+)[:：]\\s*(?<value>.+)$"
     );
+    /**
+     * 章节映射表：key 为归一化后的标题字符串。
+     * 说明：
+     *  - 使用 LinkedHashMap 保留声明顺序，便于代码审查与后续补充。
+     *  - Collocations 被视为词组用法，与现有 phrases 集合语义一致；HistoricalResonance 强调语义背景，归入 definitions。
+     */
+    private static final Map<String, Section> SECTION_BY_HEADING = buildSectionMapping();
 
     private MarkdownWordExtractor() {}
 
@@ -171,17 +193,7 @@ final class MarkdownWordExtractor {
         if (normalized.isEmpty()) {
             return Section.DEFINITION;
         }
-        return switch (normalized) {
-            case "definition", "definitions", "meaning", "meanings", "释义", "解释", "含义" -> Section.DEFINITION;
-            case "synonym", "synonyms", "同义词" -> Section.SYNONYMS;
-            case "antonym", "antonyms", "反义词" -> Section.ANTONYMS;
-            case "related", "relatedwords", "相关词", "相关词汇" -> Section.RELATED;
-            case "variation", "variations", "变体", "变形", "词形" -> Section.VARIATIONS;
-            case "phrase", "phrases", "常见词组", "词组" -> Section.PHRASES;
-            case "example", "examples", "例句", "用法示例", "用例" -> Section.EXAMPLE;
-            case "phonetic", "pronunciation", "音标", "发音" -> Section.PHONETIC;
-            default -> Section.DEFINITION;
-        };
+        return SECTION_BY_HEADING.getOrDefault(normalized, Section.DEFINITION);
     }
 
     private static void appendToSection(
@@ -244,5 +256,46 @@ final class MarkdownWordExtractor {
         PHRASES,
         EXAMPLE,
         PHONETIC,
+    }
+
+    private static Map<String, Section> buildSectionMapping() {
+        Map<String, Section> mapping = new LinkedHashMap<>();
+        register(
+            mapping,
+            Section.DEFINITION,
+            "definition",
+            "definitions",
+            "meaning",
+            "meanings",
+            "释义",
+            "解释",
+            "含义",
+            "historicalresonance"
+        );
+        register(mapping, Section.SYNONYMS, "synonym", "synonyms", "同义词");
+        register(mapping, Section.ANTONYMS, "antonym", "antonyms", "反义词");
+        register(mapping, Section.RELATED, "related", "relatedwords", "相关词", "相关词汇");
+        register(
+            mapping,
+            Section.VARIATIONS,
+            "variation",
+            "variations",
+            "变体",
+            "变形",
+            "词形",
+            "derivativesextendedforms",
+            "derivatives",
+            "extendedforms"
+        );
+        register(mapping, Section.PHRASES, "phrase", "phrases", "常见词组", "词组", "collocation", "collocations");
+        register(mapping, Section.EXAMPLE, "example", "examples", "例句", "用法示例", "用例");
+        register(mapping, Section.PHONETIC, "phonetic", "pronunciation", "音标", "发音");
+        return Map.copyOf(mapping);
+    }
+
+    private static void register(Map<String, Section> mapping, Section section, String... headings) {
+        for (String heading : headings) {
+            mapping.put(heading, section);
+        }
     }
 }
