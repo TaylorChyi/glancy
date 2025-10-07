@@ -46,7 +46,6 @@ export default {
   loading: "加载中...",
   settingsPersonalizationEmpty: "完善画像信息以便回答更贴近你。",
   settingsPersonalizationLoadError: "个性化详情暂时无法加载，请稍后再试。",
-  settingsResponseStyleDescription: "选择释义的语气，并补充你的背景信息。",
   settingsResponseStyleError: "响应风格配置暂时无法保存，请稍后重试。",
   settingsResponseStyleSaved: "已保存",
   responseStyleSelectLabel: "响应风格",

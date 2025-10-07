@@ -52,8 +52,6 @@ export default {
     "Add a few notes about yourself to tailor every response.",
   settingsPersonalizationLoadError:
     "We couldn't load your personalization details. Please try again shortly.",
-  settingsResponseStyleDescription:
-    "Choose the tone for explanations and share the context behind it.",
   settingsResponseStyleError:
     "We couldn't save your response style. Please try again in a moment.",
   settingsResponseStyleSaved: "Saved",
