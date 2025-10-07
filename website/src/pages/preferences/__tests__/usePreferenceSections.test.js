@@ -195,6 +195,7 @@ const createTranslations = (overrides = {}) => ({
   subscriptionRedeemTitle: "Redeem",
   subscriptionRedeemPlaceholder: "Code",
   subscriptionRedeemButton: "Redeem now",
+  subscriptionRedeemSuccessToast: "Redeemed successfully",
   subscriptionFeatureColumnLabel: "Feature",
   pricingFixedNote: "Fixed",
   pricingTaxIncluded: "Tax included",
@@ -207,6 +208,7 @@ const createTranslations = (overrides = {}) => ({
   usernameValidationTooShort: "Username must be at least {{min}} characters",
   usernameValidationTooLong: "Username must be at most {{max}} characters",
   usernameUpdateFailed: "Unable to update username",
+  toastDismissLabel: "Dismiss notification",
   ...overrides,
 });
 
@@ -431,6 +433,12 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
     "default",
   );
+  expect(result.current.feedback.redeemToast).toMatchObject({
+    open: false,
+    message: "",
+    closeLabel: translations.toastDismissLabel,
+    duration: 3000,
+  });
 });
 
 /**
@@ -497,6 +505,11 @@ test("Given valid code When redeem resolves Then membership snapshot merges into
       }),
     }),
   );
+  expect(result.current.feedback.redeemToast).toMatchObject({
+    open: true,
+    message: translations.subscriptionRedeemSuccessToast,
+    closeLabel: translations.toastDismissLabel,
+  });
 });
 
 /**
@@ -544,6 +557,7 @@ test("Given redeem failure When onRedeem invoked Then error bubbles without user
     failure,
   );
   expect(setUserMock).not.toHaveBeenCalled();
+  expect(result.current.feedback.redeemToast.open).toBe(false);
 });
 
 /**

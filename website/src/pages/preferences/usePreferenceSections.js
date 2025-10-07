@@ -164,6 +164,14 @@ const formatPhoneDisplay = (
 
 const MEMBERSHIP_EFFECT_TYPE = "MEMBERSHIP";
 
+const DEFAULT_REDEEM_SUCCESS_MESSAGE = "兑换成功，权益已生效。";
+const DEFAULT_TOAST_DISMISS_LABEL = "Dismiss notification";
+const REDEEM_SUCCESS_TOAST_APPEARANCE = Object.freeze({
+  backgroundColor: "var(--brand-primary)",
+  textColor: "var(--text-inverse-light)",
+});
+const REDEEM_SUCCESS_TOAST_DURATION = 3000;
+
 /**
  * 意图：
  *  - 将兑换接口返回的会员奖励合并到用户上下文中，保持订阅蓝图与全局导航的会员状态一致。
@@ -260,6 +268,46 @@ function usePreferenceSections({ initialSectionId }) {
   const redemptionApi = useRedemptionCodesApi();
   const redeemCodeRequest = redemptionApi?.redeem;
 
+  const redeemSuccessMessage = useMemo(
+    () =>
+      pickFirstMeaningfulString(
+        [t.subscriptionRedeemSuccessToast],
+        DEFAULT_REDEEM_SUCCESS_MESSAGE,
+      ),
+    [t.subscriptionRedeemSuccessToast],
+  );
+
+  const toastDismissLabel = useMemo(
+    () =>
+      pickFirstMeaningfulString(
+        [t.toastDismissLabel],
+        DEFAULT_TOAST_DISMISS_LABEL,
+      ),
+    [t.toastDismissLabel],
+  );
+
+  const [redeemToastState, setRedeemToastState] = useState({
+    open: false,
+    message: "",
+  });
+
+  const handleRedeemToastClose = useCallback(() => {
+    setRedeemToastState((current) =>
+      current.open ? { ...current, open: false } : current,
+    );
+  }, []);
+
+  const redeemToast = useMemo(
+    () => ({
+      ...REDEEM_SUCCESS_TOAST_APPEARANCE,
+      ...redeemToastState,
+      duration: REDEEM_SUCCESS_TOAST_DURATION,
+      closeLabel: toastDismissLabel,
+      onClose: handleRedeemToastClose,
+    }),
+    [redeemToastState, toastDismissLabel, handleRedeemToastClose],
+  );
+
   const handleSubscriptionRedeem = useCallback(
     async (rawCode) => {
       const normalizedCode =
@@ -298,13 +346,18 @@ function usePreferenceSections({ initialSectionId }) {
           setUser(nextUser);
         }
 
+        setRedeemToastState({
+          open: true,
+          message: redeemSuccessMessage,
+        });
+
         return response;
       } catch (error) {
         console.error("Failed to redeem subscription code", error);
         throw error;
       }
     },
-    [redeemCodeRequest, setUser, user],
+    [redeemCodeRequest, redeemSuccessMessage, setUser, user],
   );
 
   const avatarEditorLabels = useMemo(
@@ -1107,6 +1160,9 @@ function usePreferenceSections({ initialSectionId }) {
     },
     avatarEditor: {
       modalProps: avatarEditorModalProps,
+    },
+    feedback: {
+      redeemToast,
     },
   };
 }
