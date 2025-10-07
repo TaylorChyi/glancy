@@ -349,7 +349,7 @@ export default {
   reportCategoryHint: "请选择最贴近问题的选项。",
   reportDescriptionLabel: "详细描述（选填）",
   reportDescriptionPlaceholder: "补充说明、样例或上下文信息。",
-  reportSubmit: "提交举报",
+  reportSubmit: "提交",
   reportSubmitting: "提交中...",
   reportCancel: "取消",
   reportErrorMessage: "暂时无法提交举报，请稍后重试。",
