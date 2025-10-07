@@ -143,6 +143,12 @@ function SubscriptionSection({
   }, []);
 
   const shouldRenderPlanRailNav = planCards.length > 1;
+  /**
+   * 以导航显隐取代禁用态，避免读屏软件聚焦到无效按钮，并减少视觉噪点。
+   * 如后续需要保留占位，可改为渲染按钮容器并在样式层做透明处理。
+   */
+  const shouldShowPlanRailPreviousNav = shouldRenderPlanRailNav && !isPlanRailAtStart;
+  const shouldShowPlanRailNextNav = shouldRenderPlanRailNav && !isPlanRailAtEnd;
 
   return (
     <section
@@ -158,12 +164,11 @@ function SubscriptionSection({
       </div>
       <div className={styles["subscription-matrix"]}>
         <div className={styles["subscription-plan-carousel"]}>
-          {shouldRenderPlanRailNav ? (
+          {shouldShowPlanRailPreviousNav ? (
             <button
               type="button"
               className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-previous"]}`}
               onClick={() => handlePlanRailNav(-1)}
-              disabled={isPlanRailAtStart}
               aria-label="查看前一个订阅方案"
             >
               <span aria-hidden="true">‹</span>
@@ -226,12 +231,11 @@ function SubscriptionSection({
               })}
             </div>
           </div>
-          {shouldRenderPlanRailNav ? (
+          {shouldShowPlanRailNextNav ? (
             <button
               type="button"
               className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-next"]}`}
               onClick={() => handlePlanRailNav(1)}
-              disabled={isPlanRailAtEnd}
               aria-label="查看后一个订阅方案"
             >
               <span aria-hidden="true">›</span>
