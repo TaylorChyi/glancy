@@ -319,14 +319,17 @@ class HistoryCsvSerializerTemplate {
     return rows.map((row) => toCsvRow(row)).join("\r\n");
   }
 
-  // eslint-disable-next-line class-methods-use-this
   buildHeader() {
-    return [];
+    // 采用模板方法模式，通过显式抛错约束子类覆写，避免静默回退默认空结构。 
+    throw new Error(
+      `${this.constructor.name} must implement buildHeader(context)`,
+    );
   }
 
-  // eslint-disable-next-line class-methods-use-this
   buildRows() {
-    return [];
+    throw new Error(
+      `${this.constructor.name} must implement buildRows(historyItems, context)`,
+    );
   }
 }
 
