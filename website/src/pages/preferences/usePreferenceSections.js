@@ -545,7 +545,7 @@ function usePreferenceSections({ initialSectionId }) {
         t.fail ??
         "Unable to load response preferences",
       retryLabel: t.refresh ?? "Refresh",
-      dropdownLabel: t.responseStyleSelectLabel ?? "Response tone",
+      dropdownLabel: t.responseStyleSelectLabel ?? "Response Tone",
       options: [
         {
           value: "default",
@@ -599,7 +599,7 @@ function usePreferenceSections({ initialSectionId }) {
           label:
             t.responseStyleFieldAbilityLabel ??
             t.currentAbilityLabel ??
-            "Current ability",
+            "Current Ability",
           placeholder: t.responseStyleFieldAbilityPlaceholder ?? "",
         },
         {
