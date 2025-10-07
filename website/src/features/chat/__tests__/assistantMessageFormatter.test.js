@@ -82,3 +82,48 @@ test("formats doubao dictionary chunks incrementally", () => {
   const expected = polishDictionaryMarkdown(raw);
   expect(final).toBe(expected);
 });
+
+/**
+ * 测试目标：验证新增抖宝词典字段（英文释义、适用人群、搭配、派生、练习）也能触发格式化。
+ * 前置条件：输入模拟新版 Doubao 词条，分成两段以覆盖“需累计多个信号后触发”的路径。
+ * 步骤：
+ *  1) 追加包含标题与 EnglishDefinitions 的首段；
+ *  2) 追加含 RecommendedAudience/Collocations/Derivatives/PracticePrompts 的尾段；
+ * 断言：
+ *  - 第二次 append 返回 polishDictionaryMarkdown(raw)；
+ * 边界/异常：
+ *  - 验证大小写不敏感匹配（practiceprompts 为小写），确保未来字段扩展时可复用模式。
+ */
+test("formats doubao dictionary entries with extended field set", () => {
+  const formatter = createAssistantMessageFormatter();
+  const part1 = "## Illuminate\n\nEnglishDefinitions: 1. To provide light.";
+  const part2 = [
+    "\nrecommendedAudience: Intermediate learners",
+    "\nCollocations: illuminate the path; illuminate a problem",
+    "\nDerivatives: illumination; illuminative",
+    "\npracticeprompts: Describe how you would illuminate a stage.",
+  ].join("");
+  const raw = part1 + part2;
+  const interim = formatter.append(part1);
+  expect(interim).toBe(part1);
+  const final = formatter.append(part2);
+  const expected = polishDictionaryMarkdown(raw);
+  expect(final).toBe(expected);
+});
+
+/**
+ * 测试目标：确认单一关键词不足以触发字典策略，维持普通文本透传。
+ * 前置条件：仅包含一个疑似字段名（Collocations:）的输入；
+ * 步骤：
+ *  1) append 含 Collocations: 的文本；
+ * 断言：
+ *  - 返回值等于原文，说明阈值保护生效；
+ * 边界/异常：
+ *  - 避免普通对话偶然包含字段名时被误判为词典模式。
+ */
+test("does not switch to dictionary formatting for single signal", () => {
+  const formatter = createAssistantMessageFormatter();
+  const raw = "Collocations: are useful study aids in many contexts.";
+  const result = formatter.append(raw);
+  expect(result).toBe(raw);
+});
