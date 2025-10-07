@@ -1,12 +1,13 @@
 .dictionary-entry {
-  width: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 
   /*
-   * 保持词条内容在中心对齐，去除固定 2cm 外边距以适配 Markdown 折叠块；
-   * 通过水平内边距吸收横向留白，避免超出内容区域。
+   * 让词条内容与承载 section 宽度保持一致，避免 Markdown 折叠块产生横向溢出；
+   * 如后续需要限制最大内容宽度，请通过上层容器设置限制而非组件内部写死。
    */
-  margin: 0 auto;
-  max-width: var(--layout-content-max, 100%);
+  margin: 0;
   text-align: justify;
   text-align-last: left;
   font-size: 1rem;
