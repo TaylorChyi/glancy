@@ -36,15 +36,23 @@ function MarkdownRenderer({
   children,
   remarkPlugins: additionalRemarkPlugins,
   rehypePlugins: additionalRehypePlugins,
+  components: additionalComponents,
   ...props
 }) {
   const injectBreaks = useBreakableContent();
-  const components = useMemo(
+  const baseComponents = useMemo(
     () =>
       buildMarkdownComponents({
         injectBreaks,
       }),
     [injectBreaks],
+  );
+  const components = useMemo(
+    () => ({
+      ...baseComponents,
+      ...(additionalComponents ?? {}),
+    }),
+    [additionalComponents, baseComponents],
   );
 
   const remarkPlugins = useMemo(
@@ -301,6 +309,9 @@ MarkdownRenderer.propTypes = {
   remarkPlugins: PropTypes.arrayOf(PropTypes.func),
   rehypePlugins: PropTypes.arrayOf(
     PropTypes.oneOfType([PropTypes.func, PropTypes.array]),
+  ),
+  components: PropTypes.objectOf(
+    PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
   ),
 };
 
