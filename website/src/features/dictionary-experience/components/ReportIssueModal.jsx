@@ -158,8 +158,11 @@ function ReportIssueModal({
     ],
   );
 
+  // 通过挂载局部样式类，重置 ModalContent 注入的背景色，避免举报弹窗出现额外底色。
+  const modalClassName = `modal-content ${styles["modal-shell"]}`;
+
   return (
-    <BaseModal open={open} onClose={onClose} className="modal-content">
+    <BaseModal open={open} onClose={onClose} className={modalClassName}>
       <SettingsSurface
         as="form"
         onSubmit={handleSubmit}
