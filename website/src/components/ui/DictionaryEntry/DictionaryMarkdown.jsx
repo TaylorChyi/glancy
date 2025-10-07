@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import MarkdownStream, {
-  STREAM_SEGMENTATION_PROP,
-} from "@/components/ui/MarkdownStream";
+import MarkdownStream from "@/components/ui/MarkdownStream";
+import { STREAM_SEGMENTATION_PROP } from "@/components/ui/MarkdownStream/streamSegmentationProp.js";
 import styles from "./DictionaryMarkdown.module.css";
 
 function joinClassNames(...tokens) {
@@ -29,7 +28,7 @@ const headingFactory = (level) => {
   };
 };
 
-export const dictionaryMarkdownComponents = {
+const dictionaryMarkdownComponents = {
   h1: headingFactory(1),
   h2: headingFactory(2),
   h3: headingFactory(3),

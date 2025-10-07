@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import PropTypes from "prop-types";
 import MarkdownRenderer from "../MarkdownRenderer";
+import { STREAM_SEGMENTATION_PROP } from "./streamSegmentationProp.js";
 import rehypeStreamWordSegments from "./rehypeStreamWordSegments.js";
-
-const STREAM_SEGMENTATION_PROP = "enableStreamWordSegmentation";
 
 /**
  * 渲染 Markdown 流内容的通用组件，默认使用 MarkdownRenderer。
@@ -40,4 +39,3 @@ MarkdownStream.propTypes = {
 };
 
 export default MarkdownStream;
-export { STREAM_SEGMENTATION_PROP };
