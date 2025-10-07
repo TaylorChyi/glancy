@@ -15,10 +15,20 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Avatar from "@/components/ui/Avatar";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
-import { ACCOUNT_USERNAME_FIELD_TYPE } from "./accountSection.constants.js";
+import usernameEditorStyles from "@/components/Profile/UsernameEditor/UsernameEditor.module.css";
+import {
+  ACCOUNT_STATIC_FIELD_TYPE,
+  ACCOUNT_USERNAME_FIELD_TYPE,
+} from "./accountSection.constants.js";
 import styles from "../Preferences.module.css";
 
 const AVATAR_SIZE = 72;
+const DETAIL_INPUT_CLASSNAME = [
+  usernameEditorStyles.input,
+  styles["detail-input"],
+]
+  .filter(Boolean)
+  .join(" ");
 
 /**
  * 意图：在账号详情表格中以分栏布局呈现用户名编辑能力，确保操作按钮落位于统一的动作列。
@@ -31,7 +41,7 @@ const AVATAR_SIZE = 72;
  * 错误处理：用户名校验与异步错误交由 UsernameEditor 内部处理。
  * 复杂度：O(1)。
  */
-function UsernameFieldRow({ field }) {
+function UsernameFieldRow({ field, labelId, valueId }) {
   const [actionDescriptor, setActionDescriptor] = useState(null);
 
   const handleResolveAction = useCallback((descriptor) => {
@@ -57,12 +67,22 @@ function UsernameFieldRow({ field }) {
   const buttonClassName = `${styles["avatar-trigger"]} ${styles["detail-action-button"]}`;
   const isDisabled = Boolean(actionDescriptor?.disabled);
 
+  const mergedInputClassName = [
+    field.usernameEditorProps?.inputClassName,
+    DETAIL_INPUT_CLASSNAME,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className={styles["detail-row"]}>
-      <dt className={styles["detail-label"]}>{field.label}</dt>
-      <dd className={styles["detail-value"]}>
+      <dt id={labelId} className={styles["detail-label"]}>
+        {field.label}
+      </dt>
+      <dd className={styles["detail-value"]} id={valueId}>
         <UsernameEditor
           {...field.usernameEditorProps}
+          inputClassName={mergedInputClassName}
           renderInlineAction={false}
           onResolveAction={handleResolveAction}
         />
@@ -95,8 +115,90 @@ UsernameFieldRow.propTypes = {
       onSuccess: PropTypes.func,
       onFailure: PropTypes.func,
       t: UsernameEditor.propTypes.t,
+      inputClassName: PropTypes.string,
     }).isRequired,
   }).isRequired,
+  labelId: PropTypes.string.isRequired,
+  valueId: PropTypes.string.isRequired,
+};
+
+/**
+ * 意图：以静态禁用输入框承载邮箱/手机号等只读字段，让视觉样式与用户名保持一致。
+ * 输入：field —— AccountSection 字段配置，需提供展示 value 与可选的 readOnlyInputProps。
+ * 输出：返回 detail-row 行元素，值列渲染禁用输入框。
+ * 流程：
+ *  1) 合并默认输入属性与 field.readOnlyInputProps，避免硬编码类型；
+ *  2) 将输入框与标签通过 aria-labelledby 建立语义绑定；
+ *  3) 值列保持文本居中，确保视觉对齐。
+ * 错误处理：纯展示组件无异步/交互逻辑，无需额外错误处理。
+ * 复杂度：O(1)。
+ */
+function StaticFieldRow({ field, labelId, valueId }) {
+  const inputProps = {
+    type: "text",
+    inputMode: undefined,
+    autoComplete: "off",
+    ...field.readOnlyInputProps,
+  };
+
+  return (
+    <div className={styles["detail-row"]}>
+      <dt id={labelId} className={styles["detail-label"]}>
+        {field.label}
+      </dt>
+      <dd className={styles["detail-value"]} id={valueId}>
+        <input
+          {...inputProps}
+          className={DETAIL_INPUT_CLASSNAME}
+          value={field.value}
+          disabled
+          readOnly
+          aria-readonly="true"
+          aria-labelledby={labelId}
+        />
+      </dd>
+      <div className={styles["detail-action"]}>
+        {field.action ? (
+          <button
+            type="button"
+            className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+            aria-disabled={field.action.disabled || field.action.isPending}
+            disabled={field.action.disabled || field.action.isPending}
+            onClick={field.action.onClick}
+          >
+            {field.action.isPending && field.action.pendingLabel
+              ? field.action.pendingLabel
+              : field.action.label}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+StaticFieldRow.propTypes = {
+  field: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+    readOnlyInputProps: PropTypes.shape({
+      type: PropTypes.string,
+      inputMode: PropTypes.string,
+      autoComplete: PropTypes.string,
+      name: PropTypes.string,
+      placeholder: PropTypes.string,
+    }),
+    action: PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+      disabled: PropTypes.bool,
+      onClick: PropTypes.func,
+      isPending: PropTypes.bool,
+      pendingLabel: PropTypes.string,
+    }),
+  }).isRequired,
+  labelId: PropTypes.string.isRequired,
+  valueId: PropTypes.string.isRequired,
 };
 
 function AccountSection({ title, fields, headingId, identity, bindings }) {
@@ -191,15 +293,38 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
           </div>
         </div>
         {fields.map((field) => {
+          const labelId = `${headingId}-${field.id}-label`;
+          const valueId = `${headingId}-${field.id}-value`;
+
           if (field.type === ACCOUNT_USERNAME_FIELD_TYPE) {
-            return <UsernameFieldRow key={field.id} field={field} />;
+            return (
+              <UsernameFieldRow
+                key={field.id}
+                field={field}
+                labelId={labelId}
+                valueId={valueId}
+              />
+            );
+          }
+
+          if (field.type === ACCOUNT_STATIC_FIELD_TYPE) {
+            return (
+              <StaticFieldRow
+                key={field.id}
+                field={field}
+                labelId={labelId}
+                valueId={valueId}
+              />
+            );
           }
 
           const renderValue = field.renderValue;
           return (
             <div key={field.id} className={styles["detail-row"]}>
-              <dt className={styles["detail-label"]}>{field.label}</dt>
-              <dd className={styles["detail-value"]}>
+              <dt id={labelId} className={styles["detail-label"]}>
+                {field.label}
+              </dt>
+              <dd className={styles["detail-value"]} id={valueId}>
                 {typeof renderValue === "function"
                   ? renderValue(field)
                   : field.value}
@@ -263,6 +388,13 @@ AccountSection.propTypes = {
       value: PropTypes.string.isRequired,
       renderValue: PropTypes.func,
       type: PropTypes.string,
+      readOnlyInputProps: PropTypes.shape({
+        type: PropTypes.string,
+        inputMode: PropTypes.string,
+        autoComplete: PropTypes.string,
+        name: PropTypes.string,
+        placeholder: PropTypes.string,
+      }),
       usernameEditorProps: PropTypes.shape({
         username: PropTypes.string,
         emptyDisplayValue: PropTypes.string,
@@ -270,6 +402,7 @@ AccountSection.propTypes = {
         onSuccess: PropTypes.func,
         onFailure: PropTypes.func,
         t: UsernameEditor.propTypes.t,
+        inputClassName: PropTypes.string,
       }),
       action: PropTypes.shape({
         id: PropTypes.string.isRequired,
