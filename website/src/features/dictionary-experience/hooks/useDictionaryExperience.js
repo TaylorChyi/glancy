@@ -15,7 +15,6 @@ import {
   WORD_LANGUAGE_AUTO,
   resolveShareTarget,
   attemptShareLink,
-  polishDictionaryMarkdown,
   copyTextToClipboard,
 } from "@/utils";
 import { wordCacheKey } from "@/api/words.js";
@@ -33,6 +32,10 @@ import {
   isLibraryView,
 } from "../dictionaryExperienceViews.js";
 import { useWordIssueReportDialog } from "./useWordIssueReportDialog.js";
+import {
+  normalizeDictionaryMarkdown,
+  normalizeMarkdownEntity,
+} from "../markdown/dictionaryMarkdownNormalizer.js";
 
 /**
  * 背景：
@@ -153,7 +156,7 @@ export function useDictionaryExperience() {
       }
       const preview = extractMarkdownPreview(candidate);
       const normalized = preview == null ? candidate : preview;
-      return polishDictionaryMarkdown(normalized);
+      return normalizeDictionaryMarkdown(normalized);
     }
 
     if (entry && typeof entry === "object") {
@@ -385,16 +388,18 @@ export function useDictionaryExperience() {
           (item) => String(item.id) === String(resolvedActiveId),
         ) ??
         record.versions[record.versions.length - 1];
-      setVersions(record.versions);
+      const normalizedVersions = record.versions.map(normalizeMarkdownEntity);
+      setVersions(normalizedVersions);
       setActiveVersionId(resolvedActiveId ?? null);
-      if (resolvedEntry) {
-        setEntry(resolvedEntry);
-        setFinalText(resolvedEntry.markdown ?? "");
-        if (resolvedEntry.term) {
-          setCurrentTerm(resolvedEntry.term);
+      const normalizedEntry = normalizeMarkdownEntity(resolvedEntry);
+      if (normalizedEntry) {
+        setEntry(normalizedEntry);
+        setFinalText(normalizedEntry.markdown ?? "");
+        if (normalizedEntry.term) {
+          setCurrentTerm(normalizedEntry.term);
         }
       }
-      return resolvedEntry ?? null;
+      return normalizedEntry ?? null;
     },
     [wordStoreApi],
   );
@@ -485,11 +490,14 @@ export function useDictionaryExperience() {
           acc += chunk;
 
           const derived = extractMarkdownPreview(acc);
-          preview = derived === null ? preview : derived;
+          if (derived !== null) {
+            preview = normalizeDictionaryMarkdown(derived);
+          }
           setStreamText(preview);
 
           try {
-            parsedEntry = JSON.parse(acc);
+            const parsed = JSON.parse(acc);
+            parsedEntry = normalizeMarkdownEntity(parsed);
             setEntry(parsedEntry);
           } catch {
             // waiting for JSON to finish streaming
@@ -508,7 +516,11 @@ export function useDictionaryExperience() {
           }
         } else if (parsedEntry) {
           setEntry(parsedEntry);
-          setFinalText(parsedEntry.markdown ?? "");
+          const finalMarkdown =
+            typeof parsedEntry.markdown === "string"
+              ? parsedEntry.markdown
+              : "";
+          setFinalText(finalMarkdown);
           resolvedTerm = coerceResolvedTerm(parsedEntry.term, normalized);
         } else {
           setFinalText(preview);
@@ -716,11 +728,12 @@ export function useDictionaryExperience() {
 
       wordStoreApi.getState().setActiveVersion?.(currentTermKey, nextId);
       setActiveVersionId(nextId ?? null);
-      setEntry(nextVersion);
-      setFinalText(nextVersion.markdown ?? "");
+      const normalizedVersion = normalizeMarkdownEntity(nextVersion);
+      setEntry(normalizedVersion);
+      setFinalText(normalizedVersion?.markdown ?? "");
       setStreamText("");
-      if (nextVersion.term) {
-        setCurrentTerm(nextVersion.term);
+      if (normalizedVersion?.term) {
+        setCurrentTerm(normalizedVersion.term);
       }
       return true;
     },

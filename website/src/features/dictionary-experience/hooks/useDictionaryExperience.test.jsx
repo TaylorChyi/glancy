@@ -167,6 +167,7 @@ beforeEach(() => {
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
+  utilsModule.polishDictionaryMarkdown.mockImplementation((value) => value);
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });
   mockWordStoreState.entries = {};
   submitWordReportMock.mockReset();
@@ -691,5 +692,39 @@ describe("useDictionaryExperience", () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.activeView).toBe("dictionary");
     expect(result.current.viewState.isDictionary).toBe(true);
+  });
+
+  /**
+   * 测试目标：流式 Markdown 经归一化后需在 streamText 与 finalText 中保持一致。
+   * 前置条件：polishDictionaryMarkdown mock 增加标记，流数据仅返回 Markdown 字符串。
+   * 步骤：触发 handleSend 并消费异步生成器。
+   * 断言：
+   *  - streamText 等于归一化结果；
+   *  - finalText 同样输出归一化字符串。
+   * 边界/异常：覆盖非 JSON 流场景。
+   */
+  it("GivenStreamingMarkdown_WhenNormalized_ShouldExposePolishedPreviewAndFinal", async () => {
+    utilsModule.extractMarkdownPreview.mockImplementation((buffer) => buffer);
+    utilsModule.polishDictionaryMarkdown.mockImplementation(
+      (value) => `normalized:${value}`,
+    );
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: "**raw**", language: "ENGLISH" };
+      })(),
+    );
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("term");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    expect(result.current.streamText).toBe("normalized:**raw**");
+    expect(result.current.finalText).toBe("normalized:**raw**");
   });
 });
