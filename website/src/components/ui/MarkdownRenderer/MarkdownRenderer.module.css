@@ -5,6 +5,10 @@
 }
 
 .section {
+  /*
+   * 背景：释义区块在嵌套折叠时存在不同容器宽度的默认值。
+   * 目的：强制所有子元素继承 section 的宽度，避免横向溢出。
+   */
   margin-block: 16px;
   border-radius: var(--radius-lg, 14px);
   border: 1px solid
@@ -13,6 +17,7 @@
   box-shadow: 0 12px 32px
     color-mix(in srgb, var(--surface-dark) 10%, transparent);
   overflow: hidden;
+  width: 100%;
 }
 
 .section[data-depth="3"] {
@@ -50,11 +55,21 @@
 }
 
 .summary-title {
+  /*
+   * 背景：折叠标题在包含长文本时会收缩宽度，导致内容溢出。
+   * 目的：让标题文本填满剩余空间，并启用两端对齐的字符分布。
+   */
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
   font-size: 1rem;
   letter-spacing: 0.02em;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-character;
+  overflow-wrap: anywhere;
 }
 
 .chevron {
@@ -92,6 +107,7 @@
     padding 0.32s ease;
   padding: 0 28px;
   background: color-mix(in srgb, var(--color-surface-alt) 78%, transparent);
+  width: 100%;
 }
 
 .body[data-open="true"] {
@@ -101,12 +117,22 @@
 }
 
 .body-inner {
+  /*
+   * 背景：Markdown 内容混合段落、列表与内联标签，默认对齐方式会打破版面节奏。
+   * 目的：保证所有文本块宽度与 section 保持一致，并在多语言场景下启用两端对齐。
+   */
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  align-items: stretch;
+  text-align: justify;
+  text-align-last: justify;
+  text-justify: inter-character;
+  overflow-wrap: anywhere;
 }
 
 .body-inner > :global(*) {
   margin: 0;
+  width: 100%;
 }
