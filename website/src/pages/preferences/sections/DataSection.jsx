@@ -171,11 +171,6 @@ function DataSection({ title, message, headingId, descriptionId }) {
     [t],
   );
 
-  const selectedPolicy = useMemo(
-    () => getRetentionPolicyById(retentionPolicyId) ?? null,
-    [retentionPolicyId],
-  );
-
   const languageOptions = useMemo(
     () => toLanguageOptions(history, t),
     [history, t],
