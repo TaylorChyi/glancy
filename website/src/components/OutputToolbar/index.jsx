@@ -96,7 +96,7 @@ function OutputToolbar({
   canFavorite = false,
   canDelete = false,
   onDelete,
-  canShare = false,
+  canShare = undefined,
   shareModel = null,
   canReport = false,
   onReport,
@@ -257,11 +257,23 @@ function OutputToolbar({
     shareCapabilities &&
       (shareCapabilities.hasCopy || shareCapabilities.hasImage),
   );
+  const shareAccessGranted = useMemo(() => {
+    /**
+     * 背景：词典页在不同状态下由外部状态机决定是否允许分享。
+     * 取舍：若父级未显式传入 canShare，则回落到 shareModel 自身的能力判定，
+     *       避免因默认值 false 造成按钮被错误禁用。
+     */
+    if (typeof canShare === "boolean") {
+      return canShare;
+    }
+    if (shareCapabilities) {
+      return shareCapabilities.canShare !== false;
+    }
+    return false;
+  }, [canShare, shareCapabilities]);
+
   const shareButtonDisabled =
-    disabled ||
-    !canShare ||
-    !shareMenuAvailable ||
-    shareCapabilities?.canShare === false;
+    disabled || !shareAccessGranted || !shareMenuAvailable;
   // 设计取舍：分享需向未注册访客开放，因而不再依赖 user；仍保留其他禁用条件避免误触。
 
   useEffect(() => {
@@ -677,7 +689,7 @@ OutputToolbar.defaultProps = {
   canFavorite: false,
   canDelete: false,
   onDelete: undefined,
-  canShare: false,
+  canShare: undefined,
   shareModel: null,
   canReport: false,
   onReport: undefined,
