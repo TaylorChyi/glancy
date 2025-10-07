@@ -36,6 +36,13 @@
   --report-modal-gutter: clamp(var(--space-6), 7vw, var(--space-9));
 
   /*
+   * 面板描边与内部栅格存在视觉贴合问题，此处通过新增 padding 令牌来保证边界与内容之间的安全距离，
+   * 并保留在未来根据不同交互密度快速调参的可能性。
+   * 备选方案：改动 SettingsSurface 的默认 padding，但那会影响所有复用场景，风险不可接受。
+   */
+  --report-modal-panel-padding: clamp(var(--space-5), 5.4vw, var(--space-7));
+
+  /*
    * 依据订阅面板的新版视觉规范，压缩圆角以强调面板的建筑感，
    * 同时通过提升描边对比度（外层 64%、内层 58%）让层级关系更清晰。
    * 备选方案：保留旧描边（46%）但改圆角，测试后发现会让面板显得浮，故弃用。
@@ -57,6 +64,7 @@
   border-radius: var(--report-modal-radius);
   border: 1px solid var(--report-modal-inner-border);
   box-shadow: var(--report-modal-inner-shadow);
+  padding: var(--report-modal-panel-padding);
 }
 
 :global(.modal-content) :where(.plain-surface) {
@@ -68,6 +76,7 @@
   border-radius: var(--report-modal-radius);
   border: 1px solid var(--report-modal-inner-border);
   box-shadow: var(--report-modal-inner-shadow);
+  padding: var(--report-modal-panel-padding);
 }
 
 .header {
