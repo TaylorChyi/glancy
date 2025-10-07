@@ -14,24 +14,44 @@ describe("resolveShareTarget", () => {
     const result = resolveShareTarget({
       baseUrl: "https://glancy.cn/share",
       currentUrl: "https://glancy.cn/dictionary",
+      term: "vision",
+      language: "ENGLISH",
+      versionId: "123",
     });
 
-    expect(result).toBe("https://glancy.cn/share");
+    expect(result).toBe(
+      "https://glancy.cn/share?term=vision&lang=ENGLISH&versionId=123",
+    );
   });
 
   test("combines relative base with current url", () => {
     const result = resolveShareTarget({
       baseUrl: "/share",
       currentUrl: "https://glancy.cn/dictionary?term=test",
+      term: "delta",
     });
 
-    expect(result).toBe("https://glancy.cn/share");
+    expect(result).toBe("https://glancy.cn/share?term=delta");
   });
 
   test("falls back to current url when base is absent", () => {
-    const result = resolveShareTarget({ currentUrl: "https://glancy.cn/live" });
+    const result = resolveShareTarget({
+      currentUrl: "https://glancy.cn/live",
+      term: "spark",
+    });
 
-    expect(result).toBe("https://glancy.cn/live");
+    expect(result).toBe("https://glancy.cn/live?term=spark");
+  });
+
+  test("appends query params even when base parsing fails", () => {
+    const result = resolveShareTarget({
+      baseUrl: "invalid://url",
+      currentUrl: "https://glancy.cn/context",
+      term: "horizon",
+      language: "ZH",
+    });
+
+    expect(result).toBe("invalid://url?term=horizon&lang=ZH");
   });
 });
 

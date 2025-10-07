@@ -238,6 +238,62 @@
   transform: translateY(-1px);
 }
 
+/*
+ * 背景：分享按钮需承载多种动作，弹层保持品牌的白底黑字气质。
+ * 取舍：继承工具栏圆角与柔光阴影，避免额外样式依赖。
+ */
+.share-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  padding: 12px;
+  min-width: 220px;
+  border-radius: 16px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 18px 36px rgb(17 24 39 / 14%);
+}
+
+.share-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-primary, #111827);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.share-menu-item svg {
+  flex: 0 0 auto;
+  color: var(--toolbar-icon-color, #111827);
+}
+
+.share-menu-item:hover,
+.share-menu-item:focus-visible {
+  outline: none;
+  background: color-mix(
+    in srgb,
+    var(--toolbar-nav-color-hover, #e0e4ec) 32%,
+    transparent
+  );
+}
+
+.share-menu-item[disabled] {
+  cursor: not-allowed;
+  color: var(--color-text-tertiary, #9ca3af);
+}
+
+.share-menu-item[disabled] svg {
+  color: var(--color-text-tertiary, #9ca3af);
+}
+
 .indicator {
   min-width: 48px;
   text-align: center;

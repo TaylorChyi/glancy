@@ -41,6 +41,13 @@ const translationFixture = {
   share: "分享",
   shareCopySuccess: "复制链接",
   shareFailed: "分享失败",
+  shareOptionLink: "复制分享链接",
+  shareOptionImage: "导出释义长图",
+  shareImagePreparing: "图片生成中",
+  shareImageSuccess: "图片导出完成",
+  shareImageFailed: "图片导出失败",
+  shareMenuLabel: "分享方式",
+  shareAppName: "Glancy 词海",
   reportUnavailable: "无法报告",
   reportFailed: "报告失败",
   report: "报告",
@@ -101,7 +108,6 @@ jest.unstable_mockModule("@/utils", () => ({
   normalizeWordSourceLanguage: jest.fn((value) => value ?? "AUTO"),
   normalizeWordTargetLanguage: jest.fn((value) => value ?? "CHINESE"),
   resolveShareTarget: jest.fn(() => "https://example.com"),
-  attemptShareLink: jest.fn(async () => ({ status: "shared" })),
   polishDictionaryMarkdown: jest.fn((value) => value),
   copyTextToClipboard: jest.fn(async () => ({ status: "copied" })),
 }));
@@ -151,7 +157,17 @@ jest.unstable_mockModule("@/config", () => ({
   DEFAULT_MODEL: "test-model",
 }));
 
+jest.unstable_mockModule(
+  "@/features/dictionary-experience/share/dictionaryShareImage.js",
+  () => ({
+    exportDictionaryShareImage: jest.fn(async () => ({ status: "success" })),
+  }),
+);
+
 const utilsModule = await import("@/utils");
+const shareImageModule = await import(
+  "@/features/dictionary-experience/share/dictionaryShareImage.js"
+);
 const { useDictionaryExperience, COPY_FEEDBACK_STATES } = await import(
   "./useDictionaryExperience.js"
 );
@@ -171,6 +187,9 @@ beforeEach(() => {
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });
   mockWordStoreState.entries = {};
   submitWordReportMock.mockReset();
+  shareImageModule.exportDictionaryShareImage.mockResolvedValue({
+    status: "success",
+  });
 });
 
 afterEach(() => {
@@ -178,6 +197,87 @@ afterEach(() => {
 });
 
 describe("useDictionaryExperience", () => {
+  /**
+   * 测试目标：当词条激活时复制分享链接应调用剪贴板并弹出提示。
+   * 前置条件：设置查询文本并执行 handleSend。
+   * 步骤：
+   *  1) 先通过 setText 建立查询文本；
+   *  2) 调用 handleSend 建立 activeTerm；
+   *  3) 调用 shareModel.onCopyLink。
+   * 断言：
+   *  - copyTextToClipboard 收到分享地址；
+   *  - popupMsg 更新为 shareCopySuccess。
+   */
+  it("copies share link through clipboard when shareModel provided", async () => {
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("lumen");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    const shareModel = result.current.dictionaryActionBarProps.shareModel;
+    expect(shareModel).not.toBeNull();
+
+    await act(async () => {
+      await shareModel.onCopyLink();
+    });
+
+    expect(utilsModule.copyTextToClipboard).toHaveBeenCalledWith(
+      "https://example.com",
+    );
+    expect(result.current.popupMsg).toBe("复制链接");
+  });
+
+  /**
+   * 测试目标：导出图片时应调用导出器并反馈成功。
+   * 前置条件：模拟流式返回以生成 finalText，配置导出成功结果。
+   * 步骤：
+   *  1) 重写 extractMarkdownPreview 返回非空；
+   *  2) 通过 setText 写入查询文本；
+   *  3) 触发 handleSend；
+   *  4) 调用 shareModel.onExportImage。
+   * 断言：
+   *  - exportDictionaryShareImage 被调用且携带 term；
+   *  - popupMsg 更新为 shareImageSuccess。
+   */
+  it("exports share image via exporter when data ready", async () => {
+    utilsModule.extractMarkdownPreview.mockImplementation(() => "# heading");
+    mockStreamWord.mockImplementation(() =>
+      (async function* () {
+        yield { chunk: "partial" };
+      })(),
+    );
+    shareImageModule.exportDictionaryShareImage.mockResolvedValue({
+      status: "success",
+    });
+
+    const { result } = renderHook(() => useDictionaryExperience());
+
+    await act(async () => {
+      result.current.setText("prism");
+    });
+
+    await act(async () => {
+      await result.current.handleSend({ preventDefault: jest.fn() });
+    });
+
+    const shareModel = result.current.dictionaryActionBarProps.shareModel;
+    expect(shareModel).not.toBeNull();
+
+    await act(async () => {
+      await shareModel.onExportImage();
+    });
+
+    expect(shareImageModule.exportDictionaryShareImage).toHaveBeenCalledWith(
+      expect.objectContaining({ term: "prism" }),
+    );
+    expect(result.current.popupMsg).toBe("图片导出完成");
+  });
+
   /**
    * 测试路径：无用户登录时提交查询，需立即引导至登录页。
    * 步骤：构造空用户上下文，调用 handleSend。

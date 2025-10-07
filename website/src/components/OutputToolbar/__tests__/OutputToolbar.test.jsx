@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, screen, within } from "@testing-library/react";
+import { render, fireEvent, screen, within, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
@@ -23,6 +23,12 @@ jest.unstable_mockModule("@/context", () => ({
       deleteButton: "删除",
       share: "分享",
       report: "反馈",
+      shareOptionLink: "复制分享链接",
+      shareOptionImage: "导出长图",
+      shareMenuLabel: "分享方式",
+      shareImagePreparing: "生成图片",
+      shareImageSuccess: "导出成功",
+      shareImageFailed: "导出失败",
       dictionarySourceLanguageLabel: "源语言",
       dictionaryTargetLanguageLabel: "目标语言",
     },
@@ -151,10 +157,11 @@ describe("OutputToolbar", () => {
   /**
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
-  test("renders action buttons when permitted", () => {
+  test("renders action buttons when permitted", async () => {
     const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
-    const onShare = jest.fn();
+    const onCopyLink = jest.fn(() => Promise.resolve());
+    const onExportImage = jest.fn(() => Promise.resolve());
     const onReport = jest.fn();
     const onCopy = jest.fn();
 
@@ -168,8 +175,13 @@ describe("OutputToolbar", () => {
         canFavorite
         onDelete={onDelete}
         canDelete
-        onShare={onShare}
         canShare
+        shareModel={{
+          canShare: true,
+          onCopyLink,
+          onExportImage,
+          canExportImage: true,
+        }}
         onReport={onReport}
         canReport
       />,
@@ -177,7 +189,26 @@ describe("OutputToolbar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
-    fireEvent.click(screen.getByRole("button", { name: "分享" }));
+    const shareTrigger = screen.getByRole("button", { name: "分享" });
+    await act(async () => {
+      fireEvent.click(shareTrigger);
+    });
+    await screen.findByRole("menu", { name: "分享方式" });
+    const copyItem = await screen.findByRole("menuitem", {
+      name: /复制分享链接/,
+    });
+    await act(async () => {
+      fireEvent.click(copyItem);
+    });
+    await Promise.resolve();
+    await act(async () => {
+      fireEvent.click(shareTrigger);
+    });
+    const imageItem = await screen.findByRole("menuitem", { name: /导出长图/ });
+    await act(async () => {
+      fireEvent.click(imageItem);
+    });
+    await Promise.resolve();
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
@@ -186,7 +217,8 @@ describe("OutputToolbar", () => {
     ).toContain("entry__tool-btn");
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(onCopyLink).toHaveBeenCalledTimes(1);
+    expect(onExportImage).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);
   });
@@ -242,10 +274,20 @@ describe("OutputToolbar", () => {
    */
   test("disables actions without user", () => {
     userState.user = null;
-    render(<OutputToolbar term="hello" canShare onShare={jest.fn()} />);
+    render(
+      <OutputToolbar
+        term="hello"
+        canShare
+        shareModel={{ canShare: true, onCopyLink: jest.fn() }}
+      />,
+    );
 
     const shareButton = screen.getByRole("button", { name: "分享" });
     expect(shareButton).toBeDisabled();
+    fireEvent.click(shareButton);
+    expect(
+      screen.queryByRole("menu", { name: "分享方式" }),
+    ).not.toBeInTheDocument();
   });
 
   /**
