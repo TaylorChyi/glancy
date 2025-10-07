@@ -1,4 +1,7 @@
+import { useMemo } from "react";
+import PropTypes from "prop-types";
 import MarkdownRenderer from "../MarkdownRenderer";
+import rehypeStreamWordSegments from "./rehypeStreamWordSegments.js";
 
 /**
  * 渲染 Markdown 流内容的通用组件，默认使用 MarkdownRenderer。
@@ -6,7 +9,25 @@ import MarkdownRenderer from "../MarkdownRenderer";
  */
 function MarkdownStream({ text, renderer }) {
   const Renderer = renderer || MarkdownRenderer;
-  return <Renderer className="stream-text">{text}</Renderer>;
+  const additionalRehypePlugins = useMemo(
+    () => (Renderer === MarkdownRenderer ? [rehypeStreamWordSegments] : null),
+    [Renderer],
+  );
+
+  const rendererProps = additionalRehypePlugins
+    ? { rehypePlugins: additionalRehypePlugins }
+    : {};
+
+  return (
+    <Renderer className="stream-text" {...rendererProps}>
+      {text}
+    </Renderer>
+  );
 }
+
+MarkdownStream.propTypes = {
+  text: PropTypes.string,
+  renderer: PropTypes.elementType,
+};
 
 export default MarkdownStream;
