@@ -771,14 +771,6 @@ function usePreferenceSections({ initialSectionId }) {
     const generalLabel = t.settingsTabGeneral ?? "General";
 
     const responseStyleLabel = t.settingsTabPersonalization ?? "Response style";
-    const responseStyleSummary =
-      t.settingsResponseStyleDescription ??
-      t.prefPersonalizationTitle ??
-      "Choose how explanations should sound.";
-    const responseStyleMessage = pickFirstMeaningfulString(
-      [t.settingsResponseStyleDescription, t.prefPersonalizationTitle],
-      responseStyleSummary,
-    );
 
     const dataLabel = t.settingsTabData ?? "Data controls";
     const dataSummary =
@@ -894,7 +886,7 @@ function usePreferenceSections({ initialSectionId }) {
         Component: ResponseStyleSection,
         componentProps: {
           title: responseStyleLabel,
-          message: responseStyleMessage,
+          // 根据最新信息架构，响应风格分区不再提供额外描述，避免重复呈现。
           state: responseStyleState,
           copy: responseStyleCopy,
           onRetry: handleResponseStyleRetry,
@@ -962,7 +954,6 @@ function usePreferenceSections({ initialSectionId }) {
     usernameEditorTranslations,
     changeAvatarLabel,
     t.prefAccountTitle,
-    t.prefPersonalizationTitle,
     t.settingsAccountBindingApple,
     t.settingsAccountBindingGoogle,
     t.settingsAccountBindingWeChat,
@@ -976,7 +967,6 @@ function usePreferenceSections({ initialSectionId }) {
     t.settingsTabGeneral,
     t.settingsTabKeyboard,
     t.settingsTabPersonalization,
-    t.settingsResponseStyleDescription,
     responseStyleCopy,
     responseStyleState,
     handleResponseStyleRetry,

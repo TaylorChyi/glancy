@@ -77,7 +77,6 @@ const createTranslations = (overrides = {}) => ({
   loading: "Loading...",
   settingsPersonalizationEmpty: "No personalization yet",
   settingsPersonalizationLoadError: "Unable to load personalization",
-  settingsResponseStyleDescription: "Response style summary",
   settingsResponseStyleError: "Unable to save response style",
   settingsResponseStyleSaved: "Saved",
   responseStyleSelectLabel: "Response tone",
@@ -310,6 +309,7 @@ afterEach(() => {
  *  - sections 顺序符合蓝图。
  *  - activeSectionId 为 general。
  *  - focusHeadingId 与 headingId 指向 general 分区。
+ *  - responseStyle 分区未暴露描述信息，message 应为 undefined。
  *  - modalHeadingText 等于 General 文案。
  * 边界/异常：
  *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
@@ -330,6 +330,7 @@ test("Given default sections When reading blueprint Then general leads navigatio
       (section) => section.id === "responseStyle",
     );
     expect(responseStyleSection.componentProps.state.status).toBe("ready");
+    expect(responseStyleSection.componentProps.message).toBeUndefined();
   });
 
   expect(result.current.sections.map((section) => section.id)).toEqual([
