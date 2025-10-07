@@ -18,6 +18,7 @@ import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
 import com.glancy.backend.service.support.SearchContentDictionaryTermNormalizer;
+import com.glancy.backend.service.support.WordPersistenceCoordinator;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +57,7 @@ class WordServiceStreamingErrorTest {
     private WordPersonalizationContext personalizationContext;
     private ObjectMapper objectMapper;
     private DictionaryTermNormalizer termNormalizer;
+    private WordPersistenceCoordinator wordPersistenceCoordinator;
 
     @BeforeEach
     void setUp() {
@@ -75,6 +77,7 @@ class WordServiceStreamingErrorTest {
         );
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
+        wordPersistenceCoordinator = new WordPersistenceCoordinator();
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -83,7 +86,8 @@ class WordServiceStreamingErrorTest {
             parser,
             wordPersonalizationService,
             termNormalizer,
-            objectMapper
+            objectMapper,
+            wordPersistenceCoordinator
         );
     }
 
