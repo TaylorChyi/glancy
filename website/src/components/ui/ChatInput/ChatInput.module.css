@@ -208,7 +208,12 @@
 
 .core-input {
   flex: 1 1 auto;
-  min-width: 0;
+  /*
+   * 背景：默认布局下文字槽位可压缩至极窄，导致单行可视字符不足。
+   * 目的：引入基于字符宽度的最小尺寸，确保至少容纳约 30 个字符，同时维持在窄屏设备的弹性收缩能力。
+   * 取舍：通过 min() 结合 100% 限制，保证在容器宽度小于 30ch 时仍可按需收缩，避免破坏移动端体验。
+   */
+  min-width: min(100%, var(--chat-input-text-min, 30ch));
   display: flex;
   align-items: center;
 }
