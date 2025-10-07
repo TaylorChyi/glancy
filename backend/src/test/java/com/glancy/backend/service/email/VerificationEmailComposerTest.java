@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.glancy.backend.config.EmailVerificationProperties;
 import com.glancy.backend.entity.EmailVerificationPurpose;
+import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
+import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
@@ -22,11 +24,23 @@ class VerificationEmailComposerTest {
     @Test
     void populate_shouldComposeMultipartMessageWithComplianceHeaders() throws Exception {
         EmailVerificationProperties properties = buildProperties();
-        VerificationEmailComposer composer = new VerificationEmailComposer(properties);
+        VerificationEmailContentResolver resolver = (ip, code) ->
+            new LocalizedVerificationContent(
+                "验证码：" + code,
+                "<p style=\"margin:0; font-size:16px; line-height:1.5; color:#1f2933;\">验证码：" + code + "</p>"
+            );
+        VerificationEmailComposer composer = new VerificationEmailComposer(properties, resolver);
         MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
         LocalDateTime expiresAt = LocalDateTime.of(2024, 1, 1, 12, 0);
 
-        composer.populate(message, "user@example.com", EmailVerificationPurpose.LOGIN, "123456", expiresAt);
+        composer.populate(
+            message,
+            "user@example.com",
+            EmailVerificationPurpose.LOGIN,
+            "123456",
+            expiresAt,
+            "198.51.100.1"
+        );
 
         assertEquals("Glancy 登录验证码", message.getSubject());
         assertNotNull(message.getFrom());
@@ -36,17 +50,11 @@ class VerificationEmailComposerTest {
         MimeMultipart multipart = (MimeMultipart) message.getContent();
         assertEquals(2, multipart.getCount());
         String plainText = (String) multipart.getBodyPart(0).getContent();
-        assertTrue(plainText.contains("123456"));
-        assertTrue(plainText.contains("尊敬的用户（user@example.com）："));
-        assertTrue(plainText.contains("我们已根据您在 Glancy 测试提交的登录验证请求"));
-        assertTrue(plainText.contains("验证码有效期为 12 分钟"));
-        assertTrue(plainText.contains("本邮件由 Glancy 测试 依据用户授权及相关法规发送"));
-        assertTrue(plainText.contains("https://test.glancy.xyz/unsubscribe"));
+        assertEquals("验证码：123456", plainText.trim());
 
         String html = (String) multipart.getBodyPart(1).getContent();
         assertTrue(html.contains("<p"));
-        assertTrue(html.contains("color:#1f2933"));
-        assertTrue(html.contains("尊敬的用户（user@example.com）："));
+        assertTrue(html.contains("验证码：123456"));
 
         String listUnsubscribe = message.getHeader("List-Unsubscribe", null);
         assertNotNull(listUnsubscribe);
@@ -79,8 +87,14 @@ class VerificationEmailComposerTest {
 
         EmailVerificationProperties.Template template = new EmailVerificationProperties.Template();
         template.setSubject("Glancy 登录验证码");
-        template.setBody("验证码 {{code}}，将在 {{ttlMinutes}} 分钟后失效。{{companyName}}");
+        template.setBody("验证码：{{code}}");
         properties.getTemplates().put(EmailVerificationPurpose.LOGIN, template);
+        EmailVerificationProperties.Localization localization = properties.getLocalization();
+        localization.setDefaultLanguageTag("zh-CN");
+        EmailVerificationProperties.Localization.Message message =
+            new EmailVerificationProperties.Localization.Message();
+        message.setBody("验证码：{{code}}");
+        localization.getMessages().put("zh-CN", message);
         return properties;
     }
 }

@@ -141,10 +141,26 @@ mail:
     templates:
       register:
         subject: "Glancy 注册验证码"
-        body: "您的注册验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成验证。"
+        body: "验证码：{{code}}"
       login:
         subject: "Glancy 登录验证码"
-        body: "您的登录验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成登录。"
+        body: "验证码：{{code}}"
       change_email:
         subject: "Glancy 邮箱换绑验证码"
-        body: "您的邮箱换绑验证码为 {{code}}，请在 {{ttlMinutes}} 分钟内完成验证。"
+        body: "验证码：{{code}}"
+    localization:
+      default-language-tag: zh-CN
+      messages:
+        zh-CN:
+          body: "验证码：{{code}}"
+        en-US:
+          body: "Verification code: {{code}}"
+        ja-JP:
+          body: "認証コード：{{code}}"
+      rules:
+        - cidr: "36.0.0.0/4"
+          language-tag: zh-CN
+        - cidr: "3.0.0.0/8"
+          language-tag: en-US
+        - cidr: "2001:200::/23"
+          language-tag: ja-JP

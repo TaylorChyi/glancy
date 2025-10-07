@@ -135,7 +135,7 @@ public class UserService {
      * Send a verification code to the provided email for the requested purpose.
      */
     @Transactional
-    public void sendVerificationCode(EmailVerificationCodeRequest request) {
+    public void sendVerificationCode(EmailVerificationCodeRequest request, String clientIp) {
         String normalizedEmail = normalizeEmail(request.email());
         EmailVerificationPurpose purpose = request.purpose();
         try (EmailVerificationLogContext ignored = EmailVerificationLogContext.create(normalizedEmail, purpose)) {
@@ -170,7 +170,7 @@ public class UserService {
             } else {
                 log.info("Processing email verification for custom purpose {}", purpose);
             }
-            emailVerificationService.issueCode(normalizedEmail, purpose);
+            emailVerificationService.issueCode(normalizedEmail, purpose, clientIp);
             log.info("Email verification issuance flow completed");
         }
     }
@@ -445,12 +445,12 @@ public class UserService {
      * Issue a verification code to the new email for change binding.
      */
     @Transactional
-    public void requestEmailChangeCode(Long userId, String email) {
+    public void requestEmailChangeCode(Long userId, String email, String clientIp) {
         log.info("Requesting email change code for user {}", userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
         String normalizedEmail = prepareBindingTargetEmail(userId, user, email);
 
-        emailVerificationService.issueCode(normalizedEmail, EmailVerificationPurpose.CHANGE_EMAIL);
+        emailVerificationService.issueCode(normalizedEmail, EmailVerificationPurpose.CHANGE_EMAIL, clientIp);
     }
 
     /**

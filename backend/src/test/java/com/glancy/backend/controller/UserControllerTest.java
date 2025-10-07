@@ -3,6 +3,7 @@ package com.glancy.backend.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -12,12 +13,19 @@ import com.glancy.backend.dto.*;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;
+import com.glancy.backend.util.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,8 +46,16 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private ClientIpResolver clientIpResolver;
+
     @Autowired
     private ObjectMapper objectMapper;
+
+    @BeforeEach
+    void setUp() {
+        when(clientIpResolver.resolve(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+    }
 
     /**
      * 测试 register 接口
@@ -88,18 +104,28 @@ class UserControllerTest {
      */
     @Test
     void getUser() throws Exception {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("u");
-        user.setPassword("p");
-        user.setEmail("e");
-        user.setPhone("p1");
-        when(userService.getUserRaw(1L)).thenReturn(user);
+        UserDetailResponse detailResponse = new UserDetailResponse(
+            1L,
+            "u",
+            "e",
+            "avatar-url",
+            "p1",
+            false,
+            MembershipType.NONE,
+            null,
+            false,
+            LocalDateTime.of(2024, 1, 1, 8, 0),
+            LocalDateTime.of(2024, 1, 2, 9, 0),
+            null
+        );
+        when(userService.getUserDetail(1L)).thenReturn(detailResponse);
 
         mockMvc
             .perform(get("/api/users/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1L))
+            .andExpect(jsonPath("$.username").value("u"))
+            .andExpect(jsonPath("$.email").value("e"))
             .andExpect(jsonPath("$.password").doesNotExist());
     }
 
@@ -230,7 +256,7 @@ class UserControllerTest {
      */
     @Test
     void requestEmailChangeCode() throws Exception {
-        doNothing().when(userService).requestEmailChangeCode(1L, "next@example.com");
+        doNothing().when(userService).requestEmailChangeCode(1L, "next@example.com", "127.0.0.1");
 
         EmailChangeInitiationRequest req = new EmailChangeInitiationRequest("next@example.com");
 
@@ -297,9 +323,23 @@ class UserControllerTest {
      */
     @Test
     void logout() throws Exception {
+        User authenticated = new User();
+        authenticated.setId(1L);
+        authenticated.setLoginToken("tkn");
+        when(userService.getUserRaw(1L)).thenReturn(authenticated);
         doNothing().when(userService).logout(1L, "tkn");
 
-        mockMvc.perform(post("/api/users/1/logout").header("X-USER-TOKEN", "tkn")).andExpect(status().isNoContent());
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(1L, "tkn", Collections.emptyList())
+        );
+
+        try {
+            mockMvc.perform(post("/api/users/1/logout")).andExpect(status().isNoContent());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+
+        verify(userService).logout(1L, "tkn");
     }
 
     /**

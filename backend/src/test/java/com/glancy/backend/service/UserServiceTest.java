@@ -63,6 +63,8 @@ class UserServiceTest {
     @MockitoBean
     private EmailVerificationService emailVerificationService;
 
+    private static final String CLIENT_IP = "127.0.0.1";
+
     @BeforeAll
     static void loadEnv() {
         Dotenv dotenv = Dotenv.configure()
@@ -228,11 +230,17 @@ class UserServiceTest {
         req.setPhone("4567");
         UserResponse created = userService.register(req);
 
-        doNothing().when(emailVerificationService).issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+        doNothing()
+            .when(emailVerificationService)
+            .issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL, CLIENT_IP);
 
-        userService.requestEmailChangeCode(created.getId(), "next@example.com");
+        userService.requestEmailChangeCode(created.getId(), "next@example.com", CLIENT_IP);
 
-        verify(emailVerificationService).issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+        verify(emailVerificationService).issueCode(
+            "next@example.com",
+            EmailVerificationPurpose.CHANGE_EMAIL,
+            CLIENT_IP
+        );
     }
 
     /**
@@ -313,7 +321,7 @@ class UserServiceTest {
         clearInvocations(emailVerificationService);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-            userService.requestEmailChangeCode(created.getId(), "Primary@Example.com")
+            userService.requestEmailChangeCode(created.getId(), "Primary@Example.com", CLIENT_IP)
         );
 
         assertEquals("新邮箱不能与当前邮箱相同", exception.getMessage());
@@ -351,7 +359,7 @@ class UserServiceTest {
         clearInvocations(emailVerificationService);
 
         DuplicateResourceException exception = assertThrows(DuplicateResourceException.class, () ->
-            userService.requestEmailChangeCode(firstUser.getId(), "TARGET@example.com")
+            userService.requestEmailChangeCode(firstUser.getId(), "TARGET@example.com", CLIENT_IP)
         );
 
         assertEquals("邮箱已被使用", exception.getMessage());
@@ -412,7 +420,7 @@ class UserServiceTest {
         clearInvocations(emailVerificationService);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-            userService.requestEmailChangeCode(created.getId(), "   ")
+            userService.requestEmailChangeCode(created.getId(), "   ", CLIENT_IP)
         );
 
         assertEquals("邮箱不能为空", exception.getMessage());
