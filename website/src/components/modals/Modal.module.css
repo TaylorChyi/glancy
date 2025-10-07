@@ -29,7 +29,7 @@
 .close-button {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -51,7 +51,7 @@
 .close-slot {
   position: absolute;
   top: 16px;
-  right: 16px;
+  left: 16px;
   display: flex;
   gap: 12px;
 }
@@ -102,12 +102,12 @@
 
   .close-button {
     top: 12px;
-    right: 12px;
+    left: 12px;
   }
 
   .close-slot {
     top: 12px;
-    right: 12px;
+    left: 12px;
   }
 }
 
