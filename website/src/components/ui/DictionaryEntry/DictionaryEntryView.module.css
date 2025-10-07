@@ -4,6 +4,15 @@
   box-sizing: border-box;
 }
 
+.entry > * {
+  /*
+   * 将 section 内的直接子元素限制为与容器同宽，避免 Markdown 自定义元素撑破布局。
+   */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .definition {
   display: block;
 }

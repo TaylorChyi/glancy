@@ -3,6 +3,9 @@
   gap: var(--space-3, 16px);
   text-align: left;
   color: var(--app-color);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .heading {
