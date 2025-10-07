@@ -119,6 +119,8 @@ export default {
   settingsDataRetentionOption_365d: "365 days",
   settingsDataRetentionOption_forever: "Keep forever",
   settingsDataLanguageLabel: "Language history",
+  settingsDataLanguageDescription:
+    "Only clears saved lookups for the selected language.",
   settingsDataClearLanguagePlaceholder: "No language-specific history yet",
   settingsDataActionsLabel: "Data actions",
   settingsDataClearAll: "Erase all history",

@@ -20,6 +20,8 @@ const translations = {
   settingsDataRetentionOption_365d: "365 days",
   settingsDataRetentionOption_forever: "Keep forever",
   settingsDataLanguageLabel: "Language history",
+  settingsDataLanguageDescription:
+    "Only clears saved lookups for the selected language.",
   settingsDataClearLanguage: "Clear selected language",
   settingsDataClearLanguagePlaceholder: "No language history",
   settingsDataActionsLabel: "Data actions",
@@ -137,6 +139,39 @@ test("Given section message When rendering Then description linked for accessibi
 
   expect(description).toHaveAttribute("id", "data-description");
   expect(section).toHaveAttribute("aria-describedby", "data-description");
+});
+
+/**
+ * 测试目标：语言清理控制区域呈现说明文字，提示仅影响所选语言。
+ * 前置条件：默认翻译文案已注入。
+ * 步骤：
+ *  1) 渲染 DataSection；
+ *  2) 查询语言描述文本与容器。
+ * 断言：
+ *  - 描述文本等于预期翻译；
+ *  - 描述文本与语言标签处于同一控制容器内。
+ * 边界/异常：
+ *  - 若描述缺失，用户可能误认为会清空全部历史。
+ */
+test("Given language scoped controls When rendering Then language description clarifies scope", () => {
+  render(
+    <DataSection
+      title="Data"
+      message="Control your data"
+      headingId="data-heading"
+      descriptionId="data-description"
+    />,
+  );
+
+  const description = screen.getByText(
+    translations.settingsDataLanguageDescription,
+  );
+  expect(description).toBeInTheDocument();
+
+  const fieldContainer = description.closest("div");
+  expect(fieldContainer).toContainElement(
+    screen.getByText(translations.settingsDataLanguageLabel),
+  );
 });
 
 /**
