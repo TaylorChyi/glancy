@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 // 测试同样直接引用具体 Store，保证与生产实现一致且规避 barrel 带来的循环依赖。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
 import { useHistoryStore } from "@/store/historyStore.ts";
+import { useWordStore } from "@/store/wordStore.js";
 
 const translations = {
   settingsDataDescription: "Data stewardship",
@@ -25,8 +26,13 @@ const translations = {
   settingsDataActionsLabel: "Data actions",
   settingsDataClearAll: "Erase all history",
   settingsDataExport: "Export data",
-  settingsDataExportDescription: "Download snapshot",
+  settingsDataExportDescription:
+    "Export detailed definitions grouped by chapter.",
   settingsDataExportFileName: "glancy-export",
+  settingsDataExportDefaultChapter: "General",
+  settingsDataExportChapterColumn: "chapter",
+  settingsDataExportContentColumn: "content",
+  definitionsLabel: "Definitions",
   dictionaryTargetLanguageEnglish: "English",
   dictionaryTargetLanguageChinese: "Chinese",
 };
@@ -34,6 +40,14 @@ const translations = {
 jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => ({ t: translations }),
   useUser: () => ({ user: { token: "token-1" } }),
+  useKeyboardShortcutContext: () => ({
+    register: jest.fn(),
+    unregister: jest.fn(),
+  }),
+  useTheme: () => ({ theme: "light" }),
+  ThemeContext: {},
+  ThemeProvider: ({ children }) => children,
+  KEYBOARD_SHORTCUT_RESET_ACTION: "reset",
 }));
 
 jest.unstable_mockModule("@/components/ui/LanguageMenu", () => ({
@@ -65,6 +79,7 @@ let DataSection;
 let originalClearHistory;
 let originalClearHistoryByLanguage;
 let originalApplyRetentionPolicy;
+let originalWordStoreEntries;
 
 const createHistoryItem = (overrides = {}) => ({
   term: "hello",
@@ -98,6 +113,23 @@ beforeEach(() => {
     clearHistoryByLanguage: jest.fn().mockResolvedValue(undefined),
     applyRetentionPolicy: jest.fn().mockResolvedValue(undefined),
   });
+  originalWordStoreEntries = useWordStore.getState().getRecord(
+    "ENGLISH:BILINGUAL:hello",
+  );
+  useWordStore.getState().clear();
+  useWordStore.getState().setVersions(
+    "ENGLISH:BILINGUAL:hello",
+    [
+      {
+        id: "v1",
+        sections: [
+          { heading: "Overview", lines: ["UK /həˈləʊ/"] },
+          { heading: "Definitions", lines: ["A friendly greeting"] },
+        ],
+      },
+    ],
+    { activeVersionId: "v1" },
+  );
 });
 
 afterEach(() => {
@@ -108,6 +140,18 @@ afterEach(() => {
     clearHistoryByLanguage: originalClearHistoryByLanguage,
     applyRetentionPolicy: originalApplyRetentionPolicy,
   });
+  useWordStore.getState().clear();
+  if (originalWordStoreEntries) {
+    useWordStore.getState().setVersions(
+      "ENGLISH:BILINGUAL:hello",
+      originalWordStoreEntries.versions,
+      {
+        activeVersionId: originalWordStoreEntries.activeVersionId,
+        metadata: originalWordStoreEntries.metadata,
+      },
+    );
+  }
+  originalWordStoreEntries = undefined;
 });
 
 /**
@@ -292,8 +336,8 @@ test("Given export action When clicking export Then browser download initiated",
   const csvText = (blobCalls[0]?.parts ?? [])
     .map((part) => (typeof part === "string" ? part : ""))
     .join("");
-  expect(csvText).toContain("generatedAt,historyCaptureEnabled,retentionPolicyId,retentionDays");
-  expect(csvText).toContain("term,language,flavor,createdAt,favorite,versions");
+  expect(csvText).toContain("term,language,flavor,chapter,content");
+  expect(csvText).toContain("hello,ENGLISH,BILINGUAL,Definitions,A friendly greeting");
 
   const appendedElements = appendSpy.mock.calls
     .map((call) => call?.[0])
