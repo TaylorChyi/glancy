@@ -270,24 +270,67 @@ describe("OutputToolbar", () => {
   });
 
   /**
-   * 当用户未登录时，应隐藏动作按钮避免误导。
+   * 测试目标：未登录用户亦可打开分享菜单以复制链接或导出长图。
+   * 前置条件：userState.user 设为 null，组件获得包含复制回调的 shareModel。
+   * 步骤：
+   *  1) 渲染组件后点击分享按钮；
+   *  2) 断言菜单同时提供复制与导出选项并触发复制操作；
+   *  3) 再次开启菜单执行导出操作。
+   * 断言：
+   *  - 分享按钮保持可用并能弹出菜单；
+   *  - 复制与导出均触发对应 shareModel 回调。
+   * 边界/异常：
+   *  - 若 shareModel 缺失或回调不是函数则应在其他用例中覆盖降级路径。
    */
-  test("disables actions without user", () => {
+  test("allowsShareMenuWithoutUser", async () => {
     userState.user = null;
+    const onCopyLink = jest.fn(() => Promise.resolve());
+    const onExportImage = jest.fn(() => Promise.resolve());
     render(
       <OutputToolbar
         term="hello"
         canShare
-        shareModel={{ canShare: true, onCopyLink: jest.fn() }}
+        shareModel={{
+          canShare: true,
+          onCopyLink,
+          onExportImage,
+          canExportImage: true,
+        }}
       />,
     );
 
     const shareButton = screen.getByRole("button", { name: "分享" });
-    expect(shareButton).toBeDisabled();
-    fireEvent.click(shareButton);
-    expect(
-      screen.queryByRole("menu", { name: "分享方式" }),
-    ).not.toBeInTheDocument();
+    expect(shareButton).not.toBeDisabled();
+    await act(async () => {
+      fireEvent.click(shareButton);
+    });
+
+    await screen.findByRole("menu", { name: "分享方式" });
+    const copyItem = await screen.findByRole("menuitem", {
+      name: /复制分享链接/,
+    });
+    const imageItem = await screen.findByRole("menuitem", {
+      name: /导出长图/,
+    });
+    expect(imageItem).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(copyItem);
+    });
+    expect(onCopyLink).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.click(shareButton);
+    });
+    await screen.findByRole("menu", { name: "分享方式" });
+    const imageItemSecond = await screen.findByRole("menuitem", {
+      name: /导出长图/,
+    });
+    await act(async () => {
+      fireEvent.click(imageItemSecond);
+    });
+
+    expect(onExportImage).toHaveBeenCalledTimes(1);
+    userState.user = { id: "u" };
   });
 
   /**
