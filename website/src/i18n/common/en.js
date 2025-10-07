@@ -22,7 +22,7 @@ export default {
   prefPersonalizationTitle: "Personal Context",
   prefKeyboardTitle: "Shortcut playbook",
   prefDataTitle: "Data stewardship",
-  prefAccountTitle: "Account essentials",
+  prefAccountTitle: "Account",
   prefSystemLanguage: "System Language",
   prefSystemLanguageAuto: "Match Device Language",
   prefLanguage: "Source Language",
