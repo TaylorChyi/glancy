@@ -403,7 +403,7 @@ export default {
   favoriteAction: "Favorite",
   deleteAction: "Delete",
   searchPlaceholder: "What are we querying next?",
-  inputPlaceholder: "“Words, phrases, sentences”",
+  inputPlaceholder: "Words, phrases, sentences",
   cookieConsentTitle: "Your privacy, elevated",
   cookieConsentDescription:
     "We use cookies to remember trusted devices and tailor your sign-in journey.",
