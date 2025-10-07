@@ -6,7 +6,6 @@
    * 通过水平内边距吸收横向留白，避免超出内容区域。
    */
   margin: 0 auto;
-  padding: 0 20px;
   max-width: var(--layout-content-max, 100%);
   text-align: justify;
   text-align-last: left;
