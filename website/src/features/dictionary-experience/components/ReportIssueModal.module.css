@@ -59,22 +59,15 @@
 }
 
 .plain-surface {
-  background: var(--report-modal-inner-surface);
-  border-radius: var(--report-modal-radius);
-  border: 1px solid var(--report-modal-inner-border);
-  box-shadow: var(--report-modal-inner-shadow);
-  padding: var(--report-modal-panel-padding);
-}
-
-:global(.modal-content) :where(.plain-surface) {
   /*
-   * 在模态容器作用域内确保内层面板继承我们定义的底色与阴影，
-   * 以呼应 SettingsSurface 的玻璃化质感并保持视觉统一。
+   * 将 SettingsSurface 的底色与描边全部抽离，
+   * 让模态最外层负责分隔背景，表单主体转而强调内容信息密度。
+   * 备选方案：保留轻微描边，但在设计评审中确认会与外层模态产生双重边框，因而弃用。
    */
-  background: var(--report-modal-inner-surface);
+  background: transparent;
   border-radius: var(--report-modal-radius);
-  border: 1px solid var(--report-modal-inner-border);
-  box-shadow: var(--report-modal-inner-shadow);
+  border: none;
+  box-shadow: none;
   padding: var(--report-modal-panel-padding);
 }
 
