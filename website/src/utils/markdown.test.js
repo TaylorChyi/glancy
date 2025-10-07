@@ -208,6 +208,31 @@ test("polishDictionaryMarkdown formats practice prompts metadata", () => {
 });
 
 /**
+ * 测试目标：验证抖宝协议新增标签（Recommended Audience、Set Expressions、Historical Resonance 等）会被识别为需换行的行内标签。
+ * 前置条件：构造含多个新增标签的列表项，标签间仅以双空格分隔。
+ * 步骤：
+ *  1) 组合含新增标签的 Markdown 行。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 每个新增标签被加粗并继承列表缩进换行，若失败说明前端词表未与后端同步。
+ * 边界/异常：
+ *  - 覆盖多标签连缀场景，可防止后续协议升级导致排版回退为单行。
+ */
+test("polishDictionaryMarkdown splits newly synced protocol labels", () => {
+  const source =
+    "- **Meaning**: outline the idea  **Recommended Audience**: Intermediate learners  **Set Expressions**: take a stand  **Historical Resonance**: Rooted in 19th century rhetoric.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "- **Meaning**: outline the idea",
+      "  **Recommended Audience**: Intermediate learners",
+      "  **Set Expressions**: take a stand",
+      "  **Historical Resonance**: Rooted in 19th century rhetoric.",
+    ].join("\n"),
+  );
+});
+
+/**
  * 测试目标：PracticePrompts 与 Answer 串联在同一行时需拆分换行，避免长行阻塞滚动。
  * 前置条件：构造同一行包含两个标签的 Markdown 文本。
  * 步骤：
@@ -251,6 +276,31 @@ test("polishDictionaryMarkdown separates labels merged into values", () => {
       "**Usage Insight**: Often used in narratives.",
       "**Register**: Formal",
       "**Extended Notes**: Retains period usage.",
+    ].join("\n"),
+  );
+});
+
+/**
+ * 测试目标：验证带编号的新增义项标签（如 S1Definition）与协议信息标签（Collocations、SetExpressions）能正确拆分并格式化。
+ * 前置条件：输入为紧凑的冒号串联结构，包含编号义项与新增标签。
+ * 步骤：
+ *  1) 构造 `Senses:S1Definition` 与协议信息标签的 Markdown 文本。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 输出中的编号标签以 “Sense {编号} · {类别}” 格式渲染，并与新增标签一并换行；失败则表示动态标签正则未覆盖。
+ * 边界/异常：
+ *  - 涵盖编号+新增标签组合，确保行内解析与后端 `resolveSection` 结果保持一致。
+ */
+test("polishDictionaryMarkdown formats numbered definition and protocol labels", () => {
+  const source =
+    "Senses:S1Definition:to restate core meaning.Collocations:make history.SetExpressions:set in stone.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(
+    [
+      "**Senses**:",
+      "**Sense 1 · Definition**: to restate core meaning.",
+      "**Collocations**: make history.",
+      "**Set Expressions**: set in stone.",
     ].join("\n"),
   );
 });
