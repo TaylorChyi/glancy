@@ -79,15 +79,6 @@
   background: var(--menu-bg-active);
 }
 
-.menu-item[data-active="true"]::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  background: var(--menu-divider);
-  border-radius: 2px;
-}
-
 .menu-item[aria-disabled="true"] {
   color: var(--menu-muted);
   cursor: not-allowed;
