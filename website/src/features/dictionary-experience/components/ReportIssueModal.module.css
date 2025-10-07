@@ -7,7 +7,11 @@
     var(--app-bg) 90%,
     var(--color-surface-alt)
   );
-  --report-modal-border: color-mix(in srgb, var(--border-color) 38%, transparent);
+  /*
+   * 复用 SettingsSurface 的边框对比度，确保举报弹窗与偏好设置面板在视觉上保持一致的厚度与明暗层级。
+   * 备选方案：单独定义举报弹窗的色板，但会造成主题维护分叉，故放弃。
+   */
+  --report-modal-border: color-mix(in srgb, var(--border-color) 52%, transparent);
   --report-modal-shadow: 0 48px 120px
     color-mix(in srgb, var(--shadow-color) 32%, transparent);
   --report-modal-inner-surface: color-mix(
