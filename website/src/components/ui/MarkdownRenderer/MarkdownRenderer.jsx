@@ -32,7 +32,12 @@ const SUMMARY_RENDERER_FLAG = Symbol("CollapsibleSummaryRenderer");
  * 组件在渲染阶段通过 rehype 插件把指定层级以上的标题收拢为可展开的分节，
  * 以便在长释义场景下维持简洁的视觉秩序，同时保留锚点定位能力。
  */
-function MarkdownRenderer({ children, ...props }) {
+function MarkdownRenderer({
+  children,
+  remarkPlugins: additionalRemarkPlugins,
+  rehypePlugins: additionalRehypePlugins,
+  ...props
+}) {
   const injectBreaks = useBreakableContent();
   const components = useMemo(
     () =>
@@ -42,12 +47,21 @@ function MarkdownRenderer({ children, ...props }) {
     [injectBreaks],
   );
 
+  const remarkPlugins = useMemo(
+    () => [remarkGfm, ...(additionalRemarkPlugins ?? [])],
+    [additionalRemarkPlugins],
+  );
+  const rehypePlugins = useMemo(
+    () => [rehypeCollapsibleSections, ...(additionalRehypePlugins ?? [])],
+    [additionalRehypePlugins],
+  );
+
   if (!children) return null;
 
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeCollapsibleSections]}
+      remarkPlugins={remarkPlugins}
+      rehypePlugins={rehypePlugins}
       components={components}
       {...props}
     >
@@ -188,7 +202,9 @@ function createBreakInjector() {
         if (typeof previous !== "string" || typeof current !== "string") {
           return false;
         }
-        return !(WHITESPACE_ONLY.test(previous) || WHITESPACE_ONLY.test(current));
+        return !(
+          WHITESPACE_ONLY.test(previous) || WHITESPACE_ONLY.test(current)
+        );
       };
 
       let result = segments[0];
@@ -203,7 +219,9 @@ function createBreakInjector() {
     }
 
     if (isValidElement(node)) {
-      const shouldSkip = typeof node.type === "string" && (node.type === "code" || node.type === "pre");
+      const shouldSkip =
+        typeof node.type === "string" &&
+        (node.type === "code" || node.type === "pre");
       if (shouldSkip || !node.props?.children) {
         return node;
       }
@@ -227,11 +245,24 @@ function createBreakInjector() {
 }
 
 function buildMarkdownComponents({ injectBreaks }) {
-  const breakableTags = ["p", "li", "dd", "dt", "th", "td", "caption", "figcaption", "blockquote"];
+  const breakableTags = [
+    "p",
+    "li",
+    "dd",
+    "dt",
+    "th",
+    "td",
+    "caption",
+    "figcaption",
+    "blockquote",
+  ];
 
   const components = Object.fromEntries(
     breakableTags.map((tag) => {
-      const BreakableElement = function BreakableElement({ children, ...elementProps }) {
+      const BreakableElement = function BreakableElement({
+        children,
+        ...elementProps
+      }) {
         const Tag = tag;
         return <Tag {...elementProps}>{injectBreaks(children)}</Tag>;
       };
@@ -267,6 +298,10 @@ function createSummaryRenderer(injectBreaks) {
 
 MarkdownRenderer.propTypes = {
   children: PropTypes.node,
+  remarkPlugins: PropTypes.arrayOf(PropTypes.func),
+  rehypePlugins: PropTypes.arrayOf(
+    PropTypes.oneOfType([PropTypes.func, PropTypes.array]),
+  ),
 };
 
 CollapsibleSection.propTypes = {
