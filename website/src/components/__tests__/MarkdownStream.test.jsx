@@ -15,18 +15,39 @@ test("renders markdown with default renderer", () => {
 });
 
 /**
- * 测试目标：验证流式 Markdown 在渲染时按空格拆分词语。
+ * 测试目标：默认分段策略应与静态 Markdown 一致，不插入额外 span。
  * 前置条件：输入文本包含以空格分隔的英文单词。
  * 步骤：
  *  1) 渲染 MarkdownStream 并传入 "Hello world"；
- *  2) 查询生成的词级 span 元素；
+ *  2) 查询生成的段落元素；
  * 断言：
- *  - span 数量等于单词数量且文本保持原始值；
- * 边界/异常：
- *  - 确保未破坏空格本身（通过比较父节点文本）。
+ *  - 不存在 stream-word span；
+ *  - 段落文本保持原始空格。
+ * 边界/异常：覆盖默认策略路径。
  */
-test("splits words with dedicated spans during streaming", () => {
+test("omits segmentation spans by default", () => {
   const { container } = render(<MarkdownStream text="Hello world" />);
+  const paragraph = container.querySelector(".stream-text p");
+  expect(paragraph).not.toBeNull();
+  const spans = paragraph.querySelectorAll("span.stream-word");
+  expect(spans).toHaveLength(0);
+  expect(stripZeroWidth(paragraph.textContent)).toBe("Hello world");
+});
+
+/**
+ * 测试目标：显式请求词级分段时应输出 stream-word span，保持空格。
+ * 前置条件：segmentation 属性传入 "word"。
+ * 步骤：
+ *  1) 渲染 MarkdownStream 并传入 segmentation="word"；
+ *  2) 查询 stream-word span；
+ * 断言：
+ *  - span 数量等于单词数量且文本保持原值；
+ * 边界/异常：验证策略切换能力。
+ */
+test("applies word segmentation when requested", () => {
+  const { container } = render(
+    <MarkdownStream text="Hello world" segmentation="word" />,
+  );
   const paragraph = container.querySelector(".stream-text p");
   expect(paragraph).not.toBeNull();
   const spans = paragraph.querySelectorAll("span.stream-word");
