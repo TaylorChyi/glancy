@@ -1,29 +1,32 @@
 import { useMemo } from "react";
 import PropTypes from "prop-types";
 import MarkdownRenderer from "../MarkdownRenderer";
-import { STREAM_SEGMENTATION_PROP } from "./streamSegmentationProp.js";
-import rehypeStreamWordSegments from "./rehypeStreamWordSegments.js";
+import { resolveSegmentationStrategy } from "./segmentationStrategies.js";
 
 /**
  * 渲染 Markdown 流内容的通用组件，默认使用 MarkdownRenderer。
- * 可通过 renderer 属性注入自定义渲染器以便测试或扩展。
+ * 通过 segmentation 策略控制是否注入额外的流式标记，默认保持与静态 Markdown 一致。
  */
-function MarkdownStream({ text, renderer, className = "stream-text" }) {
+function MarkdownStream({
+  text,
+  renderer,
+  className = "stream-text",
+  segmentation = "none",
+}) {
   const Renderer = renderer || MarkdownRenderer;
-  const supportsSegmentation = useMemo(
-    () =>
-      Renderer === MarkdownRenderer ||
-      Renderer?.[STREAM_SEGMENTATION_PROP] === true,
-    [Renderer],
-  );
-  const additionalRehypePlugins = useMemo(
-    () => (supportsSegmentation ? [rehypeStreamWordSegments] : null),
-    [supportsSegmentation],
+
+  const strategy = useMemo(
+    () => resolveSegmentationStrategy(segmentation),
+    [segmentation],
   );
 
-  const rendererProps = additionalRehypePlugins
-    ? { rehypePlugins: additionalRehypePlugins }
-    : {};
+  const rendererProps = useMemo(() => {
+    const plugins = strategy.resolvePlugins({
+      Renderer,
+      defaultRenderer: MarkdownRenderer,
+    });
+    return plugins ? { rehypePlugins: plugins } : {};
+  }, [Renderer, strategy]);
 
   return (
     <Renderer className={className} {...rendererProps}>
@@ -36,6 +39,7 @@ MarkdownStream.propTypes = {
   text: PropTypes.string,
   renderer: PropTypes.elementType,
   className: PropTypes.string,
+  segmentation: PropTypes.oneOf(["none", "word"]),
 };
 
 export default MarkdownStream;
