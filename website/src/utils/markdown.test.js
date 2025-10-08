@@ -287,6 +287,33 @@ test("polishDictionaryMarkdown keeps hash segmentation markers", () => {
 });
 
 /**
+ * 测试目标：被拆成两行的标题需回收到同一行，符合模板要求。
+ * 前置条件：构造首行仅含井号、正文落在下一行的 Markdown。
+ * 步骤：调用 polishDictionaryMarkdown 并按行拆分结果。
+ * 断言：
+ *  - 标题重新合并为单行；
+ *  - 标题后续的内容保持原有结构。
+ */
+test("polishDictionaryMarkdown merges broken headings into single line", () => {
+  const source = ["##", "词汇学信息", "- 语体：中性"].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual(["## 词汇学信息", "- 语体：中性"]);
+});
+
+/**
+ * 测试目标：标题修复逻辑不应误将列表项并入标题。
+ * 前置条件：标题后立即跟随列表项，而非真实标题内容。
+ * 步骤：执行 polishDictionaryMarkdown。
+ * 断言：
+ *  - 标题保持原状，列表项单独换行。
+ */
+test("polishDictionaryMarkdown keeps heading isolated when next line is list", () => {
+  const source = ["##", "- 语体：中性"].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual(["##", "- 语体：中性"]);
+});
+
+/**
  * 测试目标：验证串联的英译英标签会被拆行并恢复空格，提升词条可读性。
  * 前置条件：行内包含 `Examples:Example1:...`、`UsageInsight:...` 等紧贴字段。
  * 步骤：
