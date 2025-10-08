@@ -21,6 +21,7 @@
 .summary {
   width: 100%;
   display: flex;
+
   /*
    * 背景：按钮与标题左右分散排列，导致用户目光在阅读开头时需要额外扫到最右侧确认折叠状态。
    * 目的：将指示图标与文字统一左对齐，让展开控制顺着阅读方向出现，降低眼动负担。
@@ -104,7 +105,7 @@
 
 .body[data-open="true"] {
   grid-template-rows: 1fr;
-  padding: 0px 16px;
+  padding: 0 16px;
   background: none;
 }
 
