@@ -246,10 +246,9 @@ describe("useDictionaryExperience", () => {
    *  - popupMsg 更新为 shareImageSuccess。
    */
   it("exports share image via exporter when data ready", async () => {
-    utilsModule.extractMarkdownPreview.mockImplementation(() => "# heading");
     mockStreamWord.mockImplementation(() =>
       (async function* () {
-        yield { chunk: "partial" };
+        yield { chunk: "## Heading" };
       })(),
     );
     shareImageModule.exportDictionaryShareImage.mockResolvedValue({
@@ -293,10 +292,9 @@ describe("useDictionaryExperience", () => {
    */
   it("keeps share menu enabled when link missing but image export ready", async () => {
     utilsModule.resolveShareTarget.mockReturnValueOnce("");
-    utilsModule.extractMarkdownPreview.mockImplementation(() => "# heading");
     mockStreamWord.mockImplementation(() =>
       (async function* () {
-        yield { chunk: "partial" };
+        yield { chunk: "## Heading" };
       })(),
     );
 
@@ -862,10 +860,6 @@ describe("useDictionaryExperience", () => {
    *  - 若取消查询逻辑未清理 loading，应导致断言失败提示状态未复位。
    */
   it("GivenDefinitionState_WhenHandleShowDictionary_ThenResetsToHome", async () => {
-    utilsModule.extractMarkdownPreview.mockImplementation(
-      () => "Preview snippet",
-    );
-
     const record = {
       versions: [
         {
@@ -899,7 +893,7 @@ describe("useDictionaryExperience", () => {
 
     expect(result.current.entry).not.toBeNull();
     expect(result.current.finalText).toBe("## Meaning");
-    expect(result.current.streamText).toBe("Preview snippet");
+    expect(result.current.streamText).toBe("## Meaning");
     expect(result.current.dictionaryActionBarProps.versions).toHaveLength(1);
     expect(result.current.dictionaryActionBarProps.activeVersionId).toBe("v1");
 
@@ -927,7 +921,6 @@ describe("useDictionaryExperience", () => {
    * 边界/异常：覆盖非 JSON 流场景。
    */
   it("GivenStreamingMarkdown_WhenNormalized_ShouldExposePolishedPreviewAndFinal", async () => {
-    utilsModule.extractMarkdownPreview.mockImplementation((buffer) => buffer);
     utilsModule.polishDictionaryMarkdown.mockImplementation(
       (value) => `normalized:${value}`,
     );
