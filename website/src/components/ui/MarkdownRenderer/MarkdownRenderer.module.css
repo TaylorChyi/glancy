@@ -29,7 +29,6 @@
    */
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
   border: none;
   background: none;
   color: inherit;
@@ -88,8 +87,8 @@
  * 取舍：通过调整旋转角度取代双重色值混合，简化主题切换路径。
  */
 .chevron-icon {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-right: 2px solid currentcolor;
   border-bottom: 2px solid currentcolor;
   transform: rotate(-45deg);
