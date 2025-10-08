@@ -4,12 +4,14 @@ import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.exception.ResourceNotFoundException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.support.DictionaryTermNormalizer;
 import com.glancy.backend.service.support.SearchRecordPageRequest;
 import com.glancy.backend.service.support.SearchRecordViewAssembler;
 import java.time.LocalDate;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -35,19 +38,22 @@ public class SearchRecordService {
     private final SearchResultService searchResultService;
     private final SearchRecordViewAssembler searchRecordViewAssembler;
     private final int nonMemberSearchLimit;
+    private final DictionaryTermNormalizer termNormalizer;
 
     public SearchRecordService(
         SearchRecordRepository searchRecordRepository,
         UserRepository userRepository,
         SearchProperties properties,
         SearchResultService searchResultService,
-        SearchRecordViewAssembler searchRecordViewAssembler
+        SearchRecordViewAssembler searchRecordViewAssembler,
+        DictionaryTermNormalizer termNormalizer
     ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
         this.searchResultService = searchResultService;
         this.searchRecordViewAssembler = searchRecordViewAssembler;
         this.nonMemberSearchLimit = properties.getLimit().getNonMember();
+        this.termNormalizer = termNormalizer;
     }
 
     /**
@@ -68,13 +74,14 @@ public class SearchRecordService {
             throw new InvalidRequestException("用户未登录");
         }
         DictionaryFlavor flavor = request.getFlavor() != null ? request.getFlavor() : DictionaryFlavor.BILINGUAL;
-        SearchRecord existing =
-            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
-                userId,
-                request.getTerm(),
-                request.getLanguage(),
-                flavor
-            );
+        String normalizedTerm = termNormalizer.normalize(request.getTerm());
+        SearchRecord existing = findExistingRecord(
+            userId,
+            request.getTerm(),
+            normalizedTerm,
+            request.getLanguage(),
+            flavor
+        );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
             existing.setCreatedAt(LocalDateTime.now());
@@ -108,6 +115,49 @@ public class SearchRecordService {
         SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, saved);
         log.info("Returning record response: {}", describeResponse(response));
         return response;
+    }
+
+    /**
+     * 意图：通过共享的词条归一化策略在保存前复用已有搜索记录，避免因大小写或空白差异产生重复历史。\
+     * 输入：\
+     *  - userId：当前用户；\
+     *  - rawTerm：请求中的原始词条；\
+     *  - normalizedTerm：归一化后的词条；\
+     *  - language/flavor：查询维度。\
+     * 输出：若找到匹配记录则返回该记录，否则返回 null。\
+     * 流程：优先按归一化词条查询，若未命中且原始词条可用则回退到精确匹配。\
+     * 错误处理：无显式异常，数据库访问异常由上层捕获。\
+     * 复杂度：O(1)。
+     */
+    private SearchRecord findExistingRecord(
+        Long userId,
+        String rawTerm,
+        String normalizedTerm,
+        Language language,
+        DictionaryFlavor flavor
+    ) {
+        if (normalizedTerm != null && !normalizedTerm.isBlank()) {
+            Pageable firstNewest = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "createdAt"));
+            List<SearchRecord> normalizedMatches = searchRecordRepository.findByUserIdAndNormalizedTerm(
+                userId,
+                normalizedTerm,
+                language,
+                flavor,
+                firstNewest
+            );
+            if (!normalizedMatches.isEmpty()) {
+                return normalizedMatches.get(0);
+            }
+        }
+        if (rawTerm == null || rawTerm.isBlank()) {
+            return null;
+        }
+        return searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+            userId,
+            rawTerm,
+            language,
+            flavor
+        );
     }
 
     /**

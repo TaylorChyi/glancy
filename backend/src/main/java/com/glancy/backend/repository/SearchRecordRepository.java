@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -32,6 +34,22 @@ public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long
         String term,
         Language language,
         DictionaryFlavor flavor
+    );
+
+    @Query(
+        "SELECT r FROM SearchRecord r " +
+        "WHERE r.deleted = false " +
+        "AND r.user.id = :userId " +
+        "AND r.language = :language " +
+        "AND r.flavor = :flavor " +
+        "AND LOWER(TRIM(r.term)) = :normalizedTerm"
+    )
+    List<SearchRecord> findByUserIdAndNormalizedTerm(
+        @Param("userId") Long userId,
+        @Param("normalizedTerm") String normalizedTerm,
+        @Param("language") Language language,
+        @Param("flavor") DictionaryFlavor flavor,
+        Pageable pageable
     );
 
     java.util.Optional<SearchRecord> findByIdAndUserIdAndDeletedFalse(Long id, Long userId);

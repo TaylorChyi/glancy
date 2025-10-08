@@ -188,6 +188,45 @@ class SearchRecordServiceTest {
     }
 
     /**
+     * 测试目标：验证归一化后相同的词条不会因为大小写或空白差异重复保存。\
+     * 前置条件：用户已创建并完成登录。\
+     * 步骤：\
+     *  1) 保存带有空白和大写的词条 " Hello ";\
+     *  2) 使用小写无空白的 "hello" 再次保存。\
+     * 断言：\
+     *  - 第二次保存返回的记录 ID 与首次相同；\
+     *  - 数据库中仅存在一条未删除的记录。\
+     * 边界/异常：若命中逻辑缺陷导致新增记录或返回空对象则失败。
+     */
+    @Test
+    void reusesExistingRecordWhenOnlyCaseOrWhitespaceDiffers() {
+        User user = new User();
+        user.setUsername("normalize");
+        user.setPassword("p");
+        user.setEmail("n@example.com");
+        user.setPhone("46");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest noisy = new SearchRecordRequest();
+        noisy.setTerm(" Hello ");
+        noisy.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), noisy);
+
+        SearchRecordRequest normalized = new SearchRecordRequest();
+        normalized.setTerm("hello");
+        normalized.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), normalized);
+
+        assertEquals(first.id(), second.id(), "归一化后的查询应复用现有记录");
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalse(user.getId());
+        assertEquals(1, records.size(), "数据库中应仅保留一条未删除记录");
+    }
+
+    /**
      * 验证批量获取搜索记录时会一次性组装全部版本信息并确保最新版本优先呈现。
      */
     @Test
