@@ -92,14 +92,14 @@
   transition:
     grid-template-rows 0.32s ease,
     padding 0.32s ease;
-  padding: 0 28px;
+  padding: 0 16px;
   background: none;
   width: 100%;
 }
 
 .body[data-open="true"] {
   grid-template-rows: 1fr;
-  padding: 24px 28px 28px;
+  padding: 0px 16px;
   background: none;
 }
 
