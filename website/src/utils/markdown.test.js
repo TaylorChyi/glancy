@@ -153,6 +153,71 @@ test("translation line keeps nested unordered list indentation", () => {
 });
 
 /**
+ * 测试目标：未加粗的“翻译”标签需被识别并换行，避免译文紧贴例句或拆成单字。
+ * 前置条件：例句行末尾直接跟随纯文本“翻译:” 标签，且仅以单个空格分隔。
+ * 步骤：
+ *  1) 构造包含未加粗翻译标签的 Markdown 字串。
+ *  2) 执行 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 译文换行并继承列表缩进；若失败则说明翻译标签匹配缺失纯文本形态。
+ * 边界/异常：
+ *  - 覆盖 Doubao 返回的最小间隔场景，防止未来再次合并成单行。
+ */
+test("polishDictionaryMarkdown splits plain translation label", () => {
+  const source =
+    "- **例句**: She bought a bendy straw to drink her milkshake without a lid. 翻译: 她买了一根可弯吸管。";
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual([
+    "- **例句**: She bought a bendy straw to drink her milkshake without a lid.",
+    "  翻译: 她买了一根可弯吸管。",
+  ]);
+});
+
+/**
+ * 测试目标：英文 “Translation” 标签也需换行，确保多语种响应遵循相同排版规范。
+ * 前置条件：例句与英文 Translation 标签之间仅由单个空格连接。
+ * 步骤：
+ *  1) 构造含英文 Translation 标签的 Markdown。
+ *  2) 调用 polishDictionaryMarkdown 进行归一化。
+ * 断言：
+ *  - 翻译标签独占一行并继承列表缩进；失败说明词表未覆盖英文变体。
+ * 边界/异常：
+ *  - 覆盖英译英场景，防止未来仅识别中文标签。
+ */
+test("polishDictionaryMarkdown splits english translation label", () => {
+  const source =
+    "- **例句**: The suit looked impeccable at the gala. Translation: It was flawless in appearance.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual([
+    "- **例句**: The suit looked impeccable at the gala.",
+    "  **Translation**: It was flawless in appearance.",
+  ]);
+});
+
+/**
+ * 测试目标：译文别名（如“译文”）与分词标注共存时，仍应保持译文换行且分词留在例句行。
+ * 前置条件：例句内含 `#token#` 分词标记并紧跟“译文:” 标签。
+ * 步骤：
+ *  1) 构造包含分词与译文别名的 Markdown。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 分词标记仍留在例句行；
+ *  - “译文” 标签换行并继承缩进；
+ *  - 失败则说明新逻辑破坏了分词合并或译文识别。
+ * 边界/异常：
+ *  - 覆盖译文别名与附件并存的极值场景，防止未来回归。
+ */
+test("polishDictionaryMarkdown splits translation alias while preserving markers", () => {
+  const source =
+    "- **例句**: 今天天气好 #token# 译文: The weather is great today.";
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual([
+    "- **例句**: 今天天气好 #token#",
+    "  译文: The weather is great today.",
+  ]);
+});
+
+/**
  * 测试目标：验证例句后紧跟的标题不会被误并入分词标记，仍保持独立换行。
  * 前置条件：例句行之后立即出现 Markdown 标题行 `# 英文释义`。
  * 步骤：
