@@ -20,6 +20,15 @@
   font-weight: normal;
 }
 
+/*
+ * 释义段落需保持自然阅读方向；
+ * 通过对 section 文本强制左对齐，避免 justify 导致的中文排版分散。
+ */
+.dictionary-entry section {
+  text-align: left;
+  text-align-last: left;
+}
+
 .section-title {
   margin: 16px 0 4px;
   font-size: 1em;
