@@ -60,9 +60,12 @@ test("treats null markdown as empty string", () => {
  * 验证 `polishDictionaryMarkdown` 会强制将译文放到独立行，避免与英文例句同行展示。
  */
 test("polishDictionaryMarkdown enforces translation line break", () => {
-  const source = "- **例句 1**: Hello world  **翻译**: 你好世界";
+  const source =
+    "- **例句 1**: The road goes through some very bendy sections in the mountains.  **翻译**: 这条路在山里有几段非常蜿蜒曲折。";
   const result = polishDictionaryMarkdown(source);
-  expect(result).toBe("- **例句 1**: Hello world\n  **翻译**: 你好世界");
+  expect(result).toBe(
+    "- **例句 1**: The road goes through some very bendy sections in the mountains.\n  **翻译**: 这条路在山里有几段非常蜿蜒曲折。",
+  );
 });
 
 /**
