@@ -36,6 +36,7 @@ import {
   normalizeDictionaryMarkdown,
   normalizeMarkdownEntity,
 } from "../markdown/dictionaryMarkdownNormalizer.js";
+import { createDictionaryStreamingMarkdownBuffer } from "../streaming/dictionaryStreamingMarkdownBuffer.js";
 import { exportDictionaryShareImage } from "../share/dictionaryShareImage.js";
 
 /**
@@ -517,9 +518,7 @@ export function useDictionaryExperience() {
 
       let detected = resolvedLanguage;
       try {
-        let acc = "";
-        let preview = "";
-        let parsedEntry = null;
+        const buffer = createDictionaryStreamingMarkdownBuffer();
 
         for await (const { chunk, language } of streamWord({
           user,
@@ -531,23 +530,16 @@ export function useDictionaryExperience() {
           flavor: targetFlavor,
         })) {
           if (language && language !== detected) detected = language;
-          acc += chunk;
-
-          const derived = extractMarkdownPreview(acc);
-          if (derived !== null) {
-            preview = normalizeDictionaryMarkdown(derived);
+          const { preview: nextPreview, entry: streamingEntry } = buffer.append(chunk);
+          if (nextPreview !== null) {
+            setStreamText(nextPreview);
           }
-          setStreamText(preview);
-
-          try {
-            const parsed = JSON.parse(acc);
-            parsedEntry = normalizeMarkdownEntity(parsed);
-            setEntry(parsedEntry);
-          } catch {
-            // waiting for JSON to finish streaming
+          if (streamingEntry) {
+            setEntry(streamingEntry);
           }
         }
 
+        const { markdown: bufferedMarkdown, entry: bufferedEntry } = buffer.finalize();
         const record = wordStoreApi.getState().getRecord?.(cacheKey);
         if (record) {
           const hydratedRecord = applyRecord(
@@ -558,16 +550,15 @@ export function useDictionaryExperience() {
           if (hydratedRecord?.term) {
             resolvedTerm = coerceResolvedTerm(hydratedRecord.term, normalized);
           }
-        } else if (parsedEntry) {
-          setEntry(parsedEntry);
-          const finalMarkdown =
-            typeof parsedEntry.markdown === "string"
-              ? parsedEntry.markdown
-              : "";
-          setFinalText(finalMarkdown);
-          resolvedTerm = coerceResolvedTerm(parsedEntry.term, normalized);
+        } else if (bufferedEntry) {
+          setEntry(bufferedEntry);
+          setFinalText(bufferedMarkdown ?? "");
+          resolvedTerm = coerceResolvedTerm(
+            bufferedEntry.term,
+            normalized,
+          );
         } else {
-          setFinalText(preview);
+          setFinalText(bufferedMarkdown ?? "");
         }
 
         const detectedLanguage = detected ?? resolvedLanguage;
