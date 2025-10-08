@@ -7,6 +7,7 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
+const BROKEN_HEADING_LINE_PATTERN = /^(#{1,6})(?:[ \t]*)\n([ \t]*)(\S[^\n]*)$/gm;
 const HEADING_ATTACHED_LIST_PATTERN = /^(#{1,6}\s*)([^\n]*?)(-)(?!-)([^\n]+)$/gm;
 const HEADING_INLINE_LABEL_PATTERN = /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 const INLINE_LABEL_PATTERN =
@@ -280,6 +281,53 @@ function ensureHeadingLineBreak(text) {
         }
       }
       return `${before}\n${hashes}`;
+    },
+  );
+}
+
+function isListMarkerCandidate(segment) {
+  const trimmed = segment.trimStart();
+  if (!trimmed) {
+    return false;
+  }
+  if (/^[-*+][ \t]+/.test(trimmed)) {
+    return true;
+  }
+  if (/^\d+[.)][ \t]+/.test(trimmed)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * 背景：
+ *  - Doubao 返回的词典标题偶发被拆成两行，首行仅剩下 `##` 而正文换到下一行，
+ *    前端渲染后标题会出现空白行，与生成模板要求冲突。
+ * 目的：
+ *  - 将被强制换行的标题重新合并为单行，确保 heading 语义与视觉表现一致。
+ * 关键决策与取舍：
+ *  - 仅在下一行不是列表、编号或新的标题时执行合并，避免误将合法内容拼接进标题。 
+ * 影响范围：
+ *  - 词典 Markdown 归一化流程，在 polishDictionaryMarkdown 中作为早期修复步骤。
+ */
+function mergeBrokenHeadingLines(text) {
+  return text.replace(
+    BROKEN_HEADING_LINE_PATTERN,
+    (match, hashes, _indent, body) => {
+      if (!body) {
+        return match;
+      }
+      const normalizedBody = body.trim();
+      if (!normalizedBody) {
+        return match;
+      }
+      if (normalizedBody.startsWith("#")) {
+        return match;
+      }
+      if (isListMarkerCandidate(normalizedBody)) {
+        return match;
+      }
+      return `${hashes} ${normalizedBody}`;
     },
   );
 }
@@ -1543,7 +1591,10 @@ function ensureExampleTranslationLayout(text) {
 export function polishDictionaryMarkdown(source) {
   if (!source) return "";
   const normalized = normalizeNewlines(source);
-  const withDelimitersRestored = restoreMissingLabelDelimiters(normalized);
+  const withHeadingsMerged = mergeBrokenHeadingLines(normalized);
+  const withDelimitersRestored = restoreMissingLabelDelimiters(
+    withHeadingsMerged,
+  );
   const withAdjacentSeparated = separateAdjacentInlineLabels(
     withDelimitersRestored,
   );
