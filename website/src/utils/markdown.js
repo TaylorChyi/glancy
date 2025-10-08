@@ -7,6 +7,7 @@ const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
+const HEADING_ATTACHED_LIST_PATTERN = /^(#{1,6}\s*)([^\n]*?)(-)(?!-)([^\n]+)$/gm;
 const HEADING_INLINE_LABEL_PATTERN = /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
@@ -183,6 +184,30 @@ const INLINE_LABEL_DYNAMIC_PATTERNS = [
   /^practiceprompts\d+(?:[a-z]+)?$/,
 ];
 
+const HEADING_LIST_TITLES = new Set(
+  [
+    "音标",
+    "词频等级",
+    "词汇学信息",
+    "常见搭配",
+    "常见词组",
+    "固定习语",
+    "固定句型",
+    "单词变形",
+    "近义词",
+    "反义词",
+    "语法用法说明",
+    "易混淆词",
+    "地域差异",
+    "词源",
+    "相关派生词",
+    "词根与构词法",
+    "文化背景与典故",
+    "历史语义演变",
+    "专业领域用法",
+  ].map((title) => title.replace(/\s+/g, "")),
+);
+
 function normalizeInlineLabelCandidate(raw) {
   if (!raw) {
     return "";
@@ -255,6 +280,39 @@ function ensureHeadingLineBreak(text) {
         }
       }
       return `${before}\n${hashes}`;
+    },
+  );
+}
+
+function normalizeHeadingTitle(title) {
+  return title.replace(/[\s：:]+/g, "");
+}
+
+function shouldSeparateHeadingList(headingTitle, rest) {
+  if (!rest || !/[:：]/.test(rest)) {
+    return false;
+  }
+  const normalized = normalizeHeadingTitle(headingTitle);
+  if (!normalized) {
+    return false;
+  }
+  return HEADING_LIST_TITLES.has(normalized);
+}
+
+function separateHeadingListMarkers(text) {
+  return text.replace(
+    HEADING_ATTACHED_LIST_PATTERN,
+    (match, prefix, headingBody, _dash, rest) => {
+      const headingTitle = headingBody.trimEnd();
+      if (!shouldSeparateHeadingList(headingTitle, rest)) {
+        return match;
+      }
+      const normalizedHeading = `${prefix}${headingTitle}`.trimEnd();
+      const listContent = rest.replace(/^\s*/, "");
+      const bullet = listContent.startsWith("-")
+        ? listContent
+        : `- ${listContent}`;
+      return `${normalizedHeading}\n${bullet}`;
     },
   );
 }
@@ -1499,7 +1557,8 @@ export function polishDictionaryMarkdown(source) {
   const humanizedValues = humanizeCompactMetadataValues(spacedColon);
   const withLineBreak = ensureHeadingLineBreak(humanizedValues);
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
-  const headingsSeparated = separateHeadingInlineLabels(withHeadingSpacing);
+  const withHeadingLists = separateHeadingListMarkers(withHeadingSpacing);
+  const headingsSeparated = separateHeadingInlineLabels(withHeadingLists);
   const padded = ensureHeadingPadding(headingsSeparated);
   const spaced = ensureListSpacing(padded);
   const withInlineBreaks = ensureInlineLabelLineBreak(spaced);
