@@ -10,7 +10,6 @@
    * 目的：强制所有子元素继承 section 的宽度，避免横向溢出。
    * 取舍：统一回落到无边框、透明背景以适配最新设计基调，同时保留圆角与布局节奏。
    */
-  margin-block: 16px;
   border-radius: var(--radius-lg, 14px);
   border: none;
   background: none;
@@ -25,7 +24,6 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px;
   border: none;
   background: none;
   color: inherit;
