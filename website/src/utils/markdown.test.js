@@ -150,6 +150,43 @@ test("translation line keeps nested unordered list indentation", () => {
 });
 
 /**
+ * 测试目标：验证例句后紧跟的标题不会被误并入分词标记，仍保持独立换行。
+ * 前置条件：例句行之后立即出现 Markdown 标题行 `# 英文释义`。
+ * 步骤：
+ *  1) 构造包含例句与后续标题的 Markdown 字串。
+ *  2) 调用 polishDictionaryMarkdown 进行格式化处理。
+ * 断言：
+ *  - 标题仍为独立行；若断言失败，说明示例分词逻辑错误吞并了标题。
+ * 边界/异常：
+ *  - 覆盖例句旁的标题场景，防止未来回归再次破坏 heading 结构。
+ */
+test(
+  "polishDictionaryMarkdown preserves heading after example segmentation",
+  () => {
+    const source = ["- **例句**: Hello world", "# 英文释义"].join("\n");
+    const result = polishDictionaryMarkdown(source);
+    expect(result).toBe(["- **例句**: Hello world", "# 英文释义"].join("\n"));
+  },
+);
+
+/**
+ * 测试目标：确保 `#token#` 分词标记仍会并入例句正文，分词逻辑保持向后兼容。
+ * 前置条件：例句行之后紧跟分词标记行 `#token#`。
+ * 步骤：
+ *  1) 构造包含例句与分词标记的 Markdown 字串。
+ *  2) 调用 polishDictionaryMarkdown 获取格式化结果。
+ * 断言：
+ *  - 输出中的例句行末尾仍包含 `#token#`；若失败则表示新解析未保留分词标记。
+ * 边界/异常：
+ *  - 覆盖分词标记典型模式，防止正则调整造成回归。
+ */
+test("polishDictionaryMarkdown keeps hash segmentation markers", () => {
+  const source = ["- **例句**: 今天天气好", "#token#"].join("\n");
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("- **例句**: 今天天气好 #token#");
+});
+
+/**
  * 测试目标：验证串联的英译英标签会被拆行并恢复空格，提升词条可读性。
  * 前置条件：行内包含 `Examples:Example1:...`、`UsageInsight:...` 等紧贴字段。
  * 步骤：

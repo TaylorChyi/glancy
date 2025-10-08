@@ -1211,6 +1211,111 @@ function normalizeExampleContent(value) {
 }
 
 /**
+ * 意图：在例句正文与下一行之间解析潜在的 `#token#` 分词标记。
+ * 输入：
+ *  - lines：Markdown 行数组。
+ *  - startIndex：疑似分词标记行的索引。
+ * 输出：若解析成功返回 `{ marker, trailingText, consumed }`，否则返回 null。
+ * 流程：
+ *  1) 读取首行并归一化 `#` 前后的空格。
+ *  2) 若首行已形成完整 `#token#`，直接返回；否则向后寻找补齐的闭合 `#`。
+ *  3) 当后续行以单个 `#` 开头时，将其视为闭合标记，并把剩余正文作为 `trailingText`。
+ * 错误处理：遇到多级标题（`##`）或非 `#` 开头的行即放弃解析，避免误吞标题。
+ * 复杂度：O(p)，p 为尝试拼接分词标记所需行数。
+ */
+function parseSegmentationMarker(lines, startIndex) {
+  if (startIndex >= lines.length) {
+    return null;
+  }
+  const firstLine = lines[startIndex];
+  const trimmed = firstLine.trimStart();
+  if (!trimmed.startsWith("#")) {
+    return null;
+  }
+  const normalized = trimmed.replace(/^#\s+/, "#").trimEnd();
+  if (!/^#[^#\s]+/.test(normalized)) {
+    return null;
+  }
+  let consumed = 1;
+  if (/^#[^#\s]+#$/.test(normalized)) {
+    return { marker: normalized, trailingText: "", consumed };
+  }
+  if (!/^#[^#\s]+$/.test(normalized)) {
+    return null;
+  }
+  let gapConsumed = 0;
+  for (let idx = startIndex + 1; idx < lines.length; idx += 1) {
+    const candidate = lines[idx];
+    const candidateTrimmed = candidate.trimStart();
+    if (candidateTrimmed === "") {
+      gapConsumed += 1;
+      continue;
+    }
+    if (!candidateTrimmed.startsWith("#")) {
+      return null;
+    }
+    if (/^##/.test(candidateTrimmed)) {
+      return null;
+    }
+    const trailingText = candidateTrimmed.replace(/^#\s*/, "");
+    return {
+      marker: `${normalized}#`,
+      trailingText,
+      consumed: consumed + gapConsumed + 1,
+    };
+  }
+  return null;
+}
+
+/**
+ * 意图：收集例句行后续的分词标记附件，并保留需要独立渲染的标题行。
+ * 输入：
+ *  - lines：Markdown 行数组。
+ *  - startIndex：例句下一行的索引。
+ * 输出：结构体 `{ markerAttachments, preservedHeadings, consumed }`。
+ * 流程：
+ *  1) 跳过空行，逐行检查是否为分词标记或标题。
+ *  2) 对 `#` 开头的行调用 `parseSegmentationMarker`，仅当解析成功时并入附件。
+ *  3) 遇到无法解析的 `#` 行则认定为标题，终止扫描并记录待保留的标题行。
+ * 错误处理：默认保守策略，未识别的行会被留给后续流程。
+ * 复杂度：O(q)，q 为附件区段的行数。
+ */
+function collectExampleSegmentationAttachments(lines, startIndex) {
+  const markerAttachments = [];
+  const preservedHeadings = [];
+  let consumed = 0;
+  let cursor = startIndex;
+  while (cursor < lines.length) {
+    const current = lines[cursor];
+    const trimmed = current.trimStart();
+    if (trimmed === "") {
+      consumed += 1;
+      cursor += 1;
+      continue;
+    }
+    if (!/^(#|\{\{|\[\[)/.test(trimmed)) {
+      break;
+    }
+    if (trimmed.startsWith("#")) {
+      const parsed = parseSegmentationMarker(lines, cursor);
+      if (!parsed) {
+        preservedHeadings.push(current);
+        consumed += 1;
+        break;
+      }
+      markerAttachments.push(parsed);
+      consumed += parsed.consumed;
+      cursor += parsed.consumed;
+      continue;
+    }
+    markerAttachments.push({ marker: trimmed, trailingText: "" });
+    consumed += 1;
+    cursor += 1;
+  }
+  return { markerAttachments, preservedHeadings, consumed };
+}
+
+/**
  * 意图：在字典 Markdown 中定位例句行并补齐分词空格。
  * 输入：格式化前的 Markdown 字符串。
  * 输出：例句段落完成分词空格后的 Markdown。
@@ -1240,35 +1345,20 @@ function applyExampleSegmentationSpacing(text) {
       normalized.push(line);
       continue;
     }
-    let combined = rest;
-    let consumed = 0;
-    const attachments = [];
-    for (let j = i + 1; j < lines.length; j += 1) {
-      const candidate = lines[j];
-      const trimmed = candidate.trimStart();
-      if (trimmed === "") {
-        consumed += 1;
-        continue;
-      }
-      if (!/^(#|\{\{|\[\[)/.test(trimmed)) {
-        break;
-      }
-      consumed += 1;
-      if (trimmed.startsWith("#")) {
-        attachments.push(trimmed.replace(/^#\s+/, "#"));
-      } else {
-        attachments.push(trimmed);
-      }
-    }
-    if (attachments.length > 0) {
-      combined = `${combined}${attachments.join("")}`;
-    }
+    const { markerAttachments, preservedHeadings, consumed } =
+      collectExampleSegmentationAttachments(lines, i + 1);
+    const combined = markerAttachments.reduce((acc, attachment) => {
+      return `${acc}${attachment.marker}${attachment.trailingText}`;
+    }, rest);
     const normalizedContent = normalizeExampleContent(combined);
     if (!normalizedContent) {
       normalized.push(prefix.trimEnd());
     } else {
       normalized.push(`${prefix}${normalizedContent}`);
     }
+    preservedHeadings.forEach((heading) => {
+      normalized.push(heading);
+    });
     i += consumed;
   }
   return normalized.join("\n");
