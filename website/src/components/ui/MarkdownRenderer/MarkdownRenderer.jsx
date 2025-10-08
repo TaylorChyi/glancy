@@ -140,18 +140,18 @@ function CollapsibleSummary({
       aria-controls={contentId}
       onClick={onToggle}
     >
+      <span className={styles.chevron} aria-hidden="true">
+        <span
+          className={styles["chevron-icon"]}
+          data-open={isOpen ? "true" : "false"}
+        />
+      </span>
       <span
         className={styles["summary-title"]}
         role="heading"
         aria-level={depth}
       >
         {renderedChildren}
-      </span>
-      <span className={styles.chevron} aria-hidden="true">
-        <span
-          className={styles["chevron-icon"]}
-          data-open={isOpen ? "true" : "false"}
-        />
       </span>
     </button>
   );
