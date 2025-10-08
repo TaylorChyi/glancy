@@ -21,7 +21,12 @@
 .summary {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  /*
+   * 背景：按钮与标题左右分散排列，导致用户目光在阅读开头时需要额外扫到最右侧确认折叠状态。
+   * 目的：将指示图标与文字统一左对齐，让展开控制顺着阅读方向出现，降低眼动负担。
+   * 取舍：舍弃 space-between 布局，改由 gap 控制间距，保证整行仍为单一点击热区且视觉节奏一致。
+   */
+  justify-content: flex-start;
   align-items: center;
   gap: 12px;
   border: none;
