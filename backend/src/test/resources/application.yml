@@ -78,6 +78,12 @@ mail:
       inactivity-threshold: P90D
       soft-bounce-suppression-threshold: 2
       hard-bounce-suppression-threshold: 1
+    localization:
+      default-language-tag: zh-CN
+      messages:
+        zh-CN:
+          body: "测试验证码 {{code}}"
+      rules: []
     streams:
       transactional-domain: test.glancy.xyz
       transactional-ip-pool: test-ip-txn
