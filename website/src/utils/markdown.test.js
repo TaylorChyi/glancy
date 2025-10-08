@@ -111,6 +111,38 @@ test("polishDictionaryMarkdown splits composite english inline labels", () => {
 });
 
 /**
+ * 测试目标：验证标题误与列表连写时会自动换行，恢复模板结构。
+ * 前置条件：构造 Doubao 输出中常见的 `## 音标-英式: ...` 异常行。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 进行格式化。
+ * 断言：
+ *  - 标题与首个列表项之间插入换行，避免渲染错位。
+ * 边界/异常：
+ *  - 该逻辑仅作用于已知模板标题，防止误伤包含连字符的常规标题。
+ */
+test("polishDictionaryMarkdown splits heading-attached list markers", () => {
+  const source = "## 音标-英式: /ˈmenjuː/\n- 美式: /ˈmenjuː/";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("## 音标\n- 英式: /ˈmenjuː/\n- 美式: /ˈmenjuː/");
+});
+
+/**
+ * 测试目标：验证包含连字符的正常标题不会被误判为列表。
+ * 前置条件：构造 `## T-shirt: history` 这类合法标题。
+ * 步骤：
+ *  1) 执行 polishDictionaryMarkdown。
+ * 断言：
+ *  - 原始标题保持不变，确保分支条件足够保守。
+ * 边界/异常：
+ *  - 若误触发，说明白名单过宽，需要进一步收紧匹配条件。
+ */
+test("polishDictionaryMarkdown keeps hyphenated headings intact", () => {
+  const source = "## T-shirt: history";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe("## T-shirt: history");
+});
+
+/**
  * 测试目标：验证拆分后的连字符不会残留在标签行尾，避免渲染出 `value-`。
  * 前置条件：原始 Markdown 以连字符连接多个行内标签，如 Pronunciation 与 American。
  * 步骤：
