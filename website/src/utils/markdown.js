@@ -66,6 +66,18 @@ const EXAMPLE_LABEL_TOKENS = new Set([
   "用例",
 ]);
 
+const TRANSLATION_LABEL_TOKENS = new Set([
+  "translation",
+  "translations",
+  "翻译",
+  "译文",
+]);
+
+const INLINE_TRANSLATION_LABEL_PATTERN =
+  /(?:^|(?<=\s)|(?<=[\p{P}\p{S}]))(\*\*([^*]+)\*\*|[\p{L}\p{N}]{1,32})(?:\s*)([:：])/gu;
+
+const TRANSLATION_LABEL_BOUNDARY_PATTERN = /[\p{L}\p{N}*]/u;
+
 const SEGMENTATION_MARKER_PATTERNS = [
   /\[\[[^\]]+\]\]/g,
   /\{\{[^}]+\}\}/g,
@@ -108,6 +120,7 @@ const INLINE_LABEL_TOKENS = new Set(
     "用法示例",
     "用例",
     "翻译",
+    "译文",
     "同义词",
     "反义词",
     "相关词",
@@ -1160,6 +1173,42 @@ function isExampleLabel(label) {
   return false;
 }
 
+function isTranslationLabel(label) {
+  const candidates = collectInlineLabelCandidates(label);
+  if (candidates.size === 0) {
+    return false;
+  }
+  for (const candidate of candidates) {
+    if (TRANSLATION_LABEL_TOKENS.has(candidate)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * 背景：
+ *  - 翻译需与例句共享同一列表项，但在渲染时要另起一行保持视觉层级。
+ * 目的：
+ *  - 继承列表缩进，避免因直接替换为空格导致的错位或视觉抖动。
+ * 关键决策与取舍：
+ *  - 优先复用列表标记的占位宽度；若无法识别列表，则退化为沿用原始缩进或最小两个空格。
+ */
+function deriveExampleTranslationIndent(prefix) {
+  const listMatch = prefix.match(/^([ \t]*)(?:([-*+])|((?:\d+[.)])))(\s+)/);
+  if (listMatch) {
+    const [, leading = "", bullet = "", numbered = "", gap = ""] = listMatch;
+    const marker = bullet || numbered;
+    const visualizedMarker = marker.replace(/[^\s]/g, " ");
+    return `${leading}${visualizedMarker}${gap.replace(/[^\s]/g, " ")}`;
+  }
+  const leadingWhitespaceMatch = prefix.match(/^[ \t]+/);
+  if (leadingWhitespaceMatch) {
+    return leadingWhitespaceMatch[0];
+  }
+  return "  ";
+}
+
 function ensureSegmentationMarkerSpacing(value) {
   let result = value;
   for (const pattern of SEGMENTATION_MARKER_PATTERNS) {
@@ -1361,6 +1410,75 @@ function applyExampleSegmentationSpacing(text) {
     });
     i += consumed;
   }
+  return normalized.join("\n").replace(/[ \t]+$/gm, "");
+}
+
+function ensureExampleTranslationLayout(text) {
+  if (!text) {
+    return text;
+  }
+  const merged = text
+    .replace(/翻\s*\n([ \t]+)译(?=[:：])/g, "\n$1翻译")
+    .replace(/译\s*\n([ \t]+)文(?=[:：])/g, "\n$1译文");
+  const lines = merged.split("\n");
+  const normalized = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const match = line.match(
+      /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
+    );
+    if (!match) {
+      normalized.push(line);
+      continue;
+    }
+    const [, prefix, label, rest] = match;
+    if (!isExampleLabel(label)) {
+      normalized.push(line);
+      continue;
+    }
+    INLINE_TRANSLATION_LABEL_PATTERN.lastIndex = 0;
+    let handled = false;
+    while (true) {
+      const translationMatch = INLINE_TRANSLATION_LABEL_PATTERN.exec(rest);
+      if (!translationMatch) {
+        break;
+      }
+      const [, rawLabel, innerLabel] = translationMatch;
+      const candidate = innerLabel ?? rawLabel;
+      if (!isTranslationLabel(candidate)) {
+        continue;
+      }
+      let start = translationMatch.index;
+      while (start > 0) {
+        const previous = rest[start - 1];
+        if (!previous) {
+          break;
+        }
+        if (TRANSLATION_LABEL_BOUNDARY_PATTERN.test(previous)) {
+          start -= 1;
+          continue;
+        }
+        break;
+      }
+      const exampleBody = rest.slice(0, start).trimEnd();
+      const translationSegment = rest.slice(start).trimStart();
+      const exampleLine = exampleBody
+        ? `${prefix}${exampleBody}`.trimEnd()
+        : prefix.trimEnd();
+      normalized.push(exampleLine.replace(/[ \t]+$/u, ""));
+      if (translationSegment) {
+        const translationIndent = deriveExampleTranslationIndent(prefix);
+        normalized.push(
+          `${translationIndent}${translationSegment}`.replace(/[ \t]+$/u, ""),
+        );
+      }
+      handled = true;
+      break;
+    }
+    if (!handled) {
+      normalized.push(line);
+    }
+  }
   return normalized.join("\n");
 }
 
@@ -1391,5 +1509,11 @@ export function polishDictionaryMarkdown(source) {
   const withPunctuationSpacing = ensureEnglishPunctuationSpacing(
     withoutDanglingSeparators,
   );
-  return applyExampleSegmentationSpacing(withPunctuationSpacing);
+  const withExampleSegmentation = applyExampleSegmentationSpacing(
+    withPunctuationSpacing,
+  );
+  const withTranslationLayout = ensureExampleTranslationLayout(
+    withExampleSegmentation,
+  );
+  return withTranslationLayout.replace(/[ \t]+$/gm, "");
 }
