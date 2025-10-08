@@ -64,31 +64,39 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * 背景：原有圆形底色在不同主题下与内容背景冲突，边框阴影也削弱了极简视觉层级。
+ * 目的：去除底色与边框，直接以主题文本色绘制指示箭头，确保深浅主题自动适配。
+ * 取舍：放弃额外装饰，仅保留尺寸与对齐以维持版面节奏。
+ */
 .chevron {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--surface-light) 85%, transparent);
   display: grid;
   place-items: center;
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--color-surface-alt) 50%, transparent);
+  color: var(--color-text);
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
+/*
+ * 背景：箭头需在展开时朝下，且在黑/白主题间保持对比度。
+ * 目的：以 currentColor 驱动边框绘制箭头，随父元素颜色自动切换。
+ * 取舍：通过调整旋转角度取代双重色值混合，简化主题切换路径。
+ */
 .chevron-icon {
   width: 8px;
   height: 8px;
-  border-right: 2px solid
-    color-mix(in srgb, var(--surface-dark) 48%, transparent);
-  border-bottom: 2px solid
-    color-mix(in srgb, var(--surface-dark) 48%, transparent);
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
   transform: rotate(-45deg);
   transition: transform 0.32s ease;
 }
 
 .chevron-icon[data-open="true"] {
-  transform: rotate(135deg);
+  transform: rotate(45deg);
 }
 
 .body {
