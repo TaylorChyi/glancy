@@ -22,10 +22,17 @@
   text-align: left;
 }
 
+/*
+ * 主标题需在词条详情中成为视觉锚点：
+ *  - 通过加粗与居中排版突出当前查询单词；
+ *  - 使用 justify-self 避免受 wrapper 的网格布局影响偏移。
+ */
 .heading-primary {
   font-size: 1.5rem;
+  font-weight: var(--font-weight-bold, 700);
   margin: 0;
   text-align: center;
+  justify-self: center;
 }
 
 .heading-secondary {
