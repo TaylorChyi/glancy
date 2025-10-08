@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class SearchRecordService {
+
+    // 归一化查找仅需最近若干条记录即可避免全表扫描，20 条覆盖常见短期重复查询场景且便于未来通过配置调整。
+    private static final int NORMALIZED_LOOKBACK_LIMIT = 20;
+
+    private static final Sort CREATED_AT_DESC = Sort.by(Sort.Direction.DESC, "createdAt");
 
     private final SearchRecordRepository searchRecordRepository;
     private final UserRepository userRepository;
@@ -125,7 +131,9 @@ public class SearchRecordService {
      *  - normalizedTerm：归一化后的词条；\
      *  - language/flavor：查询维度。\
      * 输出：若找到匹配记录则返回该记录，否则返回 null。\
-     * 流程：优先按归一化词条查询，若未命中且原始词条可用则回退到精确匹配。\
+     * 流程：\
+     *  1) 从最近记录中按归一化策略查找；\
+     *  2) 若未命中且原始词条可用，则回退到精确匹配。\
      * 错误处理：无显式异常，数据库访问异常由上层捕获。\
      * 复杂度：O(1)。
      */
@@ -137,16 +145,20 @@ public class SearchRecordService {
         DictionaryFlavor flavor
     ) {
         if (normalizedTerm != null && !normalizedTerm.isBlank()) {
-            Pageable firstNewest = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "createdAt"));
-            List<SearchRecord> normalizedMatches = searchRecordRepository.findByUserIdAndNormalizedTerm(
-                userId,
-                normalizedTerm,
-                language,
-                flavor,
-                firstNewest
-            );
-            if (!normalizedMatches.isEmpty()) {
-                return normalizedMatches.get(0);
+            Pageable newestRecords = PageRequest.of(0, NORMALIZED_LOOKBACK_LIMIT, CREATED_AT_DESC);
+            Optional<SearchRecord> normalizedMatch = searchRecordRepository
+                .findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+                    userId,
+                    language,
+                    flavor,
+                    newestRecords
+                )
+                .stream()
+                // 采用与请求相同的归一化策略进行对比，确保数据库中的历史词条与缓存键一致。
+                .filter(candidate -> normalizedTerm.equals(termNormalizer.normalize(candidate.getTerm())))
+                .findFirst();
+            if (normalizedMatch.isPresent()) {
+                return normalizedMatch.get();
             }
         }
         if (rawTerm == null || rawTerm.isBlank()) {
@@ -198,7 +210,7 @@ public class SearchRecordService {
      */
     @Transactional(readOnly = true)
     public List<SearchRecordResponse> getRecords(Long userId, SearchRecordPageRequest pageRequest) {
-        Pageable pageable = pageRequest.toPageable(Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = pageRequest.toPageable(CREATED_AT_DESC);
         log.info(
             "Fetching search records for user {} with page {} and size {}",
             userId,

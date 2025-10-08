@@ -227,6 +227,45 @@ class SearchRecordServiceTest {
     }
 
     /**
+     * 测试目标：验证归一化流水线在折叠多余空白的场景下能够复用历史记录。\
+     * 前置条件：用户存在并已完成登录。\
+     * 步骤：\
+     *  1) 保存包含连续空白的词条 "foo   bar"；\
+     *  2) 以归一化后的 "foo bar" 再次保存。\
+     * 断言：\
+     *  - 两次保存返回相同的搜索记录 ID；\
+     *  - 用户未删除的搜索记录数量保持为 1。\
+     * 边界/异常：若复用失败导致新增记录或返回 null，则说明归一化查找逻辑缺陷。\
+     */
+    @Test
+    void reusesExistingRecordWhenWhitespaceCollapsedByNormalizer() {
+        User user = new User();
+        user.setUsername("collapse");
+        user.setPassword("p");
+        user.setEmail("collapse@example.com");
+        user.setPhone("47");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest spaced = new SearchRecordRequest();
+        spaced.setTerm("foo   bar");
+        spaced.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), spaced);
+
+        SearchRecordRequest collapsed = new SearchRecordRequest();
+        collapsed.setTerm("foo bar");
+        collapsed.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), collapsed);
+
+        assertEquals(first.id(), second.id(), "多余空白应被归一化并复用已有记录");
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalse(user.getId());
+        assertEquals(1, records.size(), "归一化后仍应只有一条记录");
+    }
+
+    /**
      * 验证批量获取搜索记录时会一次性组装全部版本信息并确保最新版本优先呈现。
      */
     @Test
