@@ -245,6 +245,76 @@ test("polishDictionaryMarkdown splits english translation label", () => {
 });
 
 /**
+ * 测试目标：例句结尾或译文包裹的括号需被移除，确保“翻译:” 行不再含括号。
+ * 前置条件：构造含半角与全角括号的两段 Markdown 例句。
+ * 步骤：
+ *  1) 对每段 Markdown 执行 polishDictionaryMarkdown；
+ *  2) 对比示例行与译文行的输出。
+ * 断言：
+ *  - 例句行不再保留括号；
+ *  - 译文行以 `翻译:` 开头且无括号结尾；
+ * 边界/异常：
+ *  - 同时覆盖半角 () 与全角 （） 括号，验证多语言标点兼容性。
+ */
+test("polishDictionaryMarkdown strips translation wrappers", () => {
+  const cases = [
+    {
+      source: "- **例句**: She smiled. (翻译: 她笑了。)",
+      expected: ["- **例句**: She smiled.", "  **翻译**: 她笑了。"],
+    },
+    {
+      source: "- **例句**: 他回答道。（翻译: 他作出了回答。）",
+      expected: ["- **例句**: 他回答道。", "  **翻译**: 他作出了回答。"],
+    },
+  ];
+  cases.forEach(({ source, expected }) => {
+    const result = polishDictionaryMarkdown(source);
+    expect(result.split("\n")).toEqual(expected);
+  });
+});
+
+/**
+ * 测试目标：译文若仅以括号附在例句末尾，应被拆分为标准译文行并补齐“翻译”标签。
+ * 前置条件：例句原文为英文，括号内包含中文译文且无显式标签。
+ * 步骤：
+ *  1) 执行 polishDictionaryMarkdown；
+ *  2) 拆分输出行并比对预期结构。
+ * 断言：
+ *  - 第一行仅保留例句；
+ *  - 第二行补齐 `**翻译**:` 标签且无括号；
+ * 边界/异常：
+ *  - 覆盖 Doubao 使用括号呈现译文的特殊返回，防止漏判导致译文缺失。
+ */
+test(
+  "polishDictionaryMarkdown promotes parenthetical translation into labeled line",
+  () => {
+    const source = "- **例句**: She smiled. (她笑了。)";
+    const result = polishDictionaryMarkdown(source);
+    expect(result.split("\n")).toEqual([
+      "- **例句**: She smiled.",
+      "  **翻译**: 她笑了。",
+    ]);
+  },
+);
+
+/**
+ * 测试目标：英文补充说明括号不应被误判为译文行，需保持原始结构。
+ * 前置条件：括号内仅含英文说明且缺少中文特征。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown；
+ *  2) 比对输出应与输入一致。
+ * 断言：
+ *  - 例句行保持原样，未新增翻译行；
+ * 边界/异常：
+ *  - 防止括号识别逻辑误判英文 parenthetical，保障语义说明不被删除。
+ */
+test("polishDictionaryMarkdown keeps english parentheses untouched", () => {
+  const source = "- **例句**: She read the book (a classic).";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(source);
+});
+
+/**
  * 测试目标：译文别名（如“译文”）与分词标注共存时，仍应保持译文换行且分词留在例句行。
  * 前置条件：例句内含 `#token#` 分词标记并紧跟“译文:” 标签。
  * 步骤：
