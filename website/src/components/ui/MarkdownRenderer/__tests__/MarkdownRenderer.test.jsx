@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  useSettingsStore,
+} from "@/store/settings";
 
 const stripZeroWidth = (value) => value.replace(/\u200B/g, "");
 const getButtonByLabel = (label) =>
@@ -6,6 +11,16 @@ const getButtonByLabel = (label) =>
     name: (value) => stripZeroWidth(value) === label,
   });
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
+
+beforeEach(() => {
+  act(() => {
+    const state = useSettingsStore.getState();
+    useSettingsStore.setState({
+      markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
+      setMarkdownRenderingMode: state.setMarkdownRenderingMode,
+    });
+  });
+});
 
 /**
  * 验证 MarkdownRenderer 能解析 GFM 语法。
@@ -19,6 +34,32 @@ test("renders GFM syntax", () => {
 test("returns null for empty content", () => {
   const { container } = render(<MarkdownRenderer>{""}</MarkdownRenderer>);
   expect(container).toBeEmptyDOMElement();
+});
+
+/**
+ * 测试目标：关闭动态渲染后直接展示原始文本，不应生成 Markdown 节点。
+ * 前置条件：Markdown 渲染模式设为 plain。
+ * 步骤：
+ *  1) 更新 store 将模式切换为 plain。
+ *  2) 渲染带有 Markdown 语法的文本。
+ * 断言：
+ *  - 容器内不存在 <strong> 元素。
+ *  - 文本原样保留星号与换行。
+ * 边界/异常：
+ *  - 若仍生成 Markdown DOM，则说明策略切换失效。
+ */
+test("renders plain text when markdown strategy disabled", () => {
+  act(() => {
+    useSettingsStore.setState({
+      markdownRenderingMode: MARKDOWN_RENDERING_MODE_PLAIN,
+    });
+  });
+
+  const markdown = "**bold**\nNext";
+  const { container } = render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  expect(container.querySelector("strong")).toBeNull();
+  expect(container.textContent).toBe(markdown);
 });
 
 /**

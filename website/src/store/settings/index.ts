@@ -27,6 +27,16 @@ type DictionarySourceLanguage =
 
 type DictionaryTargetLanguage = "CHINESE" | "ENGLISH";
 
+const MARKDOWN_RENDERING_MODE_DYNAMIC = "dynamic" as const;
+const MARKDOWN_RENDERING_MODE_PLAIN = "plain" as const;
+
+const MARKDOWN_RENDERING_MODES = Object.freeze([
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+] as const);
+
+type MarkdownRenderingMode = (typeof MARKDOWN_RENDERING_MODES)[number];
+
 type SettingsState = {
   systemLanguage: SystemLanguage;
   setSystemLanguage: (language: SystemLanguage) => void;
@@ -34,6 +44,8 @@ type SettingsState = {
   setDictionarySourceLanguage: (language: DictionarySourceLanguage) => void;
   dictionaryTargetLanguage: DictionaryTargetLanguage;
   setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => void;
+  markdownRenderingMode: MarkdownRenderingMode;
+  setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => void;
   /**
    * @deprecated 请改用 setDictionarySourceLanguage / setDictionaryTargetLanguage
    */
@@ -86,12 +98,36 @@ function persistLegacyLanguage(language: SystemLanguage) {
   }
 }
 
+/**
+ * 意图：规范化 Markdown 渲染模式，保证状态机仅暴露有限集合。
+ * 输入：候选模式字符串（可能来源于持久化或外部注入）。
+ * 输出：枚举内合法值，无法识别时回退到动态渲染。
+ * 流程：
+ *  1) 判断候选值是否为字符串。
+ *  2) 匹配是否在允许集合中。
+ *  3) 默认回退至 dynamic。
+ * 错误处理：不抛异常，统一回退到 dynamic。
+ * 复杂度：O(1)，集合长度常量级。
+ */
+function normalizeMarkdownRenderingMode(
+  candidate: unknown,
+): MarkdownRenderingMode {
+  if (typeof candidate === "string") {
+    const normalized = candidate.toLowerCase();
+    if (MARKDOWN_RENDERING_MODES.includes(normalized as MarkdownRenderingMode)) {
+      return normalized as MarkdownRenderingMode;
+    }
+  }
+  return MARKDOWN_RENDERING_MODE_DYNAMIC;
+}
+
 export const useSettingsStore = createPersistentStore<SettingsState>({
   key: SETTINGS_STORAGE_KEY,
   initializer: (set, get) => ({
     systemLanguage: detectInitialLanguage(),
     dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
     dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
+    markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
     setSystemLanguage: (language: SystemLanguage) => {
       const normalized = sanitizeLanguage(language);
       const current = get().systemLanguage;
@@ -118,6 +154,15 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
           return {};
         }
         return { dictionaryTargetLanguage: normalized };
+      });
+    },
+    setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => {
+      const normalized = normalizeMarkdownRenderingMode(mode);
+      set((state) => {
+        if (state.markdownRenderingMode === normalized) {
+          return {};
+        }
+        return { markdownRenderingMode: normalized };
       });
     },
     setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
@@ -154,6 +199,7 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       "systemLanguage",
       "dictionarySourceLanguage",
       "dictionaryTargetLanguage",
+      "markdownRenderingMode",
     ]),
     onRehydrateStorage: () => (state) => {
       if (state) {
@@ -186,6 +232,10 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
           (state as unknown as { dictionaryTargetLanguage?: string })
             .dictionaryTargetLanguage,
         );
+        state.markdownRenderingMode = normalizeMarkdownRenderingMode(
+          (state as unknown as { markdownRenderingMode?: string })
+            .markdownRenderingMode,
+        );
 
         if (legacyLanguage && !hasPersistedSource && !hasPersistedTarget) {
           switch (legacyLanguage) {
@@ -216,3 +266,8 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
 });
 
 export const SUPPORTED_SYSTEM_LANGUAGES = getSupportedLanguageCodes();
+export {
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  MARKDOWN_RENDERING_MODES,
+};

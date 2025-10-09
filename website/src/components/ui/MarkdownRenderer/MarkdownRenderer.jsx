@@ -6,6 +6,7 @@
  *  - 通过渲染阶段在字符级别补充潜在换行点，解耦视图层与布局约束，保证任意语言都能随容器宽度折行。
  * 关键决策与取舍：
  *  - 采用 `Intl.Segmenter` 进行字素切分，保持对多语言的统一处理；放弃纯 CSS 调整，避免与现有设计令牌冲突。
+ *  - 引入渲染策略切换：根据用户偏好在动态 Markdown 与原始文本间切换，避免在同一组件内堆叠条件逻辑。
  * 影响范围：
  *  - MarkdownRenderer 及其折叠子组件；ReactMarkdown 的文本节点将注入零宽空格作为可选断行点。
  * 演进与TODO：
@@ -22,17 +23,35 @@ import {
 import PropTypes from "prop-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import {
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  useSettingsStore,
+} from "@/store/settings";
 import rehypeCollapsibleSections from "./rehypeCollapsibleSections.js";
 import styles from "./MarkdownRenderer.module.css";
 
 const SUMMARY_RENDERER_FLAG = Symbol("CollapsibleSummaryRenderer");
+const joinClassNames = (...tokens) => tokens.filter(Boolean).join(" ");
 
 /**
  * 通用 Markdown 渲染组件，支持 GFM 语法并为标题分区提供折叠交互。
  * 组件在渲染阶段通过 rehype 插件把指定层级以上的标题收拢为可展开的分节，
  * 以便在长释义场景下维持简洁的视觉秩序，同时保留锚点定位能力。
  */
-function MarkdownRenderer({
+function MarkdownRenderer(props) {
+  const { children } = props;
+  const markdownMode = useSettingsStore((state) => state.markdownRenderingMode);
+
+  if (!children) return null;
+
+  if (markdownMode === MARKDOWN_RENDERING_MODE_PLAIN) {
+    return <PlainMarkdownRenderer {...props} />;
+  }
+
+  return <DynamicMarkdownRenderer {...props} />;
+}
+
+function DynamicMarkdownRenderer({
   children,
   remarkPlugins: additionalRemarkPlugins,
   rehypePlugins: additionalRehypePlugins,
@@ -75,6 +94,34 @@ function MarkdownRenderer({
     >
       {children}
     </ReactMarkdown>
+  );
+}
+
+/**
+ * 意图：在关闭动态渲染时保持原始文本展示，并继承容器样式。
+ * 输入：接受 MarkdownRenderer 外层传入的通用 DOM 属性与子节点。
+ * 输出：包裹原始文本的 div，保留 className 组合与换行控制。
+ * 流程：
+ *  1) 忽略 Markdown 专属 props（remark/rehype/components）。
+ *  2) 组合 plain 样式与外部 className。
+ *  3) 按原样输出文本，允许父级自定义 data-* 属性。
+ * 错误处理：返回 null 覆盖空内容场景。
+ * 复杂度：O(1)。
+ */
+function PlainMarkdownRenderer({
+  children,
+  className,
+  remarkPlugins: _remarkPlugins,
+  rehypePlugins: _rehypePlugins,
+  components: _components,
+  ...domProps
+}) {
+  if (!children) return null;
+  const resolvedClassName = joinClassNames(styles.plain, className);
+  return (
+    <div {...domProps} className={resolvedClassName}>
+      {children}
+    </div>
   );
 }
 

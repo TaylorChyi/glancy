@@ -5,8 +5,12 @@ import userEvent from "@testing-library/user-event";
 
 const mockSetTheme = jest.fn();
 const mockSetSystemLanguage = jest.fn();
+const mockSetMarkdownRenderingMode = jest.fn();
 const themeState = { theme: "light" };
 const languageState = { value: "auto" };
+const settingsState = {
+  markdownRenderingMode: "dynamic",
+};
 
 const createTranslations = () => ({
   prefTheme: "Theme",
@@ -19,6 +23,9 @@ const createTranslations = () => ({
   settingsGeneralLanguageLabel: "Interface language",
   settingsGeneralLanguageOption_en: "English (US)",
   settingsGeneralLanguageOption_zh: "Chinese (Simplified)",
+  settingsGeneralMarkdownLabel: "Markdown rendering",
+  settingsGeneralMarkdownDynamic: "Render dynamically",
+  settingsGeneralMarkdownPlain: "Show raw text",
 });
 
 jest.unstable_mockModule("@/context", () => ({
@@ -32,6 +39,13 @@ jest.unstable_mockModule("@/context", () => ({
 
 jest.unstable_mockModule("@/store/settings", () => ({
   SUPPORTED_SYSTEM_LANGUAGES: ["en", "zh"],
+  MARKDOWN_RENDERING_MODE_DYNAMIC: "dynamic",
+  MARKDOWN_RENDERING_MODE_PLAIN: "plain",
+  useSettingsStore: (selector) =>
+    selector({
+      ...settingsState,
+      setMarkdownRenderingMode: mockSetMarkdownRenderingMode,
+    }),
 }));
 
 let GeneralSection;
@@ -45,6 +59,8 @@ beforeEach(() => {
   mockSetSystemLanguage.mockClear();
   themeState.theme = "light";
   languageState.value = "auto";
+  settingsState.markdownRenderingMode = "dynamic";
+  mockSetMarkdownRenderingMode.mockClear();
 });
 
 /**
@@ -72,6 +88,9 @@ test("Given initial preferences When rendered Then current selection highlighted
   });
   expect(languageTrigger).toHaveAttribute("data-fullwidth", "true");
   expect(languageTrigger).toHaveTextContent(/Match device language/i);
+  expect(
+    screen.getByRole("radio", { name: "Render dynamically" }),
+  ).toHaveAttribute("aria-checked", "true");
 });
 
 /**
@@ -121,4 +140,27 @@ test("Given language menu When choosing locale Then system language updated", as
 
   expect(mockSetSystemLanguage).toHaveBeenCalledTimes(1);
   expect(mockSetSystemLanguage).toHaveBeenCalledWith("en");
+});
+
+/**
+ * 测试目标：Markdown 渲染开关切换到原始文本时调用设置器。
+ * 前置条件：Markdown 模式初始为 dynamic。
+ * 步骤：
+ *  1) 渲染组件。
+ *  2) 点击 "Show raw text" 选项。
+ * 断言：
+ *  - setMarkdownRenderingMode 接收到 "plain"。
+ * 边界/异常：
+ *  - 若当前模式已为 plain 不应重复调用。
+ */
+test("Given markdown toggle When selecting plain mode Then preference updated", async () => {
+  const user = userEvent.setup();
+  render(
+    <GeneralSection title="General" headingId="general-section-heading" />,
+  );
+
+  await user.click(screen.getByRole("radio", { name: "Show raw text" }));
+
+  expect(mockSetMarkdownRenderingMode).toHaveBeenCalledTimes(1);
+  expect(mockSetMarkdownRenderingMode).toHaveBeenCalledWith("plain");
 });

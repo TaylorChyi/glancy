@@ -4,10 +4,10 @@
  * 目的：
  *  - 以组合模式编排字段控件，串联主题上下文与设置 Store，确保模态与页面共享一致行为。
  * 关键决策与取舍：
- *  - 选用“组合 + 策略”架构：字段容器负责排版，具体控件通过回调策略写入 Theme/Language，上层未来可追加新策略；
+ *  - 选用“组合 + 策略”架构：字段容器负责排版，具体控件通过回调策略写入 Theme/Language/Markdown 行为，上层未来可追加新策略；
  *  - 放弃继续沿用 PlaceholderSection，避免一次性补丁阻塞真实表单的演进。
  * 影响范围：
- *  - Preferences 页面与 SettingsModal 的“通用”分区将即时呈现主题与语言配置。
+ *  - Preferences 页面与 SettingsModal 的“通用”分区将即时呈现主题、语言与 Markdown 渲染模式配置。
  * 演进与TODO：
  *  - TODO: 待接入更多通用偏好（如语音预览、字号）时，可在 controls 数组中扩展新的策略项。
  */
@@ -15,11 +15,20 @@ import { useCallback, useId, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage, useTheme } from "@/context";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
-import { SUPPORTED_SYSTEM_LANGUAGES } from "@/store/settings";
+import {
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  SUPPORTED_SYSTEM_LANGUAGES,
+  useSettingsStore,
+} from "@/store/settings";
 import LanguageMenu from "@/components/ui/LanguageMenu";
 import styles from "../Preferences.module.css";
 
 const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
+const MARKDOWN_RENDER_MODE_ORDER = Object.freeze([
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+]);
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
@@ -32,9 +41,16 @@ const mapLanguageLabel = (translations, code) => {
 function GeneralSection({ title, headingId }) {
   const { theme, setTheme } = useTheme();
   const { t, systemLanguage, setSystemLanguage } = useLanguage();
+  const markdownRenderingMode = useSettingsStore(
+    (state) => state.markdownRenderingMode,
+  );
+  const setMarkdownRenderingMode = useSettingsStore(
+    (state) => state.setMarkdownRenderingMode,
+  );
 
   const themeFieldId = useId();
   const languageSelectId = useId();
+  const markdownFieldId = useId();
 
   const themeLabel = t.settingsGeneralThemeLabel ?? t.prefTheme ?? "Theme";
   const themeOptions = useMemo(
@@ -71,6 +87,22 @@ function GeneralSection({ title, headingId }) {
     );
   }, [t]);
 
+  const markdownLabel =
+    t.settingsGeneralMarkdownLabel ?? "Markdown rendering";
+  const markdownOptions = useMemo(
+    () =>
+      MARKDOWN_RENDER_MODE_ORDER.map((value) => ({
+        value,
+        label:
+          (value === MARKDOWN_RENDERING_MODE_DYNAMIC &&
+            (t.settingsGeneralMarkdownDynamic ?? "Render dynamically")) ||
+          (value === MARKDOWN_RENDERING_MODE_PLAIN &&
+            (t.settingsGeneralMarkdownPlain ?? "Show raw text")) ||
+          value,
+      })),
+    [t.settingsGeneralMarkdownDynamic, t.settingsGeneralMarkdownPlain],
+  );
+
   const handleThemeSelect = useCallback(
     (nextTheme) => {
       if (!nextTheme || nextTheme === theme) {
@@ -105,6 +137,16 @@ function GeneralSection({ title, headingId }) {
       setSystemLanguage(target);
     },
     [setSystemLanguage, systemLanguage],
+  );
+
+  const handleMarkdownModeSelect = useCallback(
+    (nextMode) => {
+      if (!nextMode || nextMode === markdownRenderingMode) {
+        return;
+      }
+      setMarkdownRenderingMode(nextMode);
+    },
+    [markdownRenderingMode, setMarkdownRenderingMode],
   );
 
   return (
@@ -168,6 +210,38 @@ function GeneralSection({ title, headingId }) {
             />
           </div>
         </div>
+        <fieldset
+          className={styles["control-field"]}
+          aria-labelledby={markdownFieldId}
+        >
+          <legend id={markdownFieldId} className={styles["control-label"]}>
+            {markdownLabel}
+          </legend>
+          <div
+            role="radiogroup"
+            aria-labelledby={markdownFieldId}
+            className={styles.segments}
+          >
+            {markdownOptions.map((option) => {
+              const active = markdownRenderingMode === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className={composeClassName(
+                    styles.segment,
+                    active ? styles["segment-active"] : "",
+                  )}
+                  onClick={() => handleMarkdownModeSelect(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
       </div>
     </section>
   );
