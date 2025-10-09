@@ -109,6 +109,22 @@ const ASCII_PUNCTUATION_BOUNDARY = new Set([
   "_",
 ]);
 
+// 背景：
+//  - Doubao 在英中协议中使用 `【】` 包裹 Sense 绑定信息，且右括号后无额外内容。
+//  - restoreMissingLabelDelimiters 若在此处补冒号，会诱发后续换行规则，把 Sense 拆到下一行。
+// 取舍：仅在识别到右括号类字符（含全角符号）时跳过冒号补写，保持括号内原样展示。
+const INLINE_LABEL_TERMINATORS = new Set([
+  "]",
+  "}",
+  ")",
+  "\u3009", // 〉
+  "\u300B", // 》
+  "\u3011", // 】
+  "\u3015", // 〕
+  "\u3017", // 〗
+  "\uFF3D", // ］
+]);
+
 const EXAMPLE_LABEL_TOKENS = new Set([
   "example",
   "examples",
@@ -276,6 +292,13 @@ function matchesDynamicInlineLabel(candidate) {
   return INLINE_LABEL_DYNAMIC_PATTERNS.some((pattern) =>
     pattern.test(candidate),
   );
+}
+
+function isInlineLabelTerminator(char) {
+  if (!char) {
+    return false;
+  }
+  return INLINE_LABEL_TERMINATORS.has(char);
 }
 
 function collectInlineLabelCandidates(label) {
@@ -1045,6 +1068,17 @@ function restoreMissingLabelDelimiters(text) {
       }
       const spacing = line.slice(end, spacingEnd);
       const nextIndex = spacingEnd;
+
+      const nextChar = nextIndex < line.length ? line[nextIndex] : "";
+      if (isInlineLabelTerminator(nextChar)) {
+        result += token;
+        if (spacing) {
+          result += spacing;
+        }
+        cursor = nextIndex;
+        carryLabelContext = false;
+        continue;
+      }
 
       LABEL_TOKEN_PATTERN.lastIndex = nextIndex;
       const nextMatch = LABEL_TOKEN_PATTERN.exec(line);
