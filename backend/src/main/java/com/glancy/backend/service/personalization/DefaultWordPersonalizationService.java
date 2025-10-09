@@ -120,7 +120,7 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
     }
 
     private List<String> fetchRecentTerms(Long userId) {
-        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(
             userId,
             PageRequest.of(0, RECENT_HISTORY_LIMIT)
         );

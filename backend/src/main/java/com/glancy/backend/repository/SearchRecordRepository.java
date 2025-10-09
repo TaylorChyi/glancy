@@ -14,11 +14,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long> {
-    List<SearchRecord> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId);
+    List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId);
 
-    List<SearchRecord> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId, Pageable pageable);
 
-    List<SearchRecord> findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+    List<SearchRecord> findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
         Long userId,
         Language language,
         DictionaryFlavor flavor,
@@ -34,7 +34,7 @@ public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long
         DictionaryFlavor flavor
     );
 
-    SearchRecord findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+    SearchRecord findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
         Long userId,
         String term,
         Language language,
