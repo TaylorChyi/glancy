@@ -178,13 +178,68 @@ class SearchRecordServiceTest {
         req.setLanguage(Language.ENGLISH);
 
         SearchRecordResponse first = searchRecordService.saveRecord(user.getId(), req);
+        LocalDateTime beforeReuse = searchRecordRepository.findById(first.id()).orElseThrow().getUpdatedAt();
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req);
 
         assertEquals(first.id(), second.id());
-        assertTrue(second.createdAt().isAfter(first.createdAt()));
+        SearchRecord refreshed = searchRecordRepository.findById(first.id()).orElseThrow();
+        assertTrue(refreshed.getUpdatedAt().isAfter(beforeReuse));
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
         assertEquals(1, list.size());
-        assertEquals(second.createdAt(), list.get(0).createdAt());
+        assertEquals(second.id(), list.get(0).id());
+    }
+
+    /**
+     * 测试目标：验证复用已有搜索记录时会刷新更新时间并将其置于历史列表顶部。\\
+     * 前置条件：用户存在且已登录，历史中已有两个不同词条。\\
+     * 步骤：\\
+     *  1) 依次保存词条 "alpha"、"beta"；\\
+     *  2) 再次保存 "alpha" 触发复用逻辑；\\
+     *  3) 查询历史列表。\\
+     * 断言：\\
+     *  - 复用后的记录 updatedAt 晚于复用前；\\
+     *  - 历史列表首项为 "alpha"，说明排序依据刷新生效。\\
+     * 边界/异常：若 updatedAt 未刷新或排序未改变，则说明触发逻辑存在缺陷。
+     */
+    @Test
+    void reusedRecordRefreshesUpdatedAtAndMovesToTop() throws InterruptedException {
+        User user = new User();
+        user.setUsername("touch");
+        user.setPassword("p");
+        user.setEmail("touch@example.com");
+        user.setPhone("48");
+        userRepository.save(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        SearchRecordRequest alpha = new SearchRecordRequest();
+        alpha.setTerm("alpha");
+        alpha.setLanguage(Language.ENGLISH);
+        SearchRecordResponse alphaRecord = searchRecordService.saveRecord(user.getId(), alpha);
+
+        SearchRecordRequest beta = new SearchRecordRequest();
+        beta.setTerm("beta");
+        beta.setLanguage(Language.ENGLISH);
+        searchRecordService.saveRecord(user.getId(), beta);
+
+        SearchRecord storedAlpha = searchRecordRepository.findById(alphaRecord.id()).orElseThrow();
+        LocalDateTime beforeReuse = storedAlpha.getUpdatedAt();
+
+        Thread.sleep(5L);
+
+        SearchRecordRequest alphaAgain = new SearchRecordRequest();
+        alphaAgain.setTerm("alpha");
+        alphaAgain.setLanguage(Language.ENGLISH);
+        SearchRecordResponse reused = searchRecordService.saveRecord(user.getId(), alphaAgain);
+
+        assertEquals(alphaRecord.id(), reused.id(), "重复查询应复用同一条记录");
+
+        SearchRecord refreshedAlpha = searchRecordRepository.findById(alphaRecord.id()).orElseThrow();
+        assertTrue(refreshedAlpha.getUpdatedAt().isAfter(beforeReuse), "复用后的记录应刷新 updatedAt 以反映最近访问");
+
+        List<SearchRecordResponse> history = searchRecordService.getRecords(user.getId());
+        assertEquals(2, history.size(), "历史记录应维持原有条数");
+        assertEquals("alpha", history.get(0).term(), "刷新后应将复用词条排在首位");
     }
 
     /**
