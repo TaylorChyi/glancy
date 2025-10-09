@@ -8,6 +8,55 @@ const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const BROKEN_HEADING_LINE_PATTERN = /^(#{1,6})(?:[ \t]*)\n([ \t]*)(\S[^\n]*)$/gm;
+const SECTION_HEADING_TOKENS = new Set(
+  [
+    "definition",
+    "definitions",
+    "meaning",
+    "meanings",
+    "释义",
+    "解释",
+    "含义",
+    "historicalresonance",
+    "synonym",
+    "synonyms",
+    "同义词",
+    "antonym",
+    "antonyms",
+    "反义词",
+    "related",
+    "relatedwords",
+    "相关词",
+    "相关词汇",
+    "variation",
+    "variations",
+    "变体",
+    "变形",
+    "词形",
+    "derivativesextendedforms",
+    "derivatives",
+    "extendedforms",
+    "phrase",
+    "phrases",
+    "常见词组",
+    "词组",
+    "collocation",
+    "collocations",
+    "example",
+    "examples",
+    "例句",
+    "用法示例",
+    "用例",
+    "phonetic",
+    "pronunciation",
+    "音标",
+    "发音",
+  ].map((token) => token.toLowerCase()),
+);
+const SECTION_HEADING_TOKENS_DESC = Object.freeze(
+  Array.from(SECTION_HEADING_TOKENS).sort((a, b) => b.length - a.length),
+);
+const SECTION_CONTENT_SPLIT_TRIGGER = /[\u4e00-\u9fff\s0-9:：,，。.!?;；、-]/u;
 const HEADING_ATTACHED_LIST_PATTERN = /^(#{1,6}\s*)([^\n]*?)(-)(?!-)([^\n]+)$/gm;
 const HEADING_INLINE_LABEL_PATTERN = /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 const INLINE_LABEL_PATTERN =
@@ -334,6 +383,102 @@ function mergeBrokenHeadingLines(text) {
 
 function normalizeHeadingTitle(title) {
   return title.replace(/[\s：:]+/g, "");
+}
+
+function normalizeHeadingIdentifier(candidate) {
+  if (!candidate) {
+    return "";
+  }
+  return candidate
+    .toLowerCase()
+    .replace(/[：:]/g, "")
+    .replace(/[^\p{L}\p{N}\u4e00-\u9fff]+/gu, "");
+}
+
+function buildNormalizedIndexSegments(source) {
+  let normalized = "";
+  const segments = [];
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    if (/[^\p{L}\p{N}\u4e00-\u9fff]/u.test(char)) {
+      continue;
+    }
+    normalized += char.toLowerCase();
+    segments.push({
+      normalizedLength: normalized.length,
+      endIndex: index + 1,
+    });
+  }
+  return { normalized, segments };
+}
+
+function sliceByNormalizedLength(source, segments, length) {
+  for (let index = 0; index < segments.length; index += 1) {
+    if (segments[index].normalizedLength >= length) {
+      return source.slice(0, segments[index].endIndex);
+    }
+  }
+  return source;
+}
+
+function shouldSplitSectionHeadingRest(rest) {
+  if (!rest) {
+    return false;
+  }
+  const trimmed = rest.trim();
+  if (!trimmed) {
+    return false;
+  }
+  return SECTION_CONTENT_SPLIT_TRIGGER.test(trimmed);
+}
+
+/**
+ * 背景：
+ *  - Doubao 协议返回的章节标题常在同一行携带正文，例如 `## 释义 1. ...`，导致前端折叠按钮
+ *    将整句视为标题，严重影响信息架构与可读性。
+ * 目的：
+ *  - 将归属词典章节的标题与正文拆分到独立行，保持 Markdown 语义清晰并为折叠组件提供纯净标题。
+ * 关键决策与取舍：
+ *  - 仅对与后端章节映射一致的标题关键字（definitions/synonyms 等）生效，避免误拆普通文章标题；
+ *  - 使用字符级索引按归一化后的 token 长度定位前缀，以兼容多语言与包含空格/符号的标题。
+ * 影响范围：
+ *  - polishDictionaryMarkdown 的章节整理流程；MarkdownRenderer 折叠按钮的展示文本。
+ */
+function isolateSectionHeadingContent(text) {
+  return text.replace(
+    /^(#{1,6})(\s*)([^\n]+)$/gm,
+    (match, hashes, spacing, body) => {
+      const trimmedBody = body.trimEnd();
+      if (!trimmedBody) {
+        return `${hashes}${spacing}${trimmedBody}`;
+      }
+      const { normalized, segments } = buildNormalizedIndexSegments(trimmedBody);
+      if (!normalized) {
+        return `${hashes}${spacing}${trimmedBody}`;
+      }
+      for (const token of SECTION_HEADING_TOKENS_DESC) {
+        if (!normalized.startsWith(token)) {
+          continue;
+        }
+        const headingPart = sliceByNormalizedLength(
+          trimmedBody,
+          segments,
+          token.length,
+        ).trimEnd();
+        const rest = trimmedBody.slice(headingPart.length);
+        if (!shouldSplitSectionHeadingRest(rest)) {
+          return `${hashes}${spacing}${trimmedBody}`;
+        }
+        const normalizedIdentifier = normalizeHeadingIdentifier(headingPart);
+        if (!SECTION_HEADING_TOKENS.has(normalizedIdentifier)) {
+          return `${hashes}${spacing}${trimmedBody}`;
+        }
+        const trailing = rest.trimStart();
+        return `${hashes} ${headingPart}\n${trailing}`;
+      }
+      return `${hashes}${spacing}${trimmedBody}`;
+    },
+  );
 }
 
 function shouldSeparateHeadingList(headingTitle, rest) {
@@ -1610,7 +1755,8 @@ export function polishDictionaryMarkdown(source) {
   const withHeadingSpacing = ensureHeadingSpacing(withLineBreak);
   const withHeadingLists = separateHeadingListMarkers(withHeadingSpacing);
   const headingsSeparated = separateHeadingInlineLabels(withHeadingLists);
-  const padded = ensureHeadingPadding(headingsSeparated);
+  const headingsIsolated = isolateSectionHeadingContent(headingsSeparated);
+  const padded = ensureHeadingPadding(headingsIsolated);
   const spaced = ensureListSpacing(padded);
   const withInlineBreaks = ensureInlineLabelLineBreak(spaced);
   const withoutDanglingSeparators = resolveDanglingLabelSeparators(
