@@ -56,8 +56,8 @@ class SearchRecordRepositoryTest {
         List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(user.getId());
         assertEquals("term2", list.get(0).getTerm());
 
-        long count = searchRecordRepository
-            .countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        long count =
+            searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                 user.getId(),
                 now.minusDays(2),
                 now.plusSeconds(1)

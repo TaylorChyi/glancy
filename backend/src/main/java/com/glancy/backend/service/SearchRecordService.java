@@ -109,8 +109,8 @@ public class SearchRecordService {
             LocalDateTime startOfDay = LocalDate.now(clock).atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             // 采用 [startOfDay, endOfDay) 左闭右开区间，避免将次日 00:00:00 的记录误计入当日额度。
-            long count = searchRecordRepository
-                .countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            long count =
+                searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                     userId,
                     startOfDay,
                     endOfDay
