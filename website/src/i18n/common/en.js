@@ -44,6 +44,9 @@ export default {
   settingsGeneralLanguageLabel: "Interface language",
   settingsGeneralLanguageOption_en: "English (US)",
   settingsGeneralLanguageOption_zh: "Chinese (Simplified)",
+  settingsGeneralMarkdownLabel: "Markdown rendering",
+  settingsGeneralMarkdownDynamic: "Render dynamically",
+  settingsGeneralMarkdownPlain: "Show raw text",
   settingsTabPersonalization: "Personalization",
   settingsPersonalizationDescription:
     "Describe your background so answers feel bespoke.",

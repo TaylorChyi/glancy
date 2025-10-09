@@ -40,6 +40,9 @@ export default {
   settingsGeneralLanguageLabel: "系统语言",
   settingsGeneralLanguageOption_en: "英语（English）",
   settingsGeneralLanguageOption_zh: "中文（简体）",
+  settingsGeneralMarkdownLabel: "Markdown 渲染",
+  settingsGeneralMarkdownDynamic: "动态渲染",
+  settingsGeneralMarkdownPlain: "显示原文",
   settingsTabPersonalization: "个性化",
   settingsPersonalizationDescription:
     "描述你的身份与期待，生成更贴合的回答语气。",

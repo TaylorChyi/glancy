@@ -1,5 +1,9 @@
 import { act } from "@testing-library/react";
-import { useSettingsStore } from "@/store/settings";
+import {
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  useSettingsStore,
+} from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
 import {
   WORD_LANGUAGE_AUTO,
@@ -18,6 +22,8 @@ describe("settingsStore", () => {
         setDictionarySourceLanguage: state.setDictionarySourceLanguage,
         dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
         setDictionaryTargetLanguage: state.setDictionaryTargetLanguage,
+        markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
+        setMarkdownRenderingMode: state.setMarkdownRenderingMode,
         setDictionaryLanguage: state.setDictionaryLanguage,
       },
       true,
@@ -36,6 +42,9 @@ describe("settingsStore", () => {
     );
     expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
+    );
+    expect(useSettingsStore.getState().markdownRenderingMode).toBe(
+      MARKDOWN_RENDERING_MODE_DYNAMIC,
     );
   });
 
@@ -121,6 +130,30 @@ describe("settingsStore", () => {
     const stored = JSON.parse(localStorage.getItem("settings"));
     expect(stored.state.dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
+    );
+  });
+
+  /**
+   * 验证 Markdown 渲染模式可切换并持久化，且不合法值会回退到动态渲染。
+   */
+  test("setMarkdownRenderingMode toggles persisted preference", () => {
+    act(() =>
+      useSettingsStore
+        .getState()
+        .setMarkdownRenderingMode(MARKDOWN_RENDERING_MODE_PLAIN),
+    );
+    expect(useSettingsStore.getState().markdownRenderingMode).toBe(
+      MARKDOWN_RENDERING_MODE_PLAIN,
+    );
+    act(() =>
+      useSettingsStore.getState().setMarkdownRenderingMode("invalid"),
+    );
+    expect(useSettingsStore.getState().markdownRenderingMode).toBe(
+      MARKDOWN_RENDERING_MODE_DYNAMIC,
+    );
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    expect(stored.state.markdownRenderingMode).toBe(
+      MARKDOWN_RENDERING_MODE_DYNAMIC,
     );
   });
 });
