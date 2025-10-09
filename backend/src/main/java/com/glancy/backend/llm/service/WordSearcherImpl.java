@@ -240,12 +240,12 @@ public class WordSearcherImpl implements WordSearcher {
 
     private String renderPersonalizedTone(DictionaryFlavor flavor) {
         if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-            return "\n请结合画像输出结构化释义、语义差异与可执行练习建议（英文表达）。";
+            return "\n请结合画像输出结构化释义与语义差异（英文表达）。";
         }
         if (flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
-            return "\n请结合画像输出结构化释义、语义差异与可执行练习建议（中文表达）。";
+            return "\n请结合画像输出结构化释义与语义差异（中文表达）。";
         }
-        return "\n请结合画像输出结构化释义、语义差异与可执行练习建议。";
+        return "\n请结合画像输出结构化释义与语义差异。";
     }
 
     private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
