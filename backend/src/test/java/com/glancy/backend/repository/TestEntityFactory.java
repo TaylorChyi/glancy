@@ -17,6 +17,9 @@ final class TestEntityFactory {
         user.setPassword("pass" + idx);
         user.setEmail("user" + idx + "@example.com");
         user.setPhone("1000" + idx);
+        LocalDateTime now = LocalDateTime.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
         return user;
     }
 
@@ -27,6 +30,7 @@ final class TestEntityFactory {
         record.setLanguage(language);
         record.setFlavor(DictionaryFlavor.BILINGUAL);
         record.setCreatedAt(createdAt);
+        record.setUpdatedAt(createdAt);
         return record;
     }
 

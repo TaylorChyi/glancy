@@ -37,7 +37,8 @@ public class SearchRecordService {
     // 归一化查找仅需最近若干条记录即可避免全表扫描，20 条覆盖常见短期重复查询场景且便于未来通过配置调整。
     private static final int NORMALIZED_LOOKBACK_LIMIT = 20;
 
-    private static final Sort CREATED_AT_DESC = Sort.by(Sort.Direction.DESC, "createdAt");
+    // 通过 updatedAt 维持时间序，因 createdAt 列开启 updatable=false，不可在重用记录时重置创建时间。
+    private static final Sort UPDATED_AT_DESC = Sort.by(Sort.Direction.DESC, "updatedAt");
 
     private final SearchRecordRepository searchRecordRepository;
     private final UserRepository userRepository;
@@ -90,7 +91,7 @@ public class SearchRecordService {
         );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
-            existing.setCreatedAt(LocalDateTime.now());
+            // 依赖 JPA 审计自动更新 updatedAt，从而在按更新时间排序的列表中将最近查询置顶。
             SearchRecord updated = searchRecordRepository.save(existing);
             log.info("Updated record persisted: {}", describeRecord(updated));
             SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, updated);
@@ -145,9 +146,9 @@ public class SearchRecordService {
         DictionaryFlavor flavor
     ) {
         if (normalizedTerm != null && !normalizedTerm.isBlank()) {
-            Pageable newestRecords = PageRequest.of(0, NORMALIZED_LOOKBACK_LIMIT, CREATED_AT_DESC);
+            Pageable newestRecords = PageRequest.of(0, NORMALIZED_LOOKBACK_LIMIT, UPDATED_AT_DESC);
             Optional<SearchRecord> normalizedMatch = searchRecordRepository
-                .findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+                .findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
                     userId,
                     language,
                     flavor,
@@ -164,7 +165,7 @@ public class SearchRecordService {
         if (rawTerm == null || rawTerm.isBlank()) {
             return null;
         }
-        return searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+        return searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
             userId,
             rawTerm,
             language,
@@ -210,14 +211,14 @@ public class SearchRecordService {
      */
     @Transactional(readOnly = true)
     public List<SearchRecordResponse> getRecords(Long userId, SearchRecordPageRequest pageRequest) {
-        Pageable pageable = pageRequest.toPageable(CREATED_AT_DESC);
+        Pageable pageable = pageRequest.toPageable(UPDATED_AT_DESC);
         log.info(
             "Fetching search records for user {} with page {} and size {}",
             userId,
             pageRequest.page(),
             pageRequest.size()
         );
-        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(
             userId,
             pageable
         );
