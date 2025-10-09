@@ -15,6 +15,7 @@
  *  - TODO: 后续可根据语言/词典风格注入更细颗粒的章节映射，或增加 JSON/Excel 导出策略。
  */
 import { normalizeDictionaryMarkdown } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
+import { stripMarkdownArtifacts } from "@/features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 
 const normalizeCsvValue = (value) => {
   if (value === null || value === undefined) {
@@ -84,13 +85,6 @@ const toTrimmedString = (value) => {
   if (typeof value === "string") return value.trim();
   return String(value).trim();
 };
-
-const stripMarkdownArtifacts = (text) =>
-  toTrimmedString(text)
-    .replace(/[`*_~>#]/g, "")
-    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
-    .replace(/\s+/g, (match, offset) => (offset === 0 ? "" : " "))
-    .trim();
 
 const pushChapter = (chapters, heading, lines, fallbackHeading) => {
   const normalizedHeading = toTrimmedString(heading) || fallbackHeading;

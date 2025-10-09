@@ -16,6 +16,7 @@
 import appIconAsset from "@/assets/glancy-web.svg";
 import defaultAvatarAsset from "@/assets/default-user-avatar.svg";
 import { normalizeDictionaryMarkdown } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
+import { stripMarkdownArtifacts } from "@/features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 
 const FONT_STACK = `'Pretendard', 'Noto Sans SC', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif`;
 const TITLE_FONT = `600 48px ${FONT_STACK}`;
@@ -80,13 +81,6 @@ class ShareDocumentBuilder {
     });
   }
 }
-
-const stripMarkdownArtifacts = (text) =>
-  toTrimmedString(text)
-    .replace(/[`*_~>#]/g, "")
-    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
-    .replace(/\s+/g, (match, offset) => (offset === 0 ? "" : " "))
-    .trim();
 
 const buildFromMarkdown = (source) => {
   const trimmed = toTrimmedString(source);
