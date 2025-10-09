@@ -143,6 +143,28 @@ beforeEach(() => {
 });
 
 /**
+ * 测试目标：通用分区默认展示 Markdown 渲染模式选项。
+ * 前置条件：
+ *  - 偏好设置页面成功渲染并默认激活通用分区；
+ *  - 语言上下文未提供文案时落回英文默认值。
+ * 步骤：
+ *  1) 渲染 Preferences 页面；
+ *  2) 获取当前激活的 tabpanel；
+ * 断言：
+ *  - 面板内存在名称为 “Show raw text” 的单选按钮；
+ * 边界/异常：
+ *  - 若未查询到该按钮，提示 Markdown 控制未接入通用分区。
+ */
+test("GivenPreferences_WhenGeneralSectionActive_ThenMarkdownPlainToggleVisible", () => {
+  render(<Preferences />);
+
+  const activePanel = screen.getByRole("tabpanel");
+  expect(
+    within(activePanel).getByRole("radio", { name: /Show raw text/i }),
+  ).toBeInTheDocument();
+});
+
+/**
  * 测试目标：切换到账户标签后展示账户字段。
  * 前置条件：
  *  - 已 mock useUser 返回完整账户信息；
@@ -177,8 +199,8 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(
     within(activePanel).getByDisplayValue(mockUser.username),
   ).toBeInTheDocument();
-  expect(within(activePanel).getByText(mockUser.email)).toBeInTheDocument();
-  expect(within(activePanel).getByText("+1 111")).toBeInTheDocument();
+  expect(within(activePanel).getByDisplayValue(mockUser.email)).toBeInTheDocument();
+  expect(within(activePanel).getByDisplayValue("+1 111")).toBeInTheDocument();
   expect(
     within(activePanel).getByRole("button", {
       name: mockLanguage.changeAvatar,
@@ -285,7 +307,7 @@ test("GivenMissingAccountData_WhenSwitchingToAccountTab_ThenFallbackShown", asyn
 
   const fallback = mockLanguage.settingsEmptyValue;
   const activePanel = screen.getByRole("tabpanel");
-  expect(within(activePanel).getAllByText(fallback)).toHaveLength(2);
+  expect(within(activePanel).getAllByDisplayValue(fallback)).toHaveLength(2);
 });
 
 /**
