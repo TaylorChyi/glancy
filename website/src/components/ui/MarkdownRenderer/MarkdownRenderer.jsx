@@ -108,14 +108,9 @@ function DynamicMarkdownRenderer({
  * 错误处理：返回 null 覆盖空内容场景。
  * 复杂度：O(1)。
  */
-function PlainMarkdownRenderer({
-  children,
-  className,
-  remarkPlugins: _remarkPlugins,
-  rehypePlugins: _rehypePlugins,
-  components: _components,
-  ...domProps
-}) {
+function PlainMarkdownRenderer({ children, className, ...rawProps }) {
+  const domProps = sanitizePlainRendererProps(rawProps);
+
   if (!children) return null;
   const resolvedClassName = joinClassNames(styles.plain, className);
   return (
@@ -123,6 +118,25 @@ function PlainMarkdownRenderer({
       {children}
     </div>
   );
+}
+
+/**
+ * 意图：过滤掉仅用于 ReactMarkdown 的配置项，避免泄漏到原生 DOM 属性。
+ * 输入：PlainMarkdownRenderer 接收到的剩余 props。
+ * 输出：去除 remark/rehype/components 后的安全 domProps。
+ * 流程：
+ *  1) 浅拷贝对象，避免对调用方 props 产生副作用。
+ *  2) 删除 Markdown 专属配置键。
+ * 错误处理：无；如存在额外字段，保持透传以支持后续扩展。
+ * 复杂度：O(n) —— n 为 props 键数量，通常远小于 10。
+ */
+function sanitizePlainRendererProps(sourceProps) {
+  if (!sourceProps) return {};
+  const sanitized = { ...sourceProps };
+  delete sanitized.remarkPlugins;
+  delete sanitized.rehypePlugins;
+  delete sanitized.components;
+  return sanitized;
 }
 
 function CollapsibleSection({ children, depth = 2, injectBreaks }) {
