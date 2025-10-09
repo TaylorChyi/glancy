@@ -143,6 +143,24 @@ test("polishDictionaryMarkdown keeps hyphenated headings intact", () => {
 });
 
 /**
+ * 测试目标：章节标题后的正文需被移到独立行，避免折叠标题夹带释义内容。
+ * 前置条件：输入为 Doubao 风格的 `## 释义 1. ...` 行，正文紧跟标题。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 处理示例 Markdown。
+ *  2) 读取结果并按行拆分。
+ * 断言：
+ *  - 第一行只保留标题 `## 释义`；
+ *  - 第二行开始出现原始正文 `1. 主要解释`。
+ * 边界/异常：
+ *  - 覆盖中文标题配合编号场景，防止未来回归再次把正文塞入标题。
+ */
+test("polishDictionaryMarkdown isolates section headings from content", () => {
+  const source = "## 释义 1. 主要解释";
+  const result = polishDictionaryMarkdown(source);
+  expect(result.split("\n")).toEqual(["## 释义", "1. 主要解释"]);
+});
+
+/**
  * 测试目标：验证拆分后的连字符不会残留在标签行尾，避免渲染出 `value-`。
  * 前置条件：原始 Markdown 以连字符连接多个行内标签，如 Pronunciation 与 American。
  * 步骤：
