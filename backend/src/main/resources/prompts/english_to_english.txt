@@ -62,10 +62,6 @@ Output must be pure Markdown（no tables, no code blocks, no trailing commentary
 ## Cultural or Intertextual Resonance
 - {literary, cultural, or idiomatic allusions worth highlighting}
 
-## Practice Prompts
-- {exercise 1 encouraging production or discrimination}
-- {exercise 2 with specific scenario}
-
 ## Collocations（≤ max_collocations）
 - {collocation}: {concise explanation}  [ref: s#]
 
