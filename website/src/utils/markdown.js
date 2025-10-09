@@ -140,10 +140,21 @@ const TRANSLATION_LABEL_TOKENS = new Set([
   "译文",
 ]);
 
+const TRANSLATION_WRAPPER_PAIRS = Object.freeze([
+  ["(", ")"],
+  ["（", "）"],
+  ["[", "]"],
+  ["【", "】"],
+]);
+
 const INLINE_TRANSLATION_LABEL_PATTERN =
   /(?:^|(?<=\s)|(?<=[\p{P}\p{S}]))(\*\*([^*]+)\*\*|[\p{L}\p{N}]{1,32})(?:\s*)([:：])/gu;
 
 const TRANSLATION_LABEL_BOUNDARY_PATTERN = /[\p{L}\p{N}*]/u;
+
+const HAN_SCRIPT_PATTERN = /\p{Script=Han}/u;
+
+const CJK_TRANSLATION_PUNCTUATION_PATTERN = /[，。、“”‘’！？；：]/u;
 
 const SEGMENTATION_MARKER_PATTERNS = [
   /\[\[[^\]]+\]\]/g,
@@ -1505,6 +1516,93 @@ function deriveExampleTranslationIndent(prefix) {
   return "  ";
 }
 
+/**
+ * 意图：剥离围绕译文的括号，保持“例句 + 翻译”布局的纯净结构。
+ * 输入：
+ *  - exampleBody：译文标签出现前的例句正文（已移除尾随空格）。
+ *  - translationSegment：包含译文标签与正文的片段。
+ * 输出：返回去除多余括号后的 `{ exampleBody, translationSegment }`。
+ * 流程：
+ *  1) 按声明顺序检查成对括号集合；
+ *  2) 若例句以左括号结尾且译文以对应右括号收尾，则共同剥离；
+ *  3) 其余情况保持原样以免误删语义括号。
+ * 错误处理：输入为空时直接返回原值，不额外抛错。
+ * 复杂度：O(k)，k 为可识别括号对数量，常数规模。
+ */
+function stripTranslationWrappers(exampleBody, translationSegment) {
+  if (!exampleBody) {
+    return { exampleBody, translationSegment };
+  }
+  const trimmedExample = exampleBody.trimEnd();
+  for (const [open, close] of TRANSLATION_WRAPPER_PAIRS) {
+    if (!trimmedExample.endsWith(open)) {
+      continue;
+    }
+    const withoutOpen = trimmedExample.slice(0, trimmedExample.length - open.length).trimEnd();
+    let trimmedTranslation = translationSegment.trimEnd();
+    if (trimmedTranslation.endsWith(close)) {
+      trimmedTranslation = trimmedTranslation.slice(0, -close.length).trimEnd();
+    }
+    return { exampleBody: withoutOpen, translationSegment: trimmedTranslation };
+  }
+  return { exampleBody, translationSegment };
+}
+
+/**
+ * 意图：判断括号内文本是否为独立中文译文，以便后续拆分为标准译文行。
+ * 输入：candidate —— 括号内的字符串。
+ * 输出：布尔值，指示文本是否包含明显中文特征。
+ * 流程：
+ *  1) 若文本包含汉字则视为译文；
+ *  2) 若不含汉字但含有常用中文标点，也判定为译文；
+ *  3) 其他情况返回 false，避免误伤正常括号补充说明。
+ * 错误处理：空串直接返回 false。
+ * 复杂度：O(n)，n 为文本长度，仅进行两次正则扫描。
+ */
+function isLikelyStandaloneTranslation(candidate) {
+  if (!candidate) {
+    return false;
+  }
+  if (HAN_SCRIPT_PATTERN.test(candidate)) {
+    return true;
+  }
+  return CJK_TRANSLATION_PUNCTUATION_PATTERN.test(candidate);
+}
+
+/**
+ * 意图：从例句行末尾提取仅以括号呈现的译文，转化为独立的翻译段。
+ * 输入：rawExample —— 去除标签后的例句正文。
+ * 输出：若命中则返回 `{ exampleBody, translation }`，否则返回 null。
+ * 流程：
+ *  1) 反向遍历已知括号对，确认例句以右括号结尾；
+ *  2) 定位对应左括号并截取括号内文本；
+ *  3) 若文本符合中文译文特征，则返回拆分结果，否则继续下一对括号。
+ * 错误处理：未命中括号或文本不符合译文特征时返回 null。
+ * 复杂度：O(k + m)，k 为括号对数量，m 为例句长度，仅做常数次扫描。
+ */
+function extractParentheticalTranslation(rawExample) {
+  if (!rawExample) {
+    return null;
+  }
+  const trimmed = rawExample.trimEnd();
+  for (const [open, close] of TRANSLATION_WRAPPER_PAIRS) {
+    if (!trimmed.endsWith(close)) {
+      continue;
+    }
+    const start = trimmed.lastIndexOf(open);
+    if (start === -1) {
+      continue;
+    }
+    const candidate = trimmed.slice(start + open.length, trimmed.length - close.length).trim();
+    if (!isLikelyStandaloneTranslation(candidate)) {
+      continue;
+    }
+    const exampleBody = trimmed.slice(0, start).trimEnd();
+    return { exampleBody, translation: candidate };
+  }
+  return null;
+}
+
 function ensureSegmentationMarkerSpacing(value) {
   let result = value;
   for (const pattern of SEGMENTATION_MARKER_PATTERNS) {
@@ -1756,8 +1854,14 @@ function ensureExampleTranslationLayout(text) {
         }
         break;
       }
-      const exampleBody = rest.slice(0, start).trimEnd();
-      const translationSegment = rest.slice(start).trimStart();
+      let exampleBody = rest.slice(0, start).trimEnd();
+      let translationSegment = rest.slice(start).trimStart();
+      const sanitizedSegments = stripTranslationWrappers(
+        exampleBody,
+        translationSegment,
+      );
+      exampleBody = sanitizedSegments.exampleBody;
+      translationSegment = sanitizedSegments.translationSegment;
       const exampleLine = exampleBody
         ? `${prefix}${exampleBody}`.trimEnd()
         : prefix.trimEnd();
@@ -1772,6 +1876,60 @@ function ensureExampleTranslationLayout(text) {
       break;
     }
     if (!handled) {
+      const trimmedExampleBody = rest.trimEnd();
+      const upcomingTranslation = lines[i + 1];
+      if (upcomingTranslation) {
+        const translationContent = upcomingTranslation.trimStart();
+        const translationMatch = translationContent.match(
+          /^(\*\*([^*]+)\*\*|[^\s:：]{1,32})(?:\s*)([:：])(.*)$/u,
+        );
+        if (translationMatch) {
+          const [, rawLabel, innerLabel] = translationMatch;
+          const candidateLabel = innerLabel ?? rawLabel;
+          if (isTranslationLabel(candidateLabel)) {
+            const sanitizedSegments = stripTranslationWrappers(
+              trimmedExampleBody,
+              translationContent,
+            );
+            const changedExample = sanitizedSegments.exampleBody !== trimmedExampleBody;
+            const changedTranslation =
+              sanitizedSegments.translationSegment !== translationContent;
+            if (changedExample || changedTranslation) {
+              const normalizedExample = sanitizedSegments.exampleBody
+                ? `${prefix}${sanitizedSegments.exampleBody}`.trimEnd()
+                : prefix.trimEnd();
+              normalized.push(normalizedExample.replace(/[ \t]+$/u, ""));
+              if (sanitizedSegments.translationSegment) {
+                const translationIndent = upcomingTranslation.slice(
+                  0,
+                  upcomingTranslation.length - translationContent.length,
+                );
+                normalized.push(
+                  `${translationIndent}${sanitizedSegments.translationSegment}`.replace(
+                    /[ \t]+$/u,
+                    "",
+                  ),
+                );
+              }
+              i += 1;
+              continue;
+            }
+          }
+        }
+      }
+      const fallbackTranslation = extractParentheticalTranslation(trimmedExampleBody);
+      if (fallbackTranslation) {
+        const { exampleBody, translation } = fallbackTranslation;
+        const normalizedExample = exampleBody
+          ? `${prefix}${exampleBody}`.trimEnd()
+          : prefix.trimEnd();
+        normalized.push(normalizedExample.replace(/[ \t]+$/u, ""));
+        const translationIndent = deriveExampleTranslationIndent(prefix);
+        normalized.push(
+          `${translationIndent}**翻译**: ${translation}`.replace(/[ \t]+$/u, ""),
+        );
+        continue;
+      }
       normalized.push(line);
     }
   }
