@@ -25,7 +25,11 @@ public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long
         Pageable pageable
     );
 
-    long countByUserIdAndDeletedFalseAndCreatedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
+    long countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        Long userId,
+        LocalDateTime startInclusive,
+        LocalDateTime endExclusive
+    );
 
     boolean existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
         Long userId,
