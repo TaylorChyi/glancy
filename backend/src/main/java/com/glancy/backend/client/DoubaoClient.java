@@ -3,8 +3,8 @@ package com.glancy.backend.client;
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.stream.DataBufferTextExtractor;
 import com.glancy.backend.llm.stream.StreamDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +12,6 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -28,6 +27,7 @@ public class DoubaoClient implements LLMClient {
 
     private final WebClient webClient;
     private final StreamDecoder decoder;
+    private final DataBufferTextExtractor textExtractor;
     private final String chatPath;
     private final String apiKey;
     private final String model;
@@ -36,10 +36,12 @@ public class DoubaoClient implements LLMClient {
     public DoubaoClient(
         WebClient.Builder builder,
         DoubaoProperties properties,
-        @Qualifier("doubaoStreamDecoder") StreamDecoder decoder
+        @Qualifier("doubaoStreamDecoder") StreamDecoder decoder,
+        @Qualifier("utf8DataBufferTextExtractor") DataBufferTextExtractor textExtractor
     ) {
         this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
         this.decoder = decoder;
+        this.textExtractor = textExtractor;
         this.chatPath = ensureLeadingSlash(properties.getChatPath());
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
@@ -111,11 +113,7 @@ public class DoubaoClient implements LLMClient {
         }
         return resp
             .bodyToFlux(DataBuffer.class)
-            .map(buf -> {
-                String raw = buf.toString(StandardCharsets.UTF_8);
-                DataBufferUtils.release(buf);
-                return raw;
-            })
+            .transform(textExtractor::extract)
             .doOnNext(raw -> log.info("SSE event [{}]: {}", extractEventType(raw), raw));
     }
 
