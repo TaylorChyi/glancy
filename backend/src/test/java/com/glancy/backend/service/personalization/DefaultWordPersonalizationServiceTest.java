@@ -72,15 +72,17 @@ class DefaultWordPersonalizationServiceTest {
         SearchRecord first = new SearchRecord();
         first.setTerm("equity");
         first.setCreatedAt(LocalDateTime.now());
+        first.setUpdatedAt(LocalDateTime.now());
         first.setDeleted(false);
 
         SearchRecord second = new SearchRecord();
         second.setTerm("portfolio");
         second.setCreatedAt(LocalDateTime.now().minusHours(1));
+        second.setUpdatedAt(LocalDateTime.now().minusHours(1));
         second.setDeleted(false);
 
         when(
-            searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(eq(1L), any(Pageable.class))
+            searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(eq(1L), any(Pageable.class))
         ).thenReturn(List.of(first, second));
 
         WordResponse response = new WordResponse(

@@ -22,7 +22,20 @@ class SearchRecordRepositoryTest {
     private UserRepository userRepository;
 
     /**
-     * 构建多条搜索记录（含软删除记录），验证 Repository 查询仅关注未删除数据并能正确按照时间顺序、数量与存在性进行判定。
+     * 测试目标：构建含软删除的数据集，验证未删除记录按更新时间倒序返回且关联查询契约成立。
+     * 前置条件：预先持久化 3 条搜索记录，其中一条标记删除。
+     * 步骤：
+     *  1) 查询全部未删除记录并检查排序；
+     *  2) 统计今日新增数量并断言；
+     *  3) 验证存在性与最新记录获取接口；
+     *  4) 检查按用户与删除标记过滤的查询。
+     * 断言：
+     *  - 最新记录位于首位；
+     *  - 统计结果为 2；
+     *  - findTop 返回最新记录；
+     *  - 软删除记录不会被常规查询返回。
+     * 边界/异常：
+     *  - 验证软删除记录查询为空，确保 deleted 标记生效。
      */
     @Test
     void searchRecordQueries() {
@@ -33,7 +46,9 @@ class SearchRecordRepositoryTest {
             Language.ENGLISH,
             LocalDateTime.now().minusDays(1)
         );
+        r1.setUpdatedAt(LocalDateTime.now().minusDays(1));
         SearchRecord r2 = TestEntityFactory.searchRecord(user, "term2", Language.ENGLISH, LocalDateTime.now());
+        r2.setUpdatedAt(LocalDateTime.now());
         searchRecordRepository.save(r1);
         searchRecordRepository.save(r2);
 
@@ -44,9 +59,10 @@ class SearchRecordRepositoryTest {
             LocalDateTime.now().minusHours(2)
         );
         deletedRecord.setDeleted(true);
+        deletedRecord.setUpdatedAt(LocalDateTime.now().minusHours(2));
         searchRecordRepository.save(deletedRecord);
 
-        List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByCreatedAtDesc(user.getId());
+        List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(user.getId());
         assertEquals("term2", list.get(0).getTerm());
 
         long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
@@ -71,9 +87,10 @@ class SearchRecordRepositoryTest {
             Language.ENGLISH,
             LocalDateTime.now().plusMinutes(1)
         );
+        r3.setUpdatedAt(LocalDateTime.now().plusMinutes(1));
         searchRecordRepository.save(r3);
         SearchRecord top =
-            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByCreatedAtDesc(
+            searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
                 user.getId(),
                 "term1",
                 Language.ENGLISH,
