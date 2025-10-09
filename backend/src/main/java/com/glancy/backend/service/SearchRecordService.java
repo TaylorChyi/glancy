@@ -14,6 +14,7 @@ import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
 import com.glancy.backend.service.support.SearchRecordPageRequest;
 import com.glancy.backend.service.support.SearchRecordViewAssembler;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,6 +47,7 @@ public class SearchRecordService {
     private final SearchRecordViewAssembler searchRecordViewAssembler;
     private final int nonMemberSearchLimit;
     private final DictionaryTermNormalizer termNormalizer;
+    private final Clock clock;
 
     public SearchRecordService(
         SearchRecordRepository searchRecordRepository,
@@ -53,7 +55,8 @@ public class SearchRecordService {
         SearchProperties properties,
         SearchResultService searchResultService,
         SearchRecordViewAssembler searchRecordViewAssembler,
-        DictionaryTermNormalizer termNormalizer
+        DictionaryTermNormalizer termNormalizer,
+        Clock clock
     ) {
         this.searchRecordRepository = searchRecordRepository;
         this.userRepository = userRepository;
@@ -61,6 +64,7 @@ public class SearchRecordService {
         this.searchRecordViewAssembler = searchRecordViewAssembler;
         this.nonMemberSearchLimit = properties.getLimit().getNonMember();
         this.termNormalizer = termNormalizer;
+        this.clock = clock;
     }
 
     /**
@@ -91,7 +95,9 @@ public class SearchRecordService {
         );
         if (existing != null) {
             log.info("Existing record found: {}", describeRecord(existing));
-            // 依赖 JPA 审计自动更新 updatedAt，从而在按更新时间排序的列表中将最近查询置顶。
+            // 通过显式刷新更新时间触发 JPA 更新钩子，确保历史列表按最近访问排序。
+            existing.setUpdatedAt(LocalDateTime.now(clock));
+            // 将刷新后的时间写回数据库，使最新访问立即生效。
             SearchRecord updated = searchRecordRepository.save(existing);
             log.info("Updated record persisted: {}", describeRecord(updated));
             SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, updated);
@@ -99,8 +105,8 @@ public class SearchRecordService {
             return response;
         }
 
-        if (!user.hasActiveMembershipAt(LocalDateTime.now())) {
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        if (!user.hasActiveMembershipAt(LocalDateTime.now(clock))) {
+            LocalDateTime startOfDay = LocalDate.now(clock).atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
             long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
                 userId,
