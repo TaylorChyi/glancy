@@ -48,4 +48,30 @@ describe("polishDictionaryMarkdown", () => {
     const output = polishDictionaryMarkdown(input);
     expect(output).toContain("## Frequency&\n**Proficiency-Frequency Band**: High");
   });
+
+  /**
+   * 测试目标：词典章节标题后紧跟英文释义时应强制换行。
+   * 前置条件：输入包含 `## 释义 Adj. ...` 形式的行。
+   * 步骤：执行 polishDictionaryMarkdown。
+   * 断言：标题与释义正文位于不同的行。
+   * 边界/异常：验证不会破坏标题文本本身。
+   */
+  test("breaks section heading followed by english gloss", () => {
+    const input = "## 释义 Adj. immaculate";
+    const output = polishDictionaryMarkdown(input);
+    expect(output).toBe("## 释义\nAdj. immaculate");
+  });
+
+  /**
+   * 测试目标：英文章节标题后若残留额外说明，应在标题后换行保留正文。
+   * 前置条件：输入包含 `## Synonyms additional cues`。
+   * 步骤：执行 polishDictionaryMarkdown。
+   * 断言：额外说明被放入标题下一行。
+   * 边界/异常：确保额外说明文本不被裁剪。
+   */
+  test("breaks section heading followed by additional english text", () => {
+    const input = "## Synonyms additional cues";
+    const output = polishDictionaryMarkdown(input);
+    expect(output).toBe("## Synonyms\nadditional cues");
+  });
 });

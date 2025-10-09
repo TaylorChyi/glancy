@@ -56,7 +56,7 @@ const SECTION_HEADING_TOKENS = new Set(
 const SECTION_HEADING_TOKENS_DESC = Object.freeze(
   Array.from(SECTION_HEADING_TOKENS).sort((a, b) => b.length - a.length),
 );
-const SECTION_CONTENT_SPLIT_TRIGGER = /[\u4e00-\u9fff\s0-9:：,，。.!?;；、-]/u;
+const SECTION_CONTENT_WORD_PATTERN = /[\p{L}\p{N}]/u;
 const HEADING_ATTACHED_LIST_PATTERN = /^(#{1,6}\s*)([^\n]*?)(-)(?!-)([^\n]+)$/gm;
 const HEADING_INLINE_LABEL_PATTERN = /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 const INLINE_LABEL_PATTERN =
@@ -429,7 +429,18 @@ function shouldSplitSectionHeadingRest(rest) {
   if (!trimmed) {
     return false;
   }
-  return SECTION_CONTENT_SPLIT_TRIGGER.test(trimmed);
+
+  // 说明：
+  //  - 章节标题与正文之间若存在显式空格或标点，应视为正文起始并换行；
+  //  - 仅在后续文本包含字母/数字时触发，避免如 `## 释义——` 这类装饰符被误拆。
+  const hasWordLikeContent = SECTION_CONTENT_WORD_PATTERN.test(trimmed);
+  if (!hasWordLikeContent) {
+    return false;
+  }
+
+  const hasStructuralCue = /[\s.:：;；、。·-]/u.test(rest);
+  const hasExplicitGap = rest.length !== trimmed.length;
+  return hasStructuralCue || hasExplicitGap;
 }
 
 /**
