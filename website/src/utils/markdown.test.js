@@ -590,6 +590,22 @@ test("polishDictionaryMarkdown restores missing label delimiters", () => {
 });
 
 /**
+ * 测试目标：验证 Sense 标签位于全角方括号内时不会被补写冒号触发换行。
+ * 前置条件：输入字符串包含 `【对应：s2】` 片段，且右括号后无额外标签。
+ * 步骤：
+ *  1) 调用 polishDictionaryMarkdown 处理示例 Markdown。
+ * 断言：
+ *  - 输出仍保持 `【对应：s2】` 位于同一行，避免 Sense 与括号拆分。
+ * 边界/异常：
+ *  - 覆盖英中协议下的义项绑定格式，防止后续回归再次插入多余换行。
+ */
+test("polishDictionaryMarkdown preserves sense marker inside cjk brackets", () => {
+  const source = "- cooperatewith: 与……合作【对应：s2】";
+  const result = polishDictionaryMarkdown(source);
+  expect(result).toBe(source);
+});
+
+/**
  * 测试目标：验证英文标点后会自动补空格，避免释义文本紧贴导致阅读困难。
  * 前置条件：构造逗号与感叹号后缺少空格的 Markdown 行。
  * 步骤：
