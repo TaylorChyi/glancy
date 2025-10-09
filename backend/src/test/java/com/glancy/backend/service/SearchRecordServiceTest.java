@@ -15,8 +15,13 @@ import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.repository.UserRepository;
+import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import com.glancy.backend.service.support.SearchRecordViewAssembler;
 import io.github.cdimascio.dotenv.Dotenv;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -52,6 +57,15 @@ class SearchRecordServiceTest {
 
     @Autowired
     private SearchProperties searchProperties;
+
+    @Autowired
+    private SearchResultService searchResultService;
+
+    @Autowired
+    private SearchRecordViewAssembler searchRecordViewAssembler;
+
+    @Autowired
+    private DictionaryTermNormalizer dictionaryTermNormalizer;
 
     @BeforeAll
     static void loadEnv() {
@@ -157,6 +171,69 @@ class SearchRecordServiceTest {
             searchRecordService.saveRecord(user.getId(), req3)
         );
         assertEquals("非会员每天只能搜索2次", ex.getMessage());
+    }
+
+    /**
+     * 测试目标：验证午夜边界产生的记录不会被计入当天的搜索额度。\\
+     * 前置条件：以固定时钟 2024-05-10T12:00Z 构造服务，并为用户预置一条当天记录与一条次日 00:00 记录。\\
+     * 步骤：\\
+     *  1) 使用固定时钟实例化 SearchRecordService；\\
+     *  2) 直接写入两条历史记录，其中一条创建时间为次日 00:00；\\
+     *  3) 调用 saveRecord 执行新的搜索请求。\\
+     * 断言：\\
+     *  - 保存不会抛出额度超限异常；\\
+     *  - 返回结果包含持久化后的记录 ID。\\
+     * 边界/异常：若抛出 InvalidRequestException 则说明午夜边界仍被计入额度，应视为失败。
+     */
+    @Test
+    void dailyLimitTreatsNextMidnightAsNewDayBoundary() {
+        Clock evaluationClock = Clock.fixed(Instant.parse("2024-05-10T12:00:00Z"), ZoneOffset.UTC);
+        SearchRecordService quotaAwareService = new SearchRecordService(
+            searchRecordRepository,
+            userRepository,
+            searchProperties,
+            searchResultService,
+            searchRecordViewAssembler,
+            dictionaryTermNormalizer,
+            evaluationClock
+        );
+
+        User user = new User();
+        user.setUsername("boundary");
+        user.setPassword("p");
+        user.setEmail("boundary@example.com");
+        user.setPhone("98");
+        user.setLastLoginAt(LocalDateTime.now(evaluationClock));
+        userRepository.save(user);
+
+        LocalDateTime startOfDay = LocalDateTime.now(evaluationClock).toLocalDate().atStartOfDay();
+        LocalDateTime nextMidnight = startOfDay.plusDays(1);
+
+        SearchRecord sameDay = new SearchRecord();
+        sameDay.setUser(user);
+        sameDay.setTerm("quota-same-day");
+        sameDay.setLanguage(Language.ENGLISH);
+        sameDay.setFlavor(DictionaryFlavor.BILINGUAL);
+        sameDay.setCreatedAt(startOfDay.plusHours(1));
+        sameDay.setUpdatedAt(startOfDay.plusHours(1));
+        searchRecordRepository.save(sameDay);
+
+        SearchRecord boundaryRecord = new SearchRecord();
+        boundaryRecord.setUser(user);
+        boundaryRecord.setTerm("quota-boundary");
+        boundaryRecord.setLanguage(Language.ENGLISH);
+        boundaryRecord.setFlavor(DictionaryFlavor.BILINGUAL);
+        boundaryRecord.setCreatedAt(nextMidnight);
+        boundaryRecord.setUpdatedAt(nextMidnight);
+        searchRecordRepository.save(boundaryRecord);
+
+        SearchRecordRequest request = new SearchRecordRequest();
+        request.setTerm("quota-new");
+        request.setLanguage(Language.ENGLISH);
+
+        SearchRecordResponse response = quotaAwareService.saveRecord(user.getId(), request);
+
+        assertNotNull(response.id(), "午夜边界不应计入额度，新增搜索应成功");
     }
 
     /**

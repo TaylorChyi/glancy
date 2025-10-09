@@ -40,36 +40,28 @@ class SearchRecordRepositoryTest {
     @Test
     void searchRecordQueries() {
         User user = userRepository.save(TestEntityFactory.user(10));
-        SearchRecord r1 = TestEntityFactory.searchRecord(
-            user,
-            "term1",
-            Language.ENGLISH,
-            LocalDateTime.now().minusDays(1)
-        );
-        r1.setUpdatedAt(LocalDateTime.now().minusDays(1));
-        SearchRecord r2 = TestEntityFactory.searchRecord(user, "term2", Language.ENGLISH, LocalDateTime.now());
-        r2.setUpdatedAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        SearchRecord r1 = TestEntityFactory.searchRecord(user, "term1", Language.ENGLISH, now.minusDays(1));
+        r1.setUpdatedAt(now.minusDays(1));
+        SearchRecord r2 = TestEntityFactory.searchRecord(user, "term2", Language.ENGLISH, now);
+        r2.setUpdatedAt(now);
         searchRecordRepository.save(r1);
         searchRecordRepository.save(r2);
 
-        SearchRecord deletedRecord = TestEntityFactory.searchRecord(
-            user,
-            "term3",
-            Language.ENGLISH,
-            LocalDateTime.now().minusHours(2)
-        );
+        SearchRecord deletedRecord = TestEntityFactory.searchRecord(user, "term3", Language.ENGLISH, now.minusHours(2));
         deletedRecord.setDeleted(true);
-        deletedRecord.setUpdatedAt(LocalDateTime.now().minusHours(2));
+        deletedRecord.setUpdatedAt(now.minusHours(2));
         searchRecordRepository.save(deletedRecord);
 
         List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(user.getId());
         assertEquals("term2", list.get(0).getTerm());
 
-        long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
-            user.getId(),
-            LocalDateTime.now().minusDays(2),
-            LocalDateTime.now()
-        );
+        long count = searchRecordRepository
+            .countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                user.getId(),
+                now.minusDays(2),
+                now.plusSeconds(1)
+            );
         assertEquals(2, count);
 
         assertTrue(
@@ -81,13 +73,8 @@ class SearchRecordRepositoryTest {
             )
         );
 
-        SearchRecord r3 = TestEntityFactory.searchRecord(
-            user,
-            "term1",
-            Language.ENGLISH,
-            LocalDateTime.now().plusMinutes(1)
-        );
-        r3.setUpdatedAt(LocalDateTime.now().plusMinutes(1));
+        SearchRecord r3 = TestEntityFactory.searchRecord(user, "term1", Language.ENGLISH, now.plusMinutes(1));
+        r3.setUpdatedAt(now.plusMinutes(1));
         searchRecordRepository.save(r3);
         SearchRecord top =
             searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(

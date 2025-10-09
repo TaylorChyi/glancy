@@ -108,11 +108,13 @@ public class SearchRecordService {
         if (!user.hasActiveMembershipAt(LocalDateTime.now(clock))) {
             LocalDateTime startOfDay = LocalDate.now(clock).atStartOfDay();
             LocalDateTime endOfDay = startOfDay.plusDays(1);
-            long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
-                userId,
-                startOfDay,
-                endOfDay
-            );
+            // 采用 [startOfDay, endOfDay) 左闭右开区间，避免将次日 00:00:00 的记录误计入当日额度。
+            long count = searchRecordRepository
+                .countByUserIdAndDeletedFalseAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                    userId,
+                    startOfDay,
+                    endOfDay
+                );
             if (count >= nonMemberSearchLimit) {
                 log.warn("User {} exceeded daily search limit", userId);
                 throw new InvalidRequestException("非会员每天只能搜索" + nonMemberSearchLimit + "次");
