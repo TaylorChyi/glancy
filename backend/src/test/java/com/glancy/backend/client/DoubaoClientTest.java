@@ -2,6 +2,7 @@ package com.glancy.backend.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.DoubaoProperties;
@@ -77,7 +78,16 @@ class DoubaoClientTest {
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("he").expectNext("llo").verifyComplete();
+        StepVerifier
+            .create(flux.collectList())
+            .assertNext(chunks -> {
+                assertTrue(!chunks.isEmpty(), "expected raw SSE chunks");
+                String merged = String.join("", chunks);
+                assertTrue(merged.contains("event: message"));
+                assertTrue(merged.contains("data: {\"choices\""));
+                assertTrue(merged.contains("event: end"));
+            })
+            .verifyComplete();
     }
 
     /** 验证 error 事件会终止流并抛出异常。 */
@@ -91,7 +101,14 @@ class DoubaoClientTest {
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("hi").expectErrorMessage("boom").verify();
+        StepVerifier
+            .create(flux.collectList())
+            .assertNext(chunks -> {
+                assertTrue(chunks.stream().anyMatch(chunk -> chunk.contains("event: error")));
+            })
+            .verifyComplete();
+
+        assertThrows(IllegalStateException.class, () -> client.chat(List.of(new ChatMessage("u", "hi")), 0.5));
     }
 
     private Mono<ClientResponse> successResponse(ClientRequest request) {

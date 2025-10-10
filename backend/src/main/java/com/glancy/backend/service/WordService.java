@@ -17,6 +17,7 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
+import com.glancy.backend.llm.stream.StreamDecoder;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -31,6 +32,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -53,6 +55,7 @@ public class WordService {
     private final DictionaryTermNormalizer termNormalizer;
     private final ObjectMapper objectMapper;
     private final WordPersistenceCoordinator wordPersistenceCoordinator;
+    private final StreamDecoder doubaoStreamDecoder;
     private final WordVersionContentStrategy defaultVersionContentStrategy;
     private final WordVersionContentStrategy streamingVersionContentStrategy;
 
@@ -65,7 +68,8 @@ public class WordService {
         WordPersonalizationService wordPersonalizationService,
         DictionaryTermNormalizer termNormalizer,
         ObjectMapper objectMapper,
-        WordPersistenceCoordinator wordPersistenceCoordinator
+        WordPersistenceCoordinator wordPersistenceCoordinator,
+        @Qualifier("doubaoStreamDecoder") StreamDecoder doubaoStreamDecoder
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -76,6 +80,7 @@ public class WordService {
         this.termNormalizer = termNormalizer;
         this.objectMapper = objectMapper;
         this.wordPersistenceCoordinator = wordPersistenceCoordinator;
+        this.doubaoStreamDecoder = doubaoStreamDecoder;
         this.defaultVersionContentStrategy = new ResponseMarkdownOrSerializedWordStrategy();
         this.streamingVersionContentStrategy = new SanitizedStreamingMarkdownStrategy();
     }
@@ -392,9 +397,9 @@ public class WordService {
             personalizationContext,
             captureHistory
         );
-        Flux<String> stream;
+        Flux<String> rawStream;
         try {
-            stream = wordSearcher.streamSearch(term, language, flavor, resolvedModel, personalizationContext);
+            rawStream = wordSearcher.streamSearch(term, language, flavor, resolvedModel, personalizationContext);
         } catch (BusinessException e) {
             return Flux.error(e);
         } catch (Exception e) {
@@ -404,10 +409,15 @@ public class WordService {
             );
         }
 
-        Flux<StreamPayload> main = stream
+        // 背景：前端需要获得未经改写的 Doubao SSE，而持久化流程仍依赖解析后的正文。
+        // 取舍：通过共享底层流并在需要时套用 StreamDecoder 策略，既保证透传又复用现有解析逻辑。
+        boolean decodeRequired = shouldDecode(resolvedModel);
+        Flux<String> sharedStream = decodeRequired ? rawStream.publish().autoConnect(2) : rawStream;
+
+        Flux<StreamPayload> main = sharedStream
             .doOnNext(chunk -> {
-                log.info("Streaming chunk for term '{}': {}", term, chunk);
-                session.append(chunk);
+                log.info("Streaming raw chunk for term '{}': {}", term, chunk);
+                session.recordRaw(chunk);
             })
             .doOnError(err ->
                 log.error(
@@ -423,7 +433,24 @@ public class WordService {
             .doOnError(session::markError)
             .map(StreamPayload::data);
 
-        return main.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
+        Flux<StreamPayload> aggregated = decodeRequired
+            ? doubaoStreamDecoder
+                .decode(sharedStream)
+                .doOnNext(chunk -> {
+                    log.info("Decoded chunk for term '{}': {}", term, chunk);
+                    session.appendDecoded(chunk);
+                })
+                .doOnError(session::markError)
+                .flatMap(chunk -> Flux.<StreamPayload>empty())
+            : Flux.empty();
+
+        Flux<StreamPayload> merged = decodeRequired ? Flux.merge(main, aggregated) : main;
+
+        return merged.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
+    }
+
+    private boolean shouldDecode(String model) {
+        return DEFAULT_MODEL.equals(model);
     }
 
     private String resolveModelName(String requestedModel) {
@@ -453,10 +480,13 @@ public class WordService {
         private final boolean captureHistory;
         private final Instant startedAt = Instant.now();
         private final StringBuilder transcript = new StringBuilder();
-        private int chunkCount;
+        private int rawChunkCount;
+        private int decodedChunkCount;
         private boolean error;
         private Throwable failure;
         private String snapshot;
+        private String lastRawPreview;
+        private String lastChunkPreview;
 
         StreamingAccumulator(
             Long userId,
@@ -482,9 +512,19 @@ public class WordService {
             return flavor;
         }
 
-        void append(String chunk) {
-            chunkCount++;
+        void recordRaw(String chunk) {
+            rawChunkCount++;
+            lastRawPreview = SensitiveDataUtil.previewText(chunk);
+        }
+
+        void appendDecoded(String chunk) {
+            if (chunk == null || chunk.isEmpty()) {
+                return;
+            }
+            decodedChunkCount++;
             transcript.append(chunk);
+            snapshot = null;
+            lastChunkPreview = SensitiveDataUtil.previewText(chunk);
         }
 
         void markError(Throwable throwable) {
@@ -503,18 +543,21 @@ public class WordService {
             CompletionCheck completion = CompletionSentinel.inspect(aggregated);
             log.info(
                 "Streaming session summary [user={}, term='{}', language={}, model={}]: signal={}, " +
-                "chunks={}, totalChars={}, durationMs={}, error={}, completionSentinelPresent={}, preview={}",
+                "rawChunks={}, decodedChunks={}, totalChars={}, durationMs={}, error={}, completionSentinelPresent={}, " +
+                "rawPreview={}, decodedPreview={}",
                 userId,
                 term,
                 language,
                 model,
                 signal,
-                chunkCount,
+                rawChunkCount,
+                decodedChunkCount,
                 aggregated.length(),
                 duration,
                 errorSummary,
                 completion.satisfied(),
-                SensitiveDataUtil.previewText(aggregated)
+                lastRawPreview != null ? lastRawPreview : "<none>",
+                lastChunkPreview != null ? lastChunkPreview : SensitiveDataUtil.previewText(aggregated)
             );
             return completion;
         }
