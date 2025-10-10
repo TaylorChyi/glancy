@@ -17,6 +17,7 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
+import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
@@ -58,6 +59,7 @@ public class WordService {
     private final StreamDecoder doubaoStreamDecoder;
     private final WordVersionContentStrategy defaultVersionContentStrategy;
     private final WordVersionContentStrategy streamingVersionContentStrategy;
+    private final SseEventParser sseEventParser;
 
     public WordService(
         WordSearcher wordSearcher,
@@ -69,7 +71,8 @@ public class WordService {
         DictionaryTermNormalizer termNormalizer,
         ObjectMapper objectMapper,
         WordPersistenceCoordinator wordPersistenceCoordinator,
-        @Qualifier("doubaoStreamDecoder") StreamDecoder doubaoStreamDecoder
+        @Qualifier("doubaoStreamDecoder") StreamDecoder doubaoStreamDecoder,
+        SseEventParser sseEventParser
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -83,6 +86,7 @@ public class WordService {
         this.doubaoStreamDecoder = doubaoStreamDecoder;
         this.defaultVersionContentStrategy = new ResponseMarkdownOrSerializedWordStrategy();
         this.streamingVersionContentStrategy = new SanitizedStreamingMarkdownStrategy();
+        this.sseEventParser = sseEventParser;
     }
 
     private static final String DEFAULT_MODEL = DictionaryModel.DOUBAO.getClientName();
@@ -261,6 +265,11 @@ public class WordService {
         public static StreamPayload version(String versionId) {
             return new StreamPayload("version", versionId);
         }
+
+        public static StreamPayload fromEvent(String event, String data) {
+            String normalizedEvent = "message".equals(event) ? null : event;
+            return new StreamPayload(normalizedEvent, data);
+        }
     }
 
     @Transactional
@@ -431,7 +440,7 @@ public class WordService {
                 )
             )
             .doOnError(session::markError)
-            .map(StreamPayload::data);
+            .map(chunk -> toStreamPayload(chunk, term));
 
         Flux<StreamPayload> aggregated = decodeRequired
             ? doubaoStreamDecoder
@@ -447,6 +456,54 @@ public class WordService {
         Flux<StreamPayload> merged = decodeRequired ? Flux.merge(main, aggregated) : main;
 
         return merged.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
+    }
+
+    private StreamPayload toStreamPayload(String rawChunk, String term) {
+        return sseEventParser
+            .parse(rawChunk)
+            .map(parsed -> StreamPayload.fromEvent(parsed.event(), parsed.data()))
+            .orElseGet(() -> {
+                String stripped = extractDataPayload(rawChunk);
+                if (!stripped.isEmpty()) {
+                    log.warn("Failed to parse SSE chunk for term '{}', fallback to data-only payload", term);
+                    return StreamPayload.data(stripped);
+                }
+                log.warn("Failed to parse SSE chunk for term '{}', fallback to raw payload", term);
+                return StreamPayload.data(rawChunk);
+            });
+    }
+
+    /**
+     * 意图：在解析失败时兜底提取 data 字段，避免二次包裹造成前端解析异常。
+     * 输入：完整的原始 SSE 片段，可能包含 CRLF、注释或其他字段。
+     * 输出：按换行拼接的 data 内容；不存在 data 字段时返回空字符串。
+     * 流程：
+     *  1) 统一换行符为 \n；
+     *  2) 过滤出以 "data:" 开头的行并去除协议约定的单个空格；
+     *  3) 使用换行拼接，保留模型输出中的合法空白。
+     * 错误处理：无显式异常；无法提取时返回空字符串交由调用方决定回退策略。
+     * 复杂度：O(n)，n 为输入长度。
+     */
+    private String extractDataPayload(String rawChunk) {
+        if (rawChunk == null || rawChunk.isEmpty()) {
+            return "";
+        }
+        String normalized = rawChunk.replace("\r\n", "\n").replace('\r', '\n');
+        StringBuilder builder = new StringBuilder();
+        for (String line : normalized.split("\n")) {
+            if (!line.startsWith("data:")) {
+                continue;
+            }
+            String content = line.substring("data:".length());
+            if (!content.isEmpty() && content.charAt(0) == ' ') {
+                content = content.substring(1);
+            }
+            if (builder.length() > 0) {
+                builder.append('\n');
+            }
+            builder.append(content);
+        }
+        return builder.toString();
     }
 
     private boolean shouldDecode(String model) {

@@ -49,7 +49,25 @@ const { WORD_FLAVOR_BILINGUAL } = await import("@/utils/language.js");
  */
 test("streamWord yields chunks with logging", async () => {
   const encoder = new TextEncoder();
-  const sse = "data: part1\n\ndata: part2\n\n";
+  const chunk1 = JSON.stringify({
+    choices: [
+      {
+        delta: {
+          content: "part1",
+        },
+      },
+    ],
+  });
+  const chunk2 = JSON.stringify({
+    choices: [
+      {
+        delta: {
+          content: "part2",
+        },
+      },
+    ],
+  });
+  const sse = `data: ${chunk1}\n\ndata: ${chunk2}\n\n`;
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(encoder.encode(sse));
@@ -75,7 +93,7 @@ test("streamWord yields chunks with logging", async () => {
   }
 
   expect(global.fetch).toHaveBeenCalledWith(
-    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&flavor=${WORD_FLAVOR_BILINGUAL}&model=${DEFAULT_MODEL}`,
+    `${API_PATHS.words}/stream?userId=u&term=hello&language=ENGLISH&flavor=${WORD_FLAVOR_BILINGUAL}&model=${DEFAULT_MODEL}&captureHistory=true`,
     expect.objectContaining({
       headers: expect.objectContaining({
         "X-USER-TOKEN": "t",
@@ -105,12 +123,81 @@ test("streamWord yields chunks with logging", async () => {
 });
 
 /**
+ * 验证嵌套 message/content 结构能够被展开。
+ */
+test("streamWord flattens nested message structures", async () => {
+  const encoder = new TextEncoder();
+  const chunk = JSON.stringify({
+    choices: [
+      {
+        delta: {
+          message: {
+            content: [
+              {
+                segments: [
+                  { text: "layer" },
+                  { content: "ed" },
+                ],
+              },
+              { messages: [{ content: " stream" }] },
+              " ready",
+            ],
+          },
+        },
+      },
+    ],
+  });
+  const sse = `data: ${chunk}\n\n`;
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse));
+      controller.close();
+    },
+  });
+
+  const originalFetch = global.fetch;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ body: stream, ok: true, status: 200 });
+
+  const chunks = [];
+  for await (const event of streamWord({
+    userId: "u",
+    term: "hello",
+    language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
+  })) {
+    chunks.push(event);
+  }
+
+  expect(chunks).toEqual([{ type: "chunk", data: "layered stream ready" }]);
+
+  global.fetch = originalFetch;
+});
+
+/**
  * 验证收到 [DONE] 后停止产出 chunk。
  */
 test("streamWord stops on DONE marker", async () => {
   const encoder = new TextEncoder();
   const done = String.fromCharCode(91) + "DONE" + String.fromCharCode(93);
-  const sse = "data: part1\n\ndata: " + done + "\n\ndata: part2\n\n";
+  const chunk = JSON.stringify({
+    choices: [
+      {
+        delta: {
+          messages: [
+            {
+              content: [
+                { text: "part" },
+                { text: "1" },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+  });
+  const sse = `data: ${chunk}\n\ndata: ${done}\n\n`;
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(encoder.encode(sse));

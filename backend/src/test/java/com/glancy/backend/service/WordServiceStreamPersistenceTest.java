@@ -20,6 +20,7 @@ import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
+import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
@@ -68,6 +69,7 @@ class WordServiceStreamPersistenceTest {
     private DictionaryTermNormalizer termNormalizer;
     private WordPersistenceCoordinator wordPersistenceCoordinator;
     private StreamDecoder streamDecoder;
+    private SseEventParser sseEventParser;
 
     @BeforeEach
     void setUp() {
@@ -90,6 +92,7 @@ class WordServiceStreamPersistenceTest {
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
         streamDecoder = new DoubaoStreamDecoder(objectMapper);
+        sseEventParser = spy(new SseEventParser());
         when(searchRecordService.synchronizeRecordTerm(anyLong(), anyLong(), any())).thenReturn(null);
         wordService = new WordService(
             wordSearcher,
@@ -101,7 +104,8 @@ class WordServiceStreamPersistenceTest {
             termNormalizer,
             objectMapper,
             wordPersistenceCoordinator,
-            streamDecoder
+            streamDecoder,
+            sseEventParser
         );
     }
 
@@ -255,12 +259,12 @@ class WordServiceStreamPersistenceTest {
 
         StepVerifier.create(flux)
             .expectNextMatches(
-                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
             )
             .expectNextMatches(
-                payload -> payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
+                payload -> payload.event() == null && messageData(CompletionSentinel.MARKER).equals(payload.data())
             )
-            .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
+            .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .expectNextMatches(payload -> "version".equals(payload.event()) && "88".equals(payload.data()))
             .verifyComplete();
         verify(wordRepository).save(argThat(w -> "{\"term\":\"hi\"}".equals(w.getMarkdown())));
@@ -339,12 +343,12 @@ class WordServiceStreamPersistenceTest {
 
         StepVerifier.create(flux)
             .expectNextMatches(
-                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
             )
             .expectNextMatches(
-                payload -> payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
+                payload -> payload.event() == null && messageData(CompletionSentinel.MARKER).equals(payload.data())
             )
-            .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
+            .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .verifyComplete();
 
         verify(searchRecordService, never()).saveRecord(anyLong(), any());
@@ -358,6 +362,52 @@ class WordServiceStreamPersistenceTest {
             any(Word.class),
             any(DictionaryFlavor.class)
         );
+    }
+
+    /**
+     * 测试目标：当 SseEventParser 解析失败时，仍可提取 data 字段内容用于透传。\
+     * 前置条件：\
+     *  - sseEventParser.parse 返回 Optional.empty()；\
+     *  - 底层流式输出包含合法的 data 行。\
+     * 步骤：\
+     *  1) 模拟 streamSearch 返回包含 data 行的 SSE 文本；\
+     *  2) 订阅 streamWordForUser 的首个事件。\
+     * 断言：\
+     *  - 收到的 payload.data 为纯 data 内容且 event 为空。\
+     * 边界/异常：覆盖解析失败的兜底逻辑。\
+     */
+    @Test
+    void fallsBackToDataPayloadWhenParsingFails() {
+        when(wordRepository.findActiveByNormalizedTerm("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL)).thenReturn(
+            Optional.empty()
+        );
+        String rawChunk = "data: {\\\"choices\\\":[{\\\"delta\\\":{\\\"content\\\":\\\"part\\\"}}]}\n\n";
+        doReturn(Optional.empty()).when(sseEventParser).parse(rawChunk);
+        when(
+            wordSearcher.streamSearch(
+                eq("hi"),
+                eq(Language.ENGLISH),
+                eq(DictionaryFlavor.BILINGUAL),
+                eq("doubao"),
+                any()
+            )
+        ).thenReturn(Flux.just(rawChunk));
+
+        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+            1L,
+            "hi",
+            Language.ENGLISH,
+            DictionaryFlavor.BILINGUAL,
+            null,
+            false,
+            false
+        );
+
+        StepVerifier.create(flux)
+            .expectNextMatches(
+                payload -> payload.event() == null && payload.data() != null && payload.data().contains("part")
+            )
+            .verifyComplete();
     }
 
     /**
@@ -399,9 +449,9 @@ class WordServiceStreamPersistenceTest {
 
         StepVerifier.create(flux)
             .expectNextMatches(
-                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
             )
-            .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
+            .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .verifyComplete();
         verify(parser, never()).parse(any(), any(), any());
         verify(wordRepository, never()).save(any());
@@ -449,7 +499,7 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(payload -> payload.event() == null && messageChunk("part").equals(payload.data()))
+            .expectNextMatches(payload -> payload.event() == null && messageData("part").equals(payload.data()))
             .expectError()
             .verify();
         verify(wordRepository, never()).save(any());
@@ -481,14 +531,19 @@ class WordServiceStreamPersistenceTest {
     }
 
     private String messageChunk(String content) {
+        return String.format("event: message%ndata: %s%n%n", messageData(content));
+    }
+
+    private String messageData(String content) {
         String escaped = content.replace("\\", "\\\\").replace("\"", "\\\"");
-        return String.format(
-            "event: message%ndata: {\"choices\":[{\"delta\":{\"messages\":[{\"content\":\"%s\"}]}}]}%n%n",
-            escaped
-        );
+        return String.format("{\"choices\":[{\"delta\":{\"messages\":[{\"content\":\"%s\"}]}}]}", escaped);
     }
 
     private String endChunk() {
-        return "event: end\ndata: {\"code\":0}\n\n";
+        return String.format("event: end%ndata: %s%n%n", endData());
+    }
+
+    private String endData() {
+        return "{\"code\":0}";
     }
 }

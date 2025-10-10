@@ -113,6 +113,87 @@ export function createWordsApi(request = apiRequest) {
   );
 
   /**
+   * 意图：按照 Doubao 输出结构提取增量文本，保持前端流式渲染与后端数据透传一致。
+   * 输入：模型返回的原始 data 字段，可为字符串或其他类型。
+   * 输出：字符串形式的文本片段；解析失败时回退原始字符串。
+   * 复杂度：O(n)，n 为字段总长度。
+   */
+  const extractDoubaoChunk = (payload) => {
+    if (typeof payload !== "string" || payload.length === 0) {
+      return typeof payload === "string" ? payload : "";
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(payload);
+    } catch {
+      return payload;
+    }
+    const [choice] = Array.isArray(parsed?.choices) ? parsed.choices : [];
+    if (!choice) return payload;
+    const delta = choice?.delta ?? {};
+    const segments = [];
+
+    const messages = Array.isArray(delta.messages)
+      ? delta.messages
+      : delta.message
+        ? [delta.message]
+        : [];
+    if (messages.length > 0) {
+      for (const message of messages) {
+        segments.push(...collectContentSegments(message?.content ?? message));
+      }
+    }
+
+    if (segments.length === 0) {
+      segments.push(...collectContentSegments(delta.content));
+    }
+
+    const text = segments.join("");
+    return text === "" ? "" : text;
+  };
+
+  const collectContentSegments = (value) => {
+    if (value == null) return [];
+    if (typeof value === "string") return [value];
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => collectContentSegments(item));
+    }
+    if (typeof value === "object" && value !== null) {
+      const resolved = [];
+      if (typeof value.text === "string") {
+        resolved.push(value.text);
+      }
+      if (typeof value.content === "string") {
+        resolved.push(value.content);
+      }
+      if (Array.isArray(value.content)) {
+        resolved.push(
+          ...value.content.flatMap((item) => collectContentSegments(item)),
+        );
+      }
+      if (Array.isArray(value.segments)) {
+        resolved.push(
+          ...value.segments.flatMap((item) => collectContentSegments(item)),
+        );
+      }
+      if (typeof value.message === "object" && value.message !== null) {
+        resolved.push(
+          ...collectContentSegments(value.message.content ?? value.message),
+        );
+      }
+      if (Array.isArray(value.messages)) {
+        for (const message of value.messages) {
+          resolved.push(...collectContentSegments(message?.content ?? message));
+        }
+      }
+      if (resolved.length > 0) {
+        return resolved;
+      }
+    }
+    return [];
+  };
+
+  /**
    * 流式获取词汇释义并输出统一格式日志。
    * 日志格式:
    *   console.info("[streamWord] <阶段>", { userId, term, chunk?, error? })
@@ -173,10 +254,15 @@ export function createWordsApi(request = apiRequest) {
           yield { type: "metadata", data };
           continue;
         }
+        if (event === "end") {
+          continue;
+        }
         if (data) {
-          console.info("[streamWord] chunk", { ...logCtx, chunk: data });
-          if (onChunk) onChunk(data);
-          yield { type: "chunk", data };
+          const chunk = extractDoubaoChunk(data);
+          if (chunk === "") continue;
+          console.info("[streamWord] chunk", { ...logCtx, chunk });
+          if (onChunk) onChunk(chunk);
+          yield { type: "chunk", data: chunk };
         }
       }
       console.info("[streamWord] end", logCtx);
