@@ -11,8 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import java.nio.charset.StandardCharsets;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.web.reactive.server.FluxExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -38,7 +40,7 @@ class ChatControllerIT {
                 @Override
                 public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
                     return Flux.interval(Duration.ofMillis(5))
-                        .map(i -> "chunk-" + i)
+                        .map(i -> String.format("event: message%ndata: chunk-%d%n%n", i))
                         .take(50);
                 }
 
@@ -60,7 +62,7 @@ class ChatControllerIT {
         req.setModel("stub");
         req.setMessages(List.of(new ChatMessage("user", "hello")));
 
-        FluxExchangeResult<ServerSentEvent<String>> result = webTestClient
+        FluxExchangeResult<DataBuffer> result = webTestClient
             .post()
             .uri("/api/chat")
             .contentType(MediaType.APPLICATION_JSON)
@@ -68,16 +70,23 @@ class ChatControllerIT {
             .exchange()
             .expectStatus()
             .isOk()
-            .returnResult(new org.springframework.core.ParameterizedTypeReference<ServerSentEvent<String>>() {});
+            .returnResult(DataBuffer.class);
 
         List<String> chunks = result
             .getResponseBody()
-            .map(ServerSentEvent::data)
+            .map(this::toUtf8)
             .collectList()
             .block(Duration.ofSeconds(10));
 
         org.junit.jupiter.api.Assertions.assertNotNull(chunks);
         org.junit.jupiter.api.Assertions.assertEquals(50, chunks.size());
-        org.junit.jupiter.api.Assertions.assertEquals("chunk-49", chunks.get(49));
+        org.junit.jupiter.api.Assertions.assertTrue(chunks.get(49).contains("chunk-49"));
+    }
+
+    private String toUtf8(DataBuffer buffer) {
+        byte[] bytes = new byte[buffer.readableByteCount()];
+        buffer.read(bytes);
+        DataBufferUtils.release(buffer);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 }

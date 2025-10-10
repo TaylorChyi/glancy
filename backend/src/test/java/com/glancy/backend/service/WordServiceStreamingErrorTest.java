@@ -14,6 +14,8 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
+import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
+import com.glancy.backend.llm.stream.StreamDecoder;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -58,6 +60,7 @@ class WordServiceStreamingErrorTest {
     private ObjectMapper objectMapper;
     private DictionaryTermNormalizer termNormalizer;
     private WordPersistenceCoordinator wordPersistenceCoordinator;
+    private StreamDecoder streamDecoder;
 
     @BeforeEach
     void setUp() {
@@ -78,6 +81,7 @@ class WordServiceStreamingErrorTest {
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
+        streamDecoder = new DoubaoStreamDecoder(objectMapper);
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -87,7 +91,8 @@ class WordServiceStreamingErrorTest {
             wordPersonalizationService,
             termNormalizer,
             objectMapper,
-            wordPersistenceCoordinator
+            wordPersistenceCoordinator,
+            streamDecoder
         );
     }
 

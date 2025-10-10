@@ -59,7 +59,22 @@ public class DoubaoClient implements LLMClient {
     }
 
     @Override
+    @Override
     public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
+        return executeStream(messages, temperature);
+    }
+
+    @Override
+    public String chat(List<ChatMessage> messages, double temperature) {
+        return executeStream(messages, temperature)
+            .transform(decoder::decode)
+            .reduce(new StringBuilder(), StringBuilder::append)
+            .map(StringBuilder::toString)
+            .blockOptional()
+            .orElse("");
+    }
+
+    private Flux<String> executeStream(List<ChatMessage> messages, double temperature) {
         log.info("DoubaoClient.streamChat called with {} messages, temperature={}", messages.size(), temperature);
 
         Map<String, Object> body = prepareRequestBody(messages, temperature);
@@ -75,8 +90,7 @@ public class DoubaoClient implements LLMClient {
                 }
             })
             .bodyValue(body)
-            .exchangeToFlux(this::handleResponse)
-            .transform(decoder::decode);
+            .exchangeToFlux(this::handleResponse);
     }
 
     private Map<String, Object> prepareRequestBody(List<ChatMessage> messages, double temperature) {
