@@ -15,6 +15,7 @@ import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
+import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
@@ -61,6 +62,7 @@ class WordServiceStreamingErrorTest {
     private DictionaryTermNormalizer termNormalizer;
     private WordPersistenceCoordinator wordPersistenceCoordinator;
     private StreamDecoder streamDecoder;
+    private SseEventParser sseEventParser;
 
     @BeforeEach
     void setUp() {
@@ -82,6 +84,7 @@ class WordServiceStreamingErrorTest {
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
         streamDecoder = new DoubaoStreamDecoder(objectMapper);
+        sseEventParser = new SseEventParser();
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -92,7 +95,8 @@ class WordServiceStreamingErrorTest {
             termNormalizer,
             objectMapper,
             wordPersistenceCoordinator,
-            streamDecoder
+            streamDecoder,
+            sseEventParser
         );
     }
 
