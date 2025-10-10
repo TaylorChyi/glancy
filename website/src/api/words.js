@@ -2,6 +2,7 @@ import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest } from "./client.js";
 import { useApi } from "@/hooks/useApi.js";
 import { createCachedFetcher, parseSse } from "@/utils";
+import { extractTextFromDelta } from "./streamingContent.js";
 import { WORD_FLAVOR_BILINGUAL } from "@/utils/language.js";
 import { useWordStore } from "@/store/wordStore.js";
 // 直接引用数据治理 store，避免 utils/store 桶状导出间的循环依赖在 SSR 或打包阶段触发。
@@ -130,67 +131,8 @@ export function createWordsApi(request = apiRequest) {
     }
     const [choice] = Array.isArray(parsed?.choices) ? parsed.choices : [];
     if (!choice) return payload;
-    const delta = choice?.delta ?? {};
-    const segments = [];
-
-    const messages = Array.isArray(delta.messages)
-      ? delta.messages
-      : delta.message
-        ? [delta.message]
-        : [];
-    if (messages.length > 0) {
-      for (const message of messages) {
-        segments.push(...collectContentSegments(message?.content ?? message));
-      }
-    }
-
-    if (segments.length === 0) {
-      segments.push(...collectContentSegments(delta.content));
-    }
-
-    const text = segments.join("");
+    const text = extractTextFromDelta(choice?.delta ?? {});
     return text === "" ? "" : text;
-  };
-
-  const collectContentSegments = (value) => {
-    if (value == null) return [];
-    if (typeof value === "string") return [value];
-    if (Array.isArray(value)) {
-      return value.flatMap((item) => collectContentSegments(item));
-    }
-    if (typeof value === "object" && value !== null) {
-      const resolved = [];
-      if (typeof value.text === "string") {
-        resolved.push(value.text);
-      }
-      if (typeof value.content === "string") {
-        resolved.push(value.content);
-      }
-      if (Array.isArray(value.content)) {
-        resolved.push(
-          ...value.content.flatMap((item) => collectContentSegments(item)),
-        );
-      }
-      if (Array.isArray(value.segments)) {
-        resolved.push(
-          ...value.segments.flatMap((item) => collectContentSegments(item)),
-        );
-      }
-      if (typeof value.message === "object" && value.message !== null) {
-        resolved.push(
-          ...collectContentSegments(value.message.content ?? value.message),
-        );
-      }
-      if (Array.isArray(value.messages)) {
-        for (const message of value.messages) {
-          resolved.push(...collectContentSegments(message?.content ?? message));
-        }
-      }
-      if (resolved.length > 0) {
-        return resolved;
-      }
-    }
-    return [];
   };
 
   /**
@@ -212,17 +154,13 @@ export function createWordsApi(request = apiRequest) {
     captureHistory,
   }) {
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
-    const shouldCaptureHistory =
-      captureHistory ?? resolveCaptureHistory();
+    const shouldCaptureHistory = captureHistory ?? resolveCaptureHistory();
     const params = new URLSearchParams({ userId, term, language });
     if (resolvedFlavor) params.append("flavor", resolvedFlavor);
     if (model) params.append("model", model);
     if (forceNew) params.append("forceNew", "true");
     if (versionId) params.append("versionId", versionId);
-    params.append(
-      "captureHistory",
-      shouldCaptureHistory ? "true" : "false",
-    );
+    params.append("captureHistory", shouldCaptureHistory ? "true" : "false");
     const url = `${API_PATHS.words}/stream?${params.toString()}`;
     const headers = {
       Accept: "text/event-stream",

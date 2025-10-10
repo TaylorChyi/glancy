@@ -2,6 +2,7 @@ import { API_PATHS, DEFAULT_MODEL } from "@/config";
 import { apiRequest, createJsonRequest } from "./client.js";
 import { useApi } from "@/hooks/useApi.js";
 import { parseSse } from "@/utils";
+import { extractTextFromDelta } from "./streamingContent.js";
 
 export function createChatApi(request = apiRequest) {
   const jsonRequest = createJsonRequest(request);
@@ -33,7 +34,8 @@ export function createChatApi(request = apiRequest) {
         if (data === "[DONE]") continue;
         if (!data) continue;
         const json = JSON.parse(data);
-        const content = json?.choices?.[0]?.delta?.content;
+        const [choice] = Array.isArray(json?.choices) ? json.choices : [];
+        const content = extractTextFromDelta(choice?.delta ?? {});
         if (content) {
           console.info("[streamChatMessage] chunk", {
             ...logCtx,
