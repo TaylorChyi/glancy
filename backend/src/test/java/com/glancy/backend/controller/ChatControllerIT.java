@@ -4,6 +4,7 @@ import com.glancy.backend.dto.ChatRequest;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import java.nio.charset.StandardCharsets;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
@@ -72,11 +72,7 @@ class ChatControllerIT {
             .isOk()
             .returnResult(DataBuffer.class);
 
-        List<String> chunks = result
-            .getResponseBody()
-            .map(this::toUtf8)
-            .collectList()
-            .block(Duration.ofSeconds(10));
+        List<String> chunks = result.getResponseBody().map(this::toUtf8).collectList().block(Duration.ofSeconds(10));
 
         org.junit.jupiter.api.Assertions.assertNotNull(chunks);
         org.junit.jupiter.api.Assertions.assertEquals(50, chunks.size());

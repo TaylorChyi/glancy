@@ -78,8 +78,7 @@ class DoubaoClientTest {
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier
-            .create(flux.collectList())
+        StepVerifier.create(flux.collectList())
             .assertNext(chunks -> {
                 assertTrue(!chunks.isEmpty(), "expected raw SSE chunks");
                 String merged = String.join("", chunks);
@@ -101,8 +100,7 @@ class DoubaoClientTest {
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier
-            .create(flux.collectList())
+        StepVerifier.create(flux.collectList())
             .assertNext(chunks -> {
                 assertTrue(chunks.stream().anyMatch(chunk -> chunk.contains("event: error")));
             })

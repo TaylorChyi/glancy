@@ -18,9 +18,9 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.search.SearchContentManagerImpl;
 import com.glancy.backend.llm.service.WordSearcher;
+import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import com.glancy.backend.llm.stream.StreamDecoder;
-import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -202,9 +202,7 @@ class WordServiceStreamPersistenceTest {
                 eq("doubao"),
                 any()
             )
-        ).thenReturn(
-            Flux.just(messageChunk("{\"term\":\"hi\"}"), messageChunk(CompletionSentinel.MARKER), endChunk())
-        );
+        ).thenReturn(Flux.just(messageChunk("{\"term\":\"hi\"}"), messageChunk(CompletionSentinel.MARKER), endChunk()));
         WordResponse resp = new WordResponse(
             null,
             "hi",
@@ -256,11 +254,11 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(payload ->
-                payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+            .expectNextMatches(
+                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
             )
-            .expectNextMatches(payload ->
-                payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
+            .expectNextMatches(
+                payload -> payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
             )
             .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
             .expectNextMatches(payload -> "version".equals(payload.event()) && "88".equals(payload.data()))
@@ -302,9 +300,7 @@ class WordServiceStreamPersistenceTest {
                 eq("doubao"),
                 any()
             )
-        ).thenReturn(
-            Flux.just(messageChunk("{\"term\":\"hi\"}"), messageChunk(CompletionSentinel.MARKER), endChunk())
-        );
+        ).thenReturn(Flux.just(messageChunk("{\"term\":\"hi\"}"), messageChunk(CompletionSentinel.MARKER), endChunk()));
         WordResponse resp = new WordResponse(
             null,
             "hi",
@@ -342,11 +338,11 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(payload ->
-                payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+            .expectNextMatches(
+                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
             )
-            .expectNextMatches(payload ->
-                payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
+            .expectNextMatches(
+                payload -> payload.event() == null && messageChunk(CompletionSentinel.MARKER).equals(payload.data())
             )
             .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
             .verifyComplete();
@@ -402,8 +398,8 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(payload ->
-                payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
+            .expectNextMatches(
+                payload -> payload.event() == null && messageChunk("{\"term\":\"hi\"}").equals(payload.data())
             )
             .expectNextMatches(payload -> payload.event() == null && endChunk().equals(payload.data()))
             .verifyComplete();
