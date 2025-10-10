@@ -40,7 +40,7 @@ public class ChatController {
         }
         return client
             .streamChat(request.getMessages(), request.getTemperature())
-            .map(chunk -> BUFFER_FACTORY.wrap(chunk.getBytes(StandardCharsets.UTF_8)))
+            .map(chunk -> (DataBuffer) BUFFER_FACTORY.wrap(chunk.getBytes(StandardCharsets.UTF_8)))
             .doOnCancel(() -> log.info("SSE connection cancelled: model={}", request.getModel()))
             .doOnError(ex -> log.error("SSE streaming failed: model={}", request.getModel(), ex))
             .doFinally(signal -> log.info("SSE stream terminated: {}", signal));
