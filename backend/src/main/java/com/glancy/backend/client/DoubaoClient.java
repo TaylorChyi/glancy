@@ -59,7 +59,6 @@ public class DoubaoClient implements LLMClient {
     }
 
     @Override
-    @Override
     public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
         return executeStream(messages, temperature);
     }

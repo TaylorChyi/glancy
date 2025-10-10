@@ -195,6 +195,22 @@
                                         <source>17</source>
                                         <target>17</target>
                                         <parameters>true</parameters>
+                                        <!--
+                                          背景：在 CI 与本地环境均观测到 Lombok 与 MapStruct 注解处理器未触发，
+                                          导致 @Slf4j/@Data 等生成代码缺失。Maven Compiler Plugin 默认依赖 JDK
+                                          的自动发现机制，而在部分构建环境该机制被关闭。
+                                          决策：显式声明注解处理器，强制 javac 加载 Lombok 与 MapStruct，确保
+                                          日志字段、getter/setter 及 Mapper 实现按预期生成。
+                                          取舍：维持既有 Lombok 代码结构，同时为未来扩展留出集中配置点。
+                                        -->
+                                        <annotationProcessors>
+                                                <annotationProcessor>
+                                                        lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+                                                </annotationProcessor>
+                                                <annotationProcessor>
+                                                        org.mapstruct.ap.MappingProcessor
+                                                </annotationProcessor>
+                                        </annotationProcessors>
                                         <annotationProcessorPaths>
                                                 <path>
                                                         <groupId>org.projectlombok</groupId>
