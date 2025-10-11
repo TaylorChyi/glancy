@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
+import com.glancy.backend.dto.LoginResponse;
 import com.glancy.backend.dto.UserContactResponse;
 import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
@@ -510,6 +511,36 @@ class UserServiceTest {
         loginReq.setPassword("pass123");
 
         assertNotNull(userService.login(loginReq).getToken());
+    }
+
+    /**
+     * 测试目标：验证邮箱登录对大小写不敏感。
+     * 前置条件：
+     *  - 使用混合大小写邮箱注册成功的用户存在。
+     * 步骤：
+     *  1) 使用全大写邮箱与正确密码调用 login。
+     * 断言：
+     *  - 返回的登录响应包含规范化的小写邮箱并生成令牌。
+     * 边界/异常：
+     *  - 覆盖邮箱大小写差异导致的潜在登录失败路径。
+     */
+    @Test
+    void loginIgnoresEmailCase() {
+        UserRegistrationRequest req = new UserRegistrationRequest();
+        req.setUsername("emailcaseuser");
+        req.setPassword("pass123");
+        req.setEmail("CaseUser@Example.com");
+        req.setPhone("556");
+        userService.register(req);
+
+        LoginRequest loginReq = new LoginRequest();
+        loginReq.setAccount("CASEUSER@EXAMPLE.COM");
+        loginReq.setPassword("pass123");
+
+        LoginResponse response = userService.login(loginReq);
+
+        assertEquals("caseuser@example.com", response.getEmail());
+        assertNotNull(response.getToken());
     }
 
     /**
