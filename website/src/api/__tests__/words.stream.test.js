@@ -123,6 +123,55 @@ test("streamWord yields chunks with logging", async () => {
 });
 
 /**
+ * 验证包含完整 Doubao chunk 元信息时仍能抽取文本内容。
+ */
+test("streamWord strips doubao metadata wrapper", async () => {
+  const encoder = new TextEncoder();
+  const chunk = JSON.stringify({
+    id: "0217601177769821",
+    object: "chat.completion.chunk",
+    created: 1760117777,
+    model: "doubao-seed-1-6",
+    service_tier: "default",
+    choices: [
+      {
+        index: 0,
+        delta: {
+          content: "词条",
+        },
+      },
+    ],
+    usage: null,
+  });
+  const sse = `data: ${chunk}\n\n`;
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse));
+      controller.close();
+    },
+  });
+
+  const originalFetch = global.fetch;
+  global.fetch = jest
+    .fn()
+    .mockResolvedValue({ body: stream, ok: true, status: 200 });
+
+  const outputs = [];
+  for await (const event of streamWord({
+    userId: "u",
+    term: "hello",
+    language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
+  })) {
+    outputs.push(event);
+  }
+
+  expect(outputs).toEqual([{ type: "chunk", data: "词条" }]);
+
+  global.fetch = originalFetch;
+});
+
+/**
  * 验证嵌套 message/content 结构能够被展开。
  */
 test("streamWord flattens nested message structures", async () => {

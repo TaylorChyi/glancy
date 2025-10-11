@@ -123,16 +123,37 @@ export function createWordsApi(request = apiRequest) {
     if (typeof payload !== "string" || payload.length === 0) {
       return typeof payload === "string" ? payload : "";
     }
+
+    // 说明：当返回体不符合 JSON 结构时，保持与历史实现一致直接透传，
+    // 例如缓存命中场景下直接返回的词条 JSON 文本。
+    if (payload.trimStart()[0] !== "{") {
+      return payload;
+    }
+
     let parsed;
     try {
       parsed = JSON.parse(payload);
     } catch {
+      // 解析失败保留原始串，交由上层以 Markdown 回退方案渲染，避免误删信息。
       return payload;
     }
-    const [choice] = Array.isArray(parsed?.choices) ? parsed.choices : [];
-    if (!choice) return payload;
-    const text = extractTextFromDelta(choice?.delta ?? {});
-    return text === "" ? "" : text;
+
+    const choices = Array.isArray(parsed?.choices) ? parsed.choices : [];
+    if (choices.length === 0) {
+      return payload;
+    }
+
+    let aggregated = "";
+    for (const choice of choices) {
+      if (!choice || typeof choice !== "object") continue;
+      const deltaText = extractTextFromDelta(choice.delta ?? {});
+      if (deltaText) {
+        aggregated += deltaText;
+      }
+    }
+
+    // 若增量内容为空，则跳过该片段，以免把协议载荷渲染到前端。
+    return aggregated;
   };
 
   /**
