@@ -16,12 +16,42 @@ public final class CompletionSentinel {
         if (content == null) {
             return new CompletionCheck(false, null);
         }
-        String trimmed = content.stripTrailing();
-        if (!trimmed.endsWith(MARKER)) {
+        int markerIndex = locateTerminalMarker(content);
+        if (markerIndex < 0) {
             return new CompletionCheck(false, content);
         }
-        String withoutMarker = trimmed.substring(0, trimmed.length() - MARKER.length()).stripTrailing();
+        String withoutMarker = content.substring(0, markerIndex);
         return new CompletionCheck(true, withoutMarker);
+    }
+
+    /**
+     * 意图：在不改写正文空白字符的前提下定位终止哨兵。
+     * 输入：模型原始输出文本。
+     * 输出：若末尾存在独立一行的哨兵，返回其起始下标；否则返回 -1。
+     * 流程：
+     *  1) 选择末次出现的哨兵；
+     *  2) 仅允许哨兵之后出现换行符，避免吞掉后续有效字符。
+     * 复杂度：O(n)。
+     */
+    private static int locateTerminalMarker(String content) {
+        int markerIndex = content.lastIndexOf(MARKER);
+        if (markerIndex < 0) {
+            return -1;
+        }
+        if (!hasOnlyLineBreaksAfterMarker(content, markerIndex + MARKER.length())) {
+            return -1;
+        }
+        return markerIndex;
+    }
+
+    private static boolean hasOnlyLineBreaksAfterMarker(String content, int startIndex) {
+        for (int i = startIndex; i < content.length(); i++) {
+            char ch = content.charAt(i);
+            if (ch != '\n' && ch != '\r') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
