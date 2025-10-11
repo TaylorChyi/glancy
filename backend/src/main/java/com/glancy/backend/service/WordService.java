@@ -19,6 +19,7 @@ import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
+import com.glancy.backend.llm.stream.transform.SsePayloadTransformerRegistry;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -60,6 +61,7 @@ public class WordService {
     private final WordVersionContentStrategy defaultVersionContentStrategy;
     private final WordVersionContentStrategy streamingVersionContentStrategy;
     private final SseEventParser sseEventParser;
+    private final SsePayloadTransformerRegistry ssePayloadTransformerRegistry;
 
     public WordService(
         WordSearcher wordSearcher,
@@ -72,7 +74,8 @@ public class WordService {
         ObjectMapper objectMapper,
         WordPersistenceCoordinator wordPersistenceCoordinator,
         @Qualifier("doubaoStreamDecoder") StreamDecoder doubaoStreamDecoder,
-        SseEventParser sseEventParser
+        SseEventParser sseEventParser,
+        SsePayloadTransformerRegistry ssePayloadTransformerRegistry
     ) {
         this.wordSearcher = wordSearcher;
         this.wordRepository = wordRepository;
@@ -87,6 +90,7 @@ public class WordService {
         this.defaultVersionContentStrategy = new ResponseMarkdownOrSerializedWordStrategy();
         this.streamingVersionContentStrategy = new SanitizedStreamingMarkdownStrategy();
         this.sseEventParser = sseEventParser;
+        this.ssePayloadTransformerRegistry = ssePayloadTransformerRegistry;
     }
 
     private static final String DEFAULT_MODEL = DictionaryModel.DOUBAO.getClientName();
@@ -440,7 +444,7 @@ public class WordService {
                 )
             )
             .doOnError(session::markError)
-            .map(chunk -> toStreamPayload(chunk, term));
+            .map(chunk -> toStreamPayload(chunk, term, resolvedModel));
 
         Flux<StreamPayload> aggregated = decodeRequired
             ? doubaoStreamDecoder
@@ -458,18 +462,23 @@ public class WordService {
         return merged.concatWith(Mono.defer(() -> finalizeStreamingSession(session))).doFinally(session::logSummary);
     }
 
-    private StreamPayload toStreamPayload(String rawChunk, String term) {
+    private StreamPayload toStreamPayload(String rawChunk, String term, String model) {
         return sseEventParser
             .parse(rawChunk)
-            .map(parsed -> StreamPayload.fromEvent(parsed.event(), parsed.data()))
+            .map(parsed -> {
+                String transformed = ssePayloadTransformerRegistry.transform(model, parsed.event(), parsed.data());
+                return StreamPayload.fromEvent(parsed.event(), transformed);
+            })
             .orElseGet(() -> {
                 String stripped = extractDataPayload(rawChunk);
                 if (!stripped.isEmpty()) {
                     log.warn("Failed to parse SSE chunk for term '{}', fallback to data-only payload", term);
-                    return StreamPayload.data(stripped);
+                    String transformed = ssePayloadTransformerRegistry.transform(model, "message", stripped);
+                    return StreamPayload.data(transformed);
                 }
                 log.warn("Failed to parse SSE chunk for term '{}', fallback to raw payload", term);
-                return StreamPayload.data(rawChunk);
+                String transformed = ssePayloadTransformerRegistry.transform(model, "message", rawChunk);
+                return StreamPayload.data(transformed);
             });
     }
 

@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.llm.stream.doubao.DoubaoContentExtractor;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -18,7 +19,8 @@ import reactor.test.StepVerifier;
  */
 class DoubaoStreamDecoderTest {
 
-    private final DoubaoStreamDecoder decoder = new DoubaoStreamDecoder(new ObjectMapper());
+    private final DoubaoContentExtractor contentExtractor = new DoubaoContentExtractor();
+    private final DoubaoStreamDecoder decoder = new DoubaoStreamDecoder(new ObjectMapper(), contentExtractor);
 
     /** 验证标准 message 事件片段能够解析出文本内容。 */
     @Test

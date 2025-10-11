@@ -22,6 +22,9 @@ import com.glancy.backend.llm.stream.CompletionSentinel;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
+import com.glancy.backend.llm.stream.doubao.DoubaoContentExtractor;
+import com.glancy.backend.llm.stream.transform.DoubaoContentOnlyTransformer;
+import com.glancy.backend.llm.stream.transform.SsePayloadTransformerRegistry;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -70,6 +73,7 @@ class WordServiceStreamPersistenceTest {
     private WordPersistenceCoordinator wordPersistenceCoordinator;
     private StreamDecoder streamDecoder;
     private SseEventParser sseEventParser;
+    private SsePayloadTransformerRegistry transformerRegistry;
 
     @BeforeEach
     void setUp() {
@@ -91,8 +95,12 @@ class WordServiceStreamPersistenceTest {
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
-        streamDecoder = new DoubaoStreamDecoder(objectMapper);
+        DoubaoContentExtractor contentExtractor = new DoubaoContentExtractor();
+        streamDecoder = new DoubaoStreamDecoder(objectMapper, contentExtractor);
         sseEventParser = spy(new SseEventParser());
+        transformerRegistry = new SsePayloadTransformerRegistry(
+            List.of(new DoubaoContentOnlyTransformer(objectMapper, contentExtractor))
+        );
         when(searchRecordService.synchronizeRecordTerm(anyLong(), anyLong(), any())).thenReturn(null);
         wordService = new WordService(
             wordSearcher,
@@ -105,7 +113,8 @@ class WordServiceStreamPersistenceTest {
             objectMapper,
             wordPersistenceCoordinator,
             streamDecoder,
-            sseEventParser
+            sseEventParser,
+            transformerRegistry
         );
     }
 
@@ -258,12 +267,8 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(
-                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
-            )
-            .expectNextMatches(
-                payload -> payload.event() == null && messageData(CompletionSentinel.MARKER).equals(payload.data())
-            )
+            .expectNextMatches(payload -> payload.event() == null && "{\"term\":\"hi\"}".equals(payload.data()))
+            .expectNextMatches(payload -> payload.event() == null && CompletionSentinel.MARKER.equals(payload.data()))
             .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .expectNextMatches(payload -> "version".equals(payload.event()) && "88".equals(payload.data()))
             .verifyComplete();
@@ -342,12 +347,8 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(
-                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
-            )
-            .expectNextMatches(
-                payload -> payload.event() == null && messageData(CompletionSentinel.MARKER).equals(payload.data())
-            )
+            .expectNextMatches(payload -> payload.event() == null && "{\"term\":\"hi\"}".equals(payload.data()))
+            .expectNextMatches(payload -> payload.event() == null && CompletionSentinel.MARKER.equals(payload.data()))
             .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .verifyComplete();
 
@@ -448,9 +449,7 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(
-                payload -> payload.event() == null && messageData("{\"term\":\"hi\"}").equals(payload.data())
-            )
+            .expectNextMatches(payload -> payload.event() == null && "{\"term\":\"hi\"}".equals(payload.data()))
             .expectNextMatches(payload -> "end".equals(payload.event()) && endData().equals(payload.data()))
             .verifyComplete();
         verify(parser, never()).parse(any(), any(), any());
@@ -499,7 +498,7 @@ class WordServiceStreamPersistenceTest {
         );
 
         StepVerifier.create(flux)
-            .expectNextMatches(payload -> payload.event() == null && messageData("part").equals(payload.data()))
+            .expectNextMatches(payload -> payload.event() == null && "part".equals(payload.data()))
             .expectError()
             .verify();
         verify(wordRepository, never()).save(any());

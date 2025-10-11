@@ -9,6 +9,7 @@ import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import com.glancy.backend.llm.stream.Utf8DataBufferTextExtractor;
+import com.glancy.backend.llm.stream.doubao.DoubaoContentExtractor;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class DoubaoClientTest {
         client = new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper()),
+            new DoubaoStreamDecoder(new ObjectMapper(), new DoubaoContentExtractor()),
             new Utf8DataBufferTextExtractor()
         );
         String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
@@ -59,7 +60,7 @@ class DoubaoClientTest {
         client = new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper()),
+            new DoubaoStreamDecoder(new ObjectMapper(), new DoubaoContentExtractor()),
             new Utf8DataBufferTextExtractor()
         );
         assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
@@ -74,7 +75,7 @@ class DoubaoClientTest {
         client = new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper()),
+            new DoubaoStreamDecoder(new ObjectMapper(), new DoubaoContentExtractor()),
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
@@ -96,7 +97,7 @@ class DoubaoClientTest {
         client = new DoubaoClient(
             WebClient.builder().exchangeFunction(ef),
             properties,
-            new DoubaoStreamDecoder(new ObjectMapper()),
+            new DoubaoStreamDecoder(new ObjectMapper(), new DoubaoContentExtractor()),
             new Utf8DataBufferTextExtractor()
         );
         Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
