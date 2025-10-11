@@ -65,6 +65,31 @@ class DoubaoStreamDecoderTest {
             .verifyComplete();
     }
 
+    /**
+     * 测试目标：确保嵌套 message/messages/segments 结构被展开为纯文本，避免 JSON 片段透传到前端。
+     * 前置条件：构造 content 包含 segments 与 messages 混合结构的 Doubao 事件。
+     * 步骤：
+     *  1) 推送包含单个 message 事件与 end 事件的文本块；
+     *  2) 订阅解码器输出聚合结果；
+     * 断言：
+     *  - 输出唯一片段为 "layered stream ready"；
+     * 边界/异常：
+     *  - 若解析失败将产生空输出，断言触发提醒解析策略需更新。
+     */
+    @Test
+    void flattenStructuredPayloadIntoPlainText() {
+        String body = """
+            event: message
+            data: {"choices":[{"delta":{"message":{"content":[{"segments":[{"text":"layered"}]},{"messages":[{"content":" stream"}]},{"text":" ready"}]}}}]}
+
+            event: end
+            data: {"code":0}
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(body))).expectNext("layered stream ready").verifyComplete();
+    }
+
     /** 验证缺少内容的片段会记录 WARN 日志且不输出数据。 */
     @Test
     void decodeInvalidChunkLogsWarn() {
