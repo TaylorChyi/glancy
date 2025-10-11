@@ -2,6 +2,7 @@ package com.glancy.backend.llm.stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glancy.backend.llm.stream.doubao.DoubaoContentExtractor;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,9 +18,11 @@ import reactor.core.publisher.Flux;
 public class DoubaoStreamDecoder implements StreamDecoder {
 
     private final ObjectMapper mapper;
+    private final DoubaoContentExtractor contentExtractor;
 
-    public DoubaoStreamDecoder(ObjectMapper mapper) {
+    public DoubaoStreamDecoder(ObjectMapper mapper, DoubaoContentExtractor contentExtractor) {
         this.mapper = mapper;
+        this.contentExtractor = contentExtractor;
     }
 
     @Override
@@ -132,7 +135,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             JsonNode choice = node.path("choices").path(0);
             state.inspectChoice(choice);
             JsonNode delta = choice.path("delta");
-            String content = extractDisplayText(delta);
+            String content = contentExtractor.extract(delta);
             if (content.isEmpty()) {
                 state.incrementEmptyPayload();
                 log.warn("Message event missing content: {}", SensitiveDataUtil.previewText(json));
@@ -152,77 +155,6 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             state.incrementDecodeFailure();
             log.warn("Failed to decode message event, raw={}", SensitiveDataUtil.previewText(json), e);
             return Flux.empty();
-        }
-    }
-
-    /**
-     * 背景：
-     *  - Doubao 新版协议会以 message/messages/content 嵌套数组的形式返回结构化片段，
-     *    若直接取某个字段将出现 JSON 串被前端透出的问题。
-     * 目的：
-     *  - 通过“模板方法 + 递归组合”收集所有可展示文本字段，屏蔽不同层级的差异，确保流式输出恒为纯文本。
-     * 关键决策与取舍：
-     *  - 仅枚举 text/content/segments/message(s) 等语义字段，避免误采集 role/type 等元信息；
-     *  - 通过顺序遍历保持模型原始片段的先后顺序，不在此处插入额外空格，由上层 formatter 控制排版。
-     */
-    private String extractDisplayText(JsonNode delta) {
-        if (delta == null || delta.isMissingNode() || delta.isNull()) {
-            return "";
-        }
-        List<String> segments = new ArrayList<>();
-        collectTextSegments(delta.path("message"), segments);
-        collectTextSegments(delta.path("messages"), segments);
-        collectTextSegments(delta.path("content"), segments);
-        collectTextSegments(delta.path("segments"), segments);
-        if (segments.isEmpty()) {
-            collectTextSegments(delta, segments);
-        }
-        if (segments.isEmpty()) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        for (String segment : segments) {
-            if (segment == null || segment.isEmpty()) {
-                continue;
-            }
-            builder.append(segment);
-        }
-        return builder.toString();
-    }
-
-    /**
-     * 意图：深度优先遍历 Doubao 结构化节点，抽取其中的纯文本片段。
-     * 输入：当前节点（可能为文本、数组或对象）以及聚合结果容器。
-     * 输出：无直接返回值，片段会追加到 segments 列表中。
-     * 流程：
-     *  1) 若节点为文本则直接采集；
-     *  2) 若为数组则顺序遍历递归子节点；
-     *  3) 若为对象则按 text/content/segments/message(s) 顺序递归处理；
-     * 错误处理：忽略空节点及非文本字段，避免污染展示结果。
-     */
-    private void collectTextSegments(JsonNode node, List<String> segments) {
-        if (node == null || node.isMissingNode() || node.isNull()) {
-            return;
-        }
-        if (node.isTextual()) {
-            String text = node.asText();
-            if (!text.isEmpty()) {
-                segments.add(text);
-            }
-            return;
-        }
-        if (node.isArray()) {
-            for (JsonNode child : node) {
-                collectTextSegments(child, segments);
-            }
-            return;
-        }
-        if (node.isObject()) {
-            collectTextSegments(node.get("text"), segments);
-            collectTextSegments(node.get("content"), segments);
-            collectTextSegments(node.get("segments"), segments);
-            collectTextSegments(node.get("message"), segments);
-            collectTextSegments(node.get("messages"), segments);
         }
     }
 

@@ -17,6 +17,9 @@ import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
 import com.glancy.backend.llm.stream.SseEventParser;
 import com.glancy.backend.llm.stream.StreamDecoder;
+import com.glancy.backend.llm.stream.doubao.DoubaoContentExtractor;
+import com.glancy.backend.llm.stream.transform.DoubaoContentOnlyTransformer;
+import com.glancy.backend.llm.stream.transform.SsePayloadTransformerRegistry;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
@@ -83,8 +86,12 @@ class WordServiceStreamingErrorTest {
         objectMapper = Jackson2ObjectMapperBuilder.json().build();
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
-        streamDecoder = new DoubaoStreamDecoder(objectMapper);
+        DoubaoContentExtractor contentExtractor = new DoubaoContentExtractor();
+        streamDecoder = new DoubaoStreamDecoder(objectMapper, contentExtractor);
         sseEventParser = new SseEventParser();
+        SsePayloadTransformerRegistry transformerRegistry = new SsePayloadTransformerRegistry(
+            List.of(new DoubaoContentOnlyTransformer(objectMapper, contentExtractor))
+        );
         wordService = new WordService(
             wordSearcher,
             wordRepository,
@@ -96,7 +103,8 @@ class WordServiceStreamingErrorTest {
             objectMapper,
             wordPersistenceCoordinator,
             streamDecoder,
-            sseEventParser
+            sseEventParser,
+            transformerRegistry
         );
     }
 
