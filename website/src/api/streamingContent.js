@@ -39,6 +39,13 @@ export function collectContentSegments(value) {
     if (typeof value.content === "string") {
       resolved.push(value.content);
     }
+    if (
+      value.content &&
+      typeof value.content === "object" &&
+      !Array.isArray(value.content)
+    ) {
+      resolved.push(...collectContentSegments(value.content));
+    }
     if (Array.isArray(value.content)) {
       resolved.push(
         ...value.content.flatMap((item) => collectContentSegments(item)),
