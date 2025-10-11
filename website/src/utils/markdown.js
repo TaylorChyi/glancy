@@ -4,7 +4,8 @@ const WHITESPACE_RE = /\s/;
 
 const NEWLINE_NORMALIZER = /\r\n?|\u2028|\u2029/g;
 const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
-const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;
+const LIST_MARKER_WITHOUT_GAP =
+  /^([ \t]*)([-*+]|(?:\d+[.)]))(?=\S)/gm;
 const HEADING_WITHOUT_PADDING = /([^\n])\n(#{1,6}\s)/g;
 const HEADING_STUCK_TO_PREVIOUS = /([^\n\s])((?:#{1,6})(?=\S))/g;
 const BROKEN_HEADING_LINE_PATTERN = /^(#{1,6})(?:[ \t]*)\n([ \t]*)(\S[^\n]*)$/gm;
@@ -579,10 +580,37 @@ function separateHeadingInlineLabels(text) {
   );
 }
 
+// 背景：
+//  - Markdown 中 `---`、`***` 等水平线结构与无序列表前缀相同，需避免被插入空格破坏语义。
+// 目的：
+//  - 在补齐列表标记空格前识别出水平线，保持协议格式不变。
+// 影响范围：
+//  - polishDictionaryMarkdown 的 ensureListSpacing 步骤。
+function isHorizontalRule(line) {
+  return /^[ \t]*([-*+])\1{2,}[ \t]*$/.test(line);
+}
+
 function ensureListSpacing(text) {
   return text.replace(
     LIST_MARKER_WITHOUT_GAP,
-    (_, marker, rest) => `${marker} ${rest}`,
+    (match, leading, marker, offset, source) => {
+      const nextChar = source[offset + match.length];
+      if (marker.length === 1 && nextChar === marker) {
+        // 说明：`**Heading**`、`++` 等成对符号不是列表项，保持原样避免插入多余空格。
+        return match;
+      }
+      // 说明：通过行片段判断当前匹配是否来自水平分隔符，若是则直接返回原文本。
+      const lineStart = source.lastIndexOf("\n", offset) + 1;
+      const lineEnd = source.indexOf("\n", offset);
+      const line = source.slice(
+        lineStart,
+        lineEnd === -1 ? source.length : lineEnd,
+      );
+      if (isHorizontalRule(line)) {
+        return match;
+      }
+      return `${leading}${marker} `;
+    },
   );
 }
 

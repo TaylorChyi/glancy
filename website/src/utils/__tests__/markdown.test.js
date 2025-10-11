@@ -17,6 +17,23 @@ describe("polishDictionaryMarkdown", () => {
     expect(polishDictionaryMarkdown(input)).toBe("1. 第一条\n2) 第二条");
   });
 
+  /**
+   * 测试目标：无序列表标记紧贴正文时自动补足空格，同时保持水平分隔线格式不变。
+   * 前置条件：输入包含以 `-`、`*`、`+` 开头的无序列表项以及 `---` 水平线。
+   * 步骤：
+   *  1) 调用 polishDictionaryMarkdown 处理构造的 Markdown 文本。
+   *  2) 读取格式化后的输出。
+   * 断言：
+   *  - 无序列表项补齐单个空格；水平线 `---` 不发生变化。
+   * 边界/异常：
+   *  - 覆盖不同无序列表前缀，确保后续改动不会破坏通用处理。
+   */
+  test("ensures unordered list markers preserve spacing", () => {
+    const input = ["-第一条", "*第二条", "+第三条", "---"].join("\n");
+    const expected = ["- 第一条", "* 第二条", "+ 第三条", "---"].join("\n");
+    expect(polishDictionaryMarkdown(input)).toBe(expected);
+  });
+
   test("pulls inline headings onto dedicated lines", () => {
     const input = "词条: word##释义";
     expect(polishDictionaryMarkdown(input)).toBe("词条: word\n\n## 释义");
