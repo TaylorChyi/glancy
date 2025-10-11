@@ -35,6 +35,56 @@ class DoubaoStreamDecoderTest {
     }
 
     /**
+     * 测试目标：验证 content 作为数组返回时会逐项拼接文本并保留换行与前导空格。
+     * 前置条件：构造 Doubao delta.messages[0].content 为数组的事件。
+     * 步骤：
+     *  1) 推送单次 SSE 数据块，内部含有两个 text 元素，分别带有前导空格与换行转义；
+     *  2) 订阅输出并消费单个片段；
+     * 断言：
+     *  - 输出字符串与原始 text 字段一致（包含换行与空格）；
+     * 边界/异常：
+     *  - 无额外异常路径，重点覆盖数组结构解析。
+     */
+    @Test
+    void decodeContentArrayPreservesFormatting() {
+        String body = """
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"content":[{"type":"text","text":" Leading"},{"type":"text","text":"\\nSpace"}]}]}}]}
+
+            event: end
+            data: {"code":0}
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(body))).expectNext(" Leading\nSpace").verifyComplete();
+    }
+
+    /**
+     * 测试目标：验证当 content 缺失时能够回退至 message 根节点 text 字段且不做 trim。
+     * 前置条件：构造 Doubao 消息仅包含 text 字段的事件。
+     * 步骤：
+     *  1) 推送单次 SSE 数据块，其中 message 对象直接携带 text；
+     *  2) 订阅输出消费片段；
+     * 断言：
+     *  - 输出字符串保持首尾空格，与 text 原样一致；
+     * 边界/异常：
+     *  - 兜底逻辑覆盖 message 根级字段。
+     */
+    @Test
+    void decodeFallbackToMessageTextWithoutTrimming() {
+        String body = """
+            event: message
+            data: {"choices":[{"delta":{"messages":[{"text":"  raw text  "}]}}]}
+
+            event: end
+            data: {"code":0}
+
+            """;
+
+        StepVerifier.create(decoder.decode(Flux.just(body))).expectNext("  raw text  ").verifyComplete();
+    }
+
+    /**
      * 测试目标：验证解码后仍能保留跨 chunk 的前导空格，避免 Markdown 字段被粘连。
      * 前置条件：构造包含前导空格的 Doubao message 事件序列。
      * 步骤：
