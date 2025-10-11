@@ -216,7 +216,8 @@ public class UserService {
         User user;
         switch (type) {
             case EMAIL:
-                identifier = account;
+                // 邮箱登录需归一化大小写与空白，避免注册时写入的小写邮箱与用户输入的混合大小写不匹配。
+                identifier = normalizeEmail(account);
                 final String email = identifier;
                 user = userRepository
                     .findByEmailAndDeletedFalse(email)
