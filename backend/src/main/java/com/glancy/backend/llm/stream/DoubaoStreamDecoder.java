@@ -132,10 +132,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             JsonNode choice = node.path("choices").path(0);
             state.inspectChoice(choice);
             JsonNode delta = choice.path("delta");
-            String content = delta.path("messages").path(0).path("content").asText();
-            if (content.isEmpty()) {
-                content = delta.path("content").asText();
-            }
+            String content = extractContent(delta);
             if (content.isEmpty()) {
                 state.incrementEmptyPayload();
                 log.warn("Message event missing content: {}", SensitiveDataUtil.previewText(json));
@@ -156,6 +153,69 @@ public class DoubaoStreamDecoder implements StreamDecoder {
             log.warn("Failed to decode message event, raw={}", SensitiveDataUtil.previewText(json), e);
             return Flux.empty();
         }
+    }
+
+    /**
+     * 意图：
+     *  - 从 Doubao delta 结构中提取逐帧文本，保持原始格式与转义不变。
+     * 输入：
+     *  - delta：单个 Doubao message 事件中的 "delta" 节点。
+     * 输出：
+     *  - 精确的文本片段；若不存在文本则返回空字符串。
+     * 流程：
+     *  1) 优先解析 messages[0].content，兼容字符串与数组结构；
+     *  2) 当 content 为空时兜底读取顶层 delta.content；
+     * 错误处理：
+     *  - 不抛异常，仅返回空串，由上层统一计入 empty payload；
+     * 复杂度：
+     *  - 线性遍历 content 数组，按元素数量 O(n)。
+     */
+    private String extractContent(JsonNode delta) {
+        if (delta == null || delta.isMissingNode() || delta.isNull()) {
+            return "";
+        }
+        JsonNode messages = delta.path("messages");
+        String content = extractFromContentNode(messages);
+        if (!content.isEmpty()) {
+            return content;
+        }
+        return extractFromValueNode(delta.path("content"));
+    }
+
+    private String extractFromContentNode(JsonNode messagesNode) {
+        if (!messagesNode.isArray() || messagesNode.isEmpty()) {
+            return "";
+        }
+        JsonNode firstMessage = messagesNode.get(0);
+        String content = extractFromValueNode(firstMessage.path("content"));
+        if (!content.isEmpty()) {
+            return content;
+        }
+        return extractFromValueNode(firstMessage);
+    }
+
+    private String extractFromValueNode(JsonNode node) {
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return "";
+        }
+        if (node.isTextual()) {
+            return node.textValue();
+        }
+        if (node.isArray()) {
+            StringBuilder builder = new StringBuilder();
+            for (JsonNode element : node) {
+                String chunk = extractFromValueNode(element);
+                if (!chunk.isEmpty()) {
+                    builder.append(chunk);
+                }
+            }
+            return builder.toString();
+        }
+        JsonNode textField = node.get("text");
+        if (textField != null && textField.isTextual()) {
+            return textField.textValue();
+        }
+        return "";
     }
 
     private Flux<String> handleError(String json, StreamState state) {
