@@ -28,7 +28,7 @@ public final class HttpStatusAwareErrorMessageResolver {
 
     public static HttpStatusAwareErrorMessageResolver defaultResolver() {
         return new HttpStatusAwareErrorMessageResolver(
-            List.of(new ServerErrorMessageStrategy(), new PassthroughMessageStrategy())
+            List.of(new BadGatewayMessageStrategy(), new ServerErrorMessageStrategy(), new PassthroughMessageStrategy())
         );
     }
 
@@ -72,6 +72,33 @@ public final class HttpStatusAwareErrorMessageResolver {
         @Override
         public String toPublicMessage(String originalMessage) {
             return Objects.requireNonNullElse(originalMessage, "");
+        }
+    }
+
+    /**
+     * 背景：
+     *  - 502 错误通常代表上游依赖中断，直接返回泛化提示无法让终端用户理解具体处置方式。
+     * 目的：
+     *  - 通过专门策略对 502 文案进行再包装，明确提示正在恢复并给出下一步建议。
+     * 关键决策与取舍：
+     *  - 采用策略模式的可插拔特性，在不修改其他分支的前提下新增 BadGateway 文案处理，保持拓展性。
+     * 影响范围：
+     *  - 所有以 502 结束的响应都会展示统一的对外提示，避免回退到 Nginx 默认页。
+     * 演进与TODO：
+     *  - 若后续需要 A/B 测试不同提示语，可在此处引入配置或特性开关实现动态切换。
+     */
+    static final class BadGatewayMessageStrategy implements ErrorMessageStrategy {
+
+        private static final String FRIENDLY_MESSAGE = "中转服务短暂不可达，我们正在自动重试，请稍后再试";
+
+        @Override
+        public boolean supports(HttpStatus status) {
+            return status == HttpStatus.BAD_GATEWAY;
+        }
+
+        @Override
+        public String toPublicMessage(String originalMessage) {
+            return FRIENDLY_MESSAGE;
         }
     }
 }
