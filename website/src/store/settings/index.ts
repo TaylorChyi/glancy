@@ -30,12 +30,21 @@ type DictionaryTargetLanguage = "CHINESE" | "ENGLISH";
 const MARKDOWN_RENDERING_MODE_DYNAMIC = "dynamic" as const;
 const MARKDOWN_RENDERING_MODE_PLAIN = "plain" as const;
 
+const CHAT_COMPLETION_MODE_STREAMING = "stream" as const;
+const CHAT_COMPLETION_MODE_SYNC = "sync" as const;
+
 const MARKDOWN_RENDERING_MODES = Object.freeze([
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
 ] as const);
 
+const CHAT_COMPLETION_MODES = Object.freeze([
+  CHAT_COMPLETION_MODE_STREAMING,
+  CHAT_COMPLETION_MODE_SYNC,
+] as const);
+
 type MarkdownRenderingMode = (typeof MARKDOWN_RENDERING_MODES)[number];
+type ChatCompletionMode = (typeof CHAT_COMPLETION_MODES)[number];
 
 type SettingsState = {
   systemLanguage: SystemLanguage;
@@ -46,6 +55,8 @@ type SettingsState = {
   setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => void;
   markdownRenderingMode: MarkdownRenderingMode;
   setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => void;
+  chatCompletionMode: ChatCompletionMode;
+  setChatCompletionMode: (mode: ChatCompletionMode) => void;
   /**
    * @deprecated 请改用 setDictionarySourceLanguage / setDictionaryTargetLanguage
    */
@@ -121,6 +132,27 @@ function normalizeMarkdownRenderingMode(
   return MARKDOWN_RENDERING_MODE_DYNAMIC;
 }
 
+/**
+ * 意图：规范化聊天输出模式，确保仅暴露流式或同步两种选项。
+ * 输入：候选模式字符串，可来源于持久化或外部注入。
+ * 输出：合法模式值，未知输入回退到流式模式。
+ * 流程：
+ *  1) 判断输入是否为字符串。
+ *  2) 统一转为小写并校验是否属于受支持集合。
+ *  3) 失败时返回流式作为默认体验。
+ * 错误处理：不抛异常，统一回退流式模式。
+ * 复杂度：O(1)。
+ */
+function normalizeChatCompletionMode(candidate: unknown): ChatCompletionMode {
+  if (typeof candidate === "string") {
+    const normalized = candidate.toLowerCase();
+    if (CHAT_COMPLETION_MODES.includes(normalized as ChatCompletionMode)) {
+      return normalized as ChatCompletionMode;
+    }
+  }
+  return CHAT_COMPLETION_MODE_STREAMING;
+}
+
 export const useSettingsStore = createPersistentStore<SettingsState>({
   key: SETTINGS_STORAGE_KEY,
   initializer: (set, get) => ({
@@ -128,6 +160,7 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
     dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
     dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
     markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
+    chatCompletionMode: CHAT_COMPLETION_MODE_STREAMING,
     setSystemLanguage: (language: SystemLanguage) => {
       const normalized = sanitizeLanguage(language);
       const current = get().systemLanguage;
@@ -165,6 +198,15 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
         return { markdownRenderingMode: normalized };
       });
     },
+    setChatCompletionMode: (mode: ChatCompletionMode) => {
+      const normalized = normalizeChatCompletionMode(mode);
+      set((state) => {
+        if (state.chatCompletionMode === normalized) {
+          return {};
+        }
+        return { chatCompletionMode: normalized };
+      });
+    },
     setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
       const normalized = normalizeWordLanguage(language);
       set(() => {
@@ -200,6 +242,7 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       "dictionarySourceLanguage",
       "dictionaryTargetLanguage",
       "markdownRenderingMode",
+      "chatCompletionMode",
     ]),
     onRehydrateStorage: () => (state) => {
       if (state) {
@@ -236,6 +279,9 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
           (state as unknown as { markdownRenderingMode?: string })
             .markdownRenderingMode,
         );
+        state.chatCompletionMode = normalizeChatCompletionMode(
+          (state as unknown as { chatCompletionMode?: string }).chatCompletionMode,
+        );
 
         if (legacyLanguage && !hasPersistedSource && !hasPersistedTarget) {
           switch (legacyLanguage) {
@@ -270,4 +316,7 @@ export {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
   MARKDOWN_RENDERING_MODES,
+  CHAT_COMPLETION_MODE_STREAMING,
+  CHAT_COMPLETION_MODE_SYNC,
+  CHAT_COMPLETION_MODES,
 };

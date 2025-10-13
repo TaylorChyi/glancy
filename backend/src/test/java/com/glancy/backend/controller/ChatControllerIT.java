@@ -43,6 +43,11 @@ class ChatControllerIT {
                 }
 
                 @Override
+                public String chat(List<ChatMessage> messages, double temperature) {
+                    return "final-response";
+                }
+
+                @Override
                 public String name() {
                     return "stub";
                 }
@@ -79,5 +84,28 @@ class ChatControllerIT {
         org.junit.jupiter.api.Assertions.assertNotNull(chunks);
         org.junit.jupiter.api.Assertions.assertEquals(50, chunks.size());
         org.junit.jupiter.api.Assertions.assertEquals("chunk-49", chunks.get(49));
+    }
+
+    /**
+     * 验证 Accept: application/json 时返回聚合文本并保持 200 状态。
+     */
+    @Test
+    void chatSyncShouldReturnAggregatedResponse() {
+        ChatRequest req = new ChatRequest();
+        req.setModel("stub");
+        req.setMessages(List.of(new ChatMessage("user", "hi")));
+
+        webTestClient
+            .post()
+            .uri("/api/chat")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(req)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectBody()
+            .jsonPath("$.content")
+            .isEqualTo("final-response");
     }
 }

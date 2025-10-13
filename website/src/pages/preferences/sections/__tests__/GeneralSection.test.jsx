@@ -6,10 +6,12 @@ import userEvent from "@testing-library/user-event";
 const mockSetTheme = jest.fn();
 const mockSetSystemLanguage = jest.fn();
 const mockSetMarkdownRenderingMode = jest.fn();
+const mockSetChatCompletionMode = jest.fn();
 const themeState = { theme: "light" };
 const languageState = { value: "auto" };
 const settingsState = {
   markdownRenderingMode: "dynamic",
+  chatCompletionMode: "stream",
 };
 
 const createTranslations = () => ({
@@ -26,6 +28,9 @@ const createTranslations = () => ({
   settingsGeneralMarkdownLabel: "Markdown rendering",
   settingsGeneralMarkdownDynamic: "Render dynamically",
   settingsGeneralMarkdownPlain: "Show raw text",
+  settingsGeneralChatOutputLabel: "Chat response",
+  settingsGeneralChatOutputStream: "Stream responses",
+  settingsGeneralChatOutputSync: "Send when ready",
 });
 
 jest.unstable_mockModule("@/context", () => ({
@@ -41,10 +46,13 @@ jest.unstable_mockModule("@/store/settings", () => ({
   SUPPORTED_SYSTEM_LANGUAGES: ["en", "zh"],
   MARKDOWN_RENDERING_MODE_DYNAMIC: "dynamic",
   MARKDOWN_RENDERING_MODE_PLAIN: "plain",
+  CHAT_COMPLETION_MODE_STREAMING: "stream",
+  CHAT_COMPLETION_MODE_SYNC: "sync",
   useSettingsStore: (selector) =>
     selector({
       ...settingsState,
       setMarkdownRenderingMode: mockSetMarkdownRenderingMode,
+      setChatCompletionMode: mockSetChatCompletionMode,
     }),
 }));
 
@@ -60,7 +68,9 @@ beforeEach(() => {
   themeState.theme = "light";
   languageState.value = "auto";
   settingsState.markdownRenderingMode = "dynamic";
+  settingsState.chatCompletionMode = "stream";
   mockSetMarkdownRenderingMode.mockClear();
+  mockSetChatCompletionMode.mockClear();
 });
 
 /**
@@ -90,6 +100,9 @@ test("Given initial preferences When rendered Then current selection highlighted
   expect(languageTrigger).toHaveTextContent(/Match device language/i);
   expect(
     screen.getByRole("radio", { name: "Render dynamically" }),
+  ).toHaveAttribute("aria-checked", "true");
+  expect(
+    screen.getByRole("radio", { name: "Stream responses" }),
   ).toHaveAttribute("aria-checked", "true");
 });
 
@@ -163,4 +176,27 @@ test("Given markdown toggle When selecting plain mode Then preference updated", 
 
   expect(mockSetMarkdownRenderingMode).toHaveBeenCalledTimes(1);
   expect(mockSetMarkdownRenderingMode).toHaveBeenCalledWith("plain");
+});
+
+/**
+ * 测试目标：切换聊天输出模式时调用 setChatCompletionMode。
+ * 前置条件：初始模式为流式。
+ * 步骤：
+ *  1) 渲染组件。
+ *  2) 点击 "Send when ready" 选项。
+ * 断言：
+ *  - setChatCompletionMode 收到 "sync"。
+ * 边界/异常：
+ *  - 重复选择当前值不触发调用。
+ */
+test("Given chat output toggle When selecting sync Then preference updated", async () => {
+  const user = userEvent.setup();
+  render(
+    <GeneralSection title="General" headingId="general-section-heading" />,
+  );
+
+  await user.click(screen.getByRole("radio", { name: "Send when ready" }));
+
+  expect(mockSetChatCompletionMode).toHaveBeenCalledTimes(1);
+  expect(mockSetChatCompletionMode).toHaveBeenCalledWith("sync");
 });
