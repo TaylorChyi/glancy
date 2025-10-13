@@ -16,6 +16,14 @@ import styles from "./SegmentedControl.module.css";
 
 const joinClassNames = (...tokens) => tokens.filter(Boolean).join(" ");
 
+const segmentedControlClasses = {
+  group: styles.group,
+  wrap: styles["group-wrap"],
+  option: styles.option,
+  activeOption: styles["option-active"],
+  disabledOption: styles["option-disabled"],
+};
+
 function SegmentedControl({
   value,
   options,
@@ -29,8 +37,8 @@ function SegmentedControl({
   id,
 }) {
   const groupClassName = joinClassNames(
-    styles.group,
-    wrap ? styles.groupWrap : "",
+    segmentedControlClasses.group,
+    wrap ? segmentedControlClasses.wrap : "",
     className,
   );
 
@@ -70,9 +78,9 @@ function SegmentedControl({
         const isActive = Object.is(optionValue, value);
         const isDisabled = disabled || Boolean(optionDisabled);
         const buttonClassName = joinClassNames(
-          styles.option,
-          isActive ? styles.optionActive : "",
-          isDisabled ? styles.optionDisabled : "",
+          segmentedControlClasses.option,
+          isActive ? segmentedControlClasses.activeOption : "",
+          isDisabled ? segmentedControlClasses.disabledOption : "",
           optionClassName,
         );
         return (
