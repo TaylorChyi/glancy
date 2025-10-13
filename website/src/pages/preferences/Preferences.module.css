@@ -582,6 +582,7 @@
 .field-control-textarea {
   cursor: text;
   caret-color: var(--preferences-panel-text);
+
   /*
    * 背景：响应风格面板需与全局 textarea 行为一致，避免用户拉伸导致布局断裂。
    * 取舍：禁用浏览器 resize，将高度交由组件逻辑控制，维持排版稳定。
