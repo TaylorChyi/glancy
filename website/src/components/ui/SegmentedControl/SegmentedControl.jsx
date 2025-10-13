@@ -11,28 +11,10 @@
  *  - TODO: 后续可扩展 density/size 等属性，以适配更复杂的布局需求。
  */
 import PropTypes from "prop-types";
+import segmentedOptionShape from "./segmentedOptionShape.js";
 import styles from "./SegmentedControl.module.css";
 
 const joinClassNames = (...tokens) => tokens.filter(Boolean).join(" ");
-
-const segmentedOptionShape = PropTypes.shape({
-  id: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-    PropTypes.bool,
-  ]),
-  value: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-    PropTypes.bool,
-    PropTypes.object,
-  ]).isRequired,
-  label: PropTypes.node.isRequired,
-  ariaLabel: PropTypes.string,
-  ariaDescribedby: PropTypes.string,
-  disabled: PropTypes.bool,
-  className: PropTypes.string,
-});
 
 function SegmentedControl({
   value,
@@ -145,4 +127,3 @@ SegmentedControl.defaultProps = {
 };
 
 export default SegmentedControl;
-export { segmentedOptionShape };
