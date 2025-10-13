@@ -357,61 +357,6 @@
   line-height: 1.6;
 }
 
-.segments {
-  display: inline-flex;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 16px;
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 82%,
-    transparent
-  );
-}
-
-.segment {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 96px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--preferences-panel-muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.segment:hover {
-  transform: translateY(-1px);
-}
-
-.segment:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
-}
-
-.segment-active {
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 96%,
-    transparent
-  );
-  color: var(--preferences-panel-text);
-  transform: translateY(-1px);
-}
-
-.segment-active:focus-visible {
-  transform: translateY(-1px);
-}
-
 :where(.language-shell, .field-shell) {
   display: block;
   width: 100%;
@@ -1359,10 +1304,6 @@
 
   .controls {
     gap: var(--space-4);
-  }
-
-  .segments {
-    flex-wrap: wrap;
   }
 
   .detail-row {

@@ -19,6 +19,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useLanguage, useUser } from "@/context";
 import LanguageMenu from "@/components/ui/LanguageMenu";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 // 避免经由 store/index 桶状导出的路径，确保页面依赖在打包拆分时保持拓扑稳定
 // 并为后续按需加载各 store 留出空间。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
@@ -164,11 +165,21 @@ function DataSection({ title, message, headingId, descriptionId }) {
     () =>
       DATA_RETENTION_POLICIES.map((policy) => ({
         ...policy,
+        id: policy.id,
+        value: policy.id,
         label:
           t[`settingsDataRetentionOption_${policy.id}`] ||
           `${policy.days ?? "∞"} days`,
       })),
     [t],
+  );
+
+  const historyToggleOptions = useMemo(
+    () => [
+      { id: "history-on", value: true, label: toggleOnLabel },
+      { id: "history-off", value: false, label: toggleOffLabel },
+    ],
+    [toggleOffLabel, toggleOnLabel],
   );
 
   const languageOptions = useMemo(
@@ -313,36 +324,12 @@ function DataSection({ title, message, headingId, descriptionId }) {
             {toggleLabel}
           </legend>
           <p className={styles.description}>{toggleDescription}</p>
-          <div
-            role="radiogroup"
-            aria-labelledby={toggleFieldId}
-            className={styles.segments}
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={historyCaptureEnabled}
-              className={composeClassName(
-                styles.segment,
-                historyCaptureEnabled ? styles["segment-active"] : "",
-              )}
-              onClick={() => handleToggleHistory(true)}
-            >
-              {toggleOnLabel}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!historyCaptureEnabled}
-              className={composeClassName(
-                styles.segment,
-                !historyCaptureEnabled ? styles["segment-active"] : "",
-              )}
-              onClick={() => handleToggleHistory(false)}
-            >
-              {toggleOffLabel}
-            </button>
-          </div>
+          <SegmentedControl
+            labelledBy={toggleFieldId}
+            options={historyToggleOptions}
+            value={historyCaptureEnabled}
+            onChange={handleToggleHistory}
+          />
         </fieldset>
         <fieldset
           className={styles["control-field"]}
@@ -352,31 +339,13 @@ function DataSection({ title, message, headingId, descriptionId }) {
             {retentionLabel}
           </legend>
           <p className={styles.description}>{retentionDescription}</p>
-          <div
-            role="radiogroup"
-            aria-labelledby={retentionFieldId}
-            className={styles.segments}
-          >
-            {retentionOptions.map((option) => {
-              const active = retentionPolicyId === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={composeClassName(
-                    styles.segment,
-                    active ? styles["segment-active"] : "",
-                  )}
-                  onClick={() => handleRetentionSelect(option.id)}
-                  disabled={isActionPending("retention")}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            labelledBy={retentionFieldId}
+            options={retentionOptions}
+            value={retentionPolicyId}
+            onChange={handleRetentionSelect}
+            disabled={isActionPending("retention")}
+          />
         </fieldset>
         <div className={styles["control-field"]}>
           <label htmlFor={languageFieldId} className={styles["control-label"]}>

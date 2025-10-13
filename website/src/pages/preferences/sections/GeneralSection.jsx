@@ -24,6 +24,7 @@ import {
   useSettingsStore,
 } from "@/store/settings";
 import LanguageMenu from "@/components/ui/LanguageMenu";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import styles from "../Preferences.module.css";
 
 const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
@@ -207,30 +208,12 @@ function GeneralSection({ title, headingId }) {
           <legend id={themeFieldId} className={styles["control-label"]}>
             {themeLabel}
           </legend>
-          <div
-            role="radiogroup"
-            aria-labelledby={themeFieldId}
-            className={styles.segments}
-          >
-            {themeOptions.map((option) => {
-              const active = theme === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={composeClassName(
-                    styles.segment,
-                    active ? styles["segment-active"] : "",
-                  )}
-                  onClick={() => handleThemeSelect(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            labelledBy={themeFieldId}
+            options={themeOptions}
+            value={theme}
+            onChange={handleThemeSelect}
+          />
         </fieldset>
         <div className={styles["control-field"]}>
           <label htmlFor={languageSelectId} className={styles["control-label"]}>
@@ -256,30 +239,12 @@ function GeneralSection({ title, headingId }) {
           <legend id={markdownFieldId} className={styles["control-label"]}>
             {markdownLabel}
           </legend>
-          <div
-            role="radiogroup"
-            aria-labelledby={markdownFieldId}
-            className={styles.segments}
-          >
-            {markdownOptions.map((option) => {
-              const active = markdownRenderingMode === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={composeClassName(
-                    styles.segment,
-                    active ? styles["segment-active"] : "",
-                  )}
-                  onClick={() => handleMarkdownModeSelect(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            labelledBy={markdownFieldId}
+            options={markdownOptions}
+            value={markdownRenderingMode}
+            onChange={handleMarkdownModeSelect}
+          />
         </fieldset>
         <fieldset
           className={styles["control-field"]}
@@ -288,30 +253,12 @@ function GeneralSection({ title, headingId }) {
           <legend id={chatCompletionFieldId} className={styles["control-label"]}>
             {chatCompletionLabel}
           </legend>
-          <div
-            role="radiogroup"
-            aria-labelledby={chatCompletionFieldId}
-            className={styles.segments}
-          >
-            {chatCompletionOptions.map((option) => {
-              const active = chatCompletionMode === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={composeClassName(
-                    styles.segment,
-                    active ? styles["segment-active"] : "",
-                  )}
-                  onClick={() => handleChatCompletionModeSelect(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            labelledBy={chatCompletionFieldId}
+            options={chatCompletionOptions}
+            value={chatCompletionMode}
+            onChange={handleChatCompletionModeSelect}
+          />
         </fieldset>
       </div>
     </section>
