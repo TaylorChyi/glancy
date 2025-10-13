@@ -1,12 +1,11 @@
 package com.glancy.backend.controller;
 
-import java.util.List;
-
 import com.glancy.backend.dto.ChatRequest;
 import com.glancy.backend.dto.ChatResponse;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -48,27 +47,15 @@ public class ChatController {
     @PostMapping(value = "/api/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chat(@RequestBody ChatRequest request) {
         return withClient(request, context -> {
-            log.info(
-                "SSE chat start: model={}, messages={}",
-                context.client().name(),
-                context.messageCount()
-            );
+            log.info("SSE chat start: model={}, messages={}", context.client().name(), context.messageCount());
             return context
                 .client()
                 .streamChat(context.messages(), context.temperature())
                 .map(data -> ServerSentEvent.builder(data).build())
-                .doOnCancel(() ->
-                    log.info("SSE connection cancelled: model={}", context.client().name())
-                )
+                .doOnCancel(() -> log.info("SSE connection cancelled: model={}", context.client().name()))
                 .onErrorResume(ex -> {
                     log.error("SSE streaming failed: model={}", context.client().name(), ex);
-                    return Flux
-                        .just(
-                            ServerSentEvent
-                                .builder("[ERROR] stream terminated")
-                                .event("error")
-                                .build()
-                        );
+                    return Flux.just(ServerSentEvent.builder("[ERROR] stream terminated").event("error").build());
                 })
                 .doFinally(signal -> log.info("SSE stream terminated: {}", signal));
         });
@@ -81,22 +68,11 @@ public class ChatController {
     )
     public ChatResponse chatSync(@RequestBody ChatRequest request) {
         return withClient(request, context -> {
-                log.info(
-                    "Sync chat start: model={}, messages={}",
-                    context.client().name(),
-                    context.messageCount()
-                );
-                String content = context
-                    .client()
-                    .chat(context.messages(), context.temperature());
-                log.info(
-                    "Sync chat completed: model={}, length={}",
-                    context.client().name(),
-                    content.length()
-                );
-                return new ChatResponse(content);
-            }
-        );
+            log.info("Sync chat start: model={}, messages={}", context.client().name(), context.messageCount());
+            String content = context.client().chat(context.messages(), context.temperature());
+            log.info("Sync chat completed: model={}, length={}", context.client().name(), content.length());
+            return new ChatResponse(content);
+        });
     }
 
     private <T> T withClient(ChatRequest request, ChatSessionHandler<T> handler) {
@@ -104,14 +80,8 @@ public class ChatController {
         if (client == null) {
             throw new IllegalArgumentException("Unknown model: " + request.getModel());
         }
-        List<ChatMessage> messages = request.getMessages() == null
-            ? List.of()
-            : request.getMessages();
-        ChatSessionContext context = new ChatSessionContext(
-            client,
-            messages,
-            request.getTemperature()
-        );
+        List<ChatMessage> messages = request.getMessages() == null ? List.of() : request.getMessages();
+        ChatSessionContext context = new ChatSessionContext(client, messages, request.getTemperature());
         return handler.handle(context);
     }
 
