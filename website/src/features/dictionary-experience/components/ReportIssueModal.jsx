@@ -2,6 +2,7 @@ import { useCallback, useMemo, useId } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "@/components/modals/BaseModal.jsx";
 import { SettingsSurface } from "@/components";
+import SegmentedControl from "@/components/ui/SegmentedControl";
 import { useLanguage } from "@/context";
 import styles from "./ReportIssueModal.module.css";
 
@@ -33,6 +34,7 @@ function ReportIssueModal({
 }) {
   const { t } = useLanguage();
   const headingId = useId();
+  const legendId = useId();
 
   const handleSubmit = useCallback(
     (event) => {
@@ -43,24 +45,15 @@ function ReportIssueModal({
     [onSubmit, submitting],
   );
 
-  const renderCategoryOption = (option) => {
-    const active = category === option.value;
-    return (
-      <button
-        key={option.value}
-        type="button"
-        role="radio"
-        aria-checked={active}
-        className={[styles.segment, active ? styles["segment-active"] : ""]
-          .filter(Boolean)
-          .join(" ")}
-        onClick={() => onCategoryChange(option.value)}
-        disabled={submitting}
-      >
-        {t[option.labelKey] ?? option.value}
-      </button>
-    );
-  };
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((option) => ({
+        id: option.value,
+        value: option.value,
+        label: t[option.labelKey] ?? option.value,
+      })),
+    [categories, t],
+  );
 
   const languageKey = typeof language === "string" ? language.toUpperCase() : "";
   const flavorKey = typeof flavor === "string" ? flavor.toUpperCase() : "";
@@ -249,12 +242,17 @@ function ReportIssueModal({
           ))}
         </dl>
         <fieldset className={styles.fieldset}>
-          <legend className={styles.legend}>
+          <legend id={legendId} className={styles.legend}>
             {t.reportCategoryLabel ?? "Issue type"}
           </legend>
-          <div role="radiogroup" className={styles["segment-group"]}>
-            {categories.map(renderCategoryOption)}
-          </div>
+          <SegmentedControl
+            labelledBy={legendId}
+            options={categoryOptions}
+            value={category}
+            onChange={onCategoryChange}
+            wrap
+            disabled={submitting}
+          />
         </fieldset>
         <div className={styles.fieldset}>
           <label htmlFor="report-description" className={styles.legend}>
