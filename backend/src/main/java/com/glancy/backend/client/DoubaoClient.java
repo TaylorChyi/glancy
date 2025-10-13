@@ -1,6 +1,9 @@
 package com.glancy.backend.client;
 
 import com.glancy.backend.config.DoubaoProperties;
+import com.glancy.backend.dto.ChatCompletionResponse;
+import com.glancy.backend.exception.BusinessException;
+import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.stream.StreamDecoder;
@@ -9,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * 针对抖宝模型的客户端实现，基于 WebClient 支持流式响应。
@@ -58,30 +63,54 @@ public class DoubaoClient implements LLMClient {
 
     @Override
     public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
-        log.info("DoubaoClient.streamChat called with {} messages, temperature={}", messages.size(), temperature);
+        log.info(
+            "DoubaoClient.streamChat called with {} messages, temperature={}, stream=true",
+            messages.size(),
+            temperature
+        );
 
-        Map<String, Object> body = prepareRequestBody(messages, temperature);
+        Map<String, Object> body = prepareRequestBody(messages, temperature, true);
         log.info("Request body prepared for Doubao API: {}", body);
-        return webClient
-            .post()
-            .uri(chatPath)
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.TEXT_EVENT_STREAM)
-            .headers(h -> {
-                if (apiKey != null && !apiKey.isEmpty()) {
-                    h.setBearerAuth(apiKey);
-                }
-            })
-            .bodyValue(body)
-            .exchangeToFlux(this::handleResponse)
+        return prepareRequest(body, MediaType.TEXT_EVENT_STREAM)
+            .exchangeToFlux(this::handleStreamResponse)
             .transform(decoder::decode);
     }
 
-    private Map<String, Object> prepareRequestBody(List<ChatMessage> messages, double temperature) {
+    /**
+     * 背景：
+     *  - 前端在“完整生成后输出”模式下需要一次性聚合的回复，若仍以 stream=true 请求抖宝 API，会继续收到 SSE 片段。
+     * 目的：
+     *  - 覆盖默认实现以 stream=false 调用上游，使后端直接获得最终文本，避免额外的流式解码与首屏延迟。
+     * 关键取舍：
+     *  - 复用 prepareRequestBody 保持参数一致，同时引入请求级 Accept 头切换；相比新增独立 WebClient，复用当前实例更易维护。
+     */
+    @Override
+    public String chat(List<ChatMessage> messages, double temperature) {
+        log.info(
+            "DoubaoClient.chat called with {} messages, temperature={}, stream=false",
+            messages.size(),
+            temperature
+        );
+        Map<String, Object> body = prepareRequestBody(messages, temperature, false);
+        return prepareRequest(body, MediaType.APPLICATION_JSON)
+            .exchangeToMono(this::handleSyncResponse)
+            .map(this::extractAssistantContent)
+            .doOnNext(content -> log.info("DoubaoClient.chat aggregated response length={}", content.length()))
+            .blockOptional()
+            .orElse("");
+    }
+
+    /**
+     * 意图：根据调用方指定的模式构造抖宝请求体。
+     * 输入：消息列表、温度及是否启用流式响应。
+     * 输出：含 stream 标识的请求参数映射。
+     * 复杂度：O(n)，n 为消息数量。
+     */
+    private Map<String, Object> prepareRequestBody(List<ChatMessage> messages, double temperature, boolean stream) {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("temperature", temperature);
-        body.put("stream", true);
+        body.put("stream", stream);
         body.put("thinking", Map.of("type", "disabled"));
         if (maxCompletionTokens != null && maxCompletionTokens > 0) {
             body.put("max_completion_tokens", maxCompletionTokens);
@@ -97,17 +126,26 @@ public class DoubaoClient implements LLMClient {
         return body;
     }
 
-    private Flux<String> handleResponse(ClientResponse resp) {
+    private WebClient.RequestHeadersSpec<?> prepareRequest(Map<String, Object> body, MediaType acceptType) {
+        return webClient
+            .post()
+            .uri(chatPath)
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(acceptType)
+            .headers(h -> {
+                if (apiKey != null && !apiKey.isEmpty()) {
+                    h.setBearerAuth(apiKey);
+                }
+            })
+            .bodyValue(body);
+    }
+
+    private Flux<String> handleStreamResponse(ClientResponse resp) {
         if (resp.statusCode().is4xxClientError()) {
             if (resp.statusCode().value() == 401) {
-                return Flux.error(new com.glancy.backend.exception.UnauthorizedException("Invalid Doubao API key"));
+                return Flux.error(new UnauthorizedException("Invalid Doubao API key"));
             }
-            return Flux.error(
-                new com.glancy.backend.exception.BusinessException(
-                    "Failed to call Doubao API: " + resp.statusCode(),
-                    null
-                )
-            );
+            return Flux.error(new BusinessException("Failed to call Doubao API: " + resp.statusCode()));
         }
         return resp
             .bodyToFlux(DataBuffer.class)
@@ -117,6 +155,41 @@ public class DoubaoClient implements LLMClient {
                 return raw;
             })
             .doOnNext(raw -> log.info("SSE event [{}]: {}", extractEventType(raw), raw));
+    }
+
+    /**
+     * 意图：处理非流式响应并将其转换为 ChatCompletionResponse。
+     */
+    private Mono<ChatCompletionResponse> handleSyncResponse(ClientResponse resp) {
+        if (resp.statusCode().is4xxClientError()) {
+            if (resp.statusCode().value() == 401) {
+                return Mono.error(new UnauthorizedException("Invalid Doubao API key"));
+            }
+            return Mono.error(new BusinessException("Failed to call Doubao API: " + resp.statusCode()));
+        }
+        if (resp.statusCode().is5xxServerError()) {
+            return Mono.error(new BusinessException("Doubao API returned 5xx: " + resp.statusCode()));
+        }
+        return resp.bodyToMono(ChatCompletionResponse.class);
+    }
+
+    /**
+     * 意图：从抖宝同步响应中提取首个助手消息文本。
+     */
+    private String extractAssistantContent(ChatCompletionResponse response) {
+        if (response == null || response.getChoices() == null) {
+            log.warn("Doubao aggregated response missing choices - returning empty content");
+            return "";
+        }
+        return response
+            .getChoices()
+            .stream()
+            .map(ChatCompletionResponse.Choice::getMessage)
+            .filter(Objects::nonNull)
+            .map(ChatCompletionResponse.Message::getContent)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse("");
     }
 
     private String extractEventType(String raw) {
