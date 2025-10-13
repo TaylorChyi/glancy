@@ -169,3 +169,12 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
+textarea {
+  /*
+   * 背景：各页面的 textarea 默认允许浏览器自由 resize，造成与整体排版节奏不一致，
+   *       且干扰后续在不同布局中维护统一高度。
+   * 取舍：全局禁用 resize，下放具体高度控制给组件自身，确保体验与设计规范统一。
+   */
+  resize: none;
+}
