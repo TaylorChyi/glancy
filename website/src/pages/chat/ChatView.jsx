@@ -1,17 +1,28 @@
 import { useRef, useState } from "react";
 import ChatInput from "@/components/ui/ChatInput";
 import MarkdownRenderer from "@/components/ui/MarkdownRenderer";
-import { streamChatMessage } from "@/api/chat.js";
+import { completeChatMessage, streamChatMessage } from "@/api/chat.js";
 import { DEFAULT_MODEL } from "@/config";
 import { useLanguage } from "@/context";
 import { createAssistantMessageFormatter } from "@/features/chat/createAssistantMessageFormatter.js";
+import {
+  CHAT_COMPLETION_MODE_STREAMING,
+  useSettingsStore,
+} from "@/store/settings";
 import styles from "./ChatView.module.css";
 
-export default function ChatView({ streamFn = streamChatMessage }) {
+export default function ChatView({
+  streamFn = streamChatMessage,
+  completeFn = completeChatMessage,
+}) {
   const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const formatterRef = useRef();
+  const chatCompletionMode = useSettingsStore(
+    (state) => state.chatCompletionMode,
+  );
+  const isStreaming = chatCompletionMode === CHAT_COMPLETION_MODE_STREAMING;
 
   if (!formatterRef.current) {
     formatterRef.current = createAssistantMessageFormatter();
@@ -26,25 +37,38 @@ export default function ChatView({ streamFn = streamChatMessage }) {
     let firstChunk = true;
     const formatter = formatterRef.current;
     formatter.reset();
-    for await (const chunk of streamFn({
-      model: DEFAULT_MODEL,
-      messages: [...messages, userMessage],
-    })) {
-      const formatted = formatter.append(chunk);
-      if (firstChunk) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: formatted },
-        ]);
-        firstChunk = false;
-      } else {
-        setMessages((prev) => {
-          const last = { ...prev.at(-1) };
-          last.content = formatted;
-          return [...prev.slice(0, -1), last];
-        });
+    const history = [...messages, userMessage];
+    if (isStreaming) {
+      for await (const chunk of streamFn({
+        model: DEFAULT_MODEL,
+        messages: history,
+      })) {
+        const formatted = formatter.append(chunk);
+        if (firstChunk) {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: formatted },
+          ]);
+          firstChunk = false;
+        } else {
+          setMessages((prev) => {
+            const last = { ...prev.at(-1) };
+            last.content = formatted;
+            return [...prev.slice(0, -1), last];
+          });
+        }
       }
+      return;
     }
+    const result = await completeFn({
+      model: DEFAULT_MODEL,
+      messages: history,
+    });
+    const formatted = formatter.append(result ?? "");
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: formatted },
+    ]);
   };
 
   const handleVoice = () => {

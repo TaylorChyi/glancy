@@ -55,10 +55,36 @@ export function createChatApi(request = apiRequest) {
       body: { text },
     });
 
-  return { sendChatMessage, streamChatMessage };
+  async function completeChatMessage({
+    model = DEFAULT_MODEL,
+    messages,
+    temperature,
+  }) {
+    const logCtx = { model, messages: messages.length };
+    console.info("[completeChatMessage] start", logCtx);
+    try {
+      const response = await jsonRequest(API_PATHS.chat, {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: { model, messages, temperature },
+      });
+      const content = response?.content ?? "";
+      console.info("[completeChatMessage] end", {
+        ...logCtx,
+        length: content.length,
+      });
+      return content;
+    } catch (error) {
+      console.info("[completeChatMessage] error", { ...logCtx, error });
+      throw error;
+    }
+  }
+
+  return { sendChatMessage, streamChatMessage, completeChatMessage };
 }
 
-export const { sendChatMessage, streamChatMessage } = createChatApi();
+export const { sendChatMessage, streamChatMessage, completeChatMessage } =
+  createChatApi();
 
 export function useChatApi() {
   return useApi().chat;

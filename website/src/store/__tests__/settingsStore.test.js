@@ -2,6 +2,8 @@ import { act } from "@testing-library/react";
 import {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
+  CHAT_COMPLETION_MODE_STREAMING,
+  CHAT_COMPLETION_MODE_SYNC,
   useSettingsStore,
 } from "@/store/settings";
 import { SYSTEM_LANGUAGE_AUTO } from "@/i18n/languages.js";
@@ -24,6 +26,8 @@ describe("settingsStore", () => {
         setDictionaryTargetLanguage: state.setDictionaryTargetLanguage,
         markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
         setMarkdownRenderingMode: state.setMarkdownRenderingMode,
+        chatCompletionMode: CHAT_COMPLETION_MODE_STREAMING,
+        setChatCompletionMode: state.setChatCompletionMode,
         setDictionaryLanguage: state.setDictionaryLanguage,
       },
       true,
@@ -45,6 +49,9 @@ describe("settingsStore", () => {
     );
     expect(useSettingsStore.getState().markdownRenderingMode).toBe(
       MARKDOWN_RENDERING_MODE_DYNAMIC,
+    );
+    expect(useSettingsStore.getState().chatCompletionMode).toBe(
+      CHAT_COMPLETION_MODE_STREAMING,
     );
   });
 
@@ -154,6 +161,28 @@ describe("settingsStore", () => {
     const stored = JSON.parse(localStorage.getItem("settings"));
     expect(stored.state.markdownRenderingMode).toBe(
       MARKDOWN_RENDERING_MODE_DYNAMIC,
+    );
+  });
+
+  /**
+   * 验证聊天输出模式切换可被持久化，非法值回退到流式模式。
+   */
+  test("setChatCompletionMode toggles persisted chat mode", () => {
+    act(() =>
+      useSettingsStore
+        .getState()
+        .setChatCompletionMode(CHAT_COMPLETION_MODE_SYNC),
+    );
+    expect(useSettingsStore.getState().chatCompletionMode).toBe(
+      CHAT_COMPLETION_MODE_SYNC,
+    );
+    act(() => useSettingsStore.getState().setChatCompletionMode("unknown"));
+    expect(useSettingsStore.getState().chatCompletionMode).toBe(
+      CHAT_COMPLETION_MODE_STREAMING,
+    );
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    expect(stored.state.chatCompletionMode).toBe(
+      CHAT_COMPLETION_MODE_STREAMING,
     );
   });
 });
