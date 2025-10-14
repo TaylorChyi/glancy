@@ -52,6 +52,7 @@ test("renders aggregated markdown when sync mode enabled", async () => {
     expect.objectContaining({
       model: expect.any(String),
       messages: expect.any(Array),
+      responseMode: "sync",
     }),
   );
   const strong = await screen.findByText("final");

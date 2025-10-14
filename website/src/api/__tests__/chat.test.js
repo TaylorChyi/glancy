@@ -2,6 +2,12 @@ import { createChatApi } from "@/api/chat.js";
 import { API_PATHS } from "@/config/api.js";
 import { jest } from "@jest/globals";
 
+jest.mock("@/utils", () => ({
+  parseSse: jest.fn(async function* parseSse() {
+    // 空生成器即可满足流式测试对调用参数的断言。
+  }),
+}));
+
 test("sendChatMessage posts to chat endpoint", async () => {
   const request = jest.fn().mockResolvedValue("ok");
   const api = createChatApi(request);
@@ -26,7 +32,36 @@ test("completeChatMessage requests aggregated response", async () => {
     API_PATHS.chat,
     expect.objectContaining({
       headers: expect.objectContaining({ Accept: "application/json" }),
+      body: JSON.stringify(
+        expect.objectContaining({ responseMode: "sync" }),
+      ),
     }),
   );
   expect(result).toBe("done");
+});
+
+test("streamChatMessage annotates response mode", async () => {
+  const request = jest.fn();
+  const api = createChatApi(request);
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({
+    body: { [Symbol.asyncIterator]: async function* asyncGenerator() {} },
+  });
+  try {
+    const iterator = api.streamChatMessage({
+      model: "stub",
+      messages: [{ role: "user", content: "hi" }],
+    });
+    await iterator.next();
+    expect(global.fetch).toHaveBeenCalledWith(
+      API_PATHS.chat,
+      expect.objectContaining({
+        body: JSON.stringify(
+          expect.objectContaining({ responseMode: "stream" }),
+        ),
+      }),
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

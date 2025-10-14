@@ -6,6 +6,7 @@ import com.glancy.backend.llm.llm.LLMClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,6 +27,8 @@ import reactor.core.publisher.Flux;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ChatControllerIT {
 
+    private static final int STREAM_CHUNK_COUNT = 50;
+
     @Autowired
     private WebTestClient webTestClient;
 
@@ -33,13 +36,21 @@ class ChatControllerIT {
     static class StubConfig {
 
         @Bean
+        @org.springframework.context.annotation.Primary
         LLMClientFactory llmClientFactory() {
             LLMClient stub = new LLMClient() {
                 @Override
                 public Flux<String> streamChat(List<ChatMessage> messages, double temperature) {
-                    return Flux.interval(Duration.ofMillis(5))
-                        .map(i -> "chunk-" + i)
-                        .take(50);
+                    // 通过按需生成的 Flux 保证严格遵循下游背压，避免 Interval 推送造成溢出。
+                    return Flux.<String, AtomicLong>generate(AtomicLong::new, (counter, sink) -> {
+                        long index = counter.getAndIncrement();
+                        if (index >= STREAM_CHUNK_COUNT) {
+                            sink.complete();
+                        } else {
+                            sink.next("chunk-" + index);
+                        }
+                        return counter;
+                    }).delayElements(Duration.ofMillis(5));
                 }
 
                 @Override
@@ -57,13 +68,23 @@ class ChatControllerIT {
     }
 
     /**
-     * 长时间流式输出应保持稳定并最终完整关闭连接。
+     * 测试目标：验证流式响应在长时间输出时遵循背压且完整结束。
+     * 前置条件：
+     *  - 使用 stub LLM 在 50 个片段内模拟 SSE 输出。
+     * 步骤：
+     *  1) 通过 WebTestClient 发起 stream 模式请求。
+     *  2) 收集全部事件片段。
+     * 断言：
+     *  - 片段数为 50，且最后一个片段内容正确。
+     * 边界/异常：
+     *  - 验证订阅在背压约束下不会抛出 OverflowException。
      */
     @Test
     void streamChatShouldRemainStableForLongOutput() {
         ChatRequest req = new ChatRequest();
         req.setModel("stub");
         req.setMessages(List.of(new ChatMessage("user", "hello")));
+        req.setResponseMode("stream");
 
         FluxExchangeResult<ServerSentEvent<String>> result = webTestClient
             .post()
@@ -82,18 +103,31 @@ class ChatControllerIT {
             .block(Duration.ofSeconds(10));
 
         org.junit.jupiter.api.Assertions.assertNotNull(chunks);
-        org.junit.jupiter.api.Assertions.assertEquals(50, chunks.size());
-        org.junit.jupiter.api.Assertions.assertEquals("chunk-49", chunks.get(49));
+        org.junit.jupiter.api.Assertions.assertEquals(STREAM_CHUNK_COUNT, chunks.size());
+        org.junit.jupiter.api.Assertions.assertEquals(
+            "chunk-" + (STREAM_CHUNK_COUNT - 1),
+            chunks.get(STREAM_CHUNK_COUNT - 1)
+        );
     }
 
     /**
-     * 验证 Accept: application/json 时返回聚合文本并保持 200 状态。
+     * 测试目标：验证同步模式在显式声明时返回聚合响应体。
+     * 前置条件：
+     *  - 请求头 Accept: application/json。
+     * 步骤：
+     *  1) 构造显式 sync 模式的请求体。
+     *  2) 发起接口调用并读取 JSON 响应。
+     * 断言：
+     *  - 响应状态为 200，且 content 字段等于 final-response。
+     * 边界/异常：
+     *  - 验证不会因 Accept 头导致模式误判。
      */
     @Test
     void chatSyncShouldReturnAggregatedResponse() {
         ChatRequest req = new ChatRequest();
         req.setModel("stub");
         req.setMessages(List.of(new ChatMessage("user", "hi")));
+        req.setResponseMode("sync");
 
         webTestClient
             .post()
@@ -104,6 +138,41 @@ class ChatControllerIT {
             .exchange()
             .expectStatus()
             .isOk()
+            .expectBody()
+            .jsonPath("$.content")
+            .isEqualTo("final-response");
+    }
+
+    /**
+     * 测试目标：验证显式响应模式优先级高于 Accept 头配置。
+     * 前置条件：
+     *  - 请求体声明 responseMode=sync，头部 Accept: text/event-stream。
+     * 步骤：
+     *  1) 构造冲突的模式请求。
+     *  2) 触发接口并检查响应头与内容。
+     * 断言：
+     *  - 响应 Content-Type 仍为 application/json 且内容聚合。
+     * 边界/异常：
+     *  - 防止代理添加 Accept 头时造成模式漂移。
+     */
+    @Test
+    void explicitSyncModeOverridesAcceptHeader() {
+        ChatRequest req = new ChatRequest();
+        req.setModel("stub");
+        req.setMessages(List.of(new ChatMessage("user", "hi")));
+        req.setResponseMode("sync");
+
+        webTestClient
+            .post()
+            .uri("/api/chat")
+            .contentType(MediaType.APPLICATION_JSON)
+            .accept(MediaType.TEXT_EVENT_STREAM)
+            .bodyValue(req)
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectHeader()
+            .contentType(MediaType.APPLICATION_JSON)
             .expectBody()
             .jsonPath("$.content")
             .isEqualTo("final-response");
