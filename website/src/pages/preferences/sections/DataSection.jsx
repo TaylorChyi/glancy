@@ -20,6 +20,7 @@ import PropTypes from "prop-types";
 import { useLanguage, useUser } from "@/context";
 import LanguageMenu from "@/components/ui/LanguageMenu";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import SettingsSection from "@/components/settings/SettingsSection";
 // 避免经由 store/index 桶状导出的路径，确保页面依赖在打包拆分时保持拓扑稳定
 // 并为后续按需加载各 store 留出空间。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
@@ -96,12 +97,11 @@ function DataSection({ title, message, headingId, descriptionId }) {
   const userStore = useUser();
   const user = userStore?.user;
 
-  const fallbackSectionDescriptionId = useId();
   const hasSectionMessage =
     typeof message === "string" && message.trim().length > 0;
-  const sectionDescriptionId = hasSectionMessage
-    ? descriptionId ?? fallbackSectionDescriptionId
-    : undefined;
+  // 使用 Section 插槽承载辅助描述，保持屏幕阅读器上下文一致同时避免破坏视觉布局。
+  const sectionDescription = hasSectionMessage ? message : undefined;
+  const resolvedSectionDescriptionId = hasSectionMessage ? descriptionId : undefined;
 
   const {
     historyCaptureEnabled,
@@ -295,26 +295,19 @@ function DataSection({ title, message, headingId, descriptionId }) {
   const canClearLanguage = selectedLanguage && languageOptions.length > 0;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={sectionDescriptionId}
-      className={composeClassName(styles.section, styles["section-plain"])}
+    <SettingsSection
+      headingId={headingId}
+      title={title}
+      description={sectionDescription}
+      descriptionId={resolvedSectionDescriptionId}
+      classes={{
+        section: composeClassName(styles.section, styles["section-plain"]),
+        header: styles["section-header"],
+        title: styles["section-title"],
+        divider: styles["section-divider"],
+        description: styles["visually-hidden"],
+      }}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
-      {hasSectionMessage ? (
-        // 使用视觉隐藏的描述串联 message，确保屏幕阅读器获得上下文而不干扰视觉布局。
-        <p
-          id={sectionDescriptionId}
-          className={styles["visually-hidden"]}
-        >
-          {message}
-        </p>
-      ) : null}
       <div className={styles.controls}>
         <fieldset
           className={styles["control-field"]}
@@ -408,7 +401,7 @@ function DataSection({ title, message, headingId, descriptionId }) {
           </div>
         </div>
       </div>
-    </section>
+    </SettingsSection>
   );
 }
 

@@ -14,6 +14,7 @@
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import Avatar from "@/components/ui/Avatar";
+import SettingsSection from "@/components/settings/SettingsSection";
 import UsernameEditor from "@/components/Profile/UsernameEditor";
 import usernameEditorStyles from "@/components/Profile/UsernameEditor/UsernameEditor.module.css";
 import {
@@ -239,16 +240,16 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
   ]);
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className={`${styles.section} ${styles["section-plain"]}`}
+    <SettingsSection
+      headingId={headingId}
+      title={title}
+      classes={{
+        section: `${styles.section} ${styles["section-plain"]}`,
+        header: styles["section-header"],
+        title: styles["section-title"],
+        divider: styles["section-divider"],
+      }}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
       <dl className={styles.details}>
         <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
           <dt
@@ -375,7 +376,7 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
           </ul>
         </div>
       ) : null}
-    </section>
+    </SettingsSection>
   );
 }
 

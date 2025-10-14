@@ -15,6 +15,7 @@
 import { useId } from "react";
 import PropTypes from "prop-types";
 import SelectMenu from "@/components/ui/SelectMenu";
+import SettingsSection from "@/components/settings/SettingsSection";
 import styles from "../Preferences.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
@@ -49,6 +50,7 @@ function ResponseStyleSection({
 }) {
   const fallbackDescriptionId = useId();
   const hasMessage = isMeaningful(message);
+  const resolvedDescription = hasMessage ? message : undefined;
   const resolvedDescriptionId = hasMessage
     ? (descriptionId ?? fallbackDescriptionId)
     : undefined;
@@ -116,22 +118,19 @@ function ResponseStyleSection({
   );
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={resolvedDescriptionId}
-      className={composeClassName(styles.section, styles["section-plain"])}
+    <SettingsSection
+      headingId={headingId}
+      title={title}
+      description={resolvedDescription}
+      descriptionId={resolvedDescriptionId}
+      classes={{
+        section: composeClassName(styles.section, styles["section-plain"]),
+        header: styles["section-header"],
+        title: styles["section-title"],
+        divider: styles["section-divider"],
+        description: styles["section-description"],
+      }}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
-      {hasMessage ? (
-        <p id={resolvedDescriptionId} className={styles["section-description"]}>
-          {message}
-        </p>
-      ) : null}
       <div aria-live="polite" className={styles.details}>
         {shouldShowPlaceholder ? (
           <p className={styles.placeholder}>{copy.loadingLabel}</p>
@@ -212,7 +211,7 @@ function ResponseStyleSection({
           </dl>
         ) : null}
       </div>
-    </section>
+    </SettingsSection>
   );
 }
 
