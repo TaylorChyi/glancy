@@ -3,6 +3,8 @@ node_modules/
 dist/
 dist-ssr/
 build/
+!website/config/build/
+!website/config/build/**
 
 # IDE configuration
 .vscode/
