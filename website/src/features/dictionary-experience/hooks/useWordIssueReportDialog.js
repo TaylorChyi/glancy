@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useReducer } from "react";
-import { useApi } from "@/hooks/useApi.js";
-import { useUser } from "@/context";
+import { useApi } from "@shared/hooks/useApi.js";
+import { useUser } from "@core/context";
 import {
   DEFAULT_WORD_REPORT_CATEGORY,
   WORD_REPORT_CATEGORIES,

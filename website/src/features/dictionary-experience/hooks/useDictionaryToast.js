@@ -31,7 +31,9 @@ const resolveDuration = (candidate, fallback) => {
   return candidate;
 };
 
-export function useDictionaryToast({ defaultDuration = DEFAULT_DURATION } = {}) {
+export function useDictionaryToast({
+  defaultDuration = DEFAULT_DURATION,
+} = {}) {
   const [state, setState] = useState(INITIAL_STATE);
 
   const showToast = useCallback(

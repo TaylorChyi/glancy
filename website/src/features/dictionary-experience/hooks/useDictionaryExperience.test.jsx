@@ -79,7 +79,7 @@ jest.unstable_mockModule("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useHistory: () => mockHistoryApi,
   useUser: () => mockUserState,
   useFavorites: () => mockFavoritesApi,
@@ -87,17 +87,17 @@ jest.unstable_mockModule("@/context", () => ({
   useLanguage: () => mockLanguageApi,
 }));
 
-jest.unstable_mockModule("@/hooks", () => ({
+jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: () => mockStreamWord,
   useSpeechInput: () => ({ start: mockStartSpeech }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: mockToggleFavoriteEntry }),
 }));
 
-jest.unstable_mockModule("@/hooks/useApi.js", () => ({
+jest.unstable_mockModule("@shared/hooks/useApi.js", () => ({
   useApi: () => ({ wordReports: { submitWordReport: submitWordReportMock } }),
 }));
 
-jest.unstable_mockModule("@/utils", () => ({
+jest.unstable_mockModule("@shared/utils", () => ({
   extractMarkdownPreview: jest.fn(() => null),
   resolveDictionaryConfig: jest.fn(() => ({
     language: "ENGLISH",
@@ -112,7 +112,7 @@ jest.unstable_mockModule("@/utils", () => ({
   copyTextToClipboard: jest.fn(async () => ({ status: "copied" })),
 }));
 
-jest.unstable_mockModule("@/api/words.js", () => ({
+jest.unstable_mockModule("@shared/api/words.js", () => ({
   wordCacheKey: jest.fn(({ term, language }) => `${term}-${language}`),
 }));
 
@@ -138,35 +138,35 @@ useDataGovernanceStore.setState = (updater) => {
   Object.assign(dataGovernanceState, partial);
 };
 
-jest.unstable_mockModule("@/store", () => ({
+jest.unstable_mockModule("@core/store", () => ({
   // 仅暴露 settings store 以匹配 useDictionaryLanguageConfig 的依赖，其他 store 由具体模块 mock。
   useSettingsStore,
 }));
 
-jest.unstable_mockModule("@/store/wordStore.js", () => ({
+jest.unstable_mockModule("@core/store/wordStore.js", () => ({
   __esModule: true,
   useWordStore,
 }));
 
-jest.unstable_mockModule("@/store/dataGovernanceStore.ts", () => ({
+jest.unstable_mockModule("@core/store/dataGovernanceStore.ts", () => ({
   __esModule: true,
   useDataGovernanceStore,
 }));
 
-jest.unstable_mockModule("@/config", () => ({
+jest.unstable_mockModule("@core/config", () => ({
   DEFAULT_MODEL: "test-model",
 }));
 
 jest.unstable_mockModule(
-  "@/features/dictionary-experience/share/dictionaryShareImage.js",
+  "@features/dictionary-experience/share/dictionaryShareImage.js",
   () => ({
     exportDictionaryShareImage: jest.fn(async () => ({ status: "success" })),
   }),
 );
 
-const utilsModule = await import("@/utils");
+const utilsModule = await import("@shared/utils");
 const shareImageModule = await import(
-  "@/features/dictionary-experience/share/dictionaryShareImage.js"
+  "@features/dictionary-experience/share/dictionaryShareImage.js"
 );
 const { useDictionaryExperience, COPY_FEEDBACK_STATES } = await import(
   "./useDictionaryExperience.js"

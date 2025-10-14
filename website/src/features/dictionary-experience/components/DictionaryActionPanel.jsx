@@ -14,10 +14,10 @@
 import PropTypes from "prop-types";
 import { useMemo, useCallback } from "react";
 
-import SearchBox from "@/components/ui/SearchBox";
-import DictionaryEntryActionBar from "@/components/DictionaryEntryActionBar";
-import ThemeIcon from "@/components/ui/Icon";
-import toolbarStyles from "@/components/OutputToolbar/OutputToolbar.module.css";
+import SearchBox from "@shared/components/ui/SearchBox";
+import DictionaryEntryActionBar from "@shared/components/DictionaryEntryActionBar";
+import ThemeIcon from "@shared/components/ui/Icon";
+import toolbarStyles from "@shared/components/OutputToolbar/OutputToolbar.module.css";
 
 import styles from "./DictionaryActionPanel.module.css";
 
@@ -46,11 +46,7 @@ export default function DictionaryActionPanel({
      * 复杂度：O(1)。
      */
     () =>
-      [
-        toolbarStyles["tool-button"],
-        "entry__tool-btn",
-        styles["search-toggle"],
-      ]
+      [toolbarStyles["tool-button"], "entry__tool-btn", styles["search-toggle"]]
         .filter(Boolean)
         .join(" "),
     [],

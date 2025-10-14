@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - 后续若需按语言切换策略，可在 createDictionaryMarkdownNormalizer 的入参中注入多策略选择器。
  */
-import { polishDictionaryMarkdown } from "@/utils";
+import { polishDictionaryMarkdown } from "@shared/utils";
 
 const DEFAULT_PIPELINE = Object.freeze([polishDictionaryMarkdown]);
 
@@ -27,9 +27,10 @@ const DEFAULT_PIPELINE = Object.freeze([polishDictionaryMarkdown]);
  * 复杂度：O(n)（n 为步骤数），默认单步。
  */
 export function createDictionaryMarkdownNormalizer({ pipeline } = {}) {
-  const steps = Array.isArray(pipeline) && pipeline.length > 0
-    ? pipeline.filter((step) => typeof step === "function")
-    : DEFAULT_PIPELINE;
+  const steps =
+    Array.isArray(pipeline) && pipeline.length > 0
+      ? pipeline.filter((step) => typeof step === "function")
+      : DEFAULT_PIPELINE;
 
   return {
     normalize(source) {

@@ -1,0 +1,322 @@
+/**
+ * 背景：
+ *  - 旧布局采用多层容器并让 body/主区共同滚动，导致底部工具条与内容区之间互相遮挡。
+ * 目的：
+ *  - 构建 #app > #sidebar + #main(#content + #docker) 的固定布局，限定滚动发生在内容区。
+ * 关键决策与取舍：
+ *  - 通过 CSS 变量暴露侧边栏宽度与 docker 高度，便于拖拽/断点同步；
+ *  - 选用 fixed docker 搭配 backdrop，放弃 sticky 实现以规避移动端滚动兼容性问题。
+ *  - 以 ::before + mask 控制底部磨砂渐变，保留输入框顶缘的清晰度并为未来调优保留变量。
+ * 影响范围：
+ *  - App 页面主体区域、底部搜索工具条、侧边栏拖拽宽度。
+ * 演进与TODO：
+ *  - 后续可将断点与 token 抽至主题配置，或拆分出独立的布局主题模块。
+ */
+
+.app {
+  --layout-sidebar-min: 240px;
+  --layout-sidebar-max: 420px;
+  --sidebar-w: clamp(
+    var(--layout-sidebar-min),
+    24vw,
+    var(--layout-sidebar-max)
+  );
+  --layout-content-max: 1080px;
+  --layout-content-padding-x: clamp(20px, 5vw, 48px);
+  --layout-content-padding-top: clamp(24px, 5vw, 36px);
+  --layout-content-padding-bottom: clamp(24px, 6vh, 36px);
+  --docker-h: 0px;
+  --docker-padding-y: clamp(16px, 4vw, 24px);
+  --docker-padding-x: clamp(20px, 5vw, 32px);
+  --docker-backdrop-blur: 22px;
+  --docker-backdrop-tint-strong: 82%;
+  --docker-backdrop-tint-weak: 32%;
+  --docker-backdrop-gradient-hold: 58%;
+  --docker-backdrop-gradient-fade-start: 72%;
+  --docker-backdrop-mask-solid-stop: 64%;
+
+  position: relative;
+  min-height: var(--vh);
+  width: 100%;
+  background: var(--app-bg);
+  color: var(--app-color);
+}
+
+.resizer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sidebar-w) - 3px);
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 120;
+  transition: background 0.2s ease;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(
+      in srgb,
+      var(--sidebar-border-color, var(--border-color)) 24%,
+      transparent
+    ),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizer:hover::after,
+.resizer:focus-visible::after,
+.resizer:active::after {
+  opacity: 1;
+}
+
+.main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: var(--vh);
+  margin-left: var(--sidebar-w);
+  background: var(--chat-window-bg);
+  color: inherit;
+  overflow: hidden;
+}
+
+.main-top {
+  width: 100%;
+  min-height: var(--bar-height);
+  position: sticky;
+  top: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px clamp(16px, 6vw, 32px);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-color) 52%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--chat-window-bg) 96%, transparent) 0%,
+    color-mix(in srgb, var(--chat-window-bg) 86%, transparent) 100%
+  );
+  box-shadow: 0 18px 38px
+    color-mix(in srgb, var(--shadow-color) 14%, transparent);
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 52%, transparent);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-surface-alt) 98%, transparent) 0%,
+    color-mix(in srgb, var(--color-surface-alt) 74%, transparent) 100%
+  );
+  box-shadow:
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 82%, transparent),
+    0 18px 34px color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  color: color-mix(in srgb, var(--color-text) 90%, transparent);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary-color) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary-color) 46%, transparent);
+  box-shadow:
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 86%, transparent),
+    0 22px 38px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+}
+
+.sidebar-toggle:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0
+      color-mix(in srgb, var(--color-surface-muted) 78%, transparent),
+    0 14px 24px color-mix(in srgb, var(--shadow-color) 18%, transparent);
+}
+
+.content {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--docker-h, 0px) + env(safe-area-inset-bottom));
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--border-color) 32%, transparent);
+  border-radius: 6px;
+}
+
+.content-inner {
+  flex: 1 1 auto;
+  width: min(100%, var(--layout-content-max));
+  padding: var(--layout-content-padding-top) var(--layout-content-padding-x)
+    var(--layout-content-padding-bottom);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(24px, 4vw, 40px);
+}
+
+.docker {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-w);
+  z-index: 70;
+  padding: var(--docker-padding-y) var(--docker-padding-x);
+  padding-bottom: calc(var(--docker-padding-y) + env(safe-area-inset-bottom));
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+/*
+ * 采用 ::before + mask 限制磨砂范围，保证搜索框顶缘以上保持清晰；
+ * 若后续需要全覆盖磨砂，可通过变量重置 mask 与渐变控制点。
+ */
+.docker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(var(--docker-backdrop-blur));
+  background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      var(--docker-backdrop-gradient-hold),
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-weak),
+        transparent
+      )
+      var(--docker-backdrop-gradient-fade-start),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    0deg,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) var(--docker-backdrop-mask-solid-stop),
+    rgb(0 0 0 / 0%) 100%
+  );
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}
+
+.docker-inner {
+  width: var(--docker-row-width, min(100%, var(--sb-max-width)));
+
+  /*
+   * 背景：底部 docker 需要对搜索输入与释义操作提供一致的宽度基线，
+   *       过去直接下发 90% 宽度导致 SearchBox 与工具栏出现偏差与裁切。
+   * 取舍：通过集中定义 --docker-row-max-width 与 --docker-row-width，
+   *       让子组件统一消费“最大宽度 + 容器宽度”两类信号，既保证等宽，
+   *       又为未来在 Layout 处调整断点或内边距预留单一入口。
+   */
+
+  --docker-row-max-width: var(--sb-max-width);
+  --docker-row-width: min(100%, var(--docker-row-max-width));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (width <= 900px) {
+  .app {
+    --sidebar-w: 0px;
+    --layout-content-padding-x: clamp(16px, 6vw, 28px);
+    --layout-content-padding-top: clamp(24px, 6vw, 32px);
+    --layout-content-padding-bottom: clamp(24px, 8vw, 32px);
+    --docker-backdrop-gradient-hold: 64%;
+    --docker-backdrop-gradient-fade-start: 82%;
+    --docker-backdrop-mask-solid-stop: 74%;
+  }
+
+  .resizer {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .docker {
+    left: 0;
+    padding: clamp(18px, 6vw, 28px) clamp(16px, 6vw, 28px);
+    padding-bottom: calc(clamp(18px, 6vw, 28px) + env(safe-area-inset-bottom));
+  }
+
+  .docker-inner {
+    width: 100%;
+
+    --docker-row-max-width: 100%;
+    --docker-row-width: 100%;
+  }
+}
+
+@media (width <= 600px) {
+  .app {
+    --layout-content-padding-x: clamp(14px, 6vw, 24px);
+    --layout-content-padding-top: clamp(20px, 6vw, 28px);
+    --docker-backdrop-gradient-hold: 68%;
+    --docker-backdrop-gradient-fade-start: 88%;
+    --docker-backdrop-mask-solid-stop: 78%;
+  }
+
+  .docker-inner {
+    gap: 10px;
+  }
+}

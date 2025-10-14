@@ -55,12 +55,36 @@ const createBaseExperienceState = () => ({
   popupOpen: false,
   popupMsg: "",
   closePopup: jest.fn(),
+  toast: null,
+  closeToast: jest.fn(),
   dictionaryTargetLanguageLabel: "目标语言",
   dictionarySourceLanguageLabel: "源语言",
   dictionarySwapLanguagesLabel: "切换",
-  searchEmptyState: { title: "开始探索", description: "输入任何词汇即可获取解释" },
+  searchEmptyState: {
+    title: "开始探索",
+    description: "输入任何词汇即可获取解释",
+  },
   chatInputPlaceholder: "输入查询内容",
   libraryLandingLabel: "致用单词",
+  reportDialog: {
+    open: false,
+    term: "",
+    language: "ENGLISH",
+    flavor: "BILINGUAL",
+    sourceLanguage: "ENGLISH",
+    targetLanguage: "CHINESE",
+    category: null,
+    categories: [],
+    description: "",
+    submitting: false,
+    error: "",
+  },
+  reportDialogHandlers: {
+    close: jest.fn(),
+    setCategory: jest.fn(),
+    setDescription: jest.fn(),
+    submit: jest.fn(),
+  },
 });
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
@@ -92,26 +116,43 @@ jest.unstable_mockModule("../components/BottomPanelSwitcher.jsx", () => ({
 jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
   __esModule: true,
   default: ({ actionBarProps }) => (
-    <div data-testid="dictionary-action-panel" data-has-action={Boolean(actionBarProps)} />
+    <div
+      data-testid="dictionary-action-panel"
+      data-has-action={Boolean(actionBarProps)}
+    />
   ),
 }));
 
-jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
+jest.unstable_mockModule("@shared/components/ui/DictionaryEntry", () => ({
   __esModule: true,
+  default: (props) => {
+    dictionaryEntryViewSpy(props);
+    return (
+      <div data-testid="dictionary-entry" data-preview={props.preview || ""}>
+        dictionary-entry
+      </div>
+    );
+  },
   DictionaryEntryView: (props) => {
     dictionaryEntryViewSpy(props);
     return (
-      <div data-testid="dictionary-entry-view" data-preview={props.preview || ""}>
+      <div
+        data-testid="dictionary-entry-view"
+        data-preview={props.preview || ""}
+      >
         dictionary-entry-view
       </div>
     );
   },
 }));
 
-jest.unstable_mockModule("@/components/Layout", () => ({
+jest.unstable_mockModule("@shared/components/Layout", () => ({
   __esModule: true,
   default: ({ sidebarProps, bottomContent, children }) => (
-    <div data-testid="layout-root" data-active-view={sidebarProps?.activeView || ""}>
+    <div
+      data-testid="layout-root"
+      data-active-view={sidebarProps?.activeView || ""}
+    >
       {bottomContent ? (
         <div data-testid="layout-bottom">{bottomContent}</div>
       ) : null}
@@ -120,12 +161,12 @@ jest.unstable_mockModule("@/components/Layout", () => ({
   ),
 }));
 
-jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
+jest.unstable_mockModule("@shared/components/ui/HistoryDisplay", () => ({
   __esModule: true,
   default: () => <div data-testid="history-display" />,
 }));
 
-jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
+jest.unstable_mockModule("@shared/components/ui/ChatInput", () => ({
   __esModule: true,
   default: (props) => (
     <form data-testid="dictionary-chat-input">
@@ -138,12 +179,13 @@ jest.unstable_mockModule("@/components/ui/ChatInput", () => ({
   ),
 }));
 
-jest.unstable_mockModule("@/components/ui/ICP", () => ({
+jest.unstable_mockModule("@shared/components/ui/ICP", () => ({
   __esModule: true,
   default: () => <div data-testid="dictionary-icp" />,
+  DockedICP: () => <div data-testid="dictionary-icp" />,
 }));
 
-jest.unstable_mockModule("@/components/ui/EmptyState", () => ({
+jest.unstable_mockModule("@shared/components/ui/EmptyState", () => ({
   __esModule: true,
   default: ({ title, description }) => (
     <div data-testid="dictionary-empty-state">
@@ -153,12 +195,12 @@ jest.unstable_mockModule("@/components/ui/EmptyState", () => ({
   ),
 }));
 
-jest.unstable_mockModule("@/pages/App/LibraryLandingView.jsx", () => ({
+jest.unstable_mockModule("@app/pages/App/LibraryLandingView.jsx", () => ({
   __esModule: true,
   default: ({ label }) => <div data-testid="library-landing">{label}</div>,
 }));
 
-jest.unstable_mockModule("@/components/ui/MessagePopup", () => ({
+jest.unstable_mockModule("@shared/components/ui/MessagePopup", () => ({
   __esModule: true,
   default: ({ open, message }) => (
     <div data-testid="message-popup" data-open={open ? "yes" : "no"}>

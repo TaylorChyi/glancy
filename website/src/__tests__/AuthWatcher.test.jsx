@@ -6,7 +6,7 @@ import { jest } from "@jest/globals";
 const mockNavigate = jest.fn();
 let currentUser = null;
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useUser: () => ({ user: currentUser }),
 }));
 
@@ -17,7 +17,7 @@ jest.unstable_mockModule("react-router-dom", async () => {
 
 const router = await import("react-router-dom");
 const { MemoryRouter } = router;
-const { default: AuthWatcher } = await import("@/components/AuthWatcher");
+const { default: AuthWatcher } = await import("@shared/components/AuthWatcher");
 
 beforeEach(() => {
   currentUser = null;

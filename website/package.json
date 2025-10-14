@@ -8,9 +8,9 @@
     "prebuild": "npm run icons:mono && npm run generate:icons",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate:icons": "node scripts/generate-icon-manifest.mjs",
-    "icons:mono": "node tools/mono-svg.js",
-    "start": "node server/index.js",
+    "generate:icons": "node ops/scripts/generate-icon-manifest.mjs",
+    "icons:mono": "node ops/tools/mono-svg.js",
+    "start": "node ops/server/index.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
     "lint:css": "stylelint \"src/**/*.css\"",
     "test:e2e": "playwright test"

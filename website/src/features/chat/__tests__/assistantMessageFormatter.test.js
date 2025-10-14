@@ -1,5 +1,5 @@
 import { createAssistantMessageFormatter } from "../createAssistantMessageFormatter.js";
-import { polishDictionaryMarkdown } from "@/utils/markdown.js";
+import { polishDictionaryMarkdown } from "@shared/utils/markdown.js";
 
 /**
  * 测试目标：确认格式化器能够在普通对话文本中保持透传行为。
@@ -74,7 +74,8 @@ test("normalizes carriage return segments during streaming", () => {
 test("formats doubao dictionary chunks incrementally", () => {
   const formatter = createAssistantMessageFormatter();
   const part1 = "## Come\n\n";
-  const part2 = "Senses\nExample1:Shecameatexactly3:15PMasscheduled.\nUsageInsight:Travel context";
+  const part2 =
+    "Senses\nExample1:Shecameatexactly3:15PMasscheduled.\nUsageInsight:Travel context";
   const raw = part1 + part2;
   const interim = formatter.append(part1);
   expect(interim).toBe(part1);

@@ -3,19 +3,19 @@ import { jest } from "@jest/globals";
 
 const submitWordReportMock = jest.fn();
 
-jest.unstable_mockModule("@/hooks/useApi.js", () => ({
+jest.unstable_mockModule("@shared/hooks/useApi.js", () => ({
   useApi: () => ({ wordReports: { submitWordReport: submitWordReportMock } }),
 }));
 
 const userState = { user: { token: "token" } };
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useUser: () => userState,
 }));
 
-const {
-  useWordIssueReportDialog,
-} = await import("./useWordIssueReportDialog.js");
+const { useWordIssueReportDialog } = await import(
+  "./useWordIssueReportDialog.js"
+);
 
 beforeEach(() => {
   submitWordReportMock.mockReset();

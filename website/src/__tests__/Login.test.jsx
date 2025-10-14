@@ -2,14 +2,14 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
-import { API_PATHS } from "@/config/api.js";
+import { API_PATHS } from "@core/config/api.js";
 
 const mockSetUser = jest.fn();
 const mockJsonRequest = jest.fn().mockResolvedValue({ id: "1", token: "t" });
 const mockNavigate = jest.fn();
 const mockHydrateClientSessionState = jest.fn().mockResolvedValue(undefined);
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useUser: () => ({ setUser: mockSetUser }),
   useTheme: () => ({ resolvedTheme: "light" }),
   useLanguage: () => ({
@@ -33,10 +33,10 @@ jest.unstable_mockModule("@/context", () => ({
     },
   }),
 }));
-jest.unstable_mockModule("@/hooks", () => ({
+jest.unstable_mockModule("@shared/hooks", () => ({
   useApi: () => ({ jsonRequest: mockJsonRequest }),
 }));
-jest.unstable_mockModule("@/session/sessionLifecycle.js", () => ({
+jest.unstable_mockModule("@core/session/sessionLifecycle.js", () => ({
   hydrateClientSessionState: mockHydrateClientSessionState,
 }));
 jest.unstable_mockModule("react-router-dom", async () => {
@@ -46,7 +46,7 @@ jest.unstable_mockModule("react-router-dom", async () => {
 
 const router = await import("react-router-dom");
 const { MemoryRouter } = router;
-const { default: Login } = await import("@/pages/auth/Login");
+const { default: Login } = await import("@app/pages/auth/Login");
 
 beforeEach(() => {
   mockJsonRequest.mockClear();

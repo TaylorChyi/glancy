@@ -2,7 +2,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
-import { API_PATHS } from "@/config/api.js";
+import { API_PATHS } from "@core/config/api.js";
 
 const mockSetUser = jest.fn();
 const mockRequest = jest
@@ -11,13 +11,13 @@ const mockRequest = jest
   .mockResolvedValueOnce({ id: "1", token: "t" });
 const mockNavigate = jest.fn();
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useUser: () => ({ setUser: mockSetUser }),
 }));
-jest.unstable_mockModule("@/hooks", () => ({
+jest.unstable_mockModule("@shared/hooks", () => ({
   useApi: () => ({ request: mockRequest }),
 }));
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useTheme: () => ({ resolvedTheme: "light" }),
 }));
 jest.unstable_mockModule("react-router-dom", async () => {
@@ -27,7 +27,7 @@ jest.unstable_mockModule("react-router-dom", async () => {
 
 const router = await import("react-router-dom");
 const { MemoryRouter } = router;
-const { default: Register } = await import("@/pages/auth/Register");
+const { default: Register } = await import("@app/pages/auth/Register");
 
 test("registers and logs in user", async () => {
   render(

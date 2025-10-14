@@ -4,10 +4,7 @@
    * 关键取舍：通过读取 Layout 注入的 --docker-row-width 变量集中控制宽度，
    *           避免在父级分散样式并保持 SearchBox 的壳层解耦。
    */
-  width: var(
-    --docker-row-width,
-    min(100%, var(--sb-max-width))
-  );
+  width: var(--docker-row-width, min(100%, var(--sb-max-width)));
   display: flex;
   justify-content: center;
   max-width: var(--docker-row-max-width, var(--sb-max-width));

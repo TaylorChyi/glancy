@@ -37,7 +37,10 @@ test("GivenChineseStructuredEntry_WhenBuildInvoked_ShouldProduceSectionedMarkdow
               反义词: ["imperfect"],
             },
             例句: [
-              { 源语言: "She has impeccable taste.", 翻译: "她的品味无可挑剔。" },
+              {
+                源语言: "She has impeccable taste.",
+                翻译: "她的品味无可挑剔。",
+              },
             ],
           },
         ],
