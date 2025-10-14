@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import SettingsSection from "@/components/settings/SettingsSection";
 import styles from "../Preferences.module.css";
 
 const REDEEM_CODE_GROUP_SIZE = 4;
@@ -151,17 +152,17 @@ function SubscriptionSection({
   const shouldShowPlanRailNextNav = shouldRenderPlanRailNav && !isPlanRailAtEnd;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={descriptionId}
-      className={`${styles.section} ${styles["section-plain"]} ${styles["subscription-section"]}`}
+    <SettingsSection
+      headingId={headingId}
+      title={title}
+      describedBy={descriptionId}
+      classes={{
+        section: `${styles.section} ${styles["section-plain"]} ${styles["subscription-section"]}`,
+        header: styles["section-header"],
+        title: styles["section-title"],
+        divider: styles["section-divider"],
+      }}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
       <div className={styles["subscription-matrix"]}>
         <div className={styles["subscription-plan-carousel"]}>
           {shouldShowPlanRailPreviousNav ? (
@@ -304,7 +305,7 @@ function SubscriptionSection({
           </div>
         </div>
       </div>
-    </section>
+    </SettingsSection>
   );
 }
 

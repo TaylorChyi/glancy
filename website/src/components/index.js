@@ -21,6 +21,7 @@ export {
   default as SettingsSurface,
   SETTINGS_SURFACE_VARIANTS,
 } from "./settings/SettingsSurface";
+export { default as SettingsSection } from "./settings/SettingsSection";
 
 export { default as AuthForm } from "./form/AuthForm.jsx";
 export { default as EditableField } from "./form/EditableField/EditableField.jsx";
