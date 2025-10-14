@@ -12,7 +12,10 @@
  * 演进与TODO：
  *  - 后续可引入配置驱动策略选择或接入 A/B 开关，支持灰度验证不同格式化方案。
  */
-import { createStreamingTextBuffer, polishDictionaryMarkdown } from "@/utils";
+import {
+  createStreamingTextBuffer,
+  polishDictionaryMarkdown,
+} from "@shared/utils";
 
 /**
  * 背景：
@@ -77,7 +80,10 @@ function createDoubaoDictionaryStrategy() {
  * 复杂度：每次 append 线性扫描策略列表，整体 O(n * m)（n 为策略数，m 为文本长度），现阶段可接受。
  */
 export function createAssistantMessageFormatter({ strategies } = {}) {
-  const availableStrategies = strategies ?? [createDoubaoDictionaryStrategy(), FALLBACK_STRATEGY];
+  const availableStrategies = strategies ?? [
+    createDoubaoDictionaryStrategy(),
+    FALLBACK_STRATEGY,
+  ];
   const streamBuffer = createStreamingTextBuffer();
 
   function applyStrategies(text) {

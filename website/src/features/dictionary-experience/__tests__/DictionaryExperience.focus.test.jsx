@@ -57,12 +57,33 @@ function createDictionaryExperienceState(overrides = {}) {
     popupOpen: false,
     popupMsg: "",
     closePopup: jest.fn(),
+    toast: null,
+    closeToast: jest.fn(),
     dictionaryTargetLanguageLabel: "目标语言",
     dictionarySourceLanguageLabel: "源语言",
     dictionarySwapLanguagesLabel: "切换",
     searchEmptyState: { title: "", description: "" },
     chatInputPlaceholder: "",
     libraryLandingLabel: "致用单词",
+    reportDialog: {
+      open: false,
+      term: "",
+      language: "ENGLISH",
+      flavor: "BILINGUAL",
+      sourceLanguage: "ENGLISH",
+      targetLanguage: "CHINESE",
+      category: null,
+      categories: [],
+      description: "",
+      submitting: false,
+      error: "",
+    },
+    reportDialogHandlers: {
+      close: jest.fn(),
+      setCategory: jest.fn(),
+      setDescription: jest.fn(),
+      submit: jest.fn(),
+    },
     ...overrides,
   };
 }
@@ -72,10 +93,13 @@ jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   useDictionaryExperience: jest.fn(() => createDictionaryExperienceState()),
 }));
 
-jest.unstable_mockModule("@/components/Layout", () => ({
+jest.unstable_mockModule("@shared/components/Layout", () => ({
   __esModule: true,
   default: ({ bottomContent, children }) => (
-    <div data-testid="layout-root" data-has-bottom={bottomContent ? "yes" : "no"}>
+    <div
+      data-testid="layout-root"
+      data-has-bottom={bottomContent ? "yes" : "no"}
+    >
       {bottomContent ? (
         <div data-testid="layout-bottom-content">{bottomContent}</div>
       ) : null}
@@ -84,27 +108,28 @@ jest.unstable_mockModule("@/components/Layout", () => ({
   ),
 }));
 
-jest.unstable_mockModule("@/pages/App/LibraryLandingView.jsx", () => ({
+jest.unstable_mockModule("@app/pages/App/LibraryLandingView.jsx", () => ({
   __esModule: true,
   default: ({ label }) => (
     <div data-testid="library-landing">{label || "致用单词"}</div>
   ),
 }));
 
-jest.unstable_mockModule("@/components/ui/HistoryDisplay", () => ({
+jest.unstable_mockModule("@shared/components/ui/HistoryDisplay", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.unstable_mockModule("@/components/ui/DictionaryEntry", () => ({
+jest.unstable_mockModule("@shared/components/ui/DictionaryEntry", () => ({
   __esModule: true,
+  default: () => <div data-testid="dictionary-entry" />,
   DictionaryEntryView: () => <div data-testid="dictionary-entry" />,
 }));
 
-jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
+jest.unstable_mockModule("@shared/components/ui/ChatInput", async () => {
   const ReactModule = await import("react");
   const { default: useActionInputBehavior } = await import(
-    "@/components/ui/ChatInput/hooks/useActionInputBehavior",
+    "@shared/components/ui/ChatInput/hooks/useActionInputBehavior"
   );
 
   function MockChatInput(props) {
@@ -137,7 +162,9 @@ jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
       >
         <textarea {...textareaProps} data-testid="dictionary-chat-input" />
         <button type="button" onClick={handleActionClick}>
-          {isSendState ? actionButtonProps.sendLabel : actionButtonProps.voiceLabel}
+          {isSendState
+            ? actionButtonProps.sendLabel
+            : actionButtonProps.voiceLabel}
         </button>
       </form>
     );
@@ -151,17 +178,18 @@ jest.unstable_mockModule("@/components/ui/ChatInput", async () => {
   };
 });
 
-jest.unstable_mockModule("@/components/ui/ICP", () => ({
+jest.unstable_mockModule("@shared/components/ui/ICP", () => ({
+  __esModule: true,
+  default: () => null,
+  DockedICP: () => null,
+}));
+
+jest.unstable_mockModule("@shared/components/ui/EmptyState", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.unstable_mockModule("@/components/ui/EmptyState", () => ({
-  __esModule: true,
-  default: () => null,
-}));
-
-jest.unstable_mockModule("@/components/ui/MessagePopup", () => ({
+jest.unstable_mockModule("@shared/components/ui/MessagePopup", () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -191,7 +219,8 @@ jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
   ),
 }));
 
-const DictionaryExperience = (await import("../DictionaryExperience.jsx")).default;
+const DictionaryExperience = (await import("../DictionaryExperience.jsx"))
+  .default;
 const { useDictionaryExperience } = await import(
   "../hooks/useDictionaryExperience.js"
 );

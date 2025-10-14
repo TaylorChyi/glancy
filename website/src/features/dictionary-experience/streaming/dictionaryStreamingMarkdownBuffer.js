@@ -24,7 +24,9 @@ const noop = () => {};
  * 输入：可选 logger（便于测试观察）。
  * 输出：暴露 append/getSnapshot/finalize 三个操作。
  */
-export function createDictionaryStreamingMarkdownBuffer({ logger = { debug: noop } } = {}) {
+export function createDictionaryStreamingMarkdownBuffer({
+  logger = { debug: noop },
+} = {}) {
   let raw = "";
   let preview = "";
   let parsedEntry = null;
@@ -41,7 +43,10 @@ export function createDictionaryStreamingMarkdownBuffer({ logger = { debug: noop
       parsedEntry = normalized;
       return parsedEntry;
     } catch (error) {
-      logger.debug?.("[dictionaryStreamingMarkdownBuffer] parse pending", error);
+      logger.debug?.(
+        "[dictionaryStreamingMarkdownBuffer] parse pending",
+        error,
+      );
       return null;
     }
   };
@@ -104,4 +109,3 @@ export function createDictionaryStreamingMarkdownBuffer({ logger = { debug: noop
     },
   });
 }
-

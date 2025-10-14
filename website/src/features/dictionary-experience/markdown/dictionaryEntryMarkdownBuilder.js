@@ -39,14 +39,19 @@ const toTrimmedString = (value) => {
   return String(value).trim();
 };
 
-const isNonEmptyArray = (candidate) => Array.isArray(candidate) && candidate.length > 0;
+const isNonEmptyArray = (candidate) =>
+  Array.isArray(candidate) && candidate.length > 0;
 
 const sanitizeText = (value) =>
-  toTrimmedString(value).replace(/\s+/g, (segment, index) => (index === 0 ? "" : " "));
+  toTrimmedString(value).replace(/\s+/g, (segment, index) =>
+    index === 0 ? "" : " ",
+  );
 
 class MarkdownStrategy {
   supports(entry) {
-    return Boolean(entry && typeof entry.markdown === "string" && entry.markdown.trim());
+    return Boolean(
+      entry && typeof entry.markdown === "string" && entry.markdown.trim(),
+    );
   }
 
   build(entry) {
@@ -76,7 +81,9 @@ class LegacyEnglishStrategy {
 
     if (entry.phonetic) {
       lines.push(headings.phonetic);
-      lines.push(`- ${DEFAULT_LABELS.phoneticEn}：${sanitizeText(entry.phonetic)}`);
+      lines.push(
+        `- ${DEFAULT_LABELS.phoneticEn}：${sanitizeText(entry.phonetic)}`,
+      );
       lines.push("");
     }
 
@@ -150,13 +157,21 @@ class StructuredChineseStrategy {
           .filter(Boolean)
           .join(category && definition ? " " : " ");
         if (headline) {
-          definitionBlocks.push(`${order}. ${category ? `${category} · ` : ""}${definition}`);
+          definitionBlocks.push(
+            `${order}. ${category ? `${category} · ` : ""}${definition}`,
+          );
         }
 
         const relations = sense?.关系词 || {};
-        const synonyms = Array.isArray(relations?.同义词) ? relations.同义词 : [];
-        const antonyms = Array.isArray(relations?.反义词) ? relations.反义词 : [];
-        const related = Array.isArray(relations?.相关词) ? relations.相关词 : [];
+        const synonyms = Array.isArray(relations?.同义词)
+          ? relations.同义词
+          : [];
+        const antonyms = Array.isArray(relations?.反义词)
+          ? relations.反义词
+          : [];
+        const related = Array.isArray(relations?.相关词)
+          ? relations.相关词
+          : [];
         if (synonyms.length > 0) {
           definitionBlocks.push(
             `  - ${labels.synonyms}：${synonyms.map(sanitizeText).filter(Boolean).join("、")}`,
@@ -260,4 +275,3 @@ export const __INTERNAL__ = Object.freeze({
   StructuredChineseStrategy,
   LegacyEnglishStrategy,
 });
-

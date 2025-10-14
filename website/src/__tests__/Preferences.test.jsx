@@ -59,7 +59,7 @@ beforeAll(() => {
   }
 });
 
-jest.unstable_mockModule("@/context", () => ({
+jest.unstable_mockModule("@core/context", () => ({
   useLanguage: () => ({ t: mockLanguage }),
   useUser: () => ({ user: mockUser, setUser: mockSetUser }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
@@ -70,14 +70,14 @@ jest.unstable_mockModule("@/context", () => ({
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
-jest.unstable_mockModule("@/api/users.js", () => ({
+jest.unstable_mockModule("@shared/api/users.js", () => ({
   useUsersApi: () => ({
     updateUsername: updateUsernameMock,
     unbindEmail: jest.fn(),
   }),
 }));
 
-jest.unstable_mockModule("@/components/ui/Avatar", () => ({
+jest.unstable_mockModule("@shared/components/ui/Avatar", () => ({
   __esModule: true,
   default: ({ className }) => (
     <div data-testid="avatar" className={className}>
@@ -86,18 +86,18 @@ jest.unstable_mockModule("@/components/ui/Avatar", () => ({
   ),
 }));
 
-jest.unstable_mockModule("@/hooks/useAvatarEditorWorkflow.js", () => ({
+jest.unstable_mockModule("@shared/hooks/useAvatarEditorWorkflow.js", () => ({
   __esModule: true,
   default: mockUseAvatarEditorWorkflow,
 }));
 
-jest.unstable_mockModule("@/hooks/useEmailBinding.js", () => ({
+jest.unstable_mockModule("@shared/hooks/useEmailBinding.js", () => ({
   __esModule: true,
   default: mockUseEmailBinding,
   useEmailBinding: mockUseEmailBinding,
 }));
 
-const { default: Preferences } = await import("@/pages/preferences");
+const { default: Preferences } = await import("@app/pages/preferences");
 
 beforeEach(() => {
   updateUsernameMock = jest.fn().mockResolvedValue({ username: "ada" });
@@ -199,7 +199,9 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
   expect(
     within(activePanel).getByDisplayValue(mockUser.username),
   ).toBeInTheDocument();
-  expect(within(activePanel).getByDisplayValue(mockUser.email)).toBeInTheDocument();
+  expect(
+    within(activePanel).getByDisplayValue(mockUser.email),
+  ).toBeInTheDocument();
   expect(within(activePanel).getByDisplayValue("+1 111")).toBeInTheDocument();
   expect(
     within(activePanel).getByRole("button", {

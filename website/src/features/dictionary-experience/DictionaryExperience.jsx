@@ -1,17 +1,17 @@
 import { useEffect, useMemo } from "react";
-import MessagePopup from "@/components/ui/MessagePopup";
-import Toast from "@/components/ui/Toast";
-import Layout from "@/components/Layout";
-import HistoryDisplay from "@/components/ui/HistoryDisplay";
-import { DictionaryEntryView } from "@/components/ui/DictionaryEntry";
-import ChatInput from "@/components/ui/ChatInput";
-import { DockedICP } from "@/components/ui/ICP";
-import EmptyState from "@/components/ui/EmptyState";
-import LibraryLandingView from "@/pages/App/LibraryLandingView.jsx";
+import MessagePopup from "@shared/components/ui/MessagePopup";
+import Toast from "@shared/components/ui/Toast";
+import Layout from "@shared/components/Layout";
+import HistoryDisplay from "@shared/components/ui/HistoryDisplay";
+import { DictionaryEntryView } from "@shared/components/ui/DictionaryEntry";
+import ChatInput from "@shared/components/ui/ChatInput";
+import { DockedICP } from "@shared/components/ui/ICP";
+import EmptyState from "@shared/components/ui/EmptyState";
+import LibraryLandingView from "@app/pages/App/LibraryLandingView.jsx";
 import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
-} from "@/utils";
+} from "@shared/utils";
 import { useDictionaryExperience } from "./hooks/useDictionaryExperience";
 import useBottomPanelState, {
   PANEL_MODE_SEARCH,
@@ -19,7 +19,7 @@ import useBottomPanelState, {
 import BottomPanelSwitcher from "./components/BottomPanelSwitcher.jsx";
 import DictionaryActionPanel from "./components/DictionaryActionPanel.jsx";
 import ReportIssueModal from "./components/ReportIssueModal.jsx";
-import "@/pages/App/App.css";
+import "@app/pages/App/App.css";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "./dictionaryExperienceViews.js";
 
 export default function DictionaryExperience() {
@@ -128,7 +128,7 @@ export default function DictionaryExperience() {
   };
 
   /**
-   * @param {import("@/components/ui/ChatInput/hooks/useActionInputBehavior").FocusChangeContext} context
+   * @param {import("@shared/components/ui/ChatInput/hooks/useActionInputBehavior").FocusChangeContext} context
    */
   const handleInputFocusChange = (context) => {
     handlePanelFocusChange(context);

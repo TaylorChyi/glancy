@@ -1,11 +1,11 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("@/utils", () => ({
+jest.unstable_mockModule("@shared/utils", () => ({
   polishDictionaryMarkdown: jest.fn((value) => `polished:${value}`),
 }));
 
 const normalizerModule = await import("../dictionaryMarkdownNormalizer.js");
-const utilsModule = await import("@/utils");
+const utilsModule = await import("@shared/utils");
 
 const {
   createDictionaryMarkdownNormalizer,

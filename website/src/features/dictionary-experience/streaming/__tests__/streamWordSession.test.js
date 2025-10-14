@@ -47,7 +47,12 @@ afterEach(() => {
  * 边界/异常：覆盖 JSON 分支的主流程。
  */
 test("GivenJsonChunk_WhenStreamCompletes_ThenReturnsParsedEntry", async () => {
-  const jsonEntry = { id: "1", term: "test", definitions: [], metadata: { origin: "model" } };
+  const jsonEntry = {
+    id: "1",
+    term: "test",
+    definitions: [],
+    metadata: { origin: "model" },
+  };
   streamWordApi.mockImplementation(async function* (options) {
     expect(options).toMatchObject({ term: "test", captureHistory: true });
     yield { type: "chunk", data: JSON.stringify(jsonEntry) };
@@ -67,18 +72,30 @@ test("GivenJsonChunk_WhenStreamCompletes_ThenReturnsParsedEntry", async () => {
   ]);
   expect(logger.info).toHaveBeenCalledWith(
     "[StreamWordSession] start",
-    expect.objectContaining({ userId: baseRequest.userId, term: baseRequest.term }),
+    expect.objectContaining({
+      userId: baseRequest.userId,
+      term: baseRequest.term,
+    }),
   );
   expect(logger.info).toHaveBeenCalledWith(
     "[StreamWordSession] end",
-    expect.objectContaining({ userId: baseRequest.userId, term: baseRequest.term }),
+    expect.objectContaining({
+      userId: baseRequest.userId,
+      term: baseRequest.term,
+    }),
   );
 
   const payload = session.getStorePayload();
   expect(payload.key).toBe(baseRequest.key);
-  expect(payload.versions[0]).toMatchObject({ id: "1", metadata: { origin: "model" } });
+  expect(payload.versions[0]).toMatchObject({
+    id: "1",
+    metadata: { origin: "model" },
+  });
   expect(payload.versions[0].markdown).toBeUndefined();
-  expect(payload.options.metadata).toMatchObject({ flavor: baseRequest.flavor, origin: "model" });
+  expect(payload.options.metadata).toMatchObject({
+    flavor: baseRequest.flavor,
+    origin: "model",
+  });
   expect(payload.options.activeVersionId).toBe("1");
 });
 
@@ -104,10 +121,17 @@ test("GivenMarkdownChunk_WhenStreamCompletes_ThenKeepsMarkdownEntry", async () =
     chunks.push(payload);
   }
 
-  expect(chunks).toEqual([{ chunk: "# Title", language: baseRequest.language }]);
+  expect(chunks).toEqual([
+    { chunk: "# Title", language: baseRequest.language },
+  ]);
   const payload = session.getStorePayload();
-  expect(payload.versions[0]).toMatchObject({ term: "test", markdown: "# Title" });
-  expect(payload.options.metadata).toMatchObject({ flavor: baseRequest.flavor });
+  expect(payload.versions[0]).toMatchObject({
+    term: "test",
+    markdown: "# Title",
+  });
+  expect(payload.options.metadata).toMatchObject({
+    flavor: baseRequest.flavor,
+  });
   expect(payload.options.activeVersionId).toBeUndefined();
 });
 
@@ -142,8 +166,16 @@ test("GivenMetadataAndJson_WhenStreamCompletes_ThenMergeVersionsAndMetadata", as
 
   const payload = session.getStorePayload();
   expect(payload.versions).toHaveLength(1);
-  expect(payload.versions[0]).toMatchObject({ id: "v1", markdown: "new", flavor: "MONO" });
-  expect(payload.options.metadata).toEqual({ flavor: "MONO", reviewer: "r1", source: "llm" });
+  expect(payload.versions[0]).toMatchObject({
+    id: "v1",
+    markdown: "new",
+    flavor: "MONO",
+  });
+  expect(payload.options.metadata).toEqual({
+    flavor: "MONO",
+    reviewer: "r1",
+    source: "llm",
+  });
   expect(payload.options.activeVersionId).toBe("v1");
 });
 
@@ -178,6 +210,10 @@ test("GivenUpstreamError_WhenStreaming_ThenPropagateAndBlockPayload", async () =
   );
   expect(logger.info).toHaveBeenCalledWith(
     "[StreamWordSession] error",
-    expect.objectContaining({ userId: baseRequest.userId, term: baseRequest.term, error: expect.any(Error) }),
+    expect.objectContaining({
+      userId: baseRequest.userId,
+      term: baseRequest.term,
+      error: expect.any(Error),
+    }),
   );
 });

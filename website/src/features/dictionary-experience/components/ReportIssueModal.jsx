@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useId } from "react";
 import PropTypes from "prop-types";
-import BaseModal from "@/components/modals/BaseModal.jsx";
-import { SettingsSurface } from "@/components";
-import SegmentedControl from "@/components/ui/SegmentedControl";
-import { useLanguage } from "@/context";
+import BaseModal from "@shared/components/modals/BaseModal.jsx";
+import { SettingsSurface } from "@shared/components";
+import SegmentedControl from "@shared/components/ui/SegmentedControl";
+import { useLanguage } from "@core/context";
 import styles from "./ReportIssueModal.module.css";
 
 /**
@@ -55,7 +55,8 @@ function ReportIssueModal({
     [categories, t],
   );
 
-  const languageKey = typeof language === "string" ? language.toUpperCase() : "";
+  const languageKey =
+    typeof language === "string" ? language.toUpperCase() : "";
   const flavorKey = typeof flavor === "string" ? flavor.toUpperCase() : "";
   const sourcePreferenceKey =
     typeof sourceLanguage === "string" ? sourceLanguage.toUpperCase() : "";
@@ -75,8 +76,7 @@ function ReportIssueModal({
     ],
   );
 
-  const resolvedLanguageLabel =
-    languageLabels[languageKey] ?? language ?? "";
+  const resolvedLanguageLabel = languageLabels[languageKey] ?? language ?? "";
 
   // 词典模式展示需要呈现具体语言方向；在用户选择“自动检测”时，
   // 回退到当前词条识别的语言，并基于口味选择推断默认方向。
@@ -225,8 +225,8 @@ function ReportIssueModal({
                 disabled={submitting}
               >
                 {submitting
-                  ? t.reportSubmitting ?? t.loading ?? "Submitting"
-                  : t.reportSubmit ?? "Submit"}
+                  ? (t.reportSubmitting ?? t.loading ?? "Submitting")
+                  : (t.reportSubmit ?? "Submit")}
               </button>
             </div>
           </div>

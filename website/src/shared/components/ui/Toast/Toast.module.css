@@ -1,0 +1,87 @@
+.toast {
+  position: fixed;
+  top: var(--space-5, 32px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px) var(--space-3, 16px);
+  min-width: min(420px, calc(100vw - 2 * var(--space-4, 24px)));
+  max-width: min(520px, calc(100vw - 2 * var(--space-4, 24px)));
+  background: var(
+    --toast-bg,
+    var(--panel, var(--night-panel, var(--color-panel)))
+  );
+  color: var(--toast-color, var(--text-primary, var(--night-text)));
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(
+    --toast-shadow,
+    var(--shadow-elevated-md, 0 16px 40px rgb(0 0 0 / 45%))
+  );
+  z-index: calc(var(--z-index-popover, 1100) + 10);
+  letter-spacing: 0.01em;
+}
+
+.dismiss-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5, 32px);
+  height: var(--space-5, 32px);
+  border: none;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.dismiss-button:hover,
+.dismiss-button:focus-visible {
+  background: color-mix(
+    in srgb,
+    var(--toast-color, currentColor) 12%,
+    transparent 88%
+  );
+}
+
+.dismiss-button:focus-visible {
+  outline: 2px solid
+    color-mix(in srgb, var(--toast-color, currentColor) 28%, transparent 72%);
+  outline-offset: 2px;
+}
+
+.dismiss-button span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+@media (width <= 600px) {
+  .toast {
+    width: calc(100vw - 2 * var(--space-2, 8px));
+    min-width: unset;
+    max-width: unset;
+    padding: var(--space-2, 8px);
+    top: var(--space-4, 24px);
+  }
+
+  .dismiss-button {
+    width: var(--space-4, 24px);
+    height: var(--space-4, 24px);
+  }
+
+  .dismiss-button span {
+    font-size: 18px;
+  }
+}

@@ -12,7 +12,7 @@
  *  - 后续可以引入策略模式扩展不同 markdown/JSON 渲染器，实现多流派并行落地。
  */
 
-import { normalizeMarkdownEntity } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
+import { normalizeMarkdownEntity } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 
 const DEFAULT_LOGGER = console;
 

@@ -13,10 +13,10 @@
  * 演进与TODO：
  *  - 后续可抽象主题配置、支持暗色主题或多语言排版，亦可扩展为导出 PDF。
  */
-import appIconAsset from "@/assets/glancy-web.svg";
-import defaultAvatarAsset from "@/assets/default-user-avatar.svg";
-import { normalizeDictionaryMarkdown } from "@/features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
-import { stripMarkdownArtifacts } from "@/features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
+import appIconAsset from "@assets/glancy-web.svg";
+import defaultAvatarAsset from "@assets/default-user-avatar.svg";
+import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
+import { stripMarkdownArtifacts } from "@features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 
 const FONT_STACK = `'Pretendard', 'Noto Sans SC', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif`;
 const TITLE_FONT = `600 48px ${FONT_STACK}`;

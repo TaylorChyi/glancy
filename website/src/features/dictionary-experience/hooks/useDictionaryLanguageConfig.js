@@ -4,8 +4,8 @@ import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
   resolveDictionaryFlavor,
-} from "@/utils";
-import { useSettingsStore } from "@/store";
+} from "@shared/utils";
+import { useSettingsStore } from "@core/store";
 
 export function useDictionaryLanguageConfig({ t }) {
   const dictionarySourceLanguage = useSettingsStore(

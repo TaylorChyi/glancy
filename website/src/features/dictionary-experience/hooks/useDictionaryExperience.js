@@ -6,8 +6,8 @@ import {
   useFavorites,
   useTheme,
   useLanguage,
-} from "@/context";
-import { useStreamWord, useSpeechInput, useAppShortcuts } from "@/hooks";
+} from "@core/context";
+import { useStreamWord, useSpeechInput, useAppShortcuts } from "@shared/hooks";
 import {
   extractMarkdownPreview,
   resolveDictionaryConfig,
@@ -15,12 +15,12 @@ import {
   WORD_LANGUAGE_AUTO,
   resolveShareTarget,
   copyTextToClipboard,
-} from "@/utils";
-import { wordCacheKey } from "@/api/words.js";
+} from "@shared/utils";
+import { wordCacheKey } from "@shared/api/words.js";
 // 直接依赖各 store，避免桶状导出拆分 chunk 时的循环依赖影响首屏渲染。
-import { useWordStore } from "@/store/wordStore.js";
-import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
-import { DEFAULT_MODEL } from "@/config";
+import { useWordStore } from "@core/store/wordStore.js";
+import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
+import { DEFAULT_MODEL } from "@core/config";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useDictionaryPopup } from "./useDictionaryPopup.js";
 import { useDictionaryToast } from "./useDictionaryToast.js";
@@ -530,7 +530,8 @@ export function useDictionaryExperience() {
           flavor: targetFlavor,
         })) {
           if (language && language !== detected) detected = language;
-          const { preview: nextPreview, entry: streamingEntry } = buffer.append(chunk);
+          const { preview: nextPreview, entry: streamingEntry } =
+            buffer.append(chunk);
           if (nextPreview !== null) {
             setStreamText(nextPreview);
           }
@@ -539,7 +540,8 @@ export function useDictionaryExperience() {
           }
         }
 
-        const { markdown: bufferedMarkdown, entry: bufferedEntry } = buffer.finalize();
+        const { markdown: bufferedMarkdown, entry: bufferedEntry } =
+          buffer.finalize();
         const record = wordStoreApi.getState().getRecord?.(cacheKey);
         if (record) {
           const hydratedRecord = applyRecord(
@@ -553,10 +555,7 @@ export function useDictionaryExperience() {
         } else if (bufferedEntry) {
           setEntry(bufferedEntry);
           setFinalText(bufferedMarkdown ?? "");
-          resolvedTerm = coerceResolvedTerm(
-            bufferedEntry.term,
-            normalized,
-          );
+          resolvedTerm = coerceResolvedTerm(bufferedEntry.term, normalized);
         } else {
           setFinalText(bufferedMarkdown ?? "");
         }

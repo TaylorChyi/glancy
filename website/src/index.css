@@ -12,8 +12,8 @@
  *  - 后续可将 legacy 样式逐步迁移至分层 tokens/组件中，进一步减少跨文件耦合。
  */
 @import url("./tailwind.css");
-@import url("./styles/tokens/palette.css");
-@import url("./styles/tokens/roles.css");
-@import url("./styles/components/button.css");
-@import url("./styles/utilities/roles.css");
-@import url("./styles/index.css");
+@import url("./shared/styles/tokens/palette.css");
+@import url("./shared/styles/tokens/roles.css");
+@import url("./shared/styles/components/button.css");
+@import url("./shared/styles/utilities/roles.css");
+@import url("./shared/styles/index.css");

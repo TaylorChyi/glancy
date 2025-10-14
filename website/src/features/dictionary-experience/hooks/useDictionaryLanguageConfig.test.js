@@ -21,7 +21,7 @@ const mockSettingsState = {
   setDictionaryTargetLanguage: jest.fn(),
 };
 
-jest.unstable_mockModule("@/utils", () => ({
+jest.unstable_mockModule("@shared/utils", () => ({
   WORD_LANGUAGE_AUTO: "AUTO",
   normalizeWordSourceLanguage: jest.fn((value) => value ?? "AUTO"),
   normalizeWordTargetLanguage: jest.fn((value) => value ?? "CHINESE"),
@@ -30,7 +30,7 @@ jest.unstable_mockModule("@/utils", () => ({
 
 const useSettingsStore = (selector) => selector(mockSettingsState);
 
-jest.unstable_mockModule("@/store", () => ({
+jest.unstable_mockModule("@core/store", () => ({
   useSettingsStore,
 }));
 

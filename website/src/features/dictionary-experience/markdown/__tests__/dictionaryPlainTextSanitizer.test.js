@@ -11,7 +11,8 @@ describe("stripMarkdownArtifacts", () => {
    *  - 返回值保留英文单词间空格且去除 Markdown 标记。
    */
   test("GivenZeroWidthSpaces_WhenStripping_ThenRestoresVisibleWhitespace", () => {
-    const source = "**Time**\u200Bis\u200Bthe continued\nprogress of existence.";
+    const source =
+      "**Time**\u200Bis\u200Bthe continued\nprogress of existence.";
     const result = stripMarkdownArtifacts(source);
 
     expect(result).toBe("Time is the continued progress of existence.");

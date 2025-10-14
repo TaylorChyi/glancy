@@ -13,7 +13,11 @@
  */
 import PropTypes from "prop-types";
 
-export default function BottomPanelSwitcher({ mode, searchContent, actionsContent }) {
+export default function BottomPanelSwitcher({
+  mode,
+  searchContent,
+  actionsContent,
+}) {
   const content = mode === "actions" ? actionsContent : searchContent;
 
   return <div data-mode={mode}>{content}</div>;

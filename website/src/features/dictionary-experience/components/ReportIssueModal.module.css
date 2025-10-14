@@ -12,7 +12,11 @@
    * 复用 SettingsSurface 的边框对比度，确保举报弹窗与偏好设置面板在视觉上保持一致的厚度与明暗层级。
    * 备选方案：单独定义举报弹窗的色板，但会造成主题维护分叉，故放弃。
    */
-  --report-modal-border: color-mix(in srgb, var(--border-color) 64%, transparent);
+  --report-modal-border: color-mix(
+    in srgb,
+    var(--border-color) 64%,
+    transparent
+  );
   --report-modal-shadow: 0 48px 120px
     color-mix(in srgb, var(--shadow-color) 32%, transparent);
   --report-modal-inner-surface: color-mix(
@@ -111,7 +115,11 @@
   outline: none;
   border-color: var(--preferences-panel-ring, var(--highlight-color));
   box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--preferences-panel-ring, var(--highlight-color)) 28%, transparent);
+    color-mix(
+      in srgb,
+      var(--preferences-panel-ring, var(--highlight-color)) 28%,
+      transparent
+    );
 }
 
 .header-title {
@@ -138,7 +146,11 @@
   padding: clamp(var(--space-3), 3vw, var(--space-4));
   border-radius: var(--radius-xl);
   border: 1px solid
-    color-mix(in srgb, var(--preferences-panel-border, var(--border-color)) 55%, transparent);
+    color-mix(
+      in srgb,
+      var(--preferences-panel-border, var(--border-color)) 55%,
+      transparent
+    );
   background: color-mix(
     in srgb,
     var(--preferences-panel-surface, var(--app-bg)) 92%,
@@ -201,8 +213,16 @@
   padding: clamp(var(--space-3), 3vw, var(--space-4));
   border-radius: var(--radius-xl);
   border: 1px solid
-    color-mix(in srgb, var(--preferences-panel-ring, var(--border-color)) 55%, transparent);
-  background: color-mix(in srgb, var(--preferences-panel-surface, var(--app-bg)) 94%, transparent);
+    color-mix(
+      in srgb,
+      var(--preferences-panel-ring, var(--border-color)) 55%,
+      transparent
+    );
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface, var(--app-bg)) 94%,
+    transparent
+  );
   color: var(--preferences-panel-text, var(--color-text));
   font-size: var(--text-sm);
   line-height: 1.7;
@@ -218,7 +238,11 @@
   outline: none;
   border-color: var(--preferences-panel-ring, var(--highlight-color));
   box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--preferences-panel-ring, var(--highlight-color)) 35%, transparent);
+    color-mix(
+      in srgb,
+      var(--preferences-panel-ring, var(--highlight-color)) 35%,
+      transparent
+    );
 }
 
 .action-bar {
@@ -250,9 +274,17 @@
   padding: 0.75rem 1.4rem;
   border-radius: var(--radius-lg);
   border: 1px solid
-    color-mix(in srgb, var(--preferences-panel-border, var(--border-color)) 55%, transparent);
+    color-mix(
+      in srgb,
+      var(--preferences-panel-border, var(--border-color)) 55%,
+      transparent
+    );
   background: transparent;
-  color: color-mix(in srgb, var(--preferences-panel-text, var(--color-text)) 88%, transparent);
+  color: color-mix(
+    in srgb,
+    var(--preferences-panel-text, var(--color-text)) 88%,
+    transparent
+  );
   font-weight: var(--font-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -312,8 +344,8 @@
     padding: clamp(var(--space-3), 4vw, var(--space-4));
   }
 
-    .action-bar {
-      flex-direction: column;
+  .action-bar {
+    flex-direction: column;
     align-items: stretch;
   }
 

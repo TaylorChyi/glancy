@@ -6,7 +6,7 @@ import styles from "../DictionaryActionPanel.module.css";
 
 const recordedIconProps = [];
 
-jest.unstable_mockModule("@/components/ui/Icon", () => ({
+jest.unstable_mockModule("@shared/components/ui/Icon", () => ({
   __esModule: true,
   default: (props) => {
     recordedIconProps.push(props);
@@ -14,7 +14,7 @@ jest.unstable_mockModule("@/components/ui/Icon", () => ({
   },
 }));
 
-jest.unstable_mockModule("@/components/DictionaryEntryActionBar", () => ({
+jest.unstable_mockModule("@shared/components/DictionaryEntryActionBar", () => ({
   __esModule: true,
   default: ({ renderRoot }) =>
     renderRoot({
@@ -101,7 +101,7 @@ describe("DictionaryActionPanel", () => {
     );
 
     const searchBox = screen.getByTestId("dictionary-action-panel");
-    expect(searchBox.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBox.parentElement).toHaveClass(styles["panel-shell"]);
 
     rerender(
       <DictionaryActionPanel
@@ -117,6 +117,8 @@ describe("DictionaryActionPanel", () => {
     const searchBoxAfterRerender = screen.getByTestId(
       "dictionary-action-panel",
     );
-    expect(searchBoxAfterRerender.parentElement).toHaveClass(styles.panelShell);
+    expect(searchBoxAfterRerender.parentElement).toHaveClass(
+      styles["panel-shell"],
+    );
   });
 });
