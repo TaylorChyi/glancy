@@ -1,22 +1,59 @@
 <!doctype html>
+<!--
+  文件用途：
+  - 应用的入口 HTML 模板，提供根节点、基础 meta 信息与静态资源入口；
+  - 运行时由 /src/main.jsx 挂载并渲染所有界面；
+  - 禁止在此处硬编码业务文案或可配置信息（符合“禁止硬编码”军规）。
+
+  关键说明：
+  - 页面标题不在此文件中写死，交由运行时的 i18n（LanguageContext）根据当前语言设置 document.title；
+  - 如需修改默认品牌/标题，请在 i18n 文案或统一配置中调整，而非直接改动本文件。
+-->
 <html lang="zh" data-theme="system">
   <head>
+    <!-- 设置文档字符编码为 UTF-8，确保中英文及多语言字符正常显示 -->
     <meta charset="UTF-8" />
+    <!-- 定义浏览器标签页图标 -->
     <link
       id="favicon"
       rel="icon"
       type="image/svg+xml"
       href="/src/assets/glancy-web.svg"
     />
+    <!-- 设置响应式布局视口，使页面在移动端设备上按比例显示 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>格律词典</title>
+    <!-- 页面标题由运行时设置，避免硬编码。见 src/core/context/LanguageContext.jsx -->
+    <title></title>
+    
+    <!--
+      在浏览器环境初始化阶段执行的启动脚本：
+      - 用于检测系统主题（深色/浅色）并设置到 <html data-theme>；
+      - 注入 polyfill（旧浏览器兼容代码）；
+      - 执行必要的全局初始化逻辑（例如 CSS 变量、环境检测）；
+      - 必须在 React 代码加载前运行。
+    -->
     <script
       type="module"
       src="/src/shared/theme/bootstrapBrowserEnvironment.ts"
     ></script>
   </head>
+  
   <body>
+    <!--
+      React 应用挂载点：
+      - ReactDOM 在运行时通过 `createRoot(document.getElementById('root'))` 挂载；
+      - 所有前端页面、组件均在此节点下渲染；
+      - 此处不应存在除 root 外的其他静态内容。
+    -->
     <div id="root"></div>
+
+    <!--
+      应用主入口脚本：
+      - 通过 ES Module 方式加载；
+      - 内部引入 React、路由、全局样式、国际化配置等；
+      - 挂载根组件 App；
+      - Vite（Vite 全称同名，无缩写）在构建时自动注入 hash 版本号以支持缓存控制。
+    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
