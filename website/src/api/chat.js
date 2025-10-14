@@ -14,14 +14,18 @@ export function createChatApi(request = apiRequest) {
    * @param {{model: string, messages: Array}} options
    * @returns {AsyncGenerator<string>}
    */
-  async function* streamChatMessage({ model = DEFAULT_MODEL, messages }) {
+  async function* streamChatMessage({
+    model = DEFAULT_MODEL,
+    messages,
+    responseMode = "stream",
+  }) {
     const logCtx = { model, messages: messages.length };
     console.info("[streamChatMessage] start", logCtx);
     let response;
     try {
       response = await fetch(API_PATHS.chat, {
         method: "POST",
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify({ model, messages, responseMode }),
         headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
@@ -59,6 +63,7 @@ export function createChatApi(request = apiRequest) {
     model = DEFAULT_MODEL,
     messages,
     temperature,
+    responseMode = "sync",
   }) {
     const logCtx = { model, messages: messages.length };
     console.info("[completeChatMessage] start", logCtx);
@@ -66,7 +71,7 @@ export function createChatApi(request = apiRequest) {
       const response = await jsonRequest(API_PATHS.chat, {
         method: "POST",
         headers: { Accept: "application/json" },
-        body: { model, messages, temperature },
+        body: { model, messages, temperature, responseMode },
       });
       const content = response?.content ?? "";
       console.info("[completeChatMessage] end", {

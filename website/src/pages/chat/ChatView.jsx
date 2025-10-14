@@ -42,6 +42,7 @@ export default function ChatView({
       for await (const chunk of streamFn({
         model: DEFAULT_MODEL,
         messages: history,
+        responseMode: "stream",
       })) {
         const formatted = formatter.append(chunk);
         if (firstChunk) {
@@ -63,6 +64,7 @@ export default function ChatView({
     const result = await completeFn({
       model: DEFAULT_MODEL,
       messages: history,
+      responseMode: "sync",
     });
     const formatted = formatter.append(result ?? "");
     setMessages((prev) => [

@@ -24,4 +24,9 @@ public class ChatRequest {
      * 温度参数，缺省采用适中的 0.7。
      */
     private double temperature = 0.7d;
+
+    /**
+     * 调用方期望的响应模式，可选 "stream" 或 "sync"，默认为流式输出。
+     */
+    private String responseMode;
 }
