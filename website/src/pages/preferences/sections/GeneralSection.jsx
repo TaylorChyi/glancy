@@ -25,6 +25,7 @@ import {
 } from "@/store/settings";
 import LanguageMenu from "@/components/ui/LanguageMenu";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import PreferenceSection from "./PreferenceSection.jsx";
 import styles from "../Preferences.module.css";
 
 const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
@@ -37,8 +38,6 @@ const CHAT_COMPLETION_MODE_ORDER = Object.freeze([
   CHAT_COMPLETION_MODE_STREAMING,
   CHAT_COMPLETION_MODE_SYNC,
 ]);
-
-const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
 const mapLanguageLabel = (translations, code) => {
   const key = `settingsGeneralLanguageOption_${code}`;
@@ -190,16 +189,7 @@ function GeneralSection({ title, headingId }) {
   );
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className={composeClassName(styles.section, styles["section-plain"])}
-    >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
+    <PreferenceSection title={title} headingId={headingId}>
       <div className={styles.controls}>
         <fieldset
           className={styles["control-field"]}
@@ -261,7 +251,7 @@ function GeneralSection({ title, headingId }) {
           />
         </fieldset>
       </div>
-    </section>
+    </PreferenceSection>
   );
 }
 

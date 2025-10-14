@@ -20,6 +20,7 @@ import PropTypes from "prop-types";
 import { useLanguage, useUser } from "@/context";
 import LanguageMenu from "@/components/ui/LanguageMenu";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import PreferenceSection from "./PreferenceSection.jsx";
 // 避免经由 store/index 桶状导出的路径，确保页面依赖在打包拆分时保持拓扑稳定
 // 并为后续按需加载各 store 留出空间。
 import { useDataGovernanceStore } from "@/store/dataGovernanceStore.ts";
@@ -295,26 +296,20 @@ function DataSection({ title, message, headingId, descriptionId }) {
   const canClearLanguage = selectedLanguage && languageOptions.length > 0;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={sectionDescriptionId}
-      className={composeClassName(styles.section, styles["section-plain"])}
+    <PreferenceSection
+      title={title}
+      headingId={headingId}
+      descriptionId={sectionDescriptionId}
+      describedBy={sectionDescriptionId}
+      renderDescription={({ id }) =>
+        hasSectionMessage ? (
+          // 使用视觉隐藏的描述串联 message，确保屏幕阅读器获得上下文而不干扰视觉布局。
+          <p id={id} className={styles["visually-hidden"]}>
+            {message}
+          </p>
+        ) : null
+      }
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
-      {hasSectionMessage ? (
-        // 使用视觉隐藏的描述串联 message，确保屏幕阅读器获得上下文而不干扰视觉布局。
-        <p
-          id={sectionDescriptionId}
-          className={styles["visually-hidden"]}
-        >
-          {message}
-        </p>
-      ) : null}
       <div className={styles.controls}>
         <fieldset
           className={styles["control-field"]}
@@ -408,7 +403,7 @@ function DataSection({ title, message, headingId, descriptionId }) {
           </div>
         </div>
       </div>
-    </section>
+    </PreferenceSection>
   );
 }
 

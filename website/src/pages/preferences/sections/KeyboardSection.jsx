@@ -19,7 +19,7 @@ import {
   mergeShortcutLists,
   translateShortcutAction,
 } from "@/utils/keyboardShortcuts.js";
-import sectionStyles from "../Preferences.module.css";
+import PreferenceSection from "./PreferenceSection.jsx";
 import styles from "./KeyboardSection.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
@@ -84,16 +84,7 @@ function KeyboardSection({ title, headingId }) {
   const isLoading = status === "loading";
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className={composeClassName(sectionStyles.section, sectionStyles["section-plain"], styles.section)}
-    >
-      <div className={sectionStyles["section-header"]}>
-        <h3 id={headingId} className={sectionStyles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={sectionStyles["section-divider"]} aria-hidden="true" />
-      </div>
+    <PreferenceSection title={title} headingId={headingId} className={styles.section}>
       <div className={styles.body}>
         <div className={styles.hint}>{hint}</div>
         <ul className={styles.list}>
@@ -151,7 +142,7 @@ function KeyboardSection({ title, headingId }) {
           </button>
         </div>
       </div>
-    </section>
+    </PreferenceSection>
   );
 }
 

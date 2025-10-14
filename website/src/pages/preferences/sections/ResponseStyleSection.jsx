@@ -12,9 +12,9 @@
  * 演进与TODO：
  *  - TODO: 后续可补充字段级校验与保存失败的逐项提示。
  */
-import { useId } from "react";
 import PropTypes from "prop-types";
 import SelectMenu from "@/components/ui/SelectMenu";
+import PreferenceSection from "./PreferenceSection.jsx";
 import styles from "../Preferences.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
@@ -47,11 +47,8 @@ function ResponseStyleSection({
   onFieldChange,
   onFieldCommit,
 }) {
-  const fallbackDescriptionId = useId();
   const hasMessage = isMeaningful(message);
-  const resolvedDescriptionId = hasMessage
-    ? (descriptionId ?? fallbackDescriptionId)
-    : undefined;
+  const resolvedDescription = hasMessage ? message : undefined;
 
   const status = state?.status ?? "idle";
   const values = state?.values ?? {};
@@ -116,22 +113,12 @@ function ResponseStyleSection({
   );
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={resolvedDescriptionId}
-      className={composeClassName(styles.section, styles["section-plain"])}
+    <PreferenceSection
+      title={title}
+      headingId={headingId}
+      description={resolvedDescription}
+      descriptionId={descriptionId}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
-      {hasMessage ? (
-        <p id={resolvedDescriptionId} className={styles["section-description"]}>
-          {message}
-        </p>
-      ) : null}
       <div aria-live="polite" className={styles.details}>
         {shouldShowPlaceholder ? (
           <p className={styles.placeholder}>{copy.loadingLabel}</p>
@@ -212,7 +199,7 @@ function ResponseStyleSection({
           </dl>
         ) : null}
       </div>
-    </section>
+    </PreferenceSection>
   );
 }
 

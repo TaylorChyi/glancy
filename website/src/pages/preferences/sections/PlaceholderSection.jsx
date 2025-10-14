@@ -11,24 +11,27 @@
  *  - TODO: 当分区功能上线后，可用真实组件替换此占位实现。
  */
 import PropTypes from "prop-types";
+import PreferenceSection, {
+  PREFERENCE_SECTION_VARIANTS,
+} from "./PreferenceSection.jsx";
 import styles from "../Preferences.module.css";
 
 function PlaceholderSection({ title, message, headingId, descriptionId }) {
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={descriptionId}
-      className={styles.section}
+    <PreferenceSection
+      title={title}
+      headingId={headingId}
+      descriptionId={descriptionId}
+      variant={PREFERENCE_SECTION_VARIANTS.DEFAULT}
+      divider={false}
+      renderDescription={({ id }) => (
+        <p id={id} className={styles.placeholder}>
+          {message}
+        </p>
+      )}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-      </div>
-      <p id={descriptionId} className={styles.placeholder}>
-        {message}
-      </p>
-    </section>
+      {null}
+    </PreferenceSection>
   );
 }
 

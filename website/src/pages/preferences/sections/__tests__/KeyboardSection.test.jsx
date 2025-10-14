@@ -8,6 +8,7 @@ jest.unstable_mockModule("@/context", () => ({
   useLanguage: mockUseLanguage,
   useKeyboardShortcutContext: mockUseKeyboardShortcutContext,
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
+  useUser: () => ({ user: null }),
   useTheme: () => ({ theme: "dark", setTheme: jest.fn() }),
 }));
 

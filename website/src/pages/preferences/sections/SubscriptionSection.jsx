@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import styles from "../Preferences.module.css";
+import PreferenceSection from "./PreferenceSection.jsx";
 
 const REDEEM_CODE_GROUP_SIZE = 4;
 const REDEEM_CODE_MAX_LENGTH = 16;
@@ -151,17 +152,12 @@ function SubscriptionSection({
   const shouldShowPlanRailNextNav = shouldRenderPlanRailNav && !isPlanRailAtEnd;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-describedby={descriptionId}
-      className={`${styles.section} ${styles["section-plain"]} ${styles["subscription-section"]}`}
+    <PreferenceSection
+      title={title}
+      headingId={headingId}
+      className={styles["subscription-section"]}
+      describedBy={descriptionId}
     >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
       <div className={styles["subscription-matrix"]}>
         <div className={styles["subscription-plan-carousel"]}>
           {shouldShowPlanRailPreviousNav ? (
@@ -304,7 +300,7 @@ function SubscriptionSection({
           </div>
         </div>
       </div>
-    </section>
+    </PreferenceSection>
   );
 }
 

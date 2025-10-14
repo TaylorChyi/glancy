@@ -20,6 +20,7 @@ import {
   ACCOUNT_STATIC_FIELD_TYPE,
   ACCOUNT_USERNAME_FIELD_TYPE,
 } from "./accountSection.constants.js";
+import PreferenceSection from "./PreferenceSection.jsx";
 import styles from "../Preferences.module.css";
 
 const AVATAR_SIZE = 72;
@@ -239,16 +240,7 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
   ]);
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className={`${styles.section} ${styles["section-plain"]}`}
-    >
-      <div className={styles["section-header"]}>
-        <h3 id={headingId} className={styles["section-title"]} tabIndex={-1}>
-          {title}
-        </h3>
-        <div className={styles["section-divider"]} aria-hidden="true" />
-      </div>
+    <PreferenceSection title={title} headingId={headingId}>
       <dl className={styles.details}>
         <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
           <dt
@@ -375,7 +367,7 @@ function AccountSection({ title, fields, headingId, identity, bindings }) {
           </ul>
         </div>
       ) : null}
-    </section>
+    </PreferenceSection>
   );
 }
 
