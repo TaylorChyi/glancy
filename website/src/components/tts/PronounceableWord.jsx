@@ -1,26 +1,25 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import MessagePopup from "@/components/ui/MessagePopup";
-import Toast from "@/components/ui/Toast";
-import UpgradeModal from "@/components/modals/UpgradeModal.jsx";
 import { useTtsPlayer } from "@/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@/store";
 import { useLanguage } from "@/context";
 import styles from "./PronounceableWord.module.css";
+import useTtsFeedback from "./useTtsFeedback.js";
+import TtsFeedbackSurfaces from "./TtsFeedbackSurfaces.jsx";
 
 /**
- * Text element that plays word pronunciation when clicked.
- * Mirrors error handling of TtsButton for consistent UX.
+ * 背景：
+ *  - 与 TtsButton 保持一致的错误反馈体验，但展示触点是可点击文字。
+ * 目的：
+ *  - 复用 useTtsFeedback + TtsFeedbackSurfaces，避免在此重复弹层渲染逻辑。
+ * 关键决策：
+ *  - 控制层只负责触发播放/停止，反馈完全交给组合组件处理，
+ *    维持“触发器 + 反馈”分离的结构，后续可平移到其他文本元素。
  */
 export default function PronounceableWord({ text, lang, className }) {
-  const navigate = useNavigate();
   const { t } = useLanguage();
   const { play, stop, loading, playing, error } = useTtsPlayer({
     scope: "word",
   });
-  const [toastMsg, setToastMsg] = useState("");
-  const [popupMsg, setPopupMsg] = useState("");
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const feedback = useTtsFeedback(error);
 
   const handleClick = async () => {
     if (loading) return;
@@ -31,20 +30,6 @@ export default function PronounceableWord({ text, lang, className }) {
     const voice = useVoiceStore.getState().getVoice(lang);
     await play({ text, lang, voice });
   };
-
-  useEffect(() => {
-    if (!error) return;
-    switch (error.code) {
-      case 401:
-        navigate("/login");
-        break;
-      case 403:
-        setPopupMsg(error.message);
-        break;
-      default:
-        setToastMsg(error.message);
-    }
-  }, [error, navigate]);
 
   const cls = [
     styles.word,
@@ -67,27 +52,10 @@ export default function PronounceableWord({ text, lang, className }) {
       >
         {text}
       </span>
-      <MessagePopup
-        open={!!popupMsg}
-        message={popupMsg}
-        onClose={() => setPopupMsg("")}
-      >
-        <button
-          type="button"
-          className={styles["upgrade-btn"]}
-          onClick={() => {
-            setUpgradeOpen(true);
-            setPopupMsg("");
-          }}
-        >
-          {t.upgrade}
-        </button>
-      </MessagePopup>
-      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
-      <Toast
-        open={!!toastMsg}
-        message={toastMsg}
-        onClose={() => setToastMsg("")}
+      <TtsFeedbackSurfaces
+        feedback={feedback}
+        upgradeLabel={t.upgrade}
+        upgradeButtonClassName={styles["upgrade-btn"]}
       />
     </>
   );
