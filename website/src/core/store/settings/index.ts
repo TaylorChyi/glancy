@@ -1,243 +1,118 @@
+/**
+ * 背景：
+ *  - 设置 Store 过去集成常量、归一化与持久化逻辑，导致修改一处易产生冲突并影响其他责任。
+ * 目的：
+ *  - 基于领域模型、策略、持久化三层拆分结构，实现职责单一且可扩展的状态管理入口。
+ * 关键决策与取舍：
+ *  - 通过组合 normalizers（策略模式）与 persistence（职责链）模块，使初始化与更新路径统一。
+ *  - 维持原有 Hook 契约不变，避免对调用方造成破坏性调整。
+ * 影响范围：
+ *  - 所有读取 useSettingsStore 的页面与特性，将受益于更清晰的职责划分与容错处理。
+ * 演进与TODO：
+ *  - 若后续引入跨端同步，可在 persistence 层新增 resolver；如需特性开关，可在 initializer 内注入配置。
+ */
+
 import { createPersistentStore } from "../createPersistentStore.js";
 import { pickState } from "../persistUtils.js";
 import {
-  SYSTEM_LANGUAGE_AUTO,
-  getSupportedLanguageCodes,
-  isSupportedLanguage,
-} from "@core/i18n/languages.js";
-import {
-  WORD_LANGUAGE_AUTO,
-  WORD_LANGUAGE_ENGLISH_MONO,
-  normalizeWordLanguage,
-  normalizeWordSourceLanguage,
-  normalizeWordTargetLanguage,
-  WORD_DEFAULT_TARGET_LANGUAGE,
-} from "@shared/utils/language.js";
-
-const LEGACY_LANGUAGE_STORAGE_KEY = "lang";
-const SETTINGS_STORAGE_KEY = "settings";
-const DEFAULT_LANGUAGE_FALLBACK = "zh";
-
-type SystemLanguage = typeof SYSTEM_LANGUAGE_AUTO | string;
-
-type DictionarySourceLanguage =
-  | typeof WORD_LANGUAGE_AUTO
-  | "CHINESE"
-  | "ENGLISH";
-
-type DictionaryTargetLanguage = "CHINESE" | "ENGLISH";
-
-const MARKDOWN_RENDERING_MODE_DYNAMIC = "dynamic" as const;
-const MARKDOWN_RENDERING_MODE_PLAIN = "plain" as const;
-
-const CHAT_COMPLETION_MODE_STREAMING = "stream" as const;
-const CHAT_COMPLETION_MODE_SYNC = "sync" as const;
-
-const MARKDOWN_RENDERING_MODES = Object.freeze([
-  MARKDOWN_RENDERING_MODE_DYNAMIC,
-  MARKDOWN_RENDERING_MODE_PLAIN,
-] as const);
-
-const CHAT_COMPLETION_MODES = Object.freeze([
   CHAT_COMPLETION_MODE_STREAMING,
   CHAT_COMPLETION_MODE_SYNC,
-] as const);
+  CHAT_COMPLETION_MODES,
+  DEFAULT_SETTINGS_SLICE,
+  DictionaryLegacyLanguage,
+  MARKDOWN_RENDERING_MODE_DYNAMIC,
+  MARKDOWN_RENDERING_MODE_PLAIN,
+  MARKDOWN_RENDERING_MODES,
+  SETTINGS_STORAGE_KEY,
+  SUPPORTED_SYSTEM_LANGUAGES,
+  type SettingsSlice,
+  type SettingsState,
+  type SystemLanguage,
+} from "./model.js";
+import {
+  normalizeChatCompletionMode,
+  normalizeDictionarySourceLanguage,
+  normalizeDictionaryTargetLanguage,
+  normalizeLegacyDictionaryLanguage,
+  normalizeMarkdownRenderingMode,
+  resolveDictionaryPreference,
+  resolveDictionaryPreferenceFromLegacy,
+  sanitizeSystemLanguage,
+} from "./normalizers.js";
+import {
+  extractDictionaryPersistence,
+  persistLegacySystemLanguage,
+  readPersistedSettingsSnapshot,
+  resolveInitialSystemLanguage,
+} from "./persistence.js";
 
-type MarkdownRenderingMode = (typeof MARKDOWN_RENDERING_MODES)[number];
-type ChatCompletionMode = (typeof CHAT_COMPLETION_MODES)[number];
-
-type SettingsState = {
-  systemLanguage: SystemLanguage;
-  setSystemLanguage: (language: SystemLanguage) => void;
-  dictionarySourceLanguage: DictionarySourceLanguage;
-  setDictionarySourceLanguage: (language: DictionarySourceLanguage) => void;
-  dictionaryTargetLanguage: DictionaryTargetLanguage;
-  setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => void;
-  markdownRenderingMode: MarkdownRenderingMode;
-  setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => void;
-  chatCompletionMode: ChatCompletionMode;
-  setChatCompletionMode: (mode: ChatCompletionMode) => void;
-  /**
-   * @deprecated 请改用 setDictionarySourceLanguage / setDictionaryTargetLanguage
-   */
-  setDictionaryLanguage: (language: DictionaryLegacyLanguage) => void;
-};
-
-type DictionaryLegacyLanguage =
-  | typeof WORD_LANGUAGE_AUTO
-  | "CHINESE"
-  | "ENGLISH"
-  | typeof WORD_LANGUAGE_ENGLISH_MONO;
-
-function sanitizeLanguage(candidate: SystemLanguage): SystemLanguage {
-  if (candidate === SYSTEM_LANGUAGE_AUTO) {
-    return SYSTEM_LANGUAGE_AUTO;
-  }
-  if (isSupportedLanguage(candidate)) {
-    return candidate;
-  }
-  return DEFAULT_LANGUAGE_FALLBACK;
-}
-
-function detectInitialLanguage(): SystemLanguage {
-  const persisted = localStorage.getItem(SETTINGS_STORAGE_KEY);
-  if (persisted) {
-    try {
-      const data = JSON.parse(persisted);
-      const candidate = data?.state?.systemLanguage;
-      if (candidate && isSupportedLanguage(candidate)) {
-        return candidate;
-      }
-    } catch (error) {
-      console.warn("[settings] failed to parse persisted state", error);
-    }
-  }
-  const legacy = localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
-  if (legacy && isSupportedLanguage(legacy)) {
-    return legacy;
-  }
-  return SYSTEM_LANGUAGE_AUTO;
-}
-
-function persistLegacyLanguage(language: SystemLanguage) {
-  if (language === SYSTEM_LANGUAGE_AUTO) {
-    localStorage.removeItem(LEGACY_LANGUAGE_STORAGE_KEY);
-    return;
-  }
-  if (isSupportedLanguage(language)) {
-    localStorage.setItem(LEGACY_LANGUAGE_STORAGE_KEY, language);
-  }
-}
-
-/**
- * 意图：规范化 Markdown 渲染模式，保证状态机仅暴露有限集合。
- * 输入：候选模式字符串（可能来源于持久化或外部注入）。
- * 输出：枚举内合法值，无法识别时回退到动态渲染。
- * 流程：
- *  1) 判断候选值是否为字符串。
- *  2) 匹配是否在允许集合中。
- *  3) 默认回退至 dynamic。
- * 错误处理：不抛异常，统一回退到 dynamic。
- * 复杂度：O(1)，集合长度常量级。
- */
-function normalizeMarkdownRenderingMode(
-  candidate: unknown,
-): MarkdownRenderingMode {
-  if (typeof candidate === "string") {
-    const normalized = candidate.toLowerCase();
-    if (
-      MARKDOWN_RENDERING_MODES.includes(normalized as MarkdownRenderingMode)
-    ) {
-      return normalized as MarkdownRenderingMode;
-    }
-  }
-  return MARKDOWN_RENDERING_MODE_DYNAMIC;
-}
-
-/**
- * 意图：规范化聊天输出模式，确保仅暴露流式或同步两种选项。
- * 输入：候选模式字符串，可来源于持久化或外部注入。
- * 输出：合法模式值，未知输入回退到流式模式。
- * 流程：
- *  1) 判断输入是否为字符串。
- *  2) 统一转为小写并校验是否属于受支持集合。
- *  3) 失败时返回流式作为默认体验。
- * 错误处理：不抛异常，统一回退流式模式。
- * 复杂度：O(1)。
- */
-function normalizeChatCompletionMode(candidate: unknown): ChatCompletionMode {
-  if (typeof candidate === "string") {
-    const normalized = candidate.toLowerCase();
-    if (CHAT_COMPLETION_MODES.includes(normalized as ChatCompletionMode)) {
-      return normalized as ChatCompletionMode;
-    }
-  }
-  return CHAT_COMPLETION_MODE_STREAMING;
-}
+const STORAGE = typeof window === "undefined" ? undefined : window.localStorage;
 
 export const useSettingsStore = createPersistentStore<SettingsState>({
   key: SETTINGS_STORAGE_KEY,
-  initializer: (set, get) => ({
-    systemLanguage: detectInitialLanguage(),
-    dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
-    dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
-    markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
-    chatCompletionMode: CHAT_COMPLETION_MODE_STREAMING,
-    setSystemLanguage: (language: SystemLanguage) => {
-      const normalized = sanitizeLanguage(language);
-      const current = get().systemLanguage;
-      if (current === normalized) {
-        persistLegacyLanguage(normalized);
-        return;
-      }
-      set({ systemLanguage: normalized });
-      persistLegacyLanguage(normalized);
-    },
-    setDictionarySourceLanguage: (language: DictionarySourceLanguage) => {
-      const normalized = normalizeWordSourceLanguage(language);
-      set((state) => {
-        if (state.dictionarySourceLanguage === normalized) {
-          return {};
+  initializer: (set, get) => {
+    const initialSlice = {
+      ...DEFAULT_SETTINGS_SLICE,
+      systemLanguage: STORAGE
+        ? resolveInitialSystemLanguage(STORAGE)
+        : DEFAULT_SETTINGS_SLICE.systemLanguage,
+    } satisfies SettingsSlice;
+
+    return {
+      ...initialSlice,
+      setSystemLanguage: (language: SystemLanguage) => {
+        const normalized = sanitizeSystemLanguage(language);
+        const current = get().systemLanguage;
+        if (current === normalized) {
+          if (STORAGE) {
+            persistLegacySystemLanguage(STORAGE, normalized);
+          }
+          return;
         }
-        return { dictionarySourceLanguage: normalized };
-      });
-    },
-    setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => {
-      const normalized = normalizeWordTargetLanguage(language);
-      set((state) => {
-        if (state.dictionaryTargetLanguage === normalized) {
-          return {};
+        set({ systemLanguage: normalized });
+        if (STORAGE) {
+          persistLegacySystemLanguage(STORAGE, normalized);
         }
-        return { dictionaryTargetLanguage: normalized };
-      });
-    },
-    setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => {
-      const normalized = normalizeMarkdownRenderingMode(mode);
-      set((state) => {
-        if (state.markdownRenderingMode === normalized) {
-          return {};
-        }
-        return { markdownRenderingMode: normalized };
-      });
-    },
-    setChatCompletionMode: (mode: ChatCompletionMode) => {
-      const normalized = normalizeChatCompletionMode(mode);
-      set((state) => {
-        if (state.chatCompletionMode === normalized) {
-          return {};
-        }
-        return { chatCompletionMode: normalized };
-      });
-    },
-    setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
-      const normalized = normalizeWordLanguage(language);
-      set(() => {
-        switch (normalized) {
-          case "CHINESE":
-            return {
-              dictionarySourceLanguage: "CHINESE",
-              dictionaryTargetLanguage: "ENGLISH",
-            };
-          case "ENGLISH":
-            return {
-              dictionarySourceLanguage: "ENGLISH",
-              dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
-            };
-          case WORD_LANGUAGE_ENGLISH_MONO:
-            return {
-              dictionarySourceLanguage: "ENGLISH",
-              dictionaryTargetLanguage: "ENGLISH",
-            };
-          case WORD_LANGUAGE_AUTO:
-          default:
-            return {
-              dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
-              dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
-            };
-        }
-      });
-    },
-  }),
+      },
+      setDictionarySourceLanguage: (language) => {
+        const normalized = normalizeDictionarySourceLanguage(language);
+        set((state) =>
+          state.dictionarySourceLanguage === normalized
+            ? {}
+            : { dictionarySourceLanguage: normalized },
+        );
+      },
+      setDictionaryTargetLanguage: (language) => {
+        const normalized = normalizeDictionaryTargetLanguage(language);
+        set((state) =>
+          state.dictionaryTargetLanguage === normalized
+            ? {}
+            : { dictionaryTargetLanguage: normalized },
+        );
+      },
+      setMarkdownRenderingMode: (mode) => {
+        const normalized = normalizeMarkdownRenderingMode(mode);
+        set((state) =>
+          state.markdownRenderingMode === normalized
+            ? {}
+            : { markdownRenderingMode: normalized },
+        );
+      },
+      setChatCompletionMode: (mode) => {
+        const normalized = normalizeChatCompletionMode(mode);
+        set((state) =>
+          state.chatCompletionMode === normalized
+            ? {}
+            : { chatCompletionMode: normalized },
+        );
+      },
+      setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
+        const normalized = normalizeLegacyDictionaryLanguage(language);
+        const preference = resolveDictionaryPreferenceFromLegacy(normalized);
+        set(() => preference);
+      },
+    } satisfies SettingsState;
+  },
   persistOptions: {
     partialize: pickState([
       "systemLanguage",
@@ -247,74 +122,37 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       "chatCompletionMode",
     ]),
     onRehydrateStorage: () => (state) => {
-      if (state) {
-        let persistedState: { state?: Record<string, unknown> } | null = null;
-        try {
-          const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-          persistedState = raw ? JSON.parse(raw) : null;
-        } catch (error) {
-          console.warn("[settings] failed to parse persisted state", error);
-        }
-        const hasPersistedSource = Boolean(
-          persistedState?.state?.dictionarySourceLanguage,
-        );
-        const hasPersistedTarget = Boolean(
-          persistedState?.state?.dictionaryTargetLanguage,
-        );
-        persistLegacyLanguage(state.systemLanguage);
-        const legacyLanguage =
-          "dictionaryLanguage" in state
-            ? normalizeWordLanguage(
-                (state as unknown as { dictionaryLanguage?: string })
-                  .dictionaryLanguage,
-              )
-            : undefined;
-        const persistedSource = normalizeWordSourceLanguage(
-          (state as unknown as { dictionarySourceLanguage?: string })
-            .dictionarySourceLanguage,
-        );
-        const persistedTarget = normalizeWordTargetLanguage(
-          (state as unknown as { dictionaryTargetLanguage?: string })
-            .dictionaryTargetLanguage,
-        );
-        state.markdownRenderingMode = normalizeMarkdownRenderingMode(
-          (state as unknown as { markdownRenderingMode?: string })
-            .markdownRenderingMode,
-        );
-        state.chatCompletionMode = normalizeChatCompletionMode(
-          (state as unknown as { chatCompletionMode?: string })
-            .chatCompletionMode,
-        );
-
-        if (legacyLanguage && !hasPersistedSource && !hasPersistedTarget) {
-          switch (legacyLanguage) {
-            case "CHINESE":
-              state.dictionarySourceLanguage = "CHINESE";
-              state.dictionaryTargetLanguage = "ENGLISH";
-              break;
-            case "ENGLISH":
-              state.dictionarySourceLanguage = "ENGLISH";
-              state.dictionaryTargetLanguage = WORD_DEFAULT_TARGET_LANGUAGE;
-              break;
-            case WORD_LANGUAGE_ENGLISH_MONO:
-              state.dictionarySourceLanguage = "ENGLISH";
-              state.dictionaryTargetLanguage = "ENGLISH";
-              break;
-            default:
-              state.dictionarySourceLanguage = WORD_LANGUAGE_AUTO;
-              state.dictionaryTargetLanguage = WORD_DEFAULT_TARGET_LANGUAGE;
-              break;
-          }
-        } else {
-          state.dictionarySourceLanguage = persistedSource;
-          state.dictionaryTargetLanguage = persistedTarget;
-        }
+      if (!state || !STORAGE) {
+        return;
       }
+      const snapshot = readPersistedSettingsSnapshot(STORAGE);
+      const { source, target, hasSource, hasTarget } =
+        extractDictionaryPersistence(snapshot);
+      persistLegacySystemLanguage(STORAGE, state.systemLanguage);
+      const legacyLanguage = normalizeLegacyDictionaryLanguage(
+        (state as unknown as { dictionaryLanguage?: string })
+          .dictionaryLanguage,
+      );
+      state.markdownRenderingMode = normalizeMarkdownRenderingMode(
+        state.markdownRenderingMode,
+      );
+      state.chatCompletionMode = normalizeChatCompletionMode(
+        state.chatCompletionMode,
+      );
+      const preference = resolveDictionaryPreference({
+        legacyLanguage,
+        persistedSource: source,
+        persistedTarget: target,
+        hasPersistedSource: hasSource,
+        hasPersistedTarget: hasTarget,
+      });
+      state.dictionarySourceLanguage = preference.dictionarySourceLanguage;
+      state.dictionaryTargetLanguage = preference.dictionaryTargetLanguage;
     },
   },
 });
 
-export const SUPPORTED_SYSTEM_LANGUAGES = getSupportedLanguageCodes();
+export { SUPPORTED_SYSTEM_LANGUAGES };
 export {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
