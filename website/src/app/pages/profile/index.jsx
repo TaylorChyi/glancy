@@ -23,7 +23,7 @@ import "@app/pages/App/App.css";
 import styles from "./Profile.module.css";
 import Avatar from "@shared/components/ui/Avatar";
 import { useLanguage } from "@core/context";
-import MessagePopup from "@shared/components/ui/MessagePopup";
+import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import EditableField from "@shared/components/form/EditableField/EditableField.jsx";
 import FormField from "@shared/components/form/FormField.jsx";
 import { useEmailBinding } from "@shared/hooks";
@@ -557,10 +557,12 @@ function Profile({ onCancel }) {
         labels={avatarEditorLabels}
         isProcessing={avatarEditor.phase === "uploading"}
       />
-      <MessagePopup
-        open={popupOpen}
-        message={popupMsg}
-        onClose={() => setPopupOpen(false)}
+      <FeedbackHub
+        popup={{
+          open: popupOpen,
+          message: popupMsg,
+          onClose: () => setPopupOpen(false),
+        }}
       />
     </div>
   );

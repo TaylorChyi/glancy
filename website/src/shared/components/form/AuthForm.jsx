@@ -5,8 +5,7 @@ import PhoneInput from "./PhoneInput.jsx";
 import Button from "@shared/components/ui/Button";
 import MultiLineText from "@shared/components/ui/MultiLineText.jsx";
 import styles from "./AuthForm.module.css";
-import MessagePopup from "@shared/components/ui/MessagePopup";
-import Toast from "@shared/components/ui/Toast";
+import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import ThemeIcon from "@shared/components/ui/Icon";
 import ICP from "@shared/components/ui/ICP";
 import PasswordInput from "@shared/components/ui/PasswordInput";
@@ -274,16 +273,18 @@ function AuthForm({
         </div>
         <ICP />
       </div>
-      <MessagePopup
-        open={showNotice}
-        message={noticeMsg}
-        onClose={() => setShowNotice(false)}
-      />
-      <Toast
-        open={toastFeedback.open}
-        message={toastFeedback.message}
-        onClose={() => setToastFeedback({ open: false, message: "" })}
-        closeLabel={toastDismissLabel}
+      <FeedbackHub
+        popup={{
+          open: showNotice,
+          message: noticeMsg,
+          onClose: () => setShowNotice(false),
+        }}
+        toast={{
+          open: toastFeedback.open,
+          message: toastFeedback.message,
+          onClose: () => setToastFeedback({ open: false, message: "" }),
+          closeLabel: toastDismissLabel,
+        }}
       />
     </div>
   );
