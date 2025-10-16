@@ -5,50 +5,52 @@
  *  - 定义 surface/primary/feedback 等语义变量，并在 dark 模式下切换到对应值。
  * 关键决策与取舍：
  *  - 使用 CSS 变量实现主题切换，保障与 legacy data-theme 机制兼容；
- *  - 预留强对比（surface-strong）变量满足“同主题内反相配色”需求。
+ *  - 统一通过 tokens 层与 data-theme 属性覆写，替代历史上的 .dark class，消除层级冲突。
  * 影响范围：
  *  - 按钮、图标、背景等依赖语义色的组件。
  * 演进与TODO：
  *  - 后续可按设计稿补充 hover/active token，并与 color-mix 回退策略联动。
  */
-:root {
-  --role-surface: var(--neutral-1);
-  --role-on-surface: var(--neutral-12);
-  --role-on-surface-muted: var(--neutral-9);
-  --role-border: var(--neutral-4);
-  --role-primary: var(--brand-9);
-  --role-on-primary: #fff;
-  --role-surface-strong: var(--neutral-12);
-  --role-on-surface-strong: var(--neutral-1);
-  --role-success: #16a34a;
-  --role-on-success: #fff;
-  --role-warning: color-mix(in srgb, var(--brand-primary) 80%, white 20%);
-  --role-on-warning: var(--hl-dark);
-  --role-danger: #dc2626;
-  --role-on-danger: #fff;
-  --role-focus: var(--brand-10);
-}
-
-.dark {
-  --role-surface: var(--neutral-1);
-  --role-on-surface: var(--neutral-12);
-  --role-on-surface-muted: var(--neutral-9);
-  --role-border: var(--neutral-5);
-  --role-primary: var(--brand-9);
-  --role-on-primary: #0b0d10;
-  --role-surface-strong: var(--neutral-12);
-  --role-on-surface-strong: var(--neutral-1);
-  --role-success: #22c55e;
-  --role-on-success: #0b0d10;
-  --role-warning: color-mix(in srgb, var(--brand-primary) 68%, black 32%);
-  --role-on-warning: var(--hl-light);
-  --role-danger: #ef4444;
-  --role-on-danger: #0b0d10;
-  --role-focus: var(--brand-10);
-}
-
-@supports not (color: color-mix(in oklab, white, black)) {
+@layer tokens {
   :root {
-    /* TODO：根据设计需求补充 hover/active 的降级色值，确保旧浏览器表现稳定。 */
+    --role-surface: var(--neutral-1);
+    --role-on-surface: var(--neutral-12);
+    --role-on-surface-muted: var(--neutral-9);
+    --role-border: var(--neutral-4);
+    --role-primary: var(--brand-9);
+    --role-on-primary: #fff;
+    --role-surface-strong: var(--neutral-12);
+    --role-on-surface-strong: var(--neutral-1);
+    --role-success: #16a34a;
+    --role-on-success: #fff;
+    --role-warning: color-mix(in srgb, var(--brand-primary) 80%, white 20%);
+    --role-on-warning: var(--hl-dark);
+    --role-danger: #dc2626;
+    --role-on-danger: #fff;
+    --role-focus: var(--brand-10);
+  }
+
+  :root[data-theme="dark"] {
+    --role-surface: var(--neutral-1);
+    --role-on-surface: var(--neutral-12);
+    --role-on-surface-muted: var(--neutral-9);
+    --role-border: var(--neutral-5);
+    --role-primary: var(--brand-9);
+    --role-on-primary: #0b0d10;
+    --role-surface-strong: var(--neutral-12);
+    --role-on-surface-strong: var(--neutral-1);
+    --role-success: #22c55e;
+    --role-on-success: #0b0d10;
+    --role-warning: color-mix(in srgb, var(--brand-primary) 68%, black 32%);
+    --role-on-warning: var(--hl-light);
+    --role-danger: #ef4444;
+    --role-on-danger: #0b0d10;
+    --role-focus: var(--brand-10);
+  }
+
+  @supports not (color: color-mix(in oklab, white, black)) {
+    :root {
+      /* TODO：根据设计需求补充 hover/active 的降级色值，确保旧浏览器表现稳定。 */
+    }
   }
 }
