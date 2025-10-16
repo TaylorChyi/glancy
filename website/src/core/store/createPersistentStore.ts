@@ -5,10 +5,11 @@ import {
   type PersistOptions,
 } from "zustand/middleware";
 import { resolveStateStorage } from "./persistUtils.js";
+import { type StoreKey } from "./storeKeys.js";
 import type { StateCreator, StoreApi, UseBoundStore } from "zustand";
 
 interface Options<T> {
-  key: string;
+  key: StoreKey;
   initializer: StateCreator<T>;
   persistOptions?: Omit<PersistOptions<T>, "name" | "storage">;
 }

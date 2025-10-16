@@ -4,6 +4,7 @@ import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
+import { STORE_KEYS } from "./storeKeys.js";
 import {
   resolveWordLanguage,
   WORD_LANGUAGE_AUTO,
@@ -388,7 +389,7 @@ const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
   );
 
 export const useHistoryStore = createPersistentStore<HistoryState>({
-  key: "searchHistory",
+  key: STORE_KEYS.HISTORY,
   initializer: (set, get) => {
     const wordStore = useWordStore;
     const paginationReducers: Record<

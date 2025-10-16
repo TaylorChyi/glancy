@@ -14,6 +14,7 @@
  */
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState, resolveStateStorage } from "./persistUtils.js";
+import { STORE_KEYS } from "./storeKeys.js";
 
 export type DataRetentionPolicy = {
   id: string;
@@ -27,7 +28,7 @@ type DataGovernanceState = {
   setHistoryCaptureEnabled: (enabled: boolean) => void;
 };
 
-const DATA_GOVERNANCE_STORAGE_KEY = "dataGovernance";
+const DATA_GOVERNANCE_STORAGE_KEY = STORE_KEYS.DATA_GOVERNANCE;
 
 export const DATA_RETENTION_POLICIES: readonly DataRetentionPolicy[] =
   Object.freeze([

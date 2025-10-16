@@ -7,7 +7,15 @@ export { useWordStore } from "./wordStore.js";
 export {
   useCookieConsentStore,
   LOGIN_HISTORY_COOKIE_KEY,
+  COOKIE_CONSENT_STORAGE_KEY,
 } from "./cookieConsentStore.js";
 export { useSettingsStore } from "./settings/index.js";
 export type { User } from "./userStore.js";
 export type { CookieConsentStatus } from "./cookieConsentStore.js";
+export {
+  STORE_KEYS,
+  STORE_DESCRIPTORS,
+  getStoreDescriptor,
+  findStoreDescriptorByKey,
+} from "./storeKeys.js";
+export type { StoreKey, StoreIdentifier } from "./storeKeys.js";

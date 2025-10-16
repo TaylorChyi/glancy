@@ -1,5 +1,6 @@
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
+import { STORE_KEYS } from "./storeKeys.js";
 
 interface VoiceState {
   voices: Record<string, string>;
@@ -8,7 +9,7 @@ interface VoiceState {
 }
 
 export const useVoiceStore = createPersistentStore<VoiceState>({
-  key: "ttsVoicePrefs",
+  key: STORE_KEYS.VOICE,
   initializer: (set, get) => ({
     voices: {},
     setVoice: (lang: string, voiceId: string) =>

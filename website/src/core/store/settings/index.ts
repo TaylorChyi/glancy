@@ -1,5 +1,6 @@
 import { createPersistentStore } from "../createPersistentStore.js";
 import { pickState } from "../persistUtils.js";
+import { STORE_KEYS } from "../storeKeys.js";
 import {
   SYSTEM_LANGUAGE_AUTO,
   getSupportedLanguageCodes,
@@ -15,7 +16,7 @@ import {
 } from "@shared/utils/language.js";
 
 const LEGACY_LANGUAGE_STORAGE_KEY = "lang";
-const SETTINGS_STORAGE_KEY = "settings";
+const SETTINGS_STORAGE_KEY = STORE_KEYS.SETTINGS;
 const DEFAULT_LANGUAGE_FALLBACK = "zh";
 
 type SystemLanguage = typeof SYSTEM_LANGUAGE_AUTO | string;

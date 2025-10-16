@@ -1,5 +1,9 @@
 import { act } from "@testing-library/react";
-import { useCookieConsentStore, LOGIN_HISTORY_COOKIE_KEY } from "@core/store";
+import {
+  useCookieConsentStore,
+  LOGIN_HISTORY_COOKIE_KEY,
+  COOKIE_CONSENT_STORAGE_KEY,
+} from "@core/store";
 
 describe("cookieConsentStore", () => {
   beforeEach(() => {
@@ -20,7 +24,9 @@ describe("cookieConsentStore", () => {
     });
     expect(useCookieConsentStore.getState().status).toBe("accepted");
     expect(useCookieConsentStore.getState().hasLoginCookie).toBe(true);
-    const persisted = JSON.parse(localStorage.getItem("cookie-consent"));
+    const persisted = JSON.parse(
+      localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY),
+    );
     expect(persisted.state.status).toBe("accepted");
   });
 

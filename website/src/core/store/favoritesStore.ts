@@ -1,5 +1,6 @@
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
+import { STORE_KEYS } from "./storeKeys.js";
 
 interface FavoritesState {
   favorites: string[];
@@ -7,7 +8,7 @@ interface FavoritesState {
 }
 
 export const useFavoritesStore = createPersistentStore<FavoritesState>({
-  key: "favorites",
+  key: STORE_KEYS.FAVORITES,
   initializer: (set, get) => ({
     favorites: [],
     toggleFavorite: (term: string) => {

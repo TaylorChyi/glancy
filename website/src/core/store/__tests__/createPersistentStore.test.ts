@@ -1,5 +1,6 @@
 import { act } from "@testing-library/react";
 import { createPersistentStore } from "../createPersistentStore.js";
+import { STORE_KEYS } from "../storeKeys.js";
 
 describe("createPersistentStore", () => {
   const originalDescriptor = Object.getOwnPropertyDescriptor(
@@ -24,7 +25,7 @@ describe("createPersistentStore", () => {
     });
 
     const useTestStore = createPersistentStore({
-      key: "test-safe-storage",
+      key: STORE_KEYS.USER,
       initializer: (set) => ({
         value: 0,
         increment: () => set((state) => ({ value: state.value + 1 })),

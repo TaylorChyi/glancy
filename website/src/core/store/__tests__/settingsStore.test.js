@@ -6,6 +6,7 @@ import {
   CHAT_COMPLETION_MODE_SYNC,
   useSettingsStore,
 } from "@core/store/settings";
+import { STORE_KEYS } from "@core/store";
 import { SYSTEM_LANGUAGE_AUTO } from "@core/i18n/languages.js";
 import {
   WORD_LANGUAGE_AUTO,
@@ -61,7 +62,7 @@ describe("settingsStore", () => {
   test("setSystemLanguage persists supported language", () => {
     act(() => useSettingsStore.getState().setSystemLanguage("en"));
     expect(useSettingsStore.getState().systemLanguage).toBe("en");
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.systemLanguage).toBe("en");
   });
 
@@ -91,7 +92,7 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
     );
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.dictionarySourceLanguage).toBe("AUTO");
     expect(stored.state.dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
@@ -114,7 +115,7 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().dictionarySourceLanguage).toBe(
       WORD_LANGUAGE_AUTO,
     );
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.dictionarySourceLanguage).toBe("AUTO");
   });
 
@@ -134,7 +135,7 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
     );
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.dictionaryTargetLanguage).toBe(
       WORD_DEFAULT_TARGET_LANGUAGE,
     );
@@ -156,7 +157,7 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().markdownRenderingMode).toBe(
       MARKDOWN_RENDERING_MODE_DYNAMIC,
     );
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.markdownRenderingMode).toBe(
       MARKDOWN_RENDERING_MODE_DYNAMIC,
     );
@@ -178,7 +179,7 @@ describe("settingsStore", () => {
     expect(useSettingsStore.getState().chatCompletionMode).toBe(
       CHAT_COMPLETION_MODE_STREAMING,
     );
-    const stored = JSON.parse(localStorage.getItem("settings"));
+    const stored = JSON.parse(localStorage.getItem(STORE_KEYS.SETTINGS));
     expect(stored.state.chatCompletionMode).toBe(
       CHAT_COMPLETION_MODE_STREAMING,
     );

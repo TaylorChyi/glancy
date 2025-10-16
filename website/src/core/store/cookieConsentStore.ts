@@ -1,11 +1,12 @@
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
+import { STORE_KEYS } from "./storeKeys.js";
 import { deleteCookie, hasCookie, setCookie } from "@shared/utils/cookies.js";
 
 export type CookieConsentStatus = "unknown" | "accepted" | "rejected";
 export type CookiePromptContext = "initial" | "required" | null;
 
-export const COOKIE_CONSENT_STORAGE_KEY = "cookie-consent";
+export const COOKIE_CONSENT_STORAGE_KEY = STORE_KEYS.COOKIE_CONSENT;
 export const LOGIN_HISTORY_COOKIE_KEY = "glancy_login_history";
 const LOGIN_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 

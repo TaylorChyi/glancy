@@ -6,8 +6,7 @@ import {
   jest,
   test,
 } from "@jest/globals";
-
-const STORAGE_KEY = "dataGovernance";
+import { STORE_KEYS } from "@core/store";
 
 type StoreModule = typeof import("@core/store/dataGovernanceStore");
 
@@ -124,7 +123,7 @@ describe("dataGovernanceStore", () => {
    */
   test("Given persisted disabled capture When initializing store Then adopt snapshot", async () => {
     localStorage.setItem(
-      STORAGE_KEY,
+      STORE_KEYS.DATA_GOVERNANCE,
       JSON.stringify({
         state: { retentionPolicyId: "30d", historyCaptureEnabled: false },
         version: 0,

@@ -1,5 +1,6 @@
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
+import { STORE_KEYS } from "./storeKeys.js";
 
 export interface User {
   id: string;
@@ -15,7 +16,7 @@ interface UserState {
 }
 
 export const useUserStore = createPersistentStore<UserState>({
-  key: "user",
+  key: STORE_KEYS.USER,
   initializer: (set) => ({
     user: null,
     setUser: (user: User) => {
