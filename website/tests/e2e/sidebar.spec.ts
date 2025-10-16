@@ -74,6 +74,9 @@ test.describe("Sidebar layout", () => {
     if (!sidebarBox || !panelBox) {
       throw new Error("Unable to resolve bounding boxes for popover assertion");
     }
-    expect(Math.round(panelBox.left - sidebarBox.right)).toBe(8);
+    // Playwright exposes raw geometry via x/width; we derive semantic edges to keep assertions explicit.
+    const sidebarRightEdge = sidebarBox.x + sidebarBox.width;
+    const panelLeftEdge = panelBox.x;
+    expect(Math.round(panelLeftEdge - sidebarRightEdge)).toBe(8);
   });
 });
