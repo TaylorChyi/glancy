@@ -1,0 +1,35 @@
+/**
+ * 背景：
+ *  - 字体与字号 token 长期散落在 typography.css 与组件模块，缺乏集中治理；
+ * 目的：
+ *  - 定义字号、字重、行高等原子令牌，供语义层组合场景化文本样式；
+ * 关键决策与取舍：
+ *  - 延续现有字号/行高数值，避免引入排版回归；
+ *  - 通过 sans/mono 家族区分正文与等宽场景，便于后续扩展代码高亮等需求；
+ * 影响范围：
+ *  - 所有消费 `--text-*`、`--font-*` 的组件与 Tailwind 配置；
+ * 演进与TODO：
+ *  - 规划在后续补充字距、段落间距等排版参数，并为多语言字体提供兜底机制。
+ */
+:root {
+  --font-family-sans: system-ui, avenir, helvetica, arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --fs-12: 0.75rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+
+  --lh-tight: 1.35;
+  --lh-snug: 1.45;
+  --lh-normal: 1.6;
+  --lh-relaxed: 1.75;
+
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+}

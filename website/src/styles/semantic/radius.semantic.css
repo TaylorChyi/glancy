@@ -1,0 +1,23 @@
+/**
+ * 背景：
+ *  - 组件直接引用像素圆角，难以在视觉体系调整时统一收敛；
+ * 目的：
+ *  - 将常用圆角语义（sm/md/lg/xl/pill）映射至基础令牌，供组件覆写；
+ * 关键决策与取舍：
+ *  - 对齐历史变量名 `--radius-*`，避免破坏既有 CSS 依赖；
+ * 影响范围：
+ *  - 按钮、卡片、弹窗等引用圆角的组件；
+ * 演进与TODO：
+ *  - 后续可增加 `--radius-2xl` 等尺寸，并考虑针对桌面/移动拆分轨道。
+ */
+:root {
+  --radius-0: var(--r-0);
+  --radius-sm: var(--r-4);
+  --radius-md: var(--r-8);
+  --radius-lg: var(--r-12);
+  --radius-xl: var(--r-16);
+  --radius-2xl: var(--r-20);
+  --radius-3xl: var(--r-24);
+  --radius-pill: var(--r-full);
+  --radius-avatar: var(--r-12);
+}

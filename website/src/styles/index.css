@@ -1,0 +1,29 @@
+/**
+ * 背景：
+ *  - tokens、语义、组件变量分散在多个目录，装配顺序依赖隐式约定；
+ * 目的：
+ *  - 提供单一入口聚合三层令牌与主题覆写，确保加载顺序透明且易于审计；
+ * 关键决策与取舍：
+ *  - 严格遵循 primitives → semantic → themes → component tokens 的顺序，避免覆盖链紊乱；
+ *  - 主题层仅负责覆写语义变量，组件层只声明局部令牌，保持层级职责清晰；
+ * 影响范围：
+ *  - 全局样式入口 `src/index.css` 及所有依赖其中变量的组件；
+ * 演进与TODO：
+ *  - 可在此追加动画、阴影等新的令牌层级，或按需引入更多主题文件。
+ */
+@import url("./tokens/color.primitives.css");
+@import url("./tokens/typography.primitives.css");
+@import url("./tokens/radius.primitives.css");
+@import url("./tokens/spacing.primitives.css");
+@import url("./tokens/zindex.primitives.css");
+@import url("./semantic/color.semantic.css");
+@import url("./semantic/typography.semantic.css");
+@import url("./semantic/radius.semantic.css");
+@import url("./semantic/spacing.semantic.css");
+@import url("./themes/light.css");
+@import url("./themes/dark.css");
+@import url("./themes/high-contrast.css");
+@import url("./components/button.css");
+@import url("./components/input.css");
+@import url("./components/card.css");
+@import url("./components/modal.css");

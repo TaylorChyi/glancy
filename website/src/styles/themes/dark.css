@@ -1,0 +1,63 @@
+/**
+ * 背景：
+ *  - 暗色主题的变量分布在 colors.css、variables.css 与 dark.css 中，维护成本高；
+ * 目的：
+ *  - 将暗色主题覆写集中在单一入口，复用语义层变量并统一可调整的组件令牌；
+ * 关键决策与取舍：
+ *  - 使用夜间基础色令牌（night-*、brand-dark-*）映射语义，避免重复硬编码；
+ * 影响范围：
+ *  - data-theme="dark" 的页面渲染；
+ * 演进与TODO：
+ *  - 支持未来引入 AMOLED/Dim 等暗色子主题，通过此文件或派生文件覆写差异。
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  color: var(--sys-text-dark);
+  background-color: var(--sys-bg-dark);
+
+  --color-bg: var(--night-surface);
+  --color-bg-muted: color-mix(in srgb, var(--night-surface) 85%, var(--night-panel) 15%);
+  --color-surface: var(--night-panel);
+  --color-surface-alt: color-mix(in srgb, var(--night-panel) 85%, var(--night-border) 15%);
+  --color-text: var(--night-text);
+  --color-text-muted: var(--night-muted);
+  --color-text-inverse: var(--neutral-0);
+  --color-border: var(--night-border);
+  --color-border-strong: color-mix(in srgb, var(--night-border) 70%, var(--neutral-0) 30%);
+  --color-primary: var(--brand-dark-9);
+  --color-primary-hover: var(--brand-dark-10);
+  --color-primary-soft: var(--brand-dark-3);
+  --color-primary-contrast: var(--night-surface);
+  --color-link-light: var(--color-primary);
+  --color-link-dark: color-mix(in srgb, var(--color-primary) 68%, var(--neutral-0) 32%);
+  --accent-color: var(--color-primary);
+  --accent-color-strong: var(--color-primary-hover);
+  --color-overlay-base: var(--night-surface);
+  --color-overlay-inverse-base: var(--neutral-0);
+  --text-secondary: color-mix(in srgb, var(--color-text) 65%, transparent 35%);
+  --text-tertiary: color-mix(in srgb, var(--color-text) 45%, transparent 55%);
+  --role-on-primary: var(--night-surface);
+  --role-on-success: var(--night-surface);
+  --role-on-warning: var(--hl-light);
+  --role-on-danger: var(--night-surface);
+
+  --sidebar-surface: var(--night-surface);
+  --sidebar-panel: var(--night-panel);
+  --sidebar-border-color: var(--night-border);
+  --sidebar-hover-bg: var(--night-hover);
+  --sidebar-active-bg: var(--night-active);
+  --sidebar-text-color: var(--night-text);
+  --sidebar-muted-color: var(--night-muted);
+  --sidebar-shadow-elevated: 0 18px 42px color-mix(in srgb, var(--color-overlay-base) 45%, transparent 55%);
+  --sidebar-input-bg: var(--night-input-bg);
+  --sidebar-input-ring: var(--night-input-ring);
+  --sidebar-bg: var(--sidebar-panel);
+  --sidebar-color: var(--sidebar-text-color);
+
+  --input-bg: var(--night-panel);
+  --border-color: var(--night-border);
+  --shadow-color: color-mix(in srgb, var(--c-black) 55%, transparent 45%);
+  --loader-bar-tone: var(--night-text);
+  --primary-bg: var(--night-text);
+  --primary-color: var(--night-surface);
+}

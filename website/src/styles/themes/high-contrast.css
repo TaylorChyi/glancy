@@ -1,0 +1,41 @@
+/**
+ * 背景：
+ *  - 高对比主题尚未标准化，需提供基础可访问性的配色覆写；
+ * 目的：
+ *  - 覆写语义变量为黑白强对比，并保留必要的强调色满足可用性；
+ * 关键决策与取舍：
+ *  - 通过亮色语义组合构建青色强调，兼顾品牌识别与无障碍对比度；
+ * 影响范围：
+ *  - data-theme="high-contrast" 的渲染；
+ * 演进与TODO：
+ *  - 后续可针对 WCAG AAA 要求扩展更多可选强调色与交互反馈。
+ */
+:root[data-theme="high-contrast"] {
+  color-scheme: dark;
+  color: var(--c-white);
+  background-color: var(--c-black);
+
+  --color-bg: var(--c-black);
+  --color-bg-muted: var(--c-black);
+  --color-surface: var(--c-black);
+  --color-surface-alt: var(--c-black);
+  --color-text: var(--c-white);
+  --color-text-muted: var(--c-white);
+  --color-text-inverse: var(--c-black);
+  --color-border: var(--c-white);
+  --color-border-strong: var(--c-white);
+  --color-primary: color-mix(in srgb, var(--brand-9) 40%, var(--c-white) 60%);
+  --color-primary-hover: color-mix(in srgb, var(--brand-9) 60%, var(--c-white) 40%);
+  --color-primary-soft: var(--color-primary);
+  --color-primary-contrast: var(--c-black);
+  --accent-color: var(--color-primary);
+  --accent-color-strong: var(--color-primary-hover);
+  --color-overlay-base: var(--c-white);
+  --color-overlay-inverse-base: var(--c-black);
+  --text-secondary: var(--color-text);
+  --text-tertiary: var(--color-text);
+  --role-on-primary: var(--c-black);
+  --role-on-success: var(--c-black);
+  --role-on-warning: var(--c-black);
+  --role-on-danger: var(--c-black);
+}

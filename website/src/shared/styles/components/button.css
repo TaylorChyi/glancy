@@ -13,11 +13,22 @@
  */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium;
+    @apply inline-flex items-center justify-center rounded-xl border;
 
-    background: var(--btn-bg, var(--role-surface));
-    color: var(--btn-label, var(--role-on-surface));
-    border-color: var(--btn-border, var(--role-border));
+    font-family: var(--btn-font-family, var(--component-button-font-family));
+    font-size: var(--btn-font-size, var(--component-button-font-size));
+    line-height: var(--btn-line-height, var(--component-button-line-height));
+    font-weight: var(--btn-font-weight, var(--component-button-font-weight));
+    gap: var(--btn-gap, var(--component-button-gap));
+    padding-inline: var(--btn-padding-inline, var(--component-button-padding-inline));
+    padding-block: var(--btn-padding-block, var(--component-button-padding-block));
+    border-radius: var(--btn-radius, var(--component-button-radius));
+    background: var(--btn-bg, var(--component-button-secondary-bg));
+    color: var(--btn-label, var(--component-button-secondary-fg));
+    border-color: var(
+      --btn-border,
+      var(--component-button-secondary-border, transparent)
+    );
     box-shadow: var(--btn-shadow, none);
     outline: none;
   }
@@ -25,64 +36,75 @@
   .btn:focus-visible {
     @apply ring-2 ring-offset-2;
 
-    --tw-ring-color: var(--role-focus);
+    --tw-ring-color: var(--component-button-focus-ring);
     --tw-ring-offset-color: transparent;
   }
 
   .btn .icon {
-    color: var(--btn-icon, var(--btn-label, var(--role-on-surface)));
+    color: var(--btn-icon, var(--btn-label, var(--component-button-secondary-fg)));
   }
 
   .btn[data-variant="primary"] {
-    --btn-bg: var(--role-primary);
-    --btn-label: var(--role-on-primary);
+    --btn-bg: var(--component-button-primary-bg);
+    --btn-label: var(--component-button-primary-fg);
     --btn-border: transparent;
+    --btn-bg-hover: var(--component-button-primary-bg-hover);
   }
 
   .btn[data-variant="secondary"] {
-    --btn-bg: var(--role-surface);
-    --btn-label: var(--role-on-surface);
-    --btn-border: var(--role-border);
+    --btn-bg: var(--component-button-secondary-bg);
+    --btn-label: var(--component-button-secondary-fg);
+    --btn-border: var(--component-button-secondary-border);
+    --btn-bg-hover: var(--component-button-secondary-bg-hover);
   }
 
   .btn[data-variant="danger"] {
-    --btn-bg: var(--role-danger);
-    --btn-label: var(--role-on-danger);
+    --btn-bg: var(--component-button-danger-bg);
+    --btn-label: var(--component-button-danger-fg);
     --btn-border: transparent;
+    --btn-bg-hover: var(--component-button-danger-bg-hover);
   }
 
   .btn[data-variant="ghost"] {
-    --btn-bg: transparent;
-    --btn-label: var(--role-on-surface);
-    --btn-border: transparent;
+    --btn-bg: var(--component-button-ghost-bg);
+    --btn-label: var(--component-button-ghost-fg);
+    --btn-border: var(--component-button-ghost-border);
   }
 
   .btn[data-variant="outline"] {
-    --btn-bg: transparent;
-    --btn-label: var(--role-on-surface);
-    --btn-border: var(--role-border);
+    --btn-bg: var(--component-button-outline-bg);
+    --btn-label: var(--component-button-outline-fg);
+    --btn-border: var(--component-button-outline-border);
   }
 
   .btn[data-emphasis="soft"][data-variant="primary"] {
-    --btn-bg: color-mix(in oklab, var(--role-primary) 18%, transparent);
-    --btn-label: var(--role-primary);
-    --btn-border: color-mix(in oklab, var(--role-primary) 35%, transparent);
+    --btn-bg: color-mix(
+      in oklab,
+      var(--component-button-primary-bg) 18%,
+      transparent
+    );
+    --btn-label: var(--component-button-primary-bg);
+    --btn-border: color-mix(
+      in oklab,
+      var(--component-button-primary-bg) 35%,
+      transparent
+    );
   }
 
   .btn[data-icon="dark"] {
-    --btn-icon: var(--role-on-surface-strong);
+    --btn-icon: var(--color-text-inverse);
   }
 
   .btn[data-icon="light"] {
-    --btn-icon: var(--role-on-surface);
+    --btn-icon: var(--color-text);
   }
 
   .btn[data-label="dark"] {
-    --btn-label: var(--role-on-surface-strong);
+    --btn-label: var(--color-text-inverse);
   }
 
   .btn[data-label="light"] {
-    --btn-label: var(--role-on-surface);
+    --btn-label: var(--color-text);
   }
 
   .btn:hover {
@@ -98,7 +120,7 @@
 
   .btn[disabled],
   .btn[aria-disabled="true"] {
-    opacity: 0.5;
+    opacity: var(--btn-disabled-opacity, var(--component-button-disabled-opacity));
     pointer-events: none;
   }
 }

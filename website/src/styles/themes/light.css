@@ -1,0 +1,44 @@
+/**
+ * 背景：
+ *  - 明亮主题的变量此前散落在 colors.css 与 light.css 中，缺乏集中入口；
+ * 目的：
+ *  - 统一在主题层覆写与浅色主题相关的语义与组件令牌，并补充浏览器 color-scheme 声明；
+ * 关键决策与取舍：
+ *  - 仅覆写与默认值不同的变量，其他沿用 `semantic` 层默认配置；
+ * 影响范围：
+ *  - data-theme="light" 或默认主题的页面渲染效果；
+ * 演进与TODO：
+ *  - 后续可根据设计输入引入品牌配色主题或季节性主题，并在此文件继承扩展。
+ */
+:root[data-theme="light"],
+:root:not([data-theme]) {
+  color-scheme: light;
+  color: var(--sys-text-light);
+  background-color: var(--sys-bg-light);
+
+  --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--brand-2) 6%);
+  --sidebar-panel: var(--color-surface);
+  --sidebar-border-color: color-mix(in srgb, var(--color-border) 92%, transparent 8%);
+  --sidebar-hover-bg: color-mix(in srgb, var(--color-text) 6%, transparent 94%);
+  --sidebar-active-bg: color-mix(in srgb, var(--color-text) 12%, transparent 88%);
+  --sidebar-text-color: var(--text-primary);
+  --sidebar-muted-color: color-mix(in srgb, var(--text-primary) 55%, transparent 45%);
+  --sidebar-shadow-elevated: 0 18px 42px color-mix(
+    in srgb,
+    var(--color-overlay-base) 16%,
+    transparent 84%
+  );
+  --sidebar-input-bg: color-mix(in srgb, var(--color-surface) 96%, var(--color-surface-alt) 4%);
+  --sidebar-input-ring: color-mix(in srgb, var(--color-border) 88%, transparent 12%);
+  --sidebar-bg: var(--sidebar-surface);
+  --sidebar-color: var(--sidebar-text-color);
+
+  --input-bg: var(--color-surface);
+  --border-color: var(--color-border);
+  --shadow-color: color-mix(in srgb, var(--c-black) 15%, transparent 85%);
+  --loader-bar-tone: var(--neutral-900);
+  --primary-bg: var(--neutral-900);
+  --primary-color: var(--neutral-50);
+  --color-text: var(--text-primary);
+  --color-text-inverse: var(--text-inverse-light);
+}

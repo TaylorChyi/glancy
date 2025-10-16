@@ -1,0 +1,33 @@
+/**
+ * 背景：
+ *  - 弹窗相关的尺寸、阴影、遮罩透明度未形成统一入口，新增主题时维护成本高；
+ * 目的：
+ *  - 聚合 modal 组件需要的令牌（外层/内容/遮罩/排版），让不同弹窗共享同一套参数；
+ * 关键决策与取舍：
+ *  - 默认覆盖宽度、高度、圆角、阴影，并暴露遮罩颜色供主题调整；
+ * 影响范围：
+ *  - SettingsModal、BaseModal 等弹层组件；
+ * 演进与TODO：
+ *  - 后续可引入尺寸断点（md/lg/fullscreen）与动画持续时间令牌。
+ */
+:root {
+  --component-modal-backdrop: color-mix(
+    in srgb,
+    var(--color-overlay-base) 70%,
+    transparent 30%
+  );
+  --component-modal-surface: var(--color-surface);
+  --component-modal-surface-muted: var(--color-surface-alt);
+  --component-modal-border: var(--color-border);
+  --component-modal-radius: var(--radius-3xl);
+  --component-modal-shadow: 0 24px 60px color-mix(in srgb, var(--color-overlay-base) 30%, transparent 70%);
+  --component-modal-gap: var(--space-5);
+  --component-modal-padding-inline: var(--space-5);
+  --component-modal-padding-block: var(--space-5);
+  --component-modal-max-height: 72vh;
+  --component-modal-width-md: 640px;
+  --component-modal-width-lg: 720px;
+  --component-modal-nav-width: 240px;
+  --component-modal-control-height: 40px;
+  --component-modal-control-radius: var(--radius-lg);
+}
