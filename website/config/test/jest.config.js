@@ -18,12 +18,24 @@ const normalise = (value) => value.split(path.sep).join("/");
 const mocksDir = normalise(path.join(PATHS.tests, "mocks"));
 const mapAlias = (aliasKey) => `${normalise(MODULE_ALIASES[aliasKey])}/$1`;
 
+/**
+ * 意图：兼容以 .js 结尾的 ESM import，映射到无扩展名的物理路径，
+ * 便于 Jest 根据 moduleFileExtensions 自动补全 .ts/.js。
+ */
+const mapAliasWithoutExtension = (aliasKey) => mapAlias(aliasKey);
+
 export default {
   testEnvironment: "jsdom",
   moduleNameMapper: {
     "^@shared/api/index.js$": `${mocksDir}/apiIndexMock.cjs`,
     "^@assets/(.*)\\.svg\\?raw$": `${mocksDir}/rawSvgMock.cjs`,
     "^@assets/(.*)\\.svg$": `${mocksDir}/fileMock.cjs`,
+    "^@app/(.*)\\.js$": mapAliasWithoutExtension("@app"),
+    "^@core/(.*)\\.js$": mapAliasWithoutExtension("@core"),
+    "^@shared/(.*)\\.js$": mapAliasWithoutExtension("@shared"),
+    "^@features/(.*)\\.js$": mapAliasWithoutExtension("@features"),
+    "^@assets/(.*)\\.js$": mapAliasWithoutExtension("@assets"),
+    "^@/(.*)\\.js$": mapAliasWithoutExtension("@"),
     "^@app/(.*)$": mapAlias("@app"),
     "^@core/(.*)$": mapAlias("@core"),
     "^@shared/(.*)$": mapAlias("@shared"),
