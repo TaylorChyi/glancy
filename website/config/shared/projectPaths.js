@@ -29,6 +29,7 @@ const PROJECT_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 export const PATHS = Object.freeze({
   projectRoot: PROJECT_ROOT,
   src: path.join(PROJECT_ROOT, "src"),
+  styles: path.join(PROJECT_ROOT, "src", "styles"),
   app: path.join(PROJECT_ROOT, "src", "app"),
   core: path.join(PROJECT_ROOT, "src", "core"),
   shared: path.join(PROJECT_ROOT, "src", "shared"),
@@ -55,6 +56,7 @@ export const MODULE_ALIASES = Object.freeze({
   "@shared": PATHS.shared,
   "@features": PATHS.features,
   "@assets": PATHS.assets,
+  "@styles": PATHS.styles,
 });
 
 /**

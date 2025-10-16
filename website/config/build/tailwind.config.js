@@ -33,6 +33,11 @@ const createContentGlobs = () => [
 const asCssVarColor = (cssVar) => ({ DEFAULT: `var(${cssVar})` });
 
 /**
+ * 意图：将 CSS 变量直接暴露为 Tailwind 可复用的尺寸值。
+ */
+const asCssVar = (cssVar) => `var(${cssVar})`;
+
+/**
  * 意图：将 CSS 变量映射为 Tailwind 圆角尺寸。
  */
 const asCssVarRadius = (cssVar) => `var(${cssVar})`;
@@ -42,17 +47,43 @@ export default {
   theme: {
     extend: {
       colors: {
+        bg: asCssVarColor("--color-bg"),
         surface: asCssVarColor("--color-surface"),
-        panel: asCssVarColor("--color-panel"),
-        accent: asCssVarColor("--color-accent"),
-        text: asCssVarColor("--color-text-primary"),
-        muted: asCssVarColor("--color-text-muted"),
+        "surface-alt": asCssVarColor("--color-surface-alt"),
+        border: asCssVarColor("--color-border"),
+        primary: asCssVarColor("--color-primary"),
+        success: asCssVarColor("--color-success"),
+        warning: asCssVarColor("--color-warning"),
+        danger: asCssVarColor("--color-danger"),
+        text: asCssVarColor("--color-text"),
+        "text-muted": asCssVarColor("--color-text-muted"),
       },
       borderRadius: {
         sm: asCssVarRadius("--radius-sm"),
         md: asCssVarRadius("--radius-md"),
         lg: asCssVarRadius("--radius-lg"),
         xl: asCssVarRadius("--radius-xl"),
+        pill: asCssVarRadius("--radius-pill"),
+      },
+      spacing: {
+        0: asCssVar("--space-0"),
+        1: asCssVar("--space-1"),
+        2: asCssVar("--space-2"),
+        3: asCssVar("--space-3"),
+        4: asCssVar("--space-4"),
+        5: asCssVar("--space-5"),
+        6: asCssVar("--space-6"),
+        7: asCssVar("--space-7"),
+        8: asCssVar("--space-8"),
+        10: asCssVar("--space-10"),
+      },
+      fontSize: {
+        xs: asCssVar("--text-xs"),
+        sm: asCssVar("--text-sm"),
+        md: asCssVar("--text-md"),
+        lg: asCssVar("--text-lg"),
+        xl: asCssVar("--text-xl"),
+        "2xl": asCssVar("--text-2xl"),
       },
       boxShadow: {
         elevated: "var(--shadow-elevated-md)",

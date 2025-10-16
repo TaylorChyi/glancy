@@ -1,0 +1,34 @@
+/**
+ * 背景：
+ *  - 文本语义（xs/sm/md 等）直接绑定到具体 rem 数值，切换字号时需要全局替换；
+ * 目的：
+ *  - 让字号、行高、字重通过语义层映射基础令牌，供组件与 Tailwind 共享；
+ * 关键决策与取舍：
+ *  - 保留历史变量命名（--text-sm、--line-height-tight 等），确保组件无感迁移；
+ * 影响范围：
+ *  - 任何依赖 `--text-*`、`--line-height-*` 的样式及 Tailwind 配置；
+ * 演进与TODO：
+ *  - 后续可加入字距、段落间距语义，并针对多语言场景扩展字体族映射。
+ */
+:root {
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+
+  --text-xs: var(--fs-12);
+  --text-sm: var(--fs-14);
+  --text-md: var(--fs-16);
+  --text-lg: var(--fs-18);
+  --text-xl: var(--fs-20);
+  --text-2xl: var(--fs-24);
+
+  --leading-tight: var(--lh-tight);
+  --leading-snug: var(--lh-snug);
+  --leading-normal: var(--lh-normal);
+  --leading-relaxed: var(--lh-relaxed);
+
+  --weight-light: var(--fw-light);
+  --weight-regular: var(--fw-regular);
+  --weight-medium: var(--fw-medium);
+  --weight-semibold: var(--fw-semibold);
+  --weight-bold: var(--fw-bold);
+}

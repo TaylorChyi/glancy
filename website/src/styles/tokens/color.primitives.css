@@ -1,0 +1,78 @@
+/**
+ * 背景：
+ *  - 现有色板散落于 palette、colors 等文件，缺乏单一可信来源，跨主题切换时容易遗漏覆写；
+ * 目的：
+ *  - 将真实色值集中沉淀为基础设计令牌，供语义层与组件层按需映射，确保“颜色值-语义-组件”三段式解耦；
+ * 关键决策与取舍：
+ *  - 保留既有品牌与中性色序列命名（brand-/neutral-），同时新增 c-* 原子命名以支撑未来更细粒度的设计系统；
+ *  - 仅在此文件出现具体十六进制/rgba 值，其余层级全部引用变量，保障主题切换与 lint 规则可控；
+ * 影响范围：
+ *  - 所有消费品牌色、灰阶或功能色的 CSS 模块与 Tailwind 配置；
+ * 演进与TODO：
+ *  - 后续可在此补充扩展色域（如信息 Info、提示 Hint）与渐变基色，并根据设计输入调优数值密度。
+ */
+:root {
+  /* 基础黑白 */
+  --c-white: #ffffff;
+  --c-black: #000000;
+
+  /* 灰阶：沿用历史 neutral 色板以降低迁移风险 */
+  --neutral-0: #ffffff;
+  --neutral-50: #f8f7f4;
+  --neutral-100: #f1efe9;
+  --neutral-200: #e4e1d8;
+  --neutral-300: #d5d1c6;
+  --neutral-400: #bbb6aa;
+  --neutral-500: #9b9488;
+  --neutral-600: #746e64;
+  --neutral-700: #585248;
+  --neutral-800: #3d3832;
+  --neutral-900: #24211d;
+  --neutral-950: #121212;
+
+  /* 品牌主色：对齐既有 brand-* 体系 */
+  --brand-1: #f5faff;
+  --brand-2: #e6f0ff;
+  --brand-3: #d6e6ff;
+  --brand-4: #c5dcff;
+  --brand-5: #a3c7ff;
+  --brand-6: #7db0ff;
+  --brand-7: #5898ff;
+  --brand-8: #3b86ff;
+  --brand-9: #2563eb;
+  --brand-10: #1d4ed8;
+  --brand-11: #1e40af;
+  --brand-12: #172554;
+
+  /* 品牌深色映射（夜间主题使用） */
+  --brand-dark-1: #0b1220;
+  --brand-dark-2: #0f1a2e;
+  --brand-dark-3: #12203a;
+  --brand-dark-4: #152746;
+  --brand-dark-5: #1a2f58;
+  --brand-dark-6: #1f3a73;
+  --brand-dark-7: #23468e;
+  --brand-dark-8: #2752a8;
+  --brand-dark-9: #3b82f6;
+  --brand-dark-10: #60a5fa;
+  --brand-dark-11: #93c5fd;
+  --brand-dark-12: #dbeafe;
+
+  /* 功能色 */
+  --c-success-500: #16a34a;
+  --c-success-600: #22c55e;
+  --c-warning-500: #f79009;
+  --c-danger-500: #dc2626;
+  --c-danger-600: #ef4444;
+
+  /* 夜间主题专用基色 */
+  --night-surface: #0f1115;
+  --night-panel: #1f232b;
+  --night-border: #2a2f3a;
+  --night-hover: #1a1e24;
+  --night-active: #242935;
+  --night-text: #eef0f3;
+  --night-muted: #a2a9b4;
+  --night-input-bg: #2b2f34;
+  --night-input-ring: #3a3f46;
+}

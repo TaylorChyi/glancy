@@ -1,29 +1,25 @@
 /*
  * 背景：
- *  - Tailwind 指令与设计 token 原先混杂在同一文件，导致 @import 顺序不符合规范。
+ *  - 旧实现将 Tailwind 指令、基础 token 与主题覆写混杂，层级职责模糊且难以扩展；
  * 目的：
- *  - 通过显式聚合入口维护全局样式装配顺序，并消除 stylelint 对 @import 位置的告警。
+ *  - 通过引入 `src/styles/index.css` 聚合“三层令牌 + 主题”体系，明确各层装配顺序并便于审计；
  * 关键决策与取舍：
- *  - 拆分 Tailwind 指令至独立 tailwind.css，再以 @import 顺序表达依赖链，避免禁用规则的权宜之计；
- *  - 保持 tokens → 组件 → 工具 → legacy 的加载节奏，兼容既有样式的演进计划。
+ *  - 保持 Tailwind 指令独立，随后按 primitives → semantic → themes → component tokens → legacy 的顺序引入；
+ *  - 暂时保留历史 `@shared/theme` 与 `shared/styles` 目录，确保渐进迁移期间全局变量兼容；
  * 影响范围：
  *  - 全局样式初始化流程以及任何依赖 index.css 的页面入口。
  * 演进与TODO：
- *  - 后续可将 legacy 样式逐步迁移至分层 tokens/组件中，进一步减少跨文件耦合。
+ *  - 后续逐步替换 `@shared/theme/*` 中的遗留变量定义，改为消费新组件令牌并拆分 utilities。
  */
 @layer tokens, foundations, theme, base, components, utilities;
 
 @import url("./tailwind.css");
-@import url("@shared/theme/colors.css");
-@import url("@shared/theme/variables.css");
+@import url("./styles/index.css");
 @import url("@shared/theme/spacing.css");
 @import url("@shared/theme/typography.css");
-@import url("./shared/styles/tokens/palette.css");
-@import url("./shared/styles/tokens/roles.css");
+@import url("@shared/theme/variables.css");
 @import url("./shared/styles/tokens.menu.css");
 @import url("./shared/styles/foundations.css");
-@import url("./shared/styles/themes/light.css");
-@import url("./shared/styles/themes/dark.css");
 @import url("./shared/styles/components/button.css");
 @import url("./shared/styles/utilities/roles.css");
 @import url("./shared/styles/index.css");

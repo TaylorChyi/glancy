@@ -1,0 +1,101 @@
+/**
+ * 背景：
+ *  - 真实色值与语义变量耦合在同一文件，导致主题切换需要手动同步多处定义；
+ * 目的：
+ *  - 构建语义层变量（背景、文本、分隔、品牌、反馈等），以基础令牌为唯一色值来源；
+ * 关键决策与取舍：
+ *  - 通过 data-theme 派生暗色与高对比方案，沿用既有 `--brand-*`、`--role-*` 变量以保障兼容；
+ *  - 使用 color-mix 组合高阶语义，避免在语义层再次硬编码十六进制值；
+ * 影响范围：
+ *  - 全局主题切换、Tailwind 自定义色板及依赖语义变量的组件；
+ * 演进与TODO：
+ *  - 后续可将反馈色（Success/Warning/Danger）拆分 hover/active 变体，并补充信息提示 Info 语义。
+ */
+:root {
+  /* 基础语义背景 */
+  --color-bg: var(--neutral-50);
+  --color-bg-muted: var(--neutral-100);
+  --color-surface: var(--neutral-0);
+  --color-surface-alt: var(--neutral-200);
+  --color-text: var(--neutral-900);
+  --color-text-muted: color-mix(in srgb, var(--neutral-700) 80%, transparent 20%);
+  --color-text-inverse: var(--neutral-0);
+  --color-border: color-mix(in srgb, var(--neutral-300) 80%, transparent 20%);
+  --color-border-strong: var(--neutral-400);
+
+  /* 品牌语义（兼容历史变量命名） */
+  --color-primary: var(--brand-9);
+  --color-primary-hover: var(--brand-10);
+  --color-primary-soft: var(--brand-3);
+  --color-primary-contrast: var(--neutral-0);
+  --brand-primary: var(--color-primary);
+  --brand-primary-emphasis: var(--color-primary-hover);
+  --brand-primary-soft: var(--color-primary-soft);
+  --brand-primary-contrast: var(--color-primary-contrast);
+  --brand-secondary: var(--brand-8);
+  --brand-surface-light: var(--brand-2);
+  --brand-surface-dark: color-mix(in srgb, var(--brand-9) 78%, var(--c-black) 22%);
+  --brand-outline: var(--brand-10);
+  --brand-glow: color-mix(in srgb, var(--brand-9) 40%, transparent 60%);
+  --brand-color: var(--brand-primary);
+
+  /* 系统/链接语义 */
+  --sys-text-light: var(--neutral-900);
+  --sys-text-dark: color-mix(in srgb, var(--neutral-0) 87%, transparent 13%);
+  --sys-bg-light: var(--neutral-0);
+  --sys-bg-dark: var(--neutral-950);
+  --sys-border-light: color-mix(in srgb, var(--neutral-200) 90%, transparent 10%);
+  --sys-border-dark: color-mix(in srgb, var(--neutral-700) 85%, transparent 15%);
+  --sys-muted: var(--neutral-500);
+  --color-link-light: var(--brand-primary);
+  --color-link-dark: color-mix(in srgb, var(--brand-primary) 82%, var(--neutral-0) 18%);
+  --accent-color: var(--brand-primary);
+  --accent-color-strong: var(--brand-primary-emphasis);
+
+  /* 反馈语义 */
+  --color-success: var(--c-success-500);
+  --color-warning: var(--c-warning-500);
+  --color-danger: var(--c-danger-500);
+
+  /* 叠加层语义 */
+  --color-overlay-base: var(--neutral-950);
+  --color-overlay-inverse-base: var(--neutral-0);
+  --color-overlay-weak: color-mix(in srgb, var(--color-overlay-base) 5%, transparent 95%);
+  --color-overlay-strong: color-mix(in srgb, var(--color-overlay-base) 75%, transparent 25%);
+  --color-overlay: color-mix(in srgb, var(--color-overlay-base) 50%, transparent 50%);
+  --color-overlay-inverse: color-mix(
+    in srgb,
+    var(--color-overlay-inverse-base) 10%,
+    transparent 90%
+  );
+
+  /* 文字分层语义 */
+  --text-primary: var(--color-text);
+  --text-secondary: color-mix(in srgb, var(--color-text) 70%, transparent 30%);
+  --text-tertiary: color-mix(in srgb, var(--color-text) 50%, transparent 50%);
+
+  /* 高亮语义 */
+  --hl-light: var(--neutral-0);
+  --hl-dark: var(--neutral-950);
+
+  /* 兼容旧角色变量（role-*） */
+  --role-surface: var(--color-surface);
+  --role-surface-strong: var(--color-text);
+  --role-on-surface: var(--color-text);
+  --role-on-surface-muted: var(--color-text-muted);
+  --role-on-surface-strong: var(--color-text-inverse);
+  --role-border: var(--color-border);
+  --role-primary: var(--color-primary);
+  --role-on-primary: var(--color-primary-contrast);
+  --role-success: var(--color-success);
+  --role-on-success: var(--color-text-inverse);
+  --role-warning: color-mix(in srgb, var(--color-primary) 80%, var(--neutral-0) 20%);
+  --role-on-warning: var(--hl-dark);
+  --role-danger: var(--color-danger);
+  --role-on-danger: var(--color-text-inverse);
+  --role-focus: var(--color-primary-hover);
+}
+
+/*
+ * 主题覆写位于 `src/styles/themes/*.css`，此处仅声明默认（亮色）语义值。
+ */

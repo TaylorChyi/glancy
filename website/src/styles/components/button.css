@@ -1,0 +1,50 @@
+/**
+ * 背景：
+ *  - 按钮样式直接引用语义色，缺乏可覆写的组件级变量；
+ * 目的：
+ *  - 为按钮提供统一的组件令牌，支持不同容器按需覆写同时保持语义入口一致；
+ * 关键决策与取舍：
+ *  - 保留 primary/secondary/danger/ghost/outline 变体，并暴露尺寸、圆角、字重等关键参数；
+ * 影响范围：
+ *  - `src/shared/styles/components/button.css` 以及任何消费 `.btn` 类的模块；
+ * 演进与TODO：
+ *  - 后续可补充 loading/soft/tertiary 等扩展态，并将 gap/尺寸与尺寸系统解耦。
+ */
+:root {
+  --component-button-font-family: var(--font-sans);
+  --component-button-font-size: var(--text-sm);
+  --component-button-line-height: var(--leading-normal);
+  --component-button-font-weight: var(--weight-semibold);
+  --component-button-gap: var(--space-2);
+  --component-button-padding-inline: var(--space-3);
+  --component-button-padding-block: var(--space-2);
+  --component-button-radius: var(--radius-xl);
+
+  --component-button-primary-fg: var(--color-primary-contrast);
+  --component-button-primary-bg: var(--color-primary);
+  --component-button-primary-bg-hover: var(--color-primary-hover);
+
+  --component-button-secondary-fg: var(--color-text);
+  --component-button-secondary-bg: var(--color-surface);
+  --component-button-secondary-bg-hover: var(--color-surface-alt);
+  --component-button-secondary-border: var(--color-border);
+
+  --component-button-danger-fg: var(--color-text-inverse);
+  --component-button-danger-bg: var(--color-danger);
+  --component-button-danger-bg-hover: color-mix(
+    in srgb,
+    var(--color-danger) 88%,
+    transparent 12%
+  );
+
+  --component-button-ghost-fg: var(--color-text);
+  --component-button-ghost-bg: transparent;
+  --component-button-ghost-border: transparent;
+
+  --component-button-outline-fg: var(--color-text);
+  --component-button-outline-bg: transparent;
+  --component-button-outline-border: var(--color-border);
+
+  --component-button-focus-ring: color-mix(in srgb, var(--color-primary) 45%, transparent 55%);
+  --component-button-disabled-opacity: 0.5;
+}
