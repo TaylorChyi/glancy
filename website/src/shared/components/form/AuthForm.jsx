@@ -8,6 +8,7 @@ import styles from "./AuthForm.module.css";
 import MessagePopup from "@shared/components/ui/MessagePopup";
 import Toast from "@shared/components/ui/Toast";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import ICP from "@shared/components/ui/ICP";
 import PasswordInput from "@shared/components/ui/PasswordInput";
 import { useLanguage } from "@core/context";
@@ -16,12 +17,12 @@ import { getBrandText } from "@shared/utils";
 const USERNAME_METHOD = "username";
 
 const defaultIcons = {
-  username: "user",
-  email: "email",
-  phone: "phone",
-  wechat: "wechat",
-  apple: "apple",
-  google: "google",
+  username: ICON_TOKEN.IDENTITY_USER,
+  email: ICON_TOKEN.AUTH_EMAIL,
+  phone: ICON_TOKEN.AUTH_PHONE,
+  wechat: ICON_TOKEN.BRAND_WECHAT,
+  apple: ICON_TOKEN.BRAND_APPLE,
+  google: ICON_TOKEN.BRAND_GOOGLE,
 };
 
 const resolveInitialMethod = (methods, preferredMethod = null) => {
@@ -223,7 +224,7 @@ function AuthForm({
   return (
     <div className={styles["auth-page"]}>
       <ThemeIcon
-        name="glancy-web"
+        name={ICON_TOKEN.BRAND_WORDMARK}
         alt={brandText}
         className={styles["auth-logo"]}
       />

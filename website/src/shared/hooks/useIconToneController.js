@@ -9,7 +9,7 @@
  *  - 仅暴露语义结果（tone/isInverse/colorToken），让调用方自由组合样式实现，
  *    并保留 auto 策略以便未来按主题自动推断。
  * 影响范围：
- *  - 依赖 send-button 与 voice-button 的按钮类组件，通过控制器统一获得反相颜色语义。
+ *  - 依赖 chat-send 与 chat-voice 的按钮类组件，通过控制器统一获得反相颜色语义。
  * 演进与TODO：
  *  - 后续可在 STRATEGY_TABLE 中扩展高对比或品牌色调策略，或引入特性开关控制 tone。
  */

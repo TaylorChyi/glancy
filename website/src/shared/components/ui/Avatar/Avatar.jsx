@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { cacheBust } from "@shared/utils";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import styles from "./Avatar.module.css";
 
 const ELEVATIONS = Object.freeze({
@@ -66,7 +67,7 @@ function Avatar({
   }
   return (
     <ThemeIcon
-      name="default-user-avatar"
+      name={ICON_TOKEN.AVATAR_DEFAULT}
       alt={alt}
       className={mergedClassName}
       data-elevation={elevation}

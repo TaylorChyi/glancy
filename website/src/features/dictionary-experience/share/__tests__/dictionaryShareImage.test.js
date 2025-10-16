@@ -1,9 +1,9 @@
 import { describe, expect, test, jest } from "@jest/globals";
 
-jest.unstable_mockModule("@assets/glancy-web.svg", () => ({
-  default: "glancy.svg",
+jest.unstable_mockModule("@assets/brand-wordmark.svg", () => ({
+  default: "brand-wordmark.svg",
 }));
-jest.unstable_mockModule("@assets/default-user-avatar.svg", () => ({
+jest.unstable_mockModule("@assets/avatar-default.svg", () => ({
   default: "avatar.svg",
 }));
 

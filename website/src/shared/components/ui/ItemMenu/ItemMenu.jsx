@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";
 import Popover from "@shared/components/ui/Popover/Popover.jsx";
 import { withStopPropagation } from "@shared/utils/stopPropagation.js";
@@ -42,7 +43,11 @@ function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
         onKeyDown={handleTriggerKeyDown}
         ref={triggerRef}
       >
-        <ThemeIcon name="ellipsis-vertical" width={16} height={16} />
+        <ThemeIcon
+          name={ICON_TOKEN.ACTION_OVERFLOW}
+          width={16}
+          height={16}
+        />
       </button>
       <Popover
         isOpen={open}
@@ -63,7 +68,7 @@ function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
                 })}
               >
                 <ThemeIcon
-                  name="star-solid"
+                  name={ICON_TOKEN.FAVORITE_SOLID}
                   width={16}
                   height={16}
                   className={styles.icon}
@@ -81,7 +86,7 @@ function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
                 })}
               >
                 <ThemeIcon
-                  name="trash"
+                  name={ICON_TOKEN.ACTION_DELETE}
                   width={16}
                   height={16}
                   className={styles.icon}

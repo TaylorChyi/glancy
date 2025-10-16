@@ -9,18 +9,18 @@ describe("buildDynamicRegistry", () => {
   test("normalises windows style paths to keep original svg assets", () => {
     const registry = buildDynamicRegistry(
       {
-        ".\\send-button.svg": "/assets/send-button.svg",
+        ".\\chat-send.svg": "/assets/chat-send.svg",
       },
       {
-        ".\\send-button.svg": '<svg data-token="send-button"></svg>',
+        ".\\chat-send.svg": '<svg data-token="chat-send"></svg>',
       },
     );
 
     expect(registry).toEqual({
-      "send-button": {
+      "chat-send": {
         single: Object.freeze({
-          url: "/assets/send-button.svg",
-          inline: '<svg data-token="send-button"></svg>',
+          url: "/assets/chat-send.svg",
+          inline: '<svg data-token="chat-send"></svg>',
         }),
       },
     });

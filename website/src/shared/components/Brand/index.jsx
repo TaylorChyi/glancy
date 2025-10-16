@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { useLanguage } from "@core/context";
 import { UserMenu } from "@shared/components/Header";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import { getBrandText } from "@shared/utils";
 
 function PrimaryNavItem({ icon, iconAlt, label, onClick, isActive, title }) {
@@ -85,7 +86,7 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
     {
       key: "dictionary",
       label: dictionaryLabel,
-      icon: "glancy-web",
+      icon: ICON_TOKEN.BRAND_WORDMARK,
       iconAlt: dictionaryLabel,
       onClick: handleDictionary,
       title: dictionaryHint,
@@ -94,7 +95,7 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
     {
       key: "library",
       label: libraryLabel,
-      icon: "library",
+      icon: ICON_TOKEN.FEATURE_LIBRARY,
       iconAlt: libraryLabel,
       onClick: handleLibrary,
       enableActiveState: true,

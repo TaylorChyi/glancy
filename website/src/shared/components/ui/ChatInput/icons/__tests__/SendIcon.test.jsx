@@ -15,12 +15,12 @@ import { jest } from "@jest/globals";
  *  - 后续若新增多主题资源，可在此扩展对 variant props 的断言。
  */
 
-jest.unstable_mockModule("@assets/send-button.svg", () => ({
+jest.unstable_mockModule("@assets/chat-send.svg", () => ({
   __esModule: true,
   default: "send-asset.svg",
 }));
 
-jest.unstable_mockModule("@assets/send-button.svg?raw", () => ({
+jest.unstable_mockModule("@assets/chat-send.svg?raw", () => ({
   __esModule: true,
   default: '<svg data-token="send-inline"></svg>',
 }));
@@ -32,7 +32,7 @@ describe("SendIcon", () => {
    * 测试目标：渲染发送图标时应输出带有语义标记的 inline 节点。
    * 前置条件：传入标准 className。
    * 步骤：
-   *  1) 渲染组件并查询 data-icon 节点。
+   *  1) 渲染组件并查询 chat-send 节点。
    *  2) 校验元素标签与关键属性。
    * 断言：
    *  - 返回 inline 节点并标记 data-render-mode=inline。
@@ -43,7 +43,7 @@ describe("SendIcon", () => {
   test("GivenClassName_WhenRendering_ThenPreferInlinePayload", () => {
     const { container } = render(<SendIcon className="icon" />);
 
-    const node = container.querySelector('[data-icon-name="send-button"]');
+    const node = container.querySelector('[data-icon-name="chat-send"]');
 
     expect(node).not.toBeNull();
     expect(node?.tagName).toBe("SPAN");

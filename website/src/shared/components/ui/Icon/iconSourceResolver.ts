@@ -17,6 +17,7 @@
  */
 
 import ICONS from "@assets/icons.js";
+import { ICON_TOKEN, type IconToken } from "@assets/iconTokens";
 import type { ResolvedTheme } from "@shared/theme/mode";
 
 export type IconVariantResource = {
@@ -95,6 +96,51 @@ class SingleVariantStrategy implements IconVariantStrategy {
   }
 }
 
+const LEGACY_ICON_ALIASES: Record<string, IconToken> = Object.freeze({
+  apple: ICON_TOKEN.BRAND_APPLE,
+  google: ICON_TOKEN.BRAND_GOOGLE,
+  wechat: ICON_TOKEN.BRAND_WECHAT,
+  email: ICON_TOKEN.AUTH_EMAIL,
+  phone: ICON_TOKEN.AUTH_PHONE,
+  user: ICON_TOKEN.IDENTITY_USER,
+  "default-user-avatar": ICON_TOKEN.AVATAR_DEFAULT,
+  "arrow-right-on-rectangle": ICON_TOKEN.ACCOUNT_SIGN_OUT,
+  "cog-6-tooth": ICON_TOKEN.SETTINGS_GENERAL,
+  "command-line": ICON_TOKEN.SETTINGS_SHORTCUTS,
+  personalization: ICON_TOKEN.SETTINGS_RESPONSE_STYLE,
+  "shield-check": ICON_TOKEN.SETTINGS_SECURITY,
+  subscription: ICON_TOKEN.SETTINGS_SUBSCRIPTION,
+  library: ICON_TOKEN.FEATURE_LIBRARY,
+  search: ICON_TOKEN.ACTION_SEARCH,
+  copy: ICON_TOKEN.ACTION_COPY,
+  "copy-success": ICON_TOKEN.ACTION_COPY_SUCCESS,
+  link: ICON_TOKEN.ACTION_LINK,
+  trash: ICON_TOKEN.ACTION_DELETE,
+  "ellipsis-vertical": ICON_TOKEN.ACTION_OVERFLOW,
+  close: ICON_TOKEN.ACTION_CLOSE,
+  flag: ICON_TOKEN.ACTION_FLAG,
+  refresh: ICON_TOKEN.ACTION_REFRESH,
+  "send-button": ICON_TOKEN.CHAT_SEND,
+  "voice-button": ICON_TOKEN.CHAT_VOICE,
+  eye: ICON_TOKEN.INPUT_VISIBILITY_ON,
+  "eye-off": ICON_TOKEN.INPUT_VISIBILITY_OFF,
+  "star-solid": ICON_TOKEN.FAVORITE_SOLID,
+  "star-outline": ICON_TOKEN.FAVORITE_OUTLINE,
+  "arrow-left": ICON_TOKEN.NAVIGATION_PREVIOUS,
+  "arrow-right": ICON_TOKEN.NAVIGATION_NEXT,
+  "waitting-frame": ICON_TOKEN.LOADER_FRAMES,
+  glancy: ICON_TOKEN.BRAND_GLYPH,
+  "glancy-web": ICON_TOKEN.BRAND_WORDMARK,
+});
+
+const resolveCanonicalToken = (name: string): string => {
+  if (typeof name !== "string" || name.length === 0) {
+    return name;
+  }
+  const trimmed = name.trim();
+  return LEGACY_ICON_ALIASES[trimmed] ?? trimmed;
+};
+
 export class IconSourceResolver {
   constructor(
     private readonly registry: Record<string, IconModuleEntry>,
@@ -113,7 +159,8 @@ export class IconSourceResolver {
    * 复杂度：O(n)，n 为策略数量（当前为常量 2）。
    */
   resolve(name: string, theme: ResolvedTheme): IconVariantResource | null {
-    const entry = this.registry[name];
+    const canonicalName = resolveCanonicalToken(name);
+    const entry = this.registry[canonicalName];
     for (const strategy of this.strategies) {
       const resolved = strategy.resolve(entry, theme);
       if (resolved) {

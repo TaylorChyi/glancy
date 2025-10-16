@@ -15,7 +15,7 @@
  *  - TODO：引入主题化节奏或低性能设备降级策略，必要时为渐隐渐显增加特性开关。
  */
 import { useMemo } from "react";
-import waittingFrame from "@assets/waitting-frame.svg";
+import loaderFramesAsset from "@assets/loader-frames.svg";
 import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";
@@ -33,12 +33,12 @@ import { buildWaitingSymbolStyle } from "./waitingSymbolStyle";
 const WAITING_ANIMATION_STRATEGY = waitingAnimationStrategy;
 
 const WAITING_FRAME_DIMENSIONS = WAITING_ANIMATION_STRATEGY.canvas;
-const WAITING_FRAMES = Object.freeze([waittingFrame]);
+const WAITING_FRAMES = Object.freeze([loaderFramesAsset]);
 // 设计说明：单帧素材默认不触发调度，依赖 Hook 内的 shouldSchedule 控制节奏。
 const WAITING_CYCLE_OPTIONS = Object.freeze({
   shouldSchedule: WAITING_FRAMES.length > 1,
 });
-const WAITING_FRAME_IMAGE_VALUE = `url("${waittingFrame}")`;
+const WAITING_FRAME_IMAGE_VALUE = `url("${loaderFramesAsset}")`;
 
 function Loader() {
   const { currentFrame, cycleDurationMs } = useWaitingFrameCycle(

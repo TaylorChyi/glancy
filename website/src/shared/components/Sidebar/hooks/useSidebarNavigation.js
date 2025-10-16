@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@core/context";
 // 避免通过 utils/index 的桶状导出造成 rollup chunk 循环，直接引用具体实现。
 import { useIsMobile } from "@shared/utils/device.js";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 const NAVIGATION_KEYS = {
   DICTIONARY: "dictionary",
@@ -126,7 +127,7 @@ export default function useSidebarNavigation({
       {
         key: NAVIGATION_KEYS.DICTIONARY,
         label: dictionaryLabel,
-        icon: "glancy-web",
+        icon: ICON_TOKEN.BRAND_WORDMARK,
         onClick: handleDictionary,
         active: activeView === NAVIGATION_KEYS.DICTIONARY,
         testId: "sidebar-nav-dictionary",
@@ -134,7 +135,7 @@ export default function useSidebarNavigation({
       {
         key: NAVIGATION_KEYS.LIBRARY,
         label: libraryLabel,
-        icon: "library",
+        icon: ICON_TOKEN.FEATURE_LIBRARY,
         onClick: handleLibrary,
         active: activeView === NAVIGATION_KEYS.LIBRARY,
         testId: "sidebar-nav-library",

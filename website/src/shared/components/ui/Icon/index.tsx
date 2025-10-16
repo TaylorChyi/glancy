@@ -4,6 +4,7 @@ import styles from "./ThemeIcon.module.css";
 import type { ResolvedTheme } from "@shared/theme/mode";
 import { iconSourceResolver } from "./iconSourceResolver";
 import type { IconVariantResource } from "./iconSourceResolver";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 /**
  * 背景：
@@ -77,6 +78,13 @@ const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
     default: { label: "•", variant: "default" },
   });
 
+const FALLBACK_VARIANT_BY_TOKEN: Record<string, FallbackPresetKey> =
+  Object.freeze({
+    [ICON_TOKEN.BRAND_APPLE]: "apple",
+    [ICON_TOKEN.BRAND_GOOGLE]: "google",
+    [ICON_TOKEN.BRAND_WECHAT]: "wechat",
+  });
+
 const DEFAULT_ROLE_BY_THEME: Record<ResolvedTheme, IconRoleClass> =
   Object.freeze({
     light: "onsurface",
@@ -111,10 +119,8 @@ const composeClassName = (
 ) => [base, ROLE_CLASSNAME_MAP[roleClass], external].filter(Boolean).join(" ");
 
 const resolveFallback = (name: string): FallbackPreset => {
-  if ((FALLBACK_PRESETS as Record<string, FallbackPreset>)[name]) {
-    return FALLBACK_PRESETS[name as FallbackPresetKey];
-  }
-  return FALLBACK_PRESETS.default;
+  const variantKey = FALLBACK_VARIANT_BY_TOKEN[name] ?? "default";
+  return FALLBACK_PRESETS[variantKey];
 };
 
 const toCssDimension = (value: number | string | undefined) => {
@@ -263,15 +269,19 @@ export function ThemeIcon({
 }
 
 export const EllipsisVerticalIcon = (props: IconProps) => (
-  <ThemeIcon name="ellipsis-vertical" alt="ellipsis" {...props} />
+  <ThemeIcon
+    name={ICON_TOKEN.ACTION_OVERFLOW}
+    alt="ellipsis"
+    {...props}
+  />
 );
 
 export const StarSolidIcon = (props: IconProps) => (
-  <ThemeIcon name="star-solid" alt="star" {...props} />
+  <ThemeIcon name={ICON_TOKEN.FAVORITE_SOLID} alt="star" {...props} />
 );
 
 export const TrashIcon = (props: IconProps) => (
-  <ThemeIcon name="trash" alt="trash" {...props} />
+  <ThemeIcon name={ICON_TOKEN.ACTION_DELETE} alt="trash" {...props} />
 );
 
 export default ThemeIcon;

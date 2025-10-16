@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import UserButton from "./UserButton";
 import styles from "./UserMenu.module.css";
 
@@ -59,13 +60,13 @@ function UserMenu({
     () => [
       {
         id: "settings",
-        icon: "cog-6-tooth",
+        icon: ICON_TOKEN.SETTINGS_GENERAL,
         label: settings,
         onSelect: () => onOpenSettings("general"),
       },
       {
         id: "logout",
-        icon: "arrow-right-on-rectangle",
+        icon: ICON_TOKEN.ACCOUNT_SIGN_OUT,
         label: logout,
         onSelect: onOpenLogout,
       },

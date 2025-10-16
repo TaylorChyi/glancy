@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { memo, useMemo, useCallback, useState, useRef, useEffect } from "react";
 import { TtsButton } from "@shared/components";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import { useLanguage, useUser } from "@core/context";
 import SelectMenu from "@shared/components/ui/SelectMenu";
 import Popover from "@shared/components/ui/Popover/Popover.jsx";
@@ -19,9 +20,17 @@ const ACTION_BLUEPRINTS = [
         : t.favoriteAction || "Favorite",
     getIcon: ({ favorited }) =>
       favorited ? (
-        <ThemeIcon name="star-solid" width={22} height={22} />
+        <ThemeIcon
+          name={ICON_TOKEN.FAVORITE_SOLID}
+          width={22}
+          height={22}
+        />
       ) : (
-        <ThemeIcon name="star-outline" width={22} height={22} />
+        <ThemeIcon
+          name={ICON_TOKEN.FAVORITE_OUTLINE}
+          width={22}
+          height={22}
+        />
       ),
     isActive: ({ favorited }) => Boolean(favorited),
     canUse: ({ canFavorite }) => Boolean(canFavorite),
@@ -32,7 +41,9 @@ const ACTION_BLUEPRINTS = [
     variant: "delete",
     requiresUser: true,
     getLabel: ({ t }) => t.deleteButton || t.deleteAction || "Delete",
-    getIcon: () => <ThemeIcon name="trash" width={20} height={20} />,
+    getIcon: () => (
+      <ThemeIcon name={ICON_TOKEN.ACTION_DELETE} width={20} height={20} />
+    ),
     canUse: ({ canDelete }) => Boolean(canDelete),
     getHandler: ({ onDelete }) => onDelete,
   },
@@ -42,7 +53,9 @@ const ACTION_BLUEPRINTS = [
     requiresUser: true,
     hiddenWhenInactive: true,
     getLabel: ({ t }) => t.report || "Report",
-    getIcon: () => <ThemeIcon name="flag" width={20} height={20} />,
+    getIcon: () => (
+      <ThemeIcon name={ICON_TOKEN.ACTION_FLAG} width={20} height={20} />
+    ),
     canUse: ({ canReport }) => Boolean(canReport),
     getHandler: ({ onReport }) => onReport,
   },
@@ -304,9 +317,17 @@ function OutputToolbar({
 
   const actionItems = useMemo(() => {
     const copyIcon = copySuccessActive ? (
-      <ThemeIcon name="copy-success" width={20} height={20} />
+      <ThemeIcon
+        name={ICON_TOKEN.ACTION_COPY_SUCCESS}
+        width={20}
+        height={20}
+      />
     ) : (
-      <ThemeIcon name="copy" width={20} height={20} />
+      <ThemeIcon
+        name={ICON_TOKEN.ACTION_COPY}
+        width={20}
+        height={20}
+      />
     );
     const copyButtonDisabled =
       disabled || copySuccessActive || !canCopy || typeof onCopy !== "function";
@@ -326,7 +347,13 @@ function OutputToolbar({
       ? {
           key: "share",
           label: t.share || "Share",
-          icon: <ThemeIcon name="link" width={20} height={20} />,
+          icon: (
+            <ThemeIcon
+              name={ICON_TOKEN.ACTION_LINK}
+              width={20}
+              height={20}
+            />
+          ),
           onClick: handleShareTriggerClick,
           active: shareMenuOpen,
           variant: "share",
@@ -443,7 +470,7 @@ function OutputToolbar({
               aria-label={t.reoutput}
             >
               <ThemeIcon
-                name="refresh"
+                name={ICON_TOKEN.ACTION_REFRESH}
                 width={16}
                 height={16}
                 aria-hidden="true"
@@ -533,7 +560,11 @@ function OutputToolbar({
                         );
                       }}
                     >
-                      <ThemeIcon name="copy" width={18} height={18} />
+                      <ThemeIcon
+                        name={ICON_TOKEN.ACTION_COPY}
+                        width={18}
+                        height={18}
+                      />
                       <span>
                         {t.shareOptionLink ||
                           t.shareCopySuccess ||
@@ -564,7 +595,11 @@ function OutputToolbar({
                         shareCapabilities.isImageExporting ? "true" : undefined
                       }
                     >
-                      <ThemeIcon name="glancy" width={18} height={18} />
+                      <ThemeIcon
+                        name={ICON_TOKEN.BRAND_GLYPH}
+                        width={18}
+                        height={18}
+                      />
                       <span>
                         {t.shareOptionImage || t.share || "Export image"}
                       </span>
@@ -589,7 +624,7 @@ function OutputToolbar({
           aria-label={t.previousVersion}
         >
           <ThemeIcon
-            name="arrow-left"
+            name={ICON_TOKEN.NAVIGATION_PREVIOUS}
             width={14}
             height={14}
             aria-hidden="true"
@@ -621,7 +656,7 @@ function OutputToolbar({
           aria-label={t.nextVersion}
         >
           <ThemeIcon
-            name="arrow-right"
+            name={ICON_TOKEN.NAVIGATION_NEXT}
             width={14}
             height={14}
             aria-hidden="true"

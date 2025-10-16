@@ -3,6 +3,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { jest } from "@jest/globals";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 jest.unstable_mockModule("@core/context", () => ({
   // Provide minimal implementations for all hooks consumed by AuthForm
@@ -37,7 +38,7 @@ jest.unstable_mockModule("@core/context", () => ({
 }));
 
 const iconRegistry = {
-  "glancy-web": {
+  [ICON_TOKEN.BRAND_WORDMARK]: {
     light: Object.freeze({
       url: "/assets/glancy-web-light.svg",
       inline: '<svg data-token="glancy-light"></svg>',
@@ -47,7 +48,7 @@ const iconRegistry = {
       inline: '<svg data-token="glancy-dark"></svg>',
     }),
   },
-  user: {
+  [ICON_TOKEN.IDENTITY_USER]: {
     light: Object.freeze({
       url: "/assets/user-light.svg",
       inline: '<svg data-token="user-light"></svg>',
@@ -57,7 +58,7 @@ const iconRegistry = {
       inline: '<svg data-token="user-dark"></svg>',
     }),
   },
-  email: {
+  [ICON_TOKEN.AUTH_EMAIL]: {
     light: Object.freeze({
       url: "/assets/email-light.svg",
       inline: '<svg data-token="email-light"></svg>',
@@ -67,7 +68,7 @@ const iconRegistry = {
       inline: '<svg data-token="email-dark"></svg>',
     }),
   },
-  phone: {
+  [ICON_TOKEN.AUTH_PHONE]: {
     light: Object.freeze({
       url: "/assets/phone-light.svg",
       inline: '<svg data-token="phone-light"></svg>',
@@ -77,7 +78,7 @@ const iconRegistry = {
       inline: '<svg data-token="phone-dark"></svg>',
     }),
   },
-  wechat: {
+  [ICON_TOKEN.BRAND_WECHAT]: {
     light: Object.freeze({
       url: "/assets/wechat-light.svg",
       inline: '<svg data-token="wechat-light"></svg>',
@@ -87,7 +88,7 @@ const iconRegistry = {
       inline: '<svg data-token="wechat-dark"></svg>',
     }),
   },
-  apple: {
+  [ICON_TOKEN.BRAND_APPLE]: {
     light: Object.freeze({
       url: "/assets/apple-light.svg",
       inline: '<svg data-token="apple-light"></svg>',
@@ -97,7 +98,7 @@ const iconRegistry = {
       inline: '<svg data-token="apple-dark"></svg>',
     }),
   },
-  google: {
+  [ICON_TOKEN.BRAND_GOOGLE]: {
     light: Object.freeze({
       url: "/assets/google-light.svg",
       inline: '<svg data-token="google-light"></svg>',
@@ -107,7 +108,7 @@ const iconRegistry = {
       inline: '<svg data-token="google-dark"></svg>',
     }),
   },
-  eye: {
+  [ICON_TOKEN.INPUT_VISIBILITY_ON]: {
     light: Object.freeze({
       url: "/assets/eye-light.svg",
       inline: '<svg data-token="eye-light"></svg>',
@@ -117,7 +118,7 @@ const iconRegistry = {
       inline: '<svg data-token="eye-dark"></svg>',
     }),
   },
-  "eye-off": {
+  [ICON_TOKEN.INPUT_VISIBILITY_OFF]: {
     light: Object.freeze({
       url: "/assets/eye-off-light.svg",
       inline: '<svg data-token="eye-off-light"></svg>',

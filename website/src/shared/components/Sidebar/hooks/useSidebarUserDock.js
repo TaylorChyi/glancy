@@ -13,6 +13,7 @@
  */
 import { useCallback, useMemo } from "react";
 import { useHistory, useLanguage, useUser } from "@core/context";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 export function useSidebarUserDock() {
   const { user, clearUser } = useUser();
@@ -70,12 +71,12 @@ export function useSidebarUserDock() {
   const anonymousNav = useMemo(
     () => ({
       login: {
-        icon: "arrow-right-on-rectangle",
+        icon: ICON_TOKEN.NAVIGATION_NEXT,
         label: t.navLogin || "Log in",
         to: "/login",
       },
       register: {
-        icon: "user",
+        icon: ICON_TOKEN.IDENTITY_USER,
         label: t.navRegister || "Register",
         to: "/register",
       },

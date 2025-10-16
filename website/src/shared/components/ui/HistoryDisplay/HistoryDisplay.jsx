@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import { useMemo } from "react";
 import { useHistory, useLanguage } from "@core/context";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import EmptyState from "@shared/components/ui/EmptyState";
 import Button from "@shared/components/ui/Button";
 import styles from "./HistoryDisplay.module.css";
@@ -38,7 +39,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     return (
       <EmptyState
         size="sm"
-        iconName="command-line"
+        iconName={ICON_TOKEN.SETTINGS_SHORTCUTS}
         title={t.historyEmptyTitle}
         description={t.historyEmptyDescription}
         actions={
@@ -82,7 +83,7 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
                     </time>
                   ) : null}
                   <ThemeIcon
-                    name="arrow-right"
+                    name={ICON_TOKEN.NAVIGATION_NEXT}
                     width={18}
                     height={18}
                     aria-hidden="true"

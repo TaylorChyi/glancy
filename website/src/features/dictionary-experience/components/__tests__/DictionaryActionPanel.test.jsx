@@ -1,6 +1,7 @@
 /* eslint-env jest */
 import { render, screen, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 import styles from "../DictionaryActionPanel.module.css";
 
@@ -29,7 +30,7 @@ const DictionaryActionPanel = (await import("../DictionaryActionPanel.jsx"))
  * 背景：
  *  - DictionaryActionPanel 使用 ThemeIcon 呈现放大镜按钮，但缺失素材时会退化为字母占位。
  * 目的：
- *  - 确保组件在渲染时向 ThemeIcon 传入 search 图标标识，以匹配新增 SVG 资产。
+ *  - 确保组件在渲染时向 ThemeIcon 传入 action-search 图标标识，以匹配新增 SVG 资产。
  * 关键决策与取舍：
  *  - 通过模块模拟记录 ThemeIcon props，避免依赖实际 SVG 解析，提高测试稳定性；
  *  - 同时触发按钮事件以确保交互路径未受影响。
@@ -51,7 +52,7 @@ describe("DictionaryActionPanel", () => {
    *  2) 查找放大镜按钮并触发点击；
    *  3) 检查记录的 ThemeIcon props。
    * 断言：
-   *  - ThemeIcon 的 name 为 "search"；
+   *  - ThemeIcon 的 name 为 ICON_TOKEN.ACTION_SEARCH；
    *  - ThemeIcon 的 width 与 height 均为 18；
    *  - 点击按钮会调用 onRequestSearch 回调。
    * 边界/异常：
@@ -71,7 +72,7 @@ describe("DictionaryActionPanel", () => {
     const searchButton = screen.getByRole("button", { name: "返回搜索" });
     fireEvent.click(searchButton);
 
-    expect(recordedIconProps[0]?.name).toBe("search");
+    expect(recordedIconProps[0]?.name).toBe(ICON_TOKEN.ACTION_SEARCH);
     expect(recordedIconProps[0]?.width).toBe(18);
     expect(recordedIconProps[0]?.height).toBe(18);
     expect(onRequestSearch).toHaveBeenCalledTimes(1);

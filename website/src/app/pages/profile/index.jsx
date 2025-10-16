@@ -31,6 +31,7 @@ import { useApi } from "@shared/hooks/useApi.js";
 import { useUser } from "@core/context";
 import { cacheBust } from "@shared/utils";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import Tooltip from "@shared/components/ui/Tooltip";
 import EmailBindingCard from "@shared/components/Profile/EmailBindingCard";
 import UsernameEditor from "@shared/components/Profile/UsernameEditor";
@@ -130,14 +131,14 @@ function Profile({ onCancel }) {
         fields: [
           {
             key: "education",
-            icon: "library",
+            icon: ICON_TOKEN.FEATURE_LIBRARY,
             label: t.educationLabel,
             placeholder: t.educationPlaceholder,
             help: t.educationHelp,
           },
           {
             key: "job",
-            icon: "command-line",
+            icon: ICON_TOKEN.SETTINGS_SHORTCUTS,
             label: t.jobLabel,
             placeholder: t.jobPlaceholder,
             help: t.jobHelp,
@@ -149,21 +150,21 @@ function Profile({ onCancel }) {
         fields: [
           {
             key: "interests",
-            icon: "star-outline",
+            icon: ICON_TOKEN.FAVORITE_OUTLINE,
             label: t.interestsLabel,
             placeholder: t.interestsPlaceholder,
             help: t.interestsHelp,
           },
           {
             key: "goal",
-            icon: "flag",
+            icon: ICON_TOKEN.ACTION_FLAG,
             label: t.goalLabel,
             placeholder: t.goalPlaceholder,
             help: t.goalHelp,
           },
           {
             key: "currentAbility",
-            icon: "shield-check",
+            icon: ICON_TOKEN.SETTINGS_SECURITY,
             label: t.currentAbilityLabel,
             placeholder: t.currentAbilityPlaceholder,
             help: t.currentAbilityHelp,

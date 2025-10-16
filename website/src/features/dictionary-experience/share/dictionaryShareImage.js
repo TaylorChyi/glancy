@@ -13,8 +13,8 @@
  * 演进与TODO：
  *  - 后续可抽象主题配置、支持暗色主题或多语言排版，亦可扩展为导出 PDF。
  */
-import appIconAsset from "@assets/glancy-web.svg";
-import defaultAvatarAsset from "@assets/default-user-avatar.svg";
+import appIconAsset from "@assets/brand-wordmark.svg";
+import defaultAvatarAsset from "@assets/avatar-default.svg";
 import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 import { stripMarkdownArtifacts } from "@features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 

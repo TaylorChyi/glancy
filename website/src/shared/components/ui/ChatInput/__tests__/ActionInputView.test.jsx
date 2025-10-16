@@ -89,7 +89,7 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
     />,
   );
 
-  const sendIcon = container.querySelector('[data-icon-name="send-button"]');
+  const sendIcon = container.querySelector('[data-icon-name="chat-send"]');
   expect(sendIcon).not.toBeNull();
 
   expect(container).toMatchSnapshot();
@@ -177,7 +177,7 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () =>
  *  - data-language-visible === "false"。
  *  - language-slot 不包含子节点并具有 data-visible="false"。
  *  - divider 在此场景下被移除，避免冗余列。
- *  - 语音态按钮包含标记为 voice-button 的图标。
+ *  - 语音态按钮包含标记为 chat-voice 的图标。
  * 边界/异常：
  *  - 折叠逻辑纯展示层处理，不依赖额外行为。
  */
@@ -229,7 +229,7 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
   const divider = container.querySelector(`.${"input-divider"}`);
   expect(divider?.getAttribute("data-visible")).toBe("false");
 
-  const voiceIcon = container.querySelector('[data-icon-name="voice-button"]');
+  const voiceIcon = container.querySelector('[data-icon-name="chat-voice"]');
   expect(voiceIcon).not.toBeNull();
   expect(voiceIcon?.tagName).toBe("SPAN");
   expect(voiceIcon?.getAttribute("data-render-mode")).toBe("inline");
@@ -240,13 +240,13 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
 });
 
 /**
- * 测试目标：暗色主题下的发送态按钮应加载 send-button 资源并暴露一致蒙版。
+ * 测试目标：暗色主题下的发送态按钮应加载 chat-send 资源并暴露一致蒙版。
  * 前置条件：resolvedTheme 为 dark，输入区值非空。
  * 步骤：
  *  1) 通过 mocked useTheme 注入暗色主题。
  *  2) 渲染组件并获取动作按钮与内部图标。
  * 断言：
- *  - send-button 图标被渲染且拥有蒙版样式。
+ *  - chat-send 图标被渲染且拥有蒙版样式。
  *  - 快照稳定，覆盖暗色主题下的发送按钮结构。
  * 边界/异常：
  *  - 若暗色资源缺失则自动回退，测试将捕获为空的情况。
@@ -293,11 +293,11 @@ test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
     />,
   );
 
-  const sendIcon = container.querySelector('[data-icon-name="send-button"]');
+  const sendIcon = container.querySelector('[data-icon-name="chat-send"]');
   expect(sendIcon).not.toBeNull();
   expect(sendIcon?.tagName).toBe("SPAN");
   expect(sendIcon?.getAttribute("data-render-mode")).toBe("inline");
-  expect(sendIcon?.getAttribute("data-icon-name")).toBe("send-button");
+  expect(sendIcon?.getAttribute("data-icon-name")).toBe("chat-send");
 
   const sendButton = container.querySelector(`.${"action-slot"} button`);
   expect(sendButton).toMatchSnapshot("DarkSendActionButtonMarkup");

@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 let userState = { user: null, clearUser: jest.fn() };
 let historyState = { clearHistory: jest.fn() };
@@ -45,12 +46,12 @@ describe("useSidebarUserDock", () => {
 
     expect(result.current.hasUser).toBe(false);
     expect(result.current.anonymousNav.login).toEqual({
-      icon: "arrow-right-on-rectangle",
+      icon: ICON_TOKEN.NAVIGATION_NEXT,
       label: "登录",
       to: "/login",
     });
     expect(result.current.anonymousNav.register).toEqual({
-      icon: "user",
+      icon: ICON_TOKEN.IDENTITY_USER,
       label: "注册",
       to: "/register",
     });

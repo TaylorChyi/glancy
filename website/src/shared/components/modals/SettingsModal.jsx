@@ -21,6 +21,7 @@ import preferencesStyles from "@app/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@app/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@shared/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import useStableSettingsPanelHeight from "./useStableSettingsPanelHeight.js";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";
 import Toast from "@shared/components/ui/Toast";
@@ -142,7 +143,12 @@ function SettingsModal({ open, onClose, initialSection }) {
             aria-label={resolvedCloseLabel}
           >
             {/* 统一使用图标按钮，避免重复文本且保留无障碍语义。 */}
-            <ThemeIcon name="close" width={20} height={20} decorative />
+            <ThemeIcon
+              name={ICON_TOKEN.ACTION_CLOSE}
+              width={20}
+              height={20}
+              decorative
+            />
           </button>
         );
       },

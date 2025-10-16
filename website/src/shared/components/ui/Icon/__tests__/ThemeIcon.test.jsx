@@ -1,6 +1,7 @@
 /* eslint-env jest */
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 let currentTheme = "light";
 const mockUseTheme = jest.fn(() => ({ resolvedTheme: currentTheme }));
@@ -10,19 +11,19 @@ jest.unstable_mockModule("@core/context", () => ({
 }));
 
 const iconRegistry = {
-  "glancy-web": {
+  [ICON_TOKEN.BRAND_WORDMARK]: {
     single: Object.freeze({
       url: "/assets/glancy-web.svg",
       inline: '<svg data-icon="glancy"></svg>',
     }),
   },
-  wechat: {
+  [ICON_TOKEN.BRAND_WECHAT]: {
     single: Object.freeze({
       url: null,
       inline: '<svg data-icon="wechat"></svg>',
     }),
   },
-  apple: {
+  [ICON_TOKEN.BRAND_APPLE]: {
     light: Object.freeze({
       url: null,
       inline: '<svg data-variant="light"></svg>',
@@ -61,7 +62,7 @@ describe("ThemeIcon", () => {
    *  - 不触发。
    */
   test("renders single-source icon with semantic role class", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_WORDMARK} alt="brand" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.innerHTML).toContain('data-icon="glancy"');
     expect(icon.className).toContain("text-onsurface");
@@ -81,7 +82,7 @@ describe("ThemeIcon", () => {
    */
   test("prefers light variant when theme resolves to light", () => {
     currentTheme = "light";
-    render(<ThemeIcon name="apple" alt="apple" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_APPLE} alt="apple" />);
     const icon = screen.getByRole("img", { name: "apple" });
     expect(icon.innerHTML).toContain('data-variant="light"');
   });
@@ -100,7 +101,7 @@ describe("ThemeIcon", () => {
    */
   test("switches to dark variant when theme resolves to dark", () => {
     currentTheme = "dark";
-    render(<ThemeIcon name="apple" alt="apple" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_APPLE} alt="apple" />);
     const icon = screen.getByRole("img", { name: "apple" });
     expect(icon.innerHTML).toContain('data-variant="dark"');
   });
@@ -118,7 +119,7 @@ describe("ThemeIcon", () => {
    *  - tone 未提供时应同样产出 text-onsurface（由默认测试覆盖）。
    */
   test("treats dark tone as default foreground to preserve contrast", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" tone="dark" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_WORDMARK} alt="brand" tone="dark" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-onsurface");
   });
@@ -137,7 +138,7 @@ describe("ThemeIcon", () => {
    */
   test("uses surface role in dark theme for auto tone", () => {
     currentTheme = "dark";
-    render(<ThemeIcon name="glancy-web" alt="brand" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_WORDMARK} alt="brand" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-onsurface");
   });
@@ -155,7 +156,13 @@ describe("ThemeIcon", () => {
    *  - 若 roleClass 缺失则回退到 legacy tone（已由前两测试覆盖）。
    */
   test("respects explicit roleClass override", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" roleClass="danger" />);
+    render(
+      <ThemeIcon
+        name={ICON_TOKEN.BRAND_WORDMARK}
+        alt="brand"
+        roleClass="danger"
+      />,
+    );
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-ondanger");
   });
@@ -172,7 +179,13 @@ describe("ThemeIcon", () => {
    *  - inherit 仅跳过语义色注入，其余属性保持默认处理。
    */
   test("skips semantic role classes when inherit is requested", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" roleClass="inherit" />);
+    render(
+      <ThemeIcon
+        name={ICON_TOKEN.BRAND_WORDMARK}
+        alt="brand"
+        roleClass="inherit"
+      />,
+    );
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).not.toContain("text-onsurface");
   });
@@ -191,7 +204,7 @@ describe("ThemeIcon", () => {
    *  - 覆盖无资源场景，确保 UI 稳定。
    */
   test("renders typographic fallback when icon is missing", () => {
-    render(<ThemeIcon name="google" alt="google" />);
+    render(<ThemeIcon name={ICON_TOKEN.BRAND_GOOGLE} alt="google" />);
     const fallback = screen.getByRole("img", { name: "google" });
     expect(fallback).toHaveTextContent("G");
   });

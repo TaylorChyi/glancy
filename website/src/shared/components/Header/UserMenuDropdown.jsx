@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import styles from "./Header.module.css";
 
 function UserMenuDropdown({
@@ -64,7 +65,7 @@ function UserMenuDropdown({
     if (!isPro) {
       primaryItems.push({
         key: "upgrade",
-        icon: "shield-check",
+        icon: ICON_TOKEN.SETTINGS_SECURITY,
         label: translate("upgrade", "Upgrade"),
         action: onOpenUpgrade,
         tone: "default",
@@ -73,7 +74,7 @@ function UserMenuDropdown({
 
     primaryItems.push({
       key: "settings",
-      icon: "cog-6-tooth",
+      icon: ICON_TOKEN.SETTINGS_GENERAL,
       label: translate("settings", "Settings"),
       action: onOpenSettings,
       tone: "default",
@@ -82,7 +83,7 @@ function UserMenuDropdown({
     const exitItems = [
       {
         key: "logout",
-        icon: "arrow-right-on-rectangle",
+        icon: ICON_TOKEN.ACCOUNT_SIGN_OUT,
         label: translate("logout", "Logout"),
         action: onOpenLogout,
         tone: "danger",

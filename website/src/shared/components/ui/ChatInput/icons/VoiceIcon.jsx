@@ -2,7 +2,7 @@
  * 背景：
  *  - 语音按钮此前同样依赖遮罩模板与多分支降级逻辑，导致维护成本高且难以与最新资产库同步。
  * 目的：
- *  - 直接消费 voice-button SVG 资源，提供纯展示组件以贴合最新设计。
+ *  - 直接消费 chat-voice SVG 资源，提供纯展示组件以贴合最新设计。
  * 关键决策与取舍：
  *  - 放弃遮罩检测与主题分支，统一走静态资源渲染，最大化复用样式层的颜色控制。
  *  - 与 SendIcon 共用 renderStaticIcon 纯函数理念，维持实现一致性但互不依赖旧逻辑。
@@ -13,12 +13,13 @@
  */
 import PropTypes from "prop-types";
 
-import voiceButtonAsset from "@assets/voice-button.svg";
-import voiceButtonInline from "@assets/voice-button.svg?raw";
+import voiceButtonAsset from "@assets/chat-voice.svg";
+import voiceButtonInline from "@assets/chat-voice.svg?raw";
+import { ICON_TOKEN } from "@assets/iconTokens";
 
 import renderStaticIcon from "./renderStaticIcon.jsx";
 
-const VOICE_ICON_NAME = "voice-button";
+const VOICE_ICON_NAME = ICON_TOKEN.CHAT_VOICE;
 
 export default function VoiceIcon({ className }) {
   return renderStaticIcon({

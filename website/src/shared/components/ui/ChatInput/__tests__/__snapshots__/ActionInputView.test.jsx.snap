@@ -9,7 +9,7 @@ exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSen
   <span
     aria-hidden="true"
     class="action-button-icon"
-    data-icon-name="send-button"
+    data-icon-name="chat-send"
     data-render-mode="inline"
     draggable="false"
   >
@@ -29,7 +29,7 @@ exports[`GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot: Voi
   <span
     aria-hidden="true"
     class="action-button-icon"
-    data-icon-name="voice-button"
+    data-icon-name="chat-voice"
     data-render-mode="inline"
     draggable="false"
   >
@@ -166,7 +166,7 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
           <span
             aria-hidden="true"
             class="action-button-icon"
-            data-icon-name="send-button"
+            data-icon-name="chat-send"
             data-render-mode="inline"
             draggable="false"
           >

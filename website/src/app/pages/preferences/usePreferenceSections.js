@@ -35,6 +35,7 @@ import useEmailBinding from "@shared/hooks/useEmailBinding.js";
 import { useUsersApi } from "@shared/api/users.js";
 import { useProfilesApi } from "@shared/api/profiles.js";
 import { useRedemptionCodesApi } from "@shared/api/redemptionCodes.js";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import {
   mapResponseToProfileDetails,
   createEmptyProfileDetails,
@@ -64,12 +65,12 @@ const createIconConfig = (name) =>
  *  - 保留 createIconConfig 工厂确保尺寸与语义默认值一致，避免调用方散落魔法常量。
  */
 const SECTION_ICON_REGISTRY = Object.freeze({
-  general: createIconConfig("cog-6-tooth"),
-  responseStyle: createIconConfig("personalization"),
-  data: createIconConfig("shield-check"),
-  keyboard: createIconConfig("command-line"),
-  account: createIconConfig("user"),
-  subscription: createIconConfig("subscription"),
+  general: createIconConfig(ICON_TOKEN.SETTINGS_GENERAL),
+  responseStyle: createIconConfig(ICON_TOKEN.SETTINGS_RESPONSE_STYLE),
+  data: createIconConfig(ICON_TOKEN.SETTINGS_SECURITY),
+  keyboard: createIconConfig(ICON_TOKEN.SETTINGS_SHORTCUTS),
+  account: createIconConfig(ICON_TOKEN.IDENTITY_USER),
+  subscription: createIconConfig(ICON_TOKEN.SETTINGS_SUBSCRIPTION),
 });
 
 const FALLBACK_MODAL_HEADING_ID = "settings-modal-fallback-heading";

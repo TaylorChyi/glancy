@@ -18,6 +18,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import Sidebar from "@shared/components/Sidebar";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 // 直接引用移动端判断 Hook，避免 utils 桶状导出的循环依赖在移动端首屏触发。
 import { useIsMobile } from "@shared/utils/device.js";
 import styles from "./Layout.module.css";
@@ -191,7 +192,11 @@ function Layout({
               onClick={() => setSidebarOpen(true)}
               aria-label="打开侧边栏"
             >
-              <ThemeIcon name="glancy-web" width={24} height={24} />
+              <ThemeIcon
+                name={ICON_TOKEN.BRAND_WORDMARK}
+                width={24}
+                height={24}
+              />
             </button>
           </div>
         ) : null}

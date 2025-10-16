@@ -232,8 +232,8 @@ describe("OutputToolbar", () => {
    *  1) 初次渲染为成功态，断言禁用与图标；
    *  2) rerender 为 idle，断言图标/禁用恢复。
    * 断言：
-   *  - 勾选态按钮禁用且渲染 copy-success 图标；
-   *  - idle 态恢复复制图标与可用状态。
+   *  - 勾选态按钮禁用且渲染 feedback-copy-success 图标；
+   *  - idle 态恢复 action-copy 图标与可用状态。
    * 边界/异常：
    *  - 若状态切换未更新按钮属性，将导致断言失败。
    */
@@ -251,7 +251,9 @@ describe("OutputToolbar", () => {
     const successButton = screen.getByRole("button", { name: "复制完成" });
     expect(successButton).toBeDisabled();
     expect(
-      within(successButton).getByRole("img", { name: "copy-success" }),
+      within(successButton).getByRole("img", {
+        name: "feedback-copy-success",
+      }),
     ).toBeInTheDocument();
 
     rerender(
@@ -267,7 +269,7 @@ describe("OutputToolbar", () => {
     const idleButton = screen.getByRole("button", { name: "复制" });
     expect(idleButton).not.toBeDisabled();
     expect(
-      within(idleButton).getByRole("img", { name: "copy" }),
+      within(idleButton).getByRole("img", { name: "action-copy" }),
     ).toBeInTheDocument();
   });
 

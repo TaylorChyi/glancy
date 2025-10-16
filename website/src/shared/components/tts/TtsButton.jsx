@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import { useTtsPlayer } from "@shared/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@core/store";
 import { useLanguage } from "@core/context";
@@ -63,7 +64,11 @@ export default function TtsButton({
         aria-label={tooltip}
         title={tooltip}
       >
-        <ThemeIcon name="voice-button" width={iconSize} height={iconSize} />
+        <ThemeIcon
+          name={ICON_TOKEN.CHAT_VOICE}
+          width={iconSize}
+          height={iconSize}
+        />
       </button>
       <TtsFeedbackSurfaces
         feedback={feedback}

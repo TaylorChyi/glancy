@@ -17,6 +17,7 @@ import { useMemo, useCallback } from "react";
 import SearchBox from "@shared/components/ui/SearchBox";
 import DictionaryEntryActionBar from "@shared/components/DictionaryEntryActionBar";
 import ThemeIcon from "@shared/components/ui/Icon";
+import { ICON_TOKEN } from "@assets/iconTokens";
 import toolbarStyles from "@shared/components/OutputToolbar/OutputToolbar.module.css";
 
 import styles from "./DictionaryActionPanel.module.css";
@@ -86,7 +87,11 @@ export default function DictionaryActionPanel({
           aria-label={searchButtonLabel}
           title={searchButtonLabel}
         >
-          <ThemeIcon name="search" width={18} height={18} />
+          <ThemeIcon
+            name={ICON_TOKEN.ACTION_SEARCH}
+            width={18}
+            height={18}
+          />
         </button>
         <DictionaryEntryActionBar
           {...restActionBarProps}
