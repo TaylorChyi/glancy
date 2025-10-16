@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
-import MessagePopup from "@shared/components/ui/MessagePopup";
-import Toast from "@shared/components/ui/Toast";
+import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import Layout from "@shared/components/Layout";
 import HistoryDisplay from "@shared/components/ui/HistoryDisplay";
 import { DictionaryEntryView } from "@shared/components/ui/DictionaryEntry";
@@ -250,15 +249,21 @@ export default function DictionaryExperience() {
         onDescriptionChange={reportDialogHandlers.setDescription}
         onSubmit={reportDialogHandlers.submit}
       />
-      <MessagePopup open={popupOpen} message={popupMsg} onClose={closePopup} />
-      <Toast
-        open={toast?.open}
-        message={toast?.message}
-        duration={toast?.duration}
-        backgroundColor={toast?.backgroundColor}
-        textColor={toast?.textColor}
-        closeLabel={toast?.closeLabel}
-        onClose={closeToast}
+      <FeedbackHub
+        popup={{ open: popupOpen, message: popupMsg, onClose: closePopup }}
+        toast={
+          toast
+            ? {
+                open: toast.open,
+                message: toast.message,
+                duration: toast.duration,
+                backgroundColor: toast.backgroundColor,
+                textColor: toast.textColor,
+                closeLabel: toast.closeLabel,
+                onClose: closeToast,
+              }
+            : undefined
+        }
       />
     </>
   );

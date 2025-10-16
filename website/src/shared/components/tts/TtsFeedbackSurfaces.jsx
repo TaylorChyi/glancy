@@ -14,8 +14,7 @@
  *  - TODO：若未来有多按钮操作，可扩展 children 插槽而不破坏现有 API。
  */
 import PropTypes from "prop-types";
-import MessagePopup from "@shared/components/ui/MessagePopup";
-import Toast from "@shared/components/ui/Toast";
+import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import UpgradeModal from "@shared/components/modals/UpgradeModal.jsx";
 
 function TtsFeedbackSurfaces({
@@ -25,27 +24,30 @@ function TtsFeedbackSurfaces({
 }) {
   return (
     <>
-      <MessagePopup
-        open={feedback.isPopupOpen}
-        message={feedback.popupMessage}
-        onClose={feedback.closePopup}
-      >
-        <button
-          type="button"
-          className={upgradeButtonClassName}
-          onClick={feedback.openUpgrade}
-        >
-          {upgradeLabel}
-        </button>
-      </MessagePopup>
+      <FeedbackHub
+        popup={{
+          open: feedback.isPopupOpen,
+          message: feedback.popupMessage,
+          onClose: feedback.closePopup,
+          renderActions: () => (
+            <button
+              type="button"
+              className={upgradeButtonClassName}
+              onClick={feedback.openUpgrade}
+            >
+              {upgradeLabel}
+            </button>
+          ),
+        }}
+        toast={{
+          open: feedback.isToastOpen,
+          message: feedback.toastMessage,
+          onClose: feedback.closeToast,
+        }}
+      />
       <UpgradeModal
         open={feedback.isUpgradeOpen}
         onClose={feedback.closeUpgrade}
-      />
-      <Toast
-        open={feedback.isToastOpen}
-        message={feedback.toastMessage}
-        onClose={feedback.closeToast}
       />
     </>
   );
