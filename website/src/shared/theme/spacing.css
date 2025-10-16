@@ -10,15 +10,7 @@
  * 演进与TODO：
  *  - 后续可按需拆分为尺寸系统/布局系统的更细粒度模块。
  */
-@layer tokens {
-  :root {
-    --space-1: 4px;
-    --space-2: 8px;
-    --space-3: 16px;
-    --space-4: 24px;
-    --space-5: 32px;
-  }
-}
+@import url("@styles/semantic/spacing.semantic.css");
 
 @layer utilities {
   /* margin utilities */

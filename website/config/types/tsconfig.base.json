@@ -20,7 +20,8 @@
       "@core/*": ["src/core/*"],
       "@shared/*": ["src/shared/*"],
       "@features/*": ["src/features/*"],
-      "@assets/*": ["src/shared/assets/*"]
+      "@assets/*": ["src/shared/assets/*"],
+      "@styles/*": ["src/styles/*"]
     }
   }
 }

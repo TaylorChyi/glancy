@@ -1,7 +1,7 @@
-@import url("@shared/theme/spacing.css");
-@import url("@shared/theme/variables.css");
-@import url("@shared/theme/colors.css");
-@import url("@shared/theme/typography.css");
+@import url("@styles/semantic/spacing.semantic.css");
+@import url("@styles/semantic/radius.semantic.css");
+@import url("@styles/semantic/color.semantic.css");
+@import url("@styles/semantic/typography.semantic.css");
 
 .item {
   --list-item-height: 46px;

@@ -1,0 +1,46 @@
+/**
+ * 背景：
+ *  - 输入类组件在不同页面定义差异化颜色/尺寸，难以确保一致；
+ * 目的：
+ *  - 抽象出输入框通用的组件令牌，统一控制背景、描边、内边距与状态色；
+ * 关键决策与取舍：
+ *  - 默认覆盖文本输入、选择框等，保持可覆写的 data- 属性接口；
+ * 影响范围：
+ *  - 复用输入令牌的表单组件；
+ * 演进与TODO：
+ *  - 后续可针对紧凑/密集布局补充尺寸等级，并与交互态（invalid/readonly）联动。
+ */
+:root {
+  --component-input-font-family: var(--font-sans);
+  --component-input-font-size: var(--text-sm);
+  --component-input-line-height: var(--leading-normal);
+  --component-input-font-weight: var(--weight-regular);
+  --component-input-radius: var(--radius-lg);
+  --component-input-padding-inline: var(--space-3);
+  --component-input-padding-block: var(--space-2);
+  --component-input-gap: var(--space-2);
+
+  --component-input-bg: var(--color-surface);
+  --component-input-bg-hover: color-mix(in srgb, var(--color-surface) 90%, var(--color-text) 10%);
+  --component-input-bg-disabled: color-mix(
+    in srgb,
+    var(--color-surface) 80%,
+    transparent 20%
+  );
+  --component-input-border: var(--color-border);
+  --component-input-border-hover: color-mix(
+    in srgb,
+    var(--color-border) 70%,
+    var(--color-text) 30%
+  );
+  --component-input-border-focus: color-mix(
+    in srgb,
+    var(--color-primary) 60%,
+    transparent 40%
+  );
+  --component-input-shadow-focus: 0 0 0 1px var(--component-input-border-focus);
+  --component-input-placeholder: var(--color-text-muted);
+  --component-input-color: var(--color-text);
+  --component-input-icon: var(--color-text-muted);
+  --component-input-ring: color-mix(in srgb, var(--color-primary) 35%, transparent 65%);
+}

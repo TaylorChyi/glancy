@@ -1,0 +1,24 @@
+/**
+ * 背景：
+ *  - 间距变量在 utilities 与组件间重复定义，调整时极易遗漏；
+ * 目的：
+ *  - 以语义层（space-1/2/3 等）承接基础间距，供布局与组件一致复用；
+ * 关键决策与取舍：
+ *  - 保持 `--space-*` 命名，以兼容既有 CSS 模块；
+ * 影响范围：
+ *  - 所有引用间距变量的组件、布局与 Tailwind 扩展 spacing；
+ * 演进与TODO：
+ *  - 后续可根据响应式需求引入 `--space-fluid-*` 等自适应间距。
+ */
+:root {
+  --space-0: var(--sp-0);
+  --space-1: var(--sp-4);
+  --space-2: var(--sp-8);
+  --space-3: var(--sp-12);
+  --space-4: var(--sp-16);
+  --space-5: var(--sp-20);
+  --space-6: var(--sp-24);
+  --space-7: var(--sp-28);
+  --space-8: var(--sp-32);
+  --space-10: var(--sp-40);
+}
