@@ -1,60 +1,28 @@
 import api from "@shared/api/index.js";
 import { ApiError } from "@shared/api/client.js";
+import { useWordStore } from "./wordStore.js";
+import { useDataGovernanceStore } from "./dataGovernanceStore.js";
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import { useUserStore } from "./userStore.js";
 import type { User } from "./userStore.js";
 import {
-  resolveWordLanguage,
-  WORD_LANGUAGE_AUTO,
-  WORD_FLAVOR_BILINGUAL,
-} from "@shared/utils/language.js";
-import { useWordStore } from "./wordStore.js";
-import { useDataGovernanceStore } from "./dataGovernanceStore.js";
-
-const HISTORY_PAGE_SIZE = 20;
-const REMOTE_HISTORY_PAGE_LIMIT = 50;
-
-type HistoryVersionPayload = {
-  id?: string | number | null;
-  term?: string | null;
-  metadata?: { term?: string | null } | null;
-  createdAt?: string | null;
-  favorite?: boolean | null;
-};
-
-type SearchRecordDto = {
-  id?: string | number | null;
-  term: string;
-  language?: string | null;
-  flavor?: string | null;
-  createdAt?: string | null;
-  favorite?: boolean | null;
-  metadata?: { term?: string | null } | null;
-  versions?: HistoryVersionPayload[] | null;
-};
-
-export interface HistoryVersion {
-  id: string;
-  createdAt: string | null;
-  favorite: boolean;
-}
-
-export interface HistoryItem {
-  /**
-   * 搜索记录在服务端的主键，用于删除/收藏等变更操作。
-   * 老版本缓存可能不存在该字段，因此需在命令中做降级处理。
-   */
-  recordId: string | null;
-  term: string;
-  language: string;
-  flavor: string;
-  termKey: string;
-  createdAt: string | null;
-  favorite: boolean;
-  versions: HistoryVersion[];
-  latestVersionId: string | null;
-}
+  HISTORY_PAGE_SIZE,
+  HISTORY_PAGINATION_MODES,
+  REMOTE_HISTORY_PAGE_LIMIT,
+  type PaginationMode,
+  type HistoryItem,
+  type SearchRecordDto,
+  HistoryRetentionPolicy,
+  compareByCreatedAtDesc,
+  createTermKey,
+  mergeHistory,
+  normalizeFlavor,
+  normalizeLanguage,
+  resolveHistoryItem,
+  sanitizeHistoryTerm,
+  toHistoryItem,
+} from "@core/history/index.ts";
 
 interface HistoryState {
   history: HistoryItem[];
@@ -101,81 +69,6 @@ type SetState = (
     | ((state: HistoryState) => Partial<HistoryState>),
   replace?: boolean,
 ) => void;
-
-const createTermKey = (term: string, language: string, flavor: string) =>
-  `${language}:${flavor}:${term}`;
-
-const normalizeLanguage = (term: string, language?: string | null) =>
-  resolveWordLanguage(term, language ?? WORD_LANGUAGE_AUTO).toUpperCase();
-
-const normalizeFlavor = (flavor?: string | null) => {
-  if (!flavor) return WORD_FLAVOR_BILINGUAL;
-  const upper = String(flavor).trim().toUpperCase();
-  return upper || WORD_FLAVOR_BILINGUAL;
-};
-
-/**
- * 意图：在历史存储层统一修剪词形输入，避免展示端出现前后空白并为规范词形解析提供基线。
- * 输入：任意候选值。
- * 输出：去除首尾空白的字符串，若无法转换则返回空串。
- */
-const sanitizeHistoryTerm = (value: unknown): string => {
-  if (typeof value !== "string") return "";
-  return value.trim();
-};
-
-/**
- * 意图：在可用时从版本集合中挑选服务端提供的规范词形，优先匹配最新版本。
- * 输入：原始版本数组、latestVersionId（若存在）。
- * 输出：规范词形字符串，若无法确定则返回空串交由上层回退。
- */
-const resolveTermFromVersions = (
-  versions: SearchRecordDto["versions"],
-  latestVersionId: string | null,
-): string => {
-  if (!Array.isArray(versions) || versions.length === 0) {
-    return "";
-  }
-
-  const preferred = versions.find((candidate) => {
-    if (!candidate) return false;
-    const candidateTerm = sanitizeHistoryTerm(
-      candidate.term ?? candidate.metadata?.term,
-    );
-    if (!candidateTerm) {
-      return false;
-    }
-    if (!latestVersionId) {
-      return true;
-    }
-    return String(candidate.id) === String(latestVersionId);
-  });
-
-  if (!preferred) {
-    return "";
-  }
-
-  return (
-    sanitizeHistoryTerm(preferred.term) ||
-    sanitizeHistoryTerm(preferred.metadata?.term)
-  );
-};
-
-const resolveCanonicalTerm = (
-  record: SearchRecordDto,
-  latestVersionId: string | null,
-): string => {
-  // 服务端会在 metadata 或版本元数据中附带规范词形，优先读取该字段保持与词典正文一致。
-  const metadataTerm = sanitizeHistoryTerm(record.metadata?.term);
-  if (metadataTerm) {
-    return metadataTerm;
-  }
-  const versionTerm = resolveTermFromVersions(record.versions, latestVersionId);
-  if (versionTerm) {
-    return versionTerm;
-  }
-  return sanitizeHistoryTerm(record.term);
-};
 
 /**
  * 意图：使用模板方法遍历服务端分页历史，收集满足谓词的记录。
@@ -268,94 +161,6 @@ const pruneWordCacheByLanguage = (language: string) => {
   });
 };
 
-const sanitizeVersion = (
-  version: SearchRecordDto["versions"] extends (infer R)[] ? R : never,
-  fallback: { createdAt?: string | null; favorite?: boolean | null },
-): HistoryVersion | null => {
-  if (!version || version.id == null) return null;
-  return {
-    id: String(version.id),
-    createdAt: version.createdAt ?? fallback.createdAt ?? null,
-    favorite: Boolean(version.favorite ?? fallback.favorite ?? false),
-  };
-};
-
-const ensureVersions = (record: SearchRecordDto): HistoryVersion[] => {
-  const fallback = {
-    createdAt: record.createdAt ?? null,
-    favorite: record.favorite ?? null,
-  };
-  const provided = (record.versions ?? [])
-    .map((version) => sanitizeVersion(version, fallback))
-    .filter((v): v is HistoryVersion => Boolean(v));
-  if (provided.length > 0) {
-    return provided.sort((a, b) => {
-      const left = a.createdAt ?? "";
-      const right = b.createdAt ?? "";
-      return right.localeCompare(left);
-    });
-  }
-  if (record.id == null) return [];
-  return [
-    {
-      id: String(record.id),
-      createdAt: record.createdAt ?? null,
-      favorite: Boolean(record.favorite ?? false),
-    },
-  ];
-};
-
-const toHistoryItem = (record: SearchRecordDto): HistoryItem => {
-  const flavor = normalizeFlavor(record.flavor);
-  const versions = ensureVersions(record);
-  const latestVersionId = versions.length ? versions[0].id : null;
-  const canonicalTerm = resolveCanonicalTerm(record, latestVersionId);
-  const fallbackTerm = sanitizeHistoryTerm(record.term) || record.term || "";
-  const term = canonicalTerm || fallbackTerm;
-  const language = normalizeLanguage(term, record.language);
-  return {
-    recordId: record.id == null ? null : String(record.id),
-    term,
-    language,
-    flavor,
-    termKey: createTermKey(term, language, flavor),
-    createdAt: record.createdAt ?? versions[0]?.createdAt ?? null,
-    favorite: Boolean(record.favorite ?? versions[0]?.favorite ?? false),
-    versions,
-    latestVersionId,
-  };
-};
-
-const compareByCreatedAtDesc = (a: HistoryItem, b: HistoryItem) => {
-  const left = a.createdAt ?? "";
-  const right = b.createdAt ?? "";
-  if (!left && !right) return 0;
-  if (!left) return 1;
-  if (!right) return -1;
-  return right.localeCompare(left);
-};
-
-const mergeHistory = (existing: HistoryItem[], incoming: HistoryItem[]) => {
-  const map = new Map<string, HistoryItem>();
-  const orderedIncoming = [...incoming].sort(compareByCreatedAtDesc);
-  orderedIncoming.forEach((item) => {
-    map.set(item.termKey, item);
-  });
-  existing.forEach((item) => {
-    if (!map.has(item.termKey)) {
-      map.set(item.termKey, item);
-    }
-  });
-  return Array.from(map.values());
-};
-
-const PAGINATION_MODES = Object.freeze({
-  RESET: "reset",
-  APPEND: "append",
-} as const);
-
-type PaginationMode = (typeof PAGINATION_MODES)[keyof typeof PAGINATION_MODES];
-
 function handleApiError(err: unknown, set: SetState) {
   if (err instanceof ApiError && err.status === 401) {
     const { clearUser } = useUserStore.getState();
@@ -378,15 +183,6 @@ function handleApiError(err: unknown, set: SetState) {
   set({ error: message, isLoading: false });
 }
 
-const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
-  history.find(
-    (item) =>
-      item.recordId === identifier ||
-      item.termKey === identifier ||
-      item.term === identifier ||
-      `${item.language}:${item.term}` === identifier,
-  );
-
 export const useHistoryStore = createPersistentStore<HistoryState>({
   key: "searchHistory",
   initializer: (set, get) => {
@@ -395,8 +191,8 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       PaginationMode,
       (current: HistoryItem[], incoming: HistoryItem[]) => HistoryItem[]
     > = {
-      [PAGINATION_MODES.RESET]: (_current, incoming) => incoming,
-      [PAGINATION_MODES.APPEND]: (current, incoming) =>
+      [HISTORY_PAGINATION_MODES.RESET]: (_current, incoming) => incoming,
+      [HISTORY_PAGINATION_MODES.APPEND]: (current, incoming) =>
         mergeHistory(current, incoming),
     };
 
@@ -414,7 +210,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       const reducer = paginationReducers[mode];
       set(() => ({
         isLoading: true,
-        ...(mode === PAGINATION_MODES.RESET
+        ...(mode === HISTORY_PAGINATION_MODES.RESET
           ? { history: [], error: null, hasMore: true, nextPage: 0 }
           : {}),
       }));
@@ -456,7 +252,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       nextPage: 0,
       loadHistory: async (user?: User | null) => {
         if (user?.token) {
-          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+          await loadHistoryPage(user, 0, HISTORY_PAGINATION_MODES.RESET);
           return;
         }
         set({
@@ -471,7 +267,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         if (!user?.token) return;
         const { isLoading, hasMore, nextPage } = get();
         if (isLoading || !hasMore) return;
-        await loadHistoryPage(user, nextPage, PAGINATION_MODES.APPEND);
+        await loadHistoryPage(user, nextPage, HISTORY_PAGINATION_MODES.APPEND);
       },
       addHistory: async (
         term: string,
@@ -522,7 +318,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
               language: normalizedLanguage,
               flavor: normalizedFlavor,
             });
-            await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+            await loadHistoryPage(user, 0, HISTORY_PAGINATION_MODES.RESET);
           } catch (err) {
             handleApiError(err, set);
           }
@@ -618,7 +414,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
           }
 
           try {
-            await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+            await loadHistoryPage(user, 0, HISTORY_PAGINATION_MODES.RESET);
           } catch (err) {
             handleApiError(err, set);
           }
@@ -683,7 +479,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             token: user.token,
             recordId: idToUse,
           });
-          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+          await loadHistoryPage(user, 0, HISTORY_PAGINATION_MODES.RESET);
         } catch (err) {
           handleApiError(err, set);
         }
@@ -703,7 +499,7 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
             token: user.token,
             recordId: idToUse,
           });
-          await loadHistoryPage(user, 0, PAGINATION_MODES.RESET);
+          await loadHistoryPage(user, 0, HISTORY_PAGINATION_MODES.RESET);
         } catch (err) {
           handleApiError(err, set);
         }
@@ -712,52 +508,27 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
         retentionDays: number | null,
         user?: User | null,
       ) => {
-        if (retentionDays == null || retentionDays <= 0) {
-          return;
-        }
-        const threshold = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
-        const historyItems = get().history;
-        const candidates = historyItems.filter((item) => {
-          if (!item.createdAt) {
-            return false;
-          }
-          const timestamp = Date.parse(item.createdAt);
-          if (Number.isNaN(timestamp)) {
-            return false;
-          }
-          return timestamp < threshold;
-        });
-        if (candidates.length === 0) {
+        const policy = HistoryRetentionPolicy.forDays(retentionDays);
+        if (!policy) {
           return;
         }
 
-        set((state) => {
-          const filtered = state.history.filter(
-            (item) =>
-              !candidates.some(
-                (candidate) => candidate.termKey === item.termKey,
-              ),
-          );
-          return {
-            history: filtered,
-            nextPage: resolveNextPage(filtered.length),
-          };
+        const evaluation = policy.evaluate(get().history);
+        if (evaluation.expired.length === 0) {
+          return;
+        }
+
+        set({
+          history: evaluation.retained,
+          nextPage: resolveNextPage(evaluation.retained.length),
         });
 
-        candidates.forEach((item) => {
+        evaluation.expired.forEach((item) => {
           wordStore.getState().removeVersions(item.termKey);
         });
 
-        if (user?.token) {
-          const recordIds = new Set<string>();
-          candidates.forEach((item) => {
-            if (item.recordId) {
-              recordIds.add(item.recordId);
-            } else if (item.latestVersionId) {
-              recordIds.add(item.latestVersionId);
-            }
-          });
-          for (const recordId of recordIds.values()) {
+        if (user?.token && evaluation.remoteRecordIds.size > 0) {
+          for (const recordId of evaluation.remoteRecordIds.values()) {
             try {
               await api.searchRecords.deleteSearchRecord({
                 recordId,
