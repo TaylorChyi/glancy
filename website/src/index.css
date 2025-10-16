@@ -11,9 +11,19 @@
  * 演进与TODO：
  *  - 后续可将 legacy 样式逐步迁移至分层 tokens/组件中，进一步减少跨文件耦合。
  */
+@layer tokens, foundations, theme, base, components, utilities;
+
 @import url("./tailwind.css");
+@import url("@shared/theme/colors.css");
+@import url("@shared/theme/variables.css");
+@import url("@shared/theme/spacing.css");
+@import url("@shared/theme/typography.css");
 @import url("./shared/styles/tokens/palette.css");
 @import url("./shared/styles/tokens/roles.css");
+@import url("./shared/styles/tokens.menu.css");
+@import url("./shared/styles/foundations.css");
+@import url("./shared/styles/themes/light.css");
+@import url("./shared/styles/themes/dark.css");
 @import url("./shared/styles/components/button.css");
 @import url("./shared/styles/utilities/roles.css");
 @import url("./shared/styles/index.css");

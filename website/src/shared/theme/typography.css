@@ -1,61 +1,81 @@
-:root {
-  --font-family-base: system-ui, avenir, helvetica, arial, sans-serif;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --font-light: 300;
-  --font-normal: 400;
-  --font-medium: 500;
-  --font-bold: 700;
-  --line-height-tight: 1.35;
-  --line-height-snug: 1.45;
-  --line-height-comfortable: 1.6;
-  --line-height-relaxed: 1.75;
+/**
+ * 背景：
+ *  - 字体变量与排版类名混在一个文件，缺乏 cascade layer 标识导致覆盖顺序不确定。
+ * 目的：
+ *  - 令变量进入 tokens 层、全局排版设定归于 base 层，文本尺寸类归入 utilities。
+ * 关键决策与取舍：
+ *  - body 的默认字体仍在 CSS 层控制，避免额外在 JS 注入；
+ *  - 保持类名与变量值稳定，减少对现有组件的影响。
+ * 影响范围：
+ *  - 所有复用字体变量或文本尺寸类的页面。
+ * 演进与TODO：
+ *  - 可结合设计体系进一步抽象字重/行高组合。
+ */
+@layer tokens {
+  :root {
+    --font-family-base: system-ui, avenir, helvetica, arial, sans-serif;
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-bold: 700;
+    --line-height-tight: 1.35;
+    --line-height-snug: 1.45;
+    --line-height-comfortable: 1.6;
+    --line-height-relaxed: 1.75;
+  }
 }
 
-body {
-  font-family: var(--font-family-base);
+@layer base {
+  body {
+    font-family: var(--font-family-base);
+  }
 }
 
-.text-xs {
-  font-size: var(--text-xs);
-}
+@layer utilities {
 
-.text-sm {
-  font-size: var(--text-sm);
-}
+  .text-xs {
+    font-size: var(--text-xs);
+  }
 
-.text-base {
-  font-size: var(--text-base);
-}
+  .text-sm {
+    font-size: var(--text-sm);
+  }
 
-.text-lg {
-  font-size: var(--text-lg);
-}
+  .text-base {
+    font-size: var(--text-base);
+  }
 
-.text-xl {
-  font-size: var(--text-xl);
-}
+  .text-lg {
+    font-size: var(--text-lg);
+  }
 
-.text-2xl {
-  font-size: var(--text-2xl);
-}
+  .text-xl {
+    font-size: var(--text-xl);
+  }
 
-.font-light {
-  font-weight: var(--font-light);
-}
+  .text-2xl {
+    font-size: var(--text-2xl);
+  }
 
-.font-normal {
-  font-weight: var(--font-normal);
-}
+  .font-light {
+    font-weight: var(--font-light);
+  }
 
-.font-medium {
-  font-weight: var(--font-medium);
-}
+  .font-normal {
+    font-weight: var(--font-normal);
+  }
 
-.font-bold {
-  font-weight: var(--font-bold);
+  .font-medium {
+    font-weight: var(--font-medium);
+  }
+
+  .font-bold {
+    font-weight: var(--font-bold);
+  }
 }

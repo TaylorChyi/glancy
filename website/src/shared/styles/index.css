@@ -1,27 +1,16 @@
 /**
  * 背景：
- *  - 既有 index.css 同时承担基础 token、主题覆写与全局元素样式，层次混杂导致变量冲突频发。
+ *  - 既有文件同时承担 tokens 聚合与基础样式定义，层级职责模糊导致变量覆盖关系难以追踪。
  * 目的：
- *  - 通过 Cascade Layers 拆分 foundations/theme/base 三个维度，令变量与结构样式各司其职。
+ *  - 将 tokens 聚合上移至全局入口，仅保留 base 层结构样式，确保层次边界单一且可维护。
  * 关键决策与取舍：
- *  - 维持原有 import 顺序，在其后插入新的基础/主题聚合文件，避免对构建流程造成破坏；
- *  - 保留全局元素样式于 base 层，减少与组件局部样式的权重竞争。
+ *  - 继续依赖上游已声明的 @layer 顺序，避免在此重复声明层级导致维护成本上升；
+ *  - 保留原有 base 层样式，确保浏览器默认排版与聚焦态行为不受影响。
  * 影响范围：
- *  - 所有消费共享样式的页面；主题覆写需在独立文件中维护。
+ *  - 所有复用全局 base 样式的页面与组件；tokens 现由 src/index.css 统一装配。
  * 演进与TODO：
- *  - 后续可在 base 层引入 reset/typography 模块，将现有杂糅的标签样式进一步模块化。
+ *  - 后续可在此引入 reset/typography 模块化拆分，或将 textarea 等特殊处理迁移到各自组件。 
  */
-@layer foundations, theme, base;
-
-@import url("@shared/theme/colors.css");
-@import url("@shared/theme/variables.css");
-@import url("@shared/theme/spacing.css");
-@import url("@shared/theme/typography.css");
-@import url("@shared/styles/tokens.menu.css");
-@import url("./foundations.css");
-@import url("./themes/light.css");
-@import url("./themes/dark.css");
-
 @layer base {
   :root {
     font-family: var(--font-family-base);
