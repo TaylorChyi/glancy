@@ -1,0 +1,53 @@
+/**
+ * 背景：
+ *  - 全局变量既负责视图层 token，又承担主题覆写，导致覆盖关系隐式且难以追踪。
+ * 目的：
+ *  - 以基础层集中声明跨主题共享的 CSS 自定义属性，压实变量语义并减少重复定义。
+ * 关键决策与取舍：
+ *  - 采用 CSS Cascade Layers 建模，将共享变量置于 foundations 层，便于主题层按需覆写；
+ *  - 保留语义 token 的默认值，通过 color-mix 等函数对齐既有视觉表现，避免引入破坏性变更。
+ * 影响范围：
+ *  - 所有消费 `--*` 变量的组件与 Tailwind 原子类；主题文件需遵循新的分层顺序。
+ * 演进与TODO：
+ *  - 后续可在此扩展尺寸/动效等基础令牌，并为非现代浏览器补充 color-mix 降级策略。
+ */
+@layer foundations {
+  :root {
+    --vh: 100vh;
+    --highlight-color: var(--hl-dark);
+    --link-color: var(--color-link-light);
+    --shadow-color: rgb(0 0 0 / 15%);
+    --loader-bar-tone: var(--neutral-900);
+    --text-muted: var(--sys-muted);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-tertiary: var(--text-tertiary);
+    --color-surface-muted: var(--surface-muted);
+    --color-surface-alt: var(--surface-alt);
+    --color-overlay: color-mix(
+      in srgb,
+      var(--color-overlay-base),
+      transparent 50%
+    );
+    --color-overlay-strong: color-mix(
+      in srgb,
+      var(--color-overlay-base),
+      transparent 25%
+    );
+    --color-overlay-weak: color-mix(
+      in srgb,
+      var(--color-overlay-base),
+      transparent 95%
+    );
+    --color-overlay-inverse: color-mix(
+      in srgb,
+      var(--color-overlay-inverse-base),
+      transparent 90%
+    );
+  }
+
+  @supports (height: 100dvh) {
+    :root {
+      --vh: 100dvh;
+    }
+  }
+}
