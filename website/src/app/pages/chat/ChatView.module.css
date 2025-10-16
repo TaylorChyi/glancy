@@ -12,31 +12,3 @@
     padding: 0.75rem clamp(0.5rem, 4vw, 0.75rem);
   }
 }
-
-.history {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  overflow-y: auto;
-}
-
-.message {
-  max-width: 70%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 4px var(--shadow-color);
-  line-height: 1.5;
-  color: var(--color-text);
-}
-
-.user {
-  align-self: flex-end;
-  background: var(--chat-bubble-user-bg);
-  color: var(--brand-primary-contrast);
-}
-
-.assistant {
-  align-self: flex-start;
-  background: var(--chat-bubble-bg);
-}
