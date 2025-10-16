@@ -13,17 +13,14 @@
 import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "./BaseModal.jsx";
-import SettingsBody from "./SettingsBody.jsx";
-import SettingsNav from "./SettingsNav.jsx";
-import SettingsPanel from "./SettingsPanel.jsx";
 import modalStyles from "./SettingsModal.module.css";
 import preferencesStyles from "@app/pages/preferences/Preferences.module.css";
 import usePreferenceSections from "@app/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@shared/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@shared/components/ui/Icon";
-import useStableSettingsPanelHeight from "./useStableSettingsPanelHeight.js";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";
 import Toast from "@shared/components/ui/Toast";
+import SettingsSectionsViewport from "@shared/components/settings/SettingsSectionsViewport";
 
 // 采用组合式文案构造策略，确保关闭操作在缺失显式标题时仍具备语义化提示。
 const buildCloseLabel = (baseLabel, contextLabel) => {
@@ -44,9 +41,6 @@ const buildCloseLabel = (baseLabel, contextLabel) => {
   }
   return `${normalizedBase} ${normalizedContext}`;
 };
-
-const composeClassName = (...classNames) =>
-  classNames.filter(Boolean).join(" ");
 
 function SettingsModal({ open, onClose, initialSection }) {
   const {
@@ -94,38 +88,6 @@ function SettingsModal({ open, onClose, initialSection }) {
     [panel.headingId, registerHeading],
   );
 
-  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
-    useStableSettingsPanelHeight({
-      sections,
-      activeSectionId,
-      referenceSectionId: "data",
-    });
-
-  const sizedPanelClassName = composeClassName(
-    preferencesStyles.panel,
-    preferencesStyles["panel-surface"],
-  );
-  const probePanelClassName = composeClassName(
-    preferencesStyles.panel,
-    preferencesStyles["panel-probe"],
-  );
-
-  const measurementProbe = useMemo(() => {
-    if (!referenceMeasurement) {
-      return null;
-    }
-    const {
-      Component: ReferenceComponent,
-      props,
-      registerNode,
-    } = referenceMeasurement;
-    return (
-      <div aria-hidden className={probePanelClassName} ref={registerNode}>
-        <ReferenceComponent {...props} />
-      </div>
-    );
-  }, [probePanelClassName, referenceMeasurement]);
-
   const redeemToast = feedback?.redeemToast;
 
   const renderCloseAction = useMemo(
@@ -160,27 +122,38 @@ function SettingsModal({ open, onClose, initialSection }) {
         ariaLabelledBy={resolvedHeadingId}
         ariaDescribedBy={resolvedDescriptionId}
       >
-        <SettingsBody
-          className={`${preferencesStyles.body} ${modalStyles["body-region"]}`}
-          style={bodyStyle}
-          measurementProbe={measurementProbe}
-        >
-          <SettingsNav
-            sections={sections}
-            activeSectionId={activeSectionId}
-            onSelect={handleSectionSelectWithFocus}
-            tablistLabel={copy.tablistLabel}
-            renderCloseAction={renderCloseAction}
-            classes={{
+        <SettingsSectionsViewport
+          sections={sections}
+          activeSectionId={activeSectionId}
+          onSectionSelect={handleSectionSelectWithFocus}
+          tablistLabel={copy.tablistLabel}
+          renderCloseAction={renderCloseAction}
+          referenceSectionId="data"
+          body={{
+            className: `${preferencesStyles.body} ${modalStyles["body-region"]}`,
+          }}
+          nav={{
+            classes: {
               container: preferencesStyles["tabs-region"],
               action: preferencesStyles["close-action"],
               nav: preferencesStyles.tabs,
               button: preferencesStyles.tab,
               label: preferencesStyles["tab-label"],
               labelText: preferencesStyles["tab-label-text"],
+              icon: preferencesStyles["tab-icon"],
               actionButton: preferencesStyles["close-button"],
-            }}
-          />
+            },
+          }}
+          panel={{
+            panelId: panel.panelId,
+            tabId: panel.tabId,
+            headingId: panel.headingId,
+            className: preferencesStyles.panel,
+            surfaceClassName: preferencesStyles["panel-surface"],
+            probeClassName: preferencesStyles["panel-probe"],
+          }}
+          onHeadingElementChange={registerHeading}
+        >
           <form
             aria-labelledby={resolvedHeadingId}
             aria-describedby={resolvedDescriptionId}
@@ -197,27 +170,16 @@ function SettingsModal({ open, onClose, initialSection }) {
                 {panel.modalHeadingText || copy.title}
               </h2>
             ) : null}
-            <SettingsPanel
-              panelId={panel.panelId}
-              tabId={panel.tabId}
-              headingId={panel.headingId}
-              className={sizedPanelClassName}
-              onHeadingElementChange={registerHeading}
-              onPanelElementChange={registerActivePanelNode}
-            >
-              {activeSection ? (
-                <activeSection.Component
-                  headingId={panel.headingId || panel.modalHeadingId}
-                  descriptionId={panel.descriptionId}
-                  {...activeSection.componentProps}
-                />
-              ) : null}
-            </SettingsPanel>
+            {activeSection ? (
+              <activeSection.Component
+                headingId={panel.headingId || panel.modalHeadingId}
+                descriptionId={panel.descriptionId}
+                {...activeSection.componentProps}
+              />
+            ) : null}
           </form>
-          {avatarEditor ? (
-            <AvatarEditorModal {...avatarEditor.modalProps} />
-          ) : null}
-        </SettingsBody>
+        </SettingsSectionsViewport>
+        {avatarEditor ? <AvatarEditorModal {...avatarEditor.modalProps} /> : null}
       </BaseModal>
       {redeemToast ? (
         <Toast
