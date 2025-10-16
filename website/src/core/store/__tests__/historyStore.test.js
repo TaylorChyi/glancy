@@ -1,10 +1,12 @@
 import { jest } from "@jest/globals";
 import { act } from "@testing-library/react";
 import api from "@shared/api/index.js";
+import { ApiError } from "@shared/api/client.js";
 // 直接引用具体 store 以规避 barrel 引入的循环依赖并保持测试与生产实现等价。
 import { useHistoryStore } from "@core/store/historyStore.ts";
 import { useWordStore } from "@core/store/wordStore.js";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
+import { useUserStore } from "@core/store/userStore.js";
 import { WORD_FLAVOR_BILINGUAL } from "@shared/utils/language.js";
 
 const mockWordStore = useWordStore;
@@ -561,5 +563,58 @@ describe("historyStore", () => {
     });
     expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:legacy");
     removeSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：收到 401 响应时，Store 会触发用户登出并复位本地状态。
+   * 前置条件：userStore 存在已登录用户；historyStore 预置历史记录。
+   * 步骤：
+   *  1) 预置 userStore 与 historyStore；
+   *  2) 模拟 fetchSearchRecords 拒绝并抛出 401 ApiError；
+   * 断言：
+   *  - clearUser 被调用；
+   *  - history 被清空且错误信息与加载状态复位；
+   * 边界/异常：
+   *  - 若异常未被捕获，则测试会失败。
+   */
+  test("Given 401 response When loading history Then user cleared and state reset", async () => {
+    useUserStore.setState({ user: { id: "u1", token: "t" } });
+    const clearSpy = jest.spyOn(useUserStore.getState(), "clearUser");
+
+    useHistoryStore.setState({
+      history: [
+        {
+          recordId: "rec-stale",
+          term: "stale",
+          language: "ENGLISH",
+          flavor: WORD_FLAVOR_BILINGUAL,
+          termKey: "ENGLISH:BILINGUAL:stale",
+          createdAt: "2024-05-01T10:00:00Z",
+          favorite: false,
+          versions: [],
+          latestVersionId: null,
+        },
+      ],
+      error: "previous",
+      hasMore: true,
+      isLoading: false,
+      nextPage: 1,
+    });
+
+    mockApi.searchRecords.fetchSearchRecords.mockRejectedValueOnce(
+      new ApiError(401, "Unauthorized", undefined),
+    );
+
+    await act(async () => {
+      await useHistoryStore.getState().loadHistory({ id: "u1", token: "t" });
+    });
+
+    expect(clearSpy).toHaveBeenCalledTimes(1);
+    const state = useHistoryStore.getState();
+    expect(state.history).toHaveLength(0);
+    expect(state.error).toBe("Unauthorized");
+    expect(state.isLoading).toBe(false);
+    expect(state.hasMore).toBe(false);
+    clearSpy.mockRestore();
   });
 });
