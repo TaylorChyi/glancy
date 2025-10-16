@@ -12,10 +12,10 @@
  * 影响范围：
  *  - SettingsBody 的高度控制、SettingsModal 与 Preferences 页面布局稳定性。
  * 演进与TODO：
- *  - TODO: 后续可接入缓存机制，避免多次计算相同高度；
+ *  - 已接入基于分区标识的高度缓存，后续可在多参考面板场景下扩展缓存键策略；
  *  - TODO: 若引入动画过渡，可在此扩展高度平滑过渡逻辑。
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const DEFAULT_REFERENCE_SECTION_ID = "data";
 
@@ -59,31 +59,77 @@ function useStableSettingsPanelHeight({
   const [activePanelNode, setActivePanelNode] = useState(null);
   const [referencePanelNode, setReferencePanelNode] = useState(null);
   const [heightMap, setHeightMap] = useState({ active: null, reference: null });
+  const heightCacheRef = useRef(new Map());
 
-  const updateHeight = useCallback((type, heightValue) => {
+  const applyHeightUpdate = useCallback((type, heightValue, sectionId) => {
+    const normalized = sanitizeHeight(heightValue);
     setHeightMap((current) => {
-      const normalized = sanitizeHeight(heightValue);
       if (current[type] === normalized) {
         return current;
       }
       return { ...current, [type]: normalized };
     });
+
+    if (typeof sectionId === "string" && sectionId.trim().length > 0) {
+      if (normalized === null) {
+        heightCacheRef.current.delete(sectionId);
+      } else {
+        heightCacheRef.current.set(sectionId, normalized);
+      }
+    }
   }, []);
+
+  const applyCachedHeight = useCallback((type, sectionId) => {
+    if (typeof sectionId !== "string" || sectionId.trim().length === 0) {
+      return false;
+    }
+
+    const cachedHeight = heightCacheRef.current.get(sectionId);
+    if (cachedHeight == null) {
+      return false;
+    }
+
+    setHeightMap((current) => {
+      if (current[type] === cachedHeight) {
+        return current;
+      }
+      return { ...current, [type]: cachedHeight };
+    });
+
+    return true;
+  }, []);
+
+  const updateActiveHeight = useCallback(
+    (heightValue) => {
+      applyHeightUpdate("active", heightValue, activeSectionId);
+    },
+    [activeSectionId, applyHeightUpdate],
+  );
+
+  const updateReferenceHeight = useCallback(
+    (heightValue) => {
+      applyHeightUpdate("reference", heightValue, referenceSectionId);
+    },
+    [applyHeightUpdate, referenceSectionId],
+  );
 
   useEffect(() => {
     if (!activePanelNode) {
-      updateHeight("active", null);
+      updateActiveHeight(null);
       return undefined;
     }
 
     if (typeof ResizeObserver === "undefined") {
-      updateHeight("active", measureInstantly(activePanelNode));
+      if (applyCachedHeight("active", activeSectionId)) {
+        return undefined;
+      }
+      updateActiveHeight(measureInstantly(activePanelNode));
       return undefined;
     }
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        updateHeight("active", entry?.contentRect?.height ?? null);
+        updateActiveHeight(entry?.contentRect?.height ?? null);
       }
     });
 
@@ -92,22 +138,25 @@ function useStableSettingsPanelHeight({
     return () => {
       observer.disconnect();
     };
-  }, [activePanelNode, activeSectionId, updateHeight]);
+  }, [activePanelNode, activeSectionId, applyCachedHeight, updateActiveHeight]);
 
   useEffect(() => {
     if (!referencePanelNode) {
-      updateHeight("reference", null);
+      updateReferenceHeight(null);
       return undefined;
     }
 
     if (typeof ResizeObserver === "undefined") {
-      updateHeight("reference", measureInstantly(referencePanelNode));
+      if (applyCachedHeight("reference", referenceSectionId)) {
+        return undefined;
+      }
+      updateReferenceHeight(measureInstantly(referencePanelNode));
       return undefined;
     }
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        updateHeight("reference", entry?.contentRect?.height ?? null);
+        updateReferenceHeight(entry?.contentRect?.height ?? null);
       }
     });
 
@@ -116,15 +165,49 @@ function useStableSettingsPanelHeight({
     return () => {
       observer.disconnect();
     };
-  }, [referencePanelNode, referenceSectionId, updateHeight]);
+  }, [
+    referencePanelNode,
+    referenceSectionId,
+    applyCachedHeight,
+    updateReferenceHeight,
+  ]);
 
-  const handleActivePanelChange = useCallback((node) => {
-    setActivePanelNode(node ?? null);
-  }, []);
+  useEffect(() => {
+    applyCachedHeight("active", activeSectionId);
+  }, [activeSectionId, applyCachedHeight]);
 
-  const handleReferencePanelChange = useCallback((node) => {
-    setReferencePanelNode(node ?? null);
-  }, []);
+  useEffect(() => {
+    if (!referenceSectionId) {
+      return;
+    }
+    applyCachedHeight("reference", referenceSectionId);
+  }, [applyCachedHeight, referenceSectionId]);
+
+  useEffect(() => {
+    if (!sections.find((section) => section.id === referenceSectionId)) {
+      updateReferenceHeight(null);
+    }
+  }, [referenceSectionId, sections, updateReferenceHeight]);
+
+  const handleActivePanelChange = useCallback(
+    (node) => {
+      setActivePanelNode(node ?? null);
+      if (node) {
+        applyCachedHeight("active", activeSectionId);
+      }
+    },
+    [activeSectionId, applyCachedHeight],
+  );
+
+  const handleReferencePanelChange = useCallback(
+    (node) => {
+      setReferencePanelNode(node ?? null);
+      if (node) {
+        applyCachedHeight("reference", referenceSectionId);
+      }
+    },
+    [applyCachedHeight, referenceSectionId],
+  );
 
   const referenceSection = useMemo(
     () => sections.find((section) => section.id === referenceSectionId),

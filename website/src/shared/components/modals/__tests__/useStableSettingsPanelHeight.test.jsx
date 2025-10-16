@@ -10,6 +10,7 @@
  * 演进与TODO：
  *  - TODO: 后续可补充宽度同步断言，覆盖更多响应式场景。
  */
+import { jest } from "@jest/globals";
 import { render } from "@testing-library/react";
 import PropTypes from "prop-types";
 import SettingsBody from "../SettingsBody.jsx";
@@ -37,6 +38,8 @@ class MockResizeObserver {
     this.targets.clear();
   }
 }
+
+const originalResizeObserver = global.ResizeObserver;
 
 function TestSection({ headingId }) {
   return (
@@ -127,8 +130,66 @@ HeightHarness.defaultProps = {
   referenceHeight: 640,
 };
 
-beforeAll(() => {
+function FallbackMeasurementHarness({
+  panelInstanceKey,
+  getBoundingClientRect,
+  activeSectionId = "general",
+}) {
+  const sections = useMemo(
+    () => [
+      {
+        id: "general",
+        label: "General",
+        Component: TestSection,
+        componentProps: { title: "General" },
+      },
+    ],
+    [],
+  );
+
+  const { bodyStyle, registerActivePanelNode } = useStableSettingsPanelHeight({
+    sections,
+    activeSectionId,
+    referenceSectionId: "unknown",
+  });
+
+  return (
+    <SettingsBody style={bodyStyle}>
+      <div role="presentation">navigation</div>
+      <SettingsPanel
+        key={panelInstanceKey}
+        panelId={`${activeSectionId}-panel-${panelInstanceKey}`}
+        tabId={`${activeSectionId}-tab-${panelInstanceKey}`}
+        headingId="general-heading"
+        onPanelElementChange={(node) => {
+          if (node) {
+            node.getBoundingClientRect = getBoundingClientRect;
+          }
+          registerActivePanelNode(node);
+        }}
+      >
+        <TestSection headingId="general-heading" />
+      </SettingsPanel>
+    </SettingsBody>
+  );
+}
+
+FallbackMeasurementHarness.propTypes = {
+  panelInstanceKey: PropTypes.string.isRequired,
+  getBoundingClientRect: PropTypes.func.isRequired,
+  activeSectionId: PropTypes.string,
+};
+
+FallbackMeasurementHarness.defaultProps = {
+  activeSectionId: "general",
+};
+
+beforeEach(() => {
   global.ResizeObserver = MockResizeObserver;
+});
+
+afterEach(() => {
+  global.ResizeObserver = originalResizeObserver;
 });
 
 /**
@@ -184,4 +245,44 @@ test("Given smaller reference section When measuring height Then uses measured r
   );
 
   expect(container.firstChild).toHaveStyle("--settings-body-height: 280px");
+});
+
+/**
+ * 测试目标：在缺少 ResizeObserver 时应复用缓存高度，避免重复同步。
+ * 前置条件：ResizeObserver 未定义，首次测量返回 420。
+ * 步骤：
+ *  1) 渲染 FallbackMeasurementHarness 并触发初次测量；
+ *  2) 以不同 panelInstanceKey 重新渲染模拟分区重建。
+ * 断言：
+ *  - CSS 变量维持 420px；
+ *  - getBoundingClientRect 仅调用一次。
+ * 边界/异常：
+ *  - 若未来缓存键策略调整，需同步断言调用次数。
+ */
+test("Given cached measurements without observer When remounting Then reuses cached height", () => {
+  global.ResizeObserver = undefined;
+  const getBoundingClientRect = jest
+    .fn()
+    .mockReturnValueOnce({ height: 420 })
+    .mockReturnValue({ height: 999 });
+
+  const { container, rerender } = render(
+    <FallbackMeasurementHarness
+      panelInstanceKey="initial"
+      getBoundingClientRect={getBoundingClientRect}
+    />,
+  );
+
+  expect(container.firstChild).toHaveStyle("--settings-body-height: 420px");
+  expect(getBoundingClientRect).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <FallbackMeasurementHarness
+      panelInstanceKey="remounted"
+      getBoundingClientRect={getBoundingClientRect}
+    />,
+  );
+
+  expect(container.firstChild).toHaveStyle("--settings-body-height: 420px");
+  expect(getBoundingClientRect).toHaveBeenCalledTimes(1);
 });
