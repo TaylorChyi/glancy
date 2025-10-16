@@ -11,22 +11,14 @@
  *  - TODO: 随着更多分区上线，可在 usePreferenceSections 内扩展蓝图并按需引入懒加载策略。
  */
 import PropTypes from "prop-types";
-import { useCallback, useMemo } from "react";
-import {
-  SettingsBody,
-  SettingsHeader,
-  SettingsNav,
-  SettingsPanel,
-} from "@shared/components/modals";
+import { useCallback } from "react";
+import { SettingsHeader } from "@shared/components/modals";
 import styles from "./Preferences.module.css";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@shared/hooks/useSectionFocusManager.js";
-import useStableSettingsPanelHeight from "@shared/components/modals/useStableSettingsPanelHeight.js";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";
 import Toast from "@shared/components/ui/Toast";
-
-const composeClassName = (...classNames) =>
-  classNames.filter(Boolean).join(" ");
+import SettingsSectionsViewport from "@shared/components/settings/SettingsSectionsViewport";
 
 function Preferences({ initialSection, renderCloseAction }) {
   const {
@@ -61,38 +53,6 @@ function Preferences({ initialSection, renderCloseAction }) {
     ? ({ className }) => renderCloseAction({ className })
     : undefined;
 
-  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
-    useStableSettingsPanelHeight({
-      sections,
-      activeSectionId,
-      referenceSectionId: "data",
-    });
-
-  const sizedPanelClassName = composeClassName(
-    styles.panel,
-    styles["panel-surface"],
-  );
-  const probePanelClassName = composeClassName(
-    styles.panel,
-    styles["panel-probe"],
-  );
-
-  const measurementProbe = useMemo(() => {
-    if (!referenceMeasurement) {
-      return null;
-    }
-    const {
-      Component: ReferenceComponent,
-      props,
-      registerNode,
-    } = referenceMeasurement;
-    return (
-      <div aria-hidden className={probePanelClassName} ref={registerNode}>
-        <ReferenceComponent {...props} />
-      </div>
-    );
-  }, [probePanelClassName, referenceMeasurement]);
-
   const redeemToast = feedback?.redeemToast;
 
   return (
@@ -120,18 +80,18 @@ function Preferences({ initialSection, renderCloseAction }) {
               description: styles.description,
             }}
           />
-          <SettingsBody
-            className={styles.body}
-            style={bodyStyle}
-            measurementProbe={measurementProbe}
-          >
-            <SettingsNav
-              sections={sections}
-              activeSectionId={activeSectionId}
-              onSelect={handleSectionSelectWithFocus}
-              tablistLabel={copy.tablistLabel}
-              renderCloseAction={closeRenderer}
-              classes={{
+          <SettingsSectionsViewport
+            sections={sections}
+            activeSectionId={activeSectionId}
+            onSectionSelect={handleSectionSelectWithFocus}
+            tablistLabel={copy.tablistLabel}
+            renderCloseAction={closeRenderer}
+            referenceSectionId="data"
+            body={{
+              className: styles.body,
+            }}
+            nav={{
+              classes: {
                 container: styles["tabs-region"],
                 action: styles["close-action"],
                 nav: styles.tabs,
@@ -140,25 +100,26 @@ function Preferences({ initialSection, renderCloseAction }) {
                 labelText: styles["tab-label-text"],
                 icon: styles["tab-icon"],
                 actionButton: styles["close-button"],
-              }}
-            />
-            <SettingsPanel
-              panelId={panel.panelId}
-              tabId={panel.tabId}
-              headingId={panel.headingId}
-              className={sizedPanelClassName}
-              onHeadingElementChange={registerHeading}
-              onPanelElementChange={registerActivePanelNode}
-            >
-              {activeSection ? (
-                <activeSection.Component
-                  headingId={panel.headingId}
-                  descriptionId={panel.descriptionId}
-                  {...activeSection.componentProps}
-                />
-              ) : null}
-            </SettingsPanel>
-          </SettingsBody>
+              },
+            }}
+            panel={{
+              panelId: panel.panelId,
+              tabId: panel.tabId,
+              headingId: panel.headingId,
+              className: styles.panel,
+              surfaceClassName: styles["panel-surface"],
+              probeClassName: styles["panel-probe"],
+            }}
+            onHeadingElementChange={registerHeading}
+          >
+            {activeSection ? (
+              <activeSection.Component
+                headingId={panel.headingId}
+                descriptionId={panel.descriptionId}
+                {...activeSection.componentProps}
+              />
+            ) : null}
+          </SettingsSectionsViewport>
         </form>
         {avatarEditor ? (
           <AvatarEditorModal {...avatarEditor.modalProps} />
