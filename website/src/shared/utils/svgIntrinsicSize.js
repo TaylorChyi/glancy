@@ -12,16 +12,38 @@
  *  - 头像裁剪、未来所有依赖 SVG 尺寸的功能可复用该工具函数；
  *    其余使用位图的流程不受影响。
  * 演进与TODO：
- *  - TODO: 后续若需支持带单位（cm/in 等）的尺寸，可在 parseNumericDimension 中扩展单位换算。
+ *  - TODO: 若需支持视口相对单位（vw/vh/% 等），可在 parseNumericDimension 中扩展上下文感知的换算策略。
  */
 
+const LENGTH_UNIT_TO_PX = Object.freeze({
+  px: 1,
+  in: 96,
+  cm: 96 / 2.54,
+  mm: 96 / 25.4,
+  pt: 96 / 72,
+  pc: 16,
+  q: 96 / (2.54 * 40),
+});
+
+function convertLengthToPixels(value, unitToken) {
+  const normalizedUnit = unitToken ? unitToken.toLowerCase() : "";
+  if (!normalizedUnit || normalizedUnit === "px") {
+    return value;
+  }
+  const factor = LENGTH_UNIT_TO_PX[normalizedUnit];
+  if (typeof factor !== "number") {
+    return null;
+  }
+  return value * factor;
+}
+
 /**
- * 意图：解析 width/height 属性中的数值部分，忽略像素后缀。
+ * 意图：解析 width/height 属性中的数值部分，忽略像素或常见物理单位后缀。
  * 输入：SVG 节点属性值字符串。
  * 输出：成功解析返回 number，失败返回 null。
  * 流程：
- *  1) 去除空白并匹配开头的数值；
- *  2) 将匹配结果转换为浮点数；
+ *  1) 去除空白并匹配数值及单位；
+ *  2) 将匹配结果转换为浮点数后按单位换算像素；
  * 错误处理：无法解析或数值非法时返回 null。
  * 复杂度：O(1)。
  */
@@ -33,7 +55,7 @@ function parseNumericDimension(value) {
   if (!trimmed) {
     return null;
   }
-  const match = trimmed.match(/^(-?\d+(?:\.\d+)?)/u);
+  const match = trimmed.match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s*([a-zA-Z%]+))?/u);
   if (!match) {
     return null;
   }
@@ -41,7 +63,9 @@ function parseNumericDimension(value) {
   if (!Number.isFinite(numeric) || numeric <= 0) {
     return null;
   }
-  return numeric;
+  const unitToken = match[2] ?? "";
+  const converted = convertLengthToPixels(numeric, unitToken);
+  return converted == null ? null : converted;
 }
 
 /**
