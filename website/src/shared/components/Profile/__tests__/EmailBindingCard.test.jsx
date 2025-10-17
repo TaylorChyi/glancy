@@ -12,7 +12,7 @@
  *  - 后续可补充验证码流程的 E2E 覆盖以验证倒计时交互。
  */
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import EmailBindingCard from "@shared/components/Profile/EmailBindingCard";
 
@@ -165,5 +165,91 @@ describe("EmailBindingCard", () => {
     expect(
       screen.getByRole("button", { name: "Confirm update" }),
     ).toBeInTheDocument();
+  });
+
+  /**
+   * 测试目标：验证码发送后应进入倒计时，禁用按钮并动态更新剩余秒数。
+   * 前置条件：启用假定时器，onRequestCode 返回 Promise<true>，组件处于编辑态。
+   * 步骤：
+   *  1) 点击发送验证码按钮触发请求；
+   *  2) 推进定时器 1 秒，检查按钮文案；
+   *  3) 切换至 idle 态，确认倒计时重置。
+   * 断言：
+   *  - 初始倒计时显示 60s 并禁用按钮；
+   *  - 推进后变为 59s；
+   *  - 返回 idle 态后文案恢复为 Send code 且按钮启用。
+   * 边界/异常：
+   *  - 覆盖 onRequestCode 返回 true 的路径及倒计时重置逻辑。
+   */
+  test("GivenSuccessfulCodeRequest_WhenCooldownActive_ThenDisableResendAndShowCountdown", async () => {
+    jest.useFakeTimers();
+    const handleRequestCode = jest.fn().mockResolvedValue(true);
+
+    try {
+      const { rerender } = render(
+        <EmailBindingCard
+          email="user@example.com"
+          mode="editing"
+          isAwaitingVerification
+          requestedEmail="user@example.com"
+          onStart={jest.fn()}
+          onCancel={jest.fn()}
+          onRequestCode={handleRequestCode}
+          onConfirm={jest.fn()}
+          onUnbind={jest.fn()}
+          t={t}
+        />,
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+        await Promise.resolve();
+      });
+
+      expect(handleRequestCode).toHaveBeenCalledTimes(1);
+      expect(
+        await screen.findByRole("button", { name: "60s" }),
+      ).toBeDisabled();
+
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(await screen.findByRole("button", { name: "59s" })).toBeDisabled();
+
+      rerender(
+        <EmailBindingCard
+          email="user@example.com"
+          mode="idle"
+          isAwaitingVerification={false}
+          requestedEmail="user@example.com"
+          onStart={jest.fn()}
+          onCancel={jest.fn()}
+          onRequestCode={handleRequestCode}
+          onConfirm={jest.fn()}
+          onUnbind={jest.fn()}
+          t={t}
+        />,
+      );
+
+      rerender(
+        <EmailBindingCard
+          email="user@example.com"
+          mode="editing"
+          isAwaitingVerification
+          requestedEmail="user@example.com"
+          onStart={jest.fn()}
+          onCancel={jest.fn()}
+          onRequestCode={handleRequestCode}
+          onConfirm={jest.fn()}
+          onUnbind={jest.fn()}
+          t={t}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

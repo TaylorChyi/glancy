@@ -70,7 +70,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/features/dictionary-experience/share/dictionaryShareImage.js",
   "src/shared/components/AvatarEditorModal/index.jsx",
   "src/shared/components/OutputToolbar/index.jsx",
-  "src/shared/components/Profile/EmailBindingCard/index.jsx",
   "src/shared/components/Sidebar/UserMenu/UserMenu.tsx",
   "src/shared/components/form/AuthForm.jsx",
   "src/shared/components/ui/ChatInput/hooks/useActionInputBehavior.ts",
