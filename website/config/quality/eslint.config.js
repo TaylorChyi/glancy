@@ -68,7 +68,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/features/dictionary-experience/hooks/useDictionaryExperience.js",
   "src/features/dictionary-experience/hooks/useDictionaryExperience.test.jsx",
   "src/features/dictionary-experience/share/dictionaryShareImage.js",
-  "src/shared/components/AvatarEditorModal/index.jsx",
   "src/shared/components/OutputToolbar/index.jsx",
   "src/shared/components/Sidebar/UserMenu/UserMenu.tsx",
   "src/shared/components/form/AuthForm.jsx",
