@@ -54,31 +54,15 @@ const mergeStructuralRules = (customRules = {}) => ({
 //  - 拆分下列遗留长文件，恢复统一结构化规则校验。
 //  - 目前仅为平滑迁移临时豁免，严禁新增例外。
 const STRUCTURAL_DEBT_ALLOWLIST = [
-  "src/app/pages/preferences/__tests__/usePreferenceSections.test.js",
-  "src/app/pages/preferences/sections/AccountSection.jsx",
   "src/app/pages/preferences/sections/historyExportSerializer.js",
   "src/app/pages/preferences/sections/subscriptionBlueprint.js",
-  "src/app/pages/preferences/usePreferenceSections.js",
-  "src/app/pages/profile/index.jsx",
   "src/core/i18n/common/en.js",
-  "src/core/i18n/common/zh.js",
-  "src/core/store/history/historyStoreMachine.ts",
   "src/features/dictionary-experience/components/ReportIssueModal.jsx",
-  "src/features/dictionary-experience/hooks/useDictionaryExperience.js",
-  "src/features/dictionary-experience/hooks/useDictionaryExperience.test.jsx",
-  "src/features/dictionary-experience/share/dictionaryShareImage.js",
-  "src/shared/components/AvatarEditorModal/index.jsx",
   "src/shared/components/OutputToolbar/index.jsx",
   "src/shared/components/Sidebar/UserMenu/UserMenu.tsx",
   "src/shared/components/form/AuthForm.jsx",
-  "src/shared/components/ui/ChatInput/hooks/useActionInputBehavior.ts",
-  "src/shared/components/ui/LanguageMenu/index.jsx",
-  "src/shared/components/ui/MarkdownRenderer/MarkdownRenderer.jsx",
   "src/shared/components/ui/Popover/Popover.jsx",
-  "src/shared/components/ui/SelectMenu/index.jsx",
-  "src/shared/utils/keyboardShortcuts.js",
   "src/shared/utils/markdown.js",
-  "src/shared/utils/markdown.test.js",
 ];
 
 export default defineConfig([
