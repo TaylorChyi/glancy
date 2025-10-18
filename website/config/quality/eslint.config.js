@@ -77,7 +77,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/shared/components/ui/SelectMenu/index.jsx",
   "src/shared/utils/keyboardShortcuts.js",
   "src/shared/utils/markdown.js",
-  "src/shared/utils/markdown.test.js",
 ];
 
 export default defineConfig([
