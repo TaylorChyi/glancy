@@ -54,7 +54,6 @@ const mergeStructuralRules = (customRules = {}) => ({
 //  - 拆分下列遗留长文件，恢复统一结构化规则校验。
 //  - 目前仅为平滑迁移临时豁免，严禁新增例外。
 const STRUCTURAL_DEBT_ALLOWLIST = [
-  "src/app/pages/preferences/sections/historyExportSerializer.js",
   "src/app/pages/preferences/sections/subscriptionBlueprint.js",
   "src/core/i18n/common/en.js",
   "src/features/dictionary-experience/components/ReportIssueModal.jsx",
