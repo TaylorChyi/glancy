@@ -58,7 +58,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/core/i18n/common/en.js",
   "src/features/dictionary-experience/components/ReportIssueModal.jsx",
   "src/shared/components/OutputToolbar/index.jsx",
-  "src/shared/components/Sidebar/UserMenu/UserMenu.tsx",
   "src/shared/utils/markdown.js",
 ];
 
