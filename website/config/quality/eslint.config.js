@@ -58,7 +58,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/app/pages/preferences/sections/historyExportSerializer.js",
   "src/app/pages/preferences/sections/subscriptionBlueprint.js",
   "src/core/i18n/common/en.js",
-  "src/core/i18n/common/zh.js",
   "src/features/dictionary-experience/components/ReportIssueModal.jsx",
   "src/features/dictionary-experience/share/dictionaryShareImage.js",
   "src/shared/components/OutputToolbar/index.jsx",
