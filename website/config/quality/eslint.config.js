@@ -75,7 +75,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/shared/components/ui/MarkdownRenderer/MarkdownRenderer.jsx",
   "src/shared/components/ui/Popover/Popover.jsx",
   "src/shared/components/ui/SelectMenu/index.jsx",
-  "src/shared/utils/keyboardShortcuts.js",
   "src/shared/utils/markdown.js",
 ];
 
