@@ -55,7 +55,6 @@ const mergeStructuralRules = (customRules = {}) => ({
 //  - 目前仅为平滑迁移临时豁免，严禁新增例外。
 const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/shared/components/OutputToolbar/index.jsx",
-  "src/shared/utils/markdown.js",
 ];
 
 export default defineConfig([
