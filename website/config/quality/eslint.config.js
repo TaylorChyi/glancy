@@ -71,7 +71,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/shared/components/form/AuthForm.jsx",
   "src/shared/components/ui/ChatInput/hooks/useActionInputBehavior.ts",
   "src/shared/components/ui/LanguageMenu/index.jsx",
-  "src/shared/components/ui/MarkdownRenderer/MarkdownRenderer.jsx",
   "src/shared/components/ui/Popover/Popover.jsx",
   "src/shared/utils/markdown.js",
 ];
