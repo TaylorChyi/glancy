@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - 可接入状态机管理提交态或引入多语言配置同步机制。
  */
-import { useCallback, useId } from "react";
+import { useId } from "react";
 import { useLanguage } from "@core/context";
 import styles from "./ReportIssueModal.module.css";
 import {
@@ -63,27 +63,6 @@ const useReportIssueSurfaceDependencies = ({
   return { summaryItems, segmentedControlProps, strings };
 };
 
-const useReportIssueHeaderRenderer = (handleClose, closeLabel) =>
-  useCallback(
-    ({ headingId: surfaceHeadingId, title }) => (
-      <header className={styles.header}>
-        <button
-          type="button"
-          className={styles["header-close"]}
-          aria-label={closeLabel}
-          onClick={handleClose}
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h2 id={surfaceHeadingId} className={styles["header-title"]}>
-          {title}
-        </h2>
-        <span aria-hidden="true" className={styles["header-spacer"]} />
-      </header>
-    ),
-    [closeLabel, handleClose],
-  );
-
 export const useReportIssueModalViewModel = ({
   categories,
   category,
@@ -123,17 +102,11 @@ export const useReportIssueModalViewModel = ({
       submitting,
       translations: t,
     });
-  const renderHeader = useReportIssueHeaderRenderer(
-    handleClose,
-    strings.closeLabel,
-  );
-
   return {
     headingId,
     legendId,
     handleSubmit,
     handleClose,
-    renderHeader,
     summaryItems,
     segmentedControlProps,
     strings,
