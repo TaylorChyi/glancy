@@ -11,11 +11,13 @@
  * 演进与TODO：
  *  - 可进一步引入分段组件以支持表单项的动态配置。
  */
+import { useCallback } from "react";
 import PropTypes from "prop-types";
 import { SettingsSurface } from "@shared/components";
 import SegmentedControl from "@shared/components/ui/SegmentedControl";
 import ReportIssueActionBar from "./ReportIssueActionBar.jsx";
 import ReportIssueSummary from "./ReportIssueSummary.jsx";
+import ReportIssueModalHeader from "./ReportIssueModalHeader.jsx";
 import styles from "./ReportIssueModal.module.css";
 
 const TEXTAREA_ID = "report-description";
@@ -76,7 +78,6 @@ function ReportIssueForm({
   legendId,
   handleSubmit,
   handleClose,
-  renderHeader,
   summaryItems,
   segmentedControlProps,
   strings,
@@ -84,6 +85,18 @@ function ReportIssueForm({
   submitting,
   onDescriptionChange,
 }) {
+  const renderHeader = useCallback(
+    ({ headingId: surfaceHeadingId, title }) => (
+      <ReportIssueModalHeader
+        headingId={surfaceHeadingId}
+        title={title}
+        closeLabel={strings.closeLabel}
+        onClose={handleClose}
+      />
+    ),
+    [handleClose, strings.closeLabel],
+  );
+
   return (
     <SettingsSurface
       as="form"
@@ -152,7 +165,6 @@ ReportIssueForm.propTypes = {
   legendId: PropTypes.string.isRequired,
   handleSubmit: PropTypes.func.isRequired,
   handleClose: PropTypes.func.isRequired,
-  renderHeader: PropTypes.func.isRequired,
   summaryItems: PropTypes.arrayOf(
     PropTypes.shape({
       key: PropTypes.string.isRequired,
