@@ -3,6 +3,7 @@ import {
   doesEventMatchShortcut,
   mergeShortcutLists,
   translateShortcutAction,
+  normalizeKeyToken,
   DEFAULT_SHORTCUTS,
 } from "../keyboardShortcuts.js";
 
@@ -95,4 +96,22 @@ test("Given translations When mapping action Then returns localized label", () =
   expect(translateShortcutAction(t, "FOCUS_SEARCH")).toBe("Focus");
   expect(translateShortcutAction(t, "OPEN_SHORTCUTS")).toBe("Open panel");
   expect(translateShortcutAction({}, "UNKNOWN_ACTION")).toBe("UNKNOWN_ACTION");
+});
+
+/**
+ * 测试目标：normalizeKeyToken 应以别名映射表归一化输入。
+ * 前置条件：提供大小写混合且包含空格/符号的别名。
+ * 步骤：
+ *  1) 依次调用 normalizeKeyToken；
+ * 断言：
+ *  - 返回结果均转换为标准键值；
+ * 边界/异常：
+ *  - 传入非字符串或空白字符时返回空字符串。
+ */
+test("Given alias strings When normalizing Then returns canonical token", () => {
+  expect(normalizeKeyToken(" Cmd ")).toBe("META");
+  expect(normalizeKeyToken("space-bar")).toBe("SPACE");
+  expect(normalizeKeyToken(" arrowRight ")).toBe("ARROW_RIGHT");
+  expect(normalizeKeyToken(42)).toBe("");
+  expect(normalizeKeyToken("   ")).toBe("");
 });
