@@ -57,7 +57,6 @@ const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/app/pages/preferences/__tests__/usePreferenceSections.test.js",
   "src/app/pages/preferences/sections/AccountSection.jsx",
   "src/app/pages/preferences/sections/DataSection.jsx",
-  "src/app/pages/preferences/sections/historyExportSerializer.js",
   "src/app/pages/preferences/sections/subscriptionBlueprint.js",
   "src/app/pages/preferences/usePreferenceSections.js",
   "src/app/pages/profile/index.jsx",
