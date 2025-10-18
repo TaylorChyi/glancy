@@ -12,20 +12,8 @@
  *  - 若后续协议调整字段命名，可在 MARKDOWN_KEY 与 findMarkdownValue 中更新匹配策略。
  */
 import { NEWLINE_NORMALIZER } from "./constants/index.js";
-
-const MARKDOWN_KEY = '"markdown"';
-const WHITESPACE_RE = /\s/;
-const SIMPLE_ESCAPE_MAPPINGS = new Map([
-  ["\\", "\\"],
-  ['"', '"'],
-  ["'", "'"],
-  ["/", "/"],
-  ["b", "\b"],
-  ["f", "\f"],
-  ["n", "\n"],
-  ["r", "\r"],
-  ["t", "\t"],
-]);
+import { decodeJsonString } from "./jsonStringParser.js";
+import { findMarkdownValue } from "./markdownJsonScanner.js";
 
 export function normalizeNewlines(text) {
   return text.replace(NEWLINE_NORMALIZER, "\n");
@@ -35,115 +23,6 @@ function isLikelyJson(text) {
   if (!text) return false;
   const first = text.trimStart()[0];
   return first === "{" || first === "[";
-}
-
-function decodeUnicodeSequence(raw, startIndex) {
-  const code = raw.slice(startIndex, startIndex + 4);
-  const isValid = code.length === 4 && /^[0-9a-fA-F]+$/.test(code);
-  if (!isValid) {
-    return { char: "\\u", advance: 1 };
-  }
-  return {
-    char: String.fromCharCode(parseInt(code, 16)),
-    advance: 5,
-  };
-}
-
-function decodeEscapedSequence(raw, index) {
-  const next = raw[index + 1];
-  if (next === undefined) {
-    return { char: "\\", advance: 0 };
-  }
-  if (next === "u") {
-    return decodeUnicodeSequence(raw, index + 2);
-  }
-  const mapped = SIMPLE_ESCAPE_MAPPINGS.get(next);
-  if (mapped !== undefined) {
-    return { char: mapped, advance: 1 };
-  }
-  return { char: next, advance: 1 };
-}
-
-function decodeJsonString(raw) {
-  let result = "";
-  for (let i = 0; i < raw.length; i += 1) {
-    const char = raw[i];
-    if (char !== "\\") {
-      result += char;
-      continue;
-    }
-    const { char: decoded, advance } = decodeEscapedSequence(raw, i);
-    result += decoded;
-    i += advance;
-  }
-  return result;
-}
-
-function readJsonString(source, startIndex) {
-  let result = "";
-  let index = startIndex + 1;
-  let closed = false;
-  while (index < source.length) {
-    const char = source[index];
-    if (char === "\\") {
-      const next = source[index + 1];
-      if (next === undefined) {
-        result += "\\";
-        break;
-      }
-      result += char;
-      result += next;
-      index += 2;
-      continue;
-    }
-    if (char === '"') {
-      closed = true;
-      index += 1;
-      break;
-    }
-    result += char;
-    index += 1;
-  }
-  return { raw: result, closed };
-}
-
-function seekMarkdownKey(buffer) {
-  let index = 0;
-  while (index < buffer.length) {
-    if (buffer.startsWith(MARKDOWN_KEY, index)) {
-      return index + MARKDOWN_KEY.length;
-    }
-    index += 1;
-  }
-  return -1;
-}
-
-function skipWhitespace(buffer, startIndex) {
-  let index = startIndex;
-  while (index < buffer.length && WHITESPACE_RE.test(buffer[index])) {
-    index += 1;
-  }
-  return index;
-}
-
-function findMarkdownValue(buffer) {
-  const keyIndex = seekMarkdownKey(buffer);
-  if (keyIndex === -1) {
-    return null;
-  }
-  let index = skipWhitespace(buffer, keyIndex);
-  if (buffer[index] !== ":") {
-    return null;
-  }
-  index = skipWhitespace(buffer, index + 1);
-  if (index >= buffer.length) {
-    return null;
-  }
-  if (buffer.startsWith("null", index)) {
-    return { raw: "", closed: true };
-  }
-  if (buffer[index] !== '"') return null;
-  return readJsonString(buffer, index);
 }
 
 export function extractMarkdownPreview(buffer) {
