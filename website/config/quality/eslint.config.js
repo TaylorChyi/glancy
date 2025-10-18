@@ -56,7 +56,6 @@ const mergeStructuralRules = (customRules = {}) => ({
 const STRUCTURAL_DEBT_ALLOWLIST = [
   "src/app/pages/preferences/sections/subscriptionBlueprint.js",
   "src/core/i18n/common/en.js",
-  "src/features/dictionary-experience/components/ReportIssueModal.jsx",
   "src/shared/components/OutputToolbar/index.jsx",
   "src/shared/utils/markdown.js",
 ];
