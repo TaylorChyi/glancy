@@ -12,11 +12,8 @@
  *  - 后续可在此扩展复制失败的详细错误上报或埋点输出。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  extractMarkdownPreview,
-  normalizeDictionaryMarkdown,
-  copyTextToClipboard,
-} from "@shared/utils";
+import { extractMarkdownPreview, copyTextToClipboard } from "@shared/utils";
+import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 
 export const COPY_FEEDBACK_STATES = Object.freeze({
   IDLE: "idle",

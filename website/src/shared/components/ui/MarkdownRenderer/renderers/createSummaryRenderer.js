@@ -9,12 +9,17 @@
  * 影响范围：
  *  - buildMarkdownComponents 生成的组件映射。
  */
+import { createElement } from "react";
+
 import CollapsibleSummary from "./CollapsibleSummary.jsx";
 import SUMMARY_RENDERER_FLAG from "../constants/summaryRendererFlag.js";
 
 export default function createSummaryRenderer(injectBreaks) {
   const SummaryRenderer = function SummaryRenderer(props) {
-    return <CollapsibleSummary {...props} injectBreaks={injectBreaks} />;
+    return createElement(CollapsibleSummary, {
+      ...props,
+      injectBreaks,
+    });
   };
 
   SummaryRenderer.propTypes = CollapsibleSummary.propTypes;

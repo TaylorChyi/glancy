@@ -13,6 +13,7 @@
  * 演进与TODO：
  *  - 如需新增可断行标签，可在 BREAKABLE_TAGS 中扩展。
  */
+import { createElement } from "react";
 import PropTypes from "prop-types";
 
 import CollapsibleSection from "./CollapsibleSection.jsx";
@@ -39,7 +40,11 @@ export default function buildMarkdownComponents({ injectBreaks }) {
         ...elementProps
       }) {
         const Tag = tag;
-        return <Tag {...elementProps}>{injectBreaks(children)}</Tag>;
+        return createElement(
+          Tag,
+          elementProps,
+          injectBreaks(children),
+        );
       };
 
       BreakableElement.propTypes = {
@@ -52,9 +57,11 @@ export default function buildMarkdownComponents({ injectBreaks }) {
 
   return {
     ...components,
-    "collapsible-section": (props) => (
-      <CollapsibleSection {...props} injectBreaks={injectBreaks} />
-    ),
+    "collapsible-section": (props) =>
+      createElement(CollapsibleSection, {
+        ...props,
+        injectBreaks,
+      }),
     "collapsible-summary": createSummaryRenderer(injectBreaks),
     "collapsible-body": CollapsibleBody,
   };
