@@ -1,29 +1,7 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  useHistory,
-  useUser,
-  useFavorites,
-  useTheme,
-  useLanguage,
-} from "@core/context";
-import { useStreamWord, useSpeechInput, useAppShortcuts } from "@shared/hooks";
-import {
-  extractMarkdownPreview,
-  resolveDictionaryConfig,
-  resolveDictionaryFlavor,
-  WORD_LANGUAGE_AUTO,
-  resolveShareTarget,
-  copyTextToClipboard,
-} from "@shared/utils";
-import { wordCacheKey } from "@shared/api/words.js";
-// 直接依赖各 store，避免桶状导出拆分 chunk 时的循环依赖影响首屏渲染。
+import { useMemo } from "react";
+import { useStreamWord, useSpeechInput } from "@shared/hooks";
 import { useWordStore } from "@core/store/wordStore.js";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
-import { DEFAULT_MODEL } from "@core/config";
-import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
-import { useDictionaryPopup } from "./useDictionaryPopup.js";
-import { useDictionaryToast } from "./useDictionaryToast.js";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
 import {
   DICTIONARY_EXPERIENCE_VIEWS,
@@ -31,109 +9,28 @@ import {
   isHistoryView,
   isLibraryView,
 } from "../dictionaryExperienceViews.js";
-import { useWordIssueReportDialog } from "./useWordIssueReportDialog.js";
-import {
-  normalizeDictionaryMarkdown,
-  normalizeMarkdownEntity,
-} from "../markdown/dictionaryMarkdownNormalizer.js";
-import { createDictionaryStreamingMarkdownBuffer } from "../streaming/dictionaryStreamingMarkdownBuffer.js";
-import { exportDictionaryShareImage } from "../share/dictionaryShareImage.js";
+import { useDictionaryExperienceState } from "./useDictionaryExperienceState.js";
+import { useDictionaryExperienceContext } from "./useDictionaryExperienceContext.js";
+import { useDictionaryReportDialogManager } from "./useDictionaryReportDialogManager.js";
+import { createDictionaryExperienceViewModel } from "./createDictionaryExperienceViewModel.js";
+import { useDictionaryExperienceInteractions } from "./useDictionaryExperienceInteractions.js";
+import { useDictionaryExperienceLifecycle } from "./useDictionaryExperienceLifecycle.js";
 
-/**
- * 背景：
- *  - 复制操作的反馈此前仅依赖弹窗提示，用户无法快速辨识当前按钮是否可再次复制。
- * 目的：
- *  - 建立一个可扩展的复制反馈状态机，为工具栏按钮提供语义化的交互源数据。
- * 关键决策与取舍：
- *  - 采用有限状态机常量而非布尔标志，便于未来扩展错误、处理中等状态；
- *  - 通过计时器在成功 2 秒后回退至初始态，兼顾即时反馈与连续复制需求。
- * 影响范围：
- *  - DictionaryExperience 与其子组件使用的复制按钮状态。
- * 演进与TODO：
- *  - 后续可根据 copyFeedbackState 扩展更多视觉反馈，如错误提示高亮。
- */
-export const COPY_FEEDBACK_STATES = Object.freeze({
-  IDLE: "idle",
-  SUCCESS: "success",
-});
-
-const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
-
-// 确保词条统一走修剪流程，避免出现空白历史条目并便于后续复用。
-const coerceResolvedTerm = (candidate, fallback) => {
-  if (typeof candidate !== "string") return fallback;
-  const trimmed = candidate.trim();
-  return trimmed || fallback;
-};
-
-/**
- * 背景：
- *  - 分享菜单既要覆盖链接复制又要覆盖长图导出，历史上各入口各自判断导致禁用条件分散且易出错。
- * 目的：
- *  - 以集中构建 shareModel 的方式确保至少有一个通道可用时即可开启菜单，降低 UI 与业务状态脱节概率。
- * 关键决策与取舍：
- *  - 采用构建者模式统一归一化各布尔条件，避免调用方重复推导；
- *  - 将链接与长图的可用性拆分处理，允许链接暂缺但长图可用的场景依旧展示菜单。
- * 影响范围：
- *  - OutputToolbar 接收到的 shareModel 结构被规范化，Share 按钮启用逻辑由此函数主导。
- * 演进与TODO：
- *  - 若未来新增分享载体（如 PDF），可在此扩展新的通道判定并保持菜单启用逻辑一致。
- */
-const createDictionaryShareModel = ({
-  shareUrl,
-  onCopyLink,
-  onExportImage,
-  isImageExporting,
-  canExportImage,
-}) => {
-  const normalisedShareUrl =
-    typeof shareUrl === "string" ? shareUrl.trim() : "";
-  const copyChannelReady =
-    normalisedShareUrl.length > 0 && typeof onCopyLink === "function";
-  const exportableImage = Boolean(canExportImage);
-  const imageChannelReady =
-    exportableImage && typeof onExportImage === "function";
-  const menuEnabled = copyChannelReady || imageChannelReady;
-
-  return {
-    canShare: menuEnabled,
-    shareUrl: normalisedShareUrl,
-    onCopyLink,
-    onExportImage,
-    isImageExporting: isImageExporting === true,
-    canExportImage: exportableImage,
-  };
-};
+export { COPY_FEEDBACK_STATES } from "./useDictionaryCopyController.js";
 
 export function useDictionaryExperience() {
-  const [text, setText] = useState("");
-  const [entry, setEntry] = useState(null);
-  const { t, lang, setLang } = useLanguage();
-  const [loading, setLoading] = useState(false);
-  const [copyFeedbackState, setCopyFeedbackState] = useState(
-    COPY_FEEDBACK_STATES.IDLE,
-  );
-  const [shareImageState, setShareImageState] = useState("idle");
-  const { user } = useUser();
-  const {
-    history: historyItems,
-    loadHistory,
-    addHistory,
-    removeHistory,
-  } = useHistory();
-  const { theme, setTheme } = useTheme();
-  const inputRef = useRef(null);
-  const [activeView, setActiveView] = useState(
-    DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
-  );
-  const [streamText, setStreamText] = useState("");
-  const [finalText, setFinalText] = useState("");
-  const [versions, setVersions] = useState([]);
-  const [activeVersionId, setActiveVersionId] = useState(null);
-  const [currentTermKey, setCurrentTermKey] = useState(null);
-  const [currentTerm, setCurrentTerm] = useState("");
-  const copyFeedbackResetTimerRef = useRef(null);
-  const wordEntries = useWordStore((state) => state.entries);
+  const state = useDictionaryExperienceState();
+  const contexts = useDictionaryExperienceContext();
+
+  const { languageContext, userContext } = contexts;
+  const { historyContext, popup, toast, languageConfig } = contexts;
+
+  const { t, lang } = languageContext;
+  const { user } = userContext;
+  const { favorites } = contexts.favoritesContext;
+  const { loadHistory } = historyContext;
+  const { popupOpen, popupMsg, showPopup, closePopup } = popup;
+  const { state: toastState, showToast, closeToast } = toast;
   const {
     dictionarySourceLanguage,
     dictionaryTargetLanguage,
@@ -143,42 +40,78 @@ export function useDictionaryExperience() {
     targetLanguageOptions,
     dictionaryFlavor,
     handleSwapLanguages,
-  } = useDictionaryLanguageConfig({ t });
-  const { popupOpen, popupMsg, showPopup, closePopup } = useDictionaryPopup();
-  const { state: toastState, showToast, closeToast } = useDictionaryToast();
-  const {
-    state: reportDialogState,
-    categories: reportDialogCategories,
-    openDialog: openReportDialog,
-    closeDialog: closeReportDialog,
-    setCategory: setReportCategory,
-    setDescription: setReportDescription,
-    submit: submitWordIssueReport,
-  } = useWordIssueReportDialog({
-    onSuccess: () => {
-      const message = t.reportSuccess ?? t.report ?? "Report";
-      showToast(message);
-    },
-    onError: () => {
-      const message = t.reportFailed ?? t.report ?? "Report";
-      showPopup(message);
-    },
-  });
+  } = languageConfig;
 
-  const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
-    useDictionaryLookupController();
-  const { favorites, toggleFavorite } = useFavorites();
-  const navigate = useNavigate();
-  const streamWord = useStreamWord();
-  const { start: startSpeech } = useSpeechInput({ onResult: setText });
+  const wordEntries = useWordStore((store) => store.entries);
   const wordStoreApi = useWordStore;
   const historyCaptureEnabled = useDataGovernanceStore(
     (state) => state.historyCaptureEnabled,
   );
-  const activeTerm = entry?.term || currentTerm;
-  const isDictionaryViewActive = isDictionaryView(activeView);
-  const isHistoryViewActive = isHistoryView(activeView);
-  const isLibraryViewActive = isLibraryView(activeView);
+  const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
+    useDictionaryLookupController();
+  const streamWord = useStreamWord();
+  const { start: startSpeech } = useSpeechInput({ onResult: state.setText });
+
+  const interactions = useDictionaryExperienceInteractions({
+    state,
+    contexts,
+    wordStoreApi,
+    historyCaptureEnabled,
+    lookupController: {
+      beginLookup,
+      cancelActiveLookup,
+      clearActiveLookup,
+      isMounted,
+    },
+    streamWord,
+    startSpeech,
+  });
+
+  const {
+    activeTerm,
+    canCopyDefinition,
+    copyFeedbackState,
+    handleCopy,
+    isCopySuccessActive,
+    shareUrl,
+    shareImageState,
+    handleShareLinkCopy,
+    handleShareImageExport,
+    handleSend,
+    handleReoutput,
+    handleSelectHistory,
+    handleDeleteHistory,
+    toggleFavoriteEntry,
+    focusInput,
+    resetDictionaryHomeState,
+    handleShowDictionary,
+    handleShowLibrary,
+    handleVoice,
+    handleNavigateVersion,
+    handleSelectVersion,
+    applyRecord,
+  } = interactions;
+
+  const isDictionaryViewActive = isDictionaryView(state.activeView);
+  const isHistoryViewActive = isHistoryView(state.activeView);
+  const isLibraryViewActive = isLibraryView(state.activeView);
+
+  const {
+    reportDialog,
+    reportDialogHandlers,
+    handleReport,
+    closeReportDialog,
+  } = useDictionaryReportDialogManager({
+    t,
+    showToast,
+    showPopup,
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    dictionaryFlavor,
+    entry: state.entry,
+    activeTerm,
+  });
+
   const libraryLandingLabel = useMemo(() => {
     if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
     if (t.favorites) return t.favorites;
@@ -186,862 +119,25 @@ export function useDictionaryExperience() {
     return "致用单词";
   }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
 
-  const copyPayload = useMemo(() => {
-    const stringCandidates = [
-      typeof entry?.markdown === "string" ? entry.markdown : null,
-      typeof finalText === "string" ? finalText : null,
-      typeof streamText === "string" ? streamText : null,
-    ];
-
-    for (const candidate of stringCandidates) {
-      if (!candidate || !candidate.trim()) {
-        continue;
-      }
-      const preview = extractMarkdownPreview(candidate);
-      const normalized = preview == null ? candidate : preview;
-      return normalizeDictionaryMarkdown(normalized);
-    }
-
-    if (entry && typeof entry === "object") {
-      try {
-        return JSON.stringify(entry, null, 2);
-      } catch {
-        return currentTerm || "";
-      }
-    }
-
-    return currentTerm || "";
-  }, [entry, finalText, streamText, currentTerm]);
-
-  const canCopyDefinition = useMemo(
-    () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
-    [copyPayload],
-  );
-
-  const reportDialog = useMemo(() => {
-    const context = reportDialogState.context ?? {};
-    return {
-      open: reportDialogState.open,
-      submitting: reportDialogState.submitting,
-      error: reportDialogState.error,
-      term: context.term ?? "",
-      language: context.language ?? null,
-      flavor: context.flavor ?? null,
-      sourceLanguage: context.sourceLanguage ?? null,
-      targetLanguage: context.targetLanguage ?? null,
-      sourceUrl: context.sourceUrl ?? "",
-      category: reportDialogState.form.category,
-      description: reportDialogState.form.description,
-      categories: reportDialogCategories,
-    };
-  }, [reportDialogState, reportDialogCategories]);
-
-  const reportDialogHandlers = useMemo(
-    () => ({
-      setCategory: setReportCategory,
-      setDescription: setReportDescription,
-      submit: submitWordIssueReport,
-      close: closeReportDialog,
-    }),
-    [
-      setReportCategory,
-      setReportDescription,
-      submitWordIssueReport,
-      closeReportDialog,
-    ],
-  );
-
-  /**
-   * 背景：
-   *  - 复制成功的反馈此前通过弹窗提示，与工具栏上的图标状态重复且分散。
-   * 目的：
-   *  - 以策略映射集中维护各状态对应的弹窗文案，便于未来扩展，同时允许在成功态下静默处理。
-   * 关键决策与取舍：
-   *  - 采用冻结对象提供不可变映射，确保回调依赖稳定；
-   *  - 针对 copied 状态返回 null，以保留弹窗通道但避免与按钮态重复提示。
-   */
-  const copyFeedbackMessages = useMemo(() => {
-    const base = t.copyAction || "Copy";
-    const failure = t.copyFailed || base;
-    return Object.freeze({
-      base,
-      fallback: failure,
-      statuses: Object.freeze({
-        copied: null,
-        empty: t.copyEmpty || failure,
-        unavailable: t.copyUnavailable || failure,
-        failed: failure,
-        default: failure,
-      }),
-    });
-  }, [t.copyAction, t.copyFailed, t.copyEmpty, t.copyUnavailable]);
-
-  const resolveCopyPopupMessage = useCallback(
-    (status) => {
-      const { base, fallback, statuses } = copyFeedbackMessages;
-      const resolvedFallback = statuses.default ?? fallback ?? base ?? "Copy";
-      if (!status) {
-        return resolvedFallback;
-      }
-      if (Object.prototype.hasOwnProperty.call(statuses, status)) {
-        return statuses[status];
-      }
-      return resolvedFallback;
-    },
-    [copyFeedbackMessages],
-  );
-
-  const pushCopyPopup = useCallback(
-    (status) => {
-      const message = resolveCopyPopupMessage(status);
-      if (message) {
-        showPopup(message);
-      }
-    },
-    [resolveCopyPopupMessage, showPopup],
-  );
-
-  const clearCopyFeedbackResetTimer = useCallback(() => {
-    if (copyFeedbackResetTimerRef.current) {
-      clearTimeout(copyFeedbackResetTimerRef.current);
-      copyFeedbackResetTimerRef.current = null;
-    }
-  }, []);
-
-  const scheduleCopyFeedbackReset = useCallback(() => {
-    clearCopyFeedbackResetTimer();
-    copyFeedbackResetTimerRef.current = setTimeout(() => {
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      copyFeedbackResetTimerRef.current = null;
-    }, COPY_FEEDBACK_RESET_DELAY_MS);
-  }, [clearCopyFeedbackResetTimer]);
-
-  const handleCopy = useCallback(async () => {
-    if (!canCopyDefinition) {
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      pushCopyPopup("empty");
-      return;
-    }
-
-    try {
-      const result = await copyTextToClipboard(copyPayload);
-      if (result.status === "copied") {
-        setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
-        scheduleCopyFeedbackReset();
-        pushCopyPopup("copied");
-        return;
-      }
-
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      pushCopyPopup(result.status || "default");
-    } catch {
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      pushCopyPopup("failed");
-    }
-  }, [
-    canCopyDefinition,
-    copyPayload,
-    scheduleCopyFeedbackReset,
-    pushCopyPopup,
-  ]);
-
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(
-    () => () => {
-      clearCopyFeedbackResetTimer();
-    },
-    [clearCopyFeedbackResetTimer],
-  );
-
-  /**
-   * 意图：集中回收词典首页所依赖的查询状态，保证任意入口返回首页时体验一致。
-   * 输入：无显式参数，通过闭包访问当前 Hook 状态。
-   * 输出：副作用：终止流式查询、清空释义相关状态并重置视图聚焦。
-   * 流程：
-   *  1) 终止仍在运行的查询以避免竞争态；
-   *  2) 归零释义/版本/加载等状态，恢复收藏与历史侧边栏的关闭态；
-   *  3) 聚焦输入框，方便继续输入。
-   * 错误处理：取消查询失败时由内部控制器保障幂等。
-   * 复杂度：O(1)；只操作常量数量的状态。
-   * 设计取舍：集中重置可避免散落在多处的清理逻辑发生漂移，相比逐处手动设置可显著降低未来新增状态时的遗漏风险。
-   */
-  const resetDictionaryHomeState = useCallback(() => {
-    cancelActiveLookup();
-    clearCopyFeedbackResetTimer();
-    setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-    setEntry(null);
-    setFinalText("");
-    setStreamText("");
-    setLoading(false);
-    setVersions([]);
-    setActiveVersionId(null);
-    setCurrentTermKey(null);
-    setCurrentTerm("");
-    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-    focusInput();
-    closeToast();
-  }, [
-    cancelActiveLookup,
-    clearCopyFeedbackResetTimer,
-    focusInput,
-    setActiveView,
-    closeToast,
-  ]);
-
-  const { toggleFavoriteEntry } = useAppShortcuts({
-    inputRef,
-    lang,
-    setLang,
-    theme,
-    setTheme,
-    entry,
-    isDictionaryViewActive,
-    toggleFavorite,
+  useDictionaryExperienceLifecycle({
+    user,
+    loadHistory,
+    state,
+    applyRecord,
+    wordStoreApi,
+    wordEntries,
+    resetDictionaryHomeState,
+    closeReportDialog,
   });
 
-  const handleShowDictionary = useCallback(() => {
-    resetDictionaryHomeState();
-  }, [resetDictionaryHomeState]);
-
-  const handleShowLibrary = useCallback(() => {
-    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.LIBRARY);
-  }, [setActiveView]);
-
-  const handleVoice = useCallback(() => {
-    const locale = lang === "en" ? "en-US" : "zh-CN";
-    startSpeech(locale);
-  }, [lang, startSpeech]);
-
-  const applyRecord = useCallback(
-    (termKey, record, preferredVersionId) => {
-      if (!termKey || !record || !Array.isArray(record.versions)) return null;
-      if (record.versions.length === 0) {
-        setVersions([]);
-        setActiveVersionId(null);
-        return null;
-      }
-      const fallbackId =
-        record.versions[0]?.id ?? record.versions[0]?.versionId ?? null;
-      const resolvedActiveId =
-        preferredVersionId ?? record.activeVersionId ?? fallbackId;
-      const resolvedEntry =
-        wordStoreApi.getState().getEntry?.(termKey, resolvedActiveId) ??
-        record.versions.find(
-          (item) => String(item.id) === String(resolvedActiveId),
-        ) ??
-        record.versions[record.versions.length - 1];
-      const normalizedVersions = record.versions.map(normalizeMarkdownEntity);
-      setVersions(normalizedVersions);
-      setActiveVersionId(resolvedActiveId ?? null);
-      const normalizedEntry = normalizeMarkdownEntity(resolvedEntry);
-      if (normalizedEntry) {
-        setEntry(normalizedEntry);
-        setFinalText(normalizedEntry.markdown ?? "");
-        if (normalizedEntry.term) {
-          setCurrentTerm(normalizedEntry.term);
-        }
-      }
-      return normalizedEntry ?? null;
-    },
-    [wordStoreApi],
-  );
-
-  const executeLookup = useCallback(
-    async (
-      term,
-      {
-        forceNew = false,
-        versionId,
-        language: preferredLanguage,
-        flavor: preferredFlavor,
-      } = {},
-    ) => {
-      const normalized = term.trim();
-      if (!normalized) {
-        return { status: "idle", term: normalized };
-      }
-
-      setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-      clearCopyFeedbackResetTimer();
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      const controller = beginLookup();
-
-      setLoading(true);
-      const { language: resolvedLanguage, flavor: defaultFlavor } =
-        resolveDictionaryConfig(normalized, {
-          sourceLanguage:
-            preferredLanguage ?? dictionarySourceLanguage ?? WORD_LANGUAGE_AUTO,
-          targetLanguage: dictionaryTargetLanguage,
-        });
-      const targetFlavor = preferredFlavor ?? defaultFlavor;
-      const cacheKey = wordCacheKey({
-        term: normalized,
-        language: resolvedLanguage,
-        flavor: targetFlavor,
-        model: DEFAULT_MODEL,
-      });
-      const isNewTerm = currentTermKey !== cacheKey;
-      const shouldResetView = isNewTerm || forceNew;
-      setCurrentTermKey(cacheKey);
-      setCurrentTerm(normalized);
-      setStreamText("");
-      if (shouldResetView) {
-        setEntry(null);
-        setFinalText("");
-        setVersions([]);
-        setActiveVersionId(null);
-      }
-
-      let resolvedTerm = normalized;
-
-      if (!forceNew && versionId) {
-        const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
-        if (cachedRecord) {
-          const hydrated = applyRecord(cacheKey, cachedRecord, versionId);
-          if (hydrated) {
-            resolvedTerm = coerceResolvedTerm(hydrated.term, normalized);
-            setLoading(false);
-            clearActiveLookup();
-            return {
-              status: "success",
-              term: resolvedTerm,
-              queriedTerm: normalized,
-              detectedLanguage: resolvedLanguage,
-              flavor: targetFlavor,
-            };
-          }
-        }
-      }
-
-      let detected = resolvedLanguage;
-      try {
-        const buffer = createDictionaryStreamingMarkdownBuffer();
-
-        for await (const { chunk, language } of streamWord({
-          user,
-          term: normalized,
-          signal: controller.signal,
-          forceNew,
-          versionId,
-          language: resolvedLanguage,
-          flavor: targetFlavor,
-        })) {
-          if (language && language !== detected) detected = language;
-          const { preview: nextPreview, entry: streamingEntry } =
-            buffer.append(chunk);
-          if (nextPreview !== null) {
-            setStreamText(nextPreview);
-          }
-          if (streamingEntry) {
-            setEntry(streamingEntry);
-          }
-        }
-
-        const { markdown: bufferedMarkdown, entry: bufferedEntry } =
-          buffer.finalize();
-        const record = wordStoreApi.getState().getRecord?.(cacheKey);
-        if (record) {
-          const hydratedRecord = applyRecord(
-            cacheKey,
-            record,
-            record.activeVersionId,
-          );
-          if (hydratedRecord?.term) {
-            resolvedTerm = coerceResolvedTerm(hydratedRecord.term, normalized);
-          }
-        } else if (bufferedEntry) {
-          setEntry(bufferedEntry);
-          setFinalText(bufferedMarkdown ?? "");
-          resolvedTerm = coerceResolvedTerm(bufferedEntry.term, normalized);
-        } else {
-          setFinalText(bufferedMarkdown ?? "");
-        }
-
-        const detectedLanguage = detected ?? resolvedLanguage;
-        setCurrentTerm(resolvedTerm);
-        return {
-          status: "success",
-          term: resolvedTerm,
-          queriedTerm: normalized,
-          detectedLanguage,
-          flavor: targetFlavor,
-        };
-      } catch (error) {
-        if (error.name === "AbortError") {
-          return { status: "cancelled", term: normalized };
-        }
-
-        showPopup(error.message);
-        return { status: "error", term: normalized, error };
-      } finally {
-        if (!controller.signal.aborted && isMounted()) {
-          setLoading(false);
-        }
-        clearActiveLookup();
-      }
-    },
-    [
-      streamWord,
-      user,
-      beginLookup,
-      setActiveView,
-      setLoading,
-      setEntry,
-      setStreamText,
-      setFinalText,
-      showPopup,
-      dictionarySourceLanguage,
-      dictionaryTargetLanguage,
-      currentTermKey,
-      setCurrentTermKey,
-      setCurrentTerm,
-      wordStoreApi,
-      applyRecord,
-      isMounted,
-      clearActiveLookup,
-      clearCopyFeedbackResetTimer,
-    ],
-  );
-
-  const handleSend = useCallback(
-    async (event) => {
-      event.preventDefault();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-      if (!text.trim()) return;
-
-      const inputValue = text.trim();
-      setText("");
-
-      const result = await executeLookup(inputValue);
-      if (result.status === "success" && historyCaptureEnabled) {
-        // 这里同步使用数据治理开关，避免即便后端跳过持久化仍然在前端堆积本地历史。
-        const historyTerm = result.term ?? result.queriedTerm ?? inputValue;
-        addHistory(
-          historyTerm,
-          user,
-          result.detectedLanguage,
-          result.flavor ?? dictionaryFlavor,
-        );
-      }
-    },
-    [
-      user,
-      navigate,
-      text,
-      setText,
-      executeLookup,
-      historyCaptureEnabled,
-      addHistory,
-      dictionaryFlavor,
-    ],
-  );
-
-  const handleReoutput = useCallback(() => {
-    if (!currentTerm) return;
-    executeLookup(currentTerm, { forceNew: true });
-  }, [currentTerm, executeLookup]);
-
-  const shareUrl = useMemo(() => {
-    if (!activeTerm) return "";
-    const currentUrl =
-      typeof window !== "undefined" && window.location
-        ? window.location.href
-        : "";
-    return resolveShareTarget({
-      currentUrl,
-      term: activeTerm,
-      language: dictionaryTargetLanguage,
-      versionId: activeVersionId,
-    });
-  }, [activeTerm, dictionaryTargetLanguage, activeVersionId]);
-
-  const handleShareLinkCopy = useCallback(async () => {
-    if (!activeTerm) return;
-    const targetUrl = shareUrl;
-    const fallbackMessage = t.shareFailed ?? t.share ?? activeTerm;
-    if (!targetUrl) {
-      showPopup(fallbackMessage);
-      return;
-    }
-
-    try {
-      const result = await copyTextToClipboard(targetUrl);
-      if (result.status === "copied") {
-        const successMessage =
-          t.shareCopySuccess ?? t.shareSuccess ?? t.share ?? activeTerm;
-        showPopup(successMessage);
-      } else {
-        showPopup(fallbackMessage);
-      }
-    } catch (error) {
-      console.error("[DictionaryExperience] share link copy failed", error);
-      showPopup(fallbackMessage);
-    }
-  }, [
-    activeTerm,
-    shareUrl,
-    showPopup,
-    t.shareCopySuccess,
-    t.shareSuccess,
-    t.share,
-    t.shareFailed,
-  ]);
-
-  const handleShareImageExport = useCallback(async () => {
-    if (!activeTerm) return;
-    if (shareImageState === "pending") return;
-    if (!entry && !finalText) {
-      const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
-      showPopup(failureMessage ?? activeTerm);
-      return;
-    }
-
-    const preparingMessage = t.shareImagePreparing;
-    try {
-      setShareImageState("pending");
-      if (preparingMessage) {
-        showPopup(preparingMessage);
-      }
-      const result = await exportDictionaryShareImage({
-        term: activeTerm,
-        entry,
-        finalText,
-        t,
-        user,
-        appName: t.shareAppName ?? "Glancy",
-      });
-
-      if (result.status === "success") {
-        const successMessage =
-          t.shareImageSuccess ?? t.shareSuccess ?? t.share ?? activeTerm;
-        showPopup(successMessage);
-      } else if (result.status === "empty") {
-        const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
-        showPopup(failureMessage ?? activeTerm);
-      }
-    } catch (error) {
-      console.error("[DictionaryExperience] share image export failed", error);
-      const failureMessage = t.shareImageFailed ?? t.shareFailed ?? t.share;
-      showPopup(failureMessage ?? activeTerm);
-    } finally {
-      setShareImageState("idle");
-    }
-  }, [activeTerm, entry, finalText, shareImageState, showPopup, t, user]);
-
-  const handleDeleteHistory = useCallback(async () => {
-    const identifier = activeTerm;
-    if (!identifier) return;
-    try {
-      await removeHistory(identifier, user);
-      setEntry(null);
-      setFinalText("");
-      setStreamText("");
-      setVersions([]);
-      setActiveVersionId(null);
-      setCurrentTermKey(null);
-      setCurrentTerm("");
-    } catch (error) {
-      console.error("[DictionaryExperience] remove history failed", error);
-    }
-  }, [activeTerm, removeHistory, user]);
-
-  const handleReport = useCallback(() => {
-    if (!activeTerm) return;
-
-    const fallback = resolveDictionaryConfig(activeTerm, {
-      sourceLanguage: dictionarySourceLanguage,
-      targetLanguage: dictionaryTargetLanguage,
-    });
-
-    const contextLanguage = entry?.language ?? fallback.language;
-    const contextFlavor = entry?.flavor ?? dictionaryFlavor;
-    const sourceUrl =
-      typeof window !== "undefined" && window.location
-        ? window.location.href
-        : "";
-
-    openReportDialog({
-      term: activeTerm,
-      language: contextLanguage,
-      flavor: contextFlavor,
-      sourceLanguage: dictionarySourceLanguage,
-      targetLanguage: dictionaryTargetLanguage,
-      sourceUrl,
-    });
-  }, [
-    activeTerm,
-    entry,
-    dictionarySourceLanguage,
-    dictionaryTargetLanguage,
-    dictionaryFlavor,
-    openReportDialog,
-  ]);
-
-  /**
-   * 意图：统一封装版本切换的副作用，确保所有入口（翻页/菜单）共享一致流程。
-   * 输入：nextVersion - 目标版本对象，需包含 id/versionId 与 markdown。
-   * 输出：布尔值，true 表示完成切换。
-   * 流程：
-   *  1) 写入全局 word store 的 activeVersionId；
-   *  2) 更新本地 entry/finalText/term 状态并清空流式文本；
-   *  3) 返回是否成功切换。
-   * 错误处理：缺失 termKey、版本 ID 或对象为空时直接返回 false。
-   * 复杂度：O(1)。
-   */
-  const commitVersionSelection = useCallback(
-    (nextVersion) => {
-      if (!currentTermKey || !nextVersion) return false;
-      const nextId = nextVersion.id ?? nextVersion.versionId;
-      if (nextId == null) return false;
-
-      wordStoreApi.getState().setActiveVersion?.(currentTermKey, nextId);
-      setActiveVersionId(nextId ?? null);
-      const normalizedVersion = normalizeMarkdownEntity(nextVersion);
-      setEntry(normalizedVersion);
-      setFinalText(normalizedVersion?.markdown ?? "");
-      setStreamText("");
-      if (normalizedVersion?.term) {
-        setCurrentTerm(normalizedVersion.term);
-      }
-      return true;
-    },
-    [
-      currentTermKey,
-      wordStoreApi,
-      setActiveVersionId,
-      setEntry,
-      setFinalText,
-      setStreamText,
-      setCurrentTerm,
-    ],
-  );
-
-  const handleNavigateVersion = useCallback(
-    (direction) => {
-      if (!currentTermKey || versions.length === 0) return;
-      const currentIndex = versions.findIndex(
-        (item) => String(item.id) === String(activeVersionId),
-      );
-      const safeIndex = currentIndex >= 0 ? currentIndex : versions.length - 1;
-      const delta = direction === "next" ? 1 : -1;
-      const nextIndex = Math.min(
-        versions.length - 1,
-        Math.max(0, safeIndex + delta),
-      );
-      if (nextIndex === safeIndex) return;
-      const nextVersion = versions[nextIndex];
-      if (!nextVersion) return;
-      commitVersionSelection(nextVersion);
-    },
-    [currentTermKey, versions, activeVersionId, commitVersionSelection],
-  );
-
-  const handleSelectVersion = useCallback(
-    (versionId) => {
-      if (!currentTermKey || !versionId || versions.length === 0) return;
-      const target = versions.find(
-        (item) => String(item.id ?? item.versionId) === String(versionId ?? ""),
-      );
-      if (!target) return;
-      commitVersionSelection(target);
-    },
-    [commitVersionSelection, currentTermKey, versions],
-  );
-
-  const handleSelectHistory = useCallback(
-    async (identifier, versionId) => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-      const target =
-        typeof identifier === "object" && identifier
-          ? identifier
-          : historyItems?.find(
-              (item) => item.term === identifier || item.termKey === identifier,
-            );
-      const resolvedTerm =
-        typeof identifier === "string" ? identifier : (target?.term ?? "");
-      if (!resolvedTerm) return;
-      const fallbackConfig = resolveDictionaryConfig(resolvedTerm, {
-        sourceLanguage:
-          (typeof identifier === "object" && identifier?.language) ||
-          dictionarySourceLanguage ||
-          WORD_LANGUAGE_AUTO,
-        targetLanguage: dictionaryTargetLanguage,
-      });
-      const resolvedLanguage = target?.language ?? fallbackConfig.language;
-      const resolvedFlavor =
-        target?.flavor ??
-        (typeof identifier === "object" && identifier?.language
-          ? resolveDictionaryFlavor({
-              sourceLanguage: identifier.language,
-              targetLanguage: dictionaryTargetLanguage,
-              resolvedSourceLanguage: fallbackConfig.language,
-            })
-          : dictionaryFlavor);
-      const cacheKey = wordCacheKey({
-        term: resolvedTerm,
-        language: resolvedLanguage,
-        flavor: resolvedFlavor,
-        model: DEFAULT_MODEL,
-      });
-      setCurrentTermKey(cacheKey);
-      const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
-
-      cancelActiveLookup();
-
-      if (cachedRecord) {
-        const applied = applyRecord(
-          cacheKey,
-          cachedRecord,
-          versionId ?? cachedRecord.activeVersionId,
-        );
-        if (applied) {
-          setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-          setLoading(false);
-          setStreamText("");
-          setCurrentTerm(resolvedTerm);
-          return;
-        }
-      }
-
-      await executeLookup(resolvedTerm, {
-        versionId,
-        language: resolvedLanguage,
-        flavor: resolvedFlavor,
-      });
-    },
-    [
-      user,
-      navigate,
-      historyItems,
-      dictionarySourceLanguage,
-      dictionaryTargetLanguage,
-      dictionaryFlavor,
-      cancelActiveLookup,
-      wordStoreApi,
-      applyRecord,
-      executeLookup,
-      setLoading,
-      setStreamText,
-      setActiveView,
-    ],
-  );
-
-  useEffect(() => {
-    loadHistory(user);
-  }, [user, loadHistory]);
-
-  useEffect(() => {
-    if (!currentTermKey) return;
-    const record = wordStoreApi.getState().getRecord?.(currentTermKey);
-    if (record) {
-      applyRecord(currentTermKey, record, record.activeVersionId);
-    }
-  }, [wordEntries, currentTermKey, applyRecord, wordStoreApi]);
-
-  useEffect(() => {
-    if (!user) {
-      resetDictionaryHomeState();
-      setText("");
-      closeReportDialog();
-    }
-  }, [user, resetDictionaryHomeState, closeReportDialog]);
-
   const isEntryViewActive = isDictionaryViewActive;
-  const resolvedTerm = activeTerm;
-  const hasResolvedEntry = isEntryViewActive && Boolean(entry);
-  const isTermActionable = isEntryViewActive && Boolean(resolvedTerm);
-  const isEmptyStateActive = useMemo(
-    () =>
-      isDictionaryViewActive && !entry && !finalText && !streamText && !loading,
-    [isDictionaryViewActive, entry, finalText, streamText, loading],
-  );
-  const displayClassName = useMemo(
-    () =>
-      ["display", isEmptyStateActive ? "display-empty" : ""]
-        .filter(Boolean)
-        .join(" "),
-    [isEmptyStateActive],
-  );
+  const isTermActionable = isEntryViewActive && Boolean(activeTerm);
 
-  const isCopySuccessActive =
-    copyFeedbackState === COPY_FEEDBACK_STATES.SUCCESS;
-
-  const dictionaryActionBarProps = useMemo(
-    () => ({
-      term: resolvedTerm,
-      lang,
-      onReoutput: handleReoutput,
-      disabled: !isTermActionable || loading,
-      versions: isEntryViewActive ? versions : [],
-      activeVersionId: isEntryViewActive ? activeVersionId : null,
-      onNavigate: isEntryViewActive ? handleNavigateVersion : undefined,
-      onSelectVersion: isEntryViewActive ? handleSelectVersion : undefined,
-      onCopy: handleCopy,
-      canCopy: canCopyDefinition,
-      copyFeedbackState,
-      isCopySuccess: isCopySuccessActive,
-      favorited: Boolean(resolvedTerm && favorites.includes(resolvedTerm)),
-      onToggleFavorite: toggleFavoriteEntry,
-      canFavorite: hasResolvedEntry && isTermActionable,
-      canDelete: isTermActionable,
-      onDelete: isEntryViewActive ? handleDeleteHistory : undefined,
-      canShare: isTermActionable,
-      shareModel:
-        isEntryViewActive && isTermActionable
-          ? createDictionaryShareModel({
-              shareUrl,
-              onCopyLink: handleShareLinkCopy,
-              onExportImage: handleShareImageExport,
-              isImageExporting: shareImageState === "pending",
-              canExportImage: Boolean(entry || finalText),
-            })
-          : null,
-      canReport: isTermActionable,
-      onReport: isEntryViewActive ? handleReport : undefined,
-    }),
-    [
-      hasResolvedEntry,
-      resolvedTerm,
-      lang,
-      handleReoutput,
-      isTermActionable,
-      loading,
-      isEntryViewActive,
-      versions,
-      activeVersionId,
-      handleNavigateVersion,
-      handleSelectVersion,
-      handleCopy,
-      canCopyDefinition,
-      copyFeedbackState,
-      isCopySuccessActive,
-      favorites,
-      toggleFavoriteEntry,
-      handleDeleteHistory,
-      shareUrl,
-      handleShareLinkCopy,
-      handleShareImageExport,
-      shareImageState,
-      entry,
-      finalText,
-      handleReport,
-    ],
-  );
-
-  return {
-    inputRef,
+  return createDictionaryExperienceViewModel({
+    inputRef: state.inputRef,
     t,
-    text,
-    setText,
+    text: state.text,
+    setText: state.setText,
     dictionarySourceLanguage,
     setDictionarySourceLanguage,
     dictionaryTargetLanguage,
@@ -1055,40 +151,43 @@ export function useDictionaryExperience() {
     handleShowLibrary,
     handleSelectHistory,
     favorites,
-    activeView,
-    viewState: {
-      active: activeView,
-      isDictionary: isDictionaryViewActive,
-      isHistory: isHistoryViewActive,
-      isLibrary: isLibraryViewActive,
-    },
+    activeView: state.activeView,
+    isDictionaryViewActive,
+    isHistoryViewActive,
+    isLibraryViewActive,
     focusInput,
-    entry,
-    finalText,
-    streamText,
-    loading,
-    dictionaryActionBarProps,
-    displayClassName,
-    isEmptyStateActive,
+    entry: state.entry,
+    finalText: state.finalText,
+    streamText: state.streamText,
+    loading: state.loading,
+    activeTerm,
+    lang,
+    handleReoutput,
+    isTermActionable,
+    isEntryViewActive,
+    versions: state.versions,
+    activeVersionId: state.activeVersionId,
+    handleNavigateVersion,
+    handleSelectVersion,
+    handleCopy,
+    canCopyDefinition,
+    copyFeedbackState,
+    isCopySuccessActive,
+    toggleFavoriteEntry,
+    handleDeleteHistory,
+    shareUrl,
+    handleShareLinkCopy,
+    handleShareImageExport,
+    shareImageState,
+    handleReport,
     popupOpen,
     popupMsg,
     closePopup,
-    toast: toastState,
+    toastState,
     closeToast,
-    handleCopy,
     reportDialog,
     reportDialogHandlers,
-    canCopyDefinition,
-    lang,
     dictionaryFlavor,
     libraryLandingLabel,
-    dictionaryTargetLanguageLabel: t.dictionaryTargetLanguageLabel,
-    dictionarySourceLanguageLabel: t.dictionarySourceLanguageLabel,
-    dictionarySwapLanguagesLabel: t.dictionarySwapLanguages,
-    searchEmptyState: {
-      title: t.searchEmptyTitle,
-      description: t.searchEmptyDescription,
-    },
-    chatInputPlaceholder: t.inputPlaceholder,
-  };
+  });
 }
