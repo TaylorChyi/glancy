@@ -6,7 +6,7 @@ import {
   sanitizeAccount,
   useAuthFormController,
   useFeedbackChannels,
-} from "../AuthForm.jsx";
+} from "../authFormController.js";
 
 const createTranslations = (overrides = {}) => ({
   close: "Close",
