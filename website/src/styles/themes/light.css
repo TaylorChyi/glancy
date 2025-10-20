@@ -16,16 +16,33 @@
   color: var(--sys-text-light);
   background-color: var(--sys-bg-light);
 
-  --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--brand-2) 6%);
+  --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--neutral-200) 6%);
   --sidebar-panel: var(--color-surface);
   --sidebar-border-color: color-mix(in srgb, var(--color-border) 92%, transparent 8%);
   
   /*
-   * 取舍：改用以 sidebar-surface 为基底的混色策略，确保浅色主题下 hover/active
-   * 背景与默认态之间存在可感知的亮度差；若仅提升透明度会在品牌迭代时引发不可控漂移。
+   * 取舍：
+   *  - 继续沿用以 sidebar-surface 为基底的混色策略，但将强调色替换为中性灰阶，避免品牌色渗入导致蓝色偏移；
+   *  - 通过引入 sidebar-highlight-tone 的中立变量，为后续根据主题统一调整高亮明度预留扩展点。
+   * 影响：
+   *  - 浅色主题的导航 hover / active 呈现浅灰色对比，与深色主题保持语义一致；
+   *  - 若未来需要重新启用品牌强调，可仅覆写 sidebar-highlight-tone 即可回退。
    */
-  --sidebar-hover-bg: color-mix(in srgb, var(--color-text) 12%, var(--sidebar-surface) 88%);
-  --sidebar-active-bg: color-mix(in srgb, var(--color-text) 22%, var(--sidebar-surface) 78%);
+  --sidebar-highlight-tone: color-mix(
+    in srgb,
+    var(--neutral-400) 60%,
+    var(--neutral-200) 40%
+  );
+  --sidebar-hover-bg: color-mix(
+    in srgb,
+    var(--sidebar-highlight-tone) 26%,
+    var(--sidebar-surface) 74%
+  );
+  --sidebar-active-bg: color-mix(
+    in srgb,
+    var(--sidebar-highlight-tone) 46%,
+    var(--sidebar-surface) 54%
+  );
   --sidebar-text-color: var(--text-primary);
   --sidebar-muted-color: color-mix(in srgb, var(--text-primary) 55%, transparent 45%);
   --sidebar-shadow-elevated: 0 18px 42px color-mix(

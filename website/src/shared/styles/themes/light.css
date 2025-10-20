@@ -23,23 +23,29 @@
     --chat-bubble-bg: var(--neutral-100);
     --chat-bubble-user-bg: var(--brand-surface-light);
     --body-bg: var(--neutral-0);
-    --sidebar-surface: #f5f7fb;
+    --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--neutral-200) 6%);
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
     
     /*
-     * 取舍：沿用主样式层的混色逻辑，通过 sidebar-surface 提升 hover/active 的亮度差，
-     * 替代直接调高透明度，从而在遗留 token 尚未清退前保持双轨主题一致性。
+     * 取舍：
+     *  - 延续基于 sidebar-surface 的混色方案，但将强调色替换为中性灰阶，避免浅色主题 hover/active 出现蓝色偏移；
+     *  - 补充 sidebar-highlight-tone 变量，方便旧入口与新样式层共享统一的高亮配置。
      */
+    --sidebar-highlight-tone: color-mix(
+      in srgb,
+      var(--neutral-400) 60%,
+      var(--neutral-200) 40%
+    );
     --sidebar-hover-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 12%,
-      var(--sidebar-surface) 88%
+      var(--sidebar-highlight-tone) 26%,
+      var(--sidebar-surface) 74%
     );
     --sidebar-active-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 22%,
-      var(--sidebar-surface) 78%
+      var(--sidebar-highlight-tone) 46%,
+      var(--sidebar-surface) 54%
     );
     --sidebar-text-color: var(--text-primary-light);
     --sidebar-muted-color: color-mix(
