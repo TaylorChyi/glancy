@@ -23,7 +23,7 @@
     --chat-bubble-bg: var(--neutral-100);
     --chat-bubble-user-bg: var(--brand-surface-light);
     --body-bg: var(--neutral-0);
-    --sidebar-surface: #f5f7fb;
+    --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--neutral-200) 6%);
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
 
@@ -32,6 +32,11 @@
      *  - 沿用主样式层的亮度混合策略，以 sidebar-surface 为基底控制层次，避免依赖透明度叠加；
      *  - 浅色主题改采 sidebar-accent（默认蓝色）作为主色并提升占比，解决文字灰阶导致的 hover/active 不可感问题。
      */
+    --sidebar-highlight-tone: color-mix(
+      in srgb,
+      var(--neutral-400) 60%,
+      var(--neutral-200) 40%
+    );
     --sidebar-hover-bg: color-mix(
       in srgb,
       var(--sidebar-accent, var(--brand-6)) 24%,

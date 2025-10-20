@@ -16,7 +16,7 @@
   color: var(--sys-text-light);
   background-color: var(--sys-bg-light);
 
-  --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--brand-2) 6%);
+  --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--neutral-200) 6%);
   --sidebar-panel: var(--color-surface);
   --sidebar-border-color: color-mix(in srgb, var(--color-border) 92%, transparent 8%);
 
