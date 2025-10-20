@@ -149,7 +149,12 @@ function SettingsModal({ open, onClose, initialSection }) {
             tabId: panel.tabId,
             headingId: panel.headingId,
             className: preferencesStyles.panel,
-            surfaceClassName: preferencesStyles["panel-surface"],
+            surfaceClassName: [
+              preferencesStyles["panel-surface"],
+              preferencesStyles["panel-surface-modal"],
+            ]
+              .filter(Boolean)
+              .join(" "),
             probeClassName: preferencesStyles["panel-probe"],
           }}
           onHeadingElementChange={registerHeading}
@@ -179,7 +184,9 @@ function SettingsModal({ open, onClose, initialSection }) {
             ) : null}
           </form>
         </SettingsSectionsViewport>
-        {avatarEditor ? <AvatarEditorModal {...avatarEditor.modalProps} /> : null}
+        {avatarEditor ? (
+          <AvatarEditorModal {...avatarEditor.modalProps} />
+        ) : null}
       </BaseModal>
       {redeemToast ? (
         <Toast

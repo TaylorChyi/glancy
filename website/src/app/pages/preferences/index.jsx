@@ -107,7 +107,12 @@ function Preferences({ initialSection, renderCloseAction }) {
               tabId: panel.tabId,
               headingId: panel.headingId,
               className: styles.panel,
-              surfaceClassName: styles["panel-surface"],
+              surfaceClassName: [
+                styles["panel-surface"],
+                styles["panel-surface-page"],
+              ]
+                .filter(Boolean)
+                .join(" "),
               probeClassName: styles["panel-probe"],
             }}
             onHeadingElementChange={registerHeading}
