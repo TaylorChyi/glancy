@@ -39,8 +39,6 @@ const CHAT_COMPLETION_MODE_ORDER = Object.freeze([
   CHAT_COMPLETION_MODE_SYNC,
 ]);
 
-const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
-
 const mapLanguageLabel = (translations, code) => {
   const key = `settingsGeneralLanguageOption_${code}`;
   const fallback = code === "zh" ? "Chinese" : code === "en" ? "English" : code;
@@ -195,7 +193,7 @@ function GeneralSection({ title, headingId }) {
       headingId={headingId}
       title={title}
       classes={{
-        section: composeClassName(styles.section, styles["section-plain"]),
+        section: styles.section,
         header: styles["section-header"],
         title: styles["section-title"],
         divider: styles["section-divider"],
