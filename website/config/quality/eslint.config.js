@@ -53,9 +53,22 @@ const mergeStructuralRules = (customRules = {}) => ({
 // TODO(glancy-frontend, 2025-03-31):
 //  - 拆分下列遗留长文件，恢复统一结构化规则校验。
 //  - 目前仅为平滑迁移临时豁免，严禁新增例外。
-const STRUCTURAL_DEBT_ALLOWLIST = [
-  "src/shared/components/OutputToolbar/index.jsx",
-];
+const STRUCTURAL_DEBT_ALLOWLIST = [];
+
+const STRUCTURAL_DEBT_OVERRIDES = STRUCTURAL_DEBT_ALLOWLIST.length
+  ? [
+      {
+        files: STRUCTURAL_DEBT_ALLOWLIST,
+        rules: {
+          "max-lines": "off",
+          "max-lines-per-function": "off",
+          complexity: "off",
+          "max-depth": "off",
+          "max-nested-callbacks": "off",
+        },
+      },
+    ]
+  : [];
 
 export default defineConfig([
   globalIgnores(["dist"]),
@@ -165,14 +178,5 @@ export default defineConfig([
       },
     },
   },
-  {
-    files: STRUCTURAL_DEBT_ALLOWLIST,
-    rules: {
-      "max-lines": "off",
-      "max-lines-per-function": "off",
-      complexity: "off",
-      "max-depth": "off",
-      "max-nested-callbacks": "off",
-    },
-  },
+  ...STRUCTURAL_DEBT_OVERRIDES,
 ]);
