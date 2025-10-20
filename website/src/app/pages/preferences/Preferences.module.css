@@ -243,13 +243,36 @@
 
 .panel {
   /*
-   * 维持面板在页面与模态间的视觉基线；具体尺寸约束交由特定变体类处理，
-   * 便于在测量探针中复用相同的样式上下文。
+   * 维持面板在页面与模态间的一致布局：统一的内边距/间距让测量探针与实际面板
+   * 共用相同的结构基线，避免由于额外补丁导致高度计算偏差。
    */
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: clamp(var(--space-5), 5vw, var(--space-7));
 }
 
 .panel-surface {
-  min-height: 100%;
+  /*
+   * 为系统面板引入独立的表面层，确保右侧内容在页面态也具备实体感，
+   * 同时通过局部变量与 color-mix 控制透明度，兼容后续主题扩展。
+   * 将布局能力集中在 surface 层，便于保持测量探针 (panel-probe) 的
+   * 最小样式负担，避免高度基准被一次性补丁破坏。
+   */
+  /*
+   * 背景层保留在 surface 级别，确保测量探针可继承 panel 基线而无需复制阴影/颜色。
+   */
+  border-radius: 22px;
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 96%,
+    transparent
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+  box-shadow: 0 26px 56px
+    color-mix(in srgb, var(--preferences-panel-surface) 82%, transparent);
 }
 
 .panel-probe {
