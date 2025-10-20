@@ -14,7 +14,8 @@ import { wordCacheKey } from "@shared/api/words.js";
 import { DEFAULT_MODEL } from "@core/config";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../dictionaryExperienceViews.js";
 import { createDictionaryStreamingMarkdownBuffer } from "../streaming/dictionaryStreamingMarkdownBuffer.js";
-import { normalizeMarkdownEntity } from "../markdown/dictionaryMarkdownNormalizer.js";
+import { createDictionaryStreamChunkInterpreter } from "../streaming/dictionaryStreamChunkInterpreter.js";
+import { normalizeDictionaryMarkdown } from "../markdown/dictionaryMarkdownNormalizer.js";
 import { coerceResolvedTerm } from "./coerceResolvedTerm.js";
 
 /**
@@ -114,6 +115,8 @@ export function useDictionaryLookupExecutor({
       let detected = resolvedLanguage;
       try {
         const buffer = createDictionaryStreamingMarkdownBuffer();
+        const chunkInterpreter = createDictionaryStreamChunkInterpreter();
+        let latestResolvedEntry = null;
         for await (const chunk of streamWord({
           term: normalized,
           language: resolvedLanguage,
@@ -126,24 +129,52 @@ export function useDictionaryLookupExecutor({
             detected = chunk.language;
           }
 
-          if (chunk.chunk) {
-            const parsed = JSON.parse(chunk.chunk);
-            const normalizedEntry = normalizeMarkdownEntity(parsed);
-            if (normalizedEntry) {
-              resolvedTerm = coerceResolvedTerm(
-                normalizedEntry.term,
-                resolvedTerm,
-              );
-              setEntry(normalizedEntry);
+          const {
+            text: chunkText,
+            entry: interpretedEntry,
+            operation: chunkOperation,
+          } =
+            chunkInterpreter.interpret(chunk.chunk);
+
+          if (interpretedEntry) {
+            latestResolvedEntry = interpretedEntry;
+            resolvedTerm = coerceResolvedTerm(
+              interpretedEntry.term,
+              resolvedTerm,
+            );
+            setEntry(interpretedEntry);
+          }
+
+          const normalizedChunkText = chunkText ?? "";
+          const shouldProcessBuffer =
+            (normalizedChunkText.length > 0 || chunkOperation === "replace");
+
+          if (shouldProcessBuffer) {
+            const { preview, entry } =
+              chunkOperation === "replace"
+                ? buffer.replace(normalizedChunkText)
+                : buffer.append(normalizedChunkText);
+            if (entry) {
+              latestResolvedEntry = entry;
+              resolvedTerm = coerceResolvedTerm(entry.term, resolvedTerm);
+              setEntry(entry);
             }
-            buffer.append(parsed.markdown ?? "");
-            setStreamText(buffer.toString());
+            if (preview !== null) {
+              setStreamText(preview);
+            }
           }
         }
 
-        const bufferedMarkdown = buffer.toString();
-        if (bufferedMarkdown) {
-          setFinalText(bufferedMarkdown ?? "");
+        const { markdown: finalMarkdown, entry: finalEntry } = buffer.finalize();
+        const resolvedEntry = finalEntry ?? latestResolvedEntry;
+        if (resolvedEntry) {
+          resolvedTerm = coerceResolvedTerm(resolvedEntry.term, resolvedTerm);
+          setEntry(resolvedEntry);
+        }
+        // 最终 Markdown 可能为空串，此处复用 normalizer 保持格式一致。
+        const polishedMarkdown = normalizeDictionaryMarkdown(finalMarkdown ?? "");
+        if (polishedMarkdown) {
+          setFinalText(polishedMarkdown);
         }
 
         const detectedLanguage = detected ?? resolvedLanguage;

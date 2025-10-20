@@ -62,28 +62,43 @@ export function createDictionaryStreamingMarkdownBuffer({
     return buildDictionaryEntryMarkdown({ markdown: raw });
   };
 
+  const appendChunk = (chunk) => {
+    if (typeof chunk !== "string" || chunk.length === 0) {
+      return { preview: null, entry: null };
+    }
+    raw += chunk;
+    const nextPreview = rebuildPreviewFromRaw();
+    const previewChanged = nextPreview !== preview;
+    if (previewChanged) {
+      preview = nextPreview;
+    }
+    const entryUpdated = parsedChanged ? parsedEntry : null;
+    parsedChanged = false;
+    return {
+      preview: previewChanged ? preview : null,
+      entry: entryUpdated,
+    };
+  };
+
   return Object.freeze({
     /**
      * 意图：追加 chunk 并派生最新预览。
      * 输入：chunk 字符串。
      * 输出：包含 preview（若无变化则为 null）与 entry（当解析成功且更新时返回）。
      */
-    append(chunk) {
-      if (typeof chunk !== "string" || chunk.length === 0) {
-        return { preview: null, entry: null };
-      }
-      raw += chunk;
-      const nextPreview = rebuildPreviewFromRaw();
-      const previewChanged = nextPreview !== preview;
-      if (previewChanged) {
-        preview = nextPreview;
-      }
-      const entryUpdated = parsedChanged ? parsedEntry : null;
+    append: appendChunk,
+
+    /**
+     * 意图：将缓冲内容重置为指定 Markdown，覆盖已有原始串。
+     * 输入：新 Markdown 字符串。
+     * 输出：与 append 一致，返回最新预览/词条。
+     */
+    replace(nextMarkdown) {
+      raw = "";
+      preview = "";
+      parsedEntry = null;
       parsedChanged = false;
-      return {
-        preview: previewChanged ? preview : null,
-        entry: entryUpdated,
-      };
+      return appendChunk(nextMarkdown);
     },
 
     /**
