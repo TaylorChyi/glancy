@@ -5,7 +5,7 @@
  *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅主题（系统模式复用解析后的主题令牌）。
  * 关键决策与取舍：
  *  - 沿用原有设置面板配色变量，新增 tabs 状态样式覆盖默认/悬停/激活/禁用。
- *  - 本轮去除容器底色/描边，改以 spacing/shadow 令牌维持结构节奏并贴合全局主题。
+ *  - 重新引入表面底色并通过主题变量控制透明度，确保与侧边栏之间存在清晰层级。
  * 影响范围：
  *  - 仅作用于 Preferences 页面。
  * 演进与TODO：
@@ -32,6 +32,12 @@
   width: min(720px, 100%);
   padding: 44px;
   border-radius: 20px;
+
+  /*
+   * 恢复表面底色以确保设置面板与背景形成可感知层级，
+   * 通过主题令牌输出透明度，兼容浅/暗两套基线。
+   */
+  background: var(--preferences-panel-surface);
   color: var(--preferences-panel-text);
   display: flex;
   flex-direction: column;
