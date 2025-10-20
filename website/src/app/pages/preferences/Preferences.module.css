@@ -255,14 +255,16 @@
 
 .panel-surface {
   /*
-   * 为系统面板引入独立的表面层，确保右侧内容在页面态也具备实体感，
-   * 同时通过局部变量与 color-mix 控制透明度，兼容后续主题扩展。
-   * 将布局能力集中在 surface 层，便于保持测量探针 (panel-probe) 的
-   * 最小样式负担，避免高度基准被一次性补丁破坏。
+   * 背景：
+   *  - SettingsModal 与 Preferences 页面共用 panel-surface，模态态会叠加独立的 BaseModal 表面层。
+   * 设计取舍：
+   *  - 让基础类仅承载结构语义，由不同态通过修饰符类注入视觉层，以避免任一场景出现重复或缺失的背景。
    */
+}
 
+.panel-surface-page {
   /*
-   * 背景层保留在 surface 级别，确保测量探针可继承 panel 基线而无需复制阴影/颜色。
+   * 页面态仍需具备实体面板感受，因此保留原有的圆角/阴影/描边方案，并继续使用透明度控制的主题变量。
    */
   border-radius: 22px;
   background: color-mix(
@@ -274,6 +276,16 @@
     color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
   box-shadow: 0 26px 56px
     color-mix(in srgb, var(--preferences-panel-surface) 82%, transparent);
+}
+
+.panel-surface-modal {
+  /*
+   * 模态态由 BaseModal 提供底色与阴影，若继续叠加会导致视觉重复，因此显式清空视觉属性。
+   */
+  border-radius: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 .panel-probe {
