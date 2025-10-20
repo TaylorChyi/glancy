@@ -28,18 +28,19 @@
     --sidebar-border-color: #d9dde7;
 
     /*
-     * 取舍：沿用主样式层的混色逻辑，通过 sidebar-surface 提升 hover/active 的亮度差，
-     * 替代直接调高透明度，从而在遗留 token 尚未清退前保持双轨主题一致性。
+     * 取舍：
+     *  - 沿用主样式层的亮度混合策略，以 sidebar-surface 为基底控制层次，避免依赖透明度叠加；
+     *  - 浅色主题改采 sidebar-accent（默认蓝色）作为主色并提升占比，解决文字灰阶导致的 hover/active 不可感问题。
      */
     --sidebar-hover-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 12%,
-      var(--sidebar-surface) 88%
+      var(--sidebar-accent, var(--brand-6)) 24%,
+      var(--sidebar-surface) 76%
     );
     --sidebar-active-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 22%,
-      var(--sidebar-surface) 78%
+      var(--sidebar-accent, var(--brand-6)) 44%,
+      var(--sidebar-surface) 56%
     );
     --sidebar-text-color: var(--text-primary-light);
     --sidebar-muted-color: color-mix(
