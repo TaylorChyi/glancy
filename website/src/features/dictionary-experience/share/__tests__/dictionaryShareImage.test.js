@@ -1,14 +1,21 @@
 import { describe, expect, test, jest } from "@jest/globals";
 
-jest.unstable_mockModule("@assets/brand-glancy-website.svg", () => ({
-  default: "brand-glancy-app.svg",
-}));
-jest.unstable_mockModule("@assets/default-user-avatar.svg", () => ({
-  default: "avatar.svg",
-}));
+jest.unstable_mockModule(
+  "@assets/brand/glancy/brand-glancy-website.svg",
+  () => ({
+    default: "brand-glancy-app.svg",
+  }),
+);
+jest.unstable_mockModule(
+  "@assets/identity/avatars/default-user-avatar.svg",
+  () => ({
+    default: "avatar.svg",
+  }),
+);
 
 const shareModule = await import("../dictionaryShareImage.js");
-const { buildShareDocument, __INTERNAL__ } = shareModule;
+const { __INTERNAL__ } = shareModule;
+const { buildShareDocument } = __INTERNAL__;
 
 const t = {
   phoneticLabel: "音标",

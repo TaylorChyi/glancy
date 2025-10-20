@@ -12,8 +12,8 @@
  *  - 可扩展更多社交品牌样式或动画效果。
  */
 
-import appIconAsset from "@assets/brand-glancy-website.svg";
-import defaultAvatarAsset from "@assets/default-user-avatar.svg";
+import appIconAsset from "@assets/brand/glancy/brand-glancy-website.svg";
+import defaultAvatarAsset from "@assets/identity/avatars/default-user-avatar.svg";
 
 import { toTrimmedString } from "./documentFormatting.js";
 import {
@@ -67,7 +67,14 @@ const drawCircularImage = (ctx, image, x, y, size) => {
   ctx.restore();
 };
 
-const renderAvatar = async ({ ctx, avatarX, avatarY, username, assets, user }) => {
+const renderAvatar = async ({
+  ctx,
+  avatarX,
+  avatarY,
+  username,
+  assets,
+  user,
+}) => {
   const source = selectAvatarSource(user, assets);
   try {
     const avatarImage = await loadImage(source);
@@ -110,7 +117,8 @@ export const drawFooter = async ({
   const footerY = totalHeight - FOOTER_HEIGHT + 32;
   const avatarX = CONTENT_PADDING_X;
   const avatarY = footerY + 16;
-  const username = toTrimmedString(user?.username) || toTrimmedString(user?.name);
+  const username =
+    toTrimmedString(user?.username) || toTrimmedString(user?.name);
 
   await renderAvatar({ ctx, avatarX, avatarY, username, assets, user });
 
@@ -124,7 +132,8 @@ export const drawFooter = async ({
   const renderedIcon = await renderBranding({ ctx, footerY, appName, assets });
   if (!renderedIcon) {
     ctx.font = FOOTER_FONT;
-    const labelX = CANVAS_WIDTH - CONTENT_PADDING_X - ctx.measureText(appName).width;
+    const labelX =
+      CANVAS_WIDTH - CONTENT_PADDING_X - ctx.measureText(appName).width;
     ctx.fillText(appName, labelX, footerY + ICON_SIZE / 2);
   }
 };
