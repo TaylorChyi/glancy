@@ -31,15 +31,21 @@
      * 取舍：沿用主样式层的混色逻辑，通过 sidebar-surface 提升 hover/active 的亮度差，
      * 替代直接调高透明度，从而在遗留 token 尚未清退前保持双轨主题一致性。
      */
+    /*
+     * 背景：
+     *  - 与全局主题保持一致，提升浅色主题下 Sidebar 交互态的亮度差，避免 hover 视觉弱化。
+     * 目的：
+     *  - 将文字色权重同步调整至 18%/28%，保证 token 在组件层复用时获得一致的反馈强度。
+     */
     --sidebar-hover-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 12%,
-      var(--sidebar-surface) 88%
+      var(--text-primary-light) 18%,
+      var(--sidebar-surface) 82%
     );
     --sidebar-active-bg: color-mix(
       in srgb,
-      var(--text-primary-light) 22%,
-      var(--sidebar-surface) 78%
+      var(--text-primary-light) 28%,
+      var(--sidebar-surface) 72%
     );
     --sidebar-text-color: var(--text-primary-light);
     --sidebar-muted-color: color-mix(
