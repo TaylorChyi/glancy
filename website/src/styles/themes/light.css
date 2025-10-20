@@ -19,7 +19,7 @@
   --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--brand-2) 6%);
   --sidebar-panel: var(--color-surface);
   --sidebar-border-color: color-mix(in srgb, var(--color-border) 92%, transparent 8%);
-  
+
   /*
    * 取舍：改用以 sidebar-surface 为基底的混色策略，确保浅色主题下 hover/active
    * 背景与默认态之间存在可感知的亮度差；若仅提升透明度会在品牌迭代时引发不可控漂移。
