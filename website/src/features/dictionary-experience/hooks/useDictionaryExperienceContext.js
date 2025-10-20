@@ -19,9 +19,9 @@ import {
   useTheme,
   useLanguage,
 } from "@core/context";
-import { useDictionaryPopup } from "./useDictionaryPopup.js";
 import { useDictionaryToast } from "./useDictionaryToast.js";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
+import { useMessagePopup } from "@shared/hooks/useMessagePopup.js";
 
 export function useDictionaryExperienceContext() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export function useDictionaryExperienceContext() {
   const userContext = useUser();
   const favoritesContext = useFavorites();
   const historyContext = useHistory();
-  const popup = useDictionaryPopup();
+  const popup = useMessagePopup();
   const toast = useDictionaryToast();
   const languageConfig = useDictionaryLanguageConfig({
     t: languageContext.t,

@@ -1,6 +1,7 @@
 export { useAppShortcuts } from "./useAppShortcuts.js";
 export { useFetchWord } from "./useFetchWord.js";
 export { useStreamWord } from "./useStreamWord.js";
+export { useMessagePopup } from "./useMessagePopup.js";
 export { useTtsPlayer } from "./useTtsPlayer.js";
 export { default as useEscapeKey } from "./useEscapeKey.js";
 export { default as useMediaQuery } from "./useMediaQuery.js";

@@ -12,21 +12,21 @@
  *  - 可接入埋点或可观测性钩子，以统计通知点击率。
  */
 import { useCallback, useState } from "react";
+import { useMessagePopup } from "@shared/hooks/useMessagePopup.js";
 
 const useFeedbackChannels = () => {
-  const [popup, setPopup] = useState({ open: false, message: "" });
+  const {
+    popupConfig,
+    popupOpen,
+    popupMsg,
+    showPopup,
+    closePopup,
+    resetPopup,
+  } = useMessagePopup();
   const [toast, setToast] = useState({ open: false, message: "" });
-
-  const showPopup = useCallback((message) => {
-    setPopup({ open: Boolean(message), message: message ?? "" });
-  }, []);
 
   const showToast = useCallback((message) => {
     setToast({ open: Boolean(message), message: message ?? "" });
-  }, []);
-
-  const resetPopup = useCallback(() => {
-    setPopup({ open: false, message: "" });
   }, []);
 
   const resetToast = useCallback(() => {
@@ -34,12 +34,14 @@ const useFeedbackChannels = () => {
   }, []);
 
   return {
-    popup,
+    popup: { open: popupOpen, message: popupMsg },
     toast,
     showPopup,
     showToast,
     resetPopup,
     resetToast,
+    closePopup,
+    popupConfig,
   };
 };
 
