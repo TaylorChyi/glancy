@@ -13,6 +13,7 @@
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
   --preferences-button-contrast-bg: var(--neutral-950);
   --preferences-button-contrast-text: var(--neutral-0);
+  --modal-overlay-background: transparent;
   --modal-surface: var(--preferences-panel-bg);
   --modal-color: var(--preferences-panel-text);
   --modal-shadow: var(--preferences-panel-shadow);

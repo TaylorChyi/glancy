@@ -255,25 +255,10 @@
 
 .panel-surface {
   /*
-   * 为系统面板引入独立的表面层，确保右侧内容在页面态也具备实体感，
-   * 同时通过局部变量与 color-mix 控制透明度，兼容后续主题扩展。
-   * 将布局能力集中在 surface 层，便于保持测量探针 (panel-probe) 的
-   * 最小样式负担，避免高度基准被一次性补丁破坏。
+   * 右侧内容在页面态依赖 form 背景、在模态态则由 BaseModal 提供表面层。
+   * 这里刻意移除局部的圆角/阴影/底色，避免与模态容器叠加造成透明叠影，
+   * 同时让测量探针复用同一布局基线。
    */
-
-  /*
-   * 背景层保留在 surface 级别，确保测量探针可继承 panel 基线而无需复制阴影/颜色。
-   */
-  border-radius: 22px;
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface) 96%,
-    transparent
-  );
-  border: 1px solid
-    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
-  box-shadow: 0 26px 56px
-    color-mix(in srgb, var(--preferences-panel-surface) 82%, transparent);
 }
 
 .panel-probe {
