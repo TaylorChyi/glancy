@@ -11,7 +11,10 @@
  * 演进与TODO：
  *  - 后续新增动作时同步在此扩展工厂函数。
  */
-import ThemeIcon from "@shared/components/ui/Icon";
+import {
+  resolveCopyIcon,
+  resolveShareIcon,
+} from "./iconFactories";
 
 export const buildActionContext = ({
   translator,
@@ -48,11 +51,7 @@ export const createCopyItem = ({
   const success = Boolean(isCopySuccess || copyFeedbackState === "success");
   const baseLabel = translator.copyAction || "Copy";
   const label = success ? translator.copySuccess || baseLabel : baseLabel;
-  const icon = success ? (
-    <ThemeIcon name="copy-success" width={20} height={20} />
-  ) : (
-    <ThemeIcon name="copy" width={20} height={20} />
-  );
+  const icon = resolveCopyIcon(success);
   const copyDisabled =
     disabled || success || !canCopy || typeof onCopy !== "function";
   return {
@@ -73,7 +72,7 @@ export const createShareItem = ({ shareMenu, translator }) => {
   return {
     key: "share",
     label: translator.share || "Share",
-    icon: <ThemeIcon name="link" width={20} height={20} />,
+    icon: resolveShareIcon(),
     onClick: shareMenu.handleTriggerClick,
     active: shareMenu.isOpen,
     variant: "share",

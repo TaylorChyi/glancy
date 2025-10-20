@@ -11,7 +11,11 @@
  * 演进与TODO：
  *  - 后续新增动作时请在此扩展并补充相应策略。
  */
-import ThemeIcon from "@shared/components/ui/Icon";
+import {
+  resolveDeleteIcon,
+  resolveFavoriteIcon,
+  resolveReportIcon,
+} from "./iconFactories";
 
 export const ACTION_BLUEPRINTS = [
   {
@@ -23,12 +27,7 @@ export const ACTION_BLUEPRINTS = [
       favorited
         ? translator.favoriteRemove || translator.favoriteAction || "Favorite"
         : translator.favoriteAction || "Favorite",
-    getIcon: ({ favorited }) =>
-      favorited ? (
-        <ThemeIcon name="star-solid" width={22} height={22} />
-      ) : (
-        <ThemeIcon name="star-outline" width={22} height={22} />
-      ),
+    getIcon: ({ favorited }) => resolveFavoriteIcon(favorited),
     isActive: ({ favorited }) => Boolean(favorited),
     canUse: ({ canFavorite }) => Boolean(canFavorite),
     getHandler: ({ onToggleFavorite }) => onToggleFavorite,
@@ -40,7 +39,7 @@ export const ACTION_BLUEPRINTS = [
     hiddenWhenInactive: false,
     getLabel: ({ translator }) =>
       translator.deleteButton || translator.deleteAction || "Delete",
-    getIcon: () => <ThemeIcon name="trash" width={20} height={20} />,
+    getIcon: resolveDeleteIcon,
     canUse: ({ canDelete }) => Boolean(canDelete),
     getHandler: ({ onDelete }) => onDelete,
   },
@@ -50,7 +49,7 @@ export const ACTION_BLUEPRINTS = [
     requiresUser: true,
     hiddenWhenInactive: true,
     getLabel: ({ translator }) => translator.report || "Report",
-    getIcon: () => <ThemeIcon name="flag" width={20} height={20} />,
+    getIcon: resolveReportIcon,
     canUse: ({ canReport }) => Boolean(canReport),
     getHandler: ({ onReport }) => onReport,
   },
