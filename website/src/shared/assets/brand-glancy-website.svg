@@ -1,0 +1,14 @@
+<svg
+  width="1024"
+  height="1024"
+  viewBox="0 0 1024 1024"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-hidden="true"
+>
+  <title>Brand Glancy Website</title>
+  <rect x="432" y="352" width="160" height="320" rx="20" fill="currentColor" />
+  <rect x="672" y="192" width="160" height="320" rx="20" fill="currentColor" />
+  <rect x="192" y="512" width="160" height="320" rx="20" fill="currentColor" />
+</svg>
