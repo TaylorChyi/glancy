@@ -15,15 +15,18 @@ import { jest } from "@jest/globals";
  *  - 若未来语音按钮需要多状态资源，应在此扩展变体断言。
  */
 
-jest.unstable_mockModule("@assets/voice-button.svg", () => ({
+jest.unstable_mockModule("@assets/interface/controls/voice-button.svg", () => ({
   __esModule: true,
   default: "voice-asset.svg",
 }));
 
-jest.unstable_mockModule("@assets/voice-button.svg?raw", () => ({
-  __esModule: true,
-  default: '<svg data-token="voice-inline"></svg>',
-}));
+jest.unstable_mockModule(
+  "@assets/interface/controls/voice-button.svg?raw",
+  () => ({
+    __esModule: true,
+    default: '<svg data-token="voice-inline"></svg>',
+  }),
+);
 
 const { default: VoiceIcon } = await import("../VoiceIcon.jsx");
 

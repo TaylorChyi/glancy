@@ -10,7 +10,7 @@
  * 演进与TODO：
  *  - 后续可引入持久化错误上报或与服务端协商语言偏好。
  */
-import glancyWebBaseSvg from "@assets/brand-glancy-website.svg?raw";
+import glancyWebBaseSvg from "@assets/brand/glancy/brand-glancy-website.svg?raw";
 import {
   createBrowserFaviconRegistry,
   ensureBrowserFaviconManifest,

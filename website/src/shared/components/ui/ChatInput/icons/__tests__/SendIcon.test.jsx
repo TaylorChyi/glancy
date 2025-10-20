@@ -15,15 +15,18 @@ import { jest } from "@jest/globals";
  *  - 后续若新增多主题资源，可在此扩展对 variant props 的断言。
  */
 
-jest.unstable_mockModule("@assets/send-button.svg", () => ({
+jest.unstable_mockModule("@assets/interface/controls/send-button.svg", () => ({
   __esModule: true,
   default: "send-asset.svg",
 }));
 
-jest.unstable_mockModule("@assets/send-button.svg?raw", () => ({
-  __esModule: true,
-  default: '<svg data-token="send-inline"></svg>',
-}));
+jest.unstable_mockModule(
+  "@assets/interface/controls/send-button.svg?raw",
+  () => ({
+    __esModule: true,
+    default: '<svg data-token="send-inline"></svg>',
+  }),
+);
 
 const { default: SendIcon } = await import("../SendIcon.jsx");
 

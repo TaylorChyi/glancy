@@ -15,7 +15,7 @@
  *  - TODO：引入主题化节奏或低性能设备降级策略，必要时为渐隐渐显增加特性开关。
  */
 import { useMemo } from "react";
-import waittingFrame from "@assets/waitting-frame.svg";
+import waittingFrame from "@assets/interface/controls/waitting-frame.svg";
 import styles from "./Loader.module.css";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 import useWaitingFrameCycle from "./useWaitingFrameCycle";

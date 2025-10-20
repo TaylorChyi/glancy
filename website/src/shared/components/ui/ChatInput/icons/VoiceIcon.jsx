@@ -13,8 +13,8 @@
  */
 import PropTypes from "prop-types";
 
-import voiceButtonAsset from "@assets/voice-button.svg";
-import voiceButtonInline from "@assets/voice-button.svg?raw";
+import voiceButtonAsset from "@assets/interface/controls/voice-button.svg";
+import voiceButtonInline from "@assets/interface/controls/voice-button.svg?raw";
 
 import renderStaticIcon from "./renderStaticIcon.jsx";
 

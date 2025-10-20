@@ -13,8 +13,8 @@
  */
 import PropTypes from "prop-types";
 
-import sendButtonAsset from "@assets/send-button.svg";
-import sendButtonInline from "@assets/send-button.svg?raw";
+import sendButtonAsset from "@assets/interface/controls/send-button.svg";
+import sendButtonInline from "@assets/interface/controls/send-button.svg?raw";
 
 import renderStaticIcon from "./renderStaticIcon.jsx";
 
