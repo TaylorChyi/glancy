@@ -19,6 +19,8 @@ import PropTypes from "prop-types";
 import CollapsibleSection from "./CollapsibleSection.jsx";
 import CollapsibleBody from "./CollapsibleBody.jsx";
 import createSummaryRenderer from "./createSummaryRenderer.js";
+import styles from "../MarkdownRenderer.module.css";
+import joinClassNames from "../utils/joinClassNames.js";
 
 const BREAKABLE_TAGS = [
   "p",
@@ -57,6 +59,7 @@ export default function buildMarkdownComponents({ injectBreaks }) {
 
   return {
     ...components,
+    table: TableRenderer,
     "collapsible-section": (props) =>
       createElement(CollapsibleSection, {
         ...props,
@@ -66,3 +69,20 @@ export default function buildMarkdownComponents({ injectBreaks }) {
     "collapsible-body": CollapsibleBody,
   };
 }
+
+function TableRenderer({ children, className, ...tableProps }) {
+  const resolvedClassName = joinClassNames(styles.table, className);
+  return createElement(
+    "table",
+    {
+      ...tableProps,
+      className: resolvedClassName,
+    },
+    children,
+  );
+}
+
+TableRenderer.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};

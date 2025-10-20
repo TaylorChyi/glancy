@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
@@ -29,6 +29,50 @@ test("renders GFM syntax", () => {
   render(<MarkdownRenderer>{"~~gone~~"}</MarkdownRenderer>);
   const del = screen.getByText((content) => stripZeroWidth(content) === "gone");
   expect(del.tagName).toBe("DEL");
+});
+
+/**
+ * 测试目标：Markdown 表格在动态渲染模式下保留语义结构与列头信息。
+ * 前置条件：提供包含单个表格的 Markdown，表头与数据行字段齐全。
+ * 步骤：
+ *  1) 渲染含表格的 Markdown 文本。
+ *  2) 查询 table 节点及其列头、单元格。
+ * 断言：
+ *  - 仅存在一个 table 元素且列头数量为 6。
+ *  - 数据行的“对应义项”列保留 `【对应：s#】` 标记。
+ * 边界/异常：
+ *  - 若缺失列或无法解析表格，则说明 GFM 表格支持回归。
+ */
+test("renders markdown tables with accessible structure", () => {
+  const markdown = [
+    "## 对比",
+    "",
+    "| 对比词 A | 对比词 B | 核心判别准则 | 英文例句 | 中文翻译 | 对应义项 |",
+    "| --- | --- | --- | --- | --- | --- |",
+    "| adapt | adopt | choose the appropriate verb | Adapt quickly. | 尽快适应。 | 【对应：s1】 |",
+  ].join("\n");
+
+  render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
+
+  const table = screen.getByRole("table");
+  expect(table).toBeInTheDocument();
+
+  const headers = within(table).getAllByRole("columnheader");
+  expect(headers).toHaveLength(6);
+  expect(
+    headers.map((header) => stripZeroWidth(header.textContent ?? "")),
+  ).toEqual([
+    "对比词 A",
+    "对比词 B",
+    "核心判别准则",
+    "英文例句",
+    "中文翻译",
+    "对应义项",
+  ]);
+
+  const cells = within(table).getAllByRole("cell");
+  expect(cells).toHaveLength(6);
+  expect(stripZeroWidth(cells[5].textContent ?? "")).toBe("【对应：s1】");
 });
 
 test("returns null for empty content", () => {
