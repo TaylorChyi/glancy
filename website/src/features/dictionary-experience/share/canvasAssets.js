@@ -12,7 +12,7 @@
  *  - 可扩展更多社交品牌样式或动画效果。
  */
 
-import appIconAsset from "@assets/glancy-web.svg";
+import appIconAsset from "@assets/brand-glancy-website.svg";
 import defaultAvatarAsset from "@assets/default-user-avatar.svg";
 
 import { toTrimmedString } from "./documentFormatting.js";

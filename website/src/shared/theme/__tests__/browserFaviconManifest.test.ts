@@ -10,7 +10,7 @@ import {
 
 /**
  * 测试目标：使用默认调色板构建 manifest 时应生成黑白两款数据 URI。
- * 前置条件：提供原始 glancy-web.svg 文本。
+ * 前置条件：提供原始 brand-glancy-website.svg 文本。
  * 步骤：
  *  1) 调用 buildBrowserFaviconManifest；
  *  2) 校验浅色与深色条目。

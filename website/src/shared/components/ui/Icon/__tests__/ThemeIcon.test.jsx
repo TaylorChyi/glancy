@@ -12,7 +12,7 @@ jest.unstable_mockModule("@core/context", () => ({
 const iconRegistry = {
   "glancy-web": {
     single: Object.freeze({
-      url: "/assets/glancy-web.svg",
+      url: "/assets/brand-glancy-website.svg",
       inline: '<svg data-icon="glancy"></svg>',
     }),
   },
