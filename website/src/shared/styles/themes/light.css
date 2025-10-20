@@ -26,8 +26,21 @@
     --sidebar-surface: #f5f7fb;
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
-    --sidebar-hover-bg: rgb(15 17 21 / 6%);
-    --sidebar-active-bg: rgb(15 17 21 / 12%);
+    
+    /*
+     * 取舍：沿用主样式层的混色逻辑，通过 sidebar-surface 提升 hover/active 的亮度差，
+     * 替代直接调高透明度，从而在遗留 token 尚未清退前保持双轨主题一致性。
+     */
+    --sidebar-hover-bg: color-mix(
+      in srgb,
+      var(--text-primary-light) 12%,
+      var(--sidebar-surface) 88%
+    );
+    --sidebar-active-bg: color-mix(
+      in srgb,
+      var(--text-primary-light) 22%,
+      var(--sidebar-surface) 78%
+    );
     --sidebar-text-color: var(--text-primary-light);
     --sidebar-muted-color: color-mix(
       in srgb,
