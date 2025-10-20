@@ -24,8 +24,19 @@
    * 取舍：改用以 sidebar-surface 为基底的混色策略，确保浅色主题下 hover/active
    * 背景与默认态之间存在可感知的亮度差；若仅提升透明度会在品牌迭代时引发不可控漂移。
    */
-  --sidebar-hover-bg: color-mix(in srgb, var(--color-text) 12%, var(--sidebar-surface) 88%);
-  --sidebar-active-bg: color-mix(in srgb, var(--color-text) 22%, var(--sidebar-surface) 78%);
+  /*
+   * 背景：
+   *  - 浅色主题下导航/历史列表的 hover 慢变量与默认底色亮度差过小，肉眼几乎无法分辨，
+   *    与预期的动效反馈不符。
+   * 目的：
+   *  - 提升 hover/active 慢变量中的文字色占比，确保与默认底色至少保持 ~8% 的亮度差，
+   *    在 LCD 与 OLED 设备上都能稳定感知。
+   * 关键决策与取舍：
+   *  - 采用同一 `color-mix` 策略，仅调整权重到 18%/28%，既保留品牌主色调，又避免一次性
+   *    改写组件局部样式；若未来需要更强对比，可继续通过 token 调整而无需侵入组件。
+   */
+  --sidebar-hover-bg: color-mix(in srgb, var(--color-text) 18%, var(--sidebar-surface) 82%);
+  --sidebar-active-bg: color-mix(in srgb, var(--color-text) 28%, var(--sidebar-surface) 72%);
   --sidebar-text-color: var(--text-primary);
   --sidebar-muted-color: color-mix(in srgb, var(--text-primary) 55%, transparent 45%);
   --sidebar-shadow-elevated: 0 18px 42px color-mix(
