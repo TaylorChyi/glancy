@@ -26,7 +26,7 @@
     --sidebar-surface: #f5f7fb;
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
-    
+
     /*
      * 取舍：沿用主样式层的混色逻辑，通过 sidebar-surface 提升 hover/active 的亮度差，
      * 替代直接调高透明度，从而在遗留 token 尚未清退前保持双轨主题一致性。
