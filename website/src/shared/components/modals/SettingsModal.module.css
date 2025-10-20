@@ -28,6 +28,11 @@
   padding: 44px;
   box-sizing: border-box;
   border: 1px solid var(--preferences-panel-border);
+  /*
+   * 统一在容器层设置纯色背景，避免透明叠底导致的层级透出，
+   * 同时复用 night/light 主题色板以保持视觉一致。
+   */
+  background: var(--preferences-panel-bg);
   color: var(--preferences-panel-text);
 }
 
