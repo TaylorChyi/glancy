@@ -30,22 +30,25 @@
     /*
      * 取舍：
      *  - 沿用主样式层的亮度混合策略，以 sidebar-surface 为基底控制层次，避免依赖透明度叠加；
-     *  - 浅色主题改采 sidebar-accent（默认蓝色）作为主色并提升占比，解决文字灰阶导致的 hover/active 不可感问题。
+     *  - 为保证明暗主题的高亮语义一致，将浅色主题的 hover/active 回落到中性灰阶，避免默认品牌蓝造成的视觉跳色。
+     * 影响：
+     *  - 导航与历史入口在浅色主题下与暗色主题一致呈现灰阶反馈，减少主题切换时的突兀感；
+     *  - 未来若需重新引入品牌色高亮，可在 sidebar-highlight-tone 上覆写并复用相同混合逻辑。
      */
     --sidebar-highlight-tone: color-mix(
       in srgb,
-      var(--neutral-400) 60%,
-      var(--neutral-200) 40%
+      var(--neutral-400) 62%,
+      var(--neutral-200) 38%
     );
     --sidebar-hover-bg: color-mix(
       in srgb,
-      var(--sidebar-accent, var(--brand-6)) 24%,
-      var(--sidebar-surface) 76%
+      var(--sidebar-highlight-tone) 34%,
+      var(--sidebar-surface) 66%
     );
     --sidebar-active-bg: color-mix(
       in srgb,
-      var(--sidebar-accent, var(--brand-6)) 44%,
-      var(--sidebar-surface) 56%
+      var(--sidebar-highlight-tone) 54%,
+      var(--sidebar-surface) 46%
     );
     --sidebar-text-color: var(--text-primary-light);
     --sidebar-muted-color: color-mix(
