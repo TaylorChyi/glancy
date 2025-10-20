@@ -31,7 +31,7 @@ function useUsernameWorkflow({ api, currentUser, setUser, popup, t }) {
       });
       const updatedUsername = response.username ?? nextUsername;
       setUser({ ...currentUser, username: updatedUsername });
-      popup.show(t.usernameUpdateSuccess);
+      popup.showPopup(t.usernameUpdateSuccess);
       return updatedUsername;
     },
     [api, currentUser, popup, setUser, t.usernameUpdateSuccess],
@@ -57,7 +57,7 @@ function useProfileInitialLoad({
     dispatchDetails: detailsState.dispatchDetails,
     setPersistedMeta,
     applyAvatar,
-    showError: () => popup.show(t.fail),
+    showError: () => popup.showPopup(t.fail),
   });
 }
 
@@ -74,7 +74,7 @@ function useProfileControllers({ api, currentUser, setUser, popup, t }) {
     currentUser,
     setUser,
     t,
-    notifyFailure: () => popup.show(t.fail),
+    notifyFailure: () => popup.showPopup(t.fail),
   });
   const emailBinding = useEmailBinding({
     user: currentUser,
@@ -83,8 +83,8 @@ function useProfileControllers({ api, currentUser, setUser, popup, t }) {
   const emailWorkflow = useEmailBindingWorkflow({
     emailBinding,
     currentUser,
-    notifySuccess: popup.show,
-    notifyFailure: popup.show,
+    notifySuccess: popup.showPopup,
+    notifyFailure: popup.showPopup,
     t,
   });
   return {
@@ -112,7 +112,7 @@ function useProfilePersistence({
     phone: phoneState.phone,
     setUser,
     persistedMeta,
-    showPopup: popup.show,
+    showPopup: popup.showPopup,
     t,
   });
   return { isSaving, handleSave };

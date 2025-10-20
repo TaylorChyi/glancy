@@ -13,6 +13,7 @@
  */
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useApi } from "@shared/hooks/useApi.js";
+import { useMessagePopup } from "@shared/hooks/useMessagePopup.js";
 import { useLanguage, useUser } from "@core/context";
 import {
   createEmptyProfileDetails,
@@ -20,17 +21,6 @@ import {
 } from "./profileDetailsModel.js";
 import { createProfileFieldGroups } from "./profileFieldGroups.js";
 import { useProfileWorkflows } from "./useProfileWorkflows.js";
-
-function usePopupBridge() {
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [popupMsg, setPopupMsg] = useState("");
-  const show = useCallback((message) => {
-    setPopupMsg(message);
-    setPopupOpen(true);
-  }, []);
-  const close = useCallback(() => setPopupOpen(false), []);
-  return { popupOpen, popupMsg, show, close };
-}
 
 function useProfileDetailsState(t) {
   const [details, dispatchDetails] = useReducer(
@@ -96,7 +86,7 @@ function useSynchronizedPhoneState(currentUser) {
 
 export function useProfilePageModel() {
   const { t, api, currentUser, setUser } = useProfileServices();
-  const popup = usePopupBridge();
+  const popup = useMessagePopup();
   const detailsState = useProfileDetailsState(t);
   const phoneState = useSynchronizedPhoneState(currentUser);
   const { persistedMeta, setPersistedMeta } = usePersistedMetaState();

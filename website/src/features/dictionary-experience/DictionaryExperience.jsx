@@ -48,9 +48,7 @@ export default function DictionaryExperience() {
     loading,
     dictionaryActionBarProps,
     displayClassName,
-    popupOpen,
-    popupMsg,
-    closePopup,
+    popupConfig,
     toast,
     closeToast,
     dictionaryTargetLanguageLabel,
@@ -250,7 +248,7 @@ export default function DictionaryExperience() {
         onSubmit={reportDialogHandlers.submit}
       />
       <FeedbackHub
-        popup={{ open: popupOpen, message: popupMsg, onClose: closePopup }}
+        popup={popupConfig}
         toast={
           toast
             ? {

@@ -220,13 +220,7 @@ function ProfileLayout({
         labels={avatarController.labels}
         isProcessing={avatarController.editor.phase === "uploading"}
       />
-      <FeedbackHub
-        popup={{
-          open: popup.popupOpen,
-          message: popup.popupMsg,
-          onClose: popup.close,
-        }}
-      />
+      <FeedbackHub popup={popup.popupConfig} />
     </div>
   );
 }

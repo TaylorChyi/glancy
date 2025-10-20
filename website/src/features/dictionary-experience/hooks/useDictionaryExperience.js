@@ -29,7 +29,7 @@ export function useDictionaryExperience() {
   const { user } = userContext;
   const { favorites } = contexts.favoritesContext;
   const { loadHistory } = historyContext;
-  const { popupOpen, popupMsg, showPopup, closePopup } = popup;
+  const { popupOpen, popupMsg, popupConfig, showPopup, closePopup } = popup;
   const { state: toastState, showToast, closeToast } = toast;
   const {
     dictionarySourceLanguage,
@@ -182,6 +182,7 @@ export function useDictionaryExperience() {
     handleReport,
     popupOpen,
     popupMsg,
+    popupConfig,
     closePopup,
     toastState,
     closeToast,
