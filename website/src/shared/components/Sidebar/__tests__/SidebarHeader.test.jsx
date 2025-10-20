@@ -11,7 +11,7 @@ const { default: SidebarHeader } = await import("../header/SidebarHeader.jsx");
 const createItems = () => [
   {
     key: "dictionary",
-    icon: "glancy-web",
+    icon: "brand-glancy-website",
     label: "Dictionary",
     active: true,
     onClick: jest.fn(),

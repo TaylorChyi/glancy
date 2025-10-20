@@ -23,6 +23,12 @@ const NAVIGATION_KEYS = {
   LIBRARY: "library",
 };
 
+const ICON_NAMES = Object.freeze({
+  // 采用品牌版主图标以保持导航与站点品牌一致，避免多处手动维护别名。
+  DICTIONARY: "brand-glancy-website",
+  LIBRARY: "library",
+});
+
 /**
  * 意图：集中管理侧边栏导航所需的状态、文案与回调，输出给展示组件。
  * 输入：调用方可透传是否移动端、开闭状态、关闭回调、两个业务动作以及当前激活视图。
@@ -126,7 +132,7 @@ export default function useSidebarNavigation({
       {
         key: NAVIGATION_KEYS.DICTIONARY,
         label: dictionaryLabel,
-        icon: "glancy-web",
+        icon: ICON_NAMES.DICTIONARY,
         onClick: handleDictionary,
         active: activeView === NAVIGATION_KEYS.DICTIONARY,
         testId: "sidebar-nav-dictionary",
@@ -134,7 +140,7 @@ export default function useSidebarNavigation({
       {
         key: NAVIGATION_KEYS.LIBRARY,
         label: libraryLabel,
-        icon: "library",
+        icon: ICON_NAMES.LIBRARY,
         onClick: handleLibrary,
         active: activeView === NAVIGATION_KEYS.LIBRARY,
         testId: "sidebar-nav-library",
