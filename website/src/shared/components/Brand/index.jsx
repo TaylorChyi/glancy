@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { useLanguage } from "@core/context";
 import { UserMenu } from "@shared/components/Header";
 import ThemeIcon from "@shared/components/ui/Icon";
-import { getBrandText } from "@shared/utils";
+import { getBrandText, BRAND_LOGO_ICON } from "@shared/utils";
 
 function PrimaryNavItem({ icon, iconAlt, label, onClick, isActive, title }) {
   return (
@@ -85,7 +85,7 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
     {
       key: "dictionary",
       label: dictionaryLabel,
-      icon: "glancy-web",
+      icon: BRAND_LOGO_ICON,
       iconAlt: dictionaryLabel,
       onClick: handleDictionary,
       title: dictionaryHint,
