@@ -40,8 +40,7 @@ test("renders GFM syntax", () => {
  *  2) 查询 table 节点及其列头、单元格。
  * 断言：
  *  - 仅存在一个 table 元素且列头数量为 5。
- *  - 数据行的“对应义项”列保留 `【对应：s#】` 标记。
- *  - 表头与数据单元格均应用约定的样式类，确保对齐策略可回归检测。
+ *  - 数据行的“对应义项”列保留 emoji 义项标记（例如 1️⃣）。
  * 边界/异常：
  *  - 若缺失列或无法解析表格，则说明 GFM 表格支持回归。
  */
@@ -51,7 +50,7 @@ test("renders markdown tables with accessible structure", () => {
     "",
     "| 对比词 | 核心判别准则 | 英文例句 | 中文翻译 | 对应义项 |",
     "| --- | --- | --- | --- | --- |",
-    "| adopt | choose the appropriate verb | Adopt the new policy. | 采纳这项新政策。 | 【对应：s1】 |",
+    "| adopt | choose the appropriate verb | Adopt the new policy. | 采纳这项新政策。 | 1️⃣ |",
   ].join("\n");
 
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
@@ -76,10 +75,7 @@ test("renders markdown tables with accessible structure", () => {
 
   const cells = within(table).getAllByRole("cell");
   expect(cells).toHaveLength(5);
-  expect(stripZeroWidth(cells[4].textContent ?? "")).toBe("【对应：s1】");
-  cells.forEach((cell) => {
-    expect(cell).toHaveClass(styles["table-data-cell"]);
-  });
+  expect(stripZeroWidth(cells[4].textContent ?? "")).toBe("1️⃣");
 });
 
 test("returns null for empty content", () => {

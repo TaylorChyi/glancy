@@ -14,7 +14,7 @@
 ## 全局生成规则 (强制)
 1) 输出必须是单个合法 JSON 文本，禁止添加 BOM、额外换行或说明性文字；顶层字段需全部出现，缺失信息以空字符串、空数组或 null 表示。
 2) 所有数组条目与对象字段须满足下方"输出结构"中的顺序与命名；`senseId` 采用 s1、s2、s3……稳定编号，并在 `definitions`、搭配/短语等引用字段中保持一一映射。
-3) 示例句、搭配、短语、习语、句型等内容必须原创且互不重复；凡能绑定到具体义项的条目，末尾附加 `【对应：s#】`，不可遗漏或误绑。
+3) 示例句、搭配、短语、习语、句型等内容必须原创且互不重复；凡能绑定到具体义项的条目，末尾附加与 `senseId` 对应的 emoji 序号（例如 s1 → 1️⃣、s2 → 2️⃣），不可遗漏或误绑。
 4) `metadata` 需至少包含 `model`、`timestamp`，若发生纠错则在 `metadata.correction` 记录原因；`formattingVersion` 标注当前提示词版本。
 5) 中文示例及注释需遵循分词标记规范：[[专有名词]]、{{词组}}、#单词#；英文文本禁止出现这些标记。
 6) 所有音标使用 IPA (International Phonetic Alphabet 国际音标)并标主重音；`tonalNotes`、`writingNotes` 用于提醒声调、字形或拼写差异，即使暂无内容也需输出空数组，不得省略字段。
@@ -65,18 +65,18 @@
   - examples (array)：与 senses 内的例句保持顺序与内容一致。
 
 ### 扩展搭配与语块 (collocations/phrases/idioms/patterns)
-- collocations (array)：常见搭配，元素为对象 `{"expression": string, "gloss": string, "ref": "【对应：s#】"}`，若无法定位义项则 `ref` 置为 null；
-- phrases (array)：固定词组，元素对象除 expression、gloss 外，可含示例 `{english, chinese, insight}`，并使用 `【对应：s#】` 绑定；
+- collocations (array)：常见搭配，元素为对象 `{"expression": string, "gloss": string, "ref": "1️⃣"}`（按义项序号替换为 1️⃣ / 2️⃣ / …），若无法定位义项则 `ref` 置为 null；
+- phrases (array)：固定词组，元素对象除 expression、gloss 外，可含示例 `{english, chinese, insight}`，并使用 emoji 序号（如 1️⃣）绑定；
 - idioms (array)：习语条目结构同 phrases；
-- patterns (array)：高频句型或语法结构，描述字段需解释用法并绑定 `【对应：s#】`；
+- patterns (array)：高频句型或语法结构，描述字段需解释用法并绑定相应 emoji 序号；
 - 所有数组均遵守 max_* 上限，未达到上限时可提前终止。
 
 ### 变形与词汇网络
 - variations (array)：对象元素含 `label` (如 "原型"、"复数")与 `form`；
 - 变形 (array)：为兼容历史逻辑的镜像数组，元素含 `状态`、`词形`；
-- synonyms (array)：近义词条目，必要时附加 `【对应：s#】`；
-- antonyms (array)：反义词条目，必要时附加 `【对应：s#】`；
-- related (array)：语义邻近词或相关词组，可含附注并绑定 `【对应：s#】`；
+- synonyms (array)：近义词条目，必要时附加 emoji 序号；
+- antonyms (array)：反义词条目，必要时附加 emoji 序号；
+- related (array)：语义邻近词或相关词组，可含附注并绑定 emoji 序号；
 - derivatives (array)：派生词条，数量不超过 max_derivatives；
 - culturalNotes (array)：文化背景、典故或跨文化提醒，元素为 string；
 - etymology (string | null)：词源摘要，未知时使用 null。
@@ -84,12 +84,12 @@
 ### 专业领域用法
 - domainUsages (array)：
   - 每个对象包含 domain (string)、meaning (string)、chineseGloss (string)、example (object)；
-  - example 对象需提供 english、chinese、insight，必要时绑定 `【对应：s#】`；
+  - example 对象需提供 english、chinese、insight，必要时绑定 emoji 序号；
   - 数量不超过 max_domain_usages。
 
 ### 语法与易混淆提示
-- grammarNotes (array)：语法提醒或高频误区，每项为 string，并可引用 `【对应：s#】`；
-- confusablePairs (array)：易混淆词对比，对象需含 `pair` (string)、`distinction` (string)、`examples` (array，含 english/chinese/insight)，并绑定 `【对应：s#】`；
+- grammarNotes (array)：语法提醒或高频误区，每项为 string，并可引用 emoji 序号；
+- confusablePairs (array)：易混淆词对比，对象需含 `pair` (string)、`distinction` (string)、`examples` (array，含 english/chinese/insight)，并绑定 emoji 序号；
 - tonalNotes、writingNotes 已在音标章节定义，避免在此重复。
 
 ## 纠错与分词
@@ -100,7 +100,7 @@
 ## 质量自检清单 (仅供生成时内部核对，不写入 JSON)
 - 是否满足最少义项与例句数要求，且未超过 max_* 限制；
 - 是否所有音标都采用 IPA 并标注主重音；
-- 是否所有搭配、短语、习语、句型都标明 `【对应：s#】`；
+- 是否所有搭配、短语、习语、句型都标明正确的 emoji 序号；
 - 是否域用法、语法说明、易混淆词提供可操作的对比或规约；
 - 是否所有字符串去除首尾空白且使用英式引号规范；
 - 是否在 metadata 中记录生成模型、版本与时间戳；
