@@ -11,6 +11,7 @@ const getButtonByLabel = (label) =>
     name: (value) => stripZeroWidth(value) === label,
   });
 import MarkdownRenderer from "@shared/components/ui/MarkdownRenderer";
+import styles from "@shared/components/ui/MarkdownRenderer/MarkdownRenderer.module.css";
 
 beforeEach(() => {
   act(() => {
@@ -40,6 +41,7 @@ test("renders GFM syntax", () => {
  * 断言：
  *  - 仅存在一个 table 元素且列头数量为 5。
  *  - 数据行的“对应义项”列保留 `【对应：s#】` 标记。
+ *  - 表头与数据单元格均应用约定的样式类，确保对齐策略可回归检测。
  * 边界/异常：
  *  - 若缺失列或无法解析表格，则说明 GFM 表格支持回归。
  */
@@ -68,10 +70,16 @@ test("renders markdown tables with accessible structure", () => {
     "中文翻译",
     "对应义项",
   ]);
+  headers.forEach((header) => {
+    expect(header).toHaveClass(styles["table-header-cell"]);
+  });
 
   const cells = within(table).getAllByRole("cell");
   expect(cells).toHaveLength(5);
   expect(stripZeroWidth(cells[4].textContent ?? "")).toBe("【对应：s1】");
+  cells.forEach((cell) => {
+    expect(cell).toHaveClass(styles["table-data-cell"]);
+  });
 });
 
 test("returns null for empty content", () => {

@@ -34,6 +34,16 @@ const BREAKABLE_TAGS = [
   "blockquote",
 ];
 
+const TABLE_TAG_CLASS_MAP = {
+  /**
+   * 背景：Markdown 表格默认沿用 th 的浏览器样式，项目主题需要自定义排版与比重。
+   * 目的：在不破坏断行逻辑的前提下，赋予表头/单元格专属类名，便于样式模块控制对齐与字重。
+   * 取舍：采用 CSS Module 类映射，替代在组件中硬编码 style/align 属性，保持设计令牌集中治理。
+   */
+  th: styles["table-header-cell"],
+  td: styles["table-data-cell"],
+};
+
 export default function buildMarkdownComponents({ injectBreaks }) {
   const components = Object.fromEntries(
     BREAKABLE_TAGS.map((tag) => {
@@ -42,9 +52,17 @@ export default function buildMarkdownComponents({ injectBreaks }) {
         ...elementProps
       }) {
         const Tag = tag;
+        const { className, ...restElementProps } = elementProps;
+        const resolvedClassName = joinClassNames(
+          className,
+          TABLE_TAG_CLASS_MAP[tag],
+        );
         return createElement(
           Tag,
-          elementProps,
+          {
+            ...restElementProps,
+            className: resolvedClassName,
+          },
           injectBreaks(children),
         );
       };
