@@ -220,9 +220,7 @@ public class WordSearcherImpl implements WordSearcher {
     }
 
     private void appendEnglishGuidance(StringBuilder builder, DictionaryFlavor flavor) {
-        builder
-            .append("\n条目类型：英文词汇")
-            .append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
+        builder.append("\n结构要求：保持模板的分层释义、例句与语法说明，并以 <END> 结尾。");
         if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
             builder.append("\n输出语言：仅使用英文完成释义、例句与所有说明，严禁出现中文或其他语言翻译。");
         }

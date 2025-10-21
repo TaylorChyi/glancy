@@ -98,10 +98,18 @@ class WordSearcherImplTest {
     }
 
     /**
-     * 验证中文查询时会在用户消息中标注条目类型，确保模型区分汉字与词语的输出格式。
+     * 测试目标：验证中文查询场景会在用户消息中追加条目结构定位与写作指引。
+     * 前置条件：模拟 LLM 工厂返回默认客户端，Prompt 管理器提供中文模板，搜索内容归一化为单字。
+     * 步骤：
+     *  1) 触发双语模式中文搜索；
+     *  2) 捕获发送给模型的用户消息。
+     * 断言：
+     *  - 用户消息包含「条目结构定位」与「写作指引」关键字段。
+     * 边界/异常：
+     *  - 若缺失条目结构定位，说明引导模板未生效，应快速定位。
      */
     @Test
-    void chineseSearchAnnotatesEntryType() {
+    void chineseSearchAnnotatesStructureGuidance() {
         when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
         when(searchContentManager.normalize("汉")).thenReturn("汉");
@@ -150,5 +158,51 @@ class WordSearcherImplTest {
             .filter(message -> "system".equals(message.getRole()))
             .anyMatch(message -> message.getContent().contains("中文译文"));
         assertTrue(hasInstruction);
+    }
+
+    /**
+     * 测试目标：确认英文检索的用户负载不再包含「条目类型」段落。
+     * 前置条件：模拟默认客户端、英文 Prompt、归一化后的英文词条，以及带哨兵的模型返回值。
+     * 步骤：
+     *  1) 触发英文单语检索；
+     *  2) 捕获发送给模型的用户消息内容。
+     * 断言：
+     *  - 用户消息不包含「条目类型」字符串，避免多余章节要求。
+     * 边界/异常：
+     *  - 如仍存在条目类型字段，说明指令未同步，需回滚或继续排查。
+     */
+    @Test
+    void englishSearchOmitsEntryTypeSection() {
+        when(factory.get("doubao")).thenReturn(defaultClient);
+        when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        when(searchContentManager.normalize("elegance")).thenReturn("elegance");
+        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
+        WordResponse expected = new WordResponse();
+        when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
+            new ParsedWord(expected, "content<END>")
+        );
+
+        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        searcher.search(
+            "elegance",
+            Language.ENGLISH,
+            DictionaryFlavor.MONOLINGUAL_ENGLISH,
+            "doubao",
+            NO_PERSONALIZATION_CONTEXT
+        );
+
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
+        ChatMessage userMessage = messagesCaptor
+            .getValue()
+            .stream()
+            .filter(message -> "user".equals(message.getRole()))
+            .findFirst()
+            .orElseThrow();
+
+        assertFalse(
+            userMessage.getContent().contains("条目类型"),
+            "英文检索用户消息仍包含「条目类型」字段，提示模板未同步"
+        );
     }
 }
