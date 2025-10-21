@@ -33,14 +33,14 @@ test("renders GFM syntax", () => {
 });
 
 /**
- * 测试目标：Markdown 表格在动态渲染模式下保留语义结构与列头信息。
+ * 测试目标：Markdown 表格在动态渲染模式下保留语义结构与三列表头信息。
  * 前置条件：提供包含单个表格的 Markdown，表头与数据行字段齐全。
  * 步骤：
  *  1) 渲染含表格的 Markdown 文本。
  *  2) 查询 table 节点及其列头、单元格。
  * 断言：
- *  - 仅存在一个 table 元素且列头数量为 5。
- *  - 数据行的“对应义项”列保留 emoji 义项标记（例如 1️⃣）。
+ *  - 仅存在一个 table 元素且列头数量为 3。
+ *  - 数据行的“对比词”列右侧附带 emoji 义项标记（例如 1️⃣）。
  * 边界/异常：
  *  - 若缺失列或无法解析表格，则说明 GFM 表格支持回归。
  */
@@ -48,9 +48,9 @@ test("renders markdown tables with accessible structure", () => {
   const markdown = [
     "## 对比",
     "",
-    "| 对比词 | 核心判别准则 | 英文例句 | 中文翻译 | 对应义项 |",
-    "| --- | --- | --- | --- | --- |",
-    "| adopt | choose the appropriate verb | Adopt the new policy. | 采纳这项新政策。 | 1️⃣ |",
+    "| 对比词 | 核心判别准则 | 英文例句 |",
+    "| --- | --- | --- |",
+    "| adopt 1️⃣ | choose the appropriate verb | Adopt the new policy. |",
   ].join("\n");
 
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
@@ -59,23 +59,21 @@ test("renders markdown tables with accessible structure", () => {
   expect(table).toBeInTheDocument();
 
   const headers = within(table).getAllByRole("columnheader");
-  expect(headers).toHaveLength(5);
+  expect(headers).toHaveLength(3);
   expect(
     headers.map((header) => stripZeroWidth(header.textContent ?? "")),
   ).toEqual([
     "对比词",
     "核心判别准则",
     "英文例句",
-    "中文翻译",
-    "对应义项",
   ]);
   headers.forEach((header) => {
     expect(header).toHaveClass(styles["table-header-cell"]);
   });
 
   const cells = within(table).getAllByRole("cell");
-  expect(cells).toHaveLength(5);
-  expect(stripZeroWidth(cells[4].textContent ?? "")).toBe("1️⃣");
+  expect(cells).toHaveLength(3);
+  expect(stripZeroWidth(cells[0].textContent ?? "")).toBe("adopt 1️⃣");
 });
 
 test("returns null for empty content", () => {
