@@ -38,7 +38,7 @@ test("renders GFM syntax", () => {
  *  1) 渲染含表格的 Markdown 文本。
  *  2) 查询 table 节点及其列头、单元格。
  * 断言：
- *  - 仅存在一个 table 元素且列头数量为 6。
+ *  - 仅存在一个 table 元素且列头数量为 5。
  *  - 数据行的“对应义项”列保留 `【对应：s#】` 标记。
  * 边界/异常：
  *  - 若缺失列或无法解析表格，则说明 GFM 表格支持回归。
@@ -47,9 +47,9 @@ test("renders markdown tables with accessible structure", () => {
   const markdown = [
     "## 对比",
     "",
-    "| 对比词 A | 对比词 B | 核心判别准则 | 英文例句 | 中文翻译 | 对应义项 |",
-    "| --- | --- | --- | --- | --- | --- |",
-    "| adapt | adopt | choose the appropriate verb | Adapt quickly. | 尽快适应。 | 【对应：s1】 |",
+    "| 对比词 | 核心判别准则 | 英文例句 | 中文翻译 | 对应义项 |",
+    "| --- | --- | --- | --- | --- |",
+    "| adopt | choose the appropriate verb | Adopt the new policy. | 采纳这项新政策。 | 【对应：s1】 |",
   ].join("\n");
 
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
@@ -58,12 +58,11 @@ test("renders markdown tables with accessible structure", () => {
   expect(table).toBeInTheDocument();
 
   const headers = within(table).getAllByRole("columnheader");
-  expect(headers).toHaveLength(6);
+  expect(headers).toHaveLength(5);
   expect(
     headers.map((header) => stripZeroWidth(header.textContent ?? "")),
   ).toEqual([
-    "对比词 A",
-    "对比词 B",
+    "对比词",
     "核心判别准则",
     "英文例句",
     "中文翻译",
@@ -71,8 +70,8 @@ test("renders markdown tables with accessible structure", () => {
   ]);
 
   const cells = within(table).getAllByRole("cell");
-  expect(cells).toHaveLength(6);
-  expect(stripZeroWidth(cells[5].textContent ?? "")).toBe("【对应：s1】");
+  expect(cells).toHaveLength(5);
+  expect(stripZeroWidth(cells[4].textContent ?? "")).toBe("【对应：s1】");
 });
 
 test("returns null for empty content", () => {
