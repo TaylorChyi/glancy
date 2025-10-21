@@ -22,7 +22,7 @@ export {
   WORD_DEFAULT_TARGET_LANGUAGE,
   resolveLanguageBadge,
 } from "./language.js";
-export { getBrandText, BRAND_TEXT } from "./brand.js";
+export { getBrandText, BRAND_TEXT, BRAND_LOGO_ICON } from "./brand.js";
 export { validateEmail, validatePhone, validateAccount } from "./validators.js";
 export { audioManager } from "./audioManager.js";
 export { decodeTtsAudio } from "./audio.js";

@@ -1,6 +1,7 @@
 /* eslint-env jest */
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { BRAND_LOGO_ICON } from "@shared/utils/brand.js";
 
 let currentTheme = "light";
 const mockUseTheme = jest.fn(() => ({ resolvedTheme: currentTheme }));
@@ -10,7 +11,7 @@ jest.unstable_mockModule("@core/context", () => ({
 }));
 
 const iconRegistry = {
-  "glancy-web": {
+  [BRAND_LOGO_ICON]: {
     single: Object.freeze({
       url: "/assets/brand/glancy/brand-glancy-website.svg",
       inline: '<svg data-icon="glancy"></svg>',
@@ -49,7 +50,7 @@ describe("ThemeIcon", () => {
 
   /**
    * 测试目标：在默认主题下渲染单源 SVG 并附带语义文本颜色类。
-   * 前置条件：iconRegistry 包含 glancy-web 的 single 资源；主题为 light。
+   * 前置条件：iconRegistry 注册了品牌图标单源资源；主题为 light。
    * 步骤：
    *  1) 渲染 ThemeIcon；
    *  2) 查找 role="img" 元素；
@@ -61,7 +62,7 @@ describe("ThemeIcon", () => {
    *  - 不触发。
    */
   test("renders single-source icon with semantic role class", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" />);
+    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.innerHTML).toContain('data-icon="glancy"');
     expect(icon.className).toContain("text-onsurface");
@@ -118,7 +119,7 @@ describe("ThemeIcon", () => {
    *  - tone 未提供时应同样产出 text-onsurface（由默认测试覆盖）。
    */
   test("treats dark tone as default foreground to preserve contrast", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" tone="dark" />);
+    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" tone="dark" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-onsurface");
   });
@@ -137,7 +138,7 @@ describe("ThemeIcon", () => {
    */
   test("uses surface role in dark theme for auto tone", () => {
     currentTheme = "dark";
-    render(<ThemeIcon name="glancy-web" alt="brand" />);
+    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-onsurface");
   });
@@ -155,14 +156,14 @@ describe("ThemeIcon", () => {
    *  - 若 roleClass 缺失则回退到 legacy tone（已由前两测试覆盖）。
    */
   test("respects explicit roleClass override", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" roleClass="danger" />);
+    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" roleClass="danger" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).toContain("text-ondanger");
   });
 
   /**
    * 测试目标：当 roleClass 指定为 inherit 时不再覆盖外层 color，保证侧边栏等场景的色彩继承链一致。
-   * 前置条件：roleClass="inherit"；iconRegistry 存在 glancy-web 的 single 资源。
+   * 前置条件：roleClass="inherit"；iconRegistry 提供品牌图标 single 资源。
    * 步骤：
    *  1) 渲染 ThemeIcon，并传入 roleClass="inherit"；
    *  2) 获取 role="img" 元素；
@@ -172,7 +173,7 @@ describe("ThemeIcon", () => {
    *  - inherit 仅跳过语义色注入，其余属性保持默认处理。
    */
   test("skips semantic role classes when inherit is requested", () => {
-    render(<ThemeIcon name="glancy-web" alt="brand" roleClass="inherit" />);
+    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" roleClass="inherit" />);
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).not.toContain("text-onsurface");
   });

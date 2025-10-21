@@ -24,7 +24,7 @@ import ThemeIcon from "@shared/components/ui/Icon";
 import ICP from "@shared/components/ui/ICP";
 import PasswordInput from "@shared/components/ui/PasswordInput";
 import { useLanguage } from "@core/context";
-import { getBrandText } from "@shared/utils";
+import { getBrandText, BRAND_LOGO_ICON } from "@shared/utils";
 import {
   useAuthFormController,
 } from "./authFormController.js";
@@ -160,7 +160,7 @@ function AuthFormHeader({ brandText, title }) {
   return (
     <>
       <ThemeIcon
-        name="glancy-web"
+        name={BRAND_LOGO_ICON}
         alt={brandText}
         className={styles["auth-logo"]}
       />

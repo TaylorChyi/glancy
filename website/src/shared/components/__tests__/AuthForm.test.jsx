@@ -3,6 +3,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { jest } from "@jest/globals";
+import { BRAND_LOGO_ICON } from "@shared/utils/brand.js";
 
 jest.unstable_mockModule("@core/context", () => ({
   // Provide minimal implementations for all hooks consumed by AuthForm
@@ -37,13 +38,13 @@ jest.unstable_mockModule("@core/context", () => ({
 }));
 
 const iconRegistry = {
-  "glancy-web": {
+  [BRAND_LOGO_ICON]: {
     light: Object.freeze({
-      url: "/assets/glancy-web-light.svg",
+      url: "/assets/brand/glancy/brand-glancy-website.svg",
       inline: '<svg data-token="glancy-light"></svg>',
     }),
     dark: Object.freeze({
-      url: "/assets/glancy-web-dark.svg",
+      url: "/assets/brand/glancy/brand-glancy-website.svg",
       inline: '<svg data-token="glancy-dark"></svg>',
     }),
   },
