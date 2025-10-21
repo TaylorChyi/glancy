@@ -308,8 +308,8 @@ test("polishDictionaryMarkdown restores missing label delimiters", () => {
 });
 
 /**
- * 测试目标：验证 Sense 标签位于全角方括号内时不会被补写冒号触发换行。
- * 前置条件：Markdown 文本中包含 `【对应：s2】` 片段。
+ * 测试目标：验证基于 emoji 的义项标记不会被补写冒号逻辑误伤。
+ * 前置条件：Markdown 文本中包含 `2️⃣` 片段。
  * 步骤：
  *  1) 调用 polishDictionaryMarkdown。
  * 断言：
@@ -317,8 +317,8 @@ test("polishDictionaryMarkdown restores missing label delimiters", () => {
  * 边界/异常：
  *  - 防止语料绑定信息被拆分。
  */
-test("polishDictionaryMarkdown preserves sense marker inside cjk brackets", () => {
-  const source = "- cooperatewith: 与……合作【对应：s2】";
+test("polishDictionaryMarkdown preserves sense marker emoji", () => {
+  const source = "- cooperatewith: 与……合作2️⃣";
   const result = polishDictionaryMarkdown(source);
   expect(result).toBe(source);
 });

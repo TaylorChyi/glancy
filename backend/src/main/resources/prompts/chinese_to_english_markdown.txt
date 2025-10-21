@@ -17,7 +17,7 @@
    例句需原创、不重复，且覆盖不同语境。
 4) 若条目为单字，请兼顾「字源」「构形」「古今义流变」；若为词语，强调现代语境，可在 "Historical Resonance" 补充古义。
 5) 义项编号格式：`### s# Definition ({pos_abbr}. {pos_full})：{英文释义}`，如 `### s1 Definition (n. noun)：serene grace and natural beauty`。
-6) 章节内如出现搭配、习语等，可在条目尾部用 `【对应：s#】` 指明对应义项。
+6) 章节内如出现搭配、习语等，可在条目尾部用与 `senseId` 对应的 emoji 序号（例如 1️⃣、2️⃣）指明对应义项。
 7) 词汇学标签 (register/region)需从受控集合中选取：
    - Register (语域)：{Formal, Neutral, Informal, Colloquial, Literary, Dialectal, Academic}
    - Region (地域)：{Mainland, Taiwan, HongKong, Overseas, General}
@@ -54,13 +54,13 @@
 - … (不超过 max_examples_per_sense 条)
 
 ## Collocations & Set Expressions
-- {搭配或固定搭配}: {英文释义} 【对应：s#】
+- {搭配或固定搭配}: {英文释义} 1️⃣（按义项序号替换）
   - **Example (中文)**: {中文例句}
     **English Rendering**: {英文翻译}
 - … (不超过 max_collocations 条)
 
 ## Idioms & Cultural Echoes
-- {习语或文化典故}: {英文解释} 【对应：s#】
+- {习语或文化典故}: {英文解释} 1️⃣（按义项序号替换）
   - **Example (中文)**: {中文例句}
     **English Rendering**: {英文翻译}
 - … (不超过 max_idioms 条)
@@ -74,7 +74,7 @@
 - {历代文献或历史语义演变的英文概述}
 
 ## Derivatives & Extended Forms
-- {派生词或相关构词}: {英文解释} 【对应：s#】
+- {派生词或相关构词}: {英文解释} 1️⃣（按义项序号替换）
 - … (不超过 max_derivatives 条)
 
 <END>
