@@ -11,6 +11,7 @@ const getButtonByLabel = (label) =>
     name: (value) => stripZeroWidth(value) === label,
   });
 import MarkdownRenderer from "@shared/components/ui/MarkdownRenderer";
+import styles from "@shared/components/ui/MarkdownRenderer/MarkdownRenderer.module.css";
 
 beforeEach(() => {
   act(() => {
@@ -68,6 +69,9 @@ test("renders markdown tables with accessible structure", () => {
     "中文翻译",
     "对应义项",
   ]);
+  headers.forEach((header) => {
+    expect(header).toHaveClass(styles["table-header-cell"]);
+  });
 
   const cells = within(table).getAllByRole("cell");
   expect(cells).toHaveLength(5);
