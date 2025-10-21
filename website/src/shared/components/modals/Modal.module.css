@@ -6,6 +6,24 @@
   align-items: center;
   justify-content: center;
   padding: var(--settings-dialog-gap-md);
+  /*
+   * 复用组件注入的 overlay 令牌，并统一提供毛玻璃基线：
+   *  - 默认落地为夜间中性叠层色板，保持品牌色温；
+   *  - 通过半透明叠加与背景模糊柔化下层内容，避免出现生硬遮挡；
+   *  - 向下兼容旧有不配置 overlay 令牌的模态，保证回退视觉一致。
+   */
+  background: var(
+    --modal-overlay-background,
+    color-mix(in srgb, #0f172a 82%, transparent)
+  );
+  backdrop-filter: var(
+    --modal-overlay-backdrop-filter,
+    blur(28px) saturate(120%)
+  );
+  -webkit-backdrop-filter: var(
+    --modal-overlay-backdrop-filter,
+    blur(28px) saturate(120%)
+  );
   animation: sheet-overlay-fade 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 

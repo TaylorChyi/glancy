@@ -13,7 +13,18 @@
   --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
   --preferences-button-contrast-bg: var(--neutral-950);
   --preferences-button-contrast-text: var(--neutral-0);
-  --modal-overlay-background: transparent;
+  /*
+   * 将 overlay 着色为与面板同源的半透明色板并叠加模糊：
+   *  - 维持色温与内容面板一致，避免主题切换时的割裂；
+   *  - 通过轻量透出配合模糊营造毛玻璃层次感；
+   *  - 若未来主题需调整强度，可仅覆盖变量，无需触碰组件样式。
+   */
+  --modal-overlay-background: color-mix(
+    in srgb,
+    var(--preferences-panel-bg) 88%,
+    transparent
+  );
+  --modal-overlay-backdrop-filter: blur(30px) saturate(125%);
   --modal-surface: var(--preferences-panel-bg);
   --modal-color: var(--preferences-panel-text);
   --modal-shadow: var(--preferences-panel-shadow);
