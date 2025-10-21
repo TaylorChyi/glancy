@@ -4,8 +4,6 @@
    * 同时通过变量受控，避免影响其他对话框的宽高策略。
   */
   --modal-max-height: min(92vh, 920px);
-
-  background: var(--app-bg);
   color: var(--app-color);
   padding: 32px 32px 28px;
   border-radius: var(--radius-lg);
