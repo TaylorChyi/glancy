@@ -6,21 +6,23 @@
   align-items: center;
   justify-content: center;
   padding: var(--settings-dialog-gap-md);
+
   /*
    * 复用组件注入的 overlay 令牌，并统一提供毛玻璃基线：
    *  - 默认落地为夜间中性叠层色板，保持品牌色温；
-   *  - 通过半透明叠加与背景模糊柔化下层内容，避免出现生硬遮挡；
+   *  - 采用纯色遮罩结合背景模糊，彻底阻断透底造成的视觉噪点；
    *  - 向下兼容旧有不配置 overlay 令牌的模态，保证回退视觉一致。
    */
   background: var(
     --modal-overlay-background,
-    color-mix(in srgb, #0f172a 82%, transparent)
+    var(--color-overlay-strong, #0f172a)
   );
+
+  /*
+   * `backdrop-filter` 在 Safari 16+ 已原生支持，无需继续维持前缀写法。
+   * 通过变量保留可调节性，便于后续针对性能或视觉进行差异化配置。
+   */
   backdrop-filter: var(
-    --modal-overlay-backdrop-filter,
-    blur(28px) saturate(120%)
-  );
-  -webkit-backdrop-filter: var(
     --modal-overlay-backdrop-filter,
     blur(28px) saturate(120%)
   );
