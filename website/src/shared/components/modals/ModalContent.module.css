@@ -6,12 +6,6 @@
 
   --modal-max-height: min(92vh, 920px);
 
-  /*
-   * 统一使用主题变量控制对话框底色与排版参数，确保品牌认证
-   * 页签与导航入口在不同主题下拥有一致的视觉秩序。
-   */
-
-  background: var(--app-bg);
   color: var(--app-color);
   padding: 32px 32px 28px;
   border-radius: var(--radius-lg);
