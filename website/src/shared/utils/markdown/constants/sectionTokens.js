@@ -68,7 +68,6 @@ export const HEADING_LIST_TITLES = new Set(
     "反义词",
     "语法用法说明",
     "易混淆词",
-    "地域差异",
     "词源",
     "相关派生词",
     "词根与构词法",
