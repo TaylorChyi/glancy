@@ -23,5 +23,4 @@ export const TRANSLATION_WRAPPER_PAIRS = Object.freeze([
   ["(", ")"],
   ["（", "）"],
   ["[", "]"],
-  ["【", "】"],
 ]);
