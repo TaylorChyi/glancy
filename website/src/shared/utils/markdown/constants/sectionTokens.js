@@ -72,7 +72,6 @@ export const HEADING_LIST_TITLES = new Set(
     "词源",
     "相关派生词",
     "词根与构词法",
-    "文化背景与典故",
     "历史语义演变",
     "专业领域用法",
   ].map((title) => title.replace(/\s+/g, "")),
