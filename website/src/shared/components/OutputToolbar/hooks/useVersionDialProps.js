@@ -17,7 +17,6 @@ export const useVersionDialProps = ({
   versionViewModel,
   baseToolButtonClass,
   onNavigate,
-  disabled,
   translator,
 }) => {
   const {
@@ -25,28 +24,19 @@ export const useVersionDialProps = ({
     hasNext,
     indicator,
     pagerLabel,
-    versionOptions,
-    versionSelectValue,
-    versionMenuLabel,
-    canSelectVersion,
-    handleVersionSelect,
+    disabled,
   } = versionViewModel;
   return useMemo(
     () => ({
       baseToolButtonClass,
       hasPrevious,
       hasNext,
-      disabled: Boolean(disabled),
+      disabled,
       onNavigate,
       previousLabel: translator.previousVersion,
       nextLabel: translator.nextVersion,
       indicator,
       pagerLabel,
-      canSelectVersion,
-      versionOptions,
-      versionSelectValue,
-      handleVersionSelect,
-      versionMenuLabel,
     }),
     [
       baseToolButtonClass,
@@ -58,11 +48,6 @@ export const useVersionDialProps = ({
       translator.nextVersion,
       indicator,
       pagerLabel,
-      canSelectVersion,
-      versionOptions,
-      versionSelectValue,
-      handleVersionSelect,
-      versionMenuLabel,
     ],
   );
 };

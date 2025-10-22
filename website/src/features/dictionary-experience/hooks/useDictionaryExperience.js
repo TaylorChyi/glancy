@@ -88,7 +88,6 @@ export function useDictionaryExperience() {
     handleShowLibrary,
     handleVoice,
     handleNavigateVersion,
-    handleSelectVersion,
     applyRecord,
   } = interactions;
 
@@ -168,7 +167,6 @@ export function useDictionaryExperience() {
     versions: state.versions,
     activeVersionId: state.activeVersionId,
     handleNavigateVersion,
-    handleSelectVersion,
     handleCopy,
     canCopyDefinition,
     copyFeedbackState,

@@ -162,19 +162,19 @@ describe("useDictionaryExperience/view state", () => {
   });
 
   /**
-   * 测试目标：验证版本选择入口会同步更新词条与缓存。
+   * 测试目标：验证版本导航按钮仍可驱动版本切换并同步缓存。
    * 前置条件：mockStreamWord 返回含双版本记录，缓存命中 activeVersionId。
    * 步骤：
    *  1) 设置查询词并触发 handleSend；
-   *  2) 通过 onSelectVersion 选择第二个版本。
+   *  2) 调用 onNavigate("next") 切换到下一版本。
    * 断言：
    *  - setActiveVersion 收到缓存键与目标版本 ID；
    *  - dictionaryActionBarProps.activeVersionId 更新为目标 ID；
    *  - entry 与 finalText 对应目标版本，streamText 被清空。
    * 边界/异常：
-   *  - 若缓存缺失或版本 ID 不存在，应保持当前版本不变。
+   *  - 若不存在下一版本，应保持当前版本不变。
    */
-  it("GivenMultipleVersions_WhenSelectingFromMenu_ThenUpdatesActiveEntry", async () => {
+  it("GivenMultipleVersions_WhenNavigatingForward_ThenUpdatesActiveEntry", async () => {
     const entryV1 = {
       id: "v1",
       term: "omega",
@@ -197,7 +197,7 @@ describe("useDictionaryExperience/view state", () => {
     });
 
     await act(() => {
-      result.current.dictionaryActionBarProps.onSelectVersion?.("v2");
+      result.current.dictionaryActionBarProps.onNavigate?.("next");
     });
 
     expect(mockSetActiveVersion).toHaveBeenCalledWith(cacheKey, "v2");
