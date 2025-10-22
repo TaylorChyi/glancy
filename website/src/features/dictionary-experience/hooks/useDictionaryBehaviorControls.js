@@ -63,7 +63,7 @@ export function useDictionaryBehaviorControls({
     lookupController;
 
   const activeTerm = entry?.term || currentTerm;
-  const { applyRecord, handleNavigateVersion, handleSelectVersion } =
+  const { applyRecord, handleNavigateVersion } =
     useDictionaryVersionControls({
       wordStoreApi,
       setEntry,
@@ -175,7 +175,6 @@ export function useDictionaryBehaviorControls({
     handleShareLinkCopy,
     handleShareImageExport,
     handleNavigateVersion,
-    handleSelectVersion,
     applyRecord,
     ...historyHandlers,
   };

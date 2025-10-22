@@ -42,8 +42,6 @@ export const translationFixture = {
   searchEmptyTitle: "开始探索",
   searchEmptyDescription: "输入任何词汇即可获取解释",
   inputPlaceholder: "输入查询内容",
-  versionMenuLabel: "选择版本",
-  versionOptionLabel: "版本 {index}",
   copyAction: "复制",
   copySuccess: "复制成功",
   copyEmpty: "无内容",

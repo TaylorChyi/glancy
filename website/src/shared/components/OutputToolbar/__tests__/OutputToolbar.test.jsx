@@ -14,8 +14,6 @@ jest.unstable_mockModule("@core/context", () => ({
       nextVersion: "下一版本",
       versionIndicator: "{current} / {total}",
       versionIndicatorEmpty: "0 / 0",
-      versionMenuLabel: "选择版本",
-      versionOptionLabel: "版本 {index}",
       copyAction: "复制",
       copySuccess: "复制完成",
       favoriteAction: "收藏",
@@ -114,29 +112,31 @@ describe("OutputToolbar", () => {
   });
 
   /**
-   * 验证版本下拉菜单在多版本场景下渲染，并正确透出选择事件。
+   * 测试目标：多版本场景仅展示翻页按钮与指示器，不渲染下拉菜单。
+   * 前置条件：传入三个版本并指定当前激活版本。
+   * 步骤：
+   *  1) 渲染 OutputToolbar；
+   *  2) 获取版本拨盘容器；
+   *  3) 统计按钮数量并尝试查找下拉触发器。
+   * 断言：
+   *  - 拨盘中仅存在两个导航按钮；
+   *  - 查找“选择版本”按钮返回 null。
+   * 边界/异常：
+   *  - 若未来重新引入版本菜单，需要更新此测试验证新的交互。
    */
-  test("renders version menu and delegates selection", () => {
-    const onSelectVersion = jest.fn();
+  test("WhenMultipleVersionsPresent_MenuRemainsHidden", () => {
     render(
       <OutputToolbar
         term="hello"
-        versions={[
-          { id: "v1", createdAt: "2024-05-01T08:00:00Z" },
-          { id: "v2", createdAt: "2024-05-02T09:00:00Z" },
-        ]}
-        activeVersionId="v1"
-        onSelectVersion={onSelectVersion}
+        versions={[{ id: "v1" }, { id: "v2" }, { id: "v3" }]}
+        activeVersionId="v2"
       />,
     );
 
-    const trigger = screen.getByRole("button", { name: "选择版本" });
-    expect(trigger).toHaveTextContent("版本 1");
-
-    fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("menuitemradio", { name: /版本 2/ }));
-
-    expect(onSelectVersion).toHaveBeenCalledWith("v2");
+    const pagerGroup = screen.getByRole("group", { name: "例句翻页" });
+    const buttons = within(pagerGroup).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    expect(within(pagerGroup).queryByRole("button", { name: "选择版本" })).toBeNull();
   });
 
   /**
