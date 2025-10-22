@@ -299,7 +299,7 @@ public class WordSearcherImpl implements WordSearcher {
         }
         return new ChineseEntryProfile(
             "Multi-character Word",
-            "标准汉语词语，请分层呈现核心义项、语域差异与常见搭配，并提供文化背景。"
+            "标准汉语词语，请分层呈现核心义项与常见搭配。"
         );
     }
 
