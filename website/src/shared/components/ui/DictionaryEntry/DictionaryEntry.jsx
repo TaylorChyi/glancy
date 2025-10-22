@@ -48,7 +48,7 @@ function DictionaryEntry({ entry, className }) {
             aria-labelledby="phon-title"
           >
             <h2 id="phon-title" className={styles["section-title"]}>
-              【{t.phoneticLabel}】
+              {t.phoneticLabel}
             </h2>
             <p className={styles.phonetic}>{phonetic}</p>
           </section>
@@ -56,7 +56,7 @@ function DictionaryEntry({ entry, className }) {
         {definitions && definitions.length > 0 ? (
           <section className={styles.definitions} aria-labelledby="def-title">
             <h2 id="def-title" className={styles["section-title"]}>
-              【{t.definitionsLabel}】
+              {t.definitionsLabel}
             </h2>
             <ol>
               {definitions.map((d, i) => (
@@ -72,7 +72,7 @@ function DictionaryEntry({ entry, className }) {
         {example && (
           <section className={styles.example} aria-labelledby="ex-title">
             <h2 id="ex-title" className={styles["section-title"]}>
-              【{t.exampleLabel}】
+              {t.exampleLabel}
             </h2>
             <blockquote>
               <DictionaryMarkdown>{example}</DictionaryMarkdown>
@@ -115,7 +115,7 @@ function DictionaryEntry({ entry, className }) {
           aria-labelledby="phon-title"
         >
           <h2 id="phon-title" className={styles["section-title"]}>
-            【{t.phoneticLabel}】
+            {t.phoneticLabel}
           </h2>
           <p className={styles.phonetic}>{phoneticText}</p>
         </section>
@@ -123,7 +123,7 @@ function DictionaryEntry({ entry, className }) {
       {variants.length > 0 && (
         <section className={styles.variants} aria-labelledby="var-title">
           <h2 id="var-title" className={styles["section-title"]}>
-            【{varLabel}】
+            {varLabel}
           </h2>
           <ul>
             {variants.map((v, i) => (
@@ -137,7 +137,7 @@ function DictionaryEntry({ entry, className }) {
       {defs.length > 0 ? (
         <section className={styles.definitions} aria-labelledby="def-title">
           <h2 id="def-title" className={styles["section-title"]}>
-            【{t.definitionsLabel}】
+            {t.definitionsLabel}
           </h2>
           <ol>
             {defs.map((d, i) => (
@@ -194,7 +194,7 @@ function DictionaryEntry({ entry, className }) {
       {phrases.length > 0 && (
         <section className={styles.phrases} aria-labelledby="phr-title">
           <h2 id="phr-title" className={styles["section-title"]}>
-            【{phrLabel}】
+            {phrLabel}
           </h2>
           <ul>
             {phrases.map((p, i) => (
