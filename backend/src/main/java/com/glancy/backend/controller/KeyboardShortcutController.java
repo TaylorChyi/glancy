@@ -1,8 +1,8 @@
 package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
-import com.glancy.backend.dto.KeyboardShortcutResponse;
-import com.glancy.backend.dto.KeyboardShortcutUpdateRequest;
+import com.glancy.backend.dto.keyboard.KeyboardShortcutResponse;
+import com.glancy.backend.dto.keyboard.KeyboardShortcutUpdateRequest;
 import com.glancy.backend.entity.ShortcutAction;
 import com.glancy.backend.service.shortcut.KeyboardShortcutService;
 import jakarta.validation.Valid;

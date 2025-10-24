@@ -1,9 +1,9 @@
 package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
-import com.glancy.backend.dto.TtsRequest;
-import com.glancy.backend.dto.TtsResponse;
-import com.glancy.backend.dto.VoiceResponse;
+import com.glancy.backend.dto.tts.TtsRequest;
+import com.glancy.backend.dto.tts.TtsResponse;
+import com.glancy.backend.dto.tts.VoiceResponse;
 import com.glancy.backend.service.tts.TtsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

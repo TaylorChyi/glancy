@@ -1,6 +1,6 @@
 package com.glancy.backend.controller;
 
-import com.glancy.backend.dto.LocaleResponse;
+import com.glancy.backend.dto.common.LocaleResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Locale;
 import java.util.Map;

@@ -1,8 +1,8 @@
 package com.glancy.backend.service.personalization;
 
-import com.glancy.backend.dto.PersonalizedWordExplanation;
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.PersonalizedWordExplanation;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 
 /**
  * Provides contextualized interpretations for dictionary entries based on a

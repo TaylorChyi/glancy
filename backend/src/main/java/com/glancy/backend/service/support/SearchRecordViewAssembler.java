@@ -1,7 +1,7 @@
 package com.glancy.backend.service.support;
 
-import com.glancy.backend.dto.SearchRecordResponse;
-import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.dto.search.SearchRecordResponse;
+import com.glancy.backend.dto.search.SearchRecordVersionSummary;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.mapper.SearchRecordMapper;
 import com.glancy.backend.service.SearchResultService;

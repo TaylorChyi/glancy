@@ -1,8 +1,8 @@
 package com.glancy.backend.service;
 
-import com.glancy.backend.dto.ProfileCustomSectionDto;
-import com.glancy.backend.dto.UserProfileRequest;
-import com.glancy.backend.dto.UserProfileResponse;
+import com.glancy.backend.dto.user.ProfileCustomSectionDto;
+import com.glancy.backend.dto.user.UserProfileRequest;
+import com.glancy.backend.dto.user.UserProfileResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.UserProfile;
 import com.glancy.backend.exception.ResourceNotFoundException;

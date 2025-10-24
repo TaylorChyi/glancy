@@ -1,6 +1,6 @@
 package com.glancy.backend.service;
 
-import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.dto.search.SearchRecordVersionSummary;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;

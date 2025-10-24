@@ -3,7 +3,7 @@ package com.glancy.backend.service.profile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.ProfileCustomSectionDto;
+import com.glancy.backend.dto.user.ProfileCustomSectionDto;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;

@@ -1,7 +1,7 @@
 package com.glancy.backend.client;
 
 import com.glancy.backend.config.DoubaoProperties;
-import com.glancy.backend.dto.ChatCompletionResponse;
+import com.glancy.backend.dto.chat.ChatCompletionResponse;
 import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.llm.llm.LLMClient;

@@ -1,6 +1,6 @@
 package com.glancy.backend.service.profile;
 
-import com.glancy.backend.dto.ProfileCustomSectionDto;
+import com.glancy.backend.dto.user.ProfileCustomSectionDto;
 import java.util.List;
 
 /**
