@@ -1,0 +1,62 @@
+//
+// 背景：
+//  - 需要在持续集成阶段识别从业务入口不可达的后端方法，避免未使用代码堆积。
+// 目的：
+//  - 定义 jQAssistant 规则组，通过调用图分析找出从 Spring 控制器、调度任务与事件监听入口不可达的方法。
+// 关键决策与取舍：
+//  - 选择使用 AsciiDoc 约束文件而非内联 XML，以便后续团队以声明式方式扩展规则；
+//  - 未引入 APOC 等扩展，保证 Neo4j 嵌入式依赖最小，必要时可再增加导出能力。
+// 影响范围：
+//  - CI 中执行的 jqassistant:scan 与 jqassistant:analyze 会引用该规则；触发后会阻断构建。
+// 演进与TODO：
+//  - 后续可按需要扩展入口白名单、接入 @KafkaListener/@RabbitListener 等注解并补充导出报表。
+=
+= Dead Code Governance
+
+[[group:default]]
+== 基于入口的可达性约束（默认守卫）
+
+[[dead-code:unreachable-from-entrypoints]]
+[role=constraint, severity=error]
+=== 从业务入口不可达的方法必须清理
+
+该约束收集所有以 Spring Web 控制器、调度任务、事件监听器以及核心启动方法为起点的调用路径，
+凡是声明于 `com.glancy.backend` 包下且既不在调用路径上、也未显式标记 `@UsedByReflection` 的方法，
+都将视为“不可达候选”。违规列表会随分析报告输出，并以 ERROR 等级使构建失败。
+
+[source,cypher]
+----
+CALL {
+  MATCH (method:Method)-[:ANNOTATED_BY]->(annotation:Annotation)
+  WHERE annotation.fqn STARTS WITH 'org.springframework.web.bind.annotation.'
+     OR annotation.fqn IN [
+       'org.springframework.scheduling.annotation.Scheduled',
+       'org.springframework.context.event.EventListener',
+       'org.springframework.context.annotation.Bean'
+     ]
+  RETURN COLLECT(DISTINCT method) AS annotatedEntries
+}
+CALL {
+  MATCH (mainMethod:Method {name: 'main'})<-[:DECLARES]-(mainOwner:Type)
+  WHERE mainOwner.fqn STARTS WITH 'com.glancy.backend'
+  RETURN COLLECT(DISTINCT mainMethod) AS bootstrapEntries
+}
+WITH annotatedEntries + bootstrapEntries AS entryCandidates
+UNWIND entryCandidates AS entryCandidate
+WITH COLLECT(DISTINCT entryCandidate) AS entryMethods
+CALL {
+  WITH entryMethods
+  UNWIND entryMethods AS entry
+  MATCH path = (entry)-[:INVOKES*0..]->(reachable:Method)
+  RETURN COLLECT(DISTINCT reachable) AS reachableMethods
+}
+MATCH (candidate:Method)<-[:DECLARES]-(owner:Type)
+WHERE owner.fqn STARTS WITH 'com.glancy.backend'
+  AND candidate.name <> '<init>'
+  AND candidate.name <> '<clinit>'
+  AND NOT candidate IN reachableMethods
+  AND NOT (candidate)-[:ANNOTATED_BY]->(:Annotation {fqn: 'com.glancy.backend.annotation.UsedByReflection'})
+RETURN DISTINCT candidate AS offendingMethod,
+                owner AS declaringType,
+                '方法未从任何业务入口调用，请评估删除或以 @UsedByReflection 标记。' AS message
+----
