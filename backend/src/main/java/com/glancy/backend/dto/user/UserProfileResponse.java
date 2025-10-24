@@ -38,10 +38,8 @@ public record UserProfileResponse(
     /** 自定义维度的层级配置 */
     List<ProfileCustomSectionDto> customSections
 ) {
-    @SuppressWarnings("PMD.UnusedAssignment")
     public UserProfileResponse {
-        // 防御性拷贝自定义区块，保持 record 不可变语义且兼容 PMD 规则。
-        customSections = sanitizeSections(customSections);
+        customSections = sanitizeSections(customSections); // NOPMD - UnusedAssignment: 构造时重绑定以保障不可变语义
     }
 
     private static List<ProfileCustomSectionDto> sanitizeSections(List<ProfileCustomSectionDto> sections) {

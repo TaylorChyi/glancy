@@ -27,11 +27,9 @@ public record WordPersonalizationContext(
     List<String> interests,
     List<String> recentTerms
 ) {
-    @SuppressWarnings("PMD.UnusedAssignment")
     public WordPersonalizationContext {
-        // 在字段赋值前统一执行 List.copyOf，避免外部篡改原始集合。
-        interests = sanitizeSignals(interests);
-        recentTerms = sanitizeSignals(recentTerms);
+        interests = sanitizeSignals(interests); // NOPMD - UnusedAssignment: record 构造需要重绑定集合实现防御性拷贝
+        recentTerms = sanitizeSignals(recentTerms); // NOPMD - UnusedAssignment: 同上
     }
 
     private static List<String> sanitizeSignals(List<String> signals) {

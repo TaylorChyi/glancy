@@ -20,10 +20,8 @@ public record ProfileCustomSectionDto(
     /** 大项内的细分条目集合 */
     List<ProfileCustomSectionItemDto> items
 ) {
-    @SuppressWarnings("PMD.UnusedAssignment")
     public ProfileCustomSectionDto {
-        // 构造阶段需对列表进行防御性拷贝，重写参数值会被 PMD 误判为未使用赋值。
-        items = sanitizeItems(items);
+        items = sanitizeItems(items); // NOPMD - UnusedAssignment: record 构造阶段需重绑定以完成防御性拷贝
     }
 
     private static List<ProfileCustomSectionItemDto> sanitizeItems(List<ProfileCustomSectionItemDto> source) {

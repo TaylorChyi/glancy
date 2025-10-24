@@ -31,10 +31,8 @@ public record SearchRecordResponse(
     SearchRecordVersionSummary latestVersion,
     List<SearchRecordVersionSummary> versions
 ) {
-    @SuppressWarnings("PMD.UnusedAssignment")
     public SearchRecordResponse {
-        // PMD 将 record 构造器中的参数重写视作未使用赋值，但此处需在字段落地前进行防御性拷贝。
-        versions = sanitizeVersions(versions);
+        versions = sanitizeVersions(versions); // NOPMD - UnusedAssignment: record 构造需在赋值前拷贝集合
     }
 
     public SearchRecordResponse withVersionDetails(
