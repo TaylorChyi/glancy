@@ -77,7 +77,7 @@ function ToolbarActions({ baseToolButtonClass, translator, ...modelProps }) {
       {shareItem ? (
         <Popover
           isOpen={shareMenu.isOpen}
-          anchorRef={shareMenu.shareTriggerRef}
+          anchorRef={shareMenu.anchorBoundaryRef}
           onClose={shareMenu.closeMenu}
           placement="top"
           align="end"

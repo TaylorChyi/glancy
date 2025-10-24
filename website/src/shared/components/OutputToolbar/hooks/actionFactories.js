@@ -78,7 +78,7 @@ export const createShareItem = ({ shareMenu, translator }) => {
     variant: "share",
     disabled: shareMenu.buttonDisabled,
     hasMenu: true,
-    anchorRef: shareMenu.shareTriggerRef,
+    anchorRef: shareMenu.registerShareTrigger,
     onKeyDown: shareMenu.handleTriggerKeyDown,
   };
 };

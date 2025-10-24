@@ -70,8 +70,43 @@ const shouldDisableShare = ({ disabled, accessGranted, available }) =>
  */
 export function useShareMenuState({ shareModel, canShare, disabled }) {
   const shareTriggerRef = useRef(null);
+  const shareTriggerFallbackRef = useRef(null);
   const shareMenuRef = useRef(null);
   const [isOpen, setOpen] = useState(false);
+
+  /**
+   * 背景：
+   *  - React 在提交阶段会先将旧 ref 置空再写入新节点，
+   *    若此瞬间触发全局 pointerdown，Popover 会误判为“点在外部”并立刻关闭。
+   * 目的：
+   *  - 持久化最近一次有效的触发器节点，保障在 ref 短暂为 null 时仍能识别点击来源，
+   *    避免出现“菜单瞬间弹出又消失”的错觉。
+   * 关键决策与取舍：
+   *  - 采用回调 ref 记录实时节点与兜底节点，既不侵入调用方，也保持 DOM 引用准确；
+   *  - 在组件卸载时主动清理引用，防止持有已销毁节点导致内存泄露。
+   */
+  const registerShareTrigger = useCallback((node) => {
+    shareTriggerRef.current = node;
+    if (node) {
+      shareTriggerFallbackRef.current = node;
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      shareTriggerRef.current = null;
+      shareTriggerFallbackRef.current = null;
+    },
+    [],
+  );
+
+  const anchorBoundaryRef = useMemo(() => {
+    const boundaryRef = {};
+    Object.defineProperty(boundaryRef, "current", {
+      get: () => shareTriggerRef.current ?? shareTriggerFallbackRef.current,
+    });
+    return boundaryRef;
+  }, []);
 
   const capabilities = useMemo(
     () => deriveCapabilities(shareModel),
@@ -130,6 +165,8 @@ export function useShareMenuState({ shareModel, canShare, disabled }) {
     handleTriggerKeyDown,
     closeMenu,
     shareTriggerRef,
+    registerShareTrigger,
+    anchorBoundaryRef,
     shareMenuRef,
   };
 }
