@@ -80,5 +80,6 @@ export const createShareItem = ({ shareMenu, translator }) => {
     hasMenu: true,
     anchorRef: shareMenu.registerShareTrigger,
     onKeyDown: shareMenu.handleTriggerKeyDown,
+    controls: shareMenu.menuId,
   };
 };
