@@ -12,6 +12,7 @@ import com.glancy.backend.service.UserService;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.MethodParameter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -84,8 +86,10 @@ class AuthenticatedUserArgumentResolverTest {
 
     private static class FixtureController {
 
+        @SuppressWarnings("unused")
         void handleWithId(@AuthenticatedUser Long userId) {}
 
+        @SuppressWarnings("unused")
         void handleWithUser(@AuthenticatedUser User user) {}
     }
 
@@ -94,16 +98,16 @@ class AuthenticatedUserArgumentResolverTest {
         private final T instance;
 
         private FixedObjectProvider(T instance) {
-            this.instance = instance;
+            this.instance = Objects.requireNonNull(instance, "instance");
         }
 
         @Override
-        public T getObject() {
+        public @NonNull T getObject() {
             return instance;
         }
 
         @Override
-        public T getObject(Object... args) {
+        public @NonNull T getObject(@NonNull Object... args) {
             return instance;
         }
 
@@ -118,7 +122,7 @@ class AuthenticatedUserArgumentResolverTest {
         }
 
         @Override
-        public java.util.Iterator<T> iterator() {
+        public @NonNull java.util.Iterator<T> iterator() {
             return instance == null ? Collections.<T>emptyIterator() : List.of(instance).iterator();
         }
     }
