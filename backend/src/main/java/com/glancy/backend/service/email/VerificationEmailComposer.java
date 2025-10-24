@@ -5,7 +5,6 @@ import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;

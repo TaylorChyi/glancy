@@ -32,13 +32,14 @@ public class ControllerLoggingAspect {
         String[] paramNames = resolveParameterNames(signature, args);
         Map<String, Object> params = new LinkedHashMap<>();
         if (args != null) {
-            int nameLength = paramNames != null ? paramNames.length : 0;
-            if (paramNames != null && nameLength != args.length) {
+            int nameLength = paramNames.length;
+            if (nameLength != args.length) {
                 log.debug("Parameter name count {} does not match argument count {}", nameLength, args.length);
             }
             for (int i = 0; i < args.length; i++) {
-                String name = (i < nameLength) ? paramNames[i] : "arg" + i;
-                params.put(name, args[i]);
+                String candidate = (i < nameLength) ? paramNames[i] : null;
+                String resolved = (candidate == null || candidate.isBlank()) ? "arg" + i : candidate;
+                params.put(resolved, args[i]);
             }
         }
         log.info("controller.entry method={} params={}", method, params);
@@ -57,11 +58,15 @@ public class ControllerLoggingAspect {
         if (names == null) {
             names = parameterNameDiscoverer.getParameterNames(signature.getMethod());
         }
-        if (names == null && args != null) {
-            names = IntStream.range(0, args.length)
-                .mapToObj(i -> "arg" + i)
-                .toArray(String[]::new);
+        if (names != null) {
+            return names;
         }
-        return names;
+        int argLength = args != null ? args.length : 0;
+        if (argLength == 0) {
+            return new String[0];
+        }
+        return IntStream.range(0, argLength)
+            .mapToObj(i -> "arg" + i)
+            .toArray(String[]::new);
     }
 }
