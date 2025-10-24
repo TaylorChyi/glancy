@@ -63,14 +63,6 @@ CREATE TABLE IF NOT EXISTS word_definitions (
   CONSTRAINT fk_word_definition_word FOREIGN KEY (word_id) REFERENCES words (id)
 );
 
-CREATE TABLE IF NOT EXISTS contact_messages (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  email VARCHAR(100) NOT NULL,
-  message TEXT NOT NULL,
-  createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
-);
-
 CREATE TABLE IF NOT EXISTS third_party_accounts (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT NOT NULL,
@@ -85,15 +77,6 @@ CREATE TABLE IF NOT EXISTS login_devices (
   deviceInfo VARCHAR(255) NOT NULL,
   loginTime DATETIME NOT NULL,
   CONSTRAINT fk_login_device_user FOREIGN KEY (user_id) REFERENCES users (id)
-);
-
-CREATE TABLE IF NOT EXISTS notifications (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  message VARCHAR(255) NOT NULL,
-  systemLevel BOOLEAN NOT NULL DEFAULT FALSE,
-  user_id BIGINT,
-  createdAt DATETIME (6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS alert_recipients (
@@ -113,15 +96,6 @@ CREATE TABLE IF NOT EXISTS system_parameters (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) NOT NULL UNIQUE,
   value VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS user_preferences (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  user_id BIGINT NOT NULL UNIQUE,
-  theme VARCHAR(20) NOT NULL,
-  systemLanguage VARCHAR(20) NOT NULL,
-  searchLanguage VARCHAR(20) NOT NULL,
-  CONSTRAINT fk_user_pref_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE IF NOT EXISTS user_keyboard_shortcuts (
