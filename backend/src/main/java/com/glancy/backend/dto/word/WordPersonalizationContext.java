@@ -27,9 +27,15 @@ public record WordPersonalizationContext(
     List<String> interests,
     List<String> recentTerms
 ) {
+    @SuppressWarnings("PMD.UnusedAssignment")
     public WordPersonalizationContext {
-        interests = interests == null ? List.of() : List.copyOf(interests);
-        recentTerms = recentTerms == null ? List.of() : List.copyOf(recentTerms);
+        // 在字段赋值前统一执行 List.copyOf，避免外部篡改原始集合。
+        interests = sanitizeSignals(interests);
+        recentTerms = sanitizeSignals(recentTerms);
+    }
+
+    private static List<String> sanitizeSignals(List<String> signals) {
+        return signals == null ? List.of() : List.copyOf(signals);
     }
 
     public boolean hasSignals() {

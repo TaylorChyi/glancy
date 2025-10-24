@@ -38,7 +38,13 @@ public record UserProfileResponse(
     /** 自定义维度的层级配置 */
     List<ProfileCustomSectionDto> customSections
 ) {
+    @SuppressWarnings("PMD.UnusedAssignment")
     public UserProfileResponse {
-        customSections = customSections == null ? List.of() : List.copyOf(customSections);
+        // 防御性拷贝自定义区块，保持 record 不可变语义且兼容 PMD 规则。
+        customSections = sanitizeSections(customSections);
+    }
+
+    private static List<ProfileCustomSectionDto> sanitizeSections(List<ProfileCustomSectionDto> sections) {
+        return sections == null ? List.of() : List.copyOf(sections);
     }
 }

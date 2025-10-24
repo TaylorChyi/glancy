@@ -31,8 +31,10 @@ public record SearchRecordResponse(
     SearchRecordVersionSummary latestVersion,
     List<SearchRecordVersionSummary> versions
 ) {
+    @SuppressWarnings("PMD.UnusedAssignment")
     public SearchRecordResponse {
-        versions = versions == null ? List.of() : List.copyOf(versions);
+        // PMD 将 record 构造器中的参数重写视作未使用赋值，但此处需在字段落地前进行防御性拷贝。
+        versions = sanitizeVersions(versions);
     }
 
     public SearchRecordResponse withVersionDetails(
@@ -48,7 +50,11 @@ public record SearchRecordResponse(
             createdAt,
             favorite,
             latest,
-            versionSummaries == null ? List.of() : List.copyOf(versionSummaries)
+            sanitizeVersions(versionSummaries)
         );
+    }
+
+    private static List<SearchRecordVersionSummary> sanitizeVersions(List<SearchRecordVersionSummary> source) {
+        return source == null ? List.of() : List.copyOf(source);
     }
 }
