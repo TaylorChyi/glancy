@@ -63,6 +63,7 @@ final class MarkdownWordExtractor {
 
         Section currentSection = Section.DEFINITION;
         String resolvedTerm = fallbackTerm;
+        boolean headingApplied = false;
         String example = null;
         String phonetic = null;
         boolean insideFence = false;
@@ -87,8 +88,9 @@ final class MarkdownWordExtractor {
                 if (heading.isEmpty()) {
                     continue;
                 }
-                if (resolvedTerm == null || resolvedTerm.isBlank()) {
+                if (!headingApplied || resolvedTerm == null || resolvedTerm.isBlank()) {
                     resolvedTerm = heading;
+                    headingApplied = true;
                 }
                 currentSection = resolveSection(heading);
                 continue;

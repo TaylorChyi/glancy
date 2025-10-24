@@ -202,6 +202,7 @@ class WordControllerTest {
                 eq(true)
             )
         ).thenReturn(resp);
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
