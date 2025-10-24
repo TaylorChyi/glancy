@@ -9,10 +9,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.glancy.backend.dto.TtsRequest;
-import com.glancy.backend.dto.TtsResponse;
-import com.glancy.backend.dto.VoiceOption;
-import com.glancy.backend.dto.VoiceResponse;
+import com.glancy.backend.dto.tts.TtsRequest;
+import com.glancy.backend.dto.tts.TtsResponse;
+import com.glancy.backend.dto.tts.VoiceOption;
+import com.glancy.backend.dto.tts.VoiceResponse;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.tts.TtsService;
 import java.nio.charset.StandardCharsets;

@@ -2,7 +2,7 @@ package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;

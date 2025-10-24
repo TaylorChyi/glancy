@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import com.glancy.backend.dto.AvatarResponse;
-import com.glancy.backend.dto.LoginRequest;
-import com.glancy.backend.dto.UserContactResponse;
-import com.glancy.backend.dto.UserEmailResponse;
-import com.glancy.backend.dto.UserRegistrationRequest;
-import com.glancy.backend.dto.UserResponse;
+import com.glancy.backend.dto.auth.LoginRequest;
+import com.glancy.backend.dto.auth.UserRegistrationRequest;
+import com.glancy.backend.dto.user.AvatarResponse;
+import com.glancy.backend.dto.user.UserContactResponse;
+import com.glancy.backend.dto.user.UserEmailResponse;
+import com.glancy.backend.dto.user.UserResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.entity.LoginDevice;
 import com.glancy.backend.entity.MembershipType;

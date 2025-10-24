@@ -2,8 +2,8 @@ package com.glancy.backend.service.shortcut;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.dto.KeyboardShortcutResponse;
-import com.glancy.backend.dto.KeyboardShortcutUpdateRequest;
+import com.glancy.backend.dto.keyboard.KeyboardShortcutResponse;
+import com.glancy.backend.dto.keyboard.KeyboardShortcutUpdateRequest;
 import com.glancy.backend.entity.ShortcutAction;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;

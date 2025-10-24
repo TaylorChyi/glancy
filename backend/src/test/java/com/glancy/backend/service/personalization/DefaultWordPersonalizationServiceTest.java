@@ -5,9 +5,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.glancy.backend.dto.PersonalizedWordExplanation;
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.PersonalizedWordExplanation;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;

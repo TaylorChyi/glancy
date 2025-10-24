@@ -3,8 +3,8 @@ package com.glancy.backend.service.profile;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.ProfileCustomSectionDto;
-import com.glancy.backend.dto.ProfileCustomSectionItemDto;
+import com.glancy.backend.dto.user.ProfileCustomSectionDto;
+import com.glancy.backend.dto.user.ProfileCustomSectionItemDto;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

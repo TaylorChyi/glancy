@@ -3,9 +3,9 @@ package com.glancy.backend.service.support;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.glancy.backend.dto.PersonalizedWordExplanation;
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.PersonalizedWordExplanation;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
