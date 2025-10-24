@@ -34,11 +34,22 @@ global.ResizeObserver = ResizeObserverMock;
 
 jest.unstable_mockModule("@shared/components/Sidebar", () => ({
   __esModule: true,
-  default: forwardRef(function SidebarStub({ ...rest }, ref) {
-    // 说明：Sidebar 的移动端与交互态在此 stub 中不参与断言，仅透传其余属性。
+  default: forwardRef(function SidebarStub(props, ref) {
+    const {
+      // 说明：下列属性仅用于容器层逻辑，Stub 中不再向 DOM 透出，避免生成非法属性。
+      isMobile: _ignoredIsMobile,
+      open: _ignoredOpen,
+      onClose: _ignoredOnClose,
+      onShowDictionary: _ignoredOnShowDictionary,
+      onShowLibrary: _ignoredOnShowLibrary,
+      activeView: _ignoredActiveView,
+      onSelectHistory: _ignoredOnSelectHistory,
+      ...domProps
+    } = props;
+
     return (
       <aside
-        {...rest}
+        {...domProps}
         ref={ref}
         id="sidebar"
         data-testid="sidebar-stub"
