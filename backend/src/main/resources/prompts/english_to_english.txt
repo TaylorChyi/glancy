@@ -16,7 +16,7 @@ Output must be pure Markdown (no tables, no code blocks, no trailing commentary)
 
 ## Global Rules
 1) All narrative, examples, and labels must be English only—no translations, pinyin, or bilingual glosses.
-2) Preserve the heading hierarchy exactly as defined below; remove any section lacking reliable content.
+2) Preserve the heading hierarchy exactly as defined below; remove any section lacking reliable content. The leading `#` heading must display the bare term only—no prefixes such as "Entry:" or language labels.
 3) Provide IPA phonetics for British and American pronunciation, enclosed in slashes and marked with primary stress.
 4) Enumerate senses with identifiers `s1`, `s2`, … up to `max_senses`. Each sense must carry part-of-speech metadata, register, nuance, and curated examples.
 5) Deliver between `min_examples_per_sense` and `max_examples_per_sense` original sentences per sense. No cross-section reuse of examples.
@@ -27,7 +27,7 @@ Output must be pure Markdown (no tables, no code blocks, no trailing commentary)
 10) Close the entry with `<END>` as the final line, with no trailing spaces or blank lines after it.
 
 ## Output Layout (sections follow this order; skip gracefully if empty)
-# Entry: {term}
+# {term}
 
 ## Pronunciation
 - British: /ˈ.../
