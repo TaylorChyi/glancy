@@ -1,14 +1,15 @@
 /**
  * 背景：
- *  - Loader 动画自 2025-03 起强调“中心显现、向外扩展，再向内收束”的节奏，需更精细的遮罩控制。
+ *  - Loader 升级为三层波浪圆环动画，需在 CSS 层提供 3D 透视与字形布点支持。
  * 目的：
- *  - 通过 CSS 模块统一管理透明度与遮罩扩散过渡，让 Hook 输出布尔态即可驱动方向性渐隐渐显。
- *  - 引入 mask + currentColor 的组合，将素材颜色响应式映射到当前主题文本色。
+ *  - 通过模块化样式定义场景、堆栈与字符姿态，确保组件仅传递动态矩阵信息。
  * 关键决策与取舍：
- *  - 使用径向遮罩与 `mask-size` 过渡替代 clip-path，便于在淡入淡出过程中引入羽化模糊；
- *  - 所有时长仍交由 CSS 变量控制，方便主题或无障碍场景动态调整。
+ *  - 保留原有居中与主题色继承策略，避免影响外层布局；
+ *  - 使用 `transform-style: preserve-3d` 与统一的系统字体栈，呈现克制的奢侈品级极简视觉；
+ *  - 采用 clamp 控制字符字号，兼顾桌面与移动端密度。
  */
 .loader {
+  position: relative;
   display: grid;
   place-items: center;
   inline-size: 100%;
@@ -18,81 +19,52 @@
   color: var(--loader-symbol-color, var(--role-on-surface, currentColor));
 }
 
-.symbol {
+.scene {
   position: relative;
-  inline-size: min(
-    80vw,
-    calc(var(--waiting-frame-aspect-ratio) * var(--waiting-frame-height))
-  );
-  block-size: var(--waiting-frame-height);
-  aspect-ratio: var(--waiting-frame-aspect-ratio);
+  display: grid;
+  place-items: center;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  inline-size: min(80vw, 640px);
+  block-size: min(80vh, 640px);
+}
+
+.stack {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  isolation: isolate;
-  color: inherit;
+  gap: 8.75rem; /* 140px */
+  transform-style: preserve-3d;
 }
 
-.frame {
+.ring {
   position: relative;
-  inline-size: 100%;
-  block-size: 100%;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    opacity var(--waiting-fade-duration, 1000ms) ease-in-out,
-    mask-size var(--waiting-fade-duration, 1000ms) ease-in-out,
-    -webkit-mask-size var(--waiting-fade-duration, 1000ms) ease-in-out;
-  mask-image: radial-gradient(
-    circle at center,
-    rgb(0 0 0 / 100%) calc(100% - var(--waiting-reveal-softness, 12%)),
-    rgb(0 0 0 / 0%) 100%
-  );
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: 0% 0%;
-  /* stylelint-disable property-no-vendor-prefix */
-  -webkit-mask-image: radial-gradient(
-    circle at center,
-    rgb(0 0 0 / 100%) calc(100% - var(--waiting-reveal-softness, 12%)),
-    rgb(0 0 0 / 0%) 100%
-  );
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  -webkit-mask-size: 0% 0%;
-  /* stylelint-enable property-no-vendor-prefix */
-}
-
-.frame-visible {
-  opacity: 1;
-  mask-size: var(--waiting-reveal-mask-visible-size, 140%)
-    var(--waiting-reveal-mask-visible-size, 140%);
-  /* stylelint-disable property-no-vendor-prefix */
-  -webkit-mask-size: var(--waiting-reveal-mask-visible-size, 140%)
-    var(--waiting-reveal-mask-visible-size, 140%);
-  /* stylelint-enable property-no-vendor-prefix */
-}
-
-.frame-asset {
-  inline-size: 100%;
-  block-size: 100%;
-  display: block;
+  transform-style: preserve-3d;
+  will-change: transform;
+  font-size: clamp(1.75rem, 3vw, 2rem);
+  font-family:
+    var(
+      --font-family-sans,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      Helvetica,
+      Arial,
+      "Noto Sans CJK SC",
+      sans-serif
+    );
   color: inherit;
-  background-color: currentcolor;
-  mask-image: var(--waiting-frame-image);
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  mask-position: center;
-  /* stylelint-disable property-no-vendor-prefix */
-  -webkit-mask-image: var(--waiting-frame-image);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  -webkit-mask-position: center;
-  /* stylelint-enable property-no-vendor-prefix */
+}
+
+.glyph {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform-origin: 0 0;
+  white-space: pre;
+  will-change: transform;
+  color: inherit;
 }
 
 .label {
@@ -108,10 +80,8 @@
 }
 
 @media (width <= 480px) {
-  .symbol {
-    inline-size: min(
-      90vw,
-      calc(var(--waiting-frame-aspect-ratio) * var(--waiting-frame-height))
-    );
+  .scene {
+    inline-size: min(90vw, 640px);
+    block-size: min(90vh, 640px);
   }
 }

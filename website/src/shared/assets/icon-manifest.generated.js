@@ -63,10 +63,8 @@ import iconAsset60 from "./identity/users/user.svg";
 import iconAsset61 from "./identity/users/user.svg?raw";
 import iconAsset62 from "./interface/controls/voice-button.svg";
 import iconAsset63 from "./interface/controls/voice-button.svg?raw";
-import iconAsset64 from "./interface/controls/waitting-frame.svg";
-import iconAsset65 from "./interface/controls/waitting-frame.svg?raw";
-import iconAsset66 from "./communication/channels/wechat.svg";
-import iconAsset67 from "./communication/channels/wechat.svg?raw";
+import iconAsset64 from "./communication/channels/wechat.svg";
+import iconAsset65 from "./communication/channels/wechat.svg?raw";
 
 const registry = Object.freeze({
   apple: Object.freeze({
@@ -165,11 +163,8 @@ const registry = Object.freeze({
   "voice-button": Object.freeze({
     single: Object.freeze({ url: iconAsset62, inline: iconAsset63 }),
   }),
-  "waitting-frame": Object.freeze({
-    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
-  }),
   wechat: Object.freeze({
-    single: Object.freeze({ url: iconAsset66, inline: iconAsset67 }),
+    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
   }),
 });
 

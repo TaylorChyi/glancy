@@ -1,26 +1,34 @@
 /**
- * 测试目标：验证等待动画策略输出统一节奏与尺寸，确保组件渲染时素材等高且 1.5 秒轮换。
- * 前置条件：使用默认策略模块，不注入额外参数。
+ * 测试目标：验证等待动画策略可生成多环波浪字符蓝图，并维持统一旋转速度。
+ * 前置条件：使用默认策略模块，禁用额外参数注入。
  * 步骤：
  *  1) 动态导入策略对象。
- *  2) 调用 buildTimeline 生成三帧时间线。
+ *  2) 调用 buildRings 获取圆环蓝图，并抽样首个字符的变换矩阵。
  * 断言：
- *  - frameIntervalMs 恒为 1500ms，对应 1.5 秒节奏。
- *  - durationFor 返回 4500ms，总时长为帧数 * 间隔。
- *  - delays 序列为 ["0ms", "-1500ms", "-3000ms"]，保证依次触发。
- *  - canvas 高度恒定，保障素材等高呈现。
+ *  - rotationSpeedDegPerSec 为 49，对应设计要求。
+ *  - buildRings 返回三个圆环，且首个圆环字符数量为 textLength * count。
+ *  - composeRingGlyphs 输出的 transform 包含 rotateY 与 translateZ 关键字。
  * 边界/异常：
- *  - 若帧数非法应抛出 TypeError，本用例不覆盖异常路径。
+ *  - 未覆盖空文本输入，相关校验在策略内部处理。
  */
-test("GivenStrategy_WhenTimelineGenerated_ThenRespectUniformIntervalAndCanvas", async () => {
+test("GivenStrategy_WhenBuildRings_ThenExposeWaveBlueprint", async () => {
   const { default: strategy } = await import("../waitingAnimationStrategy.cjs");
 
-  expect(strategy.frameIntervalMs).toBe(1500);
-  expect(strategy.canvas.height).toBe(454);
+  expect(strategy.rotationSpeedDegPerSec).toBe(49);
 
-  const timeline = strategy.buildTimeline(3);
-  expect(strategy.durationFor(3)).toBe("4500ms");
-  expect(timeline.interval).toBe("1500ms");
-  expect(timeline.duration).toBe("4500ms");
-  expect(timeline.delays).toEqual(["0ms", "-1500ms", "-3000ms"]);
+  const rings = strategy.buildRings();
+  expect(rings).toHaveLength(3);
+
+  const firstRing = rings[0];
+  expect(firstRing.glyphs).toHaveLength(
+    strategy.ringBlueprints[0].textLength * strategy.baseParameters.count,
+  );
+
+  const sampleGlyph = firstRing.glyphs[0];
+  expect(sampleGlyph.transform).toEqual(
+    expect.stringContaining("rotateY"),
+  );
+  expect(sampleGlyph.transform).toEqual(
+    expect.stringContaining("translateZ"),
+  );
 });
