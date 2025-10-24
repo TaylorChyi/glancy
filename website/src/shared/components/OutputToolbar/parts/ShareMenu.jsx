@@ -62,7 +62,14 @@ const renderImageOption = ({ translator, capabilities, closeMenu }) => {
   );
 };
 
-function ShareMenu({ isOpen, menuRef, capabilities, closeMenu, translator }) {
+function ShareMenu({
+  isOpen,
+  menuRef,
+  capabilities,
+  closeMenu,
+  translator,
+  menuId,
+}) {
   if (!isOpen) {
     return null;
   }
@@ -71,6 +78,7 @@ function ShareMenu({ isOpen, menuRef, capabilities, closeMenu, translator }) {
     <div
       className={styles["share-menu"]}
       role="menu"
+      id={menuId}
       aria-label={
         translator.shareMenuLabel || translator.share || "Share options"
       }
@@ -84,7 +92,10 @@ function ShareMenu({ isOpen, menuRef, capabilities, closeMenu, translator }) {
 
 ShareMenu.propTypes = {
   isOpen: PropTypes.bool.isRequired,
-  menuRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
+  menuRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.any }),
+  ]).isRequired,
   capabilities: PropTypes.shape({
     hasCopy: PropTypes.bool,
     hasImage: PropTypes.bool,
@@ -101,10 +112,12 @@ ShareMenu.propTypes = {
     shareCopySuccess: PropTypes.string,
     shareOptionImage: PropTypes.string,
   }).isRequired,
+  menuId: PropTypes.string,
 };
 
 ShareMenu.defaultProps = {
   capabilities: null,
+  menuId: undefined,
 };
 
 export default ShareMenu;

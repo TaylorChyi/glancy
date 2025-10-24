@@ -1,5 +1,12 @@
 import React from "react";
-import { render, fireEvent, screen, within, act } from "@testing-library/react";
+import {
+  render,
+  fireEvent,
+  screen,
+  within,
+  act,
+  waitFor,
+} from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
@@ -377,6 +384,54 @@ describe("OutputToolbar", () => {
     });
 
     expect(onCopyLink).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * 测试目标：分享菜单可通过外部点击自动关闭，并保持 aria 语义一致。
+   * 前置条件：提供包含复制回调的 shareModel 以启用分享菜单。
+   * 步骤：
+   *  1) 打开分享菜单并记录按钮的 aria-controls；
+   *  2) 断言菜单 id 与 aria-controls 对齐；
+   *  3) 在文档空白处触发 pointerdown 关闭菜单。
+   * 断言：
+   *  - 点击外部后菜单被移除；
+   *  - 分享按钮 aria-expanded 回落为 false。
+   * 边界/异常：
+   *  - 若未来支持键盘关闭需追加对应用例。
+   */
+  test("WhenClickingOutsideShareMenu_MenuClosesAndResetsAriaState", async () => {
+    const onCopyLink = jest.fn(() => Promise.resolve());
+    render(
+      <OutputToolbar
+        term="zeta"
+        shareModel={{
+          onCopyLink,
+          onExportImage: jest.fn(() => Promise.resolve()),
+          canExportImage: true,
+        }}
+      />,
+    );
+
+    const shareButton = screen.getByRole("button", { name: "分享" });
+    const controlsId = shareButton.getAttribute("aria-controls");
+    expect(controlsId).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(shareButton);
+    });
+
+    const menu = await screen.findByRole("menu", { name: "分享方式" });
+    expect(menu.id).toBe(controlsId);
+
+    fireEvent.pointerDown(document.body);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("menu", { name: "分享方式" }),
+      ).not.toBeInTheDocument();
+    });
+
+    expect(shareButton).toHaveAttribute("aria-expanded", "false");
   });
 
   /**

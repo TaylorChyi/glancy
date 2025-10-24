@@ -12,8 +12,7 @@
  *  - 若新增动作，需要在模型 Hook 中扩展策略表即可。
  */
 import PropTypes from "prop-types";
-import Popover from "@shared/components/ui/Popover/Popover.jsx";
-import ShareMenu from "./ShareMenu.jsx";
+import ShareMenuSurface from "./ShareMenuSurface.jsx";
 import styles from "../OutputToolbar.module.css";
 import { useToolbarActionsModel } from "../hooks/useToolbarActionsModel.js";
 
@@ -22,7 +21,11 @@ const resolveVariantClass = (variant) => {
   return styles[`tool-button-${variant}`] || "";
 };
 
-const renderActionButton = ({ item, baseToolButtonClass, shareMenuOpen }) => {
+const renderActionButton = ({
+  item,
+  baseToolButtonClass,
+  shareMenuOpen,
+}) => {
   const variantClass = resolveVariantClass(item.variant);
   const className = [baseToolButtonClass, variantClass]
     .filter(Boolean)
@@ -47,6 +50,7 @@ const renderActionButton = ({ item, baseToolButtonClass, shareMenuOpen }) => {
       onKeyDown={item.onKeyDown}
       aria-haspopup={item.hasMenu ? "menu" : undefined}
       aria-expanded={ariaExpanded}
+      aria-controls={item.controls}
     >
       {item.icon}
     </button>
@@ -75,22 +79,7 @@ function ToolbarActions({ baseToolButtonClass, translator, ...modelProps }) {
         )}
       </div>
       {shareItem ? (
-        <Popover
-          isOpen={shareMenu.isOpen}
-          anchorRef={shareMenu.anchorBoundaryRef}
-          onClose={shareMenu.closeMenu}
-          placement="top"
-          align="end"
-          offset={8}
-        >
-          <ShareMenu
-            isOpen={shareMenu.isOpen}
-            menuRef={shareMenu.shareMenuRef}
-            capabilities={shareMenu.capabilities}
-            closeMenu={shareMenu.closeMenu}
-            translator={translator}
-          />
-        </Popover>
+        <ShareMenuSurface shareMenu={shareMenu} translator={translator} />
       ) : null}
     </>
   );

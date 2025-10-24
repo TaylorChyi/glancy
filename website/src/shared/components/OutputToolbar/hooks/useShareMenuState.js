@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - 后续可在此扩展动画策略或权限校验日志。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";
 
 const deriveCapabilities = (shareModel) => {
@@ -73,6 +73,7 @@ export function useShareMenuState({ shareModel, canShare, disabled }) {
   const shareTriggerFallbackRef = useRef(null);
   const shareMenuRef = useRef(null);
   const [isOpen, setOpen] = useState(false);
+  const menuId = useId();
 
   /**
    * 背景：
@@ -168,5 +169,6 @@ export function useShareMenuState({ shareModel, canShare, disabled }) {
     registerShareTrigger,
     anchorBoundaryRef,
     shareMenuRef,
+    menuId,
   };
 }
