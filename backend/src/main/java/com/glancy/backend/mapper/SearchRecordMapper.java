@@ -1,6 +1,6 @@
 package com.glancy.backend.mapper;
 
-import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.search.SearchRecordResponse;
 import com.glancy.backend.entity.SearchRecord;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

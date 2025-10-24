@@ -2,7 +2,7 @@ package com.glancy.backend.llm.parser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.Language;
 import java.util.ArrayList;
 import java.util.List;

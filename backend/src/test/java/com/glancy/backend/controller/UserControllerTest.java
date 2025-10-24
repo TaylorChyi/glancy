@@ -9,7 +9,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.*;
+import com.glancy.backend.dto.auth.LoginRequest;
+import com.glancy.backend.dto.auth.LoginResponse;
+import com.glancy.backend.dto.auth.ThirdPartyAccountRequest;
+import com.glancy.backend.dto.auth.ThirdPartyAccountResponse;
+import com.glancy.backend.dto.auth.UserRegistrationRequest;
+import com.glancy.backend.dto.user.AvatarRequest;
+import com.glancy.backend.dto.user.AvatarResponse;
+import com.glancy.backend.dto.user.EmailChangeInitiationRequest;
+import com.glancy.backend.dto.user.EmailChangeRequest;
+import com.glancy.backend.dto.user.UserContactRequest;
+import com.glancy.backend.dto.user.UserContactResponse;
+import com.glancy.backend.dto.user.UserDetailResponse;
+import com.glancy.backend.dto.user.UserEmailResponse;
+import com.glancy.backend.dto.user.UserResponse;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;

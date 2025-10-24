@@ -1,6 +1,6 @@
 package com.glancy.backend.service.tts;
 
-import com.glancy.backend.dto.TtsRequest;
+import com.glancy.backend.dto.tts.TtsRequest;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.ForbiddenException;

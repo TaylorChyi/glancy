@@ -1,8 +1,8 @@
 package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
-import com.glancy.backend.dto.SearchRecordRequest;
-import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.search.SearchRecordRequest;
+import com.glancy.backend.dto.search.SearchRecordResponse;
 import com.glancy.backend.service.SearchRecordService;
 import com.glancy.backend.service.support.SearchRecordPageRequest;
 import jakarta.validation.Valid;

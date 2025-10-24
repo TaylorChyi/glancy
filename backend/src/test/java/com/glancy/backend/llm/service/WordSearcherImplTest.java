@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;

@@ -1,7 +1,7 @@
 package com.glancy.backend.service.support;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.util.SensitiveDataUtil;
 import lombok.extern.slf4j.Slf4j;

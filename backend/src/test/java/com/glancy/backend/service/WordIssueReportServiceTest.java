@@ -2,8 +2,8 @@ package com.glancy.backend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.glancy.backend.dto.WordIssueReportRequest;
-import com.glancy.backend.dto.WordIssueReportResponse;
+import com.glancy.backend.dto.word.WordIssueReportRequest;
+import com.glancy.backend.dto.word.WordIssueReportResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.WordIssueCategory;

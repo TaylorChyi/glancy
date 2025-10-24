@@ -3,8 +3,8 @@ package com.glancy.backend.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.glancy.backend.config.SearchProperties;
-import com.glancy.backend.dto.SearchRecordRequest;
-import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.search.SearchRecordRequest;
+import com.glancy.backend.dto.search.SearchRecordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.MembershipType;

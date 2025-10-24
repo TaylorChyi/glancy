@@ -48,6 +48,10 @@ final class TestEntityFactory {
         word.setLanguage(language);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(Collections.singletonList("def"));
+        LocalDateTime now = LocalDateTime.now();
+        word.setCreatedAt(now);
+        word.setUpdatedAt(now);
+        word.setDeleted(false);
         return word;
     }
 

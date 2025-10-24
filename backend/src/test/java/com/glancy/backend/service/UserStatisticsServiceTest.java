@@ -2,7 +2,7 @@ package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.dto.UserStatisticsResponse;
+import com.glancy.backend.dto.user.UserStatisticsResponse;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.repository.UserRepository;

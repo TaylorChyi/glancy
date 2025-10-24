@@ -134,6 +134,6 @@ class WordControllerStreamTest {
             .andReturn();
 
         String body = dispatched.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertEquals("event: error\ndata: {\"message\":\"内部服务器错误\"}\n\n", body);
+        assertEquals("event: error\ndata: {\"message\":\"服务暂不可用，请稍后重试\"}\n\n", body);
     }
 }

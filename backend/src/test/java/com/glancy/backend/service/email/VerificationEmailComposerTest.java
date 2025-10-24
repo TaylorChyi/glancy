@@ -9,6 +9,7 @@ import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import java.time.Duration;
@@ -44,7 +45,8 @@ class VerificationEmailComposerTest {
 
         assertEquals("Glancy 登录验证码", message.getSubject());
         assertNotNull(message.getFrom());
-        assertTrue(message.getFrom()[0].toString().contains("Glancy 测试"));
+        InternetAddress from = (InternetAddress) message.getFrom()[0];
+        assertTrue(from.getPersonal().contains("Glancy 测试"));
         assertTrue(message.getReplyTo()[0].toString().contains("support@test.glancy.xyz"));
 
         MimeMultipart multipart = (MimeMultipart) message.getContent();

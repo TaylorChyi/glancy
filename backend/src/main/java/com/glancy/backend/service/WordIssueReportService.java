@@ -1,7 +1,7 @@
 package com.glancy.backend.service;
 
-import com.glancy.backend.dto.WordIssueReportRequest;
-import com.glancy.backend.dto.WordIssueReportResponse;
+import com.glancy.backend.dto.word.WordIssueReportRequest;
+import com.glancy.backend.dto.word.WordIssueReportResponse;
 import com.glancy.backend.entity.WordIssueReport;
 import com.glancy.backend.repository.WordIssueReportRepository;
 import jakarta.transaction.Transactional;

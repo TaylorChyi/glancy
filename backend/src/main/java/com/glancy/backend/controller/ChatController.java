@@ -1,7 +1,7 @@
 package com.glancy.backend.controller;
 
-import com.glancy.backend.dto.ChatRequest;
-import com.glancy.backend.dto.ChatResponse;
+import com.glancy.backend.dto.chat.ChatRequest;
+import com.glancy.backend.dto.chat.ChatResponse;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
