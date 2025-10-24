@@ -108,14 +108,6 @@ public class SearchResultService {
             .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public SearchResultVersion getVersionDetail(Long userId, Long recordId, Long versionId) {
-        resolveAccessibleRecord(userId, recordId);
-        return searchResultVersionRepository
-            .findByIdAndSearchRecordIdAndDeletedFalse(versionId, recordId)
-            .orElseThrow(() -> new ResourceNotFoundException("结果版本不存在"));
-    }
-
     @Transactional
     public void softDeleteByRecordIds(Collection<Long> recordIds) {
         if (recordIds == null || recordIds.isEmpty()) {

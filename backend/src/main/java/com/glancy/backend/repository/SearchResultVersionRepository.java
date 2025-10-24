@@ -18,8 +18,6 @@ public interface SearchResultVersionRepository extends JpaRepository<SearchResul
 
     Optional<SearchResultVersion> findTopBySearchRecordIdAndDeletedFalseOrderByVersionNumberDesc(Long searchRecordId);
 
-    Optional<SearchResultVersion> findByIdAndSearchRecordIdAndDeletedFalse(Long id, Long searchRecordId);
-
     List<SearchResultVersion> findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(
         Collection<Long> recordIds
     );

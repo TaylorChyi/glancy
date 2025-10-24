@@ -10,7 +10,6 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.SearchResultVersionRepository;
-import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.repository.WordRepository;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -29,9 +28,6 @@ class WordServiceTest {
 
     @Autowired
     private WordService wordService;
-
-    @Autowired
-    private UserPreferenceRepository userPreferenceRepository;
 
     @Autowired
     private WordRepository wordRepository;
@@ -59,7 +55,6 @@ class WordServiceTest {
     @BeforeEach
     void setUp() {
         wordRepository.deleteAll();
-        userPreferenceRepository.deleteAll();
         searchRecordRepository.deleteAll();
         searchResultVersionRepository.deleteAll();
         userRepository.deleteAll();
