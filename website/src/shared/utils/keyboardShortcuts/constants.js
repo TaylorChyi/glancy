@@ -12,7 +12,13 @@
  *  - 若引入多按键序列（chord）或平台特定常量，可在此处新增命名导出并保持 freeze 语义。
  */
 
-const MODIFIER_TOKENS = Object.freeze(["MOD", "CONTROL", "META", "ALT", "SHIFT"]);
+const MODIFIER_TOKENS = Object.freeze([
+  "MOD",
+  "CONTROL",
+  "META",
+  "ALT",
+  "SHIFT",
+]);
 
 export const MODIFIER_ORDER = Object.freeze([...MODIFIER_TOKENS]);
 export const MODIFIER_SET = new Set(MODIFIER_TOKENS);
@@ -21,7 +27,6 @@ const SHORTCUT_BLUEPRINT = Object.freeze([
   ["FOCUS_SEARCH", Object.freeze(["MOD", "SHIFT", "F"])],
   ["SWITCH_LANGUAGE", Object.freeze(["MOD", "SHIFT", "L"])],
   ["TOGGLE_THEME", Object.freeze(["MOD", "SHIFT", "M"])],
-  ["TOGGLE_FAVORITE", Object.freeze(["MOD", "SHIFT", "B"])],
   ["OPEN_SHORTCUTS", Object.freeze(["MOD", "SHIFT", "K"])],
 ]);
 

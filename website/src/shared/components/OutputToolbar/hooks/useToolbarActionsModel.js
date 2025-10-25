@@ -29,9 +29,6 @@ const useShareItem = (shareMenu, translator) =>
 const useActionContextMemo = ({
   translator,
   user,
-  favorited,
-  canFavorite,
-  onToggleFavorite,
   canDelete,
   onDelete,
   canReport,
@@ -43,27 +40,13 @@ const useActionContextMemo = ({
       buildActionContext({
         translator,
         user,
-        favorited,
-        canFavorite,
-        onToggleFavorite,
         canDelete,
         onDelete,
         canReport,
         onReport,
         disabled,
       }),
-    [
-      translator,
-      user,
-      favorited,
-      canFavorite,
-      onToggleFavorite,
-      canDelete,
-      onDelete,
-      canReport,
-      onReport,
-      disabled,
-    ],
+    [translator, user, canDelete, onDelete, canReport, onReport, disabled],
   );
 
 const useBlueprintItemsMemo = ({ actionContext, disabled, user, shareItem }) =>
@@ -110,9 +93,6 @@ export function useToolbarActionsModel({
   onCopy,
   copyFeedbackState,
   isCopySuccess,
-  favorited,
-  onToggleFavorite,
-  canFavorite,
   canDelete,
   onDelete,
   canReport,
@@ -126,9 +106,6 @@ export function useToolbarActionsModel({
   const actionContext = useActionContextMemo({
     translator,
     user,
-    favorited,
-    canFavorite,
-    onToggleFavorite,
     canDelete,
     onDelete,
     canReport,

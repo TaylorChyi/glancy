@@ -121,7 +121,12 @@ export const drawTextBlock = (ctx, text, font, x, y, contentWidth) => {
   return y + lines.length * LINE_SPACING;
 };
 
-export const drawDocumentBody = ({ ctx, documentModel, contentWidth, startY }) => {
+export const drawDocumentBody = ({
+  ctx,
+  documentModel,
+  contentWidth,
+  startY,
+}) => {
   let cursorY = startY;
   if (documentModel.title) {
     cursorY = drawTextBlock(

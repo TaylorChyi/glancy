@@ -44,25 +44,11 @@ export function createSearchRecordsApi(request = apiRequest) {
       token,
     });
 
-  const favoriteSearchRecord = ({ token, recordId }) =>
-    request(`${API_PATHS.searchRecords}/user/${recordId}/favorite`, {
-      method: "POST",
-      token,
-    });
-
-  const unfavoriteSearchRecord = ({ token, recordId }) =>
-    request(`${API_PATHS.searchRecords}/user/${recordId}/favorite`, {
-      method: "DELETE",
-      token,
-    });
-
   return {
     fetchSearchRecords,
     saveSearchRecord,
     clearSearchRecords,
     deleteSearchRecord,
-    favoriteSearchRecord,
-    unfavoriteSearchRecord,
   };
 }
 
@@ -71,8 +57,6 @@ export const {
   saveSearchRecord,
   clearSearchRecords,
   deleteSearchRecord,
-  favoriteSearchRecord,
-  unfavoriteSearchRecord,
 } = createSearchRecordsApi();
 
 export function useSearchRecordsApi() {

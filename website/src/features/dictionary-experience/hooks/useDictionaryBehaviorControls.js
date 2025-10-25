@@ -63,19 +63,18 @@ export function useDictionaryBehaviorControls({
     lookupController;
 
   const activeTerm = entry?.term || currentTerm;
-  const { applyRecord, handleNavigateVersion } =
-    useDictionaryVersionControls({
-      wordStoreApi,
-      setEntry,
-      setFinalText,
-      setStreamText,
-      setVersions,
-      setActiveVersionId,
-      setCurrentTerm,
-      versions,
-      activeVersionId,
-      currentTermKey,
-    });
+  const { applyRecord, handleNavigateVersion } = useDictionaryVersionControls({
+    wordStoreApi,
+    setEntry,
+    setFinalText,
+    setStreamText,
+    setVersions,
+    setActiveVersionId,
+    setCurrentTerm,
+    versions,
+    activeVersionId,
+    currentTermKey,
+  });
 
   const {
     canCopyDefinition,

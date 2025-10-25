@@ -11,27 +11,9 @@
  * 演进与TODO：
  *  - 后续新增动作时请在此扩展并补充相应策略。
  */
-import {
-  resolveDeleteIcon,
-  resolveFavoriteIcon,
-  resolveReportIcon,
-} from "./iconFactories";
+import { resolveDeleteIcon, resolveReportIcon } from "./iconFactories";
 
 export const ACTION_BLUEPRINTS = [
-  {
-    key: "favorite",
-    variant: "favorite",
-    requiresUser: true,
-    hiddenWhenInactive: false,
-    getLabel: ({ translator, favorited }) =>
-      favorited
-        ? translator.favoriteRemove || translator.favoriteAction || "Favorite"
-        : translator.favoriteAction || "Favorite",
-    getIcon: ({ favorited }) => resolveFavoriteIcon(favorited),
-    isActive: ({ favorited }) => Boolean(favorited),
-    canUse: ({ canFavorite }) => Boolean(canFavorite),
-    getHandler: ({ onToggleFavorite }) => onToggleFavorite,
-  },
   {
     key: "delete",
     variant: "delete",

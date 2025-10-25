@@ -18,11 +18,9 @@ export const mockHistoryApi = {
   history: [],
   loadHistory: jest.fn(),
   addHistory: jest.fn(),
-  unfavoriteHistory: jest.fn(),
   removeHistory: jest.fn(),
 };
 export const mockUserState = { user: { id: "user-id" } };
-export const mockFavoritesApi = { favorites: [], toggleFavorite: jest.fn() };
 export const mockThemeApi = { theme: "light", setTheme: jest.fn() };
 
 export const translationFixture = {
@@ -71,7 +69,6 @@ export const mockLanguageApi = {
   lang: "en",
   setLang: jest.fn(),
 };
-export const mockToggleFavoriteEntry = jest.fn();
 export const mockStartSpeech = jest.fn();
 export const mockStreamWord = jest.fn(() => (async function* () {})());
 export const mockGetRecord = jest.fn(() => null);
@@ -94,7 +91,6 @@ jest.unstable_mockModule("react-router-dom", () => ({
 jest.unstable_mockModule("@core/context", () => ({
   useHistory: () => mockHistoryApi,
   useUser: () => mockUserState,
-  useFavorites: () => mockFavoritesApi,
   useTheme: () => mockThemeApi,
   useLanguage: () => mockLanguageApi,
 }));
@@ -102,7 +98,7 @@ jest.unstable_mockModule("@core/context", () => ({
 jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: () => mockStreamWord,
   useSpeechInput: () => ({ start: mockStartSpeech }),
-  useAppShortcuts: () => ({ toggleFavoriteEntry: mockToggleFavoriteEntry }),
+  useAppShortcuts: () => ({}),
 }));
 
 jest.unstable_mockModule("@shared/hooks/useApi.js", () => ({
@@ -205,7 +201,6 @@ export const resetDictionaryExperienceTestState = () => {
   mockSettingsState.dictionarySourceLanguage = "AUTO";
   mockSettingsState.dictionaryTargetLanguage = "CHINESE";
   mockUserState.user = { id: "user-id" };
-  mockFavoritesApi.favorites = [];
   mockStreamWord.mockImplementation(() => (async function* () {})());
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);

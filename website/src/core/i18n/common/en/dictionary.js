@@ -2,9 +2,9 @@
  * 背景：
  *  - 词典与检索相关词条在原文件内篇幅庞大，影响整体可读性。
  * 目的：
- *  - 独立维护词典、搜索、收藏及历史模块用语，支撑后续按领域演进。
+ *  - 独立维护词典、搜索与历史模块用语，支撑后续按领域演进。
  * 关键决策与取舍：
- *  - 采用对象组合聚合多个子场景（搜索、收藏、版本），以清晰命名表达语义；
+ *  - 采用对象组合聚合多个子场景（搜索、版本、历史），以清晰命名表达语义；
  *  - 保持键名稳定，避免影响既有渲染逻辑。
  * 影响范围：
  *  - 字典搜索、收藏历史与版本切换界面。
@@ -53,16 +53,7 @@ const dictionary = {
   relatedLabel: "Related",
   variantsLabel: "Variants",
   phrasesLabel: "Phrases",
-  favorites: "Favorites",
-  favoritesIconAlt: "Open favorites collection",
-  favoriteAction: "Favorite",
-  favoriteRemove: "Remove from favorites",
-  favoritesEmptyTitle: "Curate your first favorite",
-  favoritesEmptyDescription:
-    "Tap the star on any search result to build your personal lexicon.",
-  favoritesEmptyAction: "Return to search",
   searchHistory: "History",
-  noFavorites: "No favorites yet",
   noHistory: "No history",
   historyEmptyTitle: "Your story starts here",
   historyEmptyDescription:

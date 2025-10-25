@@ -12,7 +12,6 @@ jest.unstable_mockModule("@core/context", () => ({
   useApiContext: () => ({ request: async () => {} }),
   useUser: () => ({ setUser: jest.fn() }),
   useHistory: () => ({ entries: [] }),
-  useFavorites: () => ({ items: [] }),
   useLanguage: () => ({
     lang: "en",
     t: {

@@ -30,7 +30,6 @@ export function createDictionaryExperienceViewModel({
   handleShowDictionary,
   handleShowLibrary,
   handleSelectHistory,
-  favorites,
   activeView,
   isDictionaryViewActive,
   isHistoryViewActive,
@@ -52,7 +51,6 @@ export function createDictionaryExperienceViewModel({
   canCopyDefinition,
   copyFeedbackState,
   isCopySuccessActive,
-  toggleFavoriteEntry,
   handleDeleteHistory,
   shareUrl,
   handleShareLinkCopy,
@@ -72,7 +70,10 @@ export function createDictionaryExperienceViewModel({
 }) {
   const isEmptyStateActive =
     isDictionaryViewActive && !entry && !finalText && !streamText && !loading;
-  const displayClassName = ["display", isEmptyStateActive ? "display-empty" : ""]
+  const displayClassName = [
+    "display",
+    isEmptyStateActive ? "display-empty" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -90,8 +91,6 @@ export function createDictionaryExperienceViewModel({
     canCopyDefinition,
     copyFeedbackState,
     isCopySuccessActive,
-    favorites,
-    toggleFavoriteEntry,
     handleDeleteHistory,
     shareUrl,
     handleShareLinkCopy,
@@ -119,7 +118,6 @@ export function createDictionaryExperienceViewModel({
     handleShowDictionary,
     handleShowLibrary,
     handleSelectHistory,
-    favorites,
     activeView,
     viewState: {
       active: activeView,

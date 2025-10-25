@@ -27,7 +27,7 @@ test("Given retention days When evaluate Then separate expired history", () => {
       flavor: "BILINGUAL",
       termKey: "ENGLISH:BILINGUAL:old",
       createdAt: new Date(now - 40 * 24 * 60 * 60 * 1000).toISOString(),
-      favorite: false,
+
       versions: [],
       latestVersionId: null,
     },
@@ -38,7 +38,7 @@ test("Given retention days When evaluate Then separate expired history", () => {
       flavor: "BILINGUAL",
       termKey: "ENGLISH:BILINGUAL:recent",
       createdAt: new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      favorite: true,
+
       versions: [],
       latestVersionId: "ver-123",
     },
@@ -49,7 +49,7 @@ test("Given retention days When evaluate Then separate expired history", () => {
       flavor: "BILINGUAL",
       termKey: "ENGLISH:BILINGUAL:missing",
       createdAt: null,
-      favorite: false,
+
       versions: [],
       latestVersionId: null,
     },

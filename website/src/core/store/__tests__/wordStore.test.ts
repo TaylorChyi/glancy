@@ -36,12 +36,16 @@ describe("wordStore", () => {
     });
 
     store.setActiveVersion("term:en", "v2");
-    expect(useWordStore.getState().getEntry("term:en")?.markdown).toBe("second");
+    expect(useWordStore.getState().getEntry("term:en")?.markdown).toBe(
+      "second",
+    );
 
     store.removeVersions("term:en", "v2");
     const entry = useWordStore.getState().getEntry("term:en");
     expect(entry?.markdown).toBe("first");
-    expect(useWordStore.getState().getRecord("term:en")?.activeVersionId).toBe("v1");
+    expect(useWordStore.getState().getRecord("term:en")?.activeVersionId).toBe(
+      "v1",
+    );
   });
 
   /**
@@ -96,12 +100,12 @@ describe("wordStore", () => {
 
     const record = useWordStore.getState().getRecord("term:es");
     expect(record?.versions).toHaveLength(2);
-    expect(record?.versions.find((version) => version.id === "v1")?.markdown).toBe(
-      "uno",
-    );
-    expect(record?.versions.find((version) => version.id === "v2")?.markdown).toBe(
-      "dos actualizado",
-    );
+    expect(
+      record?.versions.find((version) => version.id === "v1")?.markdown,
+    ).toBe("uno");
+    expect(
+      record?.versions.find((version) => version.id === "v2")?.markdown,
+    ).toBe("dos actualizado");
     expect(record?.activeVersionId).toBe("v2");
   });
 

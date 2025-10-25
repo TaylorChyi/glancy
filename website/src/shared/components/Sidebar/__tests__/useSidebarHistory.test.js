@@ -16,10 +16,8 @@ const historyMock = [
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:alpha",
     createdAt: "2024-05-01T10:00:00Z",
-    favorite: false,
-    versions: [
-      { id: "v1", createdAt: "2024-05-01T10:00:00Z", favorite: false },
-    ],
+
+    versions: [{ id: "v1", createdAt: "2024-05-01T10:00:00Z" }],
     latestVersionId: "v1",
   },
   {
@@ -28,10 +26,8 @@ const historyMock = [
     flavor: "BILINGUAL",
     termKey: "ENGLISH:BILINGUAL:beta",
     createdAt: "2024-05-02T11:00:00Z",
-    favorite: false,
-    versions: [
-      { id: "v2", createdAt: "2024-05-02T11:00:00Z", favorite: false },
-    ],
+
+    versions: [{ id: "v2", createdAt: "2024-05-02T11:00:00Z" }],
     latestVersionId: "v2",
   },
 ];

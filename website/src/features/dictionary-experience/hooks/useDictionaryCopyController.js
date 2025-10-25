@@ -172,9 +172,10 @@ export function useDictionaryCopyController({
     resetCopyFeedback,
   ]);
 
-  useEffect(() => () => clearCopyFeedbackResetTimer(), [
-    clearCopyFeedbackResetTimer,
-  ]);
+  useEffect(
+    () => () => clearCopyFeedbackResetTimer(),
+    [clearCopyFeedbackResetTimer],
+  );
 
   const isCopySuccessActive =
     copyFeedbackState === COPY_FEEDBACK_STATES.SUCCESS;

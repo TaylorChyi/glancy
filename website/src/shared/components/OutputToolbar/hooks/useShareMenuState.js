@@ -11,7 +11,14 @@
  * 演进与TODO：
  *  - 后续可在此扩展动画策略或权限校验日志。
  */
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";
 
 const deriveCapabilities = (shareModel) => {

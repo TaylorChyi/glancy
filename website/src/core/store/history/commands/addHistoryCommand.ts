@@ -61,7 +61,6 @@ export class AddHistoryCommand {
       flavor: normalizedFlavor,
       termKey,
       createdAt: now,
-      favorite: false,
       versions: [],
       latestVersionId: null,
     };

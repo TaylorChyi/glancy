@@ -109,7 +109,7 @@ export function useDictionaryHistoryHandlers({
               (item) => item.term === identifier || item.termKey === identifier,
             );
       const resolvedTerm =
-        typeof identifier === "string" ? identifier : target?.term ?? "";
+        typeof identifier === "string" ? identifier : (target?.term ?? "");
       if (!resolvedTerm) return;
       const fallbackConfig = resolveDictionaryConfig(resolvedTerm, {
         sourceLanguage:

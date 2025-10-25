@@ -19,13 +19,8 @@ export const useVersionDialProps = ({
   onNavigate,
   translator,
 }) => {
-  const {
-    hasPrevious,
-    hasNext,
-    indicator,
-    pagerLabel,
-    disabled,
-  } = versionViewModel;
+  const { hasPrevious, hasNext, indicator, pagerLabel, disabled } =
+    versionViewModel;
   return useMemo(
     () => ({
       baseToolButtonClass,

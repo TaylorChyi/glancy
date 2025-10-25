@@ -43,20 +43,13 @@ export type HistoryActions = {
     flavor?: string,
   ) => Promise<void>;
   clearHistory: (user?: User | null) => Promise<void>;
-  clearHistoryByLanguage: (language: string, user?: User | null) => Promise<void>;
+  clearHistoryByLanguage: (
+    language: string,
+    user?: User | null,
+  ) => Promise<void>;
   removeHistory: (
     identifier: string | HistoryItem,
     user?: User | null,
-  ) => Promise<void>;
-  favoriteHistory: (
-    identifier: string,
-    user?: User | null,
-    versionId?: string,
-  ) => Promise<void>;
-  unfavoriteHistory: (
-    identifier: string,
-    user?: User | null,
-    versionId?: string,
   ) => Promise<void>;
   applyRetentionPolicy: (
     retentionDays: number | null,
@@ -106,9 +99,10 @@ export interface HistoryApiGateway {
     flavor: string;
   }) => Promise<unknown>;
   clearRecords: (params: { token: string }) => Promise<unknown>;
-  deleteRecord: (params: { token: string; recordId: string }) => Promise<unknown>;
-  favoriteRecord: (params: { token: string; recordId: string }) => Promise<unknown>;
-  unfavoriteRecord: (params: { token: string; recordId: string }) => Promise<unknown>;
+  deleteRecord: (params: {
+    token: string;
+    recordId: string;
+  }) => Promise<unknown>;
 }
 
 export interface HistoryStoreDependencies {

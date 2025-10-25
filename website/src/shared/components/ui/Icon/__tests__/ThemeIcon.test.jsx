@@ -173,7 +173,9 @@ describe("ThemeIcon", () => {
    *  - inherit 仅跳过语义色注入，其余属性保持默认处理。
    */
   test("skips semantic role classes when inherit is requested", () => {
-    render(<ThemeIcon name={BRAND_LOGO_ICON} alt="brand" roleClass="inherit" />);
+    render(
+      <ThemeIcon name={BRAND_LOGO_ICON} alt="brand" roleClass="inherit" />,
+    );
     const icon = screen.getByRole("img", { name: "brand" });
     expect(icon.className).not.toContain("text-onsurface");
   });

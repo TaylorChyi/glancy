@@ -2,12 +2,12 @@
  * 背景：
  *  - 词典体验相关的翻译项数量庞大，需要独立分组以支撑功能扩展。
  * 目的：
- *  - 将查词流程、收藏、历史等文案统一集中，确保演进时上下文一致。
+ *  - 将查词流程、历史等文案统一集中，确保演进时上下文一致。
  * 关键决策与取舍：
  *  - 不调整现有键名，维持调用端无感迁移；
  *  - 覆盖搜索、收藏、语言切换及占位提示，构建完整链路。
  * 影响范围：
- *  - 词典页面、收藏夹与历史记录组件。
+ *  - 词典页面与历史记录组件。
  * 演进与TODO：
  *  - 若引入多模态释义，可在此扩展媒体类型相关文案。
  */
@@ -48,15 +48,9 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   relatedLabel: "相关词",
   variantsLabel: "变形",
   phrasesLabel: "常见词组",
-  favorites: "收藏夹",
-  favoritesIconAlt: "打开收藏夹",
   searchHistory: "搜索记录",
   noDefinition: "暂无释义",
-  noFavorites: "暂无收藏",
   noHistory: "暂无记录",
-  favoritesEmptyTitle: "收藏夹静候佳作",
-  favoritesEmptyDescription: "为任意词条点亮星标，打造只属于你的高定词汇清单。",
-  favoritesEmptyAction: "返回搜索",
   historyEmptyTitle: "历史记录尚未启航",
   historyEmptyDescription:
     "当你开始探索，最近的检索会在这里井然排列，随时回味。",
@@ -69,7 +63,5 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   inputPlaceholder: "词条、短语、句子",
   playWordAudio: "播放发音",
   playSentenceAudio: "播放例句发音",
-  favoriteAction: "收藏",
-  favoriteRemove: "取消收藏",
   deleteAction: "删除",
 };

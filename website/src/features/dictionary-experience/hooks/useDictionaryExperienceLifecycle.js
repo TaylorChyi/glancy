@@ -25,9 +25,7 @@ export function useDictionaryExperienceLifecycle({
 
   useEffect(() => {
     if (!state.currentTermKey) return;
-    const record = wordStoreApi
-      .getState()
-      .getRecord?.(state.currentTermKey);
+    const record = wordStoreApi.getState().getRecord?.(state.currentTermKey);
     if (record) {
       applyRecord(state.currentTermKey, record, record.activeVersionId);
     }

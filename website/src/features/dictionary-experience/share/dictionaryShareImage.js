@@ -12,8 +12,14 @@
  *  - 后续可在此接入不同导出策略（PDF/主题），并通过特性开关切换具体渲染器实现。
  */
 
-import { buildShareDocument, __INTERNAL__ as DocumentInternal } from "./documentModel.js";
-import { renderShareDocument, __INTERNAL__ as CanvasInternal } from "./canvasRenderer.js";
+import {
+  buildShareDocument,
+  __INTERNAL__ as DocumentInternal,
+} from "./documentModel.js";
+import {
+  renderShareDocument,
+  __INTERNAL__ as CanvasInternal,
+} from "./canvasRenderer.js";
 import { toTrimmedString } from "./documentFormatting.js";
 
 export async function exportDictionaryShareImage({

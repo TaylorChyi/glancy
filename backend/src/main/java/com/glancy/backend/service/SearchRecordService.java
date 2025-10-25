@@ -180,23 +180,6 @@ public class SearchRecordService {
     }
 
     /**
-     * Mark a search record as favorite for the user.
-     */
-    @Transactional
-    public SearchRecordResponse favoriteRecord(Long userId, Long recordId) {
-        log.info("Favoriting search record {} for user {}", recordId, userId);
-        SearchRecord record = searchRecordRepository
-            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("搜索记录不存在"));
-        record.setFavorite(true);
-        SearchRecord saved = searchRecordRepository.save(record);
-        log.info("Record after favoriting: {}", describeRecord(saved));
-        SearchRecordResponse response = searchRecordViewAssembler.assembleSingle(userId, saved);
-        log.info("Favorite response: {}", describeResponse(response));
-        return response;
-    }
-
-    /**
      * Retrieve the first page of a user's search history with the default size.
      */
     @Transactional(readOnly = true)
@@ -252,20 +235,6 @@ public class SearchRecordService {
             records.stream().map(SearchRecord::getId).filter(Objects::nonNull).toList()
         );
         searchRecordRepository.saveAll(records);
-    }
-
-    /**
-     * Cancel favorite status for a user's search record.
-     */
-    @Transactional
-    public void unfavoriteRecord(Long userId, Long recordId) {
-        log.info("Unfavoriting search record {} for user {}", recordId, userId);
-        SearchRecord record = searchRecordRepository
-            .findByIdAndUserIdAndDeletedFalse(recordId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("记录不存在"));
-        record.setFavorite(false);
-        SearchRecord saved = searchRecordRepository.save(record);
-        log.info("Record after unfavoriting: {}", describeRecord(saved));
     }
 
     /**
@@ -334,13 +303,12 @@ public class SearchRecordService {
         }
         Long uid = record.getUser() != null ? record.getUser().getId() : null;
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, favorite=%s, createdAt=%s, deleted=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, createdAt=%s, deleted=%s",
             record.getId(),
             uid,
             record.getTerm(),
             record.getLanguage(),
             record.getFlavor(),
-            record.getFavorite(),
             record.getCreatedAt(),
             record.getDeleted()
         );
@@ -351,14 +319,12 @@ public class SearchRecordService {
             return "null";
         }
         return String.format(
-            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, " +
-            "favorite=%s, createdAt=%s, versions=%d, latestVersion=%s",
+            "id=%d, userId=%s, term='%s', language=%s, flavor=%s, " + "createdAt=%s, versions=%d, latestVersion=%s",
             response.id(),
             response.userId(),
             response.term(),
             response.language(),
             response.flavor(),
-            response.favorite(),
             response.createdAt(),
             response.versions().size(),
             response.latestVersion() != null ? response.latestVersion().versionNumber() : null

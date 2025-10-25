@@ -60,12 +60,14 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
   const brandText = getBrandText(lang);
 
   const dictionaryLabel = t.primaryNavDictionaryLabel || brandText;
-  const libraryLabel = t.primaryNavLibraryLabel || t.favorites || "Favorites";
+  const libraryLabel =
+    t.primaryNavLibraryLabel ||
+    t.primaryNavEntriesLabel ||
+    (lang === "zh" ? "致用词单" : "Library");
   const entriesLabel = t.primaryNavEntriesLabel || t.termLabel || "Entries";
   const dictionaryHint =
     t.primaryNavDictionaryDescription || t.searchTitle || dictionaryLabel;
-  const libraryHint =
-    t.primaryNavLibraryDescription || t.favoritesEmptyTitle || libraryLabel;
+  const libraryHint = t.primaryNavLibraryDescription || libraryLabel;
 
   const handleDictionary = () => {
     if (typeof onShowDictionary === "function") {

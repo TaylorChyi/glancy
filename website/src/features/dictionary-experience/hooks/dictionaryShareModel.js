@@ -18,7 +18,8 @@ export function createDictionaryShareModel({
   isImageExporting,
   canExportImage,
 }) {
-  const normalisedShareUrl = typeof shareUrl === "string" ? shareUrl.trim() : "";
+  const normalisedShareUrl =
+    typeof shareUrl === "string" ? shareUrl.trim() : "";
   const copyChannelReady =
     normalisedShareUrl.length > 0 && typeof onCopyLink === "function";
   const exportableImage = Boolean(canExportImage);

@@ -16,7 +16,6 @@ const shortcuts = {
   shortcutsFocusSearch: "Focus search input",
   shortcutsSwitchLanguage: "Switch language",
   shortcutsToggleTheme: "Toggle theme",
-  shortcutsToggleFavorite: "Toggle favorite",
 };
 
 export default shortcuts;

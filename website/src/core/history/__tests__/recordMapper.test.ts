@@ -20,7 +20,6 @@ test("Given metadata canonical When mapping record Then prefer metadata term", (
     language: "english",
     flavor: "bilingual",
     createdAt: "2024-01-01T00:00:00Z",
-    favorite: false,
     versions: null,
   };
 
@@ -38,7 +37,7 @@ test("Given metadata canonical When mapping record Then prefer metadata term", (
  *  2) 调用 toHistoryItem；
  * 断言：
  *  - term 与 latestVersionId 对应的版本一致；
- *  - createdAt/favorite 从版本属性回填。
+ *  - createdAt 从版本属性回填。
  * 边界/异常：
  *  - 当所有版本缺失 term 时，映射器会继续降级至原始 term。
  */
@@ -49,19 +48,16 @@ test("Given latest version id When mapping record Then use version term", () => 
     language: "ENGLISH",
     flavor: "bilingual",
     createdAt: null,
-    favorite: null,
     versions: [
       {
         id: "ver-1",
         term: "draft",
         createdAt: "2024-02-01T10:00:00Z",
-        favorite: false,
       },
       {
         id: "ver-2",
         term: "final",
         createdAt: "2024-02-02T12:00:00Z",
-        favorite: true,
       },
     ],
   } as SearchRecordDto;
@@ -71,7 +67,6 @@ test("Given latest version id When mapping record Then use version term", () => 
   expect(result.term).toBe("final");
   expect(result.latestVersionId).toBe("ver-2");
   expect(result.createdAt).toBe("2024-02-02T12:00:00Z");
-  expect(result.favorite).toBe(true);
 });
 
 /**
@@ -82,7 +77,7 @@ test("Given latest version id When mapping record Then use version term", () => 
  *  2) 读取结果。
  * 断言：
  *  - term/termKey 直接使用原始词形的归一化结果；
- *  - createdAt/favorite 保持默认值。
+ *  - createdAt 保持默认值。
  * 边界/异常：
  *  - 若 term 为空字符串，termKey 仍会遵循归一化策略（此处未覆盖）。
  */
@@ -100,5 +95,4 @@ test("Given minimal record When mapping record Then fall back to raw term", () =
   expect(result.term).toBe("hello");
   expect(result.termKey).toBe("ENGLISH:BILINGUAL:hello");
   expect(result.createdAt).toBeNull();
-  expect(result.favorite).toBe(false);
 });

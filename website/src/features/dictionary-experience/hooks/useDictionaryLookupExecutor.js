@@ -6,10 +6,7 @@
  * 演进与TODO：后续可扩展查询埋点或多模型能力。
  */
 import { useCallback } from "react";
-import {
-  resolveDictionaryConfig,
-  WORD_LANGUAGE_AUTO,
-} from "@shared/utils";
+import { resolveDictionaryConfig, WORD_LANGUAGE_AUTO } from "@shared/utils";
 import { wordCacheKey } from "@shared/api/words.js";
 import { DEFAULT_MODEL } from "@core/config";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../dictionaryExperienceViews.js";
@@ -134,8 +131,7 @@ export function useDictionaryLookupExecutor({
             text: chunkText,
             entry: interpretedEntry,
             operation: chunkOperation,
-          } =
-            chunkInterpreter.interpret(chunk.chunk);
+          } = chunkInterpreter.interpret(chunk.chunk);
 
           if (interpretedEntry) {
             latestResolvedEntry = interpretedEntry;
@@ -148,7 +144,7 @@ export function useDictionaryLookupExecutor({
 
           const normalizedChunkText = chunkText ?? "";
           const shouldProcessBuffer =
-            (normalizedChunkText.length > 0 || chunkOperation === "replace");
+            normalizedChunkText.length > 0 || chunkOperation === "replace";
 
           if (shouldProcessBuffer) {
             const { preview, entry } =
@@ -166,7 +162,8 @@ export function useDictionaryLookupExecutor({
           }
         }
 
-        const { markdown: finalMarkdown, entry: finalEntry } = buffer.finalize();
+        const { markdown: finalMarkdown, entry: finalEntry } =
+          buffer.finalize();
         const resolvedEntry = finalEntry ?? latestResolvedEntry;
         if (resolvedEntry) {
           resolvedTerm = coerceResolvedTerm(resolvedEntry.term, resolvedTerm);

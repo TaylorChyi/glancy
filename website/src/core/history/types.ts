@@ -22,7 +22,6 @@ export type HistoryVersionPayload = {
   term?: string | null;
   metadata?: { term?: string | null } | null;
   createdAt?: string | null;
-  favorite?: boolean | null;
 };
 
 export type SearchRecordDto = {
@@ -31,7 +30,6 @@ export type SearchRecordDto = {
   language?: string | null;
   flavor?: string | null;
   createdAt?: string | null;
-  favorite?: boolean | null;
   metadata?: { term?: string | null } | null;
   versions?: HistoryVersionPayload[] | null;
 };
@@ -39,7 +37,6 @@ export type SearchRecordDto = {
 export interface HistoryVersion {
   id: string;
   createdAt: string | null;
-  favorite: boolean;
 }
 
 export interface HistoryItem {
@@ -53,7 +50,6 @@ export interface HistoryItem {
   flavor: string;
   termKey: string;
   createdAt: string | null;
-  favorite: boolean;
   versions: HistoryVersion[];
   latestVersionId: string | null;
 }

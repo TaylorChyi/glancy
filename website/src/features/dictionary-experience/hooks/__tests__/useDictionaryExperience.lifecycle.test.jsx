@@ -170,7 +170,8 @@ describe("useDictionaryExperience/lifecycle", () => {
       createAbortAwareStream(signal, abortError),
     );
 
-    const { restore: restoreConsole, spy: consoleErrorSpy } = muteConsoleError();
+    const { restore: restoreConsole, spy: consoleErrorSpy } =
+      muteConsoleError();
     const { result, unmount } = renderHook(() => useDictionaryExperience());
 
     try {

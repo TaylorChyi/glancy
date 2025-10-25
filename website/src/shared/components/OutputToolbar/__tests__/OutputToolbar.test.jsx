@@ -23,8 +23,6 @@ jest.unstable_mockModule("@core/context", () => ({
       versionIndicatorEmpty: "0 / 0",
       copyAction: "复制",
       copySuccess: "复制完成",
-      favoriteAction: "收藏",
-      favoriteRemove: "取消收藏",
       deleteButton: "删除",
       share: "分享",
       report: "反馈",
@@ -143,7 +141,9 @@ describe("OutputToolbar", () => {
     const pagerGroup = screen.getByRole("group", { name: "例句翻页" });
     const buttons = within(pagerGroup).getAllByRole("button");
     expect(buttons).toHaveLength(2);
-    expect(within(pagerGroup).queryByRole("button", { name: "选择版本" })).toBeNull();
+    expect(
+      within(pagerGroup).queryByRole("button", { name: "选择版本" }),
+    ).toBeNull();
   });
 
   /**
@@ -167,7 +167,6 @@ describe("OutputToolbar", () => {
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
   test("renders action buttons when permitted", async () => {
-    const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
     const onCopyLink = jest.fn(() => Promise.resolve());
     const onExportImage = jest.fn(() => Promise.resolve());
@@ -179,9 +178,6 @@ describe("OutputToolbar", () => {
         term="hello"
         canCopy
         onCopy={onCopy}
-        favorited
-        onToggleFavorite={onToggleFavorite}
-        canFavorite
         onDelete={onDelete}
         canDelete
         canShare
@@ -196,8 +192,8 @@ describe("OutputToolbar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
-    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    const deleteButton = screen.getByRole("button", { name: "删除" });
+    fireEvent.click(deleteButton);
     const shareTrigger = screen.getByRole("button", { name: "分享" });
     await act(async () => {
       fireEvent.click(shareTrigger);
@@ -219,12 +215,11 @@ describe("OutputToolbar", () => {
     });
     await Promise.resolve();
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
-    fireEvent.click(screen.getByRole("button", { name: "复制" }));
+    const copyButton = screen.getByRole("button", { name: "复制" });
+    fireEvent.click(copyButton);
 
-    expect(
-      screen.getByRole("button", { name: "取消收藏" }).className,
-    ).toContain("entry__tool-btn");
-    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+    expect(deleteButton.className).toContain("entry__tool-btn");
+    expect(copyButton.className).toContain("entry__tool-btn");
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onCopyLink).toHaveBeenCalledTimes(1);
     expect(onExportImage).toHaveBeenCalledTimes(1);

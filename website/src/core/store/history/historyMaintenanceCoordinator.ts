@@ -22,7 +22,6 @@ import { AddHistoryCommand } from "./commands/addHistoryCommand.ts";
 import { ClearHistoryCommand } from "./commands/clearHistoryCommand.ts";
 import { LanguageCleanupCommand } from "./commands/languageCleanupCommand.ts";
 import { RemoveHistoryCommand } from "./commands/removeHistoryCommand.ts";
-import { ToggleFavoriteCommand } from "./commands/toggleFavoriteCommand.ts";
 import { RetentionPolicyCommand } from "./commands/retentionPolicyCommand.ts";
 
 export class HistoryMaintenanceCoordinator {
@@ -33,8 +32,6 @@ export class HistoryMaintenanceCoordinator {
   private readonly languageCleanupCommand: LanguageCleanupCommand;
 
   private readonly removeCommand: RemoveHistoryCommand;
-
-  private readonly toggleFavoriteCommand: ToggleFavoriteCommand;
 
   private readonly retentionCommand: RetentionPolicyCommand;
 
@@ -62,12 +59,6 @@ export class HistoryMaintenanceCoordinator {
       errorBoundary,
     );
     this.removeCommand = new RemoveHistoryCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
-    );
-    this.toggleFavoriteCommand = new ToggleFavoriteCommand(
       context,
       dependencies,
       pagination,
@@ -102,23 +93,10 @@ export class HistoryMaintenanceCoordinator {
     return this.removeCommand.execute(identifier, user);
   }
 
-  public favoriteHistory(
-    identifier: string,
+  public applyRetentionPolicy(
+    retentionDays: number | null,
     user?: User | null,
-    versionId?: string,
   ) {
-    return this.toggleFavoriteCommand.favorite(identifier, user, versionId);
-  }
-
-  public unfavoriteHistory(
-    identifier: string,
-    user?: User | null,
-    versionId?: string,
-  ) {
-    return this.toggleFavoriteCommand.unfavorite(identifier, user, versionId);
-  }
-
-  public applyRetentionPolicy(retentionDays: number | null, user?: User | null) {
     return this.retentionCommand.execute(retentionDays, user);
   }
 }

@@ -21,11 +21,7 @@ const resolveVariantClass = (variant) => {
   return styles[`tool-button-${variant}`] || "";
 };
 
-const renderActionButton = ({
-  item,
-  baseToolButtonClass,
-  shareMenuOpen,
-}) => {
+const renderActionButton = ({ item, baseToolButtonClass, shareMenuOpen }) => {
   const variantClass = resolveVariantClass(item.variant);
   const className = [baseToolButtonClass, variantClass]
     .filter(Boolean)
@@ -90,8 +86,6 @@ ToolbarActions.propTypes = {
     copyAction: PropTypes.string,
     copySuccess: PropTypes.string,
     share: PropTypes.string,
-    favoriteAction: PropTypes.string,
-    favoriteRemove: PropTypes.string,
     deleteButton: PropTypes.string,
     deleteAction: PropTypes.string,
     report: PropTypes.string,
@@ -103,9 +97,6 @@ ToolbarActions.propTypes = {
   onCopy: PropTypes.func,
   copyFeedbackState: PropTypes.string,
   isCopySuccess: PropTypes.bool,
-  favorited: PropTypes.bool,
-  onToggleFavorite: PropTypes.func,
-  canFavorite: PropTypes.bool,
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
   canReport: PropTypes.bool,
@@ -127,9 +118,6 @@ ToolbarActions.defaultProps = {
   onCopy: undefined,
   copyFeedbackState: "idle",
   isCopySuccess: false,
-  favorited: false,
-  onToggleFavorite: undefined,
-  canFavorite: false,
   canDelete: false,
   onDelete: undefined,
   canReport: false,

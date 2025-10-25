@@ -20,19 +20,15 @@ mockApi.searchRecords = {
     language: "ENGLISH",
     flavor: WORD_FLAVOR_BILINGUAL,
     createdAt: "2024-05-01T10:00:00Z",
-    favorite: false,
     versions: [
       {
         id: "ver-1",
         createdAt: "2024-05-01T10:00:00Z",
-        favorite: false,
       },
     ],
   }),
   clearSearchRecords: jest.fn().mockResolvedValue(undefined),
   deleteSearchRecord: jest.fn().mockResolvedValue(undefined),
-  favoriteSearchRecord: jest.fn().mockResolvedValue(undefined),
-  unfavoriteSearchRecord: jest.fn().mockResolvedValue(undefined),
 };
 
 const user = { id: "u1", token: "t" };
@@ -47,12 +43,10 @@ const makeRecord = (idx) => {
     language: "ENGLISH",
     flavor: WORD_FLAVOR_BILINGUAL,
     createdAt,
-    favorite: false,
     versions: [
       {
         id: `ver-${idx}`,
         createdAt,
-        favorite: false,
       },
     ],
   };
@@ -87,12 +81,10 @@ describe("historyStore", () => {
         language: "ENGLISH",
         flavor: WORD_FLAVOR_BILINGUAL,
         createdAt: "2024-05-01T10:00:00Z",
-        favorite: false,
         versions: [
           {
             id: "ver-1",
             createdAt: "2024-05-01T10:00:00Z",
-            favorite: false,
           },
         ],
       },
@@ -203,14 +195,12 @@ describe("historyStore", () => {
         flavor: WORD_FLAVOR_BILINGUAL,
         metadata: { term: "student" },
         createdAt: "2024-05-01T10:00:00Z",
-        favorite: false,
         versions: [
           {
             id: "ver-1",
             term: "student",
             metadata: { term: "student" },
             createdAt: "2024-05-01T10:00:00Z",
-            favorite: false,
           },
         ],
       },
@@ -275,12 +265,10 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:hello",
           createdAt: "2024-05-01T10:00:00Z",
-          favorite: false,
           versions: [
             {
               id: "ver-hello",
               createdAt: "2024-05-01T10:00:00Z",
-              favorite: false,
             },
           ],
           latestVersionId: "ver-hello",
@@ -326,8 +314,7 @@ describe("historyStore", () => {
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-1", createdAt }],
         },
         {
           id: "rec-zh-1",
@@ -335,8 +322,7 @@ describe("historyStore", () => {
           language: "CHINESE",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-zh-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-zh-1", createdAt }],
         },
       ])
       .mockResolvedValueOnce([
@@ -346,8 +332,7 @@ describe("historyStore", () => {
           language: "ENGLISH",
           flavor: WORD_FLAVOR_BILINGUAL,
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-1", createdAt }],
         },
       ]);
     useHistoryStore.setState({
@@ -359,8 +344,7 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:hello",
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-en-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-1", createdAt }],
           latestVersionId: "ver-en-1",
         },
         {
@@ -370,8 +354,7 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "CHINESE:BILINGUAL:你好",
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-zh-1", createdAt, favorite: false }],
+          versions: [{ id: "ver-zh-1", createdAt }],
           latestVersionId: "ver-zh-1",
         },
       ],
@@ -452,8 +435,7 @@ describe("historyStore", () => {
       language: "ENGLISH",
       flavor: WORD_FLAVOR_BILINGUAL,
       createdAt,
-      favorite: false,
-      versions: [{ id: `ver-en-${idx}`, createdAt, favorite: false }],
+      versions: [{ id: `ver-en-${idx}`, createdAt }],
     }));
     const extra = {
       id: "rec-en-extra",
@@ -461,8 +443,7 @@ describe("historyStore", () => {
       language: "ENGLISH",
       flavor: WORD_FLAVOR_BILINGUAL,
       createdAt,
-      favorite: false,
-      versions: [{ id: "ver-en-extra", createdAt, favorite: false }],
+      versions: [{ id: "ver-en-extra", createdAt }],
     };
     mockApi.searchRecords.fetchSearchRecords
       .mockResolvedValueOnce(firstPage)
@@ -478,8 +459,7 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:seed",
           createdAt,
-          favorite: false,
-          versions: [{ id: "ver-en-seed", createdAt, favorite: false }],
+          versions: [{ id: "ver-en-seed", createdAt }],
           latestVersionId: "ver-en-seed",
         },
       ],
@@ -525,10 +505,7 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:legacy",
           createdAt: oldDate,
-          favorite: false,
-          versions: [
-            { id: "ver-legacy-1", createdAt: oldDate, favorite: false },
-          ],
+          versions: [{ id: "ver-legacy-1", createdAt: oldDate }],
           latestVersionId: "ver-legacy-1",
         },
         {
@@ -538,10 +515,7 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:fresh",
           createdAt: newDate,
-          favorite: false,
-          versions: [
-            { id: "ver-fresh-1", createdAt: newDate, favorite: false },
-          ],
+          versions: [{ id: "ver-fresh-1", createdAt: newDate }],
           latestVersionId: "ver-fresh-1",
         },
       ],
@@ -590,7 +564,6 @@ describe("historyStore", () => {
           flavor: WORD_FLAVOR_BILINGUAL,
           termKey: "ENGLISH:BILINGUAL:stale",
           createdAt: "2024-05-01T10:00:00Z",
-          favorite: false,
           versions: [],
           latestVersionId: null,
         },

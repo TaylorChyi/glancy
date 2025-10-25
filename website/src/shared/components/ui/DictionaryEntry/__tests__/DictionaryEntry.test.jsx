@@ -19,7 +19,6 @@ jest.unstable_mockModule("@core/context", () => ({
   AppProvider: ({ children }) => children,
   useUser: () => ({}),
   useHistory: () => ({}),
-  useFavorites: () => ({}),
   useLanguage: () => ({
     t: {
       phoneticLabel: "phon",
@@ -48,7 +47,9 @@ jest.unstable_mockModule("@shared/components", () => ({
   PronounceableWord: ({ text }) => <span>{text}</span>,
 }));
 
-const { default: DictionaryEntry } = await import("@shared/components/ui/DictionaryEntry");
+const { default: DictionaryEntry } = await import(
+  "@shared/components/ui/DictionaryEntry"
+);
 
 const getStrongText = (expected) =>
   screen.getByText((_, element) => {

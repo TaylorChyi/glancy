@@ -5,7 +5,7 @@ import Popover from "@shared/components/ui/Popover/Popover.jsx";
 import { withStopPropagation } from "@shared/utils/stopPropagation.js";
 import styles from "./ItemMenu.module.css";
 
-function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
+function ItemMenu({ onDelete, deleteLabel }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
@@ -54,23 +54,6 @@ function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
       >
         {open && (
           <ul className={styles.menu} role="menu" ref={menuRef}>
-            <li role="menuitem">
-              <button
-                type="button"
-                onClick={withStopPropagation(() => {
-                  onFavorite();
-                  closeMenu();
-                })}
-              >
-                <ThemeIcon
-                  name="star-solid"
-                  width={16}
-                  height={16}
-                  className={styles.icon}
-                />{" "}
-                {favoriteLabel}
-              </button>
-            </li>
             <li role="menuitem">
               <button
                 type="button"

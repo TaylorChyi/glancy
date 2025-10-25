@@ -47,7 +47,10 @@ export interface WordStoreState {
     termKey: string,
     versionIds?: NullableVersionId | NullableVersionId[],
   ) => void;
-  getEntry: (termKey: string, versionId?: NullableVersionId) => WordVersion | undefined;
+  getEntry: (
+    termKey: string,
+    versionId?: NullableVersionId,
+  ) => WordVersion | undefined;
   getRecord: (termKey: string) => WordCacheRecord | undefined;
   clear: () => void;
 }
@@ -153,7 +156,9 @@ export const useWordStore = createPersistentStore<WordStoreState>({
           return { entries: removeEntry(state.entries, termKey) };
         }
 
-        const shouldResolveActive = normalizedIds.has(target.activeVersionId ?? "");
+        const shouldResolveActive = normalizedIds.has(
+          target.activeVersionId ?? "",
+        );
         const nextActiveId = shouldResolveActive
           ? registry.resolveActiveVersionId({
               versions: filtered,

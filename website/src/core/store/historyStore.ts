@@ -41,8 +41,6 @@ const historyApiGateway: HistoryApiGateway = {
   saveRecord: (params) => api.searchRecords.saveSearchRecord(params),
   clearRecords: (params) => api.searchRecords.clearSearchRecords(params),
   deleteRecord: (params) => api.searchRecords.deleteSearchRecord(params),
-  favoriteRecord: (params) => api.searchRecords.favoriteSearchRecord(params),
-  unfavoriteRecord: (params) => api.searchRecords.unfavoriteSearchRecord(params),
 };
 
 export const useHistoryStore = createPersistentStore<HistoryState>({
@@ -75,8 +73,6 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
       clearHistory: machine.clearHistory,
       clearHistoryByLanguage: machine.clearHistoryByLanguage,
       removeHistory: machine.removeHistory,
-      favoriteHistory: machine.favoriteHistory,
-      unfavoriteHistory: machine.unfavoriteHistory,
       applyRetentionPolicy: machine.applyRetentionPolicy,
     } satisfies HistoryState;
   },
@@ -100,7 +96,6 @@ export const useHistoryStore = createPersistentStore<HistoryState>({
               flavor,
               termKey: createTermKey(item, language, flavor),
               createdAt: null,
-              favorite: false,
               versions: [],
               latestVersionId: null,
             } satisfies HistoryItem;

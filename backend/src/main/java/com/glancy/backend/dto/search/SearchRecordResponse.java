@@ -27,7 +27,6 @@ public record SearchRecordResponse(
     Language language,
     DictionaryFlavor flavor,
     LocalDateTime createdAt,
-    Boolean favorite,
     SearchRecordVersionSummary latestVersion,
     List<SearchRecordVersionSummary> versions
 ) {
@@ -46,7 +45,6 @@ public record SearchRecordResponse(
             language,
             flavor,
             createdAt,
-            favorite,
             latest,
             sanitizeVersions(versionSummaries)
         );

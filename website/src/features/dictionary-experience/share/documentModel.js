@@ -80,8 +80,9 @@ const buildFromLegacyEntry = (entry, t) => {
   if (Array.isArray(entry.definitions) && entry.definitions.length > 0) {
     sections.push({
       heading: t.definitionsLabel,
-      lines: entry.definitions.map((definition, index) =>
-        `${index + 1}. ${stripMarkdownArtifacts(definition)}`,
+      lines: entry.definitions.map(
+        (definition, index) =>
+          `${index + 1}. ${stripMarkdownArtifacts(definition)}`,
       ),
     });
   }

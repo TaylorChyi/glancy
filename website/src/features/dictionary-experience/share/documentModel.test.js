@@ -4,34 +4,31 @@ import { toTrimmedString } from "./documentFormatting.js";
 const { buildFromMarkdown } = __INTERNAL__;
 
 describe("documentModel", () => {
-  test(
-    "buildShareDocument prioritises markdown source when provided",
-    () => {
-      /**
-       * 测试目标：
-       *  - 确认当 markdown 文本存在时，构建器只生成单一无标题区块且去除多余空白。
-       * 前置条件：
-       *  - 提供带有前后空格与空行的 markdown 字符串。
-       * 步骤：
-       *  1) 调用 buildShareDocument 构造文档模型。
-       * 断言：
-       *  - 标题为空，sections 仅包含一项且行内容已去除尾随空格。
-       * 边界/异常：
-       *  - 若返回含标题或包含空白行则测试失败。
-       */
-      const markdown = "  Heading\ncontent line  \n\n";
-      const result = buildShareDocument({
-        term: "term",
-        entry: { markdown },
-        finalText: "should be ignored",
-        t: {},
-      });
-      expect(result.title).toBe("term");
-      expect(result.sections).toHaveLength(1);
-      expect(result.sections[0].heading).toBe("");
-      expect(result.sections[0].lines).toEqual(["Heading", "content line"]);
-    },
-  );
+  test("buildShareDocument prioritises markdown source when provided", () => {
+    /**
+     * 测试目标：
+     *  - 确认当 markdown 文本存在时，构建器只生成单一无标题区块且去除多余空白。
+     * 前置条件：
+     *  - 提供带有前后空格与空行的 markdown 字符串。
+     * 步骤：
+     *  1) 调用 buildShareDocument 构造文档模型。
+     * 断言：
+     *  - 标题为空，sections 仅包含一项且行内容已去除尾随空格。
+     * 边界/异常：
+     *  - 若返回含标题或包含空白行则测试失败。
+     */
+    const markdown = "  Heading\ncontent line  \n\n";
+    const result = buildShareDocument({
+      term: "term",
+      entry: { markdown },
+      finalText: "should be ignored",
+      t: {},
+    });
+    expect(result.title).toBe("term");
+    expect(result.sections).toHaveLength(1);
+    expect(result.sections[0].heading).toBe("");
+    expect(result.sections[0].lines).toEqual(["Heading", "content line"]);
+  });
 
   test("buildFromMarkdown trims trailing whitespace per line", () => {
     /**

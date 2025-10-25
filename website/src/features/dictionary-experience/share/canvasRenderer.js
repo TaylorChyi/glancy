@@ -12,7 +12,11 @@
  *  - 日后可在此接入更多渲染策略（如 WebGL、SVG）。
  */
 
-import { CANVAS_WIDTH, CONTENT_PADDING_X, CONTENT_PADDING_Y } from "./canvasTheme.js";
+import {
+  CANVAS_WIDTH,
+  CONTENT_PADDING_X,
+  CONTENT_PADDING_Y,
+} from "./canvasTheme.js";
 import {
   drawDocumentBody,
   measureDocumentHeight,

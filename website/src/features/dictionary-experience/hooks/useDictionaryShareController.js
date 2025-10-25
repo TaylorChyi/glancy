@@ -128,15 +128,7 @@ export function useDictionaryShareController({
     } finally {
       setShareImageState("idle");
     }
-  }, [
-    activeTerm,
-    entry,
-    finalText,
-    shareImageState,
-    showPopup,
-    t,
-    user,
-  ]);
+  }, [activeTerm, entry, finalText, shareImageState, showPopup, t, user]);
 
   return {
     shareUrl,

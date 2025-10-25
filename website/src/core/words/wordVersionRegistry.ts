@@ -23,7 +23,10 @@ export interface WordVersionMetadata {
 export interface WordVersionLike {
   id?: string | number | null;
   versionId?: string | number | null;
-  metadata?: { id?: string | number | null; versionId?: string | number | null } | null;
+  metadata?: {
+    id?: string | number | null;
+    versionId?: string | number | null;
+  } | null;
   createdAt?: string | Date | null;
   [key: string]: unknown;
 }
@@ -60,7 +63,9 @@ export interface VersionSelectionStrategy {
   pick(context: VersionSelectionContext): WordIdentifier | null;
 }
 
-const normalizeIdentifier = (value?: string | number | null): WordIdentifier | null => {
+const normalizeIdentifier = (
+  value?: string | number | null,
+): WordIdentifier | null => {
   if (value == null) {
     return null;
   }
@@ -68,7 +73,9 @@ const normalizeIdentifier = (value?: string | number | null): WordIdentifier | n
   return normalized.length > 0 ? normalized : null;
 };
 
-const parseTimestamp = (value: string | Date | null | undefined): number | null => {
+const parseTimestamp = (
+  value: string | Date | null | undefined,
+): number | null => {
   if (!value) {
     return null;
   }
@@ -83,11 +90,16 @@ const parseTimestamp = (value: string | Date | null | undefined): number | null 
   return Number.isNaN(time) ? null : time;
 };
 
-const findMatchingId = (versions: WordVersion[], candidate: WordIdentifier | null) => {
+const findMatchingId = (
+  versions: WordVersion[],
+  candidate: WordIdentifier | null,
+) => {
   if (!candidate) {
     return null;
   }
-  return versions.some((version) => version.id === candidate) ? candidate : null;
+  return versions.some((version) => version.id === candidate)
+    ? candidate
+    : null;
 };
 
 /**
@@ -95,7 +107,12 @@ const findMatchingId = (versions: WordVersion[], candidate: WordIdentifier | nul
  * 取舍：优先返回显式指定的 ID，其次沿用现有激活版本，再退化至最新时间戳。
  */
 export class LatestTimestampStrategy implements VersionSelectionStrategy {
-  pick({ versions, preferredId, current, metadata }: VersionSelectionContext): WordIdentifier | null {
+  pick({
+    versions,
+    preferredId,
+    current,
+    metadata,
+  }: VersionSelectionContext): WordIdentifier | null {
     if (!versions.length) {
       return null;
     }
@@ -152,9 +169,13 @@ export class LatestTimestampStrategy implements VersionSelectionStrategy {
  * 复杂度：操作整体保持 O(n)。
  */
 export class WordVersionRegistry {
-  constructor(private readonly strategy: VersionSelectionStrategy = new LatestTimestampStrategy()) {}
+  constructor(
+    private readonly strategy: VersionSelectionStrategy = new LatestTimestampStrategy(),
+  ) {}
 
-  normalizeVersions(versions: (WordVersionLike | null | undefined)[]): WordVersion[] {
+  normalizeVersions(
+    versions: (WordVersionLike | null | undefined)[],
+  ): WordVersion[] {
     return versions
       .filter((version): version is WordVersionLike => Boolean(version))
       .map((version, index) => {
@@ -172,7 +193,10 @@ export class WordVersionRegistry {
       });
   }
 
-  mergeVersionCollections(existing: WordVersion[], incoming: WordVersion[]): WordVersion[] {
+  mergeVersionCollections(
+    existing: WordVersion[],
+    incoming: WordVersion[],
+  ): WordVersion[] {
     if (!incoming.length) {
       return existing;
     }
@@ -180,7 +204,10 @@ export class WordVersionRegistry {
     const registry = new Map<WordIdentifier, WordVersion>();
     const order: WordIdentifier[] = [];
 
-    const register = (candidate: WordVersion | undefined, preferIncoming: boolean) => {
+    const register = (
+      candidate: WordVersion | undefined,
+      preferIncoming: boolean,
+    ) => {
       if (!candidate) {
         return;
       }
@@ -205,20 +232,28 @@ export class WordVersionRegistry {
       .filter((version): version is WordVersion => Boolean(version));
   }
 
-  resolveActiveVersionId(context: VersionSelectionContext): WordIdentifier | null {
+  resolveActiveVersionId(
+    context: VersionSelectionContext,
+  ): WordIdentifier | null {
     return this.strategy.pick(context);
   }
 
-  normalizeId(value: string | number | null | undefined): WordIdentifier | null {
+  normalizeId(
+    value: string | number | null | undefined,
+  ): WordIdentifier | null {
     return normalizeIdentifier(value ?? null);
   }
 
-  selectVersion(entry: WordCacheRecord | undefined, versionId?: string | number | null): WordVersion | undefined {
+  selectVersion(
+    entry: WordCacheRecord | undefined,
+    versionId?: string | number | null,
+  ): WordVersion | undefined {
     if (!entry || !entry.versions.length) {
       return undefined;
     }
 
-    const preferred = normalizeIdentifier(versionId ?? null) ?? entry.activeVersionId;
+    const preferred =
+      normalizeIdentifier(versionId ?? null) ?? entry.activeVersionId;
     if (preferred) {
       const match = entry.versions.find((version) => version.id === preferred);
       if (match) {
@@ -229,7 +264,10 @@ export class WordVersionRegistry {
     return entry.versions[entry.versions.length - 1];
   }
 
-  resolveLatestVersionId(versions: WordVersion[], metadata?: WordVersionMetadata | null): WordIdentifier | null {
+  resolveLatestVersionId(
+    versions: WordVersion[],
+    metadata?: WordVersionMetadata | null,
+  ): WordIdentifier | null {
     if (!versions.length) {
       return null;
     }
@@ -239,7 +277,9 @@ export class WordVersionRegistry {
       normalizeIdentifier(metadata?.activeVersionId ?? null);
 
     if (metadataPreferred) {
-      const matched = versions.find((version) => version.id === metadataPreferred);
+      const matched = versions.find(
+        (version) => version.id === metadataPreferred,
+      );
       if (matched) {
         return matched.id;
       }

@@ -11,17 +11,11 @@
  * 演进与TODO：
  *  - 后续新增动作时同步在此扩展工厂函数。
  */
-import {
-  resolveCopyIcon,
-  resolveShareIcon,
-} from "./iconFactories";
+import { resolveCopyIcon, resolveShareIcon } from "./iconFactories";
 
 export const buildActionContext = ({
   translator,
   user,
-  favorited,
-  canFavorite,
-  onToggleFavorite,
   canDelete,
   onDelete,
   canReport,
@@ -30,9 +24,6 @@ export const buildActionContext = ({
 }) => ({
   translator,
   user,
-  favorited,
-  canFavorite,
-  onToggleFavorite,
   canDelete,
   onDelete,
   canReport,

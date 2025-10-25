@@ -12,7 +12,13 @@
  *  - 后续可抽象出通用 FloatingLayer，将位置策略通过策略模式外置以支持更多 placement 组合。
  */
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import PropTypes from "prop-types";
 import ShareMenu from "./ShareMenu.jsx";
 import styles from "../OutputToolbar.module.css";
@@ -34,7 +40,10 @@ const computeAnchoredPosition = ({ anchorRect, menuRect, offset }) => {
   const preferredTop = anchorRect.top - menuRect.height - offset;
   const fallbackTop = anchorRect.bottom + offset;
   const minTop = VIEWPORT_PADDING;
-  const maxTop = Math.max(minTop, viewport.height - menuRect.height - VIEWPORT_PADDING);
+  const maxTop = Math.max(
+    minTop,
+    viewport.height - menuRect.height - VIEWPORT_PADDING,
+  );
 
   let placement = "top";
   let top = preferredTop;
@@ -47,7 +56,10 @@ const computeAnchoredPosition = ({ anchorRect, menuRect, offset }) => {
 
   const rawLeft = anchorRect.right - menuRect.width;
   const minLeft = VIEWPORT_PADDING;
-  const maxLeft = Math.max(minLeft, viewport.width - menuRect.width - VIEWPORT_PADDING);
+  const maxLeft = Math.max(
+    minLeft,
+    viewport.width - menuRect.width - VIEWPORT_PADDING,
+  );
   const left = clamp(rawLeft, minLeft, maxLeft);
 
   return { top, left, placement };
@@ -65,7 +77,11 @@ function ShareMenuSurface({ shareMenu, translator }) {
 
   const localMenuNodeRef = useRef(null);
   const rafRef = useRef(null);
-  const [geometry, setGeometry] = useState({ top: 0, left: 0, placement: "top" });
+  const [geometry, setGeometry] = useState({
+    top: 0,
+    left: 0,
+    placement: "top",
+  });
 
   const assignMenuNode = useCallback(
     (node) => {
@@ -157,12 +173,15 @@ function ShareMenuSurface({ shareMenu, translator }) {
     };
   }, [anchorBoundaryRef, closeMenu, isOpen]);
 
-  useEffect(() => () => {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    },
+    [],
+  );
 
   if (!isOpen) return null;
   if (typeof document === "undefined") return null;

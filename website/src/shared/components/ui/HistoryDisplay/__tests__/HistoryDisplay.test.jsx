@@ -7,10 +7,7 @@ const historyMock = [
     language: "ENGLISH",
     termKey: "ENGLISH:beta",
     createdAt: "2024-05-01T12:00:00Z",
-    favorite: false,
-    versions: [
-      { id: "v10", createdAt: "2024-05-01T12:00:00Z", favorite: false },
-    ],
+    versions: [{ id: "v10", createdAt: "2024-05-01T12:00:00Z" }],
     latestVersionId: "v10",
   },
 ];

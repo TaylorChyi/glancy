@@ -43,7 +43,11 @@ function ReportIssueActionBar({
        * 通过占满 actions 区域来与 SettingsSurface 保持左右对齐的栅格节奏，
        * 既方便在左侧展示错误消息，也能在右侧维持操作按钮的视觉稳定。
        */}
-      <div className={styles["action-status"]} aria-live="assertive" aria-atomic="true">
+      <div
+        className={styles["action-status"]}
+        aria-live="assertive"
+        aria-atomic="true"
+      >
         {errorMessage ? (
           <p className={styles.error} role="alert">
             {errorMessage}

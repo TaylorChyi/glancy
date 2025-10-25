@@ -67,26 +67,6 @@ public class SearchRecordController {
     }
 
     /**
-     * Mark a search record as favorite for the user.
-     */
-    @PostMapping("/user/{recordId}/favorite")
-    public ResponseEntity<SearchRecordResponse> favorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        SearchRecordResponse resp = searchRecordService.favoriteRecord(userId, recordId);
-        log.info("Favorite search record response: {}", resp);
-        return ResponseEntity.ok(resp);
-    }
-
-    /**
-     * Cancel favorite for a specific search record of the user.
-     */
-    @DeleteMapping("/user/{recordId}/favorite")
-    public ResponseEntity<Void> unfavorite(@AuthenticatedUser Long userId, @PathVariable Long recordId) {
-        searchRecordService.unfavoriteRecord(userId, recordId);
-        log.info("Unfavorited record {} for user {}", recordId, userId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * Delete a specific search record of a user.
      */
     @DeleteMapping("/user/{recordId}")

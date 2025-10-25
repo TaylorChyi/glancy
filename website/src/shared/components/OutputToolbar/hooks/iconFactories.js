@@ -16,18 +16,12 @@ import { createElement } from "react";
 
 import ThemeIcon from "@shared/components/ui/Icon";
 
-const createThemeIconFactory = (name, size) =>
-  () =>
-    createElement(ThemeIcon, {
-      name,
-      width: size,
-      height: size,
-    });
-
-const FAVORITE_ICON_FACTORY = Object.freeze({
-  active: createThemeIconFactory("star-solid", 22),
-  inactive: createThemeIconFactory("star-outline", 22),
-});
+const createThemeIconFactory = (name, size) => () =>
+  createElement(ThemeIcon, {
+    name,
+    width: size,
+    height: size,
+  });
 
 const COPY_ICON_FACTORY = Object.freeze({
   success: createThemeIconFactory("copy-success", 20),
@@ -39,15 +33,11 @@ const REPORT_ICON_FACTORY = createThemeIconFactory("flag", 20);
 const SHARE_ICON_FACTORY = createThemeIconFactory("link", 20);
 
 export const ICON_FACTORIES = Object.freeze({
-  favorite: FAVORITE_ICON_FACTORY,
   copy: COPY_ICON_FACTORY,
   delete: DELETE_ICON_FACTORY,
   report: REPORT_ICON_FACTORY,
   share: SHARE_ICON_FACTORY,
 });
-
-export const resolveFavoriteIcon = (favorited) =>
-  (favorited ? FAVORITE_ICON_FACTORY.active : FAVORITE_ICON_FACTORY.inactive)();
 
 export const resolveCopyIcon = (isSuccess) =>
   (isSuccess ? COPY_ICON_FACTORY.success : COPY_ICON_FACTORY.default)();

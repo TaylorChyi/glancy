@@ -36,7 +36,10 @@ export type {
   HistorySlice,
 } from "./contracts.ts";
 
-export type { HistoryStoreContext, HistoryStoreDependencies } from "./contracts.ts";
+export type {
+  HistoryStoreContext,
+  HistoryStoreDependencies,
+} from "./contracts.ts";
 
 export class HistoryStoreMachine {
   public readonly initialState: HistorySlice = { ...INITIAL_HISTORY_SLICE };
@@ -63,7 +66,9 @@ export class HistoryStoreMachine {
     );
   }
 
-  public loadHistory: HistoryActions["loadHistory"] = async (user?: User | null) => {
+  public loadHistory: HistoryActions["loadHistory"] = async (
+    user?: User | null,
+  ) => {
     await this.pagination.loadInitial(user);
   };
 
@@ -98,22 +103,6 @@ export class HistoryStoreMachine {
     user?,
   ) => {
     await this.maintenance.removeHistory(identifier, user);
-  };
-
-  public favoriteHistory: HistoryActions["favoriteHistory"] = async (
-    identifier,
-    user?,
-    versionId?,
-  ) => {
-    await this.maintenance.favoriteHistory(identifier, user, versionId);
-  };
-
-  public unfavoriteHistory: HistoryActions["unfavoriteHistory"] = async (
-    identifier,
-    user?,
-    versionId?,
-  ) => {
-    await this.maintenance.unfavoriteHistory(identifier, user, versionId);
   };
 
   public applyRetentionPolicy: HistoryActions["applyRetentionPolicy"] = async (

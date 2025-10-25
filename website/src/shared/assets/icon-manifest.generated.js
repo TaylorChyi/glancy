@@ -51,20 +51,16 @@ import iconAsset48 from "./interface/controls/send-button.svg";
 import iconAsset49 from "./interface/controls/send-button.svg?raw";
 import iconAsset50 from "./status/shield-check.svg";
 import iconAsset51 from "./status/shield-check.svg?raw";
-import iconAsset52 from "./status/star-outline.svg";
-import iconAsset53 from "./status/star-outline.svg?raw";
-import iconAsset54 from "./status/star-solid.svg";
-import iconAsset55 from "./status/star-solid.svg?raw";
-import iconAsset56 from "./status/subscription.svg";
-import iconAsset57 from "./status/subscription.svg?raw";
-import iconAsset58 from "./actions/trash.svg";
-import iconAsset59 from "./actions/trash.svg?raw";
-import iconAsset60 from "./identity/users/user.svg";
-import iconAsset61 from "./identity/users/user.svg?raw";
-import iconAsset62 from "./interface/controls/voice-button.svg";
-import iconAsset63 from "./interface/controls/voice-button.svg?raw";
-import iconAsset64 from "./communication/channels/wechat.svg";
-import iconAsset65 from "./communication/channels/wechat.svg?raw";
+import iconAsset52 from "./status/subscription.svg";
+import iconAsset53 from "./status/subscription.svg?raw";
+import iconAsset54 from "./actions/trash.svg";
+import iconAsset55 from "./actions/trash.svg?raw";
+import iconAsset56 from "./identity/users/user.svg";
+import iconAsset57 from "./identity/users/user.svg?raw";
+import iconAsset58 from "./interface/controls/voice-button.svg";
+import iconAsset59 from "./interface/controls/voice-button.svg?raw";
+import iconAsset60 from "./communication/channels/wechat.svg";
+import iconAsset61 from "./communication/channels/wechat.svg?raw";
 
 const registry = Object.freeze({
   apple: Object.freeze({
@@ -145,26 +141,20 @@ const registry = Object.freeze({
   "shield-check": Object.freeze({
     single: Object.freeze({ url: iconAsset50, inline: iconAsset51 }),
   }),
-  "star-outline": Object.freeze({
+  subscription: Object.freeze({
     single: Object.freeze({ url: iconAsset52, inline: iconAsset53 }),
   }),
-  "star-solid": Object.freeze({
+  trash: Object.freeze({
     single: Object.freeze({ url: iconAsset54, inline: iconAsset55 }),
   }),
-  subscription: Object.freeze({
+  user: Object.freeze({
     single: Object.freeze({ url: iconAsset56, inline: iconAsset57 }),
   }),
-  trash: Object.freeze({
+  "voice-button": Object.freeze({
     single: Object.freeze({ url: iconAsset58, inline: iconAsset59 }),
   }),
-  user: Object.freeze({
-    single: Object.freeze({ url: iconAsset60, inline: iconAsset61 }),
-  }),
-  "voice-button": Object.freeze({
-    single: Object.freeze({ url: iconAsset62, inline: iconAsset63 }),
-  }),
   wechat: Object.freeze({
-    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
+    single: Object.freeze({ url: iconAsset60, inline: iconAsset61 }),
   }),
 });
 

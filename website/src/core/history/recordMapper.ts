@@ -36,7 +36,6 @@ abstract class AbstractHistoryRecordMapper {
       flavor,
       termKey: createTermKey(term, language, flavor),
       createdAt: this.resolveCreatedAt(prepared, versions),
-      favorite: this.resolveFavorite(prepared, versions),
       versions,
       latestVersionId,
     };
@@ -51,7 +50,7 @@ abstract class AbstractHistoryRecordMapper {
   }
 
   protected resolveLatestVersionId(versions: HistoryVersion[]): string | null {
-    return versions.length ? versions[0]?.id ?? null : null;
+    return versions.length ? (versions[0]?.id ?? null) : null;
   }
 
   protected resolveFallbackTerm(record: SearchRecordDto): string {
@@ -65,16 +64,7 @@ abstract class AbstractHistoryRecordMapper {
     return record.createdAt ?? versions[0]?.createdAt ?? null;
   }
 
-  protected resolveFavorite(
-    record: SearchRecordDto,
-    versions: HistoryVersion[],
-  ): boolean {
-    return Boolean(record.favorite ?? versions[0]?.favorite ?? false);
-  }
-
-  protected abstract ensureVersions(
-    record: SearchRecordDto,
-  ): HistoryVersion[];
+  protected abstract ensureVersions(record: SearchRecordDto): HistoryVersion[];
 
   protected abstract resolveCanonicalTerm(
     record: SearchRecordDto,
@@ -84,13 +74,12 @@ abstract class AbstractHistoryRecordMapper {
 
 const sanitizeVersion = (
   version: HistoryVersionPayload | null | undefined,
-  fallback: { createdAt?: string | null; favorite?: boolean | null },
+  fallback: { createdAt?: string | null },
 ): HistoryVersion | null => {
   if (!version || version.id == null) return null;
   return {
     id: String(version.id),
     createdAt: version.createdAt ?? fallback.createdAt ?? null,
-    favorite: Boolean(version.favorite ?? fallback.favorite ?? false),
   };
 };
 
@@ -98,7 +87,6 @@ class DefaultHistoryRecordMapper extends AbstractHistoryRecordMapper {
   protected override ensureVersions(record: SearchRecordDto): HistoryVersion[] {
     const fallback = {
       createdAt: record.createdAt ?? null,
-      favorite: record.favorite ?? null,
     };
     const provided = (record.versions ?? [])
       .map((version) => sanitizeVersion(version, fallback))
@@ -115,7 +103,6 @@ class DefaultHistoryRecordMapper extends AbstractHistoryRecordMapper {
       {
         id: String(record.id),
         createdAt: record.createdAt ?? null,
-        favorite: Boolean(record.favorite ?? false),
       },
     ];
   }

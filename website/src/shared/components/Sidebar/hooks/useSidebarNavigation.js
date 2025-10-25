@@ -92,10 +92,9 @@ export default function useSidebarNavigation({
 
   const libraryLabel = useMemo(() => {
     if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
-    if (t.favorites) return t.favorites;
     if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
-    return "Library";
-  }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
+    return lang === "zh" ? "致用词单" : "Library";
+  }, [lang, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
 
   const historyLabel = useMemo(() => {
     if (t.searchHistory) return t.searchHistory;

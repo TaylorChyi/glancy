@@ -13,19 +13,9 @@
  */
 
 const ACTION_TRANSLATORS = new Map([
-  [
-    "FOCUS_SEARCH",
-    (t) => t?.shortcutsFocusSearch ?? "Focus search input",
-  ],
-  [
-    "SWITCH_LANGUAGE",
-    (t) => t?.shortcutsSwitchLanguage ?? "Switch language",
-  ],
+  ["FOCUS_SEARCH", (t) => t?.shortcutsFocusSearch ?? "Focus search input"],
+  ["SWITCH_LANGUAGE", (t) => t?.shortcutsSwitchLanguage ?? "Switch language"],
   ["TOGGLE_THEME", (t) => t?.shortcutsToggleTheme ?? "Toggle theme"],
-  [
-    "TOGGLE_FAVORITE",
-    (t) => t?.shortcutsToggleFavorite ?? "Toggle favorite",
-  ],
   [
     "OPEN_SHORTCUTS",
     (t) => t?.settingsKeyboardOpenPalette ?? "Open shortcut guide",

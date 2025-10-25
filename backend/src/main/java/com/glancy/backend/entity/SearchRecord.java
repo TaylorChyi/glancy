@@ -29,7 +29,4 @@ public class SearchRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
-
-    @Column(nullable = false)
-    private Boolean favorite = false;
 }
