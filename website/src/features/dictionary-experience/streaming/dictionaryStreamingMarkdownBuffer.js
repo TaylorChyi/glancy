@@ -9,7 +9,7 @@
  *    （dictionaryEntryMarkdownBuilder），从而兼顾可测试性与可扩展性；
  *  - 预览更新仅在内容变化时触发，避免在高频 chunk 下造成不必要的渲染。
  * 影响范围：
- *  - useDictionaryExperience、历史导出及后续分享链路可共享一致的 Markdown 产物。
+ *  - useDictionaryExperience 与历史导出可共享一致的 Markdown 产物。
  * 演进与TODO：
  *  - 可进一步扩展 append 接口，支持服务端 metadata 事件（如渐进式结构化片段）。
  */

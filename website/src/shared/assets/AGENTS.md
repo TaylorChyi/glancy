@@ -10,7 +10,6 @@
   - `glancy/`：品牌识别相关资产（应用、站点徽标等）。
 - `communication/`
   - `channels/`：沟通触点，如邮箱、电话、社交账号。
-  - `sharing/`：链路与外部分享入口。
 - `domain/`
   - 按业务语义拆分（automation、knowledge、personalization 等），收录场景特定插画或图标。
 - `identity/`

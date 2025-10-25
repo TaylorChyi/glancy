@@ -5,7 +5,7 @@
  *  - 通过组合模式拆分子组件与状态 Hook，让主入口聚焦装配并恢复结构化规则校验。
  * 关键决策与取舍：
  *  - 引入 LeftCluster、ToolbarActions、VersionDial 三段布局组件，持续复用既有视觉标记；
- *  - 采用 useVersionViewModel 与 useShareMenuState 提供可复用的派生数据，避免一次性重构。
+ *  - 采用 useVersionViewModel 提供可复用的派生数据，避免一次性重构。
  * 影响范围：
  *  - 词典页输出工具栏及依赖其交互的页面。
  * 演进与TODO：
@@ -131,8 +131,6 @@ const OUTPUT_TOOLBAR_DEFAULTS = {
   canFavorite: false,
   canDelete: false,
   onDelete: undefined,
-  canShare: undefined,
-  shareModel: null,
   canReport: false,
   onReport: undefined,
   className: "",
@@ -193,15 +191,6 @@ OutputToolbar.propTypes = {
   canFavorite: PropTypes.bool,
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
-  canShare: PropTypes.bool,
-  shareModel: PropTypes.shape({
-    canShare: PropTypes.bool,
-    onCopyLink: PropTypes.func,
-    onExportImage: PropTypes.func,
-    isImageExporting: PropTypes.bool,
-    canExportImage: PropTypes.bool,
-    shareUrl: PropTypes.string,
-  }),
   canReport: PropTypes.bool,
   onReport: PropTypes.func,
   className: PropTypes.string,

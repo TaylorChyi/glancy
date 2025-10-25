@@ -37,8 +37,6 @@ import iconAsset34 from "./integrations/identity-providers/google.svg";
 import iconAsset35 from "./integrations/identity-providers/google.svg?raw";
 import iconAsset36 from "./domain/knowledge/library.svg";
 import iconAsset37 from "./domain/knowledge/library.svg?raw";
-import iconAsset38 from "./communication/sharing/link.svg";
-import iconAsset39 from "./communication/sharing/link.svg?raw";
 import iconAsset40 from "./domain/personalization/personalization.svg";
 import iconAsset41 from "./domain/personalization/personalization.svg?raw";
 import iconAsset42 from "./communication/channels/phone.svg";
@@ -123,9 +121,6 @@ const registry = Object.freeze({
   }),
   library: Object.freeze({
     single: Object.freeze({ url: iconAsset36, inline: iconAsset37 }),
-  }),
-  link: Object.freeze({
-    single: Object.freeze({ url: iconAsset38, inline: iconAsset39 }),
   }),
   personalization: Object.freeze({
     single: Object.freeze({ url: iconAsset40, inline: iconAsset41 }),

@@ -47,18 +47,6 @@ export const translationFixture = {
   copyEmpty: "无内容",
   copyFailed: "复制失败",
   copyUnavailable: "不可复制",
-  shareMessage: "分享 {term}",
-  shareSuccess: "分享完成",
-  share: "分享",
-  shareCopySuccess: "复制链接",
-  shareFailed: "分享失败",
-  shareOptionLink: "复制分享链接",
-  shareOptionImage: "导出释义长图",
-  shareImagePreparing: "图片生成中",
-  shareImageSuccess: "图片导出完成",
-  shareImageFailed: "图片导出失败",
-  shareMenuLabel: "分享方式",
-  shareAppName: "Glancy 词海",
   reportUnavailable: "无法报告",
   reportFailed: "报告失败",
   report: "报告",
@@ -119,7 +107,6 @@ jest.unstable_mockModule("@shared/utils", () => ({
   WORD_LANGUAGE_AUTO: "AUTO",
   normalizeWordSourceLanguage: jest.fn((value) => value ?? "AUTO"),
   normalizeWordTargetLanguage: jest.fn((value) => value ?? "CHINESE"),
-  resolveShareTarget: jest.fn(() => "https://example.com"),
   polishDictionaryMarkdown: jest.fn((value) => value),
   copyTextToClipboard: jest.fn(async () => ({ status: "copied" })),
 }));
@@ -169,17 +156,7 @@ jest.unstable_mockModule("@core/config", () => ({
   DEFAULT_MODEL: "test-model",
 }));
 
-jest.unstable_mockModule(
-  "@features/dictionary-experience/share/dictionaryShareImage.js",
-  () => ({
-    exportDictionaryShareImage: jest.fn(async () => ({ status: "success" })),
-  }),
-);
-
 export const utilsModule = await import("@shared/utils");
-export const shareImageModule = await import(
-  "@features/dictionary-experience/share/dictionaryShareImage.js"
-);
 export const { useDictionaryExperience, COPY_FEEDBACK_STATES } = await import(
   "../useDictionaryExperience.js"
 );
@@ -214,10 +191,6 @@ export const resetDictionaryExperienceTestState = () => {
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });
   mockWordStoreState.entries = {};
   submitWordReportMock.mockReset();
-  shareImageModule.exportDictionaryShareImage.mockResolvedValue({
-    status: "success",
-  });
-  utilsModule.resolveShareTarget.mockReturnValue("https://example.com");
 };
 
 export const restoreDictionaryExperienceTimers = () => {
