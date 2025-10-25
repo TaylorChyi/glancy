@@ -30,6 +30,7 @@
   --color-primary-contrast: var(--night-surface);
   --color-link-light: var(--color-primary);
   --color-link-dark: color-mix(in srgb, var(--color-primary) 68%, var(--neutral-0) 32%);
+  --link-color: var(--color-link-dark);
   --accent-color: var(--color-primary);
   --accent-color-strong: var(--color-primary-hover);
   --color-overlay-base: var(--night-surface);
