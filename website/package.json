@@ -11,7 +11,7 @@
     "generate:icons": "node ops/scripts/generate-icon-manifest.mjs",
     "icons:mono": "node ops/tools/mono-svg.js",
     "start": "node ops/server/index.js",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
+    "test": "node ops/scripts/run-jest.mjs --runInBand",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint:lines": "node scripts/check-lines.mjs",
     "lint:colors": "colorguard \"src/**/*.css\" --threshold 3",
