@@ -20,7 +20,6 @@ import { SETTINGS_DATA_TRANSLATIONS_ZH } from "./segments/settingsDataZh";
 import { SETTINGS_ACCOUNT_TRANSLATIONS_ZH } from "./segments/settingsAccountZh";
 import { SETTINGS_SUBSCRIPTION_TRANSLATIONS_ZH } from "./segments/settingsSubscriptionZh";
 import { DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH } from "./segments/dictionaryExperienceZh";
-import { ENGAGEMENT_SHARING_TRANSLATIONS_ZH } from "./segments/engagementSharingZh";
 import { INTERACTION_CONTROLS_TRANSLATIONS_ZH } from "./segments/interactionControlsZh";
 import { PRIVACY_CONSENT_TRANSLATIONS_ZH } from "./segments/privacyConsentZh";
 
@@ -34,7 +33,6 @@ const ZH_TRANSLATIONS = {
   ...SETTINGS_ACCOUNT_TRANSLATIONS_ZH,
   ...SETTINGS_SUBSCRIPTION_TRANSLATIONS_ZH,
   ...DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH,
-  ...ENGAGEMENT_SHARING_TRANSLATIONS_ZH,
   ...INTERACTION_CONTROLS_TRANSLATIONS_ZH,
   ...PRIVACY_CONSENT_TRANSLATIONS_ZH,
 };

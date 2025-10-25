@@ -54,8 +54,6 @@ const pickActionsInput = (props) => ({
   onDelete: props.onDelete,
   canReport: props.canReport,
   onReport: props.onReport,
-  canShare: props.canShare,
-  shareModel: props.shareModel,
 });
 
 const pickVersionDialInput = ({
