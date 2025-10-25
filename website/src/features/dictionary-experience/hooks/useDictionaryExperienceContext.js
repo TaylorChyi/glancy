@@ -12,13 +12,7 @@
  *  - 若未来上下文增多，可在此添加 memo 化或调试日志。
  */
 import { useNavigate } from "react-router-dom";
-import {
-  useHistory,
-  useUser,
-  useFavorites,
-  useTheme,
-  useLanguage,
-} from "@core/context";
+import { useHistory, useUser, useTheme, useLanguage } from "@core/context";
 import { useDictionaryToast } from "./useDictionaryToast.js";
 import { useDictionaryLanguageConfig } from "./useDictionaryLanguageConfig.js";
 import { useMessagePopup } from "@shared/hooks/useMessagePopup.js";
@@ -28,7 +22,6 @@ export function useDictionaryExperienceContext() {
   const languageContext = useLanguage();
   const themeContext = useTheme();
   const userContext = useUser();
-  const favoritesContext = useFavorites();
   const historyContext = useHistory();
   const popup = useMessagePopup();
   const toast = useDictionaryToast();
@@ -41,7 +34,6 @@ export function useDictionaryExperienceContext() {
     languageContext,
     themeContext,
     userContext,
-    favoritesContext,
     historyContext,
     popup,
     toast,

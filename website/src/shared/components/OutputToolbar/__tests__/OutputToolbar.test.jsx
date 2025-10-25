@@ -16,8 +16,6 @@ jest.unstable_mockModule("@core/context", () => ({
       versionIndicatorEmpty: "0 / 0",
       copyAction: "复制",
       copySuccess: "复制完成",
-      favoriteAction: "收藏",
-      favoriteRemove: "取消收藏",
       deleteButton: "删除",
       report: "反馈",
       dictionarySourceLanguageLabel: "源语言",
@@ -151,7 +149,6 @@ describe("OutputToolbar", () => {
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
   test("renders action buttons when permitted", () => {
-    const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
     const onReport = jest.fn();
     const onCopy = jest.fn();
@@ -161,9 +158,6 @@ describe("OutputToolbar", () => {
         term="hello"
         canCopy
         onCopy={onCopy}
-        favorited
-        onToggleFavorite={onToggleFavorite}
-        canFavorite
         onDelete={onDelete}
         canDelete
         onReport={onReport}
@@ -171,15 +165,10 @@ describe("OutputToolbar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
-    expect(
-      screen.getByRole("button", { name: "取消收藏" }).className,
-    ).toContain("entry__tool-btn");
-    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);

@@ -113,7 +113,6 @@ jest.unstable_mockModule("@core/context", () => ({
     removeHistory: jest.fn(),
   }),
   useUser: () => ({ user: { id: "1", token: "t" } }),
-  useFavorites: () => ({ favorites: [], toggleFavorite: jest.fn() }),
   useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
   useLanguage: () => ({
     t: {
@@ -156,7 +155,12 @@ const streamMock = jest.fn();
 jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: streamMock,
   useSpeechInput: () => ({ start: jest.fn() }),
-  useAppShortcuts: () => ({ toggleFavoriteEntry: jest.fn() }),
+  useAppShortcuts: () => ({
+    focusInput: jest.fn(),
+    cycleLanguage: jest.fn(),
+    cycleTheme: jest.fn(),
+    openShortcuts: jest.fn(),
+  }),
   useApi: () => ({ words: {} }),
   useMediaQuery: () => false,
   useEscapeKey: () => ({ on: jest.fn(), off: jest.fn() }),

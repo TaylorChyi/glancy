@@ -1,4 +1,3 @@
-export { useFavoritesStore } from "./favoritesStore.js";
 export { useHistoryStore } from "./historyStore.js";
 export { useDataGovernanceStore } from "./dataGovernanceStore.js";
 export { useUserStore } from "./userStore.js";

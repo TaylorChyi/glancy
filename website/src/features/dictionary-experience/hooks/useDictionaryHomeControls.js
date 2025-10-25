@@ -15,21 +15,16 @@ export function useDictionaryHomeControls({
   startSpeech,
 }) {
   const { inputRef, setActiveView } = state;
-  const { languageContext, themeContext, favoritesContext } = contexts;
+  const { languageContext, themeContext } = contexts;
   const { lang, setLang } = languageContext;
   const { theme, setTheme } = themeContext;
-  const { toggleFavorite } = favoritesContext;
 
-  const { toggleFavoriteEntry } = useAppShortcuts({
+  useAppShortcuts({
     inputRef,
     lang,
     setLang,
     theme,
     setTheme,
-    entry: state.entry,
-    isDictionaryViewActive:
-      state.activeView === DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
-    toggleFavorite,
   });
 
   const focusInput = () => {
@@ -65,7 +60,6 @@ export function useDictionaryHomeControls({
   };
 
   return {
-    toggleFavoriteEntry,
     focusInput,
     resetDictionaryHomeState,
     handleShowDictionary,

@@ -4,53 +4,54 @@ import { buildBlueprintItems } from "../actionBlueprints";
 
 describe("buildBlueprintItems", () => {
   /**
-   * 测试目标：验证收藏动作的图标工厂在状态变化时输出正确的 ThemeIcon 变体。
-   * 前置条件：提供翻译文案、收藏/删除/举报能力均开启且处理函数有效。
+   * 测试目标：验证删除与举报蓝图在权限开启时正确输出 ThemeIcon 并保留可用状态。
+   * 前置条件：提供完整翻译文案、删除/举报处理函数有效且禁用标记为 false。
    * 步骤：
-   *  1) 构造 favorited=true 的上下文并生成蓝图条目。
-   *  2) 切换 favorited=false 再生成蓝图条目。
+   *  1) 构造可用的 actionContext 并生成蓝图条目集合；
+   *  2) 找到 delete 与 report 项并比对属性；
+   *  3) 构造无权限上下文确认举报项会被隐藏。
    * 断言：
-   *  - 收藏按钮的图标类型为 ThemeIcon。
-   *  - 收藏按钮在收藏状态为 star-solid，未收藏为 star-outline。
+   *  - 删除/举报按钮的 icon 均为 ThemeIcon 且名称正确；
+   *  - 删除按钮保持可用，举报权限关闭时不渲染条目。
    * 边界/异常：
-   *  - 若未来扩展无用户场景，可在此补充缺省图标断言。
+   *  - 若未来新增其他权限判断，需要扩展断言覆盖隐藏策略。
    */
-  test("switches favorite icon variant via factory", () => {
+  test("whenActionsEnabled_returnsDeleteAndReportBlueprints", () => {
     const translator = {
-      favoriteAction: "收藏",
-      favoriteRemove: "取消收藏",
       deleteButton: "删除",
       report: "举报",
     };
 
-    const baseContext = {
+    const actionContext = {
       translator,
-      canFavorite: true,
-      onToggleFavorite: () => {},
       canDelete: true,
       onDelete: () => {},
       canReport: true,
       onReport: () => {},
     };
 
-    const activeItems = buildBlueprintItems({
-      actionContext: { ...baseContext, favorited: true },
+    const items = buildBlueprintItems({
+      actionContext,
       disabled: false,
       user: { id: "user" },
     });
-    const activeFavorite = activeItems.find((item) => item.key === "favorite");
 
-    expect(activeFavorite?.icon.type).toBe(ThemeIcon);
-    expect(activeFavorite?.icon.props.name).toBe("star-solid");
+    const deleteItem = items.find((item) => item.key === "delete");
+    const reportItem = items.find((item) => item.key === "report");
 
-    const inactiveItems = buildBlueprintItems({
-      actionContext: { ...baseContext, favorited: false },
+    expect(deleteItem?.icon.type).toBe(ThemeIcon);
+    expect(deleteItem?.icon.props.name).toBe("trash");
+    expect(deleteItem?.disabled).toBe(false);
+
+    expect(reportItem?.icon.type).toBe(ThemeIcon);
+    expect(reportItem?.icon.props.name).toBe("flag");
+
+    const withoutReport = buildBlueprintItems({
+      actionContext: { ...actionContext, canReport: false },
       disabled: false,
       user: { id: "user" },
     });
-    const inactiveFavorite = inactiveItems.find((item) => item.key === "favorite");
 
-    expect(inactiveFavorite?.icon.type).toBe(ThemeIcon);
-    expect(inactiveFavorite?.icon.props.name).toBe("star-outline");
+    expect(withoutReport.find((item) => item.key === "report")).toBeUndefined();
   });
 });

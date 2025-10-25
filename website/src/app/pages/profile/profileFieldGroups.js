@@ -37,7 +37,7 @@ export function createProfileFieldGroups(t) {
       fields: [
         {
           key: "interests",
-          icon: "star-outline",
+          icon: "personalization",
           label: t.interestsLabel,
           placeholder: t.interestsPlaceholder,
           help: t.interestsHelp,

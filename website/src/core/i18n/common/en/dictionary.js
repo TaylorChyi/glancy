@@ -54,15 +54,7 @@ const dictionary = {
   variantsLabel: "Variants",
   phrasesLabel: "Phrases",
   favorites: "Favorites",
-  favoritesIconAlt: "Open favorites collection",
-  favoriteAction: "Favorite",
-  favoriteRemove: "Remove from favorites",
-  favoritesEmptyTitle: "Curate your first favorite",
-  favoritesEmptyDescription:
-    "Tap the star on any search result to build your personal lexicon.",
-  favoritesEmptyAction: "Return to search",
   searchHistory: "History",
-  noFavorites: "No favorites yet",
   noHistory: "No history",
   historyEmptyTitle: "Your story starts here",
   historyEmptyDescription:
