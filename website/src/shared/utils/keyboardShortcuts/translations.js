@@ -23,10 +23,6 @@ const ACTION_TRANSLATORS = new Map([
   ],
   ["TOGGLE_THEME", (t) => t?.shortcutsToggleTheme ?? "Toggle theme"],
   [
-    "TOGGLE_FAVORITE",
-    (t) => t?.shortcutsToggleFavorite ?? "Toggle favorite",
-  ],
-  [
     "OPEN_SHORTCUTS",
     (t) => t?.settingsKeyboardOpenPalette ?? "Open shortcut guide",
   ],

@@ -137,10 +137,6 @@
   color: color-mix(in srgb, var(--color-text-tertiary) 88%, transparent);
 }
 
-.tool-button-favorite {
-  color: color-mix(in srgb, var(--accent-color) 70%, var(--app-color) 30%);
-}
-
 .tool-button-delete,
 .tool-button-report {
   color: color-mix(in srgb, var(--color-danger) 70%, var(--app-color) 30%);

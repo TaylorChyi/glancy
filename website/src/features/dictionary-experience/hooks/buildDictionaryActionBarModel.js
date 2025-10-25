@@ -13,7 +13,7 @@
  */
 /**
  * 意图：根据上下文构建 DictionaryActionBar 所需的 props。
- * 输入：词条状态、收藏状态、复制控制器等。
+ * 输入：词条状态、复制控制器等。
  * 输出：结构化的 props 对象。
  */
 export function buildDictionaryActionBarModel({
@@ -30,8 +30,6 @@ export function buildDictionaryActionBarModel({
   canCopyDefinition,
   copyFeedbackState,
   isCopySuccessActive,
-  favorites,
-  toggleFavoriteEntry,
   handleDeleteHistory,
   entry,
   finalText,
@@ -49,9 +47,6 @@ export function buildDictionaryActionBarModel({
     canCopy: canCopyDefinition,
     copyFeedbackState,
     isCopySuccess: isCopySuccessActive,
-    favorited: Boolean(resolvedTerm && favorites.includes(resolvedTerm)),
-    onToggleFavorite: toggleFavoriteEntry,
-    canFavorite: Boolean(isTermActionable && isEntryViewActive && entry),
     canDelete: isTermActionable,
     onDelete: isEntryViewActive ? handleDeleteHistory : undefined,
     canReport: isTermActionable,

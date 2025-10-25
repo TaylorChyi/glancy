@@ -19,7 +19,6 @@ jest.unstable_mockModule("@core/context", () => ({
   AppProvider: ({ children }) => children,
   useUser: () => ({}),
   useHistory: () => ({}),
-  useFavorites: () => ({}),
   useLanguage: () => ({
     t: {
       phoneticLabel: "phon",

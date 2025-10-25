@@ -49,14 +49,9 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   variantsLabel: "变形",
   phrasesLabel: "常见词组",
   favorites: "收藏夹",
-  favoritesIconAlt: "打开收藏夹",
   searchHistory: "搜索记录",
   noDefinition: "暂无释义",
-  noFavorites: "暂无收藏",
   noHistory: "暂无记录",
-  favoritesEmptyTitle: "收藏夹静候佳作",
-  favoritesEmptyDescription: "为任意词条点亮星标，打造只属于你的高定词汇清单。",
-  favoritesEmptyAction: "返回搜索",
   historyEmptyTitle: "历史记录尚未启航",
   historyEmptyDescription:
     "当你开始探索，最近的检索会在这里井然排列，随时回味。",
@@ -69,7 +64,5 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   inputPlaceholder: "词条、短语、句子",
   playWordAudio: "播放发音",
   playSentenceAudio: "播放例句发音",
-  favoriteAction: "收藏",
-  favoriteRemove: "取消收藏",
   deleteAction: "删除",
 };
