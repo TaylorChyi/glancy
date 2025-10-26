@@ -31,8 +31,6 @@ export function buildDictionaryActionBarModel({
   copyFeedbackState,
   isCopySuccessActive,
   handleDeleteHistory,
-  entry,
-  finalText,
   handleReport,
 }) {
   return {
