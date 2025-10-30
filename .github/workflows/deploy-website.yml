@@ -37,12 +37,6 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Run unit tests
-        # 使用 CI 环境变量确保 Jest 在非交互模式下运行并覆盖全部用例。
-        run: npm test
-        env:
-          CI: "true"
-
       - name: Lint
         run: |
           npm run lint

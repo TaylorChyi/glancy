@@ -1,0 +1,63 @@
+# 背景：
+#  - 部署流水线剥离了全量单元测试，需要保留一个可随时调用的质量验证渠道。
+# 目的：
+#  - 提供手动触发的工作流，一次性运行前后端全部单元测试。
+# 关键决策与取舍：
+#  - 采用并行 Job 缩短反馈时间；沿用既有测试命令以降低维护成本。
+# 影响范围：
+#  - 供运维或开发在部署前后主动触发全量回归，确保变更稳定性。
+# 演进与TODO：
+#  - 后续可引入依赖缓存与矩阵环境扩展更丰富的验证覆盖。
+name: manual-tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_backend:
+        description: "是否执行后端测试"
+        required: false
+        default: "true"
+      run_website:
+        description: "是否执行前端测试"
+        required: false
+        default: "true"
+
+jobs:
+  backend-tests:
+    if: inputs.run_backend == 'true'
+    name: Backend unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Run Maven tests
+        run: ./mvnw -B test
+
+  website-tests:
+    if: inputs.run_website == 'true'
+    name: Website unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Jest suite
+        run: npm test
+        env:
+          CI: "true"
