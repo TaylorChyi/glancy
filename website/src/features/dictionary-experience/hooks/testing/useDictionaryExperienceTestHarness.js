@@ -50,7 +50,6 @@ export const translationFixture = {
   reportFailed: "报告失败",
   report: "报告",
   reportSuccess: "报告成功",
-  primaryNavLibraryLabel: "致用单词",
 };
 
 export const mockLanguageApi = {

@@ -1,14 +1,8 @@
-import { useMemo } from "react";
 import { useStreamWord, useSpeechInput } from "@shared/hooks";
 import { useWordStore } from "@core/store/wordStore.js";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
-import {
-  DICTIONARY_EXPERIENCE_VIEWS,
-  isDictionaryView,
-  isHistoryView,
-  isLibraryView,
-} from "../dictionaryExperienceViews.js";
+import { isDictionaryView, isHistoryView } from "../dictionaryExperienceViews.js";
 import { useDictionaryExperienceState } from "./useDictionaryExperienceState.js";
 import { useDictionaryExperienceContext } from "./useDictionaryExperienceContext.js";
 import { useDictionaryReportDialogManager } from "./useDictionaryReportDialogManager.js";
@@ -44,7 +38,7 @@ export function useDictionaryExperience() {
   const wordEntries = useWordStore((store) => store.entries);
   const wordStoreApi = useWordStore;
   const historyCaptureEnabled = useDataGovernanceStore(
-    (state) => state.historyCaptureEnabled,
+    (settings) => settings.historyCaptureEnabled,
   );
   const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
     useDictionaryLookupController();
@@ -79,7 +73,6 @@ export function useDictionaryExperience() {
     focusInput,
     resetDictionaryHomeState,
     handleShowDictionary,
-    handleShowLibrary,
     handleVoice,
     handleNavigateVersion,
     applyRecord,
@@ -87,7 +80,6 @@ export function useDictionaryExperience() {
 
   const isDictionaryViewActive = isDictionaryView(state.activeView);
   const isHistoryViewActive = isHistoryView(state.activeView);
-  const isLibraryViewActive = isLibraryView(state.activeView);
 
   const {
     reportDialog,
@@ -104,13 +96,6 @@ export function useDictionaryExperience() {
     entry: state.entry,
     activeTerm,
   });
-
-  const libraryLandingLabel = useMemo(() => {
-    if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
-    if (t.favorites) return t.favorites;
-    if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
-    return "致用单词";
-  }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
 
   useDictionaryExperienceLifecycle({
     user,
@@ -141,12 +126,10 @@ export function useDictionaryExperience() {
     handleSend,
     handleVoice,
     handleShowDictionary,
-    handleShowLibrary,
     handleSelectHistory,
     activeView: state.activeView,
     isDictionaryViewActive,
     isHistoryViewActive,
-    isLibraryViewActive,
     focusInput,
     entry: state.entry,
     finalText: state.finalText,
@@ -175,6 +158,5 @@ export function useDictionaryExperience() {
     reportDialog,
     reportDialogHandlers,
     dictionaryFlavor,
-    libraryLandingLabel,
   });
 }

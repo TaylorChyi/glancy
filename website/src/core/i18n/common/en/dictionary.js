@@ -37,8 +37,6 @@ const dictionary = {
   inputPlaceholder: "Words, phrases, sentences",
   primaryNavDictionaryLabel: "Glancy",
   primaryNavDictionaryDescription: "Immersive lexical intelligence",
-  primaryNavLibraryLabel: "Goyoo",
-  primaryNavLibraryDescription: "Your private word atelier",
   primaryNavEntriesLabel: "Entries",
   termLabel: "Term",
   playAudio: "Play",

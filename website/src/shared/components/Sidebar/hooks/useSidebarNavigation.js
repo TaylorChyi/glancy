@@ -20,13 +20,11 @@ import { useIsMobile } from "@shared/utils/device.js";
 
 const NAVIGATION_KEYS = {
   DICTIONARY: "dictionary",
-  LIBRARY: "library",
 };
 
 const ICON_NAMES = Object.freeze({
   // 采用品牌版主图标以保持导航与站点品牌一致，避免多处手动维护别名。
   DICTIONARY: "brand-glancy-website",
-  LIBRARY: "library",
 });
 
 /**
@@ -45,7 +43,6 @@ export default function useSidebarNavigation({
   open: openProp,
   onClose,
   onShowDictionary,
-  onShowLibrary,
   activeView,
 }) {
   const defaultMobile = useIsMobile();
@@ -90,13 +87,6 @@ export default function useSidebarNavigation({
     [t.primaryNavDictionaryLabel],
   );
 
-  const libraryLabel = useMemo(() => {
-    if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
-    if (t.favorites) return t.favorites;
-    if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
-    return "Library";
-  }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
-
   const historyLabel = useMemo(() => {
     if (t.searchHistory) return t.searchHistory;
     return lang === "zh" ? "搜索记录" : "History";
@@ -118,15 +108,6 @@ export default function useSidebarNavigation({
     }
   }, [closeSidebar, isMobile, onShowDictionary]);
 
-  const handleLibrary = useCallback(() => {
-    if (typeof onShowLibrary === "function") {
-      onShowLibrary();
-    }
-    if (isMobile) {
-      closeSidebar();
-    }
-  }, [closeSidebar, isMobile, onShowLibrary]);
-
   const navigationActions = useMemo(
     () => [
       {
@@ -137,22 +118,8 @@ export default function useSidebarNavigation({
         active: activeView === NAVIGATION_KEYS.DICTIONARY,
         testId: "sidebar-nav-dictionary",
       },
-      {
-        key: NAVIGATION_KEYS.LIBRARY,
-        label: libraryLabel,
-        icon: ICON_NAMES.LIBRARY,
-        onClick: handleLibrary,
-        active: activeView === NAVIGATION_KEYS.LIBRARY,
-        testId: "sidebar-nav-library",
-      },
     ],
-    [
-      activeView,
-      dictionaryLabel,
-      libraryLabel,
-      handleDictionary,
-      handleLibrary,
-    ],
+    [activeView, dictionaryLabel, handleDictionary],
   );
 
   const shouldShowOverlay = isMobile && resolvedOpen;

@@ -9,7 +9,7 @@
  * 影响范围：
  *  - DictionaryExperience Hook 的返回结果。
  * 演进与TODO：
- *  - 若未来需要分场景定制输出，可在此引入策略映射。
+ *  - 若后续需要分场景定制输出，可在此引入策略映射。
  */
 import { buildDictionaryActionBarModel } from "./buildDictionaryActionBarModel.js";
 
@@ -28,12 +28,10 @@ export function createDictionaryExperienceViewModel({
   handleSend,
   handleVoice,
   handleShowDictionary,
-  handleShowLibrary,
   handleSelectHistory,
   activeView,
   isDictionaryViewActive,
   isHistoryViewActive,
-  isLibraryViewActive,
   focusInput,
   entry,
   finalText,
@@ -62,7 +60,6 @@ export function createDictionaryExperienceViewModel({
   reportDialog,
   reportDialogHandlers,
   dictionaryFlavor,
-  libraryLandingLabel,
 }) {
   const isEmptyStateActive =
     isDictionaryViewActive && !entry && !finalText && !streamText && !loading;
@@ -105,14 +102,12 @@ export function createDictionaryExperienceViewModel({
     handleSend,
     handleVoice,
     handleShowDictionary,
-    handleShowLibrary,
     handleSelectHistory,
     activeView,
     viewState: {
       active: activeView,
       isDictionary: isDictionaryViewActive,
       isHistory: isHistoryViewActive,
-      isLibrary: isLibraryViewActive,
     },
     focusInput,
     entry,
@@ -134,7 +129,6 @@ export function createDictionaryExperienceViewModel({
     canCopyDefinition,
     lang,
     dictionaryFlavor,
-    libraryLandingLabel,
     dictionaryTargetLanguageLabel: t.dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel: t.dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel: t.dictionarySwapLanguages,

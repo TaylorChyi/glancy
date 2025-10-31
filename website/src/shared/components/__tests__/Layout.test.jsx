@@ -41,7 +41,6 @@ jest.unstable_mockModule("@shared/components/Sidebar", () => ({
       open: _ignoredOpen,
       onClose: _ignoredOnClose,
       onShowDictionary: _ignoredOnShowDictionary,
-      onShowLibrary: _ignoredOnShowLibrary,
       activeView: _ignoredActiveView,
       onSelectHistory: _ignoredOnSelectHistory,
       ...domProps
