@@ -7,7 +7,6 @@ export const API_PATHS = {
   login: `${API_BASE}/users/login`,
   loginWithEmail: `${API_BASE}/users/login/email`,
   register: `${API_BASE}/users/register`,
-  ping: `${API_BASE}/ping`,
   locale: `${API_BASE}/locale`,
   notifications: `${API_BASE}/notifications`,
   profiles: `${API_BASE}/profiles`,
