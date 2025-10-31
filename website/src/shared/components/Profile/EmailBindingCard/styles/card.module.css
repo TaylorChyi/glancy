@@ -1,3 +1,17 @@
+/**
+ * 背景：
+ *  - 从 src/shared/components/Profile/EmailBindingCard/EmailBindingCard.module.css 拆分出的样式片段，聚焦 card 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - 邮箱绑定卡片 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
 .card {
   width: 100%;
   display: flex;
@@ -169,104 +183,4 @@
 .ghost-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 20px rgb(0 0 0 / 10%);
-}
-
-.summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.summary-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.summary-label {
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.summary-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  word-break: break-all;
-}
-
-.summary-value::selection {
-  background: color-mix(in srgb, var(--primary-bg) 30%, transparent);
-  color: var(--primary-color);
-}
-
-.actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.flow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
-}
-
-.flow-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.flow-divider {
-  flex: 1;
-  height: 1px;
-  background: color-mix(in srgb, var(--border-color) 45%, transparent);
-}
-
-.flow-dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--text-muted) 90%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 60%, transparent);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--border-color) 40%, transparent);
-}
-
-.flow-dot-active {
-  color: var(--primary-color);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--primary-bg) 80%, transparent),
-    color-mix(in srgb, var(--primary-bg) 60%, transparent)
-  );
-  box-shadow: 0 8px 16px rgb(0 0 0 / 12%);
-}
-
-.flow-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--text-muted) 70%, transparent);
-}
-
-@media (width <= 600px) {
-  .card {
-    padding: var(--space-3);
-  }
-
-  .code-row {
-    grid-template-columns: 1fr;
-  }
 }

@@ -1,0 +1,164 @@
+/**
+ * 背景：
+ *  - 从 src/shared/components/ui/ChatInput/ChatInput.module.css 拆分出的样式片段，聚焦 language-arrow 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - 对话输入组件 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.language-arrow {
+  cursor: default;
+}
+
+.language-swap {
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.language-swap:hover {
+  background: color-mix(in srgb, var(--sb-seg) 85%, white 15%);
+}
+
+.language-swap:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.language-swap:active {
+  transform: scale(0.96);
+}
+
+.core-input {
+  flex: 1 1 auto;
+
+  /*
+   * 背景：默认布局下文字槽位可压缩至极窄，导致单行可视字符不足。
+   * 目的：引入基于字符宽度的最小尺寸，确保至少容纳约 30 个字符，同时维持在窄屏设备的弹性收缩能力。
+   * 取舍：通过 min() 结合 100% 限制，保证在容器宽度小于 30ch 时仍可按需收缩，避免破坏移动端体验。
+   */
+  min-width: 30ch;
+  display: flex;
+  align-items: center;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-text);
+  font-size: var(--ph-size, 16px);
+  font-weight: var(--ph-weight, 500);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  resize: none;
+  outline: none;
+  caret-color: var(--sb-icon);
+}
+
+.textarea::placeholder {
+  color: var(--sb-muted);
+}
+
+.action-button {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  inline-size: var(--btn-action, 44px);
+  block-size: var(--btn-action, 44px);
+  width: var(--btn-action, 44px);
+  height: var(--btn-action, 44px);
+  border: none;
+  border-radius: 999px;
+
+  /*
+   * 背景：按钮已移除实心壳体，仍保留变量以便未来扩展描边/阴影等表现时复用统一入口。
+   */
+  --action-btn-bg: transparent;
+  --action-btn-color: var(--sb-action-icon, var(--sb-icon));
+  --action-btn-shadow: none;
+
+  background: var(--action-btn-bg);
+  color: var(--action-btn-color);
+  box-shadow: var(--action-btn-shadow);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    outline-color 0.2s ease,
+    outline-width 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+}
+
+.action-button:hover {
+  color: color-mix(in srgb, var(--sb-icon) 82%, white 18%);
+}
+
+.action-button:focus-visible {
+  outline: 2px solid
+    var(--sb-cta-outline, color-mix(in srgb, var(--sb-icon) 72%, white 28%));
+}
+
+.action-button:active {
+  transform: scale(0.98);
+}
+
+.action-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: var(--sb-muted-icon, currentColor);
+}
+
+.action-button-send {
+  --action-btn-color: var(--sb-send-color);
+}
+
+.action-button-voice {
+  --action-btn-color: var(
+    --sb-voice-color,
+    var(--sb-action-icon, var(--sb-icon))
+  );
+}
+
+.action-button-voice[aria-pressed="true"] {
+  color: var(
+    --sb-cta-icon-active,
+    color-mix(in srgb, var(--sb-cta-icon) 65%, white 35%)
+  );
+  outline: 2px solid
+    var(
+      --sb-cta-outline-active,
+      color-mix(in srgb, var(--sb-cta-icon) 60%, white 40%)
+    );
+}
+
+.action-button-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  color: inherit;
+}
+
+.submit-proxy {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

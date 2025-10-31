@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 import PropTypes from "prop-types";
-import styles from "../Preferences.module.css";
+import styles from "../../styles/index.js";
 import usernameEditorStyles from "@shared/components/Profile/UsernameEditor/UsernameEditor.module.css";
 
 jest.unstable_mockModule("@shared/components/ui/Avatar", () => ({

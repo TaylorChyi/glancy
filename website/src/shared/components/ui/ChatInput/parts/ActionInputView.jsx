@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 import SearchBox from "@shared/components/ui/SearchBox";
 import LanguageControls from "../LanguageControls.jsx";
 import ActionButton from "./ActionButton.jsx";
-import styles from "../ChatInput.module.css";
+import styles from "../styles/index.js";
 
 function ActionInputView({
   formProps,

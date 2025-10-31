@@ -13,7 +13,7 @@
  *  - 若需支持 skeleton/加载态，可在此增加条件渲染分支但保持数据驱动。
  */
 import PropTypes from "prop-types";
-import styles from "./EmailBindingCard.module.css";
+import styles from "./styles/index.js";
 
 const STATUS_CLASSNAME = {
   "status-active": styles["status-active"],

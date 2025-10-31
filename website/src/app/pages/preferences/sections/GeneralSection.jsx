@@ -26,7 +26,7 @@ import {
 import LanguageMenu from "@shared/components/ui/LanguageMenu";
 import SegmentedControl from "@shared/components/ui/SegmentedControl";
 import SettingsSection from "@shared/components/settings/SettingsSection";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
 const MARKDOWN_RENDER_MODE_ORDER = Object.freeze([

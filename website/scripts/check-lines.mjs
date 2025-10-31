@@ -22,19 +22,6 @@ const COMMENT_BLOCK_PATTERN = /\/\*[\s\S]*?\*\//g;
 const SINGLE_LINE_COMMENT_PREFIX = "//";
 const MAX_STYLE_LINES = 200;
 const SEARCH_ROOTS = ["src"];
-// TODO(glancy-frontend, 2025-03-31): 压缩白名单中的遗留样式文件，拆分后移除此集合。
-const STYLE_DEBT_ALLOWLIST = new Set([
-  "src/app/pages/preferences/Preferences.module.css",
-  "src/app/pages/profile/Profile.module.css",
-  "src/features/dictionary-experience/components/ReportIssueModal.module.css",
-  "src/shared/components/Layout/Layout.module.css",
-  "src/shared/components/OutputToolbar/OutputToolbar.module.css",
-  "src/shared/components/Profile/EmailBindingCard/EmailBindingCard.module.css",
-  "src/shared/components/form/AuthForm.module.css",
-  "src/shared/components/ui/ChatInput/ChatInput.module.css",
-  "src/shared/theme/variables.css",
-]);
-
 /**
  * 意图：判断给定路径是否属于纳入校验的样式文件。
  * 输入：文件的绝对或相对路径。
@@ -127,14 +114,7 @@ const main = () => {
       const lineCount = countEffectiveLines(filePath);
       return { filePath, lineCount };
     })
-    .filter(({ filePath, lineCount }) => {
-      const relativePath = path.relative(projectRoot, filePath);
-      if (STYLE_DEBT_ALLOWLIST.has(relativePath)) {
-        return false;
-      }
-
-      return lineCount > MAX_STYLE_LINES;
-    });
+    .filter(({ lineCount }) => lineCount > MAX_STYLE_LINES);
 
   if (violations.length > 0) {
     violations.forEach(({ filePath, lineCount }) => {

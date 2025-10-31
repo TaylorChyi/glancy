@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@core/context";
-import styles from "./AuthForm.module.css";
+import styles from "./styles/index.js";
 
 // button with configurable countdown triggered after click
 

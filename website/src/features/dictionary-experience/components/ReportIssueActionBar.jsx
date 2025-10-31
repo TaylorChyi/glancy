@@ -12,7 +12,7 @@
  *  - 后续可引入操作 loading skeleton，以统一不同特性的等待反馈体验。
  */
 import PropTypes from "prop-types";
-import styles from "./ReportIssueModal.module.css";
+import styles from "./styles/index.js";
 
 /**
  * 意图：封装举报弹窗的操作区，确保错误信息与动作按钮在布局与无障碍语义上保持一致。

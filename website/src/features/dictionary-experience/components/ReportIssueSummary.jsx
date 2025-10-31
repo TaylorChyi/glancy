@@ -12,7 +12,7 @@
  *  - 若后续需要支持自定义字段排序，可在组件中接入排序策略或插槽机制。
  */
 import PropTypes from "prop-types";
-import styles from "./ReportIssueModal.module.css";
+import styles from "./styles/index.js";
 
 /**
  * 意图：渲染举报弹窗的摘要信息，确保键值对结构与样式一致。

@@ -1,0 +1,183 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/preferences/Preferences.module.css 拆分出的样式片段，聚焦 content 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Preferences 页面与 SettingsModal 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+/**
+ * 背景：
+ *  - 偏好设置升级为双栏多标签布局，原单列面板无法承载导航节奏。
+ * 目的：
+ *  - 构建垂直选项卡与内容面板的奢侈品级极简观感，兼容暗/浅主题（系统模式复用解析后的主题令牌）。
+ * 关键决策与取舍：
+ *  - 沿用原有设置面板配色变量，新增 tabs 状态样式覆盖默认/悬停/激活/禁用。
+ *  - 重新引入表面底色并通过主题变量控制透明度，确保与侧边栏之间存在清晰层级。
+ * 影响范围：
+ *  - 仅作用于 Preferences 页面。
+ * 演进与TODO：
+ *  - TODO: 当引入更多字段或编辑态时扩展交互状态（hover/focus/disabled）。
+ */
+
+.content {
+  display: flex;
+  justify-content: center;
+  padding: 56px 24px 72px;
+}
+
+.form {
+  --preferences-panel-border: rgb(255 255 255 / 12%);
+  --preferences-panel-text: var(--night-text);
+  --preferences-panel-muted: var(--night-muted);
+  --preferences-panel-ring: var(--night-input-ring);
+  --preferences-panel-surface: rgb(255 255 255 / 6%);
+  --preferences-panel-accent: linear-gradient(135deg, #5a8bff, #4c6fff);
+  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 35%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
+
+  width: min(720px, 100%);
+  padding: 44px;
+  border-radius: 20px;
+
+  /*
+   * 恢复表面底色以确保设置面板与背景形成可感知层级，
+   * 通过主题令牌输出透明度，兼容浅/暗两套基线。
+   */
+  background: var(--preferences-panel-surface);
+  color: var(--preferences-panel-text);
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+:global(:root[data-theme="light"]) .form {
+  --preferences-panel-border: var(--sidebar-border-color, #d9dde7);
+  --preferences-panel-text: var(--sidebar-text-color, #1f232b);
+  --preferences-panel-muted: var(--sidebar-muted-color, #6f7585);
+  --preferences-panel-ring: var(--sidebar-input-ring, #cfd4e2);
+  --preferences-panel-surface: rgb(15 17 21 / 6%);
+  --preferences-panel-accent-shadow: 0 12px 24px rgb(76 111 255 / 22%);
+  --preferences-button-contrast-bg: var(--neutral-950);
+  --preferences-button-contrast-text: var(--neutral-0);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.body {
+  --settings-body-safe-area: 184px;
+  --settings-body-column-gap: 36px;
+  --settings-body-grid-template: minmax(220px, 0.36fr) minmax(0, 1fr);
+  --settings-body-column-gap-mobile: 28px;
+}
+
+.tabs-region {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-self: stretch;
+  min-height: 0;
+
+  /*
+   * 通过 tabs-top-offset 统一左侧导航与右侧内容首屏的对齐点，
+   * 使用 space 令牌的差值确保关闭按钮与面板首行 padding 顶部对齐，
+   * 避免模态与偏好设置页面出现关闭按钮与标题错位。
+   */
+  --preferences-tabs-top-offset: calc(
+    var(--space-5) - (var(--space-2) + var(--space-1))
+  );
+
+  padding-block: var(--preferences-tabs-top-offset) 4px;
+
+  --preferences-close-offset: calc(var(--btn-action, 44px) + 24px);
+}
+
+/*
+ * 关闭插槽需贴合左上角以避免 sticky 区域遮挡首个标签，
+ * 同时在页面与模态内维持一致的交互起点。
+ */
+.close-action {
+  position: sticky;
+  top: var(--preferences-tabs-top-offset);
+  z-index: 2;
+  display: flex;
+  justify-content: flex-start;
+  inline-size: fit-content;
+  padding: 0;
+}
+
+.close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--btn-action, 44px);
+  block-size: var(--btn-action, 44px);
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--preferences-panel-text);
+  cursor: pointer;
+  transition:
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.close-button:hover {
+  transform: translateY(-1px);
+}
+
+.close-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+.close-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: calc(var(--space-2) + var(--space-1));
+}
+
+.tab {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--preferences-panel-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-align: left;
+}

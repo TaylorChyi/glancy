@@ -1,0 +1,165 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/preferences/Preferences.module.css 拆分出的样式片段，聚焦 binding-action 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Preferences 页面与 SettingsModal 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.binding-action[disabled] {
+  opacity: 1;
+}
+
+@media (width <= 768px) {
+  .form {
+    padding: 32px 24px;
+    gap: 32px;
+  }
+
+  .body {
+    --settings-body-safe-area: 112px;
+    --settings-body-grid-template: 1fr;
+  }
+
+  .tabs-region {
+    position: static;
+    gap: 12px;
+    padding-block: 0;
+
+    --preferences-close-offset: calc(var(--btn-action, 44px) + 20px);
+  }
+
+  .close-action {
+    position: static;
+    justify-content: flex-start;
+  }
+
+  .tabs {
+    flex: none;
+    display: grid;
+
+    /*
+     * 结合 SettingsNav 注入的分区数量，窄宽度时将标签横向等分，
+     * 避免继续使用纵向布局导致挤压。auto-fit 无法保证与 sections 对齐，
+     * 因此采用 repeat(var(--settings-nav-section-count)) 精确匹配。
+     */
+    grid-template-columns: repeat(
+      var(--settings-nav-section-count, 1),
+      minmax(0, 1fr)
+    );
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 10px;
+    min-height: auto;
+    padding: calc(var(--preferences-close-offset) + 10px) 10px 10px;
+  }
+
+  .tab {
+    min-width: 0;
+    height: 100%;
+  }
+
+  /*
+   * 当 SettingsNav 报告水平布局时，仅展示图标并将标签等宽分布，
+   * 通过视觉隐藏文本保留无障碍名称由 aria-label 提供。
+   */
+  .tabs[data-orientation="horizontal"] {
+    align-items: center;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab {
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-label {
+    justify-content: center;
+  }
+
+  .tabs[data-orientation="horizontal"] .tab-label-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .section {
+    padding: var(--space-4);
+  }
+
+  .controls {
+    gap: var(--space-4);
+  }
+
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .identity-row {
+    gap: var(--space-3);
+  }
+
+  .identity-value {
+    justify-content: flex-start;
+  }
+
+  .detail-action {
+    justify-content: flex-start;
+  }
+
+  .detail-action-button {
+    width: 100%;
+  }
+
+  .binding-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .binding-action {
+    width: 100%;
+  }
+
+  .subscription-plan-carousel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .subscription-plan-grid {
+    grid-auto-columns: minmax(240px, 86vw);
+    padding-inline: var(--space-1);
+  }
+
+  .subscription-plan-nav {
+    display: none;
+  }
+
+  .subscription-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-redeem-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subscription-redeem-button {
+    width: 100%;
+  }
+}

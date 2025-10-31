@@ -1,0 +1,194 @@
+/**
+ * 背景：
+ *  - 从 src/shared/theme/variables.css 拆分出的设计令牌片段，关注 dark。
+ * 目的：
+ *  - 控制单文件体积并为未来主题拆分埋点。
+ * 关键决策与取舍：
+ *  - 继续沿用原 token 命名，避免一次性重命名造成风险。
+ * 影响范围：
+ *  - 主题设计令牌。
+ * 演进与TODO：
+ *  - TODO: 结合主题模块化策略进一步分层。
+ */
+
+  /*
+   * 背景：
+   *  - SearchBox 相关 token 仅提供深色值，导致浅色主题下出现对比不足。
+   * 目的：
+   *  - 基于全局语义色（如 --color-surface-alt、--border-color、--color-text 等）映射出浅色配方，
+   *    并在暗色主题分支沿用原有实现，保持主题切换一致性。
+   * 关键决策与取舍：
+   *  - 通过 data-theme 派生不同 token，而非在组件中硬编码逻辑，确保扩展新主题时只需增量映射；
+   *  - `.dark` 覆写块沿用 orchestrator 既有 class 机制，避免破坏 Tailwind dark 兼容链路。
+   * 影响范围：
+   *  - SearchBox、ChatInput、DictionaryActionPanel 等消费 `--sb-*` 的组件。
+   * 演进与TODO：
+   *  - 后续若引入高对比主题，可复用此结构按需新增映射，或提炼为 CSS 自定义层。
+   */
+  :root[data-theme="light"] {
+    --sb-surface: color-mix(in srgb, var(--color-surface-alt) 92%, white 8%);
+    --sb-inner: color-mix(in srgb, var(--color-surface-alt) 88%, white 12%);
+    --sb-seg: color-mix(
+      in srgb,
+      var(--color-surface-alt) 82%,
+      var(--color-text) 18%
+    );
+    --sb-stroke: color-mix(in srgb, var(--border-color) 85%, transparent 15%);
+    --sb-divider: color-mix(in srgb, var(--border-color) 70%, transparent 30%);
+    --sb-text: var(--color-text);
+    --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
+    --sb-icon: var(--color-text);
+
+    /*
+     * 交互背景：按钮取消实体壳体后，直接继承主题文本色即可满足对比度要求。
+     * 取舍：继续保留 CTA 变量以兼容旧版阴影语义，但默认图标色回归正文颜色体系。
+     */
+    --sb-action-icon: var(--color-text);
+    --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
+    --sb-cta-icon: var(--color-text);
+
+    /*
+     * 语音/发送图标直接复用主题 icon 语义，不再强制映射到反相色，
+     * 方便未来按需在 CSS 层通过类名扩展特殊态而无需再度引入 tone 逻辑。
+     */
+    --sb-voice-color: var(--sb-icon);
+    --sb-border: var(--sb-stroke);
+    --sb-border-active: color-mix(
+      in srgb,
+      var(--sb-stroke) 55%,
+      var(--color-text) 45%
+    );
+    --sb-bg: var(--sidebar-panel, var(--sb-surface));
+    --sb-bg-hover: var(
+      --sidebar-hover-bg,
+      color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 90%, white 10%)
+    );
+    --sb-panel: color-mix(in srgb, var(--color-surface-alt) 96%, white 4%);
+    --sb-panel-strong: color-mix(
+      in srgb,
+      var(--color-surface-alt) 88%,
+      var(--color-text) 12%
+    );
+    --sb-inner-highlight: color-mix(
+      in srgb,
+      var(--color-text) 8%,
+      transparent 92%
+    );
+    --sb-ring: 0 0 0 var(--sb-ring-width, 2px)
+      color-mix(in srgb, var(--border-color) 60%, transparent 40%);
+    --ring-focus: 0 0 0 var(--sb-ring-width, 2px)
+      color-mix(in srgb, var(--border-color) 60%, transparent 40%);
+    --sb-shadow: 0 24px 48px
+      color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
+    --sb-shadow-soft: 0 16px 32px
+      color-mix(in srgb, var(--shadow-color) 50%, transparent 50%);
+    --sb-menu-shadow: 0 28px 60px
+      color-mix(in srgb, var(--shadow-color) 60%, transparent 40%);
+    --sb-caret: color-mix(in srgb, var(--color-text) 50%, transparent 50%);
+    --chip-bg: color-mix(in srgb, var(--color-surface-alt) 86%, white 14%);
+    --chip-bg-hover: color-mix(
+      in srgb,
+      var(--chip-bg) 88%,
+      var(--color-text) 12%
+    );
+    --chip-text: color-mix(in srgb, var(--color-text) 84%, transparent 16%);
+    --divider-color: var(--sb-divider);
+    --menu-bg: var(
+      --sb-bg,
+      color-mix(in srgb, var(--color-surface-alt) 96%, white 4%)
+    );
+    --menu-border: color-mix(in srgb, var(--border-color) 78%, transparent 22%);
+    --menu-hover: color-mix(in srgb, var(--menu-bg) 80%, var(--color-text) 20%);
+    --menu-code-color: color-mix(in srgb, var(--color-text) 88%, transparent 12%);
+    --menu-name-color: color-mix(in srgb, var(--color-text) 70%, transparent 30%);
+    --menu-check-color: color-mix(
+      in srgb,
+      var(--color-text) 65%,
+      transparent 35%
+    );
+    --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent 30%);
+    --menu-scroll-thumb: color-mix(
+      in srgb,
+      var(--border-color) 55%,
+      transparent 45%
+    );
+    --menu-scroll-thumb-hover: color-mix(
+      in srgb,
+      var(--border-color) 70%,
+      transparent 30%
+    );
+    --direction-icon: color-mix(in srgb, var(--color-text) 55%, transparent 45%);
+    --text-primary: var(--sb-text);
+    --text-muted: var(--sb-muted);
+    --sb-scroll-track: color-mix(in srgb, var(--menu-bg) 60%, transparent 40%);
+    --sb-scroll-thumb: color-mix(
+      in srgb,
+      var(--menu-scroll-thumb) 85%,
+      transparent 15%
+    );
+    --sb-send-bg: color-mix(in srgb, var(--neutral-950) 92%, transparent 8%);
+    --sb-send-color: var(--sb-icon);
+    --sb-cta-shadow: 0 18px 40px
+      color-mix(in srgb, var(--shadow-color) 55%, transparent 45%);
+    --sb-cta-shadow-hover: 0 22px 48px
+      color-mix(in srgb, var(--shadow-color) 65%, transparent 35%);
+  }
+
+  :root.dark,
+  :root[data-theme="dark"] {
+    --sb-surface: #0e1116;
+    --sb-inner: #11161e;
+    --sb-seg: #141b24;
+    --sb-stroke: rgb(255 255 255 / 6%);
+    --sb-divider: rgb(255 255 255 / 10%);
+    --sb-text: #edeff2;
+    --sb-muted: #9fa7b3;
+    --sb-icon: #edeff2;
+    --sb-action-icon: var(--sb-icon);
+    --sb-cta: #fff;
+    --sb-cta-icon: #0e1116;
+    --sb-voice-color: var(--sb-icon);
+    --sb-border: var(--sb-stroke);
+    --sb-border-active: color-mix(in srgb, var(--sb-stroke) 60%, white 40%);
+    --sb-bg: var(--sidebar-panel, var(--sb-surface));
+    --sb-bg-hover: var(
+      --sidebar-hover-bg,
+      color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
+    );
+    --sb-panel: var(--sb-inner);
+    --sb-panel-strong: color-mix(in srgb, var(--sb-inner) 88%, black 12%);
+    --sb-inner-highlight: rgb(255 255 255 / 12%);
+    --sb-ring: 0 0 0 2px rgb(255 255 255 / 8%);
+    --ring-focus: 0 0 0 2px rgb(255 255 255 / 8%);
+    --sb-shadow: 0 6px 20px rgb(0 0 0 / 25%);
+    --sb-shadow-soft: 0 4px 16px rgb(0 0 0 / 22%);
+    --sb-menu-shadow: 0 18px 44px rgb(0 0 0 / 45%);
+    --sb-caret: #99a6b5;
+    --chip-bg: #252b33;
+    --chip-bg-hover: #2b323c;
+    --chip-text: #d5dbe6;
+    --divider-color: var(--sb-divider);
+    --menu-bg: var(--sb-bg, var(--sb-inner));
+    --menu-border: color-mix(in srgb, var(--sb-stroke) 80%, black 20%);
+    --menu-hover: color-mix(in srgb, var(--menu-bg) 88%, white 12%);
+    --menu-code-color: #f1f4f8;
+    --menu-name-color: #c6ccd7;
+    --menu-check-color: #d9dee7;
+    --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent);
+    --menu-scroll-thumb: color-mix(in srgb, var(--menu-bg) 20%, white 12%);
+    --menu-scroll-thumb-hover: color-mix(
+      in srgb,
+      var(--menu-scroll-thumb) 70%,
+      white 30%
+    );
+    --direction-icon: #b8c2cf;
+    --text-primary: var(--sb-text);
+    --text-muted: var(--sb-muted);
+    --sb-scroll-track: color-mix(in srgb, var(--sb-inner) 35%, transparent);
+    --sb-scroll-thumb: color-mix(in srgb, var(--sb-inner) 65%, transparent);
+    --sb-send-bg: rgb(255 255 255 / 92%);
+    --sb-send-color: #0b0d11;
+    --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
+    --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
+  }
+}

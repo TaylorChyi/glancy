@@ -13,7 +13,7 @@
  */
 import { useId } from "react";
 import { useLanguage } from "@core/context";
-import styles from "./ReportIssueModal.module.css";
+import styles from "./styles/index.js";
 import {
   useCategoryOptionsState,
   useLanguageContextState,

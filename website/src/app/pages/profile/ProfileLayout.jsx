@@ -22,7 +22,7 @@ import EmailBindingCard from "@shared/components/Profile/EmailBindingCard";
 import UsernameEditor from "@shared/components/Profile/UsernameEditor";
 import CustomSectionsEditor from "@shared/components/Profile/CustomSectionsEditor";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";
-import styles from "./Profile.module.css";
+import styles from "./styles/index.js";
 
 function AvatarUpload({ avatar, onChange, hint }) {
   return (

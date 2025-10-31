@@ -18,7 +18,7 @@ import UsernameEditor from "@shared/components/Profile/UsernameEditor";
 
 import DetailActionButton from "./DetailActionButton.jsx";
 import { DETAIL_INPUT_CLASSNAME } from "./detailClassNames.js";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 /**
  * 意图：渲染包含标签、值列与动作列的用户名编辑行，并与 UsernameEditor 的动作回调解耦。

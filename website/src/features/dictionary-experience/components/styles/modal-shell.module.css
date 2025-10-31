@@ -1,3 +1,17 @@
+/**
+ * 背景：
+ *  - 从 src/features/dictionary-experience/components/ReportIssueModal.module.css 拆分出的样式片段，聚焦 modal-shell 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - 词典体验问题上报模态 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
 .modal-shell {
   /*
    * 为举报弹窗提供独立的色彩令牌，既强化层级感，也避免影响共用的 modal-content 基线样式。
@@ -175,186 +189,4 @@
     var(--preferences-panel-muted, var(--color-text)) 76%,
     transparent
   );
-}
-
-.summary-value {
-  margin: 0;
-  font-size: clamp(var(--text-lg), 2.4vw, var(--text-xl));
-  font-weight: var(--font-semibold);
-  line-height: 1.5;
-  color: var(--preferences-panel-text, var(--color-text));
-  overflow-wrap: anywhere;
-}
-
-.fieldset {
-  margin: 0;
-  padding: 0;
-  border: none;
-  display: grid;
-  gap: clamp(var(--space-3), 3vw, var(--space-4));
-}
-
-.fieldset legend + * {
-  margin-top: clamp(var(--space-3), 3vw, var(--space-4));
-}
-
-.legend {
-  margin: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--preferences-panel-text, var(--color-text));
-}
-
-.textarea {
-  width: 100%;
-  min-height: 140px;
-  padding: clamp(var(--space-3), 3vw, var(--space-4));
-  border-radius: var(--radius-xl);
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--preferences-panel-ring, var(--border-color)) 55%,
-      transparent
-    );
-  background: color-mix(
-    in srgb,
-    var(--preferences-panel-surface, var(--app-bg)) 94%,
-    transparent
-  );
-  color: var(--preferences-panel-text, var(--color-text));
-  font-size: var(--text-sm);
-  line-height: 1.7;
-
-  /*
-   * 举报描述需要维持统一高度便于设计排版，此处禁用浏览器 resize，
-   * 以防用户拉伸后破坏整体节奏；后续如需扩展可考虑提供密度配置。
-   */
-  resize: none;
-}
-
-.textarea:focus-visible {
-  outline: none;
-  border-color: var(--preferences-panel-ring, var(--highlight-color));
-  box-shadow: 0 0 0 3px
-    color-mix(
-      in srgb,
-      var(--preferences-panel-ring, var(--highlight-color)) 35%,
-      transparent
-    );
-}
-
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: clamp(var(--space-3), 3vw, var(--space-4));
-  width: 100%;
-}
-
-.action-status {
-  flex: 1;
-  min-height: 1.5rem;
-}
-
-.error {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: color-mix(in srgb, var(--danger-color, #f87171) 85%, transparent);
-}
-
-.action-buttons {
-  display: inline-flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
-}
-
-.ghost-button {
-  min-width: 132px;
-  padding: 0.75rem 1.4rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--preferences-panel-border, var(--border-color)) 55%,
-      transparent
-    );
-  background: transparent;
-  color: color-mix(
-    in srgb,
-    var(--preferences-panel-text, var(--color-text)) 88%,
-    transparent
-  );
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.primary-button {
-  min-width: 160px;
-  padding: 0.85rem 1.6rem;
-  border-radius: var(--radius-lg);
-  border: none;
-  background: var(--primary-bg);
-  color: var(--primary-color);
-  font-weight: var(--font-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 24px 56px
-    color-mix(in srgb, var(--shadow-color) 28%, transparent);
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
-}
-
-.primary-button:focus-visible {
-  outline: none;
-  transform: translateY(-1px);
-  box-shadow:
-    0 32px 72px color-mix(in srgb, var(--shadow-color) 38%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--highlight-color) 32%, transparent);
-}
-
-.primary-button:disabled,
-.ghost-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.primary-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: color-mix(in srgb, var(--primary-bg) 94%, transparent);
-  box-shadow: 0 28px 64px
-    color-mix(in srgb, var(--shadow-color) 34%, transparent);
-}
-
-@media (width <= 599px) {
-  .modal-shell {
-    /*
-     * 在窄屏下收敛外层留白以避免可视区域被过度压缩，同时保留最小安全间距防止内容贴边。
-     */
-    --report-modal-gutter: clamp(var(--space-4), 8vw, var(--space-6));
-  }
-
-  .summary {
-    grid-template-columns: 1fr;
-    padding: clamp(var(--space-3), 4vw, var(--space-4));
-  }
-
-  .action-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .action-status {
-    min-height: auto;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }

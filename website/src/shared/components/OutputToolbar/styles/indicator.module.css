@@ -1,0 +1,91 @@
+/**
+ * 背景：
+ *  - 从 src/shared/components/OutputToolbar/OutputToolbar.module.css 拆分出的样式片段，聚焦 indicator 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - 输出工具栏 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.indicator {
+  min-width: 48px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--color-text-secondary) 80%, transparent);
+}
+
+/* stylelint-disable selector-class-pattern */
+:global(.entry__tool-btn) {
+  --tool-button-opacity-base: var(--toolbar-button-opacity-base, 0.84);
+  --tool-button-opacity-hover: var(--toolbar-button-opacity-hover, 1);
+  --tool-button-opacity-disabled: var(--toolbar-button-opacity-disabled, 0.46);
+  --tool-button-focus-ring-color: var(
+    --toolbar-button-focus-ring-color,
+    var(--input-dark-ring, #3a3f46)
+  );
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--toolbar-button-size, 36px);
+  height: var(--toolbar-button-size, 36px);
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  user-select: none;
+  opacity: var(--tool-button-opacity-base);
+  transition: opacity 0.2s ease;
+}
+
+:global(.entry__tool-btn svg),
+:global(.entry__tool-btn i) {
+  width: 18px;
+  height: 18px;
+}
+
+:global(.entry__tool-btn:hover),
+:global(.entry__tool-btn:focus-visible) {
+  opacity: var(--tool-button-opacity-hover);
+}
+
+:global(.entry__tool-btn:focus-visible) {
+  outline: 2px solid var(--tool-button-focus-ring-color);
+  outline-offset: 2px;
+}
+
+:global(.entry__tool-btn:disabled) {
+  opacity: var(--tool-button-opacity-disabled);
+  cursor: not-allowed;
+}
+
+:global(.entry__pager .entry__tool-btn) {
+  --toolbar-button-size: 34px;
+}
+/* stylelint-enable selector-class-pattern */
+
+@media (width <= 768px) {
+  .toolbar {
+    gap: var(--space-2, 8px);
+  }
+}
+
+@media (width <= 480px) {
+  .toolbar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .toolbar::-webkit-scrollbar {
+    height: 6px;
+  }
+}

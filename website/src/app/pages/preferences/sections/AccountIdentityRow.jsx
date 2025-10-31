@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 
 import Avatar from "@shared/components/ui/Avatar";
 
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 /**
  * 意图：渲染账号身份行，包括头像展示、隐藏的昵称文本与触发头像上传的按钮。

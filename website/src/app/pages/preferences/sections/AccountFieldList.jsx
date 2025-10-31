@@ -20,7 +20,7 @@ import {
 import DetailActionButton from "./DetailActionButton.jsx";
 import StaticFieldRow from "./StaticFieldRow.jsx";
 import UsernameFieldRow from "./UsernameFieldRow.jsx";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 function renderGenericField(field, labelId, valueId) {
   const renderValue = field.renderValue;

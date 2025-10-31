@@ -1,3 +1,17 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/profile/Profile.module.css 拆分出的样式片段，聚焦 profile-card 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Profile 页面布局 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
 .profile-card {
   width: 100%;
   max-width: 720px;
@@ -170,130 +184,4 @@
   margin: 4px 0 0;
   font-size: 0.9rem;
   color: color-mix(in srgb, var(--color-text-muted) 82%, transparent);
-}
-
-.custom-section-add {
-  align-self: center;
-  padding: 10px 18px;
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--primary-bg) 45%, transparent);
-  background: transparent;
-  color: var(--primary-bg);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.custom-section-add:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 22px rgb(0 0 0 / 12%);
-}
-
-.custom-sections-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.custom-sections-empty {
-  margin: 0;
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface-muted) 65%, transparent);
-  color: color-mix(in srgb, var(--color-text-muted) 88%, transparent);
-  text-align: center;
-}
-
-.custom-section-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
-  box-shadow: 0 18px 32px rgb(15 15 15 / 8%);
-}
-
-.custom-section-header {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-.custom-section-header input {
-  flex: 1;
-  padding: 12px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 80%, transparent);
-}
-
-.custom-section-remove,
-.custom-item-remove {
-  border: none;
-  background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
-  color: color-mix(in srgb, var(--color-text) 90%, transparent);
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.custom-section-remove:hover,
-.custom-item-remove:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 20px rgb(0 0 0 / 10%);
-}
-
-.custom-items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.custom-item-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-  gap: var(--space-2);
-}
-
-.custom-item-row input {
-  padding: 10px 14px;
-  border-radius: var(--radius-lg);
-  border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
-  background: color-mix(in srgb, var(--color-surface-alt) 80%, transparent);
-}
-
-.custom-item-add {
-  align-self: flex-start;
-  padding: 8px 14px;
-  border-radius: var(--radius-lg);
-  border: 1px dashed color-mix(in srgb, var(--primary-bg) 55%, transparent);
-  background: transparent;
-  color: var(--primary-bg);
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.custom-item-add:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 20px rgb(0 0 0 / 10%);
-}
-
-@media (width <= 720px) {
-  .custom-section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .custom-item-row {
-    grid-template-columns: 1fr;
-  }
 }

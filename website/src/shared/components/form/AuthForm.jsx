@@ -18,7 +18,7 @@ import CodeButton from "./CodeButton.jsx";
 import PhoneInput from "./PhoneInput.jsx";
 import Button from "@shared/components/ui/Button";
 import MultiLineText from "@shared/components/ui/MultiLineText.jsx";
-import styles from "./AuthForm.module.css";
+import styles from "./styles/index.js";
 import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import ThemeIcon from "@shared/components/ui/Icon";
 import ICP from "@shared/components/ui/ICP";

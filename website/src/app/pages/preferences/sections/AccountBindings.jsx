@@ -13,7 +13,7 @@
  */
 import PropTypes from "prop-types";
 
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 /**
  * 意图：渲染第三方账号绑定信息列表。

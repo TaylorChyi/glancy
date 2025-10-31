@@ -24,7 +24,7 @@ import {
   translateShortcutAction,
 } from "@shared/utils/keyboardShortcuts.js";
 import SettingsSection from "@shared/components/settings/SettingsSection";
-import sectionStyles from "../Preferences.module.css";
+import sectionStyles from "../styles/index.js";
 import styles from "./KeyboardSection.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");

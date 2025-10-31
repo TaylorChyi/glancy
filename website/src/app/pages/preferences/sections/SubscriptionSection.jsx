@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import SettingsSection from "@shared/components/settings/SettingsSection";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 const REDEEM_CODE_GROUP_SIZE = 4;
 const REDEEM_CODE_MAX_LENGTH = 16;

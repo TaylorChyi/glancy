@@ -1,0 +1,187 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/preferences/Preferences.module.css 拆分出的样式片段，聚焦 tab-summary 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Preferences 页面与 SettingsModal 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.tab-summary {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
+.tab:focus-visible {
+  outline: none;
+  border-color: var(--preferences-panel-ring);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  color: color-mix(in srgb, var(--preferences-panel-muted) 65%, transparent);
+  opacity: 0.6;
+}
+
+.tab:disabled .tab-summary {
+  color: color-mix(in srgb, var(--preferences-panel-muted) 55%, transparent);
+}
+
+.tab:not([disabled]):hover {
+  border-color: color-mix(
+    in srgb,
+    var(--preferences-panel-ring) 65%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 96%,
+    transparent
+  );
+  color: var(--preferences-panel-text);
+}
+
+.tab[data-state="active"] {
+  border-color: var(--preferences-panel-border);
+  background: var(--preferences-panel-surface);
+  color: var(--preferences-panel-text);
+}
+
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.tab-label-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  line-height: 0;
+  color: inherit;
+}
+
+.tab[data-state="active"] .tab-summary {
+  color: var(--preferences-panel-muted);
+}
+
+.panel {
+  /*
+   * 维持面板在页面与模态间的一致布局：统一的内边距/间距让测量探针与实际面板
+   * 共用相同的结构基线，避免由于额外补丁导致高度计算偏差。
+   */
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: clamp(var(--space-5), 5vw, var(--space-7));
+}
+
+.panel-surface {
+  /*
+   * 右侧内容在页面态依赖 form 背景、在模态态则由 BaseModal 提供表面层。
+   * 这里刻意移除局部的圆角/阴影/底色，避免与模态容器叠加造成透明叠影，
+   * 同时让测量探针复用同一布局基线。
+   */
+}
+
+.panel-probe {
+  /*
+   * 仅用于隐藏测量节点，需保留自然高度以避免最小高度影响实际测量值。
+   */
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+}
+
+.identity-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--preferences-panel-muted);
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--preferences-panel-text);
+}
+
+.description {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--preferences-panel-muted);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: 18px;
+}
+
+.section-plain {
+  background: none;
+}
+
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-border) 55%,
+    transparent
+  );
+  border-radius: 999px;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-5);
+}

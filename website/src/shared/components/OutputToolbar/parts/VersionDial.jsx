@@ -13,7 +13,7 @@
  */
 import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
-import styles from "../OutputToolbar.module.css";
+import styles from "../styles/index.js";
 
 function VersionDial({
   baseToolButtonClass,

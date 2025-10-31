@@ -12,7 +12,7 @@
  */
 import PropTypes from "prop-types";
 import SettingsSection from "@shared/components/settings/SettingsSection";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 function PlaceholderSection({ title, message, headingId, descriptionId }) {
   return (

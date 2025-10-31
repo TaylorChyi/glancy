@@ -12,7 +12,7 @@
  *  - 后续可引入辅助描述或多操作分布时，在此组件内扩展布局而无需触动 ViewModel。
  */
 import PropTypes from "prop-types";
-import styles from "./ReportIssueModal.module.css";
+import styles from "./styles/index.js";
 
 /**
  * 意图：渲染举报弹窗头部，提供统一的关闭按钮与标题语义。
