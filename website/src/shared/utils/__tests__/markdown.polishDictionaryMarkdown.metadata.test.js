@@ -73,7 +73,7 @@ test("polishDictionaryMarkdown formats practice prompts metadata", () => {
 });
 
 /**
- * 测试目标：验证抖宝协议新增标签会被识别为需换行的行内标签。
+ * 测试目标：验证豆包协议新增标签会被识别为需换行的行内标签。
  * 前置条件：构造含 Recommended Audience、Set Expressions、Historical Resonance 的列表项。
  * 步骤：
  *  1) 执行 polishDictionaryMarkdown；

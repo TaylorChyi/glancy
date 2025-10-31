@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
-/** 使用 Reactor 原语按块解析抖宝 SSE 事件。 */
+/** 使用 Reactor 原语按块解析豆包 SSE 事件。 */
 @Slf4j
 @Component("doubaoStreamDecoder")
 public class DoubaoStreamDecoder implements StreamDecoder {

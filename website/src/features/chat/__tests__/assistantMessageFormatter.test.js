@@ -60,7 +60,7 @@ test("normalizes carriage return segments during streaming", () => {
 });
 
 /**
- * 测试目标：确认检测到抖宝词典信号后会回溯格式化已有文本。
+ * 测试目标：确认检测到豆包词典信号后会回溯格式化已有文本。
  * 前置条件：默认策略集合，输入包含 Example/UsageInsight 等特征字段。
  * 步骤：
  *  1) 先追加标题片段，尚不足以触发策略；
@@ -85,7 +85,7 @@ test("formats doubao dictionary chunks incrementally", () => {
 });
 
 /**
- * 测试目标：验证新增抖宝词典字段（英文释义、适用人群、搭配、派生、练习）也能触发格式化。
+ * 测试目标：验证新增豆包词典字段（英文释义、适用人群、搭配、派生、练习）也能触发格式化。
  * 前置条件：输入模拟新版 Doubao 词条，分成两段以覆盖“需累计多个信号后触发”的路径。
  * 步骤：
  *  1) 追加包含标题与 EnglishDefinitions 的首段；

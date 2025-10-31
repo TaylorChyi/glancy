@@ -14,7 +14,7 @@ import reactor.core.publisher.Sinks;
 import reactor.test.StepVerifier;
 
 /**
- * 针对抖宝流式解析的单元测试，覆盖典型事件与异常事件的处理。
+ * 针对豆包流式解析的单元测试，覆盖典型事件与异常事件的处理。
  */
 class DoubaoStreamDecoderTest {
 

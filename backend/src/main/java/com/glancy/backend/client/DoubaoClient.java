@@ -25,7 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * 针对抖宝模型的客户端实现，基于 WebClient 支持流式响应。
+ * 针对豆包模型的客户端实现，基于 WebClient 支持流式响应。
  */
 @Slf4j
 @Component("doubaoClient")
@@ -78,7 +78,7 @@ public class DoubaoClient implements LLMClient {
 
     /**
      * 背景：
-     *  - 前端在“完整生成后输出”模式下需要一次性聚合的回复，若仍以 stream=true 请求抖宝 API，会继续收到 SSE 片段。
+     *  - 前端在“完整生成后输出”模式下需要一次性聚合的回复，若仍以 stream=true 请求豆包 API，会继续收到 SSE 片段。
      * 目的：
      *  - 覆盖默认实现以 stream=false 调用上游，使后端直接获得最终文本，避免额外的流式解码与首屏延迟。
      * 关键取舍：
@@ -101,7 +101,7 @@ public class DoubaoClient implements LLMClient {
     }
 
     /**
-     * 意图：根据调用方指定的模式构造抖宝请求体。
+     * 意图：根据调用方指定的模式构造豆包请求体。
      * 输入：消息列表、温度及是否启用流式响应。
      * 输出：含 stream 标识的请求参数映射。
      * 复杂度：O(n)，n 为消息数量。
@@ -174,7 +174,7 @@ public class DoubaoClient implements LLMClient {
     }
 
     /**
-     * 意图：从抖宝同步响应中提取首个助手消息文本。
+     * 意图：从豆包同步响应中提取首个助手消息文本。
      */
     private String extractAssistantContent(ChatCompletionResponse response) {
         if (response == null || response.getChoices() == null) {

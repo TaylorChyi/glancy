@@ -33,7 +33,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-/** 集成测试，覆盖抖宝客户端的流式解析与异常处理。 */
+/** 集成测试，覆盖豆包客户端的流式解析与异常处理。 */
 class DoubaoClientTest {
 
     private static final BodyInserter.Context NO_OP_CONTEXT = new BodyInserter.Context() {
