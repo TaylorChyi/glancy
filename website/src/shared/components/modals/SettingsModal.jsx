@@ -14,7 +14,7 @@ import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "./BaseModal.jsx";
 import modalStyles from "./SettingsModal.module.css";
-import preferencesStyles from "@app/pages/preferences/Preferences.module.css";
+import preferencesStyles from "@app/pages/preferences/styles/index.js";
 import usePreferenceSections from "@app/pages/preferences/usePreferenceSections.js";
 import useSectionFocusManager from "@shared/hooks/useSectionFocusManager.js";
 import ThemeIcon from "@shared/components/ui/Icon";

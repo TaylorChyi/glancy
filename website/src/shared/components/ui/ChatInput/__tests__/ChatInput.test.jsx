@@ -3,7 +3,7 @@ import { jest } from "@jest/globals";
 
 const mockActionInput = jest.fn(() => <div data-testid="searchbar" />);
 
-jest.unstable_mockModule("../ChatInput.module.css", () => ({
+jest.unstable_mockModule("../styles/index.js", () => ({
   default: {},
 }));
 

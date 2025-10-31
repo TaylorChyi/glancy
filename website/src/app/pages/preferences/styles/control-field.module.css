@@ -1,0 +1,195 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/preferences/Preferences.module.css 拆分出的样式片段，聚焦 control-field 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Preferences 页面与 SettingsModal 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.control-field {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+/*
+ * fieldset 在多数浏览器中不会响应 gap，需要手动补齐 legend 与控件之间的竖向间距，
+ * 以维持与 label 对应控件一致的节奏。
+ */
+.control-field legend + * {
+  margin-top: var(--space-3);
+}
+
+.control-label {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
+  line-height: 1.6;
+}
+
+:where(.language-shell, .field-shell) {
+  display: block;
+  width: 100%;
+  color: var(--preferences-panel-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+
+  --language-trigger-height: var(--preferences-language-height, 48px);
+  --language-trigger-padding-inline: 14px;
+  --language-trigger-padding-block: 0px;
+  --language-trigger-radius: 20px;
+  --language-trigger-background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 82%,
+    transparent
+  );
+  --seg-r: 22px;
+  --seg-arrow-gap: 12px;
+  --seg-code-width: 4ch;
+  --sb-text: var(--preferences-panel-text);
+  --seg-hover-foreground: color-mix(
+    in srgb,
+    var(--preferences-panel-text) 82%,
+    white 18%
+  );
+  --ring-focus: 0 0 0 3px
+    color-mix(in srgb, var(--preferences-panel-ring) 45%, transparent);
+  --menu-bg: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 96%,
+    transparent
+  );
+  --menu-border: color-mix(
+    in srgb,
+    var(--preferences-panel-border) 55%,
+    transparent
+  );
+  --menu-hover: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 92%,
+    transparent
+  );
+  --menu-name-color: var(--preferences-panel-text);
+  --menu-code-color: color-mix(
+    in srgb,
+    var(--preferences-panel-muted) 80%,
+    transparent
+  );
+  --menu-check-color: var(--preferences-panel-text);
+  --menu-scroll-track: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 65%,
+    transparent
+  );
+  --menu-scroll-thumb: color-mix(
+    in srgb,
+    var(--preferences-panel-muted) 40%,
+    transparent
+  );
+  --menu-scroll-thumb-hover: color-mix(
+    in srgb,
+    var(--preferences-panel-muted) 55%,
+    transparent
+  );
+  --sb-menu-shadow: 0 18px 40px rgb(15 17 21 / 26%);
+}
+
+/*
+ * 背景：响应风格分区的原生控件外观与语言菜单存在割裂。
+ * 方案：抽象 field-shell 共享语言菜单的壳体令牌，确保不同字段复用同一视觉节奏。
+ * 取舍：通过 focus-within 控制光环而非逐一覆写控件 focus，避免与无障碍行为冲突。
+ */
+.field-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--language-trigger-height);
+  padding-inline: var(--language-trigger-padding-inline);
+  padding-block: var(--language-trigger-padding-block);
+  border-radius: var(--language-trigger-radius);
+  background: var(--language-trigger-background);
+  border: 1px solid transparent;
+  transition:
+    background 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.field-shell:hover {
+  color: var(--seg-hover-foreground);
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 88%,
+    transparent
+  );
+}
+
+.field-shell:focus-within {
+  box-shadow: var(--ring-focus);
+  color: var(--seg-hover-foreground);
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 92%,
+    transparent
+  );
+}
+
+.field-shell[data-interactive="select"],
+.field-shell[data-interactive="menu"] {
+  cursor: pointer;
+}
+
+.field-shell[data-interactive="input"],
+.field-shell[data-interactive="textarea"] {
+  cursor: text;
+}
+
+.field-shell[data-interactive="textarea"] {
+  align-items: stretch;
+  padding-block: 12px;
+}
+
+.field-shell[data-has-arrow="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 20px;
+  inline-size: 12px;
+  block-size: 8px;
+  background-color: currentcolor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='currentColor' d='M1.47.97a.75.75 0 0 0-1.06 1.06l4.5 4.5a.75.75 0 0 0 1.06 0l4.5-4.5A.75.75 0 0 0 9.91.97L6 4.88 1.47.97Z'/%3E%3C/svg%3E")
+    no-repeat center / contain;
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.field-shell[data-has-arrow="true"]:focus-within::after,
+.field-shell[data-has-arrow="true"]:hover::after {
+  opacity: 0.92;
+}
+
+.field-control {
+  flex: 1;
+  width: 100%;
+  min-height: var(--language-trigger-height);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  outline: none;
+}

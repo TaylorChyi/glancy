@@ -1,0 +1,160 @@
+/**
+ * 背景：
+ *  - 从 src/shared/components/Layout/Layout.module.css 拆分出的样式片段，聚焦 content 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - 共享 Layout 组件 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--border-color) 32%, transparent);
+  border-radius: 6px;
+}
+
+.content-inner {
+  flex: 1 1 auto;
+  width: min(100%, var(--layout-content-max));
+  padding: var(--layout-content-padding-top) var(--layout-content-padding-x)
+    var(--layout-content-padding-bottom);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(24px, 4vw, 40px);
+}
+
+.docker {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-w);
+  z-index: 70;
+  padding: var(--docker-padding-y) var(--docker-padding-x);
+  padding-bottom: calc(var(--docker-padding-y) + env(safe-area-inset-bottom));
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+/*
+ * 采用 ::before + mask 限制磨砂范围，保证搜索框顶缘以上保持清晰；
+ * 若后续需要全覆盖磨砂，可通过变量重置 mask 与渐变控制点。
+ */
+.docker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(var(--docker-backdrop-blur));
+  background: linear-gradient(
+    180deg,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-strong),
+        transparent
+      )
+      var(--docker-backdrop-gradient-hold),
+    color-mix(
+        in srgb,
+        var(--chat-window-bg) var(--docker-backdrop-tint-weak),
+        transparent
+      )
+      var(--docker-backdrop-gradient-fade-start),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    0deg,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) var(--docker-backdrop-mask-solid-stop),
+    rgb(0 0 0 / 0%) 100%
+  );
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}
+
+.docker-inner {
+  width: var(--docker-row-width, min(100%, var(--sb-max-width)));
+
+  /*
+   * 背景：底部 docker 需要对搜索输入与释义操作提供一致的宽度基线，
+   *       过去直接下发 90% 宽度导致 SearchBox 与工具栏出现偏差与裁切。
+   * 取舍：通过集中定义 --docker-row-max-width 与 --docker-row-width，
+   *       让子组件统一消费“最大宽度 + 容器宽度”两类信号，既保证等宽，
+   *       又为未来在 Layout 处调整断点或内边距预留单一入口。
+   */
+
+  --docker-row-max-width: var(--sb-max-width);
+  --docker-row-width: min(100%, var(--docker-row-max-width));
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (width <= 900px) {
+  .app {
+    --sidebar-w: 0px;
+    --layout-content-padding-x: clamp(16px, 6vw, 28px);
+    --layout-content-padding-top: clamp(24px, 6vw, 32px);
+    --layout-content-padding-bottom: clamp(24px, 8vw, 32px);
+    --docker-backdrop-gradient-hold: 64%;
+    --docker-backdrop-gradient-fade-start: 82%;
+    --docker-backdrop-mask-solid-stop: 74%;
+  }
+
+  .resizer {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .docker {
+    left: 0;
+    padding: clamp(18px, 6vw, 28px) clamp(16px, 6vw, 28px);
+    padding-bottom: calc(clamp(18px, 6vw, 28px) + env(safe-area-inset-bottom));
+  }
+
+  .docker-inner {
+    width: 100%;
+
+    --docker-row-max-width: 100%;
+    --docker-row-width: 100%;
+  }
+}
+
+@media (width <= 600px) {
+  .app {
+    --layout-content-padding-x: clamp(14px, 6vw, 24px);
+    --layout-content-padding-top: clamp(20px, 6vw, 28px);
+    --docker-backdrop-gradient-hold: 68%;
+    --docker-backdrop-gradient-fade-start: 88%;
+    --docker-backdrop-mask-solid-stop: 78%;
+  }
+
+  .docker-inner {
+    gap: 10px;
+  }
+}

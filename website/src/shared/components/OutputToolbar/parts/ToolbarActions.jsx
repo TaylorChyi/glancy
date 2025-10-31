@@ -11,7 +11,7 @@
  *  - 若新增动作，需要在模型 Hook 中扩展策略表即可。
  */
 import PropTypes from "prop-types";
-import styles from "../OutputToolbar.module.css";
+import styles from "../styles/index.js";
 import { useToolbarActionsModel } from "../hooks/useToolbarActionsModel.js";
 
 const resolveVariantClass = (variant) => {

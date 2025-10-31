@@ -1,0 +1,194 @@
+/**
+ * 背景：
+ *  - 从 src/shared/theme/variables.css 拆分出的设计令牌片段，关注 root。
+ * 目的：
+ *  - 控制单文件体积并为未来主题拆分埋点。
+ * 关键决策与取舍：
+ *  - 继续沿用原 token 命名，避免一次性重命名造成风险。
+ * 影响范围：
+ *  - 主题设计令牌。
+ * 演进与TODO：
+ *  - TODO: 结合主题模块化策略进一步分层。
+ */
+
+/**
+ * 背景：
+ *  - 变量文件同时承担主题常量与组件尺寸 token，未标注层级导致覆写顺序依赖 import。
+ * 目的：
+ *  - 将变量整体纳入 tokens 层，并保持 data-theme 分支，与全局装配顺序保持一致。
+ * 关键决策与取舍：
+ *  - 仅调整层级包装，不改动具体 token 数值，避免造成视觉回归；
+ *  - 保留现有注释结构，便于后续在各功能块继续演进。
+ * 影响范围：
+ *  - 所有引用该文件变量的组件与布局度量。
+ * 演进与TODO：
+ *  - 可逐步拆分出布局/交互子模块，进一步细化 tokens 边界。
+ */
+@layer tokens {
+  :root {
+    --bar-height: 60px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 20px;
+    --radius-avatar: 12px;
+    --color-bg: #0f1115;
+    --color-surface: #15181e;
+    --color-panel: #1c2027;
+    --color-panel-subtle: #111417;
+    --color-border-strong: #2a2f3a;
+    --color-text-primary: #e8ecf2;
+    --color-text-muted: #9aa3af;
+    --color-text-placeholder: #98a2b3;
+    --color-accent: #7aa2ff;
+    --shadow-elevated-md: 0 16px 40px rgb(0 0 0 / 45%);
+    --shadow-elevated-lg: 0 20px 56px rgb(0 0 0 / 45%);
+
+    /* search box vertical padding */
+    --search-box-padding-y: 12px;
+    --btn-padding: 0.6em 1.2em;
+    --btn-border: 1px solid transparent;
+    --user-menu-width: 180px;
+    --z-index-popover: 1100;
+
+    /* sidebar layout tokens */
+    --sidebar-w: 240px;
+    --sidebar-radius: 10px;
+    --sidebar-item-h: 36px;
+    --sidebar-pad-x: 16px;
+    --sidebar-pad-y: 12px;
+    --sidebar-gap-row: 8px;
+    --sidebar-gap-section: 12px;
+    --sidebar-icon-size: 18px;
+    --sidebar-accent: #96a0ff;
+    --sidebar-item-gap: 12px;
+
+    /* popover metrics */
+    --popover-w: 304px;
+    --popover-radius: 14px;
+    --sec-hd-size: 12px;
+    --sec-hd-weight: 600;
+    --item-size: 14px;
+    --item-weight: 400;
+
+    /* search bar tokens */
+    --sb-surface: #0e1116;
+    --sb-inner: #11161e;
+    --sb-seg: #141b24;
+    --sb-stroke: rgb(255 255 255 / 6%);
+    --sb-divider: rgb(255 255 255 / 10%);
+    --sb-text: #edeff2;
+    --sb-muted: #9fa7b3;
+    --sb-icon: #edeff2;
+    --sb-action-icon: var(--sb-icon);
+    --sb-cta: #fff;
+    --sb-cta-icon: #0e1116;
+    --sb-voice-color: var(--sb-icon);
+
+    /*
+     * search bar 在桌面稿中的最大内容宽度，统一复用布局主内容宽度令牌，
+     * 以避免 SearchBox 与 Layout 各自维护独立基准导致的双维护风险。
+     */
+    --sb-max-width: var(--layout-content-max, 960px);
+    --sb-h: 56px;
+    --sb-r: 28px;
+    --sb-radius: var(--sb-r);
+    --sb-pad-x: 20px;
+    --sb-pad-x-compact: 12px;
+    --sb-gap: 16px;
+    --sb-divider-w: 1px;
+    --sb-border: var(--sb-stroke);
+    --sb-border-active: color-mix(in srgb, var(--sb-stroke) 60%, white 40%);
+    --sb-bg: var(--sidebar-panel, var(--sb-surface));
+    --sb-bg-hover: var(
+      --sidebar-hover-bg,
+      color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
+    );
+    --sb-panel: var(--sb-inner);
+    --sb-panel-strong: color-mix(in srgb, var(--sb-inner) 88%, black 12%);
+    --sb-inner-highlight: rgb(255 255 255 / 12%);
+    --sb-ring: 0 0 0 2px rgb(255 255 255 / 8%);
+    --sb-shadow: 0 6px 20px rgb(0 0 0 / 25%);
+    --sb-shadow-soft: 0 4px 16px rgb(0 0 0 / 22%);
+    --sb-menu-shadow: 0 18px 44px rgb(0 0 0 / 45%);
+    --sb-font: 16px;
+    --sb-font-sm: 15px;
+    --sb-font-strong: 600;
+    --sb-font-weight: 500;
+    --sb-body-letter-spacing: 0.01em;
+    --sb-code-letter-spacing: 0.08em;
+    --sb-code-min-width: 64px;
+    --sb-menu-width: 360px;
+    --sb-menu-max-h: 420px;
+    --sb-menu-radius: 16px;
+    --sb-menu-padding: 8px;
+    --sb-icon-size-sm: 18px;
+    --sb-icon-size-lg: 20px;
+    --sb-action-size-sm: 40px;
+    --sb-action-size-lg: 44px;
+    --sb-icon-size: var(--sb-icon-size-lg);
+    --sb-action-size: var(--sb-action-size-lg);
+    --sb-caret: #99a6b5;
+    --chip-gap: 8px;
+    --chip-radius: 16px;
+    --chip-bg: #252b33;
+    --chip-bg-hover: #2b323c;
+    --chip-text: #d5dbe6;
+    --divider-color: var(--sb-divider);
+    --menu-bg: var(--sb-bg, var(--sb-inner));
+    --menu-border: color-mix(in srgb, var(--sb-stroke) 80%, black 20%);
+    --menu-hover: color-mix(in srgb, var(--menu-bg) 88%, white 12%);
+    --menu-code-color: #f1f4f8;
+    --menu-name-color: #c6ccd7;
+    --menu-check-color: #d9dee7;
+    --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent);
+    --menu-scroll-thumb: color-mix(in srgb, var(--menu-bg) 20%, white 12%);
+    --menu-scroll-thumb-hover: color-mix(
+      in srgb,
+      var(--menu-scroll-thumb) 70%,
+      white 30%
+    );
+    --direction-icon: #b8c2cf;
+    --text-primary: var(--sb-text);
+    --text-muted: var(--sb-muted);
+    --sb-scroll-track: color-mix(in srgb, var(--sb-inner) 35%, transparent);
+    --sb-scroll-thumb: color-mix(in srgb, var(--sb-inner) 65%, transparent);
+    --sb-send-bg: rgb(255 255 255 / 92%);
+    --sb-send-color: #0b0d11;
+    --sb-ring-width: 2px;
+    --seg-h: 44px;
+    --seg-r: 22px;
+    --seg-pad-x: 20px;
+    --seg-arrow-gap: 12px;
+    --seg-font-size: 14px;
+    --seg-font-weight: 600;
+    --seg-letter-space: 0.04em;
+    --ph-size: 16px;
+    --ph-weight: 500;
+    --btn-eq: 36px;
+    --btn-rec: 44px;
+    --btn-gap: 12px;
+    --ring-focus: 0 0 0 2px rgb(255 255 255 / 8%);
+    --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
+    --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
+
+    /* settings dialog */
+    --settings-dialog-width-md: 640px;
+    --settings-dialog-width-lg: 720px;
+    --settings-dialog-max-height: 72vh;
+    --settings-dialog-surface: #fff;
+    --settings-dialog-surface-muted: #f2f4f7;
+    --settings-dialog-background: #f7f7f8;
+    --settings-dialog-border: #e5e7eb;
+    --settings-dialog-text: #0b1220;
+    --settings-dialog-muted: #667085;
+    --settings-dialog-accent: #3b82f6;
+    --settings-dialog-shadow:
+      0 12px 30px rgb(11 18 32 / 12%), 0 2px 8px rgb(11 18 32 / 6%);
+    --settings-dialog-radius: 16px;
+    --settings-dialog-control-radius: 12px;
+    --settings-dialog-control-height: 40px;
+    --settings-dialog-navigation-width: 240px;
+    --settings-dialog-gap-sm: 16px;
+    --settings-dialog-gap-md: 24px;
+  }

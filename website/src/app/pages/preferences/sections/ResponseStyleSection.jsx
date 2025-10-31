@@ -16,7 +16,7 @@ import { useId } from "react";
 import PropTypes from "prop-types";
 import SelectMenu from "@shared/components/ui/SelectMenu";
 import SettingsSection from "@shared/components/settings/SettingsSection";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 

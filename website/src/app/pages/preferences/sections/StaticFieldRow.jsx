@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 
 import DetailActionButton from "./DetailActionButton.jsx";
 import { DETAIL_INPUT_CLASSNAME } from "./detailClassNames.js";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 /**
  * 意图：渲染 detail 布局下的只读字段行，并可选附带动作按钮。

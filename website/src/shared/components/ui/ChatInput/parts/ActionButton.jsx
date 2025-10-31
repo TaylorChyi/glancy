@@ -14,7 +14,7 @@
 import { useCallback } from "react";
 import PropTypes from "prop-types";
 
-import styles from "../ChatInput.module.css";
+import styles from "../styles/index.js";
 import { SendIcon, VoiceIcon } from "../icons";
 const ACTION_BUTTON_COOLDOWN_MS = 500;
 

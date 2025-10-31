@@ -1,0 +1,188 @@
+/**
+ * 背景：
+ *  - 从 src/app/pages/preferences/Preferences.module.css 拆分出的样式片段，聚焦 subscription-table 的局部结构。
+ * 目的：
+ *  - 维持原有声明顺序同时降低单文件体积，便于渐进式梳理。
+ * 关键决策与取舍：
+ *  - 通过自动拆分避免手工复制引入的人为回归；
+ *  - 保留原注释与排版，确保比对差异时信息完整。
+ * 影响范围：
+ *  - Preferences 页面与 SettingsModal 中引用的 className 映射。
+ * 演进与TODO：
+ *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
+ */
+
+.subscription-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.subscription-table th,
+.subscription-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 45%, transparent);
+  font-size: 13px;
+  text-align: left;
+  color: var(--preferences-panel-text);
+}
+
+.subscription-table th {
+  font-weight: 600;
+  background: color-mix(
+    in srgb,
+    var(--preferences-panel-surface) 92%,
+    transparent
+  );
+}
+
+.subscription-table td[data-plan-state="current"] {
+  font-weight: 600;
+}
+
+.subscription-footnotes {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--preferences-panel-muted);
+}
+
+.subscription-actions {
+  display: grid;
+
+  /*
+    说明：使用 auto-fit 可在仅保留兑换区域时铺满整行，同时保留未来扩展多个操作位的弹性；
+    若恢复额外动作，列布局会自动平均分配，无需再次调整样式。
+  */
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.subscription-redeem {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.subscription-redeem-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
+}
+
+.subscription-redeem-form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.subscription-redeem-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+  background: transparent;
+  color: var(--preferences-panel-text);
+}
+
+.subscription-redeem-button {
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: none;
+  background: var(--preferences-button-contrast-bg);
+  color: var(--preferences-button-contrast-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--preferences-panel-text);
+}
+
+.section-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--preferences-panel-muted);
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--preferences-panel-muted);
+}
+
+.details {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+
+  /*
+   * 通过列宽变量确保操作列分得固定比例空间，
+   * 让动作按钮能与数值列拉开距离并自然贴齐右缘，
+   * 也为后续响应式/密集布局提供统一调整入口。
+   */
+  --preferences-detail-label-column: minmax(120px, max-content);
+  --preferences-detail-value-column: minmax(0, 1fr);
+  --preferences-detail-action-column: max-content;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns:
+    var(--preferences-detail-label-column)
+    var(--preferences-detail-value-column)
+    var(--preferences-detail-action-column);
+  gap: 24px;
+  align-items: center;
+}
+
+.detail-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--preferences-panel-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-value {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--preferences-panel-text);
+  overflow-wrap: break-word;
+}
+
+/*
+ * 背景：
+ *  - 账户分区的邮箱/手机号需与用户名输入保持统一样式，避免信息密度不一致。
+ * 设计取舍：
+ *  - 复用 UsernameEditor 的输入基样式并叠加 center 对齐，确保跨组件视觉一致且文本聚焦。
+ */
+.detail-input {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.identity-row {
+  align-items: center;
+  grid-template-columns:
+    var(--preferences-detail-label-column)
+    minmax(72px, 1fr)
+    var(--preferences-detail-action-column);
+}
+
+.identity-avatar-image {
+  border-radius: 999px;
+  box-shadow: 0 16px 32px
+    color-mix(in srgb, var(--preferences-panel-border) 55%, transparent);
+}

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 import ReportIssueModalHeader from "../ReportIssueModalHeader.jsx";
-import styles from "../ReportIssueModal.module.css";
+import styles from "../styles/index.js";
 
 /**
  * 背景：

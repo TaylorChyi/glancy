@@ -18,7 +18,7 @@ import SegmentedControl from "@shared/components/ui/SegmentedControl";
 import ReportIssueActionBar from "./ReportIssueActionBar.jsx";
 import ReportIssueSummary from "./ReportIssueSummary.jsx";
 import ReportIssueModalHeader from "./ReportIssueModalHeader.jsx";
-import styles from "./ReportIssueModal.module.css";
+import styles from "./styles/index.js";
 
 const TEXTAREA_ID = "report-description";
 

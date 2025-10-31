@@ -17,7 +17,7 @@ import { useMemo, useCallback } from "react";
 import SearchBox from "@shared/components/ui/SearchBox";
 import DictionaryEntryActionBar from "@shared/components/DictionaryEntryActionBar";
 import ThemeIcon from "@shared/components/ui/Icon";
-import toolbarStyles from "@shared/components/OutputToolbar/OutputToolbar.module.css";
+import toolbarStyles from "@shared/components/OutputToolbar/styles/index.js";
 
 import styles from "./DictionaryActionPanel.module.css";
 

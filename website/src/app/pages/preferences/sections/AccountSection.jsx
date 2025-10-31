@@ -20,7 +20,7 @@ import AccountFieldList from "./AccountFieldList.jsx";
 import AccountIdentityRow from "./AccountIdentityRow.jsx";
 import { useAvatarInteraction } from "./useAvatarInteraction.js";
 import { useNormalizedIdentity } from "./useNormalizedIdentity.js";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 const AVATAR_SIZE = 72;
 

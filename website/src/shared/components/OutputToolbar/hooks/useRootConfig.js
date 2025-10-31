@@ -12,7 +12,7 @@
  *  - 若未来引入多主题样式，可在此扩展策略。
  */
 import { useMemo } from "react";
-import styles from "../OutputToolbar.module.css";
+import styles from "../styles/index.js";
 
 export const useRootConfig = ({ className, toolbarRole, ariaLabel }) => {
   const rootClassName = useMemo(

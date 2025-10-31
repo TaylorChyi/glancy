@@ -11,7 +11,7 @@
  *  - 若后续引入主题切换，可提供基于 token 的派生函数。
  */
 import usernameEditorStyles from "@shared/components/Profile/UsernameEditor/UsernameEditor.module.css";
-import styles from "../Preferences.module.css";
+import styles from "../styles/index.js";
 
 export const DETAIL_INPUT_CLASSNAME = [
   usernameEditorStyles.input,

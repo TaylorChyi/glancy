@@ -13,7 +13,7 @@
 import PropTypes from "prop-types";
 import { useCallback } from "react";
 import { SettingsHeader } from "@shared/components/modals";
-import styles from "./Preferences.module.css";
+import styles from "./styles/index.js";
 import usePreferenceSections from "./usePreferenceSections.js";
 import useSectionFocusManager from "@shared/hooks/useSectionFocusManager.js";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";

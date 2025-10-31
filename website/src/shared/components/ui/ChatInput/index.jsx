@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 
 import ActionInput from "./ActionInput";
-import styles from "./ChatInput.module.css";
+import styles from "./styles/index.js";
 
 const normalizeCssDimension = (value) => {
   if (value === null || value === undefined) {
