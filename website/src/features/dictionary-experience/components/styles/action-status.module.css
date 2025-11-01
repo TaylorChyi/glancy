@@ -12,12 +12,11 @@
  *  - TODO: 后续可进一步语义化命名或抽离为 tokens。
  */
 
-  .action-status {
-    min-height: auto;
-  }
+.action-status {
+  min-height: auto;
+}
 
-  .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.action-buttons {
+  flex-direction: column;
+  align-items: stretch;
 }
