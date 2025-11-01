@@ -297,10 +297,7 @@ public class WordSearcherImpl implements WordSearcher {
                 "请拆解字源、构形与历史演变，再补充当代主流义项与用例。"
             );
         }
-        return new ChineseEntryProfile(
-            "Multi-character Word",
-            "标准汉语词语，请分层呈现核心义项与常见搭配。"
-        );
+        return new ChineseEntryProfile("Multi-character Word", "标准汉语词语，请分层呈现核心义项与常见搭配。");
     }
 
     private record ChineseEntryProfile(String typeLabel, String guidance) {}
