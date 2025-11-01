@@ -55,17 +55,14 @@ PrimaryNavItem.defaultProps = {
   title: undefined,
 };
 
-function Brand({ activeView, onShowDictionary, onShowLibrary }) {
+function Brand({ activeView, onShowDictionary }) {
   const { lang, t } = useLanguage();
   const brandText = getBrandText(lang);
 
   const dictionaryLabel = t.primaryNavDictionaryLabel || brandText;
-  const libraryLabel = t.primaryNavLibraryLabel || t.favorites || "Favorites";
-  const entriesLabel = t.primaryNavEntriesLabel || t.termLabel || "Entries";
   const dictionaryHint =
     t.primaryNavDictionaryDescription || t.searchTitle || dictionaryLabel;
-  const libraryHint =
-    t.primaryNavLibraryDescription || t.favoritesEmptyTitle || libraryLabel;
+  const entriesLabel = t.primaryNavEntriesLabel || t.termLabel || "Entries";
 
   const handleDictionary = () => {
     if (typeof onShowDictionary === "function") {
@@ -73,12 +70,6 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
       return;
     }
     window.location.reload();
-  };
-
-  const handleLibrary = () => {
-    if (typeof onShowLibrary === "function") {
-      onShowLibrary();
-    }
   };
 
   const navItems = [
@@ -90,15 +81,6 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
       onClick: handleDictionary,
       title: dictionaryHint,
       enableActiveState: false,
-    },
-    {
-      key: "library",
-      label: libraryLabel,
-      icon: "library",
-      iconAlt: libraryLabel,
-      onClick: handleLibrary,
-      enableActiveState: true,
-      title: libraryHint,
     },
   ];
 
@@ -138,13 +120,11 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
 Brand.propTypes = {
   activeView: PropTypes.string,
   onShowDictionary: PropTypes.func,
-  onShowLibrary: PropTypes.func,
 };
 
 Brand.defaultProps = {
   activeView: undefined,
   onShowDictionary: undefined,
-  onShowLibrary: undefined,
 };
 
 export default Brand;

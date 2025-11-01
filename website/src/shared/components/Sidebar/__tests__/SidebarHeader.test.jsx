@@ -17,35 +17,27 @@ const createItems = () => [
     onClick: jest.fn(),
     testId: "sidebar-nav-dictionary",
   },
-  {
-    key: "library",
-    icon: "library",
-    label: "Library",
-    active: false,
-    onClick: jest.fn(),
-    testId: "sidebar-nav-library",
-  },
 ];
 
 describe("SidebarHeader", () => {
   /**
-   * 测试目标：点击底部项时应触发对应 onClick。
+   * 测试目标：点击导航项时应触发对应 onClick。
    * 前置条件：提供带有 onClick mock 的导航项数组并渲染组件。
    * 步骤：
    *  1) 渲染 SidebarHeader。
-   *  2) 点击第二个 NavItem。
+   *  2) 点击唯一的导航按钮。
    * 断言：
-   *  - 第二项 onClick 被调用一次（失败信息：library 入口未触发回调）。
+   *  - onClick 被调用一次（失败信息：词典入口未触发回调）。
    * 边界/异常：
    *  - 若 items 为空组件返回 null，本用例不覆盖。
    */
-  test("Given items When click library Then invokes handler", () => {
+  test("Given items When click dictionary Then invokes handler", () => {
     const items = createItems();
     render(<SidebarHeader items={items} ariaLabel="Navigation" />);
 
-    fireEvent.click(screen.getByTestId("sidebar-nav-library"));
+    fireEvent.click(screen.getByTestId("sidebar-nav-dictionary"));
 
-    expect(items[1].onClick).toHaveBeenCalledTimes(1);
+    expect(items[0].onClick).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -72,7 +64,7 @@ describe("SidebarHeader", () => {
    * 前置条件：渲染包含激活项的头部导航列表。
    * 步骤：
    *  1) 渲染 SidebarHeader。
-   *  2) 获取任意一个导航按钮。
+   *  2) 获取导航按钮。
    * 断言：
    *  - 元素包含 flat 类且未包含 active 类（失败信息：头部导航仍使用高亮变体）。
    * 边界/异常：

@@ -116,7 +116,7 @@ const prepareSingleEntryScenario = async (entry) => {
 /**
  * 意图：复用多项状态断言，降低测试内重复代码。
  * 输入：result 为 Hook 渲染结果，snapshot 描述预期。
- * 输出：无，断言失败即抛错。
+ * 输出：无，断言失即抛错。
  * 流程：依次校验版本数量、激活版本、词条与文本内容。
  * 错误处理：依赖 Jest 断言。
  * 复杂度：O(1)。
@@ -208,29 +208,6 @@ describe("useDictionaryExperience/view state", () => {
       finalText: entryV2.markdown,
       streamText: "",
     });
-  });
-
-  /**
-   * 测试路径：切换致用单词视图时，activeView 需同步更新。
-   * 步骤：依次调用 handleShowLibrary 与 handleShowDictionary。
-   * 断言：activeView 从 library 变更为 dictionary 且 viewState 标志同步。
-   */
-  it("updates active view when toggling library", () => {
-    const { result } = renderHook(() => useDictionaryExperience());
-
-    act(() => {
-      result.current.handleShowLibrary();
-    });
-    expect(result.current.activeView).toBe("library");
-    expect(result.current.viewState.isLibrary).toBe(true);
-    expect(result.current.viewState.isDictionary).toBe(false);
-
-    act(() => {
-      result.current.handleShowDictionary();
-    });
-    expect(result.current.activeView).toBe("dictionary");
-    expect(result.current.viewState.isDictionary).toBe(true);
-    expect(result.current.viewState.isLibrary).toBe(false);
   });
 
   /**

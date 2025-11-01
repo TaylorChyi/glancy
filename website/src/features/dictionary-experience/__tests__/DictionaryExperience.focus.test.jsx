@@ -38,14 +38,12 @@ function createDictionaryExperienceState(overrides = {}) {
     handleSend: jest.fn(),
     handleVoice: handleVoiceMock,
     handleShowDictionary: jest.fn(),
-    handleShowLibrary: jest.fn(),
     handleSelectHistory: jest.fn(),
     activeView: "dictionary",
     viewState: {
       active: "dictionary",
       isDictionary: true,
       isHistory: false,
-      isLibrary: false,
     },
     focusInput: focusInputMock,
     entry: { term: "mock" },
@@ -64,7 +62,6 @@ function createDictionaryExperienceState(overrides = {}) {
     dictionarySwapLanguagesLabel: "切换",
     searchEmptyState: { title: "", description: "" },
     chatInputPlaceholder: "",
-    libraryLandingLabel: "致用单词",
     reportDialog: {
       open: false,
       term: "",
@@ -105,13 +102,6 @@ jest.unstable_mockModule("@shared/components/Layout", () => ({
       ) : null}
       <div>{children}</div>
     </div>
-  ),
-}));
-
-jest.unstable_mockModule("@app/pages/App/LibraryLandingView.jsx", () => ({
-  __esModule: true,
-  default: ({ label }) => (
-    <div data-testid="library-landing">{label || "致用单词"}</div>
   ),
 }));
 
@@ -387,45 +377,5 @@ describe("DictionaryExperience focus management", () => {
 
     expect(handleSendMock).toHaveBeenCalledTimes(1);
     expect(setTextMock).toHaveBeenCalledWith("");
-  });
-
-  /**
-   * 测试目标：当视图切换至“致用单词”时，底栏应被移除且占位标签居中展示。
-   * 前置条件：useDictionaryExperience 返回 activeView 为 library 的桩数据。
-   * 步骤：
-   *  1) 通过 mockReturnValueOnce 覆盖 Hook 输出；
-   *  2) 渲染 DictionaryExperience；
-   * 断言：
-   *  - Layout 的 data-has-bottom 属性为 "no"；
-   *  - LibraryLandingView 渲染致用单词标签（失败信息：占位文案未呈现）。
-   * 边界/异常：
-   *  - 若未来 LibraryLandingView 支持更多插槽需同步更新断言。
-   */
-  test("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
-    useDictionaryExperience.mockReturnValueOnce(
-      createDictionaryExperienceState({
-        t: {},
-        handleVoice: jest.fn(),
-        activeView: "library",
-        viewState: {
-          active: "library",
-          isDictionary: false,
-          isHistory: false,
-          isLibrary: true,
-        },
-        focusInput: jest.fn(),
-        entry: null,
-        dictionaryActionBarProps: { onReoutput: jest.fn() },
-        displayClassName: "library-view",
-      }),
-    );
-
-    render(<DictionaryExperience />);
-
-    expect(screen.getByTestId("layout-root")).toHaveAttribute(
-      "data-has-bottom",
-      "no",
-    );
-    expect(screen.getByTestId("library-landing")).toHaveTextContent("致用单词");
   });
 });

@@ -34,8 +34,6 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   searchButton: "搜索",
   primaryNavDictionaryLabel: "格律词典",
   primaryNavDictionaryDescription: "沉浸式灵感解读",
-  primaryNavLibraryLabel: "致用单词",
-  primaryNavLibraryDescription: "私享收藏集",
   primaryNavEntriesLabel: "词条",
   termLabel: "词条",
   playAudio: "播放语音",

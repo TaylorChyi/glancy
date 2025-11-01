@@ -50,10 +50,6 @@ export function useDictionaryHomeControls({
     resetDictionaryHomeState();
   };
 
-  const handleShowLibrary = () => {
-    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.LIBRARY);
-  };
-
   const handleVoice = () => {
     const locale = lang === "en" ? "en-US" : "zh-CN";
     startSpeech(locale);
@@ -63,7 +59,6 @@ export function useDictionaryHomeControls({
     focusInput,
     resetDictionaryHomeState,
     handleShowDictionary,
-    handleShowLibrary,
     handleVoice,
   };
 }

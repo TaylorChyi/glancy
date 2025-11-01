@@ -37,13 +37,11 @@ const createBaseExperienceState = () => ({
   handleSend: jest.fn(),
   handleVoice: jest.fn(),
   handleShowDictionary: jest.fn(),
-  handleShowLibrary: jest.fn(),
   handleSelectHistory: jest.fn(),
   activeView: "dictionary",
   viewState: {
     isDictionary: true,
     isHistory: false,
-    isLibrary: false,
   },
   focusInput: jest.fn(),
   entry: null,
@@ -65,7 +63,6 @@ const createBaseExperienceState = () => ({
     description: "输入任何词汇即可获取解释",
   },
   chatInputPlaceholder: "输入查询内容",
-  libraryLandingLabel: "致用单词",
   reportDialog: {
     open: false,
     term: "",
@@ -193,11 +190,6 @@ jest.unstable_mockModule("@shared/components/ui/EmptyState", () => ({
       <p>{description}</p>
     </div>
   ),
-}));
-
-jest.unstable_mockModule("@app/pages/App/LibraryLandingView.jsx", () => ({
-  __esModule: true,
-  default: ({ label }) => <div data-testid="library-landing">{label}</div>,
 }));
 
 jest.unstable_mockModule("@shared/components/ui/MessagePopup", () => ({

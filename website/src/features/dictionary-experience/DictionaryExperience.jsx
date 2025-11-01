@@ -6,7 +6,6 @@ import { DictionaryEntryView } from "@shared/components/ui/DictionaryEntry";
 import ChatInput from "@shared/components/ui/ChatInput";
 import { DockedICP } from "@shared/components/ui/ICP";
 import EmptyState from "@shared/components/ui/EmptyState";
-import LibraryLandingView from "@app/pages/App/LibraryLandingView.jsx";
 import {
   normalizeWordSourceLanguage,
   normalizeWordTargetLanguage,
@@ -37,7 +36,6 @@ export default function DictionaryExperience() {
     handleSend,
     handleVoice,
     handleShowDictionary,
-    handleShowLibrary,
     handleSelectHistory,
     activeView,
     viewState,
@@ -48,7 +46,10 @@ export default function DictionaryExperience() {
     loading,
     dictionaryActionBarProps,
     displayClassName,
+    popupOpen,
+    popupMsg,
     popupConfig,
+    closePopup,
     toast,
     closeToast,
     dictionaryTargetLanguageLabel,
@@ -56,7 +57,6 @@ export default function DictionaryExperience() {
     dictionarySwapLanguagesLabel,
     searchEmptyState,
     chatInputPlaceholder,
-    libraryLandingLabel,
     reportDialog,
     reportDialogHandlers,
   } = useDictionaryExperience();
@@ -67,8 +67,6 @@ export default function DictionaryExperience() {
     activeView === DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY;
   const isHistoryViewActive =
     viewShape.isHistory ?? activeView === DICTIONARY_EXPERIENCE_VIEWS.HISTORY;
-  const isLibraryViewActive =
-    viewShape.isLibrary ?? activeView === DICTIONARY_EXPERIENCE_VIEWS.LIBRARY;
 
   const previewContent = finalText || streamText;
   const shouldRenderEntry =
@@ -197,17 +195,14 @@ export default function DictionaryExperience() {
       <Layout
         sidebarProps={{
           onShowDictionary: handleShowDictionary,
-          onShowLibrary: handleShowLibrary,
           onSelectHistory: handleSelectHistory,
           activeView,
         }}
         onMainMiddleScroll={handleMainScroll}
-        bottomContent={isLibraryViewActive ? null : bottomPanelContent}
+        bottomContent={bottomPanelContent}
       >
         <div className={displayClassName}>
-          {isLibraryViewActive ? (
-            <LibraryLandingView label={libraryLandingLabel} />
-          ) : isHistoryViewActive ? (
+          {isHistoryViewActive ? (
             <HistoryDisplay
               onEmptyAction={() => {
                 handleShowDictionary();
