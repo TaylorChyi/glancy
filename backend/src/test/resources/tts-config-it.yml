@@ -8,20 +8,6 @@ voices:
       - id: v2
         label: "v2"
         plan: pro
-quota:
-  daily:
-    pro: 100
-    free: 5
-cache:
-  ttlDays:
-    pro: 90
-    free: 30
-  audioSampleRate: 48000
-ratelimit:
-  userPerMinute: 30
-  ipPerMinute: 120
-  burst: 20
-  cooldownSeconds: 60
 features:
   hotReload: false
   useCdn: false

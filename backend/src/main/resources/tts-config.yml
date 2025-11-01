@@ -14,20 +14,6 @@ voices:
       - id: en_female_nadia_tips_emo_v2_mars_bigtts
         label: "Nadia·女声"
         plan: pro
-quota:
-  daily:
-    pro: 100
-    free: 5
-cache:
-  ttlDays:
-    pro: 90
-    free: 30
-  audioSampleRate: 48000
-ratelimit:
-  userPerMinute: 30
-  ipPerMinute: 120
-  burst: 20
-  cooldownSeconds: 60
 features:
   hotReload: true
   useCdn: true

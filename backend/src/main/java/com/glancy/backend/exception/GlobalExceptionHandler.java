@@ -115,16 +115,10 @@ public class GlobalExceptionHandler {
         return buildResponse(new ErrorResponse(msg), HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    @ExceptionHandler({ QuotaExceededException.class, ForbiddenException.class })
+    @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<?> handleForbidden(BusinessException ex) {
         log.error("Forbidden: {}", ex.getMessage());
         return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.FORBIDDEN);
-    }
-
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<?> handleRateLimit(RateLimitExceededException ex) {
-        log.warn("Rate limit exceeded: {}", ex.getMessage());
-        return buildResponse(new ErrorResponse(ex.getMessage()), HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler(TtsFailedException.class)

@@ -34,16 +34,6 @@ class TtsConfigManagerTest {
                   - id: zh_female_cancan_mars_bigtts
                     label: A
                     plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
             features:
               hotReload: false
               useCdn: true
@@ -65,16 +55,6 @@ class TtsConfigManagerTest {
                   - id: zh_male_new_voice
                     label: B
                     plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
             features:
               hotReload: false
               useCdn: true
@@ -104,16 +84,6 @@ class TtsConfigManagerTest {
                   - id: voice1
                     label: A
                     plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
             features:
               hotReload: false
               useCdn: true
@@ -135,16 +105,6 @@ class TtsConfigManagerTest {
                   - id: voice1
                     label: A
                     plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
             features:
               hotReload: false
               useCdn: true

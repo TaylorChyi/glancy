@@ -14,9 +14,6 @@ import lombok.Data;
 public class TtsConfig {
 
     private Map<String, VoiceGroup> voices = Map.of();
-    private Quota quota = new Quota();
-    private Cache cache = new Cache();
-    private RateLimit ratelimit = new RateLimit();
     private Features features = new Features();
 
     /**
@@ -39,45 +36,6 @@ public class TtsConfig {
         private String id;
         private String label;
         private String plan;
-    }
-
-    /** Configuration for synthesis quota. */
-    @Data
-    public static class Quota {
-
-        private Daily daily = new Daily();
-
-        @Data
-        public static class Daily {
-
-            private int pro;
-            private int free;
-        }
-    }
-
-    /** Cache related settings. */
-    @Data
-    public static class Cache {
-
-        private TtlDays ttlDays = new TtlDays();
-        private int audioSampleRate;
-
-        @Data
-        public static class TtlDays {
-
-            private int pro;
-            private int free;
-        }
-    }
-
-    /** Parameters for rate limiting. */
-    @Data
-    public static class RateLimit {
-
-        private int userPerMinute;
-        private int ipPerMinute;
-        private int burst;
-        private int cooldownSeconds;
     }
 
     /** Feature toggles. */
