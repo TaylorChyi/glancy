@@ -43,9 +43,7 @@ public class SecurityConfig {
         http
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth ->
-                auth.requestMatchers("/api/notifications/system").authenticated().anyRequest().permitAll()
-            )
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
             // 在匿名认证过滤器之前增加令牌追踪过滤器，确保所有请求都被记录
             .addFilterBefore(new TokenTraceFilter(), AnonymousAuthenticationFilter.class)
             .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
