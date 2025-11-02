@@ -259,8 +259,7 @@
 }
 
 .footer-links a {
-  /* 复用链接语义色，避免暗色主题下与背景混淆 */
-  color: var(--link-color);
+  color: var(--highlight-color);
   text-decoration: none;
   margin: 0 4px;
 }
