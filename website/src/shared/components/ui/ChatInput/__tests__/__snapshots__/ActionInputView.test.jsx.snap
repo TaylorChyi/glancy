@@ -73,11 +73,6 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
           </button>
         </div>
       </div>
-      <span
-        aria-hidden="true"
-        class="input-divider"
-        data-visible="true"
-      />
       <div
         class="text-slot"
       >

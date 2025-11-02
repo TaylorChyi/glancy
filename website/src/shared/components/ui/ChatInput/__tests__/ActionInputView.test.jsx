@@ -164,7 +164,7 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenExposeTriadIcon", () => {
  * 前置条件：languageControls.isVisible=false、canSubmit=false。
  * 步骤：
  *  1) 渲染组件并读取 data-language-visible 属性。
- *  2) 断言语言槽位与分隔符均被折叠。
+ *  2) 断言语言槽位被折叠。
  *  3) 校验动作按钮被禁用，表明无语音后备路径。
  * 断言：
  *  - data-language-visible === "false"。
@@ -217,7 +217,7 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
   expect(languageSlot?.childElementCount ?? 0).toBe(0);
 
   const divider = container.querySelector(`.${"input-divider"}`);
-  expect(divider?.getAttribute("data-visible")).toBe("false");
+  expect(divider).toBeNull();
 
   const actionButton = container.querySelector(`.${"action-slot"} button`);
   expect(actionButton?.getAttribute("disabled")).toBe("");

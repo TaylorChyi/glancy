@@ -22,9 +22,9 @@
 }
 
 /*
- * 结构说明：SearchBox 维持统一的视觉壳层，此处通过 grid 划分语言、分隔符、文本与动作槽位。
- *  - 桌面端：四列横向排列，并以 column-gap 继承 searchbox 的节奏感。
- *  - 窄屏：降级为单列栈结构，divider 退化为横向描边，完全移除 flex-wrap 带来的换行抖动。
+ * 结构说明：SearchBox 维持统一的视觉壳层，此处通过 grid 划分语言、文本与动作槽位。
+ *  - 桌面端：三列横向排列，并以 column-gap 继承 searchbox 的节奏感。
+ *  - 窄屏：降级为单列栈结构，移除额外分隔符避免冗余装饰。
  */
 .input-surface {
   /*
@@ -44,10 +44,9 @@
   display: grid;
   grid-template-columns:
     auto
-    var(--chat-input-divider-width, 1px)
     minmax(0, 1fr)
     auto;
-  grid-template-areas: "language divider text action";
+  grid-template-areas: "language text action";
   align-items: stretch;
   column-gap: var(--chat-input-inline-gap, var(--chat-input-bottom-gap, 12px));
 }
@@ -66,18 +65,6 @@
 }
 
 .language-slot[data-visible="false"] {
-  display: none;
-}
-
-.input-divider {
-  grid-area: divider;
-  width: var(--chat-input-divider-width, 1px);
-  background: var(--chat-input-divider-color, var(--sb-divider));
-  border-radius: 999px;
-  align-self: stretch;
-}
-
-.input-surface[data-language-visible="false"] .input-divider {
   display: none;
 }
 
@@ -103,7 +90,6 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "text"
-      "divider"
       "language"
       "action";
     row-gap: var(--chat-input-mobile-gap, var(--chat-input-bottom-gap, 12px));
@@ -114,15 +100,6 @@
     grid-template-areas:
       "text"
       "action";
-  }
-
-  .input-divider {
-    width: 100%;
-    height: var(--chat-input-divider-width, 1px);
-  }
-
-  .input-surface[data-language-visible="false"] .input-divider {
-    display: none;
   }
 
   .language-slot {

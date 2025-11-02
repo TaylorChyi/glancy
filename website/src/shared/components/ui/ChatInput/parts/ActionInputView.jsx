@@ -43,11 +43,6 @@ function ActionInputView({
             <LanguageControls {...languageProps} />
           ) : null}
         </div>
-        <span
-          className={styles["input-divider"]}
-          aria-hidden="true"
-          data-visible={languageVisibility}
-        />
         <div className={styles["text-slot"]}>
           <div className={styles["core-input"]}>
             <textarea
