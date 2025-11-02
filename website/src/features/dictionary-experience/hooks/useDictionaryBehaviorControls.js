@@ -20,6 +20,7 @@ export function useDictionaryBehaviorControls({
   historyCaptureEnabled,
   lookupController,
   streamWord,
+  fetchWord,
 }) {
   const {
     entry,
@@ -142,6 +143,7 @@ export function useDictionaryBehaviorControls({
     dictionaryTargetLanguage,
     dictionaryFlavor,
     executeLookup,
+    fetchWord,
     historyCaptureEnabled,
     addHistory,
     removeHistory,

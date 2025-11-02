@@ -36,6 +36,7 @@ export function useDictionaryHistoryHandlers({
   dictionaryTargetLanguage,
   dictionaryFlavor,
   executeLookup,
+  fetchWord,
   historyCaptureEnabled,
   addHistory,
   removeHistory,
@@ -96,6 +97,93 @@ export function useDictionaryHistoryHandlers({
     executeLookup(currentTerm, { forceNew: true });
   }, [currentTerm, executeLookup]);
 
+  /**
+   * 意图：在历史命中缓存缺失时回退至 REST 查询，并回填全局缓存。\
+   * 输入：词条请求参数与缓存键。\
+   * 输出：Promise<词条实体 | null>，成功时代表缓存已同步。\
+   * 流程：
+   *  1) 触发加载态并调用 fetchWord；
+   *  2) 根据返回语言/风味重建缓存键，尝试通过 applyRecord 回填视图；
+   *  3) 若回填失败则退化为直接写入 entry/finalText。\
+   * 错误处理：捕获 fetchWord 抛出的异常或 error 字段并弹出全局提示。\
+   * 复杂度：O(1)，依赖词典 API 的单次查询。
+   */
+  const hydrateHistorySelection = useCallback(
+    async ({ term, language, flavor, versionId, cacheKey }) => {
+      setLoading(true);
+      try {
+        const { data, error, language: requestLanguage, flavor: requestFlavor } =
+          (await fetchWord({
+            user,
+            term,
+            language,
+            flavor,
+            model: DEFAULT_MODEL,
+          })) ?? {};
+
+        if (error) {
+          showPopup(error.message ?? String(error));
+          return null;
+        }
+
+        const resolvedKey = wordCacheKey({
+          term,
+          language: requestLanguage ?? language,
+          flavor: requestFlavor ?? flavor,
+          model: DEFAULT_MODEL,
+        });
+
+        if (resolvedKey !== cacheKey) {
+          setCurrentTermKey(resolvedKey);
+        }
+
+        const record = wordStoreApi.getState().getRecord?.(resolvedKey);
+        if (record) {
+          const hydrated = applyRecord(
+            resolvedKey,
+            record,
+            versionId ?? record.activeVersionId ?? null,
+          );
+          if (hydrated) {
+            setStreamText("");
+            setCurrentTerm(hydrated.term ?? term);
+            return hydrated;
+          }
+        }
+
+        if (data) {
+          setEntry(data);
+          setFinalText(data.markdown ?? "");
+          setStreamText("");
+          if (data.term) {
+            setCurrentTerm(data.term);
+          }
+          return data;
+        }
+
+        return null;
+      } catch (error) {
+        showPopup(error.message ?? String(error));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      applyRecord,
+      fetchWord,
+      setCurrentTermKey,
+      setEntry,
+      setFinalText,
+      setLoading,
+      setStreamText,
+      setCurrentTerm,
+      showPopup,
+      user,
+      wordStoreApi,
+    ],
+  );
+
   const handleSelectHistory = useCallback(
     async (identifier, versionId) => {
       if (!user) {
@@ -134,7 +222,11 @@ export function useDictionaryHistoryHandlers({
         flavor: resolvedFlavor,
         model: DEFAULT_MODEL,
       });
+      setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
       setCurrentTermKey(cacheKey);
+      setCurrentTerm(resolvedTerm);
+      setStreamText("");
+      resetCopyFeedback();
       const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
 
       cancelActiveLookup();
@@ -146,18 +238,17 @@ export function useDictionaryHistoryHandlers({
           versionId ?? cachedRecord.activeVersionId,
         );
         if (applied) {
-          setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
           setLoading(false);
-          setStreamText("");
-          setCurrentTerm(resolvedTerm);
           return;
         }
       }
 
-      await executeLookup(resolvedTerm, {
-        versionId,
+      await hydrateHistorySelection({
+        term: resolvedTerm,
         language: resolvedLanguage,
         flavor: resolvedFlavor,
+        versionId,
+        cacheKey,
       });
     },
     [
@@ -171,11 +262,13 @@ export function useDictionaryHistoryHandlers({
       wordStoreApi,
       applyRecord,
       executeLookup,
+      hydrateHistorySelection,
       setActiveView,
       setLoading,
       setStreamText,
       setCurrentTerm,
       setCurrentTermKey,
+      resetCopyFeedback,
     ],
   );
 
