@@ -1,172 +1,82 @@
 /**
  * 背景：
- *  - 裁剪参数推导在多处使用，需要独立出来以便复用与测试。
+ *  - 裁剪参数解析需同时考虑 DOM 实际渲染与内部几何状态，原有单文件实现在扩展策略后行数超限。
  * 目的：
- *  - 根据当前视口与缩放状态计算出有效的 cropRect 与图像引用。
+ *  - 调度 CSS 矩阵与几何两套策略，优先信任浏览器渲染结果，并在必要时发出偏差诊断告警。
  * 关键决策与取舍：
- *  - 若缺少必备条件（image、scaleFactor 或 viewport），立即返回 null；
- *  - 维持纯函数特性，方便在单元测试中直接调用。
+ *  - 采用“策略链 + 诊断校准”模式，便于未来追加旋转等策略时按需扩展；
+ *  - 优先返回 CSS 矩阵求解结果，确保缩放/拖拽后的导出区域与用户所见一致；
+ *  - 当策略存在显著差异时输出 console.warn，协助定位样式或状态异常。
  * 影响范围：
- *  - AvatarEditorModal 裁剪流程。
+ *  - AvatarEditorModal 裁剪导出流程；
  * 演进与TODO：
- *  - 可在此扩展更复杂的裁剪策略（例如旋转、镜像）。
+ *  - 可继续在策略数组中插入更多变换支持，或将诊断上报接入可观测性系统。
  */
 
-import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";
+import cssMatrixStrategy, {
+  CSS_MATRIX_STRATEGY_ID,
+} from "./cropStrategies/cssMatrixStrategy.js";
+import geometryStrategy, {
+  GEOMETRY_STRATEGY_ID,
+} from "./cropStrategies/geometryStrategy.js";
+import {
+  isValidRect,
+  measureRectDeviation,
+} from "./cropStrategies/rectUtils.js";
 
-const SAFE_DETERMINANT_THRESHOLD = 1e-6;
+const MATRIX_TOLERANCE_PX = 0.5;
 
-const clampWithin = (value, min, max) => {
-  if (!Number.isFinite(value)) {
-    return min;
-  }
-  if (value < min) {
-    return min;
-  }
-  if (value > max) {
-    return max;
-  }
-  return value;
-};
+const STRATEGY_PIPELINE = Object.freeze([cssMatrixStrategy, geometryStrategy]);
 
-export const parseTransformMatrix = (transform) => {
-  if (!transform || transform === "none") {
-    return null;
-  }
-
-  const normalized = transform.trim();
-  let components = [];
-
-  if (normalized.startsWith("matrix3d(") && normalized.endsWith(")")) {
-    components = normalized
-      .slice(9, -1)
-      .split(",")
-      .map((value) => Number(value.trim()));
-    if (components.length !== 16 || components.some((value) => !Number.isFinite(value))) {
-      return null;
-    }
-    const [
-      m11,
-      m12,
-      ,
-      ,
-      m21,
-      m22,
-      ,
-      ,
-      ,
-      ,
-      ,
-      ,
-      m41,
-      m42,
-    ] = components;
-
-    return {
-      a: m11,
-      b: m12,
-      c: m21,
-      d: m22,
-      e: m41,
-      f: m42,
-    };
-  }
-
-  if (normalized.startsWith("matrix(") && normalized.endsWith(")")) {
-    components = normalized
-      .slice(7, -1)
-      .split(",")
-      .map((value) => Number(value.trim()));
-    if (components.length !== 6 || components.some((value) => !Number.isFinite(value))) {
-      return null;
-    }
-    const [a, b, c, d, e, f] = components;
-    return { a, b, c, d, e, f };
-  }
-
-  return null;
-};
-
-export const computeCropRectFromMatrix = ({
-  matrix,
+const buildContext = ({ imageRef, viewportSize, naturalSize, displayMetrics, offset }) => ({
+  image: imageRef?.current ?? null,
   viewportSize,
-  naturalWidth,
-  naturalHeight,
-}) => {
-  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
-  if (!Number.isFinite(determinant) || Math.abs(determinant) < SAFE_DETERMINANT_THRESHOLD) {
-    return null;
+  naturalWidth: naturalSize?.width ?? 0,
+  naturalHeight: naturalSize?.height ?? 0,
+  displayMetrics,
+  offset,
+});
+
+const aggregateEvaluations = (context) =>
+  STRATEGY_PIPELINE.reduce((accumulator, strategy) => {
+    const outcome = strategy.execute(context);
+    if (outcome && isValidRect(outcome.cropRect)) {
+      accumulator.push(outcome);
+    }
+    return accumulator;
+  }, []);
+
+const selectPreferredResult = ({ evaluations, viewportSize, naturalSize }) => {
+  const cssMatrixResult = evaluations.find(
+    (entry) => entry.strategy === CSS_MATRIX_STRATEGY_ID,
+  );
+  const geometryResult = evaluations.find(
+    (entry) => entry.strategy === GEOMETRY_STRATEGY_ID,
+  );
+
+  if (cssMatrixResult && geometryResult) {
+    const deviation = measureRectDeviation(
+      cssMatrixResult.cropRect,
+      geometryResult.cropRect,
+    );
+
+    if (
+      deviation > MATRIX_TOLERANCE_PX &&
+      typeof console !== "undefined" &&
+      typeof console.warn === "function"
+    ) {
+      console.warn("avatar-editor-crop-mismatch", {
+        deviation,
+        viewportSize,
+        naturalWidth: naturalSize.width,
+        naturalHeight: naturalSize.height,
+      });
+    }
+
+    return cssMatrixResult;
   }
 
-  const transformPoint = (x, y) => {
-    const translatedX = x - matrix.e;
-    const translatedY = y - matrix.f;
-    const naturalX =
-      (matrix.d * translatedX - matrix.c * translatedY) / determinant;
-    const naturalY =
-      (-matrix.b * translatedX + matrix.a * translatedY) / determinant;
-    return { x: naturalX, y: naturalY };
-  };
-
-  const corners = [
-    transformPoint(0, 0),
-    transformPoint(viewportSize, 0),
-    transformPoint(0, viewportSize),
-    transformPoint(viewportSize, viewportSize),
-  ];
-
-  if (corners.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
-    return null;
-  }
-
-  const xs = corners.map((point) => point.x);
-  const ys = corners.map((point) => point.y);
-
-  let minX = Math.min(...xs);
-  let maxX = Math.max(...xs);
-  let minY = Math.min(...ys);
-  let maxY = Math.max(...ys);
-
-  minX = clampWithin(minX, 0, naturalWidth);
-  maxX = clampWithin(maxX, 0, naturalWidth);
-  minY = clampWithin(minY, 0, naturalHeight);
-  maxY = clampWithin(maxY, 0, naturalHeight);
-
-  if (maxX <= minX || maxY <= minY) {
-    return null;
-  }
-
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
-  };
-};
-
-export const resolveCropRectUsingMatrix = ({
-  image,
-  viewportSize,
-  naturalWidth,
-  naturalHeight,
-}) => {
-  const view = image?.ownerDocument?.defaultView;
-  if (!view || viewportSize <= 0) {
-    return null;
-  }
-
-  const transform = view.getComputedStyle(image).transform;
-  const matrix = parseTransformMatrix(transform);
-  if (!matrix) {
-    return null;
-  }
-
-  return computeCropRectFromMatrix({
-    matrix,
-    viewportSize,
-    naturalWidth,
-    naturalHeight,
-  });
+  return cssMatrixResult ?? geometryResult ?? null;
 };
 
 const resolveCropParameters = ({
@@ -176,44 +86,24 @@ const resolveCropParameters = ({
   naturalSize,
   offset,
 }) => {
-  const image = imageRef.current;
-  if (!image || viewportSize <= 0) {
-    return null;
-  }
-
-  const naturalWidth = naturalSize.width;
-  const naturalHeight = naturalSize.height;
-  if (naturalWidth <= 0 || naturalHeight <= 0) {
-    return null;
-  }
-
-  const matrixCropRect = resolveCropRectUsingMatrix({
-    image,
+  const context = buildContext({
+    imageRef,
     viewportSize,
-    naturalWidth,
-    naturalHeight,
-  });
-  if (matrixCropRect) {
-    return { image, cropRect: matrixCropRect };
-  }
-
-  if (displayMetrics.scaleFactor <= 0) {
-    return null;
-  }
-
-  const cropRect = computeCropSourceRect({
-    naturalWidth: naturalSize.width,
-    naturalHeight: naturalSize.height,
-    viewportSize,
-    scaleFactor: displayMetrics.scaleFactor,
+    naturalSize,
+    displayMetrics,
     offset,
   });
 
-  if (cropRect.width <= 0 || cropRect.height <= 0) {
+  const evaluations = aggregateEvaluations(context);
+  if (evaluations.length === 0) {
     return null;
   }
 
-  return { image, cropRect };
+  return selectPreferredResult({
+    evaluations,
+    viewportSize,
+    naturalSize,
+  });
 };
 
 export default resolveCropParameters;
