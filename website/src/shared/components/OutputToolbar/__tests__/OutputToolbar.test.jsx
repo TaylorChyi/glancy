@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, screen, within, act } from "@testing-library/react";
+import { render, fireEvent, screen, within } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
@@ -21,14 +21,7 @@ jest.unstable_mockModule("@core/context", () => ({
       favoriteAction: "收藏",
       favoriteRemove: "取消收藏",
       deleteButton: "删除",
-      share: "分享",
       report: "反馈",
-      shareOptionLink: "复制分享链接",
-      shareOptionImage: "导出长图",
-      shareMenuLabel: "分享方式",
-      shareImagePreparing: "生成图片",
-      shareImageSuccess: "导出成功",
-      shareImageFailed: "导出失败",
       dictionarySourceLanguageLabel: "源语言",
       dictionaryTargetLanguageLabel: "目标语言",
     },
@@ -159,11 +152,9 @@ describe("OutputToolbar", () => {
   /**
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
-  test("renders action buttons when permitted", async () => {
+  test("renders action buttons when permitted", () => {
     const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    const onExportImage = jest.fn(() => Promise.resolve());
     const onReport = jest.fn();
     const onCopy = jest.fn();
 
@@ -177,13 +168,6 @@ describe("OutputToolbar", () => {
         canFavorite
         onDelete={onDelete}
         canDelete
-        canShare
-        shareModel={{
-          canShare: true,
-          onCopyLink,
-          onExportImage,
-          canExportImage: true,
-        }}
         onReport={onReport}
         canReport
       />,
@@ -191,26 +175,6 @@ describe("OutputToolbar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
-    const shareTrigger = screen.getByRole("button", { name: "分享" });
-    await act(async () => {
-      fireEvent.click(shareTrigger);
-    });
-    await screen.findByRole("menu", { name: "分享方式" });
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-    await Promise.resolve();
-    await act(async () => {
-      fireEvent.click(shareTrigger);
-    });
-    const imageItem = await screen.findByRole("menuitem", { name: /导出长图/ });
-    await act(async () => {
-      fireEvent.click(imageItem);
-    });
-    await Promise.resolve();
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
@@ -219,10 +183,9 @@ describe("OutputToolbar", () => {
     ).toContain("entry__tool-btn");
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
-    expect(onExportImage).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "分享" })).toBeNull();
   });
 
   /**
@@ -269,114 +232,6 @@ describe("OutputToolbar", () => {
     expect(
       within(idleButton).getByRole("img", { name: "copy" }),
     ).toBeInTheDocument();
-  });
-
-  /**
-   * 测试目标：未登录用户亦可打开分享菜单以复制链接或导出长图。
-   * 前置条件：userState.user 设为 null，组件获得包含复制回调的 shareModel。
-   * 步骤：
-   *  1) 渲染组件后点击分享按钮；
-   *  2) 断言菜单同时提供复制与导出选项并触发复制操作；
-   *  3) 再次开启菜单执行导出操作。
-   * 断言：
-   *  - 分享按钮保持可用并能弹出菜单；
-   *  - 复制与导出均触发对应 shareModel 回调。
-   * 边界/异常：
-   *  - 若 shareModel 缺失或回调不是函数则应在其他用例中覆盖降级路径。
-   */
-  test("allowsShareMenuWithoutUser", async () => {
-    userState.user = null;
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    const onExportImage = jest.fn(() => Promise.resolve());
-    render(
-      <OutputToolbar
-        term="hello"
-        canShare
-        shareModel={{
-          canShare: true,
-          onCopyLink,
-          onExportImage,
-          canExportImage: true,
-        }}
-      />,
-    );
-
-    const shareButton = screen.getByRole("button", { name: "分享" });
-    expect(shareButton).not.toBeDisabled();
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-
-    await screen.findByRole("menu", { name: "分享方式" });
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-    const imageItem = await screen.findByRole("menuitem", {
-      name: /导出长图/,
-    });
-    expect(imageItem).toBeInTheDocument();
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-    await screen.findByRole("menu", { name: "分享方式" });
-    const imageItemSecond = await screen.findByRole("menuitem", {
-      name: /导出长图/,
-    });
-    await act(async () => {
-      fireEvent.click(imageItemSecond);
-    });
-
-    expect(onExportImage).toHaveBeenCalledTimes(1);
-    userState.user = { id: "u" };
-  });
-
-  /**
-   * 测试目标：父组件未传入 canShare 时依旧可依据 shareModel 开启分享菜单。
-   * 前置条件：shareModel 同时提供链接复制与图片导出能力。
-   * 步骤：
-   *  1) 渲染组件但不显式传入 canShare；
-   *  2) 点击分享按钮后等待菜单出现；
-   *  3) 触发复制并验证回调执行。
-   * 断言：
-   *  - 分享按钮保持可用并可展开菜单；
-   *  - onCopyLink 被调用一次。
-   * 边界/异常：
-   *  - 若 shareModel.canShare === false，应由其他用例覆盖禁用路径。
-   */
-  test("WhenCanSharePropOmitted_MenuFallsBackToShareModel", async () => {
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    render(
-      <OutputToolbar
-        term="epsilon"
-        shareModel={{
-          onCopyLink,
-          onExportImage: jest.fn(() => Promise.resolve()),
-          canExportImage: true,
-        }}
-      />,
-    );
-
-    const shareButton = screen.getByRole("button", { name: "分享" });
-    expect(shareButton).not.toBeDisabled();
-
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
   });
 
   /**

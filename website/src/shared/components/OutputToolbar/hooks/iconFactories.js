@@ -7,7 +7,7 @@
  *  - 采用 React.createElement 提供延迟执行的轻量“享元”，减少重复渲染对象构建；
  *  - 导出语义化解析函数（resolveXIcon）以便未来接入特性开关或动态主题策略。
  * 影响范围：
- *  - OutputToolbar 相关动作蓝图、复制/分享等按钮；
+ *  - OutputToolbar 相关动作蓝图；
  *  - 任何引用 ICON_FACTORIES 的新动作均需保证设计令牌一致性。
  * 演进与TODO：
  *  - 可扩展缓存策略以减少高频渲染时的 React element 重新创建。
@@ -36,14 +36,12 @@ const COPY_ICON_FACTORY = Object.freeze({
 
 const DELETE_ICON_FACTORY = createThemeIconFactory("trash", 20);
 const REPORT_ICON_FACTORY = createThemeIconFactory("flag", 20);
-const SHARE_ICON_FACTORY = createThemeIconFactory("link", 20);
 
 export const ICON_FACTORIES = Object.freeze({
   favorite: FAVORITE_ICON_FACTORY,
   copy: COPY_ICON_FACTORY,
   delete: DELETE_ICON_FACTORY,
   report: REPORT_ICON_FACTORY,
-  share: SHARE_ICON_FACTORY,
 });
 
 export const resolveFavoriteIcon = (favorited) =>
@@ -55,5 +53,3 @@ export const resolveCopyIcon = (isSuccess) =>
 export const resolveDeleteIcon = () => DELETE_ICON_FACTORY();
 
 export const resolveReportIcon = () => REPORT_ICON_FACTORY();
-
-export const resolveShareIcon = () => SHARE_ICON_FACTORY();
