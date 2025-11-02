@@ -6,10 +6,14 @@
 
 import { jest } from "@jest/globals";
 import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";
-import resolveCropParameters, {
+import resolveCropParameters from "../hooks/cropParameterResolver.js";
+import {
+  CSS_MATRIX_STRATEGY_ID,
   computeCropRectFromMatrix,
   parseTransformMatrix,
-} from "../hooks/cropParameterResolver.js";
+} from "../hooks/cropStrategies/cssMatrixStrategy.js";
+
+import { GEOMETRY_STRATEGY_ID } from "../hooks/cropStrategies/geometryStrategy.js";
 
 const buildMatrix = ({ scale, offsetX, offsetY, viewportSize, naturalWidth, naturalHeight }) => {
   const halfViewport = viewportSize / 2;
@@ -159,10 +163,11 @@ describe("resolveCropParameters calibration", () => {
    * 边界/异常：
    *  - 覆盖矩阵不可用路径。
    */
-  it("Given deviant matrix When resolveCropParameters Then falls back to geometry", () => {
+  it("Given deviant matrix When resolveCropParameters Then prefers CSS matrix with warning", () => {
+    const matrix = { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 };
     const getComputedStyleSpy = jest
       .spyOn(window, "getComputedStyle")
-      .mockReturnValue({ transform: "matrix(2, 0, 0, 2, 0, 0)" });
+      .mockReturnValue({ transform: toMatrixString(matrix) });
     const consoleSpy = jest
       .spyOn(console, "warn")
       .mockImplementation(() => {});
@@ -177,6 +182,55 @@ describe("resolveCropParameters calibration", () => {
 
     getComputedStyleSpy.mockRestore();
 
+    const expectedMatrixRect = computeCropRectFromMatrix({
+      matrix,
+      viewportSize,
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+    });
+    const geometryRect = computeCropSourceRect({
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+      viewportSize,
+      scaleFactor: displayMetrics.scaleFactor,
+      offset,
+    });
+
+    expect(result?.strategy).toBe(CSS_MATRIX_STRATEGY_ID);
+    expect(result?.cropRect).toBeDefined();
+    expect(result?.cropRect.x).toBeCloseTo(expectedMatrixRect.x, 3);
+    expect(result?.cropRect.y).toBeCloseTo(expectedMatrixRect.y, 3);
+    expect(result?.cropRect.width).toBeCloseTo(expectedMatrixRect.width, 3);
+    expect(result?.cropRect.height).toBeCloseTo(expectedMatrixRect.height, 3);
+    expect(Math.abs(result.cropRect.x - geometryRect.x)).toBeGreaterThan(0.5);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：当浏览器未提供 transform 矩阵时，应回退至几何策略，保证导出与视图状态一致。
+   * 前置条件：mock getComputedStyle 返回 transform="none"，确保 CSS 策略失效。
+   * 步骤：
+   *  1) 调用 resolveCropParameters 推导结果；
+   * 断言：
+   *  - 返回策略为 geometry；
+   *  - 裁剪矩形与几何工具计算结果相符。
+   * 边界/异常：
+   *  - 覆盖矩阵缺失的回退分支。
+   */
+  it("Given missing CSS matrix When resolveCropParameters Then falls back to geometry result", () => {
+    jest
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ transform: "none" });
+
+    const result = resolveCropParameters({
+      imageRef: { current: document.createElement("img") },
+      displayMetrics,
+      viewportSize,
+      naturalSize,
+      offset,
+    });
+
     const expected = computeCropSourceRect({
       naturalWidth: naturalSize.width,
       naturalHeight: naturalSize.height,
@@ -185,29 +239,28 @@ describe("resolveCropParameters calibration", () => {
       offset,
     });
 
-    expect(result?.cropRect).toBeDefined();
-    expect(result?.cropRect.x).toBeCloseTo(expected.x, 3);
-    expect(result?.cropRect.y).toBeCloseTo(expected.y, 3);
-    expect(result?.cropRect.width).toBeCloseTo(expected.width, 3);
-    expect(result?.cropRect.height).toBeCloseTo(expected.height, 3);
-    expect(consoleSpy).toHaveBeenCalledTimes(1);
-    consoleSpy.mockRestore();
+    expect(result?.strategy).toBe(GEOMETRY_STRATEGY_ID);
+    expect(result?.cropRect?.x).toBeCloseTo(expected.x, 3);
+    expect(result?.cropRect?.y).toBeCloseTo(expected.y, 3);
+    expect(result?.cropRect?.width).toBeCloseTo(expected.width, 3);
+    expect(result?.cropRect?.height).toBeCloseTo(expected.height, 3);
   });
 
   /**
-   * 测试目标：当矩阵与几何结果仅存在微小差异时，依旧返回几何策略产物且不输出告警。
+   * 测试目标：当矩阵与几何结果仅存在微小差异时，应返回 CSS 策略产物且不输出告警。
    * 前置条件：构造 transform 矩阵在容差范围内偏移。
    * 步骤：
    *  1) 生成接近实际状态的矩阵并 mock getComputedStyle；
    *  2) mock console.warn；
    *  3) 调用 resolveCropParameters；
    * 断言：
-   *  - 返回值与几何推导一致；
+   *  - 返回策略标识为 CSS；
+   *  - 裁剪矩形与几何推导近似一致；
    *  - console.warn 未被调用。
    * 边界/异常：
    *  - 覆盖容差判断逻辑。
    */
-  it("Given near-perfect matrix When resolveCropParameters Then returns geometry without warning", () => {
+  it("Given near-perfect matrix When resolveCropParameters Then returns CSS result without warning", () => {
     const matrix = buildMatrix({
       scale: displayMetrics.scaleFactor,
       offsetX: offset.x,
@@ -216,7 +269,7 @@ describe("resolveCropParameters calibration", () => {
       naturalWidth: naturalSize.width,
       naturalHeight: naturalSize.height,
     });
-    const adjustedMatrix = { ...matrix, e: matrix.e + 0.2 };
+    const adjustedMatrix = { ...matrix, e: matrix.e + 0.0002 };
     const getComputedStyleSpy = jest
       .spyOn(window, "getComputedStyle")
       .mockReturnValue({ transform: toMatrixString(adjustedMatrix) });
@@ -242,6 +295,7 @@ describe("resolveCropParameters calibration", () => {
       offset,
     });
 
+    expect(result?.strategy).toBe(CSS_MATRIX_STRATEGY_ID);
     expect(result?.cropRect).toBeDefined();
     expect(result?.cropRect.x).toBeCloseTo(geometryRect.x, 3);
     expect(result?.cropRect.y).toBeCloseTo(geometryRect.y, 3);
