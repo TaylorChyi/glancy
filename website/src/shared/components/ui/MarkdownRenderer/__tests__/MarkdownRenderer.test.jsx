@@ -170,15 +170,15 @@ test("injects break opportunities for long english headings", () => {
  *  - 中文字符间均应具备断行能力。
  */
 test("injects break opportunities for cjk headings", () => {
-  const markdown = "## 单词：观光体验合集\n\n内容";
+  const markdown = "## 观光体验合集\n\n内容";
   render(<MarkdownRenderer>{markdown}</MarkdownRenderer>);
 
   const toggle = screen.getByRole("button", {
-    name: (value) => stripZeroWidth(value) === "单词：观光体验合集",
+    name: (value) => stripZeroWidth(value) === "观光体验合集",
   });
   expect(
     stripZeroWidth(toggle.getAttribute("aria-label") ?? toggle.textContent),
-  ).toBe("单词：观光体验合集");
+  ).toBe("观光体验合集");
   expect(toggle.textContent).toContain("\u200B");
 });
 
