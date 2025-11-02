@@ -55,12 +55,7 @@ export const ACTION_BLUEPRINTS = [
   },
 ];
 
-export const buildBlueprintItems = ({
-  actionContext,
-  disabled,
-  user,
-  shareItem,
-}) => {
+export const buildBlueprintItems = ({ actionContext, disabled, user }) => {
   const items = [];
 
   ACTION_BLUEPRINTS.forEach((blueprint) => {
@@ -86,15 +81,6 @@ export const buildBlueprintItems = ({
       disabled: itemDisabled,
     });
   });
-
-  if (shareItem) {
-    const reportIndex = items.findIndex((item) => item.key === "report");
-    if (reportIndex >= 0) {
-      items.splice(reportIndex, 0, shareItem);
-    } else {
-      items.push(shareItem);
-    }
-  }
 
   return items;
 };

@@ -37,7 +37,6 @@ describe("buildBlueprintItems", () => {
       actionContext: { ...baseContext, favorited: true },
       disabled: false,
       user: { id: "user" },
-      shareItem: null,
     });
     const activeFavorite = activeItems.find((item) => item.key === "favorite");
 
@@ -48,7 +47,6 @@ describe("buildBlueprintItems", () => {
       actionContext: { ...baseContext, favorited: false },
       disabled: false,
       user: { id: "user" },
-      shareItem: null,
     });
     const inactiveFavorite = inactiveItems.find((item) => item.key === "favorite");
 
