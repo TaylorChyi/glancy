@@ -11,7 +11,7 @@
  * 演进与TODO：
  *  - 可在此扩展历史项埋点与批量删除能力。
  */
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import {
   resolveDictionaryConfig,
   resolveDictionaryFlavor,
@@ -57,6 +57,8 @@ export function useDictionaryHistoryHandlers({
   activeTerm,
   showPopup,
 }) {
+  const activeHistoryRequestRef = useRef(null);
+
   const handleSend = useCallback(
     async (event) => {
       event.preventDefault();
@@ -109,7 +111,17 @@ export function useDictionaryHistoryHandlers({
    * 复杂度：O(1)，依赖词典 API 的单次查询。
    */
   const hydrateHistorySelection = useCallback(
-    async ({ term, language, flavor, versionId, cacheKey }) => {
+    async ({
+      term,
+      language,
+      flavor,
+      versionId,
+      cacheKey,
+      requestToken,
+    }) => {
+      const isActiveRequest = () =>
+        activeHistoryRequestRef.current?.token === requestToken;
+
       setLoading(true);
       try {
         const { data, error, language: requestLanguage, flavor: requestFlavor } =
@@ -120,6 +132,10 @@ export function useDictionaryHistoryHandlers({
             flavor,
             model: DEFAULT_MODEL,
           })) ?? {};
+
+        if (!isActiveRequest()) {
+          return null;
+        }
 
         if (error) {
           showPopup(error.message ?? String(error));
@@ -133,11 +149,19 @@ export function useDictionaryHistoryHandlers({
           model: DEFAULT_MODEL,
         });
 
+        if (!isActiveRequest()) {
+          return null;
+        }
+
         if (resolvedKey !== cacheKey) {
           setCurrentTermKey(resolvedKey);
         }
 
         const record = wordStoreApi.getState().getRecord?.(resolvedKey);
+        if (!isActiveRequest()) {
+          return null;
+        }
+
         if (record) {
           const hydrated = applyRecord(
             resolvedKey,
@@ -149,6 +173,10 @@ export function useDictionaryHistoryHandlers({
             setCurrentTerm(hydrated.term ?? term);
             return hydrated;
           }
+        }
+
+        if (!isActiveRequest()) {
+          return null;
         }
 
         if (data) {
@@ -163,13 +191,21 @@ export function useDictionaryHistoryHandlers({
 
         return null;
       } catch (error) {
-        showPopup(error.message ?? String(error));
+        if (isActiveRequest()) {
+          showPopup(error.message ?? String(error));
+        }
         return null;
       } finally {
-        setLoading(false);
+        if (isActiveRequest()) {
+          setLoading(false);
+          if (activeHistoryRequestRef.current?.token === requestToken) {
+            activeHistoryRequestRef.current = null;
+          }
+        }
       }
     },
     [
+      activeHistoryRequestRef,
       applyRecord,
       fetchWord,
       setCurrentTermKey,
@@ -231,6 +267,9 @@ export function useDictionaryHistoryHandlers({
 
       cancelActiveLookup();
 
+      const requestToken = Symbol(cacheKey);
+      activeHistoryRequestRef.current = { cacheKey, token: requestToken };
+
       if (cachedRecord) {
         const applied = applyRecord(
           cacheKey,
@@ -239,6 +278,7 @@ export function useDictionaryHistoryHandlers({
         );
         if (applied) {
           setLoading(false);
+          activeHistoryRequestRef.current = null;
           return;
         }
       }
@@ -249,9 +289,11 @@ export function useDictionaryHistoryHandlers({
         flavor: resolvedFlavor,
         versionId,
         cacheKey,
+        requestToken,
       });
     },
     [
+      activeHistoryRequestRef,
       user,
       navigate,
       historyItems,
