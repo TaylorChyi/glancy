@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 
@@ -150,4 +150,110 @@ test("GivenLauncher_WhenSelectingOption_ThenInvokeChangeAndClose", async () => {
   await waitFor(() => {
     expect(trigger.getAttribute("data-open")).toBeNull();
   });
+});
+
+/**
+ * 测试目标：鼠标在菜单内部不同交互区域穿梭时，保持浮层开启状态。
+ * 前置条件：菜单已打开且包含可切换语向与选项。
+ * 步骤：
+ *  1) 打开菜单并悬停目标语行；
+ *  2) 悬停目标语的某个选项；
+ * 断言：
+ *  - 触发按钮的 data-open 属性保持 "true"；
+ * 边界/异常：
+ *  - 若属性被清空则说明 hover 守卫失效。
+ */
+test("GivenOpenMenu_WhenHoveringAcrossZones_ThenRemainOpen", async () => {
+  jest.useFakeTimers();
+  const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+  try {
+    render(
+      <LanguageLauncher
+        sourceLanguage="ZH"
+        sourceLanguageOptions={[
+          { value: "ZH", label: "中文" },
+        ]}
+        sourceLanguageLabel="源语言"
+        onSourceLanguageChange={jest.fn()}
+        targetLanguage="EN"
+        targetLanguageOptions={[
+          { value: "EN", label: "英文" },
+          { value: "FR", label: "法语" },
+        ]}
+        targetLanguageLabel="目标语言"
+        onTargetLanguageChange={jest.fn()}
+        normalizeSourceLanguage={(value) => value}
+        normalizeTargetLanguage={(value) => value}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "源语言 → 目标语言" });
+    await user.click(trigger);
+
+    const targetRow = await screen.findByRole("menuitem", { name: /目标语言/ });
+    await user.hover(targetRow);
+
+    const frenchOption = await screen.findByRole("menuitemradio", { name: /法语/ });
+    await user.hover(frenchOption);
+
+    await act(async () => {
+      jest.advanceTimersByTime(220);
+    });
+
+    expect(trigger.getAttribute("data-open")).toBe("true");
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+/**
+ * 测试目标：鼠标离开菜单至外部区域时，应关闭浮层。
+ * 前置条件：菜单已打开。
+ * 步骤：
+ *  1) 打开菜单；
+ *  2) 派发 mouseleave 事件模拟离开至文档主体；
+ * 断言：
+ *  - data-open 属性被移除，表示菜单关闭；
+ * 边界/异常：
+ *  - 若属性仍为 "true" 则说明关闭守卫退化。
+ */
+test("GivenOpenMenu_WhenLeavingToDocument_ThenClose", async () => {
+  jest.useFakeTimers();
+  const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+  try {
+    render(
+      <LanguageLauncher
+        sourceLanguage="ZH"
+        sourceLanguageOptions={[
+          { value: "ZH", label: "中文" },
+        ]}
+        sourceLanguageLabel="源语言"
+        onSourceLanguageChange={jest.fn()}
+        targetLanguage="EN"
+        targetLanguageOptions={[
+          { value: "EN", label: "英文" },
+        ]}
+        targetLanguageLabel="目标语言"
+        onTargetLanguageChange={jest.fn()}
+        normalizeSourceLanguage={(value) => value}
+        normalizeTargetLanguage={(value) => value}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "源语言 → 目标语言" });
+    await user.click(trigger);
+
+    const menu = await screen.findByRole("menu", { name: "源语言 → 目标语言" });
+    fireEvent.mouseLeave(menu, { relatedTarget: document.body });
+
+    await act(async () => {
+      jest.advanceTimersByTime(220);
+    });
+
+    expect(trigger.getAttribute("data-open")).toBeNull();
+  } finally {
+    jest.useRealTimers();
+  }
 });

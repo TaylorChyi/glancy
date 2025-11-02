@@ -12,6 +12,7 @@
  * 演进与TODO：
  *  - TODO: 后续可在菜单底部加入最近使用语言或收藏能力。
  */
+import { useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
 import Popover from "@shared/components/ui/Popover/Popover.jsx";
@@ -143,9 +144,16 @@ export default function LanguageLauncher({
     },
   });
 
-  if (variants.length === 0) {
-    return null;
-  }
+  const hoverDismissTimerRef = useRef(null);
+
+  const cancelHoverDismiss = useCallback(() => {
+    if (hoverDismissTimerRef.current !== null && typeof window !== "undefined") {
+      window.clearTimeout(hoverDismissTimerRef.current);
+    }
+    hoverDismissTimerRef.current = null;
+  }, []);
+
+  useEffect(() => cancelHoverDismiss, [cancelHoverDismiss]);
 
   const groupLabel =
     [sourceLanguageLabel, targetLanguageLabel].filter(Boolean).join(" → ") ||
@@ -156,6 +164,38 @@ export default function LanguageLauncher({
   const activeValue = activeVariant?.currentOption?.value;
   const canSwap = typeof onSwapLanguages === "function";
 
+  const handleMenuMouseLeave = useCallback(
+    /**
+     * 意图：通过延迟收起策略避免浮层在内部 hover 切换时立即关闭。
+     * 输入：鼠标离开事件。
+     * 输出：当指针在给定延迟内未重新回到菜单时触发关闭。
+     * 流程：
+     *  1) 取消上一轮收起定时器；
+     *  2) 启动新的短延时定时器触发关闭；
+     *  3) 若期间鼠标重新进入则取消定时器。
+     * 错误处理：无额外异常分支，由外层 close 逻辑托底。
+     * 复杂度：O(1)。
+     */
+    () => {
+      cancelHoverDismiss();
+      if (typeof window === "undefined") {
+        handleClose();
+        return;
+      }
+
+      const delay = 160;
+      hoverDismissTimerRef.current = window.setTimeout(() => {
+        hoverDismissTimerRef.current = null;
+        handleClose();
+      }, delay);
+    },
+    [cancelHoverDismiss, handleClose],
+  );
+
+  if (variants.length === 0) {
+    return null;
+  }
+
   return (
     <div className={styles["language-launcher-wrapper"]}>
       <button
@@ -165,6 +205,8 @@ export default function LanguageLauncher({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={handleToggle}
+        onMouseOver={cancelHoverDismiss}
+        onMouseOut={handleMenuMouseLeave}
         ref={triggerRef}
         data-open={open ? "true" : undefined}
         title={groupLabel}
@@ -186,7 +228,8 @@ export default function LanguageLauncher({
             className={styles["language-launcher-menu"]}
             role="menu"
             aria-label={groupLabel}
-            onMouseLeave={handleClose}
+            onMouseOver={cancelHoverDismiss}
+            onMouseOut={handleMenuMouseLeave}
           >
             <div className={styles["language-variant-column"]} role="presentation">
               <ul role="menu" className={styles["language-variant-list"]}>
