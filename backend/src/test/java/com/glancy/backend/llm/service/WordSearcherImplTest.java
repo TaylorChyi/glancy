@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
@@ -120,7 +120,7 @@ class WordSearcherImplTest {
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = newChatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
@@ -150,7 +150,7 @@ class WordSearcherImplTest {
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = newChatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         boolean hasInstruction = messagesCaptor
             .getValue()
@@ -191,7 +191,7 @@ class WordSearcherImplTest {
             NO_PERSONALIZATION_CONTEXT
         );
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = newChatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
@@ -204,5 +204,14 @@ class WordSearcherImplTest {
             userMessage.getContent().contains("条目类型"),
             "英文检索用户消息仍包含「条目类型」字段，提示模板未同步"
         );
+    }
+
+    /**
+     * 构建针对 {@code List<ChatMessage>} 的参数捕获器，统一集中 SuppressWarnings，避免在各测试方法重复抑制泛型擦除告警。
+     */
+    private ArgumentCaptor<List<ChatMessage>> newChatMessagesCaptor() {
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ChatMessage>> captor = ArgumentCaptor.forClass(List.class);
+        return captor;
     }
 }

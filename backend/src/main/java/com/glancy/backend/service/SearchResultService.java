@@ -1,6 +1,6 @@
 package com.glancy.backend.service;
 
-import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.dto.search.SearchRecordVersionSummary;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
@@ -106,14 +106,6 @@ public class SearchResultService {
             .stream()
             .map(this::toSummary)
             .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public SearchResultVersion getVersionDetail(Long userId, Long recordId, Long versionId) {
-        resolveAccessibleRecord(userId, recordId);
-        return searchResultVersionRepository
-            .findByIdAndSearchRecordIdAndDeletedFalse(versionId, recordId)
-            .orElseThrow(() -> new ResourceNotFoundException("结果版本不存在"));
     }
 
     @Transactional

@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.ClientCodecConfigurer;
 import org.springframework.http.codec.HttpMessageWriter;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.lang.NonNull;
 import org.springframework.mock.http.client.reactive.MockClientHttpRequest;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.client.ClientRequest;
@@ -39,17 +40,17 @@ class DoubaoClientTest {
         private final List<HttpMessageWriter<?>> writers = ClientCodecConfigurer.create().getWriters();
 
         @Override
-        public List<HttpMessageWriter<?>> messageWriters() {
+        public @NonNull List<HttpMessageWriter<?>> messageWriters() {
             return writers;
         }
 
         @Override
-        public Optional<ServerHttpRequest> serverRequest() {
+        public @NonNull Optional<ServerHttpRequest> serverRequest() {
             return Optional.empty();
         }
 
         @Override
-        public Map<String, Object> hints() {
+        public @NonNull Map<String, Object> hints() {
             return Collections.emptyMap();
         }
     };

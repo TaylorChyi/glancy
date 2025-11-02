@@ -5,17 +5,15 @@
  *  - 以纯函数构建工具栏模型，保持输入输出明确，提高可测试性。
  * 关键决策与取舍：
  *  - 使用参数对象显式列出依赖，避免隐式耦合；
- *  - 采用组合的方式注入分享模型生成器，未来扩展无需改动主逻辑。
+ *  - 聚焦词典工具栏的状态建模，保持输出紧凑纯粹。
  * 影响范围：
  *  - DictionaryExperience 工具栏组件。
  * 演进与TODO：
  *  - 可在此添加指标采集或不同布局下的属性映射策略。
  */
-import { createDictionaryShareModel } from "./dictionaryShareModel.js";
-
 /**
  * 意图：根据上下文构建 DictionaryActionBar 所需的 props。
- * 输入：词条状态、收藏状态、复制/分享控制器等。
+ * 输入：词条状态、收藏状态、复制控制器等。
  * 输出：结构化的 props 对象。
  */
 export function buildDictionaryActionBarModel({
@@ -28,7 +26,6 @@ export function buildDictionaryActionBarModel({
   versions,
   activeVersionId,
   handleNavigateVersion,
-  handleSelectVersion,
   handleCopy,
   canCopyDefinition,
   copyFeedbackState,
@@ -36,10 +33,6 @@ export function buildDictionaryActionBarModel({
   favorites,
   toggleFavoriteEntry,
   handleDeleteHistory,
-  shareUrl,
-  handleShareLinkCopy,
-  handleShareImageExport,
-  shareImageState,
   entry,
   finalText,
   handleReport,
@@ -52,7 +45,6 @@ export function buildDictionaryActionBarModel({
     versions: isEntryViewActive ? versions : [],
     activeVersionId: isEntryViewActive ? activeVersionId : null,
     onNavigate: isEntryViewActive ? handleNavigateVersion : undefined,
-    onSelectVersion: isEntryViewActive ? handleSelectVersion : undefined,
     onCopy: handleCopy,
     canCopy: canCopyDefinition,
     copyFeedbackState,
@@ -62,17 +54,6 @@ export function buildDictionaryActionBarModel({
     canFavorite: Boolean(isTermActionable && isEntryViewActive && entry),
     canDelete: isTermActionable,
     onDelete: isEntryViewActive ? handleDeleteHistory : undefined,
-    canShare: isTermActionable,
-    shareModel:
-      isEntryViewActive && isTermActionable
-        ? createDictionaryShareModel({
-            shareUrl,
-            onCopyLink: handleShareLinkCopy,
-            onExportImage: handleShareImageExport,
-            isImageExporting: shareImageState === "pending",
-            canExportImage: Boolean(entry || finalText),
-          })
-        : null,
     canReport: isTermActionable,
     onReport: isEntryViewActive ? handleReport : undefined,
   };

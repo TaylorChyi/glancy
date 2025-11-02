@@ -1,11 +1,11 @@
 /**
  * 背景：
- *  - 版本拨盘集成了分页按钮与下拉菜单，原逻辑混杂在主组件中难以维护。
+ *  - 版本拨盘需同时兼顾上一/下一版本按钮与可达性，原逻辑混杂在主组件中难以维护。
  * 目的：
  *  - 提供自解释的版本导航组合组件，集中处理 aria 语义与按钮状态。
  * 关键决策与取舍：
- *  - 采用展示组件封装，以 props 注入文案与选项，确保领域逻辑仍由上层掌控；
- *  - 继续复用 SelectMenu，避免引入新的选择器依赖。
+ *  - 采用展示组件封装，以 props 注入文案与状态，保持领域逻辑在上层；
+ *  - 将交互收敛为方向按钮与指示器，保持界面精简且易于理解。
  * 影响范围：
  *  - OutputToolbar 中版本导航区域的渲染。
  * 演进与TODO：
@@ -13,7 +13,6 @@
  */
 import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
-import SelectMenu from "@shared/components/ui/SelectMenu";
 import styles from "../OutputToolbar.module.css";
 
 function VersionDial({
@@ -26,11 +25,6 @@ function VersionDial({
   nextLabel,
   indicator,
   pagerLabel,
-  canSelectVersion,
-  versionOptions,
-  versionSelectValue,
-  handleVersionSelect,
-  versionMenuLabel,
 }) {
   const renderNavButton = (direction, label, iconName, isDisabled) => (
     <button
@@ -51,17 +45,6 @@ function VersionDial({
       aria-label={pagerLabel}
     >
       {renderNavButton("previous", previousLabel, "arrow-left", !hasPrevious)}
-      {canSelectVersion ? (
-        <div className={styles["version-menu"]}>
-          <SelectMenu
-            id="output-toolbar-version-menu"
-            options={versionOptions}
-            value={versionSelectValue}
-            onChange={handleVersionSelect}
-            ariaLabel={versionMenuLabel}
-          />
-        </div>
-      ) : null}
       <span className={styles.indicator} aria-live="polite" aria-atomic="true">
         {indicator}
       </span>
@@ -80,17 +63,6 @@ VersionDial.propTypes = {
   nextLabel: PropTypes.string.isRequired,
   indicator: PropTypes.string.isRequired,
   pagerLabel: PropTypes.string.isRequired,
-  canSelectVersion: PropTypes.bool.isRequired,
-  versionOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      value: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-      description: PropTypes.string,
-    }),
-  ).isRequired,
-  versionSelectValue: PropTypes.string.isRequired,
-  handleVersionSelect: PropTypes.func.isRequired,
-  versionMenuLabel: PropTypes.string.isRequired,
 };
 
 VersionDial.defaultProps = {

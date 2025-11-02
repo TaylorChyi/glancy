@@ -137,8 +137,7 @@
   color: color-mix(in srgb, var(--color-text-tertiary) 88%, transparent);
 }
 
-.tool-button-favorite,
-.tool-button-share {
+.tool-button-favorite {
   color: color-mix(in srgb, var(--accent-color) 70%, var(--app-color) 30%);
 }
 
@@ -153,67 +152,6 @@
   gap: var(--space-2, 8px);
   margin-left: auto;
   flex: 0 0 auto;
-}
-
-/*
- * 背景：版本下拉需植入工具栏，与导航按钮共享同一节奏；
- * 取舍：仅在局部覆写 SelectMenu，避免影响其他调用方的默认尺寸与留白。
- */
-.version-menu {
-  min-width: 140px;
-  flex: 0 0 auto;
-
-  --language-trigger-height: var(--toolbar-button-size, 36px);
-}
-
-.version-menu :global(.menu-root) {
-  width: auto;
-}
-
-.version-menu :global(.menu-trigger) {
-  min-height: var(--toolbar-button-size, 36px);
-  padding-inline: 16px;
-  border-radius: 999px;
-  border: 1px solid
-    color-mix(in srgb, var(--toolbar-nav-color, #aeb4c0) 28%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--toolbar-nav-color, #aeb4c0) 12%,
-    transparent
-  );
-  color: var(--toolbar-nav-color);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  justify-content: center;
-  opacity: var(--toolbar-icon-opacity);
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.version-menu :global(.menu-trigger:hover),
-.version-menu :global(.menu-trigger:focus-visible),
-.version-menu :global(.menu-trigger[data-open="true"]) {
-  opacity: var(--toolbar-icon-opacity-hover);
-  border-color: color-mix(
-    in srgb,
-    var(--toolbar-nav-color-hover, #e0e4ec) 45%,
-    transparent
-  );
-  background: color-mix(
-    in srgb,
-    var(--toolbar-nav-color-hover, #e0e4ec) 24%,
-    transparent
-  );
-  color: var(--toolbar-nav-color-hover, var(--toolbar-nav-color));
-}
-
-.version-menu :global(.menu-trigger-label) {
-  text-align: center;
-  width: 100%;
 }
 
 .nav-button {
@@ -236,62 +174,6 @@
   color: var(--toolbar-nav-color-hover);
   opacity: var(--toolbar-icon-opacity-hover);
   transform: translateY(-1px);
-}
-
-/*
- * 背景：分享按钮需承载多种动作，弹层保持品牌的白底黑字气质。
- * 取舍：继承工具栏圆角与柔光阴影，避免额外样式依赖。
- */
-.share-menu {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 8px);
-  padding: 12px;
-  min-width: 220px;
-  border-radius: 16px;
-  background: var(--color-surface, #fff);
-  box-shadow: 0 18px 36px rgb(17 24 39 / 14%);
-}
-
-.share-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--color-text-primary, #111827);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.share-menu-item svg {
-  flex: 0 0 auto;
-  color: var(--toolbar-icon-color, #111827);
-}
-
-.share-menu-item:hover,
-.share-menu-item:focus-visible {
-  outline: none;
-  background: color-mix(
-    in srgb,
-    var(--toolbar-nav-color-hover, #e0e4ec) 32%,
-    transparent
-  );
-}
-
-.share-menu-item[disabled] {
-  cursor: not-allowed;
-  color: var(--color-text-tertiary, #9ca3af);
-}
-
-.share-menu-item[disabled] svg {
-  color: var(--color-text-tertiary, #9ca3af);
 }
 
 .indicator {

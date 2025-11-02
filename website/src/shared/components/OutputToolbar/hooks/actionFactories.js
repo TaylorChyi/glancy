@@ -11,10 +11,7 @@
  * 演进与TODO：
  *  - 后续新增动作时同步在此扩展工厂函数。
  */
-import {
-  resolveCopyIcon,
-  resolveShareIcon,
-} from "./iconFactories";
+import { resolveCopyIcon } from "./iconFactories";
 
 export const buildActionContext = ({
   translator,
@@ -65,20 +62,3 @@ export const createCopyItem = ({
   };
 };
 
-export const createShareItem = ({ shareMenu, translator }) => {
-  if (!shareMenu.available) {
-    return null;
-  }
-  return {
-    key: "share",
-    label: translator.share || "Share",
-    icon: resolveShareIcon(),
-    onClick: shareMenu.handleTriggerClick,
-    active: shareMenu.isOpen,
-    variant: "share",
-    disabled: shareMenu.buttonDisabled,
-    hasMenu: true,
-    anchorRef: shareMenu.shareTriggerRef,
-    onKeyDown: shareMenu.handleTriggerKeyDown,
-  };
-};

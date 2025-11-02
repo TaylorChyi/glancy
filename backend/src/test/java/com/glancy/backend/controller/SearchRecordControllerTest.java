@@ -7,9 +7,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.glancy.backend.dto.SearchRecordRequest;
-import com.glancy.backend.dto.SearchRecordResponse;
-import com.glancy.backend.dto.SearchRecordVersionSummary;
+import com.glancy.backend.dto.search.SearchRecordRequest;
+import com.glancy.backend.dto.search.SearchRecordResponse;
+import com.glancy.backend.dto.search.SearchRecordVersionSummary;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.SearchRecordService;

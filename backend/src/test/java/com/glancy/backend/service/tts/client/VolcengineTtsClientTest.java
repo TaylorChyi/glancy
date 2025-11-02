@@ -11,8 +11,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.glancy.backend.dto.TtsRequest;
-import com.glancy.backend.dto.TtsResponse;
+import com.glancy.backend.dto.tts.TtsRequest;
+import com.glancy.backend.dto.tts.TtsResponse;
 import com.glancy.backend.exception.TtsFailedException;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;

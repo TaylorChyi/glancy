@@ -1,0 +1,82 @@
+# 背景：
+#  - 仅在本地运行测试会导致质量门禁缺位，合并风险无法提前暴露。
+# 目的：
+#  - 在 Pull Request 阶段根据变更范围自动执行前后端单元测试，确保所有受影响模块的测试全部通过。
+# 关键决策与取舍：
+#  - 通过 paths-filter 精确判断目录改动，避免在无关提交中浪费 CI 资源；
+#  - 独立 job 分别运行 Java 与 Node 测试，利于并行与快速定位失败原因。
+# 影响范围：
+#  - 指向 main 或 trunk 的 Pull Request；
+#  - 流水线失败将阻断合并，需要先修复对应测试。
+# 演进与TODO：
+#  - 可补充缓存 node_modules / Maven 依赖以进一步缩短运行时间。
+name: tests
+
+on:
+  pull_request:
+    branches: ["trunk", "main"]
+    paths:
+      - "backend/**"
+      - "website/**"
+      - ".github/workflows/tests.yml"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      website: ${{ steps.filter.outputs.website }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Detect touched modules
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            backend:
+              - 'backend/**'
+            website:
+              - 'website/**'
+
+  backend-tests:
+    name: Backend unit tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+      - name: Run Maven tests
+        run: ./mvnw -B test
+
+  website-tests:
+    name: Website unit tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.website == 'true'
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Jest suite
+        run: npm test
+        env:
+          CI: "true"

@@ -1,6 +1,13 @@
 package com.glancy.backend.repository;
 
-import com.glancy.backend.entity.*;
+import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.SearchRecord;
+import com.glancy.backend.entity.ThirdPartyAccount;
+import com.glancy.backend.entity.User;
+import com.glancy.backend.entity.UserProfile;
+import com.glancy.backend.entity.Word;
 import java.time.LocalDateTime;
 import java.util.Collections;
 
@@ -41,24 +48,11 @@ final class TestEntityFactory {
         word.setLanguage(language);
         word.setFlavor(DictionaryFlavor.BILINGUAL);
         word.setDefinitions(Collections.singletonList("def"));
+        LocalDateTime now = LocalDateTime.now();
+        word.setCreatedAt(now);
+        word.setUpdatedAt(now);
+        word.setDeleted(false);
         return word;
-    }
-
-    static Notification notification(User user, String msg, boolean system, LocalDateTime createdAt) {
-        Notification n = new Notification();
-        n.setUser(user);
-        n.setMessage(msg);
-        n.setSystemLevel(system);
-        n.setCreatedAt(createdAt);
-        return n;
-    }
-
-    static ContactMessage contactMessage(String name) {
-        ContactMessage msg = new ContactMessage();
-        msg.setName(name);
-        msg.setEmail(name + "@example.com");
-        msg.setMessage("hello");
-        return msg;
     }
 
     static LoginDevice loginDevice(User user, String device, LocalDateTime time) {
@@ -67,15 +61,6 @@ final class TestEntityFactory {
         deviceEntity.setDeviceInfo(device);
         deviceEntity.setLoginTime(time);
         return deviceEntity;
-    }
-
-    static UserPreference userPreference(User user) {
-        UserPreference pref = new UserPreference();
-        pref.setUser(user);
-        pref.setTheme("light");
-        pref.setSystemLanguage("en");
-        pref.setSearchLanguage("en");
-        return pref;
     }
 
     static ThirdPartyAccount thirdPartyAccount(User user, String provider, String externalId) {

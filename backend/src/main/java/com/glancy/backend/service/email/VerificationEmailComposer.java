@@ -5,8 +5,9 @@ import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -60,7 +61,7 @@ public class VerificationEmailComposer {
         setReplyTo(helper);
 
         LocalizedVerificationContent content = contentResolver.resolve(clientIp, code);
-        helper.setText(content.plainText(), content.htmlBody());
+        applyMultipartBody(helper, content);
         helper.setPriority(1);
 
         applyComplianceHeaders(message, purpose);
@@ -83,7 +84,7 @@ public class VerificationEmailComposer {
         }
         if (StringUtils.hasText(displayName)) {
             try {
-                helper.setFrom(new InternetAddress(mailbox, displayName, StandardCharsets.UTF_8.name()));
+                helper.setFrom(mailbox, displayName);
                 return;
             } catch (UnsupportedEncodingException ex) {
                 throw new MessagingException("Unable to encode sender personal name", ex);
@@ -97,6 +98,35 @@ public class VerificationEmailComposer {
         if (StringUtils.hasText(replyTo)) {
             helper.setReplyTo(replyTo);
         }
+    }
+
+    /**
+     * 意图：构建同时包含纯文本与 HTML 的 multipart/alternative 正文，满足多客户端兼容性。
+     * 输入：
+     *  - helper：已绑定目标 {@link MimeMessage} 的装饰器；
+     *  - content：本地化后的验证码正文，含纯文本与 HTML 两种表现。
+     * 输出：
+     *  - 通过 {@link MimeMessage} 设置 multipart 内容，无返回值。
+     * 流程：
+     *  1) 创建 `multipart/alternative` 容器；
+     *  2) 依次追加纯文本与 HTML 部件，并指定 UTF-8 字符集；
+     *  3) 将容器写回消息体。
+     * 错误处理：出现 {@link MessagingException} 时交由调用方处理。
+     * 复杂度：O(1)，仅线性追加两个部件。
+     */
+    private void applyMultipartBody(MimeMessageHelper helper, LocalizedVerificationContent content)
+        throws MessagingException {
+        MimeMultipart alternative = new MimeMultipart("alternative");
+
+        MimeBodyPart plain = new MimeBodyPart();
+        plain.setText(content.plainText(), StandardCharsets.UTF_8.name());
+        alternative.addBodyPart(plain);
+
+        MimeBodyPart html = new MimeBodyPart();
+        html.setContent(content.htmlBody(), "text/html; charset=" + StandardCharsets.UTF_8.name());
+        alternative.addBodyPart(html);
+
+        helper.getMimeMessage().setContent(alternative);
     }
 
     private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)

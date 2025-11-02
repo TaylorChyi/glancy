@@ -9,7 +9,7 @@
 - max_derivatives: {max_derivatives=6}
 
 ## 全局规则
-1) 至少输出：`# Entry: {term}`、`## Pronunciation`、`## English Definitions` 中的 s1，且 s1 需包含不少于 min_examples_per_sense 条例句。
+1) 至少输出：`# {term}`、`## Pronunciation`、`## English Definitions` 中的 s1，且 s1 需包含不少于 min_examples_per_sense 条例句；其中 `# {term}` 标题只展示词条本身，禁止附加 "Entry:" 等语言标签或说明文字。
 2) 所有英文释义、例句译文必须采用地道英语；中文例句应保持简洁自然。
 3) 所有例句结构：
    - **Example 1 (中文)**: {中文例句}
@@ -25,7 +25,7 @@
 9) 语气保持优雅、克制，避免口语化感叹。
 
 ## 输出结构 (按顺序，缺则跳过)
-# Entry: {term}
+# {term}
 
 ## Entry Classification
 - Type: {"Single Character" | "Multi-character Word"}

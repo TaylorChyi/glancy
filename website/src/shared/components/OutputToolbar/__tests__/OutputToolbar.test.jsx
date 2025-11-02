@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, screen, within, act } from "@testing-library/react";
+import { render, fireEvent, screen, within } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
 const mockTtsButton = jest.fn(() => <button data-testid="tts" type="button" />);
@@ -14,21 +14,12 @@ jest.unstable_mockModule("@core/context", () => ({
       nextVersion: "下一版本",
       versionIndicator: "{current} / {total}",
       versionIndicatorEmpty: "0 / 0",
-      versionMenuLabel: "选择版本",
-      versionOptionLabel: "版本 {index}",
       copyAction: "复制",
       copySuccess: "复制完成",
       favoriteAction: "收藏",
       favoriteRemove: "取消收藏",
       deleteButton: "删除",
-      share: "分享",
       report: "反馈",
-      shareOptionLink: "复制分享链接",
-      shareOptionImage: "导出长图",
-      shareMenuLabel: "分享方式",
-      shareImagePreparing: "生成图片",
-      shareImageSuccess: "导出成功",
-      shareImageFailed: "导出失败",
       dictionarySourceLanguageLabel: "源语言",
       dictionaryTargetLanguageLabel: "目标语言",
     },
@@ -42,9 +33,7 @@ jest.unstable_mockModule("@shared/components", () => ({
   TtsButton: mockTtsButton,
 }));
 
-const { default: OutputToolbar } = await import(
-  "@shared/components/OutputToolbar"
-);
+const { default: OutputToolbar } = await import("@shared/components/OutputToolbar");
 
 describe("OutputToolbar", () => {
   beforeEach(() => {
@@ -114,29 +103,31 @@ describe("OutputToolbar", () => {
   });
 
   /**
-   * 验证版本下拉菜单在多版本场景下渲染，并正确透出选择事件。
+   * 测试目标：多版本场景仅展示翻页按钮与指示器，不渲染下拉菜单。
+   * 前置条件：传入三个版本并指定当前激活版本。
+   * 步骤：
+   *  1) 渲染 OutputToolbar；
+   *  2) 获取版本拨盘容；
+   *  3) 统计按钮数量并尝试查找下拉触发器。
+   * 断言：
+   *  - 拨盘中仅存在两个导航按钮；
+   *  - 查找“选择版本”按钮返回 null。
+   * 边界/异常：
+   *  - 若未来重新引入版本菜单，需要更新此测试验证新的交互。
    */
-  test("renders version menu and delegates selection", () => {
-    const onSelectVersion = jest.fn();
+  test("WhenMultipleVersionsPresent_MenuRemainsHidden", () => {
     render(
       <OutputToolbar
         term="hello"
-        versions={[
-          { id: "v1", createdAt: "2024-05-01T08:00:00Z" },
-          { id: "v2", createdAt: "2024-05-02T09:00:00Z" },
-        ]}
-        activeVersionId="v1"
-        onSelectVersion={onSelectVersion}
+        versions={[{ id: "v1" }, { id: "v2" }, { id: "v3" }]}
+        activeVersionId="v2"
       />,
     );
 
-    const trigger = screen.getByRole("button", { name: "选择版本" });
-    expect(trigger).toHaveTextContent("版本 1");
-
-    fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("menuitemradio", { name: /版本 2/ }));
-
-    expect(onSelectVersion).toHaveBeenCalledWith("v2");
+    const pagerGroup = screen.getByRole("group", { name: "例句翻页" });
+    const buttons = within(pagerGroup).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    expect(within(pagerGroup).queryByRole("button", { name: "选择版本" })).toBeNull();
   });
 
   /**
@@ -159,11 +150,9 @@ describe("OutputToolbar", () => {
   /**
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
-  test("renders action buttons when permitted", async () => {
+  test("renders action buttons when permitted", () => {
     const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    const onExportImage = jest.fn(() => Promise.resolve());
     const onReport = jest.fn();
     const onCopy = jest.fn();
 
@@ -177,13 +166,6 @@ describe("OutputToolbar", () => {
         canFavorite
         onDelete={onDelete}
         canDelete
-        canShare
-        shareModel={{
-          canShare: true,
-          onCopyLink,
-          onExportImage,
-          canExportImage: true,
-        }}
         onReport={onReport}
         canReport
       />,
@@ -191,26 +173,6 @@ describe("OutputToolbar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
-    const shareTrigger = screen.getByRole("button", { name: "分享" });
-    await act(async () => {
-      fireEvent.click(shareTrigger);
-    });
-    await screen.findByRole("menu", { name: "分享方式" });
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-    await Promise.resolve();
-    await act(async () => {
-      fireEvent.click(shareTrigger);
-    });
-    const imageItem = await screen.findByRole("menuitem", { name: /导出长图/ });
-    await act(async () => {
-      fireEvent.click(imageItem);
-    });
-    await Promise.resolve();
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
@@ -219,10 +181,9 @@ describe("OutputToolbar", () => {
     ).toContain("entry__tool-btn");
     expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
-    expect(onExportImage).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "分享" })).toBeNull();
   });
 
   /**
@@ -269,114 +230,6 @@ describe("OutputToolbar", () => {
     expect(
       within(idleButton).getByRole("img", { name: "copy" }),
     ).toBeInTheDocument();
-  });
-
-  /**
-   * 测试目标：未登录用户亦可打开分享菜单以复制链接或导出长图。
-   * 前置条件：userState.user 设为 null，组件获得包含复制回调的 shareModel。
-   * 步骤：
-   *  1) 渲染组件后点击分享按钮；
-   *  2) 断言菜单同时提供复制与导出选项并触发复制操作；
-   *  3) 再次开启菜单执行导出操作。
-   * 断言：
-   *  - 分享按钮保持可用并能弹出菜单；
-   *  - 复制与导出均触发对应 shareModel 回调。
-   * 边界/异常：
-   *  - 若 shareModel 缺失或回调不是函数则应在其他用例中覆盖降级路径。
-   */
-  test("allowsShareMenuWithoutUser", async () => {
-    userState.user = null;
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    const onExportImage = jest.fn(() => Promise.resolve());
-    render(
-      <OutputToolbar
-        term="hello"
-        canShare
-        shareModel={{
-          canShare: true,
-          onCopyLink,
-          onExportImage,
-          canExportImage: true,
-        }}
-      />,
-    );
-
-    const shareButton = screen.getByRole("button", { name: "分享" });
-    expect(shareButton).not.toBeDisabled();
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-
-    await screen.findByRole("menu", { name: "分享方式" });
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-    const imageItem = await screen.findByRole("menuitem", {
-      name: /导出长图/,
-    });
-    expect(imageItem).toBeInTheDocument();
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-    await screen.findByRole("menu", { name: "分享方式" });
-    const imageItemSecond = await screen.findByRole("menuitem", {
-      name: /导出长图/,
-    });
-    await act(async () => {
-      fireEvent.click(imageItemSecond);
-    });
-
-    expect(onExportImage).toHaveBeenCalledTimes(1);
-    userState.user = { id: "u" };
-  });
-
-  /**
-   * 测试目标：父组件未传入 canShare 时依旧可依据 shareModel 开启分享菜单。
-   * 前置条件：shareModel 同时提供链接复制与图片导出能力。
-   * 步骤：
-   *  1) 渲染组件但不显式传入 canShare；
-   *  2) 点击分享按钮后等待菜单出现；
-   *  3) 触发复制并验证回调执行。
-   * 断言：
-   *  - 分享按钮保持可用并可展开菜单；
-   *  - onCopyLink 被调用一次。
-   * 边界/异常：
-   *  - 若 shareModel.canShare === false，应由其他用例覆盖禁用路径。
-   */
-  test("WhenCanSharePropOmitted_MenuFallsBackToShareModel", async () => {
-    const onCopyLink = jest.fn(() => Promise.resolve());
-    render(
-      <OutputToolbar
-        term="epsilon"
-        shareModel={{
-          onCopyLink,
-          onExportImage: jest.fn(() => Promise.resolve()),
-          canExportImage: true,
-        }}
-      />,
-    );
-
-    const shareButton = screen.getByRole("button", { name: "分享" });
-    expect(shareButton).not.toBeDisabled();
-
-    await act(async () => {
-      fireEvent.click(shareButton);
-    });
-
-    const copyItem = await screen.findByRole("menuitem", {
-      name: /复制分享链接/,
-    });
-
-    await act(async () => {
-      fireEvent.click(copyItem);
-    });
-
-    expect(onCopyLink).toHaveBeenCalledTimes(1);
   });
 
   /**

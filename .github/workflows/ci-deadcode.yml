@@ -1,0 +1,51 @@
+# 背景：
+#  - 后端需要在 CI 内执行静态规则扫描、调用图分析与依赖清理，防止未使用代码回归。
+# 目的：
+#  - 配置 GitHub Actions 工作流，串联 Maven verify、jQAssistant 分析并在违规时阻断合并。
+# 关键决策与取舍：
+#  - 统一在 Ubuntu Runner 上执行，依赖 actions/setup-java 提供 Temurin JDK 17；
+#  - 将 jqassistant:scan 与 jqassistant:analyze 独立步骤，便于后续插入报告导出或缓存优化。
+# 影响范围：
+#  - 该流程覆盖 backend 目录及规则文件的提交；触发后产出日志可追踪违规详情。
+# 演进与TODO：
+#  - 可按需增加 JaCoCo 覆盖率归档、不可达方法 CSV 报告及对外通知。
+name: Dead Code Guard
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-deadcode.yml'
+      - 'AGENTS.md'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-deadcode.yml'
+      - 'AGENTS.md'
+
+permissions:
+  contents: read
+
+jobs:
+  backend-dead-code-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Maven clean verify with static gates
+        working-directory: backend
+        run: mvn -B -T1C clean verify
+
+      - name: Run jQAssistant reachability analysis
+        working-directory: backend
+        run: mvn -B jqassistant:scan jqassistant:analyze

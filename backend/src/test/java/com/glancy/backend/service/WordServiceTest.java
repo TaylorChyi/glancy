@@ -2,15 +2,15 @@ package com.glancy.backend.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.Word;
+import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.SearchRecordRepository;
 import com.glancy.backend.repository.SearchResultVersionRepository;
-import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.repository.WordRepository;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -29,9 +30,6 @@ class WordServiceTest {
 
     @Autowired
     private WordService wordService;
-
-    @Autowired
-    private UserPreferenceRepository userPreferenceRepository;
 
     @Autowired
     private WordRepository wordRepository;
@@ -44,6 +42,9 @@ class WordServiceTest {
 
     @Autowired
     private SearchResultVersionRepository searchResultVersionRepository;
+
+    @MockitoBean
+    private WordSearcher wordSearcher;
 
     private Long userId;
 
@@ -59,7 +60,6 @@ class WordServiceTest {
     @BeforeEach
     void setUp() {
         wordRepository.deleteAll();
-        userPreferenceRepository.deleteAll();
         searchRecordRepository.deleteAll();
         searchResultVersionRepository.deleteAll();
         userRepository.deleteAll();
@@ -72,6 +72,33 @@ class WordServiceTest {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
         userId = user.getId();
+        org.mockito.Mockito.when(
+            wordSearcher.search(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+            )
+        ).thenAnswer(invocation -> {
+                String term = ((String) invocation.getArgument(0)).trim();
+                Language language = invocation.getArgument(1);
+                DictionaryFlavor flavor = invocation.getArgument(2);
+                WordResponse response = new WordResponse();
+                response.setTerm(term);
+                response.setLanguage("bye".equalsIgnoreCase(term) ? null : language);
+                response.setFlavor(flavor);
+                response.setDefinitions(List.of("definition of " + term));
+                response.setMarkdown("# " + term);
+                response.setVariations(List.of());
+                response.setSynonyms(List.of());
+                response.setAntonyms(List.of());
+                response.setRelated(List.of());
+                response.setPhrases(List.of());
+                response.setExample("example of " + term);
+                response.setPhonetic("/" + term + "/");
+                return response;
+            });
     }
 
     /**

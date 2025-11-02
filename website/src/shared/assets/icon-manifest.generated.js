@@ -37,8 +37,6 @@ import iconAsset34 from "./integrations/identity-providers/google.svg";
 import iconAsset35 from "./integrations/identity-providers/google.svg?raw";
 import iconAsset36 from "./domain/knowledge/library.svg";
 import iconAsset37 from "./domain/knowledge/library.svg?raw";
-import iconAsset38 from "./communication/sharing/link.svg";
-import iconAsset39 from "./communication/sharing/link.svg?raw";
 import iconAsset40 from "./domain/personalization/personalization.svg";
 import iconAsset41 from "./domain/personalization/personalization.svg?raw";
 import iconAsset42 from "./communication/channels/phone.svg";
@@ -63,10 +61,8 @@ import iconAsset60 from "./identity/users/user.svg";
 import iconAsset61 from "./identity/users/user.svg?raw";
 import iconAsset62 from "./interface/controls/voice-button.svg";
 import iconAsset63 from "./interface/controls/voice-button.svg?raw";
-import iconAsset64 from "./interface/controls/waitting-frame.svg";
-import iconAsset65 from "./interface/controls/waitting-frame.svg?raw";
-import iconAsset66 from "./communication/channels/wechat.svg";
-import iconAsset67 from "./communication/channels/wechat.svg?raw";
+import iconAsset64 from "./communication/channels/wechat.svg";
+import iconAsset65 from "./communication/channels/wechat.svg?raw";
 
 const registry = Object.freeze({
   apple: Object.freeze({
@@ -126,9 +122,6 @@ const registry = Object.freeze({
   library: Object.freeze({
     single: Object.freeze({ url: iconAsset36, inline: iconAsset37 }),
   }),
-  link: Object.freeze({
-    single: Object.freeze({ url: iconAsset38, inline: iconAsset39 }),
-  }),
   personalization: Object.freeze({
     single: Object.freeze({ url: iconAsset40, inline: iconAsset41 }),
   }),
@@ -165,11 +158,8 @@ const registry = Object.freeze({
   "voice-button": Object.freeze({
     single: Object.freeze({ url: iconAsset62, inline: iconAsset63 }),
   }),
-  "waitting-frame": Object.freeze({
-    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
-  }),
   wechat: Object.freeze({
-    single: Object.freeze({ url: iconAsset66, inline: iconAsset67 }),
+    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
   }),
 });
 

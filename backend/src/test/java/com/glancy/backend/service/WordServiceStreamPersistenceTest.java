@@ -6,10 +6,10 @@ import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.PersonalizedWordExplanation;
-import com.glancy.backend.dto.SearchRecordResponse;
-import com.glancy.backend.dto.WordPersonalizationContext;
-import com.glancy.backend.dto.WordResponse;
+import com.glancy.backend.dto.search.SearchRecordResponse;
+import com.glancy.backend.dto.word.PersonalizedWordExplanation;
+import com.glancy.backend.dto.word.WordPersonalizationContext;
+import com.glancy.backend.dto.word.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;

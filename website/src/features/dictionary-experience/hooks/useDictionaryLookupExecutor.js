@@ -15,7 +15,6 @@ import { DEFAULT_MODEL } from "@core/config";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../dictionaryExperienceViews.js";
 import { createDictionaryStreamingMarkdownBuffer } from "../streaming/dictionaryStreamingMarkdownBuffer.js";
 import { createDictionaryStreamChunkInterpreter } from "../streaming/dictionaryStreamChunkInterpreter.js";
-import { normalizeDictionaryMarkdown } from "../markdown/dictionaryMarkdownNormalizer.js";
 import { coerceResolvedTerm } from "./coerceResolvedTerm.js";
 
 /**
@@ -124,6 +123,8 @@ export function useDictionaryLookupExecutor({
           model: DEFAULT_MODEL,
           user,
           controller,
+          forceNew,
+          versionId,
         })) {
           if (chunk.language) {
             detected = chunk.language;
@@ -171,10 +172,9 @@ export function useDictionaryLookupExecutor({
           resolvedTerm = coerceResolvedTerm(resolvedEntry.term, resolvedTerm);
           setEntry(resolvedEntry);
         }
-        // 最终 Markdown 可能为空串，此处复用 normalizer 保持格式一致。
-        const polishedMarkdown = normalizeDictionaryMarkdown(finalMarkdown ?? "");
-        if (polishedMarkdown) {
-          setFinalText(polishedMarkdown);
+        // buffer.finalize() 已返回归一化后的 Markdown，直接透传即可避免重复清洗。
+        if (finalMarkdown) {
+          setFinalText(finalMarkdown);
         }
 
         const detectedLanguage = detected ?? resolvedLanguage;

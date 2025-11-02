@@ -20,10 +20,7 @@ import { useVersionDialProps } from "./useVersionDialProps.js";
 const pickVersionViewModelInput = (props) => ({
   versions: props.versions,
   activeVersionId: props.activeVersionId,
-  lang: props.lang,
-  term: props.term,
   disabled: props.disabled,
-  onSelectVersion: props.onSelectVersion,
   translator: props.translator,
 });
 
@@ -57,8 +54,6 @@ const pickActionsInput = (props) => ({
   onDelete: props.onDelete,
   canReport: props.canReport,
   onReport: props.onReport,
-  canShare: props.canShare,
-  shareModel: props.shareModel,
 });
 
 const pickVersionDialInput = ({
@@ -69,7 +64,6 @@ const pickVersionDialInput = ({
   versionViewModel,
   baseToolButtonClass,
   onNavigate: props.onNavigate,
-  disabled: props.disabled,
   translator: props.translator,
 });
 

@@ -42,12 +42,37 @@
   animation: ripple 1.4s ease-out infinite;
 }
 
+/*
+ * 背景：
+ *  - 产品要求加载态呈现自下而上的光束，而非旋转动画，避免与播放态的圆形脉冲冲突。
+ * 取舍：
+ *  - 采用伪元素 + 渐变实现柔和光束，沿用 currentColor 计算亮度，保证主题自适应。
+ */
 .loading {
   opacity: 1;
+  --tts-loading-beam: color-mix(
+    in srgb,
+    var(--tts-icon-color, currentColor) 72%,
+    transparent
+  );
 }
 
-.loading svg {
-  animation: spin 1s linear infinite;
+.loading::before {
+  content: "";
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    transparent 38%,
+    var(--tts-loading-beam) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  filter: blur(0.4px);
+  animation: beam-sweep 1.2s ease-in-out infinite;
 }
 
 .disabled {
@@ -74,13 +99,28 @@
   box-shadow: 0 10px 24px var(--brand-glow);
 }
 
-@keyframes spin {
+@keyframes beam-sweep {
   0% {
-    transform: rotate(0deg);
+    transform: translateY(58%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.42;
+  }
+
+  50% {
+    transform: translateY(-8%);
+    opacity: 0.68;
+  }
+
+  80% {
+    opacity: 0.32;
   }
 
   100% {
-    transform: rotate(360deg);
+    transform: translateY(-64%);
+    opacity: 0;
   }
 }
 

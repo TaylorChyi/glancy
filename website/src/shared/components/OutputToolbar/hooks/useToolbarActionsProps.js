@@ -28,8 +28,6 @@ export const useToolbarActionsProps = ({
   onDelete,
   canReport,
   onReport,
-  canShare,
-  shareModel,
 }) =>
   useMemo(
     () => ({
@@ -47,8 +45,6 @@ export const useToolbarActionsProps = ({
       onDelete,
       canReport,
       onReport,
-      canShare,
-      shareModel,
     }),
     [
       translator,
@@ -65,7 +61,5 @@ export const useToolbarActionsProps = ({
       onDelete,
       canReport,
       onReport,
-      canShare,
-      shareModel,
     ],
   );

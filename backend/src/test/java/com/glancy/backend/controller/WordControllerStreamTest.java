@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Flux;
@@ -45,10 +45,10 @@ class WordControllerStreamTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private WordService wordService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     /**
@@ -134,6 +134,6 @@ class WordControllerStreamTest {
             .andReturn();
 
         String body = dispatched.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertEquals("event: error\ndata: {\"message\":\"内部服务器错误\"}\n\n", body);
+        assertEquals("event: error\ndata: {\"message\":\"服务暂不可用，请稍后重试\"}\n\n", body);
     }
 }

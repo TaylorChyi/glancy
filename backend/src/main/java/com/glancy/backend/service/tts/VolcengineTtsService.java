@@ -1,9 +1,9 @@
 package com.glancy.backend.service.tts;
 
-import com.glancy.backend.dto.TtsRequest;
-import com.glancy.backend.dto.TtsResponse;
-import com.glancy.backend.dto.VoiceOption;
-import com.glancy.backend.dto.VoiceResponse;
+import com.glancy.backend.dto.tts.TtsRequest;
+import com.glancy.backend.dto.tts.TtsResponse;
+import com.glancy.backend.dto.tts.VoiceOption;
+import com.glancy.backend.dto.tts.VoiceResponse;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.InvalidRequestException;
 import com.glancy.backend.service.UserService;

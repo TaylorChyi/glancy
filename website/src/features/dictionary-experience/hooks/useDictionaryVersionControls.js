@@ -17,7 +17,7 @@ import { normalizeMarkdownEntity } from "../markdown/dictionaryMarkdownNormalize
 /**
  * 意图：封装词条版本的选择逻辑，确保全局缓存与本地状态一致。
  * 输入：全局 store API、本地状态 setter 与当前版本数据。
- * 输出：applyRecord/commitVersionSelection/handleNavigateVersion/handleSelectVersion。
+ * 输出：applyRecord/commitVersionSelection/handleNavigateVersion。
  */
 export function useDictionaryVersionControls({
   wordStoreApi,
@@ -120,22 +120,9 @@ export function useDictionaryVersionControls({
     [currentTermKey, versions, activeVersionId, commitVersionSelection],
   );
 
-  const handleSelectVersion = useCallback(
-    (versionId) => {
-      if (!currentTermKey || !versionId || versions.length === 0) return;
-      const target = versions.find(
-        (item) => String(item.id ?? item.versionId) === String(versionId ?? ""),
-      );
-      if (!target) return;
-      commitVersionSelection(target);
-    },
-    [commitVersionSelection, currentTermKey, versions],
-  );
-
   return {
     applyRecord,
     commitVersionSelection,
     handleNavigateVersion,
-    handleSelectVersion,
   };
 }
