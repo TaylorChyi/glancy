@@ -41,19 +41,18 @@
   min-height: min(520px, 60vh);
 }
 
+/*
+ * 背景：
+ *  - 流式释义阶段曾以卡片形式包裹 Markdown，导致与最终词条成品存在底色与边框差异。
+ * 目的：
+ *  - 去除额外装饰，仅保留文字排版属性，使 streaming 预览与最终词条渲染保持一致。
+ * 关键取舍：
+ *  - 保留宽度与行高的约束，其他视觉表现交由 DictionaryMarkdown 模块统一控制，
+ *    避免多处样式漂移并满足“奢侈品级极简”基线。
+ */
 .stream-text {
   width: 100%;
-  padding: clamp(18px, 3vw, 24px);
-  background: color-mix(
-    in srgb,
-    var(--sidebar-panel, var(--app-bg)) 96%,
-    transparent
-  );
   color: inherit;
-  border-radius: 16px;
-  border: 1px solid var(--sidebar-border-color, var(--border-color));
-  box-shadow: 0 12px 28px
-    color-mix(in srgb, var(--shadow-color) 32%, transparent);
   line-height: 1.6;
 }
 
@@ -97,7 +96,4 @@
     min-width: min(86vw, 300px);
   }
 
-  .stream-text {
-    padding: clamp(16px, 6vw, 22px);
-  }
 }
