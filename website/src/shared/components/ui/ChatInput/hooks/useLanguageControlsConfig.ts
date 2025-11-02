@@ -40,7 +40,7 @@ export interface UseLanguageControlsConfigParams {
   normalizeTargetLanguageFn: NonNullable<
     UseActionInputBehaviorParams["normalizeTargetLanguageFn"]
   >;
-  onMenuOpen?: () => void;
+  onMenuOpen?: (variant?: "source" | "target") => void;
 }
 
 export interface UseLanguageControlsConfigResult {

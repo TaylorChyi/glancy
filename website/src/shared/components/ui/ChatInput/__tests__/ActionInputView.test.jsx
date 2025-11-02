@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { jest } from "@jest/globals";
 
@@ -92,20 +92,20 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
 });
 
 /**
- * 测试目标：语言触发器应绑定等宽徽标样式以稳定布局。
+ * 测试目标：语言触发按钮应渲染三点三角图标并保留可达性标识。
  * 前置条件：提供可见的语言控件与中英选项。
  * 步骤：
- *  1) 渲染组件并定位语言触发按钮的徽标节点。
- *  2) 读取类名与文本内容验证宽度约束钩子。
+ *  1) 渲染组件并定位语言触发按钮。
+ *  2) 校验按钮内部的 SVG data 标识。
  * 断言：
- *  - 徽标节点存在且包含 language-trigger-code 类，证明宽度约束生效。
- *  - 徽标文本与源语言缩写一致，便于自定义属性适配不同宽度。
+ *  - 触发按钮 aria-label 组合源/目标语标签；
+ *  - SVG data-icon-name === language-triad，证明图标渲染成功。
  * 边界/异常：
- *  - 若类名缺失或徽标为空，将无法维持 4ch 节奏，应提示设计联动。
+ *  - 若图标缺失将导致交互入口难以辨识，应阻止回归上线。
  */
-test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () => {
+test("GivenLanguageControlsVisible_WhenRendering_ThenExposeTriadIcon", () => {
   const formRef = createRef();
-  const { container } = render(
+  render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit: jest.fn() }}
       textareaProps={{
@@ -151,11 +151,12 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () =>
     />,
   );
 
-  const triggerBadge = container.querySelector(".language-trigger-code");
+  const triggerButton = screen.getByRole("button", { name: "源语言 → 目标语言" });
+  const icon = triggerButton.querySelector('[data-icon-name="language-triad"]');
 
-  expect(triggerBadge).not.toBeNull();
-  expect(triggerBadge?.classList.contains("language-trigger-code")).toBe(true);
-  expect(triggerBadge?.textContent).toBe("ZH");
+  expect(triggerButton).not.toBeNull();
+  expect(icon).not.toBeNull();
+  expect(triggerButton.getAttribute("data-open")).toBeNull();
 });
 
 /**

@@ -1,6 +1,5 @@
 import PropTypes from "prop-types";
-import { LanguageMenu } from "./parts";
-import styles from "./ChatInput.module.css";
+import { LanguageLauncher } from "./parts";
 
 export default function LanguageControls({
   sourceLanguage,
@@ -39,60 +38,22 @@ export default function LanguageControls({
       ? normalizeTargetLanguage
       : (value) => value;
 
-  const groupLabel =
-    [sourceLanguageLabel, targetLanguageLabel].filter(Boolean).join(" → ") ||
-    "language selection";
-
   return (
-    <div
-      className={styles["language-shell"]}
-      role="group"
-      aria-label={groupLabel}
-    >
-      <LanguageMenu
-        options={sourceLanguageOptions}
-        value={sourceLanguage}
-        onChange={onSourceLanguageChange}
-        ariaLabel={sourceLanguageLabel}
-        normalizeValue={normalizeSource}
-        showLabel={false}
-        variant="source"
-        onOpen={
-          typeof onMenuOpen === "function"
-            ? () => onMenuOpen("source")
-            : undefined
-        }
-      />
-      {canSwap ? (
-        <button
-          type="button"
-          className={styles["language-swap"]}
-          onClick={onSwapLanguages}
-          aria-label={swapLabel}
-          title={swapLabel}
-        >
-          →
-        </button>
-      ) : (
-        <span className={styles["language-arrow"]} aria-hidden="true">
-          →
-        </span>
-      )}
-      <LanguageMenu
-        options={targetLanguageOptions}
-        value={targetLanguage}
-        onChange={onTargetLanguageChange}
-        ariaLabel={targetLanguageLabel}
-        normalizeValue={normalizeTarget}
-        showLabel={false}
-        variant="target"
-        onOpen={
-          typeof onMenuOpen === "function"
-            ? () => onMenuOpen("target")
-            : undefined
-        }
-      />
-    </div>
+    <LanguageLauncher
+      sourceLanguage={sourceLanguage}
+      sourceLanguageOptions={sourceLanguageOptions}
+      sourceLanguageLabel={sourceLanguageLabel}
+      onSourceLanguageChange={onSourceLanguageChange}
+      targetLanguage={targetLanguage}
+      targetLanguageOptions={targetLanguageOptions}
+      targetLanguageLabel={targetLanguageLabel}
+      onTargetLanguageChange={onTargetLanguageChange}
+      onSwapLanguages={canSwap ? onSwapLanguages : undefined}
+      swapLabel={swapLabel}
+      normalizeSourceLanguage={normalizeSource}
+      normalizeTargetLanguage={normalizeTarget}
+      onMenuOpen={onMenuOpen}
+    />
   );
 }
 

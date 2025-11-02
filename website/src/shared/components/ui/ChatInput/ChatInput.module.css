@@ -130,80 +130,204 @@
   }
 }
 
-.language-shell {
+.language-launcher-wrapper {
+  display: inline-flex;
+  position: relative;
+}
+
+.language-launcher-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: var(--seg-h, 44px);
-  padding-inline: var(--seg-pad-x, 20px);
-  gap: var(--seg-arrow-gap, 12px);
+  inline-size: var(--seg-h, 44px);
+  block-size: var(--seg-h, 44px);
   border-radius: var(--seg-r, 22px);
-  color: var(--sb-text);
-  font-size: var(--seg-font-size, 14px);
-  font-weight: var(--seg-font-weight, 600);
-  letter-spacing: var(--seg-letter-space, 0.04em);
-  text-transform: uppercase;
-  text-align: center;
-  flex-shrink: 0;
-
-  /*
-   * 层级策略：通过透明壳体与排版节奏维持区块识别，依赖文字/焦点状态提供层级反馈；
-   * 若未来需要更强的分割感，可在不破坏 hover/焦点节奏的前提下重新评估描边策略。
-   */
+  border: none;
+  background: transparent;
+  color: var(--sb-icon);
+  cursor: pointer;
   transition:
     background-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.language-shell:hover {
-  /*
-   * 交互取舍：改以文字色与透明壳体的对比提供悬停反馈，避免描边重现导致的视觉噪声。
-   */
+.language-launcher-button:hover {
+  background: color-mix(in srgb, var(--sb-seg, transparent) 85%, white 15%);
 }
 
-.language-shell:focus-within {
-  box-shadow: var(--ring-focus);
-}
-
-.language-arrow,
-.language-swap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding-inline: var(--seg-arrow-gap, 12px);
-  border: none;
-  border-radius: calc(var(--seg-r, 22px) - 6px);
-  background: transparent;
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-}
-
-.language-arrow {
-  cursor: default;
-}
-
-.language-swap {
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.language-swap:hover {
-  background: color-mix(in srgb, var(--sb-seg) 85%, white 15%);
-}
-
-.language-swap:focus-visible {
+.language-launcher-button:focus-visible {
   outline: none;
   box-shadow: var(--ring-focus);
 }
 
-.language-swap:active {
-  transform: scale(0.96);
+.language-launcher-icon {
+  inline-size: 24px;
+  block-size: 24px;
+  transition: transform 0.2s ease;
+  fill: currentColor;
+}
+
+.language-launcher-button[data-open="true"] .language-launcher-icon {
+  transform: rotate(180deg);
+}
+
+.language-launcher-menu {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr);
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--sidebar-panel, var(--sb-surface));
+  box-shadow: var(--sb-popover-shadow, 0 12px 40px rgba(0, 0, 0, 0.18));
+  color: var(--sb-text);
+  min-width: 320px;
+}
+
+.language-variant-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 140px;
+}
+
+.language-variant-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.language-variant-item {
+  display: contents;
+}
+
+.language-variant-button {
+  display: grid;
+  grid-template-columns: auto;
+  row-gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.language-variant-button[data-active="true"],
+.language-variant-button:hover {
+  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.05)) 88%, white 12%);
+}
+
+.language-variant-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.language-variant-description {
+  font-size: 12px;
+  color: var(--sb-muted);
+}
+
+.language-swap-action {
+  margin-top: auto;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--sb-action-icon, var(--sb-icon));
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 999px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.language-swap-action:hover {
+  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.06)) 85%, white 15%);
+}
+
+.language-swap-action:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.language-options-column {
+  min-width: 160px;
+}
+
+.language-options-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.language-option-item {
+  display: contents;
+}
+
+.language-option-button {
+  display: grid;
+  grid-template-columns: 56px 1fr 24px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.language-option-button[data-active="true"],
+.language-option-button:hover {
+  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.05)) 90%, white 10%);
+}
+
+.language-option-code {
+  font-family: var(--sb-code-font, "Inter", system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.language-option-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.language-option-check {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--sb-action-icon, var(--sb-icon));
+}
+
+.language-empty-state {
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.04)) 80%, white 20%);
+  font-size: 13px;
+  color: var(--sb-muted);
+  text-align: center;
 }
 
 .core-input {

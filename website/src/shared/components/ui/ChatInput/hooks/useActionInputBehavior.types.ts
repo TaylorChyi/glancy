@@ -18,6 +18,7 @@ export type LanguageValue = string | symbol | undefined;
 export interface LanguageOption {
   value: string | symbol;
   label: string;
+  description?: string;
 }
 
 export interface FocusChangeContext {
@@ -60,7 +61,7 @@ export interface UseActionInputBehaviorParams {
   swapLabel?: string;
   normalizeSourceLanguageFn?: (value: LanguageValue) => LanguageValue;
   normalizeTargetLanguageFn?: (value: LanguageValue) => LanguageValue;
-  onMenuOpen?: () => void;
+  onMenuOpen?: (variant?: "source" | "target") => void;
   onFocusChange?: (context: FocusChangeContext) => void;
 }
 
@@ -94,7 +95,7 @@ export interface UseActionInputBehaviorResult {
       swapLabel?: string;
       normalizeSourceLanguage?: (value: LanguageValue) => LanguageValue;
       normalizeTargetLanguage?: (value: LanguageValue) => LanguageValue;
-      onMenuOpen?: () => void;
+      onMenuOpen?: (variant?: "source" | "target") => void;
     };
   };
   actionButtonProps: {

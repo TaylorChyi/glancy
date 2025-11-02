@@ -35,78 +35,42 @@ exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
         data-visible="true"
       >
         <div
-          aria-label="源语言 → 目标语言"
-          class="language-shell"
-          role="group"
+          class="language-launcher-wrapper"
         >
-          <div
-            class="language-select-wrapper"
-          >
-            <button
-              aria-expanded="false"
-              aria-haspopup="menu"
-              aria-label="源语言"
-              class="language-trigger"
-              data-open="false"
-              data-variant="source"
-              title="中文"
-              type="button"
-            >
-              <span
-                class="language-trigger-content"
-              >
-                <span
-                  class="language-trigger-code"
-                >
-                  ZH
-                </span>
-                <span
-                  class="language-trigger-label"
-                  data-visible="false"
-                >
-                  中文
-                </span>
-              </span>
-            </button>
-          </div>
           <button
-            aria-label="交换语向"
-            class="language-swap"
-            title="交换语向"
+            aria-expanded="false"
+            aria-haspopup="menu"
+            aria-label="源语言 → 目标语言"
+            class="language-launcher-button"
+            title="源语言 → 目标语言"
             type="button"
           >
-            →
-          </button>
-          <div
-            class="language-select-wrapper"
-          >
-            <button
-              aria-expanded="false"
-              aria-haspopup="menu"
-              aria-label="目标语言"
-              class="language-trigger"
-              data-open="false"
-              data-variant="target"
-              title="英文"
-              type="button"
+            <svg
+              aria-hidden="true"
+              class="language-launcher-icon"
+              data-icon-name="language-triad"
+              focusable="false"
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <span
-                class="language-trigger-content"
-              >
-                <span
-                  class="language-trigger-code"
-                >
-                  EN
-                </span>
-                <span
-                  class="language-trigger-label"
-                  data-visible="false"
-                >
-                  英文
-                </span>
-              </span>
-            </button>
-          </div>
+              <circle
+                cx="12"
+                cy="6"
+                r="2.5"
+              />
+              <circle
+                cx="7"
+                cy="18"
+                r="2.5"
+              />
+              <circle
+                cx="17"
+                cy="18"
+                r="2.5"
+              />
+            </svg>
+          </button>
         </div>
       </div>
       <span
