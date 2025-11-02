@@ -41,6 +41,11 @@ class WordSearcherImplTest {
     private WordResponseParser parser;
     private LLMClient defaultClient;
 
+    @SuppressWarnings("unchecked")
+    private static ArgumentCaptor<List<ChatMessage>> chatMessagesCaptor() {
+        return ArgumentCaptor.forClass((Class<List<ChatMessage>>) (Class<?>) List.class);
+    }
+
     @BeforeEach
     void setUp() {
         factory = mock(LLMClientFactory.class);
@@ -120,7 +125,7 @@ class WordSearcherImplTest {
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
@@ -150,7 +155,7 @@ class WordSearcherImplTest {
         WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         boolean hasInstruction = messagesCaptor
             .getValue()
@@ -191,7 +196,7 @@ class WordSearcherImplTest {
             NO_PERSONALIZATION_CONTEXT
         );
 
-        ArgumentCaptor<List<ChatMessage>> messagesCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
         verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
