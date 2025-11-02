@@ -41,21 +41,12 @@ export type DictionaryTargetLanguage = "CHINESE" | "ENGLISH";
 export const MARKDOWN_RENDERING_MODE_DYNAMIC = "dynamic" as const;
 export const MARKDOWN_RENDERING_MODE_PLAIN = "plain" as const;
 
-export const CHAT_COMPLETION_MODE_STREAMING = "stream" as const;
-export const CHAT_COMPLETION_MODE_SYNC = "sync" as const;
-
 export const MARKDOWN_RENDERING_MODES = Object.freeze([
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
 ] as const satisfies ReadonlyArray<string>);
 
-export const CHAT_COMPLETION_MODES = Object.freeze([
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
-] as const satisfies ReadonlyArray<string>);
-
 export type MarkdownRenderingMode = (typeof MARKDOWN_RENDERING_MODES)[number];
-export type ChatCompletionMode = (typeof CHAT_COMPLETION_MODES)[number];
 
 export type DictionaryLegacyLanguage =
   | typeof WORD_LANGUAGE_AUTO
@@ -68,7 +59,6 @@ export type SettingsSlice = {
   dictionarySourceLanguage: DictionarySourceLanguage;
   dictionaryTargetLanguage: DictionaryTargetLanguage;
   markdownRenderingMode: MarkdownRenderingMode;
-  chatCompletionMode: ChatCompletionMode;
 };
 
 export type SettingsActions = {
@@ -76,7 +66,6 @@ export type SettingsActions = {
   setDictionarySourceLanguage: (language: DictionarySourceLanguage) => void;
   setDictionaryTargetLanguage: (language: DictionaryTargetLanguage) => void;
   setMarkdownRenderingMode: (mode: MarkdownRenderingMode) => void;
-  setChatCompletionMode: (mode: ChatCompletionMode) => void;
   /**
    * @deprecated 请改用 setDictionarySourceLanguage / setDictionaryTargetLanguage
    */
@@ -90,7 +79,6 @@ export const DEFAULT_SETTINGS_SLICE: SettingsSlice = {
   dictionarySourceLanguage: WORD_LANGUAGE_AUTO,
   dictionaryTargetLanguage: WORD_DEFAULT_TARGET_LANGUAGE,
   markdownRenderingMode: MARKDOWN_RENDERING_MODE_DYNAMIC,
-  chatCompletionMode: CHAT_COMPLETION_MODE_STREAMING,
 };
 
 export const SUPPORTED_SYSTEM_LANGUAGES = getSupportedLanguageCodes();

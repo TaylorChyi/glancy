@@ -18,8 +18,6 @@ import { SYSTEM_LANGUAGE_AUTO } from "@core/i18n/languages.js";
 import {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
   SUPPORTED_SYSTEM_LANGUAGES,
   useSettingsStore,
 } from "@core/store/settings";
@@ -32,11 +30,6 @@ const THEME_ORDER = Object.freeze(["light", "dark", "system"]);
 const MARKDOWN_RENDER_MODE_ORDER = Object.freeze([
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
-]);
-
-const CHAT_COMPLETION_MODE_ORDER = Object.freeze([
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
 ]);
 
 const mapLanguageLabel = (translations, code) => {
@@ -54,17 +47,10 @@ function GeneralSection({ title, headingId }) {
   const setMarkdownRenderingMode = useSettingsStore(
     (state) => state.setMarkdownRenderingMode,
   );
-  const chatCompletionMode = useSettingsStore(
-    (state) => state.chatCompletionMode,
-  );
-  const setChatCompletionMode = useSettingsStore(
-    (state) => state.setChatCompletionMode,
-  );
 
   const themeFieldId = useId();
   const languageSelectId = useId();
   const markdownFieldId = useId();
-  const chatCompletionFieldId = useId();
 
   const themeLabel = t.settingsGeneralThemeLabel ?? t.prefTheme ?? "Theme";
   const themeOptions = useMemo(
@@ -116,22 +102,6 @@ function GeneralSection({ title, headingId }) {
     [t.settingsGeneralMarkdownDynamic, t.settingsGeneralMarkdownPlain],
   );
 
-  const chatCompletionLabel =
-    t.settingsGeneralChatOutputLabel ?? "Chat response";
-  const chatCompletionOptions = useMemo(
-    () =>
-      CHAT_COMPLETION_MODE_ORDER.map((value) => ({
-        value,
-        label:
-          (value === CHAT_COMPLETION_MODE_STREAMING &&
-            (t.settingsGeneralChatOutputStream ?? "Stream responses")) ||
-          (value === CHAT_COMPLETION_MODE_SYNC &&
-            (t.settingsGeneralChatOutputSync ?? "Send when ready")) ||
-          value,
-      })),
-    [t.settingsGeneralChatOutputStream, t.settingsGeneralChatOutputSync],
-  );
-
   const handleThemeSelect = useCallback(
     (nextTheme) => {
       if (!nextTheme || nextTheme === theme) {
@@ -176,16 +146,6 @@ function GeneralSection({ title, headingId }) {
       setMarkdownRenderingMode(nextMode);
     },
     [markdownRenderingMode, setMarkdownRenderingMode],
-  );
-
-  const handleChatCompletionModeSelect = useCallback(
-    (nextMode) => {
-      if (!nextMode || nextMode === chatCompletionMode) {
-        return;
-      }
-      setChatCompletionMode(nextMode);
-    },
-    [chatCompletionMode, setChatCompletionMode],
   );
 
   return (
@@ -243,23 +203,6 @@ function GeneralSection({ title, headingId }) {
             options={markdownOptions}
             value={markdownRenderingMode}
             onChange={handleMarkdownModeSelect}
-          />
-        </fieldset>
-        <fieldset
-          className={styles["control-field"]}
-          aria-labelledby={chatCompletionFieldId}
-        >
-          <legend
-            id={chatCompletionFieldId}
-            className={styles["control-label"]}
-          >
-            {chatCompletionLabel}
-          </legend>
-          <SegmentedControl
-            labelledBy={chatCompletionFieldId}
-            options={chatCompletionOptions}
-            value={chatCompletionMode}
-            onChange={handleChatCompletionModeSelect}
           />
         </fieldset>
       </div>

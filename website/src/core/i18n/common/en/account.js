@@ -37,8 +37,6 @@ const account = {
   usernameUpdateSuccess: "Username updated successfully",
   usernameUpdateFailed: "Unable to update username",
   message: "Message",
-  chatPlaceholder: "Type a message...",
-  sendButton: "Send",
   submit: "Submit",
   submitSuccess: "Success",
   submitFail: "Failed",

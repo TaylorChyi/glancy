@@ -6,7 +6,6 @@ import {
   WORD_LANGUAGE_ENGLISH_MONO,
 } from "@core/store/settings/model";
 import {
-  normalizeChatCompletionMode,
   normalizeDictionarySourceLanguage,
   normalizeDictionaryTargetLanguage,
   normalizeLegacyDictionaryLanguage,
@@ -15,10 +14,6 @@ import {
   resolveDictionaryPreferenceFromLegacy,
   sanitizeSystemLanguage,
 } from "@core/store/settings/normalizers";
-import {
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
-} from "@core/store/settings";
 
 /**
  * 测试目标：验证 Markdown 渲染模式归一化逻辑能够容错大小写并在非法值时回退默认值。
@@ -38,27 +33,6 @@ test("normalizeMarkdownRenderingMode enforces safe fallback", () => {
   );
   expect(normalizeMarkdownRenderingMode(undefined)).toBe(
     MARKDOWN_RENDERING_MODE_DYNAMIC,
-  );
-});
-
-/**
- * 测试目标：验证聊天模式归一化在面对非法输入时会回退到流式模式。
- * 前置条件：提供合法的同步模式与非法输入。
- * 步骤：
- *  1) 调用 normalizeChatCompletionMode 传入合法值。
- *  2) 调用同一函数传入非法值。
- * 断言：
- *  - 第一次调用返回同步模式。
- *  - 第二次调用回退到流式模式。
- * 边界/异常：
- *  - 覆盖 null 输入的处理。
- */
-test("normalizeChatCompletionMode keeps stream default", () => {
-  expect(normalizeChatCompletionMode(CHAT_COMPLETION_MODE_SYNC)).toBe(
-    CHAT_COMPLETION_MODE_SYNC,
-  );
-  expect(normalizeChatCompletionMode(null)).toBe(
-    CHAT_COMPLETION_MODE_STREAMING,
   );
 });
 

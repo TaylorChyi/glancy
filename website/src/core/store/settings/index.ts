@@ -15,9 +15,6 @@
 import { createPersistentStore } from "../createPersistentStore.js";
 import { pickState } from "../persistUtils.js";
 import {
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
-  CHAT_COMPLETION_MODES,
   DEFAULT_SETTINGS_SLICE,
   DictionaryLegacyLanguage,
   MARKDOWN_RENDERING_MODE_DYNAMIC,
@@ -30,7 +27,6 @@ import {
   type SystemLanguage,
 } from "./model.js";
 import {
-  normalizeChatCompletionMode,
   normalizeDictionarySourceLanguage,
   normalizeDictionaryTargetLanguage,
   normalizeLegacyDictionaryLanguage,
@@ -98,14 +94,6 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
             : { markdownRenderingMode: normalized },
         );
       },
-      setChatCompletionMode: (mode) => {
-        const normalized = normalizeChatCompletionMode(mode);
-        set((state) =>
-          state.chatCompletionMode === normalized
-            ? {}
-            : { chatCompletionMode: normalized },
-        );
-      },
       setDictionaryLanguage: (language: DictionaryLegacyLanguage) => {
         const normalized = normalizeLegacyDictionaryLanguage(language);
         const preference = resolveDictionaryPreferenceFromLegacy(normalized);
@@ -119,7 +107,6 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       "dictionarySourceLanguage",
       "dictionaryTargetLanguage",
       "markdownRenderingMode",
-      "chatCompletionMode",
     ]),
     onRehydrateStorage: () => (state) => {
       if (!state || !STORAGE) {
@@ -135,9 +122,6 @@ export const useSettingsStore = createPersistentStore<SettingsState>({
       );
       state.markdownRenderingMode = normalizeMarkdownRenderingMode(
         state.markdownRenderingMode,
-      );
-      state.chatCompletionMode = normalizeChatCompletionMode(
-        state.chatCompletionMode,
       );
       const preference = resolveDictionaryPreference({
         legacyLanguage,
@@ -157,7 +141,4 @@ export {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODE_PLAIN,
   MARKDOWN_RENDERING_MODES,
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODE_SYNC,
-  CHAT_COMPLETION_MODES,
 };
