@@ -10,7 +10,7 @@ import org.slf4j.MDC;
  * The context ensures that every log entry in the same thread carries
  * consistent identifiers to aid troubleshooting across layers.
  */
-final class EmailVerificationLogContext implements AutoCloseable {
+public final class EmailVerificationLogContext implements AutoCloseable {
 
     private static final String KEY_TRACE_ID = "emailVerificationTraceId";
     private static final String KEY_EMAIL = "emailVerificationEmail";
@@ -18,7 +18,7 @@ final class EmailVerificationLogContext implements AutoCloseable {
 
     private EmailVerificationLogContext() {}
 
-    static EmailVerificationLogContext create(String normalizedEmail, EmailVerificationPurpose purpose) {
+    public static EmailVerificationLogContext create(String normalizedEmail, EmailVerificationPurpose purpose) {
         String traceId = UUID.randomUUID().toString();
         MDC.put(KEY_TRACE_ID, traceId);
         if (normalizedEmail != null && !normalizedEmail.isBlank()) {

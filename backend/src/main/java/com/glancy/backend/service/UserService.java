@@ -16,6 +16,7 @@ import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.dto.UserStatisticsResponse;
 import com.glancy.backend.dto.UsernameResponse;
 import com.glancy.backend.entity.MembershipType;
+import com.glancy.backend.entity.User;
 import com.glancy.backend.service.user.UserAuthenticationCommand;
 import com.glancy.backend.service.user.UserAvatarCommand;
 import com.glancy.backend.service.user.UserContactCommand;
