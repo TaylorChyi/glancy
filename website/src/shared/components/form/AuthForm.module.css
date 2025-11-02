@@ -80,7 +80,8 @@
 }
 
 .auth-switch a {
-  color: var(--highlight-color);
+  /* 使用链接主题色确保明暗主题下的对比度一致 */
+  color: var(--link-color);
   text-decoration: none;
 }
 
@@ -259,7 +260,8 @@
 }
 
 .footer-links a {
-  color: var(--highlight-color);
+  /* 复用链接语义色，避免暗色主题下与背景混淆 */
+  color: var(--link-color);
   text-decoration: none;
   margin: 0 4px;
 }
