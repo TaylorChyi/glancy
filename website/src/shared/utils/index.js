@@ -33,6 +33,5 @@ export {
   extractMarkdownPreview,
   polishDictionaryMarkdown,
 } from "./markdown.js";
-export { createStreamingTextBuffer } from "./streamingTextBuffer.js";
 export { resolveShareTarget, attemptShareLink } from "./share.js";
 export { copyTextToClipboard } from "./clipboard.js";

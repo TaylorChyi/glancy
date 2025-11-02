@@ -14,8 +14,6 @@
 
 import { isSupportedLanguage } from "@core/i18n/languages.js";
 import {
-  CHAT_COMPLETION_MODE_STREAMING,
-  CHAT_COMPLETION_MODES,
   DEFAULT_LANGUAGE_FALLBACK,
   DictionaryLegacyLanguage,
   DictionarySourceLanguage,
@@ -23,7 +21,6 @@ import {
   MARKDOWN_RENDERING_MODE_DYNAMIC,
   MARKDOWN_RENDERING_MODES,
   SYSTEM_LANGUAGE_AUTO,
-  type ChatCompletionMode,
   type MarkdownRenderingMode,
   type SystemLanguage,
   WORD_DEFAULT_TARGET_LANGUAGE,
@@ -81,17 +78,8 @@ const markdownModeStrategy = createOptionNormalizer<MarkdownRenderingMode>(
   (value) => value.toLowerCase() as MarkdownRenderingMode,
 );
 
-const chatCompletionStrategy = createOptionNormalizer<ChatCompletionMode>(
-  CHAT_COMPLETION_MODES,
-  CHAT_COMPLETION_MODE_STREAMING,
-  (value) => value.toLowerCase() as ChatCompletionMode,
-);
-
 export const normalizeMarkdownRenderingMode: Normalizer<MarkdownRenderingMode> =
   markdownModeStrategy;
-
-export const normalizeChatCompletionMode: Normalizer<ChatCompletionMode> =
-  chatCompletionStrategy;
 
 export const sanitizeSystemLanguage: Normalizer<SystemLanguage> = (
   candidate,

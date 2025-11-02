@@ -53,9 +53,6 @@ const preferences = {
   settingsGeneralMarkdownLabel: "Markdown rendering",
   settingsGeneralMarkdownDynamic: "Render dynamically",
   settingsGeneralMarkdownPlain: "Show raw text",
-  settingsGeneralChatOutputLabel: "Chat response",
-  settingsGeneralChatOutputStream: "Stream responses",
-  settingsGeneralChatOutputSync: "Send when ready",
   settingsTabPersonalization: "Personalization",
   settingsPersonalizationDescription:
     "Describe your background so answers feel bespoke.",

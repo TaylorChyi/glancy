@@ -2,7 +2,6 @@ export const API_BASE = "/api";
 
 export const API_PATHS = {
   words: `${API_BASE}/words`,
-  chat: `${API_BASE}/chat`,
   users: `${API_BASE}/users`,
   login: `${API_BASE}/users/login`,
   loginWithEmail: `${API_BASE}/users/login/email`,

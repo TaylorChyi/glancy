@@ -34,8 +34,6 @@ export const CORE_INTERFACE_TRANSLATIONS_ZH = {
   emailPlaceholder: "请输入邮箱",
   phonePlaceholder: "请输入手机号",
   message: "留言",
-  chatPlaceholder: "输入消息...",
-  sendButton: "发送",
   submit: "提交",
   submitSuccess: "提交成功",
   submitFail: "提交失败",

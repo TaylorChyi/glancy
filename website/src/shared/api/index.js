@@ -1,5 +1,4 @@
 import { createApiClient, createJsonRequest } from "./client.js";
-import { createChatApi } from "./chat.js";
 import { createWordsApi } from "./words.js";
 import { createLocaleApi } from "./locale.js";
 import { createSearchRecordsApi } from "./searchRecords.js";
@@ -16,7 +15,6 @@ export function createApi(config) {
   return {
     request,
     jsonRequest,
-    chat: createChatApi(request),
     words: createWordsApi(request),
     locale: createLocaleApi(request),
     searchRecords: createSearchRecordsApi(request),

@@ -28,7 +28,4 @@ export const SETTINGS_GENERAL_TRANSLATIONS_ZH = {
   settingsGeneralMarkdownLabel: "Markdown 渲染",
   settingsGeneralMarkdownDynamic: "动态渲染",
   settingsGeneralMarkdownPlain: "显示原文",
-  settingsGeneralChatOutputLabel: "助手回复方式",
-  settingsGeneralChatOutputStream: "流式输出",
-  settingsGeneralChatOutputSync: "完整生成后输出",
 };
