@@ -37,7 +37,12 @@ public class ControllerLoggingAspect {
                 log.debug("Parameter name count {} does not match argument count {}", nameLength, args.length);
             }
             for (int i = 0; i < args.length; i++) {
-                String name = (i < nameLength) ? paramNames[i] : "arg" + i;
+                String name;
+                if (paramNames != null && i < nameLength) {
+                    name = paramNames[i];
+                } else {
+                    name = "arg" + i;
+                }
                 params.put(name, args[i]);
             }
         }
