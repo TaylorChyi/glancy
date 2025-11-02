@@ -16,16 +16,19 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   RESPONSE_STYLE_ACTIONS,
-  buildRequestPayload,
   createResponseStyleInitialState,
   hasFieldChanged,
   responseStyleReducer,
 } from "../sections/responseStyleModel.js";
 import {
   createEmptyProfileDetails,
-  mapProfileDetailsToRequest,
   mapResponseToProfileDetails,
 } from "@app/pages/profile/profileDetailsModel.js";
+import {
+  ensureAuthenticatedForSave,
+  persistResponseStyleChanges,
+  synchronizeUnchangedField,
+} from "./utils/responseStylePersistence.js";
 
 const hydrateWithEmptyProfile = (dispatch, profileDetailsRef) => {
   profileDetailsRef.current = createEmptyProfileDetails();
@@ -96,24 +99,16 @@ const useResponseStyleHandlers = ({
   const handleFieldCommit = useCallback(
     async (field) => {
       if (!hasFieldChanged(state, field)) {
-        const normalized = (state.values[field] ?? "").trim();
-        profileDetailsRef.current = {
-          ...profileDetailsRef.current,
-          [field]: normalized,
-        };
-        dispatch({
-          type: RESPONSE_STYLE_ACTIONS.synchronize,
+        synchronizeUnchangedField({
+          state,
           field,
-          value: normalized,
+          profileDetailsRef,
+          dispatch,
         });
         return;
       }
 
-      if (!user?.token || typeof saveProfile !== "function") {
-        dispatch({
-          type: RESPONSE_STYLE_ACTIONS.failure,
-          error: new Error("response-style-save-auth-missing"),
-        });
+      if (!ensureAuthenticatedForSave({ user, saveProfile, dispatch })) {
         return;
       }
 
@@ -123,28 +118,19 @@ const useResponseStyleHandlers = ({
       });
 
       try {
-        const mergedDetails = buildRequestPayload(
+        await persistResponseStyleChanges({
           state,
-          profileDetailsRef.current,
-        );
-        profileDetailsRef.current = mergedDetails;
-        const payload = mapProfileDetailsToRequest(mergedDetails);
-        const response = await saveProfile({
-          token: user.token,
-          profile: payload,
-        });
-        const nextDetails = mapResponseToProfileDetails(response);
-        profileDetailsRef.current = nextDetails;
-        dispatch({
-          type: RESPONSE_STYLE_ACTIONS.success,
-          payload: nextDetails,
+          user,
+          saveProfile,
+          profileDetailsRef,
+          dispatch,
         });
       } catch (error) {
         console.error("Failed to save response style preferences", error);
         dispatch({ type: RESPONSE_STYLE_ACTIONS.failure, error });
       }
     },
-    [dispatch, profileDetailsRef, saveProfile, state, user?.token],
+    [dispatch, profileDetailsRef, saveProfile, state, user],
   );
 
   return { handleFieldChange, handleFieldCommit };
@@ -164,7 +150,7 @@ const useResponseStyleRequest = ({
         fetchProfile,
         profileDetailsRef,
       }),
-    [dispatch, fetchProfile, user],
+    [dispatch, fetchProfile, profileDetailsRef, user],
   );
 
   useEffect(() => {
