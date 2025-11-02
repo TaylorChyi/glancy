@@ -11,8 +11,6 @@
  * 演进与TODO：
  *  - 后续若加入多模态输入，可在此延伸 actionButtonProps 组合并按需扩展策略集合。
  */
-import { useRef } from "react";
-
 import type {
   LanguageValue,
   UseActionInputBehaviorParams,
@@ -31,19 +29,15 @@ const identityLanguage = (language: LanguageValue) => language;
 
 type NormalizedParams = Omit<
   UseActionInputBehaviorParams,
-  | "voiceLabel"
   | "sendLabel"
   | "rows"
   | "maxRows"
-  | "isRecording"
   | "normalizeSourceLanguageFn"
   | "normalizeTargetLanguageFn"
 > & {
-  voiceLabel: string;
   sendLabel: string;
   rows: number;
   maxRows: number;
-  isRecording: boolean;
   normalizeSourceLanguageFn: (value: LanguageValue) => LanguageValue;
   normalizeTargetLanguageFn: (value: LanguageValue) => LanguageValue;
 };
@@ -53,11 +47,9 @@ const normalizeParams = (
 ): NormalizedParams =>
   ({
     ...params,
-    voiceLabel: params.voiceLabel ?? "Voice",
     sendLabel: params.sendLabel ?? "Send",
     rows: params.rows ?? 1,
     maxRows: params.maxRows ?? 5,
-    isRecording: params.isRecording ?? false,
     normalizeSourceLanguageFn:
       params.normalizeSourceLanguageFn ?? identityLanguage,
     normalizeTargetLanguageFn:
@@ -107,18 +99,13 @@ type ActionButtonProps = UseActionInputBehaviorResult["actionButtonProps"];
 const buildActionButtonParams = (
   config: NormalizedParams,
   deps: {
-    voiceCooldownRef: ActionButtonProps["voiceCooldownRef"];
     onSubmit: ActionButtonProps["onSubmit"];
     restoreFocus: ActionButtonProps["restoreFocus"];
   },
 ) => ({
   value: config.value,
-  isRecording: config.isRecording,
-  voiceCooldownRef: deps.voiceCooldownRef,
-  onVoice: config.onVoice,
   onSubmit: deps.onSubmit,
   sendLabel: config.sendLabel,
-  voiceLabel: config.voiceLabel,
   restoreFocus: deps.restoreFocus,
 });
 
@@ -128,7 +115,6 @@ export default function useActionInputBehavior(
   const config = normalizeParams(params);
   const { formRef, textareaRef, setTextareaRef, restoreFocus, releaseFocus } =
     useTextareaFocusBridge({ inputRef: config.inputRef });
-  const voiceCooldownRef = useRef<number>(0);
 
   const { resize } = useTextareaAutoResize({
     textareaRef,
@@ -164,7 +150,6 @@ export default function useActionInputBehavior(
   );
   const actionButtonProps = useActionButtonConfig(
     buildActionButtonParams(config, {
-      voiceCooldownRef,
       onSubmit: submissionHandlers.onActionSubmit,
       restoreFocus,
     }),

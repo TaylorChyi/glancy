@@ -11,4 +11,3 @@
  *  - 后续若新增多图标，可考虑生成脚本自动维护出口。
  */
 export { default as SendIcon } from "./SendIcon.jsx";
-export { default as VoiceIcon } from "./VoiceIcon.jsx";

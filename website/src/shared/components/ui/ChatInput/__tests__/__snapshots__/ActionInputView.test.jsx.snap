@@ -18,26 +18,6 @@ exports[`GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon: DarkSen
 </button>
 `;
 
-exports[`GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot: VoiceActionButtonMarkup 1`] = `
-<button
-  aria-label="语音"
-  aria-pressed="false"
-  class="action-button action-button-voice"
-  disabled=""
-  type="button"
->
-  <span
-    aria-hidden="true"
-    class="action-button-icon"
-    data-icon-name="voice-button"
-    data-render-mode="inline"
-    draggable="false"
-  >
-    file-mock
-  </span>
-</button>
-`;
-
 exports[`GivenStandardProps_WhenRenderingView_ThenMatchSnapshot 1`] = `
 <div>
   <form

@@ -19,7 +19,6 @@ import { jest } from "@jest/globals";
 
 const focusInputMock = jest.fn();
 const inputRef = { current: null };
-const handleVoiceMock = jest.fn();
 const handleReoutputMock = jest.fn();
 
 function createDictionaryExperienceState(overrides = {}) {
@@ -36,7 +35,6 @@ function createDictionaryExperienceState(overrides = {}) {
     targetLanguageOptions: [],
     handleSwapLanguages: jest.fn(),
     handleSend: jest.fn(),
-    handleVoice: handleVoiceMock,
     handleShowDictionary: jest.fn(),
     handleShowLibrary: jest.fn(),
     handleSelectHistory: jest.fn(),
@@ -135,23 +133,17 @@ jest.unstable_mockModule("@shared/components/ui/ChatInput", async () => {
   function MockChatInput(props) {
     const behavior = useActionInputBehavior(props);
     const { formProps, textareaProps, actionButtonProps } = behavior;
-    const isSendState = actionButtonProps.value.trim().length > 0;
 
     const handleActionClick = ReactModule.useCallback(
       (event) => {
         event.preventDefault();
-        if (isSendState) {
-          actionButtonProps.onSubmit?.();
-          actionButtonProps.restoreFocus();
+        if (!actionButtonProps.canSubmit) {
           return;
         }
-        if (actionButtonProps.isVoiceDisabled) {
-          return;
-        }
-        actionButtonProps.onVoice?.();
+        actionButtonProps.onSubmit?.();
         actionButtonProps.restoreFocus();
       },
-      [actionButtonProps, isSendState],
+      [actionButtonProps],
     );
 
     return (
@@ -161,10 +153,12 @@ jest.unstable_mockModule("@shared/components/ui/ChatInput", async () => {
         data-testid="dictionary-chat-input-form"
       >
         <textarea {...textareaProps} data-testid="dictionary-chat-input" />
-        <button type="button" onClick={handleActionClick}>
-          {isSendState
-            ? actionButtonProps.sendLabel
-            : actionButtonProps.voiceLabel}
+        <button
+          type="button"
+          onClick={handleActionClick}
+          disabled={!actionButtonProps.canSubmit}
+        >
+          {actionButtonProps.sendLabel}
         </button>
       </form>
     );
@@ -228,7 +222,6 @@ const { useDictionaryExperience } = await import(
 describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
     focusInputMock.mockClear();
-    handleVoiceMock.mockClear();
     handleReoutputMock.mockClear();
     inputRef.current = null;
     useDictionaryExperience.mockImplementation(() =>
@@ -297,20 +290,25 @@ describe("DictionaryExperience focus management", () => {
   });
 
   /**
-   * 测试目标：当搜索模式下点击 ChatInput 内部动作按钮时保持搜索模式并恢复输入焦点。
+   * 测试目标：当搜索模式下输入为空时，发送按钮应保持禁用并维持焦点。
    * 前置条件：存在释义记录使面板可切换；初始处于动作模式。
    * 步骤：
    *  1) 切换到底部搜索模式并聚焦 textarea；
-   *  2) 点击语音按钮触发 onVoice；
+   *  2) 尝试点击发送按钮；
    * 断言：
    *  - actions 面板不再显示（搜索模式未退回）；
-   *  - textarea 再次获得焦点；
-   *  - onVoice 被调用一次。
+   *  - textarea 保持聚焦；
+   *  - 发送回调未被触发。
    * 边界/异常：
-   *  - 若未来语音按钮文案调整需同步更新查询条件。
+   *  - 若未来引入自动补全导致按钮自动启用，需要同步调整断言。
    */
-  test("Given_searchMode_When_clickActionButton_Then_keepSearchAndRefocusTextarea", async () => {
+  test("Given_searchMode_When_sendDisabled_ThenRetainFocusWithoutSubmit", async () => {
     const user = userEvent.setup();
+    const handleSend = jest.fn();
+    useDictionaryExperience.mockImplementation(() =>
+      createDictionaryExperienceState({ handleSend }),
+    );
+
     render(<DictionaryExperience />);
 
     const searchButton = screen.getByRole("button", { name: "返回搜索" });
@@ -320,17 +318,11 @@ describe("DictionaryExperience focus management", () => {
     await user.click(textarea);
     expect(textarea).toHaveFocus();
 
-    const voiceButton = screen.getByRole("button", { name: "Voice" });
-    await user.click(voiceButton);
+    const sendButton = screen.getByRole("button", { name: "Send" });
+    expect(sendButton).toBeDisabled();
+    await user.click(sendButton);
 
-    await waitFor(() => {
-      expect(handleVoiceMock).toHaveBeenCalledTimes(1);
-      expect(textarea).toHaveFocus();
-    });
-
-    expect(
-      screen.queryByRole("button", { name: "返回搜索" }),
-    ).not.toBeInTheDocument();
+    expect(handleSend).not.toHaveBeenCalled();
   });
 
   /**
@@ -405,7 +397,6 @@ describe("DictionaryExperience focus management", () => {
     useDictionaryExperience.mockReturnValueOnce(
       createDictionaryExperienceState({
         t: {},
-        handleVoice: jest.fn(),
         activeView: "library",
         viewState: {
           active: "library",

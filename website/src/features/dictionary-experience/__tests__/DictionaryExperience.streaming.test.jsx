@@ -35,7 +35,6 @@ const createBaseExperienceState = () => ({
   targetLanguageOptions: [],
   handleSwapLanguages: jest.fn(),
   handleSend: jest.fn(),
-  handleVoice: jest.fn(),
   handleShowDictionary: jest.fn(),
   handleShowLibrary: jest.fn(),
   handleSelectHistory: jest.fn(),

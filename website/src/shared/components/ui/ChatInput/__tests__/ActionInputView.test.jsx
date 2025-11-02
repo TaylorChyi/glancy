@@ -77,14 +77,10 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
         },
       }}
       actionButtonProps={{
-        value: "example",
-        isRecording: false,
-        voiceCooldownRef: { current: 0 },
-        onVoice: jest.fn(),
+        canSubmit: true,
         onSubmit: jest.fn(),
-        isVoiceDisabled: false,
         sendLabel: "发送",
-        voiceLabel: "语音",
+        restoreFocus: jest.fn(),
       }}
     />,
   );
@@ -147,14 +143,10 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () =>
         },
       }}
       actionButtonProps={{
-        value: "example",
-        isRecording: false,
-        voiceCooldownRef: { current: 0 },
-        onVoice: jest.fn(),
+        canSubmit: true,
         onSubmit: jest.fn(),
-        isVoiceDisabled: false,
         sendLabel: "发送",
-        voiceLabel: "语音",
+        restoreFocus: jest.fn(),
       }}
     />,
   );
@@ -167,17 +159,17 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenApplyFixedCodeWidth", () =>
 });
 
 /**
- * 测试目标：当语言区隐藏时，网格属性与语义标记应正确折叠。
- * 前置条件：languageControls.isVisible=false。
+ * 测试目标：当语言区隐藏且禁用发送时，结构应折叠且按钮进入禁用态。
+ * 前置条件：languageControls.isVisible=false、canSubmit=false。
  * 步骤：
  *  1) 渲染组件并读取 data-language-visible 属性。
  *  2) 断言语言槽位与分隔符均被折叠。
- *  3) 捕获动作按钮，确认语音图标结构与语义标识。
+ *  3) 校验动作按钮被禁用，表明无语音后备路径。
  * 断言：
  *  - data-language-visible === "false"。
  *  - language-slot 不包含子节点并具有 data-visible="false"。
  *  - divider 在此场景下被移除，避免冗余列。
- *  - 语音态按钮包含标记为 voice-button 的图标。
+ *  - 按钮 disabled 属性存在。
  * 边界/异常：
  *  - 折叠逻辑纯展示层处理，不依赖额外行为。
  */
@@ -207,13 +199,10 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
         },
       }}
       actionButtonProps={{
-        value: "",
-        isRecording: false,
-        voiceCooldownRef: { current: 0 },
+        canSubmit: false,
         onSubmit: jest.fn(),
-        isVoiceDisabled: true,
         sendLabel: "发送",
-        voiceLabel: "语音",
+        restoreFocus: jest.fn(),
       }}
     />,
   );
@@ -229,14 +218,8 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
   const divider = container.querySelector(`.${"input-divider"}`);
   expect(divider?.getAttribute("data-visible")).toBe("false");
 
-  const voiceIcon = container.querySelector('[data-icon-name="voice-button"]');
-  expect(voiceIcon).not.toBeNull();
-  expect(voiceIcon?.tagName).toBe("SPAN");
-  expect(voiceIcon?.getAttribute("data-render-mode")).toBe("inline");
-  expect(voiceIcon?.classList.contains("action-button-icon")).toBe(true);
-
   const actionButton = container.querySelector(`.${"action-slot"} button`);
-  expect(actionButton).toMatchSnapshot("VoiceActionButtonMarkup");
+  expect(actionButton?.getAttribute("disabled")).toBe("");
 });
 
 /**
@@ -281,14 +264,10 @@ test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
         },
       }}
       actionButtonProps={{
-        value: "dark theme message",
-        isRecording: false,
-        voiceCooldownRef: { current: 0 },
-        onVoice: jest.fn(),
+        canSubmit: true,
         onSubmit: jest.fn(),
-        isVoiceDisabled: false,
         sendLabel: "发送",
-        voiceLabel: "语音",
+        restoreFocus: jest.fn(),
       }}
     />,
   );

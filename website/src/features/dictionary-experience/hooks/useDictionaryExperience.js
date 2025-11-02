@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useStreamWord, useSpeechInput } from "@shared/hooks";
+import { useStreamWord } from "@shared/hooks";
 import { useWordStore } from "@core/store/wordStore.js";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
@@ -50,7 +50,6 @@ export function useDictionaryExperience() {
   const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
     useDictionaryLookupController();
   const streamWord = useStreamWord();
-  const { start: startSpeech } = useSpeechInput({ onResult: state.setText });
 
   const interactions = useDictionaryExperienceInteractions({
     state,
@@ -64,7 +63,6 @@ export function useDictionaryExperience() {
       isMounted,
     },
     streamWord,
-    startSpeech,
   });
 
   const {
@@ -86,7 +84,6 @@ export function useDictionaryExperience() {
     resetDictionaryHomeState,
     handleShowDictionary,
     handleShowLibrary,
-    handleVoice,
     handleNavigateVersion,
     handleSelectVersion,
     applyRecord,
@@ -146,7 +143,6 @@ export function useDictionaryExperience() {
     targetLanguageOptions,
     handleSwapLanguages,
     handleSend,
-    handleVoice,
     handleShowDictionary,
     handleShowLibrary,
     handleSelectHistory,

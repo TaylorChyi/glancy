@@ -26,17 +26,14 @@ ActionInput.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func,
   onSubmit: PropTypes.func,
-  onVoice: PropTypes.func,
   inputRef: PropTypes.oneOfType([
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.any }),
   ]),
   placeholder: PropTypes.string,
-  voiceLabel: PropTypes.string,
   sendLabel: PropTypes.string,
   rows: PropTypes.number,
   maxRows: PropTypes.number,
-  isRecording: PropTypes.bool,
   sourceLanguage: PropTypes.oneOfType([PropTypes.string, PropTypes.symbol]),
   sourceLanguageOptions: PropTypes.arrayOf(
     PropTypes.shape({
@@ -66,14 +63,11 @@ ActionInput.propTypes = {
 ActionInput.defaultProps = {
   onChange: undefined,
   onSubmit: undefined,
-  onVoice: undefined,
   inputRef: undefined,
   placeholder: undefined,
-  voiceLabel: "Voice",
   sendLabel: "Send",
   rows: 1,
   maxRows: 5,
-  isRecording: false,
   sourceLanguage: undefined,
   sourceLanguageOptions: [],
   sourceLanguageLabel: undefined,

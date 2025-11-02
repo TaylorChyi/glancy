@@ -165,6 +165,7 @@ export function useDictionaryLookupExecutor({
           }
         }
 
+        const { preview: latestPreview } = buffer.getSnapshot();
         const { markdown: finalMarkdown, entry: finalEntry } = buffer.finalize();
         const resolvedEntry = finalEntry ?? latestResolvedEntry;
         if (resolvedEntry) {
@@ -172,7 +173,13 @@ export function useDictionaryLookupExecutor({
           setEntry(resolvedEntry);
         }
         // 最终 Markdown 可能为空串，此处复用 normalizer 保持格式一致。
-        const polishedMarkdown = normalizeDictionaryMarkdown(finalMarkdown ?? "");
+        const polishedMarkdown =
+          latestPreview && latestPreview === finalMarkdown
+            ? finalMarkdown
+            : normalizeDictionaryMarkdown(finalMarkdown ?? "");
+        //
+        // 背景：streaming 阶段已通过 normalizer 生成 preview，若最终 Markdown 与 preview 相等，
+        // 说明已完成归一化，可直接复用以避免重复执行昂贵的 polishDictionaryMarkdown。
         if (polishedMarkdown) {
           setFinalText(polishedMarkdown);
         }

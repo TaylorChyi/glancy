@@ -14,7 +14,6 @@ export function useDictionaryExperienceInteractions(options) {
     contexts: options.contexts,
     resetCopyFeedback: behavior.resetCopyFeedback,
     closeToast: options.contexts.toast.closeToast,
-    startSpeech: options.startSpeech,
   });
 
   return {

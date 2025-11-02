@@ -1,46 +1,26 @@
 /**
  * 背景：
- *  - ChatInput 需要在单一入口内平衡语音触发与文本发送的两种动作。
+ *  - ChatInput 从多态动作切回纯发送模式，需要在视觉与行为上重新定义按钮职责。
  * 目的：
- *  - 以状态策略模式组织按钮行为，通过输入态与节流器决定执行路径。
+ *  - 提供单一发送按钮，统一处理禁用与聚焦恢复逻辑，避免残留语音路径。
  * 关键决策与取舍：
- *  - 采用输入非空 -> 发送、否则 -> 语音的二元策略，避免维护额外枚举状态机。
- *  - 节流窗口保持在组件内部，隔离全局时间依赖，必要时可替换为策略实现。
+ *  - 使用布尔开关表达“可发送”状态，将语义类固定在发送态以保持主题一致；
+ *  - 依旧复用 restoreFocus 以保障键盘流畅性，未在组件内直接操作输入值。
  * 影响范围：
- *  - ChatInput 表单底部的动作按钮与语音控制体验。
+ *  - ChatInput 动作区的可交互元素与依赖其语义类的样式映射。
  * 演进与TODO：
- *  - 后续如需插入更多动作，可抽象策略表以支持多态扩展。
+ *  - 后续如需重新引入多动作策略，可在 Hook 层扩展配置并回收策略接口。
  */
 import { useCallback } from "react";
 import PropTypes from "prop-types";
 
 import styles from "../ChatInput.module.css";
-import { SendIcon, VoiceIcon } from "../icons";
-const ACTION_BUTTON_COOLDOWN_MS = 500;
+import { SendIcon } from "../icons";
 
-function ActionButton({
-  value,
-  isRecording,
-  voiceCooldownRef,
-  onVoice,
-  onSubmit,
-  isVoiceDisabled,
-  sendLabel,
-  voiceLabel,
-  restoreFocus,
-}) {
-  const trimmedLength = value.trim().length;
-  const isSendState = trimmedLength > 0;
-  const ariaLabel = isSendState ? sendLabel : voiceLabel;
-
-  //
-  // 背景：
-  //  - 壳体背景被移除后，按钮配色完全依赖语义类切换，需保持类列表最小且与输入态同步。
-  // 取舍：
-  //  - 通过固定的发送/语音类名组合交给样式层管理颜色，避免在逻辑层重新引入主题判断。
+function ActionButton({ canSubmit, onSubmit, sendLabel, restoreFocus }) {
   const actionClassName = [
     styles["action-button"],
-    styles[isSendState ? "action-button-send" : "action-button-voice"],
+    styles["action-button-send"],
   ]
     .filter(Boolean)
     .join(" ");
@@ -48,30 +28,13 @@ function ActionButton({
   const handleClick = useCallback(
     (event) => {
       event.preventDefault();
-      if (isSendState) {
-        onSubmit?.();
-        restoreFocus?.();
+      if (!canSubmit) {
         return;
       }
-      if (isVoiceDisabled) {
-        return;
-      }
-      const now = Date.now();
-      if (now - voiceCooldownRef.current < ACTION_BUTTON_COOLDOWN_MS) {
-        return;
-      }
-      voiceCooldownRef.current = now;
-      onVoice?.();
+      onSubmit?.();
       restoreFocus?.();
     },
-    [
-      isSendState,
-      isVoiceDisabled,
-      onSubmit,
-      onVoice,
-      voiceCooldownRef,
-      restoreFocus,
-    ],
+    [canSubmit, onSubmit, restoreFocus],
   );
 
   return (
@@ -79,36 +42,23 @@ function ActionButton({
       type="button"
       className={actionClassName}
       onClick={handleClick}
-      aria-label={ariaLabel}
-      aria-pressed={isSendState ? undefined : Boolean(isRecording)}
-      disabled={isSendState ? false : isVoiceDisabled}
+      aria-label={sendLabel}
+      disabled={!canSubmit}
     >
-      {isSendState ? (
-        <SendIcon className={styles["action-button-icon"]} />
-      ) : (
-        <VoiceIcon className={styles["action-button-icon"]} />
-      )}
+      <SendIcon className={styles["action-button-icon"]} />
     </button>
   );
 }
 
 ActionButton.propTypes = {
-  value: PropTypes.string.isRequired,
-  isRecording: PropTypes.bool,
-  voiceCooldownRef: PropTypes.shape({ current: PropTypes.number }).isRequired,
-  onVoice: PropTypes.func,
+  canSubmit: PropTypes.bool.isRequired,
   onSubmit: PropTypes.func,
-  isVoiceDisabled: PropTypes.bool,
   sendLabel: PropTypes.string.isRequired,
-  voiceLabel: PropTypes.string.isRequired,
   restoreFocus: PropTypes.func,
 };
 
 ActionButton.defaultProps = {
-  isRecording: false,
-  onVoice: undefined,
   onSubmit: undefined,
-  isVoiceDisabled: false,
   restoreFocus: undefined,
 };
 
