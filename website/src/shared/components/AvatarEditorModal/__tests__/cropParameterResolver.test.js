@@ -4,8 +4,9 @@
  *  - 覆盖不同缩放与偏移组合，以及异常矩阵分支。
  */
 
+import { jest } from "@jest/globals";
 import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";
-import {
+import resolveCropParameters, {
   computeCropRectFromMatrix,
   parseTransformMatrix,
 } from "../hooks/cropParameterResolver.js";
@@ -24,6 +25,8 @@ const buildMatrix = ({ scale, offsetX, offsetY, viewportSize, naturalWidth, natu
     f: offsetY + halfViewport - scale * halfNaturalHeight,
   };
 };
+
+const toMatrixString = ({ a, b, c, d, e, f }) => `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
 
 describe("cropParameterResolver matrix helpers", () => {
   it("Given CSS matrix string When parseTransformMatrix Then returns affine components", () => {
@@ -130,5 +133,121 @@ describe("cropParameterResolver matrix helpers", () => {
         naturalHeight: 500,
       }),
     ).toBeNull();
+  });
+});
+
+describe("resolveCropParameters calibration", () => {
+  const viewportSize = 320;
+  const naturalSize = { width: 1200, height: 800 };
+  const displayMetrics = { scaleFactor: 0.48 };
+  const offset = { x: -80, y: 0 };
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  /**
+   * 测试目标：当 CSS 矩阵返回异常偏移时，应回退至纯几何计算并输出诊断日志。
+   * 前置条件：构造 transform 矩阵使得解析结果与几何算法差异较大。
+   * 步骤：
+   *  1) mock getComputedStyle 返回偏离实际状态的矩阵；
+   *  2) mock console.warn 捕获诊断；
+   *  3) 调用 resolveCropParameters；
+   * 断言：
+   *  - 返回的 cropRect 与 computeCropSourceRect 一致；
+   *  - console.warn 被调用一次。
+   * 边界/异常：
+   *  - 覆盖矩阵不可用路径。
+   */
+  it("Given deviant matrix When resolveCropParameters Then falls back to geometry", () => {
+    const getComputedStyleSpy = jest
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ transform: "matrix(2, 0, 0, 2, 0, 0)" });
+    const consoleSpy = jest
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
+
+    const result = resolveCropParameters({
+      imageRef: { current: document.createElement("img") },
+      displayMetrics,
+      viewportSize,
+      naturalSize,
+      offset,
+    });
+
+    getComputedStyleSpy.mockRestore();
+
+    const expected = computeCropSourceRect({
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+      viewportSize,
+      scaleFactor: displayMetrics.scaleFactor,
+      offset,
+    });
+
+    expect(result?.cropRect).toBeDefined();
+    expect(result?.cropRect.x).toBeCloseTo(expected.x, 3);
+    expect(result?.cropRect.y).toBeCloseTo(expected.y, 3);
+    expect(result?.cropRect.width).toBeCloseTo(expected.width, 3);
+    expect(result?.cropRect.height).toBeCloseTo(expected.height, 3);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
+  });
+
+  /**
+   * 测试目标：当矩阵与几何结果仅存在微小差异时，依旧返回几何策略产物且不输出告警。
+   * 前置条件：构造 transform 矩阵在容差范围内偏移。
+   * 步骤：
+   *  1) 生成接近实际状态的矩阵并 mock getComputedStyle；
+   *  2) mock console.warn；
+   *  3) 调用 resolveCropParameters；
+   * 断言：
+   *  - 返回值与几何推导一致；
+   *  - console.warn 未被调用。
+   * 边界/异常：
+   *  - 覆盖容差判断逻辑。
+   */
+  it("Given near-perfect matrix When resolveCropParameters Then returns geometry without warning", () => {
+    const matrix = buildMatrix({
+      scale: displayMetrics.scaleFactor,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      viewportSize,
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+    });
+    const adjustedMatrix = { ...matrix, e: matrix.e + 0.2 };
+    const getComputedStyleSpy = jest
+      .spyOn(window, "getComputedStyle")
+      .mockReturnValue({ transform: toMatrixString(adjustedMatrix) });
+    const consoleSpy = jest
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
+
+    const result = resolveCropParameters({
+      imageRef: { current: document.createElement("img") },
+      displayMetrics,
+      viewportSize,
+      naturalSize,
+      offset,
+    });
+
+    getComputedStyleSpy.mockRestore();
+
+    const geometryRect = computeCropSourceRect({
+      naturalWidth: naturalSize.width,
+      naturalHeight: naturalSize.height,
+      viewportSize,
+      scaleFactor: displayMetrics.scaleFactor,
+      offset,
+    });
+
+    expect(result?.cropRect).toBeDefined();
+    expect(result?.cropRect.x).toBeCloseTo(geometryRect.x, 3);
+    expect(result?.cropRect.y).toBeCloseTo(geometryRect.y, 3);
+    expect(result?.cropRect.width).toBeCloseTo(geometryRect.width, 3);
+    expect(result?.cropRect.height).toBeCloseTo(geometryRect.height, 3);
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });

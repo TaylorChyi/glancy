@@ -10,8 +10,28 @@
  * 演进与TODO：
  *  - TODO: 后续可补充多指触控与键盘辅助交互的测试用例。
  */
+import { jest } from "@jest/globals";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
-import AvatarEditorModal from "../index.jsx";
+import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";
+import { DEFAULT_VIEWPORT_SIZE } from "../constants.js";
+
+let AvatarEditorModal;
+let renderCroppedAvatar;
+
+jest.unstable_mockModule("../hooks/avatarCropRenderer.js", () => ({
+  __esModule: true,
+  default: jest.fn(() =>
+    Promise.resolve({
+      blob: new Blob(["mock"], { type: "image/png" }),
+      previewUrl: "blob:mock",
+    }),
+  ),
+}));
+
+beforeAll(async () => {
+  ({ default: AvatarEditorModal } = await import("../index.jsx"));
+  ({ default: renderCroppedAvatar } = await import("../hooks/avatarCropRenderer.js"));
+});
 
 const parseTranslate3d = (value) => {
   const regex = /translate3d\(([-\d.]+)px, ([-\d.]+)px, 0\)/g;
@@ -19,6 +39,11 @@ const parseTranslate3d = (value) => {
     x: Number(x),
     y: Number(y),
   }));
+};
+
+const parseScale = (value) => {
+  const match = value.match(/scale\(([-\d.]+)\)/);
+  return match ? Number(match[1]) : 1;
 };
 
 const DEFAULT_LABELS = Object.freeze({
@@ -56,6 +81,10 @@ afterAll(() => {
   HTMLElement.prototype.releasePointerCapture = originalReleasePointerCapture;
 });
 
+afterEach(() => {
+  renderCroppedAvatar.mockClear();
+});
+
 const baseProps = Object.freeze({
   open: true,
   source: "blob:first",
@@ -85,6 +114,7 @@ describe("AvatarEditorModal viewport interactions", () => {
    *  2) 触发 load 事件并注入 naturalWidth/naturalHeight；
    * 断言：
    *  - transform 立即包含 translate3d(0px, 0px, 0) 而无需等待异步钳制；
+   *  - scale 等于视窗与最短边之比，确保不会出现透明边缘。
    * 边界/异常：
    *  - 本用例覆盖首次打开场景，无异常分支。
    */
@@ -95,12 +125,15 @@ describe("AvatarEditorModal viewport interactions", () => {
     loadImage(image, { width: 1280, height: 720 });
 
     const translations = parseTranslate3d(image.style.transform);
+    const scale = parseScale(image.style.transform);
+    const expectedScale = DEFAULT_VIEWPORT_SIZE / 720;
 
     expect(translations[0]).toEqual({ x: 0, y: 0 });
     expect(translations[1].x).toBeCloseTo(translations[1].y, 3);
     expect(translations[1].x).toBeGreaterThan(0);
     expect(translations[2].x).toBeLessThan(0);
     expect(translations[2].y).toBeLessThan(0);
+    expect(scale).toBeCloseTo(expectedScale, 6);
   });
 
   /**
@@ -159,5 +192,78 @@ describe("AvatarEditorModal viewport interactions", () => {
         y: 0,
       });
     });
+  });
+
+  /**
+   * 测试目标：确认拖拽与缩放后的裁剪参数与视口状态一致，避免导出区域与用户所见不一致。
+   * 前置条件：图片尺寸 1200×800，进行一次平移与放大操作。
+   * 步骤：
+   *  1) 触发 load 事件设置图片尺寸；
+   *  2) 模拟一次拖拽与一次放大操作；
+   *  3) 点击确认按钮，等待裁剪流程完成。
+   * 断言：
+   *  - renderCroppedAvatar 收到的 cropRect 与几何工具计算结果一致；
+   *  - image 引用与预期一致。
+   * 边界/异常：
+   *  - 覆盖常规拖拽与缩放组合路径，无异常分支。
+   */
+  it("Given drag and zoom When confirming Then crop rect matches viewport state", async () => {
+    renderCroppedAvatar.mockResolvedValueOnce({
+      blob: new Blob(["crop"], { type: "image/png" }),
+      previewUrl: "blob:crop",
+    });
+
+    const { getByAltText, getByLabelText, getByRole, getByText } = render(
+      <AvatarEditorModal {...baseProps} />,
+    );
+
+    const viewport = getByLabelText(DEFAULT_LABELS.title);
+    const image = getByAltText("avatar-preview");
+
+    loadImage(image, { width: 1200, height: 800 });
+
+    act(() => {
+      fireEvent.pointerDown(viewport, {
+        pointerId: 4,
+        clientX: 160,
+        clientY: 160,
+      });
+      fireEvent.pointerMove(viewport, {
+        pointerId: 4,
+        clientX: 200,
+        clientY: 190,
+      });
+      fireEvent.pointerUp(viewport, { pointerId: 4 });
+    });
+
+    act(() => {
+      fireEvent.click(getByRole("button", { name: DEFAULT_LABELS.zoomIn }));
+    });
+
+    await act(async () => {
+      fireEvent.click(getByText(DEFAULT_LABELS.confirm));
+    });
+
+    expect(renderCroppedAvatar).toHaveBeenCalledTimes(1);
+    const [{ cropRect, image: croppedImage }] = renderCroppedAvatar.mock.calls[0];
+    expect(croppedImage).toBe(image);
+
+    const viewportSize = DEFAULT_VIEWPORT_SIZE;
+    const transforms = parseTranslate3d(image.style.transform);
+    const [offset] = transforms;
+    const scaleFactor = parseScale(image.style.transform);
+
+    const expectedRect = computeCropSourceRect({
+      naturalWidth: 1200,
+      naturalHeight: 800,
+      viewportSize,
+      scaleFactor,
+      offset,
+    });
+
+    expect(cropRect.x).toBeCloseTo(expectedRect.x, 3);
+    expect(cropRect.y).toBeCloseTo(expectedRect.y, 3);
+    expect(cropRect.width).toBeCloseTo(expectedRect.width, 3);
+    expect(cropRect.height).toBeCloseTo(expectedRect.height, 3);
   });
 });
