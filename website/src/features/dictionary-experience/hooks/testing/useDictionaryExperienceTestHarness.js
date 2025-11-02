@@ -78,6 +78,12 @@ export const mockStreamWord = jest.fn(() => (async function* () {})());
 export const mockGetRecord = jest.fn(() => null);
 export const mockGetEntry = jest.fn(() => null);
 export const mockSetActiveVersion = jest.fn();
+export const mockFetchWordWithHandling = jest.fn(async () => ({
+  data: null,
+  error: null,
+  language: "ENGLISH",
+  flavor: "default",
+}));
 export const mockSettingsState = {
   dictionarySourceLanguage: "AUTO",
   dictionaryTargetLanguage: "CHINESE",
@@ -102,6 +108,7 @@ jest.unstable_mockModule("@core/context", () => ({
 
 jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: () => mockStreamWord,
+  useFetchWord: () => ({ fetchWordWithHandling: mockFetchWordWithHandling }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: mockToggleFavoriteEntry }),
 }));
 
@@ -116,7 +123,9 @@ jest.unstable_mockModule("@shared/utils", () => ({
     flavor: "default",
   })),
   resolveDictionaryFlavor: jest.fn(() => "default"),
+  resolveWordLanguage: jest.fn((_term, language) => language ?? "AUTO"),
   WORD_LANGUAGE_AUTO: "AUTO",
+  WORD_FLAVOR_BILINGUAL: "default",
   normalizeWordSourceLanguage: jest.fn((value) => value ?? "AUTO"),
   normalizeWordTargetLanguage: jest.fn((value) => value ?? "CHINESE"),
   resolveShareTarget: jest.fn(() => "https://example.com"),
@@ -209,6 +218,13 @@ export const resetDictionaryExperienceTestState = () => {
   mockStreamWord.mockImplementation(() => (async function* () {})());
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);
+  mockFetchWordWithHandling.mockReset();
+  mockFetchWordWithHandling.mockImplementation(async () => ({
+    data: null,
+    error: null,
+    language: "ENGLISH",
+    flavor: "default",
+  }));
   utilsModule.extractMarkdownPreview.mockImplementation(() => null);
   utilsModule.polishDictionaryMarkdown.mockImplementation((value) => value);
   useDataGovernanceStore.setState({ historyCaptureEnabled: true });

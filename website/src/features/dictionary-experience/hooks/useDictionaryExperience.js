@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useStreamWord } from "@shared/hooks";
+import { useStreamWord, useFetchWord } from "@shared/hooks";
 import { useWordStore } from "@core/store/wordStore.js";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 import { useDictionaryLookupController } from "./useDictionaryLookupController.ts";
@@ -50,6 +50,7 @@ export function useDictionaryExperience() {
   const { beginLookup, cancelActiveLookup, clearActiveLookup, isMounted } =
     useDictionaryLookupController();
   const streamWord = useStreamWord();
+  const { fetchWordWithHandling } = useFetchWord();
 
   const interactions = useDictionaryExperienceInteractions({
     state,
@@ -63,6 +64,7 @@ export function useDictionaryExperience() {
       isMounted,
     },
     streamWord,
+    fetchWord: fetchWordWithHandling,
   });
 
   const {
