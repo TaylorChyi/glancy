@@ -178,7 +178,7 @@
   padding: 16px;
   border-radius: 16px;
   background: var(--sidebar-panel, var(--sb-surface));
-  box-shadow: var(--sb-popover-shadow, 0 12px 40px rgba(0, 0, 0, 0.18));
+  box-shadow: var(--sb-popover-shadow, 0 12px 40px rgb(0 0 0 / 18%));
   color: var(--sb-text);
   min-width: 320px;
 }
@@ -221,7 +221,7 @@
 
 .language-variant-button[data-active="true"],
 .language-variant-button:hover {
-  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.05)) 88%, white 12%);
+  background: color-mix(in srgb, var(--sb-seg, rgb(0 0 0 / 5%)) 88%, white 12%);
 }
 
 .language-variant-label {
@@ -254,7 +254,7 @@
 }
 
 .language-swap-action:hover {
-  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.06)) 85%, white 15%);
+  background: color-mix(in srgb, var(--sb-seg, rgb(0 0 0 / 6%)) 85%, white 15%);
 }
 
 .language-swap-action:focus-visible {
@@ -297,7 +297,7 @@
 
 .language-option-button[data-active="true"],
 .language-option-button:hover {
-  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.05)) 90%, white 10%);
+  background: color-mix(in srgb, var(--sb-seg, rgb(0 0 0 / 5%)) 90%, white 10%);
 }
 
 .language-option-code {
@@ -324,7 +324,7 @@
 .language-empty-state {
   padding: 12px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--sb-seg, rgba(0, 0, 0, 0.04)) 80%, white 20%);
+  background: color-mix(in srgb, var(--sb-seg, rgb(0 0 0 / 4%)) 80%, white 20%);
   font-size: 13px;
   color: var(--sb-muted);
   text-align: center;
