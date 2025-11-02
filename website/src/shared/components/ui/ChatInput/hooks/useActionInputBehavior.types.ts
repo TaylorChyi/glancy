@@ -43,14 +43,11 @@ export interface UseActionInputBehaviorParams {
   value: string;
   onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
-  onVoice?: () => void;
   inputRef?: React.Ref<HTMLTextAreaElement> | null;
   placeholder?: string;
-  voiceLabel?: string;
   sendLabel?: string;
   rows?: number;
   maxRows?: number;
-  isRecording?: boolean;
   sourceLanguage?: LanguageValue;
   sourceLanguageOptions?: LanguageOption[];
   sourceLanguageLabel?: string;
@@ -101,14 +98,9 @@ export interface UseActionInputBehaviorResult {
     };
   };
   actionButtonProps: {
-    value: string;
-    isRecording?: boolean;
-    voiceCooldownRef: React.MutableRefObject<number>;
-    onVoice?: () => void;
+    canSubmit: boolean;
     onSubmit: () => void;
-    isVoiceDisabled: boolean;
     sendLabel: string;
-    voiceLabel: string;
     restoreFocus: () => void;
   };
   /**

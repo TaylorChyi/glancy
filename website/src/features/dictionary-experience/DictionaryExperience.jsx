@@ -35,7 +35,6 @@ export default function DictionaryExperience() {
     targetLanguageOptions,
     handleSwapLanguages,
     handleSend,
-    handleVoice,
     handleShowDictionary,
     handleShowLibrary,
     handleSelectHistory,
@@ -159,7 +158,6 @@ export default function DictionaryExperience() {
             value={text}
             onChange={(event) => setText(event.target.value)}
             onSubmit={handleSend}
-            onVoice={handleVoice}
             placeholder={chatInputPlaceholder}
             maxRows={5}
             maxWidth="var(--docker-row-max-width, var(--sb-max-width))"

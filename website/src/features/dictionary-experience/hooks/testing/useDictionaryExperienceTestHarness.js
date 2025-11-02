@@ -74,7 +74,6 @@ export const mockLanguageApi = {
   setLang: jest.fn(),
 };
 export const mockToggleFavoriteEntry = jest.fn();
-export const mockStartSpeech = jest.fn();
 export const mockStreamWord = jest.fn(() => (async function* () {})());
 export const mockGetRecord = jest.fn(() => null);
 export const mockGetEntry = jest.fn(() => null);
@@ -103,7 +102,6 @@ jest.unstable_mockModule("@core/context", () => ({
 
 jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: () => mockStreamWord,
-  useSpeechInput: () => ({ start: mockStartSpeech }),
   useAppShortcuts: () => ({ toggleFavoriteEntry: mockToggleFavoriteEntry }),
 }));
 

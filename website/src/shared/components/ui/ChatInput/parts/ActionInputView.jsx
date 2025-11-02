@@ -116,14 +116,9 @@ ActionInputView.propTypes = {
     }).isRequired,
   }).isRequired,
   actionButtonProps: PropTypes.shape({
-    value: PropTypes.string.isRequired,
-    isRecording: PropTypes.bool,
-    voiceCooldownRef: PropTypes.shape({ current: PropTypes.number }).isRequired,
-    onVoice: PropTypes.func,
+    canSubmit: PropTypes.bool.isRequired,
     onSubmit: PropTypes.func.isRequired,
-    isVoiceDisabled: PropTypes.bool.isRequired,
     sendLabel: PropTypes.string.isRequired,
-    voiceLabel: PropTypes.string.isRequired,
     restoreFocus: PropTypes.func.isRequired,
   }).isRequired,
 };

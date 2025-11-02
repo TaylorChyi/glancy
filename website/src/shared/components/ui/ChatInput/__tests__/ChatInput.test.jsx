@@ -47,7 +47,6 @@ test("GivenCustomMaxWidth_WhenRenderingChatInput_ThenExposeShellVariables", () =
       value="hello"
       onChange={() => {}}
       onSubmit={jest.fn()}
-      onVoice={jest.fn()}
     />,
   );
 

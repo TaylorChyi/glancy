@@ -296,25 +296,6 @@
   --action-btn-color: var(--sb-send-color);
 }
 
-.action-button-voice {
-  --action-btn-color: var(
-    --sb-voice-color,
-    var(--sb-action-icon, var(--sb-icon))
-  );
-}
-
-.action-button-voice[aria-pressed="true"] {
-  color: var(
-    --sb-cta-icon-active,
-    color-mix(in srgb, var(--sb-cta-icon) 65%, white 35%)
-  );
-  outline: 2px solid
-    var(
-      --sb-cta-outline-active,
-      color-mix(in srgb, var(--sb-cta-icon) 60%, white 40%)
-    );
-}
-
 .action-button-icon {
   width: 18px;
   height: 18px;
