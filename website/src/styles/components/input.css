@@ -21,7 +21,11 @@
   --component-input-gap: var(--space-2);
 
   --component-input-bg: var(--color-surface);
-  --component-input-bg-hover: color-mix(in srgb, var(--color-surface) 90%, var(--color-text) 10%);
+  --component-input-bg-hover: color-mix(
+    in srgb,
+    var(--color-surface) 90%,
+    var(--color-text) 10%
+  );
   --component-input-bg-disabled: color-mix(
     in srgb,
     var(--color-surface) 80%,
@@ -42,5 +46,9 @@
   --component-input-placeholder: var(--color-text-muted);
   --component-input-color: var(--color-text);
   --component-input-icon: var(--color-text-muted);
-  --component-input-ring: color-mix(in srgb, var(--color-primary) 35%, transparent 65%);
+  --component-input-ring: color-mix(
+    in srgb,
+    var(--color-primary) 35%,
+    transparent 65%
+  );
 }

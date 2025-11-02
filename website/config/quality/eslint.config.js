@@ -4,8 +4,8 @@
  * 目的：
  *  - 集中管理代码质量策略，并对 Node/脚本目录应用专用环境。
  * 关键决策与取舍：
-  *  - 使用扁平化配置（defineConfig），便于后续按需扩展；
-  *  - 根据 ops 目录重新划定 Node 环境匹配范围；
+ *  - 使用扁平化配置（defineConfig），便于后续按需扩展；
+ *  - 根据 ops 目录重新划定 Node 环境匹配范围；
  *  - 引入“结构化体量守卫”（行数/复杂度/嵌套）策略，并以白名单缓冲遗留债务，逐步收敛；
  *  - 由于存量代码体量庞大，首阶段以 warn 级别上线，并在 TODO 中标记升级节点。
  * 影响范围：
@@ -125,7 +125,10 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/app/pages/**/*.{js,jsx,ts,tsx}", "src/app/screens/**/*.{js,jsx,ts,tsx}"],
+    files: [
+      "src/app/pages/**/*.{js,jsx,ts,tsx}",
+      "src/app/screens/**/*.{js,jsx,ts,tsx}",
+    ],
     rules: {
       "max-lines": createMaxLinesRule(350),
     },
@@ -141,10 +144,7 @@ export default defineConfig([
     },
   },
   {
-    files: [
-      "**/hooks/**/*.{js,jsx,ts,tsx}",
-      "**/*use*.{js,jsx,ts,tsx}",
-    ],
+    files: ["**/hooks/**/*.{js,jsx,ts,tsx}", "**/*use*.{js,jsx,ts,tsx}"],
     rules: {
       "max-lines": createMaxLinesRule(200),
     },

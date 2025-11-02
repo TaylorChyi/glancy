@@ -35,12 +35,8 @@ const hydrateWithEmptyProfile = (dispatch, profileDetailsRef) => {
   });
 };
 
-const createRequestResponseStyle = ({
-  dispatch,
-  user,
-  fetchProfile,
-  profileDetailsRef,
-}) =>
+const createRequestResponseStyle =
+  ({ dispatch, user, fetchProfile, profileDetailsRef }) =>
   async ({ signal, withLoading = true } = {}) => {
     const abortRequested = () => Boolean(signal?.aborted);
     const safeDispatch = (action) => {
@@ -127,7 +123,10 @@ const useResponseStyleHandlers = ({
       });
 
       try {
-        const mergedDetails = buildRequestPayload(state, profileDetailsRef.current);
+        const mergedDetails = buildRequestPayload(
+          state,
+          profileDetailsRef.current,
+        );
         profileDetailsRef.current = mergedDetails;
         const payload = mapProfileDetailsToRequest(mergedDetails);
         const response = await saveProfile({
@@ -181,7 +180,11 @@ const useResponseStyleRequest = ({
   return { handleRetry };
 };
 
-export const useResponseStylePreferences = ({ user, fetchProfile, saveProfile }) => {
+export const useResponseStylePreferences = ({
+  user,
+  fetchProfile,
+  saveProfile,
+}) => {
   const [state, dispatch] = useReducer(
     responseStyleReducer,
     undefined,

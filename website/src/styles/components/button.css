@@ -45,6 +45,10 @@
   --component-button-outline-bg: transparent;
   --component-button-outline-border: var(--color-border);
 
-  --component-button-focus-ring: color-mix(in srgb, var(--color-primary) 45%, transparent 55%);
+  --component-button-focus-ring: color-mix(
+    in srgb,
+    var(--color-primary) 45%,
+    transparent 55%
+  );
   --component-button-disabled-opacity: 0.5;
 }

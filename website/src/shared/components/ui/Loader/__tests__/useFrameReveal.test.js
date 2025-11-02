@@ -26,7 +26,8 @@ describe("useFrameReveal", () => {
   const originalSetInterval = global.setInterval;
   const originalClearInterval = global.clearInterval;
   const originalMatchMedia = global.matchMedia;
-  const originalWindowMatchMedia = typeof window !== "undefined" ? window.matchMedia : undefined;
+  const originalWindowMatchMedia =
+    typeof window !== "undefined" ? window.matchMedia : undefined;
 
   afterEach(() => {
     global.requestAnimationFrame = originalRequestAnimationFrame;
@@ -165,8 +166,8 @@ describe("useFrameReveal", () => {
       window.matchMedia = matchMediaMock;
     }
 
-    const { result, rerender, unmount } = renderHook(({ token, interval }) =>
-      useFrameReveal(token, { intervalMs: interval }),
+    const { result, rerender, unmount } = renderHook(
+      ({ token, interval }) => useFrameReveal(token, { intervalMs: interval }),
       {
         initialProps: { token: "frame-reduced", interval: 500 },
       },

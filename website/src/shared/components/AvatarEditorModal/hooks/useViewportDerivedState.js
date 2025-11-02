@@ -68,7 +68,8 @@ const useImageTransform = ({
     const safeViewport = Number.isFinite(viewportSize) ? viewportSize : 0;
     const halfViewport = safeViewport / 2;
     const safeScale =
-      Number.isFinite(displayMetrics.scaleFactor) && displayMetrics.scaleFactor > 0
+      Number.isFinite(displayMetrics.scaleFactor) &&
+      displayMetrics.scaleFactor > 0
         ? displayMetrics.scaleFactor
         : 1;
     const halfWidth =

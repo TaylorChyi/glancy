@@ -51,7 +51,9 @@ export const usePlacement = ({
     );
     const spaceAbove = triggerRect.top;
     const spaceBelow = viewportHeight - triggerRect.bottom;
-    setPlacement(spaceAbove < menuHeight && spaceBelow > spaceAbove ? "down" : "up");
+    setPlacement(
+      spaceAbove < menuHeight && spaceBelow > spaceAbove ? "down" : "up",
+    );
   }, [maxMenuHeight, menuRef, open, triggerRef]);
 
   useEffect(() => {

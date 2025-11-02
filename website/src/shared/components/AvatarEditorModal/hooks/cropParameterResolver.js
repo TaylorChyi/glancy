@@ -28,7 +28,13 @@ const MATRIX_TOLERANCE_PX = 0.5;
 
 const STRATEGY_PIPELINE = Object.freeze([cssMatrixStrategy, geometryStrategy]);
 
-const buildContext = ({ imageRef, viewportSize, naturalSize, displayMetrics, offset }) => ({
+const buildContext = ({
+  imageRef,
+  viewportSize,
+  naturalSize,
+  displayMetrics,
+  offset,
+}) => ({
   image: imageRef?.current ?? null,
   viewportSize,
   naturalWidth: naturalSize?.width ?? 0,

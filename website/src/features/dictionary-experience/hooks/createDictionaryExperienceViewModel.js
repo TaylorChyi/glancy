@@ -68,7 +68,10 @@ export function createDictionaryExperienceViewModel({
 }) {
   const isEmptyStateActive =
     isDictionaryViewActive && !entry && !finalText && !streamText && !loading;
-  const displayClassName = ["display", isEmptyStateActive ? "display-empty" : ""]
+  const displayClassName = [
+    "display",
+    isEmptyStateActive ? "display-empty" : "",
+  ]
     .filter(Boolean)
     .join(" ");
 

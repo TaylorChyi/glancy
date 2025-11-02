@@ -14,7 +14,10 @@
  *  - 后续可在此引入手机换绑流程或第三方绑定状态同步。
  */
 import { useMemo } from "react";
-import { buildAccountSnapshot, useEmailUnbindCommand } from "./accountSnapshot.js";
+import {
+  buildAccountSnapshot,
+  useEmailUnbindCommand,
+} from "./accountSnapshot.js";
 import {
   createAccountBindings,
   createAccountIdentity,
@@ -64,11 +67,12 @@ const useAccountFields = ({
     [translations],
   );
 
-  const { handleUsernameSubmit, handleUsernameFailure } = useUsernameSubmitCommand({
-    user,
-    setUser,
-    updateUsernameRequest,
-  });
+  const { handleUsernameSubmit, handleUsernameFailure } =
+    useUsernameSubmitCommand({
+      user,
+      setUser,
+      updateUsernameRequest,
+    });
 
   const emailAction = useMemo(
     () =>

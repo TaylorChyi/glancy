@@ -197,7 +197,9 @@ export class HistoryPaginationCoordinator {
     }
   }
 
-  private normalizeFetchPayload(response: HistoryFetchPayload): SearchRecordDto[] {
+  private normalizeFetchPayload(
+    response: HistoryFetchPayload,
+  ): SearchRecordDto[] {
     if (Array.isArray(response)) {
       return response;
     }

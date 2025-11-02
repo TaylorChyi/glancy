@@ -55,7 +55,11 @@ const createToastConfig = (state, dismissLabel, handleClose) => {
   };
 };
 
-const ensureRedeemPreconditions = ({ user, redeemCodeRequest, emitFailure }) => {
+const ensureRedeemPreconditions = ({
+  user,
+  redeemCodeRequest,
+  emitFailure,
+}) => {
   if (!user?.token) {
     const error = new Error("redeem-auth-missing");
     console.error("Failed to redeem subscription code", error);
@@ -68,14 +72,15 @@ const ensureRedeemPreconditions = ({ user, redeemCodeRequest, emitFailure }) => 
   }
 };
 
-const createRedeemExecutor = ({
-  user,
-  setUser,
-  redeemCodeRequest,
-  copy,
-  emitRedeemFailureToast,
-  setRedeemToastState,
-}) =>
+const createRedeemExecutor =
+  ({
+    user,
+    setUser,
+    redeemCodeRequest,
+    copy,
+    emitRedeemFailureToast,
+    setRedeemToastState,
+  }) =>
   async (normalizedCode) => {
     ensureRedeemPreconditions({
       user,
@@ -136,7 +141,8 @@ export const useRedeemSubscription = ({
   }, []);
 
   const redeemToast = useMemo(
-    () => createToastConfig(redeemToastState, copy.dismiss, handleRedeemToastClose),
+    () =>
+      createToastConfig(redeemToastState, copy.dismiss, handleRedeemToastClose),
     [copy.dismiss, handleRedeemToastClose, redeemToastState],
   );
 

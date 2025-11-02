@@ -18,7 +18,8 @@ export function createQueueServiceWorkerRegistration({
   navigatorRef,
   serviceWorkerPath = DEFAULT_SERVICE_WORKER_PATH,
 } = {}) {
-  const resolvedWindow = windowRef ?? (typeof window !== "undefined" ? window : undefined);
+  const resolvedWindow =
+    windowRef ?? (typeof window !== "undefined" ? window : undefined);
   const resolvedNavigator =
     navigatorRef ?? (typeof navigator !== "undefined" ? navigator : undefined);
 

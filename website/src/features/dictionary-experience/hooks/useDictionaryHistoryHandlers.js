@@ -112,14 +112,18 @@ export function useDictionaryHistoryHandlers({
     async ({ term, language, flavor, versionId, cacheKey }) => {
       setLoading(true);
       try {
-        const { data, error, language: requestLanguage, flavor: requestFlavor } =
-          (await fetchWord({
-            user,
-            term,
-            language,
-            flavor,
-            model: DEFAULT_MODEL,
-          })) ?? {};
+        const {
+          data,
+          error,
+          language: requestLanguage,
+          flavor: requestFlavor,
+        } = (await fetchWord({
+          user,
+          term,
+          language,
+          flavor,
+          model: DEFAULT_MODEL,
+        })) ?? {};
 
         if (error) {
           showPopup(error.message ?? String(error));
@@ -197,7 +201,7 @@ export function useDictionaryHistoryHandlers({
               (item) => item.term === identifier || item.termKey === identifier,
             );
       const resolvedTerm =
-        typeof identifier === "string" ? identifier : target?.term ?? "";
+        typeof identifier === "string" ? identifier : (target?.term ?? "");
       if (!resolvedTerm) return;
       const fallbackConfig = resolveDictionaryConfig(resolvedTerm, {
         sourceLanguage:

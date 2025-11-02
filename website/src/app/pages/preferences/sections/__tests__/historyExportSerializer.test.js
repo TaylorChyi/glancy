@@ -116,7 +116,10 @@ describe("historyExportSerializer", () => {
      *  - 缺失 entry 时应保持 graceful degrade。
      */
     const serializer = new DefinitionsByChapterCsvSerializer();
-    const csv = serializer.serialize([BASIC_HISTORY_ITEM], DEFAULT_FALLBACK_CONTEXT);
+    const csv = serializer.serialize(
+      [BASIC_HISTORY_ITEM],
+      DEFAULT_FALLBACK_CONTEXT,
+    );
 
     const [header, row] = csv.split("\r\n");
     expect(header).toEqual(

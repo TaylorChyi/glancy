@@ -31,10 +31,7 @@ describe("useDataSectionLanguageSelection", () => {
    *  - 输入大小写混合时也能正常工作。
    */
   it("Given history options when selecting language then normalizes value and exposes canClear", () => {
-    const history = [
-      { language: "chinese" },
-      { language: "english" },
-    ];
+    const history = [{ language: "chinese" }, { language: "english" }];
 
     const { result } = renderHook(() =>
       useDataSectionLanguageSelection(history, translations),

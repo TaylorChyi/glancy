@@ -10,7 +10,10 @@ import {
   TRANSLATION_LABEL_BOUNDARY_PATTERN,
   TRANSLATION_LABEL_TOKENS,
 } from "../constants/index.js";
-import { collectInlineLabelCandidates, shouldSplitInlineLabel } from "../labels/index.js";
+import {
+  collectInlineLabelCandidates,
+  shouldSplitInlineLabel,
+} from "../labels/index.js";
 
 export function isExampleLabel(label) {
   const candidates = collectInlineLabelCandidates(label);

@@ -56,7 +56,12 @@ const PLAIN_FIELD_CONFIGS = [
   },
 ];
 
-const pushPlainFields = ({ entry, translations, chapters, fallbackHeading }) => {
+const pushPlainFields = ({
+  entry,
+  translations,
+  chapters,
+  fallbackHeading,
+}) => {
   PLAIN_FIELD_CONFIGS.forEach(({ labelKey, fallbackLabel, resolveLines }) => {
     const lines = resolveLines(entry);
     if (lines.length === 0) {
@@ -113,7 +118,12 @@ const pushMarkdown = ({ entry, chapters, fallbackHeading }) => {
   }
 };
 
-const runStructuredCollectors = ({ entry, translations, chapters, fallback }) => {
+const runStructuredCollectors = ({
+  entry,
+  translations,
+  chapters,
+  fallback,
+}) => {
   STRUCTURED_COLLECTORS.forEach((collector) =>
     collector({ entry, translations, chapters, fallback }),
   );

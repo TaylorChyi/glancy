@@ -57,7 +57,10 @@ export const mergeHistory = (
   return Array.from(map.values());
 };
 
-export const resolveHistoryItem = (history: HistoryItem[], identifier: string) =>
+export const resolveHistoryItem = (
+  history: HistoryItem[],
+  identifier: string,
+) =>
   history.find(
     (item) =>
       item.recordId === identifier ||

@@ -83,7 +83,11 @@ const mapHistoryLanguageLabel = (translations, language) => {
  * 错误处理：序列化器内部处理异常兜底章节。
  * 复杂度：时间 O(n·m)，空间 O(n·m)。
  */
-export const serializeHistoryToCsv = ({ history, translations, resolveEntry }) =>
+export const serializeHistoryToCsv = ({
+  history,
+  translations,
+  resolveEntry,
+}) =>
   definitionsByChapterCsvSerializer.serialize(history, {
     translations,
     resolveEntry,

@@ -101,9 +101,7 @@ function shouldJoinWithBreak(previous, current) {
   if (typeof previous !== "string" || typeof current !== "string") {
     return false;
   }
-  return !(
-    WHITESPACE_ONLY.test(previous) || WHITESPACE_ONLY.test(current)
-  );
+  return !(WHITESPACE_ONLY.test(previous) || WHITESPACE_ONLY.test(current));
 }
 
 function shouldSkipNode(node) {

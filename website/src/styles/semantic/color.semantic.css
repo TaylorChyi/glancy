@@ -18,7 +18,11 @@
   --color-surface: var(--neutral-0);
   --color-surface-alt: var(--neutral-200);
   --color-text: var(--neutral-900);
-  --color-text-muted: color-mix(in srgb, var(--neutral-700) 80%, transparent 20%);
+  --color-text-muted: color-mix(
+    in srgb,
+    var(--neutral-700) 80%,
+    transparent 20%
+  );
   --color-text-inverse: var(--neutral-0);
   --color-border: color-mix(in srgb, var(--neutral-300) 80%, transparent 20%);
   --color-border-strong: var(--neutral-400);
@@ -34,7 +38,11 @@
   --brand-primary-contrast: var(--color-primary-contrast);
   --brand-secondary: var(--brand-8);
   --brand-surface-light: var(--brand-2);
-  --brand-surface-dark: color-mix(in srgb, var(--brand-9) 78%, var(--c-black) 22%);
+  --brand-surface-dark: color-mix(
+    in srgb,
+    var(--brand-9) 78%,
+    var(--c-black) 22%
+  );
   --brand-outline: var(--brand-10);
   --brand-glow: color-mix(in srgb, var(--brand-9) 40%, transparent 60%);
   --brand-color: var(--brand-primary);
@@ -44,11 +52,23 @@
   --sys-text-dark: color-mix(in srgb, var(--neutral-0) 87%, transparent 13%);
   --sys-bg-light: var(--neutral-0);
   --sys-bg-dark: var(--neutral-950);
-  --sys-border-light: color-mix(in srgb, var(--neutral-200) 90%, transparent 10%);
-  --sys-border-dark: color-mix(in srgb, var(--neutral-700) 85%, transparent 15%);
+  --sys-border-light: color-mix(
+    in srgb,
+    var(--neutral-200) 90%,
+    transparent 10%
+  );
+  --sys-border-dark: color-mix(
+    in srgb,
+    var(--neutral-700) 85%,
+    transparent 15%
+  );
   --sys-muted: var(--neutral-500);
   --color-link-light: var(--brand-primary);
-  --color-link-dark: color-mix(in srgb, var(--brand-primary) 82%, var(--neutral-0) 18%);
+  --color-link-dark: color-mix(
+    in srgb,
+    var(--brand-primary) 82%,
+    var(--neutral-0) 18%
+  );
   --accent-color: var(--brand-primary);
   --accent-color-strong: var(--brand-primary-emphasis);
 
@@ -60,9 +80,21 @@
   /* 叠加层语义 */
   --color-overlay-base: var(--neutral-950);
   --color-overlay-inverse-base: var(--neutral-0);
-  --color-overlay-weak: color-mix(in srgb, var(--color-overlay-base) 5%, transparent 95%);
-  --color-overlay-strong: color-mix(in srgb, var(--color-overlay-base) 75%, transparent 25%);
-  --color-overlay: color-mix(in srgb, var(--color-overlay-base) 50%, transparent 50%);
+  --color-overlay-weak: color-mix(
+    in srgb,
+    var(--color-overlay-base) 5%,
+    transparent 95%
+  );
+  --color-overlay-strong: color-mix(
+    in srgb,
+    var(--color-overlay-base) 75%,
+    transparent 25%
+  );
+  --color-overlay: color-mix(
+    in srgb,
+    var(--color-overlay-base) 50%,
+    transparent 50%
+  );
   --color-overlay-inverse: color-mix(
     in srgb,
     var(--color-overlay-inverse-base) 10%,
@@ -89,7 +121,11 @@
   --role-on-primary: var(--color-primary-contrast);
   --role-success: var(--color-success);
   --role-on-success: var(--color-text-inverse);
-  --role-warning: color-mix(in srgb, var(--color-primary) 80%, var(--neutral-0) 20%);
+  --role-warning: color-mix(
+    in srgb,
+    var(--color-primary) 80%,
+    var(--neutral-0) 20%
+  );
   --role-on-warning: var(--hl-dark);
   --role-danger: var(--color-danger);
   --role-on-danger: var(--color-text-inverse);

@@ -30,7 +30,9 @@ jest.unstable_mockModule("../hooks/avatarCropRenderer.js", () => ({
 
 beforeAll(async () => {
   ({ default: AvatarEditorModal } = await import("../index.jsx"));
-  ({ default: renderCroppedAvatar } = await import("../hooks/avatarCropRenderer.js"));
+  ({ default: renderCroppedAvatar } = await import(
+    "../hooks/avatarCropRenderer.js"
+  ));
 });
 
 const parseTranslate3d = (value) => {
@@ -245,7 +247,8 @@ describe("AvatarEditorModal viewport interactions", () => {
     });
 
     expect(renderCroppedAvatar).toHaveBeenCalledTimes(1);
-    const [{ cropRect, image: croppedImage }] = renderCroppedAvatar.mock.calls[0];
+    const [{ cropRect, image: croppedImage }] =
+      renderCroppedAvatar.mock.calls[0];
     expect(croppedImage).toBe(image);
 
     const viewportSize = DEFAULT_VIEWPORT_SIZE;

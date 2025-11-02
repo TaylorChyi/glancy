@@ -60,10 +60,7 @@ const useOtherOptionsLabel = (otherOptionsLabel, t) =>
   }, [otherOptionsLabel, t]);
 
 const useToastDismissLabel = (t) =>
-  useMemo(
-    () => t.toastDismissLabel || t.close || "Dismiss notification",
-    [t],
-  );
+  useMemo(() => t.toastDismissLabel || t.close || "Dismiss notification", [t]);
 
 const useAuthFormController = ({
   formMethods,

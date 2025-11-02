@@ -51,7 +51,7 @@ abstract class AbstractHistoryRecordMapper {
   }
 
   protected resolveLatestVersionId(versions: HistoryVersion[]): string | null {
-    return versions.length ? versions[0]?.id ?? null : null;
+    return versions.length ? (versions[0]?.id ?? null) : null;
   }
 
   protected resolveFallbackTerm(record: SearchRecordDto): string {
@@ -72,9 +72,7 @@ abstract class AbstractHistoryRecordMapper {
     return Boolean(record.favorite ?? versions[0]?.favorite ?? false);
   }
 
-  protected abstract ensureVersions(
-    record: SearchRecordDto,
-  ): HistoryVersion[];
+  protected abstract ensureVersions(record: SearchRecordDto): HistoryVersion[];
 
   protected abstract resolveCanonicalTerm(
     record: SearchRecordDto,

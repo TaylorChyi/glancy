@@ -33,10 +33,7 @@ export const mapToDisplayValue = (candidate, fallbackValue = "") => {
  * 输入：候选字符串数组 candidates，兜底文案 fallbackValue。
  * 输出：首个非空白字符串或兜底文案。
  */
-export const pickFirstMeaningfulString = (
-  candidates,
-  fallbackValue = "",
-) => {
+export const pickFirstMeaningfulString = (candidates, fallbackValue = "") => {
   for (const candidate of candidates) {
     if (typeof candidate !== "string") {
       continue;

@@ -25,7 +25,8 @@ export const HEADING_INLINE_LABEL_PATTERN =
   /^(#{1,6}[^\n]*?)(\*\*([^*]+)\*\*:[^\n]*)/gm;
 export const INLINE_LABEL_PATTERN =
   /([^\n])((?:[ \t]*\t[ \t]*)|(?:[ \t]{2,}))(\*\*([^*]+)\*\*:[^\n]*)/g;
-export const INLINE_LABEL_NO_BOUNDARY_PATTERN = /([^\s>\n])(\*\*([^*]+)\*\*:[^\n]*)/g;
+export const INLINE_LABEL_NO_BOUNDARY_PATTERN =
+  /([^\s>\n])(\*\*([^*]+)\*\*:[^\n]*)/g;
 export const INLINE_LABEL_BOUNDARY_PREFIX_RE =
   /[A-Za-z0-9\u4e00-\u9fff)\]}”’'".!?。，；：、]/u;
 export const COLLAPSED_LABEL_CHAIN_PATTERN =

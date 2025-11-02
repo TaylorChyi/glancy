@@ -56,8 +56,14 @@ export class ToggleFavoriteCommand {
     await this.performRemoteMutation(isFavorite, user, recordId);
   }
 
-  private resolveRecordId(identifier: string, versionId?: string): string | null {
-    const target = resolveHistoryItem(this.context.getState().history, identifier);
+  private resolveRecordId(
+    identifier: string,
+    versionId?: string,
+  ): string | null {
+    const target = resolveHistoryItem(
+      this.context.getState().history,
+      identifier,
+    );
     return versionId ?? target?.recordId ?? target?.latestVersionId ?? null;
   }
 

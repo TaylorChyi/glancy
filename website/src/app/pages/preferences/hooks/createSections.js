@@ -92,7 +92,9 @@ const createKeyboardSection = (translations) => {
 
 const createAccountSection = ({ translations, accountModel }) => {
   const label =
-    translations.prefAccountTitle ?? translations.settingsTabAccount ?? "Account";
+    translations.prefAccountTitle ??
+    translations.settingsTabAccount ??
+    "Account";
   return {
     id: "account",
     label,

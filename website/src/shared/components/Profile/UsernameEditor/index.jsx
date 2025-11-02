@@ -34,7 +34,11 @@ function UsernameEditor(props) {
         ) : null}
       </div>
       {errorProps ? (
-        <p className={errorProps.className} id={errorProps.id} role={errorProps.role}>
+        <p
+          className={errorProps.className}
+          id={errorProps.id}
+          role={errorProps.role}
+        >
           {errorProps.message}
         </p>
       ) : null}

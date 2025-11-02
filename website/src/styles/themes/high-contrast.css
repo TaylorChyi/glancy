@@ -25,7 +25,11 @@
   --color-border: var(--c-white);
   --color-border-strong: var(--c-white);
   --color-primary: color-mix(in srgb, var(--brand-9) 40%, var(--c-white) 60%);
-  --color-primary-hover: color-mix(in srgb, var(--brand-9) 60%, var(--c-white) 40%);
+  --color-primary-hover: color-mix(
+    in srgb,
+    var(--brand-9) 60%,
+    var(--c-white) 40%
+  );
   --color-primary-soft: var(--color-primary);
   --color-primary-contrast: var(--c-black);
   --accent-color: var(--color-primary);

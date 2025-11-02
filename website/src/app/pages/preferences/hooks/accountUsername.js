@@ -65,7 +65,11 @@ export const createUsernameEditorTranslations = (translations) => ({
   ),
 });
 
-export const useUsernameSubmitCommand = ({ user, setUser, updateUsernameRequest }) => {
+export const useUsernameSubmitCommand = ({
+  user,
+  setUser,
+  updateUsernameRequest,
+}) => {
   const handleUsernameFailure = useCallback((error) => {
     console.error("Failed to update username from preferences", error);
   }, []);

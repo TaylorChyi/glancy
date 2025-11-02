@@ -9,7 +9,10 @@ import {
   COLON_WITHOUT_SPACE_PATTERN,
   DECORATED_LABEL_VALUE_PATTERN,
 } from "../constants/index.js";
-import { deriveInlineLabelDisplay, shouldSplitInlineLabel } from "./candidates.js";
+import {
+  deriveInlineLabelDisplay,
+  shouldSplitInlineLabel,
+} from "./candidates.js";
 
 export function decorateBareInlineLabels(text) {
   return text.replace(

@@ -98,8 +98,7 @@ export const resolveLanguageContext = ({
     return ENGLISH_KEY;
   })();
 
-  const resolvedLanguageLabel =
-    languageLabels[languageKey] ?? language ?? "";
+  const resolvedLanguageLabel = languageLabels[languageKey] ?? language ?? "";
 
   return {
     resolvedSourceKey,
@@ -181,7 +180,11 @@ export const buildModalStrings = (translations, error) => ({
     ["reportDescriptionPlaceholder"],
     "Tell us more (optional)",
   ),
-  cancelLabel: pickTranslation(translations, ["reportCancel", "cancel"], "Cancel"),
+  cancelLabel: pickTranslation(
+    translations,
+    ["reportCancel", "cancel"],
+    "Cancel",
+  ),
   submitLabel: pickTranslation(translations, ["reportSubmit"], "Submit"),
   submittingLabel: pickTranslation(
     translations,

@@ -73,7 +73,8 @@ export function isolateSectionHeadingContent(text) {
       if (!trimmedBody) {
         return `${hashes}${spacing}${trimmedBody}`;
       }
-      const { normalized, segments } = buildNormalizedIndexSegments(trimmedBody);
+      const { normalized, segments } =
+        buildNormalizedIndexSegments(trimmedBody);
       if (!normalized) {
         return `${hashes}${spacing}${trimmedBody}`;
       }

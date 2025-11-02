@@ -72,8 +72,12 @@ const useDataSectionControls = ({
     setHistoryCaptureEnabled,
     setRetentionPolicy,
   } = governance;
-  const { history, clearHistory, clearHistoryByLanguage, applyRetentionPolicy } =
-    historyState;
+  const {
+    history,
+    clearHistory,
+    clearHistoryByLanguage,
+    applyRetentionPolicy,
+  } = historyState;
 
   const historyToggle = useHistoryToggleControl({
     copy,

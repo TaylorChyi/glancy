@@ -44,9 +44,7 @@ describe("useDictionaryExperience/history fetch", () => {
    */
   it("GivenHistoryMiss_WhenSelectingItem_ThenFetchesViaRestEndpoint", async () => {
     const restRecord = {
-      versions: [
-        { id: "v1", term: "rest-term", markdown: "rest definition" },
-      ],
+      versions: [{ id: "v1", term: "rest-term", markdown: "rest definition" }],
       activeVersionId: "v1",
     };
     mockHistoryApi.history = [

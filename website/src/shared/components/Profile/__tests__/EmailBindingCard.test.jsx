@@ -207,9 +207,7 @@ describe("EmailBindingCard", () => {
       });
 
       expect(handleRequestCode).toHaveBeenCalledTimes(1);
-      expect(
-        await screen.findByRole("button", { name: "60s" }),
-      ).toBeDisabled();
+      expect(await screen.findByRole("button", { name: "60s" })).toBeDisabled();
 
       act(() => {
         jest.advanceTimersByTime(1000);

@@ -48,12 +48,7 @@ const collectExampleLines = (examples = []) => {
   });
 };
 
-const collectSenseLines = ({
-  sense,
-  relations,
-  orderLabel,
-  labels,
-}) => {
+const collectSenseLines = ({ sense, relations, orderLabel, labels }) => {
   const lines = [];
   const definitionParts = [
     stripMarkdownArtifacts(sense?.定义),

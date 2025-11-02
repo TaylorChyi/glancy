@@ -13,7 +13,10 @@
  */
 
 const VIEWPORT_MARGIN = 8;
-const INFINITE_VIEWPORT = { width: Number.POSITIVE_INFINITY, height: Number.POSITIVE_INFINITY };
+const INFINITE_VIEWPORT = {
+  width: Number.POSITIVE_INFINITY,
+  height: Number.POSITIVE_INFINITY,
+};
 
 const PLACEMENT_CONFIG = {
   top: {
@@ -56,7 +59,8 @@ const PLACEMENT_CONFIG = {
 
 // 方向 -> 视窗适配判断器，便于降低循环复杂度。
 const FIT_CHECKERS = {
-  top: ({ top, bottom }, bounds) => top >= bounds.top && bottom <= bounds.bottom,
+  top: ({ top, bottom }, bounds) =>
+    top >= bounds.top && bottom <= bounds.bottom,
   bottom: ({ bottom }, bounds) => bottom <= bounds.bottom,
   left: ({ left, right }, bounds) =>
     left >= bounds.left && right <= bounds.right,
@@ -117,7 +121,9 @@ function fitsWithinViewport({
  *  1) 若提供 window 或全局存在 window，则读取 innerWidth/innerHeight；
  *  2) 否则返回无穷大视窗，表示无需裁剪。
  */
-export function getViewportMetrics(targetWindow = typeof window === "undefined" ? undefined : window) {
+export function getViewportMetrics(
+  targetWindow = typeof window === "undefined" ? undefined : window,
+) {
   if (!targetWindow) {
     return INFINITE_VIEWPORT;
   }
@@ -183,12 +189,14 @@ export function resolvePlacement({
     if (!resolution) {
       resolution = nextResolution;
     }
-    if (fitsWithinViewport({
-      placement: candidate,
-      position: basePosition,
-      popRect,
-      viewport,
-    })) {
+    if (
+      fitsWithinViewport({
+        placement: candidate,
+        position: basePosition,
+        popRect,
+        viewport,
+      })
+    ) {
       resolution = nextResolution;
       break;
     }

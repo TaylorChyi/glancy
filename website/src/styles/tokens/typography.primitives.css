@@ -13,7 +13,9 @@
  */
 :root {
   --font-family-sans: system-ui, avenir, helvetica, arial, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-family-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 
   --fs-12: 0.75rem;
   --fs-14: 0.875rem;

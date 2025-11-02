@@ -22,11 +22,7 @@ import { TriadIcon } from "../icons";
 import useLanguageLauncher from "../hooks/useLanguageLauncher.ts";
 import styles from "../ChatInput.module.css";
 
-function VariantRow({
-  variant,
-  isActive,
-  onEnter,
-}) {
+function VariantRow({ variant, isActive, onEnter }) {
   const description = variant.currentOption?.label || "--";
   return (
     <li role="none" className={styles["language-variant-item"]}>
@@ -40,8 +36,12 @@ function VariantRow({
         onMouseEnter={() => onEnter(variant.key)}
         onFocus={() => onEnter(variant.key)}
       >
-        <span className={styles["language-variant-label"]}>{variant.label}</span>
-        <span className={styles["language-variant-description"]}>{description}</span>
+        <span className={styles["language-variant-label"]}>
+          {variant.label}
+        </span>
+        <span className={styles["language-variant-description"]}>
+          {description}
+        </span>
       </button>
     </li>
   );
@@ -147,7 +147,10 @@ export default function LanguageLauncher({
   const hoverDismissTimerRef = useRef(null);
 
   const cancelHoverDismiss = useCallback(() => {
-    if (hoverDismissTimerRef.current !== null && typeof window !== "undefined") {
+    if (
+      hoverDismissTimerRef.current !== null &&
+      typeof window !== "undefined"
+    ) {
       window.clearTimeout(hoverDismissTimerRef.current);
     }
     hoverDismissTimerRef.current = null;
@@ -231,7 +234,10 @@ export default function LanguageLauncher({
             onMouseOver={cancelHoverDismiss}
             onMouseOut={handleMenuMouseLeave}
           >
-            <div className={styles["language-variant-column"]} role="presentation">
+            <div
+              className={styles["language-variant-column"]}
+              role="presentation"
+            >
               <ul role="menu" className={styles["language-variant-list"]}>
                 {variants.map((variant) => (
                   <VariantRow
@@ -255,7 +261,10 @@ export default function LanguageLauncher({
                 </button>
               ) : null}
             </div>
-            <div className={styles["language-options-column"]} role="presentation">
+            <div
+              className={styles["language-options-column"]}
+              role="presentation"
+            >
               {activeOptions.length > 0 ? (
                 <ul role="menu" className={styles["language-options-list"]}>
                   {activeOptions.map((option) => (
@@ -263,12 +272,16 @@ export default function LanguageLauncher({
                       key={option.value}
                       option={option}
                       isActive={option.value === activeValue}
-                      onSelect={(value) => handleSelect(activeKey ?? "source", value)}
+                      onSelect={(value) =>
+                        handleSelect(activeKey ?? "source", value)
+                      }
                     />
                   ))}
                 </ul>
               ) : (
-                <div className={styles["language-empty-state"]}>暂无可用语言</div>
+                <div className={styles["language-empty-state"]}>
+                  暂无可用语言
+                </div>
               )}
             </div>
           </div>

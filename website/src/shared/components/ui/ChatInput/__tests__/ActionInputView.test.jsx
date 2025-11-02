@@ -151,7 +151,9 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenExposeTriadIcon", () => {
     />,
   );
 
-  const triggerButton = screen.getByRole("button", { name: "源语言 → 目标语言" });
+  const triggerButton = screen.getByRole("button", {
+    name: "源语言 → 目标语言",
+  });
   const icon = triggerButton.querySelector('[data-icon-name="language-triad"]');
 
   expect(triggerButton).not.toBeNull();

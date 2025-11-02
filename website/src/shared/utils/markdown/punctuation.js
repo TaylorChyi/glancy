@@ -4,8 +4,17 @@
  * 目的：
  *  - 识别可安全补空格的位置，并跳过代码块或数字场景，避免误改。
  */
-import { ASCII_PUNCTUATION, ASCII_PUNCTUATION_BOUNDARY } from "./constants/index.js";
-import { isAsciiDigit, isAsciiUppercase, isCjkPunctuation, isHanChar, isSpacingCandidate } from "./characters.js";
+import {
+  ASCII_PUNCTUATION,
+  ASCII_PUNCTUATION_BOUNDARY,
+} from "./constants/index.js";
+import {
+  isAsciiDigit,
+  isAsciiUppercase,
+  isCjkPunctuation,
+  isHanChar,
+  isSpacingCandidate,
+} from "./characters.js";
 
 function countBackticks(source, startIndex) {
   let length = 0;

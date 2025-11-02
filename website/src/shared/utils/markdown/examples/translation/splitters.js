@@ -52,7 +52,11 @@ export function splitInlineTranslation(prefix, rest) {
   return null;
 }
 
-export function splitFollowingTranslation(prefix, trimmedExampleBody, upcomingLine) {
+export function splitFollowingTranslation(
+  prefix,
+  trimmedExampleBody,
+  upcomingLine,
+) {
   if (!upcomingLine) {
     return null;
   }
@@ -72,8 +76,7 @@ export function splitFollowingTranslation(prefix, trimmedExampleBody, upcomingLi
     trimmedExampleBody,
     translationContent,
   );
-  const changedExample =
-    sanitizedSegments.exampleBody !== trimmedExampleBody;
+  const changedExample = sanitizedSegments.exampleBody !== trimmedExampleBody;
   const changedTranslation =
     sanitizedSegments.translationSegment !== translationContent;
   if (!changedExample && !changedTranslation) {
@@ -88,9 +91,10 @@ export function splitFollowingTranslation(prefix, trimmedExampleBody, upcomingLi
   );
   return {
     exampleLine: normalizedExample.replace(/[ \t]+$/u, ""),
-    translationLine: `${translationIndent}${sanitizedSegments.translationSegment}`.replace(
-      /[ \t]+$/u,
-      "",
-    ),
+    translationLine:
+      `${translationIndent}${sanitizedSegments.translationSegment}`.replace(
+        /[ \t]+$/u,
+        "",
+      ),
   };
 }

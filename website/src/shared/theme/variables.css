@@ -268,14 +268,26 @@
     );
     --menu-border: color-mix(in srgb, var(--border-color) 78%, transparent 22%);
     --menu-hover: color-mix(in srgb, var(--menu-bg) 80%, var(--color-text) 20%);
-    --menu-code-color: color-mix(in srgb, var(--color-text) 88%, transparent 12%);
-    --menu-name-color: color-mix(in srgb, var(--color-text) 70%, transparent 30%);
+    --menu-code-color: color-mix(
+      in srgb,
+      var(--color-text) 88%,
+      transparent 12%
+    );
+    --menu-name-color: color-mix(
+      in srgb,
+      var(--color-text) 70%,
+      transparent 30%
+    );
     --menu-check-color: color-mix(
       in srgb,
       var(--color-text) 65%,
       transparent 35%
     );
-    --menu-scroll-track: color-mix(in srgb, var(--menu-bg) 70%, transparent 30%);
+    --menu-scroll-track: color-mix(
+      in srgb,
+      var(--menu-bg) 70%,
+      transparent 30%
+    );
     --menu-scroll-thumb: color-mix(
       in srgb,
       var(--border-color) 55%,
@@ -286,7 +298,11 @@
       var(--border-color) 70%,
       transparent 30%
     );
-    --direction-icon: color-mix(in srgb, var(--color-text) 55%, transparent 45%);
+    --direction-icon: color-mix(
+      in srgb,
+      var(--color-text) 55%,
+      transparent 45%
+    );
     --text-primary: var(--sb-text);
     --text-muted: var(--sb-muted);
     --sb-scroll-track: color-mix(in srgb, var(--menu-bg) 60%, transparent 40%);

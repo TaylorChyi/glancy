@@ -123,13 +123,7 @@ const prepareSingleEntryScenario = async (entry) => {
  */
 const expectDictionarySnapshot = (
   result,
-  {
-    versionsLength,
-    activeVersionId,
-    entryId,
-    finalText,
-    streamText,
-  },
+  { versionsLength, activeVersionId, entryId, finalText, streamText },
 ) => {
   if (typeof versionsLength === "number") {
     expect(result.current.dictionaryActionBarProps.versions).toHaveLength(

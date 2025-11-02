@@ -74,12 +74,9 @@ export const useRetentionHandler = ({
   );
 
 export const useClearAllHandler = ({ clearHistory, runWithPending, user }) =>
-  useCallback(
-    async () => {
-      await runWithPending(ACTION_CLEAR_ALL, () => clearHistory(user));
-    },
-    [clearHistory, runWithPending, user],
-  );
+  useCallback(async () => {
+    await runWithPending(ACTION_CLEAR_ALL, () => clearHistory(user));
+  }, [clearHistory, runWithPending, user]);
 
 export const useClearLanguageHandler = ({
   clearHistoryByLanguage,

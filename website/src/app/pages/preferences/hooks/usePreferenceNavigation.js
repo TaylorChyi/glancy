@@ -69,5 +69,10 @@ export const usePreferenceNavigation = ({ initialSectionId, sections }) => {
     );
   }, []);
 
-  return { activeSectionId, activeSection, handleSectionSelect, setActiveSectionId };
+  return {
+    activeSectionId,
+    activeSection,
+    handleSectionSelect,
+    setActiveSectionId,
+  };
 };

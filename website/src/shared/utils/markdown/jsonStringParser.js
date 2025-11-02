@@ -147,4 +147,3 @@ export function readJsonString(source, startIndex) {
   }
   return { raw: result, closed };
 }
-

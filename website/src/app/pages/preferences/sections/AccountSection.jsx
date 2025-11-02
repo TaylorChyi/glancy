@@ -36,12 +36,8 @@ const AVATAR_SIZE = 72;
  * 复杂度：O(n)，n 为字段数量。
  */
 function AccountSection({ title, fields, headingId, identity, bindings }) {
-  const {
-    avatarInputId,
-    avatarInputRef,
-    onAvatarTrigger,
-    onAvatarChange,
-  } = useAvatarInteraction(identity);
+  const { avatarInputId, avatarInputRef, onAvatarTrigger, onAvatarChange } =
+    useAvatarInteraction(identity);
   const normalizedIdentity = useNormalizedIdentity(identity, title);
 
   return (

@@ -9,7 +9,10 @@
  * 影响范围：
  *  - 偏好设置数据分区的数据治理逻辑。
  */
-import { normalizeLanguageValue, toLanguageOptions } from "../dataSectionToolkit.js";
+import {
+  normalizeLanguageValue,
+  toLanguageOptions,
+} from "../dataSectionToolkit.js";
 
 describe("dataSectionToolkit", () => {
   /**

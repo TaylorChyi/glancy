@@ -126,7 +126,9 @@ test("Given base props When rendering Then nav wiring and measurement remain int
     expect(onPanelElementChange).toHaveBeenCalledWith(expect.any(HTMLElement)),
   );
   await waitFor(() =>
-    expect(onHeadingElementChange).toHaveBeenCalledWith(expect.any(HTMLElement)),
+    expect(onHeadingElementChange).toHaveBeenCalledWith(
+      expect.any(HTMLElement),
+    ),
   );
 
   const closeButton = screen.getByTestId("close-action");
@@ -165,7 +167,10 @@ test("Given missing reference component When rendering Then gracefully skip meas
       activeSectionId="account"
       onSectionSelect={jest.fn()}
       tablistLabel="Account sections"
-      body={{ className: "viewport-body", style: { backgroundColor: "rgb(1, 2, 3)" } }}
+      body={{
+        className: "viewport-body",
+        style: { backgroundColor: "rgb(1, 2, 3)" },
+      }}
       nav={{ classes: { container: "nav-container" } }}
       panel={{
         panelId: "account-panel",

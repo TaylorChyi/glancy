@@ -62,11 +62,7 @@ test("renders markdown tables with accessible structure", () => {
   expect(headers).toHaveLength(3);
   expect(
     headers.map((header) => stripZeroWidth(header.textContent ?? "")),
-  ).toEqual([
-    "对比词",
-    "核心判别准则",
-    "英文例句",
-  ]);
+  ).toEqual(["对比词", "核心判别准则", "英文例句"]);
   headers.forEach((header) => {
     expect(header).toHaveClass(styles["table-header-cell"]);
   });

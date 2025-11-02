@@ -41,7 +41,9 @@ export class LanguageCleanupCommand {
   }
 
   private normalizeLanguage(language: string): string | null {
-    const normalized = String(language ?? "").trim().toUpperCase();
+    const normalized = String(language ?? "")
+      .trim()
+      .toUpperCase();
     return normalized ? normalized : null;
   }
 

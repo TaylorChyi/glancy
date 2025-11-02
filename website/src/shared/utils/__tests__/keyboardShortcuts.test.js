@@ -47,11 +47,7 @@ test("captureKeysFromEvent preserves modifier order", () => {
     altKey: false,
     shiftKey: true,
   };
-  expect(captureKeysFromEvent(event)).toEqual([
-    "CONTROL",
-    "SHIFT",
-    "K",
-  ]);
+  expect(captureKeysFromEvent(event)).toEqual(["CONTROL", "SHIFT", "K"]);
   expect(captureKeysFromEvent({ ...event, key: "Control" })).toBeNull();
 });
 

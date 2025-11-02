@@ -16,21 +16,37 @@
   background-color: var(--sys-bg-dark);
 
   --color-bg: var(--night-surface);
-  --color-bg-muted: color-mix(in srgb, var(--night-surface) 85%, var(--night-panel) 15%);
+  --color-bg-muted: color-mix(
+    in srgb,
+    var(--night-surface) 85%,
+    var(--night-panel) 15%
+  );
   --color-surface: var(--night-panel);
-  --color-surface-alt: color-mix(in srgb, var(--night-panel) 85%, var(--night-border) 15%);
+  --color-surface-alt: color-mix(
+    in srgb,
+    var(--night-panel) 85%,
+    var(--night-border) 15%
+  );
   --color-text: var(--night-text);
   --color-text-muted: var(--night-muted);
   --color-text-inverse: var(--neutral-0);
   --highlight-color: var(--hl-light);
   --color-border: var(--night-border);
-  --color-border-strong: color-mix(in srgb, var(--night-border) 70%, var(--neutral-0) 30%);
+  --color-border-strong: color-mix(
+    in srgb,
+    var(--night-border) 70%,
+    var(--neutral-0) 30%
+  );
   --color-primary: var(--brand-dark-9);
   --color-primary-hover: var(--brand-dark-10);
   --color-primary-soft: var(--brand-dark-3);
   --color-primary-contrast: var(--night-surface);
   --color-link-light: var(--color-primary);
-  --color-link-dark: color-mix(in srgb, var(--color-primary) 68%, var(--neutral-0) 32%);
+  --color-link-dark: color-mix(
+    in srgb,
+    var(--color-primary) 68%,
+    var(--neutral-0) 32%
+  );
   --accent-color: var(--color-primary);
   --accent-color-strong: var(--color-primary-hover);
   --color-overlay-base: var(--night-surface);
@@ -49,7 +65,8 @@
   --sidebar-active-bg: var(--night-active);
   --sidebar-text-color: var(--night-text);
   --sidebar-muted-color: var(--night-muted);
-  --sidebar-shadow-elevated: 0 18px 42px color-mix(in srgb, var(--color-overlay-base) 45%, transparent 55%);
+  --sidebar-shadow-elevated: 0 18px 42px
+    color-mix(in srgb, var(--color-overlay-base) 45%, transparent 55%);
   --sidebar-input-bg: var(--night-input-bg);
   --sidebar-input-ring: var(--night-input-ring);
   --sidebar-bg: var(--sidebar-panel);

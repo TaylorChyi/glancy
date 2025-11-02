@@ -22,7 +22,10 @@ const normalizeKeys = (keys, fallback) => {
   return normalized.length > 0 ? normalized : fallback;
 };
 
-const parseActionKey = (rawAction) => String(rawAction ?? "").trim().toUpperCase();
+const parseActionKey = (rawAction) =>
+  String(rawAction ?? "")
+    .trim()
+    .toUpperCase();
 
 /**
  * 意图：合并外部快捷键列表与默认蓝图。
@@ -48,7 +51,10 @@ export function mergeShortcutLists(nextShortcuts) {
     if (!actionKey) {
       continue;
     }
-    const base = registry.get(actionKey) ?? { ...EMPTY_SHORTCUT, action: actionKey };
+    const base = registry.get(actionKey) ?? {
+      ...EMPTY_SHORTCUT,
+      action: actionKey,
+    };
     const keys = normalizeKeys(shortcut?.keys, base.keys);
     const defaultKeys = normalizeKeys(shortcut?.defaultKeys, base.defaultKeys);
     registry.set(actionKey, {

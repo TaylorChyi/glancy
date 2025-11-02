@@ -14,7 +14,10 @@
  *  - 后续若接入节流或观测逻辑，可在此文件扩展额外的副作用 Hook。
  */
 import { useEffect, useRef } from "react";
-import { UsernameEditorActions, UsernameEditorModes } from "./usernameEditorState.js";
+import {
+  UsernameEditorActions,
+  UsernameEditorModes,
+} from "./usernameEditorState.js";
 
 /**
  * 意图：当外部用户名变更时，同步更新状态机并重置草稿。

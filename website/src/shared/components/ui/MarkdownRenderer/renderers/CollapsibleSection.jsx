@@ -17,7 +17,11 @@ import CollapsibleBody from "./CollapsibleBody.jsx";
 import CollapsibleSummary from "./CollapsibleSummary.jsx";
 import SUMMARY_RENDERER_FLAG from "../constants/summaryRendererFlag.js";
 
-export default function CollapsibleSection({ children, depth = 2, injectBreaks }) {
+export default function CollapsibleSection({
+  children,
+  depth = 2,
+  injectBreaks,
+}) {
   const sectionId = useId();
   const [isOpen, setIsOpen] = useState(depth <= 2);
   const labelledBy = `${sectionId}-summary`;

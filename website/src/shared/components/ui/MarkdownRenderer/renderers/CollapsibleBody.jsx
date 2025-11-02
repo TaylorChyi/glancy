@@ -13,7 +13,12 @@ import PropTypes from "prop-types";
 
 import styles from "../MarkdownRenderer.module.css";
 
-export default function CollapsibleBody({ children, isOpen, contentId, labelId }) {
+export default function CollapsibleBody({
+  children,
+  isOpen,
+  contentId,
+  labelId,
+}) {
   return (
     <div
       id={contentId}

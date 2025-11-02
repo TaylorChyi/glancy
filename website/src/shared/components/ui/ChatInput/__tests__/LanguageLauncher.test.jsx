@@ -1,11 +1,19 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
 
 let LanguageLauncher;
 
 beforeAll(async () => {
-  ({ default: LanguageLauncher } = await import("../parts/LanguageLauncher.jsx"));
+  ({ default: LanguageLauncher } = await import(
+    "../parts/LanguageLauncher.jsx"
+  ));
 });
 
 /**
@@ -35,9 +43,7 @@ test("GivenLauncher_WhenOpening_ThenEmitSourceMenuOpen", async () => {
       sourceLanguageLabel="源语言"
       onSourceLanguageChange={handleSourceChange}
       targetLanguage="EN"
-      targetLanguageOptions={[
-        { value: "EN", label: "英文" },
-      ]}
+      targetLanguageOptions={[{ value: "EN", label: "英文" }]}
       targetLanguageLabel="目标语言"
       onTargetLanguageChange={jest.fn()}
       normalizeSourceLanguage={(value) => value}
@@ -76,9 +82,7 @@ test("GivenLauncher_WhenHoveringTargetRow_ThenSwitchVariant", async () => {
   render(
     <LanguageLauncher
       sourceLanguage="ZH"
-      sourceLanguageOptions={[
-        { value: "ZH", label: "中文" },
-      ]}
+      sourceLanguageOptions={[{ value: "ZH", label: "中文" }]}
       sourceLanguageLabel="源语言"
       onSourceLanguageChange={jest.fn()}
       targetLanguage="EN"
@@ -102,7 +106,9 @@ test("GivenLauncher_WhenHoveringTargetRow_ThenSwitchVariant", async () => {
   targetRow.focus();
 
   expect(handleMenuOpen).toHaveBeenCalledWith("target");
-  expect(await screen.findByRole("menuitemradio", { name: /法语/ })).toBeInTheDocument();
+  expect(
+    await screen.findByRole("menuitemradio", { name: /法语/ }),
+  ).toBeInTheDocument();
 });
 
 /**
@@ -143,7 +149,9 @@ test("GivenLauncher_WhenSelectingOption_ThenInvokeChangeAndClose", async () => {
   const trigger = screen.getByRole("button", { name: "源语言 → 目标语言" });
   await user.click(trigger);
 
-  const englishOption = await screen.findByRole("menuitemradio", { name: /英文/ });
+  const englishOption = await screen.findByRole("menuitemradio", {
+    name: /英文/,
+  });
   await user.click(englishOption);
 
   expect(handleSourceChange).toHaveBeenCalledWith("EN");
@@ -171,9 +179,7 @@ test("GivenOpenMenu_WhenHoveringAcrossZones_ThenRemainOpen", async () => {
     render(
       <LanguageLauncher
         sourceLanguage="ZH"
-        sourceLanguageOptions={[
-          { value: "ZH", label: "中文" },
-        ]}
+        sourceLanguageOptions={[{ value: "ZH", label: "中文" }]}
         sourceLanguageLabel="源语言"
         onSourceLanguageChange={jest.fn()}
         targetLanguage="EN"
@@ -194,7 +200,9 @@ test("GivenOpenMenu_WhenHoveringAcrossZones_ThenRemainOpen", async () => {
     const targetRow = await screen.findByRole("menuitem", { name: /目标语言/ });
     await user.hover(targetRow);
 
-    const frenchOption = await screen.findByRole("menuitemradio", { name: /法语/ });
+    const frenchOption = await screen.findByRole("menuitemradio", {
+      name: /法语/,
+    });
     await user.hover(frenchOption);
 
     await act(async () => {
@@ -226,15 +234,11 @@ test("GivenOpenMenu_WhenLeavingToDocument_ThenClose", async () => {
     render(
       <LanguageLauncher
         sourceLanguage="ZH"
-        sourceLanguageOptions={[
-          { value: "ZH", label: "中文" },
-        ]}
+        sourceLanguageOptions={[{ value: "ZH", label: "中文" }]}
         sourceLanguageLabel="源语言"
         onSourceLanguageChange={jest.fn()}
         targetLanguage="EN"
-        targetLanguageOptions={[
-          { value: "EN", label: "英文" },
-        ]}
+        targetLanguageOptions={[{ value: "EN", label: "英文" }]}
         targetLanguageLabel="目标语言"
         onTargetLanguageChange={jest.fn()}
         normalizeSourceLanguage={(value) => value}

@@ -41,8 +41,14 @@ jest.unstable_mockModule("@core/context", () => ({
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
-jest.unstable_mockModule("@core/store/dataGovernanceStore.ts", buildGovernanceModule);
-jest.unstable_mockModule("@core/store/dataGovernanceStore", buildGovernanceModule);
+jest.unstable_mockModule(
+  "@core/store/dataGovernanceStore.ts",
+  buildGovernanceModule,
+);
+jest.unstable_mockModule(
+  "@core/store/dataGovernanceStore",
+  buildGovernanceModule,
+);
 
 jest.unstable_mockModule("@core/store/historyStore.ts", () => ({
   useHistoryStore: mockUseHistoryStore,
@@ -65,7 +71,9 @@ let ACTION_CLEAR_LANGUAGE;
 let ACTION_RETENTION;
 
 beforeAll(async () => {
-  ({ useDataSectionController } = await import("../useDataSectionController.js"));
+  ({ useDataSectionController } = await import(
+    "../useDataSectionController.js"
+  ));
   ({ ACTION_CLEAR_ALL, ACTION_CLEAR_LANGUAGE, ACTION_RETENTION } = await import(
     "../dataSectionActions.js"
   ));
@@ -126,8 +134,12 @@ describe("useDataSectionController", () => {
 
     mockUseLanguage.mockReturnValue({ t: translations });
     mockUseUser.mockReturnValue({ user });
-    mockUseDataGovernanceStore.mockImplementation((selector) => selector(governanceState));
-    mockUseHistoryStore.mockImplementation((selector) => selector(historyState));
+    mockUseDataGovernanceStore.mockImplementation((selector) =>
+      selector(governanceState),
+    );
+    mockUseHistoryStore.mockImplementation((selector) =>
+      selector(historyState),
+    );
     mockUseWordStoreGetState.mockReturnValue({
       getEntry: jest.fn(),
     });
@@ -136,7 +148,8 @@ describe("useDataSectionController", () => {
     );
 
     // jsdom 提供 URL API；若执行环境缺失可在此补充 polyfill。
-    global.URL.createObjectURL = global.URL.createObjectURL ?? jest.fn(() => "blob:mock");
+    global.URL.createObjectURL =
+      global.URL.createObjectURL ?? jest.fn(() => "blob:mock");
     global.URL.revokeObjectURL = global.URL.revokeObjectURL ?? jest.fn();
   });
 

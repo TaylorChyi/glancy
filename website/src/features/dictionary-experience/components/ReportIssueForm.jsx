@@ -28,7 +28,11 @@ const TEXTAREA_ID = "report-description";
  * 输出：具备 legend 与选项的 fieldset。
  * 复杂度：O(1)。
  */
-function ReportIssueCategoryFieldset({ legendId, strings, segmentedControlProps }) {
+function ReportIssueCategoryFieldset({
+  legendId,
+  strings,
+  segmentedControlProps,
+}) {
   return (
     <fieldset className={styles.fieldset}>
       <legend id={legendId} className={styles.legend}>
@@ -48,7 +52,12 @@ function ReportIssueCategoryFieldset({ legendId, strings, segmentedControlProps 
  * 输出：包含 label 与 textarea 的表单片段。
  * 复杂度：O(1)。
  */
-function ReportIssueDescriptionField({ strings, description, submitting, onDescriptionChange }) {
+function ReportIssueDescriptionField({
+  strings,
+  description,
+  submitting,
+  onDescriptionChange,
+}) {
   return (
     <div className={styles.fieldset}>
       <label htmlFor={TEXTAREA_ID} className={styles.legend}>
@@ -184,7 +193,8 @@ ReportIssueForm.propTypes = {
     errorMessage: PropTypes.string.isRequired,
   }).isRequired,
   description: PropTypes.string.isRequired,
-  segmentedControlProps: ReportIssueCategoryFieldset.propTypes.segmentedControlProps,
+  segmentedControlProps:
+    ReportIssueCategoryFieldset.propTypes.segmentedControlProps,
   submitting: PropTypes.bool.isRequired,
   onDescriptionChange: PropTypes.func.isRequired,
 };

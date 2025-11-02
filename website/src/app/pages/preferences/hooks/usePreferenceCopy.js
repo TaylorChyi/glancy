@@ -32,8 +32,10 @@ const resolvePlanLabel = (user) => {
 const createAccountCopy = (translations) => ({
   defaultPhoneCode: translations.settingsAccountDefaultPhoneCode ?? "+86",
   changeAvatarLabel: translations.changeAvatar ?? "Change avatar",
-  bindingsTitle: translations.settingsAccountBindingTitle ?? "Connected accounts",
-  bindingStatus: translations.settingsAccountBindingStatusUnlinked ?? "Not linked",
+  bindingsTitle:
+    translations.settingsAccountBindingTitle ?? "Connected accounts",
+  bindingStatus:
+    translations.settingsAccountBindingStatusUnlinked ?? "Not linked",
   bindingActionLabel:
     translations.settingsAccountBindingActionPlaceholder ?? "Coming soon",
 });

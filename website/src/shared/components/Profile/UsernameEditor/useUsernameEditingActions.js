@@ -98,7 +98,10 @@ export const useUsernameEditingActions = ({
 
   const handleChange = useCallback(
     (event) => {
-      dispatch({ type: UsernameEditorActions.CHANGE, value: event.target.value });
+      dispatch({
+        type: UsernameEditorActions.CHANGE,
+        value: event.target.value,
+      });
     },
     [dispatch],
   );

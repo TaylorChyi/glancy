@@ -23,8 +23,14 @@ const toBoolean = (value) => Boolean(value);
 
 const buildNormalizedIdentity = (identity, title) => {
   const safeIdentity = identity ?? {};
-  const changeLabel = takeOrFallback(safeIdentity.changeLabel, DEFAULT_CHANGE_LABEL);
-  const labelFallback = takeOrFallback(safeIdentity.label, takeOrFallback(changeLabel, DEFAULT_AVATAR_LABEL));
+  const changeLabel = takeOrFallback(
+    safeIdentity.changeLabel,
+    DEFAULT_CHANGE_LABEL,
+  );
+  const labelFallback = takeOrFallback(
+    safeIdentity.label,
+    takeOrFallback(changeLabel, DEFAULT_AVATAR_LABEL),
+  );
 
   return {
     label: labelFallback,
@@ -46,5 +52,8 @@ const buildNormalizedIdentity = (identity, title) => {
  * 复杂度：O(1)。
  */
 export function useNormalizedIdentity(identity, title) {
-  return useMemo(() => buildNormalizedIdentity(identity, title), [identity, title]);
+  return useMemo(
+    () => buildNormalizedIdentity(identity, title),
+    [identity, title],
+  );
 }

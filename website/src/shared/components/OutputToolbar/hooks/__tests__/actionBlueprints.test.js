@@ -48,7 +48,9 @@ describe("buildBlueprintItems", () => {
       disabled: false,
       user: { id: "user" },
     });
-    const inactiveFavorite = inactiveItems.find((item) => item.key === "favorite");
+    const inactiveFavorite = inactiveItems.find(
+      (item) => item.key === "favorite",
+    );
 
     expect(inactiveFavorite?.icon.type).toBe(ThemeIcon);
     expect(inactiveFavorite?.icon.props.name).toBe("star-outline");

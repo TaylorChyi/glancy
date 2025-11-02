@@ -50,7 +50,11 @@ const useNormalizedValues = (draftEmail, requestedEmail) => {
     [normalizedDraftEmail, normalizedRequestedEmail],
   );
 
-  return { normalizedDraftEmail, normalizedRequestedEmail, isVerificationForDraft };
+  return {
+    normalizedDraftEmail,
+    normalizedRequestedEmail,
+    isVerificationForDraft,
+  };
 };
 
 const useEmailBindingHandlers = ({
@@ -62,13 +66,19 @@ const useEmailBindingHandlers = ({
   onConfirm,
   startCountdown,
 }) => {
-  const handleDraftEmailChange = useCallback((event) => {
-    setDraftEmail(event.target.value);
-  }, [setDraftEmail]);
+  const handleDraftEmailChange = useCallback(
+    (event) => {
+      setDraftEmail(event.target.value);
+    },
+    [setDraftEmail],
+  );
 
-  const handleVerificationCodeChange = useCallback((event) => {
-    setVerificationCode(event.target.value);
-  }, [setVerificationCode]);
+  const handleVerificationCodeChange = useCallback(
+    (event) => {
+      setVerificationCode(event.target.value);
+    },
+    [setVerificationCode],
+  );
 
   const handleRequestCode = useCallback(async () => {
     if (typeof onRequestCode !== "function") {
@@ -154,10 +164,28 @@ const buildViewModelParams = ({
 });
 
 export default function useEmailBindingController(props) {
-  const { email, mode, isSendingCode, isVerifying, isUnbinding, isAwaitingVerification, requestedEmail, onStart, onCancel, onRequestCode, onConfirm, onUnbind, t } = props;
+  const {
+    email,
+    mode,
+    isSendingCode,
+    isVerifying,
+    isUnbinding,
+    isAwaitingVerification,
+    requestedEmail,
+    onStart,
+    onCancel,
+    onRequestCode,
+    onConfirm,
+    onUnbind,
+    t,
+  } = props;
 
   const countdown = useCountdownTimer(COUNTDOWN_SECONDS);
-  const state = useEmailBindingState({ email, mode, resetCountdown: countdown.reset });
+  const state = useEmailBindingState({
+    email,
+    mode,
+    resetCountdown: countdown.reset,
+  });
   const normalized = useNormalizedValues(state.draftEmail, requestedEmail);
 
   const handlers = useEmailBindingHandlers({

@@ -9,7 +9,7 @@
  * 影响范围：
  *  - AvatarEditorModal 的视口生命周期管理。
  * 演进与TODO：
- *  - 后续可在此扩展键盘或可访问性相关副作用。 
+ *  - 后续可在此扩展键盘或可访问性相关副作用。
  */
 
 import { useEffect, useLayoutEffect } from "react";

@@ -29,7 +29,8 @@ jest.unstable_mockModule("@core/context", () => ({
   useLanguage: preferenceSectionsMocks.useLanguage,
   useUser: preferenceSectionsMocks.useUser,
   useTheme: preferenceSectionsMocks.useTheme,
-  useKeyboardShortcutContext: preferenceSectionsMocks.useKeyboardShortcutContext,
+  useKeyboardShortcutContext:
+    preferenceSectionsMocks.useKeyboardShortcutContext,
   KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
 }));
 
@@ -380,15 +381,15 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
     ...options.profilesApiOverrides,
   });
 
-  const redeemMock =
-    options.redeemMock ?? jest.fn().mockResolvedValue({});
+  const redeemMock = options.redeemMock ?? jest.fn().mockResolvedValue({});
   preferenceSectionsMocks.useRedemptionCodesApi.mockReturnValue({
     redeem: redeemMock,
     ...options.redemptionCodesApiOverrides,
   });
 
   const updateUsernameMock =
-    options.updateUsernameMock ?? jest.fn().mockResolvedValue({ username: user.username });
+    options.updateUsernameMock ??
+    jest.fn().mockResolvedValue({ username: user.username });
   preferenceSectionsMocks.useUsersApi.mockReturnValue({
     updateUsername: updateUsernameMock,
     unbindEmail: unbindEmailMock,

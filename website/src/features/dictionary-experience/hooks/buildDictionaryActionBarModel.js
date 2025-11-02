@@ -35,7 +35,6 @@ export function buildDictionaryActionBarModel({
   toggleFavoriteEntry,
   handleDeleteHistory,
   entry,
-  finalText,
   handleReport,
 }) {
   return {

@@ -25,9 +25,7 @@ import ICP from "@shared/components/ui/ICP";
 import PasswordInput from "@shared/components/ui/PasswordInput";
 import { useLanguage } from "@core/context";
 import { getBrandText, BRAND_LOGO_ICON } from "@shared/utils";
-import {
-  useAuthFormController,
-} from "./authFormController.js";
+import { useAuthFormController } from "./authFormController.js";
 
 const defaultIcons = {
   username: "user",
@@ -130,11 +128,7 @@ function AuthFormView({
         showCodeButton={showCodeButton}
         t={t}
       />
-      <AuthFormSwitch
-        switchLink={switchLink}
-        switchText={switchText}
-        t={t}
-      />
+      <AuthFormSwitch switchLink={switchLink} switchText={switchText} t={t} />
       <AuthMethodDivider label={otherOptionsLabel} />
       <AuthMethodSwitcher
         availableFormMethods={availableFormMethods}
@@ -237,8 +231,7 @@ function AuthFormSwitch({ switchLink, switchText, t }) {
 
   return (
     <div className={styles["auth-switch"]}>
-      {switchText}{" "}
-      <Link to={switchLink}>{switchLabel}</Link>
+      {switchText} <Link to={switchLink}>{switchLabel}</Link>
     </div>
   );
 }
@@ -296,7 +289,13 @@ function AuthFormFooter({ t }) {
   );
 }
 
-function AuthFeedbackHub({ popup, resetPopup, resetToast, toast, toastDismissLabel }) {
+function AuthFeedbackHub({
+  popup,
+  resetPopup,
+  resetToast,
+  toast,
+  toastDismissLabel,
+}) {
   return (
     <FeedbackHub
       popup={{

@@ -33,8 +33,6 @@ export function isApplePlatform({ navigatorLike } = {}) {
     return false;
   }
   const platform =
-    runtimeNavigator.userAgentData?.platform ||
-    runtimeNavigator.platform ||
-    "";
+    runtimeNavigator.userAgentData?.platform || runtimeNavigator.platform || "";
   return APPLE_PLATFORM_PATTERN.test(platform);
 }

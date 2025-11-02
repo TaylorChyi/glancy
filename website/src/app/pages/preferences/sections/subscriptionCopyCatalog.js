@@ -236,10 +236,7 @@ const createHistoryRetentionFeature = (context) => ({
     if (value === 0) {
       return context.unavailable;
     }
-    return formatWithTemplate(
-      context.historyTemplate,
-      value.toLocaleString(),
-    );
+    return formatWithTemplate(context.historyTemplate, value.toLocaleString());
   },
 });
 
@@ -255,10 +252,7 @@ const createSupportSloFeature = (context) => ({
     if (typeof hours !== "number" || hours <= 0) {
       return FALLBACK_VALUE;
     }
-    return formatWithTemplate(
-      context.supportTemplate,
-      hours.toLocaleString(),
-    );
+    return formatWithTemplate(context.supportTemplate, hours.toLocaleString());
   },
 });
 

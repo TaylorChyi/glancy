@@ -12,7 +12,13 @@
  *  - 若引入多按键序列（chord）或平台特定常量，可在此处新增命名导出并保持 freeze 语义。
  */
 
-const MODIFIER_TOKENS = Object.freeze(["MOD", "CONTROL", "META", "ALT", "SHIFT"]);
+const MODIFIER_TOKENS = Object.freeze([
+  "MOD",
+  "CONTROL",
+  "META",
+  "ALT",
+  "SHIFT",
+]);
 
 export const MODIFIER_ORDER = Object.freeze([...MODIFIER_TOKENS]);
 export const MODIFIER_SET = new Set(MODIFIER_TOKENS);

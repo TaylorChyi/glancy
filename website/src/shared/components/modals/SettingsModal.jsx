@@ -179,7 +179,9 @@ function SettingsModal({ open, onClose, initialSection }) {
             ) : null}
           </form>
         </SettingsSectionsViewport>
-        {avatarEditor ? <AvatarEditorModal {...avatarEditor.modalProps} /> : null}
+        {avatarEditor ? (
+          <AvatarEditorModal {...avatarEditor.modalProps} />
+        ) : null}
       </BaseModal>
       {redeemToast ? (
         <Toast

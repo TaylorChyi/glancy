@@ -82,7 +82,8 @@ function resolveLabel(key: LanguageVariantKey, label?: string): string {
 }
 
 function useVariantModel(input: VariantInput): VariantModel {
-  const { key, label, options, value, normalizeValue, onChange, onOpen } = input;
+  const { key, label, options, value, normalizeValue, onChange, onOpen } =
+    input;
 
   const normalizedOptions = useMemo(
     () => toNormalizedOptions(options, normalizeValue) as NormalizedOption[],
@@ -159,23 +160,24 @@ export default function useLanguageLauncher({
 
   const activeVariant = useMemo(
     () =>
-      variants.find((variant) => variant.key === activeKey) ?? variants[0] ?? null,
+      variants.find((variant) => variant.key === activeKey) ??
+      variants[0] ??
+      null,
     [activeKey, variants],
   );
 
-  const emitVariantOpen = useCallback(
-    (variant: VariantModel | null) => {
-      variant?.onOpen?.();
-    },
-    [],
-  );
+  const emitVariantOpen = useCallback((variant: VariantModel | null) => {
+    variant?.onOpen?.();
+  }, []);
 
   const handleToggle = useCallback(() => {
     setOpen((previous) => {
       const next = !previous;
       if (next) {
         const fallbackVariant =
-          variants.find((variant) => variant.key === activeKey) ?? variants[0] ?? null;
+          variants.find((variant) => variant.key === activeKey) ??
+          variants[0] ??
+          null;
         if (fallbackVariant) {
           setActiveKey(fallbackVariant.key);
           emitVariantOpen(fallbackVariant);
@@ -191,7 +193,8 @@ export default function useLanguageLauncher({
 
   const handleVariantEnter = useCallback(
     (key: LanguageVariantKey) => {
-      const targetVariant = variants.find((variant) => variant.key === key) ?? null;
+      const targetVariant =
+        variants.find((variant) => variant.key === key) ?? null;
       if (!targetVariant) {
         return;
       }

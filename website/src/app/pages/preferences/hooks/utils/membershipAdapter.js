@@ -22,7 +22,11 @@ const normalizePlan = (membershipType) => {
   return trimmed.length > 0 ? trimmed.toUpperCase() : "";
 };
 
-const buildSubscriptionUpdates = ({ normalizedPlan, expiresAt, subscription }) => {
+const buildSubscriptionUpdates = ({
+  normalizedPlan,
+  expiresAt,
+  subscription,
+}) => {
   const updates = {};
   if (normalizedPlan) {
     updates.planId = normalizedPlan;

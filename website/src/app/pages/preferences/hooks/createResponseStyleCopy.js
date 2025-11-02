@@ -92,7 +92,12 @@ const FIELD_BLUEPRINTS = [
   },
 ];
 
-const resolveTranslation = (translations, primaryKey, fallbackKey, fallback) => {
+const resolveTranslation = (
+  translations,
+  primaryKey,
+  fallbackKey,
+  fallback,
+) => {
   if (primaryKey && typeof translations[primaryKey] === "string") {
     return translations[primaryKey];
   }
@@ -103,22 +108,24 @@ const resolveTranslation = (translations, primaryKey, fallbackKey, fallback) => 
 };
 
 const createOptions = (translations) =>
-  OPTION_BLUEPRINTS.map(({
-    value,
-    labelKey,
-    descriptionKey,
-    fallbackLabel,
-    fallbackDescription,
-  }) => ({
-    value,
-    label: resolveTranslation(translations, labelKey, null, fallbackLabel),
-    description: resolveTranslation(
-      translations,
+  OPTION_BLUEPRINTS.map(
+    ({
+      value,
+      labelKey,
       descriptionKey,
-      null,
+      fallbackLabel,
       fallbackDescription,
-    ),
-  }));
+    }) => ({
+      value,
+      label: resolveTranslation(translations, labelKey, null, fallbackLabel),
+      description: resolveTranslation(
+        translations,
+        descriptionKey,
+        null,
+        fallbackDescription,
+      ),
+    }),
+  );
 
 const createFields = (translations) =>
   FIELD_BLUEPRINTS.map(
@@ -146,7 +153,12 @@ const createFields = (translations) =>
   );
 
 export const createResponseStyleCopy = (translations) => ({
-  loadingLabel: resolveTranslation(translations, "loading", "saving", "Loading..."),
+  loadingLabel: resolveTranslation(
+    translations,
+    "loading",
+    "saving",
+    "Loading...",
+  ),
   savingLabel: resolveTranslation(translations, "saving", null, "Saving..."),
   errorLabel: resolveTranslation(
     translations,

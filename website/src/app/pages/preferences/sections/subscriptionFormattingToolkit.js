@@ -248,7 +248,11 @@ export const formatCurrency = (amount, { currency, currencySymbol }) => {
 /**
  * 意图：构造限额类文案，统一零值与软上限说明。
  */
-export const formatQuota = (value, template, { zeroLabel, softLimitNote } = {}) => {
+export const formatQuota = (
+  value,
+  template,
+  { zeroLabel, softLimitNote } = {},
+) => {
   if (value === null || value === undefined) {
     return zeroLabel ?? FALLBACK_VALUE;
   }

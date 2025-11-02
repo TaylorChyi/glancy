@@ -20,7 +20,8 @@
   --component-modal-surface-muted: var(--color-surface-alt);
   --component-modal-border: var(--color-border);
   --component-modal-radius: var(--radius-3xl);
-  --component-modal-shadow: 0 24px 60px color-mix(in srgb, var(--color-overlay-base) 30%, transparent 70%);
+  --component-modal-shadow: 0 24px 60px
+    color-mix(in srgb, var(--color-overlay-base) 30%, transparent 70%);
   --component-modal-gap: var(--space-5);
   --component-modal-padding-inline: var(--space-5);
   --component-modal-padding-block: var(--space-5);

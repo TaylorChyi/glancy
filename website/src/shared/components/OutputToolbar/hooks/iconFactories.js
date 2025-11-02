@@ -16,13 +16,12 @@ import { createElement } from "react";
 
 import ThemeIcon from "@shared/components/ui/Icon";
 
-const createThemeIconFactory = (name, size) =>
-  () =>
-    createElement(ThemeIcon, {
-      name,
-      width: size,
-      height: size,
-    });
+const createThemeIconFactory = (name, size) => () =>
+  createElement(ThemeIcon, {
+    name,
+    width: size,
+    height: size,
+  });
 
 const FAVORITE_ICON_FACTORY = Object.freeze({
   active: createThemeIconFactory("star-solid", 22),

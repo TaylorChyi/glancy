@@ -4,7 +4,10 @@
  * 目的：
  *  - 为示例正文补齐分词空格，并在后续行解析额外的分段标记。
  */
-import { ASCII_PUNCTUATION, SEGMENTATION_MARKER_PATTERNS } from "../constants/index.js";
+import {
+  ASCII_PUNCTUATION,
+  SEGMENTATION_MARKER_PATTERNS,
+} from "../constants/index.js";
 import { isCjkPunctuation } from "../characters.js";
 import {
   collectExampleSegmentationAttachments,

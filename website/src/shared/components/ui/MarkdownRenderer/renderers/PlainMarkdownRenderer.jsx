@@ -18,11 +18,7 @@ import PropTypes from "prop-types";
 import styles from "../MarkdownRenderer.module.css";
 import joinClassNames from "../utils/joinClassNames.js";
 
-const MARKDOWN_SPECIFIC_KEYS = [
-  "remarkPlugins",
-  "rehypePlugins",
-  "components",
-];
+const MARKDOWN_SPECIFIC_KEYS = ["remarkPlugins", "rehypePlugins", "components"];
 
 export default function PlainMarkdownRenderer({
   children,

@@ -4,7 +4,10 @@
  * 目的：
  *  - 在安全前缀场景下补写冒号并处理连写标签，使链式格式化生效。
  */
-import { isInlineLabelTerminator, shouldSplitInlineLabel } from "../candidates.js";
+import {
+  isInlineLabelTerminator,
+  shouldSplitInlineLabel,
+} from "../candidates.js";
 
 export function restoreMissingLabelDelimiters(text) {
   const LABEL_TOKEN_PATTERN = /[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*/gu;

@@ -15,7 +15,14 @@ import {
 
 import { GEOMETRY_STRATEGY_ID } from "../hooks/cropStrategies/geometryStrategy.js";
 
-const buildMatrix = ({ scale, offsetX, offsetY, viewportSize, naturalWidth, naturalHeight }) => {
+const buildMatrix = ({
+  scale,
+  offsetX,
+  offsetY,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+}) => {
   const halfViewport = viewportSize / 2;
   const halfNaturalWidth = naturalWidth / 2;
   const halfNaturalHeight = naturalHeight / 2;
@@ -30,7 +37,8 @@ const buildMatrix = ({ scale, offsetX, offsetY, viewportSize, naturalWidth, natu
   };
 };
 
-const toMatrixString = ({ a, b, c, d, e, f }) => `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
+const toMatrixString = ({ a, b, c, d, e, f }) =>
+  `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
 
 describe("cropParameterResolver matrix helpers", () => {
   it("Given CSS matrix string When parseTransformMatrix Then returns affine components", () => {
@@ -168,9 +176,7 @@ describe("resolveCropParameters calibration", () => {
     const getComputedStyleSpy = jest
       .spyOn(window, "getComputedStyle")
       .mockReturnValue({ transform: toMatrixString(matrix) });
-    const consoleSpy = jest
-      .spyOn(console, "warn")
-      .mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = resolveCropParameters({
       imageRef: { current: document.createElement("img") },
@@ -273,9 +279,7 @@ describe("resolveCropParameters calibration", () => {
     const getComputedStyleSpy = jest
       .spyOn(window, "getComputedStyle")
       .mockReturnValue({ transform: toMatrixString(adjustedMatrix) });
-    const consoleSpy = jest
-      .spyOn(console, "warn")
-      .mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = resolveCropParameters({
       imageRef: { current: document.createElement("img") },

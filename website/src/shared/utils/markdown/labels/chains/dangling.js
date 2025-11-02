@@ -9,7 +9,10 @@ import {
   DANGLING_LABEL_SEPARATOR_PATTERN,
   DANGLING_LABEL_SPACE_CHAIN_PATTERN,
 } from "../../constants/index.js";
-import { computeListIndentation, deriveLineIndentation } from "../../indentation.js";
+import {
+  computeListIndentation,
+  deriveLineIndentation,
+} from "../../indentation.js";
 import { shouldSplitInlineLabel } from "../candidates.js";
 
 export function resolveDanglingLabelSeparators(text) {

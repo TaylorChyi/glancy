@@ -64,9 +64,12 @@ function usePrefersReducedMotion() {
 
   useEffect(() => {
     const mediaQueryList = getReducedMotionMediaQueryList();
-    const unsubscribe = subscribeReducedMotionChange(mediaQueryList, (event) => {
-      setPrefersReducedMotion(Boolean(event?.matches));
-    });
+    const unsubscribe = subscribeReducedMotionChange(
+      mediaQueryList,
+      (event) => {
+        setPrefersReducedMotion(Boolean(event?.matches));
+      },
+    );
     return () => {
       unsubscribe();
     };

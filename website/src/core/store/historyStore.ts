@@ -42,7 +42,8 @@ const historyApiGateway: HistoryApiGateway = {
   clearRecords: (params) => api.searchRecords.clearSearchRecords(params),
   deleteRecord: (params) => api.searchRecords.deleteSearchRecord(params),
   favoriteRecord: (params) => api.searchRecords.favoriteSearchRecord(params),
-  unfavoriteRecord: (params) => api.searchRecords.unfavoriteSearchRecord(params),
+  unfavoriteRecord: (params) =>
+    api.searchRecords.unfavoriteSearchRecord(params),
 };
 
 export const useHistoryStore = createPersistentStore<HistoryState>({

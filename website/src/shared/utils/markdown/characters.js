@@ -4,7 +4,10 @@
  * 目的：
  *  - 暴露字符级工具函数，为空格补写、示例分词等提供支撑。
  */
-import { CJK_TRANSLATION_PUNCTUATION_PATTERN, HAN_SCRIPT_PATTERN } from "./constants/index.js";
+import {
+  CJK_TRANSLATION_PUNCTUATION_PATTERN,
+  HAN_SCRIPT_PATTERN,
+} from "./constants/index.js";
 
 export function isAsciiDigit(char) {
   return char >= "0" && char <= "9";
@@ -23,7 +26,9 @@ export function isHanChar(char) {
 }
 
 export function isCjkPunctuation(char) {
-  return /[\u3000-\u303F\uFF00-\uFF65。，；：！？、（）「」『』《》〈〉【】]/u.test(char);
+  return /[\u3000-\u303F\uFF00-\uFF65。，；：！？、（）「」『』《》〈〉【】]/u.test(
+    char,
+  );
 }
 
 export function isSpacingCandidate(char) {

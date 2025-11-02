@@ -25,12 +25,24 @@ import {
 } from "./subscriptionFormattingToolkit.js";
 
 const deriveLabelConfig = (translations) => ({
-  badgeCurrent: safeString(translations.subscriptionPlanCurrentBadge, "当前套餐"),
-  badgeSelected: safeString(translations.subscriptionPlanSelectedBadge, "已选择"),
+  badgeCurrent: safeString(
+    translations.subscriptionPlanCurrentBadge,
+    "当前套餐",
+  ),
+  badgeSelected: safeString(
+    translations.subscriptionPlanSelectedBadge,
+    "已选择",
+  ),
   badgeLocked: safeString(translations.subscriptionPlanLockedBadge, "仅兑换"),
   freePrice: safeString(translations.subscriptionPlanFreePrice, "免费"),
-  monthlyTemplate: safeString(translations.subscriptionPriceMonthly, "{amount}/月"),
-  yearlyTemplate: safeString(translations.subscriptionPriceYearly, "{amount}/年"),
+  monthlyTemplate: safeString(
+    translations.subscriptionPriceMonthly,
+    "{amount}/月",
+  ),
+  yearlyTemplate: safeString(
+    translations.subscriptionPriceYearly,
+    "{amount}/年",
+  ),
   yearlyWithEquivalentTemplate:
     translations.subscriptionPriceYearlyWithEquivalent,
   nextRenewalTemplate: safeString(

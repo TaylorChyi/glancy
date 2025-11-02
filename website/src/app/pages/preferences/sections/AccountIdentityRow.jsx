@@ -50,7 +50,9 @@ function AccountIdentityRow({
           className={styles["identity-avatar-image"]}
         />
         {identity.displayName ? (
-          <span className={styles["visually-hidden"]}>{identity.displayName}</span>
+          <span className={styles["visually-hidden"]}>
+            {identity.displayName}
+          </span>
         ) : null}
       </dd>
       <div className={styles["detail-action"]}>

@@ -118,7 +118,10 @@ export class HistoryMaintenanceCoordinator {
     return this.toggleFavoriteCommand.unfavorite(identifier, user, versionId);
   }
 
-  public applyRetentionPolicy(retentionDays: number | null, user?: User | null) {
+  public applyRetentionPolicy(
+    retentionDays: number | null,
+    user?: User | null,
+  ) {
     return this.retentionCommand.execute(retentionDays, user);
   }
 }

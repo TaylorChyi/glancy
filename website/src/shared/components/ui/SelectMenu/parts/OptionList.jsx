@@ -83,7 +83,9 @@ export default function OptionList({
               title={option.description || option.label}
             >
               <span className={styles["menu-option-text"]}>
-                <span className={styles["menu-option-label"]}>{option.label}</span>
+                <span className={styles["menu-option-label"]}>
+                  {option.label}
+                </span>
                 {option.description ? (
                   <span className={styles["menu-option-description"]}>
                     {option.description}

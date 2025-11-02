@@ -95,7 +95,11 @@ function LanguageMenuList({ options, currentValue, onSelect }) {
   return options.map((option) => {
     const isActive = option.value === currentValue;
     return (
-      <li key={option.value} role="none" className={styles["language-menu-item"]}>
+      <li
+        key={option.value}
+        role="none"
+        className={styles["language-menu-item"]}
+      >
         <button
           type="button"
           role="menuitemradio"

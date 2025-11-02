@@ -12,10 +12,7 @@
  *  - 可在此扩展碰撞检测或尺寸缓存以优化性能。
  */
 import { useCallback } from "react";
-import {
-  computePopoverPosition,
-  getViewportMetrics,
-} from "./placementEngine";
+import { computePopoverPosition, getViewportMetrics } from "./placementEngine";
 
 function resolveNextPosition({
   anchorRef,

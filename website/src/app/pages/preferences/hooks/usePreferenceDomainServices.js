@@ -19,7 +19,11 @@ import { createResponseStyleCopy } from "./createResponseStyleCopy.js";
 import { useSubscriptionBlueprint } from "./useSubscriptionBlueprint.js";
 import { usePreferenceApiClients } from "./usePreferenceApiClients.js";
 
-export const usePreferenceDomainServices = ({ translations, user, setUser }) => {
+export const usePreferenceDomainServices = ({
+  translations,
+  user,
+  setUser,
+}) => {
   const {
     emailBinding,
     updateUsernameRequest,
@@ -35,9 +39,10 @@ export const usePreferenceDomainServices = ({ translations, user, setUser }) => 
     setUser,
     redeemCodeRequest,
   });
-  const responseStyleCopy = useMemo(() => createResponseStyleCopy(translations), [
-    translations,
-  ]);
+  const responseStyleCopy = useMemo(
+    () => createResponseStyleCopy(translations),
+    [translations],
+  );
   const responseStylePreferences = useResponseStylePreferences({
     user,
     fetchProfile,

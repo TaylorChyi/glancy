@@ -74,8 +74,7 @@ const subscription = {
   subscriptionPlanFreePrice: "Free",
   subscriptionPriceMonthly: "{amount} / month",
   subscriptionPriceYearly: "{amount} / year",
-  subscriptionPriceYearlyWithEquivalent:
-    "{amount} (avg. {equivalent} / month)",
+  subscriptionPriceYearlyWithEquivalent: "{amount} (avg. {equivalent} / month)",
   subscriptionBillingCycleMonthly: "Monthly",
   subscriptionBillingCycleYearly: "Yearly",
   subscriptionNextRenewalTemplate: "Next renewal: {value}",

@@ -14,7 +14,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { normalizeLanguageValue, toLanguageOptions } from "./dataSectionToolkit.js";
+import {
+  normalizeLanguageValue,
+  toLanguageOptions,
+} from "./dataSectionToolkit.js";
 
 export const useDataSectionLanguageSelection = (history, translations) => {
   const options = useMemo(

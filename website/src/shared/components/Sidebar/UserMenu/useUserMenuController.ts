@@ -1,5 +1,8 @@
 import { useRef } from "react";
-import type { UserMenuController, UserMenuControllerOptions } from "./contracts";
+import type {
+  UserMenuController,
+  UserMenuControllerOptions,
+} from "./contracts";
 import {
   useActiveItemFocus,
   useItemRefs,
@@ -23,10 +26,12 @@ export function useUserMenuController({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const { itemRefs, setItemRef } = useItemRefs();
 
-  const { open, activeIndex, setActiveIndex, toggle, close } = useMenuOpenState({
-    items,
-    triggerRef,
-  });
+  const { open, activeIndex, setActiveIndex, toggle, close } = useMenuOpenState(
+    {
+      items,
+      triggerRef,
+    },
+  );
 
   useOutsideAndTabGuards({ open, close, rootRef, itemRefs });
 

@@ -79,7 +79,5 @@ test("parseSse preserves embedded newlines without data prefix", async () => {
   for await (const evt of parseSse(stream)) {
     events.push(evt);
   }
-  expect(events).toEqual([
-    { event: "message", data: "Example:\n第二行释义" },
-  ]);
+  expect(events).toEqual([{ event: "message", data: "Example:\n第二行释义" }]);
 });

@@ -37,7 +37,11 @@ describe("placementEngine helpers", () => {
    *  - 覆盖重复元素被去除的场景。
    */
   test("Given duplicate fallbacks When computing preferred placements Then duplicates are removed", () => {
-    const result = computePreferredPlacements("bottom", ["bottom", "top", "left"]);
+    const result = computePreferredPlacements("bottom", [
+      "bottom",
+      "top",
+      "left",
+    ]);
     expect(result).toEqual(["bottom", "top", "left"]);
   });
 

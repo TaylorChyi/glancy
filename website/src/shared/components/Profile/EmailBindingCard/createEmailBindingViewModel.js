@@ -13,7 +13,9 @@
  *  - 若后续引入多步骤流程，可在此扩展 flow.sections 支持动态步骤数量。
  */
 const buildStatusTone = (hasBoundEmail) =>
-  hasBoundEmail ? { label: "status-active", text: "active" } : { label: "status-inactive", text: "inactive" };
+  hasBoundEmail
+    ? { label: "status-active", text: "active" }
+    : { label: "status-inactive", text: "inactive" };
 
 const buildSummaryLabel = (hasBoundEmail, t) =>
   hasBoundEmail ? t.emailBoundDescription : t.emailUnboundDescription;
@@ -49,7 +51,12 @@ const buildSendCodeLabel = (remainingSeconds, t) => {
   return t.emailSendCode;
 };
 
-const buildHeaderViewModel = ({ hasBoundEmail, statusTone, summaryLabel, t }) => ({
+const buildHeaderViewModel = ({
+  hasBoundEmail,
+  statusTone,
+  summaryLabel,
+  t,
+}) => ({
   title: t.emailBindingTitle,
   subtitle: summaryLabel,
   statusLabel: hasBoundEmail ? t.emailStatusBound : t.emailStatusUnbound,
@@ -98,7 +105,12 @@ const buildSendCodeButtonViewModel = ({
   disabled: isSendingCode || remainingSeconds > 0,
 });
 
-const buildConfirmButtonViewModel = ({ isVerifying, confirmButtonLabel, isSubmitDisabled, t }) => ({
+const buildConfirmButtonViewModel = ({
+  isVerifying,
+  confirmButtonLabel,
+  isSubmitDisabled,
+  t,
+}) => ({
   label: isVerifying ? t.emailVerifying : confirmButtonLabel,
   disabled: isSubmitDisabled,
 });
@@ -200,7 +212,11 @@ const composeEditingViewModel = ({
   onConfirm,
 }) => {
   const flow = buildFlowViewModel(t, isAwaitingVerification);
-  const emailField = buildEmailFieldViewModel(draftEmail, onDraftEmailChange, t);
+  const emailField = buildEmailFieldViewModel(
+    draftEmail,
+    onDraftEmailChange,
+    t,
+  );
   const codeField = buildCodeFieldViewModel({
     verificationCode,
     onVerificationCodeChange,

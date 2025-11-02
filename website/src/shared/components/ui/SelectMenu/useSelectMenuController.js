@@ -15,16 +15,10 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";
 
-import {
-  normalizeOptions,
-  resolveDisplayState,
-} from "./optionNormalizer.js";
+import { normalizeOptions, resolveDisplayState } from "./optionNormalizer.js";
 
 const useSelectMenuModel = ({ options, value, placeholder, ariaLabel }) => {
-  const normalizedOptions = useMemo(
-    () => normalizeOptions(options),
-    [options],
-  );
+  const normalizedOptions = useMemo(() => normalizeOptions(options), [options]);
 
   const normalizedValue = value != null ? String(value) : "";
   const displayState = useMemo(
@@ -67,14 +61,13 @@ const useTriggerKeyDownHandler = ({ hasOptions, menuRef, setOpen }) =>
           }
           const direction = event.key;
           requestAnimationFrame(() => {
-            const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
+            const items =
+              menuRef.current?.querySelectorAll('[role="menuitem"]');
             if (!items || items.length === 0) {
               return;
             }
             const index = direction === "ArrowUp" ? items.length - 1 : 0;
-            items[index]
-              ?.querySelector("button, [href], [tabindex]")
-              ?.focus();
+            items[index]?.querySelector("button, [href], [tabindex]")?.focus();
           });
           return true;
         });

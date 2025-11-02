@@ -42,9 +42,8 @@ function resolveTranslationSegments(prefix, rest, nextLine) {
     return { lines, consumed: 1 };
   }
 
-  const fallbackTranslation = extractParentheticalTranslation(
-    trimmedExampleBody,
-  );
+  const fallbackTranslation =
+    extractParentheticalTranslation(trimmedExampleBody);
   if (fallbackTranslation) {
     const { exampleBody, translation } = fallbackTranslation;
     const normalizedExample = exampleBody

@@ -23,7 +23,11 @@
     --chat-bubble-bg: var(--neutral-100);
     --chat-bubble-user-bg: var(--brand-surface-light);
     --body-bg: var(--neutral-0);
-    --sidebar-surface: color-mix(in srgb, var(--neutral-0) 94%, var(--neutral-200) 6%);
+    --sidebar-surface: color-mix(
+      in srgb,
+      var(--neutral-0) 94%,
+      var(--neutral-200) 6%
+    );
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
 

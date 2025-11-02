@@ -44,7 +44,10 @@ export const useLanguageContextState = ({
   targetLanguage,
   translations,
 }) => {
-  const languageLabels = useMemo(() => createLanguageLabels(translations), [translations]);
+  const languageLabels = useMemo(
+    () => createLanguageLabels(translations),
+    [translations],
+  );
   return useMemo(
     () =>
       resolveLanguageContext({
@@ -59,9 +62,17 @@ export const useLanguageContextState = ({
 };
 
 export const useCategoryOptionsState = (categories, translations) =>
-  useMemo(() => createCategoryOptions(categories, translations), [categories, translations]);
+  useMemo(
+    () => createCategoryOptions(categories, translations),
+    [categories, translations],
+  );
 
-export const useSummaryItemsState = (term, language, translations, languageContext) =>
+export const useSummaryItemsState = (
+  term,
+  language,
+  translations,
+  languageContext,
+) =>
   useMemo(
     () =>
       buildSummaryItems({

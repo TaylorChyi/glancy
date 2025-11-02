@@ -46,7 +46,8 @@ HistoryCaptureField.propTypes = {
     options: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string.isRequired,
-        value: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]).isRequired,
+        value: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
+          .isRequired,
         label: PropTypes.string.isRequired,
       }),
     ).isRequired,
@@ -169,12 +170,7 @@ LanguageHistoryField.propTypes = {
   styles: PropTypes.object.isRequired,
 };
 
-export const DataActionsField = ({
-  copy,
-  control,
-  isClearingAll,
-  styles,
-}) => (
+export const DataActionsField = ({ copy, control, isClearingAll, styles }) => (
   <div className={styles["control-field"]}>
     <span className={styles["control-label"]}>{copy.label}</span>
     <p className={styles.description}>{copy.description}</p>

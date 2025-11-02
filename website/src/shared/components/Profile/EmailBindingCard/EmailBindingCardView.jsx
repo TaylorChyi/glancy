@@ -89,7 +89,8 @@ const editingPropType = PropTypes.shape({
 }).isRequired;
 
 function EmailBindingHeader({ header }) {
-  const statusClassName = STATUS_CLASSNAME[header.statusClassName] ?? styles["status-inactive"];
+  const statusClassName =
+    STATUS_CLASSNAME[header.statusClassName] ?? styles["status-inactive"];
   return (
     <header className={styles.header}>
       <div>
@@ -109,7 +110,9 @@ function FlowIndicator({ flow }) {
   return (
     <div className={styles.flow} aria-hidden="true">
       <div className={styles["flow-item"]}>
-        <span className={`${styles["flow-dot"]} ${styles["flow-dot-active"]}`}>1</span>
+        <span className={`${styles["flow-dot"]} ${styles["flow-dot-active"]}`}>
+          1
+        </span>
         <span className={styles["flow-label"]}>{flow.stepInputLabel}</span>
       </div>
       <span className={styles["flow-divider"]} />

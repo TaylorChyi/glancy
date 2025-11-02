@@ -103,7 +103,7 @@ const muteConsoleError = () => {
  */
 const createAbortAwareStream = (signal, abortError) =>
   (async function* () {
-    /* eslint-disable-next-line require-yield, no-constant-condition */
+    /* eslint-disable-next-line no-constant-condition */
     if (false) {
       yield undefined;
     }
@@ -170,7 +170,8 @@ describe("useDictionaryExperience/lifecycle", () => {
       createAbortAwareStream(signal, abortError),
     );
 
-    const { restore: restoreConsole, spy: consoleErrorSpy } = muteConsoleError();
+    const { restore: restoreConsole, spy: consoleErrorSpy } =
+      muteConsoleError();
     const { result, unmount } = renderHook(() => useDictionaryExperience());
 
     try {

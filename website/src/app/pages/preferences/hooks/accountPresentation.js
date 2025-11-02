@@ -53,7 +53,11 @@ export const buildUsernameField = ({
   },
 });
 
-export const buildEmailField = ({ translations, accountSnapshot, emailAction }) => ({
+export const buildEmailField = ({
+  translations,
+  accountSnapshot,
+  emailAction,
+}) => ({
   id: "email",
   label: translations.settingsAccountEmail ?? "Email",
   value: accountSnapshot.emailValue,

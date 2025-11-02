@@ -55,7 +55,9 @@ function parseNumericDimension(value) {
   if (!trimmed) {
     return null;
   }
-  const match = trimmed.match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s*([a-zA-Z%]+))?/u);
+  const match = trimmed.match(
+    /^(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s*([a-zA-Z%]+))?/u,
+  );
   if (!match) {
     return null;
   }

@@ -6,7 +6,10 @@
  */
 export * from "./candidates.js";
 export { ensureInlineLabelLineBreak } from "./spacing.js";
-export { normalizeLabelBreakArtifacts, enforceInlineLabelBoundary } from "./boundaries.js";
+export {
+  normalizeLabelBreakArtifacts,
+  enforceInlineLabelBoundary,
+} from "./boundaries.js";
 export {
   expandCollapsedLabelChains,
   separateAdjacentInlineLabels,

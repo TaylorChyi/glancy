@@ -55,25 +55,13 @@ export const parseTransformMatrix = (transform) => {
       .slice(9, -1)
       .split(",")
       .map((value) => Number(value.trim()));
-    if (components.length !== 16 || components.some((value) => !Number.isFinite(value))) {
+    if (
+      components.length !== 16 ||
+      components.some((value) => !Number.isFinite(value))
+    ) {
       return null;
     }
-    const [
-      m11,
-      m12,
-      ,
-      ,
-      m21,
-      m22,
-      ,
-      ,
-      ,
-      ,
-      ,
-      ,
-      m41,
-      m42,
-    ] = components;
+    const [m11, m12, , , m21, m22, , , , , , , m41, m42] = components;
 
     return {
       a: m11,
@@ -90,7 +78,10 @@ export const parseTransformMatrix = (transform) => {
       .slice(7, -1)
       .split(",")
       .map((value) => Number(value.trim()));
-    if (components.length !== 6 || components.some((value) => !Number.isFinite(value))) {
+    if (
+      components.length !== 6 ||
+      components.some((value) => !Number.isFinite(value))
+    ) {
       return null;
     }
     const [a, b, c, d, e, f] = components;
@@ -116,15 +107,20 @@ export const computeCropRectFromMatrix = ({
   naturalHeight,
 }) => {
   const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
-  if (!Number.isFinite(determinant) || Math.abs(determinant) < SAFE_DETERMINANT_THRESHOLD) {
+  if (
+    !Number.isFinite(determinant) ||
+    Math.abs(determinant) < SAFE_DETERMINANT_THRESHOLD
+  ) {
     return null;
   }
 
   const transformPoint = (x, y) => {
     const translatedX = x - matrix.e;
     const translatedY = y - matrix.f;
-    const naturalX = (matrix.d * translatedX - matrix.c * translatedY) / determinant;
-    const naturalY = (-matrix.b * translatedX + matrix.a * translatedY) / determinant;
+    const naturalX =
+      (matrix.d * translatedX - matrix.c * translatedY) / determinant;
+    const naturalY =
+      (-matrix.b * translatedX + matrix.a * translatedY) / determinant;
     return { x: naturalX, y: naturalY };
   };
 
@@ -135,7 +131,11 @@ export const computeCropRectFromMatrix = ({
     transformPoint(viewportSize, viewportSize),
   ];
 
-  if (corners.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
+  if (
+    corners.some(
+      (point) => !Number.isFinite(point.x) || !Number.isFinite(point.y),
+    )
+  ) {
     return null;
   }
 
@@ -164,7 +164,12 @@ export const computeCropRectFromMatrix = ({
   };
 };
 
-const resolveCropRectUsingMatrix = ({ image, viewportSize, naturalWidth, naturalHeight }) => {
+const resolveCropRectUsingMatrix = ({
+  image,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+}) => {
   const view = image?.ownerDocument?.defaultView;
   if (!view || viewportSize <= 0) {
     return null;

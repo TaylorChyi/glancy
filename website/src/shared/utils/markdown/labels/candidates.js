@@ -27,7 +27,9 @@ function matchesDynamicInlineLabel(candidate) {
   if (!candidate) {
     return false;
   }
-  return INLINE_LABEL_DYNAMIC_PATTERNS.some((pattern) => pattern.test(candidate));
+  return INLINE_LABEL_DYNAMIC_PATTERNS.some((pattern) =>
+    pattern.test(candidate),
+  );
 }
 
 export function isInlineLabelTerminator(char) {

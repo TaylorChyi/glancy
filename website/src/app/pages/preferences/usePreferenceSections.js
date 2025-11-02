@@ -28,14 +28,15 @@ function usePreferenceSections({ initialSectionId }) {
     user,
     setUser,
   });
-  const { accountModel, avatarEditorModalProps } = usePreferenceAvatarAndAccount({
-    translations,
-    preferenceCopy: domainServices.preferenceCopy,
-    emailBinding: domainServices.emailBinding,
-    updateUsernameRequest: domainServices.updateUsernameRequest,
-    user,
-    setUser,
-  });
+  const { accountModel, avatarEditorModalProps } =
+    usePreferenceAvatarAndAccount({
+      translations,
+      preferenceCopy: domainServices.preferenceCopy,
+      emailBinding: domainServices.emailBinding,
+      updateUsernameRequest: domainServices.updateUsernameRequest,
+      user,
+      setUser,
+    });
 
   const sections = useSectionsBlueprint({
     translations,

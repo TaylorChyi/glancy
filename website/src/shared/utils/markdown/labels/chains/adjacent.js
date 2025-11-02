@@ -4,8 +4,14 @@
  * 目的：
  *  - 识别紧邻的标签并补充换行、缩进或展示格式。
  */
-import { ADJACENT_LABEL_PATTERN, INLINE_LABEL_TOKENS } from "../../constants/index.js";
-import { computeListIndentation, deriveLineIndentation } from "../../indentation.js";
+import {
+  ADJACENT_LABEL_PATTERN,
+  INLINE_LABEL_TOKENS,
+} from "../../constants/index.js";
+import {
+  computeListIndentation,
+  deriveLineIndentation,
+} from "../../indentation.js";
 import {
   formatSenseLabel,
   normalizeInlineLabelCandidate,

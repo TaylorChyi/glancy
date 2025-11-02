@@ -18,7 +18,12 @@ import usePointerControls from "./usePointerControls.js";
 import useAvatarCropper from "./useAvatarCropper.js";
 import useZoomControls from "./useZoomControls.js";
 
-const useControllerDependencies = ({ open, source, onConfirm, isProcessing }) => {
+const useControllerDependencies = ({
+  open,
+  source,
+  onConfirm,
+  isProcessing,
+}) => {
   const viewport = useAvatarViewportModel({ open, source });
   const pointer = usePointerControls({
     open,

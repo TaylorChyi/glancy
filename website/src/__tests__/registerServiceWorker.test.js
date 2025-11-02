@@ -47,11 +47,16 @@ describe("createQueueServiceWorkerRegistration", () => {
     });
 
     queueRegistration();
-    expect(windowStub.addEventListener).toHaveBeenCalledWith("load", expect.any(Function));
+    expect(windowStub.addEventListener).toHaveBeenCalledWith(
+      "load",
+      expect.any(Function),
+    );
 
     await loadListener();
     expect(navigatorStub.serviceWorker.register).toHaveBeenCalledTimes(1);
-    expect(navigatorStub.serviceWorker.register).toHaveBeenCalledWith("/service-worker.js");
+    expect(navigatorStub.serviceWorker.register).toHaveBeenCalledWith(
+      "/service-worker.js",
+    );
 
     queueRegistration();
     expect(windowStub.addEventListener).toHaveBeenCalledTimes(1);

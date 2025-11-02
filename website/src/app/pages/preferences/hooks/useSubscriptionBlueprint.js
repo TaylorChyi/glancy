@@ -13,7 +13,11 @@
 import { useMemo } from "react";
 import { buildSubscriptionSectionProps } from "../sections/subscriptionBlueprint.js";
 
-export const useSubscriptionBlueprint = ({ translations, user, handleRedeem }) =>
+export const useSubscriptionBlueprint = ({
+  translations,
+  user,
+  handleRedeem,
+}) =>
   useMemo(
     () =>
       buildSubscriptionSectionProps({

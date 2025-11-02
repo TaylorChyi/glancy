@@ -65,7 +65,9 @@ test("Given default sections When reading blueprint Then general leads navigatio
   );
 
   await waitFor(() => {
-    expect(context.fetchProfileMock).toHaveBeenCalledWith({ token: "token-123" });
+    expect(context.fetchProfileMock).toHaveBeenCalledWith({
+      token: "token-123",
+    });
   });
 
   await waitFor(() => {
@@ -87,7 +89,9 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(result.current.activeSectionId).toBe("general");
   expect(result.current.panel.headingId).toBe("general-section-heading");
   expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-  expect(result.current.panel.modalHeadingId).toBe("settings-modal-fallback-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
   expect(result.current.panel.modalHeadingText).toBe("General");
   const accountSection = result.current.sections.find(
     (section) => section.id === "account",
@@ -101,7 +105,9 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(accountSection.componentProps.identity.avatarAlt).toBe(
     context.translations.prefAccountTitle,
   );
-  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe("function");
+  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+    "function",
+  );
   expect(accountSection.componentProps.identity.isUploading).toBe(false);
   expect(accountSection.componentProps.fields[0].type).toBe(
     ACCOUNT_USERNAME_FIELD_TYPE,
@@ -125,13 +131,16 @@ test("Given default sections When reading blueprint Then general leads navigatio
   expect(
     accountSection.componentProps.bindings.items.every(
       (item) =>
-        item.status === context.translations.settingsAccountBindingStatusUnlinked &&
+        item.status ===
+          context.translations.settingsAccountBindingStatusUnlinked &&
         item.actionLabel ===
           context.translations.settingsAccountBindingActionPlaceholder,
     ),
   ).toBe(true);
   expect(result.current.avatarEditor).toBeDefined();
-  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe("function");
+  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+    "function",
+  );
   expect(result.current.avatarEditor.modalProps.open).toBe(false);
   const subscriptionSection = result.current.sections.find(
     (section) => section.id === "subscription",
@@ -227,7 +236,9 @@ test("Given blank section titles When resolving modal heading Then fallback titl
 
   expect(result.current.panel.focusHeadingId).toBe("keyboard-section-heading");
   expect(result.current.panel.modalHeadingText).toBe(result.current.copy.title);
-  expect(result.current.panel.modalHeadingId).toBe("settings-modal-fallback-heading");
+  expect(result.current.panel.modalHeadingId).toBe(
+    "settings-modal-fallback-heading",
+  );
 });
 
 /**

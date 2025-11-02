@@ -8,7 +8,10 @@
  *  - 解绑命令使用命令对象形式，便于未来扩展前置校验或确认弹窗。
  */
 import { useCallback } from "react";
-import { mapToDisplayValue, formatPhoneDisplay } from "./utils/displayValues.js";
+import {
+  mapToDisplayValue,
+  formatPhoneDisplay,
+} from "./utils/displayValues.js";
 
 export const buildAccountSnapshot = ({
   user,

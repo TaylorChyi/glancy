@@ -23,7 +23,13 @@ beforeEach(() => {
 test("Given controller lifecycle When toggling zoom Then boundaries are enforced", () => {
   const onConfirm = jest.fn();
   const { result } = renderHook(() =>
-    useAvatarEditorController({ open: true, source: "", onConfirm, labels: undefined, isProcessing: false }),
+    useAvatarEditorController({
+      open: true,
+      source: "",
+      onConfirm,
+      labels: undefined,
+      isProcessing: false,
+    }),
   );
 
   expect(result.current.isZoomOutDisabled).toBe(true);
@@ -57,7 +63,13 @@ test("Given controller lifecycle When toggling zoom Then boundaries are enforced
 test("Given missing image When confirming crop Then callback is skipped", async () => {
   const onConfirm = jest.fn();
   const { result } = renderHook(() =>
-    useAvatarEditorController({ open: true, source: "", onConfirm, labels: undefined, isProcessing: false }),
+    useAvatarEditorController({
+      open: true,
+      source: "",
+      onConfirm,
+      labels: undefined,
+      isProcessing: false,
+    }),
   );
 
   await act(async () => {

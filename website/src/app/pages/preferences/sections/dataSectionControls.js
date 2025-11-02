@@ -35,7 +35,11 @@ export const useHistoryToggleControl = ({
     (enabled) => setHistoryCaptureEnabled(enabled),
     [setHistoryCaptureEnabled],
   );
-  return { value: historyCaptureEnabled, options, onChange: handleToggleHistory };
+  return {
+    value: historyCaptureEnabled,
+    options,
+    onChange: handleToggleHistory,
+  };
 };
 
 export const useRetentionControl = ({
