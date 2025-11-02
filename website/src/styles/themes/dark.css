@@ -22,6 +22,7 @@
   --color-text: var(--night-text);
   --color-text-muted: var(--night-muted);
   --color-text-inverse: var(--neutral-0);
+  --highlight-color: var(--hl-light);
   --color-border: var(--night-border);
   --color-border-strong: color-mix(in srgb, var(--night-border) 70%, var(--neutral-0) 30%);
   --color-primary: var(--brand-dark-9);
