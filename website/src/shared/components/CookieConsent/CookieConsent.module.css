@@ -69,6 +69,7 @@
 
 .notice {
   font-size: 13px;
+
   /* 采用链接语义色强化暗色主题下的文案可读性 */
   color: var(--link-color);
   line-height: 1.6;
