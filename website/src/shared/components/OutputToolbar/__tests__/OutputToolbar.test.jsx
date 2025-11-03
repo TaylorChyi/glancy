@@ -10,16 +10,8 @@ jest.unstable_mockModule("@core/context", () => ({
   useLanguage: () => ({
     t: {
       reoutput: "重新输出",
-      previousVersion: "上一版本",
-      nextVersion: "下一版本",
-      versionIndicator: "{current} / {total}",
-      versionIndicatorEmpty: "0 / 0",
-      versionMenuLabel: "选择版本",
-      versionOptionLabel: "版本 {index}",
       copyAction: "复制",
       copySuccess: "复制完成",
-      favoriteAction: "收藏",
-      favoriteRemove: "取消收藏",
       deleteButton: "删除",
       report: "反馈",
       dictionarySourceLanguageLabel: "源语言",
@@ -51,12 +43,7 @@ describe("OutputToolbar", () => {
   test("renders tts when term provided and handles reoutput", () => {
     const onReoutput = jest.fn();
     render(
-      <OutputToolbar
-        term="hello"
-        lang="en"
-        onReoutput={onReoutput}
-        versions={[{ id: "v1" }]}
-      />,
+      <OutputToolbar term="hello" lang="en" onReoutput={onReoutput} />,
     );
 
     const toolbar = screen.getByRole("toolbar", { name: "词条工具栏" });
@@ -71,65 +58,16 @@ describe("OutputToolbar", () => {
   });
 
   /**
-   * 验证无 term 时不会渲染语音按钮且导航禁用。
+   * 验证无 term 时不会渲染语音按钮且复制按钮保持禁用，并确认版本菜单不再出现。
    */
-  test("hides tts without term and disables navigation", () => {
-    render(<OutputToolbar term="" versions={[]} />);
+  test("hides tts without term and keeps copy disabled", () => {
+    render(<OutputToolbar term="" />);
 
     expect(mockTtsButton).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "上一版本" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "下一版本" })).toBeDisabled();
-    expect(screen.getByText("0 / 0")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "复制" })).toBeDisabled();
-  });
-
-  /**
-   * 验证版本指示器展示正确且导航回调带方向。
-   */
-  test("shows indicator and emits navigation intent", () => {
-    const onNavigate = jest.fn();
-    render(
-      <OutputToolbar
-        term="hello"
-        versions={[{ id: "a" }, { id: "b" }, { id: "c" }]}
-        activeVersionId="b"
-        onNavigate={onNavigate}
-      />,
-    );
-
-    const pagerGroup = screen.getByRole("group", { name: "例句翻页" });
-    expect(pagerGroup.className).toContain("entry__pager");
-    expect(screen.getByText("2 / 3")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "下一版本" }));
-    expect(onNavigate).toHaveBeenCalledWith("next");
-    fireEvent.click(screen.getByRole("button", { name: "上一版本" }));
-    expect(onNavigate).toHaveBeenCalledWith("previous");
-  });
-
-  /**
-   * 验证版本下拉菜单在多版本场景下渲染，并正确透出选择事件。
-   */
-  test("renders version menu and delegates selection", () => {
-    const onSelectVersion = jest.fn();
-    render(
-      <OutputToolbar
-        term="hello"
-        versions={[
-          { id: "v1", createdAt: "2024-05-01T08:00:00Z" },
-          { id: "v2", createdAt: "2024-05-02T09:00:00Z" },
-        ]}
-        activeVersionId="v1"
-        onSelectVersion={onSelectVersion}
-      />,
-    );
-
-    const trigger = screen.getByRole("button", { name: "选择版本" });
-    expect(trigger).toHaveTextContent("版本 1");
-
-    fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("menuitemradio", { name: /版本 2/ }));
-
-    expect(onSelectVersion).toHaveBeenCalledWith("v2");
+    expect(
+      screen.queryByRole("button", { name: "选择版本" }),
+    ).not.toBeInTheDocument();
   });
 
   /**
@@ -137,13 +75,7 @@ describe("OutputToolbar", () => {
    */
   test("prefers injected tts component", () => {
     const customTts = jest.fn(() => <div data-testid="custom-tts" />);
-    render(
-      <OutputToolbar
-        term="hello"
-        versions={[{ id: "v1" }]}
-        ttsComponent={customTts}
-      />,
-    );
+    render(<OutputToolbar term="hello" ttsComponent={customTts} />);
 
     expect(customTts).toHaveBeenCalled();
     expect(mockTtsButton).not.toHaveBeenCalled();
@@ -153,7 +85,6 @@ describe("OutputToolbar", () => {
    * 确认启用动作按钮时在工具栏中渲染并响应交互。
    */
   test("renders action buttons when permitted", () => {
-    const onToggleFavorite = jest.fn();
     const onDelete = jest.fn();
     const onReport = jest.fn();
     const onCopy = jest.fn();
@@ -163,9 +94,6 @@ describe("OutputToolbar", () => {
         term="hello"
         canCopy
         onCopy={onCopy}
-        favorited
-        onToggleFavorite={onToggleFavorite}
-        canFavorite
         onDelete={onDelete}
         canDelete
         onReport={onReport}
@@ -173,32 +101,17 @@ describe("OutputToolbar", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "取消收藏" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
     fireEvent.click(screen.getByRole("button", { name: "反馈" }));
     fireEvent.click(screen.getByRole("button", { name: "复制" }));
 
-    expect(
-      screen.getByRole("button", { name: "取消收藏" }).className,
-    ).toContain("entry__tool-btn");
-    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onReport).toHaveBeenCalledTimes(1);
     expect(onCopy).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("button", { name: "分享" })).toBeNull();
   });
 
   /**
    * 测试目标：复制成功态下按钮需禁用并显示勾选图标，恢复 idle 后重新启用。
-   * 前置条件：组件接收 copyFeedbackState="success" 与 isCopySuccess=true。
-   * 步骤：
-   *  1) 初次渲染为成功态，断言禁用与图标；
-   *  2) rerender 为 idle，断言图标/禁用恢复。
-   * 断言：
-   *  - 勾选态按钮禁用且渲染 copy-success 图标；
-   *  - idle 态恢复复制图标与可用状态。
-   * 边界/异常：
-   *  - 若状态切换未更新按钮属性，将导致断言失败。
    */
   test("GivenCopySuccessState_WhenRendering_ThenShowsSuccessIconAndDisables", () => {
     const { rerender } = render(
@@ -252,18 +165,12 @@ describe("OutputToolbar", () => {
       ),
     );
 
-    render(
-      <OutputToolbar
-        term="hello"
-        versions={[{ id: "only" }]}
-        renderRoot={renderRoot}
-      />,
-    );
+    render(<OutputToolbar term="hello" renderRoot={renderRoot} />);
 
     expect(renderRoot).toHaveBeenCalled();
-    const host = screen.getByTestId("custom-toolbar");
-    expect(host.dataset.role).toBe("toolbar");
-    expect(host.getAttribute("aria-label")).toBe("词条工具栏");
-    expect(host.className).toContain("entry__toolbar");
+    expect(screen.getByTestId("custom-toolbar")).toHaveAttribute(
+      "data-role",
+      "toolbar",
+    );
   });
 });

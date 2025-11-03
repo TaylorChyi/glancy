@@ -73,10 +73,7 @@ describe("useDictionaryExperience/history & auth", () => {
         language: "ENGLISH",
       }),
     );
-    mockGetRecord.mockReturnValue({
-      versions: [correctedEntry],
-      activeVersionId: "student",
-    });
+    mockGetRecord.mockReturnValue({ entry: correctedEntry });
     mockGetEntry.mockImplementation(() => correctedEntry);
 
     const { result } = renderHook(() => useDictionaryExperience());

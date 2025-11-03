@@ -69,7 +69,5 @@ export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   inputPlaceholder: "词条、短语、句子",
   playWordAudio: "播放发音",
   playSentenceAudio: "播放例句发音",
-  favoriteAction: "收藏",
-  favoriteRemove: "取消收藏",
   deleteAction: "删除",
 };

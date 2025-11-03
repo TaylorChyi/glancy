@@ -14,7 +14,6 @@ export function useAppShortcuts({
   setTheme,
   entry,
   isDictionaryViewActive,
-  toggleFavorite,
 }) {
   const { shortcuts } = useKeyboardShortcutContext();
   const focusInput = useCallback(() => {
@@ -31,12 +30,6 @@ export function useAppShortcuts({
     const seq = { dark: "light", light: "system", system: "dark" };
     setTheme(seq[theme] || "light");
   }, [theme, setTheme]);
-
-  const toggleFavoriteEntry = useCallback(() => {
-    if (entry && isDictionaryViewActive) {
-      toggleFavorite(entry.term);
-    }
-  }, [entry, isDictionaryViewActive, toggleFavorite]);
 
   const openShortcuts = useCallback(() => {
     document.dispatchEvent(new Event("open-shortcuts"));
@@ -57,10 +50,9 @@ export function useAppShortcuts({
       FOCUS_SEARCH: focusInput,
       SWITCH_LANGUAGE: cycleLanguage,
       TOGGLE_THEME: cycleTheme,
-      TOGGLE_FAVORITE: toggleFavoriteEntry,
       OPEN_SHORTCUTS: openShortcuts,
     }),
-    [focusInput, cycleLanguage, cycleTheme, toggleFavoriteEntry, openShortcuts],
+    [focusInput, cycleLanguage, cycleTheme, openShortcuts],
   );
 
   useEffect(() => {
@@ -88,7 +80,6 @@ export function useAppShortcuts({
     focusInput,
     cycleLanguage,
     cycleTheme,
-    toggleFavoriteEntry,
     openShortcuts,
   };
 }

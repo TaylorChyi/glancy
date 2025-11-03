@@ -14,12 +14,11 @@ export function useDictionaryHomeControls({
   closeToast,
 }) {
   const { inputRef, setActiveView } = state;
-  const { languageContext, themeContext, favoritesContext } = contexts;
+  const { languageContext, themeContext } = contexts;
   const { lang, setLang } = languageContext;
   const { theme, setTheme } = themeContext;
-  const { toggleFavorite } = favoritesContext;
 
-  const { toggleFavoriteEntry } = useAppShortcuts({
+  useAppShortcuts({
     inputRef,
     lang,
     setLang,
@@ -28,7 +27,6 @@ export function useDictionaryHomeControls({
     entry: state.entry,
     isDictionaryViewActive:
       state.activeView === DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
-    toggleFavorite,
   });
 
   const focusInput = () => {
@@ -41,8 +39,6 @@ export function useDictionaryHomeControls({
     state.setFinalText("");
     state.setStreamText("");
     state.setLoading(false);
-    state.setVersions([]);
-    state.setActiveVersionId(null);
     state.setCurrentTermKey(null);
     state.setCurrentTerm("");
     setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
@@ -59,7 +55,6 @@ export function useDictionaryHomeControls({
   };
 
   return {
-    toggleFavoriteEntry,
     focusInput,
     resetDictionaryHomeState,
     handleShowDictionary,

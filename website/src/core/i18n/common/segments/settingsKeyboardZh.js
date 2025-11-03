@@ -30,5 +30,4 @@ export const SETTINGS_KEYBOARD_TRANSLATIONS_ZH = {
   shortcutsFocusSearch: "聚焦搜索框",
   shortcutsSwitchLanguage: "切换语言",
   shortcutsToggleTheme: "切换主题",
-  shortcutsToggleFavorite: "收藏当前词",
 };

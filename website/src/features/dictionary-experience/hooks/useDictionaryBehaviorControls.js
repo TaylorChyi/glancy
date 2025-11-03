@@ -7,10 +7,10 @@
  *  - 复用现有细分 Hook，避免重复实现；
  *  - 使用解构后的 state/context 以保持参数清晰。
  */
-import { useDictionaryVersionControls } from "./useDictionaryVersionControls.js";
 import { useDictionaryCopyController } from "./useDictionaryCopyController.js";
 import { useDictionaryLookupExecutor } from "./useDictionaryLookupExecutor.js";
 import { useDictionaryHistoryHandlers } from "./useDictionaryHistoryHandlers.js";
+import { useDictionaryRecordHydrator } from "./useDictionaryRecordHydrator.js";
 
 export function useDictionaryBehaviorControls({
   state,
@@ -28,10 +28,6 @@ export function useDictionaryBehaviorControls({
     setFinalText,
     streamText,
     setStreamText,
-    versions,
-    setVersions,
-    activeVersionId,
-    setActiveVersionId,
     currentTermKey,
     setCurrentTermKey,
     currentTerm,
@@ -63,19 +59,13 @@ export function useDictionaryBehaviorControls({
     lookupController;
 
   const activeTerm = entry?.term || currentTerm;
-  const { applyRecord, handleNavigateVersion, handleSelectVersion } =
-    useDictionaryVersionControls({
-      wordStoreApi,
-      setEntry,
-      setFinalText,
-      setStreamText,
-      setVersions,
-      setActiveVersionId,
-      setCurrentTerm,
-      versions,
-      activeVersionId,
-      currentTermKey,
-    });
+  const applyRecord = useDictionaryRecordHydrator({
+    wordStoreApi,
+    setEntry,
+    setFinalText,
+    setStreamText,
+    setCurrentTerm,
+  });
 
   const {
     canCopyDefinition,
@@ -110,8 +100,6 @@ export function useDictionaryBehaviorControls({
     setCurrentTerm,
     wordStoreApi,
     applyRecord,
-    setVersions,
-    setActiveVersionId,
     resetCopyFeedback,
     showPopup,
   });
@@ -133,8 +121,6 @@ export function useDictionaryBehaviorControls({
     setEntry,
     setFinalText,
     setStreamText,
-    setVersions,
-    setActiveVersionId,
     setCurrentTermKey,
     setCurrentTerm,
     setActiveView,
@@ -155,8 +141,6 @@ export function useDictionaryBehaviorControls({
     handleCopy,
     isCopySuccessActive,
     resetCopyFeedback,
-    handleNavigateVersion,
-    handleSelectVersion,
     applyRecord,
     ...historyHandlers,
   };

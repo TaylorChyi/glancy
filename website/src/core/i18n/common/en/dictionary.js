@@ -55,8 +55,6 @@ const dictionary = {
   phrasesLabel: "Phrases",
   favorites: "Favorites",
   favoritesIconAlt: "Open favorites collection",
-  favoriteAction: "Favorite",
-  favoriteRemove: "Remove from favorites",
   favoritesEmptyTitle: "Curate your first favorite",
   favoritesEmptyDescription:
     "Tap the star on any search result to build your personal lexicon.",
@@ -76,12 +74,6 @@ const dictionary = {
   clearHistory: "Clear History",
   deleteAction: "Delete",
   reoutput: "Regenerate",
-  previousVersion: "Previous version",
-  nextVersion: "Next version",
-  versionIndicator: "{current} / {total}",
-  versionIndicatorEmpty: "No versions",
-  versionMenuLabel: "Select version",
-  versionOptionLabel: "Version {index}",
 };
 
 export default dictionary;
