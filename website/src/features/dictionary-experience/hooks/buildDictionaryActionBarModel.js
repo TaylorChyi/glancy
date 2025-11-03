@@ -27,7 +27,6 @@ export function buildDictionaryActionBarModel({
   copyFeedbackState,
   isCopySuccessActive,
   handleDeleteHistory,
-  entry,
   handleReport,
 }) {
   return {
