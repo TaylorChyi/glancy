@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "@jest/globals";
 import {
   detectBrowserLanguage,
   resolveLanguage,
-} from "@core/context/LanguageContext.jsx";
+} from "@core/context/languageUtils.js";
 
 const ORIGINAL_NAVIGATOR = global.navigator;
 
