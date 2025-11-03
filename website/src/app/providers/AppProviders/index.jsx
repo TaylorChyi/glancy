@@ -7,7 +7,6 @@ import AuthWatcher from "@shared/components/AuthWatcher";
 import CookieConsent from "@shared/components/CookieConsent";
 import {
   LanguageProvider,
-  LocaleProvider,
   ThemeProvider,
   AppProvider,
   ApiProvider,
@@ -20,19 +19,17 @@ function AppProviders({ children }) {
   return (
     <AppProvider>
       <ApiProvider>
-        <LocaleProvider>
-          <KeyboardShortcutProvider>
-            <LanguageProvider>
-              <ThemeProvider>
-                <CookieConsent />
-                <AuthWatcher />
-                <ErrorBoundary resetKeys={[location.key]}>
-                  <Suspense fallback={<Loader />}>{children}</Suspense>
-                </ErrorBoundary>
-              </ThemeProvider>
-            </LanguageProvider>
-          </KeyboardShortcutProvider>
-        </LocaleProvider>
+        <KeyboardShortcutProvider>
+          <LanguageProvider>
+            <ThemeProvider>
+              <CookieConsent />
+              <AuthWatcher />
+              <ErrorBoundary resetKeys={[location.key]}>
+                <Suspense fallback={<Loader />}>{children}</Suspense>
+              </ErrorBoundary>
+            </ThemeProvider>
+          </LanguageProvider>
+        </KeyboardShortcutProvider>
       </ApiProvider>
     </AppProvider>
   );

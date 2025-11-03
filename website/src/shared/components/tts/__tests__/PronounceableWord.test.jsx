@@ -32,7 +32,6 @@ jest.unstable_mockModule("@core/context", () => ({
   }),
   useApiContext: () => ({}),
   useTheme: () => ({ resolvedTheme: "light" }),
-  useLocale: () => ({ locale: "en-US" }),
   useAppContext: () => ({}),
 }));
 

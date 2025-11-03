@@ -1,6 +1,5 @@
 import { createApiClient, createJsonRequest } from "./client.js";
 import { createWordsApi } from "./words.js";
-import { createLocaleApi } from "./locale.js";
 import { createSearchRecordsApi } from "./searchRecords.js";
 import { createUsersApi } from "./users.js";
 import { createProfilesApi } from "./profiles.js";
@@ -16,7 +15,6 @@ export function createApi(config) {
     request,
     jsonRequest,
     words: createWordsApi(request),
-    locale: createLocaleApi(request),
     searchRecords: createSearchRecordsApi(request),
     users: createUsersApi(request),
     profiles: createProfilesApi(request),

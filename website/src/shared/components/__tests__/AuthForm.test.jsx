@@ -8,7 +8,6 @@ import { BRAND_LOGO_ICON } from "@shared/utils/brand.js";
 jest.unstable_mockModule("@core/context", () => ({
   // Provide minimal implementations for all hooks consumed by AuthForm
   useTheme: () => ({ resolvedTheme: "light" }),
-  useLocale: () => ({ locale: "en-US" }),
   useApiContext: () => ({ request: async () => {} }),
   useUser: () => ({ setUser: jest.fn() }),
   useHistory: () => ({ entries: [] }),
