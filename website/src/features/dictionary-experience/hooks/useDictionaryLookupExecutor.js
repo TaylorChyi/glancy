@@ -38,8 +38,6 @@ export function useDictionaryLookupExecutor({
   setCurrentTerm,
   wordStoreApi,
   applyRecord,
-  setVersions,
-  setActiveVersionId,
   resetCopyFeedback,
   showPopup,
 }) {
@@ -84,8 +82,6 @@ export function useDictionaryLookupExecutor({
       if (shouldResetView) {
         setEntry(null);
         setFinalText("");
-        setVersions([]);
-        setActiveVersionId(null);
       }
 
       let resolvedTerm = normalized;
@@ -222,8 +218,6 @@ export function useDictionaryLookupExecutor({
       setCurrentTerm,
       wordStoreApi,
       applyRecord,
-      setVersions,
-      setActiveVersionId,
       resetCopyFeedback,
       showPopup,
     ],

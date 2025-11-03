@@ -37,10 +37,7 @@ import {
  * 复杂度：O(n)（n 为生成器推送次数，本场景恒为 1）。
  */
 const bootstrapCopyableEntry = async (result, entry) => {
-  mockGetRecord.mockReturnValue({
-    versions: [entry],
-    activeVersionId: entry.id,
-  });
+  mockGetRecord.mockReturnValue({ entry });
   mockGetEntry.mockImplementation(() => entry);
   mockStreamWord.mockImplementation(() =>
     createStreamFromChunks({

@@ -16,9 +16,6 @@ import { resolveCopyIcon } from "./iconFactories";
 export const buildActionContext = ({
   translator,
   user,
-  favorited,
-  canFavorite,
-  onToggleFavorite,
   canDelete,
   onDelete,
   canReport,
@@ -27,9 +24,6 @@ export const buildActionContext = ({
 }) => ({
   translator,
   user,
-  favorited,
-  canFavorite,
-  onToggleFavorite,
   canDelete,
   onDelete,
   canReport,

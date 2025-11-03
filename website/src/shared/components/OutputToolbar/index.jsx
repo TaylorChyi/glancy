@@ -4,8 +4,8 @@
  * 目的：
  *  - 通过组合模式拆分子组件与状态 Hook，让主入口聚焦装配并恢复结构化规则校验。
  * 关键决策与取舍：
- *  - 引入 LeftCluster、ToolbarActions、VersionDial 三段布局组件，持续复用既有视觉标记；
- *  - 采用 useVersionViewModel 提供可复用的派生数据，避免一次性重构。
+ *  - 引入 LeftCluster 与 ToolbarActions 的组合式布局，持续复用既有视觉标记；
+ *  - 以 useOutputToolbarLayout 承载派生数据，避免一次性重构。
  * 影响范围：
  *  - 词典页输出工具栏及依赖其交互的页面。
  * 演进与TODO：
@@ -17,7 +17,6 @@ import { TtsButton } from "@shared/components";
 import { useLanguage, useUser } from "@core/context";
 import LeftCluster from "./parts/LeftCluster.jsx";
 import ToolbarActions from "./parts/ToolbarActions.jsx";
-import VersionDial from "./parts/VersionDial.jsx";
 import { useOutputToolbarLayout } from "./hooks/useOutputToolbarLayout.js";
 
 /**
@@ -80,7 +79,6 @@ const buildToolbarChildren = (layout) => (
       {...layout.actionsProps}
       baseToolButtonClass={layout.baseToolButtonClass}
     />
-    <VersionDial {...layout.versionDialProps} />
   </>
 );
 
@@ -118,18 +116,11 @@ const OUTPUT_TOOLBAR_DEFAULTS = {
   lang: "en",
   onReoutput: undefined,
   disabled: false,
-  versions: [],
-  activeVersionId: undefined,
-  onNavigate: undefined,
-  onSelectVersion: undefined,
   ttsComponent: TtsButton,
   onCopy: undefined,
   canCopy: false,
   copyFeedbackState: "idle",
   isCopySuccess: false,
-  favorited: false,
-  onToggleFavorite: undefined,
-  canFavorite: false,
   canDelete: false,
   onDelete: undefined,
   canReport: false,
@@ -179,18 +170,11 @@ OutputToolbar.propTypes = {
   lang: PropTypes.string,
   onReoutput: PropTypes.func,
   disabled: PropTypes.bool,
-  versions: PropTypes.arrayOf(PropTypes.object),
-  activeVersionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onNavigate: PropTypes.func,
-  onSelectVersion: PropTypes.func,
   ttsComponent: PropTypes.elementType,
   onCopy: PropTypes.func,
   canCopy: PropTypes.bool,
   copyFeedbackState: PropTypes.string,
   isCopySuccess: PropTypes.bool,
-  favorited: PropTypes.bool,
-  onToggleFavorite: PropTypes.func,
-  canFavorite: PropTypes.bool,
   canDelete: PropTypes.bool,
   onDelete: PropTypes.func,
   canReport: PropTypes.bool,

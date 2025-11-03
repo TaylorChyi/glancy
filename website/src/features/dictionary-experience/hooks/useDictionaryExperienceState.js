@@ -19,8 +19,6 @@ export function useDictionaryExperienceState() {
   const [entry, setEntry] = useState(null);
   const [finalText, setFinalText] = useState("");
   const [streamText, setStreamText] = useState("");
-  const [versions, setVersions] = useState([]);
-  const [activeVersionId, setActiveVersionId] = useState(null);
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,10 +36,6 @@ export function useDictionaryExperienceState() {
     setFinalText,
     streamText,
     setStreamText,
-    versions,
-    setVersions,
-    activeVersionId,
-    setActiveVersionId,
     currentTermKey,
     setCurrentTermKey,
     currentTerm,

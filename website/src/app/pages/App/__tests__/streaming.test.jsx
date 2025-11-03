@@ -156,7 +156,7 @@ const streamMock = jest.fn();
 jest.unstable_mockModule("@shared/hooks", () => ({
   useStreamWord: streamMock,
   useSpeechInput: () => ({ start: jest.fn() }),
-  useAppShortcuts: () => ({ toggleFavoriteEntry: jest.fn() }),
+  useAppShortcuts: () => ({}),
   useApi: () => ({ words: {} }),
   useMediaQuery: () => false,
   useEscapeKey: () => ({ on: jest.fn(), off: jest.fn() }),

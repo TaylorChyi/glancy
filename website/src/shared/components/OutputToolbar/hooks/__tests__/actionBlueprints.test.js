@@ -4,55 +4,41 @@ import { buildBlueprintItems } from "../actionBlueprints";
 
 describe("buildBlueprintItems", () => {
   /**
-   * 测试目标：验证收藏动作的图标工厂在状态变化时输出正确的 ThemeIcon 变体。
-   * 前置条件：提供翻译文案、收藏/删除/举报能力均开启且处理函数有效。
-   * 步骤：
-   *  1) 构造 favorited=true 的上下文并生成蓝图条目。
-   *  2) 切换 favorited=false 再生成蓝图条目。
+   * 测试目标：确认蓝图仅输出删除与举报动作，并沿用 ThemeIcon 渲染。
+   * 前置条件：提供翻译文案且删除/举报处理函数可用。
+   * 步骤：构造启用状态的上下文后生成蓝图。
    * 断言：
-   *  - 收藏按钮的图标类型为 ThemeIcon。
-   *  - 收藏按钮在收藏状态为 star-solid，未收藏为 star-outline。
-   * 边界/异常：
-   *  - 若未来扩展无用户场景，可在此补充缺省图标断言。
+   *  - 仅包含 delete 与 report 两个动作键；
+   *  - 图标元素类型均为 ThemeIcon；
+   *  - 对应处理函数保持可调用。
+   * 边界/异常：当动作禁用或无用户时应返回空数组（交由其他测试覆盖）。
    */
-  test("switches favorite icon variant via factory", () => {
+  test("exposes delete and report actions without favorites", () => {
     const translator = {
-      favoriteAction: "收藏",
-      favoriteRemove: "取消收藏",
       deleteButton: "删除",
       report: "举报",
     };
 
-    const baseContext = {
+    const actionContext = {
       translator,
-      canFavorite: true,
-      onToggleFavorite: () => {},
       canDelete: true,
-      onDelete: () => {},
+      onDelete: jest.fn(),
       canReport: true,
-      onReport: () => {},
+      onReport: jest.fn(),
+      disabled: false,
     };
 
-    const activeItems = buildBlueprintItems({
-      actionContext: { ...baseContext, favorited: true },
+    const items = buildBlueprintItems({
+      actionContext,
       disabled: false,
       user: { id: "user" },
     });
-    const activeFavorite = activeItems.find((item) => item.key === "favorite");
 
-    expect(activeFavorite?.icon.type).toBe(ThemeIcon);
-    expect(activeFavorite?.icon.props.name).toBe("star-solid");
-
-    const inactiveItems = buildBlueprintItems({
-      actionContext: { ...baseContext, favorited: false },
-      disabled: false,
-      user: { id: "user" },
+    const keys = items.map((item) => item.key);
+    expect(keys).toEqual(["delete", "report"]);
+    items.forEach((item) => {
+      expect(item.icon.type).toBe(ThemeIcon);
+      expect(typeof item.onClick).toBe("function");
     });
-    const inactiveFavorite = inactiveItems.find(
-      (item) => item.key === "favorite",
-    );
-
-    expect(inactiveFavorite?.icon.type).toBe(ThemeIcon);
-    expect(inactiveFavorite?.icon.props.name).toBe("star-outline");
   });
 });

@@ -27,7 +27,6 @@ export function useDictionaryExperience() {
 
   const { t, lang } = languageContext;
   const { user } = userContext;
-  const { favorites } = contexts.favoritesContext;
   const { loadHistory } = historyContext;
   const { popupOpen, popupMsg, popupConfig, showPopup, closePopup } = popup;
   const { state: toastState, showToast, closeToast } = toast;
@@ -77,13 +76,10 @@ export function useDictionaryExperience() {
     handleReoutput,
     handleSelectHistory,
     handleDeleteHistory,
-    toggleFavoriteEntry,
     focusInput,
     resetDictionaryHomeState,
     handleShowDictionary,
     handleShowLibrary,
-    handleNavigateVersion,
-    handleSelectVersion,
     applyRecord,
   } = interactions;
 
@@ -144,7 +140,6 @@ export function useDictionaryExperience() {
     handleShowDictionary,
     handleShowLibrary,
     handleSelectHistory,
-    favorites,
     activeView: state.activeView,
     isDictionaryViewActive,
     isHistoryViewActive,
@@ -158,16 +153,10 @@ export function useDictionaryExperience() {
     lang,
     handleReoutput,
     isTermActionable,
-    isEntryViewActive,
-    versions: state.versions,
-    activeVersionId: state.activeVersionId,
-    handleNavigateVersion,
-    handleSelectVersion,
     handleCopy,
     canCopyDefinition,
     copyFeedbackState,
     isCopySuccessActive,
-    toggleFavoriteEntry,
     handleDeleteHistory,
     handleReport,
     popupOpen,

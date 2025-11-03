@@ -43,8 +43,6 @@ export function useDictionaryHistoryHandlers({
   setEntry,
   setFinalText,
   setStreamText,
-  setVersions,
-  setActiveVersionId,
   setCurrentTermKey,
   setCurrentTerm,
   setActiveView,
@@ -283,8 +281,6 @@ export function useDictionaryHistoryHandlers({
       setEntry(null);
       setFinalText("");
       setStreamText("");
-      setVersions([]);
-      setActiveVersionId(null);
       setCurrentTermKey(null);
       setCurrentTerm("");
       resetCopyFeedback();
@@ -299,8 +295,6 @@ export function useDictionaryHistoryHandlers({
     setEntry,
     setFinalText,
     setStreamText,
-    setVersions,
-    setActiveVersionId,
     setCurrentTermKey,
     setCurrentTerm,
     resetCopyFeedback,

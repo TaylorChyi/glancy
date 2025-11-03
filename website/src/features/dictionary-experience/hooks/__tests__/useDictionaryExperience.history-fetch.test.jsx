@@ -43,19 +43,17 @@ describe("useDictionaryExperience/history fetch", () => {
    *  - 若仍触发流式接口则说明策略回退失败。
    */
   it("GivenHistoryMiss_WhenSelectingItem_ThenFetchesViaRestEndpoint", async () => {
-    const restRecord = {
-      versions: [{ id: "v1", term: "rest-term", markdown: "rest definition" }],
-      activeVersionId: "v1",
-    };
+    const restEntry = { id: "v1", term: "rest-term", markdown: "rest definition" };
+    const restRecord = { entry: restEntry };
     mockHistoryApi.history = [
       { term: "rest-term", language: "ENGLISH", flavor: "default" },
     ];
     mockGetRecord
       .mockImplementationOnce(() => null)
       .mockImplementation(() => restRecord);
-    mockGetEntry.mockImplementation(() => restRecord.versions[0]);
+    mockGetEntry.mockImplementation(() => restEntry);
     mockFetchWordWithHandling.mockResolvedValue({
-      data: restRecord.versions[0],
+      data: restEntry,
       error: null,
       language: "ENGLISH",
       flavor: "default",

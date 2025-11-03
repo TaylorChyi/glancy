@@ -19,10 +19,4 @@ export const INTERACTION_CONTROLS_TRANSLATIONS_ZH = {
   copyFailed: "复制失败",
   copyUnavailable: "暂不支持复制",
   copyEmpty: "暂无可复制内容",
-  previousVersion: "上一版本",
-  nextVersion: "下一版本",
-  versionIndicator: "{current} / {total}",
-  versionIndicatorEmpty: "暂无版本",
-  versionMenuLabel: "选择版本",
-  versionOptionLabel: "版本 {index}",
 };
