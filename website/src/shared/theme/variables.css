@@ -375,5 +375,43 @@
     --sb-send-color: #0b0d11;
     --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
     --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
+
+    /*
+     * 背景：
+     *  - 退出登录等模态沿用 settings dialog token，但夜间主题未覆写导致亮色背景穿透。
+     * 目的：
+     *  - 基于 night-* 基色映射夜间版 token，确保 Modal 体系在暗色主题下保持层级与对比。
+     * 取舍：
+     *  - 复用语义化色值而非在组件中写条件样式，便于未来扩展更多主题分支。
+     */
+    --settings-dialog-surface: color-mix(
+      in srgb,
+      var(--night-panel) 92%,
+      var(--night-border) 8%
+    );
+    --settings-dialog-surface-muted: color-mix(
+      in srgb,
+      var(--night-panel) 84%,
+      var(--night-border) 16%
+    );
+    --settings-dialog-background: color-mix(
+      in srgb,
+      var(--night-surface) 88%,
+      var(--night-panel) 12%
+    );
+    --settings-dialog-border: color-mix(
+      in srgb,
+      var(--night-border) 78%,
+      transparent 22%
+    );
+    --settings-dialog-text: var(--night-text);
+    --settings-dialog-muted: color-mix(
+      in srgb,
+      var(--night-text) 58%,
+      transparent 42%
+    );
+    --settings-dialog-accent: var(--color-primary);
+    --settings-dialog-shadow: 0 20px 48px
+      color-mix(in srgb, var(--c-black) 55%, transparent 45%);
   }
 }
