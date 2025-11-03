@@ -55,6 +55,13 @@
 }
 
 :global(.modal-content).modal-shell {
+  /*
+   * 通过外层留白与渐变底色营造与偏好设置面板一致的沉浸感，
+   * 避免弹窗内容直接贴附在毛玻璃背景上导致的可读性问题。
+   * 备选方案：只在 SettingsSurface 上调整 padding，但会让关闭按钮与内容贴边，
+   * 无法形成“面板置于模态”层级。故采用在容器上设定统一区域留白。
+   */
+  padding: var(--report-modal-gutter);
   background: var(--report-modal-surface);
   color: var(--preferences-panel-text, var(--color-text));
   border-radius: var(--report-modal-radius);
@@ -64,14 +71,15 @@
 
 .plain-surface {
   /*
-   * 将 SettingsSurface 的底色与描边全部抽离，
-   * 让模态最外层负责分隔背景，表单主体转而强调内容信息密度。
-   * 备选方案：保留轻微描边，但在设计评审中确认会与外层模态产生双重边框，因而弃用。
+   * 复用偏好设置面板的建筑感：内层采用柔和渐变与细腻描边，
+   * 让举报表单在毛玻璃模态内仍具备清晰的阅读对比度。
+   * 备选方案：直接使用 SettingsSurface 默认样式，但会与外层 gutter 叠加造成溢出；
+   * 因此在此处重设 padding 与阴影以贴合举报流程的节奏。
    */
-  background: transparent;
-  border-radius: var(--report-modal-radius);
-  border: none;
-  box-shadow: none;
+  background: var(--report-modal-inner-surface);
+  border-radius: calc(var(--report-modal-radius) - 4px);
+  border: 1px solid var(--report-modal-inner-border);
+  box-shadow: var(--report-modal-inner-shadow);
   padding: var(--report-modal-panel-padding);
 }
 
