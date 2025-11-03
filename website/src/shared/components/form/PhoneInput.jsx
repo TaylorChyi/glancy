@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocale } from "@core/context";
 import styles from "./PhoneInput.module.css";
 
-const CODE_LIST = [
+const COUNTRY_CODE_CATALOG = Object.freeze([
   { country: "CN", code: "+86" },
   { country: "US", code: "+1" },
   { country: "GB", code: "+44" },
@@ -13,9 +12,14 @@ const CODE_LIST = [
   { country: "ES", code: "+34" },
   { country: "IN", code: "+91" },
   { country: "AU", code: "+61" },
-].sort((a, b) => a.code[1].localeCompare(b.code[1]));
+]);
 
-const DEFAULT_CODE = "+1";
+const CODE_LIST = [...COUNTRY_CODE_CATALOG].sort((a, b) =>
+  a.code[1].localeCompare(b.code[1]),
+);
+
+const DEFAULT_CODE = COUNTRY_CODE_CATALOG[0].code;
+
 const CODE_LIST_BY_LENGTH_DESC = [...CODE_LIST].sort(
   (a, b) => b.code.length - a.code.length,
 );
@@ -55,7 +59,6 @@ function PhoneInput({ value = "", onChange, placeholder = "" }) {
   const [number, setNumber] = useState(initial.number);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const { locale } = useLocale();
 
   const emitChange = useCallback(
     (nextCode, nextNumber) => {
@@ -71,17 +74,6 @@ function PhoneInput({ value = "", onChange, placeholder = "" }) {
     setCode(parsed.code);
     setNumber(parsed.number);
   }, [value]);
-
-  useEffect(() => {
-    if (!locale?.country || value) {
-      return;
-    }
-    const found = CODE_LIST.find((entry) => entry.country === locale.country);
-    if (found && found.code !== code) {
-      setCode(found.code);
-      emitChange(found.code, number);
-    }
-  }, [locale, value, code, number, emitChange]);
 
   useEffect(() => {
     const handler = (event) => {
