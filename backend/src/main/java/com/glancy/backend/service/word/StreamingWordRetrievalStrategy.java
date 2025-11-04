@@ -2,6 +2,7 @@ package com.glancy.backend.service.word;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.glancy.backend.dto.SearchRecordResponse;
+import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.llm.service.WordSearcher;
@@ -34,6 +35,7 @@ public class StreamingWordRetrievalStrategy implements WordRetrievalStrategy<Flu
     private final WordCacheManager cacheManager;
     private final SearchRecordCoordinator searchRecordCoordinator;
     private final WordStreamingFinalizer streamingFinalizer;
+    private final WordPersonalizationApplier personalizationApplier;
 
     @Override
     public Flux<WordStreamPayload> execute(WordQueryContext context) {
@@ -69,7 +71,14 @@ public class StreamingWordRetrievalStrategy implements WordRetrievalStrategy<Flu
 
     private Flux<WordStreamPayload> serializeCachedWord(WordQueryContext context, Word word) {
         try {
-            String payload = cacheManager.serializeResponse(cacheManager.toResponse(word));
+            WordResponse response = cacheManager.toResponse(word);
+            response.setFlavor(context.flavor());
+            WordResponse personalized = personalizationApplier.apply(
+                context.userId(),
+                response,
+                context.personalizationContext()
+            );
+            String payload = cacheManager.serializeResponse(personalized);
             return Flux.just(WordStreamPayload.data(payload));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize cached word '{}'", context.rawTerm(), e);
