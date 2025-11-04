@@ -25,11 +25,19 @@ export function useDictionaryExperienceLifecycle({
 
   useEffect(() => {
     if (!state.currentTermKey) return;
+    if (state.loading) return;
+
     const record = wordStoreApi.getState().getRecord?.(state.currentTermKey);
     if (record) {
       applyRecord(state.currentTermKey, record, record.activeVersionId);
     }
-  }, [wordEntries, state.currentTermKey, applyRecord, wordStoreApi]);
+  }, [
+    wordEntries,
+    state.currentTermKey,
+    state.loading,
+    applyRecord,
+    wordStoreApi,
+  ]);
 
   useEffect(() => {
     if (!user) {
