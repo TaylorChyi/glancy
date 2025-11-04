@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
-import com.glancy.backend.service.WordService.StreamPayload;
+import com.glancy.backend.service.word.WordStreamPayload;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ class WordControllerStreamingTest {
                 eq(false),
                 eq(true)
             )
-        ).thenReturn(Flux.just(StreamPayload.data("part1"), StreamPayload.version("77")));
+        ).thenReturn(Flux.just(WordStreamPayload.data("part1"), WordStreamPayload.version("77")));
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         MvcResult result = mockMvc
