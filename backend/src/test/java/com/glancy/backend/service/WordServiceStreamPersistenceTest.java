@@ -132,7 +132,8 @@ class WordServiceStreamPersistenceTest {
             wordSearcher,
             wordCacheManager,
             searchRecordCoordinator,
-            streamingFinalizer
+            streamingFinalizer,
+            personalizationApplier
         );
         wordService = new WordService(
             termNormalizer,
