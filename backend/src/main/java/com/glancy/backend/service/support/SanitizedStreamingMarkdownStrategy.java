@@ -2,6 +2,7 @@ package com.glancy.backend.service.support;
 
 import com.glancy.backend.entity.Word;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * 背景：
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  *  - 支持根据用户偏好选择原始流或净化版本。
  */
 @Slf4j
+@Component
 public class SanitizedStreamingMarkdownStrategy implements WordVersionContentStrategy {
 
     @Override

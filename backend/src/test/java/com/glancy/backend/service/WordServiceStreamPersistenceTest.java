@@ -21,8 +21,18 @@ import com.glancy.backend.llm.service.WordSearcher;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import com.glancy.backend.service.support.SanitizedStreamingMarkdownStrategy;
 import com.glancy.backend.service.support.SearchContentDictionaryTermNormalizer;
 import com.glancy.backend.service.support.WordPersistenceCoordinator;
+import com.glancy.backend.service.word.SearchRecordCoordinator;
+import com.glancy.backend.service.word.SearchResultVersionWriter;
+import com.glancy.backend.service.word.StreamingWordRetrievalStrategy;
+import com.glancy.backend.service.word.SynchronousWordRetrievalStrategy;
+import com.glancy.backend.service.word.WordCacheManager;
+import com.glancy.backend.service.word.WordPersistenceContextFactory;
+import com.glancy.backend.service.word.WordPersonalizationApplier;
+import com.glancy.backend.service.word.WordStreamPayload;
+import com.glancy.backend.service.word.WordStreamingFinalizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +74,14 @@ class WordServiceStreamPersistenceTest {
     private ObjectMapper objectMapper;
     private DictionaryTermNormalizer termNormalizer;
     private WordPersistenceCoordinator wordPersistenceCoordinator;
+    private WordCacheManager wordCacheManager;
+    private WordPersonalizationApplier personalizationApplier;
+    private SearchRecordCoordinator searchRecordCoordinator;
+    private SearchResultVersionWriter versionWriter;
+    private WordPersistenceContextFactory contextFactory;
+    private WordStreamingFinalizer streamingFinalizer;
+    private SynchronousWordRetrievalStrategy synchronousStrategy;
+    private StreamingWordRetrievalStrategy streamingStrategy;
 
     @BeforeEach
     void setUp() {
@@ -86,16 +104,41 @@ class WordServiceStreamPersistenceTest {
         termNormalizer = new SearchContentDictionaryTermNormalizer(new SearchContentManagerImpl());
         wordPersistenceCoordinator = new WordPersistenceCoordinator();
         when(searchRecordService.synchronizeRecordTerm(anyLong(), anyLong(), any())).thenReturn(null);
-        wordService = new WordService(
-            wordSearcher,
-            wordRepository,
-            searchRecordService,
-            searchResultService,
+        wordCacheManager = new WordCacheManager(wordRepository, termNormalizer, objectMapper);
+        personalizationApplier = new WordPersonalizationApplier(wordPersonalizationService);
+        searchRecordCoordinator = new SearchRecordCoordinator(searchRecordService);
+        versionWriter = new SearchResultVersionWriter(searchResultService);
+        contextFactory = new WordPersistenceContextFactory(
+            wordCacheManager,
+            searchRecordCoordinator,
+            versionWriter,
+            personalizationApplier
+        );
+        streamingFinalizer = new WordStreamingFinalizer(
             parser,
-            wordPersonalizationService,
+            wordPersistenceCoordinator,
+            contextFactory,
+            new SanitizedStreamingMarkdownStrategy()
+        );
+        synchronousStrategy = new SynchronousWordRetrievalStrategy(
+            wordSearcher,
+            wordCacheManager,
+            searchRecordCoordinator,
+            contextFactory,
+            wordPersistenceCoordinator,
+            personalizationApplier
+        );
+        streamingStrategy = new StreamingWordRetrievalStrategy(
+            wordSearcher,
+            wordCacheManager,
+            searchRecordCoordinator,
+            streamingFinalizer
+        );
+        wordService = new WordService(
             termNormalizer,
-            objectMapper,
-            wordPersistenceCoordinator
+            wordPersonalizationService,
+            synchronousStrategy,
+            streamingStrategy
         );
     }
 
@@ -127,7 +170,7 @@ class WordServiceStreamPersistenceTest {
             wordRepository.findActiveByNormalizedTerm("cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL)
         ).thenReturn(Optional.of(word));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<WordStreamPayload> flux = wordService.streamWordForUser(
             1L,
             "cached",
             Language.ENGLISH,
@@ -237,7 +280,7 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(version);
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<WordStreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
@@ -316,7 +359,7 @@ class WordServiceStreamPersistenceTest {
                 return w;
             });
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<WordStreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
@@ -371,7 +414,7 @@ class WordServiceStreamPersistenceTest {
             )
         ).thenReturn(Flux.just("{\"term\":\"hi\"}"));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<WordStreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
@@ -419,7 +462,7 @@ class WordServiceStreamPersistenceTest {
             wordSearcher.streamSearch(eq("hi"), eq(Language.ENGLISH), eq(DictionaryFlavor.BILINGUAL), any(), any())
         ).thenReturn(Flux.concat(Flux.just("part"), Flux.error(new RuntimeException("boom"))));
 
-        Flux<WordService.StreamPayload> flux = wordService.streamWordForUser(
+        Flux<WordStreamPayload> flux = wordService.streamWordForUser(
             1L,
             "hi",
             Language.ENGLISH,
