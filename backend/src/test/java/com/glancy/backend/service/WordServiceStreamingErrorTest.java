@@ -124,7 +124,8 @@ class WordServiceStreamingErrorTest {
             wordSearcher,
             wordCacheManager,
             searchRecordCoordinator,
-            streamingFinalizer
+            streamingFinalizer,
+            personalizationApplier
         );
         wordService = new WordService(
             termNormalizer,
