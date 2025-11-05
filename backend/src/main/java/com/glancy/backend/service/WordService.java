@@ -17,19 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
-/**
- * 背景：
- *  - 原 WordService 混合同步/流式查词流程，导致类体超过 600 行，维护成本极高。\
- * 目的：
- *  - 通过策略模式拆分查词流程，WordService 仅负责上下文构造与依赖编排。\
- * 关键决策与取舍：
- *  - 采用 `WordRetrievalStrategy` 抽象同步与流式两种流程，避免一次性补丁；\
- *  - WordService 聚焦于“准备上下文 + 调用策略”，保持可扩展与可测试。\
- * 影响范围：
- *  - 对外 API 保持不变，但内部依赖拆分为多个可组合组件。\
- * 演进与TODO：
- *  - 可进一步抽象模型选择逻辑，引入配置化策略或灰度模型。
- */
 @Slf4j
 @Service
 public class WordService {

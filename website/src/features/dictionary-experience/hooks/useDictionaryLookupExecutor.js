@@ -115,8 +115,9 @@ export function useDictionaryLookupExecutor({
           language: resolvedLanguage,
           flavor: targetFlavor,
           model: DEFAULT_MODEL,
+          forceNew,
           user,
-          controller,
+          signal: controller.signal,
         })) {
           if (chunk.language) {
             detected = chunk.language;
