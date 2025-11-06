@@ -22,10 +22,7 @@ const createMaxLinesRule = (max, severity = STRUCTURAL_RULE_SEVERITY) => [
   { ...MAX_LINE_OPTIONS, max },
 ];
 
-const createMaxParamsRule = (max) => [
-  STRUCTURAL_RULE_SEVERITY,
-  { max, ignoreRestParameters: true },
-];
+const createMaxParamsRule = (max) => [STRUCTURAL_RULE_SEVERITY, { max }];
 
 const createMaxLenRule = (limit) => [
   "error",
