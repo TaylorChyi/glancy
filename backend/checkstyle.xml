@@ -4,7 +4,68 @@
     "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
+    <property name="severity" value="error"/>
+
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value=".*/(generated|gen|target/generated-sources)/.*"/>
+    </module>
+
+    <module name="FileLength">
+        <property name="max" value="250"/>
+    </module>
+
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
     <module name="LineLength">
-        <property name="max" value="240"/>
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^package |^import |https?://|logger\\.(info|warn|error)"/>
+    </module>
+
+    <module name="TreeWalker">
+        <module name="AvoidStarImport"/>
+        <module name="UnusedImports"/>
+
+        <module name="IllegalTokenText">
+            <property name="format" value="System\.out\.print"/>
+            <property name="message" value="Use slf4j logging instead of System.out"/>
+        </module>
+
+        <module name="ParameterNumber">
+            <property name="max" value="6"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+        </module>
+
+        <module name="MethodLength">
+            <property name="tokens" value="METHOD_DEF"/>
+            <property name="max" value="30"/>
+        </module>
+
+        <module name="MethodLength">
+            <property name="id" value="constructorLength"/>
+            <property name="tokens" value="CTOR_DEF"/>
+            <property name="max" value="40"/>
+        </module>
+
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+
+        <module name="NPathComplexity">
+            <property name="max" value="300"/>
+        </module>
+
+        <module name="NestedIfDepth">
+            <property name="max" value="3"/>
+        </module>
+
+        <module name="AnonInnerLength">
+            <property name="max" value="40"/>
+        </module>
+
+        <module name="com.github.sevntu.checkstyle.checks.design.CognitiveComplexityCheck">
+            <property name="max" value="15"/>
+        </module>
     </module>
 </module>

@@ -68,5 +68,29 @@ export default {
     ],
   },
   setupFilesAfterEnv: ["@testing-library/jest-dom"],
-  collectCoverage: false,
+  collectCoverage: true,
+  collectCoverageFrom: ["src/**/*.{js,jsx,ts,tsx}", "!src/**/generated/**"],
+  coverageDirectory: "coverage/unit",
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/tests/",
+    "/dist/",
+    "/build/",
+    "/generated/",
+  ],
+  coverageReporters: ["text-summary", "lcov"],
+  coverageThreshold: {
+    global: {
+      statements: 0.7,
+      lines: 0.7,
+      branches: 0.7,
+      functions: 0.7,
+    },
+    "./src/app/pages/auth/": {
+      statements: 0.85,
+      lines: 0.85,
+      branches: 0.85,
+      functions: 0.85,
+    },
+  },
 };

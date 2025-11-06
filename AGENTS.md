@@ -14,5 +14,6 @@
 ## 提交前检查
 
 - 前端代码：依次运行 `eslint --fix`、`stylelint --fix`、`prettier -w`。
+- 前端结构化守卫：`npm run lint` 额外校验函数/文件体量、参数个数、复杂度、重复率以及 `npm audit`，必须全部通过。
 - 后端代码：运行 `mvn spotless:apply`。
 - 任何命令执行失败，必须先定位并修复问题，再进行提交。

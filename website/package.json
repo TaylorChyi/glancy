@@ -6,16 +6,19 @@
     "dev": "vite",
     "build": "vite build",
     "prebuild": "npm run icons:mono && npm run generate:icons",
-    "lint": "eslint . && npm run lint:lines",
+    "lint": "eslint . && npm run lint:lines && npm run lint:dup",
     "preview": "vite preview",
     "generate:icons": "node ops/scripts/generate-icon-manifest.mjs",
     "icons:mono": "node ops/tools/mono-svg.js",
     "start": "node ops/server/index.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
+    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --runInBand --coverage",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint:lines": "node scripts/check-lines.mjs",
+    "lint:dup": "node scripts/check-duplication.mjs",
     "lint:colors": "colorguard \"src/**/*.css\" --threshold 3",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dep:audit": "npm audit --audit-level=high"
   },
   "dependencies": {
     "express": "^4.19.2",

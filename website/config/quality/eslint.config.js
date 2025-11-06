@@ -1,17 +1,5 @@
 /**
- * 背景：
- *  - ESLint 配置散落在根目录，随着 ops、config 等目录扩展难以维护统一规则。
- * 目的：
- *  - 集中管理代码质量策略，并对 Node/脚本目录应用专用环境。
- * 关键决策与取舍：
- *  - 使用扁平化配置（defineConfig），便于后续按需扩展；
- *  - 根据 ops 目录重新划定 Node 环境匹配范围；
- *  - 引入“结构化体量守卫”（行数/复杂度/嵌套）策略，并以白名单缓冲遗留债务，逐步收敛；
- *  - 由于存量代码体量庞大，首阶段以 warn 级别上线，并在 TODO 中标记升级节点。
- * 影响范围：
- *  - 所有 lint 流程及 IDE 诊断。
- * 演进与TODO：
- *  - 可在此追加自定义规则或分层覆盖策略。
+ * 统一的 ESLint 质量门禁配置，落实函数体量、圈复杂度、认知复杂度与日志规范等约束。
  */
 import js from "@eslint/js";
 import globals from "globals";
@@ -20,9 +8,9 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import { defineConfig, globalIgnores } from "eslint/config";
+import { cognitiveComplexityRule } from "./rules/cognitiveComplexity.js";
 
-// TODO(glancy-frontend, 2025-03-31): 全量完成超限拆分后，将该级别提升为 "error"。
-const STRUCTURAL_RULE_SEVERITY = "warn";
+const STRUCTURAL_RULE_SEVERITY = "error";
 
 const MAX_LINE_OPTIONS = {
   skipBlankLines: true,
@@ -34,15 +22,36 @@ const createMaxLinesRule = (max, severity = STRUCTURAL_RULE_SEVERITY) => [
   { ...MAX_LINE_OPTIONS, max },
 ];
 
+const createMaxParamsRule = (max) => [
+  STRUCTURAL_RULE_SEVERITY,
+  { max, ignoreRestParameters: true },
+];
+
+const createMaxLenRule = (limit) => [
+  "error",
+  {
+    code: limit,
+    tabWidth: 2,
+    ignoreUrls: true,
+    ignoreStrings: true,
+    ignoreTemplateLiterals: true,
+    ignoreRegExpLiterals: true,
+    ignoreTrailingComments: true,
+    ignorePattern: "logger\\.(info|warn|error)",
+  },
+];
+
 const BASE_STRUCTURAL_RULES = {
   "max-lines": createMaxLinesRule(250),
   "max-lines-per-function": [
     STRUCTURAL_RULE_SEVERITY,
-    { max: 60, skipBlankLines: true, skipComments: true, IIFEs: true },
+    { max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
   ],
-  complexity: [STRUCTURAL_RULE_SEVERITY, 10],
-  "max-depth": [STRUCTURAL_RULE_SEVERITY, 3],
-  "max-nested-callbacks": [STRUCTURAL_RULE_SEVERITY, 3],
+  "max-params": createMaxParamsRule(5),
+  complexity: ["error", 10],
+  "max-depth": ["error", 3],
+  "max-nested-callbacks": ["error", 3],
+  "max-len": createMaxLenRule(120),
 };
 
 const mergeStructuralRules = (customRules = {}) => ({
@@ -50,33 +59,42 @@ const mergeStructuralRules = (customRules = {}) => ({
   ...customRules,
 });
 
-// TODO(glancy-frontend, 2025-03-31):
-//  - 拆分下列遗留长文件，恢复统一结构化规则校验。
-//  - 目前仅为平滑迁移临时豁免，严禁新增例外。
 const STRUCTURAL_DEBT_ALLOWLIST = [];
 
 const STRUCTURAL_DEBT_OVERRIDES = STRUCTURAL_DEBT_ALLOWLIST.length
   ? [
       {
         files: STRUCTURAL_DEBT_ALLOWLIST,
-        rules: {
-          "max-lines": "off",
-          "max-lines-per-function": "off",
-          complexity: "off",
-          "max-depth": "off",
-          "max-nested-callbacks": "off",
-        },
+        rules: Object.keys(BASE_STRUCTURAL_RULES).reduce(
+          (acc, rule) => ({ ...acc, [rule]: "off" }),
+          {},
+        ),
       },
     ]
   : [];
 
+const localPlugin = {
+  rules: {
+    "cognitive-complexity": cognitiveComplexityRule,
+  },
+};
+
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores([
+    "dist",
+    "build",
+    "**/generated/**",
+    "**/gen/**",
+    "**/vendor/**",
+    "**/third_party/**",
+    "coverage",
+  ]),
   {
     files: ["**/*.{js,jsx}"],
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      glancy: localPlugin,
     },
     languageOptions: {
       parserOptions: {
@@ -92,6 +110,8 @@ export default defineConfig([
       ...reactRefresh.configs.vite.rules,
       ...mergeStructuralRules({
         "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+        "no-console": ["error", { allow: ["warn", "error"] }],
+        "glancy/cognitive-complexity": ["error", 15],
       }),
     },
   },
@@ -101,6 +121,7 @@ export default defineConfig([
       "@typescript-eslint": tseslint,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      glancy: localPlugin,
     },
     languageOptions: {
       parser: tsParser,
@@ -121,6 +142,8 @@ export default defineConfig([
           { varsIgnorePattern: "^[A-Z_]" },
         ],
         "@typescript-eslint/no-explicit-any": "off",
+        "no-console": ["error", { allow: ["warn", "error"] }],
+        "glancy/cognitive-complexity": ["error", 15],
       }),
     },
   },
@@ -140,7 +163,16 @@ export default defineConfig([
       "**/__tests__/**/*.{js,jsx,ts,tsx}",
     ],
     rules: {
-      "max-lines": createMaxLinesRule(500),
+      "max-lines": createMaxLinesRule(400),
+      "max-lines-per-function": [
+        STRUCTURAL_RULE_SEVERITY,
+        { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true },
+      ],
+      "max-params": createMaxParamsRule(6),
+      "max-len": createMaxLenRule(140),
+      complexity: ["error", 15],
+      "max-depth": ["error", 4],
+      "glancy/cognitive-complexity": ["error", 20],
     },
   },
   {

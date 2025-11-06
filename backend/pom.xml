@@ -27,6 +27,10 @@
         <spring-boot.version>3.5.4</spring-boot.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+        <sevntu.version>1.45.1</sevntu.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <dependency-check.version>10.0.4</dependency-check.version>
+        <cyclonedx.version>2.9.0</cyclonedx.version>
         </properties>
     <dependencyManagement>
         <dependencies>
@@ -181,11 +185,27 @@
                                 <groupId>org.apache.maven.plugins</groupId>
                                 <artifactId>maven-checkstyle-plugin</artifactId>
                                 <version>3.3.0</version>
+                                <dependencies>
+                                        <dependency>
+                                                <groupId>com.github.sevntu-checkstyle</groupId>
+                                                <artifactId>sevntu-checks</artifactId>
+                                                <version>${sevntu.version}</version>
+                                        </dependency>
+                                </dependencies>
                                 <configuration>
                                         <configLocation>checkstyle.xml</configLocation>
                                         <consoleOutput>true</consoleOutput>
                                         <failOnViolation>true</failOnViolation>
+                                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
                                 </configuration>
+                                <executions>
+                                        <execution>
+                                                <phase>verify</phase>
+                                                <goals>
+                                                        <goal>check</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
                         </plugin>
                         <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
@@ -212,8 +232,85 @@
                                         </compilerArgs>
                                 </configuration>
                         </plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
+                        <plugin>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>jacoco-maven-plugin</artifactId>
+                                <version>${jacoco.version}</version>
+                                <executions>
+                                        <execution>
+                                                <goals>
+                                                        <goal>prepare-agent</goal>
+                                                </goals>
+                                        </execution>
+                                        <execution>
+                                                <id>report</id>
+                                                <phase>verify</phase>
+                                                <goals>
+                                                        <goal>report</goal>
+                                                        <goal>check</goal>
+                                                </goals>
+                                                <configuration>
+                                                        <rules>
+                                                                <rule>
+                                                                        <element>BUNDLE</element>
+                                                                        <limits>
+                                                                                <limit>
+                                                                                        <counter>LINE</counter>
+                                                                                        <value>COVEREDRATIO</value>
+                                                                                        <minimum>0.70</minimum>
+                                                                                </limit>
+                                                                                <limit>
+                                                                                        <counter>BRANCH</counter>
+                                                                                        <value>COVEREDRATIO</value>
+                                                                                        <minimum>0.60</minimum>
+                                                                                </limit>
+                                                                        </limits>
+                                                                </rule>
+                                                        </rules>
+                                                </configuration>
+                                        </execution>
+                                </executions>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.owasp</groupId>
+                                <artifactId>dependency-check-maven</artifactId>
+                                <version>${dependency-check.version}</version>
+                                <configuration>
+                                        <failOnError>true</failOnError>
+                                        <failOnCvss>7.0</failOnCvss>
+                                        <skipProvidedScope>true</skipProvidedScope>
+                                        <skipTestScope>true</skipTestScope>
+                                </configuration>
+                                <executions>
+                                        <execution>
+                                                <goals>
+                                                        <goal>aggregate</goal>
+                                                        <goal>check</goal>
+                                                </goals>
+                                        </execution>
+                                </executions>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.cyclonedx</groupId>
+                                <artifactId>cyclonedx-maven-plugin</artifactId>
+                                <version>${cyclonedx.version}</version>
+                                <executions>
+                                        <execution>
+                                                <phase>verify</phase>
+                                                <goals>
+                                                        <goal>makeAggregateBom</goal>
+                                                </goals>
+                                                <configuration>
+                                                        <schemaVersion>1.5</schemaVersion>
+                                                        <includeBomSerialNumber>true</includeBomSerialNumber>
+                                                        <outputFormat>json</outputFormat>
+                                                        <outputName>backend-sbom</outputName>
+                                                </configuration>
+                                        </execution>
+                                </executions>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.springframework.boot</groupId>
                                 <artifactId>spring-boot-maven-plugin</artifactId>
                                 <version>${spring-boot.version}</version>
                                 <configuration>
