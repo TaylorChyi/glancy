@@ -1,18 +1,20 @@
 /**
  * 背景：
- *  - ChatInput 语言控制需要统一触发器，旧版双按钮占位且缺乏二级菜单。
+ *  - LanguageLauncher 原实现集成视图、状态与交互，函数 170+ 行导致维护困难。
  * 目的：
- *  - 以三点三角按钮配合双层菜单提供源/目标语选择，并保留扩展能力。
+ *  - 采用组合模式拆分触发器/菜单/列视图，以清晰的视图模型协同精简 Hook 输出。
  * 关键决策与取舍：
- *  - 复用 useLanguageLauncher Hook 聚合状态，视图层保持纯粹；
- *  - 左列承载语向切换，右列呈现对应选项，减少误触；
- *  - 复用共享的 CheckIcon，保持勾选语义一致。
+ *  - Hover 关闭策略抽为独立 Hook，确保所有交互区共享延迟收起逻辑；
+ *  - 视图层仅处理布局，行为透过 useLanguageLauncher 暴露的组合接口注入；
+ *  - 保留现有语义/ARIA 结构，避免无谓的 UI 调整。
  * 影响范围：
- *  - ChatInput 语言选择交互与相关测试快照。
+ *  - ChatInput 语言选择菜单与相关测试快照；
+ *  - 后续可在 columns 组件内部扩展无障碍细节而不影响主函数行数。
  * 演进与TODO：
- *  - TODO: 后续可在菜单底部加入最近使用语言或收藏能力。
+ *  - TODO: 引入键盘左右箭头切换语向的事件处理；
+ *  - TODO: 将空状态文案改为国际化资源，兼容多语言站点。
  */
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 
 import Popover from "@shared/components/ui/Popover/Popover.jsx";
@@ -21,6 +23,460 @@ import CheckIcon from "@shared/components/ui/LanguageMenu/parts/CheckIcon.jsx";
 import { TriadIcon } from "../icons";
 import useLanguageLauncher from "../hooks/useLanguageLauncher.ts";
 import styles from "../ChatInput.module.css";
+
+const HOVER_DISMISS_DELAY = 160;
+
+function useHoverDismissController(onClose) {
+  const timerRef = useRef(null);
+
+  const cancel = useCallback(() => {
+    if (timerRef.current !== null && typeof window !== "undefined") {
+      window.clearTimeout(timerRef.current);
+    }
+    timerRef.current = null;
+  }, []);
+
+  const schedule = useCallback(() => {
+    cancel();
+    if (typeof window === "undefined") {
+      onClose();
+      return;
+    }
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      onClose();
+    }, HOVER_DISMISS_DELAY);
+  }, [cancel, onClose]);
+
+  useEffect(() => cancel, [cancel]);
+
+  return { enter: cancel, leave: schedule, cancel };
+}
+
+function useVariantOpenHandlers(onMenuOpen) {
+  return useMemo(() => {
+    if (typeof onMenuOpen !== "function") {
+      return { source: undefined, target: undefined };
+    }
+    return {
+      source: () => onMenuOpen("source"),
+      target: () => onMenuOpen("target"),
+    };
+  }, [onMenuOpen]);
+}
+
+function composeVariantInput({
+  key,
+  label,
+  value,
+  options,
+  onChange,
+  normalizeValue,
+  onOpen,
+}) {
+  return {
+    key,
+    label,
+    value,
+    options: options ?? [],
+    onChange,
+    normalizeValue,
+    onOpen,
+  };
+}
+
+function buildGroupLabel(sourceLabel, targetLabel) {
+  const labelTokens = [sourceLabel, targetLabel].filter(Boolean);
+  if (labelTokens.length === 0) {
+    return "language selection";
+  }
+  return labelTokens.join(" → ");
+}
+
+function resolveSwapAction(onSwapLanguages, swapLabel) {
+  if (typeof onSwapLanguages !== "function") {
+    return null;
+  }
+  return {
+    label: swapLabel || "Swap",
+    onSwap: onSwapLanguages,
+  };
+}
+
+function createLauncherViewModel(props, openHandlers) {
+  return {
+    params: {
+      source: composeVariantInput({
+        key: "source",
+        label: props.sourceLanguageLabel,
+        value: props.sourceLanguage,
+        options: props.sourceLanguageOptions,
+        onChange: props.onSourceLanguageChange,
+        normalizeValue: props.normalizeSourceLanguage,
+        onOpen: openHandlers.source,
+      }),
+      target: composeVariantInput({
+        key: "target",
+        label: props.targetLanguageLabel,
+        value: props.targetLanguage,
+        options: props.targetLanguageOptions,
+        onChange: props.onTargetLanguageChange,
+        normalizeValue: props.normalizeTargetLanguage,
+        onOpen: openHandlers.target,
+      }),
+    },
+    groupLabel: buildGroupLabel(
+      props.sourceLanguageLabel,
+      props.targetLanguageLabel,
+    ),
+    swapAction: resolveSwapAction(props.onSwapLanguages, props.swapLabel),
+  };
+}
+
+function LanguageLauncherTrigger({
+  groupLabel,
+  open,
+  onToggle,
+  triggerRef,
+  hoverGuards,
+}) {
+  return (
+    <button
+      type="button"
+      className={styles["language-launcher-button"]}
+      aria-label={groupLabel}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={onToggle}
+      onMouseOver={hoverGuards.enter}
+      onMouseOut={hoverGuards.leave}
+      ref={triggerRef}
+      data-open={open ? "true" : undefined}
+      title={groupLabel}
+    >
+      <TriadIcon className={styles["language-launcher-icon"]} />
+    </button>
+  );
+}
+
+LanguageLauncherTrigger.propTypes = {
+  groupLabel: PropTypes.string.isRequired,
+  open: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  triggerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) })
+    .isRequired,
+  hoverGuards: PropTypes.shape({
+    enter: PropTypes.func.isRequired,
+    leave: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+function LanguageVariantsColumn({
+  variants,
+  activeKey,
+  onVariantEnter,
+  swapAction,
+  onSwap,
+}) {
+  return (
+    <div className={styles["language-variant-column"]} role="presentation">
+      <ul role="menu" className={styles["language-variant-list"]}>
+        {variants.map((variant) => (
+          <VariantRow
+            key={variant.key}
+            variant={variant}
+            isActive={variant.key === activeKey}
+            onEnter={onVariantEnter}
+          />
+        ))}
+      </ul>
+      {swapAction ? (
+        <button
+          type="button"
+          className={styles["language-swap-action"]}
+          onClick={onSwap}
+        >
+          {swapAction.label}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+LanguageVariantsColumn.propTypes = {
+  variants: PropTypes.arrayOf(PropTypes.object).isRequired,
+  activeKey: PropTypes.oneOf(["source", "target"]),
+  onVariantEnter: PropTypes.func.isRequired,
+  swapAction: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+  }),
+  onSwap: PropTypes.func,
+};
+
+LanguageVariantsColumn.defaultProps = {
+  activeKey: undefined,
+  swapAction: null,
+  onSwap: undefined,
+};
+
+function LanguageMenuColumns({
+  variants,
+  activeKey,
+  onVariantEnter,
+  swapAction,
+  onSwap,
+  activeVariant,
+  onSelect,
+}) {
+  return (
+    <>
+      <LanguageVariantsColumn
+        variants={variants}
+        activeKey={activeKey}
+        onVariantEnter={onVariantEnter}
+        swapAction={swapAction}
+        onSwap={onSwap}
+      />
+      <LanguageOptionsColumn
+        variant={activeVariant}
+        onSelect={onSelect}
+      />
+    </>
+  );
+}
+
+LanguageMenuColumns.propTypes = {
+  variants: PropTypes.arrayOf(PropTypes.object).isRequired,
+  activeKey: PropTypes.oneOf(["source", "target"]),
+  onVariantEnter: PropTypes.func.isRequired,
+  swapAction: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+  }),
+  onSwap: PropTypes.func,
+  activeVariant: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+};
+
+LanguageMenuColumns.defaultProps = {
+  activeKey: undefined,
+  swapAction: null,
+  onSwap: undefined,
+  activeVariant: null,
+};
+
+function LanguageOptionsColumn({ variant, onSelect }) {
+  const options = variant?.normalizedOptions ?? [];
+  const activeValue = variant?.currentOption?.value;
+  const variantKey = variant?.key ?? "source";
+
+  if (options.length === 0) {
+    return (
+      <div className={styles["language-options-column"]} role="presentation">
+        <div className={styles["language-empty-state"]}>暂无可用语言</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles["language-options-column"]} role="presentation">
+      <ul role="menu" className={styles["language-options-list"]}>
+        {options.map((option) => (
+          <VariantOption
+            key={option.value}
+            option={option}
+            isActive={option.value === activeValue}
+            onSelect={(value) => onSelect(variantKey, value)}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+LanguageOptionsColumn.propTypes = {
+  variant: PropTypes.shape({
+    key: PropTypes.oneOf(["source", "target"]),
+    normalizedOptions: PropTypes.array,
+    currentOption: PropTypes.shape({ value: PropTypes.string }),
+  }),
+  onSelect: PropTypes.func.isRequired,
+};
+
+LanguageOptionsColumn.defaultProps = {
+  variant: null,
+};
+
+function MenuSurface({ groupLabel, menuRef, hoverGuards, children }) {
+  return (
+    <div
+      ref={menuRef}
+      className={styles["language-launcher-menu"]}
+      role="menu"
+      aria-label={groupLabel}
+      onMouseOver={hoverGuards.enter}
+      onMouseOut={hoverGuards.leave}
+    >
+      {children}
+    </div>
+  );
+}
+
+MenuSurface.propTypes = {
+  groupLabel: PropTypes.string.isRequired,
+  menuRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
+  hoverGuards: PropTypes.shape({
+    enter: PropTypes.func.isRequired,
+    leave: PropTypes.func.isRequired,
+    cancel: PropTypes.func.isRequired,
+  }).isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+function LanguageLauncherMenu({
+  groupLabel,
+  state,
+  hoverGuards,
+  swapAction,
+}) {
+  const { menuRef, variants, activeVariant, handleVariantEnter, handleSelect, handleClose } =
+    state;
+  const activeKey = activeVariant?.key;
+  const swapHandler = swapAction
+    ? () => {
+        hoverGuards.cancel();
+        swapAction.onSwap();
+        handleClose();
+      }
+    : undefined;
+
+  return (
+    <MenuSurface
+      groupLabel={groupLabel}
+      menuRef={menuRef}
+      hoverGuards={hoverGuards}
+    >
+      <LanguageMenuColumns
+        variants={variants}
+        activeKey={activeKey}
+        onVariantEnter={handleVariantEnter}
+        swapAction={swapAction}
+        onSwap={swapHandler}
+        activeVariant={activeVariant}
+        onSelect={handleSelect}
+      />
+    </MenuSurface>
+  );
+}
+
+LanguageLauncherMenu.propTypes = {
+  groupLabel: PropTypes.string.isRequired,
+  state: PropTypes.shape({
+    menuRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) })
+      .isRequired,
+    variants: PropTypes.arrayOf(PropTypes.object).isRequired,
+    activeVariant: PropTypes.object,
+    handleVariantEnter: PropTypes.func.isRequired,
+    handleSelect: PropTypes.func.isRequired,
+    handleClose: PropTypes.func.isRequired,
+  }).isRequired,
+  hoverGuards: PropTypes.shape({
+    enter: PropTypes.func.isRequired,
+    leave: PropTypes.func.isRequired,
+    cancel: PropTypes.func.isRequired,
+  }).isRequired,
+  swapAction: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onSwap: PropTypes.func.isRequired,
+  }),
+};
+
+LanguageLauncherMenu.defaultProps = {
+  swapAction: null,
+};
+
+function LanguageLauncherPopover({
+  groupLabel,
+  state,
+  hoverGuards,
+  swapAction,
+}) {
+  return (
+    <Popover
+      isOpen={state.open}
+      anchorRef={state.triggerRef}
+      onClose={state.handleClose}
+      placement="top"
+      align="start"
+      fallbackPlacements={["bottom"]}
+      offset={12}
+    >
+      {state.open ? (
+        <LanguageLauncherMenu
+          groupLabel={groupLabel}
+          state={state}
+          hoverGuards={hoverGuards}
+          swapAction={swapAction}
+        />
+      ) : null}
+    </Popover>
+  );
+}
+
+LanguageLauncherPopover.propTypes = {
+  groupLabel: PropTypes.string.isRequired,
+  state: PropTypes.object.isRequired,
+  hoverGuards: PropTypes.shape({
+    enter: PropTypes.func.isRequired,
+    leave: PropTypes.func.isRequired,
+    cancel: PropTypes.func.isRequired,
+  }).isRequired,
+  swapAction: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onSwap: PropTypes.func.isRequired,
+  }),
+};
+
+LanguageLauncherPopover.defaultProps = {
+  swapAction: null,
+};
+
+function LanguageLauncherView({ groupLabel, hoverGuards, state, swapAction }) {
+  return (
+    <div className={styles["language-launcher-wrapper"]}>
+      <LanguageLauncherTrigger
+        groupLabel={groupLabel}
+        open={state.open}
+        onToggle={state.handleToggle}
+        triggerRef={state.triggerRef}
+        hoverGuards={hoverGuards}
+      />
+      <LanguageLauncherPopover
+        groupLabel={groupLabel}
+        state={state}
+        hoverGuards={hoverGuards}
+        swapAction={swapAction}
+      />
+    </div>
+  );
+}
+
+LanguageLauncherView.propTypes = {
+  groupLabel: PropTypes.string.isRequired,
+  hoverGuards: PropTypes.shape({
+    enter: PropTypes.func.isRequired,
+    leave: PropTypes.func.isRequired,
+    cancel: PropTypes.func.isRequired,
+  }).isRequired,
+  state: PropTypes.object.isRequired,
+  swapAction: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    onSwap: PropTypes.func.isRequired,
+  }),
+};
+
+LanguageLauncherView.defaultProps = {
+  swapAction: null,
+};
 
 function VariantRow({ variant, isActive, onEnter }) {
   const description = variant.currentOption?.label || "--";
@@ -92,202 +548,23 @@ VariantOption.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-export default function LanguageLauncher({
-  sourceLanguage,
-  sourceLanguageOptions,
-  sourceLanguageLabel,
-  onSourceLanguageChange,
-  targetLanguage,
-  targetLanguageOptions,
-  targetLanguageLabel,
-  onTargetLanguageChange,
-  onSwapLanguages,
-  swapLabel,
-  normalizeSourceLanguage,
-  normalizeTargetLanguage,
-  onMenuOpen,
-}) {
-  const {
-    open,
-    triggerRef,
-    menuRef,
-    variants,
-    activeVariant,
-    handleToggle,
-    handleClose,
-    handleVariantEnter,
-    handleSelect,
-  } = useLanguageLauncher({
-    source: {
-      key: "source",
-      label: sourceLanguageLabel,
-      value: sourceLanguage,
-      options: sourceLanguageOptions,
-      onChange: onSourceLanguageChange,
-      normalizeValue: normalizeSourceLanguage,
-      onOpen:
-        typeof onMenuOpen === "function"
-          ? () => onMenuOpen("source")
-          : undefined,
-    },
-    target: {
-      key: "target",
-      label: targetLanguageLabel,
-      value: targetLanguage,
-      options: targetLanguageOptions,
-      onChange: onTargetLanguageChange,
-      normalizeValue: normalizeTargetLanguage,
-      onOpen:
-        typeof onMenuOpen === "function"
-          ? () => onMenuOpen("target")
-          : undefined,
-    },
-  });
+export default function LanguageLauncher(props) {
+  const openHandlers = useVariantOpenHandlers(props.onMenuOpen);
+  const viewModel = createLauncherViewModel(props, openHandlers);
+  const state = useLanguageLauncher(viewModel.params);
+  const hoverGuards = useHoverDismissController(state.handleClose);
 
-  const hoverDismissTimerRef = useRef(null);
-
-  const cancelHoverDismiss = useCallback(() => {
-    if (
-      hoverDismissTimerRef.current !== null &&
-      typeof window !== "undefined"
-    ) {
-      window.clearTimeout(hoverDismissTimerRef.current);
-    }
-    hoverDismissTimerRef.current = null;
-  }, []);
-
-  useEffect(() => cancelHoverDismiss, [cancelHoverDismiss]);
-
-  const groupLabel =
-    [sourceLanguageLabel, targetLanguageLabel].filter(Boolean).join(" → ") ||
-    "language selection";
-
-  const activeKey = activeVariant?.key;
-  const activeOptions = activeVariant?.normalizedOptions ?? [];
-  const activeValue = activeVariant?.currentOption?.value;
-  const canSwap = typeof onSwapLanguages === "function";
-
-  const handleMenuMouseLeave = useCallback(
-    /**
-     * 意图：通过延迟收起策略避免浮层在内部 hover 切换时立即关闭。
-     * 输入：鼠标离开事件。
-     * 输出：当指针在给定延迟内未重新回到菜单时触发关闭。
-     * 流程：
-     *  1) 取消上一轮收起定时器；
-     *  2) 启动新的短延时定时器触发关闭；
-     *  3) 若期间鼠标重新进入则取消定时器。
-     * 错误处理：无额外异常分支，由外层 close 逻辑托底。
-     * 复杂度：O(1)。
-     */
-    () => {
-      cancelHoverDismiss();
-      if (typeof window === "undefined") {
-        handleClose();
-        return;
-      }
-
-      const delay = 160;
-      hoverDismissTimerRef.current = window.setTimeout(() => {
-        hoverDismissTimerRef.current = null;
-        handleClose();
-      }, delay);
-    },
-    [cancelHoverDismiss, handleClose],
-  );
-
-  if (variants.length === 0) {
+  if (state.variants.length === 0) {
     return null;
   }
 
   return (
-    <div className={styles["language-launcher-wrapper"]}>
-      <button
-        type="button"
-        className={styles["language-launcher-button"]}
-        aria-label={groupLabel}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={handleToggle}
-        onMouseOver={cancelHoverDismiss}
-        onMouseOut={handleMenuMouseLeave}
-        ref={triggerRef}
-        data-open={open ? "true" : undefined}
-        title={groupLabel}
-      >
-        <TriadIcon className={styles["language-launcher-icon"]} />
-      </button>
-      <Popover
-        isOpen={open}
-        anchorRef={triggerRef}
-        onClose={handleClose}
-        placement="top"
-        align="start"
-        fallbackPlacements={["bottom"]}
-        offset={12}
-      >
-        {open ? (
-          <div
-            ref={menuRef}
-            className={styles["language-launcher-menu"]}
-            role="menu"
-            aria-label={groupLabel}
-            onMouseOver={cancelHoverDismiss}
-            onMouseOut={handleMenuMouseLeave}
-          >
-            <div
-              className={styles["language-variant-column"]}
-              role="presentation"
-            >
-              <ul role="menu" className={styles["language-variant-list"]}>
-                {variants.map((variant) => (
-                  <VariantRow
-                    key={variant.key}
-                    variant={variant}
-                    isActive={variant.key === activeKey}
-                    onEnter={handleVariantEnter}
-                  />
-                ))}
-              </ul>
-              {canSwap ? (
-                <button
-                  type="button"
-                  className={styles["language-swap-action"]}
-                  onClick={() => {
-                    onSwapLanguages?.();
-                    handleClose();
-                  }}
-                >
-                  {swapLabel || "Swap"}
-                </button>
-              ) : null}
-            </div>
-            <div
-              className={styles["language-options-column"]}
-              role="presentation"
-            >
-              {activeOptions.length > 0 ? (
-                <ul role="menu" className={styles["language-options-list"]}>
-                  {activeOptions.map((option) => (
-                    <VariantOption
-                      key={option.value}
-                      option={option}
-                      isActive={option.value === activeValue}
-                      onSelect={(value) =>
-                        handleSelect(activeKey ?? "source", value)
-                      }
-                    />
-                  ))}
-                </ul>
-              ) : (
-                <div className={styles["language-empty-state"]}>
-                  暂无可用语言
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null}
-      </Popover>
-    </div>
+    <LanguageLauncherView
+      groupLabel={viewModel.groupLabel}
+      hoverGuards={hoverGuards}
+      state={state}
+      swapAction={viewModel.swapAction}
+    />
   );
 }
 
