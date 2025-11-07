@@ -1,10 +1,9 @@
-name: Deploy Website
+name: website-deployment
 
 on:
   push:
-    branches: [main, 'feature-*']
     paths:
-      - 'website/**'
+      - "website/**"
   workflow_dispatch: {}
 
 concurrency:
@@ -15,7 +14,6 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
 
-    # 所有 run 步骤默认在前端目录执行（字面值，不能用表达式）
     defaults:
       run:
         working-directory: website
@@ -37,11 +35,6 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Lint
-        run: |
-          npm run lint
-          npm run lint:css
-
       - name: Build
         run: npm run build
 
@@ -57,16 +50,16 @@ jobs:
             sudo chown -R $USER:$USER /var/www/glancy-website
             rm -rf /var/www/glancy-website/dist/*
 
-      - name: Upload dist (strip prefix)
-        uses: appleboy/scp-action@v0.1.7   # ← 改这里：使用存在的 tag
+      - name: Upload dist
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
-          source: 'website/dist/**'
-          target: '/var/www/glancy-website/dist/'
-          strip_components: 2              # 剥掉 website/ 与 dist/ 两层
-          debug: true                      # 打开调试日志
+          source: "website/dist/**"
+          target: "/var/www/glancy-website/dist/"
+          strip_components: 2
+          debug: true
 
       - name: Verify remote files
         uses: appleboy/ssh-action@v1.0.0

@@ -1,0 +1,23 @@
+name: backend-format-check
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  verify-formatting:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Run Spotless & Checkstyle
+        run: ./mvnw -B spotless:check checkstyle:check
