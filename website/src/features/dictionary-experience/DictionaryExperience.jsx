@@ -43,7 +43,6 @@ export default function DictionaryExperience() {
     focusInput,
     entry,
     finalText,
-    streamText,
     loading,
     dictionaryActionBarProps,
     displayClassName,
@@ -69,7 +68,7 @@ export default function DictionaryExperience() {
   const isLibraryViewActive =
     viewShape.isLibrary ?? activeView === DICTIONARY_EXPERIENCE_VIEWS.LIBRARY;
 
-  const previewContent = finalText || streamText;
+  const previewContent = finalText;
   const shouldRenderEntry =
     isDictionaryViewActive && (entry || previewContent || loading);
   const hasDefinition = isDictionaryViewActive && Boolean(entry);

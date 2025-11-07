@@ -2,11 +2,10 @@ import { renderHook, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import {
   useDictionaryExperience,
-  mockStreamWord,
   mockWordStoreState,
   mockGetRecord,
   mockGetEntry,
-  createStreamFromChunks,
+  mockFetchWordWithHandling,
   resetDictionaryExperienceTestState,
   restoreDictionaryExperienceTimers,
 } from "../testing/useDictionaryExperienceTestHarness.js";
@@ -37,9 +36,12 @@ describe("useDictionaryExperience/view state", () => {
     const entry = { id: "v1", term: "omega", markdown: "definition" };
     mockGetRecord.mockReturnValue({ entry });
     mockGetEntry.mockReturnValue(entry);
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({ chunk: JSON.stringify(entry), language: "EN" }),
-    );
+    mockFetchWordWithHandling.mockResolvedValueOnce({
+      data: entry,
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
 
     const { result } = renderHook(() => useDictionaryExperience());
     await runLookup(result, entry.term);
@@ -59,9 +61,12 @@ describe("useDictionaryExperience/view state", () => {
     const entry = { id: "only", term: "lyra", markdown: "definition" };
     mockGetRecord.mockReturnValue({ entry });
     mockGetEntry.mockReturnValue(entry);
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({ chunk: JSON.stringify(entry), language: "EN" }),
-    );
+    mockFetchWordWithHandling.mockResolvedValueOnce({
+      data: entry,
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
 
     const { result } = renderHook(() => useDictionaryExperience());
     await runLookup(result, entry.term);
@@ -78,7 +83,6 @@ describe("useDictionaryExperience/view state", () => {
     expect(result.current.activeView).toBe("dictionary");
     expect(result.current.entry).toBeNull();
     expect(result.current.finalText).toBe("");
-    expect(result.current.streamText).toBe("");
   });
 
   /**
@@ -91,9 +95,12 @@ describe("useDictionaryExperience/view state", () => {
     };
     mockGetRecord.mockImplementation((key) => mockWordStoreState.entries[key]);
     mockGetEntry.mockImplementation(() => entry);
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({ chunk: JSON.stringify(entry), language: "EN" }),
-    );
+    mockFetchWordWithHandling.mockResolvedValue({
+      data: entry,
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
 
     const { result } = renderHook(() => useDictionaryExperience());
     await runLookup(result, "nova");

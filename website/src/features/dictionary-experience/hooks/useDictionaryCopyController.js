@@ -12,7 +12,7 @@ const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
 /**
  * 意图：集中管理复制行为的所有状态与副作用，为上层提供可组合的控制器。
  * 输入：
- *  - entry/finalText/streamText/currentTerm：复制内容的候选来源；
+ *  - entry/finalText/currentTerm：复制内容的候选来源；
  *  - t：国际化字典，需包含复制相关文案；
  *  - showPopup：弹窗提示函数。
  * 输出：复制能力是否可用、当前状态、复制动作、复位方法等。
@@ -26,7 +26,6 @@ const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
 export function useDictionaryCopyController({
   entry,
   finalText,
-  streamText,
   currentTerm,
   t,
   showPopup,
@@ -40,7 +39,6 @@ export function useDictionaryCopyController({
     const stringCandidates = [
       typeof entry?.markdown === "string" ? entry.markdown : null,
       typeof finalText === "string" ? finalText : null,
-      typeof streamText === "string" ? streamText : null,
     ];
 
     for (const candidate of stringCandidates) {
@@ -61,7 +59,7 @@ export function useDictionaryCopyController({
     }
 
     return currentTerm || "";
-  }, [entry, finalText, streamText, currentTerm]);
+  }, [entry, finalText, currentTerm]);
 
   const canCopyDefinition = useMemo(
     () => typeof copyPayload === "string" && copyPayload.trim().length > 0,

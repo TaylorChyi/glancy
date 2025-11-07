@@ -9,7 +9,6 @@ export function useDictionaryBehaviorControls({
   wordStoreApi,
   historyCaptureEnabled,
   lookupController,
-  streamWord,
   fetchWord,
 }) {
   const {
@@ -17,8 +16,6 @@ export function useDictionaryBehaviorControls({
     setEntry,
     finalText,
     setFinalText,
-    streamText,
-    setStreamText,
     currentTermKey,
     setCurrentTermKey,
     currentTerm,
@@ -54,7 +51,6 @@ export function useDictionaryBehaviorControls({
     wordStoreApi,
     setEntry,
     setFinalText,
-    setStreamText,
     setCurrentTerm,
   });
 
@@ -67,14 +63,13 @@ export function useDictionaryBehaviorControls({
   } = useDictionaryCopyController({
     entry,
     finalText,
-    streamText,
     currentTerm,
     t,
     showPopup,
   });
 
   const { executeLookup } = useDictionaryLookupExecutor({
-    streamWord,
+    fetchWord,
     user,
     beginLookup,
     clearActiveLookup,
@@ -82,7 +77,6 @@ export function useDictionaryBehaviorControls({
     setActiveView,
     setLoading,
     setEntry,
-    setStreamText,
     setFinalText,
     dictionarySourceLanguage,
     dictionaryTargetLanguage,
@@ -111,7 +105,6 @@ export function useDictionaryBehaviorControls({
     removeHistory,
     setEntry,
     setFinalText,
-    setStreamText,
     setCurrentTermKey,
     setCurrentTerm,
     setActiveView,

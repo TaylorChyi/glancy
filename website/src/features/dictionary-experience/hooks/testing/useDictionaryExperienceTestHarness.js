@@ -44,7 +44,6 @@ export const mockLanguageApi = {
   lang: "en",
   setLang: jest.fn(),
 };
-export const mockStreamWord = jest.fn(() => (async function* () {})());
 export const mockGetRecord = jest.fn(() => null);
 export const mockGetEntry = jest.fn(() => null);
 export const mockFetchWordWithHandling = jest.fn(async () => ({
@@ -72,10 +71,10 @@ jest.unstable_mockModule("@core/context", () => ({
   useUser: () => mockUserState,
   useTheme: () => mockThemeApi,
   useLanguage: () => mockLanguageApi,
+  useFavorites: () => ({ favorites: [], addFavorite: jest.fn(), removeFavorite: jest.fn() }),
 }));
 
 jest.unstable_mockModule("@shared/hooks", () => ({
-  useStreamWord: () => mockStreamWord,
   useFetchWord: () => ({ fetchWordWithHandling: mockFetchWordWithHandling }),
   useAppShortcuts: () => ({}),
 }));
@@ -149,28 +148,12 @@ export const { useDictionaryExperience, COPY_FEEDBACK_STATES } = await import(
   "../useDictionaryExperience.js"
 );
 
-/**
- * 意图：根据给定片段快速构造异步生成器，简化测试中的嵌套回调。
- * 输入：chunks 为按顺序输出的响应片段。
- * 输出：返回立即可用的异步迭代器实例。
- * 流程：逐个 yield 传入片段，不做额外处理。
- * 错误处理：依赖调用方保证片段结构合法。
- * 复杂度：O(n)，n 为片段数量。
- */
-export const createStreamFromChunks = (...chunks) =>
-  (async function* () {
-    for (const chunk of chunks) {
-      yield chunk;
-    }
-  })();
-
 export const resetDictionaryExperienceTestState = () => {
   jest.clearAllMocks();
   mockHistoryApi.history = [];
   mockSettingsState.dictionarySourceLanguage = "AUTO";
   mockSettingsState.dictionaryTargetLanguage = "CHINESE";
   mockUserState.user = { id: "user-id" };
-  mockStreamWord.mockImplementation(() => (async function* () {})());
   mockGetRecord.mockImplementation(() => null);
   mockGetEntry.mockImplementation(() => null);
   mockFetchWordWithHandling.mockReset();

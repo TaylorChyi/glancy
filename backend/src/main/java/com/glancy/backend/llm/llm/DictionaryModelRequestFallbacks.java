@@ -14,9 +14,14 @@ package com.glancy.backend.llm.llm;
  */
 public final class DictionaryModelRequestFallbacks {
 
+    private static final boolean STREAM_DISABLED = false;
     private static final String THINKING_DISABLED = "disabled";
 
     private DictionaryModelRequestFallbacks() {}
+
+    public static boolean resolveStream(Boolean configured) {
+        return configured == null ? STREAM_DISABLED : configured.booleanValue();
+    }
 
     public static String resolveThinkingType(String configured) {
         return configured == null || configured.isBlank() ? THINKING_DISABLED : configured;

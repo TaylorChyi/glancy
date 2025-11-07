@@ -5,7 +5,6 @@ export function useDictionaryExperienceState() {
   const [text, setText] = useState("");
   const [entry, setEntry] = useState(null);
   const [finalText, setFinalText] = useState("");
-  const [streamText, setStreamText] = useState("");
   const [currentTermKey, setCurrentTermKey] = useState(null);
   const [currentTerm, setCurrentTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,8 +20,6 @@ export function useDictionaryExperienceState() {
     setEntry,
     finalText,
     setFinalText,
-    streamText,
-    setStreamText,
     currentTermKey,
     setCurrentTermKey,
     currentTerm,
