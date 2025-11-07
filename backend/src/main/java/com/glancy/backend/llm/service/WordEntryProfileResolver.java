@@ -3,7 +3,6 @@ package com.glancy.backend.llm.service;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.prompt.PromptTemplateRenderer;
-import jakarta.annotation.PostConstruct;
 import java.util.EnumMap;
 import java.util.Map;
 import org.springframework.stereotype.Component;
@@ -13,11 +12,11 @@ import org.springframework.util.StringUtils;
  * 背景：
  *  - 词条类型与写作引导之前直接硬编码在 {@link WordPromptAssembler} 内，扩展其他语言困难。
  * 目的：
- *  - 将词条画像解析抽象为策略工厂，按语言路由到对应实现并通过模板资源提供可扩展的指引文案。
+ *  - 将词条画像解析抽象为策略工厂，按语言路由到对应实现并通过内存模板提供可扩展的指引文案。
  * 关键决策与取舍：
  *  - 采用策略模式将不同语言的解析逻辑解耦；指引内容统一交给模板渲染器，避免硬编码。
  * 影响范围：
- *  - Prompt 装配器与未来的多语言策略共享该组件，模板资源集中管理。
+ *  - Prompt 装配器与未来的多语言策略共享该组件，模板常量集中管理。
  * 演进与TODO：
  *  - 后续可引入配置驱动的策略注册，支持运行时扩展或 A/B 实验。
  */
@@ -32,11 +31,6 @@ public class WordEntryProfileResolver {
         this.templateRenderer = templateRenderer;
         this.defaultStrategy = new DefaultEntryProfileStrategy(templateRenderer);
         strategies.put(Language.CHINESE, new ChineseEntryProfileStrategy(templateRenderer));
-    }
-
-    @PostConstruct
-    void preloadTemplates() {
-        templateRenderer.preload(WordPromptTemplate.allPaths());
     }
 
     /**
@@ -70,8 +64,8 @@ public class WordEntryProfileResolver {
 
         @Override
         public EntryProfile resolve(String normalizedTerm, DictionaryFlavor flavor) {
-            String label = renderer.render(WordPromptTemplate.ENTRY_LABEL_DEFAULT.path(), Map.of());
-            String guidance = renderer.render(WordPromptTemplate.ENTRY_GUIDANCE_DEFAULT.path(), Map.of());
+            String label = renderer.render(WordPromptTemplate.ENTRY_LABEL_DEFAULT, Map.of());
+            String guidance = renderer.render(WordPromptTemplate.ENTRY_GUIDANCE_DEFAULT, Map.of());
             return new EntryProfile(label, guidance);
         }
     }
@@ -171,8 +165,8 @@ public class WordEntryProfileResolver {
 
         private record ProfileTemplate(WordPromptTemplate labelTemplate, WordPromptTemplate guidanceTemplate) {
             private EntryProfile render(PromptTemplateRenderer renderer) {
-                String label = renderer.render(labelTemplate.path(), Map.of());
-                String guidance = renderer.render(guidanceTemplate.path(), Map.of());
+                String label = renderer.render(labelTemplate, Map.of());
+                String guidance = renderer.render(guidanceTemplate, Map.of());
                 return new EntryProfile(label, guidance);
             }
         }

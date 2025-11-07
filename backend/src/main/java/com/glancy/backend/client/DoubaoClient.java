@@ -5,6 +5,7 @@ import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.llm.llm.DictionaryModelClient;
+import com.glancy.backend.llm.llm.DictionaryModelRequestOptions;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ public class DoubaoClient implements DictionaryModelClient {
     private final String apiKey;
     private final String model;
     private final Integer maxCompletionTokens;
+    private final boolean defaultStream;
+    private final String defaultThinkingType;
 
     public DoubaoClient(WebClient.Builder builder, DoubaoProperties properties) {
         this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
@@ -34,6 +37,11 @@ public class DoubaoClient implements DictionaryModelClient {
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
         this.maxCompletionTokens = properties.getMaxCompletionTokens();
+        this.defaultStream = Boolean.TRUE.equals(properties.getDefaultStream());
+        String configuredThinking = properties.getDefaultThinkingType();
+        this.defaultThinkingType = configuredThinking == null || configuredThinking.isBlank()
+            ? "disabled"
+            : configuredThinking;
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Doubao API key is empty");
         } else {
@@ -48,12 +56,24 @@ public class DoubaoClient implements DictionaryModelClient {
 
     @Override
     public String generateEntry(List<ChatMessage> messages, double temperature) {
+        return generateEntry(messages, temperature, DictionaryModelRequestOptions.defaults());
+    }
+
+    @Override
+    public String generateEntry(List<ChatMessage> messages, double temperature, DictionaryModelRequestOptions options) {
+        DictionaryModelRequestOptions safeOptions = options == null
+            ? DictionaryModelRequestOptions.defaults()
+            : options;
+        boolean stream = safeOptions.resolveStream(defaultStream);
+        String thinkingType = safeOptions.resolveThinkingType(defaultThinkingType);
         log.info(
-            "DoubaoClient.generateEntry called with {} messages, temperature={}, stream=false",
+            "DoubaoClient.generateEntry called with {} messages, temperature={}, stream={}, thinkingType={}",
             messages.size(),
-            temperature
+            temperature,
+            stream,
+            thinkingType
         );
-        Map<String, Object> body = prepareRequestBody(messages, temperature);
+        Map<String, Object> body = prepareRequestBody(messages, temperature, stream, thinkingType);
         return prepareRequest(body)
             .exchangeToMono(this::handleSyncResponse)
             .map(this::extractAssistantContent)
@@ -62,12 +82,17 @@ public class DoubaoClient implements DictionaryModelClient {
             .orElse("");
     }
 
-    private Map<String, Object> prepareRequestBody(List<ChatMessage> messages, double temperature) {
+    private Map<String, Object> prepareRequestBody(
+        List<ChatMessage> messages,
+        double temperature,
+        boolean stream,
+        String thinkingType
+    ) {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("temperature", temperature);
-        body.put("stream", false);
-        body.put("thinking", Map.of("type", "disabled"));
+        body.put("stream", stream);
+        body.put("thinking", Map.of("type", thinkingType));
         if (maxCompletionTokens != null && maxCompletionTokens > 0) {
             body.put("max_completion_tokens", maxCompletionTokens);
         }

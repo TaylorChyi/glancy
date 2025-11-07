@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.glancy.backend.config.DoubaoProperties;
+import com.glancy.backend.llm.llm.DictionaryModelRequestOptions;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -66,6 +67,16 @@ class DoubaoClientTest {
     }
 
     @Test
+    /**
+     * 测试目标：确认默认配置下模型返回内容被正确解析。
+     * 前置条件：模拟 200 响应并注入默认 DoubaoClient。
+     * 步骤：
+     *  1) 调用 generateEntry 并捕获响应。
+     * 断言：
+     *  - 响应内容等于模拟返回的 assistant 内容。
+     * 边界/异常：
+     *  - 若解析失败则断言不成立。
+     */
     void GivenValidResponse_WhenGenerateEntry_ThenReturnAssistantContent() {
         ExchangeFunction ef = this::successResponse;
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
@@ -74,10 +85,22 @@ class DoubaoClientTest {
     }
 
     @Test
+    /**
+     * 测试目标：当服务端返回 401 时客户端应抛出 UnauthorizedException。
+     * 前置条件：模拟 401 响应并校验请求体携带默认 stream/thinking 设置。
+     * 步骤：
+     *  1) 调用 generateEntry。
+     * 断言：
+     *  - 抛出 UnauthorizedException。
+     * 边界/异常：
+     *  - 若未抛出异常表示状态码处理失效。
+     */
     void GivenUnauthorized_WhenGenerateEntry_ThenThrowUnauthorizedException() {
         ExchangeFunction ef = req -> {
             assertEquals(MediaType.APPLICATION_JSON_VALUE, req.headers().getFirst(HttpHeaders.ACCEPT));
-            assertTrue(extractRequestBody(req).contains("\"stream\":false"));
+            String requestBody = extractRequestBody(req);
+            assertTrue(requestBody.contains("\"stream\":false"));
+            assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
             return Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
         };
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
@@ -87,6 +110,16 @@ class DoubaoClientTest {
     }
 
     @Test
+    /**
+     * 测试目标：验证 5xx 响应路径抛出 BusinessException。
+     * 前置条件：模拟 500 响应。
+     * 步骤：
+     *  1) 调用 generateEntry。
+     * 断言：
+     *  - 抛出 BusinessException。
+     * 边界/异常：
+     *  - 若未抛出异常表示错误处理缺失。
+     */
     void GivenServerError_WhenGenerateEntry_ThenThrowBusinessException() {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR).build());
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
@@ -95,12 +128,45 @@ class DoubaoClientTest {
         );
     }
 
+    @Test
+    /**
+     * 测试目标：确保调用方可覆盖 stream 与 thinkingType 参数。
+     * 前置条件：构造带有特定参数的 DictionaryModelRequestOptions。
+     * 步骤：
+     *  1) 调用 generateEntry 并检查请求体。
+     * 断言：
+     *  - 请求体中的 stream 与 thinking.type 匹配覆盖值。
+     * 边界/异常：
+     *  - 若覆盖失败则断言不满足。
+     */
+    void GivenOptionsOverride_WhenGenerateEntry_ThenRespectOverrides() {
+        ExchangeFunction ef = req -> {
+            String body = extractRequestBody(req);
+            assertTrue(body.contains("\"stream\":true"));
+            assertTrue(body.contains("\"thinking\":{\"type\":\"detailed\"}"));
+            return Mono.just(
+                ClientResponse.create(HttpStatus.OK)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .body("{\"choices\":[]}")
+                    .build()
+            );
+        };
+        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+        DictionaryModelRequestOptions options = DictionaryModelRequestOptions.builder()
+            .stream(true)
+            .thinkingType("detailed")
+            .build();
+        String result = client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5, options);
+        assertEquals("", result);
+    }
+
     private Mono<ClientResponse> successResponse(ClientRequest request) {
         assertEquals("http://mock/api/v3/chat/completions", request.url().toString());
         assertEquals("Bearer key", request.headers().getFirst(HttpHeaders.AUTHORIZATION));
         assertEquals(MediaType.APPLICATION_JSON_VALUE, request.headers().getFirst(HttpHeaders.ACCEPT));
         String requestBody = extractRequestBody(request);
         assertTrue(requestBody.contains("\"stream\":false"));
+        assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
         String body = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]}";
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)

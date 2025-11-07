@@ -8,7 +8,6 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.prompt.PromptTemplateRenderer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.DefaultResourceLoader;
 
 class WordEntryProfileResolverTest {
 
@@ -16,12 +15,12 @@ class WordEntryProfileResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new WordEntryProfileResolver(new PromptTemplateRenderer(new DefaultResourceLoader()));
+        resolver = new WordEntryProfileResolver(new PromptTemplateRenderer());
     }
 
     /**
      * 测试目标：验证单字输入命中单字模板，输出英文标签与拆解指引。
-     * 前置条件：使用默认资源加载器加载中文模板。
+     * 前置条件：渲染器基于内存常量模板。
      * 步骤：
      *  1) 调用解析器处理单个汉字。
      * 断言：
@@ -43,7 +42,7 @@ class WordEntryProfileResolverTest {
 
     /**
      * 测试目标：验证英文查询走默认策略输出通用标签。
-     * 前置条件：未注册英文专属策略。
+     * 前置条件：渲染器基于内存常量模板，未注册英文专属策略。
      * 步骤：
      *  1) 解析英文输入。
      * 断言：

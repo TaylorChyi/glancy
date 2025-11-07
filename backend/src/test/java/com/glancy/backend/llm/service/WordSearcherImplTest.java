@@ -23,7 +23,6 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.core.io.DefaultResourceLoader;
 
 class WordSearcherImplTest {
 
@@ -63,7 +62,7 @@ class WordSearcherImplTest {
         searchContentManager = mock(SearchContentManager.class);
         parser = mock(WordResponseParser.class);
         defaultClient = mock(DictionaryModelClient.class);
-        templateRenderer = new PromptTemplateRenderer(new DefaultResourceLoader());
+        templateRenderer = new PromptTemplateRenderer();
         WordEntryProfileResolver entryProfileResolver = new WordEntryProfileResolver(templateRenderer);
         promptAssembler = new WordPromptAssembler(templateRenderer, entryProfileResolver);
     }

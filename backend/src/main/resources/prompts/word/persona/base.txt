@@ -1,1 +1,0 @@
-你正在为{{personaDescriptor}}提供词汇讲解{{toneClause}}{{goalClause}}{{interestsClause}}。

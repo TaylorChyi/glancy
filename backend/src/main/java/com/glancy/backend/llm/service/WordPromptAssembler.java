@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
  * 背景：
  *  - 词典检索需组合系统提示词、个性化画像与用户查询，原实现通过字符串拼接难以维护。
  * 目的：
- *  - 借助模板渲染器从资源文件加载 Prompt 片段，按语言与风味策略装配模型消息。
+ *  - 借助模板渲染器从常量模板加载 Prompt 片段，按语言与风味策略装配模型消息。
  * 关键决策与取舍：
  *  - 采用模板枚举集中管理资源路径，避免散落的硬编码字符串。
  *  - 维持语气策略映射，便于未来按风味扩展差异化语气指令。
@@ -86,14 +86,14 @@ public class WordPromptAssembler {
             renderTextClause(context.goal(), WordPromptTemplate.PERSONA_GOAL_CLAUSE, "goal")
         );
         templateContext.put("interestsClause", renderInterestsClause(context));
-        return templateRenderer.render(WordPromptTemplate.PERSONA_BASE.path(), templateContext);
+        return templateRenderer.render(WordPromptTemplate.PERSONA_BASE, templateContext);
     }
 
     private String renderTextClause(String value, WordPromptTemplate template, String key) {
         if (!StringUtils.hasText(value)) {
             return "";
         }
-        return templateRenderer.render(template.path(), Map.of(key, value));
+        return templateRenderer.render(template, Map.of(key, value));
     }
 
     private String renderInterestsClause(WordPersonalizationContext context) {
@@ -101,10 +101,7 @@ public class WordPromptAssembler {
             return "";
         }
         String interests = String.join("、", context.interests());
-        return templateRenderer.render(
-            WordPromptTemplate.PERSONA_INTERESTS_CLAUSE.path(),
-            Map.of("interests", interests)
-        );
+        return templateRenderer.render(WordPromptTemplate.PERSONA_INTERESTS_CLAUSE, Map.of("interests", interests));
     }
 
     private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
@@ -113,14 +110,14 @@ public class WordPromptAssembler {
         }
         if (language == Language.ENGLISH) {
             if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_MONOLINGUAL.path(), Map.of());
+                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_MONOLINGUAL, Map.of());
             }
             if (flavor == DictionaryFlavor.BILINGUAL) {
-                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_BILINGUAL.path(), Map.of());
+                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_BILINGUAL, Map.of());
             }
         }
         if (language == Language.CHINESE && flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
-            return templateRenderer.render(WordPromptTemplate.FLAVOR_CHINESE_MONOLINGUAL.path(), Map.of());
+            return templateRenderer.render(WordPromptTemplate.FLAVOR_CHINESE_MONOLINGUAL, Map.of());
         }
         return null;
     }
@@ -153,7 +150,7 @@ public class WordPromptAssembler {
         templateContext.put("recentTermsSection", renderRecentTermsSection(context));
         templateContext.put("goalSection", renderGoalSection(context));
         templateContext.put("toneDirective", renderToneDirective(context, strategy));
-        return templateRenderer.render(WordPromptTemplate.USER_CHINESE_PAYLOAD.path(), templateContext);
+        return templateRenderer.render(WordPromptTemplate.USER_CHINESE_PAYLOAD, templateContext);
     }
 
     private String renderEnglishPayload(
@@ -168,21 +165,21 @@ public class WordPromptAssembler {
         templateContext.put("recentTermsSection", renderRecentTermsSection(context));
         templateContext.put("goalSection", renderGoalSection(context));
         templateContext.put("toneDirective", renderToneDirective(context, strategy));
-        return templateRenderer.render(WordPromptTemplate.USER_ENGLISH_PAYLOAD.path(), templateContext);
+        return templateRenderer.render(WordPromptTemplate.USER_ENGLISH_PAYLOAD, templateContext);
     }
 
     private String renderChineseStructureRequirement(DictionaryFlavor flavor) {
         WordPromptTemplate template = flavor == DictionaryFlavor.MONOLINGUAL_CHINESE
             ? WordPromptTemplate.STRUCTURE_CHINESE_MONOLINGUAL
             : WordPromptTemplate.STRUCTURE_CHINESE_BILINGUAL;
-        return templateRenderer.render(template.path(), Map.of());
+        return templateRenderer.render(template, Map.of());
     }
 
     private String renderEnglishStructureRequirement(DictionaryFlavor flavor) {
         WordPromptTemplate template = flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH
             ? WordPromptTemplate.STRUCTURE_ENGLISH_MONOLINGUAL
             : WordPromptTemplate.STRUCTURE_ENGLISH_BILINGUAL;
-        return templateRenderer.render(template.path(), Map.of());
+        return templateRenderer.render(template, Map.of());
     }
 
     private String renderRecentTermsSection(WordPersonalizationContext context) {
@@ -190,20 +187,20 @@ public class WordPromptAssembler {
             return "";
         }
         String joined = String.join("、", context.recentTerms());
-        return templateRenderer.render(WordPromptTemplate.USER_RECENT_TERMS.path(), Map.of("terms", joined));
+        return templateRenderer.render(WordPromptTemplate.USER_RECENT_TERMS, Map.of("terms", joined));
     }
 
     private String renderGoalSection(WordPersonalizationContext context) {
         if (context == null || !StringUtils.hasText(context.goal())) {
             return "";
         }
-        return templateRenderer.render(WordPromptTemplate.USER_GOAL.path(), Map.of("goal", context.goal()));
+        return templateRenderer.render(WordPromptTemplate.USER_GOAL, Map.of("goal", context.goal()));
     }
 
     private String renderToneDirective(WordPersonalizationContext context, ToneStrategy strategy) {
         boolean hasPersonaSignals = context != null && context.hasSignals();
         WordPromptTemplate template = hasPersonaSignals ? strategy.personalisedTemplate() : strategy.defaultTemplate();
-        return templateRenderer.render(template.path(), Map.of());
+        return templateRenderer.render(template, Map.of());
     }
 
     private record ToneStrategy(WordPromptTemplate defaultTemplate, WordPromptTemplate personalisedTemplate) {

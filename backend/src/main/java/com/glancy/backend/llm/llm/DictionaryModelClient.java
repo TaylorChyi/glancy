@@ -26,7 +26,11 @@ public interface DictionaryModelClient {
      * 错误处理：实现方负责转换供应商异常为语义化错误。
      * 复杂度：依赖下游网络调用，方法本身为 O(n) 消息序列化成本。
      */
-    String generateEntry(List<ChatMessage> messages, double temperature);
+    default String generateEntry(List<ChatMessage> messages, double temperature) {
+        return generateEntry(messages, temperature, DictionaryModelRequestOptions.defaults());
+    }
+
+    String generateEntry(List<ChatMessage> messages, double temperature, DictionaryModelRequestOptions options);
 
     /** 返回当前客户端名称，用于配置与路由。 */
     String name();

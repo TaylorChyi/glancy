@@ -1,1 +1,0 @@
-请以英文释义为主，配套中文例句与 English Rendering，对齐模板并以 <END> 收尾。
