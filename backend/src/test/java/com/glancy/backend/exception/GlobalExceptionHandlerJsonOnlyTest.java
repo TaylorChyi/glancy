@@ -1,7 +1,8 @@
 package com.glancy.backend.exception;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,14 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 测试全局异常处理在 SSE 请求下的返回。
- * 流程：
- * 1. 发送 Accept 为 text/event-stream 的请求。
- * 2. 控制器抛出 ResourceNotFoundException。
- * 3. 验证响应为 SSE 格式错误事件。
- */
-class GlobalExceptionHandlerSseTest {
+class GlobalExceptionHandlerJsonOnlyTest {
 
     private MockMvc mvc;
 
@@ -37,8 +31,8 @@ class GlobalExceptionHandlerSseTest {
     }
 
     @RestController
-    @RequestMapping("/dummy")
-    public static class DummyController {
+    @RequestMapping("/dummy-json")
+    static class DummyController {
 
         @GetMapping("/boom")
         String boom() {
@@ -46,12 +40,18 @@ class GlobalExceptionHandlerSseTest {
         }
     }
 
+    /**
+     * 测试目标：即便 Accept 为 text/event-stream 仍返回 JSON。
+     * 前置条件：请求触发 ResourceNotFoundException。
+     * 步骤：GET /dummy-json/boom，Accept:text/event-stream。
+     * 断言：状态码 404，Content-Type 为 application/json。
+     * 边界/异常：若返回 SSE，说明新逻辑未生效。
+     */
     @Test
-    void returnsSseErrorWhenAcceptEventStream() throws Exception {
+    void GivenEventStreamAccept_WhenHandleError_ThenRespondJson() throws Exception {
         mvc
-            .perform(get("/dummy/boom").accept(MediaType.TEXT_EVENT_STREAM))
+            .perform(get("/dummy-json/boom").accept(MediaType.TEXT_EVENT_STREAM))
             .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM))
-            .andExpect(content().string("event: error\ndata: {\"message\":\"missing\"}\n\n"));
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
 }
