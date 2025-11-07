@@ -23,7 +23,6 @@ export function createDictionaryExperienceViewModel({
   focusInput,
   entry,
   finalText,
-  streamText,
   loading,
   activeTerm,
   lang,
@@ -47,7 +46,7 @@ export function createDictionaryExperienceViewModel({
   libraryLandingLabel,
 }) {
   const isEmptyStateActive =
-    isDictionaryViewActive && !entry && !finalText && !streamText && !loading;
+    isDictionaryViewActive && !entry && !finalText && !loading;
   const displayClassName = [
     "display",
     isEmptyStateActive ? "display-empty" : "",
@@ -97,7 +96,6 @@ export function createDictionaryExperienceViewModel({
     focusInput,
     entry,
     finalText,
-    streamText,
     loading,
     dictionaryActionBarProps,
     displayClassName,

@@ -29,7 +29,6 @@ export function useDictionaryHistoryHandlers({
   removeHistory,
   setEntry,
   setFinalText,
-  setStreamText,
   setCurrentTermKey,
   setCurrentTerm,
   setActiveView,
@@ -126,24 +125,23 @@ export function useDictionaryHistoryHandlers({
           setCurrentTermKey(resolvedKey);
         }
 
-        const record = wordStoreApi.getState().getRecord?.(resolvedKey);
-        if (record) {
-          const hydrated = applyRecord(
-            resolvedKey,
-            record,
-            versionId ?? record.activeVersionId ?? null,
-          );
-          if (hydrated) {
-            setStreamText("");
-            setCurrentTerm(hydrated.term ?? term);
-            return hydrated;
-          }
+        const storeState = wordStoreApi.getState();
+        const record = storeState.getRecord?.(resolvedKey);
+        const preferredVersionId =
+          versionId ??
+          record?.activeVersionId ??
+          data?.id ??
+          data?.versionId ??
+          null;
+        const hydrated = applyRecord(resolvedKey, record, preferredVersionId);
+        if (hydrated) {
+          setCurrentTerm(hydrated.term ?? term);
+          return hydrated;
         }
 
         if (data) {
           setEntry(data);
           setFinalText(data.markdown ?? "");
-          setStreamText("");
           if (data.term) {
             setCurrentTerm(data.term);
           }
@@ -165,7 +163,6 @@ export function useDictionaryHistoryHandlers({
       setEntry,
       setFinalText,
       setLoading,
-      setStreamText,
       setCurrentTerm,
       showPopup,
       user,
@@ -214,7 +211,6 @@ export function useDictionaryHistoryHandlers({
       setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
       setCurrentTermKey(cacheKey);
       setCurrentTerm(resolvedTerm);
-      setStreamText("");
       resetCopyFeedback();
       const cachedRecord = wordStoreApi.getState().getRecord?.(cacheKey);
 
@@ -254,7 +250,6 @@ export function useDictionaryHistoryHandlers({
       hydrateHistorySelection,
       setActiveView,
       setLoading,
-      setStreamText,
       setCurrentTerm,
       setCurrentTermKey,
       resetCopyFeedback,
@@ -267,7 +262,6 @@ export function useDictionaryHistoryHandlers({
       await removeHistory(activeTerm, user);
       setEntry(null);
       setFinalText("");
-      setStreamText("");
       setCurrentTermKey(null);
       setCurrentTerm("");
       resetCopyFeedback();
@@ -281,7 +275,6 @@ export function useDictionaryHistoryHandlers({
     user,
     setEntry,
     setFinalText,
-    setStreamText,
     setCurrentTermKey,
     setCurrentTerm,
     resetCopyFeedback,

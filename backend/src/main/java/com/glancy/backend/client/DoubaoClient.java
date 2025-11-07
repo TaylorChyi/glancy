@@ -38,7 +38,7 @@ public class DoubaoClient implements DictionaryModelClient {
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
         this.model = properties.getModel();
         this.maxCompletionTokens = properties.getMaxCompletionTokens();
-        this.defaultStream = Boolean.TRUE.equals(properties.getDefaultStream());
+        this.defaultStream = DictionaryModelRequestFallbacks.resolveStream(properties.getDefaultStream());
         this.defaultThinkingType = DictionaryModelRequestFallbacks.resolveThinkingType(
             properties.getDefaultThinkingType()
         );

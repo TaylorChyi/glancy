@@ -16,6 +16,9 @@ export function useFetchWord() {
     model = DEFAULT_MODEL,
     language = WORD_LANGUAGE_AUTO,
     flavor = WORD_FLAVOR_BILINGUAL,
+    forceNew = false,
+    versionId,
+    captureHistory,
   }) => {
     const resolvedLanguage = resolveWordLanguage(term, language);
     const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
@@ -27,6 +30,9 @@ export function useFetchWord() {
         flavor: resolvedFlavor,
         model,
         token: user.token,
+        forceNew,
+        versionId,
+        captureHistory,
       });
       return {
         data,

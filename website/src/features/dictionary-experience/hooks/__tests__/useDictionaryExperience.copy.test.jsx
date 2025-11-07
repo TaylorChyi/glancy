@@ -3,11 +3,10 @@ import { jest } from "@jest/globals";
 import {
   useDictionaryExperience,
   COPY_FEEDBACK_STATES,
-  mockStreamWord,
+  mockFetchWordWithHandling,
   mockGetRecord,
   mockGetEntry,
   utilsModule,
-  createStreamFromChunks,
   resetDictionaryExperienceTestState,
   restoreDictionaryExperienceTimers,
 } from "../testing/useDictionaryExperienceTestHarness.js";
@@ -26,12 +25,12 @@ import {
 const bootstrapCopyableEntry = async (result, entry) => {
   mockGetRecord.mockReturnValue({ entry });
   mockGetEntry.mockImplementation(() => entry);
-  mockStreamWord.mockImplementation(() =>
-    createStreamFromChunks({
-      chunk: JSON.stringify(entry),
-      language: "ENGLISH",
-    }),
-  );
+  mockFetchWordWithHandling.mockResolvedValueOnce({
+    data: entry,
+    error: null,
+    language: "ENGLISH",
+    flavor: "default",
+  });
 
   await act(async () => {
     result.current.setText(entry.term);
@@ -159,7 +158,7 @@ describe("useDictionaryExperience/copy feedback", () => {
   /**
    * 测试目标：复制成功后状态机应进入 success，并在延迟后恢复 idle；
    * 同时不再弹出成功提示，避免重复反馈。
-   * 前置条件：mockStreamWord 返回含 markdown 的词条，clipboard 写入成功。
+   * 前置条件：mockFetchWordWithHandling 返回含 markdown 的词条，clipboard 写入成功。
    * 步骤：
    *  1) 通过辅助函数准备词条；
    *  2) 调用工具栏 onCopy；

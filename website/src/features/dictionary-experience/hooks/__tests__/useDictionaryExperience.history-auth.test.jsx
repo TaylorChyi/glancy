@@ -4,11 +4,10 @@ import {
   useDictionaryExperience,
   mockUserState,
   mockNavigate,
-  mockStreamWord,
   mockHistoryApi,
   mockGetRecord,
   mockGetEntry,
-  createStreamFromChunks,
+  mockFetchWordWithHandling,
   useDataGovernanceStore,
   resetDictionaryExperienceTestState,
   restoreDictionaryExperienceTimers,
@@ -42,7 +41,7 @@ describe("useDictionaryExperience/history & auth", () => {
 
   /**
    * 测试目标：当模型返回纠正后的词条时，历史写入应以纠正词条为准。
-   * 前置条件：mockStreamWord 产出 term 为 "student" 的词条数据，用户输入 "studdent"。
+   * 前置条件：mockFetchWordWithHandling 产出 term 为 "student" 的词条数据，用户输入 "studdent"。
    * 步骤：
    *  1) 设置输入框文本为 "studdent"；
    *  2) 调用 handleSend 触发查询流程；
@@ -54,12 +53,12 @@ describe("useDictionaryExperience/history & auth", () => {
    */
   it("writes corrected term into history when lookup normalizes input", async () => {
     const correctedEntry = { term: "student", markdown: "definition" };
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({
-        chunk: JSON.stringify(correctedEntry),
-        language: "ENGLISH",
-      }),
-    );
+    mockFetchWordWithHandling.mockResolvedValueOnce({
+      data: correctedEntry,
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
     mockGetRecord.mockReturnValue({ entry: correctedEntry });
     mockGetEntry.mockImplementation(() => correctedEntry);
 
@@ -90,12 +89,12 @@ describe("useDictionaryExperience/history & auth", () => {
    */
   it("skips history addition when capture disabled", async () => {
     useDataGovernanceStore.setState({ historyCaptureEnabled: false });
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({
-        chunk: JSON.stringify({ term: "mute", markdown: "md" }),
-        language: "ENGLISH",
-      }),
-    );
+    mockFetchWordWithHandling.mockResolvedValueOnce({
+      data: { term: "mute", markdown: "md" },
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
 
     const { result } = renderHook(() => useDictionaryExperience());
 

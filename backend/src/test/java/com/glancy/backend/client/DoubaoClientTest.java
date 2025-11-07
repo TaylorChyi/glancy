@@ -131,19 +131,19 @@ class DoubaoClientTest {
 
     @Test
     /**
-     * 测试目标：确保调用方可覆盖 stream 与 thinkingType 参数。
+     * 测试目标：确保调用方可覆盖 thinkingType 参数。
      * 前置条件：构造带有特定参数的 DictionaryModelRequestOptions。
      * 步骤：
      *  1) 调用 generateEntry 并检查请求体。
      * 断言：
-     *  - 请求体中的 stream 与 thinking.type 匹配覆盖值。
+     *  - 请求体中的 thinking.type 匹配覆盖值。
      * 边界/异常：
      *  - 若覆盖失败则断言不满足。
      */
     void GivenOptionsOverride_WhenGenerateEntry_ThenRespectOverrides() {
         ExchangeFunction ef = req -> {
             String body = extractRequestBody(req);
-            assertTrue(body.contains("\"stream\":true"));
+            assertTrue(body.contains("\"stream\":false"));
             assertTrue(body.contains("\"thinking\":{\"type\":\"detailed\"}"));
             return Mono.just(
                 ClientResponse.create(HttpStatus.OK)
@@ -154,7 +154,6 @@ class DoubaoClientTest {
         };
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         DictionaryModelRequestOptions options = DictionaryModelRequestOptions.builder()
-            .stream(true)
             .thinkingType("detailed")
             .build();
         String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5, options);

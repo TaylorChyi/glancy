@@ -2,9 +2,8 @@ import { renderHook, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import {
   useDictionaryExperience,
-  mockStreamWord,
   utilsModule,
-  createStreamFromChunks,
+  mockFetchWordWithHandling,
   resetDictionaryExperienceTestState,
   restoreDictionaryExperienceTimers,
 } from "../testing/useDictionaryExperienceTestHarness.js";
@@ -81,34 +80,6 @@ const muteConsoleError = () => {
 };
 
 /**
- * 意图：构造在 abort 前始终挂起的流式响应，用于测试中断逻辑。
- * 输入：signal 为 AbortSignal，abortError 为中断时抛出的错误。
- * 输出：返回始终等待的异步迭代器。
- * 流程：注册 abort 监听，触发后拒绝 Promise 并结束生成器。
- * 错误处理：依赖 signal 的 add/removeEventListener。
- * 复杂度：O(1)。
- */
-const createAbortAwareStream = (signal, abortError) =>
-  (async function* () {
-    /* eslint-disable-next-line no-constant-condition */
-    if (false) {
-      yield undefined;
-    }
-    await new Promise((resolve) => {
-      if (signal.aborted) {
-        resolve();
-        return;
-      }
-      const handleAbort = () => {
-        signal.removeEventListener?.("abort", handleAbort);
-        resolve();
-      };
-      signal.addEventListener?.("abort", handleAbort);
-    });
-    throw abortError;
-  })();
-
-/**
  * 意图：初始化查询文本并返回挂起的 handleSend Promise。
  * 输入：result 为 Hook 渲染结果。
  * 输出：返回 handleSend Promise 以便后续等待。
@@ -139,23 +110,17 @@ describe("useDictionaryExperience/lifecycle", () => {
     restoreDictionaryExperienceTimers();
   });
 
-  /**
-   * 测试路径：查询过程中卸载组件，需调用 AbortController.abort 并避免卸载后 setState。
-   * 步骤：启动查询但不等待结束，随后立即卸载 Hook。
-   * 断言：AbortController.abort 被调用一次，且控制台无卸载后更新的警告。
-   */
   it("aborts in-flight lookups on unmount to avoid stale state updates", async () => {
     const abortSpy = jest.fn();
-    const abortError = Object.assign(new Error("Aborted"), {
-      name: "AbortError",
-    });
     const restoreAbortController = installAbortControllerOverride(
       createAbortControllerDouble(abortSpy),
     );
 
-    mockStreamWord.mockImplementationOnce(({ signal }) =>
-      createAbortAwareStream(signal, abortError),
-    );
+    let resolveFetch;
+    const pendingFetch = new Promise((resolve) => {
+      resolveFetch = resolve;
+    });
+    mockFetchWordWithHandling.mockReturnValueOnce(pendingFetch);
 
     const { restore: restoreConsole, spy: consoleErrorSpy } =
       muteConsoleError();
@@ -164,7 +129,7 @@ describe("useDictionaryExperience/lifecycle", () => {
     try {
       const pendingSend = beginLookup(result);
 
-      expect(mockStreamWord).toHaveBeenCalledTimes(1);
+      expect(mockFetchWordWithHandling).toHaveBeenCalledTimes(1);
       expect(abortSpy).not.toHaveBeenCalled();
 
       act(() => {
@@ -173,7 +138,8 @@ describe("useDictionaryExperience/lifecycle", () => {
 
       expect(abortSpy).toHaveBeenCalledTimes(1);
 
-      pendingSend.catch(() => {});
+      resolveFetch({ data: null, error: null, language: "ENGLISH", flavor: "default" });
+      await pendingSend.catch(() => {});
 
       const hasUnmountWarning = consoleErrorSpy.mock.calls.some(
         (call) =>
@@ -189,22 +155,20 @@ describe("useDictionaryExperience/lifecycle", () => {
     }
   });
 
-  /**
-   * 测试目标：流式 Markdown 经归一化后需在 streamText 与 finalText 中保持一致。
-   * 前置条件：polishDictionaryMarkdown mock 增加标记，流数据仅返回 Markdown 字符串。
-   * 步骤：触发 handleSend 并消费异步生成器。
-   * 断言：
-   *  - streamText 等于归一化结果；
-   *  - finalText 同样输出归一化字符串。
-   * 边界/异常：覆盖非 JSON 流场景。
-   */
-  it("GivenStreamingMarkdown_WhenNormalized_ShouldExposePolishedPreviewAndFinal", async () => {
+  it("GivenSynchronousFetch_WhenMarkdownPolished_ShouldExposeNormalizedFinal", async () => {
     utilsModule.polishDictionaryMarkdown.mockImplementation(
       (value) => `normalized:${value}`,
     );
-    mockStreamWord.mockImplementation(() =>
-      createStreamFromChunks({ chunk: "**raw**", language: "ENGLISH" }),
-    );
+    mockFetchWordWithHandling.mockResolvedValueOnce({
+      data: {
+        term: "term",
+        markdown: "**raw**",
+        language: "ENGLISH",
+      },
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
 
     const { result } = renderHook(() => useDictionaryExperience());
 
@@ -216,7 +180,7 @@ describe("useDictionaryExperience/lifecycle", () => {
       await result.current.handleSend({ preventDefault: jest.fn() });
     });
 
-    expect(result.current.streamText).toBe("normalized:**raw**");
     expect(result.current.finalText).toBe("normalized:**raw**");
+    expect(result.current.entry?.markdown).toBe("normalized:**raw**");
   });
 });

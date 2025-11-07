@@ -35,7 +35,6 @@ function createDictionaryExperienceState(overrides = {}) {
     focusInput: focusInputMock,
     entry: { term: "mock" },
     finalText: "",
-    streamText: "",
     loading: false,
     dictionaryActionBarProps: { onReoutput: handleReoutputMock },
     displayClassName: "dictionary-experience",

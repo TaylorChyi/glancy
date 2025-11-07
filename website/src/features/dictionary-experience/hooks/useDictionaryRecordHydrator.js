@@ -41,7 +41,6 @@ export function useDictionaryRecordHydrator({
   wordStoreApi,
   setEntry,
   setFinalText,
-  setStreamText,
   setCurrentTerm,
 }) {
   return useCallback(
@@ -63,13 +62,12 @@ export function useDictionaryRecordHydrator({
 
       setEntry(normalized);
       setFinalText(normalized.markdown ?? "");
-      setStreamText("");
       if (normalized.term) {
         setCurrentTerm(normalized.term);
       }
 
       return normalized;
     },
-    [wordStoreApi, setEntry, setFinalText, setStreamText, setCurrentTerm],
+    [wordStoreApi, setEntry, setFinalText, setCurrentTerm],
   );
 }

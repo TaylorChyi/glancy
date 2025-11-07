@@ -31,7 +31,6 @@ export function useDictionaryHomeControls({
     resetCopyFeedback();
     state.setEntry(null);
     state.setFinalText("");
-    state.setStreamText("");
     state.setLoading(false);
     state.setCurrentTermKey(null);
     state.setCurrentTerm("");

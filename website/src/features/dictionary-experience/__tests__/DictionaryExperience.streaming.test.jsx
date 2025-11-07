@@ -34,7 +34,6 @@ const createBaseExperienceState = () => ({
   focusInput: jest.fn(),
   entry: null,
   finalText: "",
-  streamText: "",
   loading: false,
   dictionaryActionBarProps: { onReoutput: jest.fn() },
   displayClassName: "dictionary-experience",
@@ -202,55 +201,13 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-describe("DictionaryExperience streaming preview", () => {
+describe("DictionaryExperience preview rendering", () => {
   /**
-   * 测试目标：流式 Markdown 预览在词条未就绪时需透传至 DictionaryEntryView。
-   * 前置条件：useDictionaryExperience 返回空 entry、存在 streamText 且 loading 状态为真。
-   * 步骤：
-   *  1) 提供包含 streamText 的桩数据并渲染 DictionaryExperience；
-   *  2) 读取 DictionaryEntryView 接收到的 props。
-   * 断言：
-   *  - preview 属性等于 streamText；
-   *  - isLoading 属性为 true，以驱动占位渲染。
-   * 边界/异常：
-   *  - 若 streamText 为空应回退至 EmptyState（另案覆盖）。
+   * 测试目标：当最终 Markdown 可用时，DictionaryEntryView 应展示该文本预览。
+   * 前置条件：useDictionaryExperience 返回空 entry、finalText 不为空。
    */
-  it("GivenStreamingPreview_WhenNoEntryYet_ShouldPropagatePreview", () => {
+  it("GivenFinalMarkdown_WhenEntryUnavailable_ShouldPropagatePreview", () => {
     const experienceState = createBaseExperienceState();
-    experienceState.streamText = "## 流式释义";
-    experienceState.loading = true;
-    useDictionaryExperienceMock.mockReturnValue(experienceState);
-
-    render(<DictionaryExperience />);
-
-    expect(dictionaryEntryViewSpy).toHaveBeenCalledTimes(1);
-    expect(dictionaryEntryViewSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        entry: null,
-        preview: "## 流式释义",
-        isLoading: true,
-      }),
-    );
-    expect(screen.getByTestId("dictionary-entry-view").dataset.preview).toBe(
-      "## 流式释义",
-    );
-  });
-
-  /**
-   * 测试目标：当 finalText 可用时应优先覆盖流式预览，保证最终排版一致。
-   * 前置条件：useDictionaryExperience 返回空 entry、finalText 与 streamText 同时存在。
-   * 步骤：
-   *  1) 提供包含 finalText 的桩数据并渲染组件；
-   *  2) 检查 DictionaryEntryView 接收到的 preview。
-   * 断言：
-   *  - preview 属性为 finalText；
-   *  - DictionaryEntryView 仍只渲染一次。
-   * 边界/异常：
-   *  - 若 finalText 为空则应退回 streamText（由前序用例验证）。
-   */
-  it("GivenFinalMarkdown_WhenEntryUnavailable_ShouldPreferFinalText", () => {
-    const experienceState = createBaseExperienceState();
-    experienceState.streamText = "## 临时流";
     experienceState.finalText = "## 最终排版";
     experienceState.loading = false;
     useDictionaryExperienceMock.mockReturnValue(experienceState);
@@ -261,6 +218,7 @@ describe("DictionaryExperience streaming preview", () => {
     expect(dictionaryEntryViewSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         preview: "## 最终排版",
+        isLoading: false,
       }),
     );
     expect(screen.getByTestId("dictionary-entry-view").dataset.preview).toBe(
@@ -270,15 +228,7 @@ describe("DictionaryExperience streaming preview", () => {
 
   /**
    * 测试目标：在缺少词条且无任何预览内容时，应退回默认空状态视图。
-   * 前置条件：useDictionaryExperience 返回 entry/finalText/streamText 皆为空，loading 为 false。
-   * 步骤：
-   *  1) 渲染组件；
-   *  2) 查询空状态节点并确认 DictionaryEntryView 未被调用。
-   * 断言：
-   *  - 应渲染 data-testid 为 dictionary-empty-state 的节点；
-   *  - DictionaryEntryView 不会被触发。
-   * 边界/异常：
-   *  - 若 loading 为 true 将显示骨架占位（本用例不覆盖）。
+   * 前置条件：useDictionaryExperience 返回 entry/finalText 皆为空，loading 为 false。
    */
   it("GivenIdleState_WhenNoPreview_ShouldRenderEmptyState", () => {
     const experienceState = createBaseExperienceState();
@@ -288,5 +238,26 @@ describe("DictionaryExperience streaming preview", () => {
 
     expect(dictionaryEntryViewSpy).not.toHaveBeenCalled();
     expect(screen.getByTestId("dictionary-empty-state")).toBeInTheDocument();
+  });
+
+  /**
+   * 测试目标：加载状态下应通知 DictionaryEntryView 渲染占位内容。
+   * 前置条件：useDictionaryExperience 返回 loading 为真、finalText 为空。
+   */
+  it("GivenLoadingState_WhenEntryMissing_ShouldFlagPlaceholder", () => {
+    const experienceState = createBaseExperienceState();
+    experienceState.loading = true;
+    useDictionaryExperienceMock.mockReturnValue(experienceState);
+
+    render(<DictionaryExperience />);
+
+    expect(dictionaryEntryViewSpy).toHaveBeenCalledTimes(1);
+    expect(dictionaryEntryViewSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entry: null,
+        preview: "",
+        isLoading: true,
+      }),
+    );
   });
 });

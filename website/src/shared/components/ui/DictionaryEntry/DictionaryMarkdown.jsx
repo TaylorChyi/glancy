@@ -1,7 +1,4 @@
-import { useMemo } from "react";
 import MarkdownRenderer from "@shared/components/ui/MarkdownRenderer";
-import MarkdownStream from "@shared/components/ui/MarkdownStream";
-import { STREAM_SEGMENTATION_PROP } from "@shared/components/ui/MarkdownStream/streamSegmentationProp.js";
 import styles from "./DictionaryMarkdown.module.css";
 
 function joinClassNames(...tokens) {
@@ -119,39 +116,4 @@ export default function DictionaryMarkdown({ children, className }) {
   );
 }
 
-function createDictionaryMarkdownStreamRenderer(additionalClassName) {
-  return function DictionaryMarkdownStreamRenderer({
-    className,
-    children,
-    ...rendererProps
-  }) {
-    const wrapperClassName = joinClassNames(
-      styles.wrapper,
-      additionalClassName,
-      className,
-    );
-    const streamRenderer = (
-      <div className={wrapperClassName}>
-        <MarkdownRenderer
-          {...rendererProps}
-          components={dictionaryMarkdownComponents}
-        >
-          {children}
-        </MarkdownRenderer>
-      </div>
-    );
-    return streamRenderer;
-  };
-}
-
-export function DictionaryMarkdownStream({ text, className }) {
-  const Renderer = useMemo(() => {
-    const renderer = createDictionaryMarkdownStreamRenderer(className);
-    renderer[STREAM_SEGMENTATION_PROP] = true;
-    return renderer;
-  }, [className]);
-
-  if (!text) return null;
-
-  return <MarkdownStream text={text} renderer={Renderer} />;
-}
+// 流式渲染已下线，仅保留静态 Markdown 输出以简化呈现层。

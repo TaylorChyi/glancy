@@ -1,7 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import {
   useDictionaryExperience,
-  mockStreamWord,
   mockFetchWordWithHandling,
   mockHistoryApi,
   mockGetRecord,
@@ -27,10 +26,9 @@ describe("useDictionaryExperience/history fetch", () => {
    *  2) 渲染 useDictionaryExperience 并调用 handleSelectHistory；
    * 断言：
    *  - fetchWordWithHandling 被调用一次；
-   *  - streamWord 未被调用；
    *  - 最终释义与版本来源于 REST 响应。
    * 边界/异常：
-   *  - 若仍触发流式接口则说明策略回退失败。
+   *  - 若重复发起请求则说明缓存策略失效。
    */
   it("GivenHistoryMiss_WhenSelectingItem_ThenFetchesViaRestEndpoint", async () => {
     const restEntry = { id: "v1", term: "rest-term", markdown: "rest definition" };
@@ -58,7 +56,6 @@ describe("useDictionaryExperience/history fetch", () => {
     await act(async () => {});
 
     expect(mockFetchWordWithHandling).toHaveBeenCalledTimes(1);
-    expect(mockStreamWord).not.toHaveBeenCalled();
     expect(result.current.finalText).toBe("rest definition");
     expect(result.current.entry?.term).toBe("rest-term");
     expect(result.current.loading).toBe(false);

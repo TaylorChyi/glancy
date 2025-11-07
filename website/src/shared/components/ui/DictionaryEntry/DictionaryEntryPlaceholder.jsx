@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import DictionaryEntrySkeleton from "./DictionaryEntrySkeleton.jsx";
-import { DictionaryMarkdownStream } from "./DictionaryMarkdown.jsx";
+import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
 import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 import styles from "./DictionaryEntryPlaceholder.module.css";
 
@@ -13,7 +13,7 @@ function DictionaryEntryPlaceholder({ preview, isLoading }) {
   if (previewMarkdown) {
     return (
       <div className={styles["preview-wrapper"]}>
-        <DictionaryMarkdownStream text={previewMarkdown} />
+        <DictionaryMarkdown>{previewMarkdown}</DictionaryMarkdown>
       </div>
     );
   }

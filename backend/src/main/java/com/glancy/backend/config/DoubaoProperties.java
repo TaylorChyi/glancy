@@ -24,7 +24,10 @@ public class DoubaoProperties {
      */
     private Integer maxCompletionTokens = 20480;
 
-    /** Whether to request streaming responses by default. */
+    /**
+     * Whether to request streaming responses by default. 处于纯非流式消费场景时也必须显式
+     * 传递 stream=false，以满足第三方接口对字段存在性的约束，规避回退分支被触发。
+     */
     private Boolean defaultStream = Boolean.FALSE;
 
     /**
