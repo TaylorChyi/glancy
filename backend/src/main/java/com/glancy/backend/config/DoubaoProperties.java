@@ -23,4 +23,13 @@ public class DoubaoProperties {
      * resource usage predictable.
      */
     private Integer maxCompletionTokens = 20480;
+
+    /** Whether to request streaming responses by default. */
+    private Boolean defaultStream = Boolean.FALSE;
+
+    /**
+     * Default "thinking" mode requested from Doubao. Accepts values defined by
+     * the upstream API such as "disabled" or "detailed".
+     */
+    private String defaultThinkingType = "disabled";
 }
