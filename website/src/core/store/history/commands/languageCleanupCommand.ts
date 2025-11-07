@@ -1,11 +1,3 @@
-/**
- * 背景：
- *  - 按语言清理历史需遍历本地与远端记录，并同步更新词条缓存，
- *    逻辑复杂且与其他命令耦合度低。
- * 目的：
- *  - 以命令形式集中处理语言维度清理，后续可独立优化分页收集策略。
- */
-
 import type { User } from "../../userStore.ts";
 import type {
   HistoryStoreContext,

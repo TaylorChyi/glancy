@@ -21,19 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 登录、令牌校验、第三方账号等逻辑集中在 UserService，难以维护扩展。
- * 目的：
- *  - 以命令处理器聚焦认证相关流程，配合 {@link UserResponseAssembler} 输出统一 DTO。
- * 关键决策与取舍：
- *  - 通过策略分支处理不同登录标识，保留结构化日志；
- *  - 依赖 Clock 统一时间来源，便于测试与演进。
- * 影响范围：
- *  - 邮箱验证码登录、密码登录、令牌校验等流程迁移至此类。
- * 演进与TODO：
- *  - 可接入多因子认证策略或令牌黑名单缓存。
- */
+
 @Component
 public class UserAuthenticationCommand {
 

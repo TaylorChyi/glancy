@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - `SegmentedControl.jsx` 需要复用选项 PropTypes，但 React Fast Refresh 要求组件文件仅导出组件。
- * 目的：
- *  - 提供统一的选项 PropTypes 描述，解耦组件实现与类型约束，便于跨组件共享。
- * 关键决策与取舍：
- *  - 采用独立模块暴露 PropTypes，避免在组件文件中导出非组件对象；也评估过直接内联 PropTypes，但会削弱复用性。
- * 影响范围：
- *  - 依赖分段选项 PropTypes 的组件或文档，将经由此文件获取一致约束。
- * 演进与TODO：
- *  - TODO: 如需支持异步选项或分组，可扩展 shape 结构并提供版本化迁移策略。
- */
 import PropTypes from "prop-types";
 
 /**

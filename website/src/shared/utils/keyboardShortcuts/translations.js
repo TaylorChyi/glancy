@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 快捷键动作翻译与逻辑处理混杂，无法单独维护国际化策略。
- * 目的：
- *  - 独立抽象动作到展示文案的映射，便于未来接入多语言与自定义文案。
- * 关键决策与取舍：
- *  - 保持默认文案作为后备输出，避免缺失翻译时出现空白；
- *  - 暴露纯函数接口，便于通过依赖注入提升可测试性。
- * 影响范围：
- *  - 快捷键模态、设置面板等依赖文案的界面展示。
- * 演进与TODO：
- *  - 可在未来引入枚举或对象映射，支撑更多快捷键动作。
- */
-
 const ACTION_TRANSLATORS = new Map([
   ["FOCUS_SEARCH", (t) => t?.shortcutsFocusSearch ?? "Focus search input"],
   ["SWITCH_LANGUAGE", (t) => t?.shortcutsSwitchLanguage ?? "Switch language"],

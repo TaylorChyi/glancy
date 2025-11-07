@@ -1,13 +1,3 @@
-/**
- * 背景：
- *  - 历史记录回放在缓存未命中时默认走流式接口，既浪费资源也造成接口错用。
- * 目的：
- *  - 验证新策略会优先使用 REST 查询，确保历史回放命中普通接口。
- * 关键决策与取舍：
- *  - 通过 test harness 注入依赖，聚焦于查询分支的选择，不涉及 UI。
- * 影响范围：
- *  - useDictionaryExperience 在历史项选择时的查询链路。
- */
 import { renderHook, act } from "@testing-library/react";
 import {
   useDictionaryExperience,

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - useActionInputBehavior 既要服务 ChatInput 行为层，也需被测试与其他特性间接复用。
- * 目的：
- *  - 集中维护 Hook 的类型契约，拆分出语义明确的结构以便复用与演进。
- * 关键决策与取舍：
- *  - 采用显式类型文件避免主 Hook 超限，同时作为“领域语言”出口供上层引用。
- *  - 保留 symbol 与 string 混用的语言值，兼容外部策略注入。
- * 影响范围：
- *  - ChatInput 行为 Hook、相关测试与引用这些类型的功能模块。
- * 演进与TODO：
- *  - 后续若引入多模态输入，可在此拓展新的控制面板配置项。
- */
 import type React from "react";
 
 export type LanguageValue = string | symbol | undefined;

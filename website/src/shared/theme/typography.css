@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 字体变量与排版类名混在一个文件，缺乏 cascade layer 标识导致覆盖顺序不确定。
- * 目的：
- *  - 令变量进入 tokens 层、全局排版设定归于 base 层，文本尺寸类归入 utilities。
- * 关键决策与取舍：
- *  - body 的默认字体仍在 CSS 层控制，避免额外在 JS 注入；
- *  - 保持类名与变量值稳定，减少对现有组件的影响。
- * 影响范围：
- *  - 所有复用字体变量或文本尺寸类的页面。
- * 演进与TODO：
- *  - 可结合设计体系进一步抽象字重/行高组合。
- */
 @import url("@styles/tokens/typography.primitives.css");
 @import url("@styles/semantic/typography.semantic.css");
 

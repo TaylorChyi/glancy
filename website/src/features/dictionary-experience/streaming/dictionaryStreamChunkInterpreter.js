@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 上游 streamWord 会根据后端协议返回多种 chunk 形态（纯文本、JSON 字符串、带 value 字段的对象），
- *    直接在 Hook 中分支判断会导致协议演进时反复修改业务代码。
- * 目的：
- *  - 提供专责的片段解释器，基于策略模式将不同 chunk 解析逻辑解耦，统一产出 Markdown 片段与词条实体。
- * 关键决策与取舍：
- *  - 采用「策略链」模式：按顺序匹配策略，命中后即时返回，避免对 Hook 公开协议细节；
- *  - JSON 解析失败时降级为原始文本，宁可少量冗余渲染也不阻断主流程。
- * 影响范围：
- *  - useDictionaryLookupExecutor 及后续需要消费流式 chunk 的特性，可复用该解释器保持协议兼容。
- * 演进与TODO：
- *  - 后续若需支持 metadata/结构化片段，可在 STRATEGIES 中追加新策略而无需修改现有调用方。
- */
-
 import { normalizeMarkdownEntity } from "../markdown/dictionaryMarkdownNormalizer.js";
 
 const noopLogger = Object.freeze({ debug: () => {} });

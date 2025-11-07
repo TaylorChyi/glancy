@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 按钮样式直接引用语义色，缺乏可覆写的组件级变量；
- * 目的：
- *  - 为按钮提供统一的组件令牌，支持不同容器按需覆写同时保持语义入口一致；
- * 关键决策与取舍：
- *  - 保留 primary/secondary/danger/ghost/outline 变体，并暴露尺寸、圆角、字重等关键参数；
- * 影响范围：
- *  - `src/shared/styles/components/button.css` 以及任何消费 `.btn` 类的模块；
- * 演进与TODO：
- *  - 后续可补充 loading/soft/tertiary 等扩展态，并将 gap/尺寸与尺寸系统解耦。
- */
 :root {
   --component-button-font-family: var(--font-sans);
   --component-button-font-size: var(--text-sm);

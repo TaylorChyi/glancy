@@ -13,19 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 词条缓存的查找、序列化与持久化散落在 WordService 中，重复代码多且不易测试。\
- * 目的：
- *  - 将与本地词条缓存相关的职责集中管理，确保保存与读取遵循一致的归一化规则。\
- * 关键决策与取舍：
- *  - 采用组合而非继承来复用 `DictionaryTermNormalizer` 与 `WordRepository`，便于独立测试；\
- *  - 序列化逻辑复用同一 `ObjectMapper`，避免多处创建实例造成资源浪费。\
- * 影响范围：
- *  - WordService 及查词策略通过该组件访问缓存并完成响应转换。\
- * 演进与TODO：
- *  - 未来若接入多级缓存，可在此扩展命中统计或添加分布式缓存适配。
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

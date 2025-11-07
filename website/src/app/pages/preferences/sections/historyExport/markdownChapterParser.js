@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 词典内容可能以富文本 Markdown 存储，需要在导出前恢复章节结构。
- * 目的：
- *  - 提供 Markdown 行级解析工具，将散列的文本拆分为语义章节。
- * 关键决策与取舍：
- *  - 保持零依赖实现，兼顾性能与可调试性；
- *  - 以纯函数返回数组，便于在不同导出策略间复用。
- * 影响范围：
- *  - 任何依赖 Markdown 缓存导出历史的模块。
- * 演进与TODO：
- *  - 后续可扩展为生成语义树，以支持更复杂的章节导航或排序。
- */
-
 export const joinChapterContent = (lines = []) =>
   lines
     .filter((line) => typeof line === "string" && line.trim().length > 0)

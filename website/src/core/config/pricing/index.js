@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 订阅定价需支持按地区与 IP 段差异化展示，前端在缺省后端接口前需有能力解析本地配置。
- * 目的：
- *  - 暴露 resolvePricing 等纯函数，将静态 JSON 配置转换为 UI 可消费的结构，便于未来替换为 API 调用。
- * 关键决策与取舍：
- *  - 采用端口-适配器思路：本模块仅关注数据解析与合并，组件通过注入的函数消费结果。
- *  - 当前未实现 CIDR/Exact 覆盖的查找，保留接口签名供后续接入后端或 Web Worker 完成。
- * 影响范围：
- *  - Preferences/Subscription 分区的价格展示逻辑，及潜在的订阅流。
- * 演进与TODO：
- *  - TODO: 补齐 IP 段覆盖、实时刷新与版本号协商等能力。
- */
 import defaultPricing from "./default.json" with { type: "json" };
 import cnPricing from "./regions/CN.json" with { type: "json" };
 import euPricing from "./regions/EU.json" with { type: "json" };

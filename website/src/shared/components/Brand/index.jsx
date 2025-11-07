@@ -22,13 +22,7 @@ function PrimaryNavItem({ icon, iconAlt, label, onClick, isActive, title }) {
             width={20}
             height={20}
             className="primary-nav-item-icon-asset"
-            /*
-             * 背景：
-             *  - 侧边栏品牌入口沿用 muted → active 的色彩策略，若 ThemeIcon 使用默认语义类会强行套用文本色，
-             *    导致“格律词典”图标与同组按钮色调不一致。
-             * 取舍：
-             *  - 通过 roleClass="inherit" 沿用容器 color，使按钮状态机控制权回到 Brand 样式层，避免重复定义专用色值。
-             */
+            
             roleClass="inherit"
           />
         ) : null}

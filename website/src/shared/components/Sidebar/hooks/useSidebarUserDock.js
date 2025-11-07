@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 侧边栏用户区域此前直接在容器组件内读取多个 Context，导致派生状态与展示耦合。
- * 目的：
- *  - 聚合用户、历史、语言上下文并输出组合模式所需的派生数据与回调映射，保持容器纯粹。
- * 关键决策与取舍：
- *  - 采用组合模式（UserMenuModals + 展示组件）承载模态控制，比在 Hook 内直接触发副作用更易扩展装饰器；
- *  - 放弃 useReducer 等状态机方案，因当前仅为静态派生值与回调封装，无需额外状态管理。
- * 影响范围：
- *  - UserDock 容器改为依赖本 Hook 暴露的协议；展示组件与其它模块无需改动即可复用。
- * 演进与TODO：
- *  - 可在 modalProps 中挂载特性开关或埋点；匿名导航后续可支持多语言路由策略。
- */
 import { useCallback, useMemo } from "react";
 import { useHistory, useLanguage, useUser } from "@core/context";
 

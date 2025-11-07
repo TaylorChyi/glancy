@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - SelectMenu 触发器曾直接写在主组件中，导致视图层过长且难以复用。
- * 目的：
- *  - 拆分触发按钮，集中处理可访问属性与占位态样式，保持主组件聚焦装配逻辑。
- * 关键决策与取舍：
- *  - 暂不支持自定义触发节点，统一通过 props 控制状态；
- *  - 保留 data- 属性方便样式与测试定位。
- * 影响范围：
- *  - SelectMenu 触发按钮的渲染与 aria 声明。
- * 演进与TODO：
- *  - TODO: 如需支持自定义触发器，可在此组件外包裹 render prop 实现。
- */
 import PropTypes from "prop-types";
 
 import styles from "../SelectMenu.module.css";

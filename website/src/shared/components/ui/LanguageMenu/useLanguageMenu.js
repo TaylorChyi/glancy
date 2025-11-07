@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - LanguageMenu 既承担状态管理又承载渲染逻辑，导致 hooks 难以复用并触发结构化 lint 豁免。
- * 目的：
- *  - 抽离专用 Hook 聚合菜单的打开/关闭、键盘导航与值选择逻辑，让 UI 层保持精简。
- * 关键决策与取舍：
- *  - 通过组合 useMenuNavigation 与本地状态组装菜单行为，保留原有交互；
- *  - 仍使用策略模式注入 normalizeValue，从而支持上下游差异化语言映射；
- *  - 拒绝引入全局状态，避免为单一组件引入额外依赖。
- * 影响范围：
- *  - LanguageMenu 组件及未来可能复用该 Hook 的衍生菜单。
- * 演进与TODO：
- *  - TODO: 若未来需要异步加载选项，可在此扩展 loading/disabled 状态并暴露给 UI 层。
- */
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";

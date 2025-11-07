@@ -11,19 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 折扣类兑换需要生成用户折扣权益记录。
- * 目的：
- *  - 通过策略将兑换结果落库，并返回折扣配置。
- * 关键决策与取舍：
- *  - 直接写入权益表，便于下游系统查询；
- *  - 若兑换码缺少折扣配置，立即抛出异常，避免生成不完整权益。
- * 影响范围：
- *  - 兑换接口响应及后续下游消费。
- * 演进与TODO：
- *  - 可扩展支持折扣叠加、使用限制等字段。
- */
+
 @Component
 public class DiscountRedemptionProcessor implements RedemptionEffectProcessor {
 

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 图标资源存在 light/dark 两份，导致打包体积翻倍且难以统一风格。
- * 目的：
- *  - 将双份 SVG 归并为使用 `currentColor` 的单份文件，配合主题变量动态着色。
- * 关键决策与取舍：
- *  - 采用策略模式封装“读取 → 优化 → 写入 → 清理”流程，确保后续可替换不同处理策略；
- *  - 默认优先使用 light 版本，如缺失则回退 dark，兼顾历史资源的兼容性。
- * 影响范围：
- *  - src/shared/assets/icons 下的所有 `*-light.svg` 与 `*-dark.svg` 文件；生成 `*.svg` 单源文件。
- * 演进与TODO：
- *  - 后续可扩展对多尺寸或多色版的支持，通过新增策略实现差异化处理。
- */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { optimize } from "svgo";

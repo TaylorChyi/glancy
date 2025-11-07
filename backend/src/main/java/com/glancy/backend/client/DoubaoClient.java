@@ -76,14 +76,7 @@ public class DoubaoClient implements LLMClient {
             .transform(decoder::decode);
     }
 
-    /**
-     * 背景：
-     *  - 前端在“完整生成后输出”模式下需要一次性聚合的回复，若仍以 stream=true 请求抖宝 API，会继续收到 SSE 片段。
-     * 目的：
-     *  - 覆盖默认实现以 stream=false 调用上游，使后端直接获得最终文本，避免额外的流式解码与首屏延迟。
-     * 关键取舍：
-     *  - 复用 prepareRequestBody 保持参数一致，同时引入请求级 Accept 头切换；相比新增独立 WebClient，复用当前实例更易维护。
-     */
+    
     @Override
     public String chat(List<ChatMessage> messages, double temperature) {
         log.info(

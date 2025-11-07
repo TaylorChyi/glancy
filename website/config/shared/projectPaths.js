@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 顶层目录存在大量配置文件与脚本，缺乏统一的路径语义，导致跨配置共享别名困难。
- * 目的：
- *  - 提供集中式的目录解析与别名映射，供构建、测试与质量工具共享，避免重复维护。
- * 关键决策与取舍：
- *  - 采用对象常量暴露路径，保持不可变性，防止执行期被篡改；
- *  - 刻意与 Vite/Jest 中的别名保持一致，便于 IDE 与打包工具共享；
- *  - 放弃直接读取 package.json（减少 I/O 并避免循环依赖）。
- * 影响范围：
- *  - 构建（Vite/PostCSS）、测试（Jest/Playwright）、类型系统（TSConfig）的路径解析。
- * 演进与TODO：
- *  - 后续可在此补充更多派生路径（如 assets、dist），或接入特性开关读取。
- */
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 

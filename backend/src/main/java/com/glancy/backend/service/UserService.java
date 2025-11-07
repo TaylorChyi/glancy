@@ -33,19 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * 背景：
- *  - 传统 UserService 集中包含注册、认证、资料、统计等多种职责，导致文件行数与耦合度过高。
- * 目的：
- *  - 采用门面模式（Facade）协调细粒度命令/查询处理器，使每个文件保持在 250 行以内并提升可维护性。
- * 关键决策与取舍：
- *  - 将单一巨石类拆分为命令（Command）与查询（Query）组件，通过组合完成编排；
- *  - 保留现有对外接口签名，确保控制器与测试无需调整即可复用。
- * 影响范围：
- *  - 用户领域所有写/读操作的实现迁移至新建组件，UserService 仅承担编排职责。
- * 演进与TODO：
- *  - 后续可引入特性开关控制不同命令的启用，或在 Facade 层增加熔断/重试策略。
- */
+
 @Slf4j
 @Service
 public class UserService {

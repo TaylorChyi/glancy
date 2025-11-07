@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 缺失空格的标签链常表现为 `ValueLabel:` 或 `Label1Label2:`，难以阅读。
- * 目的：
- *  - 识别紧邻的标签并补充换行、缩进或展示格式。
- */
 import {
   ADJACENT_LABEL_PATTERN,
   INLINE_LABEL_TOKENS,

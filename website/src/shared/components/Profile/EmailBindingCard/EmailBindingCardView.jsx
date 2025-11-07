@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 视图层曾夹杂大量派生逻辑，使组件难以阅读并阻碍 lint 结构化规则落地。
- * 目的：
- *  - 接收控制器提供的视图模型并负责纯渲染，确保 UI 层保持声明式与可测试。
- * 关键决策与取舍：
- *  - 通过拆分 Header/Form/Summary 子组件，降低单个函数体量以满足结构化规则；
- *  - 保留原有语义结构与辅助文本，避免引入视觉层面的额外变更。
- * 影响范围：
- *  - EmailBindingCard 的渲染结构；
- *  - 未来如需扩展布局，可在 viewModel 中扩展字段而无需修改控制器。
- * 演进与TODO：
- *  - 若需支持 skeleton/加载态，可在此增加条件渲染分支但保持数据驱动。
- */
 import PropTypes from "prop-types";
 import styles from "./EmailBindingCard.module.css";
 

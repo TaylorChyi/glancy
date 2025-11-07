@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 响应风格分区的请求、缓存与提交逻辑原本夹杂在主 Hook 中，
- *    导致 usePreferenceSections.js 难以维护且测试困难。
- * 目的：
- *  - 抽离响应风格状态机，遵循“数据获取-表单交互-提交”完整闭环，
- *    便于复用与单元测试覆盖。
- * 关键决策与取舍：
- *  - 保留现有 reducer 模型，确保与既有测试兼容；
- *  - 引入 AbortController 守卫，避免组件卸载后的状态更新警告。
- * 影响范围：
- *  - 偏好设置页面的个性化配置分区。
- * 演进与TODO：
- *  - 后续可将请求层替换为 react-query 等数据层以获得缓存与重试能力。
- */
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   RESPONSE_STYLE_ACTIONS,

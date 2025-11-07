@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 组件原本直接在渲染函数中拼接大量派生文案与状态判断，导致认知复杂度高。
- * 目的：
- *  - 将纯计算逻辑集中到视图模型生成器，确保 UI 层仅负责 JSX 渲染。
- * 关键决策与取舍：
- *  - 采用可读性优先的命名字段（header/editing/summary），方便未来扩展；
- *  - 在视图模型阶段完成所有文案替换与禁用判断，减轻视图层判断分支。
- * 影响范围：
- *  - EmailBindingCard 的渲染数据来源；
- *  - 单测可直接断言视图模型输出以覆盖边界条件。
- * 演进与TODO：
- *  - 若后续引入多步骤流程，可在此扩展 flow.sections 支持动态步骤数量。
- */
 const buildStatusTone = (hasBoundEmail) =>
   hasBoundEmail
     ? { label: "status-active", text: "active" }

@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 判断例句与译文标签需兼容多语言与动态编号。
- * 目的：
- *  - 复用标签候选词逻辑，为示例排版提供可靠的布尔判断。
- */
 import {
   EXAMPLE_LABEL_TOKENS,
   INLINE_TRANSLATION_LABEL_PATTERN,

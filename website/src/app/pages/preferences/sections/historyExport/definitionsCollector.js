@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 历史记录中“发音解释”字段包含多层结构，需要展开为线性文本。
- * 目的：
- *  - 提供责任链式的释义收集器，将结构化含义转写为导出章节行。
- * 关键决策与取舍：
- *  - 维持函数式 collector 接口，既能在数组中自由组合，也方便单元测试；
- *  - 释义顺序保持原始索引，保证与产品展示一致性。
- * 影响范围：
- *  - 偏好设置导出的 Definitions 章节。
- * 演进与TODO：
- *  - 可在此扩展更多关系词类型或格式化策略。
- */
-
 import { stripMarkdownArtifacts } from "@features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 
 import { pushChapter } from "./chapterNormalization.js";

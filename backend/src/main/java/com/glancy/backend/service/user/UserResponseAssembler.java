@@ -9,19 +9,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 过往在 UserService 中直接拼装 DTO，增加服务类长度与认知负担。
- * 目的：
- *  - 采用装配器模式集中 DTO 映射，确保命令/查询逻辑专注于流程编排。
- * 关键决策与取舍：
- *  - 使用组合式装配器（Assembler Pattern）而非静态工具函数，便于引入时钟、特性开关等依赖；
- *  - 使用 Clock 注入而非直接调用 LocalDateTime.now，提高测试可控性。
- * 影响范围：
- *  - 所有用户领域响应 DTO 的构造迁移至此，降低重复与格式不一致风险。
- * 演进与TODO：
- *  - 若后续需要国际化或多视图 DTO，可在此扩展策略接口实现。
- */
+
 @Component
 public class UserResponseAssembler {
 

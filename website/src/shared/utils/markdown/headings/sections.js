@@ -1,11 +1,3 @@
-/**
- * 背景：
- *  - Doubao 协议常把章节标题与正文写在同一行，导致折叠组件无法提取纯标题。
- * 目的：
- *  - 将章节标题与正文拆分到独立行，保持 Markdown 结构语义化。
- * 关键决策与取舍：
- *  - 仅对受控词表命中的标题执行拆分，并复用字符索引避免语言差异导致错位。
- */
 import {
   SECTION_CONTENT_WORD_PATTERN,
   SECTION_HEADING_TOKENS,

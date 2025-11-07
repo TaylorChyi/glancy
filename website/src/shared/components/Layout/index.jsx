@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - 旧版 Layout 采用 main-middle/main-bottom 的多层容器，底部工具条与滚动上下文割裂，
- *    导致搜索栏定位与内容滚动互相干扰。
- * 目的：
- *  - 实现“sidebar + main(content + docker)”的二层两区结构，固定 docker 于主区底部，
- *    并确保滚动仅发生在内容区域。
- * 关键决策与取舍：
- *  - 以 CSS 变量暴露侧边栏宽度、底部高度，结合 ResizeObserver 同步 content padding，
- *    兼顾响应式断点；
- *  - 保留现有侧边栏抽屉逻辑，避免一次性替换导航体系。
- * 影响范围：
- *  - App 页面布局、Sidebar 尺寸同步、底部搜索/释义操作条。
- * 演进与TODO：
- *  - 后续可将断点阈值抽为配置，或将布局拆分为可测试的 Hooks。
- */
 import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import Sidebar from "@shared/components/Sidebar";

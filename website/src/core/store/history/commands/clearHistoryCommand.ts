@@ -1,11 +1,3 @@
-/**
- * 背景：
- *  - 清空历史需同时处理本地状态与远端数据，
- *    原实现散落在状态机中难以组合复用。
- * 目的：
- *  - 将该行为封装为命令对象，便于未来追加审计或提示。
- */
-
 import type { User } from "../../userStore.ts";
 import {
   INITIAL_HISTORY_SLICE,

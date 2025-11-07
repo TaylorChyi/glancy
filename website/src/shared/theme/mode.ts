@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 主题切换历史上依赖 `data-theme`，未与 Tailwind `dark` 类协同，导致样式体系割裂。
- * 目的：
- *  - 通过策略模式统一管理主题偏好（light/dark/system），同时驱动 data-theme 与 dark class。
- * 关键决策与取舍：
- *  - 以策略模式隔离不同主题应用逻辑，便于未来扩展高对比或自动模式；
- *  - 将 `matchMedia` 监听封装在 System 策略中，提供可解除的订阅，避免内存泄漏。
- * 影响范围：
- *  - ThemeContext、按钮与图标等依赖主题变量的组件。
- * 演进与TODO：
- *  - 预留策略注册点，后续可接入自定义主题或按租户差异化皮肤。
- */
 export type ThemePreference = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 

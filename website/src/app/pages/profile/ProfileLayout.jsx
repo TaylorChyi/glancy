@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Profile 页面展示逻辑与状态管理耦合，导致组件难以复用。
- * 目的：
- *  - 将视图渲染抽离为纯展示组件，接收视图模型并渲染表单结构。
- * 关键决策与取舍：
- *  - 采用小型展示组件分段组织，保持 JSX 可读性；
- *  - 不处理副作用，仅依赖传入的回调执行操作。
- * 影响范围：
- *  - Profile 页面结构更清晰，也方便未来复用布局片段。
- * 演进与TODO：
- *  - TODO: 视图模型稳定后可考虑拆分为按需加载的子组件以优化首屏。
- */
 import "@app/pages/App/App.css";
 import Avatar from "@shared/components/ui/Avatar";
 import FeedbackHub from "@shared/components/ui/FeedbackHub";

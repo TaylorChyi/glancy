@@ -15,20 +15,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * 背景：
- *  - 邮箱验证码文案需按客户端 IP 决定语言，旧实现基于复杂段落组合，维护成本高。
- * 目的：
- *  - 以最小责任组合邮件主题、正文与合规头部，委托外部策略完成本地化正文渲染。
- * 关键决策与取舍：
- *  - 通过 {@link VerificationEmailContentResolver} 注入策略模式，后续可无缝扩展其他渲染逻辑；
- *  - 保留合规头部设置，确保投递质量；
- *  - 正文仅保留“验证码：{code}”极简文案，满足业务需求。
- * 影响范围：
- *  - 所有验证码邮件发送流程。
- * 演进与TODO：
- *  - 未来如需多段落或品牌定制，可新增策略实现而无需修改该类。
- */
+
 @Component
 public class VerificationEmailComposer {
 

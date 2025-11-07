@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - React Fast Refresh 要求功能模块按职责拆分，否则组件文件混杂逻辑导出会阻断热更新。
- *  - 原 `AuthForm.jsx` 聚合了控制器 Hook 与纯函数工具，难以在其他流程复用。
- * 目的：
- *  - 提供 AuthForm 领域的控制器能力与纯函数工具，供容器组件与测试用例共用。
- * 关键决策与取舍：
- *  - 采用控制器模块（Controller Module）集中管理状态协调逻辑，组件文件仅负责呈现；
- *  - 保持纯函数导出（例如 resolveInitialMethod）以便独立单测，未额外引入类封装以避免增加心智负担。
- * 影响范围：
- *  - AuthForm 组件、其单元测试以及未来可能复用登录策略的业务。
- * 演进与TODO：
- *  - 若后续引入更多登录策略，可在此新增策略模式实现，并通过特性开关切换。
- */
 import { useEffect, useMemo, useState } from "react";
 import { resolveInitialMethod } from "./authFormPrimitives.js";
 import { useFeedbackChannels } from "./authFormFeedback.js";

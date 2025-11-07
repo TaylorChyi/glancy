@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置与 Profile 页面分别维护头像裁剪与上传流程，导致状态机重复且难以复用。
- * 目的：
- *  - 将裁剪模态与上传命令组合为统一的 Hook，供任意入口以相同的交互体验触发头像更新。
- * 关键决策与取舍：
- *  - 采用状态机（idle/preview/uploading）明确流程边界，避免多重 useState 难以追踪；
- *  - 上传动作委托给 useAvatarUploader，通过命令模式暴露 selectAvatar 入口，保持表现层解耦。
- * 影响范围：
- *  - 偏好设置、SettingsModal 以及 Profile 页面可以共享同一套裁剪上传逻辑。
- * 演进与TODO：
- *  - TODO: 后续可在此 Hook 接入进度条或失败重试策略，并支持多文件排队。
- */
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import useAvatarUploader from "./useAvatarUploader.js";
 import {

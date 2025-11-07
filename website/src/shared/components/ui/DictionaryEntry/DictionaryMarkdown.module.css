@@ -71,11 +71,7 @@
   text-align-last: left;
 }
 
-/**
- * 背景：动态 Markdown 需去除额外的底色与边框，以符合“奢侈品级极简”视觉准则。
- * 目的：删除 blockquote 自带的背景与左侧边框，仅保留语义配色与排版。
- * 取舍：保留原有的内边距与次要文字色，确保在无装饰的前提下仍具可读性。
- */
+
 .blockquote {
   margin: 0;
   padding: var(--space-2, 8px) var(--space-3, 16px);
@@ -93,19 +89,13 @@
   font-style: italic;
 }
 
-/**
- * 背景：去除内联代码的底色与圆角，避免与 Markdown 动态渲染的无装饰策略冲突。
- * 目的：仅通过字体族和字号区分代码文本，保持极简视觉基调。
- * 取舍：如未来需要强调，可由调用方注入额外类名实现差异化样式。
- */
+
 .code {
   font-family: var(--font-mono, "Fira Code", monospace);
   font-size: 0.95rem;
 }
 
-/**
- * 背景：分隔线同样遵循“无额外边框”原则，交由外层决定视觉表现。
- */
+
 .divider {
   border: none;
   margin: var(--space-4, 24px) 0;

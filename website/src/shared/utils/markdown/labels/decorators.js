@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 裸标签、紧凑值与缺失空格的冒号会降低 Markdown 可读性。
- * 目的：
- *  - 提供标签装饰与元数据值人性化展示能力。
- */
 import {
   BARE_INLINE_LABEL_PATTERN,
   COLON_WITHOUT_SPACE_PATTERN,

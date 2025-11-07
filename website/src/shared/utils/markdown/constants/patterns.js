@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Markdown 归一化策略依赖多组正则匹配标题、行内标签与译文等语义结构。
- * 目的：
- *  - 集中维护 regex 常量，复用同一套模式供不同策略模块组合，避免各处分散定义造成维护困难。
- * 关键决策与取舍：
- *  - 仅暴露不可变的模式常量，不在此文件混入具体逻辑，确保正则调优可独立回顾；
- *  - 依据语义分层组织命名（heading、inline、translation 等），后续扩展时能快速定位适配点。
- * 影响范围：
- *  - 所有 Markdown 格式化策略模块，特别是标题、标签、译文的拆分逻辑。
- * 演进与TODO：
- *  - 若 Doubao 协议扩展新的标签/标题规范，需在此同步补充对应模式并在提交中注明来源。
- */
 export const NEWLINE_NORMALIZER = /\r\n?|\u2028|\u2029/g;
 export const HEADING_WITHOUT_SPACE = /^(#{1,6})([^\s#])/gm;
 export const LIST_MARKER_WITHOUT_GAP = /^(\d+[.)])([^\s])/gm;

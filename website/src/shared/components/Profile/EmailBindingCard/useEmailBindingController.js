@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 旧版 EmailBindingCard 将状态、副作用与视图耦合在单文件中，导致 lint 拆分迁移迟迟无法收敛。
- * 目的：
- *  - 提供集中管理交互状态的控制器 Hook，产出纯视图模型供 UI 层消费。
- * 关键决策与取舍：
- *  - 复用 useCountdownTimer 统一管理验证码倒计时；
- *  - 借助分层 Hook（状态/归一化/事件）降低主函数体量，满足结构化规则。
- * 影响范围：
- *  - EmailBindingCard 组件的渲染数据来源；
- *  - 单测可针对控制器输出进行断言，降低耦合。
- * 演进与TODO：
- *  - 若后续支持草稿持久化，可在此扩展与本地存储的同步逻辑。
- */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import createEmailBindingViewModel from "./createEmailBindingViewModel.js";
 import useCountdownTimer from "./useCountdownTimer.js";

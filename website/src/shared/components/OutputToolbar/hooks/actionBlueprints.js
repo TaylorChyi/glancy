@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 动作蓝图需集中定义以便扩展与复用。
- * 目的：
- *  - 暴露按钮蓝图及构建逻辑，供 useToolbarActionsModel 组合使用。
- * 关键决策与取舍：
- *  - 在此文件中保留图标定义，避免在模型 Hook 中散落 JSX；
- *  - 仅负责纯数据组合，不涉及状态。
- * 影响范围：
- *  - ToolbarActions 与潜在复用者。
- * 演进与TODO：
- *  - 后续新增动作时请在此扩展并补充相应策略。
- */
 import { resolveDeleteIcon, resolveReportIcon } from "./iconFactories";
 
 export const ACTION_BLUEPRINTS = [

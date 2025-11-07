@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - useDictionaryExperience 相关测试需要大量上下文 mock，原有文件集中编写导致超长且难以维护。
- * 目的：
- *  - 提供可复用的测试装配工具，统一构造 React Router、store、API 等依赖的替身实现。
- * 关键决策与取舍：
- *  - 采用集中式 harness 暴露 mock 与复位函数，避免重复配置并支撑按领域拆分的测试文件；
- *  - 保留 jest.unstable_mockModule 与顶层 await，确保在导入被测 hook 前完成依赖替换。
- * 影响范围：
- *  - 所有 useDictionaryExperience 相关测试文件共享同一组 mock 与生命周期管理。
- * 演进与TODO：
- *  - 后续可将常见断言封装为更高阶的 DSL，进一步提升可读性。
- */
 import { jest } from "@jest/globals";
 
 export const mockNavigate = jest.fn();

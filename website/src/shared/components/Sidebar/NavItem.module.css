@@ -69,12 +69,7 @@
   transform: scaleY(1);
 }
 
-/*
- * 背景：
- *  - 词典等入口在深浅主题下需要同步切换图标前景色，原先通过固定 muted 色值导致与文字断层。
- * 目的：
- *  - 让图标默认继承容器 currentColor，保持与标签文字一致，同时保留变量扩展能力以便未来覆盖。
- */
+
 .icon {
   display: inline-flex;
   align-items: center;
@@ -98,18 +93,7 @@
   text-overflow: ellipsis;
 }
 
-/*
- * 背景：
- *  - 搜索历史存在长度不定的词条，单行截断会导致信息缺失，影响复查与复用体验。
- *  - 旧实现使用 flex-start，使单行内容贴顶且与设计稿的居中节奏不符。
- * 目的：
- *  - 在保持默认单行样式的同时提供显式的多行模式，必要时允许内容扩展且不侵扰其他入口。
- *  - 通过变量化的对齐策略，默认居中呈现词条，保持视觉平衡，同时预留回退空间。
- * 关键决策与取舍：
- *  - 通过额外类控制高度、换行与对齐，避免在组件中直接写条件样式，便于未来扩展更多布局策略。
- * 影响：
- *  - 仅作用于启用多行模式的入口，对默认导航项无影响。
- */
+
 .item-multiline {
   align-items: var(--sidebar-multiline-align-items, center);
   padding-top: var(--sidebar-multiline-pad-y, 8px);

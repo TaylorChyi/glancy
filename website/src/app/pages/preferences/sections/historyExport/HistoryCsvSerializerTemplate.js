@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置页面存在多种导出变体，需要统一的 CSV 序列化骨架。
- * 目的：
- *  - 定义模板方法基类，约束子类提供表头与数据行生成逻辑。
- * 关键决策与取舍：
- *  - 通过抽象类模式控制扩展点，避免散落的 util 函数难以维护；
- *  - 仍以函数式返回字符串，兼容现有下载流程。
- * 影响范围：
- *  - 所有依赖历史导出的 CSV 策略实现。
- * 演进与TODO：
- *  - 若未来支持流式写入，可在 serialize 中引入迭代器输出。
- */
-
 import { toCsvRow } from "./csvPrimitives.js";
 
 export class HistoryCsvSerializerTemplate {

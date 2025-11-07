@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 标题后紧跟列表内容时常以 `## 音标-英式: ...` 形式出现，渲染后标题与列表挤在一行。
- * 目的：
- *  - 将标题与列表项拆分，恢复列表结构并保留缩进。
- */
 import {
   HEADING_ATTACHED_LIST_PATTERN,
   HEADING_LIST_TITLES,

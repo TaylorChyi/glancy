@@ -14,20 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 背景：
- *  - 画像字段瘦身后，服务层仍沿用可变 DTO 与 Entity 映射，易在未来扩展时遗漏必填字段或破坏幂等性。
- * 目的：
- *  - 以应用服务姿态负责用户画像的初始化、保存与读取，统一处理默认值与异常治理。
- * 关键决策与取舍：
- *  - 继续在服务层收敛事务边界，保持 `UserProfile` Entity 专注持久化；
- *  - 通过不可变 DTO 提供只读接口，避免遗漏字段写回；
- *  - 默认画像不足时延迟创建而非在注册时强制生成，降低耦合度。
- * 影响范围：
- *  - 控制器与个性化服务依赖的画像读取逻辑保持稳定。
- * 演进与TODO：
- *  - TODO: 若后续支持多画像版本或草稿态，可在此引入版本化或快照机制。
- */
+
 @Slf4j
 @Service
 public class UserProfileService {

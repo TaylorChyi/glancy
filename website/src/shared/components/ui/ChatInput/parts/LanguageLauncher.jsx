@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - LanguageLauncher 原实现集成视图、状态与交互，函数 170+ 行导致维护困难。
- * 目的：
- *  - 采用组合模式拆分触发器/菜单/列视图，以清晰的视图模型协同精简 Hook 输出。
- * 关键决策与取舍：
- *  - Hover 关闭策略抽为独立 Hook，确保所有交互区共享延迟收起逻辑；
- *  - 视图层仅处理布局，行为透过 useLanguageLauncher 暴露的组合接口注入；
- *  - 保留现有语义/ARIA 结构，避免无谓的 UI 调整。
- * 影响范围：
- *  - ChatInput 语言选择菜单与相关测试快照；
- *  - 后续可在 columns 组件内部扩展无障碍细节而不影响主函数行数。
- * 演进与TODO：
- *  - TODO: 引入键盘左右箭头切换语向的事件处理；
- *  - TODO: 将空状态文案改为国际化资源，兼容多语言站点。
- */
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 

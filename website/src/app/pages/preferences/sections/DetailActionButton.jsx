@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置账号分区内的按钮行为此前零散定义，导致禁用态与 pending 标签逻辑重复。
- * 目的：
- *  - 统一封装 detail 行的动作按钮渲染，确保交互语义一致并为后续扩展 loading/tooltip 等能力预留入口。
- * 关键决策与取舍：
- *  - 组件保持无状态纯函数，通过 props 描述按钮语义；未来若需接入 Skeleton/Spinner，可在此扩展。
- * 影响范围：
- *  - 所有 detail 行的动作按钮渲染逻辑。
- * 演进与TODO：
- *  - 若后续需要记录埋点，可在此处引入 onAnalyticsHook 的可选回调。
- */
 import PropTypes from "prop-types";
 
 import { DETAIL_ACTION_BUTTON_CLASSNAME } from "./detailClassNames.js";

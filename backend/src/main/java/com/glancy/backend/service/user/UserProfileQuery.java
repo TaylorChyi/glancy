@@ -8,19 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - UserService 既承担查询又负责命令处理，导致文件体积与耦合度过高。
- * 目的：
- *  - 通过查询处理器（Query Handler）解耦读操作，复用装配器生成 DTO。
- * 关键决策与取舍：
- *  - 保留日志以提升可观测性；
- *  - 以组合方式复用 {@link UserResponseAssembler}，避免重复代码。
- * 影响范围：
- *  - 用户详情、原始实体查询逻辑迁移至此组件。
- * 演进与TODO：
- *  - 后续可加入缓存或只读快照以提升性能。
- */
+
 @Component
 public class UserProfileQuery {
 

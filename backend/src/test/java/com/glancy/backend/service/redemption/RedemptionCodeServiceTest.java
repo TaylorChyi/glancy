@@ -29,13 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 背景：兑换码服务是新增领域能力，需确保会员和折扣逻辑正确生效。
- * 目的：覆盖兑换成功、次数限制、折扣落库等核心场景。
- * 关键决策与取舍：采用 SpringBootTest 以验证 JPA 事务与策略协作。
- * 影响范围：影响会员延长和折扣权益生成流程。
- * 演进与TODO：后续可补充更多异常场景及多用户并发用例。
- */
+
 @SpringBootTest(
     properties = {
         "oss.endpoint=http://localhost",

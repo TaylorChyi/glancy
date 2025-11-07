@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - AccountSection 既承载静态字段又包含动作按钮渲染，造成函数复杂度与重复逻辑攀升。
- * 目的：
- *  - 提供纯展示的静态字段行组件，统一处理禁用输入框与动作按钮样式。
- * 关键决策与取舍：
- *  - 输入框属性通过浅合并获得，避免在组件内硬编码类型；
- *  - 保持无状态设计，依赖 props 控制渲染。
- * 影响范围：
- *  - 偏好设置页面中邮箱、手机号等静态字段。
- * 演进与TODO：
- *  - 如需支持复制行为，可在动作列扩展二级按钮或快捷操作。
- */
 import PropTypes from "prop-types";
 
 import DetailActionButton from "./DetailActionButton.jsx";

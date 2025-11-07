@@ -11,21 +11,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - WordService 在同步与流式路径中都需要执行保存词条、记录同步、版本化与个性化回写的相同步骤。
- * 目的：
- *  - 以模板方法封装持久化协作流程，消除 WordService 中分支复制的编排逻辑。
- * 关键决策与取舍：
- *  - 选用模板方法而非责任链：流程步骤顺序固定且存在状态依赖（需先保存词条再同步记录），模板方法可显式表达骨架；
- *  - 通过函数式依赖注入各步骤实现，避免协调器直接依赖具体仓储，降低与 WordService 的耦合，取舍是上下文构造略显繁琐。
- * 影响范围：
- *  - WordService 将通过 PersistenceContext 提供具体操作；
- *  - SearchResultService 与个性化逻辑通过回调方式被统一调度。
- * 演进与TODO：
- *  - 后续可引入指标埋点或重试策略，只需在对应 step 中扩展实现；
- *  - 若持久化流程出现新的分支，可在策略接口中扩展版本内容生成逻辑。
- */
+
 @Slf4j
 @Component
 public class WordPersistenceCoordinator {

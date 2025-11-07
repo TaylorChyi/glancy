@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 原有的 useStreamWord Hook 将流式累积、JSON 解析、版本合并与存储写入混杂在一个函数内，导致扩展不同渲染策略时需要重复理解底层细节。
- * 目的：
- *  - 以状态模式拆分流式查询的关键阶段（累积、解析、合并、完成），并输出可复用的最终 payload，让上层仅关注编排。
- * 关键决策与取舍：
- *  - 采用显式状态对象串联流程，避免过程式代码散落在 Hook 中；替代方案是继续使用单一 async 函数串联步骤，但那会放大分支复杂度并难以注入新的策略（如不同 markdown 渲染器）。
- *  - 状态间通过纯数据传递，保持可测试性；替代方案是直接在状态对象内写入 store，但会让状态对象承担过多副作用职责。
- * 影响范围：
- *  - 供 useStreamWord 等编排层调用，所有词典流式渲染链路复用该抽象。
- * 演进与TODO：
- *  - 后续可以引入策略模式扩展不同 markdown/JSON 渲染器，实现多流派并行落地。
- */
-
 import { normalizeMarkdownEntity } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 
 const DEFAULT_LOGGER = console;

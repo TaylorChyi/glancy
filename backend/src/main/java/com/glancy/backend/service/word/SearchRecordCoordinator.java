@@ -7,19 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 搜索记录的创建与纠正逻辑在不同路径中重复，异常处理不一致。\
- * 目的：
- *  - 集中封装搜索记录生命周期操作，确保同步与流式流程使用统一的最佳实践。\
- * 关键决策与取舍：
- *  - 维持与 `SearchRecordService` 的一对一映射，避免引入额外状态；\
- *  - 对于同步流程，失败即抛出异常；流式流程可在策略中自行捕获。\
- * 影响范围：
- *  - 被查词策略调用以创建记录或同步标准词条。\
- * 演进与TODO：
- *  - 后续可在此处增加重试或熔断策略，以提升可靠性。
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

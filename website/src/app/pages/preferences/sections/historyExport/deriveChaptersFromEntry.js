@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 历史导出需要统一聚合来自 sections、Markdown、结构化字段的多源数据。
- * 目的：
- *  - 在单一纯函数中完成章节推导，供各类导出策略复用。
- * 关键决策与取舍：
- *  - 以“先静态字段、后 Markdown、再结构化 collector”的顺序合并，
- *    保证导出顺序与用户感知一致；
- *  - collector 列表以数组注入，方便未来扩展或下线某段逻辑。
- * 影响范围：
- *  - 偏好设置数据导出相关的章节聚合逻辑。
- * 演进与TODO：
- *  - 可引入可配置的排序策略，以支持用户自定义章节顺序。
- */
-
 import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
 
 import { pushChapter } from "./chapterNormalization.js";

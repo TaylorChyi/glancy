@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 头像裁剪模态此前出现新图片初始偏移残留，手动拖动亦可能无法回到中心位置。
- * 目的：
- *  - 验证用户拖动与重新加载图片时视口能自动回到中心，防止交互卡死。
- * 关键决策与取舍：
- *  - 采用真实组件渲染 + pointer 事件模拟，优先覆盖手势回中与文件切换两个回归场景。
- * 影响范围：
- *  - AvatarEditorModal 组件；其余模块不受影响。
- * 演进与TODO：
- *  - TODO: 后续可补充多指触控与键盘辅助交互的测试用例。
- */
 import { jest } from "@jest/globals";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";

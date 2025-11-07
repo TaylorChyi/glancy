@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 更换头像入口散落在 Profile 页面与偏好设置模块，缺乏统一的上传策略，导致重复逻辑与状态管理困难。
- * 目的：
- *  - 抽象为可复用的头像上传 Hook，通过统一的命令式接口协调文件选择、接口调用与用户态更新。
- * 关键决策与取舍：
- *  - 采用命令模式：向外暴露 onSelectAvatar 作为单一入口命令，内部封装上传流程，便于未来接入不同存储后端；
- *  - 提供状态机（idle/uploading/succeeded/failed）而非简单布尔值，兼顾后续提示与按钮节流需求；
- *  - 拒绝在 Hook 内直接触发提示组件，改由调用方根据状态自行处理，保持表现层可插拔。
- * 影响范围：
- *  - 偏好设置与其他头像入口可共享上传流程，用户 Store 在上传成功后立即同步最新头像。
- * 演进与TODO：
- *  - TODO: 后续可在 onSuccess/onError 中注入全局提示，或在状态机上扩展重试与进度反馈。
- */
 import { useCallback, useMemo, useState } from "react";
 import { useApi } from "@shared/hooks/useApi.js";
 import { useUser } from "@core/context";

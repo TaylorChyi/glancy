@@ -1,10 +1,3 @@
-/**
- * 背景：查询执行需同时处理流式渲染、缓存回填与语言解析，若留在主 Hook 会导致职责臃肿。
- * 目的：抽离独立执行器，隔离副作用并以策略模式支持不同查询场景。
- * 关键取舍：保持外部纯数据契约并复用 streaming buffer，避免重复实现。
- * 影响范围：DictionaryExperience 的主动查询、历史回放与版本切换。
- * 演进与TODO：后续可扩展查询埋点或多模型能力。
- */
 import { useCallback } from "react";
 import { resolveDictionaryConfig, WORD_LANGUAGE_AUTO } from "@shared/utils";
 import { wordCacheKey } from "@shared/api/words.js";
@@ -172,7 +165,6 @@ export function useDictionaryLookupExecutor({
             ? finalMarkdown
             : normalizeDictionaryMarkdown(finalMarkdown ?? "");
         //
-        // 背景：streaming 阶段已通过 normalizer 生成 preview，若最终 Markdown 与 preview 相等，
         // 说明已完成归一化，可直接复用以避免重复执行昂贵的 polishDictionaryMarkdown。
         if (polishedMarkdown) {
           setFinalText(polishedMarkdown);

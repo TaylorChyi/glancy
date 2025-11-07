@@ -12,19 +12,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.SignalType;
 
-/**
- * 背景：
- *  - 原有 StreamingAccumulator 嵌入 WordService 导致文件臃肿且难以复用。\
- * 目的：
- *  - 提供可复用的流式会话对象，负责汇总片段、输出统计及暴露必要元数据。\
- * 关键决策与取舍：
- *  - 保留原有字段结构并补充只读访问器，通过 Lombok @Getter 降低样板代码；\
- *  - summary 日志仍在会话内触发，保证资源释放前记录完整上下文。\
- * 影响范围：
- *  - 流式策略与最终持久化流程依赖此对象。\
- * 演进与TODO：
- *  - 后续可引入指标或超时检测，将逻辑封装在该会话类中。
- */
+
 @Slf4j
 @Getter
 public class WordStreamingSession {

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典体验在释义操作与搜索输入间切换时，存在输入框未及时聚焦的问题。
- * 目的：
- *  - 通过针对 DictionaryExperience 的集成测试，验证搜索模式复位后聚焦逻辑的异步保证。
- * 关键决策与取舍：
- *  - 采用 React Testing Library 渲染实际组件骨架，通过桩件稳定底部面板状态；
- *  - 放弃直接调用内部 Hook，避免对实现细节形成脆弱耦合。
- * 影响范围：
- *  - DictionaryExperience 聚焦行为的回归保障。
- * 演进与TODO：
- *  - 若后续增加更多底部模式，可拓展此文件覆盖多模式切换的聚焦策略。
- */
 /* eslint-env jest */
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";

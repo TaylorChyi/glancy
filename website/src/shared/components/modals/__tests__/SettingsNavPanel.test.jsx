@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - SettingsNav 与 SettingsPanel 需要在无框架容器中验证焦点切换是否符合可访问性预期。
- * 目的：
- *  - 通过组合测试确保分区切换后标题获得焦点，并验证 Tab/Shift+Tab 焦点循环不会逃离模态。
- * 关键决策与取舍：
- *  - 选择真实组件 + 轻量测试容器而非模拟 Hook，确保行为贴近生产；放弃 e2e 以保持单测执行效率。
- * 影响范围：
- *  - 聚焦策略的回归验证，防止未来重构破坏键盘可达性。
- * 演进与TODO：
- *  - TODO: 后续可扩展至箭头键导航及滚动同步的断言。
- */
 import { useCallback, useMemo, useState } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

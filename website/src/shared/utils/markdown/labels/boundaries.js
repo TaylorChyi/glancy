@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 衍生标签链在补齐冒号后，可能遗留换行断裂或标签直接贴在前一个字符上。
- * 目的：
- *  - 修正冒号换行异常并在缺少边界时强制换行，保持标签列对齐。
- */
 import {
   INLINE_LABEL_BOUNDARY_PREFIX_RE,
   INLINE_LABEL_NO_BOUNDARY_PATTERN,

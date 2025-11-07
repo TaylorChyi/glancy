@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - useReportIssueModalViewModel 的衍生逻辑逐渐增多，直接内联导致文件行数膨胀。
- * 目的：
- *  - 提供聚合的状态派生 Hook 集合，供主 ViewModel 组合使用，保持单一职责。
- * 关键决策与取舍：
- *  - 将 handler、语言上下文、摘要、文案、SegmentedControl 等拆分为独立小 Hook；
- *  - 保持纯 Hook 组合，避免引入新的状态管理依赖。
- * 影响范围：
- *  - 举报弹窗 ViewModel 的内部实现结构。
- * 演进与TODO：
- *  - 后续可引入测试专用桩，针对各 Hook 单独验证依赖组合。
- */
 import { useCallback, useMemo } from "react";
 import {
   buildModalStrings,

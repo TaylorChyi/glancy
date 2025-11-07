@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 举报弹窗主组件同时承担 BaseModal 与 SettingsSurface 的装配逻辑，导致行数与复杂度超限。
- * 目的：
- *  - 将 form 内容拆分到独立组件，保持 Modal 封装聚焦于容器职责。
- * 关键决策与取舍：
- *  - 维持现有样式模块复用，避免额外的样式耦合；
- *  - 通过 props 注入字符串与回调，使组件在呈现层保持纯净。
- * 影响范围：
- *  - 举报弹窗内部的表单渲染逻辑。
- * 演进与TODO：
- *  - 可进一步引入分段组件以支持表单项的动态配置。
- */
 import { useCallback } from "react";
 import PropTypes from "prop-types";
 import { SettingsSurface } from "@shared/components";

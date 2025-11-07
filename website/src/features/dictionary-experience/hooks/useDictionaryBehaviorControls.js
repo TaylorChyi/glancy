@@ -1,12 +1,3 @@
-/**
- * 背景：
- *  - 查询、复制、历史等核心交互逻辑集中在同一处不利于复用。
- * 目的：
- *  - 聚合与后端交互紧密相关的控制器，输出统一的行为接口。
- * 关键决策与取舍：
- *  - 复用现有细分 Hook，避免重复实现；
- *  - 使用解构后的 state/context 以保持参数清晰。
- */
 import { useDictionaryCopyController } from "./useDictionaryCopyController.js";
 import { useDictionaryLookupExecutor } from "./useDictionaryLookupExecutor.js";
 import { useDictionaryHistoryHandlers } from "./useDictionaryHistoryHandlers.js";

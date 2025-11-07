@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - AccountSection 直接内嵌绑定列表渲染，导致主组件行数过高且边界不清。
- * 目的：
- *  - 提供可选的绑定列表展示组件，保持主组件聚焦在装配职责。
- * 关键决策与取舍：
- *  - 将无绑定场景下的 null 返回逻辑收敛到组件内部，避免父组件重复判空；
- *  - 渲染结构保持不变，确保无样式回归。
- * 影响范围：
- *  - 偏好设置页面的账号绑定区域。
- * 演进与TODO：
- *  - 后续可在此增加 action handler 或分离为列表项子组件。
- */
 import PropTypes from "prop-types";
 
 import styles from "../Preferences.module.css";

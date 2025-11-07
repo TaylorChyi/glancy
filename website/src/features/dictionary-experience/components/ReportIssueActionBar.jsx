@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 举报弹窗的操作区既要承载错误提示，又需对齐 SettingsSurface 的布局栅格。
- * 目的：
- *  - 提供高内聚的操作条组件，封装按钮、状态与无障碍属性，保持主弹窗的语义清晰。
- * 关键决策与取舍：
- *  - 维持最小职责：仅负责展示与事件回调，将文案与状态从 ViewModel 注入；
- *  - 通过 aria-live 声明状态播报，兼顾键盘与读屏体验。
- * 影响范围：
- *  - 举报弹窗底部交互区域。
- * 演进与TODO：
- *  - 后续可引入操作 loading skeleton，以统一不同特性的等待反馈体验。
- */
 import PropTypes from "prop-types";
 import styles from "./ReportIssueModal.module.css";
 

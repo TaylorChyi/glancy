@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 变量文件同时承担主题常量与组件尺寸 token，未标注层级导致覆写顺序依赖 import。
- * 目的：
- *  - 将变量整体纳入 tokens 层，并保持 data-theme 分支，与全局装配顺序保持一致。
- * 关键决策与取舍：
- *  - 仅调整层级包装，不改动具体 token 数值，避免造成视觉回归；
- *  - 保留现有注释结构，便于后续在各功能块继续演进。
- * 影响范围：
- *  - 所有引用该文件变量的组件与布局度量。
- * 演进与TODO：
- *  - 可逐步拆分出布局/交互子模块，进一步细化 tokens 边界。
- */
 @layer tokens {
   :root {
     --bar-height: 60px;
@@ -180,20 +167,7 @@
     --settings-dialog-gap-md: 24px;
   }
 
-  /*
-   * 背景：
-   *  - SearchBox 相关 token 仅提供深色值，导致浅色主题下出现对比不足。
-   * 目的：
-   *  - 基于全局语义色（如 --color-surface-alt、--border-color、--color-text 等）映射出浅色配方，
-   *    并在暗色主题分支沿用原有实现，保持主题切换一致性。
-   * 关键决策与取舍：
-   *  - 通过 data-theme 派生不同 token，而非在组件中硬编码逻辑，确保扩展新主题时只需增量映射；
-   *  - `.dark` 覆写块沿用 orchestrator 既有 class 机制，避免破坏 Tailwind dark 兼容链路。
-   * 影响范围：
-   *  - SearchBox、ChatInput、DictionaryActionPanel 等消费 `--sb-*` 的组件。
-   * 演进与TODO：
-   *  - 后续若引入高对比主题，可复用此结构按需新增映射，或提炼为 CSS 自定义层。
-   */
+  
   :root[data-theme="light"] {
     --sb-surface: color-mix(in srgb, var(--color-surface-alt) 92%, white 8%);
     --sb-inner: color-mix(in srgb, var(--color-surface-alt) 88%, white 12%);
@@ -208,10 +182,7 @@
     --sb-muted: color-mix(in srgb, var(--color-text) 58%, transparent 42%);
     --sb-icon: var(--color-text);
 
-    /*
-     * 交互背景：按钮取消实体壳体后，直接继承主题文本色即可满足对比度要求。
-     * 取舍：继续保留 CTA 变量以兼容旧版阴影语义，但默认图标色回归正文颜色体系。
-     */
+    
     --sb-action-icon: var(--color-text);
     --sb-cta: color-mix(in srgb, var(--neutral-0) 96%, transparent 4%);
     --sb-cta-icon: var(--color-text);
@@ -376,14 +347,7 @@
     --sb-cta-shadow: 0 10px 30px rgb(0 0 0 / 30%);
     --sb-cta-shadow-hover: 0 12px 32px rgb(0 0 0 / 32%);
 
-    /*
-     * 背景：
-     *  - 退出登录等模态沿用 settings dialog token，但夜间主题未覆写导致亮色背景穿透。
-     * 目的：
-     *  - 基于 night-* 基色映射夜间版 token，确保 Modal 体系在暗色主题下保持层级与对比。
-     * 取舍：
-     *  - 复用语义化色值而非在组件中写条件样式，便于未来扩展更多主题分支。
-     */
+    
     --settings-dialog-surface: color-mix(
       in srgb,
       var(--night-panel) 92%,

@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - 语言选择控件早前将状态、归一化与交互硬塞在单个 Hook 中，函数体冗长且难复用。
- * 目的：
- *  - 以组合模式拆分状态机、可视化模型与行为处理器，保持 Hook 本体精简并利于单测。
- * 关键决策与取舍：
- *  - 拆分为“模型构建 + 状态协同 + 行为策略”三个段落，避免一次性长函数；
- *  - 继续委托 normalizer 工具，放弃自定义缓存层以保持逻辑透明；
- *  - 通过 emitVariantOpen 策略注入保持埋点与外部扩展能力。
- * 影响范围：
- *  - ChatInput 语言菜单触发器行为；
- *  - 后续若扩展快捷键或无障碍行为，可在各自职责块扩展。
- * 演进与TODO：
- *  - TODO: 补充键盘左右切换 variant 的状态流转；
- *  - TODO: 支持自定义排序策略并在模型层注入。
- */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject, ReactNode } from "react";
 

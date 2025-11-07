@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置 Hook 原有蓝图、导航等场景集中在单一测试文件，阅读与维护成本高。
- * 目的：
- *  - 聚焦验证分区编排与导航元数据，保障拆分后行为保持一致。
- * 关键决策与取舍：
- *  - 依赖共享装配器构建上下文，避免重复 mock 逻辑；
- *  - 以功能场景（蓝图/导航）切分测试文件，维持 500 行结构守卫。
- * 影响范围：
- *  - 偏好设置页面蓝图与导航行为的回归覆盖。
- * 演进与TODO：
- *  - 若新增分区或导航策略，可在此文件追加场景断言。
- */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   createPreferenceSectionsTestContext,

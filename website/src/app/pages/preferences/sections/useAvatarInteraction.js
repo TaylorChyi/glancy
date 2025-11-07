@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 头像文件选择逻辑之前直接内联在 AccountSection 中，造成副作用与渲染逻辑耦合。
- * 目的：
- *  - 将 avatar 触发与变更逻辑抽象为 hook，便于测试与后续扩展上传策略。
- * 关键决策与取舍：
- *  - 使用 useRef 保存 input 引用，避免重复查询 DOM；
- *  - 返回 click handler 以支持按钮触发；
- *  - 清空 input value 以便多次选择相同文件。
- * 影响范围：
- *  - AccountSection 的头像交互流程。
- * 演进与TODO：
- *  - 后续可在此接入上传进度监听与错误提示。
- */
 import { useCallback, useId, useRef } from "react";
 
 /**

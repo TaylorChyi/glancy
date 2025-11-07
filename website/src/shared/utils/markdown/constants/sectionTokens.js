@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 章节标题需要与正文拆分，为此需维护受控词表与列表标题映射。
- * 目的：
- *  - 暴露章节相关词表，供标题策略模块消费。
- */
 export const SECTION_HEADING_TOKENS = new Set(
   [
     "definition",

@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 旧版 SettingsModal 直接渲染 Preferences 页面组件，耦合度高且无法共享组合式设置结构。
- * 目的：
- *  - 使用组合组件（Header/Body/Nav/Panel）与 usePreferenceSections hook 构建模态内容，解耦布局与数据逻辑。
- * 关键决策与取舍：
- *  - 模态内复用页面样式类，但关闭按钮样式仍由模态本地维护，以确保视觉一致；保留 renderCloseAction 模式以方便 SettingsNav 注入 className。
- * 影响范围：
- *  - SettingsModal、本地样式模块以及调用偏好设置模态的入口。
- * 演进与TODO：
- *  - TODO: 后续可在此接入动画或过渡状态，并考虑拆分基础模态与业务逻辑。
- */
 import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import BaseModal from "./BaseModal.jsx";

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - SelectMenu 主文件同时承担状态管理与列表渲染，造成组件层级难以拆分。
- * 目的：
- *  - 将纯渲染的选项列表抽离为展示组件，强化组合式设计并为后续分组/虚拟滚动预留接口。
- * 关键决策与取舍：
- *  - 选择传入标准化选项与活动值，保持展示层无业务判断；
- *  - 内联 CheckIcon 以减少跨文件跳转，未来如需复用可再独立成 tokens。
- * 影响范围：
- *  - SelectMenu 的列表渲染与按键聚焦行为（依赖 menuRef）。
- * 演进与TODO：
- *  - TODO: 若未来引入分组标题，可在此组件内增加语义化 role="group" 容器。
- */
 import PropTypes from "prop-types";
 
 import styles from "../SelectMenu.module.css";

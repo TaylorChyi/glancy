@@ -13,19 +13,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * 背景：
- *  - 流式查词流程在 WordService 内部实现，包含异常处理、日志及持久化收尾，导致文件过长。\
- * 目的：
- *  - 使用策略模式将流式查词逻辑抽离，使主服务只负责上下文构造。\
- * 关键决策与取舍：
- *  - 继续复用缓存命中流程，命中时直接返回序列化响应；\
- *  - 通过 {@link WordStreamingFinalizer} 统一处理收尾逻辑，保持与同步流程一致的持久化骨架。\
- * 影响范围：
- *  - WordService 的 `streamWordForUser` 方法改为简单委派。\
- * 演进与TODO：
- *  - 可在未来扩展断流重连或背压控制。
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

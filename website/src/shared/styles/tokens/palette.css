@@ -1,11 +1,1 @@
-/**
- * 背景：
- *  - palette.css 已迁移至 `src/styles/tokens/color.primitives.css`，此处保留兼容入口；
- * 目的：
- *  - 避免历史 import 失效，同时复用新的基础色值定义；
- * 关键决策与取舍：
- *  - 不再重复维护色值，待调用方切换至 `@styles` 路径后可删除该文件；
- * 影响范围：
- *  - 仍引用 `shared/styles/tokens/palette.css` 的遗留样式模块。
- */
 @import url("@styles/tokens/color.primitives.css");

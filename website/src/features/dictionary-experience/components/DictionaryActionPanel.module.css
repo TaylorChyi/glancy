@@ -1,9 +1,5 @@
 .panel-shell {
-  /*
-   * 目的：复用 ChatInput 布局壳的宽度策略，确保词典面板在不同容器内保持一致居中表现。
-   * 关键取舍：通过读取 Layout 注入的 --docker-row-width 变量集中控制宽度，
-   *           避免在父级分散样式并保持 SearchBox 的壳层解耦。
-   */
+  
   width: var(--docker-row-width, min(100%, var(--sb-max-width)));
   display: flex;
   justify-content: center;
@@ -12,41 +8,26 @@
 }
 
 .panel {
-  /*
-   * 背景：词典动作面板与 ChatInput 属于同一底部工作区，需同步侧边栏色板以维持视觉连续性。
-   * 取舍：与 ChatInput 一致，优先消费 --sidebar-panel / --sidebar-hover-bg，必要时退回 SearchBox 令牌，
-   *       确保未来 SearchBox 在其它模块的主题自洽性不被本地覆写所影响。
-   */
+  
   --sb-bg: var(--sidebar-panel, var(--sb-surface));
   --sb-bg-hover: var(
     --sidebar-hover-bg,
     color-mix(in srgb, var(--sidebar-panel, var(--sb-surface)) 94%, white 6%)
   );
 
-  /*
-   * 背景：SearchBox 默认依赖 --padding-y 推导垂直留白，但词典面板需要与 ChatInput 底部壳同步。
-   * 取舍：将变量重置为 0，并在组件作用域内直接消费 ChatInput 的 padding-block 令牌，
-   *       避免 SearchBox 与动作面板各自维护高度导致交互态跳动。
-   */
+  
   --sb-shell-width: 100%;
   --padding-y: 0;
   --slot-gap: var(--chat-input-bottom-gap, 12px);
 
-  /*
-   * 背景：ChatInput 与释义面板共用动作槽位尺寸，为保持互动元素节奏统一，此处复用 44px 的 --btn-action 令牌。
-   * 取舍：优先使用外部注入的 --chat-input-action-size，若未提供则回落到 ChatInput 的 --btn-action 默认值，避免出现双维护尺寸。
-   */
+  
   --dictionary-panel-action-size: var(
     --chat-input-action-size,
     var(--btn-action, 44px)
   );
   --dictionary-panel-icon-size: 18px;
 
-  /*
-   * 背景：词典动作区与 OutputToolbar 共享同一批交互图标，若颜色脱节将导致跨面板体验割裂。
-   * 取舍：直接复用 OutputToolbar 的色彩配方，确保默认/悬停/禁用状态在亮暗主题下表现一致；
-   *       如未来需要差异化某些动作，只需覆写下方的 --dictionary-panel-icon-* 令牌而无需回退到 --sb-text。
-   */
+  
   --dictionary-panel-icon-color: color-mix(
     in srgb,
     var(--color-text-secondary) 88%,
@@ -68,11 +49,7 @@
     transparent
   );
 
-  /*
-   * 背景：原先通过 ::before 伪元素绘制顶部 1px 分隔线，但在深色背景下造成强对比。
-   * 取舍：引入可配置的阴影层，沿用现有阴影令牌，既保持层级又能按需复用旧变量。
-   * 影响：移除固定分隔线，默认转为柔和下投影；如需恢复外部可通过 --dictionary-panel-elevation-shadow 覆写。
-   */
+  
   --dictionary-panel-elevation-shadow: var(
     --chat-input-bottom-shadow,
     var(--sb-shadow-soft)
@@ -83,11 +60,7 @@
   align-items: center;
   flex-wrap: nowrap;
 
-  /*
-   * 背景：释义工具栏按钮数量随业务扩展而增长，原先的 nowrap+hidden 会裁切尾部动作。
-   * 取舍：通过向 OutputToolbar 注入 wrap/overflow 变量允许在必要时换行，
-   *       并保持默认 gap 设置由 SearchBox 继承，避免本地写死值。
-   */
+  
   --output-toolbar-wrap: wrap;
   --output-toolbar-overflow: visible;
   --output-toolbar-row-gap: var(
@@ -95,10 +68,7 @@
     var(--chat-input-bottom-gap, 12px)
   );
 
-  /*
-   * 背景：词典面板需与 ChatInput 搜索态共用壳层高度，防止 search/actions 切换出现高度闪烁。
-   * 取舍：直接复用 ChatInput 的 padding-block 令牌，当主题覆写时可保持两端一致响应。
-   */
+  
   padding-block: var(--chat-input-bottom-pad-y, 12px);
   box-shadow: var(--sb-shadow), var(--dictionary-panel-elevation-shadow);
 }

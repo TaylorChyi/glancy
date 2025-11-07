@@ -1,20 +1,3 @@
-/**
- * 背景：
- *  - DataSection 需协调多种动作（保留策略、清理、导出），原逻辑在控制器中手写回调，
- *    既冗长又不易测试。
- * 目的：
- *  - 抽离动作相关 Hook，形成明确的依赖接口，方便复用与单测。
- * 关键决策与取舍：
- *  - 继续使用 useCallback 保持回调稳定性；
- *  - 导出操作延续浏览器 Blob 方案，等待服务端能力接入后再替换；
- *  - 选项生成逻辑与动作一并集中，便于未来按需拆分策略。
- * 影响范围：
- *  - 偏好设置数据分区的行为处理；
- *  - 可为 SettingsModal 等复用场景提供统一动作实现。
- * 演进与TODO：
- *  - TODO: 接入埋点后，可在此统一记录用户操作事件。
- */
-
 import { useCallback, useMemo } from "react";
 import { useWordStore } from "@core/store/wordStore.js";
 import {

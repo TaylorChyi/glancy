@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - EmptyState 组件在产品中被多场景复用，之前仅提供单一带插画的视觉语态。
- * 目的：
- *  - 回归词典主视图的纯信息诉求，为组件引入 tone 策略并确保可测试。
- * 关键决策与取舍：
- *  - 采用 React Testing Library 校验结构，避免与样式实现细节硬编码耦合；
- *  - 通过 CSS Modules class 查询确认插画容器显隐，从而精确断言视觉语态。
- * 影响范围：
- *  - EmptyState 组件的 plain/decorated 视觉策略与依赖其空态的页面。
- * 演进与TODO：
- *  - 后续可补充对自定义 illustration 节点与动作区交互的覆盖。
- */
-
 import { createElement } from "react";
 import { jest } from "@jest/globals";
 import { render } from "@testing-library/react";

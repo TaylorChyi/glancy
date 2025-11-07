@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 图标清单生成脚本需要随目录重构迁移至 ops/scripts，并复用集中式路径常量。
- * 目的：
- *  - 扫描共享资源目录下的 SVG，输出 URL/inline 双态的清单模块供前端按名称索引。
- * 关键决策与取舍：
- *  - 统一使用 PATHS.assets，避免硬编码相对路径；
- *  - 输出 ESM 模块，兼容 Vite 动态导入策略。
- * 影响范围：
- *  - `npm run generate:icons` 产出的 `icon-manifest.generated.js`。
- * 演进与TODO：
- *  - 可追加缓存/差异化输出以减少 I/O 成本，或支持多主题扩展。
- */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { PATHS } from "../../config/shared/projectPaths.js";

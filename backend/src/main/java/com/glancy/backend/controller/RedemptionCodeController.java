@@ -18,19 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 背景：
- *  - 管理端与用户端需要暴露兑换码相关接口。
- * 目的：
- *  - 提供创建、查询与兑换的 REST API。
- * 关键决策与取舍：
- *  - 兑换接口依赖认证上下文提供用户信息；
- *  - 使用 ResponseEntity 明确 HTTP 状态码。
- * 影响范围：
- *  - 前端管理界面与客户端兑换流程。
- * 演进与TODO：
- *  - 可扩展列表查询、兑换记录等接口。
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/redemption-codes")

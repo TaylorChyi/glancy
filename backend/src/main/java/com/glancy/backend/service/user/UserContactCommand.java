@@ -12,19 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 用户联系方式更新与邮箱换绑流程与认证逻辑高度耦合，导致 UserService 体积过大。
- * 目的：
- *  - 采用命令处理器封装联系方式相关变更，复用 {@link UserContactPolicy} 统一约束。
- * 关键决策与取舍：
- *  - 以组合的方式复用策略对象和数据清洗组件，便于未来支持多租户差异化规则；
- *  - 保留结构化日志，确保审计信息不丢失。
- * 影响范围：
- *  - 账号设置页的联系方式更新、邮箱换绑、解绑流程都委托至此组件。
- * 演进与TODO：
- *  - 后续可在策略中加入手机号格式校验或国际化通知。
- */
+
 @Component
 public class UserContactCommand {
 

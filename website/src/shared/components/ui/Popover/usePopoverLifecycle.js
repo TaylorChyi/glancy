@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - Popover 的生命周期副作用（布局调度、全局事件、状态复位）分散在组件中，难以复用。
- * 目的：
- *  - 提供聚合的生命周期 Hook，简化主 Hook 实现并控制文件体量。
- * 关键决策与取舍：
- *  - 将布局相关副作用封装为 usePositioningCycle；
- *  - 将关闭与事件监听封装为 useGlobalDismissHandlers；
- *  - 将可见性复位封装为 usePlacementReset。
- * 影响范围：
- *  - usePopoverPositioning 复用这些 Hook，调用方无需关注内部细节。
- * 演进与TODO：
- *  - 可按需扩展更多事件（例如 focus trap）并在此模块统一管理。
- */
 import { useEffect, useLayoutEffect } from "react";
 
 const useIsomorphicLayoutEffect =

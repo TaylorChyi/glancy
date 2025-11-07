@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Service Worker 注册逻辑新增依赖注入能力，需要通过单测验证默认路径与失败保护逻辑。
- * 目的：
- *  - 确保注册流程在具备 serviceWorker 能力时以正确路径执行，且在缺失能力时安全退化。
- * 关键决策与取舍：
- *  - 采用工厂函数注入测试桩对象，避免对真实浏览器环境产生副作用。
- * 影响范围：
- *  - `createQueueServiceWorkerRegistration` 工厂函数的行为契约。
- * 演进与TODO：
- *  - 如未来引入特性开关或多策略注册，需要补充更多分支覆盖。
- */
-
 import { jest } from "@jest/globals";
 import { createQueueServiceWorkerRegistration } from "../shared/utils/registerServiceWorker";
 

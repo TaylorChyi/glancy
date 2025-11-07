@@ -1,17 +1,5 @@
 /* eslint-env jest */
-/**
- * 背景：
- *  - Layout 引入二层两区结构后需要新的快照以保证 DOM 层级稳定。
- * 目的：
- *  - 通过单测校验 #app/#sidebar/#main/#content/#docker 的存在与事件绑定。
- * 关键决策与取舍：
- *  - 采用模块级 mock 解耦 Sidebar/Icon 依赖，避免上下文耦合；
- *  - 借助 ResizeObserver mock 驱动 docker 高度同步，放弃真实测量以提升稳定性。
- * 影响范围：
- *  - Layout 组件结构、滚动回调、docker 占位逻辑。
- * 演进与TODO：
- *  - 后续可覆盖移动端模式与 sidebar 拖拽逻辑。
- */
+
 import React, { forwardRef } from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { jest } from "@jest/globals";

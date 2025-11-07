@@ -1,13 +1,3 @@
-/**
- * 背景：
- *  - SelectMenu 需要继承偏好设置面板的壳体变量，与 LanguageMenu 保持统一的极简风格。
- * 目的：
- *  - 定义触发器与弹层的栅格、留白与动效，确保自定义选项亦可共享奢侈品级节奏。
- * 关键决策与取舍：
- *  - 触发器透明显示，由外层 field-shell 控制背景，避免重复 token；
- *  - 菜单沿用 LanguageMenu 的尺寸与动画参数，减少视觉漂移。
- */
-
 .menu-root {
   position: relative;
   display: flex;

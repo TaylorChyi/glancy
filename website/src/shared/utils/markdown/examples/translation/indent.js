@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 译文行需要继承列表缩进或自定义缩进，才能与例句对齐。
- * 目的：
- *  - 计算译文行的缩进字符串供布局逻辑复用。
- */
 export function deriveExampleTranslationIndent(prefix) {
   const listMatch = prefix.match(/^([ \t]*)(?:([-*+])|((?:\d+[.)])))(\s+)/);
   if (listMatch) {

@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 历史状态机曾将所有增删改查逻辑集中在单类内，
- *    导致文件超长且难以替换单个命令。
- * 目的：
- *  - 将命令对象统一在维护协调器下装配，对外保持既有 API，
- *    内部则按职责拆分为可复用的命令组件。
- * 关键决策与取舍：
- *  - 采用命令模式组合（Command Aggregator），协调器仅负责路由；
- *  - 通过分页协调器与错误边界共享上下文，确保副作用一致。
- */
-
 import type { HistoryItem } from "@core/history/index.ts";
 import type { User } from "../userStore.ts";
 import type {

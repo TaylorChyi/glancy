@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - Doubao 生成的例句与译文常黏在同一行或写在下一行缺少标识。
- * 目的：
- *  - 将译文拆到独立行并保留列表缩进，确保渲染易读。
- */
 import { isExampleLabel } from "../labels.js";
 import { deriveExampleTranslationIndent } from "./indent.js";
 import { extractParentheticalTranslation } from "./wrappers.js";

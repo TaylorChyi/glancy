@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 旧实现直接在 ThemeContext 中根据网页主题切换 favicon，无法覆盖浏览器自身主题变更；
- *  - index.html 内联脚本重复维护逻辑，易于漂移并缺乏测试覆盖。
- * 目的：
- *  - 以配置器模式集中管理浏览器页签 favicon 的浅深色切换，确保与浏览器主题解耦；
- * 关键决策与取舍：
- *  - 采用“配置器 + 注册表”的组合模式：注册表负责资产映射，配置器负责监听浏览器主题并应用（相较于一次性脚本更易扩展及测试）；
- *  - 依赖 matchMedia 构建观察者（Observer）模式，避免手动轮询，同时在缺失能力的环境中安全回退；
- * 影响范围：
- *  - 浏览器 favicon 切换逻辑、ThemeProvider 初始化流程、与 favicon 相关的单测；
- * 演进与TODO：
- *  - 可扩展更多浏览器特性（如 high-contrast）或允许多 favicon 节点，通过策略模式封装匹配规则。
- */
 import { FaviconRegistry } from "@shared/theme/faviconRegistry";
 
 const DEFAULT_LINK_ID = "favicon";

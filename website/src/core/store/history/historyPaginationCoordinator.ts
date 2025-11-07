@@ -1,22 +1,3 @@
-/**
- * 背景：
- *  - 历史状态机既负责分页又处理增删，单个类体量高达数百行，
- *    难以聚焦分页策略本身的演进。
- * 目的：
- *  - 引入“分页协调器”（Pagination Coordinator）作为独立角色，
- *    负责对接远端分页接口并维护分页元数据，
- *    使状态机可以专注于业务意图编排。
- * 关键决策与取舍：
- *  - 采用模板方法封装加载流程（loadPage），避免重复的 try/catch 与排序逻辑；
- *  - 公布最小必要的协作接口（resolveNextPage/refreshFirstPage/collectRemoteMatches），
- *    便于其他策略（例如清理、收藏）按需重用。
- * 影响范围：
- *  - loadHistory / loadMoreHistory 等分页入口；
- *  - 依赖远端遍历的清理策略（按语言批量删除等）。
- * 演进与TODO：
- *  - 可进一步引入缓存层或乐观更新策略，通过扩展 loadPage 内的 reducer 实现。
- */
-
 import {
   HISTORY_PAGE_SIZE,
   HISTORY_PAGINATION_MODES,

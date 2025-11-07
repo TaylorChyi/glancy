@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 控制器模块需要对请求与可用性逻辑解耦，方便按需替换或扩展。
- * 目的：
- *  - 收拢 AuthForm 的副作用处理与视图模型装配逻辑，保持 Hook 主体聚焦于状态编排。
- * 关键决策与取舍：
- *  - 通过独立 Hook 管理请求副作用，未来可以插入节流/重试策略；
- *  - `composeControllerModel` 保持纯函数，方便测试时直接断言输出结构。
- * 影响范围：
- *  - AuthForm 控制器及相关测试。
- * 演进与TODO：
- *  - 可引入责任链模式以应对更多登录方式校验与错误分级处理。
- */
 import { useCallback } from "react";
 import { sanitizeAccount } from "./authFormPrimitives.js";
 

@@ -11,19 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 背景：
- *  - 用户服务中存在会员状态管理逻辑，随着兑换功能到来需要可复用的领域服务。
- * 目的：
- *  - 提供统一的会员激活、延长与撤销能力，避免多处散落重复代码。
- * 关键决策与取舍：
- *  - 抽取专用服务供 UserService 及兑换策略复用；
- *  - 采用事务保证状态一致性，避免兑换与用户状态错位。
- * 影响范围：
- *  - UserService 将委托该服务；兑换策略依赖以延长会员时长。
- * 演进与TODO：
- *  - 后续可加入会员变更事件推送、审计记录。
- */
+
 @Slf4j
 @Service
 public class MembershipLifecycleService {

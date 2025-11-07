@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - SettingsBody 新增高度同步探针，需要验证容器 style 与隐藏插槽的渲染契约。
- * 目的：
- *  - 确保传入 style/measurementProbe 时容器正确应用自定义高度并挂载探针节点。
- * 关键决策与取舍：
- *  - 采用真实组件渲染验证结构而非快照，以便未来调整 className 仍能保障语义结构稳定。
- * 影响范围：
- *  - SettingsModal、Preferences 页面共享的 SettingsBody 组合组件。
- * 演进与TODO：
- *  - TODO: 后续可补充滚动行为的交互断言，覆盖响应式布局切换。
- */
 import { render, screen } from "@testing-library/react";
 import SettingsBody from "../SettingsBody.jsx";
 

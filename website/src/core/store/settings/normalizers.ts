@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 设置 Store 中的校验逻辑散落各处，新增配置时容易复制粘贴，导致行为不一致。
- * 目的：
- *  - 通过策略模式集中定义各项偏好的规范化算法，形成可组合的业务规则中心。
- * 关键决策与取舍：
- *  - 采用 createOptionNormalizer 生成器包装有限集合校验，将“集合校验”与“值处理”解耦。
- *  - 系统语言依旧依赖 i18n 模块判定支持范围，避免重复维护语言清单。
- * 影响范围：
- *  - 设置 Store 及未来复用此模块的特性都将获得一致的参数归一能力。
- * 演进与TODO：
- *  - 若后续需要按终端区分策略，可扩展 createOptionNormalizer 接收上下文参数。
- */
-
 import { isSupportedLanguage } from "@core/i18n/languages.js";
 import {
   DEFAULT_LANGUAGE_FALLBACK,

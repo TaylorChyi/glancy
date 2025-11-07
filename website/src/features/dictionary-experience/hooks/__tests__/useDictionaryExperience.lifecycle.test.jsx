@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 查询生命周期涉及 AbortController、计时器与 Markdown 归一化，需独立验证以降低回归成本。
- * 目的：
- *  - 覆盖查询中断与流式 Markdown 归一化两个核心路径，确保卸载安全与预览一致性。
- * 关键决策与取舍：
- *  - 保留原有断言语义，同时抽离复位逻辑到共享 harness；
- *  - 针对 AbortController 使用 try/finally 确保全局状态还原。
- * 影响范围：
- *  - 仅作用于 useDictionaryExperience 的生命周期相关行为。
- * 演进与TODO：
- *  - 未来可扩展到网络超时、并发查询等场景。
- */
 import { renderHook, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import {

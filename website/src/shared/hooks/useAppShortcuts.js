@@ -12,19 +12,7 @@ const THEME_SEQUENCE = {
   system: "dark",
 };
 
-/**
- * 背景：
- *  - 快捷键绑定逻辑过度集中在单一 Hook 内，导致可读性下降且难以扩展。
- * 目的：
- *  - 采用组合式小 Hook 拆解聚合逻辑，保障主 Hook 职责单一并易于演进。
- * 关键决策与取舍：
- *  - 以 memoized map 与 handler registry 分离数据与行为层，提高扩展性；
- *  - 保持浏览器事件注册在独立 Hook 中，便于未来接入日志或埋点。
- * 影响范围：
- *  - 依赖应用快捷键的交互，行为保持不变，仅改善结构。
- * 演进与TODO：
- *  - 后续可将快捷键配置抽象为策略表，实现用户级定制与持久化。
- */
+
 
 const useFocusInput = (inputRef) =>
   useCallback(() => {

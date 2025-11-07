@@ -9,18 +9,7 @@ import java.util.Locale;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/**
- * 背景：
- *  - 验证码邮件正文需根据语言动态渲染，确保 "验证码：{code}" 文案正确输出。
- * 目的：
- *  - 校验配置驱动的本地化渲染逻辑是否满足多语言与兜底能力。
- * 关键决策与取舍：
- *  - 通过伪造解析器隔离 Locale 判定，聚焦模板渲染正确性。
- * 影响范围：
- *  - 邮件验证码正文生成链路。
- * 演进与TODO：
- *  - 如增加更多占位符，应新增测试覆盖替换逻辑。
- */
+
 class TemplateDrivenVerificationEmailContentResolverTest {
 
     private EmailVerificationProperties properties;

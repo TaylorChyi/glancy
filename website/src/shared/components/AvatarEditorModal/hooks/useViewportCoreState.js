@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - useAvatarViewportModel 原本同时承担状态初始化与副作用调度，文件体积超标。
- * 目的：
- *  - 将视口核心状态管理抽离为独立 hook，确保主 hook 聚焦装配与组合。
- * 关键决策与取舍：
- *  - 暴露 reset/recenter 行为供上层组合，而非在组件中硬编码；
- *  - 保持纯钩子实现，便于单测时直接渲染并断言初始状态。
- * 影响范围：
- *  - AvatarEditorModal 视口状态管理；
- * 演进与TODO：
- *  - 若未来支持旋转/镜像，可在此扩展额外状态字段并保持接口稳定。
- */
-
 import { useCallback, useRef, useState } from "react";
 import { deriveCenteredViewportState } from "@shared/utils/avatarCropBox.js";
 import { DEFAULT_VIEWPORT_SIZE, MAX_ZOOM, MIN_ZOOM } from "../constants.js";

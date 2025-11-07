@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - LLM 可能压缩标签间空格或使用连字符连接，影响后续换行判断。
- * 目的：
- *  - 先统一间距再执行换行策略，确保不同来源的标签格式一致。
- */
 import {
   INLINE_LABEL_HYPHEN_GAP_PATTERN,
   INLINE_LABEL_PATTERN,

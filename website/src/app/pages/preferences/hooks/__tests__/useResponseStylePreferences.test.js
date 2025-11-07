@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - useResponseStylePreferences 钩子承担响应风格偏好加载/提交的 orchestration，过往缺乏直接的回归测试。
- * 目的：
- *  - 通过渲染 Hook 验证加载与重试路径，确保依赖项调整后行为仍然稳定。
- * 关键决策与取舍：
- *  - 采用 @testing-library/react 的 renderHook 驱动真实 effect，以捕获 AbortController 及异步行为。
- * 影响范围：
- *  - 偏好设置页面响应风格分区的初始化与重试交互。
- * 演进与TODO：
- *  - TODO: 后续补充保存流程与错误提示的集成级校验，以覆盖完整状态机。
- */
-
 import { jest } from "@jest/globals";
 import { act, renderHook, waitFor } from "@testing-library/react";
 

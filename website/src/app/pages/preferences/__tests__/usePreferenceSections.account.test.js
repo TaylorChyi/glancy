@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 账户相关用例此前与其它分区混合，mock 配置重复且难以聚焦断言。
- * 目的：
- *  - 独立验证邮箱解绑动作与账户字段渲染逻辑，提升测试颗粒度。
- * 关键决策与取舍：
- *  - 通过共享装配器初始化默认用户，按需覆盖邮箱与绑定状态；
- *  - 按操作场景拆分测试，保持断言语义清晰。
- * 影响范围：
- *  - 偏好设置账户分区的测试结构。
- * 演进与TODO：
- *  - 若未来扩展多因子或更多账户字段，可在此追加测试。
- */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   createPreferenceSectionsTestContext,

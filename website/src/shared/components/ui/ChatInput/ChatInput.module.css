@@ -1,9 +1,5 @@
 .container {
-  /*
-   * 背景：需要与释义面板共享宽度比例，确保 docker 栏内组件节奏统一。
-   * 取舍：优先消费 Layout 集中下发的 --docker-row-width/--docker-row-max-width，
-   *       既保证搜索态与动作态的等宽，又在脱离 docker 时回落到 SearchBox 默认宽度。
-   */
+  
   width: var(
     --docker-row-width,
     var(--chat-input-shell-width, var(--sb-shell-width, 100%))
@@ -27,11 +23,7 @@
  *  - 窄屏：降级为单列栈结构，移除额外分隔符避免冗余装饰。
  */
 .input-surface {
-  /*
-   * 背景：底部输入区需与侧边栏保持同一面板色调，避免跨页面底部区域割裂。
-   * 取舍：优先读取 --sidebar-panel / --sidebar-hover-bg，缺省时回落到 SearchBox 内建 token，
-   *       以免影响未来复用 SearchBox 的其它场景。
-   */
+  
   --sb-bg: var(--sidebar-panel, var(--sb-surface));
   --sb-bg-hover: var(
     --sidebar-hover-bg,
@@ -310,11 +302,7 @@
 .core-input {
   flex: 1 1 auto;
 
-  /*
-   * 背景：默认布局下文字槽位可压缩至极窄，导致单行可视字符不足。
-   * 目的：引入基于字符宽度的最小尺寸，确保至少容纳约 30 个字符，同时维持在窄屏设备的弹性收缩能力。
-   * 取舍：通过 min() 结合 100% 限制，保证在容器宽度小于 30ch 时仍可按需收缩，避免破坏移动端体验。
-   */
+  
   min-width: 30ch;
   display: flex;
   align-items: center;
@@ -352,9 +340,7 @@
   border: none;
   border-radius: 999px;
 
-  /*
-   * 背景：按钮已移除实心壳体，仍保留变量以便未来扩展描边/阴影等表现时复用统一入口。
-   */
+  
   --action-btn-bg: transparent;
   --action-btn-color: var(--sb-action-icon, var(--sb-icon));
   --action-btn-shadow: none;

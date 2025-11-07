@@ -5,11 +5,7 @@
 }
 
 .section {
-  /*
-   * 背景：释义区块在嵌套折叠时存在不同容器宽度的默认值。
-   * 目的：强制所有子元素继承 section 的宽度，避免横向溢出。
-   * 取舍：统一回落到无边框、透明背景以适配最新设计基调，同时保留圆角与布局节奏。
-   */
+  
   border-radius: var(--radius-lg, 14px);
   border: none;
   background: none;
@@ -22,11 +18,7 @@
   width: 100%;
   display: flex;
 
-  /*
-   * 背景：按钮与标题左右分散排列，导致用户目光在阅读开头时需要额外扫到最右侧确认折叠状态。
-   * 目的：将指示图标与文字统一左对齐，让展开控制顺着阅读方向出现，降低眼动负担。
-   * 取舍：舍弃 space-between 布局，改由 gap 控制间距，保证整行仍为单一点击热区且视觉节奏一致。
-   */
+  
   justify-content: flex-start;
   align-items: center;
   border: none;
@@ -45,12 +37,7 @@
 }
 
 .summary-title {
-  /*
-   * 背景：折叠标题在包含长文本时会收缩宽度，导致内容溢出。
-   * 目的：让标题文本填满剩余空间，同时保持视觉对齐的稳定性。
-   * 取舍：放弃两端对齐，改为统一左对齐，以匹配 collapsible-summary 的排版需求；
-   *       同时保持加粗以突出层级标题的视觉锚点。
-   */
+  
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
@@ -64,11 +51,7 @@
   overflow-wrap: anywhere;
 }
 
-/*
- * 背景：原有圆形底色在不同主题下与内容背景冲突，边框阴影也削弱了极简视觉层级。
- * 目的：去除底色与边框，直接以主题文本色绘制指示箭头，确保深浅主题自动适配。
- * 取舍：放弃额外装饰，仅保留尺寸与对齐以维持版面节奏。
- */
+
 .chevron {
   flex-shrink: 0;
   width: 28px;
@@ -81,11 +64,7 @@
   box-shadow: none;
 }
 
-/*
- * 背景：箭头需在展开时朝下，且在黑/白主题间保持对比度。
- * 目的：以 currentColor 驱动边框绘制箭头，随父元素颜色自动切换。
- * 取舍：通过调整旋转角度取代双重色值混合，简化主题切换路径。
- */
+
 .chevron-icon {
   width: 8px;
   height: 8px;
@@ -117,10 +96,7 @@
 }
 
 .body-inner {
-  /*
-   * 背景：Markdown 内容混合段落、列表与内联标签，默认对齐方式会打破版面节奏。
-   * 目的：保证所有文本块宽度与 section 保持一致，并在多语言场景下启用两端对齐。
-   */
+  
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -137,11 +113,7 @@
   width: 100%;
 }
 
-/*
- * 背景：Markdown 提示词新增了表格输出，默认表格缺乏排版控制且边框与主题风格不符。
- * 目的：为表格提供统一的极简视觉语言，保持列间留白与对比度，同时复用主题 token。
- * 取舍：避免额外装饰，使用色彩混合轻量区分表头与数据行，并通过 joinClassNames 允许外部覆写。
- */
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -170,21 +142,14 @@
   overflow-wrap: anywhere;
 }
 
-/*
- * 背景：Markdown 表头需凸显字段层级，同时维持整表视觉节奏。
- * 目的：强制表头文本加粗且居中，呼应信息对比场景的版心设计。
- * 取舍：使用 CSS Module 类而非 inline style，保持风格令牌集中治理。
- */
+
 .table-header-cell {
   font-weight: var(--font-bold);
   text-align: center;
   text-align-last: center;
 }
 
-/*
- * 背景：数据单元格承载段落型内容，需维持阅读习惯。
- * 目的：显式约束为左对齐，防止外部覆写导致阅读方向偏移。
- */
+
 .table-data-cell {
   text-align: left;
   text-align-last: left;
@@ -198,20 +163,13 @@
   );
 }
 
-/*
- * 背景：关闭 Markdown 动态渲染后需保持原始文本换行，避免长段落成为单行。
- * 目的：通过 pre-wrap 兼顾换行与空格保留，同时延续组件的极简排版。
- * 取舍：不额外引入颜色/间距，仅约束排版属性以复用现有设计语言。
- */
+
 .plain {
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
 
-/*
- * 背景：折叠正文中包含的标题默认继承两端对齐样式，导致视觉偏移。
- * 目的：限定标题类标签回落到左对齐，以保持层级标题的阅读顺序。
- */
+
 .summary-title :global(h1, h2, h3, h4, h5),
 .body-inner :global(h1, h2, h3, h4, h5) {
   text-align: left;

@@ -20,20 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/**
- * 背景：
- *  - 画像字段裁剪后，词汇个性化仍需根据有限画像与搜索轨迹推导 Persona，以驱动 LLM 生成侧文案。
- * 目的：
- *  - 聚合用户画像、搜索历史与词条响应，生成个性化语境与行动建议。
- * 关键决策与取舍：
- *  - 采用责任链 + 策略混合模型：`PERSONA_CLASSIFIERS` 以先匹配先返回的顺序判定 Persona，便于按需扩展；
- *  - 将文本拼装逻辑拆分为若干私有方法，确保可读性并便于未来引入多语言支持；
- *  - 对兴趣字段使用不可变集合与去重策略，避免重复朗读。
- * 影响范围：
- *  - 影响偏好设置与解释生成流程中依赖的个性化上下文。
- * 演进与TODO：
- *  - TODO: 后续可引入外部特征（如学习进度），通过新增 `PersonaClassifier` 实现扩展链路。
- */
+
 @Service
 public class DefaultWordPersonalizationService implements WordPersonalizationService {
 

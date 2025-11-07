@@ -11,19 +11,7 @@ import type {
   UserMenuControllerOptions,
 } from "./contracts";
 
-/**
- * 背景：
- *  - 与用户菜单相关的键盘导航与浮层定位需要在多个组件间共享。
- * 目的：
- *  - 输出纯交互 Hook，协助控制器组合并保持函数体积可控。
- * 关键决策与取舍：
- *  - 定位逻辑延续原先的视窗高度策略，避免布局回归风险；
- *  - 键盘处理保持无障碍快捷键约定。
- * 影响范围：
- *  - UserMenu 控制器内部。
- * 演进与TODO：
- *  - 后续若引入分组渲染，可在视图模型生成器中扩展层级信息。
- */
+
 export const usePlacement = ({
   open,
   maxMenuHeight,

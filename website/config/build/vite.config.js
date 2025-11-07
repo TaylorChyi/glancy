@@ -1,21 +1,3 @@
-/**
- * 背景：
- *  - 根目录的 Vite 配置在目录解耦后仅保留转发入口，实际配置缺失导致构建脚本无法解析；
- *  - 既有 alias、输出目录等约束散落在多处脚本与工具中，维护成本高。
- * 目的：
- *  - 提供集中且可组合的构建配置，统一复用项目路径映射，恢复 `vite build` 与相关脚本的可用性；
- *  - 预留按环境扩展的空间，满足后续多环境部署与特性开关需求。
- * 关键决策与取舍：
- *  - 采用适配器模式，将 `MODULE_ALIASES` 转换为 Vite `resolve.alias` 结构，避免在多处重复维护别名；
- *  - 通过模板方法式的工厂函数组合 server/build/define 配置，确保后续扩展时有明确挂载点；
- *  - 默认启用 React 插件并开放 sourcemap/端口等能力由环境变量驱动，避免硬编码运行参数。
- * 影响范围：
- *  - 所有依赖 Vite 的开发、构建、预览流程；
- *  - 依赖别名解析的源代码与测试工具。
- * 演进与TODO：
- *  - 可在 `createBuildConfig` 内扩展多产物策略（如 SSR / library 模式）；
- *  - 后续若引入 PWA/可视化分析，可在 `createPlugins` 中集中装配。
- */
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { defineConfig, loadEnv } from "vite";

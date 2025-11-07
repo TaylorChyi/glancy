@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - SelectMenu 的交互状态（展开、聚焦、触发标签推导）曾与渲染耦合，触发文件超限且测试困难。
- * 目的：
- *  - 提炼独立的控制器 Hook，以策略模式承接选项派生逻辑，并暴露纯净接口供组件组合。
- * 关键决策与取舍：
- *  - Hook 返回结构化的视图状态与动作函数，调用方仅负责布局；
- *  - 保留 requestAnimationFrame 聚焦策略，保证键盘可访问性体验稳定。
- * 影响范围：
- *  - SelectMenu 组件的状态管理与可访问性标签。
- * 演进与TODO：
- *  - TODO: 后续可注入自定义聚焦策略或滚动定位，逐步抽象为策略接口。
- */
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";

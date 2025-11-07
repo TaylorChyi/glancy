@@ -11,19 +11,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 背景：
- *  - 购买折扣类兑换需要记录生效区间与折扣比例，以便其他业务读取。
- * 目的：
- *  - 以实体形式保留用户折扣权益，支撑下游订单或计费模块查询。
- * 关键决策与取舍：
- *  - 折扣与兑换码保持外键关联，方便追踪来源；
- *  - 不立即支持多次叠加/使用次数，由业务在读取时决定是否消耗。
- * 影响范围：
- *  - 折扣策略处理器与潜在的订单模块读取。
- * 演进与TODO：
- *  - 若需支持抵扣券等复杂形态，可引入状态字段或事件溯源。
- */
+
 @Entity
 @Table(name = "user_discount_benefit")
 public class UserDiscountBenefit extends BaseEntity {

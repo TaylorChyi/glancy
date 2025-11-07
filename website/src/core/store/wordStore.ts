@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 旧实现将词条版本合并、激活策略与状态读写紧耦合，难以扩展也易造成逻辑分叉。
- * 目的：
- *  - 借助领域服务 WordVersionRegistry 管理业务规则，store 专注于持久化与对外 API，减少冲突覆盖风险。
- * 关键决策与取舍：
- *  - 采用策略模式将激活版本的决策注入，后续可按业务替换；同时保持 API 向后兼容便于渐进迁移。
- * 影响范围：
- *  - 所有消费 useWordStore 的特性、hooks 与页面；同时为历史记录等模块提供更稳健的缓存语义。
- * 演进与TODO：
- *  - 可暴露派生 selector，以便 UI 层直接消费规范化结构；必要时支持多租户/多词典隔离。
- */
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";
 import {

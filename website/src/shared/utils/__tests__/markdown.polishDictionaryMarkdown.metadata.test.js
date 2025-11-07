@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 词典协议的元数据标签持续扩容，原测试文件将所有标签相关用例堆叠在一起导致定位困难。
- * 目的：
- *  - 聚合所有元数据标签与字段链拆分的测试，确保协议演进时有清晰的回归入口。
- * 关键决策与取舍：
- *  - 保留真实示例文本以捕捉格式细节，而非抽象化到最小片段；
- *  - 通过集中维护标签相关测试，降低后续新增标签时的修改跨度。
- * 影响范围：
- *  - 调整测试文件结构，运行时代码不受影响；
- *  - Jest 路径自动识别新文件，无需额外配置。
- * 演进与TODO：
- *  - 若协议新增大量标签，可按标签族群进一步拆分套件以保持文件精简。
- */
 import { polishDictionaryMarkdown } from "../markdown.js";
 
 /**
@@ -72,16 +58,7 @@ test("polishDictionaryMarkdown formats practice prompts metadata", () => {
   );
 });
 
-/**
- * 测试目标：验证抖宝协议新增标签会被识别为需换行的行内标签。
- * 前置条件：构造含 Recommended Audience、Set Expressions、Historical Resonance 的列表项。
- * 步骤：
- *  1) 执行 polishDictionaryMarkdown；
- * 断言：
- *  - 每个新增标签被加粗并继承列表缩进；失败说明前端词表未同步。
- * 边界/异常：
- *  - 覆盖多标签连缀的演进场景。
- */
+
 test("polishDictionaryMarkdown splits newly synced protocol labels", () => {
   const source =
     "- **Meaning**: outline the idea  **Recommended Audience**: Intermediate learners  **Set Expressions**: take a stand  **Historical Resonance**: Rooted in 19th century rhetoric.";

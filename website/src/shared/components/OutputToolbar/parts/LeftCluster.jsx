@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 工具栏左侧需按需组合语音与重播按钮，原实现内联在主组件导致层级臃肿。
- * 目的：
- *  - 提供单一职责的展示组件，承载左侧动作的渲染与可访问性语义。
- * 关键决策与取舍：
- *  - 采用展示组件 + 依赖注入（Strategy）方式接收 TTS 具体实现，确保未来可替换；
- *  - 不在组件内部持有状态，使其保持纯函数属性，便于测试。
- * 影响范围：
- *  - OutputToolbar 左侧按钮簇的渲染结构。
- * 演进与TODO：
- *  - 后续可扩展更多播放控制时，在此组件内部新增组合逻辑。
- */
 import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
 import styles from "../OutputToolbar.module.css";

@@ -1,10 +1,3 @@
-/**
- * 背景：
- *  - 保留策略执行需剔除过期记录、清理缓存并同步远端删除。
- * 目的：
- *  - 封装为独立命令，方便后续支持多策略或调度。
- */
-
 import { HistoryRetentionPolicy } from "@core/history/index.ts";
 import type { User } from "../../userStore.ts";
 import type {

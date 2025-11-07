@@ -6,19 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * 背景：
- *  - 业务需要根据访问者 IP 进行邮件本地化，但不同部署拓扑中 IP 可能来自多种代理头部。
- * 目的：
- *  - 在控制器层提供统一的客户端 IP 解析能力，屏蔽代理链差异。
- * 关键决策与取舍：
- *  - 采用可配置顺序遍历常见头部，兼容多层反向代理；
- *  - 对非法或空值自动跳过，降级到 {@link HttpServletRequest#getRemoteAddr()}。
- * 影响范围：
- *  - 所有需要解析客户端 IP 的控制器可复用该工具组件。
- * 演进与TODO：
- *  - 后续可支持可信代理名单或自定义头部配置。
- */
+
 @Component
 public class ClientIpResolver {
 

@@ -56,15 +56,7 @@ function drainBuffer(currentBuffer, log) {
   return { events, remaining: working };
 }
 
-/**
- * 背景：
- *  - Doubao SSE 在写入换行时会直接内嵌 `\n` 字符，导致单个数据段跨越多行且仅首行带有 `data:` 前缀。
- * 目的：
- *  - 通过显式的“有状态事件组装器”记录上一字段，实现对续行数据的捕获，恢复完整换行。
- * 关键决策与取舍：
- *  - 采用轻量状态模式（上一字段名称 + 缓冲）而非一次性正则，避免在高频流式场景下创建多余中间字符串；
- *  - 续行仅在上一字段为 data 时附加，确保 event/id 等字段不会被误合并。
- */
+
 function assembleEvent(rawEvent) {
   const assembler = createSseEventAssembler();
   for (const line of rawEvent.split("\n")) {

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置页面需要同时协调文案、响应风格、订阅兑换等领域能力，若集中在主 Hook 会快速膨胀。
- * 目的：
- *  - 以 Facade 组合方式聚合领域服务，向上层暴露统一接口，提升可读性与可测试性。
- * 关键决策与取舍：
- *  - 在内部使用 usePreferenceApiClients、useRedeemSubscription 等子 Hook，实现依赖注入；
- *  - 使用 useMemo 缓存响应风格文案，避免重复生成。
- * 影响范围：
- *  - 偏好设置页面及复用该 Facade 的设置模态。
- * 演进与TODO：
- *  - 可在此加入特性开关，按用户分层启用新分区。
- */
 import { useMemo } from "react";
 import { usePreferenceCopy } from "./usePreferenceCopy.js";
 import { useRedeemSubscription } from "./useRedeemSubscription.js";

@@ -25,13 +25,7 @@ function renderIcon(icon, label) {
   }
   return (
     <span className={styles.icon} aria-hidden="true">
-      {/*
-       * 背景：
-       *  - ThemeIcon 默认附带 text-onsurface 语义类，导致侧边栏 muted → active 渐变被覆盖，
-       *    品牌图标呈现与其余导航图标产生色差。
-       * 目的：
-       *  - 显式声明 inherit 角色，让图标遵循容器 color 继承链，保持不同状态下的统一色板。
-       */}
+      {}
       <ThemeIcon
         name={icon}
         alt={label}

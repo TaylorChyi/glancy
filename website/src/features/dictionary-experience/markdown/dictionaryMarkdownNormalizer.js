@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典体验在流式与静态阶段分别维护 Markdown 字符串，历史上两处各自调用 polishDictionaryMarkdown，存在漂移风险。
- * 目的：
- *  - 以可扩展的归一化服务统一 Markdown 预处理，确保 streaming 预览与最终渲染沿用同一逻辑，从而保持视觉与语义一致。
- * 关键决策与取舍：
- *  - 采用“责任链/策略”混合模式，通过可配置的管线依次执行清洗步骤，当前仅内置 polishDictionaryMarkdown，未来可按需扩展。
- *  - 保持函数式接口（normalize）以便 Hook 与组件调用，无需知晓内部策略细节，降低耦合度。
- * 影响范围：
- *  - useDictionaryExperience 在流式阶段更新 preview/finalText；DictionaryEntry 渲染 Markdown 文本。
- * 演进与TODO：
- *  - 后续若需按语言切换策略，可在 createDictionaryMarkdownNormalizer 的入参中注入多策略选择器。
- */
 import { polishDictionaryMarkdown } from "@shared/utils";
 
 const DEFAULT_PIPELINE = Object.freeze([polishDictionaryMarkdown]);

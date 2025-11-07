@@ -3,19 +3,7 @@ package com.glancy.backend.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
-/**
- * 背景：
- *  - 用户画像保存接口曾使用可变的 Lombok POJO，字段删除后仍保留 setter 容易产生并发与演进风险。
- * 目的：
- *  - 以不可变 record 承载保存画像所需字段，配合 Jackson 自动绑定确保序列化安全。
- * 关键决策与取舍：
- *  - 选择 record 而非传统类，借助 Java 平台的不可变语义提升线程安全并简化序列化；
- *    同时保留 {@link JsonIgnoreProperties} 以兼容历史客户端冗余字段。
- * 影响范围：
- *  - `UserProfileService` 及控制器使用访问器方法替换原有 setter/getter。
- * 演进与TODO：
- *  - TODO: 若后续画像字段扩展，请评估版本化需求或新增可选配置对象。
- */
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UserProfileRequest(
     /** 用户当前的职业角色描述 */

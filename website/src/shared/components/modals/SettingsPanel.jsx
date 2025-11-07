@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置内容区在模态与页面中重复声明 aria/role 属性，增加维护成本。
- * 目的：
- *  - 封装语义化的 tabpanel 容器，保持结构一致并降低可访问性错误风险。
- * 关键决策与取舍：
- *  - 组件负责语义包装并通过回调同步标题元素，以便外部 hook 统一处理焦点；仍避免干预实际内容渲染。
- * 影响范围：
- *  - SettingsModal 与 Preferences 页面内容区域。
- * 演进与TODO：
- *  - TODO: 若未来需要延迟加载，可在此扩展 loading/empty 状态插槽。
- */
 import { useLayoutEffect, useRef } from "react";
 import PropTypes from "prop-types";
 

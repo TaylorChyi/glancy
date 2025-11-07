@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 例句译文可能包裹在括号或全角符号中，需要剥离后再布局。
- * 目的：
- *  - 提供括号剥离与括号内译文提取的工具函数。
- */
 import { TRANSLATION_WRAPPER_PAIRS } from "../../constants/index.js";
 import { isLikelyStandaloneTranslation } from "../../characters.js";
 

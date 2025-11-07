@@ -1,19 +1,6 @@
 /* stylelint-disable selector-class-pattern */
 
-/**
- * 背景：
- *  - 主布局升级为固定侧边栏 + 固定底栏，需要 Sidebar 改为脱离主滚动上下文。
- * 目的：
- *  - 将 sidebar 固定在视口左侧，并保持与 Layout 共享的宽度变量；移动端继续沿用抽屉动效。
- * 关键决策与取舍：
- *  - 采用 fixed + transform 方案，在移动端通过 mobile-open 类控制显隐，放弃 sticky 以避免
- *    与 content 滚动冲突；
- *  - 维持现有宽度变量，便于 Layout 拖拽逻辑与断点共同使用。
- * 影响范围：
- *  - Sidebar 定位与遮罩层次；Layout 侧边栏拖拽宽度。
- * 演进与TODO：
- *  - 可进一步抽象宽度/断点到主题 token，或支持折叠态导航图标模式。
- */
+
 :where(.sidebar, .container) {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);

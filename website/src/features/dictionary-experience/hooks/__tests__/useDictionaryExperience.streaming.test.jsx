@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 历史实现假设流式 chunk 恒为 JSON，导致当后端返回纯 Markdown 文本时直接 JSON.parse 抛错。
- * 目的：
- *  - 验证新版查询链路能兼容纯文本片段，确保流式预览与最终结果都能稳定落地。
- * 关键决策与取舍：
- *  - 复用统一的测试 harness，聚焦 streaming 逻辑，避免重建上下文；
- *  - 断言预览与最终文本一致，证明缓冲器在无 JSON 的场景仍能工作。
- * 影响范围：
- *  - useDictionaryExperience 在处理字典查询时的流式渲染体验。
- * 演进与TODO：
- *  - 后续可追加含 metadata 事件的流式回归用例，覆盖更多协议分支。
- */
-
 import { renderHook, act } from "@testing-library/react";
 import {
   useDictionaryExperience,

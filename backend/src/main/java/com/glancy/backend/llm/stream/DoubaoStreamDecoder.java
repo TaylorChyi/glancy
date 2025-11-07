@@ -88,15 +88,7 @@ public class DoubaoStreamDecoder implements StreamDecoder {
         return evt;
     }
 
-    /**
-     * 背景：
-     *  - Doubao SSE 片段中的内容存在前导空格以维持 Markdown 间距；原实现直接 trim 会造成语句粘连。
-     * 目的：
-     *  - 仅剥离字段名前缀及其后约定的单个空格，其余字符一律保留，保证流式文本精确传递。
-     * 关键决策与取舍：
-     *  - 复用同一解析函数处理 event/data 等字段，避免在主循环内散布字符串操作；
-     *  - 使用 strip/substring 而非正则，确保在高频流式场景下性能稳定。
-     */
+    
     private String extractFieldValue(String line, String prefix) {
         if (!line.startsWith(prefix)) {
             return null;

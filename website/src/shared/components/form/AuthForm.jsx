@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 历史版本的 AuthForm 同时承载状态管控与整页渲染，导致函数体超出结构化 lint 限制。
- * 目的：
- *  - 引入容器（状态）与展示（视图）分离的组件结构，便于扩展新的登录方式与通知策略。
- * 关键决策与取舍：
- *  - 采用“Presenter 模式”将渲染细节迁移到独立的 AuthFormView，主组件专注于状态与副作用；
- *  - 抽象 useFeedbackChannels Hook，统一调度弹窗与 Toast，后续如需加入 Snackbar 可在此扩展；
- *  - 保留现有 props 接口，确保与上下游调用方兼容，避免一次性兼容层。
- * 影响范围：
- *  - 登录/注册流程共用的 AuthForm 组件与其通知行为。
- * 演进与TODO：
- *  - 后续可引入特性开关以控制第三方登录按钮排序，并为 useFeedbackChannels 增添埋点。
- */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import CodeButton from "./CodeButton.jsx";
