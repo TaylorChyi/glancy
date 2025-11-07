@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.DoubaoProperties;
+import com.glancy.backend.llm.llm.DictionaryModelRequestOptions;
 import com.glancy.backend.llm.model.ChatMessage;
-import com.glancy.backend.llm.stream.DoubaoStreamDecoder;
+import com.glancy.backend.llm.model.ChatRole;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -29,11 +29,8 @@ import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
-/** 集成测试，覆盖抖宝客户端的流式解析与异常处理。 */
 class DoubaoClientTest {
 
     private static final BodyInserter.Context NO_OP_CONTEXT = new BodyInserter.Context() {
@@ -70,61 +67,98 @@ class DoubaoClientTest {
         properties.setModel("test-model");
     }
 
-    /** 验证同步调用在收到完整流后聚合内容。 */
     @Test
-    void chatReturnsContent() {
+    /**
+     * 测试目标：确认默认配置下模型返回内容被正确解析。
+     * 前置条件：模拟 200 响应并注入默认 DoubaoClient。
+     * 步骤：
+     *  1) 调用 generateEntry 并捕获响应。
+     * 断言：
+     *  - 响应内容等于模拟返回的 assistant 内容。
+     * 边界/异常：
+     *  - 若解析失败则断言不成立。
+     */
+    void GivenValidResponse_WhenGenerateEntry_ThenReturnAssistantContent() {
         ExchangeFunction ef = this::successResponse;
-        client = new DoubaoClient(
-            WebClient.builder().exchangeFunction(ef),
-            properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
+        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+        String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5);
         assertEquals("hi", result);
     }
 
-    /** 验证 401 响应会抛出未授权异常。 */
     @Test
-    void chatUnauthorizedThrowsException() {
+    /**
+     * 测试目标：当服务端返回 401 时客户端应抛出 UnauthorizedException。
+     * 前置条件：模拟 401 响应并校验请求体携带默认 stream/thinking 设置。
+     * 步骤：
+     *  1) 调用 generateEntry。
+     * 断言：
+     *  - 抛出 UnauthorizedException。
+     * 边界/异常：
+     *  - 若未抛出异常表示状态码处理失效。
+     */
+    void GivenUnauthorized_WhenGenerateEntry_ThenThrowUnauthorizedException() {
         ExchangeFunction ef = req -> {
             assertEquals(MediaType.APPLICATION_JSON_VALUE, req.headers().getFirst(HttpHeaders.ACCEPT));
-            assertTrue(extractRequestBody(req).contains("\"stream\":false"));
+            String requestBody = extractRequestBody(req);
+            assertTrue(requestBody.contains("\"stream\":false"));
+            assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
             return Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
         };
-        client = new DoubaoClient(
-            WebClient.builder().exchangeFunction(ef),
-            properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
+        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
-            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
+            client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5)
         );
     }
 
-    /** 验证流式接口逐片段输出并在 end 事件后结束。 */
     @Test
-    void streamChatEmitsSegments() {
-        ExchangeFunction ef = this::streamSuccessResponse;
-        client = new DoubaoClient(
-            WebClient.builder().exchangeFunction(ef),
-            properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
+    /**
+     * 测试目标：验证 5xx 响应路径抛出 BusinessException。
+     * 前置条件：模拟 500 响应。
+     * 步骤：
+     *  1) 调用 generateEntry。
+     * 断言：
+     *  - 抛出 BusinessException。
+     * 边界/异常：
+     *  - 若未抛出异常表示错误处理缺失。
+     */
+    void GivenServerError_WhenGenerateEntry_ThenThrowBusinessException() {
+        ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR).build());
+        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+        assertThrows(com.glancy.backend.exception.BusinessException.class, () ->
+            client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5)
         );
-        Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("he").expectNext("llo").verifyComplete();
     }
 
-    /** 验证 error 事件会终止流并抛出异常。 */
     @Test
-    void streamChatErrorEvent() {
-        ExchangeFunction ef = this::streamErrorResponse;
-        client = new DoubaoClient(
-            WebClient.builder().exchangeFunction(ef),
-            properties,
-            new DoubaoStreamDecoder(new ObjectMapper())
-        );
-        Flux<String> flux = client.streamChat(List.of(new ChatMessage("u", "hi")), 0.5);
-        StepVerifier.create(flux).expectNext("hi").expectErrorMessage("boom").verify();
+    /**
+     * 测试目标：确保调用方可覆盖 stream 与 thinkingType 参数。
+     * 前置条件：构造带有特定参数的 DictionaryModelRequestOptions。
+     * 步骤：
+     *  1) 调用 generateEntry 并检查请求体。
+     * 断言：
+     *  - 请求体中的 stream 与 thinking.type 匹配覆盖值。
+     * 边界/异常：
+     *  - 若覆盖失败则断言不满足。
+     */
+    void GivenOptionsOverride_WhenGenerateEntry_ThenRespectOverrides() {
+        ExchangeFunction ef = req -> {
+            String body = extractRequestBody(req);
+            assertTrue(body.contains("\"stream\":true"));
+            assertTrue(body.contains("\"thinking\":{\"type\":\"detailed\"}"));
+            return Mono.just(
+                ClientResponse.create(HttpStatus.OK)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                    .body("{\"choices\":[]}")
+                    .build()
+            );
+        };
+        client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+        DictionaryModelRequestOptions options = DictionaryModelRequestOptions.builder()
+            .stream(true)
+            .thinkingType("detailed")
+            .build();
+        String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5, options);
+        assertEquals("", result);
     }
 
     private Mono<ClientResponse> successResponse(ClientRequest request) {
@@ -133,53 +167,14 @@ class DoubaoClientTest {
         assertEquals(MediaType.APPLICATION_JSON_VALUE, request.headers().getFirst(HttpHeaders.ACCEPT));
         String requestBody = extractRequestBody(request);
         assertTrue(requestBody.contains("\"stream\":false"));
-        String body = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]}";
+        assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
+        String body = String.format(
+            "{\"choices\":[{\"message\":{\"role\":\"%s\",\"content\":\"hi\"}}]}",
+            ChatRole.ASSISTANT.role()
+        );
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .body(body)
-                .build()
-        );
-    }
-
-    private Mono<ClientResponse> streamSuccessResponse(ClientRequest request) {
-        assertEquals(MediaType.TEXT_EVENT_STREAM_VALUE, request.headers().getFirst(HttpHeaders.ACCEPT));
-        String requestBody = extractRequestBody(request);
-        assertTrue(requestBody.contains("\"stream\":true"));
-        String body = """
-            event: message
-            data: {"choices":[{"delta":{"messages":[{"content":"he"}]}}]}
-
-            event: message
-            data: {"choices":[{"delta":{"messages":[{"content":"llo"}]}}]}
-
-            event: end
-            data: {"code":0}
-
-            """;
-        return Mono.just(
-            ClientResponse.create(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
-                .body(body)
-                .build()
-        );
-    }
-
-    private Mono<ClientResponse> streamErrorResponse(ClientRequest request) {
-        assertEquals(MediaType.TEXT_EVENT_STREAM_VALUE, request.headers().getFirst(HttpHeaders.ACCEPT));
-        String requestBody = extractRequestBody(request);
-        assertTrue(requestBody.contains("\"stream\":true"));
-        String body = """
-            event: message
-            data: {"choices":[{"delta":{"messages":[{"content":"hi"}]}}]}
-
-            event: error
-            data: {"message":"boom"}
-
-            """;
-        return Mono.just(
-            ClientResponse.create(HttpStatus.OK)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_EVENT_STREAM_VALUE)
                 .body(body)
                 .build()
         );
