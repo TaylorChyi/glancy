@@ -1,0 +1,5 @@
+查询词汇：{{term}}
+条目结构定位：{{entryType}}
+写作指引：{{entryGuidance}}
+结构要求：{{structureRequirement}}
+{{recentTermsSection}}{{goalSection}}{{toneDirective}}

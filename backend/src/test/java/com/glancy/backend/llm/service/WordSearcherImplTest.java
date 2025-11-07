@@ -15,12 +15,14 @@ import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
+import com.glancy.backend.llm.prompt.PromptTemplateRenderer;
 import com.glancy.backend.llm.search.SearchContentManager;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.core.io.DefaultResourceLoader;
 
 class WordSearcherImplTest {
 
@@ -41,6 +43,7 @@ class WordSearcherImplTest {
     private WordResponseParser parser;
     private LLMClient defaultClient;
     private WordPromptAssembler promptAssembler;
+    private PromptTemplateRenderer templateRenderer;
 
     @SuppressWarnings("unchecked")
     private static ArgumentCaptor<List<ChatMessage>> chatMessagesCaptor() {
@@ -59,7 +62,8 @@ class WordSearcherImplTest {
         searchContentManager = mock(SearchContentManager.class);
         parser = mock(WordResponseParser.class);
         defaultClient = mock(LLMClient.class);
-        promptAssembler = new WordPromptAssembler();
+        templateRenderer = new PromptTemplateRenderer(new DefaultResourceLoader());
+        promptAssembler = new WordPromptAssembler(templateRenderer);
     }
 
     /**

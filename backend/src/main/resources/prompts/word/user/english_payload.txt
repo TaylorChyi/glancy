@@ -1,0 +1,3 @@
+查询词汇：{{term}}
+结构要求：{{structureRequirement}}
+{{recentTermsSection}}{{goalSection}}{{toneDirective}}
