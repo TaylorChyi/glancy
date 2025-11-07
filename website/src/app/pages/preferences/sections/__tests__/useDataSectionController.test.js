@@ -1,14 +1,3 @@
-/**
- * 背景：
- *  - useDataSectionController 负责协调多模块数据，必须通过测试验证 orchestrator 行为。
- * 目的：
- *  - 模拟 Store 与上下文依赖，确保控制器输出的控制对象与 pending 管理符合预期。
- * 关键决策与取舍：
- *  - 采用模块级 mock 隔离外部副作用，仅聚焦组合逻辑；
- *  - 通过 renderHook 驱动交互，验证回调链路正确触发。
- * 影响范围：
- *  - 偏好设置数据分区的整体交互流。
- */
 import { jest } from "@jest/globals";
 import { act, renderHook } from "@testing-library/react";
 

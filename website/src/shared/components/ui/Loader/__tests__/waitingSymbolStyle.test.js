@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - waitingSymbolStyle 逻辑需要支持 mask + currentColor 的组合，同时保障高度与纵横比可配置。
- * 目的：
- *  - 通过纯函数单测验证 `buildWaitingSymbolStyle` 对尺寸、淡入时长与素材引用的组合逻辑。
- * 关键决策与取舍：
- *  - 覆盖正常路径与异常入参，确保在 Loader 之外复用时也具备稳定行为。
- * 影响范围：
- *  - Loader 组件与潜在复用方共享同一构建逻辑，此处的测试可作为回归保护。
- * 演进与TODO：
- *  - TODO：未来若加入主题维度，可在此扩展不同配置下的快照测试。
- */
 import { buildWaitingSymbolStyle } from "../waitingSymbolStyle";
 
 /**

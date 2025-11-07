@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 原 Preferences 组件集成了数据获取、导航状态与布局渲染，导致 SettingsModal 难以复用并限制长期演进。
- * 目的：
- *  - 将分区逻辑托管给 usePreferenceSections，并通过组合式 Settings* 结构组件组织 UI，使页面与模态共享一套语义层。
- * 关键决策与取舍：
- *  - 采用组合模式拼装导航与面板，避免在页面中出现硬编码 DOM；同时保留 renderCloseAction 以兼容模态场景需求。
- * 影响范围：
- *  - 偏好设置页面、相关单测以及 SettingsModal 的调用方式。
- * 演进与TODO：
- *  - TODO: 随着更多分区上线，可在 usePreferenceSections 内扩展蓝图并按需引入懒加载策略。
- */
 import PropTypes from "prop-types";
 import { useCallback } from "react";
 import { SettingsHeader } from "@shared/components/modals";

@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - DataSection 原本内联多个表单片段，导致视图层体量巨大且重复使用样式常量。
- * 目的：
- *  - 将视图片段拆分为纯展示组件，通过显式的属性约束控制输入，便于复用与测试。
- * 关键决策与取舍：
- *  - 组件保持无状态，所有行为通过回调注入，符合“控制器/视图”分层；
- *  - 沿用现有样式 token，通过 props 注入，避免跨文件硬编码 className；
- *  - 语言选择器继续复用 LanguageMenu，确保可访问性语义一致。
- * 影响范围：
- *  - 偏好设置数据分区的 UI 组织方式；
- *  - 其他分区若需类似布局，可复用这些基础组件。
- * 演进与TODO：
- *  - TODO: 若未来需要响应 pending 状态的骨架屏，可在此扩展占位符渲染。
- */
-
 import PropTypes from "prop-types";
 import LanguageMenu from "@shared/components/ui/LanguageMenu";
 import SegmentedControl from "@shared/components/ui/SegmentedControl";

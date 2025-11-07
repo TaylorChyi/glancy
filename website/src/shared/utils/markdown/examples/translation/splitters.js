@@ -1,7 +1,3 @@
-/**
- * 背景：
- *  - 译文拆分逻辑包含多种入口（同行、下一行、括号），需要独立的拆分器便于复用。
- */
 import {
   INLINE_TRANSLATION_LABEL_PATTERN,
   TRANSLATION_LABEL_BOUNDARY_PATTERN,

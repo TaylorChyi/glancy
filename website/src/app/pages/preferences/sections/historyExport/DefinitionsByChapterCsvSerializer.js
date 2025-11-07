@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置页面的数据导出需要按章节拆分释义，便于用户在表格中筛选。
- * 目的：
- *  - 复用模板方法骨架，实现“章节 + 内容”维度的 CSV 导出策略。
- * 关键决策与取舍：
- *  - 通过依赖注入 resolveEntry，保持页面与数据层解耦；
- *  - 若条目无章节信息，则回退至默认章节，确保导出结构完整。
- * 影响范围：
- *  - 偏好设置 DataSection 的导出行为。
- * 演进与TODO：
- *  - 后续可新增多格式导出，通过组合不同 serializer 实现扩展。
- */
-
 import { HistoryCsvSerializerTemplate } from "./HistoryCsvSerializerTemplate.js";
 import { joinChapterContent } from "./markdownChapterParser.js";
 import { deriveChaptersFromEntry } from "./deriveChaptersFromEntry.js";

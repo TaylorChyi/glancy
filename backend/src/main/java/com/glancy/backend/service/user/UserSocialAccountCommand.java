@@ -12,19 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 第三方账号绑定流程耦合在 UserService 中，与认证、注册逻辑互相污染。
- * 目的：
- *  - 将外部账号绑定封装为独立命令处理器，便于未来扩展解绑、同步等能力。
- * 关键决策与取舍：
- *  - 采用最小职责的组件，专注唯一性检查与绑定；
- *  - 保留结构化日志方便审计。
- * 影响范围：
- *  - 第三方账号绑定 API 委托至此组件。
- * 演进与TODO：
- *  - 后续可扩展 OAuth token 校验或解绑流程。
- */
+
 @Component
 public class UserSocialAccountCommand {
 

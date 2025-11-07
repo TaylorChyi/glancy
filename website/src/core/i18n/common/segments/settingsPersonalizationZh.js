@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 个性化与画像相关的翻译词条需要单独治理，以支持长期画像能力演进。
- * 目的：
- *  - 将个性化相关文案集中至同一模块，方便未来扩展字段与差异化体验。
- * 关键决策与取舍：
- *  - 继续沿用原有键名以避免调用侧改动；
- *  - 将画像标签与输入提示一并收敛，保障语义一致。
- * 影响范围：
- *  - 偏好设置个性化页签、画像输入与响应风格配置。
- * 演进与TODO：
- *  - 若后续引入多 persona 模板，可在此处加入结构化元数据以驱动渲染。
- */
 export const SETTINGS_PERSONALIZATION_TRANSLATIONS_ZH = {
   settingsTabPersonalization: "个性化",
   settingsPersonalizationDescription:

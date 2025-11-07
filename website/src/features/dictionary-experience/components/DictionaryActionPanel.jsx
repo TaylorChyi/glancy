@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典释义按钮组需要与搜索框共享一套视觉语言，但此前直接嵌入 ChatInput，导致职责混杂。
- * 目的：
- *  - 构建专用的动作面板组件，在保持 SearchBox 视觉样式的同时注入放大镜入口和工具栏。
- * 关键决策与取舍：
- *  - 通过 SearchBox 包裹整体结构，复用现有阴影与圆角 token，避免样式漂移；
- *  - 放弃在此组件内管理状态，仅暴露按钮点击事件，由外部状态机驱动切换，保持纯粹性。
- * 影响范围：
- *  - DictionaryExperience 底部动作区的视觉与交互结构。
- * 演进与TODO：
- *  - 若需引入更多辅助按钮，可在左侧 slot 内扩展并复用相同的 aria 语义。
- */
 import PropTypes from "prop-types";
 import { useMemo, useCallback } from "react";
 
@@ -75,10 +62,7 @@ export default function DictionaryActionPanel({
         data-testid="dictionary-action-panel"
         data-output-toolbar="true"
       >
-        {/*
-         * 背景：SearchBox 需要在多布局容器中保持一致的中心与宽度策略。
-         * 取舍：通过局部壳层承载宽度约束，而非依赖上层父容器，避免跨层耦合。
-         */}
+        {}
         <button
           type="button"
           className={searchToggleClassName}

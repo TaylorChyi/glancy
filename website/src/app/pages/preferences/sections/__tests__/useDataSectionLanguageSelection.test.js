@@ -1,13 +1,3 @@
-/**
- * 背景：
- *  - useDataSectionLanguageSelection 管理语言选项与选中状态，直接影响清理动作的准确性。
- * 目的：
- *  - 验证默认选中、选项变化以及清除判定等关键逻辑。
- * 关键决策与取舍：
- *  - 通过 renderHook 驱动 Hook，依靠 rerender 模拟历史数据变化，确保逻辑完备。
- * 影响范围：
- *  - 偏好设置数据分区的语言选择体验。
- */
 import { act, renderHook } from "@testing-library/react";
 import { useDataSectionLanguageSelection } from "../useDataSectionLanguageSelection.js";
 

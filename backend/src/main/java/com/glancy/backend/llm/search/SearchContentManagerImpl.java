@@ -6,18 +6,7 @@ import java.util.Locale;
 import java.util.function.UnaryOperator;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - LLM 查询及缓存命中依赖统一的词条归一化策略，历史实现仅做简单大小写转换，无法过滤标点与多余空白。\
- * 目的：
- *  - 通过流水线式处理清理 Unicode、空白与噪声标点，保证请求、缓存和模型输入对齐。\
- * 关键决策与取舍：
- *  - 采用责任链式的函数列表以便按需扩展或重排规则，相比逐段硬编码更易于维护。\
- * 影响范围：
- *  - SearchContentManager 的所有调用方（含服务缓存与 LLM 请求）将获得一致的归一化结果。\
- * 演进与TODO：
- *  - 如需语言特定处理，可在 PIPELINE 中注入策略或引入多实现。
- */
+
 @Component
 public class SearchContentManagerImpl implements SearchContentManager {
 

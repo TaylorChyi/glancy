@@ -1,14 +1,3 @@
-/**
- * 背景：
- *  - dataSectionToolkit 承载纯函数，需通过单测守护语言归一化与选项计算的正确性。
- * 目的：
- *  - 覆盖 normalizeLanguageValue 与 toLanguageOptions 的核心路径，确保后续重构可快速回归。
- * 关键决策与取舍：
- *  - 选用最小输入集合模拟边界情况，避免耦合其他模块；
- *  - 仅覆盖核心纯函数，保持测试运行速度。
- * 影响范围：
- *  - 偏好设置数据分区的数据治理逻辑。
- */
 import {
   normalizeLanguageValue,
   toLanguageOptions,

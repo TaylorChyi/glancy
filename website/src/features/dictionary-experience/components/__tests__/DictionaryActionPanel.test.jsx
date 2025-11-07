@@ -25,19 +25,7 @@ jest.unstable_mockModule("@shared/components/DictionaryEntryActionBar", () => ({
 const DictionaryActionPanel = (await import("../DictionaryActionPanel.jsx"))
   .default;
 
-/**
- * 背景：
- *  - DictionaryActionPanel 使用 ThemeIcon 呈现放大镜按钮，但缺失素材时会退化为字母占位。
- * 目的：
- *  - 确保组件在渲染时向 ThemeIcon 传入 search 图标标识，以匹配新增 SVG 资产。
- * 关键决策与取舍：
- *  - 通过模块模拟记录 ThemeIcon props，避免依赖实际 SVG 解析，提高测试稳定性；
- *  - 同时触发按钮事件以确保交互路径未受影响。
- * 影响范围：
- *  - DictionaryActionPanel 组件的放大镜按钮与 ThemeIcon 调用参数。
- * 演进与TODO：
- *  - 如需覆盖不同尺寸或语义色，可扩展更多断言以验证 props 组合。
- */
+
 describe("DictionaryActionPanel", () => {
   beforeEach(() => {
     recordedIconProps.length = 0;

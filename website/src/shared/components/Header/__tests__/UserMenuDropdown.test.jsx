@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 产品下线 Header 用户菜单中的帮助入口，仅保留账户核心操作。
- * 目的：
- *  - 验证菜单在不同会员状态下的展示，以及点击操作后能关闭菜单。
- * 关键决策与取舍：
- *  - 通过行为层断言（存在性与交互）替代 UI 细节截图，确保测试稳定且语义明确。
- * 影响范围：
- *  - Header/UserMenuDropdown 组件的主菜单按钮集合。
- * 演进与TODO：
- *  - TODO：补充无障碍属性（aria-*）的覆盖与快捷键支持。
- */
 import { jest } from "@jest/globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 import UserMenuDropdown from "../UserMenuDropdown";

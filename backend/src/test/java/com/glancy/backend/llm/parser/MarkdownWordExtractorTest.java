@@ -4,18 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-/**
- * 背景：
- *  - 校验 Doubao Markdown 新增标题与解析器映射保持一致，避免前端词表展示缺失数据。
- * 目的：
- *  - 通过单测覆盖 Derivatives&ExtendedForms、Collocations、HistoricalResonance 等标题的归类结果。
- * 关键决策与取舍：
- *  - 使用真实解析器以端到端方式验证集合填充顺序，确保协议升级时快速发现断裂。
- * 影响范围：
- *  - MarkdownWordExtractor 的标题解析逻辑。
- * 演进与TODO：
- *  - 若未来协议新增独立字段，需要同步扩展断言覆盖。
- */
+
 class MarkdownWordExtractorTest {
 
     /**

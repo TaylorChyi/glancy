@@ -13,20 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * 背景：
- *  - 需要通过 IP 地址快速推导验证码邮件的语言环境，避免在业务层写死条件。
- * 目的：
- *  - 基于配置的 CIDR 列表实现语言解析策略，支持 IPv4/IPv6 并提供默认回退。
- * 关键决策与取舍：
- *  - 采用 BigInteger 统一处理两类地址，避免引入额外依赖；
- *  - 配置驱动，便于在无需发版的情况下调整地理映射；
- *  - 对解析失败场景写日志并降级为默认语言，保证主流程可用性。
- * 影响范围：
- *  - 邮件验证码本地化策略；依赖配置项 `mail.verification.localization`。
- * 演进与TODO：
- *  - 后续可增加缓存或外部 GeoIP 数据源，以覆盖更细粒度的地理信息。
- */
+
 @Slf4j
 @Component
 public class CidrBasedVerificationLocaleResolver implements VerificationLocaleResolver {

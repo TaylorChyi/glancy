@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 订阅相关用例原本与蓝图、账户测试混杂在单文件中，难以定位场景。
- * 目的：
- *  - 拆分并专注校验兑换流程与套餐映射逻辑，提升可维护性。
- * 关键决策与取舍：
- *  - 依托共享装配器统一 mock 配置，保障跨文件一致的初始状态；
- *  - 以兑换/会员场景分组，避免重复等待与断言代码。
- * 影响范围：
- *  - 订阅分区相关测试的组织结构。
- * 演进与TODO：
- *  - 后续增加套餐升级/降级交互时，可在此扩展覆盖。
- */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   createPreferenceSectionsTestContext,

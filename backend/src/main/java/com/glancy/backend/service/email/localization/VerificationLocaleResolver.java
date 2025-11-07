@@ -2,18 +2,7 @@ package com.glancy.backend.service.email.localization;
 
 import java.util.Locale;
 
-/**
- * 背景：
- *  - 邮件验证码需要根据访问者的地理语言环境调整文案，现有实现缺乏灵活扩展点。
- * 目的：
- *  - 定义从客户端上下文推导 {@link Locale} 的策略接口，便于后续扩展多种解析方式。
- * 关键决策与取舍：
- *  - 采用策略模式隔离 IP 映射、外部服务等差异化实现，避免在调用方写死判断逻辑。
- * 影响范围：
- *  - 邮件验证码文案本地化流程；未来可新增 header、账号语言等解析策略。
- * 演进与TODO：
- *  - 可引入基于外部 GeoIP 服务的实现，或支持设备语言的兜底策略。
- */
+
 public interface VerificationLocaleResolver {
     /**
      * 意图：根据客户端上下文信息解析最合适的语言环境。

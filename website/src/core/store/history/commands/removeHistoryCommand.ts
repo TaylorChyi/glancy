@@ -1,10 +1,3 @@
-/**
- * 背景：
- *  - 删除历史需要解析多种 identifier 形式并同步移除缓存。
- * 目的：
- *  - 命令化封装该流程，方便未来追加撤销或批处理能力。
- */
-
 import { resolveHistoryItem } from "@core/history/index.ts";
 import type { HistoryItem } from "@core/history/index.ts";
 import type { User } from "../../userStore.ts";

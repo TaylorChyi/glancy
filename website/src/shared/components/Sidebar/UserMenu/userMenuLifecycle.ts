@@ -2,19 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import type { UserMenuControllerOptions } from "./contracts";
 
-/**
- * 背景：
- *  - 用户菜单的开合与焦点管理此前耦合在主组件中，难以独立测试与复用。
- * 目的：
- *  - 提供围绕开合状态、外部点击守卫与焦点回收的基础 Hook，支撑控制器重构。
- * 关键决策与取舍：
- *  - 保留命令式 ref 以兼容原有焦点策略；
- *  - 将默认聚焦逻辑放入 effect，避免渲染期副作用。
- * 影响范围：
- *  - 仅限 Sidebar UserMenu 内部使用。
- * 演进与TODO：
- *  - 若未来支持多触发器，可在此扩展上下文感知能力。
- */
+
 export const findFirstEnabledIndex = (
   items: UserMenuControllerOptions["items"],
 ) => {

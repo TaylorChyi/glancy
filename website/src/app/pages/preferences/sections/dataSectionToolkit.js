@@ -1,20 +1,3 @@
-/**
- * 背景：
- *  - DataSection 组件长期承担数据治理相关的格式转换与语言选项推导，逻辑臃肿导致
- *    结构化 Lint 阈值无法恢复。为了让 UI 组件聚焦展示，本工具模块抽离了纯计算能力。
- * 目的：
- *  - 暴露词典历史导出与语言选项计算的纯函数，支撑未来按需复用与单测覆盖。
- * 关键决策与取舍：
- *  - 以函数式接口输出，避免引入可变状态；
- *  - 复用 historyExportSerializer 模板方法，确保导出格式与既有实现兼容；
- *  - 语言映射保留大小写归一策略，为多语言扩展留出一致的扩展点。
- * 影响范围：
- *  - 偏好设置数据分区的导出与语言筛选逻辑；
- *  - 未来如需扩展更多序列化格式，可在此模块新增策略函数。
- * 演进与TODO：
- *  - TODO: 接入服务端导出接口后，考虑在此模块提供流式下载适配器。
- */
-
 import { definitionsByChapterCsvSerializer } from "./historyExportSerializer.js";
 
 const LANGUAGE_ENGLISH_TOKEN = "ENGLISH";

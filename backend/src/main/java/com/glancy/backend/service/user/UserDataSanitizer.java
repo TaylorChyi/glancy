@@ -6,19 +6,7 @@ import com.glancy.backend.service.support.AvatarReferenceResolver;
 import java.util.Locale;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - UserService 中存在大量邮箱、头像等字段清洗逻辑，导致主流程噪声大、重复代码多。
- * 目的：
- *  - 以可复用的组合组件承载数据归一化逻辑，为命令/查询处理器提供统一入口。
- * 关键决策与取舍：
- *  - 选用策略化的组合方式（而非静态工具类）以便注入依赖并在未来扩展缓存或特性开关；
- *  - 放弃继承或静态工具类方案，避免测试困难与全局状态污染。
- * 影响范围：
- *  - 所有用户领域命令/查询在处理邮箱、头像、验证码时统一依赖该类。
- * 演进与TODO：
- *  - 后续可在此接入灰度策略（例如邮箱白名单），或使用特性开关定制不同租户规则。
- */
+
 @Component
 public class UserDataSanitizer {
 

@@ -34,20 +34,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 背景：
- *  - 兑换码需兼容会员、折扣等多种权益，并具备时间/次数控制。
- * 目的：
- *  - 统一管理兑换码生命周期、校验规则与兑换流程。
- * 关键决策与取舍：
- *  - 通过策略模式 (RedemptionEffectProcessor) 解耦效果处理；
- *  - 使用 EnumMap 存储策略，确保 O(1) 查找并避免魔法字符串；
- *  - 注入 Clock 便于测试与未来接入可控时钟。
- * 影响范围：
- *  - 控制器与测试通过该服务完成兑换流程。
- * 演进与TODO：
- *  - 后续可补充分页查询、批量导入、撤销兑换等高级功能。
- */
+
 @Slf4j
 @Service
 public class RedemptionCodeService {

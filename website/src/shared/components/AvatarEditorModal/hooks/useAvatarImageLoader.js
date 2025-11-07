@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 图片尺寸解析与 SVG 兜底逻辑原写在组件内部，异步控制散乱且不易测试。
- * 目的：
- *  - 封装图片加载与尺寸推导流程，统一处理 fetch/fallback/abort 等细节。
- * 关键决策与取舍：
- *  - 持续使用浏览器原生 fetch，避免引入额外依赖；
- *  - 通过 ref 保留最新 source，避免异步竞态导致状态过期。
- * 影响范围：
- *  - AvatarEditorModal 控制器。
- * 演进与TODO：
- *  - 后续可在此添加缓存或离线策略，减少重复拉取 SVG 的请求。
- */
-
 import { useEffect, useMemo, useRef } from "react";
 import { extractSvgIntrinsicSize } from "@shared/utils/svgIntrinsicSize.js";
 import { DEFAULT_VIEWPORT_SIZE } from "../constants.js";

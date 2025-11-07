@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典体验相关的翻译项数量庞大，需要独立分组以支撑功能扩展。
- * 目的：
- *  - 将查词流程、收藏、历史等文案统一集中，确保演进时上下文一致。
- * 关键决策与取舍：
- *  - 不调整现有键名，维持调用端无感迁移；
- *  - 覆盖搜索、收藏、语言切换及占位提示，构建完整链路。
- * 影响范围：
- *  - 词典页面、收藏夹与历史记录组件。
- * 演进与TODO：
- *  - 若引入多模态释义，可在此扩展媒体类型相关文案。
- */
 export const DICTIONARY_EXPERIENCE_TRANSLATIONS_ZH = {
   dictionarySourceLanguageLabel: "源语言",
   dictionarySourceLanguageAuto: "自动识别",

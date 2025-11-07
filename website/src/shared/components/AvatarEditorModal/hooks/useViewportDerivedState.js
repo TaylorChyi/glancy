@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 视口几何推导逻辑原内嵌在 useAvatarViewportModel 中，导致函数复杂度与文件行数超标。
- * 目的：
- *  - 将 displayMetrics、偏移边界与 transform 计算抽离，方便独立测试与复用。
- * 关键决策与取舍：
- *  - 保持纯函数 hook（仅依赖输入 state 与 setOffset）；
- *  - 统一通过 composeTranslate3d 生成 transform，避免展示层直接拼字符串。
- * 影响范围：
- *  - AvatarEditorModal 中的缩放与偏移渲染。
- * 演进与TODO：
- *  - 后续若加入旋转/镜像参数，可在此扩展 transform 组合逻辑。
- */
-
 import { useCallback, useEffect, useMemo } from "react";
 import {
   clampOffset,

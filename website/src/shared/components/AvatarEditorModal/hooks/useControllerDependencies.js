@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 控制器内负责装配多个子 hook，代码冗长且难以阅读。
- * 目的：
- *  - 将依赖装配集中在专用 hook 中，保持主控制器函数精简。
- * 关键决策与取舍：
- *  - 组合视口模型、指针控制、图像加载、裁剪导出与缩放控制；
- *  - 输出统一的依赖包供控制器工厂函数消费。
- * 影响范围：
- *  - AvatarEditorModal 控制器实现。
- * 演进与TODO：
- *  - 若新增键盘或辅助功能交互，可在此扩展新的子 hook。
- */
-
 import useAvatarImageLoader from "./useAvatarImageLoader.js";
 import useAvatarViewportModel from "./useAvatarViewportModel.js";
 import usePointerControls from "./usePointerControls.js";

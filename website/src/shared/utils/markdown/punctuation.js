@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 英文标点与中日韩字符间缺少空格会影响阅读体验，尤其在例句合集中尤为明显。
- * 目的：
- *  - 识别可安全补空格的位置，并跳过代码块或数字场景，避免误改。
- */
 import {
   ASCII_PUNCTUATION,
   ASCII_PUNCTUATION_BOUNDARY,

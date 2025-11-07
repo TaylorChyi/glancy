@@ -3,16 +3,7 @@ import BaseModal from "@shared/components/modals/BaseModal.jsx";
 import ReportIssueForm from "./ReportIssueForm.jsx";
 import { useReportIssueModalViewModel } from "./useReportIssueModalViewModel";
 
-/**
- * 背景：
- *  - 举报弹窗需复用 SettingsSurface 的视觉语言，以保持界面一致性；
- *  - 结构化 lint 限制促使我们拆分派生逻辑与 UI 结构。
- * 目的：
- *  - 通过 ViewModel + 子组件的组合，保持弹窗职责单一且可测试。
- * 关键决策与取舍：
- *  - 使用自定义 Hook 承载派生状态，UI 只负责装配；
- *  - 将操作区、摘要区拆分为独立组件，减少主组件行数并提升复用性。
- */
+
 function ReportIssueModal(props) {
   const viewModel = useReportIssueModalViewModel(props);
 

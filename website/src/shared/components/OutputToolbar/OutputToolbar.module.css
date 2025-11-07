@@ -14,11 +14,7 @@
     0 12px 30px color-mix(in srgb, var(--shadow-color) 40%, transparent)
   );
 
-  /*
-   * 背景：不同调用方的按钮数量与布局节奏差异较大，固定 hidden+nowrap 会导致溢出裁切。
-   * 取舍：开放 wrap/overflow/row-gap 三个变量，默认保持历史行为，
-   *       让新场景（如释义面板）仅通过变量覆写即可扩展布局策略。
-   */
+  
   overflow: var(--output-toolbar-overflow, hidden);
   min-height: 44px;
   flex-wrap: var(--output-toolbar-wrap, nowrap);

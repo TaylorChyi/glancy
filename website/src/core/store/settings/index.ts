@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 设置 Store 过去集成常量、归一化与持久化逻辑，导致修改一处易产生冲突并影响其他责任。
- * 目的：
- *  - 基于领域模型、策略、持久化三层拆分结构，实现职责单一且可扩展的状态管理入口。
- * 关键决策与取舍：
- *  - 通过组合 normalizers（策略模式）与 persistence（职责链）模块，使初始化与更新路径统一。
- *  - 维持原有 Hook 契约不变，避免对调用方造成破坏性调整。
- * 影响范围：
- *  - 所有读取 useSettingsStore 的页面与特性，将受益于更清晰的职责划分与容错处理。
- * 演进与TODO：
- *  - 若后续引入跨端同步，可在 persistence 层新增 resolver；如需特性开关，可在 initializer 内注入配置。
- */
-
 import { createPersistentStore } from "../createPersistentStore.js";
 import { pickState } from "../persistUtils.js";
 import {

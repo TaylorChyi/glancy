@@ -12,19 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - WordService 的同步查词流程包含缓存命中、外部查询、持久化等步骤，逻辑冗长。\
- * 目的：
- *  - 以策略模式封装同步流程，复用缓存与持久化组件，保持职责清晰。\
- * 关键决策与取舍：
- *  - 选用默认 Markdown 策略 {@link ResponseMarkdownOrSerializedWordStrategy}，保持原行为；\
- *  - 当缓存命中时直接返回个性化响应，避免额外持久化。\
- * 影响范围：
- *  - WordService 调用该策略处理非流式请求。\
- * 演进与TODO：
- *  - 后续可注入指标或熔断逻辑。
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

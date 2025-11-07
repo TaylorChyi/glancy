@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Markdown 中的长词与多字节文本会在 flex 布局下溢出，
- *    需要在渲染时注入零宽断行符提供潜在折行点。
- * 目的：
- *  - 提供纯函数版本的断行注入器，供不同渲染器重用并便于单测覆盖。
- * 关键决策与取舍：
- *  - 优先使用 Intl.Segmenter 处理多语言字素，缺失时回退到 Array.from；
- *  - 保持对 code/pre 标签的跳过逻辑，避免破坏代码块格式；
- *  - 仅在非空白字符之间插入断点，确保英文空格不被吞噬。
- * 影响范围：
- *  - MarkdownRenderer 在动态模式下的换行表现。
- */
 import { Children, cloneElement, isValidElement } from "react";
 
 const ZERO_WIDTH_SPACE = "\u200B";

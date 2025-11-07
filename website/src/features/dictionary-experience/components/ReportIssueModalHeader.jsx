@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 举报弹窗头部结构先前散落在 ViewModel 中的 JSX，导致纯数据 Hook 泄漏展示层职责。
- * 目的：
- *  - 以独立展示组件承载头部布局，恢复 ViewModel 的纯数据属性并支撑 SettingsSurface 的 renderHeader 扩展点。
- * 关键决策与取舍：
- *  - 采用受控组件形态，仅依赖显式传入的标题与关闭回调，避免对上下文产生隐式耦合；
- *  - 通过轻量结构保留扩展空间，后续可按需拓展描述或辅助操作。
- * 影响范围：
- *  - 举报弹窗头部渲染与关闭按钮的 aria 语义。
- * 演进与TODO：
- *  - 后续可引入辅助描述或多操作分布时，在此组件内扩展布局而无需触动 ViewModel。
- */
 import PropTypes from "prop-types";
 import styles from "./ReportIssueModal.module.css";
 

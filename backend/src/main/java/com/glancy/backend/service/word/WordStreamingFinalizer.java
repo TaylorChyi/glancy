@@ -11,19 +11,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
 
-/**
- * 背景：
- *  - 流式查词结束后的解析与持久化逻辑原先直接写在 WordService 中，异常处理复杂且难以复用。\
- * 目的：
- *  - 封装流式会话完成时的统一流程：校验结束标记、解析响应、回写存储。\
- * 关键决策与取舍：
- *  - 将版本内容策略以构造参数注入，便于测试时替换；\
- *  - 遇到解析或持久化失败时以空流返回，保持流式体验稳定。\
- * 影响范围：
- *  - 流式策略在终止时调用该组件完成落库。\
- * 演进与TODO：
- *  - 可根据需要扩展指标或重试策略。
- */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

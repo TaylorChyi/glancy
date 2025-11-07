@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 通用分区需要承载界面主题与系统语言的核心偏好，原占位组件无法满足实时配置需求。
- * 目的：
- *  - 以组合模式编排字段控件，串联主题上下文与设置 Store，确保模态与页面共享一致行为。
- * 关键决策与取舍：
- *  - 选用“组合 + 策略”架构：字段容器负责排版，具体控件通过回调策略写入 Theme/Language/Markdown 行为，上层未来可追加新策略；
- *  - 放弃继续沿用 PlaceholderSection，避免一次性补丁阻塞真实表单的演进。
- * 影响范围：
- *  - Preferences 页面与 SettingsModal 的“通用”分区将即时呈现主题、语言与 Markdown 渲染模式配置。
- * 演进与TODO：
- *  - TODO: 待接入更多通用偏好（如语音预览、字号）时，可在 controls 数组中扩展新的策略项。
- */
 import { useCallback, useId, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage, useTheme } from "@core/context";

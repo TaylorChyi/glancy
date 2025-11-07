@@ -11,19 +11,7 @@ import com.glancy.backend.service.support.WordVersionContentStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - WordService 需要为持久化协调器准备大量回调，构造代码冗长且重复。\
- * 目的：
- *  - 提供集中工厂负责组装 {@link PersistenceContext}，确保各策略共享一致的流程骨架。\
- * 关键决策与取舍：
- *  - 工厂仅关注上下文构建，实际执行仍交由 `WordPersistenceCoordinator`，保持职责单一；\
- *  - 引入请求对象 {@link WordPersistenceRequest} 以避免构造函数参数爆炸。\
- * 影响范围：
- *  - 查词策略通过该工厂获取持久化上下文并执行协调器。\
- * 演进与TODO：
- *  - 若后续需要指标或审计，可在此处统一注入。
- */
+
 @Component
 @RequiredArgsConstructor
 public class WordPersistenceContextFactory {

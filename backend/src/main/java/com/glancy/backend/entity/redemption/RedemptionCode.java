@@ -13,20 +13,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * 背景：
- *  - 业务需要支持多种兑换码，并携带生效时间、兑换次数等复合约束。
- * 目的：
- *  - 使用实体对象建模兑换码生命周期及其配置，便于服务层统一校验与演进。
- * 关键决策与取舍：
- *  - 采用乐观锁字段 version，保证并发兑换时不会出现兑换次数超限的脏写；
- *  - 以小时存储会员时长，兼顾精度和数据库兼容性。若未来需要分钟级控制，可扩展为分钟级常量。
- * 影响范围：
- *  - 服务层校验逻辑、处理策略、DTO 映射依赖该模型。
- * 演进与TODO：
- *  - 如需组合效果，可引入子表进行一对多映射；
- *  - 可根据后续 BI 需求扩展兑换来源渠道、创建人等审计字段。
- */
+
 @Entity
 @Table(name = "redemption_code")
 public class RedemptionCode extends BaseEntity {

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - ChatInput 需要在 Hook 内部维护 textarea 引用，同时支持外部透传 ref。
- * 目的：
- *  - 提供桥接器集中处理焦点恢复与 ref 合并逻辑，运用“门面模式”暴露更小的接口。
- * 关键决策与取舍：
- *  - 使用 useRef 存储内部引用，并在 setTextareaRef 中兜底写入外部 ref，避免多处重复 try/catch。
- *  - 非生产环境暴露告警，提醒消费方传入不可写 ref 时尽早修复。
- * 影响范围：
- *  - ChatInput 行为 Hook 与依赖 restoreFocus/releaseFocus 的调用方。
- * 演进与TODO：
- *  - 后续可在此扩展焦点追踪埋点或 requestIdleCallback 优化聚焦体验。
- */
 import { useCallback, useRef } from "react";
 import type React from "react";
 

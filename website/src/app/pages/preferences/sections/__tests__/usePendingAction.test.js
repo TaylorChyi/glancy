@@ -1,13 +1,3 @@
-/**
- * 背景：
- *  - usePendingAction 提供通用 pending 状态管理，需要单测保障异步场景的状态流转。
- * 目的：
- *  - 验证 runWithPending 的生命周期与 isActionPending 的判定逻辑。
- * 关键决策与取舍：
- *  - 使用 renderHook + 自定义 Promise 控制执行时序，避免真实网络依赖。
- * 影响范围：
- *  - 依赖 usePendingAction 的页面控制器与动作处理。
- */
 import { jest } from "@jest/globals";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { usePendingAction } from "../usePendingAction.js";

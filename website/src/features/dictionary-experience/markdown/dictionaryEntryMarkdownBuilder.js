@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 词典响应存在多种形态：纯 Markdown、传统英文 JSON 结构以及英中复合结构。
- *    过去调用方需逐一判断字段并手写布局逻辑，导致 streaming 预览与最终渲染难以对齐。
- * 目的：
- *  - 以策略模式统一不同输入结构到“标准 Markdown”产物，保证任意阶段都能复用同一渲染链路。
- * 关键决策与取舍：
- *  - 选择策略模式而非简单的 if/else：便于后续扩展更多词典风味（如日英），并保持主流程聚焦在组合而非分支；
- *  - Markdown 生成遵循“章节 + 列表”模板，确保与现有排版规范一致，同时保留扩展点（如翻译标签、例句缩进）。
- * 影响范围：
- *  - DictionaryExperience streaming 预览、最终渲染及历史导出，只需面向 Markdown 输出即可。
- * 演进与TODO：
- *  - 后续可新增更多策略以支持分级折叠或个性化字段，也可在 options 中暴露多语言标题映射。
- */
-
 import { normalizeDictionaryMarkdown } from "./dictionaryMarkdownNormalizer.js";
 
 const DEFAULT_HEADINGS = Object.freeze({

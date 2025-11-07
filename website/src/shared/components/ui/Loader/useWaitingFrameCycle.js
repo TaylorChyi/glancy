@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 等待动画从序列帧轮播升级为“随机抽帧 + 填充”状态，需要有状态地控制素材切换时机。
- * 目的：
- *  - 封装成 Hook，集中处理素材池、随机策略与 React 生命周期，避免在 Loader 组件中散落副作用。
- * 关键决策与取舍：
- *  - 采用状态模式思路：Hook 内部维护当前帧索引与响应动画迭代事件的转换函数，保持组件层纯展示。
- *  - 提供可注入的随机函数，便于单测时复现确定性场景，同时保证默认实现零依赖。
- *  - 2025-02：补充调度策略注入口（scheduler/cancel/autoStart），让 Hook 自行掌控节奏，Loader 不再关心定时细节。
- *  - 2025-03：新增 shouldSchedule 开关，以便在单帧模式下跳过调度，避免无意义的动画重置。
- * 影响范围：
- *  - Loader 组件通过该 Hook 接收当前帧与迭代回调；未来若引入更多素材池或节奏策略，可在 Hook 内扩展。
- * 演进与TODO：
- *  - TODO：支持基于用户偏好/主题的素材分组与加权随机，提供更贴合语境的等待体验。
- */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import waitingAnimationStrategy from "./waitingAnimationStrategy.cjs";
 

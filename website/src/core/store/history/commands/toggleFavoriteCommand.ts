@@ -1,10 +1,3 @@
-/**
- * 背景：
- *  - 收藏/取消收藏逻辑高度相似，原本重复代码影响可维护性。
- * 目的：
- *  - 抽象为可配置命令，根据布尔开关决定调用 favorite 或 unfavorite 接口。
- */
-
 import { resolveHistoryItem } from "@core/history/index.ts";
 import type { User } from "../../userStore.ts";
 import type {

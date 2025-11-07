@@ -1,6 +1,4 @@
 {
-  // 背景：TS 配置迁移至 config/types/tsconfig.base.json；目的：通过继承保留 CLI 默认入口；
-  // 关键取舍：根节点仅负责引用基础配置。
   "extends": "./config/types/tsconfig.base.json",
   "include": [
     "src/**/*",

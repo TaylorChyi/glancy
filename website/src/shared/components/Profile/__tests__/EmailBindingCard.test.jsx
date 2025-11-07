@@ -1,16 +1,5 @@
 /* eslint-env jest */
-/**
- * 背景：
- *  - 邮箱绑定卡片的查看与编辑态存在多分支逻辑，缺乏针对不同绑定状态的回归用例。
- * 目的：
- *  - 覆盖已绑定与未绑定两种场景，验证按钮文案与可访问性约束符合产品语义。
- * 关键决策与取舍：
- *  - 复用轻量 t 对象避免依赖真实文案文件，保持测试聚焦于行为。
- * 影响范围：
- *  - Profile 页面内的 EmailBindingCard 组件展示逻辑。
- * 演进与TODO：
- *  - 后续可补充验证码流程的 E2E 覆盖以验证倒计时交互。
- */
+
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { jest } from "@jest/globals";

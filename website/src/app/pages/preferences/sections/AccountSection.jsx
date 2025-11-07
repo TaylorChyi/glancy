@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置面板的账号信息此前散落在父组件与布局层，难以在模态与页面之间共享。
- * 目的：
- *  - 以纯展示 Section 组件承载账号字段、头像编辑与外部账号绑定预设，供偏好设置的组合式布局复用。
- * 关键决策与取舍：
- *  - 组件保持无状态，仅依赖 props 渲染；拒绝在此处触发数据请求，使其适合作为策略模式中的具体策略。
- *  - 头像与绑定区域采用组合式布局，保留未来接入上传与绑定流程的扩展点；头部排版沿用 Settings 通用节奏。
- * 影响范围：
- *  - 偏好设置页面与 SettingsModal 的账号分区渲染逻辑。
- * 演进与TODO：
- *  - TODO: 当后续支持编辑态，可在此扩展表单控件与验证反馈。
- */
 import PropTypes from "prop-types";
 
 import SettingsSection from "@shared/components/settings/SettingsSection";

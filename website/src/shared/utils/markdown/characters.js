@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 标点与字符判断在多个策略中复用，需要集中维护避免重复实现。
- * 目的：
- *  - 暴露字符级工具函数，为空格补写、示例分词等提供支撑。
- */
 import {
   CJK_TRANSLATION_PUNCTUATION_PATTERN,
   HAN_SCRIPT_PATTERN,

@@ -2,18 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Toast from "../Toast.jsx";
 
-/**
- * 背景：
- *  - Toast 组件承担多入口的即时反馈提示，需要验证自动关闭与交互语义。
- * 目的：
- *  - 确认组件在定时关闭、自定义样式及用户主动关闭时的表现与无障碍语义。
- * 关键决策与取舍：
- *  - 采用真实渲染 + 假定时器，确保行为测试贴近运行时；避免浅渲染导致副作用缺失。
- * 影响范围：
- *  - 覆盖偏好设置、TTS 等引用 Toast 的场景，保证升级后的提示条兼容。
- * 演进与TODO：
- *  - TODO: 后续可扩展多实例队列时补充并发场景测试。
- */
+
 describe("Toast", () => {
   beforeEach(() => {
     jest.useFakeTimers();

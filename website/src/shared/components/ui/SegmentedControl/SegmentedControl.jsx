@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 偏好页与举报模态重复实现段控按钮，样式与交互容易漂移。
- * 目的：
- *  - 以组合模式提供可复用的分段选择组件，统一角色属性与视觉反馈。
- * 关键决策与取舍：
- *  - 采用函数式 props 描述选项集合，放弃嵌套子组件 API，降低现有调用方迁移成本。
- * 影响范围：
- *  - 偏好设置分区、举报模态等需要段控交互的界面。
- * 演进与TODO：
- *  - TODO: 后续可扩展 density/size 等属性，以适配更复杂的布局需求。
- */
 import PropTypes from "prop-types";
 import segmentedOptionShape from "./segmentedOptionShape.js";
 import styles from "./SegmentedControl.module.css";

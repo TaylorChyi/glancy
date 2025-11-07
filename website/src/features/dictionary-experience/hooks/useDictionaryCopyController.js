@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典体验的复制反馈逻辑长期混杂在主 Hook 内，导致定时器管理与弹窗提示分散且难以复用。
- * 目的：
- *  - 采用“状态机 + 策略映射”方式抽离复制相关副作用，对外暴露稳定的复制控制门面（Facade）。
- * 关键决策与取舍：
- *  - 通过冻结的状态常量表达有限状态机，替代历史上的布尔标记，便于未来扩展失败/处理中态；
- *  - 将弹窗提示收敛在策略映射中，调用方仅关心复制动作与状态，无需重复推导提示语。
- * 影响范围：
- *  - DictionaryExperience 及后续可能依赖复制反馈的组件/Hook。
- * 演进与TODO：
- *  - 后续可在此扩展复制失败的详细错误上报或埋点输出。
- */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { extractMarkdownPreview, copyTextToClipboard } from "@shared/utils";
 import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";

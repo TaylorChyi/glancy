@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 间距 token 与通用类混杂在一个作用域，易与 Tailwind utilities 冲突。
- * 目的：
- *  - 将变量纳入 tokens 层，工具类归属 utilities 层，使全局层级语义清晰。
- * 关键决策与取舍：
- *  - 保持类名与变量名不变，仅调整层级包装，避免破坏现有调用方。
- * 影响范围：
- *  - 依赖间距变量或 `.m-*`、`.p-*` 工具类的组件。
- * 演进与TODO：
- *  - 后续可按需拆分为尺寸系统/布局系统的更细粒度模块。
- */
 @import url("@styles/semantic/spacing.semantic.css");
 
 @layer utilities {

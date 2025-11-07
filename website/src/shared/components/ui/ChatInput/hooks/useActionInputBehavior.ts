@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - ChatInput 行为层随着功能扩展逐渐膨胀，导致主 Hook 超出结构化 lint 限制且维护困难。
- * 目的：
- *  - 通过组合式拆分（焦点门面、自动调高策略、类型契约）压缩复杂度，同时保持调用接口稳定。
- * 关键决策与取舍：
- *  - 运用门面模式封装 ref/焦点逻辑，策略模式抽离 resize 行为，主 Hook 聚焦装配职责。
- *  - 继续暴露 normalize* 策略入参，方便上层注入不同语言处理逻辑。
- * 影响范围：
- *  - ChatInput 行为 Hook 调用者、相关测试以及语言控制面板装配逻辑。
- * 演进与TODO：
- *  - 后续若加入多模态输入，可在此延伸 actionButtonProps 组合并按需扩展策略集合。
- */
 import type {
   LanguageValue,
   UseActionInputBehaviorParams,

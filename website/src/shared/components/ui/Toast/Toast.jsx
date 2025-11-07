@@ -2,18 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import styles from "./Toast.module.css";
 
-/**
- * 背景：
- *  - 旧版 Toast 仅支持底部轻量提示，缺乏可配置性，难以在兑换等流程中复用。
- * 目的：
- *  - 提供可设定主题色、停留时长与关闭交互的提示条，统一在页面顶部展示执行结果。
- * 关键决策与取舍：
- *  - 通过 CSS 变量暴露颜色，既允许调用方定制，也确保符合主题令牌体系；拒绝在组件内硬编码样式常量。
- * 影响范围：
- *  - 所有引用 Toast 的入口（如 TTS、历史记录、偏好设置）都会获得新的样式与交互能力。
- * 演进与TODO：
- *  - TODO: 后续可扩展图标/队列能力，或引入无障碍朗读策略配置。
- */
+
 const DEFAULT_DURATION = 3000;
 const DEFAULT_CLOSE_LABEL = "Dismiss notification";
 

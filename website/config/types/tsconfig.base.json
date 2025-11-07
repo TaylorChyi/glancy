@@ -1,7 +1,4 @@
 {
-  // 背景：顶层 TS 配置与别名散落，集中化便于复用；目的：提供基础编译选项与路径映射；
-  // 关键决策：采用 ESNext 模块与严格模式，暴露路径别名；影响范围：IDE 与构建的类型检查；
-  // TODO：未来可拆分 node/web 专属配置。
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 响应风格相关测试需频繁设置 profile mock，与其它场景放在一起冗长难维护。
- * 目的：
- *  - 独立验证加载失败重试与字段提交逻辑，确保个性化体验稳健。
- * 关键决策与取舍：
- *  - 使用共享装配器以 builder 方式覆写 profile 数据，避免在测试内重复铺设 mock；
- *  - 单文件聚焦 response style，降低结构复杂度。
- * 影响范围：
- *  - usePreferenceSections 中 response style 相关分支的测试组织。
- * 演进与TODO：
- *  - 若未来扩展更多字段校验，可继续在此文件补充。
- */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import {
   createPreferenceSectionsTestContext,

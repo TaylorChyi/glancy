@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 行为与布局纠缠导致 ActionInput 难以单测与复用，需抽离纯展示层。
- * 目的：
- *  - 承接 Hook 产出的结构化 Props，仅负责组合已有 SearchBox、语言控制与动作按钮。
- * 关键决策与取舍：
- *  - 组件保持无状态，避免在视图层重新引入副作用，确保快照稳定。
- * 影响范围：
- *  - ChatInput 输入模块的展示结构与快照测试基线。
- * 演进与TODO：
- *  - 若未来需要插入额外装饰元素，可通过在 Hook 中扩展状态后于此组合。
- */
 import PropTypes from "prop-types";
 
 import SearchBox from "@shared/components/ui/SearchBox";

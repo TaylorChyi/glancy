@@ -8,19 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * 背景：
- *  - 邮箱换绑与联系方式更新的前置校验散落在不同用例中，存在重复与维护风险。
- * 目的：
- *  - 通过策略对象集中管理联系方式相关约束，便于在多个命令间复用。
- * 关键决策与取舍：
- *  - 采用领域策略（Policy）模式封装规则，保留日志语义；
- *  - 放弃静态工具方法，方便后续通过依赖注入扩展白名单或多租户策略。
- * 影响范围：
- *  - 邮箱换绑、验证码发送与联系方式更新都会调用该策略。
- * 演进与TODO：
- *  - 后续可接入特性开关或多租户配置，自定义唯一性校验与通知策略。
- */
+
 @Component
 public class UserContactPolicy {
 

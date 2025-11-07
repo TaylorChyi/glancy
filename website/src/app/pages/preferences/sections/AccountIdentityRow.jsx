@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 账号身份区域在 AccountSection 内部直接构建 DOM，导致主组件体积过大且复用困难。
- * 目的：
- *  - 将身份区域拆分为独立组件，集中处理头像展示与文件选择器交互。
- * 关键决策与取舍：
- *  - 依赖外部传入的事件处理函数，组件内部不持有状态，保持容器与展示分离；
- *  - 以 visually-hidden 的 span 承载昵称，确保读屏工具可读。
- * 影响范围：
- *  - 偏好设置页面的身份区渲染。
- * 演进与TODO：
- *  - 未来支持多尺寸头像时，可在此扩展 responsive props。
- */
 import PropTypes from "prop-types";
 
 import Avatar from "@shared/components/ui/Avatar";

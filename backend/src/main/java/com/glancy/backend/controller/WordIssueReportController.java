@@ -13,15 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 背景：
- *  - 前端举报表单需要一个受保护的接口提交数据。
- * 目的：
- *  - 提供 REST 入口统一承载身份验证、参数校验与服务调用，保持控制层纯粹。
- * 关键决策与取舍：
- *  - 控制器仅负责编排日志与响应包装，具体逻辑下沉到服务层；
- *  - 记录结构化日志，便于后续溯源与审计。
- */
+
 @RestController
 @RequestMapping("/api/word-reports")
 @Slf4j

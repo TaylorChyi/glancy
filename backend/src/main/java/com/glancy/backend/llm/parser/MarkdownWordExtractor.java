@@ -10,19 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 背景：
- *  - Doubao LLM 以 Markdown 章节组织词条释义，新协议频繁迭代导致章节标题不断扩张。
- * 目的：
- *  - 通过集中式映射策略，将多源标题规范化为后端可消费的领域枚举，确保解析结果稳定输出。
- * 关键决策与取舍：
- *  - 采用不可变映射维护标题->领域段落的绑定，方便未来新增标题时只需扩展映射表。
- *  - 将 Collocations 等新标题复用现有语义槽位（phrases/definitions），避免破坏现有 API 契约。
- * 影响范围：
- *  - 所有依赖 MarkdownWordSnapshot 的前后端词表展示模块。
- * 演进与TODO：
- *  - 协议若新增需前后端同步的字段（如真正独立的历史沿革版块），需扩展 MarkdownWordSnapshot 结构并更新映射表。
- */
+
 final class MarkdownWordExtractor {
 
     private static final Pattern NUMBERED_LIST_PATTERN = Pattern.compile("^(\\d+)[\\.)]\\s*(.+)$");

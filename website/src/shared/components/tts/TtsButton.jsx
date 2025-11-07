@@ -38,9 +38,7 @@ export default function TtsButton({
   };
 
   //
-  // 背景：
   //  - UI 仅展示裸图标，按钮配色由 CSS 模块依据语义类自洽计算，逻辑层只负责组合基础状态。
-  // 取舍：
   //  - 保留 playing/loading/disabled 类用于覆盖色彩，其余语义交由样式统一治理。
   const btnClass = [
     styles.button,

@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置原有的个性画像分区仅展示静态摘要，无法满足响应风格切换与即时保存的需求。
- * 目的：
- *  - 提供具备自动保存能力的表单视图，允许用户调整响应语气及关联背景字段。
- * 关键决策与取舍：
- *  - 组件保持无状态，所有状态机逻辑交由 responseStyleModel 统一管理；
- *  - 采用语义化的列表结构 (dl/dt/dd) 以沿用既有详情布局，避免打破页面节奏；
- *  - 通过 aria-live 与按钮回退机制确保加载/错误态可感知。
- * 影响范围：
- *  - Preferences 页面“响应风格”分区的可编辑体验。
- * 演进与TODO：
- *  - TODO: 后续可补充字段级校验与保存失败的逐项提示。
- */
 import { useId } from "react";
 import PropTypes from "prop-types";
 import SelectMenu from "@shared/components/ui/SelectMenu";

@@ -1,21 +1,3 @@
-/**
- * 背景：
- *  - 历史记录 Store 过往同时承载分页、缓存同步、错误处理等多重逻辑，
- *    逻辑散落导致演进时易产生冲突与遗漏依赖。
- * 目的：
- *  - 将业务编排委托给 HistoryStoreMachine，Store 仅负责装配依赖与持久化配置，
- *    让业务定义集中、边界清晰。
- * 关键决策与取舍：
- *  - 采用端口-适配器思路注入 API、词条缓存、治理与用户依赖，便于后续替换实现；
- *  - 保留原有迁移逻辑以兼容历史持久化数据，避免一次性脚本。
- * 影响范围：
- *  - 所有依赖 useHistoryStore 的功能模块；
- *  - 数据治理、词条缓存与用户状态在装配层重新编排。
- * 演进与TODO：
- *  - TODO: 将 Gateway 抽离到 @core/services 目录，支撑多端共享；
- *  - TODO: 若引入服务端推送，可在状态机内增加订阅入口以减少轮询。
- */
-
 import api from "@shared/api/index.js";
 import { createPersistentStore } from "./createPersistentStore.js";
 import { pickState } from "./persistUtils.js";

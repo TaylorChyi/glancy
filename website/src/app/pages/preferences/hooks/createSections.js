@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - 分区数组的构建逻辑原本嵌入在主 Hook 中，字段、组件与文案交织，
- *    使得小幅调整都需要修改大段代码。
- * 目的：
- *  - 将分区装配抽象为纯函数，根据输入元数据生成统一结构，
- *    便于未来进行懒加载或特性开关控制。
- * 关键决策与取舍：
- *  - 输出稳定的 Section Blueprint（id/label/Component/componentProps/icon），
- *    页面和模态均可直接消费；
- *  - 使用策略式的 icon registry，避免组件内硬编码 icon 名称。
- * 影响范围：
- *  - 偏好设置页面以及共享的 SettingsModal。
- * 演进与TODO：
- *  - 后续可在此根据用户权限过滤分区，或注入排序策略。
- */
 import AccountSection from "../sections/AccountSection.jsx";
 import DataSection from "../sections/DataSection.jsx";
 import GeneralSection from "../sections/GeneralSection.jsx";

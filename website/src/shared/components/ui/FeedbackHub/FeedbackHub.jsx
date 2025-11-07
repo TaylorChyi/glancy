@@ -1,20 +1,3 @@
-/**
- * 背景：
- *  - 多个页面与特性模块分别渲染 MessagePopup 与 Toast，
- *    造成反馈层结构分散且难以统一扩展。
- * 目的：
- *  - 提供可组合的反馈容器，将弹窗与轻提示的装配职责下沉到共享层，
- *    以便后续按需挂载更多反馈类型。
- * 关键决策与取舍：
- *  - 采用策略模式集中管理不同反馈类型的渲染策略，
- *    相比在调用端硬编码条件渲染，可显著降低重复代码与耦合度；
- *  - 放弃一次性实现全局总线，改以可配置策略保持组件轻量，
- *    更契合当前站点规模且便于渐进演进。
- * 影响范围：
- *  - 使用 MessagePopup/Toast 的各页面与特性模块改为经由该容器装配。
- * 演进与TODO：
- *  - TODO: 若未来需要支持进度条或全局通知，可扩展策略映射并引入优先级队列。
- */
 import PropTypes from "prop-types";
 import MessagePopup from "@shared/components/ui/MessagePopup";
 import Toast from "@shared/components/ui/Toast";

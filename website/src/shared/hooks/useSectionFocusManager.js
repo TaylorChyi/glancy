@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - SettingsNav 与 SettingsPanel 在切换分区时缺乏统一的焦点管理，导致读屏器复诵与滚动跳跃问题。
- * 目的：
- *  - 通过集中式 Hook 复用焦点迁移策略，确保分区切换后标题获得焦点并回滚至视口起始位置。
- * 关键决策与取舍：
- *  - 采用组合模式：由容器负责调用 captureFocusOrigin，而面板通过 registerHeading 注入目标节点；拒绝直接在 Hook 内持有状态，避免重复渲染。
- * 影响范围：
- *  - SettingsModal 与 Preferences 页面在切换分区时的可访问性体验。
- * 演进与TODO：
- *  - TODO: 后续可扩展为自定义动画或平滑滚动策略，并在多列布局下支持自适应滚动容器。
- */
 import { useCallback, useLayoutEffect, useRef } from "react";
 
 const isBrowser =

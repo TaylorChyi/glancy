@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 用户名编辑行在 AccountSection 中混杂业务逻辑与渲染，导致函数体超长并难以在未来复用。
- * 目的：
- *  - 将用户名行拆分为独立展示组件，集中处理 UsernameEditor 的动作描述与按钮状态。
- * 关键决策与取舍：
- *  - 使用本地 state 缓存 UsernameEditor 返回的动作描述，避免父组件每次渲染都触发按钮重建；
- *  - 不在此组件内引入上下文依赖，保持纯展示属性。
- * 影响范围：
- *  - 偏好设置页面的用户名行渲染逻辑。
- * 演进与TODO：
- *  - 当需要支持无障碍说明时，可通过 props 增加 aria-describedby。
- */
 import { useCallback, useState } from "react";
 import PropTypes from "prop-types";
 

@@ -1,12 +1,3 @@
-/**
- * 背景：
- *  - 用户名编辑涉及翻译、提交流程与失败兜底，原先逻辑嵌入在主 Hook 中易于膨胀。
- * 目的：
- *  - 提供用户名编辑相关的翻译与命令，保持调用方专注于装配。
- * 关键决策与取舍：
- *  - 将提交逻辑封装为 Hook，便于未来引入埋点或校验；
- *  - 翻译结构保持纯对象，方便组件直接解构。
- */
 import { useCallback } from "react";
 
 const resolve = (translations, primaryKey, fallbackKey, fallback) => {

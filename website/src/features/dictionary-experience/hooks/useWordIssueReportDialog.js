@@ -6,15 +6,7 @@ import {
   WORD_REPORT_CATEGORIES,
 } from "../reportCategories.js";
 
-/**
- * 背景：
- *  - 举报弹窗需要协调多种状态（开关、表单、提交流程），原有 Hook 未覆盖此职责。
- * 目的：
- *  - 将举报表单的状态机抽象为可复用 Hook，保持 useDictionaryExperience 的关注点聚焦在词典主流程。
- * 关键决策与取舍：
- *  - 采用 reducer 管理状态，避免 useState 多段更新造成竞态；
- *  - 通过事件枚举统一状态转移，便于未来扩展更多动作（如草稿保存）。
- */
+
 const initialState = Object.freeze({
   open: false,
   submitting: false,

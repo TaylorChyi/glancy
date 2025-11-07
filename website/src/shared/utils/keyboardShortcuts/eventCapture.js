@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 事件捕获逻辑与格式化、匹配等职责混杂，导致维护成本高。
- * 目的：
- *  - 将事件转 token 的流程独立出来，便于单独测试与未来扩展组合键序列。
- * 关键决策与取舍：
- *  - 延续原有修饰键排序策略，通过 MODIFIER_ORDER 保证输出稳定；
- *  - 遇到无效主键时返回 null，交由调用方决定是否吞掉事件。
- * 影响范围：
- *  - 快捷键录入表单、监听器捕获流程。
- * 演进与TODO：
- *  - 若未来支持 chord，可在此返回二维数组并由上层决定序列化策略。
- */
-
 import { MODIFIER_ORDER, MODIFIER_SET } from "./constants.js";
 import { normalizeKeyToken } from "./normalizers.js";
 

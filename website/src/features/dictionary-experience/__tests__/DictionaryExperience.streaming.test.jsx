@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 词典体验需要在 LLM 流式响应未完成时预览 Markdown，避免用户等待空白界面。
- * 目的：
- *  - 验证 DictionaryExperience 在词条缺席阶段仍能向下游组件传递 streamText 以及最终 Markdown。
- * 关键决策与取舍：
- *  - 通过桩件固定 useDictionaryExperience 的输出，聚焦展示层组合逻辑；
- *  - 选择浅层组件测试而非 Hook 单测，确保视图层契约稳定。
- * 影响范围：
- *  - DictionaryExperience 到 DictionaryEntryView/EmptyState 的渲染分支。
- * 演进与TODO：
- *  - 后续可引入真实 Markdown 渲染快照，覆盖更多样式与语义组合。
- */
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置页面的文案散落在主 Hook 中，修改任一字段都需滚动整个文件。
- * 目的：
- *  - 通过 Hook 汇总所有展示层 copy，保持主 Hook 聚焦在装配逻辑。
- * 关键决策与取舍：
- *  - 输出结构化对象（copy/header/account 等），保证调用方语义明确；
- *  - 在 Hook 内部使用 useMemo 缓存派生值，避免重复计算。
- * 影响范围：
- *  - 偏好设置页面与 SettingsModal 的文案展示。
- * 演进与TODO：
- *  - 后续可在此加入 A/B 实验或多主题差异化文案。
- */
 import { useMemo } from "react";
 
 export const PREFERENCE_HEADING_ID = "settings-heading";

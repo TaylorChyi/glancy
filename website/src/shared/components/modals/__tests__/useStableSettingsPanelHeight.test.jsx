@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - useStableSettingsPanelHeight 负责同步设置面板的统一高度，需要确保参考面板优先。
- * 目的：
- *  - 验证 hook 在存在参考分区时采用其高度，在缺失时回退至当前激活分区。
- * 关键决策与取舍：
- *  - 通过自定义 ResizeObserver 桩件直接注入测试高度，避免依赖真实布局计算。
- * 影响范围：
- *  - 设置模态与页面的高度稳定性逻辑。
- * 演进与TODO：
- *  - TODO: 后续可补充宽度同步断言，覆盖更多响应式场景。
- */
 import { jest } from "@jest/globals";
 import { render } from "@testing-library/react";
 import PropTypes from "prop-types";

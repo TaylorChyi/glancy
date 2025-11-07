@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 例句后续可能附带 `#marker#`、`[[slot]]` 等附加行，需要独立解析以复用分词逻辑。
- * 目的：
- *  - 提供附件解析工具，供 segmentation 策略复用。
- */
 import { isExampleLabel } from "./labels.js";
 
 export function parseSegmentationMarker(lines, startIndex) {

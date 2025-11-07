@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - LanguageMenu 主体需遵守结构化守卫，将展示逻辑拆分可让主函数保持精简。
- * 目的：
- *  - 承载按钮与弹层的渲染细节，以组合方式装配语言菜单 UI。
- * 关键决策与取舍：
- *  - 组件拆分为 Trigger 与 Popover 两部分，避免单个函数过长；
- *  - 复用已有样式模块与 CheckIcon，拒绝在此引入额外样式变更。
- * 影响范围：
- *  - LanguageMenu 的展示层，其他模块无需调整。
- * 演进与TODO：
- *  - TODO: 若需支持选项分组，可在此扩展分组容器组件。
- */
 import PropTypes from "prop-types";
 
 import Popover from "@shared/components/ui/Popover/Popover.jsx";

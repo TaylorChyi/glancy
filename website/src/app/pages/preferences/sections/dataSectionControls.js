@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - DataSection 控制器需组合多段控制配置，如直接内联会导致文件体量超标。
- * 目的：
- *  - 将控制对象的构建抽离为独立 Hook，保持 `useDataSectionController` 精简。
- * 关键决策与取舍：
- *  - 依赖 dataSectionActions 提供的基础 handler，避免重复封装；
- *  - 各控制 Hook 输出统一结构（值、选项、动作、pendingId），便于视图层消费。
- * 影响范围：
- *  - 偏好设置数据分区的控制组合逻辑。
- * 演进与TODO：
- *  - TODO: 如需支持更多控制项，可在此文件新增对应 Hook 并保持接口一致。
- */
-
 import { useCallback } from "react";
 import {
   ACTION_CLEAR_ALL,

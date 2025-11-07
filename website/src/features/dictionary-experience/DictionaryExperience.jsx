@@ -95,11 +95,7 @@ export default function DictionaryExperience() {
       return dictionaryActionBarProps;
     }
 
-    /**
-     * 背景：重试释义源于动作面板，但语义属于“重新触发搜索”。
-     * 取舍：在此处包裹回调，统一经由底部面板状态机切回搜索模式，
-     *       避免在工具栏或 Hook 内部散落切换逻辑，保持模式职责单一。
-     */
+    
     const wrappedReoutput = (...args) => {
       activateSearchMode();
       return originalReoutput(...args);

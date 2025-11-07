@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 兑换流程需要统一的提示语与视觉风格，原实现散落在业务逻辑中难以维护。
- * 目的：
- *  - 将 toast 视觉常量与失败消息生成策略集中管理，便于共享给其他入口（如移动端）。
- * 关键决策与取舍：
- *  - 使用冻结对象定义状态->样式映射，符合策略模式思想，便于未来拓展“处理中”等状态；
- *  - 提供纯函数 composeRedeemFailureMessage，以便单元测试覆盖各类错误输入。
- * 影响范围：
- *  - 偏好设置页面的兑换反馈；后续若 SettingsModal 复用也可直接引入。
- * 演进与TODO：
- *  - 可在此扩展埋点事件描述或多语言兜底策略。
- */
-
 export const DEFAULT_REDEEM_SUCCESS_MESSAGE = "兑换成功，权益已生效。";
 export const DEFAULT_REDEEM_FAILURE_MESSAGE = "兑换失败，请稍后重试。";
 export const DEFAULT_TOAST_DISMISS_LABEL = "Dismiss notification";

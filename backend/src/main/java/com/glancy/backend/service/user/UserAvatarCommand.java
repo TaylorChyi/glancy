@@ -12,19 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * 背景：
- *  - 头像上传与地址转换逻辑在 UserService 中占据较多篇幅且耦合度高。
- * 目的：
- *  - 通过命令对象封装头像变更流程，并复用 {@link UserDataSanitizer} 保证数据一致性。
- * 关键决策与取舍：
- *  - 维持细粒度职责，避免在其它命令中重复上传逻辑；
- *  - 保留错误语义与日志以便快速定位存储异常。
- * 影响范围：
- *  - 头像读取、更新、上传流程迁移至此组件。
- * 演进与TODO：
- *  - 后续可扩展多尺寸裁剪或头像审核策略。
- */
+
 @Component
 public class UserAvatarCommand {
 

@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 订阅兑换流程原本与主 Hook 紧密耦合，导致 usePreferenceSections.js 过长且难以复用。
- * 目的：
- *  - 将兑换相关状态管理（toast、接口调用、用户上下文同步）抽离为独立 Hook，
- *    便于页面与模态共同消费，同时为后续扩展灰度实验保留注入点。
- * 关键决策与取舍：
- *  - 采用命令式 handleRedeem API，与 UI 解耦，可被按钮或快捷键触发；
- *  - 将提示语生成与视觉常量集中到 utils 中，保持单一职责。
- * 影响范围：
- *  - 偏好设置页面订阅分区；未来若引入移动端偏好设置亦可直接复用。
- * 演进与TODO：
- *  - 可在此注入特性开关或埋点回调，支持运营活动监控。
- */
 import { useCallback, useMemo, useState } from "react";
 import { pickFirstMeaningfulString } from "./utils/displayValues.js";
 import {

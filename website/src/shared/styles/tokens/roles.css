@@ -1,11 +1,1 @@
-/**
- * 背景：
- *  - 角色语义变量已收敛至 `src/styles/semantic/color.semantic.css`；
- * 目的：
- *  - 保持历史引用路径可用，转而导入新的语义层定义；
- * 关键决策与取舍：
- *  - 暂不重复声明变量，避免双写带来的覆盖顺序问题；
- * 影响范围：
- *  - 使用 `@import "shared/styles/tokens/roles.css"` 的遗留样式。
- */
 @import url("@styles/semantic/color.semantic.css");

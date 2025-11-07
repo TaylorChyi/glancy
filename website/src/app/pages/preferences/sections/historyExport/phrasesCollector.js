@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - “常见词组”字段存储字典条目的短语示例。
- * 目的：
- *  - 将词组与释义整齐输出，便于用户在 CSV 中快速检索。
- * 关键决策与取舍：
- *  - 保持符号前缀一致（•），以维持导出文件的阅读节奏。
- * 影响范围：
- *  - 偏好设置导出的 phrases 章节。
- * 演进与TODO：
- *  - 可按需扩展更多字段（例如例句来源）。
- */
-
 import { stripMarkdownArtifacts } from "@features/dictionary-experience/markdown/dictionaryPlainTextSanitizer.js";
 
 import { pushChapter } from "./chapterNormalization.js";

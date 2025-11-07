@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 分享导出与历史导出均需将 Markdown 字段转为纯文本，但各自实现重复且未处理零宽空格。
- * 目的：
- *  - 提供统一的 Markdown 纯文本清洗策略，确保不同消费方得到一致的可读输出。
- * 关键决策与取舍：
- *  - 采用轻量函数封装而非类，保持调用端简单；零宽空格统一映射为显式空格以恢复英文单词间距。
- * 影响范围：
- *  - 分享图片构建、历史导出等使用 stripMarkdownArtifacts 的模块。
- * 演进与TODO：
- *  - 如需扩展更多 Markdown 语法，可在此模块增加可组合的策略数组。
- */
-
 const MARKDOWN_INLINE_TOKENS = /[`*_~>#]/g;
 const MARKDOWN_LINK_PATTERN = /\[(.*?)\]\((.*?)\)/g;
 const ZERO_WIDTH_WHITESPACE = /\u200B|\u200C|\u200D|\u2060|\uFEFF/gu;

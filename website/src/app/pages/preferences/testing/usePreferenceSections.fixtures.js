@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - usePreferenceSections 过往测试集中在单文件，导致结构化 lint 超限且难以复用装配逻辑。
- * 目的：
- *  - 提供偏好设置页面测试的统一装配器，通过显式工厂函数输出现成的 mock 与默认数据。
- * 关键决策与取舍：
- *  - 采用“构建者模式”封装默认上下文并接受定制覆盖，确保新增测试可声明式组合依赖；
- *  - 将翻译词条与默认响应抽离为纯函数，避免跨测试共享可变对象。
- * 影响范围：
- *  - 偏好设置页面 __tests__ 目录，后续测试可直接复用装配器 API。
- * 演进与TODO：
- *  - 如需支持更多模块 mock，可在 preferenceSectionsMocks 中集中登记并在构建器内暴露。
- */
 import { jest } from "@jest/globals";
 
 export const preferenceSectionsMocks = {

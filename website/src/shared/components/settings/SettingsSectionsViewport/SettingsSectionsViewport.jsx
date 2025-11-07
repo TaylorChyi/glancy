@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - Preferences 页面与 SettingsModal 在装配导航与内容面板时重复编排同一套组件组合与测量逻辑。
- * 目的：
- *  - 提供可复用的设置分区视图组件，集中处理导航、面板高度测量与隐藏探针渲染，减轻重复样板代码。
- * 关键决策与取舍：
- *  - 采用组合模式暴露 body/nav/panel 配置，让调用方向下游组件透传 className；
- *  - 在组件内部集成 useStableSettingsPanelHeight，避免各容器手动维护测量副本；
- *  - 放弃一次性函数式封装（例如导出简单 helper），确保未来可在此扩展提示条或自适应布局。
- * 影响范围：
- *  - SettingsModal、Preferences 页面与后续复用该视图的容器组件。
- * 演进与TODO：
- *  - TODO: 后续可开放插槽以容纳导航上方的提示信息，或暴露自定义 measurementProbe 渲染策略。
- */
 import { useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import SettingsBody from "@shared/components/modals/SettingsBody.jsx";

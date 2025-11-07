@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - `value - **Label**:` 这类串联在换行后会残留连字符或破坏缩进。
- * 目的：
- *  - 移除悬挂连字符并补齐缩进，使标签链保持列对齐。
- */
 import {
   DANGLING_LABEL_INLINE_CHAIN_PATTERN,
   DANGLING_LABEL_SEPARATOR_PATTERN,

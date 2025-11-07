@@ -5,20 +5,7 @@ import type { ResolvedTheme } from "@shared/theme/mode";
 import { iconSourceResolver } from "./iconSourceResolver";
 import type { IconVariantResource } from "./iconSourceResolver";
 
-/**
- * 背景：
- *  - 旧版 Icon 依赖 light/dark 双份 SVG，并在组件中手工切换，无法复用语义色。
- * 目的：
- *  - 将 Icon 渲染与语义色系统解耦，统一以 currentColor 单源 SVG 呈现，并兼容历史 tone 属性。
- * 关键决策与取舍：
- *  - 引入 roleClass 概念映射到全局 utilities，实现语义化着色；
- *  - 使用策略函数兼容 legacy tone，避免一次性破坏既有调用方；
- *  - 保留 fallback 渲染逻辑，保障缺失资源时的信息密度与可访问性。
- * 影响范围：
- *  - 所有通过 ThemeIcon/Icon 渲染的图标、按钮与工具栏组件。
- * 演进与TODO：
- *  - 后续可扩展 loading/error 态的占位符，或支持按需加载矢量字体。
- */
+
 
 const ROLE_CLASSNAME_MAP = Object.freeze({
   onsurface: "text-onsurface",
@@ -28,15 +15,7 @@ const ROLE_CLASSNAME_MAP = Object.freeze({
   success: "text-onsuccess",
   warning: "text-onwarning",
   danger: "text-ondanger",
-  /**
-   * 背景：
-   *  - 侧边栏导航希望沿用自身的 muted → active 渐进策略，但默认 role class 会强行套用主题前景色，
-   *    导致品牌图标颜色与其他 icon 不一致。
-   * 目的：
-   *  - 提供显式的 inherit 角色以跳过语义色注入，让上层容器的 color 继承链能够生效。
-   * 取舍：
-   *  - 相比引入布尔开关（如 inheritColor），直接纳入角色映射可沿用既有策略模式与类型约束。
-   */
+  
   inherit: "",
 });
 
@@ -87,17 +66,7 @@ const legacyToneToRole = (
   tone: LegacyTone | undefined,
   resolvedTheme: ResolvedTheme,
 ): IconRoleClass => {
-  /**
-   * 背景：
-   *  - 旧版 tone="dark" 默认假设浅色主题，仅返回 text-onsurface-strong，导致暗色主题下图标仍为深色。
-   * 目的：
-   *  - 统一回落到与当前主题一致的基础前景色，保证 SearchBox 等通用组件在 dark 模式下依旧可读。
-   * 关键决策与取舍：
-   *  - “dark” 与默认 auto 等价，均采用按主题解析的标准前景色；
-   *  - “light” 保留遗留语义，仅在浅色主题下取高亮前景，在暗色主题中退回标准前景以避免反差不足。
-   * 影响范围：
-   *  - 所有未显式指定 roleClass 的 ThemeIcon 调用方。
-   */
+  
   if (tone === "light") {
     return resolvedTheme === "light" ? "onsurfaceStrong" : "onsurface";
   }

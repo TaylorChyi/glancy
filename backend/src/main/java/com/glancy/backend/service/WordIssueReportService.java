@@ -8,15 +8,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * 背景：
- *  - 举报提交流程需要一个统一的应用服务协调参数归一化、持久化及审计日志。
- * 目的：
- *  - 提供高内聚的接口收敛举报请求，确保字段合法性并落库，同时记录关键日志。
- * 关键决策与取舍：
- *  - 采用事务包裹单次写入，后续扩展（如同步通知）可沿用相同边界；
- *  - 在服务层执行基础的字符串裁剪，避免重复逻辑散落于控制器或仓储。
- */
+
 @Service
 @Slf4j
 public class WordIssueReportService {

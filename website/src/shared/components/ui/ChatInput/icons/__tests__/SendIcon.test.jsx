@@ -2,18 +2,7 @@
 import { render } from "@testing-library/react";
 import { jest } from "@jest/globals";
 
-/**
- * 背景：
- *  - SendIcon 改用静态 SVG 渲染后，需要验证 data 标识与资源引用是否保持一致。
- * 目的：
- *  - 确保发送按钮输出可继承主题色的 inline SVG，并暴露语义化属性便于样式与测试复用。
- * 关键决策与取舍：
- *  - 通过资源 mock 固定 inline 内容，聚焦结构与属性校验，避免依赖真实打包路径。
- * 影响范围：
- *  - ChatInput 发送按钮的展示层稳定性回归验证。
- * 演进与TODO：
- *  - 后续若新增多主题资源，可在此扩展对 variant props 的断言。
- */
+
 
 jest.unstable_mockModule("@assets/interface/controls/send-button.svg", () => ({
   __esModule: true,

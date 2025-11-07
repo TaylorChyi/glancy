@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Popover 组件过于庞大，定位副作用与渲染逻辑混杂，导致 lint 无法通过。
- * 目的：
- *  - 抽离定位与生命周期管理逻辑为独立 Hook，保持组件聚焦展示职责。
- * 关键决策与取舍：
- *  - 使用组合式 Hook 拆分职责，便于复用与单测；
- *  - 在 Hook 内处理 SSR 兼容，防止调用方重复判断环境。
- * 影响范围：
- *  - Popover 组件依赖该 Hook 输出定位状态。
- * 演进与TODO：
- *  - 后续可继续拆分事件监听逻辑以支持更多触发器场景。
- */
 import { useCallback, useEffect } from "react";
 import {
   useGlobalDismissHandlers,

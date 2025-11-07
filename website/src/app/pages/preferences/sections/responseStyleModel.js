@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 偏好设置的“个性画像”分区已无法满足响应风格定制需求，需转型为可编辑的响应语气配置。
- * 目的：
- *  - 以 reducer 维护响应风格表单的加载/保存状态，并提供纯函数适配器在后端档案模型与前端控件之间转换。
- * 关键决策与取舍：
- *  - 采用“适配器 + 状态机”组合：适配器负责字段清洗，reducer 管理字段编辑与保存状态，确保逻辑集中且便于单元测试；
- *  - 放弃在组件内直接维护 useState，避免在多字段保存时状态散落导致竞态；
- *  - 保留字段列表常量，后续新增字段时仅需在此处扩展即可影响全部派生流程。
- * 影响范围：
- *  - Preferences 页面响应风格分区及其调用的保存流程。
- * 演进与TODO：
- *  - TODO: 后续可引入保存节流与批量提交策略，减少频繁 API 调用。
- */
-
 import { createEmptyProfileDetails } from "@app/pages/profile/profileDetailsModel.js";
 
 const RESPONSE_STYLE_FIELDS = Object.freeze([

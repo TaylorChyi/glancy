@@ -21,9 +21,6 @@
   background: var(--app-bg);
   color: var(--app-color);
 
-  /*
-   * 背景：表单组件复用系统 textarea，需与全局禁用 resize 策略保持一致。
-   * 取舍：统一设置 resize: none，避免局部遗漏导致布局不稳定。
-   */
+  
   resize: none;
 }

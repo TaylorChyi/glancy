@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 主题相关变量长期混杂于 index.css，易被暗色主题覆盖并引发定位困难的视觉缺陷。
- * 目的：
- *  - 独立出明亮主题的语义变量，使其在 theme 层内与暗色主题并列维护，实现职责清晰。
- * 关键决策与取舍：
- *  - 延续 data-theme="light" 的切换协议，避免破坏现有上下游依赖；
- *  - 仅保留与暗色主题差异的变量，借由 foundations 层提供默认值以减少重复定义。
- * 影响范围：
- *  - 任意依赖浅色主题变量的 UI 组件与布局容器。
- * 演进与TODO：
- *  - 若未来引入更多主题，可沿用该结构扩展新的主题文件并在 index.css 中追加 import。
- */
 @layer theme {
   :root[data-theme="light"] {
     color-scheme: light;
@@ -31,14 +18,7 @@
     --sidebar-panel: #fff;
     --sidebar-border-color: #d9dde7;
 
-    /*
-     * 取舍：
-     *  - 沿用主样式层的亮度混合策略，以 sidebar-surface 为基底控制层次，避免依赖透明度叠加；
-     *  - 为保证明暗主题的高亮语义一致，将浅色主题的 hover/active 回落到中性灰阶，避免默认品牌蓝造成的视觉跳色。
-     * 影响：
-     *  - 导航与历史入口在浅色主题下与暗色主题一致呈现灰阶反馈，减少主题切换时的突兀感；
-     *  - 未来若需重新引入品牌色高亮，可在 sidebar-highlight-tone 上覆写并复用相同混合逻辑。
-     */
+    
     --sidebar-highlight-tone: color-mix(
       in srgb,
       var(--neutral-400) 62%,

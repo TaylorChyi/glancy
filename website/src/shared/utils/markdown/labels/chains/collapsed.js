@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - `EntryType:SingleWordUsageInsight` 等字段可能连续写成 `Label1:Label2:...`。
- * 目的：
- *  - 将冒号紧贴的标签拆分到新行，恢复列表缩进与标签语义。
- */
 import { COLLAPSED_LABEL_CHAIN_PATTERN } from "../../constants/index.js";
 import { computeListIndentation } from "../../indentation.js";
 import { shouldSplitInlineLabel } from "../candidates.js";

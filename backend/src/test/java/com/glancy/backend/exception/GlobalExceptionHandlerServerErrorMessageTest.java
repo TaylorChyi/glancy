@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 5xx 异常目前会透传后端异常详情，违反最小披露原则且影响用户体验。
- * 目的：
- *  - 通过集成测试验证全局异常处理器会在服务端异常时返回统一提示语，保障策略落地。
- * 关键决策与取舍：
- *  - 采用 MockMvcBuilders 构建轻量级独立容器，仅加载待测控制器与异常处理器，避免全应用上下文带来的安全拦截干扰。
- * 影响范围：
- *  - 该测试覆盖 503 服务降级场景，其验证逻辑适用于所有 5xx 策略。
- * 演进与TODO：
- *  - 后续可追加对 SSE、特定 5xx 状态的断言，以防策略回归。
- */
 package com.glancy.backend.exception;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

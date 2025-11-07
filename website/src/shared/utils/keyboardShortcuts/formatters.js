@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 修饰键与主键的展示逻辑长期耦合在单文件中，难以对不同平台做定制化注入。
- * 目的：
- *  - 以组合方式暴露格式化能力，便于未来扩展不同语言或平台策略。
- * 关键决策与取舍：
- *  - 通过可配置的 detectApplePlatform 与 resolveModifierKey 注入策略，遵循策略模式以支持测试替换；
- *  - 保持输出结构与历史一致，仅在内部完成大小写与文案处理。
- * 影响范围：
- *  - 快捷键模态、提示文案、录入表单的展示效果。
- * 演进与TODO：
- *  - 后续若需支持本地化格式，可在 options 中扩展 labelResolver。
- */
-
 import { getModifierKey } from "@shared/utils/device.js";
 
 import { MODIFIER_SET } from "./constants.js";

@@ -1,19 +1,3 @@
-/**
- * 背景：
- *  - useDictionaryExperience 过去在 Hook 内手动维护字符串累积、JSON 解析与 Markdown 归一化，
- *    streaming 过程中经常出现预览闪烁或逻辑分支漂移的问题。
- * 目的：
- *  - 以可组合的缓冲器抽象流式 Markdown 拼装，保证流式预览、最终落盘与 JSON 解析共享统一实现。
- * 关键决策与取舍：
- *  - 采用“状态 + 策略”混合设计：缓冲器内部以状态字段记录原始串与解析结果，Markdown 构建委派给策略模块
- *    （dictionaryEntryMarkdownBuilder），从而兼顾可测试性与可扩展性；
- *  - 预览更新仅在内容变化时触发，避免在高频 chunk 下造成不必要的渲染。
- * 影响范围：
- *  - useDictionaryExperience、历史导出及后续分享链路可共享一致的 Markdown 产物。
- * 演进与TODO：
- *  - 可进一步扩展 append 接口，支持服务端 metadata 事件（如渐进式结构化片段）。
- */
-
 import { normalizeMarkdownEntity } from "../markdown/dictionaryMarkdownNormalizer.js";
 import { buildDictionaryEntryMarkdown } from "../markdown/dictionaryEntryMarkdownBuilder.js";
 

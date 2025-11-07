@@ -1,17 +1,3 @@
-/**
- * 背景：
- *  - 词条缓存逻辑原先散落在 wordStore 中，导致版本合并与激活策略难以复用，且多处手工复制增加冲突概率。
- * 目的：
- *  - 通过集中封装词条版本管理的领域规则，让 store 仅关注状态持久化，提升语义清晰度并利于长期演进。
- * 关键决策与取舍：
- *  - 采用“领域服务 + 策略”组合模式：WordVersionRegistry 提供可组合能力，ActiveVersionStrategy 允许后续根据业务切换策略；
- *    相比继续在 store 内硬编码逻辑，可显著降低页面/特性层与状态实现间的耦合。
- * 影响范围：
- *  - 被 core/store/wordStore 消费，并作为未来词条相关特性共享的领域能力；确保不直接依赖 UI 或网络层。
- * 演进与TODO：
- *  - 可追加基于使用频次的策略实现，或扩展版本分组等高级能力；需在此文件补充取舍说明。
- */
-
 export type WordIdentifier = string;
 
 export interface WordVersionMetadata {
@@ -102,10 +88,7 @@ const findMatchingId = (
     : null;
 };
 
-/**
- * 背景：默认策略需要兼顾“显式选择”与“时间最新”两种优先级。
- * 取舍：优先返回显式指定的 ID，其次沿用现有激活版本，再退化至最新时间戳。
- */
+
 export class LatestTimestampStrategy implements VersionSelectionStrategy {
   pick({
     versions,

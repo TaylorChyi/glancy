@@ -1,26 +1,10 @@
-/**
- * 背景：
- *  - 偏好设置导航在不同容器中需要相同的可访问性语义与关闭按钮插槽，旧实现散落在页面组件中。
- * 目的：
- *  - 通过组合组件集中处理垂直选项卡导航，并提供插槽承载模态关闭按钮。
- * 关键决策与取舍：
- *  - 采用 renderCloseAction 以延续旧有的 render props 能力，让容器掌控按钮语义与交互；拒绝在此处生成具体按钮，保持职责单一。
- * 影响范围：
- *  - SettingsModal 以及 Preferences 页面左侧导航。
- * 演进与TODO：
- *  - TODO: 若未来需要支持拖拽排序，可在此扩展键盘交互与 aria 属性。
- */
 import { useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage } from "@core/context";
 import ThemeIcon from "@shared/components/ui/Icon/index.tsx";
 import { useMediaQuery } from "@shared/hooks";
 
-/**
- * 关键决策与取舍：
- *  - 当设置面板宽度收敛至单列时（<= 768px），导航需切换为顶部横排，仅保留图标以维持
- *    视觉节奏；通过常量集中管理阈值，避免散落魔法数并与样式断点保持一致。
- */
+
 const HORIZONTAL_NAV_BREAKPOINT = 768;
 const HORIZONTAL_NAV_QUERY = `(max-width: ${HORIZONTAL_NAV_BREAKPOINT}px)`;
 
@@ -150,11 +134,7 @@ function SettingsNav({
           const panelId = `${section.id}-panel`;
           const isActive = section.id === activeSectionId;
           const formattedLabel = formatSectionLabel(section.label, lang);
-          /*
-           * 关键决策与取舍：
-           *  - 窄屏时以图标承担主视觉，文本通过 aria-label 保留无障碍语义；
-           *    若缺失图标则回退保留文本，避免按钮出现无内容状态。
-           */
+          
           const hideLabelText =
             isHorizontalLayout && Boolean(section.icon?.name);
           return (

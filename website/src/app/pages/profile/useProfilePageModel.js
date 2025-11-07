@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - Profile 页面逻辑内联导致组件体量庞大、lint 超限，且状态管理分散。
- * 目的：
- *  - 聚合页面所需的状态与副作用，向展示层输出整洁的视图模型。
- * 关键决策与取舍：
- *  - 以组合式 Hook 形式组织模块，保持层次清晰并便于单测；
- *  - 复用既有模型与 API，避免在一次重构中引入过多风险。
- * 影响范围：
- *  - Profile 页面成为薄层容器，后续扩展字段或流程时可在此集中调整。
- * 演进与TODO：
- *  - TODO: 考虑将通知机制升级为全局队列以支撑跨页面的用户提示。
- */
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { useApi } from "@shared/hooks/useApi.js";
 import { useMessagePopup } from "@shared/hooks/useMessagePopup.js";

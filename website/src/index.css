@@ -1,16 +1,3 @@
-/*
- * 背景：
- *  - 旧实现将 Tailwind 指令、基础 token 与主题覆写混杂，层级职责模糊且难以扩展；
- * 目的：
- *  - 通过引入 `src/styles/index.css` 聚合“三层令牌 + 主题”体系，明确各层装配顺序并便于审计；
- * 关键决策与取舍：
- *  - 保持 Tailwind 指令独立，随后按 primitives → semantic → themes → component tokens → legacy 的顺序引入；
- *  - 暂时保留历史 `@shared/theme` 与 `shared/styles` 目录，确保渐进迁移期间全局变量兼容；
- * 影响范围：
- *  - 全局样式初始化流程以及任何依赖 index.css 的页面入口。
- * 演进与TODO：
- *  - 后续逐步替换 `@shared/theme/*` 中的遗留变量定义，改为消费新组件令牌并拆分 utilities。
- */
 @layer tokens, foundations, theme, base, components, utilities;
 
 @import url("./tailwind.css");

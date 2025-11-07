@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 等待动画视觉升级为“持续呼吸”的淡入淡出节奏，需在不改动 Loader 结构的前提下引入往复状态管理。
- * 目的：
- *  - 通过 Hook 统一调度 requestAnimationFrame 与 setInterval，既保证首帧在浏览器绘制后出现，也能按节奏往复切换可见态。
- * 关键决策与取舍：
- *  - requestAnimationFrame 负责首帧显现，避免首屏闪烁；setInterval 驱动后续的呼吸节奏，较 setTimeout 更易清理与推理。
- * 影响范围：
- *  - Loader 组件继续以布尔值描述覆盖层是否可见；其他调用方亦可依赖相同语义接入淡入淡出动画。
- * 演进与TODO：
- *  - 已接入 `prefers-reduced-motion` 静态策略；若需按租户或实验开关覆写动效，可在策略表扩展注入点。
- */
 import { useEffect, useRef, useState } from "react";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";

@@ -1,14 +1,2 @@
-/**
- * 背景：
- *  - colors.css 原先同时承载基础色值与语义映射，已迁移至 `src/styles` 三层令牌体系；
- * 目的：
- *  - 作为兼容层继续向历史 import 暴露同名变量，同时复用新的 primitives/semantic 定义；
- * 关键决策与取舍：
- *  - 不再直接维护色值，只负责导入统一入口，避免出现双写；
- * 影响范围：
- *  - 遗留模块仍可 `@import "@shared/theme/colors.css"` 无需改动；
- * 演进与TODO：
- *  - 完成迁移后可逐步淘汰本文件，并在调用方改为引用 `@styles` 路径。
- */
 @import url("@styles/tokens/color.primitives.css");
 @import url("@styles/semantic/color.semantic.css");

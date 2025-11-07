@@ -1,18 +1,3 @@
-/**
- * 背景：
- *  - 控制器 Hook 负责协调多处能力，若直接堆叠会导致体量与复杂度超标。
- * 目的：
- *  - 基于拆分后的子 Hook 组合 DataSection 所需的状态与动作，使主函数保持精简可读。
- * 关键决策与取舍：
- *  - 仅保留 orchestrator 角色，将文案、语言、异步命令拆分至各自模块；
- *  - 引入 usePendingAction 统一 pending 管理，减少重复样板。
- * 影响范围：
- *  - 偏好设置数据分区的状态编排；
- *  - 为后续扩展（如接入后端 API）提供清晰挂载点。
- * 演进与TODO：
- *  - TODO: 可在此 Hook 注入埋点或错误上报逻辑，实现全链路观测。
- */
-
 import { useId } from "react";
 import { useUser } from "@core/context";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";

@@ -1,16 +1,3 @@
-/**
- * 背景：
- *  - 激活分区状态管理包含初始同步、分区变更自愈等逻辑，原本散落在主 Hook 中。
- * 目的：
- *  - 抽离为独立 Hook，统一维护 sanitize 与同步策略，复用性更高。
- * 关键决策与取舍：
- *  - 使用 useRef 记录初始同步标记，避免重复重置；
- *  - 将 sanitizeActiveSectionId 作为策略注入，保持纯函数化。
- * 影响范围：
- *  - 偏好设置页面与 SettingsModal 的导航状态。
- * 演进与TODO：
- *  - 后续可在此支持根据用户偏好记忆上次访问分区。
- */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sanitizeActiveSectionId } from "./utils/sanitizeActiveSectionId.js";
 

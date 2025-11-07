@@ -1,15 +1,3 @@
-/**
- * 背景：
- *  - 暗色主题的变量分布在 colors.css、variables.css 与 dark.css 中，维护成本高；
- * 目的：
- *  - 将暗色主题覆写集中在单一入口，复用语义层变量并统一可调整的组件令牌；
- * 关键决策与取舍：
- *  - 使用夜间基础色令牌（night-*、brand-dark-*）映射语义，避免重复硬编码；
- * 影响范围：
- *  - data-theme="dark" 的页面渲染；
- * 演进与TODO：
- *  - 支持未来引入 AMOLED/Dim 等暗色子主题，通过此文件或派生文件覆写差异。
- */
 :root[data-theme="dark"] {
   color-scheme: dark;
   color: var(--sys-text-dark);

@@ -1,20 +1,3 @@
-/**
- * 背景：
- *  - 浏览器对缺少显式宽高的 SVG 资源不会暴露 naturalWidth/naturalHeight，
- *    导致头像裁剪等依赖固有尺寸的模块无法正确渲染。
- * 目的：
- *  - 提供纯函数解析器，从 SVG 文本中提取固有尺寸信息（优先 width/height，
- *    其次 viewBox），供上层在 naturalSize 缺失时安全回退。
- * 关键决策与取舍：
- *  - 采用 DOMParser 解析 XML，保持实现语义清晰且可测试；
- *  - 拒绝引入第三方图形库，避免体积膨胀并保留后续扩展空间。
- * 影响范围：
- *  - 头像裁剪、未来所有依赖 SVG 尺寸的功能可复用该工具函数；
- *    其余使用位图的流程不受影响。
- * 演进与TODO：
- *  - TODO: 若需支持视口相对单位（vw/vh/% 等），可在 parseNumericDimension 中扩展上下文感知的换算策略。
- */
-
 const LENGTH_UNIT_TO_PX = Object.freeze({
   px: 1,
   in: 96,

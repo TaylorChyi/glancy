@@ -1,9 +1,3 @@
-/**
- * 背景：
- *  - 新模型可能输出缺失冒号或以点号连接的标签链，导致换行策略失效。
- * 目的：
- *  - 在安全前缀场景下补写冒号并处理连写标签，使链式格式化生效。
- */
 import {
   isInlineLabelTerminator,
   shouldSplitInlineLabel,
