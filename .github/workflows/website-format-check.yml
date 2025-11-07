@@ -2,6 +2,9 @@ name: website-format-check
 
 on:
   workflow_dispatch: {}
+  pull_request:
+    paths:
+      - "website/**"
 
 jobs:
   lint:

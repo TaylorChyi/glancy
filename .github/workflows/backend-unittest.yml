@@ -2,6 +2,9 @@ name: backend-unittest
 
 on:
   workflow_dispatch: {}
+  pull_request:
+    paths:
+      - "backend/**"
 
 jobs:
   unit-tests:
