@@ -1,4 +1,4 @@
-name: backend-test
+name: backend-unittest
 
 on:
   workflow_dispatch: {}
