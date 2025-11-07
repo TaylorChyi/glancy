@@ -2,7 +2,7 @@ package com.glancy.backend.llm.prompt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.glancy.backend.llm.service.WordPromptTemplate;
+import com.glancy.backend.llm.service.WordPromptTemplateConstants;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,8 +40,8 @@ class PromptTemplateRendererTest {
      *  - 若替换失败将导致断言不满足。
      */
     void renderInjectsContextValues() {
-        String first = renderer.render(WordPromptTemplate.USER_GOAL, Map.of("goal", "流利表达"));
-        String second = renderer.render(WordPromptTemplate.USER_GOAL, Map.of("goal", "精准理解"));
+        String first = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of("goal", "流利表达"));
+        String second = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of("goal", "精准理解"));
         assertEquals("学习目标：流利表达\n", first);
         assertEquals("学习目标：精准理解\n", second);
     }
@@ -58,7 +58,7 @@ class PromptTemplateRendererTest {
      *  - 若渲染器未处理缺省值将导致断言失败。
      */
     void renderMissingContextFallsBackToEmpty() {
-        String content = renderer.render(WordPromptTemplate.USER_GOAL, Map.of());
+        String content = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of());
         assertEquals("学习目标：\n", content);
     }
 

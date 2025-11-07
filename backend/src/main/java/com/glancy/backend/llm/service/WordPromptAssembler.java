@@ -20,7 +20,7 @@ import org.springframework.util.StringUtils;
  * 目的：
  *  - 借助模板渲染器从常量模板加载 Prompt 片段，按语言与风味策略装配模型消息。
  * 关键决策与取舍：
- *  - 采用模板枚举集中管理资源路径，避免散落的硬编码字符串。
+ *  - 通过常量目录集中管理模板内容，避免散落的硬编码字符串。
  *  - 维持语气策略映射，便于未来按风味扩展差异化语气指令。
  * 影响范围：
  *  - 服务层在组合消息时改为依赖模板渲染，相关单测需更新断言方式。
@@ -79,17 +79,17 @@ public class WordPromptAssembler {
         templateContext.put("personaDescriptor", descriptor);
         templateContext.put(
             "toneClause",
-            renderTextClause(context.preferredTone(), WordPromptTemplate.PERSONA_TONE_CLAUSE, "tone")
+            renderTextClause(context.preferredTone(), WordPromptTemplateConstants.PERSONA_TONE_CLAUSE, "tone")
         );
         templateContext.put(
             "goalClause",
-            renderTextClause(context.goal(), WordPromptTemplate.PERSONA_GOAL_CLAUSE, "goal")
+            renderTextClause(context.goal(), WordPromptTemplateConstants.PERSONA_GOAL_CLAUSE, "goal")
         );
         templateContext.put("interestsClause", renderInterestsClause(context));
-        return templateRenderer.render(WordPromptTemplate.PERSONA_BASE, templateContext);
+        return templateRenderer.render(WordPromptTemplateConstants.PERSONA_BASE, templateContext);
     }
 
-    private String renderTextClause(String value, WordPromptTemplate template, String key) {
+    private String renderTextClause(String value, String template, String key) {
         if (!StringUtils.hasText(value)) {
             return "";
         }
@@ -101,7 +101,10 @@ public class WordPromptAssembler {
             return "";
         }
         String interests = String.join("、", context.interests());
-        return templateRenderer.render(WordPromptTemplate.PERSONA_INTERESTS_CLAUSE, Map.of("interests", interests));
+        return templateRenderer.render(
+            WordPromptTemplateConstants.PERSONA_INTERESTS_CLAUSE,
+            Map.of("interests", interests)
+        );
     }
 
     private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
@@ -110,14 +113,14 @@ public class WordPromptAssembler {
         }
         if (language == Language.ENGLISH) {
             if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
-                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_MONOLINGUAL, Map.of());
+                return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_ENGLISH_MONOLINGUAL, Map.of());
             }
             if (flavor == DictionaryFlavor.BILINGUAL) {
-                return templateRenderer.render(WordPromptTemplate.FLAVOR_ENGLISH_BILINGUAL, Map.of());
+                return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_ENGLISH_BILINGUAL, Map.of());
             }
         }
         if (language == Language.CHINESE && flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
-            return templateRenderer.render(WordPromptTemplate.FLAVOR_CHINESE_MONOLINGUAL, Map.of());
+            return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_CHINESE_MONOLINGUAL, Map.of());
         }
         return null;
     }
@@ -150,7 +153,7 @@ public class WordPromptAssembler {
         templateContext.put("recentTermsSection", renderRecentTermsSection(context));
         templateContext.put("goalSection", renderGoalSection(context));
         templateContext.put("toneDirective", renderToneDirective(context, strategy));
-        return templateRenderer.render(WordPromptTemplate.USER_CHINESE_PAYLOAD, templateContext);
+        return templateRenderer.render(WordPromptTemplateConstants.USER_CHINESE_PAYLOAD, templateContext);
     }
 
     private String renderEnglishPayload(
@@ -165,20 +168,20 @@ public class WordPromptAssembler {
         templateContext.put("recentTermsSection", renderRecentTermsSection(context));
         templateContext.put("goalSection", renderGoalSection(context));
         templateContext.put("toneDirective", renderToneDirective(context, strategy));
-        return templateRenderer.render(WordPromptTemplate.USER_ENGLISH_PAYLOAD, templateContext);
+        return templateRenderer.render(WordPromptTemplateConstants.USER_ENGLISH_PAYLOAD, templateContext);
     }
 
     private String renderChineseStructureRequirement(DictionaryFlavor flavor) {
-        WordPromptTemplate template = flavor == DictionaryFlavor.MONOLINGUAL_CHINESE
-            ? WordPromptTemplate.STRUCTURE_CHINESE_MONOLINGUAL
-            : WordPromptTemplate.STRUCTURE_CHINESE_BILINGUAL;
+        String template = flavor == DictionaryFlavor.MONOLINGUAL_CHINESE
+            ? WordPromptTemplateConstants.STRUCTURE_CHINESE_MONOLINGUAL
+            : WordPromptTemplateConstants.STRUCTURE_CHINESE_BILINGUAL;
         return templateRenderer.render(template, Map.of());
     }
 
     private String renderEnglishStructureRequirement(DictionaryFlavor flavor) {
-        WordPromptTemplate template = flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH
-            ? WordPromptTemplate.STRUCTURE_ENGLISH_MONOLINGUAL
-            : WordPromptTemplate.STRUCTURE_ENGLISH_BILINGUAL;
+        String template = flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH
+            ? WordPromptTemplateConstants.STRUCTURE_ENGLISH_MONOLINGUAL
+            : WordPromptTemplateConstants.STRUCTURE_ENGLISH_BILINGUAL;
         return templateRenderer.render(template, Map.of());
     }
 
@@ -187,48 +190,48 @@ public class WordPromptAssembler {
             return "";
         }
         String joined = String.join("、", context.recentTerms());
-        return templateRenderer.render(WordPromptTemplate.USER_RECENT_TERMS, Map.of("terms", joined));
+        return templateRenderer.render(WordPromptTemplateConstants.USER_RECENT_TERMS, Map.of("terms", joined));
     }
 
     private String renderGoalSection(WordPersonalizationContext context) {
         if (context == null || !StringUtils.hasText(context.goal())) {
             return "";
         }
-        return templateRenderer.render(WordPromptTemplate.USER_GOAL, Map.of("goal", context.goal()));
+        return templateRenderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of("goal", context.goal()));
     }
 
     private String renderToneDirective(WordPersonalizationContext context, ToneStrategy strategy) {
         boolean hasPersonaSignals = context != null && context.hasSignals();
-        WordPromptTemplate template = hasPersonaSignals ? strategy.personalisedTemplate() : strategy.defaultTemplate();
+        String template = hasPersonaSignals ? strategy.personalisedTemplate() : strategy.defaultTemplate();
         return templateRenderer.render(template, Map.of());
     }
 
-    private record ToneStrategy(WordPromptTemplate defaultTemplate, WordPromptTemplate personalisedTemplate) {
+    private record ToneStrategy(String defaultTemplate, String personalisedTemplate) {
         private static ToneStrategy english() {
             return new ToneStrategy(
-                WordPromptTemplate.TONE_ENGLISH_DEFAULT,
-                WordPromptTemplate.TONE_ENGLISH_PERSONALIZED
+                WordPromptTemplateConstants.TONE_ENGLISH_DEFAULT,
+                WordPromptTemplateConstants.TONE_ENGLISH_PERSONALIZED
             );
         }
 
         private static ToneStrategy chinese() {
             return new ToneStrategy(
-                WordPromptTemplate.TONE_CHINESE_DEFAULT,
-                WordPromptTemplate.TONE_CHINESE_PERSONALIZED
+                WordPromptTemplateConstants.TONE_CHINESE_DEFAULT,
+                WordPromptTemplateConstants.TONE_CHINESE_PERSONALIZED
             );
         }
 
         private static ToneStrategy bilingual() {
             return new ToneStrategy(
-                WordPromptTemplate.TONE_BILINGUAL_DEFAULT,
-                WordPromptTemplate.TONE_BILINGUAL_PERSONALIZED
+                WordPromptTemplateConstants.TONE_BILINGUAL_DEFAULT,
+                WordPromptTemplateConstants.TONE_BILINGUAL_PERSONALIZED
             );
         }
 
         private static ToneStrategy neutral() {
             return new ToneStrategy(
-                WordPromptTemplate.TONE_NEUTRAL_DEFAULT,
-                WordPromptTemplate.TONE_NEUTRAL_PERSONALIZED
+                WordPromptTemplateConstants.TONE_NEUTRAL_DEFAULT,
+                WordPromptTemplateConstants.TONE_NEUTRAL_PERSONALIZED
             );
         }
     }

@@ -64,8 +64,8 @@ public class WordEntryProfileResolver {
 
         @Override
         public EntryProfile resolve(String normalizedTerm, DictionaryFlavor flavor) {
-            String label = renderer.render(WordPromptTemplate.ENTRY_LABEL_DEFAULT, Map.of());
-            String guidance = renderer.render(WordPromptTemplate.ENTRY_GUIDANCE_DEFAULT, Map.of());
+            String label = renderer.render(WordPromptTemplateConstants.ENTRY_LABEL_DEFAULT, Map.of());
+            String guidance = renderer.render(WordPromptTemplateConstants.ENTRY_GUIDANCE_DEFAULT, Map.of());
             return new EntryProfile(label, guidance);
         }
     }
@@ -80,36 +80,36 @@ public class WordEntryProfileResolver {
             templates.put(
                 Category.EMPTY_OR_UNKNOWN,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_MULTI,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_UNKNOWN
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_MULTI,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_UNKNOWN
                 )
             );
             templates.put(
                 Category.NON_HAN,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_MULTI,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_NON_HAN
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_MULTI,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_NON_HAN
                 )
             );
             templates.put(
                 Category.MIXED_SCRIPT,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_MULTI,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_MIXED
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_MULTI,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_MIXED
                 )
             );
             templates.put(
                 Category.SINGLE_CHARACTER,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_SINGLE,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_SINGLE
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_SINGLE,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_SINGLE
                 )
             );
             templates.put(
                 Category.MULTI_CHARACTER,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_MULTI,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_MULTI
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_MULTI,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_MULTI
                 )
             );
         }
@@ -120,8 +120,8 @@ public class WordEntryProfileResolver {
             ProfileTemplate template = templates.getOrDefault(
                 category,
                 new ProfileTemplate(
-                    WordPromptTemplate.ENTRY_LABEL_CHINESE_MULTI,
-                    WordPromptTemplate.ENTRY_GUIDANCE_CHINESE_MULTI
+                    WordPromptTemplateConstants.ENTRY_LABEL_CHINESE_MULTI,
+                    WordPromptTemplateConstants.ENTRY_GUIDANCE_CHINESE_MULTI
                 )
             );
             return template.render(renderer);
@@ -163,7 +163,7 @@ public class WordEntryProfileResolver {
             MULTI_CHARACTER,
         }
 
-        private record ProfileTemplate(WordPromptTemplate labelTemplate, WordPromptTemplate guidanceTemplate) {
+        private record ProfileTemplate(String labelTemplate, String guidanceTemplate) {
             private EntryProfile render(PromptTemplateRenderer renderer) {
                 String label = renderer.render(labelTemplate, Map.of());
                 String guidance = renderer.render(guidanceTemplate, Map.of());

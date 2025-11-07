@@ -1,6 +1,5 @@
 package com.glancy.backend.llm.prompt;
 
-import com.glancy.backend.llm.service.WordPromptTemplate;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,11 +23,6 @@ import org.springframework.util.Assert;
 public class PromptTemplateRenderer {
 
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{(.*?)\\}}", Pattern.DOTALL);
-
-    public String render(WordPromptTemplate template, Map<String, String> context) {
-        Assert.notNull(template, "template must not be null");
-        return render(template.content(), context);
-    }
 
     public String render(String templateContent, Map<String, String> context) {
         Assert.hasText(templateContent, "templateContent must not be empty");
