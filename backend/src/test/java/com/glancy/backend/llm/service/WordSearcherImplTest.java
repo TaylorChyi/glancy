@@ -40,6 +40,7 @@ class WordSearcherImplTest {
     private SearchContentManager searchContentManager;
     private WordResponseParser parser;
     private LLMClient defaultClient;
+    private WordPromptAssembler promptAssembler;
 
     @SuppressWarnings("unchecked")
     private static ArgumentCaptor<List<ChatMessage>> chatMessagesCaptor() {
@@ -58,6 +59,7 @@ class WordSearcherImplTest {
         searchContentManager = mock(SearchContentManager.class);
         parser = mock(WordResponseParser.class);
         defaultClient = mock(LLMClient.class);
+        promptAssembler = new WordPromptAssembler();
     }
 
     /**
@@ -73,7 +75,14 @@ class WordSearcherImplTest {
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
         when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        WordSearcherImpl searcher = new WordSearcherImpl(
+            factory,
+            config,
+            promptManager,
+            searchContentManager,
+            parser,
+            promptAssembler
+        );
         WordResponse result = searcher.search(
             "hello",
             Language.ENGLISH,
@@ -96,7 +105,14 @@ class WordSearcherImplTest {
     void searchThrowsWhenDefaultMissing() {
         when(factory.get("invalid")).thenReturn(null);
         when(factory.get("doubao")).thenReturn(null);
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        WordSearcherImpl searcher = new WordSearcherImpl(
+            factory,
+            config,
+            promptManager,
+            searchContentManager,
+            parser,
+            promptAssembler
+        );
         assertThrows(IllegalStateException.class, () ->
             searcher.search("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "invalid", NO_PERSONALIZATION_CONTEXT)
         );
@@ -122,7 +138,14 @@ class WordSearcherImplTest {
         WordResponse expected = new WordResponse();
         when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        WordSearcherImpl searcher = new WordSearcherImpl(
+            factory,
+            config,
+            promptManager,
+            searchContentManager,
+            parser,
+            promptAssembler
+        );
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
@@ -152,7 +175,14 @@ class WordSearcherImplTest {
             new ParsedWord(expected, "content<END>")
         );
 
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        WordSearcherImpl searcher = new WordSearcherImpl(
+            factory,
+            config,
+            promptManager,
+            searchContentManager,
+            parser,
+            promptAssembler
+        );
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
@@ -187,7 +217,14 @@ class WordSearcherImplTest {
             new ParsedWord(expected, "content<END>")
         );
 
-        WordSearcherImpl searcher = new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser);
+        WordSearcherImpl searcher = new WordSearcherImpl(
+            factory,
+            config,
+            promptManager,
+            searchContentManager,
+            parser,
+            promptAssembler
+        );
         searcher.search(
             "elegance",
             Language.ENGLISH,
