@@ -2,6 +2,7 @@ package com.glancy.backend.llm.prompt;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,17 @@ public class PromptTemplateRenderer {
         }
         matcher.appendTail(buffer);
         return buffer.toString();
+    }
+
+    public void preload(Collection<String> resourcePaths) {
+        if (resourcePaths == null) {
+            return;
+        }
+        for (String path : resourcePaths) {
+            if (path != null && !path.isBlank()) {
+                templateCache.computeIfAbsent(path, this::loadTemplate);
+            }
+        }
     }
 
     private String loadTemplate(String resourcePath) {

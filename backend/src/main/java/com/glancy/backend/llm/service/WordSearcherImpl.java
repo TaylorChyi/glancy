@@ -7,8 +7,8 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.completion.CompletionSentinel;
 import com.glancy.backend.llm.completion.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.llm.config.LLMConfig;
-import com.glancy.backend.llm.llm.LLMClient;
-import com.glancy.backend.llm.llm.LLMClientFactory;
+import com.glancy.backend.llm.llm.DictionaryModelClient;
+import com.glancy.backend.llm.llm.DictionaryModelClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WordSearcherImpl implements WordSearcher {
 
-    private final LLMClientFactory clientFactory;
+    private final DictionaryModelClientFactory clientFactory;
     private final LLMConfig config;
     private final PromptManager promptManager;
     private final SearchContentManager searchContentManager;
@@ -43,7 +43,7 @@ public class WordSearcherImpl implements WordSearcher {
     private final WordPromptAssembler promptAssembler;
 
     public WordSearcherImpl(
-        LLMClientFactory clientFactory,
+        DictionaryModelClientFactory clientFactory,
         LLMConfig config,
         PromptManager promptManager,
         SearchContentManager searchContentManager,
@@ -67,7 +67,7 @@ public class WordSearcherImpl implements WordSearcher {
         WordPersonalizationContext personalizationContext
     ) {
         log.info(
-            "WordSearcher searching for '{}' using client {} language={} flavor={} personalizationSignals={}",
+            "WordSearcher searching for '{}' using dictionary client {} language={} flavor={} personalizationSignals={}",
             term,
             clientName,
             language,
@@ -78,7 +78,7 @@ public class WordSearcherImpl implements WordSearcher {
         String promptPath = config.resolvePromptPath(language, flavor);
         String prompt = promptManager.loadPrompt(promptPath);
         String resolvedClientName = clientName != null ? clientName : config.getDefaultClient();
-        LLMClient client = resolveClient(resolvedClientName);
+        DictionaryModelClient client = resolveClient(resolvedClientName);
         List<ChatMessage> messages = promptAssembler.composeMessages(
             prompt,
             cleanInput,
@@ -86,17 +86,17 @@ public class WordSearcherImpl implements WordSearcher {
             language,
             flavor
         );
-        String content = client.chat(messages, config.getTemperature());
+        String content = client.generateEntry(messages, config.getTemperature());
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info(
-            "LLM client '{}' returned content (sentinelPresent={}): {}",
+            "Dictionary model client '{}' returned content (sentinelPresent={}): {}",
             resolvedClientName,
             completion.satisfied(),
             content
         );
         if (!completion.satisfied()) {
             log.warn(
-                "LLM client '{}' response missing completion sentinel '{}'",
+                "Dictionary model client '{}' response missing completion sentinel '{}'",
                 resolvedClientName,
                 CompletionSentinel.MARKER
             );
@@ -106,17 +106,21 @@ public class WordSearcherImpl implements WordSearcher {
         return parsed.parsed();
     }
 
-    private LLMClient resolveClient(String clientName) {
-        LLMClient client = clientFactory.get(clientName);
+    private DictionaryModelClient resolveClient(String clientName) {
+        DictionaryModelClient client = clientFactory.get(clientName);
         if (client != null) {
             return client;
         }
-        log.warn("LLM client '{}' not found, falling back to default", clientName);
+        log.warn("Dictionary model client '{}' not found, falling back to default", clientName);
         String fallback = config.getDefaultClient();
-        LLMClient fallbackClient = clientFactory.get(fallback);
+        DictionaryModelClient fallbackClient = clientFactory.get(fallback);
         if (fallbackClient == null) {
             throw new IllegalStateException(
-                String.format("LLM client '%s' not available and default '%s' not configured", clientName, fallback)
+                String.format(
+                    "Dictionary model client '%s' not available and default '%s' not configured",
+                    clientName,
+                    fallback
+                )
             );
         }
         return fallbackClient;

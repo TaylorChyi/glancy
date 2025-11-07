@@ -35,7 +35,16 @@ public enum WordPromptTemplate {
     STRUCTURE_CHINESE_MONOLINGUAL("prompts/word/structure/chinese_monolingual.txt"),
     STRUCTURE_CHINESE_BILINGUAL("prompts/word/structure/chinese_bilingual.txt"),
     STRUCTURE_ENGLISH_MONOLINGUAL("prompts/word/structure/english_monolingual.txt"),
-    STRUCTURE_ENGLISH_BILINGUAL("prompts/word/structure/english_bilingual.txt");
+    STRUCTURE_ENGLISH_BILINGUAL("prompts/word/structure/english_bilingual.txt"),
+    ENTRY_LABEL_DEFAULT("prompts/word/entry/label_default.txt"),
+    ENTRY_GUIDANCE_DEFAULT("prompts/word/entry/guidance_default.txt"),
+    ENTRY_LABEL_CHINESE_SINGLE("prompts/word/entry/chinese_single_label.txt"),
+    ENTRY_LABEL_CHINESE_MULTI("prompts/word/entry/chinese_multi_label.txt"),
+    ENTRY_GUIDANCE_CHINESE_SINGLE("prompts/word/entry/chinese_single_guidance.txt"),
+    ENTRY_GUIDANCE_CHINESE_MULTI("prompts/word/entry/chinese_multi_guidance.txt"),
+    ENTRY_GUIDANCE_CHINESE_MIXED("prompts/word/entry/chinese_mixed_guidance.txt"),
+    ENTRY_GUIDANCE_CHINESE_NON_HAN("prompts/word/entry/chinese_non_han_guidance.txt"),
+    ENTRY_GUIDANCE_CHINESE_UNKNOWN("prompts/word/entry/chinese_unknown_guidance.txt");
 
     private final String path;
 
@@ -45,5 +54,14 @@ public enum WordPromptTemplate {
 
     public String path() {
         return path;
+    }
+
+    public static java.util.Set<String> allPaths() {
+        java.util.EnumSet<WordPromptTemplate> all = java.util.EnumSet.allOf(WordPromptTemplate.class);
+        java.util.Set<String> paths = new java.util.HashSet<>();
+        for (WordPromptTemplate template : all) {
+            paths.add(template.path());
+        }
+        return java.util.Collections.unmodifiableSet(paths);
     }
 }

@@ -9,14 +9,15 @@ import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.config.LLMConfig;
-import com.glancy.backend.llm.llm.LLMClient;
-import com.glancy.backend.llm.llm.LLMClientFactory;
+import com.glancy.backend.llm.llm.DictionaryModelClient;
+import com.glancy.backend.llm.llm.DictionaryModelClientFactory;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.prompt.PromptTemplateRenderer;
 import com.glancy.backend.llm.search.SearchContentManager;
+import com.glancy.backend.llm.service.WordEntryProfileResolver;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +37,12 @@ class WordSearcherImplTest {
         List.of()
     );
 
-    private LLMClientFactory factory;
+    private DictionaryModelClientFactory factory;
     private LLMConfig config;
     private PromptManager promptManager;
     private SearchContentManager searchContentManager;
     private WordResponseParser parser;
-    private LLMClient defaultClient;
+    private DictionaryModelClient defaultClient;
     private WordPromptAssembler promptAssembler;
     private PromptTemplateRenderer templateRenderer;
 
@@ -52,7 +53,7 @@ class WordSearcherImplTest {
 
     @BeforeEach
     void setUp() {
-        factory = mock(LLMClientFactory.class);
+        factory = mock(DictionaryModelClientFactory.class);
         config = new LLMConfig();
         config.setDefaultClient("doubao");
         config.setTemperature(0.5);
@@ -61,9 +62,10 @@ class WordSearcherImplTest {
         promptManager = mock(PromptManager.class);
         searchContentManager = mock(SearchContentManager.class);
         parser = mock(WordResponseParser.class);
-        defaultClient = mock(LLMClient.class);
+        defaultClient = mock(DictionaryModelClient.class);
         templateRenderer = new PromptTemplateRenderer(new DefaultResourceLoader());
-        promptAssembler = new WordPromptAssembler(templateRenderer);
+        WordEntryProfileResolver entryProfileResolver = new WordEntryProfileResolver(templateRenderer);
+        promptAssembler = new WordPromptAssembler(templateRenderer, entryProfileResolver);
     }
 
     /**
@@ -75,7 +77,7 @@ class WordSearcherImplTest {
         when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         when(searchContentManager.normalize("hello")).thenReturn("hello");
-        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content");
+        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content");
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
         when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
@@ -98,7 +100,7 @@ class WordSearcherImplTest {
         assertSame(expected, result);
         verify(factory).get("invalid");
         verify(factory).get("doubao");
-        verify(defaultClient).chat(anyList(), eq(0.5));
+        verify(defaultClient).generateEntry(anyList(), eq(0.5));
         verify(promptManager).loadPrompt("path-en");
     }
 
@@ -138,7 +140,7 @@ class WordSearcherImplTest {
         when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
         when(searchContentManager.normalize("汉")).thenReturn("汉");
-        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
+        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
         when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
@@ -153,7 +155,7 @@ class WordSearcherImplTest {
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
+        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
             .stream()
@@ -173,7 +175,7 @@ class WordSearcherImplTest {
         when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
+        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
         when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")
@@ -190,7 +192,7 @@ class WordSearcherImplTest {
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
+        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
         boolean hasInstruction = messagesCaptor
             .getValue()
             .stream()
@@ -215,7 +217,7 @@ class WordSearcherImplTest {
         when(factory.get("doubao")).thenReturn(defaultClient);
         when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        when(defaultClient.chat(anyList(), eq(0.5))).thenReturn("content<END>");
+        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
         when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")
@@ -238,7 +240,7 @@ class WordSearcherImplTest {
         );
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).chat(messagesCaptor.capture(), eq(0.5));
+        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
             .stream()

@@ -33,14 +33,21 @@ class PromptTemplateRendererTest {
     void renderInjectsContextValues() {
         String first = renderer.render(WordPromptTemplate.USER_GOAL.path(), Map.of("goal", "流利表达"));
         String second = renderer.render(WordPromptTemplate.USER_GOAL.path(), Map.of("goal", "精准理解"));
-        assertEquals("\n学习目标：流利表达", first);
-        assertEquals("\n学习目标：精准理解", second);
+        assertEquals("学习目标：流利表达\n", first);
+        assertEquals("学习目标：精准理解\n", second);
     }
 
     @Test
     void renderMissingContextFallsBackToEmpty() {
         String content = renderer.render(WordPromptTemplate.USER_GOAL.path(), Map.of());
-        assertEquals("\n学习目标：", content);
+        assertEquals("学习目标：\n", content);
+    }
+
+    @Test
+    void preloadCachesTemplates() {
+        renderer.preload(WordPromptTemplate.allPaths());
+        String content = renderer.render(WordPromptTemplate.USER_RECENT_TERMS.path(), Map.of("terms", "hello"));
+        assertEquals("近期检索：hello\n", content);
     }
 
     @Test

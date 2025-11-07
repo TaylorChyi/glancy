@@ -66,15 +66,15 @@ class DoubaoClientTest {
     }
 
     @Test
-    void GivenValidResponse_WhenChat_ThenReturnAssistantContent() {
+    void GivenValidResponse_WhenGenerateEntry_ThenReturnAssistantContent() {
         ExchangeFunction ef = this::successResponse;
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
-        String result = client.chat(List.of(new ChatMessage("user", "hi")), 0.5);
+        String result = client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5);
         assertEquals("hi", result);
     }
 
     @Test
-    void GivenUnauthorized_WhenChat_ThenThrowUnauthorizedException() {
+    void GivenUnauthorized_WhenGenerateEntry_ThenThrowUnauthorizedException() {
         ExchangeFunction ef = req -> {
             assertEquals(MediaType.APPLICATION_JSON_VALUE, req.headers().getFirst(HttpHeaders.ACCEPT));
             assertTrue(extractRequestBody(req).contains("\"stream\":false"));
@@ -82,16 +82,16 @@ class DoubaoClientTest {
         };
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
-            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
+            client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5)
         );
     }
 
     @Test
-    void GivenServerError_WhenChat_ThenThrowBusinessException() {
+    void GivenServerError_WhenGenerateEntry_ThenThrowBusinessException() {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR).build());
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         assertThrows(com.glancy.backend.exception.BusinessException.class, () ->
-            client.chat(List.of(new ChatMessage("user", "hi")), 0.5)
+            client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5)
         );
     }
 

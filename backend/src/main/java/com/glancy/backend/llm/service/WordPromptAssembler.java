@@ -5,6 +5,7 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.llm.model.ChatMessage;
 import com.glancy.backend.llm.prompt.PromptTemplateRenderer;
+import com.glancy.backend.llm.service.WordEntryProfileResolver.EntryProfile;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -31,9 +32,11 @@ public class WordPromptAssembler {
 
     private final Map<DictionaryFlavor, ToneStrategy> toneStrategies;
     private final PromptTemplateRenderer templateRenderer;
+    private final WordEntryProfileResolver entryProfileResolver;
 
-    public WordPromptAssembler(PromptTemplateRenderer templateRenderer) {
+    public WordPromptAssembler(PromptTemplateRenderer templateRenderer, WordEntryProfileResolver entryProfileResolver) {
         this.templateRenderer = templateRenderer;
+        this.entryProfileResolver = entryProfileResolver;
         this.toneStrategies = initialiseToneStrategies();
     }
 
@@ -141,7 +144,7 @@ public class WordPromptAssembler {
         DictionaryFlavor flavor,
         ToneStrategy strategy
     ) {
-        ChineseEntryProfile profile = resolveChineseEntryProfile(normalizedTerm);
+        EntryProfile profile = entryProfileResolver.resolve(Language.CHINESE, normalizedTerm, flavor);
         Map<String, String> templateContext = new HashMap<>();
         templateContext.put("term", normalizedTerm == null ? "" : normalizedTerm);
         templateContext.put("entryType", profile.typeLabel());
@@ -203,44 +206,6 @@ public class WordPromptAssembler {
         return templateRenderer.render(template.path(), Map.of());
     }
 
-    private ChineseEntryProfile resolveChineseEntryProfile(String normalizedTerm) {
-        if (!StringUtils.hasText(normalizedTerm)) {
-            return new ChineseEntryProfile(
-                "Multi-character Word",
-                "未识别输入，按常规汉语词语处理，突出现代义项与搭配。"
-            );
-        }
-        String condensed = normalizedTerm.replaceAll("\\s+", "");
-        int codePoints = condensed.codePointCount(0, condensed.length());
-        boolean containsHan = condensed
-            .codePoints()
-            .anyMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN);
-        if (!containsHan) {
-            return new ChineseEntryProfile(
-                "Multi-character Word",
-                "包含非汉字字符，请解释其在中文语境中的意义来源，并提供英文释义。"
-            );
-        }
-        boolean allHan = condensed
-            .codePoints()
-            .allMatch(cp -> Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN);
-        if (!allHan) {
-            return new ChineseEntryProfile(
-                "Multi-character Word",
-                "含汉字与其他符号混写，需补充借词背景，同时仍按词语结构组织英文释义。"
-            );
-        }
-        if (codePoints == 1) {
-            return new ChineseEntryProfile(
-                "Single Character",
-                "请拆解字源、构形与历史演变，再补充当代主流义项与用例。"
-            );
-        }
-        return new ChineseEntryProfile("Multi-character Word", "标准汉语词语，请分层呈现核心义项与常见搭配。");
-    }
-
-    private record ChineseEntryProfile(String typeLabel, String guidance) {}
-
     private record ToneStrategy(WordPromptTemplate defaultTemplate, WordPromptTemplate personalisedTemplate) {
         private static ToneStrategy english() {
             return new ToneStrategy(
@@ -269,6 +234,5 @@ public class WordPromptAssembler {
                 WordPromptTemplate.TONE_NEUTRAL_PERSONALIZED
             );
         }
-
     }
 }

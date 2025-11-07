@@ -4,7 +4,7 @@ import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.exception.UnauthorizedException;
-import com.glancy.backend.llm.llm.LLMClient;
+import com.glancy.backend.llm.llm.DictionaryModelClient;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component("doubaoClient")
-public class DoubaoClient implements LLMClient {
+public class DoubaoClient implements DictionaryModelClient {
 
     private final WebClient webClient;
     private final String chatPath;
@@ -47,9 +47,9 @@ public class DoubaoClient implements LLMClient {
     }
 
     @Override
-    public String chat(List<ChatMessage> messages, double temperature) {
+    public String generateEntry(List<ChatMessage> messages, double temperature) {
         log.info(
-            "DoubaoClient.chat called with {} messages, temperature={}, stream=false",
+            "DoubaoClient.generateEntry called with {} messages, temperature={}, stream=false",
             messages.size(),
             temperature
         );
@@ -57,7 +57,7 @@ public class DoubaoClient implements LLMClient {
         return prepareRequest(body)
             .exchangeToMono(this::handleSyncResponse)
             .map(this::extractAssistantContent)
-            .doOnNext(content -> log.info("DoubaoClient.chat aggregated response length={}", content.length()))
+            .doOnNext(content -> log.info("DoubaoClient.generateEntry aggregated response length={}", content.length()))
             .blockOptional()
             .orElse("");
     }
