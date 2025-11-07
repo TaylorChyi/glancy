@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 final class MarkdownWordExtractor {
 
     private static final Pattern NUMBERED_LIST_PATTERN = Pattern.compile("^(\\d+)[\\.)]\\s*(.+)$");

@@ -3,7 +3,6 @@ package com.glancy.backend.service.profile;
 import com.glancy.backend.dto.ProfileCustomSectionDto;
 import java.util.List;
 
-
 public interface ProfileSectionCodec {
     /**
      * 将自定义大项列表序列化为可持久化的文本表示。

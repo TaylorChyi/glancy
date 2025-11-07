@@ -2,7 +2,6 @@ package com.glancy.backend.service.email.localization;
 
 import java.util.Locale;
 
-
 public interface VerificationLocaleResolver {
     /**
      * 意图：根据客户端上下文信息解析最合适的语言环境。

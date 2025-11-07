@@ -6,7 +6,6 @@ import com.glancy.backend.entity.redemption.RedemptionEffectType;
 import com.glancy.backend.service.redemption.model.RedemptionOutcome;
 import java.time.LocalDateTime;
 
-
 public interface RedemptionEffectProcessor {
     RedemptionEffectType supportedType();
 

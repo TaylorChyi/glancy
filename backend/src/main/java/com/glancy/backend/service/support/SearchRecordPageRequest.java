@@ -4,7 +4,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-
 public record SearchRecordPageRequest(int page, int size) {
     public static final int DEFAULT_SIZE = 20;
     public static final int MAX_SIZE = 100;

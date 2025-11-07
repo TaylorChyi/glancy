@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
-
 @Component
 public class TemplateDrivenVerificationEmailContentResolver implements VerificationEmailContentResolver {
 

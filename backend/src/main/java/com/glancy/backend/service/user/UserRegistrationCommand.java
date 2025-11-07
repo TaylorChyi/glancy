@@ -12,7 +12,6 @@ import com.glancy.backend.service.UserProfileService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class UserRegistrationCommand {
 

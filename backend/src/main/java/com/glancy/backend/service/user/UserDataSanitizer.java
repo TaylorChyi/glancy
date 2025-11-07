@@ -6,7 +6,6 @@ import com.glancy.backend.service.support.AvatarReferenceResolver;
 import java.util.Locale;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class UserDataSanitizer {
 

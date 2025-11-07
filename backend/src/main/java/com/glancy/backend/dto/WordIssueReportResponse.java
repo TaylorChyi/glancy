@@ -5,7 +5,6 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.WordIssueCategory;
 import java.time.LocalDateTime;
 
-
 public record WordIssueReportResponse(
     Long id,
     String term,

@@ -3,7 +3,6 @@ package com.glancy.backend.entity;
 import java.util.Locale;
 import java.util.Optional;
 
-
 public enum MembershipType {
     NONE(0),
     PLUS(1),

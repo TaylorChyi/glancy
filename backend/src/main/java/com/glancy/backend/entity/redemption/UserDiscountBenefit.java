@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "user_discount_benefit")
 public class UserDiscountBenefit extends BaseEntity {

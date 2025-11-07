@@ -11,7 +11,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class MembershipRedemptionProcessor implements RedemptionEffectProcessor {
 

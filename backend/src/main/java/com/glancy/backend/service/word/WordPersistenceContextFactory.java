@@ -11,7 +11,6 @@ import com.glancy.backend.service.support.WordVersionContentStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-
 @Component
 @RequiredArgsConstructor
 public class WordPersistenceContextFactory {

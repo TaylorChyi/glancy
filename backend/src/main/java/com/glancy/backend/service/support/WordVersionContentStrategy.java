@@ -2,7 +2,6 @@ package com.glancy.backend.service.support;
 
 import com.glancy.backend.entity.Word;
 
-
 public interface WordVersionContentStrategy {
     /**
      * 根据持久化上下文与保存后的词条生成历史版本内容。

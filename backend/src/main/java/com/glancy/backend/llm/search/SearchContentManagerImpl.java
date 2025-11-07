@@ -6,7 +6,6 @@ import java.util.Locale;
 import java.util.function.UnaryOperator;
 import org.springframework.stereotype.Component;
 
-
 @Component
 public class SearchContentManagerImpl implements SearchContentManager {
 

@@ -2,7 +2,6 @@ package com.glancy.backend.service.email.localization;
 
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 
-
 public interface VerificationEmailContentResolver {
     /**
      * 意图：根据客户端上下文生成本地化后的验证码邮件正文。

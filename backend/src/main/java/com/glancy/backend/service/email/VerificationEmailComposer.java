@@ -15,7 +15,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-
 @Component
 public class VerificationEmailComposer {
 

@@ -13,7 +13,6 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "redemption_code")
 public class RedemptionCode extends BaseEntity {

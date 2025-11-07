@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-
 public record DiscountEffectConfig(
     @NotNull(message = "折扣百分比不能为空")
     @DecimalMin(value = "0.01", message = "折扣百分比需大于 0")

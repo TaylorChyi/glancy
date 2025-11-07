@@ -10,7 +10,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "redemption_record")
 public class RedemptionRecord extends BaseEntity {

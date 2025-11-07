@@ -4,7 +4,6 @@ import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 
-
 public record WordQueryContext(
     Long userId,
     String rawTerm,

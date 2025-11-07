@@ -6,7 +6,6 @@ import com.glancy.backend.entity.Word;
 import com.glancy.backend.util.SensitiveDataUtil;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
 public class ResponseMarkdownOrSerializedWordStrategy implements WordVersionContentStrategy {
 

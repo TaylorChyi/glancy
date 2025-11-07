@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
-
 public record RedemptionCodeCreateRequest(
     @NotBlank(message = "兑换码编码不能为空") String code,
     @NotNull(message = "兑换开始时间不能为空") LocalDateTime redeemableFrom,

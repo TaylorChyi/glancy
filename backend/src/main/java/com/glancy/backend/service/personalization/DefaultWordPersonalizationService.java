@@ -20,7 +20,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-
 @Service
 public class DefaultWordPersonalizationService implements WordPersonalizationService {
 

@@ -3,7 +3,6 @@ package com.glancy.backend.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UserProfileRequest(
     /** 用户当前的职业角色描述 */

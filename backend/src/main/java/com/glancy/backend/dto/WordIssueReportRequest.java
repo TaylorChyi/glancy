@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-
 public record WordIssueReportRequest(
     @NotBlank(message = "term is required") String term,
     @NotNull(message = "language is required") Language language,
