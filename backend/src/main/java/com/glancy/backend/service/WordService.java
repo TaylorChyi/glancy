@@ -7,15 +7,12 @@ import com.glancy.backend.entity.DictionaryModel;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
-import com.glancy.backend.service.word.StreamingWordRetrievalStrategy;
 import com.glancy.backend.service.word.SynchronousWordRetrievalStrategy;
 import com.glancy.backend.service.word.WordQueryContext;
 import com.glancy.backend.service.word.WordRetrievalStrategy;
-import com.glancy.backend.service.word.WordStreamPayload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -26,18 +23,15 @@ public class WordService {
     private final DictionaryTermNormalizer termNormalizer;
     private final WordPersonalizationService wordPersonalizationService;
     private final WordRetrievalStrategy<WordResponse> synchronousStrategy;
-    private final WordRetrievalStrategy<Flux<WordStreamPayload>> streamingStrategy;
 
     public WordService(
         DictionaryTermNormalizer termNormalizer,
         WordPersonalizationService wordPersonalizationService,
-        SynchronousWordRetrievalStrategy synchronousStrategy,
-        StreamingWordRetrievalStrategy streamingStrategy
+        SynchronousWordRetrievalStrategy synchronousStrategy
     ) {
         this.termNormalizer = termNormalizer;
         this.wordPersonalizationService = wordPersonalizationService;
         this.synchronousStrategy = synchronousStrategy;
-        this.streamingStrategy = streamingStrategy;
     }
 
     @Transactional
@@ -52,20 +46,6 @@ public class WordService {
     ) {
         WordQueryContext context = buildContext(userId, term, language, flavor, model, forceNew, captureHistory);
         return synchronousStrategy.execute(context);
-    }
-
-    @Transactional
-    public Flux<WordStreamPayload> streamWordForUser(
-        Long userId,
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String model,
-        boolean forceNew,
-        boolean captureHistory
-    ) {
-        WordQueryContext context = buildContext(userId, term, language, flavor, model, forceNew, captureHistory);
-        return streamingStrategy.execute(context);
     }
 
     private WordQueryContext buildContext(

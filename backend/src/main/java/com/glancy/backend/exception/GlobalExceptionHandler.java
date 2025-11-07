@@ -9,7 +9,6 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +16,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -44,27 +41,8 @@ public class GlobalExceptionHandler {
         this.messageResolver = messageResolver;
     }
 
-    private boolean isSseRequest() {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs == null) {
-            return false;
-        }
-        String accept = attrs.getRequest().getHeader(HttpHeaders.ACCEPT);
-        return accept != null && accept.contains(MediaType.TEXT_EVENT_STREAM_VALUE);
-    }
-
     private ResponseEntity<?> buildResponse(Object body, HttpStatus status) {
         Object sanitizedBody = sanitizeBody(body, status);
-        if (isSseRequest()) {
-            try {
-                String json = mapper.writeValueAsString(sanitizedBody);
-                String event = "event: error\n" + "data: " + json + "\n\n";
-                return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(event);
-            } catch (JsonProcessingException e) {
-                String fallback = "event: error\ndata: {\"message\":\"serialization error\"}\n\n";
-                return ResponseEntity.status(status).contentType(MediaType.TEXT_EVENT_STREAM).body(fallback);
-            }
-        }
         return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(sanitizedBody);
     }
 

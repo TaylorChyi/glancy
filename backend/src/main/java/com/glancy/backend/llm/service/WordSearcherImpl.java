@@ -4,6 +4,8 @@ import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.llm.completion.CompletionSentinel;
+import com.glancy.backend.llm.completion.CompletionSentinel.CompletionCheck;
 import com.glancy.backend.llm.config.LLMConfig;
 import com.glancy.backend.llm.llm.LLMClient;
 import com.glancy.backend.llm.llm.LLMClientFactory;
@@ -12,14 +14,11 @@ import com.glancy.backend.llm.parser.ParsedWord;
 import com.glancy.backend.llm.parser.WordResponseParser;
 import com.glancy.backend.llm.prompt.PromptManager;
 import com.glancy.backend.llm.search.SearchContentManager;
-import com.glancy.backend.llm.stream.CompletionSentinel;
-import com.glancy.backend.llm.stream.CompletionSentinel.CompletionCheck;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import reactor.core.publisher.Flux;
 
 @Slf4j
 @Service
@@ -87,56 +86,6 @@ public class WordSearcherImpl implements WordSearcher {
         String sanitized = completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
         ParsedWord parsed = parser.parse(sanitized, term, language);
         return parsed.parsed();
-    }
-
-    /**
-     * 面向实时场景的搜索接口，直接返回模型的流式输出。
-     */
-    public Flux<String> streamSearch(
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String clientName,
-        WordPersonalizationContext personalizationContext
-    ) {
-        log.info(
-            "WordSearcher streaming for '{}' using client '{}' language={} flavor={} personalizationSignals={}",
-            term,
-            clientName,
-            language,
-            flavor,
-            personalizationContext != null && personalizationContext.hasSignals()
-        );
-        String cleanInput = searchContentManager.normalize(term);
-        log.info("Normalized input term='{}'", cleanInput);
-
-        String promptPath = config.resolvePromptPath(language, flavor);
-        String prompt = promptManager.loadPrompt(promptPath);
-        log.info(
-            "Loaded prompt from path='{}' for language='{}', length='{}'",
-            promptPath,
-            language,
-            prompt != null ? prompt.length() : 0
-        );
-
-        String name = clientName != null ? clientName : config.getDefaultClient();
-        LLMClient client = clientFactory.get(name);
-        if (client == null) {
-            log.warn("LLM client '{}' not found, falling back to default", name);
-            client = clientFactory.get(config.getDefaultClient());
-        }
-        log.info("Using LLM client '{}'", name);
-
-        List<ChatMessage> messages = buildMessages(prompt, cleanInput, personalizationContext, language, flavor);
-        log.info("Using LLM client '{}'", name);
-        log.info(
-            "Prepared '{}' request messages: roles='{}'",
-            messages.size(),
-            messages.stream().map(ChatMessage::getRole).toList()
-        );
-
-        log.info("Sending streaming request to LLM client '{}' for term='{}'", name, term);
-        return client.streamChat(messages, config.getTemperature());
     }
 
     private List<ChatMessage> buildMessages(
