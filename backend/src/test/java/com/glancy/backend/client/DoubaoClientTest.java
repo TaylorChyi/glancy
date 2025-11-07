@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.glancy.backend.config.DoubaoProperties;
 import com.glancy.backend.llm.llm.DictionaryModelRequestOptions;
 import com.glancy.backend.llm.model.ChatMessage;
+import com.glancy.backend.llm.model.ChatRole;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -80,7 +81,7 @@ class DoubaoClientTest {
     void GivenValidResponse_WhenGenerateEntry_ThenReturnAssistantContent() {
         ExchangeFunction ef = this::successResponse;
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
-        String result = client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5);
+        String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5);
         assertEquals("hi", result);
     }
 
@@ -105,7 +106,7 @@ class DoubaoClientTest {
         };
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         assertThrows(com.glancy.backend.exception.UnauthorizedException.class, () ->
-            client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5)
+            client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5)
         );
     }
 
@@ -124,7 +125,7 @@ class DoubaoClientTest {
         ExchangeFunction ef = req -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR).build());
         client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
         assertThrows(com.glancy.backend.exception.BusinessException.class, () ->
-            client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5)
+            client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5)
         );
     }
 
@@ -156,7 +157,7 @@ class DoubaoClientTest {
             .stream(true)
             .thinkingType("detailed")
             .build();
-        String result = client.generateEntry(List.of(new ChatMessage("user", "hi")), 0.5, options);
+        String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5, options);
         assertEquals("", result);
     }
 
@@ -167,7 +168,10 @@ class DoubaoClientTest {
         String requestBody = extractRequestBody(request);
         assertTrue(requestBody.contains("\"stream\":false"));
         assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
-        String body = "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"hi\"}}]}";
+        String body = String.format(
+            "{\"choices\":[{\"message\":{\"role\":\"%s\",\"content\":\"hi\"}}]}",
+            ChatRole.ASSISTANT.role()
+        );
         return Mono.just(
             ClientResponse.create(HttpStatus.OK)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

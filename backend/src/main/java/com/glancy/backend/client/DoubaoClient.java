@@ -5,6 +5,7 @@ import com.glancy.backend.dto.ChatCompletionResponse;
 import com.glancy.backend.exception.BusinessException;
 import com.glancy.backend.exception.UnauthorizedException;
 import com.glancy.backend.llm.llm.DictionaryModelClient;
+import com.glancy.backend.llm.llm.DictionaryModelRequestFallbacks;
 import com.glancy.backend.llm.llm.DictionaryModelRequestOptions;
 import com.glancy.backend.llm.model.ChatMessage;
 import java.util.ArrayList;
@@ -38,10 +39,9 @@ public class DoubaoClient implements DictionaryModelClient {
         this.model = properties.getModel();
         this.maxCompletionTokens = properties.getMaxCompletionTokens();
         this.defaultStream = Boolean.TRUE.equals(properties.getDefaultStream());
-        String configuredThinking = properties.getDefaultThinkingType();
-        this.defaultThinkingType = configuredThinking == null || configuredThinking.isBlank()
-            ? "disabled"
-            : configuredThinking;
+        this.defaultThinkingType = DictionaryModelRequestFallbacks.resolveThinkingType(
+            properties.getDefaultThinkingType()
+        );
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Doubao API key is empty");
         } else {
