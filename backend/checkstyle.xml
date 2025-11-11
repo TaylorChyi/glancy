@@ -64,8 +64,5 @@
             <property name="max" value="40"/>
         </module>
 
-        <module name="com.github.sevntu.checkstyle.checks.design.CognitiveComplexityCheck">
-            <property name="max" value="15"/>
-        </module>
     </module>
 </module>

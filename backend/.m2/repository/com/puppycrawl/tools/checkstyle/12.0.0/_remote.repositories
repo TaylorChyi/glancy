@@ -1,0 +1,5 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Wed Nov 12 00:48:30 CST 2025
+checkstyle-12.0.0.pom>central=
+checkstyle-12.0.0-tests.jar>central=
+checkstyle-12.0.0.jar>central=

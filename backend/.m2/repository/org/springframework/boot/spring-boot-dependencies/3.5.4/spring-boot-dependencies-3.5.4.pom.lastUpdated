@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Wed Nov 12 00:10:02 CST 2025
+@proxy\:8080>@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1762877402322
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.springframework.boot\:spring-boot-dependencies\:pom\:3.5.4 from/to central (https\://repo.maven.apache.org/maven2/)\: proxy\: nodename nor servname provided, or not known

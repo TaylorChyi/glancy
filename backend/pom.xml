@@ -27,7 +27,7 @@
         <spring-boot.version>3.5.4</spring-boot.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
-        <sevntu.version>1.45.1</sevntu.version>
+        <sevntu.version>1.44.1</sevntu.version>
         <jacoco.version>0.8.12</jacoco.version>
         <dependency-check.version>10.0.4</dependency-check.version>
         <cyclonedx.version>2.9.0</cyclonedx.version>
@@ -210,7 +210,7 @@
                         <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
                                 <artifactId>maven-checkstyle-plugin</artifactId>
-                                <version>3.2.2</version>
+                                <version>3.3.0</version>
                                 <dependencies>
                                         <dependency>
                                                 <groupId>com.puppycrawl.tools</groupId>
