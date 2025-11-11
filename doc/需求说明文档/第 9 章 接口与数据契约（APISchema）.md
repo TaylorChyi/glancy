@@ -7,17 +7,28 @@
 ## 9.1 基线规范
 
 - **基地址**：`/api/v1`（内外统一），仅 HTTPS。
-- **内容类型**：`Content-Type: application/json; charset=utf-8`
-   内容协商：`Accept: application/vnd.glancy.dict.v1+json`。
-- **鉴权**：`Authorization: Bearer <token>`（用户态 JWT）；Webhook 采用 HMAC 签名。
-- **幂等**：写操作支持 `Idempotency-Key`（推荐值为 `hash(userId+entry+config)`）。参见“术语表-幂等”。 
+- **内容类型**：`Content-Type: application/json; charset=utf-8`。
+  内容协商：`Accept: application/vnd.glancy.dict.v1+json` 优先；缺失或为 `application/json` 时降级为 JSON 并在响应体携带 `contract` 字段；出现未知 vendor 时返回 `406 Not Acceptable`。
+- **鉴权**：`Authorization: Bearer <token>`，支持用户态 JWT（`user_jwt`）与匿名 JWT（`anon_jwt`）；Webhook 采用 HMAC 签名。
+- **主体 ID**：统一以 `subjectId = u_<userId> | s_<sessionId>` 参与幂等键、缓存键、配额与限速。
+- **幂等**：写操作支持 `Idempotency-Key`（推荐值 `hash(subjectId+langPair+entryNorm+configHash+profileEtag)`）。参见“术语表-幂等”。
 - **跟踪**：请求头可携带 `X-Trace-Id`；响应统一回传同名头。
 - **限流与配额回传**：
   - `X-RateLimit-Limit / Remaining / Reset`
-  - `X-Quota-Type: lookup|regenerate`，`X-Quota-Remaining: <int>`
+  - `X-Quota-Type: lookup|regenerate`，`X-Quota-Remaining: <int>`，`X-Quota-Reset-At: <ISO8601>`
+  - 响应体的 `quota` 对象镜像剩余次数与重置时间。
 - **时间**：服务器存 UTC，客户端本地渲染；导出链接 TTL 10 分钟。 
 - **分页**：列表接口使用游标分页：`?limit=50&cursor=<token>`；响应返回 `nextCursor`。
 - **错误模型**：HTTP 状态码 + 统一错误体（见 9.11）。
+
+### 9.1.1 匿名会话与 Token 获取
+
+- **端点**：`POST /api/v1/sessions/anonymous`
+- **作用**：签发匿名 JWT（`anon_jwt`），scope 限定在查词、再生成与导出申请。
+- **请求体**：`{ "fingerprint": "hash(ua+platform+tz+ipClassC)" }`
+- **响应**：`201 Created`，返回 `{ "sessionId": "s_xxx", "token": "anon_jwt", "expiresAt": "2025-01-01T00:00:00Z" }`
+- **约束**：TTL 24 h，可续签；匿名主体统一映射为 `subjectId = s_<sessionId>`；匿名配额为 Free 档日配额的 1/3（查词与再生成），阈值由特性开关配置；登录后可调用 `POST /api/v1/sessions/merge` 将匿名配额并入真实用户。
+- **安全**：仅存储指纹哈希，不落真实指纹串；配额统计遵循 9.1 基线的 quota header/体规范。
 
 ------
 
@@ -65,6 +76,7 @@
   "detailLevel": "medium",
   "exampleCount": 3,
   "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
+  "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
   "createdAt": "2025-11-08T03:20:00Z"
 }
 ```
@@ -82,8 +94,8 @@
 ### API-001 查词/生成
 
 - **方法与路径**：`POST /api/v1/lookup`
-- **鉴权**：必需
-- **幂等**：支持。推荐 `Idempotency-Key: hash(userId+entry+config)`
+- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
+- **幂等**：支持。推荐 `Idempotency-Key: hash(subjectId+langPair+entryNorm+configHash+profileEtag)`
 - **限流与配额**：计入“每日查词上限”与速率限制。 
 
 **请求体**
@@ -92,11 +104,12 @@
 {
   "entry": "bank account",
   "langPair": { "source": "en", "target": "zh" },
-  "modules": {
+  "moduleFlags": {
     "definitions": true,
     "examples": true,
     "collocations": true,
-    "synonymsAntonyms": true,
+    "synonyms": true,
+    "antonyms": true,
     "derivations": true
   },
   "detailLevel": "medium",
@@ -111,12 +124,12 @@
 - 规则与校验：
   - `entry` 仅接受单词或词组；检测疑似整句时返回 400（错误码 `ENTRY_NOT_WORD_OR_PHRASE`），与第 1.4.2 节一致。 
   - `langPair` 必须属于白名单 {L1…L4}。同语模式不输出译文。 
-  - `exampleCount` 上限：普通=1、Plus≤3、Pro≤5。超限返回 400（`EXAMPLE_COUNT_EXCEEDS_TIER`）。 
-  - `style.tags` 上限：普通≤3、Plus≤5、Pro≤8。超限 400。 
+  - `exampleCount` 上限：档位约束详见[第 12 章](<./第 12 章 订阅、计费与账单.md>)权益矩阵（Free≤1、Plus≤3、Pro≤5），超限返回 400（`EXAMPLE_COUNT_EXCEEDS_TIER`）。
+  - `style.tags` 上限：档位约束详见[第 12 章](<./第 12 章 订阅、计费与账单.md>)权益矩阵（Free≤3、Plus≤5、Pro≤8），超限 400。
 
 **响应体**（`200 OK`）
 
-- 返回 `DictResult`。当命中缓存时附加 `X-Cache: HIT`，否则 `MISS`。缓存策略与 TTL 参照 1.4.7。 
+- 返回 `DictResult`，并附带 `quota` 对象（`type`、`remaining`、`resetAt`）。当命中缓存时附加 `X-Cache: HIT`，否则 `MISS`。缓存策略与 TTL 参照 1.4.7。
 
 **错误码**：见 9.11。
 
@@ -125,8 +138,8 @@
 ### API-002 再生成
 
 - **方法与路径**：`POST /api/v1/lookup/{lookupId}/regenerate`
-- **鉴权**：必需
-- **配额**：计入“再生成次数/日”。不同于“查词上限”。 
+- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
+- **配额**：计入“再生成次数/日”，与查词配额独立；难度或风格切换视为一次再生成，不计入查词次数。
 
 **请求体**
 
@@ -138,7 +151,7 @@
 }
 ```
 
-**响应体**：同 API-001。`lookupId` 不变，返回 `iteration` 自增。
+**响应体**：同 API-001，包含 `quota` 对象。`lookupId` 不变，返回 `iteration` 自增。
 
 ------
 
@@ -182,7 +195,7 @@
 
 - **方法与路径**：`POST /api/v1/history:clear`
 - **请求体**：`{ "scope": "en|zh|all" }`
-- **响应**：`202 Accepted`，返回清理任务 `taskId` 与预计完成时间（≤5 秒）。完成后投递回执（见 9.8）。 
+- **响应**：`202 Accepted`，返回清理任务 `taskId`、预计完成时间（≤5 秒）与 `quota` 对象。完成后投递回执（见 9.8）。
 
 ------
 
@@ -195,10 +208,10 @@
 - **响应**：`202 Accepted`
 
 ```json
-{ "exportId": "ex_123", "status": "processing", "receiptId": "rc_789" }
+{ "exportId": "ex_123", "status": "processing", "receiptId": "rc_789", "quota": { "type": "export", "remaining": 2, "resetAt": "2025-11-09T00:00:00Z" } }
 ```
 
-- 处理完成 SLA：≤5 秒；生成一次性下载链接，TTL 10 分钟。返回回执号与下载链接。 
+- 处理完成 SLA：P95 ≤ 5 s；前端轮询 1–2 次 `GET /api/v1/exports/{id}` 获取一次性下载链接（TTL 10 分钟）。响应体返回回执号与配额信息。 
 
 ### API-202 查询导出状态
 
@@ -240,7 +253,7 @@
 ### API-302 更新画像
 
 - **方法与路径**：`PATCH /api/v1/profile`
-- **约束**：`styleTags` 上限随档位 3/5/8；越界 400。档位规则见 1.4.4。 
+- **约束**：`styleTags` 上限随档位 3/5/8；越界 400。档位规则以[第 12 章](<./第 12 章 订阅、计费与账单.md>)为准。 
 
 ------
 
@@ -265,12 +278,12 @@
 }
 ```
 
-> 档位矩阵与自动降级策略参见 1.4.4–1.4.5。 
+> 示例值仅用于说明，实际档位矩阵与自动降级策略以[第 12 章](<./第 12 章 订阅、计费与账单.md>)为准。
 
 ### API-402 查询配额用量
 
 - **方法与路径**：`GET /api/v1/quotas`
-- **响应体**：`{ "lookup": { "used": 12, "limit": 100 }, "regenerate": { "used": 2, "limit": 10 } }`
+- **响应体**：`{ "lookup": { "used": 12, "limit": 100, "resetAt": "2025-11-09T00:00:00Z" }, "regenerate": { "used": 2, "limit": 10, "resetAt": "2025-11-09T00:00:00Z" } }`
 
 ### API-403 导出回执查询
 
@@ -302,16 +315,22 @@
     { "code": "L4", "source": "zh", "target": "zh" }
   ],
   "detailLevelBudget": { "short": { "zh": 80, "en": 120 }, "medium": { "zh": 150, "en": 220 }, "long": { "zh": 220, "en": 320 } },
-  "modules": ["definitions","examples","collocations","synonymsAntonyms","derivations"],
+  "modules": ["definitions","examples","collocations","synonyms","antonyms","derivations"],
   "unsupported": ["frequency","examTags"]  // 暂不实现
 }
 ```
 
-> 统一详略级别基线与白名单与第 1 章一致。 
+> 统一详略级别基线与白名单与[第 1 章](<./第 1 章 引言.md>)一致。 
 
 ------
 
 ## 9.10 错误模型与码表
+
+### 9.10.0 句子输入判定规范
+
+系统仅接受“单词/词组”。满足任一硬规则即判定为“句子”，返回 `ENTRY_NOT_WORD_OR_PHRASE`：
+a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且含至少两个动词并由连词连接；c) 中文 ≥ 15 个汉字且包含 ≥2 个功能词序列。
+命中软规则将提示确认或改写；命中短语白名单则放行。前端负责首次拦截，服务端兜底并返回统一错误体。
 
 ### 9.10.1 统一错误体
 
@@ -321,6 +340,7 @@
     "code": "ENTRY_NOT_WORD_OR_PHRASE",
     "message": "Only words or short phrases are allowed.",
     "hint": "Try removing punctuation or splitting the sentence.",
+    "meta": { "kind": "input" },
     "traceId": "3bd2f9..."
   }
 }
@@ -339,9 +359,7 @@
 | 404  | NOT_FOUND                  | 资源不存在。                        |
 | 409  | IDEMPOTENCY_KEY_REPLAYED   | 幂等键重放且参数不一致。            |
 | 422  | CONTRACT_VALIDATION_FAILED | 与 `glancy.dict.v1` 契约不一致。    |
-| 429  | RATE_LIMITED               | 触发限速；返回剩余冷却。            |
-| 429  | QUOTA_EXCEEDED_LOOKUP      | 超出“每日查词上限”。                |
-| 429  | QUOTA_EXCEEDED_REGENERATE  | 超出“再生成次数/日”。               |
+| 429  | RATE_LIMITED               | 超出配额或限速；`error.meta.kind` = 'quota'|'ratelimit'，返回剩余额度与重置时间。 |
 | 500  | UPSTREAM_UNAVAILABLE       | Doubao 或第三方异常；触发降级策略。 |
 | 503  | CIRCUIT_OPEN               | 熔断中，快速失败。                  |
 
@@ -447,6 +465,8 @@
 }
 ```
 
+> `Example.text` 使用 `langPair.source` 语言，同语模式下 `translation` 省略；跨语对时才返回译文。
+
 ### 9.12.3 `#/definitions/Definition`
 
 ```json
@@ -506,7 +526,7 @@
 
 ## 9.14 兼容性与前后端协作要点
 
-- **模块开关与顺序**：普通档仅“开/关”，Plus/Pro 支持顺序与详略调节；请求体中的 `modules` 与 `detailLevel` 由前端根据档位控制。 
+- **模块开关与顺序**：Free 档仅“开/关”，Plus/Pro 支持顺序与详略调节；请求体中的 `moduleFlags` 与 `detailLevel` 由前端根据档位控制，响应体 `modules` 返回实际内容容器。
 - **同语模式**：UI 不展示译文位；服务端同样不返回 `translation`，以防前端误渲染。 
 - **降级提示**：当 `degraded=true` 时，前端在结果页显式展示退化徽标与文案。 
 
@@ -526,7 +546,7 @@ Idempotency-Key: 9f0b4d3c...
 {
   "entry": "bank account",
   "langPair": { "source": "en", "target": "zh" },
-  "modules": { "definitions": true, "examples": true, "collocations": true, "synonymsAntonyms": true, "derivations": true },
+  "moduleFlags": { "definitions": true, "examples": true, "collocations": true, "synonyms": true, "antonyms": true, "derivations": true },
   "detailLevel": "medium",
   "exampleCount": 3,
   "difficulty": "original",
@@ -545,6 +565,7 @@ X-RateLimit-Remaining: 87
 X-RateLimit-Reset: 1731045600
 X-Quota-Type: lookup
 X-Quota-Remaining: 88
+X-Quota-Reset-At: 2025-11-09T00:00:00Z
 X-Cache: MISS
 {
   "contract": "glancy.dict.v1",
@@ -577,10 +598,11 @@ X-Cache: MISS
   "detailLevel": "medium",
   "exampleCount": 3,
   "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
+  "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
   "createdAt": "2025-11-08T03:20:00Z"
 }
 ```
 
 ------
 
-> 以上完成第 9 章所需的接口与数据契约定义，严格对齐“输入与查词规则”“分层功能说明”“导出与删除语义”“档位与权益矩阵”“技术实现最小集”等既有条款。后续章节（第 10–13 章）中的数据模型、安全与合规将沿用本文的字段与错误模型作为接口层约束基线。 
+> 以上完成第 9 章所需的接口与数据契约定义，严格对齐“输入与查词规则”“分层功能说明”“导出与删除语义”“档位与权益矩阵”“技术实现最小集”等既有条款。后续章节（[第 10 章](<./第 10 章 数据模型与数据治理.md>)、[第 11 章](<./第 11 章 配额、限流与成本控制.md>)、[第 12 章](<./第 12 章 订阅、计费与账单.md>)、[第 13 章](<./第 13 章 安全、隐私与合规.md>)）中的数据模型、安全与合规将沿用本文的字段与错误模型作为接口层约束基线。
