@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.Notification;
 import com.glancy.backend.entity.User;
 import java.time.LocalDateTime;
@@ -28,15 +26,15 @@ class NotificationRepositoryTest {
         notificationRepository.save(userNote);
 
         List<Notification> systemList = notificationRepository.findBySystemLevelTrue();
-        assertEquals(1, systemList.size());
+        Assertions.assertEquals(1, systemList.size());
 
         List<Notification> userList = notificationRepository.findByUserId(user.getId());
-        assertEquals(1, userList.size());
+        Assertions.assertEquals(1, userList.size());
 
         List<Notification> sortedUser = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
-        assertEquals("user", sortedUser.get(0).getMessage());
+        Assertions.assertEquals("user", sortedUser.get(0).getMessage());
 
         List<Notification> sortedSystem = notificationRepository.findBySystemLevelTrueOrderByCreatedAtDesc();
-        assertEquals("sys", sortedSystem.get(0).getMessage());
+        Assertions.assertEquals("sys", sortedSystem.get(0).getMessage());
     }
 }

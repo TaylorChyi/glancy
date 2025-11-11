@@ -5,11 +5,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.glancy.backend.dto.*;
+import com.glancy.backend.dto.AvatarRequest;
+import com.glancy.backend.dto.AvatarResponse;
+import com.glancy.backend.dto.EmailChangeInitiationRequest;
+import com.glancy.backend.dto.EmailChangeRequest;
+import com.glancy.backend.dto.LoginRequest;
+import com.glancy.backend.dto.LoginResponse;
+import com.glancy.backend.dto.ThirdPartyAccountRequest;
+import com.glancy.backend.dto.ThirdPartyAccountResponse;
+import com.glancy.backend.dto.UserContactRequest;
+import com.glancy.backend.dto.UserContactResponse;
+import com.glancy.backend.dto.UserDetailResponse;
+import com.glancy.backend.dto.UserEmailResponse;
+import com.glancy.backend.dto.UserRegistrationRequest;
+import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.service.UserService;
@@ -82,12 +94,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                post("/api/users/register")
+                MockMvcRequestBuilders.post("/api/users/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1L));
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
     }
 
     /**
@@ -96,7 +108,7 @@ class UserControllerTest {
     @Test
     void deleteUser() throws Exception {
         doNothing().when(userService).deleteUser(1L);
-        mockMvc.perform(delete("/api/users/1")).andExpect(status().isNoContent());
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/users/1")).andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 
     /**
@@ -121,12 +133,12 @@ class UserControllerTest {
         when(userService.getUserDetail(1L)).thenReturn(detailResponse);
 
         mockMvc
-            .perform(get("/api/users/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1L))
-            .andExpect(jsonPath("$.username").value("u"))
-            .andExpect(jsonPath("$.email").value("e"))
-            .andExpect(jsonPath("$.password").doesNotExist());
+            .perform(MockMvcRequestBuilders.get("/api/users/1"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.username").value("u"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("e"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.password").doesNotExist());
     }
 
     /**
@@ -143,12 +155,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                post("/api/users/login")
+                MockMvcRequestBuilders.post("/api/users/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1L));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
     }
 
     /**
@@ -165,12 +177,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                post("/api/users/login")
+                MockMvcRequestBuilders.post("/api/users/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1L));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
     }
 
     /**
@@ -187,12 +199,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                post("/api/users/1/third-party-accounts")
+                MockMvcRequestBuilders.post("/api/users/1/third-party-accounts")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1L));
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
     }
 
     /**
@@ -204,9 +216,9 @@ class UserControllerTest {
         when(userService.getAvatar(1L)).thenReturn(resp);
 
         mockMvc
-            .perform(get("/api/users/1/avatar"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.avatar").value("url"));
+            .perform(MockMvcRequestBuilders.get("/api/users/1/avatar"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.avatar").value("url"));
     }
 
     /**
@@ -222,12 +234,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                put("/api/users/1/avatar")
+                MockMvcRequestBuilders.put("/api/users/1/avatar")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.avatar").value("url"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.avatar").value("url"));
     }
 
     /**
@@ -242,13 +254,13 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                put("/api/users/1/contact")
+                MockMvcRequestBuilders.put("/api/users/1/contact")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value("changed@example.com"))
-            .andExpect(jsonPath("$.phone").value("7654321"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("changed@example.com"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.phone").value("7654321"));
     }
 
     /**
@@ -262,11 +274,11 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                post("/api/users/1/email/change-code")
+                MockMvcRequestBuilders.post("/api/users/1/email/change-code")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isAccepted());
+            .andExpect(MockMvcResultMatchers.status().isAccepted());
     }
 
     /**
@@ -282,12 +294,12 @@ class UserControllerTest {
 
         mockMvc
             .perform(
-                put("/api/users/1/email")
+                MockMvcRequestBuilders.put("/api/users/1/email")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value("next@example.com"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("next@example.com"));
     }
 
     /**
@@ -298,9 +310,9 @@ class UserControllerTest {
         when(userService.unbindEmail(1L)).thenReturn(new UserEmailResponse(null));
 
         mockMvc
-            .perform(delete("/api/users/1/email"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.email").value(org.hamcrest.Matchers.nullValue()));
+            .perform(MockMvcRequestBuilders.delete("/api/users/1/email"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.email").value(org.hamcrest.Matchers.nullValue()));
     }
 
     /**
@@ -313,9 +325,9 @@ class UserControllerTest {
         when(userService.uploadAvatar(eq(1L), any(MultipartFile.class))).thenReturn(resp);
 
         mockMvc
-            .perform(multipart("/api/users/1/avatar-file").file(file))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.avatar").value("path/url.jpg"));
+            .perform(MockMvcRequestBuilders.multipart("/api/users/1/avatar-file").file(file))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.avatar").value("path/url.jpg"));
     }
 
     /**
@@ -334,7 +346,7 @@ class UserControllerTest {
         );
 
         try {
-            mockMvc.perform(post("/api/users/1/logout")).andExpect(status().isNoContent());
+            mockMvc.perform(MockMvcRequestBuilders.post("/api/users/1/logout")).andExpect(MockMvcResultMatchers.status().isNoContent());
         } finally {
             SecurityContextHolder.clearContext();
         }
@@ -348,6 +360,6 @@ class UserControllerTest {
     @Test
     void countUsers() throws Exception {
         when(userService.countActiveUsers()).thenReturn(5L);
-        mockMvc.perform(get("/api/users/count")).andExpect(status().isOk()).andExpect(content().string("5"));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/count")).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().string("5"));
     }
 }

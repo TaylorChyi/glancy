@@ -3,9 +3,8 @@ package com.glancy.backend.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
@@ -58,13 +57,13 @@ class UserPreferenceControllerTest {
 
         mockMvc
             .perform(
-                post("/api/preferences/user")
+                MockMvcRequestBuilders.post("/api/preferences/user")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.userId").value(2L));
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
     }
 
     /**
@@ -78,9 +77,9 @@ class UserPreferenceControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
         mockMvc
-            .perform(get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userId").value(2L));
+            .perform(MockMvcRequestBuilders.get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
     }
 
     /**
@@ -98,12 +97,12 @@ class UserPreferenceControllerTest {
 
         mockMvc
             .perform(
-                patch("/api/preferences/user")
+                MockMvcRequestBuilders.patch("/api/preferences/user")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.theme").value("dark"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.theme").value("dark"));
     }
 }

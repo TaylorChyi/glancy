@@ -3,9 +3,8 @@ package com.glancy.backend.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.ProfileCustomSectionDto;
 import com.glancy.backend.dto.ProfileCustomSectionItemDto;
@@ -93,13 +92,13 @@ class UserProfileControllerTest {
 
         mockMvc
             .perform(
-                post("/api/profiles/user")
+                MockMvcRequestBuilders.post("/api/profiles/user")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(req))
             )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.userId").value(2L));
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
     }
 
     /**
@@ -134,8 +133,8 @@ class UserProfileControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(2L);
 
         mockMvc
-            .perform(get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userId").value(2L));
+            .perform(MockMvcRequestBuilders.get("/api/profiles/user").header("X-USER-TOKEN", "tkn"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
     }
 }

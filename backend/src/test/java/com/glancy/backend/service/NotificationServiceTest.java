@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.NotificationRequest;
 import com.glancy.backend.dto.NotificationResponse;
 import com.glancy.backend.entity.User;
@@ -59,17 +57,17 @@ class NotificationServiceTest {
         NotificationRequest req = new NotificationRequest();
         req.setMessage("sys msg");
         NotificationResponse sys = notificationService.createSystemNotification(req);
-        assertTrue(sys.getSystemLevel());
+        Assertions.assertTrue(sys.getSystemLevel());
 
         NotificationRequest ureq = new NotificationRequest();
         ureq.setMessage("user msg");
         NotificationResponse uresp = notificationService.createUserNotification(user.getId(), ureq);
-        assertFalse(uresp.getSystemLevel());
-        assertEquals(user.getId(), uresp.getUserId());
+        Assertions.assertFalse(uresp.getSystemLevel());
+        Assertions.assertEquals(user.getId(), uresp.getUserId());
 
         List<NotificationResponse> list = notificationService.getNotificationsForUser(user.getId());
-        assertEquals(2, list.size());
-        assertEquals("user msg", list.get(0).getMessage());
-        assertEquals("sys msg", list.get(1).getMessage());
+        Assertions.assertEquals(2, list.size());
+        Assertions.assertEquals("user msg", list.get(0).getMessage());
+        Assertions.assertEquals("sys msg", list.get(1).getMessage());
     }
 }

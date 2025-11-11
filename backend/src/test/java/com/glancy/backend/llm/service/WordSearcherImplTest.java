@@ -1,9 +1,7 @@
 package com.glancy.backend.llm.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
+import org.junit.jupiter.api.Assertions;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
@@ -52,16 +50,16 @@ class WordSearcherImplTest {
 
     @BeforeEach
     void setUp() {
-        factory = mock(DictionaryModelClientFactory.class);
+        factory = Mockito.mock(DictionaryModelClientFactory.class);
         config = new LLMConfig();
         config.setDefaultClient("doubao");
         config.setTemperature(0.5);
         config.setPromptPath("path");
         config.setPromptPaths(Map.of("ENGLISH", "path-en", "CHINESE", "path-zh"));
-        promptManager = mock(PromptManager.class);
-        searchContentManager = mock(SearchContentManager.class);
-        parser = mock(WordResponseParser.class);
-        defaultClient = mock(DictionaryModelClient.class);
+        promptManager = Mockito.mock(PromptManager.class);
+        searchContentManager = Mockito.mock(SearchContentManager.class);
+        parser = Mockito.mock(WordResponseParser.class);
+        defaultClient = Mockito.mock(DictionaryModelClient.class);
         templateRenderer = new PromptTemplateRenderer();
         WordEntryProfileResolver entryProfileResolver = new WordEntryProfileResolver(templateRenderer);
         promptAssembler = new WordPromptAssembler(templateRenderer, entryProfileResolver);
@@ -72,14 +70,14 @@ class WordSearcherImplTest {
      */
     @Test
     void searchFallsBackToDefaultWhenClientMissing() {
-        when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("doubao")).thenReturn(defaultClient);
-        when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        when(searchContentManager.normalize("hello")).thenReturn("hello");
-        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content");
+        Mockito.when(factory.get("invalid")).thenReturn(null);
+        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize("hello")).thenReturn("hello");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content");
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
-        when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
+        Mockito.when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
         WordSearcherImpl searcher = new WordSearcherImpl(
             factory,
             config,
@@ -96,11 +94,11 @@ class WordSearcherImplTest {
             NO_PERSONALIZATION_CONTEXT
         );
 
-        assertSame(expected, result);
-        verify(factory).get("invalid");
-        verify(factory).get("doubao");
-        verify(defaultClient).generateEntry(anyList(), eq(0.5));
-        verify(promptManager).loadPrompt("path-en");
+        Assertions.assertSame(expected, result);
+        Mockito.verify(factory).get("invalid");
+        Mockito.verify(factory).get("doubao");
+        Mockito.verify(defaultClient).generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5));
+        Mockito.verify(promptManager).loadPrompt("path-en");
     }
 
     /**
@@ -108,8 +106,8 @@ class WordSearcherImplTest {
      */
     @Test
     void searchThrowsWhenDefaultMissing() {
-        when(factory.get("invalid")).thenReturn(null);
-        when(factory.get("doubao")).thenReturn(null);
+        Mockito.when(factory.get("invalid")).thenReturn(null);
+        Mockito.when(factory.get("doubao")).thenReturn(null);
         WordSearcherImpl searcher = new WordSearcherImpl(
             factory,
             config,
@@ -118,7 +116,7 @@ class WordSearcherImplTest {
             parser,
             promptAssembler
         );
-        assertThrows(IllegalStateException.class, () ->
+        Assertions.assertThrows(IllegalStateException.class, () ->
             searcher.search("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "invalid", NO_PERSONALIZATION_CONTEXT)
         );
     }
@@ -136,12 +134,12 @@ class WordSearcherImplTest {
      */
     @Test
     void chineseSearchAnnotatesStructureGuidance() {
-        when(factory.get("doubao")).thenReturn(defaultClient);
-        when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
-        when(searchContentManager.normalize("汉")).thenReturn("汉");
-        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
+        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize("汉")).thenReturn("汉");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
+        Mockito.when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
 
         WordSearcherImpl searcher = new WordSearcherImpl(
             factory,
@@ -154,7 +152,7 @@ class WordSearcherImplTest {
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
+        Mockito.verify(defaultClient).generateEntry(messagesCaptor.capture(), ArgumentMatchers.eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
             .stream()
@@ -162,8 +160,8 @@ class WordSearcherImplTest {
             .findFirst()
             .orElseThrow();
         String content = userMessage.getContent();
-        assertTrue(content.contains("条目结构定位：Single Character"));
-        assertTrue(content.contains("写作指引：请拆解字源"));
+        Assertions.assertTrue(content.contains("条目结构定位：Single Character"));
+        Assertions.assertTrue(content.contains("写作指引：请拆解字源"));
     }
 
     /**
@@ -171,12 +169,12 @@ class WordSearcherImplTest {
      */
     @Test
     void englishBilingualSearchAddsChineseInstruction() {
-        when(factory.get("doubao")).thenReturn(defaultClient);
-        when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
+        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
+        Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")
         );
 
@@ -191,13 +189,13 @@ class WordSearcherImplTest {
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
+        Mockito.verify(defaultClient).generateEntry(messagesCaptor.capture(), ArgumentMatchers.eq(0.5));
         boolean hasInstruction = messagesCaptor
             .getValue()
             .stream()
             .filter(message -> "system".equals(message.getRole()))
             .anyMatch(message -> message.getContent().contains("中文译文"));
-        assertTrue(hasInstruction);
+        Assertions.assertTrue(hasInstruction);
     }
 
     /**
@@ -213,12 +211,12 @@ class WordSearcherImplTest {
      */
     @Test
     void englishSearchOmitsEntryTypeSection() {
-        when(factory.get("doubao")).thenReturn(defaultClient);
-        when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        when(defaultClient.generateEntry(anyList(), eq(0.5))).thenReturn("content<END>");
+        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
         WordResponse expected = new WordResponse();
-        when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
+        Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")
         );
 
@@ -239,7 +237,7 @@ class WordSearcherImplTest {
         );
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
-        verify(defaultClient).generateEntry(messagesCaptor.capture(), eq(0.5));
+        Mockito.verify(defaultClient).generateEntry(messagesCaptor.capture(), ArgumentMatchers.eq(0.5));
         ChatMessage userMessage = messagesCaptor
             .getValue()
             .stream()
@@ -247,7 +245,7 @@ class WordSearcherImplTest {
             .findFirst()
             .orElseThrow();
 
-        assertFalse(
+        Assertions.assertFalse(
             userMessage.getContent().contains("条目类型"),
             "英文检索用户消息仍包含「条目类型」字段，提示模板未同步"
         );

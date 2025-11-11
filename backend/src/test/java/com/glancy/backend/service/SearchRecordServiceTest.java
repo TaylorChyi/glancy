@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
@@ -73,7 +71,7 @@ class SearchRecordServiceTest {
      */
     @Test
     void searchPropertiesBinding() {
-        assertEquals(2, searchProperties.getLimit().getNonMember());
+        Assertions.assertEquals(2, searchProperties.getLimit().getNonMember());
     }
 
     /**
@@ -94,15 +92,15 @@ class SearchRecordServiceTest {
         req.setTerm("hello");
         req.setLanguage(Language.ENGLISH);
         SearchRecordResponse saved = searchRecordService.saveRecord(user.getId(), req);
-        assertNotNull(saved.id());
+        Assertions.assertNotNull(saved.id());
 
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
-        assertEquals(1, list.size());
-        assertEquals("hello", list.get(0).term());
-        assertTrue(list.get(0).versions().isEmpty());
+        Assertions.assertEquals(1, list.size());
+        Assertions.assertEquals("hello", list.get(0).term());
+        Assertions.assertTrue(list.get(0).versions().isEmpty());
 
         searchRecordService.clearRecords(user.getId());
-        assertTrue(searchRecordService.getRecords(user.getId()).isEmpty());
+        Assertions.assertTrue(searchRecordService.getRecords(user.getId()).isEmpty());
     }
 
     /**
@@ -121,10 +119,10 @@ class SearchRecordServiceTest {
         req.setTerm("hi");
         req.setLanguage(Language.ENGLISH);
 
-        Exception ex = assertThrows(InvalidRequestException.class, () ->
+        Exception ex = Assertions.assertThrows(InvalidRequestException.class, () ->
             searchRecordService.saveRecord(user.getId(), req)
         );
-        assertEquals("用户未登录", ex.getMessage());
+        Assertions.assertEquals("用户未登录", ex.getMessage());
     }
 
     /**
@@ -153,10 +151,10 @@ class SearchRecordServiceTest {
 
         searchRecordService.saveRecord(user.getId(), req1);
         searchRecordService.saveRecord(user.getId(), req2);
-        Exception ex = assertThrows(InvalidRequestException.class, () ->
+        Exception ex = Assertions.assertThrows(InvalidRequestException.class, () ->
             searchRecordService.saveRecord(user.getId(), req3)
         );
-        assertEquals("非会员每天只能搜索2次", ex.getMessage());
+        Assertions.assertEquals("非会员每天只能搜索2次", ex.getMessage());
     }
 
     /**
@@ -181,12 +179,12 @@ class SearchRecordServiceTest {
         LocalDateTime beforeReuse = searchRecordRepository.findById(first.id()).orElseThrow().getUpdatedAt();
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), req);
 
-        assertEquals(first.id(), second.id());
+        Assertions.assertEquals(first.id(), second.id());
         SearchRecord refreshed = searchRecordRepository.findById(first.id()).orElseThrow();
-        assertTrue(refreshed.getUpdatedAt().isAfter(beforeReuse));
+        Assertions.assertTrue(refreshed.getUpdatedAt().isAfter(beforeReuse));
         List<SearchRecordResponse> list = searchRecordService.getRecords(user.getId());
-        assertEquals(1, list.size());
-        assertEquals(second.id(), list.get(0).id());
+        Assertions.assertEquals(1, list.size());
+        Assertions.assertEquals(second.id(), list.get(0).id());
     }
 
     /**
@@ -232,14 +230,14 @@ class SearchRecordServiceTest {
         alphaAgain.setLanguage(Language.ENGLISH);
         SearchRecordResponse reused = searchRecordService.saveRecord(user.getId(), alphaAgain);
 
-        assertEquals(alphaRecord.id(), reused.id(), "重复查询应复用同一条记录");
+        Assertions.assertEquals(alphaRecord.id(), reused.id(), "重复查询应复用同一条记录");
 
         SearchRecord refreshedAlpha = searchRecordRepository.findById(alphaRecord.id()).orElseThrow();
-        assertTrue(refreshedAlpha.getUpdatedAt().isAfter(beforeReuse), "复用后的记录应刷新 updatedAt 以反映最近访问");
+        Assertions.assertTrue(refreshedAlpha.getUpdatedAt().isAfter(beforeReuse), "复用后的记录应刷新 updatedAt 以反映最近访问");
 
         List<SearchRecordResponse> history = searchRecordService.getRecords(user.getId());
-        assertEquals(2, history.size(), "历史记录应维持原有条数");
-        assertEquals("alpha", history.get(0).term(), "刷新后应将复用词条排在首位");
+        Assertions.assertEquals(2, history.size(), "历史记录应维持原有条数");
+        Assertions.assertEquals("alpha", history.get(0).term(), "刷新后应将复用词条排在首位");
     }
 
     /**
@@ -276,9 +274,9 @@ class SearchRecordServiceTest {
 
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), normalized);
 
-        assertEquals(first.id(), second.id(), "归一化后的查询应复用现有记录");
+        Assertions.assertEquals(first.id(), second.id(), "归一化后的查询应复用现有记录");
         List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalse(user.getId());
-        assertEquals(1, records.size(), "数据库中应仅保留一条未删除记录");
+        Assertions.assertEquals(1, records.size(), "数据库中应仅保留一条未删除记录");
     }
 
     /**
@@ -315,9 +313,9 @@ class SearchRecordServiceTest {
 
         SearchRecordResponse second = searchRecordService.saveRecord(user.getId(), collapsed);
 
-        assertEquals(first.id(), second.id(), "多余空白应被归一化并复用已有记录");
+        Assertions.assertEquals(first.id(), second.id(), "多余空白应被归一化并复用已有记录");
         List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalse(user.getId());
-        assertEquals(1, records.size(), "归一化后仍应只有一条记录");
+        Assertions.assertEquals(1, records.size(), "归一化后仍应只有一条记录");
     }
 
     /**
@@ -359,19 +357,19 @@ class SearchRecordServiceTest {
             .filter(resp -> resp.id().equals(recordOne.getId()))
             .findFirst()
             .orElseThrow();
-        assertEquals(2, alphaResponse.versions().size());
-        assertNotNull(alphaResponse.latestVersion());
-        assertEquals(2, alphaResponse.latestVersion().versionNumber());
-        assertEquals(2, alphaResponse.versions().get(0).versionNumber());
-        assertEquals(1, alphaResponse.versions().get(1).versionNumber());
+        Assertions.assertEquals(2, alphaResponse.versions().size());
+        Assertions.assertNotNull(alphaResponse.latestVersion());
+        Assertions.assertEquals(2, alphaResponse.latestVersion().versionNumber());
+        Assertions.assertEquals(2, alphaResponse.versions().get(0).versionNumber());
+        Assertions.assertEquals(1, alphaResponse.versions().get(1).versionNumber());
 
         SearchRecordResponse betaResponse = responses
             .stream()
             .filter(resp -> resp.id().equals(recordTwo.getId()))
             .findFirst()
             .orElseThrow();
-        assertEquals(1, betaResponse.versions().size());
-        assertEquals(1, betaResponse.latestVersion().versionNumber());
+        Assertions.assertEquals(1, betaResponse.versions().size());
+        Assertions.assertEquals(1, betaResponse.latestVersion().versionNumber());
     }
 
     /**
@@ -409,18 +407,18 @@ class SearchRecordServiceTest {
         List<SearchRecordResponse> firstPage = searchRecordService.getRecords(user.getId(), 0, 10);
         List<SearchRecordResponse> secondPage = searchRecordService.getRecords(user.getId(), 1, 10);
 
-        assertEquals(10, firstPage.size(), "第一页应返回 10 条记录");
-        assertEquals(10, secondPage.size(), "第二页应返回 10 条记录");
+        Assertions.assertEquals(10, firstPage.size(), "第一页应返回 10 条记录");
+        Assertions.assertEquals(10, secondPage.size(), "第二页应返回 10 条记录");
 
         long distinctCount = Stream.concat(firstPage.stream(), secondPage.stream())
             .map(SearchRecordResponse::id)
             .distinct()
             .count();
-        assertEquals(20, distinctCount, "前两页记录应互不重复");
+        Assertions.assertEquals(20, distinctCount, "前两页记录应互不重复");
 
         LocalDateTime firstPageOldest = firstPage.get(firstPage.size() - 1).createdAt();
         LocalDateTime secondPageNewest = secondPage.get(0).createdAt();
-        assertTrue(
+        Assertions.assertTrue(
             secondPageNewest.isBefore(firstPageOldest) || secondPageNewest.isEqual(firstPageOldest),
             "第二页最新项的时间不应晚于第一页最旧项"
         );
@@ -460,9 +458,9 @@ class SearchRecordServiceTest {
         searchRecordService.deleteRecord(user.getId(), recordResponse.id());
 
         SearchRecord deletedRecord = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
-        assertTrue(deletedRecord.getDeleted());
+        Assertions.assertTrue(deletedRecord.getDeleted());
         SearchResultVersion deletedVersion = searchResultVersionRepository.findById(version.getId()).orElseThrow();
-        assertTrue(deletedVersion.getDeleted());
+        Assertions.assertTrue(deletedVersion.getDeleted());
     }
 
     /**
@@ -500,9 +498,9 @@ class SearchRecordServiceTest {
         );
 
         SearchRecord updated = searchRecordRepository.findById(response.id()).orElseThrow();
-        assertEquals("receive", updated.getTerm(), "数据库中的词条应为规范词");
-        assertNotNull(synchronizedResponse, "同步后响应不应为空");
-        assertEquals("receive", synchronizedResponse.term(), "返回结果应反映规范词条");
+        Assertions.assertEquals("receive", updated.getTerm(), "数据库中的词条应为规范词");
+        Assertions.assertNotNull(synchronizedResponse, "同步后响应不应为空");
+        Assertions.assertEquals("receive", synchronizedResponse.term(), "返回结果应反映规范词条");
     }
 
     private void persistVersion(SearchRecord record, User user, String model, int versionNumber, String content) {

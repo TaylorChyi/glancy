@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.UserPreference;
 import java.util.Optional;
@@ -25,7 +23,7 @@ class UserPreferenceRepositoryTest {
         userPreferenceRepository.save(pref);
 
         Optional<UserPreference> found = userPreferenceRepository.findByUserId(user.getId());
-        assertTrue(found.isPresent());
-        assertEquals("light", found.get().getTheme());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("light", found.get().getTheme());
     }
 }

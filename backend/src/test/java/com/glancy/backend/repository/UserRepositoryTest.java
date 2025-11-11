@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
 import java.time.LocalDateTime;
@@ -22,8 +20,8 @@ class UserRepositoryTest {
         userRepository.save(user);
 
         Optional<User> found = userRepository.findByUsernameAndDeletedFalse("user1");
-        assertTrue(found.isPresent());
-        assertEquals("user1@example.com", found.get().getEmail());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("user1@example.com", found.get().getEmail());
     }
 
     @Test
@@ -37,9 +35,9 @@ class UserRepositoryTest {
         userRepository.save(active);
         userRepository.save(deleted);
 
-        assertEquals(1, userRepository.countByDeletedFalse());
-        assertEquals(1, userRepository.countByDeletedTrue());
-        assertEquals(1, userRepository.countActiveMembers(LocalDateTime.now()));
-        assertTrue(userRepository.findByLoginToken("token123").isPresent());
+        Assertions.assertEquals(1, userRepository.countByDeletedFalse());
+        Assertions.assertEquals(1, userRepository.countByDeletedTrue());
+        Assertions.assertEquals(1, userRepository.countActiveMembers(LocalDateTime.now()));
+        Assertions.assertTrue(userRepository.findByLoginToken("token123").isPresent());
     }
 }

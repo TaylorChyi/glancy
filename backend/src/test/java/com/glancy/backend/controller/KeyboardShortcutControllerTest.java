@@ -4,9 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.glancy.backend.dto.KeyboardShortcutResponse;
 import com.glancy.backend.dto.KeyboardShortcutUpdateRequest;
 import com.glancy.backend.dto.KeyboardShortcutView;
@@ -63,10 +62,10 @@ class KeyboardShortcutControllerTest {
         given(userService.authenticateToken("token-1")).willReturn(1L);
 
         mockMvc
-            .perform(get("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.shortcuts[0].action").value("FOCUS_SEARCH"))
-            .andExpect(jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
+            .perform(MockMvcRequestBuilders.get("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-1"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].action").value("FOCUS_SEARCH"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
     }
 
     /**
@@ -99,13 +98,13 @@ class KeyboardShortcutControllerTest {
 
         mockMvc
             .perform(
-                put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
+                MockMvcRequestBuilders.put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
                     .header("X-USER-TOKEN", "token-2")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"keys\":[\"control\",\"shift\",\"p\"]}")
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
 
         verify(keyboardShortcutService).updateShortcut(
             eq(2L),
@@ -137,9 +136,9 @@ class KeyboardShortcutControllerTest {
         given(userService.authenticateToken("token-3")).willReturn(3L);
 
         mockMvc
-            .perform(delete("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-3"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
+            .perform(MockMvcRequestBuilders.delete("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-3"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
 
         verify(keyboardShortcutService).resetShortcuts(3L);
     }

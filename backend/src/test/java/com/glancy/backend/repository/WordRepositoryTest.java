@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
@@ -37,7 +35,7 @@ class WordRepositoryTest {
             Language.ENGLISH,
             DictionaryFlavor.BILINGUAL
         );
-        assertTrue(found.isPresent());
-        assertEquals("hello", found.get().getTerm());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("hello", found.get().getTerm());
     }
 }

@@ -1,7 +1,5 @@
 package com.glancy.backend.service.profile;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.ProfileCustomSectionDto;
 import com.glancy.backend.dto.ProfileCustomSectionItemDto;
@@ -42,13 +40,13 @@ class JsonProfileSectionCodecTest {
         );
 
         String payload = codec.serialize(sections);
-        assertNotNull(payload);
+        Assertions.assertNotNull(payload);
 
         List<ProfileCustomSectionDto> restored = codec.deserialize(payload);
-        assertEquals(1, restored.size(), "section size should match");
-        assertEquals("职业规划", restored.get(0).title());
-        assertEquals(2, restored.get(0).items().size());
-        assertEquals("AI 教练", restored.get(0).items().get(0).value());
+        Assertions.assertEquals(1, restored.size(), "section size should match");
+        Assertions.assertEquals("职业规划", restored.get(0).title());
+        Assertions.assertEquals(2, restored.get(0).items().size());
+        Assertions.assertEquals("AI 教练", restored.get(0).items().get(0).value());
     }
 
     /**
@@ -62,8 +60,8 @@ class JsonProfileSectionCodecTest {
      */
     @Test
     void handleEmptyPayload() {
-        assertNull(codec.serialize(List.of()), "empty list should serialize to null");
-        assertTrue(codec.deserialize(null).isEmpty(), "null payload should become empty list");
-        assertTrue(codec.deserialize(" ").isEmpty(), "blank payload should become empty list");
+        Assertions.assertNull(codec.serialize(List.of()), "empty list should serialize to null");
+        Assertions.assertTrue(codec.deserialize(null).isEmpty(), "null payload should become empty list");
+        Assertions.assertTrue(codec.deserialize(" ").isEmpty(), "blank payload should become empty list");
     }
 }

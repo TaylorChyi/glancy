@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.User;
 import com.glancy.backend.entity.UserProfile;
 import java.util.Optional;
@@ -37,8 +35,8 @@ class UserProfileRepositoryTest {
         userProfileRepository.save(profile);
 
         Optional<UserProfile> found = userProfileRepository.findByUserId(user.getId());
-        assertTrue(found.isPresent());
-        assertEquals("engineer", found.get().getJob());
-        assertEquals(30, found.get().getDailyWordTarget());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("engineer", found.get().getJob());
+        Assertions.assertEquals(30, found.get().getDailyWordTarget());
     }
 }

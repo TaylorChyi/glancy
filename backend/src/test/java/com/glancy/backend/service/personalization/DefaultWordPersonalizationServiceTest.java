@@ -1,6 +1,5 @@
 package com.glancy.backend.service.personalization;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -104,27 +103,27 @@ class DefaultWordPersonalizationServiceTest {
         );
 
         WordPersonalizationContext context = service.resolveContext(1L);
-        assertNotNull(context);
-        assertTrue(context.personaDerivedFromProfile());
-        assertEquals("高频冲刺的进阶学习者", context.personaDescriptor());
-        assertEquals("同样在冲刺高强度词汇目标的伙伴", context.audienceDescriptor());
-        assertTrue(context.hasSignals());
-        assertEquals("赢得国际设计奖", context.goal());
-        assertEquals("沉稳", context.preferredTone());
-        assertEquals(List.of("金融", "设计"), context.interests());
-        assertEquals(List.of("equity", "portfolio"), context.recentTerms());
+        Assertions.assertNotNull(context);
+        Assertions.assertTrue(context.personaDerivedFromProfile());
+        Assertions.assertEquals("高频冲刺的进阶学习者", context.personaDescriptor());
+        Assertions.assertEquals("同样在冲刺高强度词汇目标的伙伴", context.audienceDescriptor());
+        Assertions.assertTrue(context.hasSignals());
+        Assertions.assertEquals("赢得国际设计奖", context.goal());
+        Assertions.assertEquals("沉稳", context.preferredTone());
+        Assertions.assertEquals(List.of("金融", "设计"), context.interests());
+        Assertions.assertEquals(List.of("equity", "portfolio"), context.recentTerms());
 
         PersonalizedWordExplanation result = service.personalize(context, response);
 
-        assertNotNull(result);
-        assertTrue(result.personaSummary().contains("金融"));
-        assertTrue(result.personaSummary().contains("高频冲刺"));
-        assertTrue(result.personaSummary().contains("leverage"));
-        assertTrue(result.keyTakeaway().startsWith("核心释义"));
-        assertTrue(result.contextualExplanation().contains("示例提示"));
-        assertFalse(result.learningHooks().isEmpty());
-        assertTrue(result.learningHooks().get(0).contains("equity"));
-        assertEquals(2, result.reflectionPrompts().size());
-        assertTrue(result.reflectionPrompts().get(1).contains("赢得国际设计奖"));
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.personaSummary().contains("金融"));
+        Assertions.assertTrue(result.personaSummary().contains("高频冲刺"));
+        Assertions.assertTrue(result.personaSummary().contains("leverage"));
+        Assertions.assertTrue(result.keyTakeaway().startsWith("核心释义"));
+        Assertions.assertTrue(result.contextualExplanation().contains("示例提示"));
+        Assertions.assertFalse(result.learningHooks().isEmpty());
+        Assertions.assertTrue(result.learningHooks().get(0).contains("equity"));
+        Assertions.assertEquals(2, result.reflectionPrompts().size());
+        Assertions.assertTrue(result.reflectionPrompts().get(1).contains("赢得国际设计奖"));
     }
 }

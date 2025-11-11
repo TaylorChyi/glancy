@@ -1,8 +1,7 @@
 package com.glancy.backend.exception;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,8 +54,8 @@ class GlobalExceptionHandlerServerErrorMessageTest {
     void GivenServerError_WhenHandled_ThenReturnGenericMessage() throws Exception {
         mvc
             .perform(get("/unstable/503").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isServiceUnavailable())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.message").value("服务暂不可用，请稍后重试"));
+            .andExpect(MockMvcResultMatchers.status().isServiceUnavailable())
+            .andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("服务暂不可用，请稍后重试"));
     }
 }

@@ -4,9 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.SearchRecordVersionSummary;
@@ -75,15 +74,15 @@ class SearchRecordControllerTest {
 
         mockMvc
             .perform(
-                post("/api/search-records/user")
+                MockMvcRequestBuilders.post("/api/search-records/user")
                     .header("X-USER-TOKEN", "tkn")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}")
             )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.term").value("hello"))
-            .andExpect(jsonPath("$.versions").isArray());
+            .andExpect(MockMvcResultMatchers.status().isCreated())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hello"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.versions").isArray());
     }
 
     /**
@@ -124,11 +123,11 @@ class SearchRecordControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(1))
-            .andExpect(jsonPath("$[0].term").value("hello"))
-            .andExpect(jsonPath("$[0].versions").isArray());
+            .perform(MockMvcRequestBuilders.get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(1))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].term").value("hello"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$[0].versions").isArray());
 
         verify(searchRecordService).getRecords(eq(1L), eq(SearchRecordPageRequest.firstPage()));
     }
@@ -142,8 +141,8 @@ class SearchRecordControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(get("/api/search-records/user?page=2&size=50").header("X-USER-TOKEN", "tkn"))
-            .andExpect(status().isOk());
+            .perform(MockMvcRequestBuilders.get("/api/search-records/user?page=2&size=50").header("X-USER-TOKEN", "tkn"))
+            .andExpect(MockMvcResultMatchers.status().isOk());
 
         verify(searchRecordService).getRecords(eq(1L), eq(new SearchRecordPageRequest(2, 50)));
     }

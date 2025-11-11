@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
 import com.glancy.backend.dto.UserPreferenceUpdateRequest;
@@ -62,12 +60,12 @@ class UserPreferenceServiceTest {
         req.setSearchLanguage("zh");
         UserPreferenceResponse saved = userPreferenceService.savePreference(user.getId(), req);
 
-        assertNotNull(saved.getId());
-        assertEquals("light", saved.getTheme());
+        Assertions.assertNotNull(saved.getId());
+        Assertions.assertEquals("light", saved.getTheme());
 
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
-        assertEquals(saved.getId(), fetched.getId());
-        assertEquals("zh", fetched.getSearchLanguage());
+        Assertions.assertEquals(saved.getId(), fetched.getId());
+        Assertions.assertEquals("zh", fetched.getSearchLanguage());
     }
 
     /**
@@ -83,8 +81,8 @@ class UserPreferenceServiceTest {
         userRepository.save(user);
 
         UserPreferenceResponse fetched = userPreferenceService.getPreference(user.getId());
-        assertEquals("light", fetched.getTheme());
-        assertEquals("en", fetched.getSystemLanguage());
+        Assertions.assertEquals("light", fetched.getTheme());
+        Assertions.assertEquals("en", fetched.getSystemLanguage());
     }
 
     /**
@@ -110,9 +108,9 @@ class UserPreferenceServiceTest {
 
         UserPreferenceResponse updated = userPreferenceService.updatePreference(user.getId(), updateRequest);
 
-        assertEquals("dark", updated.getTheme());
-        assertEquals("en", updated.getSystemLanguage());
-        assertEquals("en", updated.getSearchLanguage());
+        Assertions.assertEquals("dark", updated.getTheme());
+        Assertions.assertEquals("en", updated.getSystemLanguage());
+        Assertions.assertEquals("en", updated.getSearchLanguage());
     }
 
     /**
@@ -140,8 +138,8 @@ class UserPreferenceServiceTest {
 
         UserPreferenceResponse updated = userPreferenceService.updatePreference(user.getId(), updateRequest);
 
-        assertEquals("dark", updated.getTheme());
-        assertEquals("fr", updated.getSystemLanguage());
-        assertEquals("es", updated.getSearchLanguage());
+        Assertions.assertEquals("dark", updated.getTheme());
+        Assertions.assertEquals("fr", updated.getSystemLanguage());
+        Assertions.assertEquals("es", updated.getSearchLanguage());
     }
 }

@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.UserStatisticsResponse;
 import com.glancy.backend.entity.MembershipType;
 import com.glancy.backend.entity.User;
@@ -69,8 +67,8 @@ class UserStatisticsServiceTest {
         userRepository.save(u3);
 
         UserStatisticsResponse stats = userService.getStatistics();
-        assertEquals(3, stats.getTotalUsers());
-        assertEquals(1, stats.getMemberUsers());
-        assertEquals(1, stats.getDeletedUsers());
+        Assertions.assertEquals(3, stats.getTotalUsers());
+        Assertions.assertEquals(1, stats.getMemberUsers());
+        Assertions.assertEquals(1, stats.getDeletedUsers());
     }
 }

@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
@@ -63,16 +61,16 @@ class SearchRecordRepositoryTest {
         searchRecordRepository.save(deletedRecord);
 
         List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(user.getId());
-        assertEquals("term2", list.get(0).getTerm());
+        Assertions.assertEquals("term2", list.get(0).getTerm());
 
         long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
             user.getId(),
             LocalDateTime.now().minusDays(2),
             LocalDateTime.now()
         );
-        assertEquals(2, count);
+        Assertions.assertEquals(2, count);
 
-        assertTrue(
+        Assertions.assertTrue(
             searchRecordRepository.existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
                 user.getId(),
                 "term1",
@@ -96,10 +94,10 @@ class SearchRecordRepositoryTest {
                 Language.ENGLISH,
                 DictionaryFlavor.BILINGUAL
             );
-        assertEquals(r3.getId(), top.getId());
+        Assertions.assertEquals(r3.getId(), top.getId());
 
-        assertTrue(searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent());
-        assertTrue(searchRecordRepository.findByIdAndDeletedFalse(r2.getId()).isPresent());
-        assertTrue(searchRecordRepository.findByIdAndDeletedFalse(deletedRecord.getId()).isEmpty());
+        Assertions.assertTrue(searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent());
+        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(r2.getId()).isPresent());
+        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(deletedRecord.getId()).isEmpty());
     }
 }

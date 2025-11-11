@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.ProfileCustomSectionDto;
 import com.glancy.backend.dto.ProfileCustomSectionItemDto;
 import com.glancy.backend.dto.UserProfileRequest;
@@ -96,21 +94,21 @@ class UserProfileServiceTest {
         );
         UserProfileResponse saved = userProfileService.saveProfile(user.getId(), req);
 
-        assertNotNull(saved.id());
-        assertEquals("dev", saved.job());
-        assertEquals("code", saved.interest());
-        assertEquals("master", saved.education());
-        assertEquals("B2", saved.currentAbility());
-        assertEquals("沉稳而有条理", saved.responseStyle());
-        assertEquals(1, saved.customSections().size());
+        Assertions.assertNotNull(saved.id());
+        Assertions.assertEquals("dev", saved.job());
+        Assertions.assertEquals("code", saved.interest());
+        Assertions.assertEquals("master", saved.education());
+        Assertions.assertEquals("B2", saved.currentAbility());
+        Assertions.assertEquals("沉稳而有条理", saved.responseStyle());
+        Assertions.assertEquals(1, saved.customSections().size());
 
         UserProfileResponse fetched = userProfileService.getProfile(user.getId());
-        assertEquals(saved.id(), fetched.id());
-        assertEquals(saved.job(), fetched.job());
-        assertEquals(user.getId(), fetched.userId());
-        assertEquals("master", fetched.education());
-        assertEquals(1, fetched.customSections().size());
-        assertEquals("沉稳而有条理", fetched.responseStyle());
+        Assertions.assertEquals(saved.id(), fetched.id());
+        Assertions.assertEquals(saved.job(), fetched.job());
+        Assertions.assertEquals(user.getId(), fetched.userId());
+        Assertions.assertEquals("master", fetched.education());
+        Assertions.assertEquals(1, fetched.customSections().size());
+        Assertions.assertEquals("沉稳而有条理", fetched.responseStyle());
     }
 
     /**
@@ -133,10 +131,10 @@ class UserProfileServiceTest {
         userRepository.save(user);
 
         UserProfileResponse fetched = userProfileService.getProfile(user.getId());
-        assertNull(fetched.id());
-        assertNull(fetched.job());
-        assertEquals(user.getId(), fetched.userId());
-        assertTrue(fetched.customSections().isEmpty(), "custom sections should default to empty list");
-        assertNull(fetched.responseStyle());
+        Assertions.assertNull(fetched.id());
+        Assertions.assertNull(fetched.job());
+        Assertions.assertEquals(user.getId(), fetched.userId());
+        Assertions.assertTrue(fetched.customSections().isEmpty(), "custom sections should default to empty list");
+        Assertions.assertNull(fetched.responseStyle());
     }
 }

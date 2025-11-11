@@ -1,11 +1,9 @@
 package com.glancy.backend.controller;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
@@ -61,19 +59,19 @@ class WordControllerTest {
             null,
             DictionaryFlavor.BILINGUAL
         );
-        when(
+        Mockito.when(
             wordService.findWordForUser(
-                eq(1L),
-                eq("hello"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                eq(null),
-                eq(false),
-                eq(true)
+                ArgumentMatchers.eq(1L),
+                ArgumentMatchers.eq("hello"),
+                ArgumentMatchers.eq(Language.ENGLISH),
+                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
+                ArgumentMatchers.eq(null),
+                ArgumentMatchers.eq(false),
+                ArgumentMatchers.eq(true)
             )
         ).thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -84,9 +82,9 @@ class WordControllerTest {
                     .accept(MediaType.APPLICATION_JSON)
             )
             .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"))
-            .andExpect(jsonPath("$.term").value("hello"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
+            .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hello"));
     }
 
     /**
@@ -111,19 +109,19 @@ class WordControllerTest {
             null,
             DictionaryFlavor.BILINGUAL
         );
-        when(
+        Mockito.when(
             wordService.findWordForUser(
-                eq(1L),
-                eq("hello"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                eq("doubao"),
-                eq(false),
-                eq(true)
+                ArgumentMatchers.eq(1L),
+                ArgumentMatchers.eq("hello"),
+                ArgumentMatchers.eq(Language.ENGLISH),
+                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
+                ArgumentMatchers.eq("doubao"),
+                ArgumentMatchers.eq(false),
+                ArgumentMatchers.eq(true)
             )
         ).thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -135,8 +133,8 @@ class WordControllerTest {
                     .accept(MediaType.APPLICATION_JSON)
             )
             .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
     }
 
     /**
@@ -144,13 +142,13 @@ class WordControllerTest {
      */
     @Test
     void testGetWordMissingTerm() throws Exception {
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
             .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Missing required parameter: term"));
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Missing required parameter: term"));
     }
 
     /**
@@ -158,15 +156,15 @@ class WordControllerTest {
      */
     @Test
     void testGetWordInvalidLanguage() throws Exception {
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
                 get("/api/words").header("X-USER-TOKEN", "tkn").param("term", "hello").param("language", "INVALID")
             )
             .andDo(print())
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("Invalid value for parameter: language"));
+            .andExpect(MockMvcResultMatchers.status().isBadRequest())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid value for parameter: language"));
     }
 
     /**
@@ -191,19 +189,19 @@ class WordControllerTest {
             null,
             DictionaryFlavor.BILINGUAL
         );
-        when(
+        Mockito.when(
             wordService.findWordForUser(
-                eq(1L),
-                eq("hi"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                eq(null),
-                eq(false),
-                eq(true)
+                ArgumentMatchers.eq(1L),
+                ArgumentMatchers.eq("hi"),
+                ArgumentMatchers.eq(Language.ENGLISH),
+                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
+                ArgumentMatchers.eq(null),
+                ArgumentMatchers.eq(false),
+                ArgumentMatchers.eq(true)
             )
         ).thenReturn(resp);
 
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -213,8 +211,8 @@ class WordControllerTest {
                     .param("language", "ENGLISH")
                     .accept(MediaType.APPLICATION_JSON)
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.term").value("hi"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hi"));
     }
 
     /**
@@ -228,7 +226,7 @@ class WordControllerTest {
      */
     @Test
     void testGetWordWithCaptureHistoryDisabled() throws Exception {
-        when(userService.authenticateToken("tkn")).thenReturn(1L);
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
         WordResponse resp = new WordResponse(
             "1",
             "hello",
@@ -246,15 +244,15 @@ class WordControllerTest {
             null,
             DictionaryFlavor.BILINGUAL
         );
-        when(
+        Mockito.when(
             wordService.findWordForUser(
-                eq(1L),
-                eq("hello"),
-                eq(Language.ENGLISH),
-                eq(DictionaryFlavor.BILINGUAL),
-                isNull(),
-                eq(false),
-                eq(false)
+                ArgumentMatchers.eq(1L),
+                ArgumentMatchers.eq("hello"),
+                ArgumentMatchers.eq(Language.ENGLISH),
+                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
+                ArgumentMatchers.isNull(),
+                ArgumentMatchers.eq(false),
+                ArgumentMatchers.eq(false)
             )
         ).thenReturn(resp);
 
@@ -267,17 +265,17 @@ class WordControllerTest {
                     .param("captureHistory", "false")
                     .accept(MediaType.APPLICATION_JSON)
             )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("1"));
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
 
-        verify(wordService, times(1)).findWordForUser(
-            eq(1L),
-            eq("hello"),
-            eq(Language.ENGLISH),
-            eq(DictionaryFlavor.BILINGUAL),
-            isNull(),
-            eq(false),
-            eq(false)
+        Mockito.verify(wordService, Mockito.times(1)).findWordForUser(
+            ArgumentMatchers.eq(1L),
+            ArgumentMatchers.eq("hello"),
+            ArgumentMatchers.eq(Language.ENGLISH),
+            ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
+            ArgumentMatchers.isNull(),
+            ArgumentMatchers.eq(false),
+            ArgumentMatchers.eq(false)
         );
     }
 }

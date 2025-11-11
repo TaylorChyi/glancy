@@ -1,9 +1,7 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
+import org.mockito.Mockito;
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.UserContactResponse;
@@ -81,7 +79,7 @@ class UserServiceTest {
     void setUp() {
         loginDeviceRepository.deleteAll();
         userRepository.deleteAll();
-        when(avatarStorage.resolveUrl(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(avatarStorage.resolveUrl(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     /**
@@ -99,20 +97,20 @@ class UserServiceTest {
         req.setPhone("100");
         UserResponse resp = userService.register(req);
 
-        assertNotNull(resp.getId());
-        assertEquals("testuser", resp.getUsername());
-        assertFalse(resp.getMember());
-        assertEquals(MembershipType.NONE, resp.getMembershipType());
-        assertNull(resp.getMembershipExpiresAt());
+        Assertions.assertNotNull(resp.getId());
+        Assertions.assertEquals("testuser", resp.getUsername());
+        Assertions.assertFalse(resp.getMember());
+        Assertions.assertEquals(MembershipType.NONE, resp.getMembershipType());
+        Assertions.assertNull(resp.getMembershipExpiresAt());
 
         // 验证数据库中未删除
         User user = userRepository.findById(resp.getId()).orElseThrow();
-        assertFalse(user.getDeleted());
+        Assertions.assertFalse(user.getDeleted());
 
         // 注销
         userService.deleteUser(resp.getId());
         User deletedUser = userRepository.findById(resp.getId()).orElseThrow();
-        assertTrue(deletedUser.getDeleted());
+        Assertions.assertTrue(deletedUser.getDeleted());
     }
 
     /**
@@ -135,10 +133,10 @@ class UserServiceTest {
         req2.setEmail("b@example.com");
         req2.setPhone("102");
 
-        Exception ex = assertThrows(DuplicateResourceException.class, () -> {
+        Exception ex = Assertions.assertThrows(DuplicateResourceException.class, () -> {
             userService.register(req2);
         });
-        assertEquals("用户名已存在", ex.getMessage());
+        Assertions.assertEquals("用户名已存在", ex.getMessage());
     }
 
     /**
@@ -161,10 +159,10 @@ class UserServiceTest {
         req2.setEmail("a@example.com");
         req2.setPhone("112");
 
-        Exception ex = assertThrows(DuplicateResourceException.class, () -> {
+        Exception ex = Assertions.assertThrows(DuplicateResourceException.class, () -> {
             userService.register(req2);
         });
-        assertEquals("邮箱已被使用", ex.getMessage());
+        Assertions.assertEquals("邮箱已被使用", ex.getMessage());
     }
 
     /**
@@ -185,10 +183,10 @@ class UserServiceTest {
         req2.setEmail("p2@example.com");
         req2.setPhone("12345");
 
-        Exception ex = assertThrows(DuplicateResourceException.class, () -> {
+        Exception ex = Assertions.assertThrows(DuplicateResourceException.class, () -> {
             userService.register(req2);
         });
-        assertEquals("手机号已被使用", ex.getMessage());
+        Assertions.assertEquals("手机号已被使用", ex.getMessage());
     }
 
     /**
@@ -205,17 +203,17 @@ class UserServiceTest {
 
         UserContactResponse updated = userService.updateContact(created.getId(), "contact@example.com", "7654321");
 
-        assertEquals("contact@example.com", updated.email());
-        assertEquals("7654321", updated.phone());
+        Assertions.assertEquals("contact@example.com", updated.email());
+        Assertions.assertEquals("7654321", updated.phone());
 
         User persisted = userRepository.findById(created.getId()).orElseThrow();
-        assertEquals("contact@example.com", persisted.getEmail());
-        assertEquals("7654321", persisted.getPhone());
+        Assertions.assertEquals("contact@example.com", persisted.getEmail());
+        Assertions.assertEquals("7654321", persisted.getPhone());
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             userService.updateContact(created.getId(), "changed@example.com", "7654321")
         );
-        assertEquals("请通过邮箱换绑流程完成更新", exception.getMessage());
+        Assertions.assertEquals("请通过邮箱换绑流程完成更新", exception.getMessage());
     }
 
     /**
@@ -230,13 +228,13 @@ class UserServiceTest {
         req.setPhone("4567");
         UserResponse created = userService.register(req);
 
-        doNothing()
-            .when(emailVerificationService)
+        Mockito.doNothing()
+            .Mockito.when(emailVerificationService)
             .issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL, CLIENT_IP);
 
         userService.requestEmailChangeCode(created.getId(), "next@example.com", CLIENT_IP);
 
-        verify(emailVerificationService).issueCode(
+        Mockito.verify(emailVerificationService).issueCode(
             "next@example.com",
             EmailVerificationPurpose.CHANGE_EMAIL,
             CLIENT_IP
@@ -255,15 +253,15 @@ class UserServiceTest {
         req.setPhone("6543");
         UserResponse created = userService.register(req);
 
-        doNothing()
-            .when(emailVerificationService)
+        Mockito.doNothing()
+            .Mockito.when(emailVerificationService)
             .consumeCode("after@example.com", "123456", EmailVerificationPurpose.CHANGE_EMAIL);
 
         UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", "123456");
 
-        assertEquals("after@example.com", response.email());
+        Assertions.assertEquals("after@example.com", response.email());
         User persisted = userRepository.findById(created.getId()).orElseThrow();
-        assertEquals("after@example.com", persisted.getEmail());
+        Assertions.assertEquals("after@example.com", persisted.getEmail());
     }
 
     /**
@@ -289,13 +287,13 @@ class UserServiceTest {
 
         UserEmailResponse response = userService.unbindEmail(created.getId());
 
-        assertNull(response.email());
-        verify(emailVerificationService).invalidateCodes("unbind@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+        Assertions.assertNull(response.email());
+        Mockito.verify(emailVerificationService).invalidateCodes("unbind@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
         UserEmailResponse second = userService.unbindEmail(created.getId());
-        assertNull(second.email());
+        Assertions.assertNull(second.email());
         verifyNoMoreInteractions(emailVerificationService);
         User persisted = userRepository.findById(created.getId()).orElseThrow();
-        assertNull(persisted.getEmail());
+        Assertions.assertNull(persisted.getEmail());
     }
 
     /**
@@ -320,11 +318,11 @@ class UserServiceTest {
 
         clearInvocations(emailVerificationService);
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             userService.requestEmailChangeCode(created.getId(), "Primary@Example.com", CLIENT_IP)
         );
 
-        assertEquals("新邮箱不能与当前邮箱相同", exception.getMessage());
+        Assertions.assertEquals("新邮箱不能与当前邮箱相同", exception.getMessage());
         verifyNoInteractions(emailVerificationService);
     }
 
@@ -358,11 +356,11 @@ class UserServiceTest {
 
         clearInvocations(emailVerificationService);
 
-        DuplicateResourceException exception = assertThrows(DuplicateResourceException.class, () ->
+        DuplicateResourceException exception = Assertions.assertThrows(DuplicateResourceException.class, () ->
             userService.requestEmailChangeCode(firstUser.getId(), "TARGET@example.com", CLIENT_IP)
         );
 
-        assertEquals("邮箱已被使用", exception.getMessage());
+        Assertions.assertEquals("邮箱已被使用", exception.getMessage());
         verifyNoInteractions(emailVerificationService);
     }
 
@@ -388,11 +386,11 @@ class UserServiceTest {
 
         clearInvocations(emailVerificationService);
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             userService.changeEmail(created.getId(), "after-change@example.com", "   ")
         );
 
-        assertEquals("验证码不能为空", exception.getMessage());
+        Assertions.assertEquals("验证码不能为空", exception.getMessage());
         verifyNoInteractions(emailVerificationService);
     }
 
@@ -419,11 +417,11 @@ class UserServiceTest {
 
         clearInvocations(emailVerificationService);
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             userService.requestEmailChangeCode(created.getId(), "   ", CLIENT_IP)
         );
 
-        assertEquals("邮箱不能为空", exception.getMessage());
+        Assertions.assertEquals("邮箱不能为空", exception.getMessage());
         verifyNoInteractions(emailVerificationService);
     }
 
@@ -448,14 +446,14 @@ class UserServiceTest {
         req.setPhone("1111");
         UserResponse created = userService.register(req);
 
-        doNothing()
-            .when(emailVerificationService)
+        Mockito.doNothing()
+            .Mockito.when(emailVerificationService)
             .consumeCode("after@example.com", "654321", EmailVerificationPurpose.CHANGE_EMAIL);
 
         UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", " 654321 ");
 
-        assertEquals("after@example.com", response.email());
-        verify(emailVerificationService).consumeCode(
+        Assertions.assertEquals("after@example.com", response.email());
+        Mockito.verify(emailVerificationService).consumeCode(
             "after@example.com",
             "654321",
             EmailVerificationPurpose.CHANGE_EMAIL
@@ -489,8 +487,8 @@ class UserServiceTest {
         userService.login(loginReq);
 
         List<LoginDevice> devices = loginDeviceRepository.findByUserIdOrderByLoginTimeAsc(resp.getId());
-        assertEquals(3, devices.size());
-        assertFalse(devices.stream().anyMatch(d -> "d1".equals(d.getDeviceInfo())));
+        Assertions.assertEquals(3, devices.size());
+        Assertions.assertFalse(devices.stream().anyMatch(d -> "d1".equals(d.getDeviceInfo())));
     }
 
     /**
@@ -509,7 +507,7 @@ class UserServiceTest {
         loginReq.setAccount("555");
         loginReq.setPassword("pass123");
 
-        assertNotNull(userService.login(loginReq).getToken());
+        Assertions.assertNotNull(userService.login(loginReq).getToken());
     }
 
     /**
@@ -532,7 +530,7 @@ class UserServiceTest {
         userService.logout(resp.getId(), token);
 
         User user = userRepository.findById(resp.getId()).orElseThrow();
-        assertNull(user.getLoginToken());
+        Assertions.assertNull(user.getLoginToken());
     }
 
     /**
@@ -548,10 +546,10 @@ class UserServiceTest {
         UserResponse resp = userService.register(req);
 
         AvatarResponse updated = userService.updateAvatar(resp.getId(), "url");
-        assertEquals("url", updated.getAvatar());
+        Assertions.assertEquals("url", updated.getAvatar());
 
         AvatarResponse fetched = userService.getAvatar(resp.getId());
-        assertEquals("url", fetched.getAvatar());
+        Assertions.assertEquals("url", fetched.getAvatar());
     }
 
     /**
@@ -566,11 +564,11 @@ class UserServiceTest {
         req.setPhone("109");
         UserResponse resp = userService.register(req);
 
-        MultipartFile file = mock(MultipartFile.class);
-        when(avatarStorage.upload(file)).thenReturn("path/url.jpg");
+        MultipartFile file = Mockito.mock(MultipartFile.class);
+        Mockito.when(avatarStorage.upload(file)).thenReturn("path/url.jpg");
 
         AvatarResponse result = userService.uploadAvatar(resp.getId(), file);
-        assertEquals("path/url.jpg", result.getAvatar());
+        Assertions.assertEquals("path/url.jpg", result.getAvatar());
     }
 
     /**
@@ -594,7 +592,7 @@ class UserServiceTest {
         userRepository.save(u2);
 
         long count = userService.countActiveUsers();
-        assertEquals(1, count);
+        Assertions.assertEquals(1, count);
     }
 
     /**
@@ -612,15 +610,15 @@ class UserServiceTest {
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(7);
         userService.activateMembership(resp.getId(), MembershipType.PRO, expiresAt);
         User user = userRepository.findById(resp.getId()).orElseThrow();
-        assertEquals(MembershipType.PRO, user.getMembershipType());
-        assertEquals(expiresAt, user.getMembershipExpiresAt());
-        assertTrue(user.hasActiveMembershipAt(LocalDateTime.now()));
+        Assertions.assertEquals(MembershipType.PRO, user.getMembershipType());
+        Assertions.assertEquals(expiresAt, user.getMembershipExpiresAt());
+        Assertions.assertTrue(user.hasActiveMembershipAt(LocalDateTime.now()));
 
         userService.removeMembership(resp.getId());
         User user2 = userRepository.findById(resp.getId()).orElseThrow();
-        assertEquals(MembershipType.NONE, user2.getMembershipType());
-        assertNull(user2.getMembershipExpiresAt());
-        assertFalse(user2.hasActiveMembershipAt(LocalDateTime.now()));
+        Assertions.assertEquals(MembershipType.NONE, user2.getMembershipType());
+        Assertions.assertNull(user2.getMembershipExpiresAt());
+        Assertions.assertFalse(user2.hasActiveMembershipAt(LocalDateTime.now()));
     }
 
     /**
@@ -635,6 +633,6 @@ class UserServiceTest {
         req.setPhone("301");
         UserResponse resp = userService.register(req);
 
-        assertTrue(userProfileRepository.findByUserId(resp.getId()).isPresent());
+        Assertions.assertTrue(userProfileRepository.findByUserId(resp.getId()).isPresent());
     }
 }

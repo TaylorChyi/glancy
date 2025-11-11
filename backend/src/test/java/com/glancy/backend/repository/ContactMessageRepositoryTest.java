@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.ContactMessage;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,7 @@ class ContactMessageRepositoryTest {
         contactMessageRepository.save(msg);
 
         Optional<ContactMessage> found = contactMessageRepository.findById(msg.getId());
-        assertTrue(found.isPresent());
-        assertEquals("alice", found.get().getName());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("alice", found.get().getName());
     }
 }

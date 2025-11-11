@@ -1,6 +1,16 @@
 package com.glancy.backend.repository;
 
-import com.glancy.backend.entity.*;
+import com.glancy.backend.entity.ContactMessage;
+import com.glancy.backend.entity.DictionaryFlavor;
+import com.glancy.backend.entity.Language;
+import com.glancy.backend.entity.LoginDevice;
+import com.glancy.backend.entity.Notification;
+import com.glancy.backend.entity.SearchRecord;
+import com.glancy.backend.entity.ThirdPartyAccount;
+import com.glancy.backend.entity.User;
+import com.glancy.backend.entity.UserPreference;
+import com.glancy.backend.entity.UserProfile;
+import com.glancy.backend.entity.Word;
 import java.time.LocalDateTime;
 import java.util.Collections;
 

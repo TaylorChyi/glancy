@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.ThirdPartyAccount;
 import com.glancy.backend.entity.User;
 import java.util.Optional;
@@ -25,7 +23,7 @@ class ThirdPartyAccountRepositoryTest {
         thirdPartyAccountRepository.save(tpa);
 
         Optional<ThirdPartyAccount> found = thirdPartyAccountRepository.findByProviderAndExternalId("google", "ext123");
-        assertTrue(found.isPresent());
-        assertEquals(user.getId(), found.get().getUser().getId());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals(user.getId(), found.get().getUser().getId());
     }
 }

@@ -1,7 +1,5 @@
 package com.glancy.backend.llm.parser;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.entity.Language;
 import java.util.List;
@@ -38,14 +36,14 @@ class JacksonWordResponseParserTest {
             "}";
 
         ParsedWord parsed = parser.parse(json, "glow", Language.ENGLISH);
-        assertEquals(json, parsed.markdown());
+        Assertions.assertEquals(json, parsed.markdown());
         var resp = parsed.parsed();
-        assertEquals(json, resp.getMarkdown());
-        assertEquals("glow", resp.getTerm());
-        assertFalse(resp.getDefinitions().isEmpty());
-        assertNotNull(resp.getPhonetic());
-        assertTrue(resp.getVariations().isEmpty());
-        assertTrue(resp.getPhrases().isEmpty());
+        Assertions.assertEquals(json, resp.getMarkdown());
+        Assertions.assertEquals("glow", resp.getTerm());
+        Assertions.assertFalse(resp.getDefinitions().isEmpty());
+        Assertions.assertNotNull(resp.getPhonetic());
+        Assertions.assertTrue(resp.getVariations().isEmpty());
+        Assertions.assertTrue(resp.getPhrases().isEmpty());
     }
 
     /**
@@ -62,13 +60,13 @@ class JacksonWordResponseParserTest {
 
         ParsedWord parsed = parser.parse(markdown, "serendipity", Language.ENGLISH);
 
-        assertEquals(markdown, parsed.markdown());
+        Assertions.assertEquals(markdown, parsed.markdown());
         var response = parsed.parsed();
-        assertEquals("Serendipity", response.getTerm());
-        assertEquals(1, response.getDefinitions().size());
-        assertEquals("意外发现珍宝的能力", response.getDefinitions().get(0));
-        assertEquals(List.of("fortuity", "chance"), response.getSynonyms());
-        assertEquals("She found the book by pure serendipity.", response.getExample());
+        Assertions.assertEquals("Serendipity", response.getTerm());
+        Assertions.assertEquals(1, response.getDefinitions().size());
+        Assertions.assertEquals("意外发现珍宝的能力", response.getDefinitions().get(0));
+        Assertions.assertEquals(List.of("fortuity", "chance"), response.getSynonyms());
+        Assertions.assertEquals("She found the book by pure serendipity.", response.getExample());
     }
 
     /**
@@ -93,11 +91,11 @@ class JacksonWordResponseParserTest {
         ParsedWord parsed = parser.parse(markdown, "illuminate", Language.ENGLISH);
         var response = parsed.parsed();
 
-        assertEquals("Illuminate", response.getTerm());
-        assertEquals("照亮; 使明亮", response.getDefinitions().get(0));
-        assertEquals(List.of("light up", "brighten"), response.getSynonyms());
-        assertEquals(List.of("darken"), response.getAntonyms());
-        assertEquals("The lantern illuminated the cave.", response.getExample());
-        assertEquals("/ɪˈluːməˌneɪt/", response.getPhonetic());
+        Assertions.assertEquals("Illuminate", response.getTerm());
+        Assertions.assertEquals("照亮; 使明亮", response.getDefinitions().get(0));
+        Assertions.assertEquals(List.of("light up", "brighten"), response.getSynonyms());
+        Assertions.assertEquals(List.of("darken"), response.getAntonyms());
+        Assertions.assertEquals("The lantern illuminated the cave.", response.getExample());
+        Assertions.assertEquals("/ɪˈluːməˌneɪt/", response.getPhonetic());
     }
 }

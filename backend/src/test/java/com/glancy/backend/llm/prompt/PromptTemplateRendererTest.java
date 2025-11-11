@@ -1,7 +1,5 @@
 package com.glancy.backend.llm.prompt;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.llm.service.WordPromptTemplateConstants;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,8 +40,8 @@ class PromptTemplateRendererTest {
     void renderInjectsContextValues() {
         String first = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of("goal", "流利表达"));
         String second = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of("goal", "精准理解"));
-        assertEquals("学习目标：流利表达\n", first);
-        assertEquals("学习目标：精准理解\n", second);
+        Assertions.assertEquals("学习目标：流利表达\n", first);
+        Assertions.assertEquals("学习目标：精准理解\n", second);
     }
 
     @Test
@@ -59,7 +57,7 @@ class PromptTemplateRendererTest {
      */
     void renderMissingContextFallsBackToEmpty() {
         String content = renderer.render(WordPromptTemplateConstants.USER_GOAL, Map.of());
-        assertEquals("学习目标：\n", content);
+        Assertions.assertEquals("学习目标：\n", content);
     }
 
     @Test
@@ -75,7 +73,7 @@ class PromptTemplateRendererTest {
      */
     void renderSupportsInlineTemplateContent() {
         String content = renderer.render("您好，{{name}}。", Map.of("name", "测试者"));
-        assertEquals("您好，测试者。", content);
+        Assertions.assertEquals("您好，测试者。", content);
     }
 
     @Test
@@ -90,6 +88,6 @@ class PromptTemplateRendererTest {
      *  - 若未抛出异常则说明参数校验缺失。
      */
     void renderRejectsEmptyTemplate() {
-        assertThrows(IllegalArgumentException.class, () -> renderer.render("", Map.of()));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> renderer.render("", Map.of()));
     }
 }

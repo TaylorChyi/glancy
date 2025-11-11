@@ -1,7 +1,5 @@
 package com.glancy.backend.service.shortcut;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.KeyboardShortcutResponse;
 import com.glancy.backend.dto.KeyboardShortcutUpdateRequest;
 import com.glancy.backend.entity.ShortcutAction;
@@ -82,8 +80,8 @@ class KeyboardShortcutServiceTest {
 
         KeyboardShortcutResponse response = keyboardShortcutService.getShortcuts(user.getId());
 
-        assertEquals(ShortcutAction.values().length, response.shortcuts().size(), "shortcut size");
-        assertTrue(
+        Assertions.assertEquals(ShortcutAction.values().length, response.shortcuts().size(), "shortcut size");
+        Assertions.assertTrue(
             response
                 .shortcuts()
                 .stream()
@@ -113,7 +111,7 @@ class KeyboardShortcutServiceTest {
         keyboardShortcutService.updateShortcut(user.getId(), ShortcutAction.FOCUS_SEARCH, request);
 
         KeyboardShortcutResponse response = keyboardShortcutService.getShortcuts(user.getId());
-        assertTrue(
+        Assertions.assertTrue(
             response
                 .shortcuts()
                 .stream()
@@ -124,7 +122,7 @@ class KeyboardShortcutServiceTest {
                 ),
             "focus search should use updated binding"
         );
-        assertTrue(
+        Assertions.assertTrue(
             response
                 .shortcuts()
                 .stream()
@@ -156,17 +154,17 @@ class KeyboardShortcutServiceTest {
             new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "Q"))
         );
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             keyboardShortcutService.updateShortcut(
                 user.getId(),
                 ShortcutAction.FOCUS_SEARCH,
                 new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "Q"))
             )
         );
-        assertEquals("快捷键已被其他功能占用", exception.getMessage());
+        Assertions.assertEquals("快捷键已被其他功能占用", exception.getMessage());
 
         KeyboardShortcutResponse response = keyboardShortcutService.getShortcuts(user.getId());
-        assertTrue(
+        Assertions.assertTrue(
             response
                 .shortcuts()
                 .stream()
@@ -193,17 +191,17 @@ class KeyboardShortcutServiceTest {
     void Given_modAliasConflict_When_updateShortcut_Then_throwInvalidRequest() {
         User user = createUser();
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+        InvalidRequestException exception = Assertions.assertThrows(InvalidRequestException.class, () ->
             keyboardShortcutService.updateShortcut(
                 user.getId(),
                 ShortcutAction.OPEN_SHORTCUTS,
                 new KeyboardShortcutUpdateRequest(List.of("CONTROL", "SHIFT", "F"))
             )
         );
-        assertEquals("快捷键已被其他功能占用", exception.getMessage());
+        Assertions.assertEquals("快捷键已被其他功能占用", exception.getMessage());
 
         KeyboardShortcutResponse response = keyboardShortcutService.getShortcuts(user.getId());
-        assertTrue(
+        Assertions.assertTrue(
             response
                 .shortcuts()
                 .stream()

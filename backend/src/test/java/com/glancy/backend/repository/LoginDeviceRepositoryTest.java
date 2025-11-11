@@ -1,7 +1,5 @@
 package com.glancy.backend.repository;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.entity.LoginDevice;
 import com.glancy.backend.entity.User;
 import java.time.LocalDateTime;
@@ -28,7 +26,7 @@ class LoginDeviceRepositoryTest {
         loginDeviceRepository.save(d1);
 
         List<LoginDevice> list = loginDeviceRepository.findByUserIdOrderByLoginTimeAsc(user.getId());
-        assertEquals("d1", list.get(0).getDeviceInfo());
-        assertEquals(2, list.size());
+        Assertions.assertEquals("d1", list.get(0).getDeviceInfo());
+        Assertions.assertEquals(2, list.size());
     }
 }

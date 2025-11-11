@@ -1,7 +1,5 @@
 package com.glancy.backend.llm.prompt;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +32,7 @@ class PromptManagerImplJarTest {
         try {
             PromptManagerImpl manager = new PromptManagerImpl();
             String prompt = manager.loadPrompt("prompts/english_to_chinese.txt");
-            assertEquals(new String(data, StandardCharsets.UTF_8), prompt);
+            Assertions.assertEquals(new String(data, StandardCharsets.UTF_8), prompt);
         } finally {
             Thread.currentThread().setContextClassLoader(previous);
             loader.close();

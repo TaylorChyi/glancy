@@ -1,7 +1,5 @@
 package com.glancy.backend.service.support;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.WordPersonalizationContext;
@@ -64,9 +62,9 @@ class WordPersistenceCoordinatorTest {
                 return word;
             })
             .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {
-                assertEquals(1L, userId, "用户 ID 应按上下文透传");
-                assertEquals(2L, recordId, "记录 ID 应保持一致");
-                assertEquals("canonical", canonicalTerm, "规范词条需来自保存结果");
+                Assertions.assertEquals(1L, userId, "用户 ID 应按上下文透传");
+                Assertions.assertEquals(2L, recordId, "记录 ID 应保持一致");
+                Assertions.assertEquals("canonical", canonicalTerm, "规范词条需来自保存结果");
                 recordSynced.set(true);
             })
             .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
@@ -88,10 +86,10 @@ class WordPersistenceCoordinatorTest {
         WordVersionContentStrategy strategy = new ResponseMarkdownOrSerializedWordStrategy();
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
 
-        assertTrue(recordSynced.get(), "应同步搜索记录");
-        assertEquals("### definition", versionContent.get(), "版本内容应复用响应 markdown");
-        assertEquals(99L, outcome.response().getVersionId(), "versionId 应写回响应");
-        assertNotNull(outcome.response().getPersonalization(), "应写入个性化结果");
+        Assertions.assertTrue(recordSynced.get(), "应同步搜索记录");
+        Assertions.assertEquals("### definition", versionContent.get(), "版本内容应复用响应 markdown");
+        Assertions.assertEquals(99L, outcome.response().getVersionId(), "versionId 应写回响应");
+        Assertions.assertNotNull(outcome.response().getPersonalization(), "应写入个性化结果");
     }
 
     /**
@@ -148,9 +146,9 @@ class WordPersistenceCoordinatorTest {
         WordVersionContentStrategy strategy = new SanitizedStreamingMarkdownStrategy();
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
 
-        assertEquals("## sanitized output", versionContent.get(), "版本内容应取净化 markdown");
-        assertTrue(personalized.get(), "应执行个性化回写");
-        assertEquals(11L, outcome.response().getVersionId(), "应写入版本 ID");
+        Assertions.assertEquals("## sanitized output", versionContent.get(), "版本内容应取净化 markdown");
+        Assertions.assertTrue(personalized.get(), "应执行个性化回写");
+        Assertions.assertEquals(11L, outcome.response().getVersionId(), "应写入版本 ID");
     }
 
     /**
@@ -206,7 +204,7 @@ class WordPersistenceCoordinatorTest {
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
 
         String expectedPreview = SensitiveDataUtil.previewText("markdown-content-with-length");
-        assertEquals(expectedPreview, versionContent.get(), "序列化失败时应回退到 markdown 预览");
-        assertEquals(21L, outcome.response().getVersionId(), "versionId 仍需写回响应");
+        Assertions.assertEquals(expectedPreview, versionContent.get(), "序列化失败时应回退到 markdown 预览");
+        Assertions.assertEquals(21L, outcome.response().getVersionId(), "versionId 仍需写回响应");
     }
 }

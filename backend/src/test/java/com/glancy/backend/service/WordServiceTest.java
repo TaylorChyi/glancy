@@ -1,7 +1,5 @@
 package com.glancy.backend.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.Assertions;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
@@ -98,8 +96,8 @@ class WordServiceTest {
             true
         );
 
-        assertNotNull(result.getId());
-        assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
+        Assertions.assertNotNull(result.getId());
+        Assertions.assertTrue(wordRepository.findById(Long.parseLong(result.getId())).isPresent());
     }
 
     /**
@@ -136,8 +134,8 @@ class WordServiceTest {
             true
         );
 
-        assertEquals(String.valueOf(word.getId()), result.getId());
-        assertEquals("md", result.getMarkdown());
+        Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
+        Assertions.assertEquals("md", result.getMarkdown());
     }
 
     /**
@@ -172,7 +170,7 @@ class WordServiceTest {
             true
         );
 
-        assertEquals(String.valueOf(word.getId()), result.getId());
+        Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
     }
 
     /**
@@ -201,14 +199,14 @@ class WordServiceTest {
         wordService.findWordForUser(userId, "CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
 
         List<SearchRecord> afterFirstQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
-        assertEquals(1, afterFirstQuery.size(), "首次命中缓存时应只创建一条历史记录");
-        assertEquals("cached", afterFirstQuery.get(0).getTerm(), "历史记录词条应被同步为规范小写形式");
+        Assertions.assertEquals(1, afterFirstQuery.size(), "首次命中缓存时应只创建一条历史记录");
+        Assertions.assertEquals("cached", afterFirstQuery.get(0).getTerm(), "历史记录词条应被同步为规范小写形式");
 
         wordService.findWordForUser(userId, "cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
 
         List<SearchRecord> afterSecondQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
-        assertEquals(1, afterSecondQuery.size(), "再次查询不应生成新的历史记录");
-        assertEquals("cached", afterSecondQuery.get(0).getTerm(), "历史记录词条应保持规范形式");
+        Assertions.assertEquals(1, afterSecondQuery.size(), "再次查询不应生成新的历史记录");
+        Assertions.assertEquals("cached", afterSecondQuery.get(0).getTerm(), "历史记录词条应保持规范形式");
     }
 
     /**
@@ -235,8 +233,8 @@ class WordServiceTest {
             true
         );
 
-        assertEquals(Language.ENGLISH, result.getLanguage());
-        assertTrue(
+        Assertions.assertEquals(Language.ENGLISH, result.getLanguage());
+        Assertions.assertTrue(
             wordRepository.findActiveByNormalizedTerm("bye", Language.ENGLISH, DictionaryFlavor.BILINGUAL).isPresent()
         );
     }
@@ -255,8 +253,8 @@ class WordServiceTest {
     void testFindWordSkipsHistoryWhenDisabled() {
         wordService.findWordForUser(userId, "skip", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false);
 
-        assertEquals(0, searchRecordRepository.count(), "搜索记录应保持为空");
-        assertEquals(0, searchResultVersionRepository.count(), "版本记录应保持为空");
+        Assertions.assertEquals(0, searchRecordRepository.count(), "搜索记录应保持为空");
+        Assertions.assertEquals(0, searchResultVersionRepository.count(), "版本记录应保持为空");
     }
 
     /**
@@ -287,12 +285,12 @@ class WordServiceTest {
         wordZh.setFlavor(DictionaryFlavor.BILINGUAL);
         wordZh.setDefinitions(List.of("\u4f60\u597d"));
 
-        assertDoesNotThrow(() -> wordRepository.save(wordZh));
+        Assertions.assertDoesNotThrow(() -> wordRepository.save(wordZh));
 
-        assertTrue(
+        Assertions.assertTrue(
             wordRepository.findActiveByNormalizedTerm("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL).isPresent()
         );
-        assertTrue(
+        Assertions.assertTrue(
             wordRepository.findActiveByNormalizedTerm("hello", Language.CHINESE, DictionaryFlavor.BILINGUAL).isPresent()
         );
     }
@@ -329,7 +327,7 @@ class WordServiceTest {
             true
         );
 
-        assertEquals(String.valueOf(word.getId()), result.getId());
-        assertEquals("hello-md", result.getMarkdown());
+        Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
+        Assertions.assertEquals("hello-md", result.getMarkdown());
     }
 }
