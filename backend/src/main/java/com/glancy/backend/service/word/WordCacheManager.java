@@ -8,6 +8,7 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +45,12 @@ public class WordCacheManager {
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
-        word.setDefinitions(resp.getDefinitions());
-        word.setVariations(resp.getVariations());
-        word.setSynonyms(resp.getSynonyms());
-        word.setAntonyms(resp.getAntonyms());
-        word.setRelated(resp.getRelated());
-        word.setPhrases(resp.getPhrases());
+        replaceContents(word.getDefinitions(), resp.getDefinitions());
+        replaceContents(word.getVariations(), resp.getVariations());
+        replaceContents(word.getSynonyms(), resp.getSynonyms());
+        replaceContents(word.getAntonyms(), resp.getAntonyms());
+        replaceContents(word.getRelated(), resp.getRelated());
+        replaceContents(word.getPhrases(), resp.getPhrases());
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
         log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
@@ -100,5 +101,15 @@ public class WordCacheManager {
             throw new IllegalArgumentException("Normalized term must not be blank when persisting word");
         }
         return persistedNormalized;
+    }
+
+    private void replaceContents(List<String> target, List<String> source) {
+        if (target == null) {
+            throw new IllegalArgumentException("Target list must be initialized");
+        }
+        target.clear();
+        if (source != null) {
+            target.addAll(source);
+        }
     }
 }
