@@ -8,6 +8,8 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +46,12 @@ public class WordCacheManager {
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
-        word.setDefinitions(resp.getDefinitions());
-        word.setVariations(resp.getVariations());
-        word.setSynonyms(resp.getSynonyms());
-        word.setAntonyms(resp.getAntonyms());
-        word.setRelated(resp.getRelated());
-        word.setPhrases(resp.getPhrases());
+        word.setDefinitions(copyToMutableList(resp.getDefinitions()));
+        word.setVariations(copyToMutableList(resp.getVariations()));
+        word.setSynonyms(copyToMutableList(resp.getSynonyms()));
+        word.setAntonyms(copyToMutableList(resp.getAntonyms()));
+        word.setRelated(copyToMutableList(resp.getRelated()));
+        word.setPhrases(copyToMutableList(resp.getPhrases()));
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
         log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
@@ -100,5 +102,12 @@ public class WordCacheManager {
             throw new IllegalArgumentException("Normalized term must not be blank when persisting word");
         }
         return persistedNormalized;
+    }
+
+    private List<String> copyToMutableList(List<String> source) {
+        if (source == null || source.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(source);
     }
 }
