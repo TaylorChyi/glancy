@@ -85,7 +85,9 @@ public class DoubaoClient implements DictionaryModelClient {
             return prepareRequest(body)
                 .exchangeToMono(this::handleSyncResponse)
                 .map(this::extractAssistantContent)
-                .doOnNext(content -> log.info("DoubaoClient.generateEntry aggregated response length={}", content.length()))
+                .doOnNext(content ->
+                    log.info("DoubaoClient.generateEntry aggregated response length={}", content.length())
+                )
                 .blockOptional()
                 .orElse("");
         } catch (UnauthorizedException ex) {
@@ -196,11 +198,16 @@ public class DoubaoClient implements DictionaryModelClient {
             sanitizedTerm = "entry";
         }
         String definition = "Offline definition generated locally for '" + sanitizedTerm + "'.";
-        String json = "{" +
-        "\"term\":\"" + escapeJson(sanitizedTerm) + "\"," +
-        "\"language\":\"ENGLISH\"," +
-        "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\"" + escapeJson(definition) + "\"]}]" +
-        "}";
+        String json =
+            "{" +
+            "\"term\":\"" +
+            escapeJson(sanitizedTerm) +
+            "\"," +
+            "\"language\":\"ENGLISH\"," +
+            "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\"" +
+            escapeJson(definition) +
+            "\"]}]" +
+            "}";
         log.info("Returning offline Doubao response for term '{}'", sanitizedTerm);
         return json;
     }
@@ -243,5 +250,8 @@ public class DoubaoClient implements DictionaryModelClient {
     }
 
     private static final Pattern TERM_PATTERN = Pattern.compile("\\\"term\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
-    private static final Pattern TERM_LINE_PATTERN = Pattern.compile("term\\s*[:：]\\s*([^\\n]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TERM_LINE_PATTERN = Pattern.compile(
+        "term\\s*[:：]\\s*([^\\n]+)",
+        Pattern.CASE_INSENSITIVE
+    );
 }
