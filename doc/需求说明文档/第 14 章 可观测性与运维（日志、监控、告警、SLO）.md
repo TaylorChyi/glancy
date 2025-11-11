@@ -50,13 +50,15 @@
 
 | SLI           | 定义                            | 统计口径                   |
 | ------------- | ------------------------------- | -------------------------- |
-| 接口可用性    | `POST /lookup                   | /regenerate                |
+| 接口可用性    | `POST /lookup`、`/regenerate`、`/history`、`/exports` 5xx 占比 | 5 分钟窗口；黑盒探针 + APM 交叉验证 |
 | 错误率        | 5xx/总请求、统一错误码分布      | 5 分钟窗口                 |
-| 429 命中率    | 429/总请求，区分 scope=user     | tenant                     |
+| 429 命中率    | 429/总请求，区分 scope=user/tenant | 5 分钟窗口；关联第 10 章配额策略 |
 | 缓存命中率    | L1/L2 命中/查词请求             | 5 分钟窗口；对齐命中率基线 |
 | Doubao 健康度 | 依赖 5xx 比例、超时率、熔断状态 | 1 分钟窗口；熔断阈值统一   |
 | 成本燃率      | 近 5 分钟成本/日预算            | 阈值联动降级动作           |
 | 队列健康      | 导出/清理队列深度、等待时长     | 1 分钟窗口                 |
+| 降级触发率    | `degraded=true` 请求数/总请求数 | 5 分钟窗口；关联第 13 章可用性降级策略 |
+| 流式丢段率    | `stream_chunks_dropped`/`stream_chunks_total` | 1 分钟窗口；与第 16 章流控预算同步 |
 
 > 429、成本燃率、熔断与降级动作与第 10 章协同；熔断阈值“依赖 5xx≥5% 且持续 1 分钟”。
 
@@ -79,6 +81,8 @@
 | 导出       | 完成 P95 ≤ 5 s        | 含回执与一次性链接    |                |
 | 缓存       | L1≥40%，L2≥20%        | 命中则跳过外呼        |                |
 | 成本       | 燃率 ≤ 1.2× 日预算    | 阈值驱动降级          |                |
+| 降级       | 自动降级触发率        | ≤ 5%；且 95% 请求 ≤ 1 次降级 | 与第 13 章可用性联动 |
+| 流式       | 丢段率                | ≤ 0.5%                 | 与第 16 章性能与流控同步 |
 
 - **错误预算**：
   - 99.9% 月度可用性错误预算 ≈ 43 分 12 秒/30 天；消耗 ≥ 50% 进入变更冻结；≥ 75% 触发高压值班；当月耗尽停止非紧急变更并回滚最近一版。
@@ -124,6 +128,9 @@
 | RDBMS 复制延迟 | 数据库指标，1 分钟最大延迟 | > 30 s 持续 5 分钟 → P2；> 60 s → P1 | DBA 值班短信+IM | 计划内维护静默，延迟 < 15 s 持续 15 分钟自动关闭 |
 | 成本燃率 | 成本流水线，5 分钟窗口 | > 1.5× 日预算 → P2；> 1.8× → P1 | IM+运营抄送 | 与降级动作联动（10 分钟内复核）；恢复到 ≤ 1.2× 且连续 3 个窗口后解除 |
 | 错误预算消耗 | 日报系统，按自然日累计 | 当日消耗 ≥ 5% 发送提醒；累计 ≥ 50% → 冻结告警；≥ 75% → 高压升级 | IM+邮件+发布系统红线 | 维护窗口不计入；当月清零自动解除 |
+| 队列积压 | 队列指标（`queue_depth`, `oldest_age_seconds`），1 分钟窗口 | `queue_depth` > 500 或 `oldest_age_seconds` > 120 → P2；持续 10 分钟 → P1 | IM+任务 Runbook | 自动触发导出降频与扩容剧本，恢复至 <300 且 <60 s 后解除 |
+| 流式丢段率 | Streaming 指标（APM + 客户端 ACK），1 分钟窗口 | 丢段率 > 0.5% 持续 3 分钟 → P1 | 语音+IM；抄送前端 | 部署期间可按线路静默；恢复到 ≤0.2% 且持续 15 分钟自动解除 |
+| 降级触发率 | APM 指标（`degraded=true`），5 分钟窗口 | > 5% 持续 3 个窗口 → P1；> 3% 持续 6 个窗口 → P2 | IM+发布守门看板 | 灰度/演练期间启用白名单静默；Runbook 执行完重启依赖或回滚后自动解除 |
 
 ### 14.5.2 合成探针（正常/降级双线路）
 
@@ -132,6 +139,20 @@
   - **降级线路**：通过强制注入熔断标头或模拟依赖降级环境，验证回退到“基础释义 + 模板例句”，并校验响应体包含 `degraded=true` 与降级提示 UI 文案。
 - **执行策略**：双线路每 2 分钟各执行一次，使用相同的探针框架；探针采集成功率、首屏 P95 与降级标识准确率，指标写入“关键接口可用性”与“降级可用率”维度，纳入 5 分钟聚合窗口。
 - **告警与静默**：正常线路失败同“关键接口可用性”规则；降级线路失败（即无法正常降级或未打标）持续 5 分钟触发 P1 并提示检查熔断配置；维护窗口与已知演练场景可配置逐线路静默，静默时需在 Runbook 留痕。
+
+------
+
+### 14.5.3 指标卡片（采集来源/聚合/单位/仪表盘）
+
+| 指标 | 采集来源 | 聚合方式 | 单位 | 可视化看板 |
+| ---- | -------- | -------- | ---- | ---------- |
+| 请求成功率 | API 网关 + 黑盒探针，`http_requests_total` | 5 分钟滚动成功率（1 - 5xx/总数） | % | `Core SLO Overview`（Grafana `obs-slo`） |
+| 首屏 P95 | 前端 RUM + APM，`rum_first_contentful_block_seconds` | P95 聚合（5 分钟窗口） | s | `Experience SLO`（Grafana `obs-slo`） |
+| 队列积压 | 任务队列导出指标，`queue_depth` | 最大值 + 95 分位（1 分钟） | 条/秒 | `Queue Health`（Grafana `queues-cost`） |
+| 降级触发率 | BFF 指标 `requests_total{degraded}` | 5 分钟窗口比例 | % | `Availability Guardrail`（Grafana `obs-slo`） |
+| 流式丢段率 | Streaming 服务 `stream_chunks_total`/`_dropped` | 1 分钟窗口比例 | % | `Streaming Quality`（Grafana `obs-slo`） |
+
+> 仪表盘链接集中在 `https://grafana.glancy.dev/d/obs-slo/core-observability`，Runbook 附录维护截图更新历史（详见 Appendix/obs）。
 
 ------
 
@@ -145,17 +166,21 @@
   "lvl":"INFO|WARN|ERROR",
   "trace_id":"3bd2f9...",
   "span_id":"a1b2...",
+  "request_id":"req-9c7f...",
   "route":"POST /api/v1/lookup",
   "subject_id":"u_xxx|s_xxx",
   "user_id":"<uuid>|null",
+  "session_id":"sess-abc...",
   "lang_pair":"en-zh",
-  "entry_hash":"sha256(entry_norm)", 
+  "entry_hash":"sha256(entry_norm)",
   "cache":"L1|L2|MISS",
   "latency_ms": 820,
   "tokens_in":321,
   "tokens_out":512,
+  "billing_cost":{"usd":0.0023,"currency":"USD"},
   "quota":{"type":"lookup","remaining":88},
   "degraded":false,
+  "policy_hits":["safe_search","abuse_block"],
   "error":{"code":null}
 }
 ```
@@ -196,10 +221,55 @@
 - **熔断**：依赖 5xx≥5% 且 ≥1 分钟 → 进入 CB 打开态并触发 P1；半开 3 次成功自动闭合仅记录 P2。
 - **预算**：错误预算当月消耗 > 50% → 发布冻结通知；> 75% → 高压；=100% → 仅安全修复。
 - **降级执行**：全局预算达 95% 或燃率 > 1.5× → 自动关闭“再生成”，查词强走缓存/简化路径。
+- **流式丢段**：`stream_chunks_dropped/stream_chunks_total > 0.5%` 且持续 3 分钟 → 触发 P1；同时检查第 16 章流控 Runbook。
 
 ### 14.7.3 抑制与维护窗口
 
 - 维护窗口内（公告且不计入 SLO）对易抖动指标执行静默；相同事件在 2 分钟内去重合并；部署期间启用“升阈静默”。
+
+### 14.7.4 告警配置示例（YAML）
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: glancy-observability
+  labels:
+    chapter: "14"
+spec:
+  groups:
+    - name: slo.core
+      rules:
+        - alert: LookupAvailabilityP1
+          expr: (1 - sum(rate(http_requests_total{route="/lookup",status=~"5.."}[5m]))
+                    / sum(rate(http_requests_total{route="/lookup"}[5m]))) < 0.995
+          for: 5m
+          labels:
+            severity: P1
+            runbook: "https://runbook.glancy.dev/lookup-availability"
+          annotations:
+            summary: "lookup 接口可用性低于 99.5%"
+            description: "检查网关、BFF、Doubao 依赖；遵循第13章降级策略。"
+        - alert: ExportQueueBacklogP2
+          expr: max(queue_depth{queue="exports"}) > 500 or max(oldest_age_seconds{queue="exports"}) > 120
+          for: 10m
+          labels:
+            severity: P2
+            runbook: "https://runbook.glancy.dev/exports-backlog"
+          annotations:
+            summary: "导出队列积压超过阈值"
+            description: "执行队列扩容或临时关闭批量导出，参考第16章容量策略。"
+        - alert: StreamingDropRateP1
+          expr: sum(rate(stream_chunks_dropped_total[1m]))
+                / sum(rate(stream_chunks_total[1m])) > 0.005
+          for: 3m
+          labels:
+            severity: P1
+            runbook: "https://runbook.glancy.dev/streaming-drop"
+          annotations:
+            summary: "流式丢段率高于 0.5%"
+            description: "检查第16章的带宽与流控参数，必要时降级。"
+```
 
 ------
 
@@ -214,6 +284,7 @@
 
 - **契约回放**：每次发布合并 ≥500 条契约样本，100% 通过方可放行；失败自动回滚。
 - **零停机与灰度**：蓝绿/小流量，异常自动回滚；发布期间 SLO 受控且误报抑制。
+- **仪表盘引用**：Runbook 收录《核心 SLO & 阈值》Grafana 看板（`https://grafana.glancy.dev/d/obs-slo/core-observability`）与《队列健康与成本》看板（`https://grafana.glancy.dev/d/queues-cost/queue-health`），发布评审与值班须附最新截图；示例截图存档于 Appendix/obs/obs-slo-dashboard.png。
 
 ------
 
@@ -222,6 +293,7 @@
 - **值班与升级**：7×12 小时轮值，P1 10 分钟内语音升级到后端负责人与平台负责人；订阅域问题同步通知计费负责人（权益 5 s 内一致）。
 - **Runbook**：对 P1/P2 事件需在工单内附“故障手册”链接（熔断开关/特性开关、缓存降级、限流调参、回滚步骤）。
 - **Postmortem**：48 小时内完成无责复盘，输出改进项（监控/阈值/自动化/容量）并纳入下一迭代。
+- **Runbook 链接**：`https://runbook.glancy.dev/lookup-availability`（接口故障）、`https://runbook.glancy.dev/exports-backlog`（队列积压）、`https://runbook.glancy.dev/streaming-drop`（流式丢段），与第 13 章可用性、 第 16 章性能章节互相引用。
 
 ------
 
