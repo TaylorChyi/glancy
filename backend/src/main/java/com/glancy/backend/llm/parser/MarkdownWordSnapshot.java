@@ -12,4 +12,20 @@ record MarkdownWordSnapshot(
     List<String> phrases,
     String example,
     String phonetic
-) {}
+) {
+
+    static MarkdownWordSnapshot empty(String fallbackTerm) {
+        List<String> empty = List.of();
+        return new MarkdownWordSnapshot(
+            fallbackTerm,
+            empty,
+            empty,
+            empty,
+            empty,
+            empty,
+            empty,
+            null,
+            null
+        );
+    }
+}
