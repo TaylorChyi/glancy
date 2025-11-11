@@ -50,6 +50,7 @@ final class MarkdownWordExtractor {
 
         Section currentSection = Section.DEFINITION;
         String resolvedTerm = fallbackTerm;
+        boolean headingResolvedTerm = false;
         String example = null;
         String phonetic = null;
         boolean insideFence = false;
@@ -74,8 +75,9 @@ final class MarkdownWordExtractor {
                 if (heading.isEmpty()) {
                     continue;
                 }
-                if (resolvedTerm == null || resolvedTerm.isBlank()) {
+                if (!headingResolvedTerm) {
                     resolvedTerm = heading;
+                    headingResolvedTerm = true;
                 }
                 currentSection = resolveSection(heading);
                 continue;
@@ -158,8 +160,12 @@ final class MarkdownWordExtractor {
             definitions.add(firstContentLine);
         }
 
+        String term = resolvedTerm;
+        if (!headingResolvedTerm && (term == null || term.isBlank())) {
+            term = fallbackTerm;
+        }
         return new MarkdownWordSnapshot(
-            resolvedTerm == null || resolvedTerm.isBlank() ? fallbackTerm : resolvedTerm,
+            term,
             List.copyOf(definitions),
             List.copyOf(synonyms),
             List.copyOf(antonyms),

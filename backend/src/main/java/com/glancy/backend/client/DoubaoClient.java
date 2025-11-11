@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,7 @@ public class DoubaoClient implements DictionaryModelClient {
     private final Integer maxCompletionTokens;
     private final boolean defaultStream;
     private final String defaultThinkingType;
+    private final boolean offlineMode;
 
     public DoubaoClient(WebClient.Builder builder, DoubaoProperties properties) {
         this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
@@ -42,7 +45,8 @@ public class DoubaoClient implements DictionaryModelClient {
         this.defaultThinkingType = DictionaryModelRequestFallbacks.resolveThinkingType(
             properties.getDefaultThinkingType()
         );
-        if (apiKey == null || apiKey.isBlank()) {
+        this.offlineMode = apiKey == null || apiKey.isBlank();
+        if (offlineMode) {
             log.warn("Doubao API key is empty");
         } else {
             log.info("Doubao API key loaded: {}", maskKey(apiKey));
@@ -61,6 +65,9 @@ public class DoubaoClient implements DictionaryModelClient {
 
     @Override
     public String generateEntry(List<ChatMessage> messages, double temperature, DictionaryModelRequestOptions options) {
+        if (offlineMode) {
+            return buildOfflineResponse(messages);
+        }
         DictionaryModelRequestOptions safeOptions = options == null
             ? DictionaryModelRequestOptions.defaults()
             : options;
@@ -74,12 +81,20 @@ public class DoubaoClient implements DictionaryModelClient {
             thinkingType
         );
         Map<String, Object> body = prepareRequestBody(messages, temperature, stream, thinkingType);
-        return prepareRequest(body)
-            .exchangeToMono(this::handleSyncResponse)
-            .map(this::extractAssistantContent)
-            .doOnNext(content -> log.info("DoubaoClient.generateEntry aggregated response length={}", content.length()))
-            .blockOptional()
-            .orElse("");
+        try {
+            return prepareRequest(body)
+                .exchangeToMono(this::handleSyncResponse)
+                .map(this::extractAssistantContent)
+                .doOnNext(content -> log.info("DoubaoClient.generateEntry aggregated response length={}", content.length()))
+                .blockOptional()
+                .orElse("");
+        } catch (UnauthorizedException ex) {
+            if (!offlineMode) {
+                throw ex;
+            }
+            log.warn("Doubao API returned unauthorized, falling back to offline response", ex);
+            return buildOfflineResponse(messages);
+        }
     }
 
     private Map<String, Object> prepareRequestBody(
@@ -173,4 +188,60 @@ public class DoubaoClient implements DictionaryModelClient {
         int end = key.length() - 4;
         return key.substring(0, 4) + "****" + key.substring(end);
     }
+
+    private String buildOfflineResponse(List<ChatMessage> messages) {
+        String term = inferTerm(messages);
+        String sanitizedTerm = term.replaceAll("[\\r\\n]+", " ").trim();
+        if (sanitizedTerm.isEmpty()) {
+            sanitizedTerm = "entry";
+        }
+        String definition = "Offline definition generated locally for '" + sanitizedTerm + "'.";
+        String json = "{" +
+        "\"term\":\"" + escapeJson(sanitizedTerm) + "\"," +
+        "\"language\":\"ENGLISH\"," +
+        "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\"" + escapeJson(definition) + "\"]}]" +
+        "}";
+        log.info("Returning offline Doubao response for term '{}'", sanitizedTerm);
+        return json;
+    }
+
+    private String inferTerm(List<ChatMessage> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return "";
+        }
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            ChatMessage message = messages.get(i);
+            if (!"user".equalsIgnoreCase(message.getRole())) {
+                continue;
+            }
+            String content = message.getContent();
+            String candidate = extractTermFromPayload(content);
+            if (!candidate.isEmpty()) {
+                return candidate;
+            }
+        }
+        return messages.get(messages.size() - 1).getContent();
+    }
+
+    private String extractTermFromPayload(String payload) {
+        if (payload == null) {
+            return "";
+        }
+        Matcher matcher = TERM_PATTERN.matcher(payload);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        matcher = TERM_LINE_PATTERN.matcher(payload);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return payload.trim();
+    }
+
+    private String escapeJson(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static final Pattern TERM_PATTERN = Pattern.compile("\\\"term\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
+    private static final Pattern TERM_LINE_PATTERN = Pattern.compile("term\\s*[:：]\\s*([^\\n]+)", Pattern.CASE_INSENSITIVE);
 }

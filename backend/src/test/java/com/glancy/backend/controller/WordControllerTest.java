@@ -203,6 +203,8 @@ class WordControllerTest {
             )
         ).thenReturn(resp);
 
+        when(userService.authenticateToken("tkn")).thenReturn(1L);
+
         mockMvc
             .perform(
                 get("/api/words")
