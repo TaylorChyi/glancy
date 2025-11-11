@@ -8,20 +8,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request).then((networkResponse) => {
-        const clonedResponse = networkResponse.clone();
-        caches.open(ICON_CACHE_NAME).then((cache) => {
-          cache.put(request, clonedResponse);
-        });
-
-        return networkResponse;
-      });
-    }),
-  );
+  event.respondWith(handleIconRequest(event, request));
 });
+
+async function handleIconRequest(event, request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetch(request);
+  const responseForCache = networkResponse.clone();
+
+  const cacheWrite = (async () => {
+    try {
+      const cache = await caches.open(ICON_CACHE_NAME);
+      await cache.put(request, responseForCache);
+    } catch (error) {
+      console.warn("Failed to cache icon response", error);
+    }
+  })();
+
+  event.waitUntil(cacheWrite);
+
+  return networkResponse;
+}
