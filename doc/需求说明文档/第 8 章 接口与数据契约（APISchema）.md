@@ -8,7 +8,7 @@
 
 - **基地址**：`/api/v1`（内外统一），仅 HTTPS。
 - **内容类型**：`Content-Type: application/json; charset=utf-8`。
-  内容协商：`Accept: application/vnd.glancy.dict.v1+json` 优先；缺失或为 `application/json` 时降级为 JSON 并在响应体携带 `contract` 字段；出现未知 vendor 时返回 `406 Not Acceptable`。
+  内容协商：`Accept: application/vnd.glancy.dict.v1+json` 优先；缺失或为 `application/json` 时降级为 JSON 并在响应体携带 `schemaVersion` 字段；出现未知 vendor 时返回 `406 Not Acceptable`。
 - **鉴权**：`Authorization: Bearer <token>`，支持用户态 JWT（`user_jwt`）与匿名 JWT（`anon_jwt`）；Webhook 采用 HMAC 签名。
 - **主体 ID**：统一以 `subjectId = u_<userId> | s_<sessionId>` 参与幂等键、缓存键、配额与限速。
 - **幂等**：写操作支持 `Idempotency-Key`（推荐值 `hash(subjectId+langPair+entryNorm+configHash+profileEtag)`）。参见“[附录 A 术语与缩略语](<./Appendix/附录 A 术语与缩略语.md>) - 幂等”。
@@ -46,7 +46,7 @@
 
 ```json
 {
-  "contract": "glancy.dict.v1",
+  "schemaVersion": "glancy.dict.v1",
   "lookupId": "lk_123",
   "entry": "bank account",
   "langPair": { "source": "en", "target": "zh" },
@@ -76,6 +76,10 @@
   "detailLevel": "medium",
   "exampleCount": 3,
   "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
+  "tokensIn": 321,
+  "tokensOut": 512,
+  "degraded": false,
+  "degradeReason": null,
   "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
   "createdAt": "2025-11-08T03:20:00Z"
 }
@@ -83,9 +87,12 @@
 
 约束与行为：
 
-- 同语模式（en→en 或 zh→zh）时 `translation` 字段必为 `null` 或省略。 
-- `detailLevel ∈ {short, medium, long}`，字符预算参考“统一详略级别基线”。 
-- `exampleCount` 及 `styleTags` 上限受订阅档位约束。 
+- 同语模式（en→en 或 zh→zh）时 `translation` 字段必为 `null` 或省略。
+- `detailLevel ∈ {short, medium, long}`，字符预算参考“统一详略级别基线”。
+- `exampleCount` 及 `styleTags` 上限受订阅档位约束。
+- `schemaVersion` 恒为 `glancy.dict.v1`；当客户端协商失败落回 JSON 时仍需输出该字段。
+- `tokensIn/tokensOut` 记录模型用量，用于成本观测与限流联动。
+- `degraded=true` 表示返回“基础释义 + 模板例句”降级内容；需与[第 13 章](<./第 13 章 可用性、容灾与备份.md>)的降级约束一致，并附带 `degradeReason`（如 `UPSTREAM_UNAVAILABLE`、`BUDGET_GUARDRAIL`）。
 
 ------
 
@@ -130,6 +137,7 @@
 **响应体**（`200 OK`）
 
 - 返回 `DictResult`，并附带 `quota` 对象（`type`、`remaining`、`resetAt`）。当命中缓存时附加 `X-Cache: HIT`，否则 `MISS`。缓存策略与 TTL 参照 1.4.7。
+- 当触发降级或熔断回退时，`DictResult.degraded=true` 且 `degradeReason` 填充；字段语义与[第 13 章](<./第 13 章 可用性、容灾与备份.md>) BCP 约束一致。
 
 **错误码**：见 9.11。
 
@@ -211,7 +219,7 @@
 { "exportId": "ex_123", "status": "processing", "receiptId": "rc_789", "quota": { "type": "export", "remaining": 2, "resetAt": "2025-11-09T00:00:00Z" } }
 ```
 
-- 处理完成 SLA：P95 ≤ 5 s；前端轮询 1–2 次 `GET /api/v1/exports/{id}` 获取一次性下载链接（TTL 10 分钟）。响应体返回回执号与配额信息。 
+- 处理完成 SLA：P95 ≤ 5 s；前端轮询 1–2 次 `GET /api/v1/exports/{id}` 获取一次性下载链接（TTL 10 分钟 = 600 s）。响应体返回回执号与配额信息。
 
 ### API-202 查询导出状态
 
@@ -228,7 +236,7 @@
 }
 ```
 
-> CSV/JSON 字段脱敏与表头固定；CSV 采用 UTF-8。 
+> CSV/JSON 字段脱敏与表头固定；CSV 采用 UTF-8。`downloadUrl` 为一次性令牌，超出 `expiresAt`（或生成后 600 s）即失效，再次访问返回 `410 Gone` + `EXPORT_LINK_EXPIRED` 错误体，需重新发起 `POST /api/v1/exports`。
 
 ------
 
@@ -358,7 +366,8 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
 | 403  | FORBIDDEN                  | RBAC 或档位不允许。                 |
 | 404  | NOT_FOUND                  | 资源不存在。                        |
 | 409  | IDEMPOTENCY_KEY_REPLAYED   | 幂等键重放且参数不一致。            |
-| 422  | CONTRACT_VALIDATION_FAILED | 与 `glancy.dict.v1` 契约不一致。    |
+| 410  | EXPORT_LINK_EXPIRED        | 导出下载链接超过 600 s TTL。         |
+| 422  | CONTRACT_VALIDATION_FAILED | `schemaVersion` 或字段结构未符合 `glancy.dict.v1`。 |
 | 429  | RATE_LIMITED               | 超出配额或限速；`error.meta.kind` = 'quota'|'ratelimit'，返回剩余额度与重置时间。 |
 | 500  | UPSTREAM_UNAVAILABLE       | Doubao 或第三方异常；触发降级策略。 |
 | 503  | CIRCUIT_OPEN               | 熔断中，快速失败。                  |
@@ -419,7 +428,7 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
 
 ### 8.11.3 适配输出（Adapter → 应用层）
 
-- 将 `payload` 正规化为 `DictResult`，并在失败或半失败时附加：
+- 将 `payload` 正规化为 `DictResult`，补齐 `schemaVersion` 常量与 `tokensIn/tokensOut` 计量字段，并在失败或半失败时附加：
 
 ```json
 { "degraded": true, "degradeReason": "UPSTREAM_UNAVAILABLE" }
@@ -488,9 +497,9 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
 ```json
 {
   "type": "object",
-  "required": ["contract","lookupId","entry","langPair","modules","createdAt"],
+  "required": ["schemaVersion","lookupId","entry","langPair","modules","createdAt"],
   "properties": {
-    "contract": { "const": "glancy.dict.v1" },
+    "schemaVersion": { "const": "glancy.dict.v1" },
     "lookupId": { "type": "string" },
     "entry": { "type": "string", "minLength": 1, "maxLength": 80 },
     "langPair": { "$ref": "#/definitions/LangPair" },
@@ -509,6 +518,10 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
     "detailLevel": { "enum": ["short","medium","long"] },
     "exampleCount": { "type": "integer", "minimum": 1, "maximum": 5 },
     "profileApplied": { "type": "object" },
+    "tokensIn": { "type": "integer", "minimum": 0 },
+    "tokensOut": { "type": "integer", "minimum": 0 },
+    "degraded": { "type": "boolean" },
+    "degradeReason": { "type": ["string","null"] },
     "createdAt": { "type": "string", "format": "date-time" }
   }
 }
@@ -568,7 +581,7 @@ X-Quota-Remaining: 88
 X-Quota-Reset-At: 2025-11-09T00:00:00Z
 X-Cache: MISS
 {
-  "contract": "glancy.dict.v1",
+  "schemaVersion": "glancy.dict.v1",
   "lookupId": "lk_123",
   "entry": "bank account",
   "langPair": { "source": "en", "target": "zh" },
@@ -598,6 +611,10 @@ X-Cache: MISS
   "detailLevel": "medium",
   "exampleCount": 3,
   "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
+  "tokensIn": 321,
+  "tokensOut": 512,
+  "degraded": false,
+  "degradeReason": null,
   "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
   "createdAt": "2025-11-08T03:20:00Z"
 }
