@@ -1,4 +1,7 @@
 package com.glancy.backend.service;
+
+import static org.mockito.ArgumentMatchers.*;
+
 import org.mockito.Mockito;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSException;
@@ -30,7 +33,7 @@ class OssAvatarStorageTest {
         OssAvatarStorage storage = new OssAvatarStorage(client, props);
         Mockito.when(client.putObject(eq("bucket"), anyString(), any(java.io.InputStream.class))).thenReturn(null);
         OSSException ex = new OSSException("AccessDenied");
-        Mockito.doThrow(ex).Mockito.when(client).setObjectAcl(eq("bucket"), anyString(), eq(CannedAccessControlList.PublicRead));
+        Mockito.doThrow(ex).when(client).setObjectAcl(eq("bucket"), anyString(), eq(CannedAccessControlList.PublicRead));
         Mockito.when(client.generatePresignedUrl(any(GeneratePresignedUrlRequest.class))).thenReturn(
             new java.net.URL("https://example.com")
         );

@@ -1,6 +1,7 @@
 package com.glancy.backend.service;
 import org.junit.jupiter.api.Assertions;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import org.mockito.Mockito;
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
@@ -229,7 +230,7 @@ class UserServiceTest {
         UserResponse created = userService.register(req);
 
         Mockito.doNothing()
-            .Mockito.when(emailVerificationService)
+            .when(emailVerificationService)
             .issueCode("next@example.com", EmailVerificationPurpose.CHANGE_EMAIL, CLIENT_IP);
 
         userService.requestEmailChangeCode(created.getId(), "next@example.com", CLIENT_IP);
@@ -254,7 +255,7 @@ class UserServiceTest {
         UserResponse created = userService.register(req);
 
         Mockito.doNothing()
-            .Mockito.when(emailVerificationService)
+            .when(emailVerificationService)
             .consumeCode("after@example.com", "123456", EmailVerificationPurpose.CHANGE_EMAIL);
 
         UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", "123456");
@@ -447,7 +448,7 @@ class UserServiceTest {
         UserResponse created = userService.register(req);
 
         Mockito.doNothing()
-            .Mockito.when(emailVerificationService)
+            .when(emailVerificationService)
             .consumeCode("after@example.com", "654321", EmailVerificationPurpose.CHANGE_EMAIL);
 
         UserEmailResponse response = userService.changeEmail(created.getId(), "after@example.com", " 654321 ");
