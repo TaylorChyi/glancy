@@ -8,6 +8,7 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +45,12 @@ public class WordCacheManager {
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
-        word.setDefinitions(resp.getDefinitions());
-        word.setVariations(resp.getVariations());
-        word.setSynonyms(resp.getSynonyms());
-        word.setAntonyms(resp.getAntonyms());
-        word.setRelated(resp.getRelated());
-        word.setPhrases(resp.getPhrases());
+        replaceContents(word.getDefinitions(), resp.getDefinitions());
+        replaceContents(word.getVariations(), resp.getVariations());
+        replaceContents(word.getSynonyms(), resp.getSynonyms());
+        replaceContents(word.getAntonyms(), resp.getAntonyms());
+        replaceContents(word.getRelated(), resp.getRelated());
+        replaceContents(word.getPhrases(), resp.getPhrases());
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
         log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
@@ -100,5 +101,27 @@ public class WordCacheManager {
             throw new IllegalArgumentException("Normalized term must not be blank when persisting word");
         }
         return persistedNormalized;
+    }
+
+    /**
+     * 意图：保持词条集合字段在缓存复用时的可变性，同时同步远端响应内容。
+     * 输入：
+     *  - target：实体内部已经初始化的可变列表引用。
+     *  - source：来自响应的列表，可能为 null 或不可变实现（如 List#of）。
+     * 输出：直接在 target 上原地清空并复制 source 内容，保持持久化框架管理的集合引用不变。
+     * 流程：
+     *  1) 对 target 执行 clear，确保旧数据被移除；
+     *  2) 在 source 非空时 addAll 拷贝元素。
+     * 错误处理：当 target 未按约定初始化时抛出 IllegalArgumentException 以便及早暴露实体装载缺陷。
+     * 复杂度：O(n)，其中 n 为 source 元素个数。
+     */
+    private void replaceContents(List<String> target, List<String> source) {
+        if (target == null) {
+            throw new IllegalArgumentException("Word collections must be initialized before mutation");
+        }
+        target.clear();
+        if (source != null) {
+            target.addAll(source);
+        }
     }
 }
