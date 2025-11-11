@@ -85,13 +85,6 @@ class WordCacheManagerTest {
         existing.getRelated().add("old related");
         existing.getPhrases().add("old phrase");
 
-        List<String> definitionsRef = existing.getDefinitions();
-        List<String> variationsRef = existing.getVariations();
-        List<String> synonymsRef = existing.getSynonyms();
-        List<String> antonymsRef = existing.getAntonyms();
-        List<String> relatedRef = existing.getRelated();
-        List<String> phrasesRef = existing.getPhrases();
-
         when(termNormalizer.normalize("requested")).thenReturn("normalized");
         when(wordRepository.findActiveByNormalizedTerm("normalized", Language.ENGLISH, DictionaryFlavor.BILINGUAL))
             .thenReturn(Optional.of(existing));
@@ -102,18 +95,18 @@ class WordCacheManagerTest {
 
         Word saved = wordCacheManager.saveWord("requested", response, Language.ENGLISH, DictionaryFlavor.BILINGUAL);
 
-        assertSame(definitionsRef, saved.getDefinitions());
-        assertSame(variationsRef, saved.getVariations());
-        assertSame(synonymsRef, saved.getSynonyms());
-        assertSame(antonymsRef, saved.getAntonyms());
-        assertSame(relatedRef, saved.getRelated());
-        assertSame(phrasesRef, saved.getPhrases());
         assertTrue(saved.getDefinitions().isEmpty());
         assertTrue(saved.getVariations().isEmpty());
         assertTrue(saved.getSynonyms().isEmpty());
         assertTrue(saved.getAntonyms().isEmpty());
         assertTrue(saved.getRelated().isEmpty());
         assertTrue(saved.getPhrases().isEmpty());
+        assertDoesNotThrow(() -> saved.getDefinitions().add("extra"));
+        assertDoesNotThrow(() -> saved.getVariations().add("extra"));
+        assertDoesNotThrow(() -> saved.getSynonyms().add("extra"));
+        assertDoesNotThrow(() -> saved.getAntonyms().add("extra"));
+        assertDoesNotThrow(() -> saved.getRelated().add("extra"));
+        assertDoesNotThrow(() -> saved.getPhrases().add("extra"));
     }
 
     @Test
@@ -131,13 +124,6 @@ class WordCacheManagerTest {
         existing.getRelated().add("old related");
         existing.getPhrases().add("old phrase");
 
-        List<String> definitionsRef = existing.getDefinitions();
-        List<String> variationsRef = existing.getVariations();
-        List<String> synonymsRef = existing.getSynonyms();
-        List<String> antonymsRef = existing.getAntonyms();
-        List<String> relatedRef = existing.getRelated();
-        List<String> phrasesRef = existing.getPhrases();
-
         when(termNormalizer.normalize("requested")).thenReturn("normalized");
         when(wordRepository.findActiveByNormalizedTerm("normalized", Language.ENGLISH, DictionaryFlavor.BILINGUAL))
             .thenReturn(Optional.of(existing));
@@ -154,18 +140,18 @@ class WordCacheManagerTest {
 
         Word saved = wordCacheManager.saveWord("requested", response, Language.ENGLISH, DictionaryFlavor.BILINGUAL);
 
-        assertSame(definitionsRef, saved.getDefinitions());
-        assertSame(variationsRef, saved.getVariations());
-        assertSame(synonymsRef, saved.getSynonyms());
-        assertSame(antonymsRef, saved.getAntonyms());
-        assertSame(relatedRef, saved.getRelated());
-        assertSame(phrasesRef, saved.getPhrases());
         assertEquals(List.of("new definition", "second definition"), saved.getDefinitions());
         assertEquals(List.of("new variation"), saved.getVariations());
         assertEquals(List.of("new synonym"), saved.getSynonyms());
         assertEquals(List.of("new antonym"), saved.getAntonyms());
         assertEquals(List.of("new related"), saved.getRelated());
         assertEquals(List.of("new phrase"), saved.getPhrases());
+        assertDoesNotThrow(() -> saved.getDefinitions().add("extra"));
+        assertDoesNotThrow(() -> saved.getVariations().add("extra"));
+        assertDoesNotThrow(() -> saved.getSynonyms().add("extra"));
+        assertDoesNotThrow(() -> saved.getAntonyms().add("extra"));
+        assertDoesNotThrow(() -> saved.getRelated().add("extra"));
+        assertDoesNotThrow(() -> saved.getPhrases().add("extra"));
     }
 }
 

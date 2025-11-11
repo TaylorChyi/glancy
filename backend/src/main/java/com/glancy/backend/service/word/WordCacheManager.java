@@ -8,6 +8,7 @@ import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.repository.WordRepository;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -45,12 +46,12 @@ public class WordCacheManager {
         word.setLanguage(lang);
         word.setFlavor(resolvedFlavor);
         word.setMarkdown(resp.getMarkdown());
-        replaceContents(word.getDefinitions(), resp.getDefinitions());
-        replaceContents(word.getVariations(), resp.getVariations());
-        replaceContents(word.getSynonyms(), resp.getSynonyms());
-        replaceContents(word.getAntonyms(), resp.getAntonyms());
-        replaceContents(word.getRelated(), resp.getRelated());
-        replaceContents(word.getPhrases(), resp.getPhrases());
+        word.setDefinitions(copyToMutableList(resp.getDefinitions()));
+        word.setVariations(copyToMutableList(resp.getVariations()));
+        word.setSynonyms(copyToMutableList(resp.getSynonyms()));
+        word.setAntonyms(copyToMutableList(resp.getAntonyms()));
+        word.setRelated(copyToMutableList(resp.getRelated()));
+        word.setPhrases(copyToMutableList(resp.getPhrases()));
         word.setExample(resp.getExample());
         word.setPhonetic(resp.getPhonetic());
         log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
@@ -103,13 +104,10 @@ public class WordCacheManager {
         return persistedNormalized;
     }
 
-    private void replaceContents(List<String> target, List<String> source) {
-        if (target == null) {
-            throw new IllegalArgumentException("Target list must be initialized");
+    private List<String> copyToMutableList(List<String> source) {
+        if (source == null || source.isEmpty()) {
+            return new ArrayList<>();
         }
-        target.clear();
-        if (source != null) {
-            target.addAll(source);
-        }
+        return new ArrayList<>(source);
     }
 }
