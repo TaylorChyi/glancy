@@ -41,6 +41,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             Long userId = userService.authenticateToken(token);
+            if (userId != null) {
+                request.setAttribute("userId", userId);
+            }
             Authentication authentication = new UsernamePasswordAuthenticationToken(userId, token, List.of());
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);

@@ -16,11 +16,19 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(KeyboardShortcutController.class)
+@Import(
+    {
+        com.glancy.backend.config.security.SecurityConfig.class,
+        com.glancy.backend.config.WebConfig.class,
+        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    }
+)
 class KeyboardShortcutControllerTest {
 
     @Autowired
@@ -28,6 +36,9 @@ class KeyboardShortcutControllerTest {
 
     @MockitoBean
     private KeyboardShortcutService keyboardShortcutService;
+
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
 
     /**
      * 测试目标：GET /api/preferences/shortcuts/user 应返回服务层提供的快捷键列表。
@@ -49,9 +60,10 @@ class KeyboardShortcutControllerTest {
             List.of("MOD", "SHIFT", "F")
         );
         given(keyboardShortcutService.getShortcuts(1L)).willReturn(new KeyboardShortcutResponse(List.of(view)));
+        given(userService.authenticateToken("token-1")).willReturn(1L);
 
         mockMvc
-            .perform(get("/api/preferences/shortcuts/user").requestAttr("userId", 1L))
+            .perform(get("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.shortcuts[0].action").value("FOCUS_SEARCH"))
             .andExpect(jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
@@ -83,11 +95,12 @@ class KeyboardShortcutControllerTest {
                 any(KeyboardShortcutUpdateRequest.class)
             )
         ).willReturn(new KeyboardShortcutResponse(List.of(view)));
+        given(userService.authenticateToken("token-2")).willReturn(2L);
 
         mockMvc
             .perform(
                 put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
-                    .requestAttr("userId", 2L)
+                    .header("X-USER-TOKEN", "token-2")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{\"keys\":[\"control\",\"shift\",\"p\"]}")
             )
@@ -121,9 +134,10 @@ class KeyboardShortcutControllerTest {
             List.of("MOD", "SHIFT", "F")
         );
         given(keyboardShortcutService.resetShortcuts(3L)).willReturn(new KeyboardShortcutResponse(List.of(view)));
+        given(userService.authenticateToken("token-3")).willReturn(3L);
 
         mockMvc
-            .perform(delete("/api/preferences/shortcuts/user").requestAttr("userId", 3L))
+            .perform(delete("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-3"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
 
