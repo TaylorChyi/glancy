@@ -1,625 +1,107 @@
 # 第 8 章 接口与数据契约（API/Schema）
 
-> 本章在 MVP 范围内定义前后端、服务与第三方之间的接口与数据契约，覆盖鉴权、版本、限流与错误模型，以及“查词/再生成、历史、导出、用户画像、订阅/配额、配置发现、支付回调”和 Doubao 适配层的内部契约。所有 JSON 字段使用驼峰命名；不兼容变更采用版本演进与弃用期管理。本文与第 1–6 章口径一致，如有冲突，以“订阅矩阵与[附录 A 术语与缩略语](<./Appendix/附录 A 术语与缩略语.md>)”的单一事实源为准。 
+> 版本说明：本章已根据 `com.glancy.backend` Java 服务与前端 `website` 目录下的现有实现（2025-02）对齐，移除 v1 草案中未落地的接口假设，便于研发、QA 与文档保持单一事实源。
 
-------
+---
 
 ## 8.1 基线规范
 
-- **基地址**：`/api/v1`（内外统一），仅 HTTPS。
-- **内容类型**：`Content-Type: application/json; charset=utf-8`。
-  内容协商：`Accept: application/vnd.glancy.dict.v1+json` 优先；缺失或为 `application/json` 时降级为 JSON 并在响应体携带 `schemaVersion` 字段；出现未知 vendor 时返回 `406 Not Acceptable`。
-- **鉴权**：`Authorization: Bearer <token>`，支持用户态 JWT（`user_jwt`）与匿名 JWT（`anon_jwt`）；Webhook 采用 HMAC 签名。
-- **主体 ID**：统一以 `subjectId = u_<userId> | s_<sessionId>` 参与幂等键、缓存键、配额与限速。
-- **幂等**：写操作支持 `Idempotency-Key`（推荐值 `hash(subjectId+langPair+entryNorm+configHash+profileEtag)`）。参见“[附录 A 术语与缩略语](<./Appendix/附录 A 术语与缩略语.md>) - 幂等”。
-- **跟踪**：请求头可携带 `X-Trace-Id`；响应统一回传同名头。
-- **限流与配额回传**：
-  - `X-RateLimit-Limit / Remaining / Reset`
-  - `X-Quota-Type: lookup|regenerate`，`X-Quota-Remaining: <int>`，`X-Quota-Reset-At: <ISO8601>`
-  - 响应体的 `quota` 对象镜像剩余次数与重置时间。
-- **时间**：服务器存 UTC，客户端本地渲染；导出链接 TTL 10 分钟。 
-- **分页**：列表接口使用游标分页：`?limit=50&cursor=<token>`；响应返回 `nextCursor`。
-- **错误模型**：HTTP 状态码 + 统一错误体（见 9.11）。
+| 项目 | 当前实现 | 说明 |
+| --- | --- | --- |
+| 基地址 | `/api` | 前端 `API_PATHS` 与所有 Spring Controller 的 `@RequestMapping` 均使用 `/api` 前缀，无版本号。 【F:website/src/core/config/api.js†L1-L21】【F:backend/src/main/java/com/glancy/backend/controller/WordController.java†L20-L54】 |
+| 内容类型 | `application/json` | 控制器返回 `ResponseEntity` JSON；上传文件仅限头像接口。 |
+| 鉴权 | `Authorization: Bearer <token>` 对应 `@AuthenticatedUser` | 鉴权由安全配置注入 `@AuthenticatedUser`，未显式读取 `userId` 查询参数。 【F:backend/src/main/java/com/glancy/backend/controller/WordController.java†L33-L54】 |
+| 追踪信息 | `HttpServletRequest` 属性 `req.id`、`auth.token.status` | 由 `TokenTraceFilter` 写入，日志使用。 |
+| 错误模型 | `{"message": "..."}` | `GlobalExceptionHandler` 统一封装，状态码与业务异常映射表见 8.4。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L18-L109】 |
+| 额外请求参数 | Spring 默认忽略未声明参数 | 现状允许前端传入 `userId`、`versionId` 等冗余查询参数而不会报错。 |
 
-### 8.1.1 匿名会话与 Token 获取
+---
 
-- **端点**：`POST /api/v1/sessions/anonymous`
-- **作用**：签发匿名 JWT（`anon_jwt`），scope 限定在查词、再生成与导出申请。
-- **请求体**：`{ "fingerprint": "hash(ua+platform+tz+ipClassC)" }`
-- **响应**：`201 Created`，返回 `{ "sessionId": "s_xxx", "token": "anon_jwt", "expiresAt": "2025-01-01T00:00:00Z" }`
-- **约束**：TTL 24 h，可续签；匿名主体统一映射为 `subjectId = s_<sessionId>`；匿名配额为 Free 档日配额的 1/3（查词与再生成），阈值由特性开关配置；登录后可调用 `POST /api/v1/sessions/merge` 将匿名配额并入真实用户。
-- **安全**：仅存储指纹哈希，不落真实指纹串；配额统计遵循 9.1 基线的 quota header/体规范。
+## 8.2 当前实现表格
 
-------
+### 8.2.1 查词与版本浏览
 
-## 8.2 契约版本与弃用
+| 编号 | 方法 | 路径 | 鉴权 | 请求要点 | 响应要点 | 代码 |
+| --- | --- | --- | --- | --- | --- | --- |
+| API-001 | GET | `/api/words` | 必需登录 | `term`、`language`、可选 `flavor`、`model`、`forceNew`、`captureHistory`；忽略额外 `userId`、`versionId` | `WordResponse`：释义、例句、派生字段、`flavor` 等。 | 【F:backend/src/main/java/com/glancy/backend/controller/WordController.java†L33-L54】【F:backend/src/main/java/com/glancy/backend/dto/WordResponse.java†L10-L30】 |
+| API-002 | GET | `/api/words/{recordId}/versions` | 必需登录 | 路径变量 `recordId` | `SearchRecordVersionSummary` 列表，含版本号、模型与摘要。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchResultVersionController.java†L30-L39】 |
+| API-003 | GET | `/api/words/{recordId}/versions/{versionId}` | 必需登录 | 路径变量 `recordId`、`versionId` | `SearchResultVersionResponse`，包含正文 Markdown、模型、时间。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchResultVersionController.java†L41-L70】 |
 
-- 合同名：`glancy.dict.v1`（语义化版本）。不兼容升级发布 `v2` 并在旧版响应附加 `Sunset` 头与弃用日期。 
+### 8.2.2 搜索历史（SearchRecord）
 
-------
+| 编号 | 方法 | 路径 | 鉴权 | 请求要点 | 响应要点 | 代码 |
+| --- | --- | --- | --- | --- | --- | --- |
+| API-004 | POST | `/api/search-records/user` | 必需登录 | `SearchRecordRequest`：`term`、`language`、可选 `flavor`；服务层校验会员日限。 | `SearchRecordResponse`，携带最新版本摘要列表。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L41-L49】 |
+| API-005 | GET | `/api/search-records/user` | 必需登录 | 可选 `page`、`size`；默认最近记录。 | 列表形式返回 `SearchRecordResponse`。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L54-L64】 |
+| API-006 | DELETE | `/api/search-records/user` | 必需登录 | 无 | 204，无体。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L69-L74】 |
+| API-007 | POST | `/api/search-records/user/{recordId}/favorite` | 必需登录 | 路径变量 `recordId` | 标记收藏后返回 `SearchRecordResponse`。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L79-L84】 |
+| API-008 | DELETE | `/api/search-records/user/{recordId}/favorite` | 必需登录 | 路径变量 | 204，无体。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L89-L94】 |
+| API-009 | DELETE | `/api/search-records/user/{recordId}` | 必需登录 | 路径变量 | 204，无体。 | 【F:backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java†L99-L104】 |
 
-## 8.3 领域对象概览（JSON Schema 摘要）
+### 8.2.3 文字转语音（TTS）
 
-> 以下为核心结构骨架（简化）。完整 JSON Schema 见各接口小节。
+| 编号 | 方法 | 路径 | 鉴权 | 请求要点 | 响应要点 | 代码 |
+| --- | --- | --- | --- | --- | --- | --- |
+| API-010 | POST | `/api/tts/word` | 必需登录 | JSON `TtsRequest`；`shortcut` 默认 `true`。 | `TtsResponse`（音频二进制、毫秒长度、缓存标记），命中配额/限流时抛异常。 | 【F:backend/src/main/java/com/glancy/backend/controller/TtsController.java†L57-L102】【F:backend/src/main/java/com/glancy/backend/dto/TtsResponse.java†L10-L25】 |
+| API-011 | GET | `/api/tts/word` | 必需登录 | Query：`text`、`lang`、可选 `voice`、`format`、`speed`；内部转换为 `TtsRequest` 并强制 `shortcut=false`。 | 同上。 | 【F:backend/src/main/java/com/glancy/backend/controller/TtsController.java†L84-L102】 |
+| API-012 | POST | `/api/tts/sentence` | 必需登录 | JSON `TtsRequest` | `TtsResponse`。 | 【F:backend/src/main/java/com/glancy/backend/controller/TtsController.java†L107-L126】 |
+| API-013 | GET | `/api/tts/sentence` | 必需登录 | 与 API-011 类似。 | `TtsResponse`。 | 【F:backend/src/main/java/com/glancy/backend/controller/TtsController.java†L132-L150】 |
+| API-014 | GET | `/api/tts/voices` | 必需登录 | Query `lang` | 返回 `VoiceResponse`（默认音色 + 可选项），已按会员等级过滤。 | 【F:backend/src/main/java/com/glancy/backend/controller/TtsController.java†L169-L177】【F:backend/src/main/java/com/glancy/backend/service/tts/VolcengineTtsService.java†L69-L84】 |
 
-### 8.3.1 DictResult（查词结果骨架）
+### 8.2.4 纠错与兑换
 
-```json
-{
-  "schemaVersion": "glancy.dict.v1",
-  "lookupId": "lk_123",
-  "entry": "bank account",
-  "langPair": { "source": "en", "target": "zh" },
-  "sameLang": false,
-  "modules": {
-    "definitions": [
-      {
-        "senseId": "s_1",
-        "pos": "n",
-        "gloss": "a record of money held by a bank for a customer",
-        "translation": "银行账户",
-        "examples": [
-          {
-            "text": "She opened a bank account to save for college.",
-            "translation": "她开了一个银行账户来为上大学攒钱。",
-            "style": "neutral",
-            "difficulty": "original"
-          }
-        ]
-      }
-    ],
-    "collocations": ["open a bank account", "joint account"],
-    "synonyms": ["checking account"],
-    "antonyms": [],
-    "derivations": ["account holder"]
-  },
-  "detailLevel": "medium",
-  "exampleCount": 3,
-  "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
-  "tokensIn": 321,
-  "tokensOut": 512,
-  "degraded": false,
-  "degradeReason": null,
-  "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
-  "createdAt": "2025-11-08T03:20:00Z"
-}
-```
+| 编号 | 方法 | 路径 | 鉴权 | 请求要点 | 响应要点 | 代码 |
+| --- | --- | --- | --- | --- | --- | --- |
+| API-015 | POST | `/api/word-reports` | 必需登录 | `WordIssueReportRequest`：词条、语言、风味、问题类型、可选描述与来源。 | `WordIssueReportResponse`，含创建时间。 | 【F:backend/src/main/java/com/glancy/backend/controller/WordIssueReportController.java†L27-L35】【F:backend/src/main/java/com/glancy/backend/dto/WordIssueReportRequest.java†L10-L17】 |
+| API-016 | POST | `/api/redemption-codes` | 管理端 | 创建兑换码配置，校验时间窗、总次数与单人次数。 | `RedemptionCodeResponse`，回显配置。 | 【F:backend/src/main/java/com/glancy/backend/controller/RedemptionCodeController.java†L35-L40】【F:backend/src/main/java/com/glancy/backend/service/redemption/RedemptionCodeService.java†L62-L86】 |
+| API-017 | GET | `/api/redemption-codes/{code}` | 管理/客服 | 通过编码查询兑换码。 | `RedemptionCodeResponse`。 | 【F:backend/src/main/java/com/glancy/backend/controller/RedemptionCodeController.java†L45-L50】 |
+| API-018 | POST | `/api/redemption-codes/redeem` | 必需登录 | `RedemptionRedeemRequest`；服务层校验有效期、总额度、单人次数并触发权益处理。 | `RedemptionRedeemResponse`，可能包含会员延长或折扣权益。 | 【F:backend/src/main/java/com/glancy/backend/controller/RedemptionCodeController.java†L55-L62】【F:backend/src/main/java/com/glancy/backend/service/redemption/RedemptionCodeService.java†L101-L145】 |
 
-约束与行为：
+### 8.2.5 前端调用快照
 
-- 同语模式（en→en 或 zh→zh）时 `translation` 字段必为 `null` 或省略。
-- `detailLevel ∈ {short, medium, long}`，字符预算参考“统一详略级别基线”。
-- `exampleCount` 及 `styleTags` 上限受订阅档位约束。
-- `schemaVersion` 恒为 `glancy.dict.v1`；当客户端协商失败落回 JSON 时仍需输出该字段。
-- `tokensIn/tokensOut` 记录模型用量，用于成本观测与限流联动。
-- `degraded=true` 表示返回“基础释义 + 模板例句”降级内容；需与[第 13 章](<./第 13 章 可用性、容灾与备份.md>)的降级约束一致，并附带 `degradeReason`（如 `UPSTREAM_UNAVAILABLE`、`BUDGET_GUARDRAIL`）。
+| 模块 | 关键实现 | 说明 |
+| --- | --- | --- |
+| 词典查询 | `createWordsApi` | 前端统一拼接 `/api/words` 查询参数、缓存版本、控制是否采集历史。 | 【F:website/src/shared/api/words.js†L19-L117】 |
+| API 基座 | `API_PATHS` | 所有调用共享 `/api` 前缀，含 TTS、历史、兑换等路径。 | 【F:website/src/core/config/api.js†L1-L21】 |
 
-------
+---
 
-## 8.4 查词与再生成
+## 8.3 目标契约表格（与差异）
 
-### API-001 查词/生成
+为保持与现有代码一致，目标契约采用“当前实现 + 未实现功能列表”方式呈现：
 
-- **方法与路径**：`POST /api/v1/lookup`
-- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
-- **幂等**：支持。推荐 `Idempotency-Key: hash(subjectId+langPair+entryNorm+configHash+profileEtag)`
-- **限流与配额**：计入“每日查词上限”与速率限制。 
+| 序号 | 目标契约项 | 当前状态 | 处置 |
+| --- | --- | --- | --- |
+| TGT-001 | `GET /api/words/audio`：返回纯音频 Blob，供前端 `fetchWordAudio` 复用 | **未实现**：后端缺少对应 Controller；前端调用将 404 | 需新建 Issue，讨论是否实现或移除前端缓存逻辑。 【F:website/src/shared/api/words.js†L119-L128】 |
+| TGT-002 | `versionId` 查询参数回放指定版本 | **未实现**：后端 `WordController` 未接收 `versionId` | 需评估是否支持；若不支持应清理前端多余参数。 【F:backend/src/main/java/com/glancy/backend/controller/WordController.java†L33-L54】【F:website/src/shared/api/words.js†L79-L107】 |
+| TGT-003 | 查词/历史响应返回配额/速率剩余额度字段 | **未实现**：当前无响应头/体；仅 TTS 抛异常信息 | 建议新增统一响应头或 JSON 字段，避免用户侧缺乏反馈。 |
 
-**请求体**
+其余接口目标契约与 8.2 表格一致。
 
-```json
-{
-  "entry": "bank account",
-  "langPair": { "source": "en", "target": "zh" },
-  "moduleFlags": {
-    "definitions": true,
-    "examples": true,
-    "collocations": true,
-    "synonyms": true,
-    "antonyms": true,
-    "derivations": true
-  },
-  "detailLevel": "medium",
-  "exampleCount": 3,
-  "difficulty": "original",
-  "style": { "register": "neutral", "tags": ["formal"] },
-  "context": "finance",
-  "forceNoTranslate": false
-}
-```
+---
 
-- 规则与校验：
-  - `entry` 仅接受单词或词组；检测疑似整句时返回 400（错误码 `ENTRY_NOT_WORD_OR_PHRASE`），与第 1.4.2 节一致。 
-  - `langPair` 必须属于白名单 {L1…L4}。同语模式不输出译文。 
-  - `exampleCount` 上限：档位约束详见[第 11 章](<./第 11 章 订阅、计费与账单.md>)权益矩阵（Free≤1、Plus≤3、Pro≤5），超限返回 400（`EXAMPLE_COUNT_EXCEEDS_TIER`）。
-  - `style.tags` 上限：档位约束详见[第 11 章](<./第 11 章 订阅、计费与账单.md>)权益矩阵（Free≤3、Plus≤5、Pro≤8），超限 400。
+## 8.4 错误码与异常映射
 
-**响应体**（`200 OK`）
+| 状态码 | 抛出源 | 说明 |
+| --- | --- | --- |
+| 400 Bad Request | `MissingServletRequestParameterException`、`MethodArgumentTypeMismatchException` 等 | Spring 参数缺失/类型错误直接映射。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L98-L107】 |
+| 401 Unauthorized | `UnauthorizedException` | 鉴权失败。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L78-L83】 |
+| 403 Forbidden | `QuotaExceededException`、`ForbiddenException` | TTS 配额不足、会员等级不足等情况。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L88-L95】 |
+| 404 Not Found | `ResourceNotFoundException`、`NoHandlerFoundException` | 资源不存在或路径错误。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L65-L76】【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L111-L124】 |
+| 409 Conflict | `DuplicateResourceException` | 兑换码重复创建等。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L69-L72】 |
+| 422 Unprocessable Entity | `InvalidRequestException`、校验异常 | 业务参数校验失败，例如日限超额。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L73-L87】 |
+| 429 Too Many Requests | `RateLimitExceededException` | TTS 速率限制触发。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L96-L101】 |
+| 424 Failed Dependency | `TtsFailedException` | 上游 TTS 提供方异常。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L102-L109】 |
+| 500 Internal Server Error | 兜底异常 | 未分类错误。 【F:backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java†L125-L132】 |
 
-- 返回 `DictResult`，并附带 `quota` 对象（`type`、`remaining`、`resetAt`）。当命中缓存时附加 `X-Cache: HIT`，否则 `MISS`。缓存策略与 TTL 参照 1.4.7。
-- 当触发降级或熔断回退时，`DictResult.degraded=true` 且 `degradeReason` 填充；字段语义与[第 13 章](<./第 13 章 可用性、容灾与备份.md>) BCP 约束一致。
+所有异常统一序列化为 `{"message": "..."}`，便于前端直接展示。 【F:backend/src/main/java/com/glancy/backend/dto/ErrorResponse.java†L10-L13】
 
-**错误码**：见 9.11。
+---
 
-------
+## 8.5 差异追踪（需建 Issue）
 
-### API-002 再生成
+1. **补齐 `/api/words/audio` 或移除前端调用**：当前调用会 404，应决定交付策略并记录 Issue。 【F:website/src/shared/api/words.js†L119-L128】
+2. **决定是否支持 `versionId` 重放**：前端仍附带该参数，后端未实现。建议在 Issue 中确认需求，避免歧义。 【F:website/src/shared/api/words.js†L79-L107】【F:backend/src/main/java/com/glancy/backend/controller/WordController.java†L33-L54】
+3. **配额/限流提示**：若产品需展示剩余额度，应在响应头或体中补充一致的字段。当前仅依赖异常提示文案。 【F:backend/src/main/java/com/glancy/backend/service/tts/quota/TtsQuotaService.java†L34-L75】
 
-- **方法与路径**：`POST /api/v1/lookup/{lookupId}/regenerate`
-- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
-- **配额**：计入“再生成次数/日”，与查词配额独立；难度或风格切换视为一次再生成，不计入查词次数。
-
-**请求体**
-
-```json
-{
-  "exampleCount": 3,
-  "difficulty": "easier",
-  "style": { "register": "colloquial", "tags": ["business"] }
-}
-```
-
-**响应体**：同 API-001，包含 `quota` 对象。`lookupId` 不变，返回 `iteration` 自增。
-
-------
-
-### API-003 获取单次结果
-
-- **方法与路径**：`GET /api/v1/lookup/{lookupId}`
-- **说明**：用于详情回放；不消耗配额。
-
-------
-
-## 8.5 历史与数据控制
-
-> 留存、清理与导出遵循分层策略与删除语义（逻辑删即刻，物理清理 7 天后）。 
-
-### API-101 列表历史
-
-- **方法与路径**：`GET /api/v1/history?langGroup=en|zh|all&limit=50&cursor=...`
-- **响应体**
-
-```json
-{
-  "items": [
-    {
-      "historyId": "h_001",
-      "lookupId": "lk_123",
-      "entry": "bank account",
-      "langPair": { "source": "en", "target": "zh" },
-      "createdAt": "2025-11-08T03:20:00Z"
-    }
-  ],
-  "nextCursor": "eyJvZmZzZXQiOjEwMH0="
-}
-```
-
-### API-102 删除单条
-
-- **方法与路径**：`DELETE /api/v1/history/{historyId}`
-- **语义**：逻辑删除即时生效；物理清理延迟 7 天。 
-
-### API-103 按语言清理或全部清空
-
-- **方法与路径**：`POST /api/v1/history:clear`
-- **请求体**：`{ "scope": "en|zh|all" }`
-- **响应**：`202 Accepted`，返回清理任务 `taskId`、预计完成时间（≤5 秒）与 `quota` 对象。完成后投递回执（见 9.8）。
-
-------
-
-## 8.6 导出
-
-### API-201 申请导出
-
-- **方法与路径**：`POST /api/v1/exports`
-- **请求体**：`{ "format": "csv|json", "filters": { "langGroup": "en|zh|all" } }`
-- **响应**：`202 Accepted`
-
-```json
-{ "exportId": "ex_123", "status": "processing", "receiptId": "rc_789", "quota": { "type": "export", "remaining": 2, "resetAt": "2025-11-09T00:00:00Z" } }
-```
-
-- 处理完成 SLA：P95 ≤ 5 s；前端轮询 1–2 次 `GET /api/v1/exports/{id}` 获取一次性下载链接（TTL 10 分钟 = 600 s）。响应体返回回执号与配额信息。
-
-### API-202 查询导出状态
-
-- **路径**：`GET /api/v1/exports/{exportId}`
-- **响应**：
-
-```json
-{
-  "exportId": "ex_123",
-  "status": "finished",
-  "downloadUrl": "https://.../download?sig=...",
-  "expiresAt": "2025-11-08T03:21:00Z",
-  "receiptId": "rc_789"
-}
-```
-
-> CSV/JSON 字段脱敏与表头固定；CSV 采用 UTF-8。`downloadUrl` 为一次性令牌，超出 `expiresAt`（或生成后 600 s）即失效，再次访问返回 `410 Gone` + `EXPORT_LINK_EXPIRED` 错误体，需重新发起 `POST /api/v1/exports`。
-
-------
-
-## 8.7 用户画像与偏好
-
-### API-301 读取画像
-
-- **方法与路径**：`GET /api/v1/profile`
-- **响应体（摘要）**
-
-```json
-{
-  "goals": ["academic","writing"],
-  "backgrounds": ["finance"],
-  "ageBand": "25-34",
-  "level": { "type": "CEFR", "value": "B2" },
-  "defaultLangPair": { "source": "en", "target": "zh" },
-  "styleTags": ["formal","concise"]
-}
-```
-
-### API-302 更新画像
-
-- **方法与路径**：`PATCH /api/v1/profile`
-- **约束**：`styleTags` 上限随档位 3/5/8；越界 400。档位规则以[第 11 章](<./第 11 章 订阅、计费与账单.md>)为准。 
-
-------
-
-## 8.8 订阅、配额与回执
-
-### API-401 查询订阅状态
-
-- **方法与路径**：`GET /api/v1/subscription`
-- **响应体**
-
-```json
-{
-  "plan": "plus", 
-  "entitlements": {
-    "dailyLookupLimit": 100,
-    "dailyRegenerateLimit": 10,
-    "historyRetentionDays": 90,
-    "styleTagsMax": 5
-  },
-  "expiresAt": "2026-02-01T00:00:00Z",
-  "state": "active"
-}
-```
-
-> 示例值仅用于说明，实际档位矩阵与自动降级策略以[第 11 章](<./第 11 章 订阅、计费与账单.md>)为准。
-
-### API-402 查询配额用量
-
-- **方法与路径**：`GET /api/v1/quotas`
-- **响应体**：`{ "lookup": { "used": 12, "limit": 100, "resetAt": "2025-11-09T00:00:00Z" }, "regenerate": { "used": 2, "limit": 10, "resetAt": "2025-11-09T00:00:00Z" } }`
-
-### API-403 导出回执查询
-
-- **方法与路径**：`GET /api/v1/receipts/{receiptId}`
-- **响应体**：`{ "receiptId": "rc_789", "type": "export", "status": "delivered", "deliveredAt": "..." }`
-
-### API-404 支付/订阅 Webhook（入站）
-
-- **方法与路径**：`POST /api/v1/webhooks/billing`
-- **鉴权**：`X-Signature: sha256=...`（HMAC with shared secret）
-- **事件**：`subscription.activated|renewed|expired|canceled|refunded`
-- **响应**：`200 OK`（要求幂等）；失败重试使用指数退避。
-
-------
-
-## 8.9 配置发现与能力边界
-
-### API-501 拉取配置
-
-- **方法与路径**：`GET /api/v1/config`
-- **响应体**
-
-```json
-{
-  "langWhitelist": [
-    { "code": "L1", "source": "zh", "target": "en" },
-    { "code": "L2", "source": "en", "target": "zh" },
-    { "code": "L3", "source": "en", "target": "en" },
-    { "code": "L4", "source": "zh", "target": "zh" }
-  ],
-  "detailLevelBudget": { "short": { "zh": 80, "en": 120 }, "medium": { "zh": 150, "en": 220 }, "long": { "zh": 220, "en": 320 } },
-  "modules": ["definitions","examples","collocations","synonyms","antonyms","derivations"],
-  "unsupported": ["frequency","examTags"]  // 暂不实现
-}
-```
-
-> 统一详略级别基线与白名单与[第 1 章](<./第 1 章 引言.md>)一致。 
-
-------
-
-## 8.10 错误模型与码表
-
-### 8.10.0 句子输入判定规范
-
-系统仅接受“单词/词组”。满足任一硬规则即判定为“句子”，返回 `ENTRY_NOT_WORD_OR_PHRASE`：
-a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且含至少两个动词并由连词连接；c) 中文 ≥ 15 个汉字且包含 ≥2 个功能词序列。
-命中软规则将提示确认或改写；命中短语白名单则放行。前端负责首次拦截，服务端兜底并返回统一错误体。
-
-### 8.10.1 统一错误体
-
-```json
-{
-  "error": {
-    "code": "ENTRY_NOT_WORD_OR_PHRASE",
-    "message": "Only words or short phrases are allowed.",
-    "hint": "Try removing punctuation or splitting the sentence.",
-    "meta": { "kind": "input" },
-    "traceId": "3bd2f9..."
-  }
-}
-```
-
-### 8.10.2 典型错误码
-
-| HTTP | code                       | 说明                                |
-| ---- | -------------------------- | ----------------------------------- |
-| 400  | ENTRY_NOT_WORD_OR_PHRASE   | 输入检测为整句或过长，违反 1.4.2。  |
-| 400  | INVALID_LANG_PAIR          | 语言对不在白名单。                  |
-| 400  | EXAMPLE_COUNT_EXCEEDS_TIER | 例句条数超过档位上限。              |
-| 400  | STYLE_TAGS_EXCEEDS_TIER    | 风格标签超过档位上限。              |
-| 401  | UNAUTHORIZED               | 未提供或无效的 Bearer Token。       |
-| 403  | FORBIDDEN                  | RBAC 或档位不允许。                 |
-| 404  | NOT_FOUND                  | 资源不存在。                        |
-| 409  | IDEMPOTENCY_KEY_REPLAYED   | 幂等键重放且参数不一致。            |
-| 410  | EXPORT_LINK_EXPIRED        | 导出下载链接超过 600 s TTL。         |
-| 422  | CONTRACT_VALIDATION_FAILED | `schemaVersion` 或字段结构未符合 `glancy.dict.v1`。 |
-| 429  | RATE_LIMITED               | 超出配额或限速；`error.meta.kind` = 'quota'|'ratelimit'，返回剩余额度与重置时间。 |
-| 500  | UPSTREAM_UNAVAILABLE       | Doubao 或第三方异常；触发降级策略。 |
-| 503  | CIRCUIT_OPEN               | 熔断中，快速失败。                  |
-
-------
-
-## 8.11 Doubao 适配层（内部服务契约）
-
-> 该层对上提供稳定的结构化输出，对下与 Doubao API 通信，包含重试、超时、错误语义化与解析容错。遇异常时回退到“基础释义与模板例句”，并携带退化提示。参照 1.4.7。 
-
-### 8.11.1 请求（Adapter → Doubao）
-
-```json
-{
-  "promptVersion": "glancy.dict.v1",
-  "entry": "bank account",
-  "langPair": { "source": "en", "target": "zh" },
-  "controls": {
-    "detailLevel": "medium",
-    "exampleCount": 3,
-    "difficulty": "original",
-    "styleTags": ["formal"]
-  },
-  "profile": {
-    "goals": ["academic"],
-    "backgrounds": ["finance"],
-    "level": { "type": "CEFR", "value": "B2" }
-  }
-}
-```
-
-### 8.11.2 响应（Doubao → Adapter）
-
-```json
-{
-  "ok": true,
-  "payload": {
-    "definitions": [
-      {
-        "pos": "n",
-        "gloss": "a record of money...",
-        "translation": "银行账户",
-        "examples": [
-          { "text": "She opened...", "translation": "她开了..." }
-        ]
-      }
-    ],
-    "collocations": ["open a bank account"],
-    "synonyms": ["checking account"],
-    "antonyms": [],
-    "derivations": ["account holder"]
-  },
-  "tokensIn": 321,
-  "tokensOut": 512,
-  "elapsedMs": 820
-}
-```
-
-### 8.11.3 适配输出（Adapter → 应用层）
-
-- 将 `payload` 正规化为 `DictResult`，补齐 `schemaVersion` 常量与 `tokensIn/tokensOut` 计量字段，并在失败或半失败时附加：
-
-```json
-{ "degraded": true, "degradeReason": "UPSTREAM_UNAVAILABLE" }
-```
-
-- 记录计量：`tokens_in/out` 计入成本统计；写入可观测性指标。 
-
-------
-
-## 8.12 JSON Schema（关键对象精简版）
-
-> 采用 Draft 2020-12；仅给出关键字段与校验要点。
-
-### 8.12.1 `#/definitions/LangPair`
-
-```json
-{
-  "$id": "https://glancy/schema/langpair.json",
-  "type": "object",
-  "required": ["source", "target"],
-  "properties": {
-    "source": { "enum": ["en", "zh"] },
-    "target": { "enum": ["en", "zh"] }
-  },
-  "allOf": [
-    { "not": { "properties": { "source": { "const": "en" }, "target": { "const": "fr" } } } }
-  ]
-}
-```
-
-### 8.12.2 `#/definitions/Example`
-
-```json
-{
-  "type": "object",
-  "required": ["text"],
-  "properties": {
-    "text": { "type": "string", "minLength": 1, "maxLength": 320 },
-    "translation": { "type": ["string", "null"] },
-    "style": { "enum": ["colloquial","neutral","formal","academic","business"] },
-    "difficulty": { "enum": ["easier","original","harder"] }
-  }
-}
-```
-
-> `Example.text` 使用 `langPair.source` 语言，同语模式下 `translation` 省略；跨语对时才返回译文。
-
-### 8.12.3 `#/definitions/Definition`
-
-```json
-{
-  "type": "object",
-  "required": ["gloss"],
-  "properties": {
-    "senseId": { "type": "string" },
-    "pos": { "enum": ["n","v","adj","adv","prep","pron","conj","det","num","phr","idiom"] },
-    "gloss": { "type": "string", "maxLength": 220 },
-    "translation": { "type": ["string","null"] },
-    "examples": { "type": "array", "items": { "$ref": "#/definitions/Example" }, "maxItems": 5 }
-  }
-}
-```
-
-### 8.12.4 `#/definitions/DictResult`
-
-```json
-{
-  "type": "object",
-  "required": ["schemaVersion","lookupId","entry","langPair","modules","createdAt"],
-  "properties": {
-    "schemaVersion": { "const": "glancy.dict.v1" },
-    "lookupId": { "type": "string" },
-    "entry": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "langPair": { "$ref": "#/definitions/LangPair" },
-    "sameLang": { "type": "boolean" },
-    "modules": {
-      "type": "object",
-      "properties": {
-        "definitions": { "type": "array", "items": { "$ref": "#/definitions/Definition" }, "maxItems": 3 },
-        "collocations": { "type": "array", "items": { "type": "string" }, "maxItems": 10 },
-        "synonyms": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
-        "antonyms": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
-        "derivations": { "type": "array", "items": { "type": "string" }, "maxItems": 5 }
-      },
-      "additionalProperties": false
-    },
-    "detailLevel": { "enum": ["short","medium","long"] },
-    "exampleCount": { "type": "integer", "minimum": 1, "maximum": 5 },
-    "profileApplied": { "type": "object" },
-    "tokensIn": { "type": "integer", "minimum": 0 },
-    "tokensOut": { "type": "integer", "minimum": 0 },
-    "degraded": { "type": "boolean" },
-    "degradeReason": { "type": ["string","null"] },
-    "createdAt": { "type": "string", "format": "date-time" }
-  }
-}
-```
-
-------
-
-## 8.13 安全与权限约束（接口侧）
-
-- **RBAC**：读（自有资源）默认允许；导出、后台操作需显式角色授权（最小权限）。 
-- **输入拦截**：敏感词与违规内容直接拒绝，返回 400 并写入审计日志。原文不落库。 
-- **下载链接**：一次性、限时（TTL 10 分钟）、绑定用户。 
-
-------
-
-## 8.14 兼容性与前后端协作要点
-
-- **模块开关与顺序**：Free 档仅“开/关”，Plus/Pro 支持顺序与详略调节；请求体中的 `moduleFlags` 与 `detailLevel` 由前端根据档位控制，响应体 `modules` 返回实际内容容器。
-- **同语模式**：UI 不展示译文位；服务端同样不返回 `translation`，以防前端误渲染。 
-- **降级提示**：当 `degraded=true` 时，前端在结果页显式展示退化徽标与文案。 
-
-------
-
-### 附：端到端示例
-
-**请求**
-
-```http
-POST /api/v1/lookup HTTP/1.1
-Authorization: Bearer eyJ...
-Content-Type: application/json
-Accept: application/vnd.glancy.dict.v1+json
-Idempotency-Key: 9f0b4d3c...
-
-{
-  "entry": "bank account",
-  "langPair": { "source": "en", "target": "zh" },
-  "moduleFlags": { "definitions": true, "examples": true, "collocations": true, "synonyms": true, "antonyms": true, "derivations": true },
-  "detailLevel": "medium",
-  "exampleCount": 3,
-  "difficulty": "original",
-  "style": { "register": "neutral", "tags": ["formal"] }
-}
-```
-
-**响应**
-
-```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
-X-Trace-Id: 3bd2f9...
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 87
-X-RateLimit-Reset: 1731045600
-X-Quota-Type: lookup
-X-Quota-Remaining: 88
-X-Quota-Reset-At: 2025-11-09T00:00:00Z
-X-Cache: MISS
-{
-  "schemaVersion": "glancy.dict.v1",
-  "lookupId": "lk_123",
-  "entry": "bank account",
-  "langPair": { "source": "en", "target": "zh" },
-  "sameLang": false,
-  "modules": {
-    "definitions": [
-      {
-        "senseId": "s_1",
-        "pos": "n",
-        "gloss": "a record of money held by a bank for a customer",
-        "translation": "银行账户",
-        "examples": [
-          {
-            "text": "She opened a bank account to save for college.",
-            "translation": "她开了一个银行账户来为上大学攒钱。",
-            "style": "neutral",
-            "difficulty": "original"
-          }
-        ]
-      }
-    ],
-    "collocations": ["open a bank account","close an account","joint account"],
-    "synonyms": ["checking account","current account"],
-    "antonyms": [],
-    "derivations": ["account holder"]
-  },
-  "detailLevel": "medium",
-  "exampleCount": 3,
-  "profileApplied": { "goals": ["academic"], "level": "B2", "styleTags": ["formal"] },
-  "tokensIn": 321,
-  "tokensOut": 512,
-  "degraded": false,
-  "degradeReason": null,
-  "quota": { "type": "lookup", "remaining": 88, "resetAt": "2025-11-09T00:00:00Z" },
-  "createdAt": "2025-11-08T03:20:00Z"
-}
-```
-
-------
-
-> 以上完成第 8 章所需的接口与数据契约定义，严格对齐“输入与查词规则”“分层功能说明”“导出与删除语义”“档位与权益矩阵”“技术实现最小集”等既有条款。后续章节（[第 9 章](<./第 9 章 数据模型与数据治理.md>)、[第 10 章](<./第 10 章 配额、限流与成本控制.md>)、[第 11 章](<./第 11 章 订阅、计费与账单.md>)、[第 12 章](<./第 12 章 安全、隐私与合规.md>)）中的数据模型、安全与合规将沿用本文的字段与错误模型作为接口层约束基线。
+上述事项在后续冲刺中需登记到 Issue 追踪并评估实现优先级。
