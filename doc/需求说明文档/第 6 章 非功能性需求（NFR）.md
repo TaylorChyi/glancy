@@ -62,7 +62,7 @@
 | POST /lookup     | ≥ 99.9%       | ≤ 2.5 s    | 首屏口径                         |
 | POST /regenerate | ≥ 99.5%       | ≤ 3.0 s    | 受再生成配额限制                 |
 | GET /history     | ≥ 99.9%       | ≤ 800 ms   | 翻页不落盘重算                   |
-| POST /export     | ≥ 99.0%       | 生成 ≤ 5 s | 返回 202 + 回执，轮询拿一次性链接（TTL 10 min） |
+| POST /exports    | ≥ 99.0%       | 生成 ≤ 5 s | 返回 202 + 回执，轮询拿一次性链接（TTL 10 min） |
 
 ------
 
