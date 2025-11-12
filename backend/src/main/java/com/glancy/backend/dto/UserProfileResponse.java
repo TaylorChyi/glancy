@@ -24,9 +24,8 @@ public record UserProfileResponse(
     /** 用户偏好的释义回应语气 */
     String responseStyle,
     /** 自定义维度的层级配置 */
-    List<ProfileCustomSectionDto> customSections
-) {
-    public UserProfileResponse {
-        customSections = customSections == null ? List.of() : List.copyOf(customSections);
-    }
+    List<ProfileCustomSectionDto> customSections) {
+  public UserProfileResponse {
+    customSections = customSections == null ? List.of() : List.copyOf(customSections);
+  }
 }

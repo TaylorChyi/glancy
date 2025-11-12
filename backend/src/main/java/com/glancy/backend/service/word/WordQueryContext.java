@@ -13,5 +13,4 @@ public record WordQueryContext(
     String model,
     boolean forceNew,
     boolean captureHistory,
-    WordPersonalizationContext personalizationContext
-) {}
+    WordPersonalizationContext personalizationContext) {}

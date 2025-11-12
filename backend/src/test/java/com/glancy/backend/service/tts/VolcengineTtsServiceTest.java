@@ -18,44 +18,39 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Tests for {@link VolcengineTtsService}. Focuses on guarding against
- * missing voice configuration which would otherwise surface as downstream
- * errors.
+ * Tests for {@link VolcengineTtsService}. Focuses on guarding against missing voice configuration
+ * which would otherwise surface as downstream errors.
  */
 class VolcengineTtsServiceTest {
 
-    @Mock
-    private VolcengineTtsClient client;
+  @Mock private VolcengineTtsClient client;
 
-    @Mock
-    private TtsRequestValidator validator;
+  @Mock private TtsRequestValidator validator;
 
-    @Mock
-    private UserService userService;
+  @Mock private UserService userService;
 
-    private VolcengineTtsService service;
+  private VolcengineTtsService service;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        service = new VolcengineTtsService(client, validator, userService);
-    }
+  @BeforeEach
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+    service = new VolcengineTtsService(client, validator, userService);
+  }
 
-    /**
-     * synthesizeWord should fail fast with {@link InvalidRequestException}
-     * when the validator cannot resolve a voice id, ensuring the client is
-     * never invoked with incomplete parameters.
-     */
-    @Test
-    void synthesizeWordRejectsMissingVoiceType() {
-        User user = new User();
-        when(userService.getUserRaw(1L)).thenReturn(user);
-        TtsRequest req = new TtsRequest();
-        req.setText("hi");
-        req.setLang("en-US");
-        when(validator.resolveVoice(user, req)).thenReturn(null);
+  /**
+   * synthesizeWord should fail fast with {@link InvalidRequestException} when the validator cannot
+   * resolve a voice id, ensuring the client is never invoked with incomplete parameters.
+   */
+  @Test
+  void synthesizeWordRejectsMissingVoiceType() {
+    User user = new User();
+    when(userService.getUserRaw(1L)).thenReturn(user);
+    TtsRequest req = new TtsRequest();
+    req.setText("hi");
+    req.setLang("en-US");
+    when(validator.resolveVoice(user, req)).thenReturn(null);
 
-        assertThrows(InvalidRequestException.class, () -> service.synthesizeWord(1L, "127.0.0.1", req));
-        verify(client, never()).synthesize(anyLong(), any());
-    }
+    assertThrows(InvalidRequestException.class, () -> service.synthesizeWord(1L, "127.0.0.1", req));
+    verify(client, never()).synthesize(anyLong(), any());
+  }
 }

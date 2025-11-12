@@ -22,129 +22,101 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(KeyboardShortcutController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class KeyboardShortcutControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockitoBean
-    private KeyboardShortcutService keyboardShortcutService;
+  @MockitoBean private KeyboardShortcutService keyboardShortcutService;
 
-    @MockitoBean
-    private com.glancy.backend.service.UserService userService;
+  @MockitoBean private com.glancy.backend.service.UserService userService;
 
-    /**
-     * 测试目标：GET /api/preferences/shortcuts/user 应返回服务层提供的快捷键列表。
-     * 前置条件：服务层返回包含一个快捷键的响应。
-     * 步骤：
-     *  1) 模拟服务层响应；
-     *  2) 发送 GET 请求；
-     * 断言：
-     *  - HTTP 状态 200；
-     *  - 响应体包含约定的字段和值。
-     * 边界/异常：
-     *  - 若服务抛出异常应交由全局异常处理（此处不覆盖）。
-     */
-    @Test
-    void Given_getRequest_When_fetchShortcuts_Then_returnPayload() throws Exception {
-        KeyboardShortcutView view = new KeyboardShortcutView(
+  /**
+   * 测试目标：GET /api/preferences/shortcuts/user 应返回服务层提供的快捷键列表。 前置条件：服务层返回包含一个快捷键的响应。 步骤： 1) 模拟服务层响应；
+   * 2) 发送 GET 请求； 断言： - HTTP 状态 200； - 响应体包含约定的字段和值。 边界/异常： - 若服务抛出异常应交由全局异常处理（此处不覆盖）。
+   */
+  @Test
+  void Given_getRequest_When_fetchShortcuts_Then_returnPayload() throws Exception {
+    KeyboardShortcutView view =
+        new KeyboardShortcutView(
             ShortcutAction.FOCUS_SEARCH.name(),
             List.of("MOD", "SHIFT", "F"),
-            List.of("MOD", "SHIFT", "F")
-        );
-        given(keyboardShortcutService.getShortcuts(1L)).willReturn(new KeyboardShortcutResponse(List.of(view)));
-        given(userService.authenticateToken("token-1")).willReturn(1L);
+            List.of("MOD", "SHIFT", "F"));
+    given(keyboardShortcutService.getShortcuts(1L))
+        .willReturn(new KeyboardShortcutResponse(List.of(view)));
+    given(userService.authenticateToken("token-1")).willReturn(1L);
 
-        mockMvc
-            .perform(MockMvcRequestBuilders.get("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-1"))
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].action").value("FOCUS_SEARCH"))
-            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
-    }
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.get("/api/preferences/shortcuts/user")
+                .header("X-USER-TOKEN", "token-1"))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].action").value("FOCUS_SEARCH"))
+        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
+  }
 
-    /**
-     * 测试目标：PUT /api/preferences/shortcuts/user/{action} 应调用服务更新快捷键。
-     * 前置条件：服务层返回更新后的列表。
-     * 步骤：
-     *  1) 模拟服务层响应；
-     *  2) 发送 PUT 请求并携带 JSON；
-     * 断言：
-     *  - HTTP 状态 200；
-     *  - 服务层收到正确的参数。
-     * 边界/异常：
-     *  - 无。
-     */
-    @Test
-    void Given_putRequest_When_updateShortcut_Then_delegateToService() throws Exception {
-        KeyboardShortcutView view = focusSearchView(List.of("CONTROL", "SHIFT", "P"));
-        given(
+  /**
+   * 测试目标：PUT /api/preferences/shortcuts/user/{action} 应调用服务更新快捷键。 前置条件：服务层返回更新后的列表。 步骤： 1) 模拟服务层响应；
+   * 2) 发送 PUT 请求并携带 JSON； 断言： - HTTP 状态 200； - 服务层收到正确的参数。 边界/异常： - 无。
+   */
+  @Test
+  void Given_putRequest_When_updateShortcut_Then_delegateToService() throws Exception {
+    KeyboardShortcutView view = focusSearchView(List.of("CONTROL", "SHIFT", "P"));
+    given(
             keyboardShortcutService.updateShortcut(
-                eq(2L),
-                eq(ShortcutAction.FOCUS_SEARCH),
-                any(KeyboardShortcutUpdateRequest.class)
-            )
-        ).willReturn(new KeyboardShortcutResponse(List.of(view)));
-        mockToken("token-2", 2L);
+                eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class)))
+        .willReturn(new KeyboardShortcutResponse(List.of(view)));
+    mockToken("token-2", 2L);
 
-        mockMvc
-            .perform(
-                MockMvcRequestBuilders.put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
-                    .header("X-USER-TOKEN", "token-2")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"keys\":[\"control\",\"shift\",\"p\"]}")
-            )
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
+                .header("X-USER-TOKEN", "token-2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"keys\":[\"control\",\"shift\",\"p\"]}"))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
 
-        verify(keyboardShortcutService).updateShortcut(
-            eq(2L),
-            eq(ShortcutAction.FOCUS_SEARCH),
-            any(KeyboardShortcutUpdateRequest.class)
-        );
-    }
+    verify(keyboardShortcutService)
+        .updateShortcut(
+            eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class));
+  }
 
-    /**
-     * 测试目标：DELETE /api/preferences/shortcuts/user 应触发服务层重置逻辑。
-     * 前置条件：服务层返回默认列表。
-     * 步骤：
-     *  1) 模拟服务层响应；
-     *  2) 发送 DELETE 请求；
-     * 断言：
-     *  - HTTP 状态 200；
-     *  - 服务层方法被调用。
-     * 边界/异常：
-     *  - 无。
-     */
-    @Test
-    void Given_deleteRequest_When_resetShortcuts_Then_delegateToService() throws Exception {
-        KeyboardShortcutView view = new KeyboardShortcutView(
+  /**
+   * 测试目标：DELETE /api/preferences/shortcuts/user 应触发服务层重置逻辑。 前置条件：服务层返回默认列表。 步骤： 1) 模拟服务层响应； 2) 发送
+   * DELETE 请求； 断言： - HTTP 状态 200； - 服务层方法被调用。 边界/异常： - 无。
+   */
+  @Test
+  void Given_deleteRequest_When_resetShortcuts_Then_delegateToService() throws Exception {
+    KeyboardShortcutView view =
+        new KeyboardShortcutView(
             ShortcutAction.FOCUS_SEARCH.name(),
             List.of("MOD", "SHIFT", "F"),
-            List.of("MOD", "SHIFT", "F")
-        );
-        given(keyboardShortcutService.resetShortcuts(3L)).willReturn(new KeyboardShortcutResponse(List.of(view)));
-        given(userService.authenticateToken("token-3")).willReturn(3L);
+            List.of("MOD", "SHIFT", "F"));
+    given(keyboardShortcutService.resetShortcuts(3L))
+        .willReturn(new KeyboardShortcutResponse(List.of(view)));
+    given(userService.authenticateToken("token-3")).willReturn(3L);
 
-        mockMvc
-            .perform(MockMvcRequestBuilders.delete("/api/preferences/shortcuts/user").header("X-USER-TOKEN", "token-3"))
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.delete("/api/preferences/shortcuts/user")
+                .header("X-USER-TOKEN", "token-3"))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
 
-        verify(keyboardShortcutService).resetShortcuts(3L);
-    }
+    verify(keyboardShortcutService).resetShortcuts(3L);
+  }
 
-    private KeyboardShortcutView focusSearchView(List<String> keys) {
-        return new KeyboardShortcutView(ShortcutAction.FOCUS_SEARCH.name(), keys, List.of("MOD", "SHIFT", "F"));
-    }
+  private KeyboardShortcutView focusSearchView(List<String> keys) {
+    return new KeyboardShortcutView(
+        ShortcutAction.FOCUS_SEARCH.name(), keys, List.of("MOD", "SHIFT", "F"));
+  }
 
-    private void mockToken(String token, long userId) {
-        given(userService.authenticateToken(token)).willReturn(userId);
-    }
+  private void mockToken(String token, long userId) {
+    given(userService.authenticateToken(token)).willReturn(userId);
+  }
 }

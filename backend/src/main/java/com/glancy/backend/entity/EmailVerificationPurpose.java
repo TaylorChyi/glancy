@@ -1,10 +1,8 @@
 package com.glancy.backend.entity;
 
-/**
- * Supported business contexts for email verification codes.
- */
+/** Supported business contexts for email verification codes. */
 public enum EmailVerificationPurpose {
-    REGISTER,
-    LOGIN,
-    CHANGE_EMAIL,
+  REGISTER,
+  LOGIN,
+  CHANGE_EMAIL,
 }

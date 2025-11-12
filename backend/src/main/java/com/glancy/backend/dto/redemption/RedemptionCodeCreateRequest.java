@@ -12,5 +12,4 @@ public record RedemptionCodeCreateRequest(
     @NotNull(message = "兑换结束时间不能为空") LocalDateTime redeemableUntil,
     @Min(value = 1, message = "总兑换次数需大于 0") int totalQuota,
     @Min(value = 1, message = "单用户兑换次数需大于 0") int perUserQuota,
-    @NotNull(message = "兑换效果不能为空") @Valid RedemptionEffectConfig effect
-) {}
+    @NotNull(message = "兑换效果不能为空") @Valid RedemptionEffectConfig effect) {}

@@ -3,9 +3,7 @@ package com.glancy.backend.dto;
 import com.glancy.backend.entity.Language;
 import java.time.LocalDateTime;
 
-/**
- * Detailed representation of a persisted search result version.
- */
+/** Detailed representation of a persisted search result version. */
 public record SearchResultVersionResponse(
     Long id,
     Long recordId,
@@ -17,5 +15,4 @@ public record SearchResultVersionResponse(
     String model,
     String preview,
     String content,
-    LocalDateTime createdAt
-) {}
+    LocalDateTime createdAt) {}

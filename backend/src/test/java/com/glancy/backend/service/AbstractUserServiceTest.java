@@ -17,50 +17,44 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @TestPropertySource(
     properties = {
-        "oss.endpoint=http://localhost",
-        "oss.bucket=test-bucket",
-        "oss.access-key-id=test-access",
-        "oss.access-key-secret=test-secret",
-        "oss.verify-location=false",
-    }
-)
+      "oss.endpoint=http://localhost",
+      "oss.bucket=test-bucket",
+      "oss.access-key-id=test-access",
+      "oss.access-key-secret=test-secret",
+      "oss.verify-location=false",
+    })
 abstract class AbstractUserServiceTest {
 
-    @Autowired
-    protected UserService userService;
+  @Autowired protected UserService userService;
 
-    @Autowired
-    protected UserRepository userRepository;
+  @Autowired protected UserRepository userRepository;
 
-    @Autowired
-    protected LoginDeviceRepository loginDeviceRepository;
+  @Autowired protected LoginDeviceRepository loginDeviceRepository;
 
-    @Autowired
-    protected UserProfileRepository userProfileRepository;
+  @Autowired protected UserProfileRepository userProfileRepository;
 
-    @MockitoBean
-    protected AvatarStorage avatarStorage;
+  @MockitoBean protected AvatarStorage avatarStorage;
 
-    @MockitoBean
-    protected EmailVerificationService emailVerificationService;
+  @MockitoBean protected EmailVerificationService emailVerificationService;
 
-    protected static final String CLIENT_IP = "127.0.0.1";
+  protected static final String CLIENT_IP = "127.0.0.1";
 
-    @BeforeAll
-    static void loadEnv() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+  @BeforeAll
+  static void loadEnv() {
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-        String dbPassword = dotenv.get("DB_PASSWORD");
-        if (dbPassword != null) {
-            System.setProperty("DB_PASSWORD", dbPassword);
-        }
+    String dbPassword = dotenv.get("DB_PASSWORD");
+    if (dbPassword != null) {
+      System.setProperty("DB_PASSWORD", dbPassword);
     }
+  }
 
-    @BeforeEach
-    void setUp() {
-        loginDeviceRepository.deleteAll();
-        userRepository.deleteAll();
-        userProfileRepository.deleteAll();
-        Mockito.when(avatarStorage.resolveUrl(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-    }
+  @BeforeEach
+  void setUp() {
+    loginDeviceRepository.deleteAll();
+    userRepository.deleteAll();
+    userProfileRepository.deleteAll();
+    Mockito.when(avatarStorage.resolveUrl(Mockito.anyString()))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+  }
 }

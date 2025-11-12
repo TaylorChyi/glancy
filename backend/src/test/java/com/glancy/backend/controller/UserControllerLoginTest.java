@@ -20,73 +20,71 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(UserController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class UserControllerLoginTest extends BaseUserControllerWebMvcTest {
 
-    @Test
-    void login() throws Exception {
-        LoginResponse resp = new LoginResponse(1L, "u", "e", null, null, false, MembershipType.NONE, null, "tkn");
-        when(userService.login(any(LoginRequest.class))).thenReturn(resp);
+  @Test
+  void login() throws Exception {
+    LoginResponse resp =
+        new LoginResponse(1L, "u", "e", null, null, false, MembershipType.NONE, null, "tkn");
+    when(userService.login(any(LoginRequest.class))).thenReturn(resp);
 
-        LoginRequest req = new LoginRequest();
-        req.setAccount("u");
-        req.setPassword("pass");
+    LoginRequest req = new LoginRequest();
+    req.setAccount("u");
+    req.setPassword("pass");
 
-        mockMvc
-            .perform(
-                MockMvcRequestBuilders.post("/api/users/login")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req))
-            )
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
+  }
+
+  @Test
+  void loginWithPhone() throws Exception {
+    LoginResponse resp =
+        new LoginResponse(1L, "u", "e", null, "555", false, MembershipType.NONE, null, "tkn");
+    when(userService.login(any(LoginRequest.class))).thenReturn(resp);
+
+    LoginRequest req = new LoginRequest();
+    req.setAccount("555");
+    req.setPassword("pass");
+
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.post("/api/users/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
+  }
+
+  @Test
+  void logout() throws Exception {
+    User authenticated = new User();
+    authenticated.setId(1L);
+    authenticated.setLoginToken("tkn");
+    when(userService.getUserRaw(1L)).thenReturn(authenticated);
+    doNothing().when(userService).logout(1L, "tkn");
+
+    SecurityContextHolder.getContext()
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken(1L, "tkn", Collections.emptyList()));
+
+    try {
+      mockMvc
+          .perform(MockMvcRequestBuilders.post("/api/users/1/logout"))
+          .andExpect(MockMvcResultMatchers.status().isNoContent());
+    } finally {
+      SecurityContextHolder.clearContext();
     }
 
-    @Test
-    void loginWithPhone() throws Exception {
-        LoginResponse resp = new LoginResponse(1L, "u", "e", null, "555", false, MembershipType.NONE, null, "tkn");
-        when(userService.login(any(LoginRequest.class))).thenReturn(resp);
-
-        LoginRequest req = new LoginRequest();
-        req.setAccount("555");
-        req.setPassword("pass");
-
-        mockMvc
-            .perform(
-                MockMvcRequestBuilders.post("/api/users/login")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req))
-            )
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L));
-    }
-
-    @Test
-    void logout() throws Exception {
-        User authenticated = new User();
-        authenticated.setId(1L);
-        authenticated.setLoginToken("tkn");
-        when(userService.getUserRaw(1L)).thenReturn(authenticated);
-        doNothing().when(userService).logout(1L, "tkn");
-
-        SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(1L, "tkn", Collections.emptyList())
-        );
-
-        try {
-            mockMvc
-                .perform(MockMvcRequestBuilders.post("/api/users/1/logout"))
-                .andExpect(MockMvcResultMatchers.status().isNoContent());
-        } finally {
-            SecurityContextHolder.clearContext();
-        }
-
-        verify(userService).logout(1L, "tkn");
-    }
+    verify(userService).logout(1L, "tkn");
+  }
 }

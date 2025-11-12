@@ -5,9 +5,7 @@ import com.glancy.backend.entity.Language;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Represents a saved search history item returned to the client.
- */
+/** Represents a saved search history item returned to the client. */
 public record SearchRecordResponse(
     Long id,
     Long userId,
@@ -17,26 +15,22 @@ public record SearchRecordResponse(
     LocalDateTime createdAt,
     Boolean favorite,
     SearchRecordVersionSummary latestVersion,
-    List<SearchRecordVersionSummary> versions
-) {
-    public SearchRecordResponse {
-        versions = versions == null ? List.of() : List.copyOf(versions);
-    }
+    List<SearchRecordVersionSummary> versions) {
+  public SearchRecordResponse {
+    versions = versions == null ? List.of() : List.copyOf(versions);
+  }
 
-    public SearchRecordResponse withVersionDetails(
-        SearchRecordVersionSummary latest,
-        List<SearchRecordVersionSummary> versionSummaries
-    ) {
-        return new SearchRecordResponse(
-            id,
-            userId,
-            term,
-            language,
-            flavor,
-            createdAt,
-            favorite,
-            latest,
-            versionSummaries == null ? List.of() : List.copyOf(versionSummaries)
-        );
-    }
+  public SearchRecordResponse withVersionDetails(
+      SearchRecordVersionSummary latest, List<SearchRecordVersionSummary> versionSummaries) {
+    return new SearchRecordResponse(
+        id,
+        userId,
+        term,
+        language,
+        flavor,
+        createdAt,
+        favorite,
+        latest,
+        versionSummaries == null ? List.of() : List.copyOf(versionSummaries));
+  }
 }

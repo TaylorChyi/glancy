@@ -6,5 +6,4 @@ public record RedemptionRedeemResponse(
     String code,
     RedemptionEffectType effectType,
     MembershipRewardResponse membership,
-    DiscountRewardResponse discount
-) {}
+    DiscountRewardResponse discount) {}

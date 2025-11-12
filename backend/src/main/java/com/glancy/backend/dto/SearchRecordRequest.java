@@ -6,17 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-/**
- * Request payload representing a user's word search.
- */
+/** Request payload representing a user's word search. */
 @Data
 public class SearchRecordRequest {
 
-    @NotBlank(message = "{validation.searchRecord.term.notblank}")
-    private String term;
+  @NotBlank(message = "{validation.searchRecord.term.notblank}")
+  private String term;
 
-    @NotNull(message = "{validation.searchRecord.language.notnull}")
-    private Language language;
+  @NotNull(message = "{validation.searchRecord.language.notnull}")
+  private Language language;
 
-    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
+  private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
 }

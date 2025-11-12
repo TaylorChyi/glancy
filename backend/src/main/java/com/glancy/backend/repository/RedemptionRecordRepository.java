@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RedemptionRecordRepository extends JpaRepository<RedemptionRecord, Long> {
-    long countByCodeIdAndUserIdAndDeletedFalse(Long codeId, Long userId);
+  long countByCodeIdAndUserIdAndDeletedFalse(Long codeId, Long userId);
 }

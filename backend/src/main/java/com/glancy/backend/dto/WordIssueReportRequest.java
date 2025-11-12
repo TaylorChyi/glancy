@@ -13,5 +13,4 @@ public record WordIssueReportRequest(
     @NotNull(message = "flavor is required") DictionaryFlavor flavor,
     @NotNull(message = "category is required") WordIssueCategory category,
     @Size(max = 2000, message = "description is too long") String description,
-    @Size(max = 500, message = "source url is too long") String sourceUrl
-) {}
+    @Size(max = 500, message = "source url is too long") String sourceUrl) {}

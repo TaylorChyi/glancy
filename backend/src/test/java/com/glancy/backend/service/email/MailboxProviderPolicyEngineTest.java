@@ -15,46 +15,46 @@ import org.junit.jupiter.api.Test;
 
 class MailboxProviderPolicyEngineTest {
 
-    private MailboxProviderPolicyEngine policyEngine;
-    private EmailVerificationProperties properties;
+  private MailboxProviderPolicyEngine policyEngine;
+  private EmailVerificationProperties properties;
 
-    @BeforeEach
-    void setUp() {
-        properties = new EmailVerificationProperties();
-        properties.setFrom("no-reply@mail.glancy.xyz");
-        properties.getStreams().setTransactionalDomain("mail.glancy.xyz");
-        properties.getCompliance().setCompanyName("Glancy Tech");
-        properties.getCompliance().setSupportEmail("support@mail.glancy.xyz");
-        properties.getCompliance().setUnsubscribeMailto("unsubscribe@mail.glancy.xyz");
-        properties.getCompliance().setUnsubscribeUrl("https://www.glancy.xyz/email/unsubscribe");
-        properties.getDeliverability().setFeedbackIdPrefix("glancy-txn");
+  @BeforeEach
+  void setUp() {
+    properties = new EmailVerificationProperties();
+    properties.setFrom("no-reply@mail.glancy.xyz");
+    properties.getStreams().setTransactionalDomain("mail.glancy.xyz");
+    properties.getCompliance().setCompanyName("Glancy Tech");
+    properties.getCompliance().setSupportEmail("support@mail.glancy.xyz");
+    properties.getCompliance().setUnsubscribeMailto("unsubscribe@mail.glancy.xyz");
+    properties.getCompliance().setUnsubscribeUrl("https://www.glancy.xyz/email/unsubscribe");
+    properties.getDeliverability().setFeedbackIdPrefix("glancy-txn");
 
-        MailboxProviderPolicy icloudPolicy = new MailboxProviderPolicy();
-        icloudPolicy.setDomains(List.of("icloud.com", "me.com", "mac.com"));
-        icloudPolicy.setListId("Glancy 事务通知 <mail.glancy.xyz>");
-        icloudPolicy.setComplaintsMailto("abuse@mail.glancy.xyz");
-        properties.getDeliverability().setMailboxProviderPolicies(Map.of("icloud", icloudPolicy));
+    MailboxProviderPolicy icloudPolicy = new MailboxProviderPolicy();
+    icloudPolicy.setDomains(List.of("icloud.com", "me.com", "mac.com"));
+    icloudPolicy.setListId("Glancy 事务通知 <mail.glancy.xyz>");
+    icloudPolicy.setComplaintsMailto("abuse@mail.glancy.xyz");
+    properties.getDeliverability().setMailboxProviderPolicies(Map.of("icloud", icloudPolicy));
 
-        policyEngine = new MailboxProviderPolicyEngine(properties);
-    }
+    policyEngine = new MailboxProviderPolicyEngine(properties);
+  }
 
-    @Test
-    /**
-     * 测试逻辑：构造 iCloud 邮箱收件人，执行策略引擎以补齐 Apple 要求的头部字段，验证
-     * List-Unsubscribe、List-ID、反馈与投诉头均正确生成。
-     */
-    void shouldApplyIcloudComplianceHeaders() throws Exception {
-        MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
+  @Test
+  /** 测试逻辑：构造 iCloud 邮箱收件人，执行策略引擎以补齐 Apple 要求的头部字段，验证 List-Unsubscribe、List-ID、反馈与投诉头均正确生成。 */
+  void shouldApplyIcloudComplianceHeaders() throws Exception {
+    MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
 
-        policyEngine.apply(message, EmailStream.TRANSACTIONAL, "member@icloud.com");
+    policyEngine.apply(message, EmailStream.TRANSACTIONAL, "member@icloud.com");
 
-        assertThat(message.getHeader("List-Unsubscribe", null)).isEqualTo(
-            "<mailto:unsubscribe@mail.glancy.xyz>, <https://www.glancy.xyz/email/unsubscribe>"
-        );
-        assertThat(message.getHeader("List-Unsubscribe-Post", null)).isEqualTo("List-Unsubscribe=One-Click");
-        assertThat(message.getHeader("List-ID", null)).isEqualTo("Glancy 事务通知 <mail.glancy.xyz>");
-        assertThat(message.getHeader("X-Complaints-To", null)).isEqualTo("mailto:abuse@mail.glancy.xyz");
-        assertThat(message.getHeader("X-Report-Abuse", null)).isEqualTo("mailto:abuse@mail.glancy.xyz");
-        assertThat(message.getHeader("Feedback-ID", null)).isEqualTo("glancy-txn:transactional:glancy-tech");
-    }
+    assertThat(message.getHeader("List-Unsubscribe", null))
+        .isEqualTo(
+            "<mailto:unsubscribe@mail.glancy.xyz>, <https://www.glancy.xyz/email/unsubscribe>");
+    assertThat(message.getHeader("List-Unsubscribe-Post", null))
+        .isEqualTo("List-Unsubscribe=One-Click");
+    assertThat(message.getHeader("List-ID", null)).isEqualTo("Glancy 事务通知 <mail.glancy.xyz>");
+    assertThat(message.getHeader("X-Complaints-To", null))
+        .isEqualTo("mailto:abuse@mail.glancy.xyz");
+    assertThat(message.getHeader("X-Report-Abuse", null)).isEqualTo("mailto:abuse@mail.glancy.xyz");
+    assertThat(message.getHeader("Feedback-ID", null))
+        .isEqualTo("glancy-txn:transactional:glancy-tech");
+  }
 }

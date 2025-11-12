@@ -11,67 +11,66 @@ import org.springframework.stereotype.Component;
 @Component
 class DoubaoOfflineResponseBuilder {
 
-    private static final Pattern TERM_PATTERN = Pattern.compile("\\\"term\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
-    private static final Pattern TERM_LINE_PATTERN = Pattern.compile(
-        "term\\s*[:：]\\s*([^\\n]+)",
-        Pattern.CASE_INSENSITIVE
-    );
+  private static final Pattern TERM_PATTERN =
+      Pattern.compile("\\\"term\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
+  private static final Pattern TERM_LINE_PATTERN =
+      Pattern.compile("term\\s*[:：]\\s*([^\\n]+)", Pattern.CASE_INSENSITIVE);
 
-    String build(List<ChatMessage> messages) {
-        String term = inferTerm(messages);
-        String sanitizedTerm = term.replaceAll("[\\r\\n]+", " ").trim();
-        if (sanitizedTerm.isEmpty()) {
-            sanitizedTerm = "entry";
-        }
-        String definition = "Offline definition generated locally for '" + sanitizedTerm + "'.";
-        String json =
-            "{" +
-            "\"term\":\"" +
-            escapeJson(sanitizedTerm) +
-            "\"," +
-            "\"language\":\"ENGLISH\"," +
-            "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\"" +
-            escapeJson(definition) +
-            "\"]}]" +
-            "}";
-        log.info("Returning offline Doubao response for term '{}'", sanitizedTerm);
-        return json;
+  String build(List<ChatMessage> messages) {
+    String term = inferTerm(messages);
+    String sanitizedTerm = term.replaceAll("[\\r\\n]+", " ").trim();
+    if (sanitizedTerm.isEmpty()) {
+      sanitizedTerm = "entry";
     }
+    String definition = "Offline definition generated locally for '" + sanitizedTerm + "'.";
+    String json =
+        "{"
+            + "\"term\":\""
+            + escapeJson(sanitizedTerm)
+            + "\","
+            + "\"language\":\"ENGLISH\","
+            + "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\""
+            + escapeJson(definition)
+            + "\"]}]"
+            + "}";
+    log.info("Returning offline Doubao response for term '{}'", sanitizedTerm);
+    return json;
+  }
 
-    private String inferTerm(List<ChatMessage> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return "";
-        }
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            ChatMessage message = messages.get(i);
-            if (!"user".equalsIgnoreCase(message.getRole())) {
-                continue;
-            }
-            String content = message.getContent();
-            String candidate = extractTermFromPayload(content);
-            if (!candidate.isEmpty()) {
-                return candidate;
-            }
-        }
-        return messages.get(messages.size() - 1).getContent();
+  private String inferTerm(List<ChatMessage> messages) {
+    if (messages == null || messages.isEmpty()) {
+      return "";
     }
+    for (int i = messages.size() - 1; i >= 0; i--) {
+      ChatMessage message = messages.get(i);
+      if (!"user".equalsIgnoreCase(message.getRole())) {
+        continue;
+      }
+      String content = message.getContent();
+      String candidate = extractTermFromPayload(content);
+      if (!candidate.isEmpty()) {
+        return candidate;
+      }
+    }
+    return messages.get(messages.size() - 1).getContent();
+  }
 
-    private String extractTermFromPayload(String payload) {
-        if (payload == null) {
-            return "";
-        }
-        Matcher matcher = TERM_PATTERN.matcher(payload);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        matcher = TERM_LINE_PATTERN.matcher(payload);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return payload.trim();
+  private String extractTermFromPayload(String payload) {
+    if (payload == null) {
+      return "";
     }
+    Matcher matcher = TERM_PATTERN.matcher(payload);
+    if (matcher.find()) {
+      return matcher.group(1);
+    }
+    matcher = TERM_LINE_PATTERN.matcher(payload);
+    if (matcher.find()) {
+      return matcher.group(1);
+    }
+    return payload.trim();
+  }
 
-    private String escapeJson(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
+  private String escapeJson(String value) {
+    return value.replace("\\", "\\\\").replace("\"", "\\\"");
+  }
 }

@@ -22,5 +22,4 @@ public record UserProfileRequest(
     /** 首选的释义回应语气 */
     String responseStyle,
     /** 用户自定义维度的配置集合 */
-    List<ProfileCustomSectionDto> customSections
-) {}
+    List<ProfileCustomSectionDto> customSections) {}

@@ -39,160 +39,162 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserProfileQuery profileQuery;
-    private final UserProfileCommand profileCommand;
-    private final UserRegistrationCommand registrationCommand;
-    private final UserVerificationCommand verificationCommand;
-    private final UserAuthenticationCommand authenticationCommand;
-    private final UserContactCommand contactCommand;
-    private final UserAvatarCommand avatarCommand;
-    private final UserSocialAccountCommand socialAccountCommand;
-    private final UserStatisticsQuery statisticsQuery;
-    private final UserMembershipCommand membershipCommand;
+  private final UserProfileQuery profileQuery;
+  private final UserProfileCommand profileCommand;
+  private final UserRegistrationCommand registrationCommand;
+  private final UserVerificationCommand verificationCommand;
+  private final UserAuthenticationCommand authenticationCommand;
+  private final UserContactCommand contactCommand;
+  private final UserAvatarCommand avatarCommand;
+  private final UserSocialAccountCommand socialAccountCommand;
+  private final UserStatisticsQuery statisticsQuery;
+  private final UserMembershipCommand membershipCommand;
 
-    /** 意图：注册新用户。 */
-    @Transactional
-    public UserResponse register(UserRegistrationRequest request) {
-        log.info("Registering user {}", request.getUsername());
-        return registrationCommand.register(request);
-    }
+  /** 意图：注册新用户。 */
+  @Transactional
+  public UserResponse register(UserRegistrationRequest request) {
+    log.info("Registering user {}", request.getUsername());
+    return registrationCommand.register(request);
+  }
 
-    /** 意图：逻辑删除用户。 */
-    @Transactional
-    public void deleteUser(Long id) {
-        profileCommand.deleteUser(id);
-    }
+  /** 意图：逻辑删除用户。 */
+  @Transactional
+  public void deleteUser(Long id) {
+    profileCommand.deleteUser(id);
+  }
 
-    /** 意图：查询原始用户实体。 */
-    @Transactional(readOnly = true)
-    public User getUserRaw(Long id) {
-        return profileQuery.getUserRaw(id);
-    }
+  /** 意图：查询原始用户实体。 */
+  @Transactional(readOnly = true)
+  public User getUserRaw(Long id) {
+    return profileQuery.getUserRaw(id);
+  }
 
-    /** 意图：查询用户详情。 */
-    @Transactional(readOnly = true)
-    public UserDetailResponse getUserDetail(Long id) {
-        return profileQuery.getUserDetail(id);
-    }
+  /** 意图：查询用户详情。 */
+  @Transactional(readOnly = true)
+  public UserDetailResponse getUserDetail(Long id) {
+    return profileQuery.getUserDetail(id);
+  }
 
-    /** 意图：发送邮箱验证码。 */
-    @Transactional
-    public void sendVerificationCode(EmailVerificationCodeRequest request, String clientIp) {
-        verificationCommand.sendVerificationCode(request, clientIp);
-    }
+  /** 意图：发送邮箱验证码。 */
+  @Transactional
+  public void sendVerificationCode(EmailVerificationCodeRequest request, String clientIp) {
+    verificationCommand.sendVerificationCode(request, clientIp);
+  }
 
-    /** 意图：通过邮箱验证码注册用户。 */
-    @Transactional
-    public UserResponse registerWithEmailVerification(EmailRegistrationRequest request) {
-        log.info("Registering user {} via email verification", request.username());
-        return registrationCommand.registerWithVerification(request);
-    }
+  /** 意图：通过邮箱验证码注册用户。 */
+  @Transactional
+  public UserResponse registerWithEmailVerification(EmailRegistrationRequest request) {
+    log.info("Registering user {} via email verification", request.username());
+    return registrationCommand.registerWithVerification(request);
+  }
 
-    /** 意图：使用邮箱验证码登录。 */
-    @Transactional
-    public LoginResponse loginWithEmailCode(EmailLoginRequest request) {
-        return authenticationCommand.loginWithEmailCode(request);
-    }
+  /** 意图：使用邮箱验证码登录。 */
+  @Transactional
+  public LoginResponse loginWithEmailCode(EmailLoginRequest request) {
+    return authenticationCommand.loginWithEmailCode(request);
+  }
 
-    /** 意图：使用账号与密码登录。 */
-    @Transactional
-    public LoginResponse login(LoginRequest request) {
-        return authenticationCommand.login(request);
-    }
+  /** 意图：使用账号与密码登录。 */
+  @Transactional
+  public LoginResponse login(LoginRequest request) {
+    return authenticationCommand.login(request);
+  }
 
-    /** 意图：绑定第三方账号。 */
-    @Transactional
-    public ThirdPartyAccountResponse bindThirdPartyAccount(Long userId, ThirdPartyAccountRequest request) {
-        return socialAccountCommand.bindThirdPartyAccount(userId, request);
-    }
+  /** 意图：绑定第三方账号。 */
+  @Transactional
+  public ThirdPartyAccountResponse bindThirdPartyAccount(
+      Long userId, ThirdPartyAccountRequest request) {
+    return socialAccountCommand.bindThirdPartyAccount(userId, request);
+  }
 
-    /** 意图：获取用户统计数据。 */
-    @Transactional(readOnly = true)
-    public UserStatisticsResponse getStatistics() {
-        return statisticsQuery.getStatistics();
-    }
+  /** 意图：获取用户统计数据。 */
+  @Transactional(readOnly = true)
+  public UserStatisticsResponse getStatistics() {
+    return statisticsQuery.getStatistics();
+  }
 
-    /** 意图：统计活跃用户数量。 */
-    @Transactional(readOnly = true)
-    public long countActiveUsers() {
-        return statisticsQuery.countActiveUsers();
-    }
+  /** 意图：统计活跃用户数量。 */
+  @Transactional(readOnly = true)
+  public long countActiveUsers() {
+    return statisticsQuery.countActiveUsers();
+  }
 
-    /** 意图：根据令牌获取用户 id。 */
-    @Transactional(readOnly = true)
-    public Long authenticateToken(String token) {
-        return authenticationCommand.authenticateToken(token);
-    }
+  /** 意图：根据令牌获取用户 id。 */
+  @Transactional(readOnly = true)
+  public Long authenticateToken(String token) {
+    return authenticationCommand.authenticateToken(token);
+  }
 
-    /** 意图：校验令牌。 */
-    @Transactional(readOnly = true)
-    public void validateToken(Long userId, String token) {
-        authenticationCommand.validateToken(userId, token);
-    }
+  /** 意图：校验令牌。 */
+  @Transactional(readOnly = true)
+  public void validateToken(Long userId, String token) {
+    authenticationCommand.validateToken(userId, token);
+  }
 
-    /** 意图：注销登录。 */
-    @Transactional
-    public void logout(Long userId, String token) {
-        authenticationCommand.logout(userId, token);
-    }
+  /** 意图：注销登录。 */
+  @Transactional
+  public void logout(Long userId, String token) {
+    authenticationCommand.logout(userId, token);
+  }
 
-    /** 意图：获取用户头像。 */
-    @Transactional(readOnly = true)
-    public AvatarResponse getAvatar(Long userId) {
-        return avatarCommand.getAvatar(userId);
-    }
+  /** 意图：获取用户头像。 */
+  @Transactional(readOnly = true)
+  public AvatarResponse getAvatar(Long userId) {
+    return avatarCommand.getAvatar(userId);
+  }
 
-    /** 意图：更新头像引用。 */
-    @Transactional
-    public AvatarResponse updateAvatar(Long userId, String avatar) {
-        return avatarCommand.updateAvatar(userId, avatar);
-    }
+  /** 意图：更新头像引用。 */
+  @Transactional
+  public AvatarResponse updateAvatar(Long userId, String avatar) {
+    return avatarCommand.updateAvatar(userId, avatar);
+  }
 
-    /** 意图：上传新头像。 */
-    @Transactional
-    public AvatarResponse uploadAvatar(Long userId, MultipartFile file) {
-        return avatarCommand.uploadAvatar(userId, file);
-    }
+  /** 意图：上传新头像。 */
+  @Transactional
+  public AvatarResponse uploadAvatar(Long userId, MultipartFile file) {
+    return avatarCommand.uploadAvatar(userId, file);
+  }
 
-    /** 意图：更新用户名。 */
-    @Transactional
-    public UsernameResponse updateUsername(Long userId, String username) {
-        return profileCommand.updateUsername(userId, username);
-    }
+  /** 意图：更新用户名。 */
+  @Transactional
+  public UsernameResponse updateUsername(Long userId, String username) {
+    return profileCommand.updateUsername(userId, username);
+  }
 
-    /** 意图：更新联系方式。 */
-    @Transactional
-    public UserContactResponse updateContact(Long userId, String email, String phone) {
-        return contactCommand.updateContact(userId, email, phone);
-    }
+  /** 意图：更新联系方式。 */
+  @Transactional
+  public UserContactResponse updateContact(Long userId, String email, String phone) {
+    return contactCommand.updateContact(userId, email, phone);
+  }
 
-    /** 意图：发送邮箱换绑验证码。 */
-    @Transactional
-    public void requestEmailChangeCode(Long userId, String email, String clientIp) {
-        contactCommand.requestEmailChangeCode(userId, email, clientIp);
-    }
+  /** 意图：发送邮箱换绑验证码。 */
+  @Transactional
+  public void requestEmailChangeCode(Long userId, String email, String clientIp) {
+    contactCommand.requestEmailChangeCode(userId, email, clientIp);
+  }
 
-    /** 意图：换绑邮箱。 */
-    @Transactional
-    public UserEmailResponse changeEmail(Long userId, String email, String code) {
-        return contactCommand.changeEmail(userId, email, code);
-    }
+  /** 意图：换绑邮箱。 */
+  @Transactional
+  public UserEmailResponse changeEmail(Long userId, String email, String code) {
+    return contactCommand.changeEmail(userId, email, code);
+  }
 
-    /** 意图：解绑邮箱。 */
-    @Transactional
-    public UserEmailResponse unbindEmail(Long userId) {
-        return contactCommand.unbindEmail(userId);
-    }
+  /** 意图：解绑邮箱。 */
+  @Transactional
+  public UserEmailResponse unbindEmail(Long userId) {
+    return contactCommand.unbindEmail(userId);
+  }
 
-    /** 意图：激活会员。 */
-    @Transactional
-    public void activateMembership(Long userId, MembershipType membershipType, LocalDateTime expiresAt) {
-        membershipCommand.activateMembership(userId, membershipType, expiresAt);
-    }
+  /** 意图：激活会员。 */
+  @Transactional
+  public void activateMembership(
+      Long userId, MembershipType membershipType, LocalDateTime expiresAt) {
+    membershipCommand.activateMembership(userId, membershipType, expiresAt);
+  }
 
-    /** 意图：移除会员资格。 */
-    @Transactional
-    public void removeMembership(Long userId) {
-        membershipCommand.removeMembership(userId);
-    }
+  /** 意图：移除会员资格。 */
+  @Transactional
+  public void removeMembership(Long userId) {
+    membershipCommand.removeMembership(userId);
+  }
 }

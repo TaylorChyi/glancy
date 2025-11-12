@@ -14,38 +14,38 @@ import java.time.LocalDateTime;
 @Table(name = "redemption_record")
 public class RedemptionRecord extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "code_id", nullable = false)
-    private RedemptionCode code;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "code_id", nullable = false)
+  private RedemptionCode code;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(nullable = false)
-    private LocalDateTime redeemedAt;
+  @Column(nullable = false)
+  private LocalDateTime redeemedAt;
 
-    public RedemptionCode getCode() {
-        return code;
-    }
+  public RedemptionCode getCode() {
+    return code;
+  }
 
-    public void setCode(RedemptionCode code) {
-        this.code = code;
-    }
+  public void setCode(RedemptionCode code) {
+    this.code = code;
+  }
 
-    public User getUser() {
-        return user;
-    }
+  public User getUser() {
+    return user;
+  }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+  public void setUser(User user) {
+    this.user = user;
+  }
 
-    public LocalDateTime getRedeemedAt() {
-        return redeemedAt;
-    }
+  public LocalDateTime getRedeemedAt() {
+    return redeemedAt;
+  }
 
-    public void setRedeemedAt(LocalDateTime redeemedAt) {
-        this.redeemedAt = redeemedAt;
-    }
+  public void setRedeemedAt(LocalDateTime redeemedAt) {
+    this.redeemedAt = redeemedAt;
+  }
 }

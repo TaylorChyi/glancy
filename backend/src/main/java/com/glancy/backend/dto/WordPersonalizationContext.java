@@ -3,8 +3,8 @@ package com.glancy.backend.dto;
 import java.util.List;
 
 /**
- * Captures the learner persona signals that drive LLM prompt adaptation and
- * downstream personalized explanations.
+ * Captures the learner persona signals that drive LLM prompt adaptation and downstream personalized
+ * explanations.
  */
 public record WordPersonalizationContext(
     String personaDescriptor,
@@ -13,20 +13,17 @@ public record WordPersonalizationContext(
     String goal,
     String preferredTone,
     List<String> interests,
-    List<String> recentTerms
-) {
-    public WordPersonalizationContext {
-        interests = interests == null ? List.of() : List.copyOf(interests);
-        recentTerms = recentTerms == null ? List.of() : List.copyOf(recentTerms);
-    }
+    List<String> recentTerms) {
+  public WordPersonalizationContext {
+    interests = interests == null ? List.of() : List.copyOf(interests);
+    recentTerms = recentTerms == null ? List.of() : List.copyOf(recentTerms);
+  }
 
-    public boolean hasSignals() {
-        return (
-            personaDerivedFromProfile ||
-            (goal != null && !goal.isBlank()) ||
-            (preferredTone != null && !preferredTone.isBlank()) ||
-            !interests.isEmpty() ||
-            !recentTerms.isEmpty()
-        );
-    }
+  public boolean hasSignals() {
+    return (personaDerivedFromProfile
+        || (goal != null && !goal.isBlank())
+        || (preferredTone != null && !preferredTone.isBlank())
+        || !interests.isEmpty()
+        || !recentTerms.isEmpty());
+  }
 }

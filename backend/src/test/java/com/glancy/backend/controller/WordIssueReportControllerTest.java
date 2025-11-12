@@ -25,70 +25,60 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(WordIssueReportController.class)
-@Import(
-    {
-        com.glancy.backend.config.security.SecurityConfig.class,
-        com.glancy.backend.config.WebConfig.class,
-        com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
-    }
-)
+@Import({
+  com.glancy.backend.config.security.SecurityConfig.class,
+  com.glancy.backend.config.WebConfig.class,
+  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+})
 class WordIssueReportControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private WordIssueReportService wordIssueReportService;
+  @MockitoBean private WordIssueReportService wordIssueReportService;
 
-    @MockitoBean
-    private UserService userService;
+  @MockitoBean private UserService userService;
 
-    @BeforeEach
-    void mockAuth() {
-        when(userService.authenticateToken("token")).thenReturn(9L);
-    }
+  @BeforeEach
+  void mockAuth() {
+    when(userService.authenticateToken("token")).thenReturn(9L);
+  }
 
-    @Test
-    void createReport_returnsCreated() throws Exception {
-        when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class))).thenReturn(
-            sampleResponse()
-        );
+  @Test
+  void createReport_returnsCreated() throws Exception {
+    when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class)))
+        .thenReturn(sampleResponse());
 
-        mockMvc
-            .perform(
-                post("/api/word-reports")
-                    .header("X-USER-TOKEN", "token")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(sampleRequest()))
-            )
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(42));
-    }
+    mockMvc
+        .perform(
+            post("/api/word-reports")
+                .header("X-USER-TOKEN", "token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sampleRequest())))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.id").value(42));
+  }
 
-    private WordIssueReportResponse sampleResponse() {
-        return new WordIssueReportResponse(
-            42L,
-            "hello",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            WordIssueCategory.MISSING_INFORMATION,
-            null,
-            null,
-            LocalDateTime.now()
-        );
-    }
+  private WordIssueReportResponse sampleResponse() {
+    return new WordIssueReportResponse(
+        42L,
+        "hello",
+        Language.ENGLISH,
+        DictionaryFlavor.BILINGUAL,
+        WordIssueCategory.MISSING_INFORMATION,
+        null,
+        null,
+        LocalDateTime.now());
+  }
 
-    private WordIssueReportRequest sampleRequest() {
-        return new WordIssueReportRequest(
-            "hello",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            WordIssueCategory.MISSING_INFORMATION,
-            null,
-            null
-        );
-    }
+  private WordIssueReportRequest sampleRequest() {
+    return new WordIssueReportRequest(
+        "hello",
+        Language.ENGLISH,
+        DictionaryFlavor.BILINGUAL,
+        WordIssueCategory.MISSING_INFORMATION,
+        null,
+        null);
+  }
 }

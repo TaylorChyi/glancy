@@ -18,19 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class WordIssueReportController {
 
-    private final WordIssueReportService wordIssueReportService;
+  private final WordIssueReportService wordIssueReportService;
 
-    public WordIssueReportController(WordIssueReportService wordIssueReportService) {
-        this.wordIssueReportService = wordIssueReportService;
-    }
+  public WordIssueReportController(WordIssueReportService wordIssueReportService) {
+    this.wordIssueReportService = wordIssueReportService;
+  }
 
-    @PostMapping
-    public ResponseEntity<WordIssueReportResponse> create(
-        @AuthenticatedUser Long userId,
-        @Valid @RequestBody WordIssueReportRequest request
-    ) {
-        log.info("[WordIssueReport] user {} submitting report for term '{}'", userId, request.term());
-        WordIssueReportResponse response = wordIssueReportService.registerReport(userId, request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
+  @PostMapping
+  public ResponseEntity<WordIssueReportResponse> create(
+      @AuthenticatedUser Long userId, @Valid @RequestBody WordIssueReportRequest request) {
+    log.info("[WordIssueReport] user {} submitting report for term '{}'", userId, request.term());
+    WordIssueReportResponse response = wordIssueReportService.registerReport(userId, request);
+    return new ResponseEntity<>(response, HttpStatus.CREATED);
+  }
 }

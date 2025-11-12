@@ -6,14 +6,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SearchContentDictionaryTermNormalizer implements DictionaryTermNormalizer {
 
-    private final SearchContentManager searchContentManager;
+  private final SearchContentManager searchContentManager;
 
-    public SearchContentDictionaryTermNormalizer(SearchContentManager searchContentManager) {
-        this.searchContentManager = searchContentManager;
-    }
+  public SearchContentDictionaryTermNormalizer(SearchContentManager searchContentManager) {
+    this.searchContentManager = searchContentManager;
+  }
 
-    @Override
-    public String normalize(String term) {
-        return searchContentManager.normalize(term);
-    }
+  @Override
+  public String normalize(String term) {
+    return searchContentManager.normalize(term);
+  }
 }

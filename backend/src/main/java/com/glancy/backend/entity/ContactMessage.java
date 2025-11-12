@@ -8,8 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * Stores feedback or enquiries submitted via the contact form so that support agents
- * can follow up asynchronously.
+ * Stores feedback or enquiries submitted via the contact form so that support agents can follow up
+ * asynchronously.
  */
 @Entity
 @Table(name = "contact_messages")
@@ -18,12 +18,12 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class ContactMessage extends BaseEntity {
 
-    @Column(nullable = false, length = 100)
-    private String name;
+  @Column(nullable = false, length = 100)
+  private String name;
 
-    @Column(nullable = false, length = 150)
-    private String email;
+  @Column(nullable = false, length = 150)
+  private String email;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String message;
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String message;
 }

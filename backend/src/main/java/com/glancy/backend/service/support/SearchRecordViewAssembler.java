@@ -18,42 +18,46 @@ import org.springframework.stereotype.Component;
 @Component
 public class SearchRecordViewAssembler {
 
-    private final SearchRecordMapper searchRecordMapper;
-    private final SearchResultService searchResultService;
+  private final SearchRecordMapper searchRecordMapper;
+  private final SearchResultService searchResultService;
 
-    public SearchRecordViewAssembler(SearchRecordMapper searchRecordMapper, SearchResultService searchResultService) {
-        this.searchRecordMapper = searchRecordMapper;
-        this.searchResultService = searchResultService;
-    }
+  public SearchRecordViewAssembler(
+      SearchRecordMapper searchRecordMapper, SearchResultService searchResultService) {
+    this.searchRecordMapper = searchRecordMapper;
+    this.searchResultService = searchResultService;
+  }
 
-    public SearchRecordResponse assembleSingle(Long userId, SearchRecord record) {
-        if (record == null) {
-            return null;
-        }
-        List<SearchRecordResponse> responses = assemble(userId, List.of(record));
-        return responses.isEmpty() ? null : responses.get(0);
+  public SearchRecordResponse assembleSingle(Long userId, SearchRecord record) {
+    if (record == null) {
+      return null;
     }
+    List<SearchRecordResponse> responses = assemble(userId, List.of(record));
+    return responses.isEmpty() ? null : responses.get(0);
+  }
 
-    public List<SearchRecordResponse> assemble(Long userId, List<SearchRecord> records) {
-        if (records == null || records.isEmpty()) {
-            return List.of();
-        }
-        List<Long> recordIds = extractRecordIds(records);
-        Map<Long, List<SearchRecordVersionSummary>> groupedVersions =
-            searchResultService.listVersionSummariesByRecordIds(recordIds);
-        return records
-            .stream()
-            .map(record -> toResponse(record, groupedVersions.getOrDefault(record.getId(), List.of())))
-            .collect(Collectors.toList());
+  public List<SearchRecordResponse> assemble(Long userId, List<SearchRecord> records) {
+    if (records == null || records.isEmpty()) {
+      return List.of();
     }
+    List<Long> recordIds = extractRecordIds(records);
+    Map<Long, List<SearchRecordVersionSummary>> groupedVersions =
+        searchResultService.listVersionSummariesByRecordIds(recordIds);
+    return records.stream()
+        .map(record -> toResponse(record, groupedVersions.getOrDefault(record.getId(), List.of())))
+        .collect(Collectors.toList());
+  }
 
-    private List<Long> extractRecordIds(Collection<SearchRecord> records) {
-        return records.stream().map(SearchRecord::getId).filter(Objects::nonNull).collect(Collectors.toList());
-    }
+  private List<Long> extractRecordIds(Collection<SearchRecord> records) {
+    return records.stream()
+        .map(SearchRecord::getId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
 
-    private SearchRecordResponse toResponse(SearchRecord record, List<SearchRecordVersionSummary> versions) {
-        SearchRecordResponse base = searchRecordMapper.toResponse(record);
-        SearchRecordVersionSummary latest = versions.isEmpty() ? null : versions.get(0);
-        return base.withVersionDetails(latest, versions);
-    }
+  private SearchRecordResponse toResponse(
+      SearchRecord record, List<SearchRecordVersionSummary> versions) {
+    SearchRecordResponse base = searchRecordMapper.toResponse(record);
+    SearchRecordVersionSummary latest = versions.isEmpty() ? null : versions.get(0);
+    return base.withVersionDetails(latest, versions);
+  }
 }

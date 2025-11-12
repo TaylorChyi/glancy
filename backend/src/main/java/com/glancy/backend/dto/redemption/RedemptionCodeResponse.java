@@ -12,5 +12,4 @@ public record RedemptionCodeResponse(
     int totalRedeemed,
     RedemptionEffectType effectType,
     MembershipEffectConfig membership,
-    DiscountEffectConfig discount
-) {}
+    DiscountEffectConfig discount) {}

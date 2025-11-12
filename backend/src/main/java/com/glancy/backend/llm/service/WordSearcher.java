@@ -6,11 +6,10 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 
 public interface WordSearcher {
-    WordResponse search(
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String clientName,
-        WordPersonalizationContext personalizationContext
-    );
+  WordResponse search(
+      String term,
+      Language language,
+      DictionaryFlavor flavor,
+      String clientName,
+      WordPersonalizationContext personalizationContext);
 }

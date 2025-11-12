@@ -19,100 +19,98 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * Handles uploading avatar images to Alibaba Cloud OSS.
- */
+/** Handles uploading avatar images to Alibaba Cloud OSS. */
 @Service
 @Slf4j
 public class OssAvatarStorage implements AvatarStorage {
 
-    private final OSS ossClient;
-    private final String bucket;
-    private final String securityToken;
-    private final String avatarDir;
-    private final boolean publicRead;
-    private final long signedUrlExpirationMinutes;
-    private final String urlPrefix;
+  private final OSS ossClient;
+  private final String bucket;
+  private final String securityToken;
+  private final String avatarDir;
+  private final boolean publicRead;
+  private final long signedUrlExpirationMinutes;
+  private final String urlPrefix;
 
-    private final Set<String> presignedOnlyKeys = ConcurrentHashMap.newKeySet();
+  private final Set<String> presignedOnlyKeys = ConcurrentHashMap.newKeySet();
 
-    public OssAvatarStorage(OSS ossClient, OssProperties properties) {
-        this.ossClient = Objects.requireNonNull(ossClient, "OSS client must not be null");
-        this.bucket = properties.getBucket();
-        this.securityToken = properties.getSecurityToken();
-        this.avatarDir = properties.getAvatarDir();
-        this.publicRead = properties.isPublicRead();
-        this.signedUrlExpirationMinutes = properties.getSignedUrlExpirationMinutes();
-        this.urlPrefix = String.format("https://%s.%s/", bucket, removeProtocol(properties.getEndpoint()));
+  public OssAvatarStorage(OSS ossClient, OssProperties properties) {
+    this.ossClient = Objects.requireNonNull(ossClient, "OSS client must not be null");
+    this.bucket = properties.getBucket();
+    this.securityToken = properties.getSecurityToken();
+    this.avatarDir = properties.getAvatarDir();
+    this.publicRead = properties.isPublicRead();
+    this.signedUrlExpirationMinutes = properties.getSignedUrlExpirationMinutes();
+    this.urlPrefix =
+        String.format("https://%s.%s/", bucket, removeProtocol(properties.getEndpoint()));
+  }
+
+  /** Upload the avatar and return its object key. */
+  @Override
+  public String upload(MultipartFile file) throws IOException {
+    String original = file.getOriginalFilename();
+    String ext = "";
+    if (original != null && original.contains(".")) {
+      ext = original.substring(original.lastIndexOf('.'));
     }
-
-    /**
-     * Upload the avatar and return its object key.
-     */
-    @Override
-    public String upload(MultipartFile file) throws IOException {
-        String original = file.getOriginalFilename();
-        String ext = "";
-        if (original != null && original.contains(".")) {
-            ext = original.substring(original.lastIndexOf('.'));
-        }
-        String objectName = avatarDir + UUID.randomUUID() + ext;
-        ossClient.putObject(bucket, objectName, file.getInputStream());
-        boolean isPublic = setPublicReadAcl(objectName);
-        if (!isPublic) {
-            presignedOnlyKeys.add(objectName);
-        } else {
-            presignedOnlyKeys.remove(objectName);
-        }
-        log.info("Avatar stored as {}", objectName);
-        return objectName;
+    String objectName = avatarDir + UUID.randomUUID() + ext;
+    ossClient.putObject(bucket, objectName, file.getInputStream());
+    boolean isPublic = setPublicReadAcl(objectName);
+    if (!isPublic) {
+      presignedOnlyKeys.add(objectName);
+    } else {
+      presignedOnlyKeys.remove(objectName);
     }
+    log.info("Avatar stored as {}", objectName);
+    return objectName;
+  }
 
-    @Override
-    public String resolveUrl(String objectKey) {
-        if (objectKey == null || objectKey.isBlank()) {
-            return objectKey;
-        }
-        if (publicRead && !presignedOnlyKeys.contains(objectKey)) {
-            return urlPrefix + objectKey;
-        }
-        return generatePresignedUrl(objectKey);
+  @Override
+  public String resolveUrl(String objectKey) {
+    if (objectKey == null || objectKey.isBlank()) {
+      return objectKey;
     }
+    if (publicRead && !presignedOnlyKeys.contains(objectKey)) {
+      return urlPrefix + objectKey;
+    }
+    return generatePresignedUrl(objectKey);
+  }
 
-    /**
-     * Attempt to mark the uploaded object as publicly readable.
-     * Some buckets do not allow changing object ACLs. If an access error occurs
-     * we simply log a warning and continue using the bucket's default ACL.
-     */
-    private boolean setPublicReadAcl(String objectName) {
-        if (!publicRead) {
-            return false;
-        }
-        try {
-            ossClient.setObjectAcl(bucket, objectName, CannedAccessControlList.PublicRead);
-            return true;
-        } catch (OSSException | ClientException e) {
-            log.warn("Unable to set public ACL for {}: {}", objectName, e.getMessage());
-            return false;
-        }
+  /**
+   * Attempt to mark the uploaded object as publicly readable. Some buckets do not allow changing
+   * object ACLs. If an access error occurs we simply log a warning and continue using the bucket's
+   * default ACL.
+   */
+  private boolean setPublicReadAcl(String objectName) {
+    if (!publicRead) {
+      return false;
     }
+    try {
+      ossClient.setObjectAcl(bucket, objectName, CannedAccessControlList.PublicRead);
+      return true;
+    } catch (OSSException | ClientException e) {
+      log.warn("Unable to set public ACL for {}: {}", objectName, e.getMessage());
+      return false;
+    }
+  }
 
-    private String generatePresignedUrl(String objectName) {
-        Date expiration = new Date(
-            System.currentTimeMillis() + Duration.ofMinutes(signedUrlExpirationMinutes).toMillis()
-        );
-        GeneratePresignedUrlRequest req = new GeneratePresignedUrlRequest(bucket, objectName, HttpMethod.GET);
-        req.setExpiration(expiration);
-        if (securityToken != null && !securityToken.isEmpty()) {
-            req.addQueryParameter("security-token", securityToken);
-        }
-        URL url = ossClient.generatePresignedUrl(req);
-        String result = url.toString();
-        log.info("Generated presigned URL: {}", result);
-        return result;
+  private String generatePresignedUrl(String objectName) {
+    Date expiration =
+        new Date(
+            System.currentTimeMillis() + Duration.ofMinutes(signedUrlExpirationMinutes).toMillis());
+    GeneratePresignedUrlRequest req =
+        new GeneratePresignedUrlRequest(bucket, objectName, HttpMethod.GET);
+    req.setExpiration(expiration);
+    if (securityToken != null && !securityToken.isEmpty()) {
+      req.addQueryParameter("security-token", securityToken);
     }
+    URL url = ossClient.generatePresignedUrl(req);
+    String result = url.toString();
+    log.info("Generated presigned URL: {}", result);
+    return result;
+  }
 
-    private static String removeProtocol(String url) {
-        return url.replaceFirst("https?://", "");
-    }
+  private static String removeProtocol(String url) {
+    return url.replaceFirst("https?://", "");
+  }
 }

@@ -31,6 +31,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <dependency-check.version>10.0.4</dependency-check.version>
         <cyclonedx.version>2.9.0</cyclonedx.version>
+        <google-java-format.version>1.18.1</google-java-format.version>
         </properties>
 
     <repositories>
@@ -187,13 +188,10 @@
                                 <version>2.43.0</version>
                                 <configuration>
                                         <java>
-                                                <prettier>
-                                                       <devDependencies>
-                                                               <prettier>${prettier.version}</prettier>
-                                                               <prettier-plugin-java>${prettier-plugin-java.version}</prettier-plugin-java>
-                                                       </devDependencies>
-                                                        <configFile>${project.basedir}/spotless-config.json</configFile>
-                                                </prettier>
+                                                <googleJavaFormat>
+                                                        <version>${google-java-format.version}</version>
+                                                        <style>GOOGLE</style>
+                                                </googleJavaFormat>
                                         </java>
                                         <format>
                                                 <name>yaml</name>

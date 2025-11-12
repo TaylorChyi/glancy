@@ -24,125 +24,131 @@ import org.springframework.stereotype.Service;
 @Service
 public class KeyboardShortcutService {
 
-    private final UserKeyboardShortcutRepository shortcutRepository;
-    private final UserRepository userRepository;
-    private final ShortcutBindingNormalizer bindingNormalizer;
+  private final UserKeyboardShortcutRepository shortcutRepository;
+  private final UserRepository userRepository;
+  private final ShortcutBindingNormalizer bindingNormalizer;
 
-    public KeyboardShortcutService(
-        UserKeyboardShortcutRepository shortcutRepository,
-        UserRepository userRepository,
-        ShortcutBindingNormalizer bindingNormalizer
-    ) {
-        this.shortcutRepository = shortcutRepository;
-        this.userRepository = userRepository;
-        this.bindingNormalizer = bindingNormalizer;
-    }
+  public KeyboardShortcutService(
+      UserKeyboardShortcutRepository shortcutRepository,
+      UserRepository userRepository,
+      ShortcutBindingNormalizer bindingNormalizer) {
+    this.shortcutRepository = shortcutRepository;
+    this.userRepository = userRepository;
+    this.bindingNormalizer = bindingNormalizer;
+  }
 
-    @Transactional
-    public KeyboardShortcutResponse updateShortcut(
-        Long userId,
-        ShortcutAction action,
-        KeyboardShortcutUpdateRequest request
-    ) {
-        log.info("Updating shortcut {} for user {}", action, userId);
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+  @Transactional
+  public KeyboardShortcutResponse updateShortcut(
+      Long userId, ShortcutAction action, KeyboardShortcutUpdateRequest request) {
+    log.info("Updating shortcut {} for user {}", action, userId);
+    User user =
+        userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
 
-        String normalizedBinding = bindingNormalizer.normalize(request.keys());
-        ensureBindingNotConflicting(userId, action, normalizedBinding);
+    String normalizedBinding = bindingNormalizer.normalize(request.keys());
+    ensureBindingNotConflicting(userId, action, normalizedBinding);
 
-        UserKeyboardShortcut entity = shortcutRepository
+    UserKeyboardShortcut entity =
+        shortcutRepository
             .findByUserIdAndAction(userId, action)
-            .orElseGet(() -> {
-                UserKeyboardShortcut shortcut = new UserKeyboardShortcut();
-                shortcut.setUser(user);
-                shortcut.setAction(action);
-                return shortcut;
-            });
-        entity.setBinding(normalizedBinding);
-        shortcutRepository.save(entity);
-        return buildResponse(userId);
-    }
+            .orElseGet(
+                () -> {
+                  UserKeyboardShortcut shortcut = new UserKeyboardShortcut();
+                  shortcut.setUser(user);
+                  shortcut.setAction(action);
+                  return shortcut;
+                });
+    entity.setBinding(normalizedBinding);
+    shortcutRepository.save(entity);
+    return buildResponse(userId);
+  }
 
-    @Transactional
-    public KeyboardShortcutResponse resetShortcuts(Long userId) {
-        log.info("Resetting shortcuts for user {}", userId);
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("用户不存在");
-        }
-        shortcutRepository.deleteByUserId(userId);
-        return buildResponse(userId);
+  @Transactional
+  public KeyboardShortcutResponse resetShortcuts(Long userId) {
+    log.info("Resetting shortcuts for user {}", userId);
+    if (!userRepository.existsById(userId)) {
+      throw new ResourceNotFoundException("用户不存在");
     }
+    shortcutRepository.deleteByUserId(userId);
+    return buildResponse(userId);
+  }
 
-    @Transactional
-    public KeyboardShortcutResponse getShortcuts(Long userId) {
-        log.info("Fetching shortcuts for user {}", userId);
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("用户不存在");
-        }
-        return buildResponse(userId);
+  @Transactional
+  public KeyboardShortcutResponse getShortcuts(Long userId) {
+    log.info("Fetching shortcuts for user {}", userId);
+    if (!userRepository.existsById(userId)) {
+      throw new ResourceNotFoundException("用户不存在");
     }
+    return buildResponse(userId);
+  }
 
-    private KeyboardShortcutResponse buildResponse(Long userId) {
-        Map<ShortcutAction, UserKeyboardShortcut> overrides = shortcutRepository
-            .findByUserId(userId)
-            .stream()
+  private KeyboardShortcutResponse buildResponse(Long userId) {
+    Map<ShortcutAction, UserKeyboardShortcut> overrides =
+        shortcutRepository.findByUserId(userId).stream()
             .collect(Collectors.toMap(UserKeyboardShortcut::getAction, shortcut -> shortcut));
 
-        List<KeyboardShortcutView> views = Arrays.stream(ShortcutAction.values())
-            .map(action -> {
-                UserKeyboardShortcut override = overrides.get(action);
-                List<String> keys = override != null ? decodeBinding(override.getBinding()) : action.getDefaultKeys();
-                return new KeyboardShortcutView(action.name(), List.copyOf(keys), List.copyOf(action.getDefaultKeys()));
-            })
+    List<KeyboardShortcutView> views =
+        Arrays.stream(ShortcutAction.values())
+            .map(
+                action -> {
+                  UserKeyboardShortcut override = overrides.get(action);
+                  List<String> keys =
+                      override != null
+                          ? decodeBinding(override.getBinding())
+                          : action.getDefaultKeys();
+                  return new KeyboardShortcutView(
+                      action.name(), List.copyOf(keys), List.copyOf(action.getDefaultKeys()));
+                })
             .toList();
-        return new KeyboardShortcutResponse(views);
-    }
+    return new KeyboardShortcutResponse(views);
+  }
 
-    private void ensureBindingNotConflicting(Long userId, ShortcutAction targetAction, String binding) {
-        Map<ShortcutAction, String> existingBindings = Arrays.stream(ShortcutAction.values()).collect(
+  private void ensureBindingNotConflicting(
+      Long userId, ShortcutAction targetAction, String binding) {
+    Map<ShortcutAction, String> existingBindings =
+        Arrays.stream(ShortcutAction.values())
+            .collect(
                 Collectors.toMap(
                     action -> action,
                     action ->
                         shortcutRepository
                             .findByUserIdAndAction(userId, action)
                             .map(UserKeyboardShortcut::getBinding)
-                            .orElseGet(() -> String.join("+", action.getDefaultKeys()))
-                )
-            );
+                            .orElseGet(() -> String.join("+", action.getDefaultKeys()))));
 
-        Set<String> candidateAliases = bindingNormalizer.expandAliases(binding);
-        for (Map.Entry<ShortcutAction, String> entry : existingBindings.entrySet()) {
-            if (entry.getKey() == targetAction) {
-                continue;
-            }
-            Set<String> existingAliases = expandBindingAliases(entry.getValue());
-            boolean conflicting = existingAliases.stream().anyMatch(alias -> candidateAliases.contains(alias));
-            if (conflicting) {
-                throw new InvalidRequestException("快捷键已被其他功能占用");
-            }
-        }
+    Set<String> candidateAliases = bindingNormalizer.expandAliases(binding);
+    for (Map.Entry<ShortcutAction, String> entry : existingBindings.entrySet()) {
+      if (entry.getKey() == targetAction) {
+        continue;
+      }
+      Set<String> existingAliases = expandBindingAliases(entry.getValue());
+      boolean conflicting =
+          existingAliases.stream().anyMatch(alias -> candidateAliases.contains(alias));
+      if (conflicting) {
+        throw new InvalidRequestException("快捷键已被其他功能占用");
+      }
     }
+  }
 
-    private List<String> decodeBinding(String binding) {
-        if (binding == null || binding.isBlank()) {
-            return List.of();
-        }
-        return Arrays.stream(binding.split("\\+"))
-            .map(String::trim)
-            .filter(token -> !token.isEmpty())
-            .toList();
+  private List<String> decodeBinding(String binding) {
+    if (binding == null || binding.isBlank()) {
+      return List.of();
     }
+    return Arrays.stream(binding.split("\\+"))
+        .map(String::trim)
+        .filter(token -> !token.isEmpty())
+        .toList();
+  }
 
-    private Set<String> expandBindingAliases(String binding) {
-        if (binding == null || binding.isBlank()) {
-            return Set.of();
-        }
-        Set<String> aliases = bindingNormalizer.expandAliases(binding);
-        if (aliases.isEmpty() || aliases.contains(binding)) {
-            return aliases.isEmpty() ? Set.of(binding) : aliases;
-        }
-        Set<String> merged = new HashSet<>(aliases);
-        merged.add(binding);
-        return merged;
+  private Set<String> expandBindingAliases(String binding) {
+    if (binding == null || binding.isBlank()) {
+      return Set.of();
     }
+    Set<String> aliases = bindingNormalizer.expandAliases(binding);
+    if (aliases.isEmpty() || aliases.contains(binding)) {
+      return aliases.isEmpty() ? Set.of(binding) : aliases;
+    }
+    Set<String> merged = new HashSet<>(aliases);
+    merged.add(binding);
+    return merged;
+  }
 }

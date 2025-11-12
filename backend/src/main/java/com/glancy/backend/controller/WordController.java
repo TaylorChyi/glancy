@@ -14,38 +14,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Provides dictionary lookup functionality. Each request also
- * records the search for history tracking.
+ * Provides dictionary lookup functionality. Each request also records the search for history
+ * tracking.
  */
 @RestController
 @RequestMapping("/api/words")
 @Slf4j
 public class WordController {
 
-    private final WordService wordService;
+  private final WordService wordService;
 
-    public WordController(WordService wordService) {
-        this.wordService = wordService;
-    }
+  public WordController(WordService wordService) {
+    this.wordService = wordService;
+  }
 
-    /**
-     * Look up a word definition and save the search record.
-     */
-    @GetMapping
-    public ResponseEntity<WordResponse> getWord(
-        @AuthenticatedUser Long userId,
-        @ModelAttribute WordLookupRequest lookupRequest
-    ) {
-        DictionaryFlavor resolvedFlavor = lookupRequest.resolvedFlavor();
-        WordSearchOptions options = WordSearchOptions.of(
+  /** Look up a word definition and save the search record. */
+  @GetMapping
+  public ResponseEntity<WordResponse> getWord(
+      @AuthenticatedUser Long userId, @ModelAttribute WordLookupRequest lookupRequest) {
+    DictionaryFlavor resolvedFlavor = lookupRequest.resolvedFlavor();
+    WordSearchOptions options =
+        WordSearchOptions.of(
             lookupRequest.getTerm(),
             lookupRequest.getLanguage(),
             resolvedFlavor,
             lookupRequest.getModel(),
             lookupRequest.isForceNew(),
-            lookupRequest.isCaptureHistory()
-        );
-        WordResponse resp = wordService.findWordForUser(userId, options);
-        return ResponseEntity.ok(resp);
-    }
+            lookupRequest.isCaptureHistory());
+    WordResponse resp = wordService.findWordForUser(userId, options);
+    return ResponseEntity.ok(resp);
+  }
 }

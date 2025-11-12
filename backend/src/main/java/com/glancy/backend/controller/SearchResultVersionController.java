@@ -13,40 +13,35 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Exposes read-only access to search result versions for dictionary lookups.
- */
+/** Exposes read-only access to search result versions for dictionary lookups. */
 @RestController
 @RequestMapping("/api/words/{recordId}/versions")
 @Slf4j
 public class SearchResultVersionController {
 
-    private final SearchResultService searchResultService;
+  private final SearchResultService searchResultService;
 
-    public SearchResultVersionController(SearchResultService searchResultService) {
-        this.searchResultService = searchResultService;
-    }
+  public SearchResultVersionController(SearchResultService searchResultService) {
+    this.searchResultService = searchResultService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<SearchRecordVersionSummary>> listVersions(
-        @AuthenticatedUser Long userId,
-        @PathVariable Long recordId
-    ) {
-        log.info("Listing versions for user {} record {}", userId, recordId);
-        List<SearchRecordVersionSummary> summaries = searchResultService.listVersionSummaries(userId, recordId);
-        log.info("Found {} versions for user {} record {}", summaries.size(), userId, recordId);
-        return ResponseEntity.ok(summaries);
-    }
+  @GetMapping
+  public ResponseEntity<List<SearchRecordVersionSummary>> listVersions(
+      @AuthenticatedUser Long userId, @PathVariable Long recordId) {
+    log.info("Listing versions for user {} record {}", userId, recordId);
+    List<SearchRecordVersionSummary> summaries =
+        searchResultService.listVersionSummaries(userId, recordId);
+    log.info("Found {} versions for user {} record {}", summaries.size(), userId, recordId);
+    return ResponseEntity.ok(summaries);
+  }
 
-    @GetMapping("/{versionId}")
-    public ResponseEntity<SearchResultVersionResponse> getVersion(
-        @AuthenticatedUser Long userId,
-        @PathVariable Long recordId,
-        @PathVariable Long versionId
-    ) {
-        log.info("Fetching version {} for user {} record {}", versionId, userId, recordId);
-        SearchResultVersion version = searchResultService.getVersionDetail(userId, recordId, versionId);
-        SearchResultVersionResponse response = new SearchResultVersionResponse(
+  @GetMapping("/{versionId}")
+  public ResponseEntity<SearchResultVersionResponse> getVersion(
+      @AuthenticatedUser Long userId, @PathVariable Long recordId, @PathVariable Long versionId) {
+    log.info("Fetching version {} for user {} record {}", versionId, userId, recordId);
+    SearchResultVersion version = searchResultService.getVersionDetail(userId, recordId, versionId);
+    SearchResultVersionResponse response =
+        new SearchResultVersionResponse(
             version.getId(),
             version.getSearchRecord().getId(),
             version.getWord() != null ? version.getWord().getId() : null,
@@ -57,15 +52,13 @@ public class SearchResultVersionController {
             version.getModel(),
             version.getPreview(),
             version.getContent(),
-            version.getCreatedAt()
-        );
-        log.info(
-            "Returning version {} for record {} user {} with model {}",
-            response.id(),
-            response.recordId(),
-            response.userId(),
-            response.model()
-        );
-        return ResponseEntity.ok(response);
-    }
+            version.getCreatedAt());
+    log.info(
+        "Returning version {} for record {} user {} with model {}",
+        response.id(),
+        response.recordId(),
+        response.userId(),
+        response.model());
+    return ResponseEntity.ok(response);
+  }
 }

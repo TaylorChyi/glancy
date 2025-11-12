@@ -12,43 +12,45 @@ import org.junit.jupiter.api.Test;
 
 class SearchRecordServiceDeleteTest extends AbstractSearchRecordServiceTest {
 
-    @Test
-    void deleteRecordSoftDeletesVersions() {
-        User user = loginUser("deleter", "del@example.com");
+  @Test
+  void deleteRecordSoftDeletesVersions() {
+    User user = loginUser("deleter", "del@example.com");
 
-        SearchRecordResponse recordResponse = searchRecordService.saveRecord(user.getId(), request("vanish"));
-        SearchRecord record = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
+    SearchRecordResponse recordResponse =
+        searchRecordService.saveRecord(user.getId(), request("vanish"));
+    SearchRecord record = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
 
-        SearchResultVersion version = new SearchResultVersion();
-        version.setSearchRecord(record);
-        version.setUser(user);
-        version.setTerm("vanish");
-        version.setLanguage(Language.ENGLISH);
-        version.setModel("test-model");
-        version.setVersionNumber(1);
-        version.setContent("content");
-        version.setPreview("cont");
-        searchResultVersionRepository.save(version);
+    SearchResultVersion version = new SearchResultVersion();
+    version.setSearchRecord(record);
+    version.setUser(user);
+    version.setTerm("vanish");
+    version.setLanguage(Language.ENGLISH);
+    version.setModel("test-model");
+    version.setVersionNumber(1);
+    version.setContent("content");
+    version.setPreview("cont");
+    searchResultVersionRepository.save(version);
 
-        searchRecordService.deleteRecord(user.getId(), recordResponse.id());
+    searchRecordService.deleteRecord(user.getId(), recordResponse.id());
 
-        SearchRecord deletedRecord = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
-        Assertions.assertTrue(deletedRecord.getDeleted());
-        SearchResultVersion deletedVersion = searchResultVersionRepository.findById(version.getId()).orElseThrow();
-        Assertions.assertTrue(deletedVersion.getDeleted());
-    }
+    SearchRecord deletedRecord = searchRecordRepository.findById(recordResponse.id()).orElseThrow();
+    Assertions.assertTrue(deletedRecord.getDeleted());
+    SearchResultVersion deletedVersion =
+        searchResultVersionRepository.findById(version.getId()).orElseThrow();
+    Assertions.assertTrue(deletedVersion.getDeleted());
+  }
 
-    private SearchRecordRequest request(String term) {
-        SearchRecordRequest req = new SearchRecordRequest();
-        req.setTerm(term);
-        req.setLanguage(Language.ENGLISH);
-        return req;
-    }
+  private SearchRecordRequest request(String term) {
+    SearchRecordRequest req = new SearchRecordRequest();
+    req.setTerm(term);
+    req.setLanguage(Language.ENGLISH);
+    return req;
+  }
 
-    private User loginUser(String username, String email) {
-        User user = persistUser(username, email);
-        user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
-        return user;
-    }
+  private User loginUser(String username, String email) {
+    User user = persistUser(username, email);
+    user.setLastLoginAt(LocalDateTime.now());
+    userRepository.save(user);
+    return user;
+  }
 }

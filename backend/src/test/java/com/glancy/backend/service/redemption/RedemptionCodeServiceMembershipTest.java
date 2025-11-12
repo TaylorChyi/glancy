@@ -18,80 +18,66 @@ import org.junit.jupiter.api.Test;
 
 class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceTest {
 
-    @Test
-    void GivenMembershipCode_WhenRedeem_ThenExtendMembership() {
-        User user = persistUser("member-user");
-        LocalDateTime now = LocalDateTime.now();
-        RedemptionCodeCreateRequest createRequest = membershipCode(
-            "VIP2024",
-            now.minusHours(1),
-            now.plusDays(1),
-            10,
-            2,
-            MembershipType.PLUS,
-            24L
-        );
-        redemptionCodeService.createCode(createRequest);
+  @Test
+  void GivenMembershipCode_WhenRedeem_ThenExtendMembership() {
+    User user = persistUser("member-user");
+    LocalDateTime now = LocalDateTime.now();
+    RedemptionCodeCreateRequest createRequest =
+        membershipCode(
+            "VIP2024", now.minusHours(1), now.plusDays(1), 10, 2, MembershipType.PLUS, 24L);
+    redemptionCodeService.createCode(createRequest);
 
-        RedemptionRedeemResponse response = redemptionCodeService.redeem(
-            user.getId(),
-            new RedemptionRedeemRequest("VIP2024")
-        );
+    RedemptionRedeemResponse response =
+        redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("VIP2024"));
 
-        User refreshed = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(response.membership()).isNotNull();
-        assertThat(response.membership().membershipType()).isEqualTo(MembershipType.PLUS);
-        assertThat(refreshed.getMembershipType()).isEqualTo(MembershipType.PLUS);
-        assertThat(refreshed.getMembershipExpiresAt()).isNotNull();
-        assertThat(refreshed.getMembershipExpiresAt()).isAfter(now);
-    }
+    User refreshed = userRepository.findById(user.getId()).orElseThrow();
+    assertThat(response.membership()).isNotNull();
+    assertThat(response.membership().membershipType()).isEqualTo(MembershipType.PLUS);
+    assertThat(refreshed.getMembershipType()).isEqualTo(MembershipType.PLUS);
+    assertThat(refreshed.getMembershipExpiresAt()).isNotNull();
+    assertThat(refreshed.getMembershipExpiresAt()).isAfter(now);
+  }
 
-    @Test
-    void GivenQuotaExhausted_WhenRedeem_ThenThrow() {
-        User user = persistUser("quota-user");
-        LocalDateTime now = LocalDateTime.now();
-        RedemptionCodeCreateRequest createRequest = membershipCode(
-            "LIMIT1",
-            now.minusHours(1),
-            now.plusDays(1),
-            1,
-            1,
-            MembershipType.PLUS,
-            12L
-        );
-        redemptionCodeService.createCode(createRequest);
-        redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LIMIT1"));
+  @Test
+  void GivenQuotaExhausted_WhenRedeem_ThenThrow() {
+    User user = persistUser("quota-user");
+    LocalDateTime now = LocalDateTime.now();
+    RedemptionCodeCreateRequest createRequest =
+        membershipCode(
+            "LIMIT1", now.minusHours(1), now.plusDays(1), 1, 1, MembershipType.PLUS, 12L);
+    redemptionCodeService.createCode(createRequest);
+    redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LIMIT1"));
 
-        InvalidRequestException ex = assertThrows(InvalidRequestException.class, () ->
-            redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LIMIT1"))
-        );
-        assertThat(ex.getMessage()).contains("次数");
-    }
+    InvalidRequestException ex =
+        assertThrows(
+            InvalidRequestException.class,
+            () ->
+                redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LIMIT1")));
+    assertThat(ex.getMessage()).contains("次数");
+  }
 
-    @Test
-    void GivenLegacyCodeWithLowercase_WhenRedeem_ThenNormalizeAndPersistRecord() {
-        User user = persistUser("legacy-user");
-        LocalDateTime now = LocalDateTime.now();
-        RedemptionCode legacy = new RedemptionCode();
-        legacy.setCode("legacy1");
-        legacy.setRedeemableFrom(now.minusHours(2));
-        legacy.setRedeemableUntil(now.plusDays(1));
-        legacy.setTotalQuota(5);
-        legacy.setPerUserQuota(2);
-        legacy.setEffectType(RedemptionEffectType.MEMBERSHIP);
-        legacy.setMembershipType(MembershipType.PLUS);
-        legacy.setMembershipExtensionHours(12);
-        redemptionCodeRepository.saveAndFlush(legacy);
+  @Test
+  void GivenLegacyCodeWithLowercase_WhenRedeem_ThenNormalizeAndPersistRecord() {
+    User user = persistUser("legacy-user");
+    LocalDateTime now = LocalDateTime.now();
+    RedemptionCode legacy = new RedemptionCode();
+    legacy.setCode("legacy1");
+    legacy.setRedeemableFrom(now.minusHours(2));
+    legacy.setRedeemableUntil(now.plusDays(1));
+    legacy.setTotalQuota(5);
+    legacy.setPerUserQuota(2);
+    legacy.setEffectType(RedemptionEffectType.MEMBERSHIP);
+    legacy.setMembershipType(MembershipType.PLUS);
+    legacy.setMembershipExtensionHours(12);
+    redemptionCodeRepository.saveAndFlush(legacy);
 
-        RedemptionRedeemResponse response = redemptionCodeService.redeem(
-            user.getId(),
-            new RedemptionRedeemRequest("LEGACY1")
-        );
+    RedemptionRedeemResponse response =
+        redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LEGACY1"));
 
-        List<RedemptionRecord> records = redemptionRecordRepository.findAll();
-        RedemptionCode refreshed = redemptionCodeRepository.findById(legacy.getId()).orElseThrow();
-        assertThat(response.membership()).isNotNull();
-        assertThat(records).hasSize(1);
-        assertThat(refreshed.getTotalRedeemed()).isEqualTo(1);
-    }
+    List<RedemptionRecord> records = redemptionRecordRepository.findAll();
+    RedemptionCode refreshed = redemptionCodeRepository.findById(legacy.getId()).orElseThrow();
+    assertThat(response.membership()).isNotNull();
+    assertThat(records).hasSize(1);
+    assertThat(refreshed.getTotalRedeemed()).isEqualTo(1);
+  }
 }

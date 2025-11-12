@@ -13,5 +13,4 @@ public record WordIssueReportResponse(
     WordIssueCategory category,
     String description,
     String sourceUrl,
-    LocalDateTime createdAt
-) {}
+    LocalDateTime createdAt) {}
