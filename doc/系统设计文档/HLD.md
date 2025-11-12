@@ -124,6 +124,7 @@ flowchart LR
 ```
 
 > 该图采用 C4 System Context 视角，展示最终用户、BFF、后台域及第三方依赖的信任边界、主要接口与数据流；源与快照集中维护于 `doc/图/`。
+> **最后同步**：2025-02-18（FigJam node 230-1 ↔ `doc/图/src/context.mmd`）。
 
 ## 3. 部署拓扑
 
@@ -149,6 +150,7 @@ flowchart LR
 ```
 
 > 展示区域/AZ 关系、组件冗余、数据主从与流量切换路径（包括冷/热备、半自动切换 Runbook）；统一收敛到 `doc/图/` 便于 FigJam 与 Mermaid 同步。
+> **最后同步**：2025-02-18（FigJam node 230-100 ↔ `doc/图/src/deployment.puml`）。
 
 ### 3.3 弹性与容灾要点
 
