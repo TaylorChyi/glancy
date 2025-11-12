@@ -103,7 +103,7 @@ public class WordPromptAssembler {
         );
     }
 
-    private WordPromptContext buildPersonaContext(WordPersonalizationContext context, String descriptor) {
+    private Map<String, String> buildPersonaContext(WordPersonalizationContext context, String descriptor) {
         return WordPromptContext.build(values -> {
             values.put(WordPromptContextKey.PERSONA_DESCRIPTOR, descriptor);
             values.put(
