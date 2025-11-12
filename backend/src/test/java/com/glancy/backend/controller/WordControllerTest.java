@@ -145,24 +145,14 @@ class WordControllerTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hi"));
   }
 
-  /**
-   * 测试目标：验证 captureHistory 参数可关闭历史记录。\ 前置条件：模拟鉴权成功。\ 步骤：\ 1) 携带 captureHistory=false 发起请求。\ 断言：\ -
-   * 服务层接收到 false。\ 边界/异常：覆盖禁用历史采集路径。\
-   */
+  /** 验证 captureHistory=false 时会禁用历史记录采集。 */
   @Test
   void testGetWordWithCaptureHistoryDisabled() throws Exception {
     WordResponse resp = response("1", "hello");
-    Mockito.when(
-            wordService.findWordForUser(
-                ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq(
-                    WordSearchOptions.of(
-                        "hello",
-                        Language.ENGLISH,
-                        DictionaryFlavor.BILINGUAL,
-                        null,
-                        false,
-                        false))))
+    WordSearchOptions options =
+        WordSearchOptions.of(
+            "hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false);
+    Mockito.when(wordService.findWordForUser(ArgumentMatchers.eq(1L), ArgumentMatchers.eq(options)))
         .thenReturn(resp);
 
     mockMvc
@@ -175,13 +165,8 @@ class WordControllerTest {
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
-
     Mockito.verify(wordService, Mockito.times(1))
-        .findWordForUser(
-            ArgumentMatchers.eq(1L),
-            ArgumentMatchers.eq(
-                WordSearchOptions.of(
-                    "hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false)));
+        .findWordForUser(ArgumentMatchers.eq(1L), ArgumentMatchers.eq(options));
   }
 
   private WordResponse response(String id, String term) {

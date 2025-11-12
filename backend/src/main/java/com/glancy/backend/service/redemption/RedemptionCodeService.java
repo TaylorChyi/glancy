@@ -79,17 +79,15 @@ public class RedemptionCodeService {
     code.setTotalQuota(request.totalQuota());
     code.setPerUserQuota(request.perUserQuota());
     applyEffectConfig(code, request.effect());
-    RedemptionCode saved = redemptionCodeRepository.save(code);
-    return toResponse(saved);
+    return toResponse(redemptionCodeRepository.save(code));
   }
 
   /** 意图：根据编码查询兑换码。 */
   public RedemptionCodeResponse findByCode(String code) {
-    RedemptionCode redemptionCode =
+    return toResponse(
         redemptionCodeRepository
             .findByCodeAndDeletedFalse(normalizeCode(code))
-            .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在"));
-    return toResponse(redemptionCode);
+            .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在")));
   }
 
   /** 意图：执行兑换流程并返回权益结果。 */
@@ -233,10 +231,7 @@ public class RedemptionCodeService {
   }
 
   private String normalizeCode(String code) {
-    if (code == null) {
-      throw new InvalidRequestException("兑换码不能为空");
-    }
-    String trimmed = code.trim();
+    String trimmed = code == null ? "" : code.trim();
     if (trimmed.isEmpty()) {
       throw new InvalidRequestException("兑换码不能为空");
     }

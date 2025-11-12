@@ -99,18 +99,8 @@ class SearchRecordCommandService {
   }
 
   SearchRecordResponse synchronizeRecordTerm(Long userId, Long recordId, String canonicalTerm) {
-    if (recordId == null) {
-      log.debug(
-          "Skip synchronizing search record term because recordId is null for user {}", userId);
-      return null;
-    }
-    if (canonicalTerm == null) {
-      log.debug("Skip synchronizing search record {} because canonical term is null", recordId);
-      return null;
-    }
-    String sanitized = canonicalTerm.trim();
-    if (sanitized.isEmpty()) {
-      log.debug("Skip synchronizing search record {} because canonical term is blank", recordId);
+    String sanitized = sanitizeCanonicalTerm(userId, recordId, canonicalTerm);
+    if (sanitized == null) {
       return null;
     }
     SearchRecord record =
@@ -120,15 +110,16 @@ class SearchRecordCommandService {
           "Search record {} for user {} not found during term synchronization", recordId, userId);
       return null;
     }
-    if (!sanitized.equals(record.getTerm())) {
-      record.setTerm(sanitized);
-      record = searchRecordRepository.save(record);
-      log.info(
-          "Synchronized search record {} for user {} to canonical term '{}'",
-          recordId,
-          userId,
-          sanitized);
+    if (sanitized.equals(record.getTerm())) {
+      return viewAssembler.assembleSingle(userId, record);
     }
+    record.setTerm(sanitized);
+    record = searchRecordRepository.save(record);
+    log.info(
+        "Synchronized search record {} for user {} to canonical term '{}'",
+        recordId,
+        userId,
+        sanitized);
     return viewAssembler.assembleSingle(userId, record);
   }
 
@@ -182,6 +173,24 @@ class SearchRecordCommandService {
     SearchRecordResponse response = viewAssembler.assembleSingle(userId, saved);
     log.info("Returning record response: {}", SearchRecordLogFormatter.response(response));
     return response;
+  }
+
+  private String sanitizeCanonicalTerm(Long userId, Long recordId, String canonicalTerm) {
+    if (recordId == null) {
+      log.debug(
+          "Skip synchronizing search record term because recordId is null for user {}", userId);
+      return null;
+    }
+    if (canonicalTerm == null) {
+      log.debug("Skip synchronizing search record {} because canonical term is null", recordId);
+      return null;
+    }
+    String sanitized = canonicalTerm.trim();
+    if (sanitized.isEmpty()) {
+      log.debug("Skip synchronizing search record {} because canonical term is blank", recordId);
+      return null;
+    }
+    return sanitized;
   }
 
   private void enforceDailyLimit(User user) {
