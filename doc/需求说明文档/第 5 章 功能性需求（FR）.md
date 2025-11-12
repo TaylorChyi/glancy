@@ -30,6 +30,8 @@
 
 </details>
 
+> **最后同步**：2025-02-18（FigJam node 230-20 ↔ `doc/图/src/sequence-lookup.puml`）。
+
 ### FR-001 语言对白名单与同语模式（Must）
 
 - **触发**：用户在 UC-01/UC-12 中提交查词或切换语言对。
@@ -133,6 +135,8 @@
 
 </details>
 
+> **最后同步**：2025-02-18（FigJam node 230-40 ↔ `doc/图/src/sequence-export.puml`）。
+
 ------
 
 ## 5.4 个性化画像与风格偏好
@@ -179,6 +183,8 @@
 ```
 
 </details>
+
+> **最后同步**：2025-02-18（FigJam node 230-60 ↔ `doc/图/src/sequence-subscription.puml`）。
 
 ### FR-042 账单与收据展示（Must）
 
