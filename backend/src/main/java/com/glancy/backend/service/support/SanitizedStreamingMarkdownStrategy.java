@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class SanitizedStreamingMarkdownStrategy implements WordVersionContentStrategy {
 
     @Override
-    public String resolveContent(WordPersistenceCoordinator.PersistenceContext context, Word savedWord) {
+    public String resolveContent(WordPersistenceContext context, Word savedWord) {
         String sanitized = context.sanitizedMarkdown();
         if (sanitized == null || sanitized.isBlank()) {
             log.warn(

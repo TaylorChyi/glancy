@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ResponseMarkdownOrSerializedWordStrategy implements WordVersionContentStrategy {
 
     @Override
-    public String resolveContent(WordPersistenceCoordinator.PersistenceContext context, Word savedWord) {
+    public String resolveContent(WordPersistenceContext context, Word savedWord) {
         WordResponse response = context.response();
         if (response != null && response.getMarkdown() != null && !response.getMarkdown().isBlank()) {
             return response.getMarkdown();

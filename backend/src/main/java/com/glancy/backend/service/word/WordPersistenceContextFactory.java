@@ -4,8 +4,8 @@ import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
+import com.glancy.backend.service.support.WordPersistenceContext;
 import com.glancy.backend.service.support.WordPersistenceCoordinator;
-import com.glancy.backend.service.support.WordPersistenceCoordinator.PersistenceContext;
 import com.glancy.backend.service.support.WordPersistenceCoordinator.PersistenceOutcome;
 import com.glancy.backend.service.support.WordVersionContentStrategy;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class WordPersistenceContextFactory {
     private final SearchResultVersionWriter versionWriter;
     private final WordPersonalizationApplier personalizationApplier;
 
-    public PersistenceContext create(WordPersistenceRequest request) {
+    public WordPersistenceContext create(WordPersistenceRequest request) {
         return WordPersistenceCoordinator.builder()
             .userId(request.userId())
             .requestedTerm(request.requestedTerm())

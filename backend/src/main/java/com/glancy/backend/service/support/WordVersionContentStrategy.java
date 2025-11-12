@@ -10,5 +10,5 @@ public interface WordVersionContentStrategy {
      * @param savedWord 已落库的词条实体
      * @return 版本内容字符串，返回 {@code null} 表示跳过版本持久化
      */
-    String resolveContent(WordPersistenceCoordinator.PersistenceContext context, Word savedWord);
+    String resolveContent(WordPersistenceContext context, Word savedWord);
 }

@@ -3,7 +3,7 @@ package com.glancy.backend.service.support;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
-import com.glancy.backend.service.support.WordPersistenceContext;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -39,19 +39,19 @@ public class WordPersistenceCoordinator {
         return WordPersistenceContext.builder();
     }
 
-    private void validateInputs(PersistenceContext context, WordVersionContentStrategy strategy) {
+    private void validateInputs(WordPersistenceContext context, WordVersionContentStrategy strategy) {
         Objects.requireNonNull(context, "persistence context must not be null");
         Objects.requireNonNull(strategy, "version content strategy must not be null");
     }
 
-    private Word saveWord(PersistenceContext context) {
+    private Word saveWord(WordPersistenceContext context) {
         return context
             .saveWordStep()
             .save(context.requestedTerm(), context.response(), context.language(), context.flavor());
     }
 
     private SearchResultVersion persistHistory(
-        PersistenceContext context,
+        WordPersistenceContext context,
         WordVersionContentStrategy strategy,
         Word savedWord
     ) {
@@ -60,7 +60,11 @@ public class WordPersistenceCoordinator {
         return persistVersionIfPresent(context, savedWord, content);
     }
 
-    private SearchResultVersion persistVersionIfPresent(PersistenceContext context, Word savedWord, String content) {
+    private SearchResultVersion persistVersionIfPresent(
+        WordPersistenceContext context,
+        Word savedWord,
+        String content
+    ) {
         if (content == null) {
             return null;
         }
@@ -73,7 +77,7 @@ public class WordPersistenceCoordinator {
         return version;
     }
 
-    private WordResponse personalize(PersistenceContext context) {
+    private WordResponse personalize(WordPersistenceContext context) {
         return context
             .personalizationStep()
             .apply(context.userId(), context.response(), context.personalizationContext());
