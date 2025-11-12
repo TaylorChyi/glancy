@@ -1,0 +1,75 @@
+@startuml
+' FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-100#Deployment
+' 摘要：双区域部署拓扑、组件冗余、任务面与观测面。
+left to right direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+node "Region A（Active-Active）" {
+    node "AZ-1" {
+        component EdgeA1 as "Edge/WAF"
+        component GW1 as "API 网关 Pod"
+        component BFF1 as "BFF Deployment"
+        component Adapter1 as "LLM 适配层"
+        component Feature1 as "Config/Flag Sidecar"
+        database RedisL1A as "Redis L1 Shard"
+    }
+    node "AZ-2" {
+        component EdgeA2 as "Edge/WAF"
+        component GW2 as "API 网关 Pod"
+        component BFF2 as "BFF Deployment"
+        component Adapter2 as "LLM 适配层"
+        component Feature2 as "Config/Flag Sidecar"
+        database RedisL1B as "Redis L1 Shard"
+    }
+    frame "数据与任务层" {
+        database RDBMSA as "PostgreSQL 主"
+        database ReadReplica as "PostgreSQL 只读"
+        database RedisL2A as "Redis L2 Cluster"
+        storage ObjA as "对象存储 Bucket A"
+        queue QueueA as "导出/任务队列"
+        component WorkerA as "导出/清理 Worker"
+        node ObservabilityA as "日志/指标/Trace 集群"
+    }
+}
+
+node "Region B（Warm Standby）" {
+    database RDBMSB as "PostgreSQL 备"
+    database RedisL2B as "Redis L2 备"
+    storage ObjB as "对象存储 CRR"
+    queue QueueB as "灾备队列"
+    component WorkerB as "备援 Worker"
+}
+
+cloud Doubao as "Doubao API"
+node CDN as "CDN/下载链接"
+actor Users as "终端用户"
+
+EdgeA1 --> GW1 --> BFF1 --> Adapter1 --> Doubao
+EdgeA2 --> GW2 --> BFF2 --> Adapter2 --> Doubao
+BFF1 --> RedisL1A
+BFF2 --> RedisL1B
+BFF1 --> RedisL2A
+BFF2 --> RedisL2A
+BFF1 --> RDBMSA
+BFF2 --> RDBMSA
+BFF1 --> QueueA
+BFF2 --> QueueA
+QueueA --> WorkerA
+WorkerA --> ObjA
+WorkerA --> RedisL2A
+WorkerA --> ObservabilityA
+BFF1 --> ObservabilityA
+BFF2 --> ObservabilityA
+ObjA --> CDN --> Users
+
+RDBMSA --> RDBMSB : 异步复制
+RedisL2A --> RedisL2B : 异步复制
+ObjA --> ObjB : CRR
+QueueA --> QueueB : 灾备镜像
+WorkerB --> ObjB
+WorkerB --> ObservabilityA
+
+Doubao --> Adapter1
+Doubao --> Adapter2
+@enduml
