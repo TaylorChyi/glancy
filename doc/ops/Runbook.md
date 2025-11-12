@@ -7,6 +7,17 @@
 - SLA：关键接口月度可用性 ≥99.9%（第 13 章）；SLO：`/lookup` 成功率 ≥99.9%、P95 ≤2.5 s；`/regenerate` 成功率 ≥99.5%、P95 ≤3.0 s；导出回执 P95 ≤5 s；订阅权益同步 ≤5 s。
 - 错误预算与成本护栏参照第 14、16 章；演练与回滚动作必须留痕于 `release_batches` 工单与 `audit_events`。
 
+### 0.1 快速索引（值班 60 秒复习）
+| 主题 | Section | 速记脚本 / 看板 |
+| --- | --- | --- |
+| 日常巡检 & 交接 | §3 | `redis-cli llen exports:pending`、`Queue Health`、handover 模板 |
+| 灰度 / SLO 守门 | §4 | `releasectl stage status`、HK 钩子表 |
+| 应急回滚 | §4.4/§4.5 | `ops/bin/rollback_stage.sh`、Kill switch 指南 |
+| 告警处置 | §5 | HK 告警矩阵、导出/降级/配额剧本 |
+| 扩缩容 | §6.1 | `kubectl scale deploy/...`、`configctl feature set glancy.cache.mode` |
+| 演练计划 & 记录 | §6.2/§6.3 | 周/月/季度演练列表、记录模板 |
+| 仪表盘 & 排障树 | §7 | `Core SLO Overview`、`Release Gate`、排障路径 |
+
 ## 1. 值班组织与沟通
 
 ### 1.1 角色表
@@ -122,6 +133,15 @@
 4. **验证**：复跑关联 AC/TC（例如 UC‑01/TC-PERF-001、UC‑14/DR-01），附 trace_id 与看板截图。
 5. **公告**：15 分钟内按 21.17 模板发布初稿；在 incident 中记录影响/恢复时间。
 6. **复盘与解冻**：旧版本稳定 ≥30 分钟后方可重启灰度；复盘列出触发 Hook、脚本、行动项。
+
+### 4.5 应急回滚 Checklist（打印张贴）
+- [ ] 判定红灯来源（HK 编号 / Incident ID）。
+- [ ] 在 `release_batches` 标记“Rollback Draft”并通知 RM/产品/客服。
+- [ ] 执行 `ops/bin/rollback_stage.sh --batch <REL-Bx>` 并截图日志尾部哈希。
+- [ ] Kill switch / 特性开关同步至配置中心并 `configctl snapshot create`。
+- [ ] 复跑 `/lookup`、`/regenerate`、导出、订阅样例；确认 SLO 指标恢复绿灯。
+- [ ] 更新 incident 时间线（开始/恢复时间、脚本、trace_id）。
+- [ ] 班次 handover 中记录原因 + 后续行动项，必要时创建问题单。
 
 ## 5. 告警矩阵与 SOP
 
