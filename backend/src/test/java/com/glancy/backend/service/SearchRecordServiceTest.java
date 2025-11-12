@@ -1,5 +1,5 @@
 package com.glancy.backend.service;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.config.SearchProperties;
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -233,7 +234,10 @@ class SearchRecordServiceTest {
         Assertions.assertEquals(alphaRecord.id(), reused.id(), "重复查询应复用同一条记录");
 
         SearchRecord refreshedAlpha = searchRecordRepository.findById(alphaRecord.id()).orElseThrow();
-        Assertions.assertTrue(refreshedAlpha.getUpdatedAt().isAfter(beforeReuse), "复用后的记录应刷新 updatedAt 以反映最近访问");
+        Assertions.assertTrue(
+            refreshedAlpha.getUpdatedAt().isAfter(beforeReuse),
+            "复用后的记录应刷新 updatedAt 以反映最近访问"
+        );
 
         List<SearchRecordResponse> history = searchRecordService.getRecords(user.getId());
         Assertions.assertEquals(2, history.size(), "历史记录应维持原有条数");

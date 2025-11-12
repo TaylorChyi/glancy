@@ -13,19 +13,8 @@ record MarkdownWordSnapshot(
     String example,
     String phonetic
 ) {
-
     static MarkdownWordSnapshot empty(String fallbackTerm) {
         List<String> empty = List.of();
-        return new MarkdownWordSnapshot(
-            fallbackTerm,
-            empty,
-            empty,
-            empty,
-            empty,
-            empty,
-            empty,
-            null,
-            null
-        );
+        return new MarkdownWordSnapshot(fallbackTerm, empty, empty, empty, empty, empty, empty, null, null);
     }
 }

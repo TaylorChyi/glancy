@@ -59,10 +59,7 @@ final class JsonWordPayload {
     }
 
     private Language resolveLanguage(Language fallbackLanguage) {
-        String candidate = firstNonBlank(
-            textOrNull(node.path("language")),
-            textOrNull(node.path("\u8BED\u8A00"))
-        );
+        String candidate = firstNonBlank(textOrNull(node.path("language")), textOrNull(node.path("\u8BED\u8A00")));
         if (isBlank(candidate)) {
             return fallbackLanguage;
         }
@@ -88,11 +85,7 @@ final class JsonWordPayload {
         return collectChineseDefinitions(synonyms, antonyms, related);
     }
 
-    private List<String> collectEnglishDefinitions(
-        List<String> synonyms,
-        List<String> antonyms,
-        List<String> related
-    ) {
+    private List<String> collectEnglishDefinitions(List<String> synonyms, List<String> antonyms, List<String> related) {
         List<String> definitions = new ArrayList<>();
         JsonNode defsNode = node.path("definitions");
         if (defsNode.isArray()) {
@@ -124,11 +117,7 @@ final class JsonWordPayload {
         return meanings;
     }
 
-    private List<String> collectChineseDefinitions(
-        List<String> synonyms,
-        List<String> antonyms,
-        List<String> related
-    ) {
+    private List<String> collectChineseDefinitions(List<String> synonyms, List<String> antonyms, List<String> related) {
         List<String> definitions = new ArrayList<>();
         JsonNode explainNode = node.path("\u53D1\u97F3\u89E3\u91CA");
         if (!explainNode.isArray()) {

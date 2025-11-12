@@ -1,8 +1,8 @@
 package com.glancy.backend.service;
-import org.junit.jupiter.api.Assertions;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import org.mockito.Mockito;
+
 import com.glancy.backend.dto.AvatarResponse;
 import com.glancy.backend.dto.LoginRequest;
 import com.glancy.backend.dto.UserContactResponse;
@@ -21,9 +21,11 @@ import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -289,7 +291,10 @@ class UserServiceTest {
         UserEmailResponse response = userService.unbindEmail(created.getId());
 
         Assertions.assertNull(response.email());
-        Mockito.verify(emailVerificationService).invalidateCodes("unbind@example.com", EmailVerificationPurpose.CHANGE_EMAIL);
+        Mockito.verify(emailVerificationService).invalidateCodes(
+            "unbind@example.com",
+            EmailVerificationPurpose.CHANGE_EMAIL
+        );
         UserEmailResponse second = userService.unbindEmail(created.getId());
         Assertions.assertNull(second.email());
         verifyNoMoreInteractions(emailVerificationService);

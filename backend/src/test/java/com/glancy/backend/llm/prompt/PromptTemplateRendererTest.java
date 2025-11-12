@@ -1,7 +1,8 @@
 package com.glancy.backend.llm.prompt;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.llm.service.WordPromptTemplateConstants;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

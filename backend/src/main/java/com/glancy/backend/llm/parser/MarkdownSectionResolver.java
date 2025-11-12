@@ -87,23 +87,11 @@ final class MarkdownSectionResolver {
     }
 
     private static void registerUsage(Map<String, MarkdownSection> mapping) {
-        register(
-            mapping,
-            MarkdownSection.EXAMPLE,
-            "example",
-            "examples",
-            "例句",
-            "用法示例",
-            "用例"
-        );
+        register(mapping, MarkdownSection.EXAMPLE, "example", "examples", "例句", "用法示例", "用例");
         register(mapping, MarkdownSection.PHONETIC, "phonetic", "pronunciation", "音标", "发音");
     }
 
-    private static void register(
-        Map<String, MarkdownSection> mapping,
-        MarkdownSection section,
-        String... headings
-    ) {
+    private static void register(Map<String, MarkdownSection> mapping, MarkdownSection section, String... headings) {
         for (String heading : headings) {
             mapping.put(heading, section);
         }

@@ -1,5 +1,5 @@
 package com.glancy.backend.service;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.dto.NotificationRequest;
 import com.glancy.backend.dto.NotificationResponse;
 import com.glancy.backend.entity.User;
@@ -7,6 +7,7 @@ import com.glancy.backend.repository.NotificationRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,9 +1,8 @@
 package com.glancy.backend.controller;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
@@ -12,12 +11,15 @@ import com.glancy.backend.service.WordService;
 import com.glancy.backend.service.word.WordSearchOptions;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(WordController.class)
 @Import(
@@ -240,14 +242,7 @@ class WordControllerTest {
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
                 ArgumentMatchers.eq(
-                    WordSearchOptions.of(
-                        "hello",
-                        Language.ENGLISH,
-                        DictionaryFlavor.BILINGUAL,
-                        null,
-                        false,
-                        false
-                    )
+                    WordSearchOptions.of("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false)
                 )
             )
         ).thenReturn(resp);

@@ -4,8 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
 import com.glancy.backend.dto.SearchRecordRequest;
 import com.glancy.backend.dto.SearchRecordResponse;
 import com.glancy.backend.dto.SearchRecordVersionSummary;
@@ -23,6 +22,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(SearchRecordController.class)
 @Import(
@@ -141,7 +142,9 @@ class SearchRecordControllerTest {
         when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
-            .perform(MockMvcRequestBuilders.get("/api/search-records/user?page=2&size=50").header("X-USER-TOKEN", "tkn"))
+            .perform(
+                MockMvcRequestBuilders.get("/api/search-records/user?page=2&size=50").header("X-USER-TOKEN", "tkn")
+            )
             .andExpect(MockMvcResultMatchers.status().isOk());
 
         verify(searchRecordService).getRecords(eq(1L), eq(new SearchRecordPageRequest(2, 50)));

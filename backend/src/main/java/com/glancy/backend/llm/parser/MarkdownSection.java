@@ -8,5 +8,5 @@ enum MarkdownSection {
     VARIATIONS,
     PHRASES,
     EXAMPLE,
-    PHONETIC
+    PHONETIC,
 }

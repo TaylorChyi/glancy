@@ -49,10 +49,7 @@ public final class EnvLoader {
     }
 
     private static String sanitizeValue(String value) {
-        if (
-            (value.startsWith("\"") && value.endsWith("\"")) ||
-            (value.startsWith("'") && value.endsWith("'"))
-        ) {
+        if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
             return value.substring(1, value.length() - 1);
         }
         return value;

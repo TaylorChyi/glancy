@@ -1,5 +1,5 @@
 package com.glancy.backend.service.shortcut;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.dto.KeyboardShortcutResponse;
 import com.glancy.backend.dto.KeyboardShortcutUpdateRequest;
 import com.glancy.backend.entity.ShortcutAction;
@@ -9,6 +9,7 @@ import com.glancy.backend.repository.UserKeyboardShortcutRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

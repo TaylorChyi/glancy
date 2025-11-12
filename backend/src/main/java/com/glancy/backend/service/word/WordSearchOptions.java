@@ -14,7 +14,6 @@ public record WordSearchOptions(
     boolean forceNew,
     boolean captureHistory
 ) {
-
     public static WordSearchOptions of(
         String term,
         Language language,

@@ -5,8 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.AvatarRequest;
 import com.glancy.backend.dto.AvatarResponse;
@@ -40,6 +39,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(UserController.class)
@@ -108,7 +109,9 @@ class UserControllerTest {
     @Test
     void deleteUser() throws Exception {
         doNothing().when(userService).deleteUser(1L);
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/users/1")).andExpect(MockMvcResultMatchers.status().isNoContent());
+        mockMvc
+            .perform(MockMvcRequestBuilders.delete("/api/users/1"))
+            .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 
     /**
@@ -346,7 +349,9 @@ class UserControllerTest {
         );
 
         try {
-            mockMvc.perform(MockMvcRequestBuilders.post("/api/users/1/logout")).andExpect(MockMvcResultMatchers.status().isNoContent());
+            mockMvc
+                .perform(MockMvcRequestBuilders.post("/api/users/1/logout"))
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
         } finally {
             SecurityContextHolder.clearContext();
         }
@@ -360,6 +365,9 @@ class UserControllerTest {
     @Test
     void countUsers() throws Exception {
         when(userService.countActiveUsers()).thenReturn(5L);
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/users/count")).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().string("5"));
+        mockMvc
+            .perform(MockMvcRequestBuilders.get("/api/users/count"))
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.content().string("5"));
     }
 }

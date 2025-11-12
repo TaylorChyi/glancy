@@ -1,11 +1,12 @@
 package com.glancy.backend.repository;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchRecord;
 import com.glancy.backend.entity.User;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -96,7 +97,9 @@ class SearchRecordRepositoryTest {
             );
         Assertions.assertEquals(r3.getId(), top.getId());
 
-        Assertions.assertTrue(searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent());
+        Assertions.assertTrue(
+            searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent()
+        );
         Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(r2.getId()).isPresent());
         Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(deletedRecord.getId()).isEmpty());
     }

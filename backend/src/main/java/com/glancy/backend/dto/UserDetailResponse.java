@@ -37,24 +37,9 @@ public record UserDetailResponse(
         );
     }
 
-    public record Identity(
-        Long id,
-        String username,
-        String email,
-        String avatar,
-        String phone
-    ) {}
+    public record Identity(Long id, String username, String email, String avatar, String phone) {}
 
-    public record Membership(
-        Boolean member,
-        MembershipType membershipType,
-        LocalDateTime membershipExpiresAt
-    ) {}
+    public record Membership(Boolean member, MembershipType membershipType, LocalDateTime membershipExpiresAt) {}
 
-    public record Audit(
-        Boolean deleted,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime lastLoginAt
-    ) {}
+    public record Audit(Boolean deleted, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime lastLoginAt) {}
 }

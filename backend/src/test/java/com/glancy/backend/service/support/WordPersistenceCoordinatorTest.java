@@ -1,5 +1,5 @@
 package com.glancy.backend.service.support;
-import org.junit.jupiter.api.Assertions;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.glancy.backend.dto.PersonalizedWordExplanation;
 import com.glancy.backend.dto.WordPersonalizationContext;
@@ -12,6 +12,7 @@ import com.glancy.backend.util.SensitiveDataUtil;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**

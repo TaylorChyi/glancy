@@ -1,7 +1,5 @@
 package com.glancy.backend.llm.service;
-import org.junit.jupiter.api.Assertions;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
+
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
@@ -18,9 +16,12 @@ import com.glancy.backend.llm.search.SearchContentManager;
 import com.glancy.backend.llm.service.WordEntryProfileResolver;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 class WordSearcherImplTest {
 
@@ -74,10 +75,14 @@ class WordSearcherImplTest {
         Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize("hello")).thenReturn("hello");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
+            "content"
+        );
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
-        Mockito.when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(new ParsedWord(expected, "content"));
+        Mockito.when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(
+            new ParsedWord(expected, "content")
+        );
         WordSearcherImpl searcher = new WordSearcherImpl(
             factory,
             config,
@@ -137,9 +142,13 @@ class WordSearcherImplTest {
         Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize("汉")).thenReturn("汉");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
+            "content<END>"
+        );
         WordResponse expected = new WordResponse();
-        Mockito.when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(new ParsedWord(expected, "content<END>"));
+        Mockito.when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(
+            new ParsedWord(expected, "content<END>")
+        );
 
         WordSearcherImpl searcher = new WordSearcherImpl(
             factory,
@@ -172,7 +181,9 @@ class WordSearcherImplTest {
         Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
+            "content<END>"
+        );
         WordResponse expected = new WordResponse();
         Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")
@@ -214,7 +225,9 @@ class WordSearcherImplTest {
         Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn("content<END>");
+        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
+            "content<END>"
+        );
         WordResponse expected = new WordResponse();
         Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
             new ParsedWord(expected, "content<END>")

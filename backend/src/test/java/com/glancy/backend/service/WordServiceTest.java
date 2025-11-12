@@ -1,5 +1,5 @@
 package com.glancy.backend.service;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
@@ -15,6 +15,7 @@ import com.glancy.backend.service.word.WordSearchOptions;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -182,13 +183,19 @@ class WordServiceTest {
         word.setMarkdown("md");
         wordRepository.save(word);
 
-        wordService.findWordForUser(userId, options("CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true));
+        wordService.findWordForUser(
+            userId,
+            options("CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
+        );
 
         List<SearchRecord> afterFirstQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
         Assertions.assertEquals(1, afterFirstQuery.size(), "首次命中缓存时应只创建一条历史记录");
         Assertions.assertEquals("cached", afterFirstQuery.get(0).getTerm(), "历史记录词条应被同步为规范小写形式");
 
-        wordService.findWordForUser(userId, options("cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true));
+        wordService.findWordForUser(
+            userId,
+            options("cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
+        );
 
         List<SearchRecord> afterSecondQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
         Assertions.assertEquals(1, afterSecondQuery.size(), "再次查询不应生成新的历史记录");

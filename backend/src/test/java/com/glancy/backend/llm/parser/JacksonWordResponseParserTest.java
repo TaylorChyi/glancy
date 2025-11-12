@@ -1,8 +1,9 @@
 package com.glancy.backend.llm.parser;
-import org.junit.jupiter.api.Assertions;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.entity.Language;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class JacksonWordResponseParserTest {

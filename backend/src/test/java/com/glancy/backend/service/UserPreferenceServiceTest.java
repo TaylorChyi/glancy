@@ -1,5 +1,5 @@
 package com.glancy.backend.service;
-import org.junit.jupiter.api.Assertions;
+
 import com.glancy.backend.dto.UserPreferenceRequest;
 import com.glancy.backend.dto.UserPreferenceResponse;
 import com.glancy.backend.dto.UserPreferenceUpdateRequest;
@@ -7,6 +7,7 @@ import com.glancy.backend.entity.User;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
 import io.github.cdimascio.dotenv.Dotenv;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -89,12 +89,7 @@ public class WordSearcherImpl implements WordSearcher {
         return parsed.parsed();
     }
 
-    private SearchInputs buildSearchInputs(
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String clientName
-    ) {
+    private SearchInputs buildSearchInputs(String term, Language language, DictionaryFlavor flavor, String clientName) {
         String cleanInput = searchContentManager.normalize(term);
         String promptPath = config.resolvePromptPath(language, flavor);
         String prompt = promptManager.loadPrompt(promptPath);
