@@ -30,17 +30,15 @@ public class EmailDeliveryService {
         JavaMailSender mailSender,
         EmailAudienceService audienceService,
         EmailDeliveryFailureClassifier failureClassifier,
-        EmailVerificationProperties properties,
-        EmailMessagePreparer messagePreparer,
-        MailboxProviderPolicyEngine mailboxProviderPolicyEngine,
+        EmailOutboundToolkit toolkit,
         Clock clock
     ) {
         this.mailSender = mailSender;
         this.audienceService = audienceService;
         this.failureClassifier = failureClassifier;
-        this.properties = properties;
-        this.messagePreparer = messagePreparer;
-        this.mailboxProviderPolicyEngine = mailboxProviderPolicyEngine;
+        this.properties = toolkit.properties();
+        this.messagePreparer = toolkit.messagePreparer();
+        this.mailboxProviderPolicyEngine = toolkit.mailboxProviderPolicyEngine();
         this.clock = clock;
     }
 

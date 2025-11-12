@@ -47,7 +47,7 @@ public class UserResponseAssembler {
      */
     public UserDetailResponse toUserDetail(User user) {
         LocalDateTime now = LocalDateTime.now(clock);
-        return new UserDetailResponse(
+        return UserDetailResponse.of(
             user.getId(),
             user.getUsername(),
             user.getEmail(),

@@ -11,6 +11,7 @@ import com.glancy.backend.repository.SearchResultVersionRepository;
 import com.glancy.backend.repository.UserPreferenceRepository;
 import com.glancy.backend.repository.UserRepository;
 import com.glancy.backend.repository.WordRepository;
+import com.glancy.backend.service.word.WordSearchOptions;
 import io.github.cdimascio.dotenv.Dotenv;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -88,12 +89,7 @@ class WordServiceTest {
     void testFetchAndCacheWord() {
         WordResponse result = wordService.findWordForUser(
             userId,
-            "hello",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            true
+            options("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
         );
 
         Assertions.assertNotNull(result.getId());
@@ -126,12 +122,7 @@ class WordServiceTest {
 
         WordResponse result = wordService.findWordForUser(
             userId,
-            "CACHED",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            true
+            options("CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
         );
 
         Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
@@ -162,12 +153,7 @@ class WordServiceTest {
 
         WordResponse result = wordService.findWordForUser(
             userId,
-            "  cached  ",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            true
+            options("  cached  ", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
         );
 
         Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
@@ -196,13 +182,13 @@ class WordServiceTest {
         word.setMarkdown("md");
         wordRepository.save(word);
 
-        wordService.findWordForUser(userId, "CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
+        wordService.findWordForUser(userId, options("CACHED", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true));
 
         List<SearchRecord> afterFirstQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
         Assertions.assertEquals(1, afterFirstQuery.size(), "首次命中缓存时应只创建一条历史记录");
         Assertions.assertEquals("cached", afterFirstQuery.get(0).getTerm(), "历史记录词条应被同步为规范小写形式");
 
-        wordService.findWordForUser(userId, "cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true);
+        wordService.findWordForUser(userId, options("cached", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true));
 
         List<SearchRecord> afterSecondQuery = searchRecordRepository.findByUserIdAndDeletedFalse(userId);
         Assertions.assertEquals(1, afterSecondQuery.size(), "再次查询不应生成新的历史记录");
@@ -225,12 +211,7 @@ class WordServiceTest {
     void testCacheWordWhenLanguageMissing() {
         WordResponse result = wordService.findWordForUser(
             userId,
-            "bye",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            true
+            options("bye", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
         );
 
         Assertions.assertEquals(Language.ENGLISH, result.getLanguage());
@@ -251,7 +232,10 @@ class WordServiceTest {
      */
     @Test
     void testFindWordSkipsHistoryWhenDisabled() {
-        wordService.findWordForUser(userId, "skip", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false);
+        wordService.findWordForUser(
+            userId,
+            options("skip", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false)
+        );
 
         Assertions.assertEquals(0, searchRecordRepository.count(), "搜索记录应保持为空");
         Assertions.assertEquals(0, searchResultVersionRepository.count(), "版本记录应保持为空");
@@ -319,15 +303,21 @@ class WordServiceTest {
 
         WordResponse result = wordService.findWordForUser(
             userId,
-            "hello!!!",
-            Language.ENGLISH,
-            DictionaryFlavor.BILINGUAL,
-            null,
-            false,
-            true
+            options("hello!!!", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
         );
 
         Assertions.assertEquals(String.valueOf(word.getId()), result.getId());
         Assertions.assertEquals("hello-md", result.getMarkdown());
+    }
+
+    private WordSearchOptions options(
+        String term,
+        Language language,
+        DictionaryFlavor flavor,
+        String model,
+        boolean forceNew,
+        boolean captureHistory
+    ) {
+        return WordSearchOptions.of(term, language, flavor, model, forceNew, captureHistory);
     }
 }

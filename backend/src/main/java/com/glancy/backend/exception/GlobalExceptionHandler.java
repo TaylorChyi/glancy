@@ -1,6 +1,5 @@
 package com.glancy.backend.exception;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.security.TokenTraceFilter;
 import com.glancy.backend.dto.ErrorResponse;

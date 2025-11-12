@@ -116,7 +116,7 @@ class UserControllerTest {
      */
     @Test
     void getUser() throws Exception {
-        UserDetailResponse detailResponse = new UserDetailResponse(
+        UserDetailResponse detailResponse = UserDetailResponse.of(
             1L,
             "u",
             "e",

@@ -81,26 +81,7 @@ public class WordPromptAssembler {
             : WordPromptFallbacks.personaDescriptor();
         return templateRenderer.render(
             WordPromptTemplateConstants.PERSONA_BASE,
-            WordPromptContext.build(values -> {
-                values.put(WordPromptContextKey.PERSONA_DESCRIPTOR, descriptor);
-                values.put(
-                    WordPromptContextKey.PERSONA_TONE_CLAUSE,
-                    renderTextClause(
-                        context.preferredTone(),
-                        WordPromptTemplateConstants.PERSONA_TONE_CLAUSE,
-                        WordPromptContextKey.CLAUSE_TONE
-                    )
-                );
-                values.put(
-                    WordPromptContextKey.PERSONA_GOAL_CLAUSE,
-                    renderTextClause(
-                        context.goal(),
-                        WordPromptTemplateConstants.PERSONA_GOAL_CLAUSE,
-                        WordPromptContextKey.CLAUSE_GOAL
-                    )
-                );
-                values.put(WordPromptContextKey.PERSONA_INTERESTS_CLAUSE, renderInterestsClause(context));
-            })
+            buildPersonaContext(context, descriptor)
         );
     }
 
@@ -120,6 +101,29 @@ public class WordPromptAssembler {
             WordPromptTemplateConstants.PERSONA_INTERESTS_CLAUSE,
             WordPromptContext.build(values -> values.put(WordPromptContextKey.CLAUSE_INTERESTS, interests))
         );
+    }
+
+    private WordPromptContext buildPersonaContext(WordPersonalizationContext context, String descriptor) {
+        return WordPromptContext.build(values -> {
+            values.put(WordPromptContextKey.PERSONA_DESCRIPTOR, descriptor);
+            values.put(
+                WordPromptContextKey.PERSONA_TONE_CLAUSE,
+                renderTextClause(
+                    context.preferredTone(),
+                    WordPromptTemplateConstants.PERSONA_TONE_CLAUSE,
+                    WordPromptContextKey.CLAUSE_TONE
+                )
+            );
+            values.put(
+                WordPromptContextKey.PERSONA_GOAL_CLAUSE,
+                renderTextClause(
+                    context.goal(),
+                    WordPromptTemplateConstants.PERSONA_GOAL_CLAUSE,
+                    WordPromptContextKey.CLAUSE_GOAL
+                )
+            );
+            values.put(WordPromptContextKey.PERSONA_INTERESTS_CLAUSE, renderInterestsClause(context));
+        });
     }
 
     private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {

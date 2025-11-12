@@ -2,14 +2,13 @@ package com.glancy.backend.service;
 
 import com.glancy.backend.dto.WordPersonalizationContext;
 import com.glancy.backend.dto.WordResponse;
-import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.DictionaryModel;
-import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.personalization.WordPersonalizationService;
 import com.glancy.backend.service.support.DictionaryTermNormalizer;
 import com.glancy.backend.service.word.SynchronousWordRetrievalStrategy;
 import com.glancy.backend.service.word.WordQueryContext;
 import com.glancy.backend.service.word.WordRetrievalStrategy;
+import com.glancy.backend.service.word.WordSearchOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,49 +34,33 @@ public class WordService {
     }
 
     @Transactional
-    public WordResponse findWordForUser(
-        Long userId,
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String model,
-        boolean forceNew,
-        boolean captureHistory
-    ) {
-        WordQueryContext context = buildContext(userId, term, language, flavor, model, forceNew, captureHistory);
+    public WordResponse findWordForUser(Long userId, WordSearchOptions options) {
+        WordQueryContext context = buildContext(userId, options);
         return synchronousStrategy.execute(context);
     }
 
-    private WordQueryContext buildContext(
-        Long userId,
-        String term,
-        Language language,
-        DictionaryFlavor flavor,
-        String requestedModel,
-        boolean forceNew,
-        boolean captureHistory
-    ) {
-        String normalizedTerm = termNormalizer.normalize(term);
-        String model = resolveModelName(requestedModel);
+    private WordQueryContext buildContext(Long userId, WordSearchOptions options) {
+        String normalizedTerm = termNormalizer.normalize(options.term());
+        String model = resolveModelName(options.model());
         WordPersonalizationContext personalizationContext = resolvePersonalization(userId);
         log.info(
             "Building word query context for user {} term '{}' (normalized '{}') language {} flavor {} model {}",
             userId,
-            term,
+            options.term(),
             normalizedTerm,
-            language,
-            flavor,
+            options.language(),
+            options.flavor(),
             model
         );
         return new WordQueryContext(
             userId,
-            term,
+            options.term(),
             normalizedTerm,
-            language,
-            flavor,
+            options.language(),
+            options.flavor(),
             model,
-            forceNew,
-            captureHistory,
+            options.forceNew(),
+            options.captureHistory(),
             personalizationContext
         );
     }

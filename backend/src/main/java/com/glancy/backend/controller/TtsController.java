@@ -1,6 +1,7 @@
 package com.glancy.backend.controller;
 
 import com.glancy.backend.config.auth.AuthenticatedUser;
+import com.glancy.backend.controller.request.TtsQueryRequest;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
 import com.glancy.backend.dto.VoiceResponse;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,23 +34,6 @@ public class TtsController {
 
     public TtsController(TtsService ttsService) {
         this.ttsService = ttsService;
-    }
-
-    /**
-     * Build a {@link TtsRequest} from query parameters. GET requests cannot
-     * submit JSON bodies so this helper translates the expected parameters
-     * into the common request object used by the POST endpoints.
-     */
-    private TtsRequest buildRequest(String text, String lang, String voice, String format, double speed) {
-        TtsRequest request = new TtsRequest();
-        request.setText(text);
-        request.setLang(lang);
-        request.setVoice(voice);
-        request.setFormat(format);
-        request.setSpeed(speed);
-        // shortcut disabled for GET so that the backend always returns audio
-        request.setShortcut(false);
-        return request;
     }
 
     /**
@@ -85,18 +70,21 @@ public class TtsController {
     public ResponseEntity<TtsResponse> streamWord(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
-        @RequestParam String text,
-        @RequestParam String lang,
-        @RequestParam(required = false) String voice,
-        @RequestParam(defaultValue = "mp3") String format,
-        @RequestParam(defaultValue = "1.0") double speed
+        @ModelAttribute TtsQueryRequest query
     ) {
-        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        TtsRequest req = query.toDto();
         String ip = httpRequest.getRemoteAddr();
         String rid = String.valueOf(httpRequest.getAttribute("req.id"));
         String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
         log.info("RID={}, entering {}, tokenStatus={}", rid, "streamWord", tokenStatus);
-        log.info("Streaming word for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
+        log.info(
+            "Streaming word for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            query.getLang(),
+            query.getVoice(),
+            query.getText()
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeWord(userId, ip, req);
         return buildResponse(userId, "Word stream", resp);
     }
@@ -133,18 +121,21 @@ public class TtsController {
     public ResponseEntity<TtsResponse> streamSentence(
         @AuthenticatedUser Long userId,
         HttpServletRequest httpRequest,
-        @RequestParam String text,
-        @RequestParam String lang,
-        @RequestParam(required = false) String voice,
-        @RequestParam(defaultValue = "mp3") String format,
-        @RequestParam(defaultValue = "1.0") double speed
+        @ModelAttribute TtsQueryRequest query
     ) {
-        TtsRequest req = buildRequest(text, lang, voice, format, speed);
+        TtsRequest req = query.toDto();
         String ip = httpRequest.getRemoteAddr();
         String rid = String.valueOf(httpRequest.getAttribute("req.id"));
         String tokenStatus = String.valueOf(httpRequest.getAttribute("auth.token.status"));
         log.info("RID={}, entering {}, tokenStatus={}", rid, "streamSentence", tokenStatus);
-        log.info("Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}", userId, ip, lang, voice, text);
+        log.info(
+            "Streaming sentence for user={}, ip={}, lang={}, voice={}, text={}",
+            userId,
+            ip,
+            query.getLang(),
+            query.getVoice(),
+            query.getText()
+        );
         Optional<TtsResponse> resp = ttsService.synthesizeSentence(userId, ip, req);
         return buildResponse(userId, "Sentence stream", resp);
     }

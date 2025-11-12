@@ -1,7 +1,6 @@
 package com.glancy.backend.service.word;
 
 import com.glancy.backend.entity.DictionaryFlavor;
-import com.glancy.backend.entity.Language;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.service.SearchResultService;

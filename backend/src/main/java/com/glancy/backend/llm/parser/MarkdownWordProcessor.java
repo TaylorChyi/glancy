@@ -1,6 +1,7 @@
 package com.glancy.backend.llm.parser;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +18,7 @@ final class MarkdownWordProcessor {
     private final String[] lines;
     private final String fallbackTerm;
     private final MarkdownSectionResolver sectionResolver;
+    private final EnumMap<MarkdownSection, SectionAppender> sectionAppenders;
 
     private MarkdownSection currentSection = MarkdownSection.DEFINITION;
     private boolean insideFence;
@@ -37,6 +39,7 @@ final class MarkdownWordProcessor {
         this.lines = markdown.split("\\R");
         this.fallbackTerm = fallbackTerm;
         this.sectionResolver = sectionResolver;
+        this.sectionAppenders = buildAppenders();
     }
 
     MarkdownWordSnapshot extract() {
@@ -144,22 +147,12 @@ final class MarkdownWordProcessor {
         if (value == null || value.isBlank()) {
             return;
         }
-        switch (section) {
-            case SYNONYMS -> synonyms.addAll(splitList(value));
-            case ANTONYMS -> antonyms.addAll(splitList(value));
-            case RELATED -> related.addAll(splitList(value));
-            case VARIATIONS -> variations.addAll(splitList(value));
-            case PHRASES -> {
-                if (splitPhrases) {
-                    phrases.addAll(splitList(value));
-                } else {
-                    phrases.add(value);
-                }
-            }
-            case EXAMPLE -> example = selectFirstNonBlank(example, value);
-            case PHONETIC -> phonetic = selectFirstNonBlank(phonetic, value);
-            default -> definitions.add(value);
+        SectionAppender appender = sectionAppenders.get(section);
+        if (appender != null) {
+            appender.append(value, splitPhrases);
+            return;
         }
+        definitions.add(value);
     }
 
     private void ensureFallbackDefinition() {
@@ -215,5 +208,30 @@ final class MarkdownWordProcessor {
             return List.of(value.trim());
         }
         return result;
+    }
+
+    private EnumMap<MarkdownSection, SectionAppender> buildAppenders() {
+        EnumMap<MarkdownSection, SectionAppender> mapping = new EnumMap<>(MarkdownSection.class);
+        mapping.put(MarkdownSection.SYNONYMS, (value, split) -> synonyms.addAll(splitList(value)));
+        mapping.put(MarkdownSection.ANTONYMS, (value, split) -> antonyms.addAll(splitList(value)));
+        mapping.put(MarkdownSection.RELATED, (value, split) -> related.addAll(splitList(value)));
+        mapping.put(MarkdownSection.VARIATIONS, (value, split) -> variations.addAll(splitList(value)));
+        mapping.put(MarkdownSection.PHRASES, this::appendPhrase);
+        mapping.put(MarkdownSection.EXAMPLE, (value, split) -> example = selectFirstNonBlank(example, value));
+        mapping.put(MarkdownSection.PHONETIC, (value, split) -> phonetic = selectFirstNonBlank(phonetic, value));
+        return mapping;
+    }
+
+    private void appendPhrase(String value, boolean splitPhrases) {
+        if (splitPhrases) {
+            phrases.addAll(splitList(value));
+            return;
+        }
+        phrases.add(value);
+    }
+
+    @FunctionalInterface
+    private interface SectionAppender {
+        void append(String value, boolean splitPhrases);
     }
 }

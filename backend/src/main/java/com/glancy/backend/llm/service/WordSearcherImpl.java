@@ -74,19 +74,35 @@ public class WordSearcherImpl implements WordSearcher {
             flavor,
             personalizationContext != null && personalizationContext.hasSignals()
         );
-        String cleanInput = searchContentManager.normalize(term);
-        String promptPath = config.resolvePromptPath(language, flavor);
-        String prompt = promptManager.loadPrompt(promptPath);
-        String resolvedClientName = clientName != null ? clientName : config.getDefaultClient();
-        DictionaryModelClient client = resolveClient(resolvedClientName);
+        SearchInputs inputs = buildSearchInputs(term, language, flavor, clientName);
+        DictionaryModelClient client = resolveClient(inputs.clientName());
         List<ChatMessage> messages = promptAssembler.composeMessages(
-            prompt,
-            cleanInput,
+            inputs.prompt(),
+            inputs.cleanInput(),
             personalizationContext,
             language,
             flavor
         );
         String content = client.generateEntry(messages, config.getTemperature());
+        CompletionCheck completion = inspectCompletion(inputs.clientName(), content);
+        ParsedWord parsed = parser.parse(sanitizedContent(content, completion), term, language);
+        return parsed.parsed();
+    }
+
+    private SearchInputs buildSearchInputs(
+        String term,
+        Language language,
+        DictionaryFlavor flavor,
+        String clientName
+    ) {
+        String cleanInput = searchContentManager.normalize(term);
+        String promptPath = config.resolvePromptPath(language, flavor);
+        String prompt = promptManager.loadPrompt(promptPath);
+        String resolvedClientName = clientName != null ? clientName : config.getDefaultClient();
+        return new SearchInputs(cleanInput, prompt, resolvedClientName);
+    }
+
+    private CompletionCheck inspectCompletion(String resolvedClientName, String content) {
         CompletionCheck completion = CompletionSentinel.inspect(content);
         log.info(
             "Dictionary model client '{}' returned content (sentinelPresent={}): {}",
@@ -101,9 +117,11 @@ public class WordSearcherImpl implements WordSearcher {
                 CompletionSentinel.MARKER
             );
         }
-        String sanitized = completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
-        ParsedWord parsed = parser.parse(sanitized, term, language);
-        return parsed.parsed();
+        return completion;
+    }
+
+    private String sanitizedContent(String content, CompletionCheck completion) {
+        return completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
     }
 
     private DictionaryModelClient resolveClient(String clientName) {
@@ -125,4 +143,6 @@ public class WordSearcherImpl implements WordSearcher {
         }
         return fallbackClient;
     }
+
+    private record SearchInputs(String cleanInput, String prompt, String clientName) {}
 }

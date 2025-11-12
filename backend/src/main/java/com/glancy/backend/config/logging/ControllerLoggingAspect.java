@@ -28,24 +28,7 @@ public class ControllerLoggingAspect {
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String method = signature.getDeclaringType().getSimpleName() + "." + signature.getName();
-        Object[] args = joinPoint.getArgs();
-        String[] paramNames = resolveParameterNames(signature, args);
-        Map<String, Object> params = new LinkedHashMap<>();
-        if (args != null) {
-            int nameLength = paramNames != null ? paramNames.length : 0;
-            if (paramNames != null && nameLength != args.length) {
-                log.debug("Parameter name count {} does not match argument count {}", nameLength, args.length);
-            }
-            for (int i = 0; i < args.length; i++) {
-                String name;
-                if (paramNames != null && i < nameLength) {
-                    name = paramNames[i];
-                } else {
-                    name = "arg" + i;
-                }
-                params.put(name, args[i]);
-            }
-        }
+        Map<String, Object> params = buildParameterMap(signature, joinPoint.getArgs());
         log.info("controller.entry method={} params={}", method, params);
         try {
             Object result = joinPoint.proceed();
@@ -68,5 +51,28 @@ public class ControllerLoggingAspect {
                 .toArray(String[]::new);
         }
         return names;
+    }
+
+    private Map<String, Object> buildParameterMap(MethodSignature signature, Object[] args) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        if (args == null) {
+            return params;
+        }
+        String[] paramNames = resolveParameterNames(signature, args);
+        int nameLength = paramNames != null ? paramNames.length : 0;
+        if (paramNames != null && nameLength != args.length) {
+            log.debug("Parameter name count {} does not match argument count {}", nameLength, args.length);
+        }
+        for (int i = 0; i < args.length; i++) {
+            params.put(resolveParamName(paramNames, nameLength, i), args[i]);
+        }
+        return params;
+    }
+
+    private String resolveParamName(String[] paramNames, int nameLength, int index) {
+        if (paramNames != null && index < nameLength) {
+            return paramNames[index];
+        }
+        return "arg" + index;
     }
 }

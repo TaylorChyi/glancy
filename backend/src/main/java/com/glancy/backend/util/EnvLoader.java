@@ -30,24 +30,31 @@ public final class EnvLoader {
             lines
                 .map(String::trim)
                 .filter(line -> !line.isEmpty() && !line.startsWith("#"))
-                .forEach(line -> {
-                    int idx = line.indexOf('=');
-                    if (idx > 0) {
-                        String key = line.substring(0, idx).trim();
-                        if (System.getProperty(key) == null && System.getenv(key) == null) {
-                            String value = line.substring(idx + 1).trim();
-                            if (
-                                (value.startsWith("\"") && value.endsWith("\"")) ||
-                                (value.startsWith("'") && value.endsWith("'"))
-                            ) {
-                                value = value.substring(1, value.length() - 1);
-                            }
-                            System.setProperty(key, value);
-                        }
-                    }
-                });
+                .forEach(EnvLoader::applyLine);
         } catch (IOException ex) {
             log.warn("Failed to load {}", file, ex);
         }
+    }
+
+    private static void applyLine(String line) {
+        int idx = line.indexOf('=');
+        if (idx <= 0) {
+            return;
+        }
+        String key = line.substring(0, idx).trim();
+        if (System.getProperty(key) != null || System.getenv(key) != null) {
+            return;
+        }
+        System.setProperty(key, sanitizeValue(line.substring(idx + 1).trim()));
+    }
+
+    private static String sanitizeValue(String value) {
+        if (
+            (value.startsWith("\"") && value.endsWith("\"")) ||
+            (value.startsWith("'") && value.endsWith("'"))
+        ) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 }

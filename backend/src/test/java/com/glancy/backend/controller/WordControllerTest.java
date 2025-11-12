@@ -9,6 +9,7 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
+import com.glancy.backend.service.word.WordSearchOptions;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,12 +63,9 @@ class WordControllerTest {
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq("hello"),
-                ArgumentMatchers.eq(Language.ENGLISH),
-                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
-                ArgumentMatchers.eq(null),
-                ArgumentMatchers.eq(false),
-                ArgumentMatchers.eq(true)
+                ArgumentMatchers.eq(
+                    WordSearchOptions.of("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
+                )
             )
         ).thenReturn(resp);
 
@@ -112,12 +110,9 @@ class WordControllerTest {
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq("hello"),
-                ArgumentMatchers.eq(Language.ENGLISH),
-                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
-                ArgumentMatchers.eq("doubao"),
-                ArgumentMatchers.eq(false),
-                ArgumentMatchers.eq(true)
+                ArgumentMatchers.eq(
+                    WordSearchOptions.of("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", false, true)
+                )
             )
         ).thenReturn(resp);
 
@@ -192,12 +187,9 @@ class WordControllerTest {
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq("hi"),
-                ArgumentMatchers.eq(Language.ENGLISH),
-                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
-                ArgumentMatchers.eq(null),
-                ArgumentMatchers.eq(false),
-                ArgumentMatchers.eq(true)
+                ArgumentMatchers.eq(
+                    WordSearchOptions.of("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true)
+                )
             )
         ).thenReturn(resp);
 
@@ -247,12 +239,16 @@ class WordControllerTest {
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq("hello"),
-                ArgumentMatchers.eq(Language.ENGLISH),
-                ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
-                ArgumentMatchers.isNull(),
-                ArgumentMatchers.eq(false),
-                ArgumentMatchers.eq(false)
+                ArgumentMatchers.eq(
+                    WordSearchOptions.of(
+                        "hello",
+                        Language.ENGLISH,
+                        DictionaryFlavor.BILINGUAL,
+                        null,
+                        false,
+                        false
+                    )
+                )
             )
         ).thenReturn(resp);
 
@@ -270,12 +266,9 @@ class WordControllerTest {
 
         Mockito.verify(wordService, Mockito.times(1)).findWordForUser(
             ArgumentMatchers.eq(1L),
-            ArgumentMatchers.eq("hello"),
-            ArgumentMatchers.eq(Language.ENGLISH),
-            ArgumentMatchers.eq(DictionaryFlavor.BILINGUAL),
-            ArgumentMatchers.isNull(),
-            ArgumentMatchers.eq(false),
-            ArgumentMatchers.eq(false)
+            ArgumentMatchers.eq(
+                WordSearchOptions.of("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false)
+            )
         );
     }
 }

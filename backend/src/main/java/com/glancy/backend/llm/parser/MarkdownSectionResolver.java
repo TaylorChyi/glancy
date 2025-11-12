@@ -33,6 +33,14 @@ final class MarkdownSectionResolver {
 
     private static Map<String, MarkdownSection> buildSectionMapping() {
         Map<String, MarkdownSection> mapping = new LinkedHashMap<>();
+        registerDefinition(mapping);
+        registerRelation(mapping);
+        registerVariations(mapping);
+        registerUsage(mapping);
+        return Map.copyOf(mapping);
+    }
+
+    private static void registerDefinition(Map<String, MarkdownSection> mapping) {
         register(
             mapping,
             MarkdownSection.DEFINITION,
@@ -45,9 +53,15 @@ final class MarkdownSectionResolver {
             "含义",
             "historicalresonance"
         );
+    }
+
+    private static void registerRelation(Map<String, MarkdownSection> mapping) {
         register(mapping, MarkdownSection.SYNONYMS, "synonym", "synonyms", "同义词");
         register(mapping, MarkdownSection.ANTONYMS, "antonym", "antonyms", "反义词");
         register(mapping, MarkdownSection.RELATED, "related", "relatedwords", "相关词", "相关词汇");
+    }
+
+    private static void registerVariations(Map<String, MarkdownSection> mapping) {
         register(
             mapping,
             MarkdownSection.VARIATIONS,
@@ -70,6 +84,9 @@ final class MarkdownSectionResolver {
             "collocation",
             "collocations"
         );
+    }
+
+    private static void registerUsage(Map<String, MarkdownSection> mapping) {
         register(
             mapping,
             MarkdownSection.EXAMPLE,
@@ -80,7 +97,6 @@ final class MarkdownSectionResolver {
             "用例"
         );
         register(mapping, MarkdownSection.PHONETIC, "phonetic", "pronunciation", "音标", "发音");
-        return Map.copyOf(mapping);
     }
 
     private static void register(

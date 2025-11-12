@@ -44,47 +44,54 @@ public class TokenTraceFilter extends OncePerRequestFilter {
         @NonNull HttpServletResponse resp,
         @NonNull FilterChain chain
     ) throws ServletException, IOException {
-        // 生成请求链路标识（Request ID，请求标识），用于串联单次请求的日志
+        String rid = initRequestContext(req);
+        TokenCheckResult result = evaluateToken(req.getHeader(HDR_TOKEN));
+        applyAttributes(req, result);
+        logRequest(req, rid, result);
+        try {
+            chain.doFilter(req, resp);
+        } finally {
+            clearRequestContext();
+        }
+    }
+
+    private String initRequestContext(HttpServletRequest req) {
         String rid = UUID.randomUUID().toString();
         MDC.put("rid", rid);
         req.setAttribute(ATTR_REQUEST_ID, rid);
+        return rid;
+    }
 
-        String token = req.getHeader(HDR_TOKEN);
-        TokenStatus status;
-        String subject = null;
+    private void clearRequestContext() {
+        MDC.remove("rid");
+    }
 
+    private TokenCheckResult evaluateToken(String token) {
         if (token == null || token.isBlank()) {
-            status = TokenStatus.MISSING; // 缺失
-        } else if (!looksLikeUuid(token)) {
-            status = TokenStatus.MALFORMED; // 格式错误
-        } else {
-            // 令牌校验逻辑（示例占位）：请在此处替换为实际的签名校验、有效期校验、吊销表查询等
-            TokenCheckResult r = checkToken(token);
-            status = r.status();
-            subject = r.subject();
+            return new TokenCheckResult(TokenStatus.MISSING, null);
         }
-
-        // 将令牌状态与主体写入请求属性，供后续安全链与控制器读取
-        req.setAttribute(ATTR_TOKEN_STATUS, status.name());
-        if (subject != null) {
-            req.setAttribute(ATTR_TOKEN_SUBJECT, subject);
+        if (!looksLikeUuid(token)) {
+            return new TokenCheckResult(TokenStatus.MALFORMED, null);
         }
+        return checkToken(token);
+    }
 
-        // 入口汇总日志：记录方法、路径、令牌状态与主体（如可判定）
+    private void applyAttributes(HttpServletRequest req, TokenCheckResult result) {
+        req.setAttribute(ATTR_TOKEN_STATUS, result.status().name());
+        if (result.subject() != null) {
+            req.setAttribute(ATTR_TOKEN_SUBJECT, result.subject());
+        }
+    }
+
+    private void logRequest(HttpServletRequest req, String rid, TokenCheckResult result) {
         log.info(
             "RID={}, method={}, path={}, tokenStatus={}, subject={}",
             rid,
             req.getMethod(),
             req.getRequestURI(),
-            status,
-            subject
+            result.status(),
+            result.subject()
         );
-
-        try {
-            chain.doFilter(req, resp);
-        } finally {
-            MDC.remove("rid");
-        }
     }
 
     // 简单格式校验：示例按 UUID（Universally Unique Identifier，通用唯一标识符）形态校验
