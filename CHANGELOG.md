@@ -57,4 +57,31 @@
 ### Security
 - _暂无。_
 
+## [glancy.dict.v2] - 2025-06-05
+
+### Added
+- 发布 `glancy.dict.v2` 契约 Beta，通过 `Accept` 头或 `?contract=preview` 提供双版本响应，支撑未来模块扩展与性能统计统一。([#1088](https://github.com/TaylorChyi/glancy/pull/1088))
+
+### Changed
+- 为 `glancy.dict.v2` 灰度引入 `Link`/`Sunset` 头与契约回放守护，确保 Beta 期间可安全回退。([#1090](https://github.com/TaylorChyi/glancy/pull/1090))
+
+## [glancy.billing.v1] - 2025-01-10
+
+### Added
+- 订阅状态机新增 `PAUSED`，支持人工冻结权益并在订阅页、账单与接口中同步展示。([#1095](https://github.com/TaylorChyi/glancy/pull/1095))
+
+### Changed
+- 调整权益同步与限流护栏，保障暂停/恢复流程在 AB 灰度期间稳定运行。([#1096](https://github.com/TaylorChyi/glancy/pull/1096))
+
+## [glancy.dict.v1] - 2024-11-15
+
+### Added
+- `modules.definitions[*].source` 字段向后兼容上线，释义卡片、导出与历史详情均可展示出处标签。([#1098](https://github.com/TaylorChyi/glancy/pull/1098))
+
+### Changed
+- 更新契约样本与 Schema Registry，指导客户端在兼容期内忽略未知字段并完善监控。([#1094](https://github.com/TaylorChyi/glancy/pull/1094))
+
 [Unreleased]: https://github.com/TaylorChyi/glancy/compare/main...HEAD
+[glancy.dict.v2]: https://github.com/TaylorChyi/glancy/releases/tag/glancy.dict.v2
+[glancy.billing.v1]: https://github.com/TaylorChyi/glancy/releases/tag/glancy.billing.v1
+[glancy.dict.v1]: https://github.com/TaylorChyi/glancy/releases/tag/glancy.dict.v1
