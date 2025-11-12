@@ -1,21 +1,22 @@
 # K8s 部署手册
 
-> 适用集群：`glancy-staging`、`glancy-prod`。本文以 `cn-beijing` 的 ACK/K8s 集群为例，落地 ConfigMap/Secret、Deployment、Service、Ingress 以及零停机发布/回滚流程。
+> 适用环境：`glancy-staging`、`glancy-prod`。目标是提供完整的资源清单、健康探针、零停机发布与回滚策略，让集群部署具备可复制性。
 
-## 1. 集群约定
-1. **命名空间**：`glancy-staging`、`glancy-prod`。所有工作负载（含 ConfigMap/Secret）必须位于对应命名空间，禁止跨命名空间引用。
+## 1. 集群基线
+1. **命名空间**：分别使用 `glancy-staging` 与 `glancy-prod`，禁止跨命名空间引用 Secret/ConfigMap。
 2. **节点池**：
-   - Backend：2 vCPU / 4 GiB 起，开启自动扩缩容。
+   - Backend：2 vCPU / 4 GiB 起步，建议开启自动扩缩容。
    - Website：1 vCPU / 2 GiB 即可，可使用 Spot 节点。
-3. **存储**：
-   - 日志：推荐接入集中日志（如 Aliyun SLS）或挂载只写 `emptyDir` + Sidecar。
-   - TTS/配置：如需外部 `tts-config.yml`，使用 `ConfigMap` 或 `Secret` + `Projected Volume`。
+3. **存储与日志**：
+   - 业务日志接入阿里云 SLS 或通过 Sidecar 推送；如需落地磁盘，可使用 `emptyDir` + Log agent。
+   - TTS 自定义配置可通过 `ConfigMap` 投射至 `/etc/glancy/tts`。
 4. **入口**：
-   - API：`Ingress` + WAF，域名 `api.<env>.glancy.xyz`。
-   - Web：`Ingress` + CDN/Edge。静态站点也可直接由 OSS/CDN 提供，K8s 仅作为回源。
+   - API：Ingress + WAF，域名 `api.<env>.glancy.xyz`。
+   - Web：Ingress + CDN/Edge；若静态托管在 OSS，可仅保留回源服务。
+5. **权限**：通过 RAM + ServiceAccount 绑定，授予访问 Secrets Manager/OSS 的最小权限。
 
-## 2. 基础资源
-### 2.1 ConfigMap（示例）
+## 2. 基础配置资源
+### 2.1 ConfigMap 示例
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -32,15 +33,18 @@ data:
   LOG_PATH: "/var/log/glancy"
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
   VITE_SHARE_BASE_URL: "https://staging.glancy.xyz/share"
+  dataVersion: "v1.4.0"
 ```
 
-### 2.2 Secret（示例）
+### 2.2 Secret 示例
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: glancy-backend-secret
   namespace: glancy-staging
+  labels:
+    app: glancy-backend
 stringData:
   DB_PASSWORD: "********"
   GLANCY_SMTP_PASSWORD: "********"
@@ -50,10 +54,11 @@ stringData:
   OSS_SECURITY_TOKEN: "***"
   VOLCENGINE_APP_ID: "***"
   VOLCENGINE_ACCESS_TOKEN: "***"
+  dataVersion: "v1.4.0"
 ```
-> 建议由管控仓（例如 GitOps + SOPS）管理 YAML，再由 ArgoCD/Flux 同步到集群，确保所有改动可审计。
+> 建议配合 GitOps（ArgoCD/Flux）+ SOPS 管理密文，所有变更以 PR 形式审计。
 
-## 3. Backend Deployment
+## 3. Backend 工作负载
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -76,10 +81,14 @@ spec:
     metadata:
       labels:
         app: glancy-backend
+      annotations:
+        checksum/config: "{{ sha256sum ConfigMap glancy-backend-config }}"
+        checksum/secret: "{{ sha256sum Secret glancy-backend-secret }}"
     spec:
+      serviceAccountName: glancy-backend
       containers:
         - name: backend
-          image: registry.glancy.xyz/glancy/backend:v1.3.0
+          image: registry.glancy.xyz/glancy/backend:v1.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -120,9 +129,9 @@ spec:
         - name: log-dir
           emptyDir: {}
 ```
-> 若尚未开启 Actuator 的 readiness/liveness 细分，可通过环境变量 `MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true`（见 ConfigMap）开启。
+> 如 Actuator 未开启细分探针，请在 ConfigMap 中设置 `MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true`。
 
-### 3.1 Service + Ingress
+### 3.1 Service 与 Ingress
 ```yaml
 apiVersion: v1
 kind: Service
@@ -145,6 +154,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
 spec:
   tls:
     - hosts:
@@ -163,8 +173,8 @@ spec:
                   number: 80
 ```
 
-## 4. Website Deployment（可选）
-若网站静态资源通过 OSS/CDN 提供，可跳过 K8s。若需在集群内托管，则可使用：
+## 4. Website 工作负载（可选）
+若静态站点通过 OSS/CDN 发布，可跳过此节。若需集群托管：
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -183,7 +193,7 @@ spec:
     spec:
       containers:
         - name: website
-          image: registry.glancy.xyz/glancy/website:v1.3.0
+          image: registry.glancy.xyz/glancy/website:v1.4.0
           ports:
             - containerPort: 80
           envFrom:
@@ -200,33 +210,28 @@ spec:
               port: 80
             initialDelaySeconds: 30
 ```
-`/healthz` 可通过 Nginx `location /healthz { return 200 'ok'; }` 暴露。
+> `/healthz` 可通过 Nginx `location /healthz { return 200 'ok'; }` 实现。
 
 ## 5. 发布与回滚流程
 1. **滚动发布**：
    ```bash
-   kubectl -n glancy-staging set image deployment/glancy-backend backend=registry.glancy.xyz/glancy/backend:v1.3.1
-   kubectl -n glancy-staging rollout status deployment/glancy-backend --timeout=120s
+   kubectl -n glancy-staging set image deployment/glancy-backend backend=registry.glancy.xyz/glancy/backend:v1.4.1
+   kubectl -n glancy-staging rollout status deployment/glancy-backend --timeout=180s
    ```
-2. **零停机保障**：
-   - `maxUnavailable=0` + `readinessProbe` 确保新 Pod 未就绪不会摘旧版本。
-   - 可在 `kubectl` 命令后附加 `--record`，方便审计。
-   - 如需金丝雀，可配置 `replicas=4`，先调整 `Deployment` 使 `maxSurge=2` 并减少 `service` 指向旧 Pod。
-3. **回滚**：
+2. **零停机保障**：`maxUnavailable=0` + Readiness Probe 确保新 Pod 未就绪不会摘除旧实例；可借助 Service Mesh/灰度入口实现金丝雀。
+3. **金丝雀发布（可选）**：临时将 `replicas=4`，把新版本副本数限制在 1-2，结合 Ingress 权重或 Service Mesh 调度小流量。
+4. **回滚**：
    ```bash
    kubectl -n glancy-staging rollout undo deployment/glancy-backend
    kubectl -n glancy-staging rollout status deployment/glancy-backend
    ```
-4. **配置变更**：修改 ConfigMap/Secret 后执行：
-   ```bash
-   kubectl -n glancy-staging rollout restart deployment/glancy-backend
-   ```
-5. **验证**：
-   - `kubectl logs deployment/glancy-backend -f` 无异常。
-   - `kubectl exec` 访问 `/actuator/info` 确认版本。
-   - 观测平台检查新的 `service.version` 标签。
+5. **配置变更**：更新 ConfigMap/Secret 后执行 `kubectl -n glancy-staging rollout restart deployment/glancy-backend` 并观察探针。
+6. **验证清单**：
+   - `kubectl logs deployment/glancy-backend -f` 无异常栈。
+   - `kubectl exec` 调用 `/actuator/info` 核对版本号。
+   - 观测平台（Prometheus/SLS）显示新版本指标正常。
 
-## 6. HPA 与弹性
+## 6. 弹性伸缩
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -248,12 +253,12 @@ spec:
     kind: Deployment
     name: glancy-backend
 ```
-> 弹性扩容时记得同步数据库、对象存储、第三方 API 配额限制，确保不会触发 Doubao/Volcengine 的流控。
+> 当触发扩容时请检查数据库、OSS、第三方 API 的配额限制，防止超额调用。
 
-## 7. 运行中巡检
-- `kubectl get events -A | grep glancy`：排查探针失败。
-- `kubectl describe ingress glancy-backend`：确认证书与 WAF 注解已生效。
-- `kubectl top pod -n glancy-prod`：观测资源使用并调整 requests/limits。
-- 定期校验 `Secret` 的 `creationTimestamp` 以符合 90 天轮转要求。
+## 7. 运行期巡检
+- `kubectl get events -n glancy-staging | grep glancy`：排查探针失败与重启原因。
+- `kubectl describe ingress glancy-backend`：确认证书与 WAF 注解生效。
+- `kubectl top pod -n glancy-prod`：监控资源使用，及时调整 `requests/limits`。
+- 定期校验 Secret 的 `dataVersion` 与 `doc/deploy/Envs.md` 保持一致，满足 90 天轮转要求。
 
-通过以上步骤可以让 Backend 与 Website 在 K8s 上按标准探针、滚动策略与回滚流程运行，实现“可复制、可回滚”的上线能力。
+按照本手册准备资源与操作，即可在 K8s 集群中完成标准化的部署、健康监测、零停机发布与快速回滚。

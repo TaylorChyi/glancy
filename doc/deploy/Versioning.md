@@ -1,37 +1,38 @@
 # Versioning & Branching
 
-> 目标：统一版本号、分支与镜像 Tag 策略，使每一次发布都可追溯、可回滚，并与 `Docker.md` / `K8s.md` 的部署流程对齐。
+> 目标：统一版本号、分支命名与镜像标签策略，让发布流程与变更记录保持一致，可快速回滚。
 
-## 1. 版本语义
-1. **规范**：`v<MAJOR>.<MINOR>.<PATCH>`（SemVer）。
-   - `MAJOR`：不兼容接口/协议变更，如 REST API 结构调整、数据库重大升级。
-   - `MINOR`：向后兼容功能新增、配置项新增。
-   - `PATCH`：缺陷修复、安全补丁、文案等微调。
-2. **派生标记**：
-   - 预发布：`v1.4.0-rc.1`，用于 `staging` 演练。
-   - Build 元信息：CI 自动写入 `git.commit.id` 和 `build.time` 到 `/actuator/info`。
-3. **来源**：`VERSION` 文件由 Release 管理员维护（可在 CI 中根据 tag 写入），前端/后端构建脚本均读取该值注入环境变量 `SERVICE_VERSION`。
+## 1. 版本规范
+1. **SemVer**：采用 `v<MAJOR>.<MINOR>.<PATCH>`。
+   - `MAJOR`：接口不兼容、数据库结构重大调整。
+   - `MINOR`：向后兼容的新功能、配置项新增。
+   - `PATCH`：缺陷修复、安全补丁、文案微调。
+2. **预发布/补丁**：
+   - 预发布使用 `vX.Y.Z-rc.N`，仅在 `staging` 环境部署。
+   - 热修复可直接打 `vX.Y.Z` tag 并在 `hotfix/*` 分支完成。
+3. **构建元信息**：CI 在构建时写入 `SERVICE_VERSION`、`org.opencontainers.image.revision`、`git.commit.id`，便于 `/actuator/info` 与监控系统展示。
+4. **配置版本**：ConfigMap/Secret 建议增加 `dataVersion` 字段，与代码版本保持一致以避免“代码升级但配置未更新”。
 
-## 2. 分支命名
-| 分支 | 说明 | 命名 | 合并策略 |
+## 2. 分支策略
+| 分支 | 说明 | 命名示例 | 合并策略 |
 | --- | --- | --- | --- |
-| `main` | 永远可发布，代表线上状态 | 固定 | 只接受来自 `release/*` 或 `hotfix/*` 的 PR，必须通过代码审查与 CI。 |
-| `develop` | 集成分支，供 QA/Dev 环境使用 | 固定 | Feature 合并前需要通过 `mvn test`、`npm test`、`npm run lint`。 |
-| `feature/*` | 功能/需求开发 | `feature/<jira-id>-<slug>` | 完成后合并到 `develop`，禁止直接推到 `main`。 |
-| `release/*` | 发版准备 | `release/v<MAJOR>.<MINOR>.0` | 从 `develop` 切出，冻结新功能，仅允许修复 bug；验收完合并到 `main` 与 `develop`。 |
-| `hotfix/*` | 线上紧急修复 | `hotfix/v<MAJOR>.<MINOR>.<PATCH>` | 直接从 `main` 切分支，修复后回合 `main` + `develop`，并立即打 tag。
+| `main` | 永远可发布，反映线上状态 | 固定 | 只接受来自 `release/*` 或 `hotfix/*` 的 PR，要求 CI 全绿 + 两人 review。 |
+| `develop` | 集成分支，供 `dev`/`staging` 使用 | 固定 | `feature/*` 合并前必须通过 `./mvnw test`、`npm run lint`、`npm test`。 |
+| `feature/*` | 功能开发 | `feature/GLC-123-share-dialog` | 完成后合并回 `develop`，禁止直接合入 `main`。 |
+| `release/*` | 发版准备 | `release/v1.4.0` | 从 `develop` 切出，冻结新功能，仅接受 bugfix；验收完成后合并到 `main` 与 `develop`。 |
+| `hotfix/*` | 线上紧急修复 | `hotfix/v1.4.1` | 从 `main` 切分支，修复后同时合并回 `main` 和 `develop`，并立即打 tag。 |
 
 ## 3. 发布流程
-1. **Cut Release Branch**：`git checkout -b release/v1.4.0 develop`。
+1. **切分支**：`git checkout -b release/v1.4.0 develop`。
 2. **版本对齐**：
-   - 更新 `VERSION`、以及用于 UI 展示版本号的常量/配置。
-   - 在 `doc/CHANGELOG.md` 或等效文件记录变化（若不存在可新建）。
-   - 确认 `doc/deploy/Envs.md` 中的变量如需新增已补充。
+   - 更新根目录 `VERSION` 与用于 UI 显示的常量。
+   - 在 `CHANGELOG.md`（或等效文档）记录变更摘要。
+   - 如有新增环境变量，同步更新 `doc/deploy/Envs.md`。
 3. **质量闸门**：
-   - `./mvnw verify`
-   - `npm run lint && npm test && npm run build`
-   - `npm run test:e2e`（可在 `staging` 执行）
-4. **打 Tag**：在 release branch 通过验收后：
+   - Backend：`./mvnw verify`
+   - Frontend：`npm run lint && npm test && npm run build`
+   - 可选：`npm run test:e2e` 在 `staging` 执行
+4. **打 Tag**：验收通过后执行：
    ```bash
    git checkout main
    git merge --ff-only release/v1.4.0
@@ -39,29 +40,26 @@
    git push origin main --follow-tags
    git checkout develop
    git merge --ff-only release/v1.4.0
+   git push origin develop
    ```
-5. **CI 产物**：Tag 推送后流水线执行：
-   - 构建 Backend Jar + Docker 镜像 `registry.../backend:v1.4.0`
-   - 构建 Website 静态资源 + 镜像 `registry.../website:v1.4.0`
+5. **CI 产物**：
+   - 构建 Backend Jar + Docker 镜像 `registry.glancy.xyz/glancy/backend:v1.4.0`
+   - 构建 Website 静态资源 + 镜像 `registry.glancy.xyz/glancy/website:v1.4.0`
    - 生成 SBOM、安全扫描报告（如 `mvn org.owasp:dependency-check-maven:aggregate`）
-6. **发布单**：
-   - 记录版本号、Git 提交、镜像 digest、涉及的环境变量调整。
-   - 链接到 `doc/deploy/Docker.md`/`K8s.md` 中的部署步骤，确保操作员使用相同 tag。
+6. **发布单**：记录 Git 提交、镜像 digest、配置变更、回滚策略，并链接至 `Docker.md`/`K8s.md` 的对应步骤。
 
-## 4. 变更与回滚
-1. **回滚策略**：
-   - Git：`git revert -m 1 <merge-commit>` 创建回滚 PR。
-   - 镜像：部署流水线可选 `Previous Artifact`（上一 tag）。
-2. **热修复**：
-   - 从 `main` 切 `hotfix/v1.4.1`，完成修改后重复第 3 节 Tag 流程。
-   - 热修复发布完成后，记得同步 `hotfix` 变更回 `develop`，防止丢失。
-3. **版本冻结**：
-   - 在 `release/*` 上设置 `CODEFREEZE=true` 标记，CI 将阻断来自 `feature/*` 的自动合并，确保只接受 bugfix。
+## 4. 回滚与热修复
+1. **Git 回滚**：`git revert -m 1 <merge-commit>` 创建回滚 PR；必要时在 `release/*` 或 `hotfix/*` 上重打 tag。
+2. **镜像回滚**：部署流水线提供“上一版本”选项，或手动指定 `vX.Y.(Z-1)` tag 并执行 `kubectl rollout undo`/`docker compose up --force-recreate`。
+3. **热修复流程**：
+   - 从 `main` 切 `hotfix/v1.4.1`，修复后重复第 3 节打 tag 流程。
+   - 发布完成后立刻将 `hotfix` 分支合并回 `develop`，保持分支一致性。
+4. **冻结策略**：在 `release/*` 设置流水线变量 `CODEFREEZE=true`，阻止自动合并，确保只接受审核后的修复。
 
 ## 5. 与部署策略的映射
-1. **Docker**：镜像 tag = Git tag = `VERSION`。在 `doc/deploy/Docker.md` 中的蓝绿/滚更操作均以该 tag 为输入。禁止使用 `latest` 在 `staging/prod` 发布。
-2. **K8s**：`Deployment` 的 `image` 字段必须引用具体版本；`kubectl rollout undo` 依赖 `image` 历史，若 tag 不变则无法回滚。
-3. **配置版本**：Secrets/ConfigMap 建议追加 `dataVersion` 字段，格式与代码版本一致，例如 `dataVersion: v1.4.0`，以便排查“代码已升级但配置未更新”的情形。
-4. **文档同步**：任何涉及部署的信息变更，需要同步更新：`doc/deploy/Envs.md`（变量）、`Docker.md`（镜像/脚本）、`K8s.md`（探针/资源）。发布单应链接到对应 MR/PR 以及文档 diff。
+1. **Docker**：镜像 tag = Git tag = `VERSION`。`Docker.md` 中的发布/回滚命令需使用同一 tag，禁止在生产环境使用 `latest`。
+2. **K8s**：`Deployment` 的 `image` 字段必须引用具体版本；只有 tag 发生变化，`kubectl rollout undo` 才能准确定位历史版本。
+3. **配置同步**：Secrets/ConfigMap 的 `dataVersion` 更新后，需要在发布单中记录并在 `staging` 验证，通过后再同步 `prod`。
+4. **文档更新**：任何涉及部署的信息变更，需同步修改 `doc/deploy/Envs.md`、`Docker.md`、`K8s.md` 并在 PR 描述中引用，以保证运维手册与实际状态一致。
 
-通过上述策略，可以将 Git、镜像、配置与发布流程串联起来，保证“能跑一次”的环境可以被可靠复制、快速回滚，并且版本号与变更记录保持一致。
+遵循以上规范即可将版本控制、镜像发布与部署策略串联起来，实现“可复制、可回滚”的发版体系。
