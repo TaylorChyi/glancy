@@ -1,453 +1,515 @@
 # 用户故事集（Story Inventory）
 
-> 与 `StoryMap.md` 对齐的 32 条 INVEST 用户故事，全部绑定 doc/用例说明书/README.md 中的 UC，并提供 Gherkin 风格验收标准与 SLA/KPI 映射。
+> 与 `StoryMap.md` 对齐的 34 条 INVEST 用户故事，全部绑定 `doc/用例说明书` 中的 UC-01 ~ UC-05，并指向相应 AC，附带 Gherkin 风格验收标准与 SLA/KPI 映射。
 
 ## 用户故事明细
 
-### ST-01 首屏流式查词响应
-- **用户故事**：作为需要即时释义的学习者，我希望首屏在 2.5 秒内开始渲染释义，以便决定是否继续阅读。
+### ST-01 输入校验阻挡句子查询
+- **用户故事**：作为需要精准释义的学习者，我希望系统阻止整句输入并指引我改为词或词组，以避免浪费查询配额。
 - **关联 UC**：UC-01
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：词典查询首屏 P95 ≤ 2.5s，分片丢失率 ≤ 1%。
-- **INVEST**：Independent（仅聚焦首屏渲染）、Negotiable（UI 形态可协商）、Valuable（缩短等待提升留存）、Estimable（API/渲染链路可量化）、Small（单次查词流程）、Testable（AC 提供可测条件）。
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：输入校验命中率 ≥ 99%；错误提示渲染延迟 < 150ms。
+- **INVEST**：Independent（仅处理输入校验）、Negotiable（提示样式可调）、Valuable（减少失败请求）、Estimable（校验逻辑明确）、Small（单组件）、Testable（校验响应可自动化）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Block sentence lookup at client side
+  Given 用户在输入框粘贴一个超过 15 个词的句子
+  When 点击“查询”
+  Then 前端阻止请求并提示“请改为词或词组”
+```
+
+### ST-02 首屏流式分片达成 SLA
+- **用户故事**：作为需要即时反馈的用户，我希望查词后首屏在 2.5 秒内渲染首个释义分片，确保体验顺滑。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01-PERF
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：首屏首个内容分片 P95 ≤ 2.5s；平均 ≤ 1.2s。
+- **INVEST**：Independent（聚焦首屏时延）、Negotiable（加载指示可调）、Valuable（提升满意度）、Estimable（链路清晰）、Small（单流程）、Testable（压测脚本可验证）。
 - **验收标准（Gherkin）**：
 ```gherkin
 Scenario: Streamed lookup renders first chunk within SLA
-  Given 用户已登录并输入查询词
-  When 词典 API 返回首个流式分片
-  Then 前端在 2.5 秒内显示释义首屏并展示加载指示
+  Given 查词 API 正常可用
+  When 用户提交查询
+  Then 2.5 秒内渲染首个释义模块并展示加载状态
 ```
 
-### ST-02 分段渲染字典结构
-- **用户故事**：作为需要完整信息的学习者，我希望释义、例句、词性等模块随着流式分片逐段渲染，避免空白等待。
+### ST-03 模块化流式渲染
+- **用户故事**：作为深入学习者，我希望释义、例句、搭配等模块随着分片到达逐步渲染，避免页面闪烁。
 - **关联 UC**：UC-01
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：分片间隔 ≤ 400ms；每个段落渲染错误率 < 0.5%。
-- **INVEST**：Independent（关注渲染序列）、Negotiable（分片布局可讨论）、Valuable（提升可读性）、Estimable（受 API 契约约束）、Small（单模块渲染）、Testable（渲染事件可验证）。
+- **覆盖 AC**：AC-UC-01-Stream
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：分片间隔 ≤ 400ms；渲染错误率 < 0.5%。
+- **INVEST**：Independent（聚焦分片渲染）、Negotiable（模块布局可调）、Valuable（提高可读性）、Estimable（契约固定）、Small（单渲染策略）、Testable（可脚本检测 DOM）。
 - **验收标准（Gherkin）**：
 ```gherkin
 Scenario: Sections render as chunks arrive
-  Given 流式响应包含释义与例句分片
-  When 第 n 个分片抵达前端
-  Then 对应的模块即刻插入 DOM 并保持已有内容不闪动
+  Given 流式响应包含多个模块分片
+  When 第 n 个分片抵达
+  Then 对应模块插入 DOM 且已渲染内容不闪动
 ```
 
-### ST-03 查询配额头信息展示
-- **用户故事**：作为订阅用户，我希望每次查询都能看到本次消耗和剩余额度，避免突发限流。
-- **关联 UC**：UC-01，UC-13
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：Quota Header 呈现成功率 100%；剩余额度计算误差=0。
-- **INVEST**：Independent（仅处理配额展示）、Negotiable（呈现样式可调）、Valuable（透明度提升转化）、Estimable（字段固定）、Small（单一组件）、Testable（Header 字段可验证）。
+### ST-04 缓存命中与 Header 指示
+- **用户故事**：作为高频用户，我希望在命中缓存时看到明显提示与 `X-Cache` Header，判断结果是否最新。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：缓存命中标识正确率 100%；提示渲染延迟 < 150ms。
+- **INVEST**：Independent（仅处理缓存提示）、Negotiable（提示样式可调）、Valuable（增强信任）、Estimable（字段固定）、Small（单组件）、Testable（响应 Header 可验证）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Display cache hit indicator
+  Given BFF 返回 Header X-Cache: HIT
+  When 页面渲染结果
+  Then 展示“来自缓存”徽标并保留 trace_id
+```
+
+### ST-05 配额消耗透明化
+- **用户故事**：作为订阅用户，我希望每次查询都能看到本次消耗、剩余额度与重置时间，避免意外限流。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01-Quota
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：Quota Header 呈现率 100%；剩余额度误差 0。
+- **INVEST**：Independent（聚焦配额展示）、Negotiable（UI 可调）、Valuable（提升透明度）、Estimable（字段有限）、Small（单组件）、Testable（自动化断言 Header）。
 - **验收标准（Gherkin）**：
 ```gherkin
 Scenario: Quota header shows remaining credits
-  Given 查词响应 Header 包含 X-Quota-Remaining 与 Reset-At
-  When 客户端完成渲染
-  Then 页面展示本次消耗与剩余额度并包含预估重置时间
+  Given 响应 Header 含 X-Quota-Remaining 与 X-Quota-Reset-At
+  When 客户端渲染查词结果
+  Then 页面展示本次消耗、剩余额度与重置时间
 ```
 
-### ST-04 流式状态与降级提示
-- **用户故事**：作为依赖词典的学习者，我希望在网络抖动或降级时收到明确提示，避免误解为系统卡死。
-- **关联 UC**：UC-01，UC-14
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：降级提示在异常判定 ≤ 200ms 内展现；误报率 < 1%。
-- **INVEST**：Independent（聚焦状态提示）、Negotiable（提示样式可调）、Valuable（减少投诉）、Estimable（状态机清晰）、Small（单提示组件）、Testable（可模拟超时验证）。
+### ST-06 历史与事件落库闭环
+- **用户故事**：作为希望回顾记录的用户，我需要成功查询能写入 `lookups`、`results`、`history` 并广播成功事件。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：落库成功率 ≥ 99.9%；事件发送延迟 < 2s。
+- **INVEST**：Independent（聚焦落库与事件）、Negotiable（事件 payload 可调）、Valuable（支持历史与导出）、Estimable（流程清晰）、Small（单链路）、Testable（检查数据库与事件日志）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Degradation banner appears when fallback triggers
-  Given 流式连接进入半开或熔断状态
-  When 客户端触发降级策略
-  Then 页面展示降级提示并引导用户稍后重试
+Scenario: Persist lookup history and emit success event
+  Given 查词响应 200 且未开启无痕
+  When 请求完成
+  Then lookups、results、history 三表写入成功并产生 query.success 事件
 ```
 
-### ST-05 一键再生成例句
-- **用户故事**：作为语言学习者，我希望点击一次即可再生成例句，且响应不超过 1 秒，以便快速获得新的语境。
-- **关联 UC**：UC-02
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：再生成响应 P95 ≤ 1.0s；失败率 < 1%。
-- **INVEST**：Independent（仅聚焦再生成按钮）、Negotiable（触发位置可调）、Valuable（提升学习效率）、Estimable（单 API 调用）、Small（按钮+调用）、Testable（可通过 AC 自动化）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Regenerate sentences within SLA
-  Given 用户在释义卡片点击“再生成”
-  When 后端返回新的例句
-  Then 页面替换旧例句并记录一次再生成配额
-```
-
-### ST-06 再生成多样性控制
-- **用户故事**：作为高级用户，我希望选择“创意/保守”等多样性档位，以得到更符合场景的例句。
-- **关联 UC**：UC-02
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：多样性分布指标 ≥ 0.7；设置到响应的延迟 < 300ms。
-- **INVEST**：Independent（只涉及多样性参数）、Negotiable（档位数量可调）、Valuable（满足差异化需求）、Estimable（有限档位）、Small（表单+参数）、Testable（日志可验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Diversity option affects regenerate payload
-  Given 用户在再生成面板选择“创意”档位
-  When 发送再生成请求
-  Then Payload 包含 diversity=creative 且返回结果标记所选档位
-```
-
-### ST-07 难度切换实时生效
-- **用户故事**：作为不同水平的学习者，我希望在释义卡片切换难度后即刻得到重算结果。
-- **关联 UC**：UC-03
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：难度切换响应 ≤ 300ms；切换成功率 ≥ 99%。
-- **INVEST**：Independent（仅难度切换）、Negotiable（展示形式可调）、Valuable（符合学习节奏）、Estimable（固定档位）、Small（控件+调用）、Testable（可脚本化）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Difficulty toggle recalculates result
-  Given 当前难度为“标准”
-  When 用户切换到“高级”
-  Then 系统重新请求 UC-03 接口并以高级标签渲染释义
-```
-
-### ST-08 难度/风格偏好持久化
-- **用户故事**：作为 Plus/Pro 用户，我希望偏好设置在账号级持久化，避免每次都手动切换。
-- **关联 UC**：UC-03，UC-07
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：偏好写入 ≤ 200ms；命中率 ≥ 90%。
-- **INVEST**：Independent（聚焦偏好存储）、Negotiable（字段可扩展）、Valuable（减少重复操作）、Estimable（受画像 Schema 限制）、Small（单表写入）、Testable（读写接口可测）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Saved preference auto-applies on next lookup
-  Given 用户已保存“简洁+正式”偏好
-  When 重新打开页面查询新单词
-  Then 默认难度与风格采用保存值且无需额外点击
-```
-
-### ST-09 历史列表分页浏览
-- **用户故事**：作为复习用户，我希望查询历史按时间倒序分页展示，以便快速定位最近的查词记录。
-- **关联 UC**：UC-04
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：分页接口 P95 ≤ 1.2s；游标翻页错误率 < 0.5%。
-- **INVEST**：Independent（仅列表读取）、Negotiable（分页大小可调）、Valuable（提升复习效率）、Estimable（接口固定）、Small（单界面）、Testable（接口响应可断言）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: History list returns paginated results
-  Given 用户打开历史页
-  When 请求第一页游标
-  Then 返回 20 条最新记录并附下一页游标
-```
-
-### ST-10 历史筛选（语言/时间）
-- **用户故事**：作为多语言用户，我希望按语言对与时间范围筛选历史记录，以便批量管理。
-- **关联 UC**：UC-04，UC-05
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：筛选响应 ≤ 1.5s；筛选命中准确率 100%。
-- **INVEST**：Independent（专注过滤条件）、Negotiable（过滤项可拓展）、Valuable（定位记录）、Estimable（条件有限）、Small（单筛选面板）、Testable（请求参数可验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Filter history by language pair
-  Given 历史中包含多个语言对
-  When 用户选择“英-中”并设置最近 7 天
-  Then 返回结果仅包含满足条件的记录
-```
-
-### ST-11 按语言清理历史
-- **用户故事**：作为注重隐私的用户，我希望按语言对删除历史并立即生效。
-- **关联 UC**：UC-05
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：逻辑删除即时；删除确认提示覆盖率 100%。
-- **INVEST**：Independent（单一删除动作）、Negotiable（确认方式可调）、Valuable（减少噪音）、Estimable（单接口）、Small（单按钮）、Testable（删除结果可查询）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Delete history by language pair
-  Given 用户在历史页选择“英-中”
-  When 点击“删除所选语言对”并确认
-  Then 该语言对记录立即从列表消失并记入待物理清除任务
-```
-
-### ST-12 全部历史清理与恢复提示
-- **用户故事**：作为控制数据的用户，我希望清空全部历史时看到 T+7 天物理清理与恢复窗口说明。
-- **关联 UC**：UC-05
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：提示弹窗覆盖率 100%；清空操作记录到审计日志。
-- **INVEST**：Independent（聚焦全量删除）、Negotiable（提醒文案可调）、Valuable（降低误删风险）、Estimable（操作链清晰）、Small（一次动作）、Testable（日志可核对）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Full history wipe shows retention info
-  Given 用户点击“清空全部历史”
-  When 确认弹窗出现
-  Then 弹窗说明逻辑删除即时、生效时间与 T+7d 物理清理及可恢复窗口
-```
-
-### ST-13 导出任务申请（CSV/JSON）
-- **用户故事**：作为需要备份的用户，我希望选择 CSV/JSON 格式后立即收到导出任务回执。
-- **关联 UC**：UC-06
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：回执生成 ≤ 5s；格式校验 100%。
-- **INVEST**：Independent（仅导出申请）、Negotiable（格式可扩展）、Valuable（满足外部分析）、Estimable（任务流程固定）、Small（单操作）、Testable（回执内容可校验）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Export job returns receipt within SLA
-  Given 用户在历史页选择 CSV 导出
-  When 点击“生成导出”
-  Then 在 5 秒内收到包含 jobId、格式与 TTL 的回执
-```
-
-### ST-14 下载导出回执链接
-- **用户故事**：作为导出申请人，我希望在回执中心/邮件中拿到一次性链接，10 分钟内有效。
-- **关联 UC**：UC-06
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：链接生成 ≤ 3s；TTL 准确率 100%。
-- **INVEST**：Independent（关注下载环节）、Negotiable（通知渠道可调）、Valuable（完成导出）、Estimable（链接生命周期清晰）、Small（单链接生成）、Testable（TTL 可验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Download link honors TTL
-  Given jobId 状态为完成
-  When 用户在 10 分钟内点击下载链接
-  Then 链接返回文件且包含剩余 TTL；超过 TTL 时返回过期提示
-```
-
-### ST-15 画像字段管理
-- **用户故事**：作为 Plus/Pro 用户，我希望在设置中心管理画像字段（语气、行业、难度权重）。
-- **关联 UC**：UC-07
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：画像写入 API P95 ≤ 200ms；成功率 ≥ 99.9%。
-- **INVEST**：Independent（聚焦画像 CRUD）、Negotiable（字段可扩展）、Valuable（驱动个性化）、Estimable（字段有限）、Small（单页面）、Testable（接口可测）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Profile update persists fields
-  Given 用户在画像中心修改行业=“法律”
-  When 点击保存
-  Then 后端记录该字段并返回版本号，前端提示成功
-```
-
-### ST-16 画像驱动查询链路
-- **用户故事**：作为已配置画像的用户，我希望所有查询自动带上画像参数以生成符合语气的结果。
-- **关联 UC**：UC-07，UC-03
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：带画像请求比例 ≥ 95%；额外延迟 < 50ms。
-- **INVEST**：Independent（聚焦参数注入）、Negotiable（参数映射可调）、Valuable（稳定体验）、Estimable（依赖固定 schema）、Small（单管线修改）、Testable（请求日志可验）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Lookup inherits profile context
-  Given 用户画像定义 tone=formal
-  When 发起任意查词
-  Then 下游请求 Payload 包含 tone=formal 且返回结果标记该语气
-```
-
-### ST-17 订阅开通与支付提交流程
-- **用户故事**：作为希望升级的用户，我要选择订阅档位并完成支付，5 秒内生效。
-- **关联 UC**：UC-08
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：支付成功到权益生效 ≤ 5s；失败回退率 < 1%。
-- **INVEST**：Independent（聚焦开通流程）、Negotiable（UI 可调）、Valuable（直接带来收入）、Estimable（支付链路既定）、Small（单流程）、Testable（交易用例可执行）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Subscription activates within SLA
-  Given 用户在订阅页选择 Plus 年费档位
-  When 完成支付并收到 PSP 成功回执
-  Then 账户在 5 秒内显示新权益并刷新配额类型
-```
-
-### ST-18 支付回调与权益即时同步
-- **用户故事**：作为系统集成者，我希望支付回调幂等处理，确保重复通知不会重复扣款。
-- **关联 UC**：UC-08
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：回调幂等冲突率 < 0.1%；权益同步延迟 ≤ 5s。
-- **INVEST**：Independent（只处理回调）、Negotiable（存储策略可调）、Valuable（防止错账）、Estimable（事件流程清晰）、Small（单服务）、Testable（可模拟重复回调）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Duplicate webhook handled idempotently
-  Given PSP 针对同一订单发送两次成功回调
-  When 后端处理第二次通知
-  Then 返回 200 OK 但不重复创建订单记录
-```
-
-### ST-19 到期自动降级处理
-- **用户故事**：作为订阅到期用户，我希望系统在权益到期时自动降级到免费档，并同步限制生效。
-- **关联 UC**：UC-09
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：降级作业延迟 ≤ 30s；失败率 < 0.5%。
-- **INVEST**：Independent（聚焦降级 job）、Negotiable（执行时间可调）、Valuable（避免权益错配）、Estimable（基于批任务）、Small（单作业）、Testable（可模拟到期用户）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Expired plan auto-downgrades
-  Given 用户订阅已超出有效期
-  When 定时任务运行
-  Then 账户状态改为 Free 并刷新配额与提示横幅
-```
-
-### ST-20 降级前后通知
-- **用户故事**：作为订阅用户，我希望提前 3 天收到到期提醒，并在降级完成后收到确认。
-- **关联 UC**：UC-09
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：提醒发送提前 ≥ 72h；通知送达率 ≥ 98%。
-- **INVEST**：Independent（专注通知链路）、Negotiable（通知渠道可定）、Valuable（提升续费率）、Estimable（触发规则固定）、Small（两类通知）、Testable（可用模拟 clock 验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Expiry reminder sent 3 days in advance
-  Given 用户订阅还有 3 天到期
-  When 系统执行提醒任务
-  Then 用户收到包含续费入口与剩余天数的通知
-```
-
-### ST-21 邮箱注册登录并同意条款
-- **用户故事**：作为新用户，我希望通过邮箱注册/登录并在首次使用时签署条款。
-- **关联 UC**：UC-10
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：登录成功率 ≥ 98%；条款记录必填率 100%。
-- **INVEST**：Independent（邮箱链路）、Negotiable（验证码或密码可调）、Valuable（开启体验入口）、Estimable（步骤有限）、Small（单链路）、Testable（登录流程可自动化）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Email login captures ToS consent
-  Given 用户输入邮箱并通过验证码
-  When 首次登录成功
-  Then 系统要求勾选条款并记录 consentId
-```
-
-### ST-22 第三方 OAuth 并账号合并
-- **用户故事**：作为已有第三方账号的用户，我希望用 OAuth 登录并自动与邮箱账号合并避免重复数据。
-- **关联 UC**：UC-10
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：OAuth 成功率 ≥ 97%；合并冲突率 < 0.5%。
-- **INVEST**：Independent（专注第三方登录）、Negotiable（支持平台可调）、Valuable（降低摩擦）、Estimable（少量流程）、Small（单链路）、Testable（可用沙盒验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: OAuth login merges existing email account
-  Given 用户已用同一邮箱注册
-  When 通过第三方 OAuth 登录
-  Then 系统提示账号合并成功且历史记录保持唯一
-```
-
-### ST-23 无痕查询模式
-- **用户故事**：作为注重隐私的用户，我希望开启无痕模式查询时不写入历史但仍计配额。
-- **关联 UC**：UC-11
-- **里程碑/批次**：M2 · Beta · 留存与个性化
-- **SLA/KPI 绑定**：无痕查询不落库率 100%；提示展示率 100%。
-- **INVEST**：Independent（聚焦无痕开关）、Negotiable（入口位置可调）、Valuable（提升信任）、Estimable（逻辑清晰）、Small（单 flag）、Testable（数据库可验证）。
-- **验收标准（Gherkin）**：
-```gherkin
-Scenario: Incognito lookup skips history persistence
-  Given 用户在查词前开启“无痕模式”
-  When 完成一次查词
-  Then 该记录不出现在历史页但配额统计 +1
-```
-
-### ST-24 语言对切换即刻重查
-- **用户故事**：作为双语用户，我希望切换语言对后自动清理缓存并重查当前单词。
-- **关联 UC**：UC-12
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：缓存清理 < 200ms；重查 P95 ≤ 2.5s。
-- **INVEST**：Independent（聚焦切换行为）、Negotiable（选择器 UI 可调）、Valuable（减少步骤）、Estimable（依赖既有 API）、Small（单操作）、Testable（可通过日志验证）。
+### ST-07 语言对切换重查
+- **用户故事**：作为多语言用户，我希望切换语言对后自动清理缓存并重新查询当前词条。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：语言切换后重查 P95 ≤ 2.5s；缓存清理 < 200ms。
+- **INVEST**：Independent（聚焦切换行为）、Negotiable（选择器样式可调）、Valuable（减少手动步骤）、Estimable（流程有限）、Small（单交互）、Testable（可模拟切换操作）。
 - **验收标准（Gherkin）**：
 ```gherkin
 Scenario: Switching language triggers fresh lookup
-  Given 当前语言对为 英→中
+  Given 当前语言为 英→中
   When 用户切换到 中→英
-  Then 客户端清理旧缓存并重新发起查词请求
+  Then 客户端清理缓存并重新发起查词请求
 ```
 
-### ST-25 限流提示包含剩余额度
-- **用户故事**：作为高频用户，我希望在限流时看到剩余额度与重置时间，便于安排查询。
-- **关联 UC**：UC-13
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：429 响应提示 100% 包含剩余额度；文案渲染延迟 < 200ms。
-- **INVEST**：Independent（聚焦限流提示）、Negotiable（提示样式可调）、Valuable（降低挫败感）、Estimable（字段有限）、Small（单组件）、Testable（可模拟 429）。
+### ST-08 幂等键与缓存层策略
+- **用户故事**：作为追求稳定性的用户，我希望重复请求能命中 24 小时幂等缓存，避免重复扣配额。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：幂等命中率 ≥ 95%；重复扣配额 0 次。
+- **INVEST**：Independent（聚焦幂等策略）、Negotiable（缓存键细节可调）、Valuable（节省成本）、Estimable（规则明确定义）、Small（单服务变更）、Testable（重复请求日志可验）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Rate limit banner shows remaining credits
-  Given API 返回 HTTP 429 与剩余额度 0
-  When 客户端捕获该状态
-  Then 页面展示剩余额度、重置时间及重试建议
+Scenario: Repeat request served from idempotent cache
+  Given 用户在 10 分钟内重复查询同一词条
+  When BFF 收到相同幂等键
+  Then 返回缓存结果且不额外扣减查词配额
 ```
 
-### ST-26 限流时升级 CTA 与 SLA 建议
-- **用户故事**：作为被限流的潜在付费用户，我希望看到可升级的套餐与预计恢复时间。
-- **关联 UC**：UC-13
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：升级 CTA 曝光率 100%；点击转化率 ≥ 8%。
-- **INVEST**：Independent（聚焦 CTA）、Negotiable（CTA 形式可调）、Valuable（促进转化）、Estimable（UI 轻量）、Small（单模块）、Testable（AB 数据可验）。
+### ST-09 权益差异与模块裁剪
+- **用户故事**：作为免费档用户，我希望系统在命中受限模块时提示升级，并裁剪例句数量。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：裁剪提示覆盖率 100%；提示渲染延迟 < 200ms。
+- **INVEST**：Independent（聚焦权益提示）、Negotiable（文案可调）、Valuable（促进升级）、Estimable（条件明确）、Small（单提示流程）、Testable（模拟免费档响应）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Rate limit CTA deep-links to upgrade flow
-  Given 用户命中限流
-  When 查看提示
-  Then 横幅包含“升级订阅”按钮并跳转到订阅页携带来源参数
+Scenario: Free tier receives truncated examples
+  Given 免费档用户查询受限模块
+  When BFF 返回裁剪后的 exampleCount
+  Then 前端展示裁剪提示并附带“升级解锁更多”入口
 ```
 
-### ST-27 熔断降级的模板释义
-- **用户故事**：作为需要兜底内容的用户，我希望主链路失败时仍能收到基础释义和示例。
-- **关联 UC**：UC-14
-- **里程碑/批次**：M1 · Alpha · 核心查词
-- **SLA/KPI 绑定**：降级响应 ≤ 800ms；fallback 呈现率 100%。
-- **INVEST**：Independent（聚焦降级输出）、Negotiable（模板内容可调）、Valuable（保障可用性）、Estimable（模板固定）、Small（单流程）、Testable（可模拟熔断）。
+### ST-10 无障碍与 aria-live 提示
+- **用户故事**：作为依赖读屏的用户，我希望流式过程中仅播报一次“正在加载”，并在降级时播报退化提示。
+- **关联 UC**：UC-01
+- **覆盖 AC**：AC-UC-01-Stream
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：ARIA 播报一次性成功率 100%；降级播报延迟 < 1s。
+- **INVEST**：Independent（聚焦可访问性）、Negotiable（提示文本可调）、Valuable（符合无障碍要求）、Estimable（规则明确）、Small（单播报策略）、Testable（读屏测试可执行）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Fallback template renders when streaming fails
-  Given 主查词调用失败并触发 UC-14
-  When fallback 模块被调用
-  Then 用户看到基础释义、例句与“已降级”提示
+Scenario: Screen reader announces streaming status once
+  Given 读屏模式开启
+  When 流式查词开始
+  Then aria-live 提示仅播报一次加载状态并在降级时追加一次退化说明
 ```
 
-### ST-28 账单列表与收据查询
-- **用户故事**：作为订阅用户，我希望查看历次账单，包含订单号、金额与状态。
-- **关联 UC**：UC-15
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：账单列表 P95 ≤ 1.5s；字段完整率 100%。
-- **INVEST**：Independent（聚焦账单查询）、Negotiable（展示字段可调）、Valuable（满足报销）、Estimable（接口清晰）、Small（单列表）、Testable（接口可验证）。
+### ST-11 熔断触发降级路径
+- **用户故事**：作为依赖可用性的用户，我希望在 Doubao 5xx ≥5% 时自动启用降级模板而非报错。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：熔断触发→降级响应 ≤ 5s；降级响应 P95 ≤ 1.8s。
+- **INVEST**：Independent（聚焦熔断判断）、Negotiable（阈值可配）、Valuable（保障体验）、Estimable（状态机明确）、Small（单流程）、Testable（模拟 5xx 可验证）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Billing list shows normalized entries
-  Given 用户打开“账单与收据”
-  When 请求账单列表
-  Then 返回每条记录含订单号、金额、货币、状态与导出入口
+Scenario: Circuit opens when upstream error rate is high
+  Given 最近 1 分钟 Doubao 5xx 比例 ≥ 5%
+  When 新的查词请求进入
+  Then 系统跳过主链路并返回 degraded=true 的模板响应
 ```
 
-### ST-29 收据下载（PDF/邮件）
-- **用户故事**：作为企业用户，我希望将账单导出为 PDF 并可发送到绑定邮箱。
-- **关联 UC**：UC-15
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：PDF 生成 ≤ 3s；邮件发送成功率 ≥ 99%。
-- **INVEST**：Independent（聚焦收据导出）、Negotiable（格式可调）、Valuable（报销凭证）、Estimable（流程固定）、Small（单动作）、Testable（可通过集成测试验证）。
+### ST-12 降级提示横幅
+- **用户故事**：作为终端用户，我希望在降级时看到明显提示，避免误以为查询失败。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：提示渲染延迟 ≤ 200ms；误报率 < 1%。
+- **INVEST**：Independent（聚焦提示）、Negotiable（样式可调）、Valuable（提升信任）、Estimable（触发条件明确）、Small（单组件）、Testable（模拟降级验证）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Receipt download returns PDF link
-  Given 用户在账单详情点击“下载收据”
-  When 生成 PDF 成功
-  Then 页面提供下载链接并可选发送到登记邮箱
+Scenario: Degradation banner appears when fallback triggers
+  Given 响应字段 degraded=true
+  When 前端渲染页面
+  Then 顶部展示“已降级”横幅并支持键盘关闭
 ```
 
-### ST-30 撤回隐私同意立即生效
-- **用户故事**：作为遵循 GDPR 的用户，我希望撤回隐私同意后立即停止非必要处理。
-- **关联 UC**：UC-16
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：撤回执行 ≤ 5s；后续请求标记 consent=false。
-- **INVEST**：Independent（聚焦 consent 状态）、Negotiable（入口可调）、Valuable（满足合规）、Estimable（状态机简单）、Small（单操作）、Testable（状态可验证）。
+### ST-13 成本护栏触发策略
+- **用户故事**：作为运营人员，我希望当成本护栏 ≥95% 时查词改走强缓存，再生成直接返回 403 并提示原因。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14-Guardrail
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：护栏触发响应 ≤ 5s；错误提示准确率 100%。
+- **INVEST**：Independent（聚焦护栏策略）、Negotiable（阈值可配）、Valuable（控制成本）、Estimable（规则明确）、Small（单策略）、Testable（模拟护栏条件）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Consent withdrawal updates processing flags
-  Given 用户在隐私中心点击“撤回非必要处理”
-  When 确认操作
-  Then 系统立即更新 consent 状态并提示后续功能受限
+Scenario: Cost guardrail bypasses regeneration
+  Given 成本护栏指标 ≥ 95%
+  When 用户点击“再生成”
+  Then 返回 403 GUARDRAIL_ACTIVE 并提示原因及稍后重试建议
 ```
 
-### ST-31 数据删除申请可追踪
-- **用户故事**：作为隐私敏感用户，我希望提交删除申请并能追踪执行进度，最终在 T+7 天完成物理清理。
-- **关联 UC**：UC-16
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：删除请求记录率 100%；完成时间 ≤ T+7d。
-- **INVEST**：Independent（聚焦删除流程）、Negotiable（状态枚举可调）、Valuable（提升透明度）、Estimable（流程固定）、Small（单队列任务）、Testable（状态流可验证）。
+### ST-14 半开探测与回滚
+- **用户故事**：作为可靠性工程师，我希望半开状态仅允许 3 次探测，失败立即回滚为 Open 并告警。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14-HalfOpen
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：半开探测窗口 3 次；失败回滚延迟 < 1s。
+- **INVEST**：Independent（聚焦状态机）、Negotiable（探测次数可配）、Valuable（缩短故障时长）、Estimable（逻辑明确）、Small（单状态流）、Testable（注入故障验证）。
 - **验收标准（Gherkin）**：
 ```gherkin
-Scenario: Data deletion request tracks lifecycle
-  Given 用户提交删除申请
-  When 查看申请详情
-  Then 页面展示“已接收/处理中/已完成”并在 7 天内进入完成状态
+Scenario: Half-open failures revert to open state
+  Given 熔断状态为 HALF_OPEN
+  When 探测请求返回错误
+  Then 状态立即切回 OPEN 并触发告警事件
 ```
 
-### ST-32 支付异常兜底与重试路径
-- **用户故事**：作为遇到支付问题的用户，我希望在失败时看到明确的错误说明、重试步骤或备用渠道。
-- **关联 UC**：UC-08
-- **里程碑/批次**：M3 · Gamma · 变现与合规
-- **SLA/KPI 绑定**：失败提示展示率 100%；支持的重试路径覆盖 ≥ 2 种支付方式。
-- **INVEST**：Independent（聚焦异常流程）、Negotiable（渠道可调）、Valuable（减少流失）、Estimable（场景有限）、Small（提示+重试逻辑）、Testable（可模拟 PSP 错误）。
+### ST-15 降级观测指标与 Runbook
+- **用户故事**：作为值班 SRE，我希望降级时自动上报 `doubao.circuit_state`、`degrade.rate` 并生成 Runbook 任务。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：观测指标上报完整率 100%；Runbook 创建延迟 < 60s。
+- **INVEST**：Independent（聚焦观测）、Negotiable（指标集合可调）、Valuable（缩短恢复时间）、Estimable（指标列表固定）、Small（单监控项）、Testable（观测数据可查）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Degradation emits observability metrics
+  Given 熔断进入 OPEN 状态
+  When 降级响应发送
+  Then 指标 doubao.circuit_state 与 degrade.rate 上报且创建 lookup-availability Runbook
+```
+
+### ST-16 模板缓存回退与备份
+- **用户故事**：作为用户，我希望降级模板缓存失效时仍可从备份对象存储加载，保证内容完整。
+- **关联 UC**：UC-02
+- **覆盖 AC**：AC-UC-14
+- **里程碑/批次**：M1 · Alpha · 核心查词与可用性
+- **SLA/KPI 绑定**：模板回源成功率 ≥ 99.9%；回源延迟 < 1s。
+- **INVEST**：Independent（聚焦模板加载）、Negotiable（备份位置可调）、Valuable（保证服务可用）、Estimable（流程有限）、Small（单回源流程）、Testable（清空缓存验证）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Fallback template loads from backup storage
+  Given 本地模板缓存不可用
+  When 降级流程启动
+  Then 系统从对象存储加载模板并继续返回 degraded 响应
+```
+
+### ST-17 导出任务创建 202 回执
+- **用户故事**：作为需要备份的用户，我希望提交导出后在 5 秒内收到包含 exportId 与预计完成时间的回执。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：创建接口 P95 ≤ 5s；回执字段完整率 100%。
+- **INVEST**：Independent（聚焦创建流程）、Negotiable（回执字段可扩展）、Valuable（增强可控性）、Estimable（步骤有限）、Small（单接口）、Testable（API 测试可执行）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Export creation returns receipt within SLA
+  Given 用户已登录且有导出权限
+  When 调用 POST /api/v1/exports
+  Then 5 秒内收到 202 响应并包含 exportId、receiptId、estimatedReadyAt
+```
+
+### ST-18 导出格式与订阅权限校验
+- **用户故事**：作为产品经理，我希望导出格式与订阅档位匹配，Free 仅能选 CSV，Plus/Pro 可选 CSV/JSON。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：权限校验准确率 100%；提示渲染延迟 < 200ms。
+- **INVEST**：Independent（聚焦权限校验）、Negotiable（提示文案可调）、Valuable（防止越权）、Estimable（规则明确）、Small（单校验）、Testable（不同档位用例可验）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Export options reflect subscription entitlement
+  Given 当前订阅为 Free
+  When 打开导出面板
+  Then 仅展示 CSV 选项并提示升级可解锁 JSON
+```
+
+### ST-19 导出配额与并发限制
+- **用户故事**：作为运营人员，我希望当导出配额耗尽时返回 429 并提示重置时间与升级入口。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：配额 429 提示准确率 100%；提示渲染延迟 < 200ms。
+- **INVEST**：Independent（聚焦配额提示）、Negotiable（文案可调）、Valuable（提升透明度）、Estimable（条件明确）、Small（单提示）、Testable（模拟配额用尽）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Export quota exhaustion returns guidance
+  Given 用户当日导出次数已达上限
+  When 再次调用 POST /api/v1/exports
+  Then 返回 429 Rate Limited 并展示重置时间与升级 CTA
+```
+
+### ST-20 下载链接 TTL 与过期提示
+- **用户故事**：作为导出申请人，我希望下载链接仅在 10 分钟内有效，并在过期时得到明确提示。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06-TTL
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：下载链接 TTL = 600s；过期提示覆盖率 100%。
+- **INVEST**：Independent（聚焦下载链接）、Negotiable（提示可调）、Valuable（保障安全）、Estimable（规则固定）、Small（单流程）、Testable（等待过期验证）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Download link expires after ten minutes
+  Given exportId 状态为 finished
+  When 用户在 10 分钟后点击下载链接
+  Then 返回 410 EXPORT_LINK_EXPIRED 并提示重新申请导出
+```
+
+### ST-21 导出状态轮询与通知
+- **用户故事**：作为耐心等待的用户，我希望在导出准备就绪时通过状态轮询或邮件通知及时得知。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：状态轮询返回完成状态 ≤ 5s；通知发送成功率 ≥ 98%。
+- **INVEST**：Independent（聚焦通知）、Negotiable（渠道可调）、Valuable（减少等待焦虑）、Estimable（流程固定）、Small（单任务）、Testable（模拟完成状态）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Polling reveals export completion
+  Given exportId 已经生成下载链接
+  When 客户端调用 GET /api/v1/exports/{id}
+  Then 返回 status=finished 并附带 downloadUrl 或触发邮件通知
+```
+
+### ST-22 导出产物 T+7 清理
+- **用户故事**：作为隐私合规负责人，我需要导出文件在 T+7 天自动删除并记录 `export.deleted` 事件。
+- **关联 UC**：UC-03
+- **覆盖 AC**：AC-UC-06-Backlog
+- **里程碑/批次**：M2 · Beta · 数据导出与合规控制
+- **SLA/KPI 绑定**：清理任务成功率 100%；延迟 ≤ T+7d。
+- **INVEST**：Independent（聚焦清理任务）、Negotiable（运行时机可调）、Valuable（降低风险）、Estimable（流程清晰）、Small（单批任务）、Testable（模拟过期文件）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Export artifact purged after retention window
+  Given 导出文件创建已超过 7 天
+  When 清理任务运行
+  Then 删除对象存储文件并写入 export.deleted 事件
+```
+
+### ST-23 订阅计划展示与确认
+- **用户故事**：作为潜在付费用户，我希望在订阅页看到各档位权益、价格与周期，并确认同意条款后下单。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-08
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：计划加载 P95 ≤ 1s；条款勾选率 100%。
+- **INVEST**：Independent（聚焦展示与确认）、Negotiable（UI 可调）、Valuable（促成转化）、Estimable（数据来源固定）、Small（单页面）、Testable（端到端脚本可测）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Plan selection captures consent
+  Given 用户打开订阅页
+  When 选择 Plus 档并勾选条款
+  Then 启用“立即升级”按钮并携带 consentId 创建订单
+```
+
+### ST-24 支付成功权益即时下发
+- **用户故事**：作为升级用户，我希望支付成功后 5 秒内刷新档位与配额上限。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-08
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：支付成功→权益同步 ≤ 5s；Quota 更新成功率 100%。
+- **INVEST**：Independent（聚焦同步）、Negotiable（刷新方式可调）、Valuable（减少等待）、Estimable（接口清晰）、Small（单流程）、Testable（模拟支付成功）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Subscription upgrade reflects within SLA
+  Given 支付渠道返回成功
+  When Webhook 生效
+  Then /subscription 与 /quotas API 在 5 秒内返回新档位与上限
+```
+
+### ST-25 到期自动降级任务
+- **用户故事**：作为已到期用户，我希望系统在订阅到期时自动降级并刷新限制，不需人工介入。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-09
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：到期任务延迟 ≤ 30s；失败率 < 0.5%。
+- **INVEST**：Independent（聚焦到期任务）、Negotiable（任务频率可调）、Valuable（防止超额使用）、Estimable（状态机明确）、Small（单批任务）、Testable（模拟到期订阅）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Expired subscription auto-downgrades
+  Given 用户订阅已到期
+  When 定时任务运行
+  Then subscriptions 状态变为 EXPIRED 并刷新权益为 Free 档
+```
+
+### ST-26 配额镜像刷新与缓存失效
+- **用户故事**：作为升级用户，我希望权益变更后配额 API 与缓存立即失效刷新，防止短期内读到旧数据。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-08
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：缓存失效传播 < 5s；配额不一致窗口 ≤ 5s。
+- **INVEST**：Independent（聚焦缓存刷新）、Negotiable（失效策略可调）、Valuable（保证一致性）、Estimable（流程有限）、Small（单缓存策略）、Testable（观察 API 响应）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Quota mirror refreshes after upgrade
+  Given 用户刚完成升级
+  When 客户端在 3 秒内调用 GET /api/v1/quotas
+  Then 返回新的查词与再生成上限且不出现旧值
+```
+
+### ST-27 提前 72 小时到期提醒
+- **用户故事**：作为续费潜在用户，我希望在订阅到期前 3 天收到包含续费入口的通知。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-09
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：提醒发送提前 ≥ 72h；送达率 ≥ 98%。
+- **INVEST**：Independent（聚焦通知）、Negotiable（渠道可调）、Valuable（提升续费率）、Estimable（触发规则明确）、Small（单任务）、Testable（模拟时间窗口）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Expiry reminder sent three days ahead
+  Given 用户订阅还有 3 天到期
+  When 通知任务运行
+  Then 发送包含续费入口与剩余天数的提醒
+```
+
+### ST-28 订阅审计与补偿回滚
+- **用户故事**：作为合规审核者，我希望每次订阅变更记录 audit event，并在配额同步失败时自动发起补偿或回滚。
+- **关联 UC**：UC-04
+- **覆盖 AC**：AC-UC-08-Rollback
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：审计事件记录率 100%；补偿重试上限 3 次。
+- **INVEST**：Independent（聚焦审计与补偿）、Negotiable（事件字段可调）、Valuable（确保一致性）、Estimable（流程明确）、Small（单任务）、Testable（模拟失败路径）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Entitlement rollback fires when quota sync fails
+  Given 支付成功但配额服务 5 秒内未确认
+  When 超时触发补偿
+  Then 记录 plan.changed 审计事件并启动 entitlement.rollback 重试最多三次
+```
+
+### ST-29 订单创建携带金额与币种
+- **用户故事**：作为升级用户，我希望下单时生成唯一 orderId，明确金额、币种与应付优惠。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-090
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：订单创建 P95 ≤ 1s；金额校验准确率 100%。
+- **INVEST**：Independent（聚焦订单创建）、Negotiable（字段可扩展）、Valuable（支持支付）、Estimable（契约明确）、Small（单接口）、Testable（API 返回可验证）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Order creation returns payment summary
+  Given 用户选择年费 Plus 档
+  When 调用 POST /v1/orders
+  Then 返回 orderId、totalAmount、currency 与折扣信息
+```
+
+### ST-30 支付回调幂等处理
+- **用户故事**：作为平台方，我希望支付渠道重复回调时系统能够幂等处理，避免重复扣费或发放权益。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-090
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：重复回调幂等冲突率 < 0.1%；处理延迟 < 1s。
+- **INVEST**：Independent（聚焦幂等）、Negotiable（幂等键策略可调）、Valuable（防止错账）、Estimable（逻辑固定）、Small（单处理流程）、Testable（重放回调可验）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Duplicate webhook does not change state twice
+  Given 同一订单收到两次成功回调
+  When 第二次请求到达
+  Then 返回 200 OK 但 orders 与 subscriptions 状态不再变更
+```
+
+### ST-31 账单与收据生成
+- **用户故事**：作为需要报销的用户，我希望支付成功后立即生成账单记录并提供一次性收据下载链接。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-042
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：收据生成 ≤ 3s；链接 TTL 600s。
+- **INVEST**：Independent（聚焦账单）、Negotiable（收据模板可调）、Valuable（满足报销）、Estimable（契约清晰）、Small（单流程）、Testable（检查数据库与链接）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Invoice record created after payment
+  Given 订单状态更新为 paid
+  When 账单服务处理事件
+  Then 创建包含 plan、amount、tax 的 invoice 并返回一次性收据链接
+```
+
+### ST-32 退款与拒付回滚权益
+- **用户故事**：作为财务人员，我希望渠道退款或拒付时系统自动回滚权益并生成红冲账单。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-092
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：退款回滚延迟 ≤ 5s；红冲记录生成率 100%。
+- **INVEST**：Independent（聚焦退款）、Negotiable（通知文案可调）、Valuable（防止超用）、Estimable（状态机明晰）、Small（单流程）、Testable（模拟退款回调）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Refund callback rolls back entitlement
+  Given 支付渠道发送退款回调
+  When 系统处理通知
+  Then orders 状态设为 refunded、subscriptions 降级并生成负数 invoice 行
+```
+
+### ST-33 对账任务识别差异
+- **用户故事**：作为财务人员，我需要 15 分钟增量对账与 T+1 全量对账自动检测差异并触发补偿。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-092
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：对账任务延迟 ≤ 15 分钟；差异处理闭环率 100%。
+- **INVEST**：Independent（聚焦对账）、Negotiable（补偿策略可调）、Valuable（避免财务风险）、Estimable（流程固定）、Small（单批任务）、Testable（注入差异验证）。
+- **验收标准（Gherkin）**：
+```gherkin
+Scenario: Reconciliation job flags mismatched transactions
+  Given 对账任务运行
+  When 发现渠道成功但本地未更新的订单
+  Then 标记 reconciliation_issue 并触发回调重放或人工告警
+```
+
+### ST-34 支付失败重试与客服引导
+- **用户故事**：作为支付失败的用户，我希望看到明确失败原因、重试按钮和联系客服入口。
+- **关联 UC**：UC-05
+- **覆盖 AC**：AC-FR-090
+- **里程碑/批次**：M3 · Release · 订阅变更与商业闭环
+- **SLA/KPI 绑定**：失败提示覆盖率 100%；重试按钮点击成功率 ≥ 95%。
+- **INVEST**：Independent（聚焦失败兜底）、Negotiable（提示文案可调）、Valuable（降低流失）、Estimable（场景有限）、Small（单界面）、Testable（模拟失败回调）。
 - **验收标准（Gherkin）**：
 ```gherkin
 Scenario: Failed payment shows retry guidance
-  Given PSP 返回“insufficient_funds”失败
+  Given 支付渠道返回 insufficient_funds
   When 客户端渲染支付结果
-  Then 呈现失败原因、推荐重试支付方式及联系支持入口
+  Then 展示失败原因、重试支付按钮与客服联系方式
 ```
