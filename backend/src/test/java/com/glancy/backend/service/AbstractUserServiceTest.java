@@ -48,9 +48,7 @@ abstract class AbstractUserServiceTest {
 
     @BeforeAll
     static void loadEnv() {
-        Dotenv dotenv = Dotenv.configure()
-            .ignoreIfMissing()
-            .load();
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         String dbPassword = dotenv.get("DB_PASSWORD");
         if (dbPassword != null) {
@@ -63,7 +61,6 @@ abstract class AbstractUserServiceTest {
         loginDeviceRepository.deleteAll();
         userRepository.deleteAll();
         userProfileRepository.deleteAll();
-        Mockito.when(avatarStorage.resolveUrl(Mockito.anyString()))
-            .thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(avatarStorage.resolveUrl(Mockito.anyString())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 }

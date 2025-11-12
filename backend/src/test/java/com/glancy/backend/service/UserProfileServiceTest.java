@@ -120,10 +120,7 @@ class UserProfileServiceTest {
 
     private UserProfileRequest buildProfileRequest() {
         List<ProfileCustomSectionDto> customSections = List.of(
-            new ProfileCustomSectionDto(
-                "作品集",
-                List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练"))
-            )
+            new ProfileCustomSectionDto("作品集", List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练")))
         );
         return new UserProfileRequest(
             "dev",

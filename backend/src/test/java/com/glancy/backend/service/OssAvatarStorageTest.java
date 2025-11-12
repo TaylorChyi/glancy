@@ -1,6 +1,8 @@
 package com.glancy.backend.service;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSException;

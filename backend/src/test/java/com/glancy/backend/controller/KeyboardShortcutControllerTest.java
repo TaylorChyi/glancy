@@ -83,11 +83,7 @@ class KeyboardShortcutControllerTest {
      */
     @Test
     void Given_putRequest_When_updateShortcut_Then_delegateToService() throws Exception {
-        KeyboardShortcutView view = new KeyboardShortcutView(
-            ShortcutAction.FOCUS_SEARCH.name(),
-            List.of("CONTROL", "SHIFT", "P"),
-            List.of("MOD", "SHIFT", "F")
-        );
+        KeyboardShortcutView view = focusSearchView(List.of("CONTROL", "SHIFT", "P"));
         given(
             keyboardShortcutService.updateShortcut(
                 eq(2L),
@@ -95,7 +91,7 @@ class KeyboardShortcutControllerTest {
                 any(KeyboardShortcutUpdateRequest.class)
             )
         ).willReturn(new KeyboardShortcutResponse(List.of(view)));
-        given(userService.authenticateToken("token-2")).willReturn(2L);
+        mockToken("token-2", 2L);
 
         mockMvc
             .perform(
@@ -142,5 +138,13 @@ class KeyboardShortcutControllerTest {
             .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].defaultKeys[2]").value("F"));
 
         verify(keyboardShortcutService).resetShortcuts(3L);
+    }
+
+    private KeyboardShortcutView focusSearchView(List<String> keys) {
+        return new KeyboardShortcutView(ShortcutAction.FOCUS_SEARCH.name(), keys, List.of("MOD", "SHIFT", "F"));
+    }
+
+    private void mockToken(String token, long userId) {
+        given(userService.authenticateToken(token)).willReturn(userId);
     }
 }

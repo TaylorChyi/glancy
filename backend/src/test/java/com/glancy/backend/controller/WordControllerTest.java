@@ -10,6 +10,7 @@ import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
 import com.glancy.backend.service.word.WordSearchOptions;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -40,28 +41,14 @@ class WordControllerTest {
     @MockitoBean
     private UserService userService;
 
-    /**
-     * 测试 testGetWord 接口
-     */
+    @BeforeEach
+    void mockAuthentication() {
+        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
+    }
+
     @Test
     void testGetWord() throws Exception {
-        WordResponse resp = new WordResponse(
-            "1",
-            "hello",
-            List.of("g"),
-            Language.ENGLISH,
-            "ex",
-            "həˈloʊ",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null,
-            null,
-            DictionaryFlavor.BILINGUAL
-        );
+        WordResponse resp = response("1", "hello");
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
@@ -70,8 +57,6 @@ class WordControllerTest {
                 )
             )
         ).thenReturn(resp);
-
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -92,23 +77,7 @@ class WordControllerTest {
      */
     @Test
     void testGetWordWithModel() throws Exception {
-        WordResponse resp = new WordResponse(
-            "1",
-            "hello",
-            List.of("g"),
-            Language.ENGLISH,
-            "ex",
-            "həˈloʊ",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null,
-            null,
-            DictionaryFlavor.BILINGUAL
-        );
+        WordResponse resp = response("1", "hello");
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
@@ -117,8 +86,6 @@ class WordControllerTest {
                 )
             )
         ).thenReturn(resp);
-
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -139,8 +106,6 @@ class WordControllerTest {
      */
     @Test
     void testGetWordMissingTerm() throws Exception {
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
-
         mockMvc
             .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
             .andDo(print())
@@ -153,8 +118,6 @@ class WordControllerTest {
      */
     @Test
     void testGetWordInvalidLanguage() throws Exception {
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
-
         mockMvc
             .perform(
                 get("/api/words").header("X-USER-TOKEN", "tkn").param("term", "hello").param("language", "INVALID")
@@ -169,23 +132,7 @@ class WordControllerTest {
      */
     @Test
     void testGetWordTokenQueryParam() throws Exception {
-        WordResponse resp = new WordResponse(
-            "1",
-            "hi",
-            List.of("g"),
-            Language.ENGLISH,
-            "ex",
-            "h\u0259\u02c8lo\u028a",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null,
-            null,
-            DictionaryFlavor.BILINGUAL
-        );
+        WordResponse resp = response("1", "hi");
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
@@ -194,8 +141,6 @@ class WordControllerTest {
                 )
             )
         ).thenReturn(resp);
-
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
 
         mockMvc
             .perform(
@@ -220,24 +165,7 @@ class WordControllerTest {
      */
     @Test
     void testGetWordWithCaptureHistoryDisabled() throws Exception {
-        Mockito.when(userService.authenticateToken("tkn")).thenReturn(1L);
-        WordResponse resp = new WordResponse(
-            "1",
-            "hello",
-            List.of("g"),
-            Language.ENGLISH,
-            "ex",
-            "həˈloʊ",
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            null,
-            null,
-            null,
-            DictionaryFlavor.BILINGUAL
-        );
+        WordResponse resp = response("1", "hello");
         Mockito.when(
             wordService.findWordForUser(
                 ArgumentMatchers.eq(1L),
@@ -264,6 +192,26 @@ class WordControllerTest {
             ArgumentMatchers.eq(
                 WordSearchOptions.of("hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false)
             )
+        );
+    }
+
+    private WordResponse response(String id, String term) {
+        return new WordResponse(
+            id,
+            term,
+            List.of("g"),
+            Language.ENGLISH,
+            "ex",
+            "həˈloʊ",
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            null,
+            null,
+            null,
+            DictionaryFlavor.BILINGUAL
         );
     }
 }

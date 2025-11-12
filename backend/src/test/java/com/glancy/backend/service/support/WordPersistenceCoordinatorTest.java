@@ -38,34 +38,17 @@ class WordPersistenceCoordinatorTest {
      *  - 若任一步骤未执行，将导致断言失败。\
      */
     @Test
-    void persistSyncFlow_ReuseResponseMarkdownAndApplyPersonalization() {
-        WordResponse response = new WordResponse();
-        response.setMarkdown("### definition");
+    void persistSyncFlow_ReusesResponseMarkdown() {
         AtomicBoolean recordSynced = new AtomicBoolean(false);
         AtomicReference<String> versionContent = new AtomicReference<>();
 
-        WordPersistenceCoordinator.PersistenceContext context = WordPersistenceCoordinator.builder()
-            .userId(1L)
-            .requestedTerm("raw")
-            .language(Language.ENGLISH)
-            .flavor(DictionaryFlavor.BILINGUAL)
-            .model("model")
-            .recordId(2L)
-            .captureHistory(true)
-            .response(response)
-            .personalizationContext(new WordPersonalizationContext(null, false, null, null, null, List.of(), List.of()))
-            .saveWordStep((requested, resp, language, flavor) -> {
-                Word word = new Word();
-                word.setTerm("canonical");
-                word.setLanguage(language);
-                word.setFlavor(flavor);
-                word.setMarkdown(resp.getMarkdown());
-                return word;
-            })
+        WordPersistenceCoordinator.PersistenceContext context = baseContext()
+            .response(responseWithMarkdown("### definition"))
+            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
             .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {
-                Assertions.assertEquals(1L, userId, "用户 ID 应按上下文透传");
-                Assertions.assertEquals(2L, recordId, "记录 ID 应保持一致");
-                Assertions.assertEquals("canonical", canonicalTerm, "规范词条需来自保存结果");
+                Assertions.assertEquals(1L, userId);
+                Assertions.assertEquals(2L, recordId);
+                Assertions.assertEquals("canonical", canonicalTerm);
                 recordSynced.set(true);
             })
             .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
@@ -74,7 +57,37 @@ class WordPersistenceCoordinatorTest {
                 version.setId(99L);
                 return version;
             })
-            .personalizationStep((userId, resp, context1) -> {
+            .personalizationStep((userId, resp, ctx) -> resp)
+            .wordSerializationStep(word -> "serialized")
+            .sanitizedMarkdown(null)
+            .build();
+
+        WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(
+            context,
+            new ResponseMarkdownOrSerializedWordStrategy()
+        );
+
+        Assertions.assertTrue(recordSynced.get(), "应同步搜索记录");
+        Assertions.assertEquals("### definition", versionContent.get(), "版本内容应复用响应 markdown");
+        Assertions.assertEquals(99L, outcome.response().getVersionId(), "versionId 应写回响应");
+    }
+
+    @Test
+    void persistSyncFlow_WritesPersonalizationResult() {
+        AtomicBoolean personalized = new AtomicBoolean(false);
+
+        WordPersistenceCoordinator.PersistenceContext context = baseContext()
+            .response(responseWithMarkdown("### definition"))
+            .personalizationContext(new WordPersonalizationContext(null, false, null, null, null, List.of(), List.of()))
+            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
+            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
+            .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
+                SearchResultVersion version = new SearchResultVersion();
+                version.setId(88L);
+                return version;
+            })
+            .personalizationStep((userId, resp, ctx) -> {
+                personalized.set(true);
                 resp.setPersonalization(
                     new PersonalizedWordExplanation("persona", "takeaway", "context", List.of(), List.of())
                 );
@@ -84,12 +97,12 @@ class WordPersistenceCoordinatorTest {
             .sanitizedMarkdown(null)
             .build();
 
-        WordVersionContentStrategy strategy = new ResponseMarkdownOrSerializedWordStrategy();
-        WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
+        WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(
+            context,
+            new ResponseMarkdownOrSerializedWordStrategy()
+        );
 
-        Assertions.assertTrue(recordSynced.get(), "应同步搜索记录");
-        Assertions.assertEquals("### definition", versionContent.get(), "版本内容应复用响应 markdown");
-        Assertions.assertEquals(99L, outcome.response().getVersionId(), "versionId 应写回响应");
+        Assertions.assertTrue(personalized.get(), "应执行个性化回写");
         Assertions.assertNotNull(outcome.response().getPersonalization(), "应写入个性化结果");
     }
 
@@ -109,20 +122,11 @@ class WordPersistenceCoordinatorTest {
      */
     @Test
     void persistStreamingFlow_UsesSanitizedMarkdown() {
-        WordResponse response = new WordResponse();
         AtomicReference<String> versionContent = new AtomicReference<>();
         AtomicBoolean personalized = new AtomicBoolean(false);
 
-        WordPersistenceCoordinator.PersistenceContext context = WordPersistenceCoordinator.builder()
-            .userId(5L)
-            .requestedTerm("term")
-            .language(Language.ENGLISH)
-            .flavor(DictionaryFlavor.BILINGUAL)
+        WordPersistenceCoordinator.PersistenceContext context = baseContext()
             .model("streaming-model")
-            .recordId(7L)
-            .captureHistory(true)
-            .response(response)
-            .personalizationContext(null)
             .saveWordStep((requested, resp, language, flavor) -> {
                 Word word = new Word();
                 word.setTerm("term");
@@ -130,13 +134,10 @@ class WordPersistenceCoordinatorTest {
                 return word;
             })
             .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
-            .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
-                versionContent.set(content);
-                SearchResultVersion version = new SearchResultVersion();
-                version.setId(11L);
-                return version;
-            })
-            .personalizationStep((userId, resp, context1) -> {
+            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
+                versionCapture(versionContent, content, 11L)
+            )
+            .personalizationStep((userId, resp, ctx) -> {
                 personalized.set(true);
                 return resp;
             })
@@ -168,19 +169,9 @@ class WordPersistenceCoordinatorTest {
      */
     @Test
     void persistSyncFlow_FallbacksToPreviewWhenSerializationFails() {
-        WordResponse response = new WordResponse();
         AtomicReference<String> versionContent = new AtomicReference<>();
 
-        WordPersistenceCoordinator.PersistenceContext context = WordPersistenceCoordinator.builder()
-            .userId(3L)
-            .requestedTerm("input")
-            .language(Language.ENGLISH)
-            .flavor(DictionaryFlavor.BILINGUAL)
-            .model("model")
-            .recordId(4L)
-            .captureHistory(true)
-            .response(response)
-            .personalizationContext(null)
+        WordPersistenceCoordinator.PersistenceContext context = baseContext()
             .saveWordStep((requested, resp, language, flavor) -> {
                 Word word = new Word();
                 word.setTerm("fallback");
@@ -188,13 +179,10 @@ class WordPersistenceCoordinatorTest {
                 return word;
             })
             .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
-            .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
-                versionContent.set(content);
-                SearchResultVersion version = new SearchResultVersion();
-                version.setId(21L);
-                return version;
-            })
-            .personalizationStep((userId, resp, context1) -> resp)
+            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
+                versionCapture(versionContent, content, 21L)
+            )
+            .personalizationStep((userId, resp, ctx) -> resp)
             .wordSerializationStep(word -> {
                 throw new JsonProcessingException("boom") {};
             })
@@ -207,5 +195,40 @@ class WordPersistenceCoordinatorTest {
         String expectedPreview = SensitiveDataUtil.previewText("markdown-content-with-length");
         Assertions.assertEquals(expectedPreview, versionContent.get(), "序列化失败时应回退到 markdown 预览");
         Assertions.assertEquals(21L, outcome.response().getVersionId(), "versionId 仍需写回响应");
+    }
+
+    private WordPersistenceCoordinator.Builder baseContext() {
+        return WordPersistenceCoordinator
+            .builder()
+            .userId(1L)
+            .requestedTerm("term")
+            .language(Language.ENGLISH)
+            .flavor(DictionaryFlavor.BILINGUAL)
+            .model("model")
+            .recordId(2L)
+            .captureHistory(true)
+            .response(new WordResponse());
+    }
+
+    private WordResponse responseWithMarkdown(String markdown) {
+        WordResponse response = new WordResponse();
+        response.setMarkdown(markdown);
+        return response;
+    }
+
+    private Word savedWord(String term, Language language, DictionaryFlavor flavor, WordResponse resp) {
+        Word word = new Word();
+        word.setTerm(term);
+        word.setLanguage(language);
+        word.setFlavor(flavor);
+        word.setMarkdown(resp.getMarkdown());
+        return word;
+    }
+
+    private SearchResultVersion versionCapture(AtomicReference<String> holder, String content, long id) {
+        holder.set(content);
+        SearchResultVersion version = new SearchResultVersion();
+        version.setId(id);
+        return version;
     }
 }
