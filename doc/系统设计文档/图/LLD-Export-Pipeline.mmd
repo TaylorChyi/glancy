@@ -1,0 +1,26 @@
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant BFF as BFF
+    participant MQ as 消息队列
+    participant Worker as Export Worker
+    participant DB as RDBMS
+    participant OSS as 对象存储
+
+    U->>BFF: POST /exports (params)
+    BFF->>BFF: validate + quota
+    BFF->>DB: INSERT exports_jobs (INIT)
+    BFF->>MQ: publish jobId
+    BFF-->>U: 200 {jobId,status=pending}
+    Worker->>MQ: pull jobId
+    Worker->>DB: UPDATE status=RUNNING
+    Worker->>DB: SELECT batched lookup/results
+    Worker->>OSS: upload CSV/JSON
+    Worker->>OSS: generate signed URL (TTL=10m)
+    Worker->>DB: UPDATE exports_receipt (SUCCESS,url,expires)
+    Worker-->>BFF: optional webhook event
+    U->>BFF: GET /exports/{jobId}
+    BFF->>DB: fetch receipt
+    BFF-->>U: signed_url + expires_at
+```
+

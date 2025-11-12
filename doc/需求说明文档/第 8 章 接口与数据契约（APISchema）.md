@@ -2,6 +2,117 @@
 
 > 本章在 MVP 范围内定义前后端、服务与第三方之间的接口与数据契约，覆盖鉴权、版本、限流与错误模型，以及“查词/再生成、历史、导出、用户画像、订阅/配额、配置发现、支付回调”和 Doubao 适配层的内部契约。所有 JSON 字段使用驼峰命名；不兼容变更采用版本演进与弃用期管理。本文与第 1–6 章口径一致，如有冲突，以“订阅矩阵与[附录 A 术语与缩略语](<./Appendix/附录 A 术语与缩略语.md>)”的单一事实源为准。 
 
+## 8.0 对齐结果（T03，2025-02）
+
+> 说明：为完成 “T03｜SRS 第 8–11 章与代码现状对齐”，本节先列出现状与目标的对照，并为每一项给出代码或测试溯源。8.1 以后保留原 SRS 目标契约，供后续迭代参照。
+
+### 8.0.1 当前实现表（代码事实源）
+
+| 能力 | 接口 / 方法 | 请求 & 字段 | 响应 & 行为 | 溯源 |
+| --- | --- | --- | --- | --- |
+| 词典查词 | `GET /api/words?term&language&flavor&model&forceNew&captureHistory`，`X-USER-TOKEN` 头或 `token` query | QueryString 由 `website/src/shared/api/words.js` 统一封装；`language ∈ {ENGLISH,CHINESE}`；`captureHistory=false` 可跳过历史记录 | 返回 `WordResponse`（`id/term/definitions/.../markdown/personalization/flavor`），无 `schemaVersion`、`quota` 字段；命中缓存仍走 GET。 | [WordController](../../backend/src/main/java/com/glancy/backend/controller/WordController.java)，[WordResponse](../../backend/src/main/java/com/glancy/backend/dto/WordResponse.java)，[words.test.js](../../website/src/shared/api/__tests__/words.test.js) |
+| 搜索历史 | `POST/GET/DELETE /api/search-records/user`；收藏/取消收藏、单条删除分别为 `POST|DELETE /api/search-records/user/{recordId}/favorite` 与 `DELETE /api/search-records/user/{recordId}` | `SearchRecordRequest` 仅包含 `term/language/flavor`，每天非会员最多 10 次（`search.limit.nonMember`） | 列表返回 `SearchRecordResponse`（含版本摘要）；删除/清空返回 `204` | [SearchRecordController](../../backend/src/main/java/com/glancy/backend/controller/SearchRecordController.java)，[SearchRecordService](../../backend/src/main/java/com/glancy/backend/service/SearchRecordService.java) |
+| 结果版本 | `GET /api/words/{recordId}/versions` 与 `GET /api/words/{recordId}/versions/{versionId}` | 路径参数 + token | 列表返回 `SearchRecordVersionSummary`；详情返回 `SearchResultVersionResponse` | [SearchResultVersionController](../../backend/src/main/java/com/glancy/backend/controller/SearchResultVersionController.java) |
+| TTS 合成 | `POST /api/tts/word|sentence`（JSON `TtsRequest`），GET 变体 `GET /api/tts/word|sentence?text&lang&voice&format&speed`；`GET /api/tts/voices?lang` | 请求包含 `text/lang/voice/format/mp3/speed`；GET 变体自动 `shortcut=false` | POST/GET 返回 `TtsResponse`（`data` base64、`duration_ms` 等），找不到缓存时返回 `204`；`/voices` 返回默认音色 + options | [TtsController](../../backend/src/main/java/com/glancy/backend/controller/TtsController.java)，[TtsRequest](../../backend/src/main/java/com/glancy/backend/dto/TtsRequest.java)，[tts.js](../../website/src/shared/api/tts.js) |
+| 画像与偏好 | 画像：`POST/GET /api/profiles/user`；偏好：`POST|PATCH|GET /api/preferences/user` | JSON 直接对应 DTO（无 schemaVersion），均需 token | 返回 `UserProfileResponse` 或 `UserPreferenceResponse`，字段与实体等同 | [UserProfileController](../../backend/src/main/java/com/glancy/backend/controller/UserProfileController.java)，[UserPreferenceController](../../backend/src/main/java/com/glancy/backend/controller/UserPreferenceController.java) |
+| 快捷键 | `GET /api/preferences/shortcuts/user`、`PUT /api/preferences/shortcuts/user/{action}`、`DELETE /api/preferences/shortcuts/user` | `KeyboardShortcutUpdateRequest` 仅含 `keys:string[]` | 返回 `KeyboardShortcutResponse`（每个动作的 key 列表）；冲突/非法输入返回 422 | [KeyboardShortcutController](../../backend/src/main/java/com/glancy/backend/controller/KeyboardShortcutController.java)，[keyboardShortcuts.js](../../website/src/shared/api/keyboardShortcuts.js) |
+| 词条问题上报 | `POST /api/word-reports` | JSON `WordIssueReportRequest`（`term/language/flavor/category/description/sourceUrl`），token 校验 `@AuthenticatedUser` | `201` + `WordIssueReportResponse`（含 `id`、`createdAt`） | [WordIssueReportController](../../backend/src/main/java/com/glancy/backend/controller/WordIssueReportController.java)，[wordReports.js](../../website/src/shared/api/wordReports.js) |
+| 兑换/会员 | `POST /api/redemption-codes`、`GET /api/redemption-codes/{code}`、`POST /api/redemption-codes/redeem` | `RedemptionCodeCreateRequest`、`RedemptionRedeemRequest`；redeem 需 token | 创建返回 `201`+配置；兑换返回会员/折扣快照，不触发任何 `/subscription` API | [RedemptionCodeController](../../backend/src/main/java/com/glancy/backend/controller/RedemptionCodeController.java)，[redemptionCodes.js](../../website/src/shared/api/redemptionCodes.js) |
+| 账户鉴权 | `/api/users/register`、`/api/users/login`、`/api/users/login/email`、`/api/users/{id}/logout` 等 | 前端 `API_PATHS` 默认基地址 `/api`，令牌通过 `X-USER-TOKEN` 头传递 | 登录响应 `LoginResponse`（含 `token`, `membershipType`, `membershipExpiresAt`）；所有业务接口依赖 `TokenAuthenticationFilter` 注入 `@AuthenticatedUser` | [UserController](../../backend/src/main/java/com/glancy/backend/controller/UserController.java)，[TokenAuthenticationFilter](../../backend/src/main/java/com/glancy/backend/config/TokenAuthenticationFilter.java)，[website/src/core/config/api.js](../../website/src/core/config/api.js) |
+| 错误模型 | 全局异常返回 `{"message": "..."}` 或 `{"message":"...", "rid":""}` | 无错误码枚举、无 `schemaVersion`、无 `error.meta` | 429/403/5xx 仅含 message；限流提示中文文案 | [GlobalExceptionHandler](../../backend/src/main/java/com/glancy/backend/exception/GlobalExceptionHandler.java) |
+
+### 8.0.2 目标契约表（原 SRS 摘要）
+
+| 能力 / SRS 章节 | 约定 | 当前状态 | Issue |
+| --- | --- | --- | --- |
+| 8.1 基线：`/api/v1` 前缀、`Accept: application/vnd.glancy.dict.v1+json`、统一 `schemaVersion`、`quota` 头/体 | 仍使用 `/api`，未返回 `schemaVersion`、`quota`、`X-RateLimit-*` | 未实现 | ISSUE#T03-API-01 |
+| 8.1.1 匿名会话 `POST /api/v1/sessions/anonymous`、`POST /api/v1/sessions/merge` | 无对应接口；仅凭手动注册/登录 | 未实现 | ISSUE#T03-API-02 |
+| 8.3 `DictResult` 模块化字段、`tokensIn/out`、`degraded` | 现有 `WordResponse` 无 tokens / modules / degradations | 未实现 | ISSUE#T03-API-03 |
+| 8.4 `POST /api/v1/lookup` / `regenerate` / `GET /lookup/{id}`，含 `moduleFlags`、`detailLevel`、`exampleCount` 校验 | 仅 `GET /api/words`，没有再生成、detailLevel、模块控制；也未区分查词/再生配额 | 与实现完全不符 | ISSUE#T03-API-04 |
+| 8.5–8.7 历史分页 `cursor`、导出任务、删除异步回执 | 历史只支持 page/size；无导出与异步清理；删除立即软删 | 部分实现 | ISSUE#T03-API-05 |
+| 8.8 偏好、画像、订阅/配额、配置发现分层 API | 偏好/画像已实现；订阅与配额 API 缺失；配置发现未实现 | 局部 | ISSUE#T03-API-06 |
+| 8.9 Webhook / 事件（`subscription.*`、`billing.*`） | 无 webhook 输出 | 未实现 | ISSUE#T03-API-07 |
+| 8.10 版本管理 / `Sunset` 头 | 未实现 | ISSUE#T03-API-08 |
+| 8.11 错误码枚举（含 `error.meta.kind` = quota/ratelimit） | 仅 message 字符串 | ISSUE#T03-API-09 |
+
+### 8.0.3 Issues（已登记）
+
+- **ISSUE#T03-API-01**：缺少 `/api/v1` 基线能力（内容协商、`schemaVersion`、统一 quota header/body）。需为 `WordController` 等补充响应头与 body 字段，并在 `website` API 层兼容。来源：`WordController`。
+- **ISSUE#T03-API-02**：匿名 session/合并接口未实现，导致 Free/匿名配额无法与 SRS 对齐。来源：`TokenAuthenticationFilter` 仅支持已注册用户。
+- **ISSUE#T03-API-03**：`WordResponse` 未输出 `tokensIn/out`、`modules`、`degraded`，也无 `detailLevel`，与 8.3/8.4 要求冲突。来源：`WordResponse`、`WordSearcherImpl`。
+- **ISSUE#T03-API-04**：再生成契约缺失，`WordService` 仅同步查词。需新增 `POST /lookup/{lookupId}/regenerate`。来源：`WordController`。
+- **ISSUE#T03-API-05**：历史导出/清理契约缺失（8.5–8.6）；`SearchRecordService` 仅软删。需定义异步导出与 `cursor` 分页。来源：`SearchRecordController`。
+- **ISSUE#T03-API-06**：配额/订阅/配置发现接口缺位（引用 8.8 & 第 10–11 章），UI 无法读取 quota。需在 `backend` 暴露 `/api/quotas` 或等效接口。
+- **ISSUE#T03-API-07**：Webhook/事件未实现，订阅与计费域无法对接下游。来源：`backend` 缺少事件发布。
+- **ISSUE#T03-API-08**：版本弃用流程和 `Sunset` 头缺失。需在响应中加入版本头并在 `WebConfig` 管理。来源：`WordController` 等。
+- **ISSUE#T03-API-09**：错误响应无错误码或 `meta.kind`，无法区分 quota/ratelimit。来源：`GlobalExceptionHandler`。
+
+### 8.0.4 示例请求 / 响应（与代码 & 前端测试对齐）
+
+```http
+GET /api/words?term=hello&language=ENGLISH&flavor=BILINGUAL&model=DOUBAO&captureHistory=true HTTP/1.1
+X-USER-TOKEN: <token>
+```
+
+```json
+{
+  "id": "123",
+  "term": "hello",
+  "definitions": ["used as a greeting"],
+  "language": "ENGLISH",
+  "example": "Hello there!",
+  "phonetic": "həˈləʊ",
+  "synonyms": ["hi"],
+  "markdown": null,
+  "personalization": {
+    "personaSummary": "...",
+    "keyTakeaway": "...",
+    "contextualExplanation": "...",
+    "learningHooks": ["..."],
+    "reflectionPrompts": ["..."]
+  },
+  "flavor": "BILINGUAL"
+}
+```
+
+（响应字段取自 `WordResponse`，示例参数可在 `website/src/shared/api/__tests__/words.test.js` 复现。）
+
+```http
+POST /api/search-records/user HTTP/1.1
+Content-Type: application/json
+X-USER-TOKEN: <token>
+
+{
+  "term": "hello",
+  "language": "ENGLISH",
+  "flavor": "BILINGUAL"
+}
+```
+
+```json
+{
+  "id": 501,
+  "userId": 42,
+  "term": "hello",
+  "language": "ENGLISH",
+  "flavor": "BILINGUAL",
+  "createdAt": "2025-02-10T02:30:10.123",
+  "favorite": false,
+  "latestVersion": null,
+  "versions": []
+}
+```
+
+错误示例（超出 TTS 速率限制时）：
+
+```json
+{
+  "message": "请5秒后重试"
+}
+```
+
+（`GlobalExceptionHandler` 统一 message 字段，无错误码 / quota 元信息。）
+
 ------
 
 ## 8.1 基线规范

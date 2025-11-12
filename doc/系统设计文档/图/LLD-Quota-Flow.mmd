@@ -1,0 +1,20 @@
+```mermaid
+flowchart TD
+    A[开始 / 接收请求] --> B{缓存快照有效?}
+    B -- 是 --> C[读取 snapshot]
+    B -- 否 --> D[查询 RDBMS subscriptions]
+    D --> E[写回 Redis snapshot]
+    C --> F[计算 quota policy]
+    E --> F
+    F --> G[执行 Lua 原子扣减]
+    G -- ok --> H[返回剩余额度+reset]
+    G -- reject --> I[返回 429 + retry_after]
+    C --> J{快照版本与 RDBMS 不一致?}
+    D --> J
+    J -- 是 --> K[触发 syncSubscription 任务]
+    J -- 否 --> H
+    H --> L{成本护栏>=95%?}
+    L -- 是 --> M[禁用再生成/强缓存]
+    L -- 否 --> N[继续业务流程]
+```
+

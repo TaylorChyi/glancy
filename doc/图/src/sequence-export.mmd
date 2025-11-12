@@ -1,0 +1,46 @@
+%% FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-40#ExportSequence
+%% 摘要：历史导出任务的异步编排、一次性链接生成与审计。
+sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant FE as Web/H5 客户端
+    participant GW as API 网关
+    participant BFF as BFF/API
+    participant Export as 导出服务
+    participant Queue as 队列
+    participant Worker as 导出 Worker
+    participant Obj as 对象存储+CDN
+    participant Audit as 审计事件
+    participant Obs as 可观测性
+
+    U->>FE: 点击“导出历史”并选择格式/时间范围
+    FE->>GW: POST /exports (filters, format)
+    GW->>BFF: 转发 + traceId + subject
+    BFF->>Export: createJob(subject, filters)
+    Export->>Queue: enqueue job payload (idempotency)
+    Export-->>BFF: 202 + jobId + receipt
+    BFF-->>FE: 回执 + 预计完成时间 + pollLink
+    BFF--)Audit: export.requested
+    BFF--)Obs: record export_enqueued
+
+    Worker->>Queue: pull job (FIFO)
+    Worker->>BFF: fetch filters/profile snapshot
+    Worker->>Obj: 写入临时文件 (CSV/JSON)
+    Worker->>Obj: 生成一次性签名 URL (TTL 10m)
+    Worker--)Audit: export.completed + artifactId
+    Worker-->>Export: job status=SUCCEEDED + download token
+
+    loop 轮询 /exports/{jobId}
+        FE->>GW: GET /exports/{jobId}
+        GW->>BFF: 透传
+        BFF->>Export: getJob(jobId)
+        alt Artifact 未就绪
+            Export-->>BFF: status=RUNNING
+            BFF-->>FE: 202 + retryAfter
+        else Artifact 就绪
+            Export-->>BFF: status=SUCCEEDED + signedUrl
+            BFF-->>FE: 200 + 一次性链接
+            FE->>Obj: 下载文件（单次）
+            Obj--)Audit: export.downloaded (ip, ua)
+        end
+    end

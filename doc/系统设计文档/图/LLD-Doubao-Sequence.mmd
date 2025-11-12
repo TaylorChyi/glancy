@@ -1,0 +1,29 @@
+```mermaid
+sequenceDiagram
+    participant BFF as BFF
+    participant Adapter as LLM 适配层
+    participant Doubao as Doubao API
+    participant Cache as Redis L1/L2
+    participant Monitor as 可观测性
+
+    BFF->>Adapter: composePrompt(ctx)
+    Adapter->>Doubao: defaultStream(prompt, timeout=5s)
+    alt success <2.3s
+        Doubao-->>Adapter: chunk
+        Adapter-->>BFF: chunk
+        BFF-->>Cache: async set (L1/L2)
+        BFF-->>Monitor: latency metrics
+    else timeout or 5xx
+        Adapter-->>BFF: error/timeout
+        BFF-->>BFF: emit degraded template
+        BFF-->>Monitor: degraded event
+        Adapter->>Doubao: fallbackStream(prompt_variant)
+        alt fallback success
+            Doubao-->>Adapter: chunk
+            Adapter-->>Cache: async set+tag fallback
+        else fallback fail
+            Adapter-->>Monitor: circuit breaker open
+        end
+    end
+```
+

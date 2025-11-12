@@ -1,0 +1,29 @@
+```mermaid
+graph LR
+    User((最终用户))
+    Edge[CDN/WAF/Edge]
+    APIGW[API 网关]
+    BFF[BFF / 应用单体]
+    Adapter[LLM 适配层]
+    Doubao((Doubao API))
+    RDBMS[(RDBMS 主从)]
+    RedisL1[(Redis L1)]
+    RedisL2[(Redis L2)]
+    ObjStore[(对象存储+CDN)]
+    Orchestrator[任务编排/消息队列]
+    Auth[登录/OIDC]
+    Payment[支付网关]
+
+    User --> Edge --> APIGW --> BFF
+    BFF -->|缓存命中| RedisL1
+    BFF -->|共享缓存| RedisL2
+    BFF --> Adapter --> Doubao
+    BFF -->|读写| RDBMS
+    BFF -->|导出回执| Orchestrator --> ObjStore
+    Orchestrator --> RedisL2
+    ObjStore -->|签名链接| User
+    BFF -->|订阅校验| Payment
+    BFF -->|登录| Auth
+    BFF -->|可观测性| Orchestrator
+```
+

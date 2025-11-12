@@ -1,0 +1,220 @@
+# AC-Index（验收标准唯一清单）
+
+> 基于《第 20 章 验收标准与测试方案（UC 对齐）》抽取的 AC 清单，结合第 21 章发布批次（REL-Bx）与 StoryMap 阶段，形成交付时核对的唯一列表。
+
+## 使用说明
+- **SSoT**：来源于 `doc/需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md`，并与第 1、3、5、6、7、8、9、10、11、14 章指标互锁。
+- **Release batch**：沿用 21.4.2 的 `REL-B0`～`REL-B5`，并映射 StoryMap（M1 Alpha / M2 Beta / M3 Gamma）阶段。
+- **一键过滤**：展开下方任意 `REL-Bx` 区块即可只看到对应批次需要打勾的 AC；同时在全文搜索 `REL-Bx` 也可高亮对应行。
+- **验证脚本**：优先链接 20.17/DR 用例或 20.5 功能脚本；若为演练/脚本，请在 CI 或测试管理系统引用同名 ID。
+- **SLA 指标**：直接摘自 20.3、20.5、21.3、21.5 以及 6.x NFR；如需更细颗粒指标请回溯至对应章节。
+
+## 发布批次快捷过滤
+
+<details open>
+<summary>REL-B0 · Step 0 蓝绿健康检查（内部 0.5%）</summary>
+
+- **UC**：`AC-UC-01`、`AC-UC-10`、`AC-UC-12`、`AC-UC-14`
+- **FR**：`AC-FR-001`、`AC-FR-002`、`AC-FR-003`、`AC-FR-004`、`AC-FR-010`、`AC-FR-012`、`AC-FR-040`、`AC-FR-070`、`AC-FR-071`、`AC-FR-100`
+- **NFR**：`AC-NFR-001`、`AC-NFR-003`、`AC-NFR-005`、`AC-NFR-006`、`AC-NFR-008`、`AC-NFR-009`
+</details>
+
+<details>
+<summary>REL-B1 · Step 1 1% Canary（Pro + L2/L3）</summary>
+
+- **UC**：`AC-UC-01`、`AC-UC-08`、`AC-UC-09`、`AC-UC-10`、`AC-UC-11`、`AC-UC-12`
+- **FR**：`AC-FR-001`、`AC-FR-002`、`AC-FR-003`、`AC-FR-004`、`AC-FR-010`、`AC-FR-012`、`AC-FR-040`、`AC-FR-041`、`AC-FR-071`、`AC-FR-081`、`AC-FR-090`、`AC-FR-091`、`AC-FR-100`
+- **NFR**：`AC-NFR-001`、`AC-NFR-002`、`AC-NFR-005`、`AC-NFR-007`
+</details>
+
+<details>
+<summary>REL-B2 · Step 2 5%（Plus + L1/L4）</summary>
+
+- **UC**：`AC-UC-02`、`AC-UC-03`、`AC-UC-04`、`AC-UC-05`、`AC-UC-07`、`AC-UC-08`、`AC-UC-09`、`AC-UC-13`
+- **FR**：`AC-FR-011`、`AC-FR-013`、`AC-FR-014`、`AC-FR-020`、`AC-FR-021`、`AC-FR-030`、`AC-FR-031`、`AC-FR-041`、`AC-FR-050`、`AC-FR-051`、`AC-FR-060`、`AC-FR-080`、`AC-FR-090`、`AC-FR-091`、`AC-FR-092`
+- **NFR**：`AC-NFR-011`、`AC-NFR-012`
+</details>
+
+<details>
+<summary>REL-B3 · Step 3 15%（含 Free，开放历史/导出）</summary>
+
+- **UC**：`AC-UC-02`、`AC-UC-03`、`AC-UC-04`、`AC-UC-05`、`AC-UC-06`、`AC-UC-07`、`AC-UC-13`、`AC-UC-15`、`AC-UC-16`
+- **FR**：`AC-FR-011`、`AC-FR-013`、`AC-FR-014`、`AC-FR-020`、`AC-FR-021`、`AC-FR-022`、`AC-FR-030`、`AC-FR-031`、`AC-FR-042`、`AC-FR-050`、`AC-FR-051`、`AC-FR-060`、`AC-FR-092`
+- **NFR**：`AC-NFR-010`、`AC-NFR-011`、`AC-NFR-013`
+</details>
+
+<details>
+<summary>REL-B4 · Step 4 50%（全量前观察窗）</summary>
+
+- **UC**：`AC-UC-06`、`AC-UC-14`、`AC-UC-15`
+- **FR**：`AC-FR-022`、`AC-FR-042`
+- **NFR**：`AC-NFR-004`、`AC-NFR-012`
+</details>
+
+<details>
+<summary>REL-B5 · Step 5 100% 切换（保留旧版 30–60 分钟）</summary>
+
+- **UC**：`AC-UC-11`、`AC-UC-14`、`AC-UC-16`
+- **FR**：`AC-FR-070`、`AC-FR-080`、`AC-FR-081`
+- **NFR**：`AC-NFR-002`、`AC-NFR-003`、`AC-NFR-004`、`AC-NFR-006`、`AC-NFR-007`、`AC-NFR-008`、`AC-NFR-009`、`AC-NFR-010`、`AC-NFR-013`
+</details>
+
+## UC 维度 AC 列表
+
+> 绑定 UC→FR→NFR，以 Use Case 视角核查功能连通性与批次准入。
+
+| AC ID | 绑定（UC / FR / NFR） | 验收要点 | 验证脚本 / 链接 | 发布批次 | SLA / 指标 |
+| --- | --- | --- | --- | --- | --- |
+| AC-NFR-001 | UC-01 / UC-02 / FR-010 / NFR-001 | 首屏 P95 <=2.5 s、均值 <=1.2 s；各模块渐进渲染 | [TC-PERF-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-perf-001>), [观测脚本](#script-observe) | REL-B0 / REL-B1 | 端到端 P95 <=2.5 s；首个模块平均 <=1.2 s；RUM 差值 <=5% |
+| AC-NFR-002 | UC-01 / UC-08 / UC-09 / NFR-002 | `/lookup` 月可用性 >=99.9%，`/regenerate` >=99.5%；订阅变更 <=5 s | [DR-03](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-03>), [观测脚本](#script-observe) | REL-B1 / REL-B5 | 可用性 >=指标；4 小时窗口 >=99.0%；到期降级/升级 5 s 内完成 |
+| AC-NFR-003 | UC-14 / FR-070 / NFR-003 | 熔断→降级→半开恢复流程闭环并可回放 | [TC-DEGRADE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-degrade-001>), [DR-01](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-01>) | REL-B0 / REL-B5 | 5xx>=5% 且 1 分钟触发；退化输出基础释义；半开 3 次成功后闭合 |
+| AC-NFR-004 | UC-01 / UC-02 / NFR-004 | 300 QPS 压测延迟劣化 <=20%，错误率 <0.1% | [压测脚本](#script-load) | REL-B4 / REL-B5 | 300 QPS 连续 10 分钟；P95 增幅 <=20%；错误率 <0.1% |
+| AC-NFR-005 | UC-01 / UC-02 / UC-03 / FR-004 / NFR-005 | 幂等键命中率 100%，重复请求不重复计费/落库 | [TC-API-003](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-003>) | REL-B0 / REL-B1 | 幂等命中率=100%；3 秒内返回相同内容；历史仅 1 条 |
+| AC-NFR-006 | UC-10 / UC-16 / FR-040 / NFR-006 | TLS1.2+/AES-256、Key Rotation 按计划执行，RBAC 最小权限 | [安全脚本](#script-security) | REL-B0 / REL-B5 | 证书/密钥轮转 <=90 天；RBAC 审计 0 高危；敏感字段脱敏 |
+| AC-NFR-007 | UC-05 / UC-11 / UC-16 / FR-080 / NFR-007 | 无痕不落正文、导出<=5 s、物理清理 T+7 d | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [DR-02](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-02>), [审计脚本](#script-audit) | REL-B1 / REL-B5 | 导出回执 <=5 s；无痕写入=0；T+7 d 清理；审计样本 100% 通过 |
+| AC-NFR-008 | 全 UC / NFR-008 | 99% 请求具备 trace_id；指标/日志/追踪三分法齐备 | [观测脚本](#script-observe) | REL-B0 / REL-B5 | trace_id 覆盖 >=99%；指标/日志关联 ID 对齐 100%；看板延迟 <1 分钟 |
+| AC-NFR-009 | UC-14 / 发布流程 / NFR-009 | 零停机/灰度/回滚机制按 21.4 执行，契约回放 >=500 条 | [DR-05](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-05>) | REL-B0 / REL-B5 | 契约样本 >=500 且 100% 通过；回滚 <=5 分钟；灰度 Step 0-5 全程可追溯 |
+| AC-NFR-010 | UC-01 / UC-03 / NFR-010 | 浏览器/设备兼容矩阵通过，不支持环境给出可读提示 | [兼容巡检](#script-compat) | REL-B3 / REL-B5 | 支持矩阵 100% 覆盖；降级提示明确；不支持环境不阻断关键路径 |
+| AC-NFR-011 | UC-01 / UC-07 / UC-10 / NFR-011 | zh/en 切换即时生效，键盘可达且符合 WCAG 2.1 AA | [TC-UX-a11y-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-ux-a11y-001>) | REL-B2 / REL-B3 | 语言切换<=1 次交互；对比度/焦点指标满足 WCAG 2.1 AA；屏幕阅读器可读 |
+| AC-NFR-012 | UC-02 / UC-03 / UC-08 / FR-050 / NFR-012 | 成本燃率 <=1.2x 日预算；成本护栏触发率受控 | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>), [DR-06](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-06>), [成本脚本](#script-cost) | REL-B2 / REL-B4 | 近 5 分钟成本/日预算 <=1.2x；护栏触发时再生成 403；端到端 P95 恶化 <10% |
+| AC-NFR-013 | UC-10 / UC-16 / NFR-013 | 审计日志可追溯、子处理者留档，合规材料完备 | [审计脚本](#script-audit) | REL-B3 / REL-B5 | 审计日志 100% 包含 actor/action/time；DPA/SCC 附件最新；取数可回溯 |
+| AC-FR-001 | UC-01 / UC-12 / FR-001 / NFR-001 | 仅接受 L1-L4 语言对白名单，同语模式隐藏译文字段 | [TC-API-002](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-002>) | REL-B0 / REL-B1 | 非白名单请求 100% 拒绝；同语模式返回缺失译文本；切换后 1 次请求内生效 |
+| AC-FR-002 | UC-01 / FR-002 / NFR-001 | 拒绝句子/段落输入并返回统一错误码与提示 | [TC-API-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-001>) | REL-B0 / REL-B1 | 句子检测准确率 100%；错误码 `ENTRY_NOT_WORD_OR_PHRASE`；hint 指向改写 |
+| AC-FR-003 | UC-01 / UC-12 / FR-003 / NFR-001 | LID p>=0.8 自动选择；0.6<=p<0.8 弹窗确认；p<0.6 拒绝 | [LID 脚本](#script-lid) | REL-B0 / REL-B1 | 低置信度不落查词；确认与拒绝事件写入 `lid_confidence`；默认阈值 0.6/0.8 可配置 |
+| AC-FR-004 | UC-01 / UC-02 / UC-03 / FR-004 / NFR-005 | 幂等键命中后 3 秒内重复请求返回相同结果且不重复计费 | [TC-API-003](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-003>) | REL-B0 / REL-B1 | 幂等键 `subject+langPair+entry_norm+config_hash+profile_etag`；重复写 0；配额计数一次 |
+| AC-FR-010 | UC-01 / UC-12 / FR-010 / NFR-001 / NFR-011 | 至少 3 个义项、字符上限符合表格，模块失败不影响其他模块 | [TC-API-002](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-002>), [TC-PERF-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-perf-001>) | REL-B0 / REL-B1 | 释义字符：中文 <=150、英文 <=220；首屏 P95 <=2.5 s；模块降级需显示原因 |
+| AC-FR-011 | UC-02 / UC-03 / FR-011 / NFR-012 | 例句条数与难度/风格档位一致，再生成独立计费 | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>), [TC-RATE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-rate-001>) | REL-B2 / REL-B3 | 档位控制再生次数；429 命中 <=3%；再生成默认绕过 L2 缓存 |
+| AC-FR-012 | UC-01 / UC-03 / FR-012 / NFR-001 | 搭配/同反/派生条数与排序符合契约，展开不重排 | [TC-API-002](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-002>) | REL-B0 / REL-B1 | 排序稳定性 100%；条数 >= 契约下限；展开动作不触发额外查询 |
+| AC-FR-013 | UC-07 / UC-10 / FR-013 / NFR-011 | 模块开关/排序/详略级别在端侧与服务端同步，Pro 支持偏好 | [Settings 脚本](#script-settings) | REL-B2 / REL-B3 | 设置更新 <200 ms 写入；多端读写最终一致；未授权项不可见 |
+| AC-FR-014 | UC-07 / FR-014 / NFR-011 | 词频/考试标签 UI 占位保留，无数据时不发起额外请求 | [Settings 脚本](#script-settings) | REL-B2 / REL-B3 | 标签渲染 <=100 ms；空状态不触发二次查询；a11y 描述完整 |
+| AC-FR-020 | UC-04 / FR-020 / NFR-007 | 历史留存窗口依档位（第 11 章权益矩阵）执行，无痕模式不写正文 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>) | REL-B2 / REL-B3 | 留存天数/条数与订阅配置一致；超限滚动清理写入 `history.eviction`；无痕写入=0、trace 覆盖 >=99% |
+| AC-FR-021 | UC-05 / FR-021 / NFR-007 | 清理支持按语言/全部，5 s 内回执并可恢复到 T+7 d | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [DR-02](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-02>) | REL-B2 / REL-B3 | 回执 <=5 s；恢复窗口 T+7 d；恢复前查询不可见 |
+| AC-FR-022 | UC-06 / FR-022 / NFR-007 | 导出 202→轮询 200，CSV/JSON，链接一次性 TTL=10 分钟 | [TC-EXPORT-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-export-001>), [DR-04](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-04>) | REL-B3 / REL-B4 | 回执 <=5 s；TTL=10 分钟；超时返回 410；导出链路恢复 <=15 分钟 |
+| AC-FR-030 | UC-07 / FR-030 / NFR-011 | 画像字段上限、排序与撤回逻辑符合 3.5 规定 | [Profile 巡检](#script-profile) | REL-B2 / REL-B3 | Free<=3、Plus<=5、Pro<=8 个标签；撤回即清空；缓存与服务端一致 |
+| AC-FR-031 | UC-02 / UC-03 / UC-07 / FR-031 / NFR-008 | 画像驱动 Prompt 参数并写入 trace，画像变更触发缓存失效 | [画像观测脚本](#script-observe) | REL-B2 / REL-B3 | trace_id 覆盖 >=99%；`profile_etag` 变化即失效缓存；Prompt 参数可追溯 |
+| AC-FR-040 | UC-10 / FR-040 / NFR-006 | 邮箱/第三方登录成功率 >=99%，首登需要条款同意并留痕 | [Auth 巡检](#script-auth) | REL-B0 / REL-B1 | TLS1.2+/AES-256；条款记录写入审计；撤回后触发 UC-16 |
+| AC-FR-041 | UC-08 / UC-09 / FR-041 / NFR-002 | 支付回调 <=3 s 完成档位切换，配额/历史能力同步 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>) | REL-B1 / REL-B2 | 回调 <=3 s；失败自动重放；/lookup 可用性 >=99.9% |
+| AC-FR-042 | UC-15 / FR-042 / NFR-002 | 账单/收据展示订单详情并支持下载（含 TZ 渲染） | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>) | REL-B3 / REL-B4 | 收据生成 <=5 s；账单 API >=99.5% 可用；下载链接一次性 |
+| AC-FR-050 | UC-13 / FR-050 / NFR-012 | 查词/再生配额通过 Header/Body 反馈并与订阅镜像一致 | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>) | REL-B2 / REL-B3 | `X-Quota-*` 与响应体一致；日配额本地 00:00 重置；429 命中 <=3% |
+| AC-FR-051 | UC-13 / FR-051 / NFR-012 | 支持用户/租户/全局三层限流，返回 `retry_after_ms` | [TC-RATE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-rate-001>) | REL-B2 / REL-B3 | 三层限流策略均可触发；返回剩余冷却；速率看板 <=阈值 |
+| AC-FR-060 | UC-07 / UC-10 / FR-060 / NFR-011 | 设置项（主题/快捷键/i18n）即时生效且符合 WCAG AA | [TC-UX-a11y-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-ux-a11y-001>), [Settings 脚本](#script-settings) | REL-B2 / REL-B3 | 切换实时生效；a11y 对比度达标；键盘可达 100% |
+| AC-FR-070 | UC-14 / FR-070 / NFR-003 | Doubao 适配熔断阈值、降级回退符合策略 | [TC-DEGRADE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-degrade-001>), [DR-01](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-01>) | REL-B0 / REL-B5 | 依赖 5xx>=5% 触发；退化输出基础释义+模板例句；半开 3 次成功后闭合 |
+| AC-FR-071 | UC-01 / UC-12 / FR-071 / NFR-001 | L1=10 分钟、L2=30 分钟缓存策略，`X-Cache` 命中标记准确 | [TC-CACHE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-cache-001>) | REL-B0 / REL-B1 | 第二次请求命中 L1；TTL 分别 10/30 分钟；命中率计入看板 |
+| AC-FR-080 | UC-05 / UC-16 / FR-080 / NFR-007 | 逻辑删除即时不可见，物理清理 T+7 d，可恢复 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [DR-02](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-02>) | REL-B2 / REL-B5 | 删除后立即不可查；T+7 d 清理；PITR 恢复窗口一致 |
+| AC-FR-081 | UC-10 / UC-16 / FR-081 / NFR-007 | 条款/隐私首登同意并可撤回，撤回即触发导出/删除 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [审计脚本](#script-audit) | REL-B1 / REL-B5 | 同意/撤回记录 100% 写审计；导出回执 <=5 s；撤回后关闭历史 |
+| AC-FR-090 | UC-08 / FR-090 / NFR-002 | 订阅开通/续费支付成功即生效，失败不降级 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>) | REL-B1 / REL-B2 | 支付成功 <=5 s 下发权益；失败路径无副作用；状态机一致 |
+| AC-FR-091 | UC-09 / FR-091 / NFR-002 | 到期自动降级，历史/配额受限并可追溯 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>), [DR-03](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-03>) | REL-B1 / REL-B2 | 降级切换 <=30 分钟；日志可追溯；关键接口 >=99.0% 可用 |
+| AC-FR-092 | UC-09 / UC-15 / FR-092 / NFR-002 / NFR-013 | 退款/异常对账回退档位并保留账单痕迹 | [Billing 对账脚本](#script-billing) | REL-B2 / REL-B3 | 退款触发自动回放；账单/合规模块保留痕迹 >=7 年；状态同步 <=5 s |
+| AC-FR-100 | UC-01 / FR-100 / NFR-001 / NFR-011 | 首屏渐进渲染，模块独立错误提示且可 a11y 访问 | [TC-PERF-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-perf-001>), [TC-UX-a11y-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-ux-a11y-001>) | REL-B0 / REL-B1 | 首屏 P95 <=2.5 s；Tab 顺序覆盖主路径；模块异常显示可读提示 |
+| AC-UC-01 | UC-01 / FR-01 / FR-02 / NFR-001 / NFR-007 | 输入词/词组合法、L1-L4 白名单与同语不返译文，返回需携带 `X-Cache` 与 L1/L2 命中标记 | [TC-API-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-001>), [TC-API-002](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-002>), [TC-CACHE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-cache-001>), [TC-PERF-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-perf-001>) | REL-B0 / REL-B1 | 首屏 P95 <= 2.5 s、均值 <= 1.2 s；L1=10 分钟/L2=30 分钟；句子输入 100% 返回 400 |
+| AC-UC-02 | UC-02 / FR-03 / FR-011 / NFR-003 / NFR-012 | 再生成独立计费、不重复扣查词次数；遇到上游异常自动降级为基础释义并保留 quota | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>), [TC-DEGRADE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-degrade-001>) | REL-B2 / REL-B3 | 429 命中率 <=3%；熔断触发条件 5xx>=5% 且持续 1 分钟；成本护栏恶化 <10% |
+| AC-UC-03 | UC-03 / FR-04 / FR-011 / FR-051 / NFR-012 | 难度/风格切换受档位控制，冷却提示需包含 `retry_after_ms` 与 quota 头部 | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>), [TC-RATE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-rate-001>) | REL-B2 / REL-B3 | `X-RateLimit-*` 与响应体镜像；全局 429 命中率 <=3%；冷却逻辑按档位配置 |
+| AC-UC-04 | UC-04 / FR-05 / FR-020 / NFR-007 / NFR-013 | 历史列表支持语言/时间筛选并脱敏；无痕模式不落正文 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>) | REL-B2 / REL-B3 | 留存窗口与档位权益一致；逻辑删除即时；历史查询 P95 <= 1.2 s 且 trace 可追溯 |
+| AC-UC-05 | UC-05 / FR-06 / FR-021 / NFR-007 / NFR-013 | 清理按语言/全部执行，5 s 内回执并触发 T+7 d 物理清理 + PITR 校验 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [DR-02](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-02>) | REL-B2 / REL-B3 | 回执 <=5 s；物理清理 T+7 d；PITR RPO <=5 分钟 |
+| AC-UC-06 | UC-06 / FR-07 / FR-022 / NFR-007 / NFR-012 | 导出 CSV/JSON，202→轮询 200，链接一次性且 TTL 10 分钟 | [TC-EXPORT-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-export-001>), [DR-04](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-04>) | REL-B3 / REL-B4 | 回执 <=5 s；下载链接 TTL=10 分钟；导出链路恢复 <=15 分钟 |
+| AC-UC-07 | UC-07 / FR-08 / FR-030 / FR-031 / NFR-011 | 画像字段上限随档位，跨端同步，撤回同意后回退默认模块顺序 | [Profile 巡检](#script-profile) | REL-B2 / REL-B3 | Free<=3 / Plus<=5 / Pro<=8 个风格标签；画像变更 1 次查词内生效；撤回即清空 |
+| AC-UC-08 | UC-08 / FR-09 / FR-041 / FR-090 / NFR-002 | 支付<=5 s 权益同步，配额/账单/历史能力与状态机一致，失败支持幂等回放 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>), [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>) | REL-B1 / REL-B2 | `/subscription` 与 `/quotas` 切换 <=5 s；/lookup 可用性 >=99.9%；计费回执全量落审计 |
+| AC-UC-09 | UC-09 / FR-10 / FR-091 / FR-092 / NFR-002 | 到期自动降级并回退权益；异常对账/退款保持幂等 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>), [DR-03](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-03>) | REL-B1 / REL-B2 | 跨区切换 <=30 分钟恢复；降级后历史/配额同步；关键接口 4 小时窗口 >=99.0% 可用 |
+| AC-UC-10 | UC-10 / FR-11 / FR-040 / NFR-006 / NFR-011 | 邮箱/第三方登录成功率 >=99%，首登强制同意条款，可随时撤回并留痕 | [Auth 巡检](#script-auth) | REL-B0 / REL-B1 | TLS1.2+/AES-256；登录成功率 >=99%；撤回后立即关闭历史留存及缓存 |
+| AC-UC-11 | UC-11 / FR-12 / FR-080 / NFR-007 / NFR-013 | 无痕模式不落正文但仍计实时配额并输出审计摘录 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>) | REL-B1 / REL-B5 | 无痕写入=0；HK-05 抽样全绿；配额计数实时同步；撤回后 T+7 d 清理 |
+| AC-UC-12 | UC-12 / FR-13 / FR-001 / FR-071 / NFR-001 | 切换语言对后缓存失效，白名单及译文策略即时生效 | [TC-API-002](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-002>), [TC-CACHE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-cache-001>) | REL-B0 / REL-B1 | 语言白名单仅 L1-L4；缓存切换后首次 MISS；首屏 P95 <=2.5 s |
+| AC-UC-13 | UC-13 / FR-14 / FR-050 / FR-051 / NFR-012 | 限流/配额提示包含剩余额度与冷却时间，并与头部字段一致 | [TC-QUOTA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-quota-001>), [TC-RATE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-rate-001>) | REL-B2 / REL-B3 | `X-Quota-Remaining` 与 UI 镜像；429 体包含 `retry_after_ms`；冷却逻辑按档位配置 |
+| AC-UC-14 | UC-14 / FR-15 / FR-070 / NFR-003 / NFR-009 | 熔断触发阈值、退化徽标、半开/回滚流程闭环 | [TC-DEGRADE-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-degrade-001>), [DR-01](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-01>), [DR-05](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-05>) | REL-B0 / REL-B4 / REL-B5 | 熔断触发：依赖 5xx>=5% 且 1 分钟；半开 3 次成功后闭合；回滚 <=5 分钟触发 |
+| AC-UC-15 | UC-15 / FR-16 / FR-042 / FR-090 / NFR-002 | 账单/收据展示订单详情、TZ 渲染、支持下载 | [TC-BILL-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-bill-001>) | REL-B3 / REL-B4 | 支付成功 <=5 s 生成回执；账单接口 >=99.5% 可用；下载链接一次性 |
+| AC-UC-16 | UC-16 / FR-17 / FR-081 / NFR-007 / NFR-013 | 撤回隐私同意即停留存并提供导出/删除回执 | [TC-DATA-001](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#tc-data-001>), [DR-02](<../需求说明文档/第 20 章 验收标准与测试方案（UC 对齐）.md#dr-02>) | REL-B3 / REL-B5 | 撤回回执 <=5 s；导出 TTL 10 分钟；物理清理 T+7 d；审计日志可追溯 |
+
+## FR 维度 AC 列表
+
+> 关注功能需求章节的验收锚点，保证模块能力与主用例对齐。
+
+| AC ID | 绑定（UC / FR / NFR） | 验收要点 | 验证脚本 / 链接 | 发布批次 | SLA / 指标 |
+| --- | --- | --- | --- | --- | --- |
+
+## NFR 维度 AC 列表
+
+> 以第 6 章 NFR / 14 章可观测性为主，与性能、可用性、隐私、成本等跨用例指标绑定。
+
+| AC ID | 绑定（UC / FR / NFR） | 验收要点 | 验证脚本 / 链接 | 发布批次 | SLA / 指标 |
+| --- | --- | --- | --- | --- | --- |
+
+## 附：脚本与 Runbook 索引
+
+> 下列脚本均为可复制的执行步骤；若需自动化版本，可在 CI 中引用同名 Job 或将命令写入临时脚本。
+
+### <a id="script-profile"></a>Profile 巡检
+1. 使用可升级档位账号执行 `PATCH /api/v1/profile`，payload 中包含 Free/Plus/Pro 各自允许的字段与标签数（参考第 3 章 3.5）。  
+2. 立刻调用 `GET /api/v1/profile` 与前端设置面板比对，确认 `profile_etag` 更新与字段脱敏策略一致。  
+3. 再执行一次 `POST /lookup`，检查 `meta.profileEtag`、模块顺序与例句差异，确认 1 次查询内生效。
+
+### <a id="script-auth"></a>Auth 巡检
+1. 通过 SMTP Mock 或三方沙箱执行邮箱/微信/Apple/Google 登录，抓包检查 TLS1.2+ 与 HSTS。  
+2. 首次登录必须展示条款对话框；点击“同意”后检查 `audit.log` 是否写入 `consent.accepted`。  
+3. 在设置页撤回同意，确保 UC-16 自动触发导出/删除入口且审计记录包含 actor、客户端 IP、trace_id。
+
+### <a id="script-lid"></a>LID 置信度脚本
+1. 发送 `POST /lookup`（示例：`{"entry":"bonjour","langPair":"en->zh"}`），记录响应 `metrics.lid_confidence`。  
+2. 修改 Accept-Language 触发 0.6<=p<0.8 的样本，确认 UI 弹出确认并写入 `lid_confidence` 事件。  
+3. 使用 `p<0.6` 的噪声输入，期望直接 400 且返回改写提示；重复调用验证阈值切换生效。
+
+### <a id="script-settings"></a>Settings / UI 脚本
+1. 登录 Plus/Pro 账号，调整模块排序、主题、快捷键与详略级别，抓包 `PATCH /settings`。  
+2. 重新加载 Web/H5 客户端，确认设置即时生效且 `X-Settings-Version` 与后端一致。  
+3. 触发 a11y 巡检：键盘 Tab 穿行主路径，确认焦点顺序与 ARIA 标签正确；主题切换后对比度满足 WCAG 2.1 AA。
+
+### <a id="script-observe"></a>观测 & 看板脚本
+1. 访问 `glancy-slo` 看板，导出近 24 小时 `/lookup` P95、错误率、429 命中等指标截图。  
+2. 在 tracing UI 中按 `trace_id` 搜索刚执行的测试，确认日志、指标、追踪三者都包含相同 ID。  
+3. 如需 RUM 数据，可运行团队维护的 RUM 导出脚本或在仪表盘直接导出 CSV，并附到验收记录。
+
+### <a id="script-audit"></a>审计抽样脚本
+1. 通过 Athena/ClickHouse 查询 `audit.log`，过滤 `event in ('privacy.withdraw','consent.accepted','history.clean')`。  
+2. 随机抽样 10 条，验证字段 `actor`, `action`, `resource`, `trace_id`, `timestamp` 完整且未缺失。  
+3. 对照 UC-11/UC-16 的操作记录，确保审计时间与 UI 回执一致，并附日志截图。
+
+### <a id="script-billing"></a>Billing 对账脚本
+1. 在 Staging 发起升级（如 Plus→Pro），记录订单号与 `paymentIntentId`。  
+2. 调用 `/subscription`、`/quotas`、`/billing/receipts/{orderId}`，确认 5 s 内反映新档位。  
+3. 触发退款或异常回放脚本，检查账单表、审计日志与成本域 `ledger` 记录一致。
+
+### <a id="script-compat"></a>兼容矩阵脚本
+1. 参考第 18 章矩阵，在 Chrome(Latest)、Safari(Last 2)、Edge、Android WebView、iOS Safari 上执行 UC-01/02/05/06。  
+2. 使用 BrowserStack/SauceLab 等云真机执行（若已提供）`npm run test:compat` 或等效脚本，并收集截图。  
+3. 对不受支持的环境验证降级文案是否弹出且不阻断核心操作。
+
+### <a id="script-load"></a>压测脚本
+1. 在性能环境运行团队 `k6` 脚本（示例：`k6 run perf/lookup.js --vus 300 --duration 10m`，参数与第 16 章一致）。  
+2. 监控 `/lookup` P95、错误率与 Doubao 依赖；确保错误率 <0.1%、P95 波动 <=20%。  
+3. 导出压测报告 PDF/CSV，并将链接附在验收记录。
+
+### <a id="script-security"></a>安全基线脚本
+1. 使用 `sslscan` 或 AWS ACM 检查 TLS1.2+、证书有效期与加密套件。  
+2. 运行密钥轮转演练（如 `aws kms schedule-key-deletion` → 取消），并记录审批票据。  
+3. 抽查 RBAC：执行 `iam simulate-principal-policy` 或等效脚本，确保最小权限原则覆盖日志/历史访问。
+
+### <a id="script-cost"></a>成本护栏脚本
+1. 通过成本看板或 SQL 计算近 5 分钟 `tokens_out / daily_budget`，确认 <=1.2x。  
+2. 触发 `DR-06` 成本护栏演练：开启护栏并执行 `/lookup` 与 `/regenerate`，记录 `costGuardrail` 标记。  
+3. 对比护栏前后 P95，确保恶化 <10%，并在验收记录中附监控截图。
+
+## 验收记录模板与样例
+
+### 模板
+
+| 字段 | 说明 |
+| --- | --- |
+| 发布批次 | 选填 `REL-Bx`；与变更单/灰度记录保持一致。 |
+| AC ID | 可填多个，建议与下表勾选项一一对应。 |
+| 验收结论 | Pass / Block / Need Fix；Block 需附缺陷号。 |
+| 责任人 | 执行脚本或确认结果的 Owner。 |
+| 证据链接 | 日志、脚本输出、监控截图或 Runbook 记录。 |
+| 时间戳 | ISO 8601，例如 `2024-06-18T10:35:22+08:00`。 |
+| 备注 | 例：触发了成本护栏 / 通过回放≥500 样本等。 |
+
+### 样例
+
+| 发布批次 | AC ID | 验收结论 | 责任人 | 证据链接 | 时间戳 | 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| REL-B2 | AC-UC-02, AC-FR-011, AC-NFR-012 | Pass | QA-Emma | 链接：Jenkins #4521（TC-QUOTA-001） | 2024-06-18T10:35:22+08:00 | 再生成计数与成本护栏报警一致 |
+| REL-B2 | AC-UC-04, AC-FR-021 | Block | QA-Li | 链接：TestRail TC-DATA-001 Run #12 | 2024-06-18T11:02:10+08:00 | T+7d 清理延迟 15 分钟，阻断进入 B3 |
+
+> **交付提示**：验收记录需随发布单归档，若某批次未全部通过请同步第 21 章 21.5 门禁守门人；再次执行脚本时直接复制上表作为 Runbook 模板。

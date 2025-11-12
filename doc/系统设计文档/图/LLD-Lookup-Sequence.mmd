@@ -1,0 +1,34 @@
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant GW as API 网关
+    participant BFF as BFF/应用
+    participant Redis as Redis L1/L2
+    participant Adapter as LLM 适配层
+    participant Doubao as Doubao API
+    participant Hist as 历史/任务队列
+
+    U->>GW: HTTPS /lookup
+    GW->>BFF: Forward + trace_id + quota headers
+    BFF->>Redis: GET cacheKey (L1/L2)
+    alt cache hit
+        Redis-->>BFF: Cached modules
+        BFF-->>U: SSE stream (X-Cache=HIT)
+        BFF-->>Hist: async record
+    else cache miss
+        BFF->>BFF: quotaCheck()
+        BFF->>Adapter: compose+defaultStream (timeout 2.3s)
+        Adapter->>Doubao: /defaultStream (timeout 5s)
+        alt first chunk < 1.8s
+            Doubao-->>Adapter: chunk
+            Adapter-->>BFF: chunk
+            BFF-->>U: SSE chunk
+        else timeout/5xx
+            BFF-->>U: SSE degraded response
+            BFF--)Hist: schedule refresh
+        end
+        BFF--)Redis: async set L1/L2
+        BFF--)Hist: async persist history
+    end
+```
+

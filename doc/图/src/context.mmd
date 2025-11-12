@@ -1,0 +1,94 @@
+%% FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-1#SystemContext
+%% 摘要：Glancy 词汇助手在终端、边缘、应用、数据与第三方依赖之间的流向与信任边界。
+flowchart LR
+    classDef boundary fill:#f2f6ff,stroke:#4a64d6,stroke-width:1px,color:#0c1b3a
+    classDef storage fill:#fff9f0,stroke:#f39c12,color:#6b3500
+
+    subgraph Clients["终端用户与客户端"]
+        User[最终用户/匿名访客]
+        Member[登录/订阅用户]
+        Web[Web/H5 客户端]
+        Admin[运营/客服后台]
+    end
+
+    subgraph Edge["边缘与接入层"]
+        CDN[CDN/WAF PoP]
+        APIGW[API 网关]
+        AdminGW[后台入口网关]
+    end
+
+    subgraph App["应用与领域服务"]
+        BFF[BFF/API 控制器]
+        Feature[特性开关/配置中心]
+        Quota[配额与限流服务]
+        Profile[画像/偏好服务]
+        History[历史与导出服务]
+        Billing[订阅与账单服务]
+        Adapter[LLM 适配层]
+        JobSvc[编排/任务服务]
+    end
+
+    subgraph Data["数据与缓存层"]
+        RedisL1[(Redis L1 缓存)]
+        RedisL2[(Redis L2 共享缓存)]
+        RDBMS[(PostgreSQL 主从)]
+        Obj[(对象存储+CDN)]
+        Queue[(消息队列)]
+        Audit[(审计与事件流)]
+    end
+
+    subgraph External["第三方依赖"]
+        Doubao((Doubao LLM API))
+        Payment((支付/OIDC 提供方))
+        Mailer((通知/邮件服务))
+    end
+
+    subgraph Observability["可观测性栈"]
+        Logs[日志]
+        Metrics[指标]
+        Traces[链路]
+    end
+
+    User --> Web
+    Member --> Web
+    Admin --> AdminGW
+    Web --> CDN --> APIGW --> BFF
+    AdminGW --> BFF
+
+    BFF --> Feature
+    BFF --> Profile
+    BFF --> History
+    BFF --> Billing
+    BFF --> Quota
+    BFF --> Adapter
+    BFF --> RedisL1
+    BFF --> RedisL2
+    BFF -->|写入| RDBMS
+    History --> Obj
+    History --> Queue
+    JobSvc --> Queue --> JobSvc
+    JobSvc --> Obj
+    JobSvc --> RedisL2
+    Adapter --> Doubao
+    Billing --> Payment
+    Billing --> Audit
+    Quota --> RedisL2
+    Profile --> RDBMS
+    Billing --> RDBMS
+    History --> RDBMS
+    Feature --> RedisL2
+
+    Obj -->|签名链接| Web
+    Queue -.-> Mailer
+    Mailer -.-> User
+
+    BFF --> Logs
+    BFF --> Metrics
+    BFF --> Traces
+    Adapter --> Traces
+    APIGW --> Metrics
+    JobSvc --> Logs
+    Billing --> Audit
+
+    Payment --> Billing
+    Doubao --> Adapter
