@@ -19,12 +19,14 @@
 
 > 模板：每条 FR 按“触发 → 约束 → 结果 → 验收引用”组织，优先级体现在标题括号，验收锚点在[第 20 章](<./第 20 章 验收标准与测试方案（UC 对齐）.md>)以 `AC-FR-*` 命名。
 
-> **图示（查词主路径）**：FigJam [node 230-20](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-20#LookupSequence) / Mermaid 源 [`doc/图/src/sequence-lookup.mmd`](../图/src/sequence-lookup.mmd) / 快照 [`doc/图/export/sequence-lookup.svg`](../图/export/sequence-lookup.svg)。
+> **图示（查词主路径）**：FigJam [node 230-20](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-20#LookupSequence) / PlantUML 源 [`doc/图/src/sequence-lookup.puml`](../图/src/sequence-lookup.puml)。
 
 <details>
 <summary>查看查词主成功/降级时序</summary>
 
-![查词主路径时序](../图/export/sequence-lookup.svg)
+```plantuml
+!include ../图/src/sequence-lookup.puml
+```
 
 </details>
 
@@ -120,12 +122,14 @@
 - **结果**：`POST /exports` 返回 202，携带 `exportId/receiptId`；P95 ≤ 5 s 内通过轮询得到下载链接；降级时响应体含 `degraded=true` 与原因。
 - **验收引用**：[AC-FR-022](<./第 20 章 验收标准与测试方案（UC 对齐）.md#ac-fr-022>).
 
-> 图示：FigJam [node 230-40](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-40#ExportSequence) / Mermaid 源 [`doc/图/src/sequence-export.mmd`](../图/src/sequence-export.mmd) / 快照 [`doc/图/export/sequence-export.svg`](../图/export/sequence-export.svg)。
+> 图示：FigJam [node 230-40](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-40#ExportSequence) / PlantUML 源 [`doc/图/src/sequence-export.puml`](../图/src/sequence-export.puml)。
 
 <details>
 <summary>查看导出任务与一次性链接时序</summary>
 
-![导出任务时序](../图/export/sequence-export.svg)
+```plantuml
+!include ../图/src/sequence-export.puml
+```
 
 </details>
 
@@ -165,12 +169,14 @@
 - **结果**：权限即时生效或降级，配额/历史/模块自定义随档位同步；异常回调自动重放。
 - **验收引用**：[AC-FR-041](<./第 20 章 验收标准与测试方案（UC 对齐）.md#ac-fr-041>).
 
-> 图示：FigJam [node 230-60](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-60#SubscriptionSequence) / Mermaid [`doc/图/src/sequence-subscription.mmd`](../图/src/sequence-subscription.mmd) / 快照 [`doc/图/export/sequence-subscription.svg`](../图/export/sequence-subscription.svg)。
+> 图示：FigJam [node 230-60](https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-60#SubscriptionSequence) / PlantUML 源 [`doc/图/src/sequence-subscription.puml`](../图/src/sequence-subscription.puml)。
 
 <details>
 <summary>查看订阅购买/回调/权益同步时序</summary>
 
-![订阅权益同步时序](../图/export/sequence-subscription.svg)
+```plantuml
+!include ../图/src/sequence-subscription.puml
+```
 
 </details>
 

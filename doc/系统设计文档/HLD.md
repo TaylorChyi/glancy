@@ -25,9 +25,103 @@
 
 - FigJam：<https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-1#SystemContext>
 - Mermaid 源：`doc/图/src/context.mmd`
-- 导出快照：`doc/图/export/context.svg`
 
-![系统上下文图（T29）](../图/export/context.svg)
+```mermaid
+%% FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-1#SystemContext
+%% 摘要：Glancy 词汇助手在终端、边缘、应用、数据与第三方依赖之间的流向与信任边界。
+flowchart LR
+    classDef boundary fill:#f2f6ff,stroke:#4a64d6,stroke-width:1px,color:#0c1b3a
+    classDef storage fill:#fff9f0,stroke:#f39c12,color:#6b3500
+
+    subgraph Clients["终端用户与客户端"]
+        User[最终用户/匿名访客]
+        Member[登录/订阅用户]
+        Web[Web/H5 客户端]
+        Admin[运营/客服后台]
+    end
+
+    subgraph Edge["边缘与接入层"]
+        CDN[CDN/WAF PoP]
+        APIGW[API 网关]
+        AdminGW[后台入口网关]
+    end
+
+    subgraph App["应用与领域服务"]
+        BFF[BFF/API 控制器]
+        Feature[特性开关/配置中心]
+        Quota[配额与限流服务]
+        Profile[画像/偏好服务]
+        History[历史与导出服务]
+        Billing[订阅与账单服务]
+        Adapter[LLM 适配层]
+        JobSvc[编排/任务服务]
+    end
+
+    subgraph Data["数据与缓存层"]
+        RedisL1[(Redis L1 缓存)]
+        RedisL2[(Redis L2 共享缓存)]
+        RDBMS[(PostgreSQL 主从)]
+        Obj[(对象存储+CDN)]
+        Queue[(消息队列)]
+        Audit[(审计与事件流)]
+    end
+
+    subgraph External["第三方依赖"]
+        Doubao((Doubao LLM API))
+        Payment((支付/OIDC 提供方))
+        Mailer((通知/邮件服务))
+    end
+
+    subgraph Observability["可观测性栈"]
+        Logs[日志]
+        Metrics[指标]
+        Traces[链路]
+    end
+
+    User --> Web
+    Member --> Web
+    Admin --> AdminGW
+    Web --> CDN --> APIGW --> BFF
+    AdminGW --> BFF
+
+    BFF --> Feature
+    BFF --> Profile
+    BFF --> History
+    BFF --> Billing
+    BFF --> Quota
+    BFF --> Adapter
+    BFF --> RedisL1
+    BFF --> RedisL2
+    BFF -->|写入| RDBMS
+    History --> Obj
+    History --> Queue
+    JobSvc --> Queue --> JobSvc
+    JobSvc --> Obj
+    JobSvc --> RedisL2
+    Adapter --> Doubao
+    Billing --> Payment
+    Billing --> Audit
+    Quota --> RedisL2
+    Profile --> RDBMS
+    Billing --> RDBMS
+    History --> RDBMS
+    Feature --> RedisL2
+
+    Obj -->|签名链接| Web
+    Queue -.-> Mailer
+    Mailer -.-> User
+
+    BFF --> Logs
+    BFF --> Metrics
+    BFF --> Traces
+    Adapter --> Traces
+    APIGW --> Metrics
+    JobSvc --> Logs
+    Billing --> Audit
+
+    Payment --> Billing
+    Doubao --> Adapter
+```
 
 > 该图采用 C4 System Context 视角，展示最终用户、BFF、后台域及第三方依赖的信任边界、主要接口与数据流；源与快照集中维护于 `doc/图/`。
 
@@ -48,10 +142,11 @@
 ### 3.2 图 2：部署拓扑
 
 - FigJam：<https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-100#Deployment>
-- Mermaid 源：`doc/图/src/deployment.mmd`
-- 导出快照：`doc/图/export/deployment.svg`
+- PlantUML 源：`doc/图/src/deployment.puml`
 
-![部署拓扑（Active / Warm）](../图/export/deployment.svg)
+```plantuml
+!include ../图/src/deployment.puml
+```
 
 > 展示区域/AZ 关系、组件冗余、数据主从与流量切换路径（包括冷/热备、半自动切换 Runbook）；统一收敛到 `doc/图/` 便于 FigJam 与 Mermaid 同步。
 
@@ -120,14 +215,14 @@
 
 ## 7. 图与 artefact 索引
 
-| 图 ID  | 描述                         | Mermaid 源                        | SVG 快照                              | FigJam 链接片段 |
-| ------ | ---------------------------- | --------------------------------- | ------------------------------------- | --------------- |
-| HLD-CTX| 系统上下文                   | `doc/图/src/context.mmd`          | `doc/图/export/context.svg`           | `node-id=230-1` |
-| HLD-DEP| 部署拓扑与容灾               | `doc/图/src/deployment.mmd`       | `doc/图/export/deployment.svg`        | `node-id=230-100` |
-| SEQ-LK | 查词与流式渲染主时序         | `doc/图/src/sequence-lookup.mmd`  | `doc/图/export/sequence-lookup.svg`   | `node-id=230-20` |
-| SEQ-EX | 历史导出与一次性链接时序     | `doc/图/src/sequence-export.mmd`  | `doc/图/export/sequence-export.svg`   | `node-id=230-40` |
-| SEQ-SB | 订阅购买/回调/权益同步时序   | `doc/图/src/sequence-subscription.mmd` | `doc/图/export/sequence-subscription.svg` | `node-id=230-60` |
-| ER-CORE| 核心数据域 ER（账户/查词/导出)| `doc/图/src/er-core.mmd`         | `doc/图/export/er-core.svg`           | `node-id=230-80` |
-| T29-GT | T29 制图交付甘特图           | `doc/图/src/gantt-t29.mmd`        | `doc/图/export/gantt-t29.svg`         | `node-id=230-140` |
+| 图 ID  | 描述                         | 图源                                   | 渲染方式                               | FigJam 链接片段 |
+| ------ | ---------------------------- | -------------------------------------- | -------------------------------------- | ---------------- |
+| HLD-CTX| 系统上下文                   | `doc/图/src/context.mmd`               | Mermaid 代码块                         | `node-id=230-1` |
+| HLD-DEP| 部署拓扑与容灾               | `doc/图/src/deployment.puml`           | PlantUML 代码块（`!include` 源文件） | `node-id=230-100` |
+| SEQ-LK | 查词与流式渲染主时序         | `doc/图/src/sequence-lookup.puml`      | PlantUML 代码块（`!include` 源文件） | `node-id=230-20` |
+| SEQ-EX | 历史导出与一次性链接时序     | `doc/图/src/sequence-export.puml`      | PlantUML 代码块（`!include` 源文件） | `node-id=230-40` |
+| SEQ-SB | 订阅购买/回调/权益同步时序   | `doc/图/src/sequence-subscription.puml`| PlantUML 代码块（`!include` 源文件） | `node-id=230-60` |
+| ER-CORE| 核心数据域 ER（账户/查词/导出)| `doc/图/src/er-core.mmd`              | Mermaid 代码块                         | `node-id=230-80` |
+| T29-GT | T29 制图交付甘特图           | `doc/图/src/gantt-t29.mmd`             | Mermaid 代码块                         | `node-id=230-140` |
 
 > 维护统一入口：见 `doc/图/README.md`。所有图的 FigJam 权限需保持“Anyone with the link → can view/comment”。
