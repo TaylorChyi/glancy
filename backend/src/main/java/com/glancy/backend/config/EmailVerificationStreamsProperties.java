@@ -47,7 +47,8 @@ public class EmailVerificationStreamsProperties {
         }
         if (StringUtils.hasText(marketingDomain) && marketingDomain.equalsIgnoreCase(transactionalDomain)) {
             throw new IllegalStateException(
-                "mail.verification.streams.marketing-domain must differ from transactional-domain for proper segmentation"
+                "mail.verification.streams.marketing-domain must differ from transactional-domain " +
+                "for proper segmentation"
             );
         }
         if (StringUtils.hasText(from)) {

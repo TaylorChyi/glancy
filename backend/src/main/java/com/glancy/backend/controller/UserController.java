@@ -39,10 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * User management endpoints including registration, login and
- * third-party account binding.
- */
+/** User management endpoints including registration, login and third-party account binding. */
 @RestController
 @RequestMapping("/api/users")
 @Slf4j

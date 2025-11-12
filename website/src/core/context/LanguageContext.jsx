@@ -24,15 +24,10 @@ export const LanguageContext = createContext({
   setSystemLanguage: () => {},
 });
 
-export function LanguageProvider({ children }) {
-  const systemLanguage = useSettingsStore((state) => state.systemLanguage);
-  const storeSetSystemLanguage = useSettingsStore(
-    (state) => state.setSystemLanguage,
-  );
+const useBrowserLanguageSource = () => {
   const [browserLanguage, setBrowserLanguage] = useState(() =>
     detectBrowserLanguage(),
   );
-
   useEffect(() => {
     if (typeof window === "undefined") {
       return undefined;
@@ -45,30 +40,38 @@ export function LanguageProvider({ children }) {
       window.removeEventListener("languagechange", handleLanguageChange);
     };
   }, []);
+  return browserLanguage;
+};
 
-  const lang = useMemo(
-    () => resolveLanguage({ systemLanguage, browserLanguage }),
-    [systemLanguage, browserLanguage],
-  );
-
-  const t = useMemo(
-    () => translations[lang] || translations[DEFAULT_LANGUAGE],
-    [lang],
-  );
-
+const useDocumentLanguageSync = (lang, t) => {
   useEffect(() => {
     document.title = t.welcomeTitle;
     document.documentElement.lang = lang;
   }, [lang, t]);
+};
 
+function useLanguageController() {
+  const systemLanguage = useSettingsStore((state) => state.systemLanguage);
+  const storeSetSystemLanguage = useSettingsStore(
+    (state) => state.setSystemLanguage,
+  );
+  const browserLanguage = useBrowserLanguageSource();
+  const lang = useMemo(
+    () => resolveLanguage({ systemLanguage, browserLanguage }),
+    [systemLanguage, browserLanguage],
+  );
+  const t = useMemo(
+    () => translations[lang] || translations[DEFAULT_LANGUAGE],
+    [lang],
+  );
   const changeLanguage = useCallback(
     (next) => {
       storeSetSystemLanguage(next ?? SYSTEM_LANGUAGE_AUTO);
     },
     [storeSetSystemLanguage],
   );
-
-  const contextValue = useMemo(
+  useDocumentLanguageSync(lang, t);
+  return useMemo(
     () => ({
       lang,
       t,
@@ -78,7 +81,10 @@ export function LanguageProvider({ children }) {
     }),
     [changeLanguage, lang, systemLanguage, t],
   );
+}
 
+export function LanguageProvider({ children }) {
+  const contextValue = useLanguageController();
   return (
     <LanguageContext.Provider value={contextValue}>
       {children}

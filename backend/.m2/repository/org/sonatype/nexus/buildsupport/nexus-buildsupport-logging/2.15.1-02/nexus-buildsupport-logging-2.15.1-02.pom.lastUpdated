@@ -1,5 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Nov 12 00:48:09 CST 2025
-http\://0.0.0.0/.error=Could not transfer artifact org.sonatype.nexus.buildsupport\:nexus-buildsupport-logging\:pom\:2.15.1-02 from/to maven-default-http-blocker (http\://0.0.0.0/)\: Blocked mirror for repositories\: [sevntu-maven (http\://sevntu-checkstyle.github.io/sevntu.checkstyle/maven2, default, releases+snapshots)]
-@default-maven-default-http-blocker-http\://0.0.0.0/.lastUpdated=1762879688949
-https\://repository.sonatype.org/content/groups/sonatype-public-grid/.lastUpdated=1762879689212

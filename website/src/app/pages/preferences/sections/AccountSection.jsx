@@ -1,60 +1,31 @@
 import PropTypes from "prop-types";
 
-import SettingsSection from "@shared/components/settings/SettingsSection";
-
-import AccountBindings from "./AccountBindings.jsx";
-import AccountFieldList from "./AccountFieldList.jsx";
-import AccountIdentityRow from "./AccountIdentityRow.jsx";
+import AccountSectionView from "./AccountSection/AccountSectionView.jsx";
+import { createAccountSectionViewModel } from "./AccountSection/viewModel";
 import { useAvatarInteraction } from "./useAvatarInteraction.js";
 import { useNormalizedIdentity } from "./useNormalizedIdentity.js";
-import styles from "../Preferences.module.css";
 
-const AVATAR_SIZE = 72;
-
-/**
- * 意图：组合账号偏好分区的身份信息、字段列表与绑定信息。
- * 输入：title/fields/headingId/identity/bindings —— 页面装配所需的数据与回调。
- * 输出：包含 SettingsSection 框架的完整分区 JSX。
- * 流程：
- *  1) 通过 useAvatarInteraction 管理头像 input 交互；
- *  2) 使用 useNormalizedIdentity 补全 identity 文案；
- *  3) 装配身份行、字段列表与绑定信息。
- * 错误处理：所有副作用交由上游控制。
- * 复杂度：O(n)，n 为字段数量。
- */
-function AccountSection({ title, fields, headingId, identity, bindings }) {
-  const { avatarInputId, avatarInputRef, onAvatarTrigger, onAvatarChange } =
-    useAvatarInteraction(identity);
+function AccountSectionContainer({
+  title,
+  fields,
+  headingId,
+  identity,
+  bindings,
+}) {
+  const avatarInteraction = useAvatarInteraction(identity);
   const normalizedIdentity = useNormalizedIdentity(identity, title);
-
-  return (
-    <SettingsSection
-      headingId={headingId}
-      title={title}
-      classes={{
-        section: `${styles.section} ${styles["section-plain"]}`,
-        header: styles["section-header"],
-        title: styles["section-title"],
-        divider: styles["section-divider"],
-      }}
-    >
-      <dl className={styles.details}>
-        <AccountIdentityRow
-          identity={normalizedIdentity}
-          avatarSize={AVATAR_SIZE}
-          avatarInputId={avatarInputId}
-          avatarInputRef={avatarInputRef}
-          onAvatarTrigger={onAvatarTrigger}
-          onAvatarChange={onAvatarChange}
-        />
-        <AccountFieldList fields={fields} headingId={headingId} />
-      </dl>
-      <AccountBindings bindings={bindings} />
-    </SettingsSection>
-  );
+  const viewModel = createAccountSectionViewModel({
+    title,
+    headingId,
+    fields,
+    bindings,
+    identity: normalizedIdentity,
+    avatarInteraction,
+  });
+  return <AccountSectionView {...viewModel} />;
 }
 
-AccountSection.propTypes = {
+AccountSectionContainer.propTypes = {
   title: PropTypes.string.isRequired,
   fields: PropTypes.arrayOf(
     PropTypes.shape({
@@ -111,4 +82,4 @@ AccountSection.propTypes = {
   }).isRequired,
 };
 
-export default AccountSection;
+export default AccountSectionContainer;

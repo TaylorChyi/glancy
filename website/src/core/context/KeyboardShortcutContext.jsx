@@ -13,6 +13,11 @@ import {
   DEFAULT_SHORTCUTS,
 } from "@shared/utils/keyboardShortcuts.js";
 import { KEYBOARD_SHORTCUT_RESET_ACTION } from "./keyboardShortcutContextTokens.js";
+import { KEYBOARD_SHORTCUT_ACTIONS } from "./keyboardShortcutActions.js";
+import {
+  createKeyboardShortcutState,
+  reduceKeyboardShortcutState,
+} from "./stateSlices/keyboardShortcuts/index.js";
 
 const KeyboardShortcutContext = createContext({
   shortcuts: [],
@@ -24,130 +29,54 @@ const KeyboardShortcutContext = createContext({
   resetShortcuts: () => Promise.resolve(),
 });
 
-const ACTIONS = {
-  RESET: "reset",
-  LOAD_START: "load_start",
-  LOAD_SUCCESS: "load_success",
-  LOAD_FAILURE: "load_failure",
-  UPDATE_START: "update_start",
-  UPDATE_SUCCESS: "update_success",
-  UPDATE_FAILURE: "update_failure",
-};
-
-const initialState = {
-  shortcuts: [],
-  status: "idle",
-  errors: {},
-  pendingAction: null,
-  lastError: null,
-};
-
-function reducer(state, action) {
-  switch (action.type) {
-    case ACTIONS.RESET:
-      return { ...initialState };
-    case ACTIONS.LOAD_START:
-      return {
-        ...state,
-        status: "loading",
-        lastError: null,
-        errors: {},
-        pendingAction: null,
-      };
-    case ACTIONS.LOAD_SUCCESS:
-      return {
-        ...state,
-        status: "ready",
-        shortcuts: action.payload,
-        errors: {},
-        lastError: null,
-        pendingAction: null,
-      };
-    case ACTIONS.LOAD_FAILURE:
-      return {
-        ...state,
-        status: "error",
-        lastError: action.error,
-        pendingAction: null,
-      };
-    case ACTIONS.UPDATE_START: {
-      const nextErrors =
-        typeof action.action === "string"
-          ? { ...state.errors, [action.action]: null }
-          : state.errors;
-      return {
-        ...state,
-        pendingAction: action.action,
-        errors: nextErrors,
-        lastError: null,
-      };
-    }
-    case ACTIONS.UPDATE_SUCCESS: {
-      const nextErrors =
-        typeof action.action === "string"
-          ? { ...state.errors, [action.action]: null }
-          : state.errors;
-      return {
-        ...state,
-        shortcuts: action.payload,
-        pendingAction: null,
-        errors: nextErrors,
-        lastError: null,
-      };
-    }
-    case ACTIONS.UPDATE_FAILURE: {
-      const nextErrors =
-        typeof action.action === "string"
-          ? { ...state.errors, [action.action]: action.errorMessage }
-          : state.errors;
-      return {
-        ...state,
-        pendingAction: null,
-        errors: nextErrors,
-        lastError: action.errorMessage,
-      };
-    }
-    default:
-      return state;
-  }
-}
+const buildDefaultShortcuts = () =>
+  DEFAULT_SHORTCUTS.map((shortcut) => ({
+    action: shortcut.action,
+    keys: [...shortcut.keys],
+    defaultKeys: [...shortcut.defaultKeys],
+  }));
 
 export function KeyboardShortcutProvider({ children }) {
   const api = useKeyboardShortcutsApi();
   const { user } = useUser();
   const token = user?.token;
   const userId = user?.id;
-  const [state, dispatch] = useReducer(reducer, initialState, (state) => ({
-    ...state,
-    shortcuts: DEFAULT_SHORTCUTS.map((shortcut) => ({
-      action: shortcut.action,
-      keys: [...shortcut.keys],
-      defaultKeys: [...shortcut.defaultKeys],
-    })),
-  }));
+  const [state, dispatch] = useReducer(
+    reduceKeyboardShortcutState,
+    createKeyboardShortcutState(buildDefaultShortcuts()),
+  );
 
   const load = useCallback(async () => {
     if (!userId || !token) {
-      dispatch({ type: ACTIONS.RESET });
+      dispatch({
+        type: KEYBOARD_SHORTCUT_ACTIONS.RESET,
+        payload: buildDefaultShortcuts(),
+      });
       return;
     }
-    dispatch({ type: ACTIONS.LOAD_START });
+    dispatch({ type: KEYBOARD_SHORTCUT_ACTIONS.LOAD_START });
     try {
       const response = await api.fetchShortcuts({ token });
       dispatch({
-        type: ACTIONS.LOAD_SUCCESS,
+        type: KEYBOARD_SHORTCUT_ACTIONS.LOAD_SUCCESS,
         payload: mergeShortcutLists(response?.shortcuts),
       });
     } catch (error) {
       console.error("[shortcuts] failed to load", error);
       const message = error?.message ?? "Failed to load shortcuts";
-      dispatch({ type: ACTIONS.LOAD_FAILURE, error: message });
+      dispatch({
+        type: KEYBOARD_SHORTCUT_ACTIONS.LOAD_FAILURE,
+        error: message,
+      });
     }
   }, [api, token, userId]);
 
   useEffect(() => {
     if (!userId || !token) {
-      dispatch({ type: ACTIONS.RESET });
+      dispatch({
+        type: KEYBOARD_SHORTCUT_ACTIONS.RESET,
+        payload: buildDefaultShortcuts(),
+      });
       return;
     }
     load();
@@ -158,11 +87,14 @@ export function KeyboardShortcutProvider({ children }) {
       if (!userId || !token) {
         return;
       }
-      dispatch({ type: ACTIONS.UPDATE_START, action });
+      dispatch({
+        type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_START,
+        action,
+      });
       try {
         const response = await api.updateShortcut({ action, keys, token });
         dispatch({
-          type: ACTIONS.UPDATE_SUCCESS,
+          type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_SUCCESS,
           action,
           payload: mergeShortcutLists(response?.shortcuts),
         });
@@ -170,7 +102,7 @@ export function KeyboardShortcutProvider({ children }) {
         console.error(`[shortcuts] failed to update ${action}`, error);
         const message = error?.message ?? "Failed to update shortcut";
         dispatch({
-          type: ACTIONS.UPDATE_FAILURE,
+          type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_FAILURE,
           action,
           errorMessage: message,
         });
@@ -185,13 +117,13 @@ export function KeyboardShortcutProvider({ children }) {
       return;
     }
     dispatch({
-      type: ACTIONS.UPDATE_START,
+      type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_START,
       action: KEYBOARD_SHORTCUT_RESET_ACTION,
     });
     try {
       const response = await api.resetShortcuts({ token });
       dispatch({
-        type: ACTIONS.UPDATE_SUCCESS,
+        type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_SUCCESS,
         action: KEYBOARD_SHORTCUT_RESET_ACTION,
         payload: mergeShortcutLists(response?.shortcuts),
       });
@@ -199,7 +131,7 @@ export function KeyboardShortcutProvider({ children }) {
       console.error("[shortcuts] failed to reset", error);
       const message = error?.message ?? "Failed to reset shortcuts";
       dispatch({
-        type: ACTIONS.UPDATE_FAILURE,
+        type: KEYBOARD_SHORTCUT_ACTIONS.UPDATE_FAILURE,
         action: KEYBOARD_SHORTCUT_RESET_ACTION,
         errorMessage: message,
       });
@@ -207,18 +139,29 @@ export function KeyboardShortcutProvider({ children }) {
     }
   }, [api, token, userId]);
 
+  const derivedState = useMemo(
+    () => ({
+      shortcuts: state.shortcuts.list,
+      status: state.bindings.status,
+      errors: state.conflicts.errors,
+      pendingAction: state.bindings.pendingAction,
+      lastError: state.conflicts.lastError,
+    }),
+    [state],
+  );
+
   const value = useMemo(
     () => ({
-      shortcuts: state.shortcuts,
-      status: state.status,
-      errors: state.errors,
-      pendingAction: state.pendingAction,
-      lastError: state.lastError,
+      shortcuts: derivedState.shortcuts,
+      status: derivedState.status,
+      errors: derivedState.errors,
+      pendingAction: derivedState.pendingAction,
+      lastError: derivedState.lastError,
       load,
       updateShortcut,
       resetShortcuts,
     }),
-    [state, load, updateShortcut, resetShortcuts],
+    [derivedState, load, updateShortcut, resetShortcuts],
   );
 
   return (

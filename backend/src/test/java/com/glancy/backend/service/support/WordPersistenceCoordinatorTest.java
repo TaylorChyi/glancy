@@ -42,25 +42,7 @@ class WordPersistenceCoordinatorTest {
         AtomicBoolean recordSynced = new AtomicBoolean(false);
         AtomicReference<String> versionContent = new AtomicReference<>();
 
-        WordPersistenceCoordinator.PersistenceContext context = baseContext()
-            .response(responseWithMarkdown("### definition"))
-            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
-            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {
-                Assertions.assertEquals(1L, userId);
-                Assertions.assertEquals(2L, recordId);
-                Assertions.assertEquals("canonical", canonicalTerm);
-                recordSynced.set(true);
-            })
-            .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
-                versionContent.set(content);
-                SearchResultVersion version = new SearchResultVersion();
-                version.setId(99L);
-                return version;
-            })
-            .personalizationStep((userId, resp, ctx) -> resp)
-            .wordSerializationStep(word -> "serialized")
-            .sanitizedMarkdown(null)
-            .build();
+        WordPersistenceContext context = buildSyncContext(recordSynced, versionContent);
 
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(
             context,
@@ -76,26 +58,7 @@ class WordPersistenceCoordinatorTest {
     void persistSyncFlow_WritesPersonalizationResult() {
         AtomicBoolean personalized = new AtomicBoolean(false);
 
-        WordPersistenceCoordinator.PersistenceContext context = baseContext()
-            .response(responseWithMarkdown("### definition"))
-            .personalizationContext(new WordPersonalizationContext(null, false, null, null, null, List.of(), List.of()))
-            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
-            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
-            .versionPersistStep((recordId, userId, model, content, word, flavor) -> {
-                SearchResultVersion version = new SearchResultVersion();
-                version.setId(88L);
-                return version;
-            })
-            .personalizationStep((userId, resp, ctx) -> {
-                personalized.set(true);
-                resp.setPersonalization(
-                    new PersonalizedWordExplanation("persona", "takeaway", "context", List.of(), List.of())
-                );
-                return resp;
-            })
-            .wordSerializationStep(word -> "serialized")
-            .sanitizedMarkdown(null)
-            .build();
+        WordPersistenceContext context = buildPersonalizationContext(personalized);
 
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(
             context,
@@ -125,25 +88,7 @@ class WordPersistenceCoordinatorTest {
         AtomicReference<String> versionContent = new AtomicReference<>();
         AtomicBoolean personalized = new AtomicBoolean(false);
 
-        WordPersistenceCoordinator.PersistenceContext context = baseContext()
-            .model("streaming-model")
-            .saveWordStep((requested, resp, language, flavor) -> {
-                Word word = new Word();
-                word.setTerm("term");
-                word.setMarkdown("persisted-markdown");
-                return word;
-            })
-            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
-            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
-                versionCapture(versionContent, content, 11L)
-            )
-            .personalizationStep((userId, resp, ctx) -> {
-                personalized.set(true);
-                return resp;
-            })
-            .wordSerializationStep(word -> "unused")
-            .sanitizedMarkdown("## sanitized output")
-            .build();
+        WordPersistenceContext context = buildStreamingContext(versionContent, personalized);
 
         WordVersionContentStrategy strategy = new SanitizedStreamingMarkdownStrategy();
         WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
@@ -171,7 +116,85 @@ class WordPersistenceCoordinatorTest {
     void persistSyncFlow_FallbacksToPreviewWhenSerializationFails() {
         AtomicReference<String> versionContent = new AtomicReference<>();
 
-        WordPersistenceCoordinator.PersistenceContext context = baseContext()
+        WordPersistenceContext context = buildSerializationFailureContext(versionContent);
+
+        WordVersionContentStrategy strategy = new ResponseMarkdownOrSerializedWordStrategy();
+        WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
+
+        String expectedPreview = SensitiveDataUtil.previewText("markdown-content-with-length");
+        Assertions.assertEquals(expectedPreview, versionContent.get(), "序列化失败时应回退到 markdown 预览");
+        Assertions.assertEquals(21L, outcome.response().getVersionId(), "versionId 仍需写回响应");
+    }
+
+    private WordPersistenceContext buildSyncContext(
+        AtomicBoolean recordSynced,
+        AtomicReference<String> versionContent
+    ) {
+        return baseContextBuilder()
+            .response(responseWithMarkdown("### definition"))
+            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
+            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {
+                Assertions.assertEquals(1L, userId);
+                Assertions.assertEquals(2L, recordId);
+                Assertions.assertEquals("canonical", canonicalTerm);
+                recordSynced.set(true);
+            })
+            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
+                versionCapture(versionContent, content, 99L)
+            )
+            .personalizationStep((userId, resp, ctx) -> resp)
+            .wordSerializationStep(word -> "serialized")
+            .sanitizedMarkdown(null)
+            .build();
+    }
+
+    private WordPersistenceContext buildPersonalizationContext(AtomicBoolean personalized) {
+        return baseContextBuilder()
+            .response(responseWithMarkdown("### definition"))
+            .personalizationContext(new WordPersonalizationContext(null, false, null, null, null, List.of(), List.of()))
+            .saveWordStep((requested, resp, language, flavor) -> savedWord("canonical", language, flavor, resp))
+            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
+            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
+                versionCapture(new AtomicReference<>(), content, 88L)
+            )
+            .personalizationStep((userId, resp, ctx) -> {
+                personalized.set(true);
+                resp.setPersonalization(
+                    new PersonalizedWordExplanation("persona", "takeaway", "context", List.of(), List.of())
+                );
+                return resp;
+            })
+            .wordSerializationStep(word -> "serialized")
+            .sanitizedMarkdown(null)
+            .build();
+    }
+
+    private WordPersistenceContext buildStreamingContext(
+        AtomicReference<String> versionContent,
+        AtomicBoolean personalized
+    ) {
+        return baseContextBuilder()
+            .model("streaming-model")
+            .saveWordStep((requested, resp, language, flavor) -> {
+                Word word = new Word();
+                word.setTerm("term");
+                word.setMarkdown("persisted-markdown");
+                return word;
+            })
+            .recordSynchronizationStep((userId, recordId, canonicalTerm) -> {})
+            .versionPersistStep((recordId, userId, model, content, word, flavor) ->
+                versionCapture(versionContent, content, 11L)
+            )
+            .personalizationStep((userId, resp, ctx) -> {
+                personalized.set(true);
+                return resp;
+            })
+            .wordSerializationStep(word -> "unused")
+            .sanitizedMarkdown("## sanitized output")
+            .build();
+    }
+    private WordPersistenceContext buildSerializationFailureContext(AtomicReference<String> versionContent) {
+        return baseContextBuilder()
             .saveWordStep((requested, resp, language, flavor) -> {
                 Word word = new Word();
                 word.setTerm("fallback");
@@ -188,17 +211,11 @@ class WordPersistenceCoordinatorTest {
             })
             .sanitizedMarkdown(null)
             .build();
-
-        WordVersionContentStrategy strategy = new ResponseMarkdownOrSerializedWordStrategy();
-        WordPersistenceCoordinator.PersistenceOutcome outcome = coordinator.persist(context, strategy);
-
-        String expectedPreview = SensitiveDataUtil.previewText("markdown-content-with-length");
-        Assertions.assertEquals(expectedPreview, versionContent.get(), "序列化失败时应回退到 markdown 预览");
-        Assertions.assertEquals(21L, outcome.response().getVersionId(), "versionId 仍需写回响应");
     }
 
-    private WordPersistenceCoordinator.Builder baseContext() {
-        return WordPersistenceCoordinator.builder()
+    private WordPersistenceContext.Builder baseContextBuilder() {
+        return WordPersistenceCoordinator
+            .builder()
             .userId(1L)
             .requestedTerm("term")
             .language(Language.ENGLISH)

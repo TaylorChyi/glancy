@@ -43,6 +43,7 @@ class WordSearcherImplTest {
     private DictionaryModelClient defaultClient;
     private WordPromptAssembler promptAssembler;
     private PromptTemplateRenderer templateRenderer;
+    private static final String DEFAULT_CLIENT = "doubao";
 
     @SuppressWarnings("unchecked")
     private static ArgumentCaptor<List<ChatMessage>> chatMessagesCaptor() {
@@ -53,7 +54,7 @@ class WordSearcherImplTest {
     void setUp() {
         factory = Mockito.mock(DictionaryModelClientFactory.class);
         config = new LLMConfig();
-        config.setDefaultClient("doubao");
+        config.setDefaultClient(DEFAULT_CLIENT);
         config.setTemperature(0.5);
         config.setPromptPath("path");
         config.setPromptPaths(Map.of("ENGLISH", "path-en", "CHINESE", "path-zh"));
@@ -71,26 +72,8 @@ class WordSearcherImplTest {
      */
     @Test
     void searchFallsBackToDefaultWhenClientMissing() {
-        Mockito.when(factory.get("invalid")).thenReturn(null);
-        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
-        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        Mockito.when(searchContentManager.normalize("hello")).thenReturn("hello");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
-            "content"
-        );
-        WordResponse expected = new WordResponse();
-        expected.setMarkdown("content");
-        Mockito.when(parser.parse("content", "hello", Language.ENGLISH)).thenReturn(
-            new ParsedWord(expected, "content")
-        );
-        WordSearcherImpl searcher = new WordSearcherImpl(
-            factory,
-            config,
-            promptManager,
-            searchContentManager,
-            parser,
-            promptAssembler
-        );
+        WordResponse expected = stubFallbackScenario("invalid", "hello", Language.ENGLISH);
+        WordSearcherImpl searcher = newSearcher();
         WordResponse result = searcher.search(
             "hello",
             Language.ENGLISH,
@@ -101,7 +84,7 @@ class WordSearcherImplTest {
 
         Assertions.assertSame(expected, result);
         Mockito.verify(factory).get("invalid");
-        Mockito.verify(factory).get("doubao");
+        Mockito.verify(factory).get(DEFAULT_CLIENT);
         Mockito.verify(defaultClient).generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5));
         Mockito.verify(promptManager).loadPrompt("path-en");
     }
@@ -112,15 +95,8 @@ class WordSearcherImplTest {
     @Test
     void searchThrowsWhenDefaultMissing() {
         Mockito.when(factory.get("invalid")).thenReturn(null);
-        Mockito.when(factory.get("doubao")).thenReturn(null);
-        WordSearcherImpl searcher = new WordSearcherImpl(
-            factory,
-            config,
-            promptManager,
-            searchContentManager,
-            parser,
-            promptAssembler
-        );
+        Mockito.when(factory.get(DEFAULT_CLIENT)).thenReturn(null);
+        WordSearcherImpl searcher = newSearcher();
         Assertions.assertThrows(IllegalStateException.class, () ->
             searcher.search("hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "invalid", NO_PERSONALIZATION_CONTEXT)
         );
@@ -139,25 +115,8 @@ class WordSearcherImplTest {
      */
     @Test
     void chineseSearchAnnotatesStructureGuidance() {
-        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
-        Mockito.when(promptManager.loadPrompt("path-zh")).thenReturn("prompt");
-        Mockito.when(searchContentManager.normalize("汉")).thenReturn("汉");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
-            "content<END>"
-        );
-        WordResponse expected = new WordResponse();
-        Mockito.when(parser.parse("content", "汉", Language.CHINESE)).thenReturn(
-            new ParsedWord(expected, "content<END>")
-        );
-
-        WordSearcherImpl searcher = new WordSearcherImpl(
-            factory,
-            config,
-            promptManager,
-            searchContentManager,
-            parser,
-            promptAssembler
-        );
+        stubSuccessfulResponse("汉", Language.CHINESE, "path-zh");
+        WordSearcherImpl searcher = newSearcher();
         searcher.search("汉", Language.CHINESE, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
@@ -178,25 +137,8 @@ class WordSearcherImplTest {
      */
     @Test
     void englishBilingualSearchAddsChineseInstruction() {
-        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
-        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
-            "content<END>"
-        );
-        WordResponse expected = new WordResponse();
-        Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
-            new ParsedWord(expected, "content<END>")
-        );
-
-        WordSearcherImpl searcher = new WordSearcherImpl(
-            factory,
-            config,
-            promptManager,
-            searchContentManager,
-            parser,
-            promptAssembler
-        );
+        stubSuccessfulResponse("elegance", Language.ENGLISH, "path-en");
+        WordSearcherImpl searcher = newSearcher();
         searcher.search("elegance", Language.ENGLISH, DictionaryFlavor.BILINGUAL, "doubao", NO_PERSONALIZATION_CONTEXT);
 
         ArgumentCaptor<List<ChatMessage>> messagesCaptor = chatMessagesCaptor();
@@ -222,25 +164,8 @@ class WordSearcherImplTest {
      */
     @Test
     void englishSearchOmitsEntryTypeSection() {
-        Mockito.when(factory.get("doubao")).thenReturn(defaultClient);
-        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
-        Mockito.when(searchContentManager.normalize("elegance")).thenReturn("elegance");
-        Mockito.when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(0.5))).thenReturn(
-            "content<END>"
-        );
-        WordResponse expected = new WordResponse();
-        Mockito.when(parser.parse("content", "elegance", Language.ENGLISH)).thenReturn(
-            new ParsedWord(expected, "content<END>")
-        );
-
-        WordSearcherImpl searcher = new WordSearcherImpl(
-            factory,
-            config,
-            promptManager,
-            searchContentManager,
-            parser,
-            promptAssembler
-        );
+        stubSuccessfulResponse("elegance", Language.ENGLISH, "path-en");
+        WordSearcherImpl searcher = newSearcher();
         searcher.search(
             "elegance",
             Language.ENGLISH,
@@ -262,5 +187,37 @@ class WordSearcherImplTest {
             userMessage.getContent().contains("条目类型"),
             "英文检索用户消息仍包含「条目类型」字段，提示模板未同步"
         );
+    }
+
+    private void stubSuccessfulResponse(String term, Language language, String promptKey) {
+        Mockito.when(factory.get(DEFAULT_CLIENT)).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt(promptKey)).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize(term)).thenReturn(term);
+        Mockito
+            .when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature())))
+            .thenReturn("content<END>");
+        Mockito.when(parser.parse("content", term, language)).thenReturn(
+            new ParsedWord(new WordResponse(), "content<END>")
+        );
+    }
+
+    private WordResponse stubFallbackScenario(String requestedClient, String term, Language language) {
+        Mockito.when(factory.get(requestedClient)).thenReturn(null);
+        Mockito.when(factory.get(DEFAULT_CLIENT)).thenReturn(defaultClient);
+        Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
+        Mockito.when(searchContentManager.normalize(term)).thenReturn(term);
+        Mockito
+            .when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature())))
+            .thenReturn("content");
+        WordResponse expected = new WordResponse();
+        expected.setMarkdown("content");
+        Mockito.when(parser.parse("content", term, language)).thenReturn(
+            new ParsedWord(expected, "content")
+        );
+        return expected;
+    }
+
+    private WordSearcherImpl newSearcher() {
+        return new WordSearcherImpl(factory, config, promptManager, searchContentManager, parser, promptAssembler);
     }
 }

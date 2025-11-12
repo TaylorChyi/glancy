@@ -67,18 +67,14 @@ class UserControllerRegistrationTest extends BaseUserControllerWebMvcTest {
     @Test
     void getUser() throws Exception {
         UserDetailResponse detailResponse = UserDetailResponse.of(
-            1L,
-            "u",
-            "e",
-            "avatar-url",
-            "p1",
-            false,
-            MembershipType.NONE,
-            null,
-            false,
-            LocalDateTime.of(2024, 1, 1, 8, 0),
-            LocalDateTime.of(2024, 1, 2, 9, 0),
-            null
+            new UserDetailResponse.Identity(1L, "u", "e", "avatar-url", "p1"),
+            new UserDetailResponse.Membership(false, MembershipType.NONE, null),
+            new UserDetailResponse.Audit(
+                false,
+                LocalDateTime.of(2024, 1, 1, 8, 0),
+                LocalDateTime.of(2024, 1, 2, 9, 0),
+                null
+            )
         );
         when(userService.getUserDetail(1L)).thenReturn(detailResponse);
 

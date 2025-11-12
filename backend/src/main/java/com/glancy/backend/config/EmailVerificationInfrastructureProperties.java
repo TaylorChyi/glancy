@@ -78,36 +78,30 @@ public class EmailVerificationInfrastructureProperties {
     }
 
     void validate() {
-        if (!StringUtils.hasText(reverseDnsDomain)) {
-            throw new IllegalStateException("mail.verification.infrastructure.reverse-dns-domain must be configured");
-        }
-        if (!StringUtils.hasText(spfRecord)) {
-            throw new IllegalStateException("mail.verification.infrastructure.spf-record must be configured");
-        }
-        if (!StringUtils.hasText(dkimSelector)) {
-            throw new IllegalStateException("mail.verification.infrastructure.dkim-selector must be configured");
-        }
-        if (!StringUtils.hasText(dmarcPolicy)) {
-            throw new IllegalStateException("mail.verification.infrastructure.dmarc-policy must be configured");
-        }
+        requireText(reverseDnsDomain, "mail.verification.infrastructure.reverse-dns-domain must be configured");
+        requireText(spfRecord, "mail.verification.infrastructure.spf-record must be configured");
+        requireText(dkimSelector, "mail.verification.infrastructure.dkim-selector must be configured");
+        requireText(dmarcPolicy, "mail.verification.infrastructure.dmarc-policy must be configured");
         if (arcSealEnabled) {
-            if (!StringUtils.hasText(arcAuthenticationResults)) {
-                throw new IllegalStateException(
-                    "mail.verification.infrastructure.arc-authentication-results " +
-                    "must be configured when arcSealEnabled=true"
-                );
-            }
-            if (!StringUtils.hasText(arcMessageSignature)) {
-                throw new IllegalStateException(
-                    "mail.verification.infrastructure.arc-message-signature " +
-                    "must be configured when arcSealEnabled=true"
-                );
-            }
-            if (!StringUtils.hasText(arcSeal)) {
-                throw new IllegalStateException(
-                    "mail.verification.infrastructure.arc-seal must be configured when arcSealEnabled=true"
-                );
-            }
+            validateArcChain();
+        }
+    }
+
+    private void validateArcChain() {
+        requireText(
+            arcAuthenticationResults,
+            "mail.verification.infrastructure.arc-authentication-results must be configured when arcSealEnabled=true"
+        );
+        requireText(
+            arcMessageSignature,
+            "mail.verification.infrastructure.arc-message-signature must be configured when arcSealEnabled=true"
+        );
+        requireText(arcSeal, "mail.verification.infrastructure.arc-seal must be configured when arcSealEnabled=true");
+    }
+
+    private void requireText(String value, String message) {
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalStateException(message);
         }
     }
 }

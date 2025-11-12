@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.glancy.backend.dto.TtsRequest;
 import com.glancy.backend.dto.TtsResponse;
+import com.glancy.backend.exception.TtsFailedException;
 import com.glancy.backend.util.SensitiveDataUtil;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -47,91 +48,13 @@ public class VolcengineTtsClient {
      * @return response from remote service
      */
     public TtsResponse synthesize(Long userId, TtsRequest request) {
-        String voice = request.getVoice() != null ? request.getVoice() : props.getVoiceType();
-        String reqId = UUID.randomUUID().toString();
-
+        String voice = resolveVoice(request);
         String token = props.resolveAccessToken();
-        if (VolcengineTtsProperties.FAKE_TOKEN.equals(token)) {
-            log.warn("Volcengine TTS token not configured; using placeholder token");
-        }
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        Map<String, Object> app = new LinkedHashMap<>();
-        app.put("token", token);
-        app.put("cluster", props.getCluster());
-        app.put("appid", props.getAppId());
-        body.put("app", app);
-
-        body.put("user", Map.of("uid", String.valueOf(userId)));
-
-        Map<String, Object> audio = new LinkedHashMap<>();
-        audio.put("voice_type", voice);
-        audio.put("encoding", request.getFormat());
-        audio.put("speed_ratio", request.getSpeed());
-        audio.put("explicit_language", request.getLang());
-        body.put("audio", audio);
-
-        Map<String, Object> req = new LinkedHashMap<>();
-        req.put("reqid", reqId);
-        req.put("text", request.getText());
-        req.put("operation", request.getOperation().apiValue());
-        body.put("request", req);
-
-        logPayload(body);
-
-        String bodyJson;
-        try {
-            bodyJson = mapper.writeValueAsString(body);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize TTS payload", e);
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + token);
-        HttpEntity<String> entity = new HttpEntity<>(bodyJson, headers);
-
-        try {
-            ResponseEntity<ObjectNode> resp = restTemplate.postForEntity(props.getApiUrl(), entity, ObjectNode.class);
-            ObjectNode node = resp.getBody();
-
-            if (!resp.getStatusCode().is2xxSuccessful() || node == null) {
-                log.warn(
-                    "Volcengine TTS returned unexpected response: status={} bodyNull={}",
-                    resp.getStatusCode(),
-                    node == null
-                );
-                throw new IllegalStateException(
-                    "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()
-                );
-            }
-
-            String dataB64 = node.path("data").asText();
-            byte[] audioBytes = Base64.getDecoder().decode(dataB64);
-            long duration = node.path("addition").path("duration").asLong();
-            TtsResponse result = new TtsResponse(audioBytes, duration, request.getFormat(), false);
-
-            log.debug(
-                "Received response from {} status={} durationMs={}",
-                props.getApiUrl(),
-                resp.getStatusCode(),
-                duration
-            );
-            return result;
-        } catch (RestClientException ex) {
-            String msg = "Upstream TTS (Text-To-Speech) request failed";
-            if (ex instanceof HttpStatusCodeException statusEx) {
-                msg += " status=" + statusEx.getStatusCode().value();
-                String bodyResp = statusEx.getResponseBodyAsString();
-                if (bodyResp != null && !bodyResp.isBlank()) {
-                    msg += " body=" + SensitiveDataUtil.previewText(bodyResp);
-                }
-            } else if (ex.getMessage() != null) {
-                msg += " msg=" + ex.getMessage();
-            }
-            log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
-            throw new com.glancy.backend.exception.TtsFailedException(msg);
-        }
+        warnIfPlaceholder(token);
+        Map<String, Object> payload = buildPayload(userId, request, voice, token);
+        logPayload(payload);
+        HttpEntity<String> entity = buildRequestEntity(payload, token);
+        return executeRequest(entity, request.getFormat());
     }
 
     private void logPayload(Map<String, Object> payload) {
@@ -163,5 +86,109 @@ public class VolcengineTtsClient {
     /** Returns default voice configured for the service. */
     public String getDefaultVoice() {
         return props.getVoiceType();
+    }
+
+    private String resolveVoice(TtsRequest request) {
+        return request.getVoice() != null ? request.getVoice() : props.getVoiceType();
+    }
+
+    private void warnIfPlaceholder(String token) {
+        if (VolcengineTtsProperties.FAKE_TOKEN.equals(token)) {
+            log.warn("Volcengine TTS token not configured; using placeholder token");
+        }
+    }
+
+    private Map<String, Object> buildPayload(Long userId, TtsRequest request, String voice, String token) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("app", buildAppSection(token));
+        body.put("user", Map.of("uid", String.valueOf(userId)));
+        body.put("audio", buildAudioSection(request, voice));
+        body.put("request", buildRequestSection(request));
+        return body;
+    }
+
+    private Map<String, Object> buildAppSection(String token) {
+        Map<String, Object> app = new LinkedHashMap<>();
+        app.put("token", token);
+        app.put("cluster", props.getCluster());
+        app.put("appid", props.getAppId());
+        return app;
+    }
+
+    private Map<String, Object> buildAudioSection(TtsRequest request, String voice) {
+        Map<String, Object> audio = new LinkedHashMap<>();
+        audio.put("voice_type", voice);
+        audio.put("encoding", request.getFormat());
+        audio.put("speed_ratio", request.getSpeed());
+        audio.put("explicit_language", request.getLang());
+        return audio;
+    }
+
+    private Map<String, Object> buildRequestSection(TtsRequest request) {
+        Map<String, Object> req = new LinkedHashMap<>();
+        req.put("reqid", UUID.randomUUID().toString());
+        req.put("text", request.getText());
+        req.put("operation", request.getOperation().apiValue());
+        return req;
+    }
+
+    private HttpEntity<String> buildRequestEntity(Map<String, Object> payload, String token) {
+        try {
+            String bodyJson = mapper.writeValueAsString(payload);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.add(HttpHeaders.AUTHORIZATION, "Bearer; " + token);
+            return new HttpEntity<>(bodyJson, headers);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize TTS payload", e);
+        }
+    }
+
+    private TtsResponse executeRequest(HttpEntity<String> entity, String format) {
+        try {
+            ResponseEntity<ObjectNode> resp = restTemplate.postForEntity(props.getApiUrl(), entity, ObjectNode.class);
+            return parseResponse(resp, format);
+        } catch (RestClientException ex) {
+            throw handleRestClientException(ex);
+        }
+    }
+
+    private TtsResponse parseResponse(ResponseEntity<ObjectNode> resp, String format) {
+        ObjectNode node = resp.getBody();
+        if (!resp.getStatusCode().is2xxSuccessful() || node == null) {
+            log.warn(
+                "Volcengine TTS returned unexpected response: status={} bodyNull={}",
+                resp.getStatusCode(),
+                node == null
+            );
+            throw new IllegalStateException(
+                "Upstream TTS (Text-To-Speech) returned empty body or non-2xx status: " + resp.getStatusCode()
+            );
+        }
+        String dataB64 = node.path("data").asText();
+        byte[] audioBytes = Base64.getDecoder().decode(dataB64);
+        long duration = node.path("addition").path("duration").asLong();
+        log.debug(
+            "Received response from {} status={} durationMs={}",
+            props.getApiUrl(),
+            resp.getStatusCode(),
+            duration
+        );
+        return new TtsResponse(audioBytes, duration, format, false);
+    }
+
+    private TtsFailedException handleRestClientException(RestClientException ex) {
+        String msg = "Upstream TTS (Text-To-Speech) request failed";
+        if (ex instanceof HttpStatusCodeException statusEx) {
+            msg += " status=" + statusEx.getStatusCode().value();
+            String bodyResp = statusEx.getResponseBodyAsString();
+            if (bodyResp != null && !bodyResp.isBlank()) {
+                msg += " body=" + SensitiveDataUtil.previewText(bodyResp);
+            }
+        } else if (ex.getMessage() != null) {
+            msg += " msg=" + ex.getMessage();
+        }
+        log.error("HTTP (HyperText Transfer Protocol) request to {} failed: {}", props.getApiUrl(), msg, ex);
+        return new TtsFailedException(msg);
     }
 }

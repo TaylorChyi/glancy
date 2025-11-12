@@ -48,18 +48,24 @@ public class UserResponseAssembler {
     public UserDetailResponse toUserDetail(User user) {
         LocalDateTime now = LocalDateTime.now(clock);
         return UserDetailResponse.of(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            dataSanitizer.resolveOutboundAvatar(user.getAvatar()),
-            user.getPhone(),
-            user.hasActiveMembershipAt(now),
-            user.getMembershipType(),
-            user.getMembershipExpiresAt(),
-            user.getDeleted(),
-            user.getCreatedAt(),
-            user.getUpdatedAt(),
-            user.getLastLoginAt()
+            new UserDetailResponse.Identity(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                dataSanitizer.resolveOutboundAvatar(user.getAvatar()),
+                user.getPhone()
+            ),
+            new UserDetailResponse.Membership(
+                user.hasActiveMembershipAt(now),
+                user.getMembershipType(),
+                user.getMembershipExpiresAt()
+            ),
+            new UserDetailResponse.Audit(
+                user.getDeleted(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getLastLoginAt()
+            )
         );
     }
 

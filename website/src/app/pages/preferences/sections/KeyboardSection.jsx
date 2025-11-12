@@ -7,17 +7,12 @@ import {
 } from "@core/context";
 import {
   captureKeysFromEvent,
-  formatShortcutKeys,
   mergeShortcutLists,
-  translateShortcutAction,
 } from "@shared/utils/keyboardShortcuts.js";
-import SettingsSection from "@shared/components/settings/SettingsSection";
-import sectionStyles from "../Preferences.module.css";
-import styles from "./KeyboardSection.module.css";
+import KeyboardSectionView from "./KeyboardSection/KeyboardSectionView.jsx";
+import { createKeyboardSectionViewModel } from "./KeyboardSection/viewModel";
 
-const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
-
-function KeyboardSection({ title, headingId }) {
+function useKeyboardSectionController({ title, headingId }) {
   const { t } = useLanguage();
   const {
     shortcuts,
@@ -29,7 +24,7 @@ function KeyboardSection({ title, headingId }) {
   } = useKeyboardShortcutContext();
   const [recordingAction, setRecordingAction] = useState(null);
 
-  const items = useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
+  const bindings = useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
 
   const handleCaptureStart = useCallback((action) => {
     setRecordingAction(action);
@@ -40,11 +35,18 @@ function KeyboardSection({ title, headingId }) {
       if (recordingAction !== action) {
         return;
       }
+      if (!event || typeof event !== "object" || !("key" in event)) {
+        return;
+      }
       if (event.key === "Tab") {
         return;
       }
-      event.preventDefault();
-      event.stopPropagation();
+      if ("preventDefault" in event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
+      if ("stopPropagation" in event && typeof event.stopPropagation === "function") {
+        event.stopPropagation();
+      }
       if (event.key === "Escape") {
         setRecordingAction(null);
         return;
@@ -73,99 +75,33 @@ function KeyboardSection({ title, headingId }) {
     resetShortcuts().catch(() => {});
   }, [resetShortcuts]);
 
-  const hint = recordingAction
-    ? (t.settingsKeyboardRecordingHint ?? "Press desired combination")
-    : (t.settingsKeyboardHint ?? "Click a shortcut then press keys");
-
-  const errorForAction = (action) => errors?.[action];
-  const isUpdating = (action) => pendingAction === action;
-  const isResetting = pendingAction === KEYBOARD_SHORTCUT_RESET_ACTION;
-  const isLoading = status === "loading";
-
-  return (
-    <SettingsSection
-      headingId={headingId}
-      title={title}
-      classes={{
-        section: composeClassName(
-          sectionStyles.section,
-          sectionStyles["section-plain"],
-          styles.section,
-        ),
-        header: sectionStyles["section-header"],
-        title: sectionStyles["section-title"],
-        divider: sectionStyles["section-divider"],
-      }}
-    >
-      <div className={styles.body}>
-        <div className={styles.hint}>{hint}</div>
-        <ul className={styles.list}>
-          {items.map((item) => {
-            const label = translateShortcutAction(t, item.action);
-            const displayKeys = formatShortcutKeys(item.keys);
-            const isRecording = recordingAction === item.action;
-            const isSaving = isUpdating(item.action);
-            const hasError = Boolean(errorForAction(item.action));
-            return (
-              <li key={item.action} className={styles.item}>
-                <div className={styles.meta}>
-                  <span className={styles.label}>{label}</span>
-                  {hasError ? (
-                    <span className={styles.error}>
-                      {t.settingsKeyboardConflict ?? "Shortcut already in use."}
-                    </span>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className={composeClassName(
-                    styles.trigger,
-                    isRecording ? styles.recording : "",
-                  )}
-                  aria-label={
-                    t.settingsKeyboardEditLabel?.replace("{label}", label) ??
-                    `Edit shortcut for ${label}`
-                  }
-                  onClick={() => handleCaptureStart(item.action)}
-                  onKeyDown={(event) =>
-                    handleCaptureKeyDown(item.action, event)
-                  }
-                  onBlur={() => handleCaptureBlur(item.action)}
-                  disabled={isSaving || isResetting || isLoading}
-                >
-                  <span className={styles.keys}>
-                    {isRecording
-                      ? (t.settingsKeyboardRecording ?? "Press keys")
-                      : displayKeys.join(" + ")}
-                  </span>
-                  {isSaving ? (
-                    <span className={styles.status}>
-                      {t.settingsKeyboardSaving ?? "Saving..."}
-                    </span>
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <div className={styles.footer}>
-          <button
-            type="button"
-            className={styles.reset}
-            onClick={handleReset}
-            disabled={isResetting || isLoading}
-          >
-            {t.settingsKeyboardReset ?? "Restore defaults"}
-          </button>
-        </div>
-      </div>
-    </SettingsSection>
-  );
+  return createKeyboardSectionViewModel({
+    title,
+    headingId,
+    bindings,
+    translations: t,
+    recordingAction,
+    pendingAction,
+    status,
+    errors,
+    resetActionId: KEYBOARD_SHORTCUT_RESET_ACTION,
+    handlers: {
+      onCaptureStart: handleCaptureStart,
+      onKeyDown: handleCaptureKeyDown,
+      onBlur: handleCaptureBlur,
+      onReset: handleReset,
+    },
+  });
 }
 
-KeyboardSection.propTypes = {
+function KeyboardSectionContainer({ title, headingId }) {
+  const viewModel = useKeyboardSectionController({ title, headingId });
+  return <KeyboardSectionView {...viewModel} />;
+}
+
+KeyboardSectionContainer.propTypes = {
   title: PropTypes.string.isRequired,
   headingId: PropTypes.string.isRequired,
 };
 
-export default KeyboardSection;
+export default KeyboardSectionContainer;

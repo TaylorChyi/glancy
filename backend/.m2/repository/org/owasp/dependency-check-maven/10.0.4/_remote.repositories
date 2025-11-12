@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Nov 05 19:29:18 CST 2025
-dependency-check-maven-10.0.4.jar>central=
-dependency-check-maven-10.0.4.pom>central=
+#Thu Nov 13 01:19:36 CST 2025
+dependency-check-maven-10.0.4.jar>central-plugins=
+dependency-check-maven-10.0.4.pom>central-plugins=

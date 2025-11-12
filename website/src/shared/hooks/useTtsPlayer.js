@@ -3,6 +3,7 @@ import { useApi } from "@shared/hooks/useApi.js";
 import { ApiError } from "@shared/api/client.js";
 import { audioManager } from "@shared/utils/audioManager.js";
 import { decodeTtsAudio } from "@shared/utils/audio.js";
+import { logger } from "@shared/utils/logger.js";
 import { useUserStore } from "@core/store";
 
 /**
@@ -68,7 +69,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
         (typeof import.meta !== "undefined" &&
           import.meta.env?.MODE !== "production");
       if (isDev) {
-        console.debug("TTS fetch start", { scope, payload });
+        logger.debug("TTS fetch start", { scope, payload });
       }
       let resp = await fn({ ...payload, shortcut: true });
       if (resp instanceof Response && resp.status === 204) {
@@ -76,7 +77,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
       }
       const data = resp instanceof Response ? await resp.json() : resp;
       if (isDev) {
-        console.debug("TTS fetch success", { scope, payload, data });
+        logger.debug("TTS fetch success", { scope, payload, data });
       }
       return data;
     },
@@ -95,7 +96,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
           (typeof import.meta !== "undefined" &&
             import.meta.env?.MODE !== "production");
         if (isDev) {
-          console.info("TTS play request", {
+          logger.info("TTS play request", {
             scope,
             text,
             lang,
@@ -114,7 +115,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
           await audioManager.play(audio);
           setPlaying(true);
           if (isDev) {
-            console.info("TTS play started", { url });
+            logger.info("TTS play started", { url });
           }
         }
       } catch (err) {
@@ -124,7 +125,7 @@ export function useTtsPlayer({ scope = "word" } = {}) {
           (typeof import.meta !== "undefined" &&
             import.meta.env?.MODE !== "production");
         if (isDev) {
-          console.warn("TTS play failed", err);
+          logger.warn("TTS play failed", err);
         }
         if (err instanceof ApiError) {
           switch (err.status) {

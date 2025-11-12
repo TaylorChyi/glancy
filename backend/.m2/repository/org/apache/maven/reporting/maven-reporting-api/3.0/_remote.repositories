@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Nov 12 00:48:36 CST 2025
-maven-reporting-api-3.0.jar>central=
-maven-reporting-api-3.0.pom>central=
+#Thu Nov 13 01:20:05 CST 2025
+maven-reporting-api-3.0.pom>central-plugins=
+maven-reporting-api-3.0.jar>central-plugins=

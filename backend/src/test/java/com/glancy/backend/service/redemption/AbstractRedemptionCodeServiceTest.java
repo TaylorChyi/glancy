@@ -66,39 +66,36 @@ abstract class AbstractRedemptionCodeServiceTest {
         return userRepository.save(user);
     }
 
-    protected RedemptionCodeCreateRequest membershipCode(
-        String code,
-        LocalDateTime redeemableFrom,
-        LocalDateTime redeemableUntil,
-        int totalQuota,
-        int perUserQuota,
-        MembershipType membershipType,
-        long extensionHours
-    ) {
+    protected RedemptionCodeCreateRequest membershipCode(MembershipCodeParams params) {
         RedemptionEffectConfig effect = new RedemptionEffectConfig(
             RedemptionEffectType.MEMBERSHIP,
-            new MembershipEffectConfig(membershipType, extensionHours),
+            new MembershipEffectConfig(params.membershipType(), params.extensionHours()),
             null
         );
-        return new RedemptionCodeCreateRequest(code, redeemableFrom, redeemableUntil, totalQuota, perUserQuota, effect);
+        return new RedemptionCodeCreateRequest(
+            params.code(),
+            params.redeemableFrom(),
+            params.redeemableUntil(),
+            params.totalQuota(),
+            params.perUserQuota(),
+            effect
+        );
     }
 
-    protected RedemptionCodeCreateRequest discountCode(
-        String code,
-        LocalDateTime redeemableFrom,
-        LocalDateTime redeemableUntil,
-        int totalQuota,
-        int perUserQuota,
-        BigDecimal percentage,
-        LocalDateTime validFrom,
-        LocalDateTime validUntil
-    ) {
+    protected RedemptionCodeCreateRequest discountCode(DiscountCodeParams params) {
         RedemptionEffectConfig effect = new RedemptionEffectConfig(
             RedemptionEffectType.DISCOUNT,
             null,
-            new DiscountEffectConfig(percentage, validFrom, validUntil)
+            new DiscountEffectConfig(params.percentage(), params.validFrom(), params.validUntil())
         );
-        return new RedemptionCodeCreateRequest(code, redeemableFrom, redeemableUntil, totalQuota, perUserQuota, effect);
+        return new RedemptionCodeCreateRequest(
+            params.code(),
+            params.redeemableFrom(),
+            params.redeemableUntil(),
+            params.totalQuota(),
+            params.perUserQuota(),
+            effect
+        );
     }
 
     protected void assertDiscountBenefit(
@@ -115,4 +112,25 @@ abstract class AbstractRedemptionCodeServiceTest {
         Assertions.assertThat(benefits.get(0).getValidFrom()).isEqualTo(validFrom);
         Assertions.assertThat(benefits.get(0).getValidUntil()).isEqualTo(validUntil);
     }
+
+    protected record MembershipCodeParams(
+        String code,
+        LocalDateTime redeemableFrom,
+        LocalDateTime redeemableUntil,
+        int totalQuota,
+        int perUserQuota,
+        MembershipType membershipType,
+        long extensionHours
+    ) {}
+
+    protected record DiscountCodeParams(
+        String code,
+        LocalDateTime redeemableFrom,
+        LocalDateTime redeemableUntil,
+        int totalQuota,
+        int perUserQuota,
+        BigDecimal percentage,
+        LocalDateTime validFrom,
+        LocalDateTime validUntil
+    ) {}
 }

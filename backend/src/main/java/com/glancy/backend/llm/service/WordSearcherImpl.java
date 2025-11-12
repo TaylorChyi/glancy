@@ -67,7 +67,8 @@ public class WordSearcherImpl implements WordSearcher {
         WordPersonalizationContext personalizationContext
     ) {
         log.info(
-            "WordSearcher searching for '{}' using dictionary client {} language={} flavor={} personalizationSignals={}",
+            "WordSearcher searching for '{}' using dictionary client {} " +
+            "language={} flavor={} personalizationSignals={}",
             term,
             clientName,
             language,

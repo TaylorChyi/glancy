@@ -5,6 +5,7 @@ dist-ssr/
 build/
 !website/config/build/
 !website/config/build/**
+website/coverage/
 
 # IDE configuration
 .vscode/
@@ -40,6 +41,10 @@ logs/
 
 # Java artifacts
 *.class
+
+# Maven cache directories
+.m2/
+**/.m2/
 
 # Backend - Maven build files
 /backend/target/

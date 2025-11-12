@@ -28,6 +28,7 @@ import com.glancy.backend.service.user.UserSocialAccountCommand;
 import com.glancy.backend.service.user.UserStatisticsQuery;
 import com.glancy.backend.service.user.UserVerificationCommand;
 import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserProfileQuery profileQuery;
@@ -47,30 +49,6 @@ public class UserService {
     private final UserSocialAccountCommand socialAccountCommand;
     private final UserStatisticsQuery statisticsQuery;
     private final UserMembershipCommand membershipCommand;
-
-    public UserService(
-        UserProfileQuery profileQuery,
-        UserProfileCommand profileCommand,
-        UserRegistrationCommand registrationCommand,
-        UserVerificationCommand verificationCommand,
-        UserAuthenticationCommand authenticationCommand,
-        UserContactCommand contactCommand,
-        UserAvatarCommand avatarCommand,
-        UserSocialAccountCommand socialAccountCommand,
-        UserStatisticsQuery statisticsQuery,
-        UserMembershipCommand membershipCommand
-    ) {
-        this.profileQuery = profileQuery;
-        this.profileCommand = profileCommand;
-        this.registrationCommand = registrationCommand;
-        this.verificationCommand = verificationCommand;
-        this.authenticationCommand = authenticationCommand;
-        this.contactCommand = contactCommand;
-        this.avatarCommand = avatarCommand;
-        this.socialAccountCommand = socialAccountCommand;
-        this.statisticsQuery = statisticsQuery;
-        this.membershipCommand = membershipCommand;
-    }
 
     /** 意图：注册新用户。 */
     @Transactional

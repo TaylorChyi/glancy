@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -14,8 +15,6 @@ import {
   persistPreference,
   readStoredPreference,
 } from "@shared/theme/mode";
-
-
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const ThemeContext = createContext({
@@ -29,7 +28,7 @@ const getStorage = () =>
     ? window.localStorage
     : undefined;
 
-export function ThemeProvider({ children }) {
+const useThemeController = () => {
   const storage = getStorage();
   const orchestratorRef = useRef(null);
   const initialPreferenceRef = useRef(null);
@@ -66,14 +65,12 @@ export function ThemeProvider({ children }) {
     if (typeof document === "undefined") {
       return undefined;
     }
-
     if (!browserFaviconConfiguratorRef.current) {
       browserFaviconConfiguratorRef.current = createBrowserFaviconConfigurator({
         registry: faviconRegistryRef.current,
         document,
       });
     }
-
     const configurator = browserFaviconConfiguratorRef.current;
     configurator.start();
     return () => {
@@ -81,10 +78,20 @@ export function ThemeProvider({ children }) {
     };
   }, []);
 
+  return useMemo(
+    () => ({
+      theme,
+      resolvedTheme,
+      setTheme,
+    }),
+    [resolvedTheme, theme],
+  );
+};
+
+export function ThemeProvider({ children }) {
+  const value = useThemeController();
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

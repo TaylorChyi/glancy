@@ -4,6 +4,7 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.SearchResultVersion;
 import com.glancy.backend.entity.Word;
 import com.glancy.backend.service.SearchResultService;
+import com.glancy.backend.service.search.dto.CreateVersionCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,15 +25,17 @@ public class SearchResultVersionWriter {
         if (recordId == null) {
             return null;
         }
-        return searchResultService.createVersion(
-            recordId,
-            userId,
-            word.getTerm(),
-            word.getLanguage(),
-            model,
-            content,
-            word,
-            flavor
-        );
+        CreateVersionCommand command = CreateVersionCommand
+            .builder()
+            .recordId(recordId)
+            .userId(userId)
+            .term(word.getTerm())
+            .language(word.getLanguage())
+            .model(model)
+            .content(content)
+            .word(word)
+            .flavor(flavor)
+            .build();
+        return searchResultService.createVersion(command);
     }
 }

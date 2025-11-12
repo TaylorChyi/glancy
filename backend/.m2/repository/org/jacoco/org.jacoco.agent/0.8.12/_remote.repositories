@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Nov 12 01:19:40 CST 2025
+#Thu Nov 13 01:20:05 CST 2025
 org.jacoco.agent-0.8.12.pom>central-plugins=
 org.jacoco.agent-0.8.12-runtime.jar>central-plugins=

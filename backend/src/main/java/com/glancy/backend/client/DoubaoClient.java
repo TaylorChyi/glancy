@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -34,8 +32,13 @@ public class DoubaoClient implements DictionaryModelClient {
     private final boolean defaultStream;
     private final String defaultThinkingType;
     private final boolean offlineMode;
+    private final DoubaoOfflineResponseBuilder offlineResponseBuilder;
 
-    public DoubaoClient(WebClient.Builder builder, DoubaoProperties properties) {
+    public DoubaoClient(
+        WebClient.Builder builder,
+        DoubaoProperties properties,
+        DoubaoOfflineResponseBuilder offlineResponseBuilder
+    ) {
         this.webClient = builder.baseUrl(trimTrailingSlash(properties.getBaseUrl())).build();
         this.chatPath = ensureLeadingSlash(properties.getChatPath());
         this.apiKey = properties.getApiKey() == null ? null : properties.getApiKey().trim();
@@ -46,6 +49,7 @@ public class DoubaoClient implements DictionaryModelClient {
             properties.getDefaultThinkingType()
         );
         this.offlineMode = apiKey == null || apiKey.isBlank();
+        this.offlineResponseBuilder = offlineResponseBuilder;
         if (offlineMode) {
             log.warn("Doubao API key is empty");
         } else {
@@ -66,59 +70,33 @@ public class DoubaoClient implements DictionaryModelClient {
     @Override
     public String generateEntry(List<ChatMessage> messages, double temperature, DictionaryModelRequestOptions options) {
         if (offlineMode) {
-            return buildOfflineResponse(messages);
+            return offlineResponseBuilder.build(messages);
         }
-        DictionaryModelRequestOptions safeOptions = options == null
-            ? DictionaryModelRequestOptions.defaults()
-            : options;
-        boolean stream = safeOptions.resolveStream(defaultStream);
-        String thinkingType = safeOptions.resolveThinkingType(defaultThinkingType);
-        log.info(
-            "DoubaoClient.generateEntry called with {} messages, temperature={}, stream={}, thinkingType={}",
-            messages.size(),
-            temperature,
-            stream,
-            thinkingType
-        );
-        Map<String, Object> body = prepareRequestBody(messages, temperature, stream, thinkingType);
+        RequestMetadata metadata = buildRequestMetadata(messages, temperature, options);
+        logRequest(metadata);
+        Map<String, Object> body = prepareRequestBody(metadata);
         try {
-            return prepareRequest(body)
-                .exchangeToMono(this::handleSyncResponse)
-                .map(this::extractAssistantContent)
-                .doOnNext(content ->
-                    log.info("DoubaoClient.generateEntry aggregated response length={}", content.length())
-                )
-                .blockOptional()
-                .orElse("");
+            return executeOnlineRequest(body);
         } catch (UnauthorizedException ex) {
-            if (!offlineMode) {
-                throw ex;
-            }
-            log.warn("Doubao API returned unauthorized, falling back to offline response", ex);
-            return buildOfflineResponse(messages);
+            return handleUnauthorized(messages, ex);
         }
     }
 
-    private Map<String, Object> prepareRequestBody(
-        List<ChatMessage> messages,
-        double temperature,
-        boolean stream,
-        String thinkingType
-    ) {
+    private Map<String, Object> prepareRequestBody(RequestMetadata metadata) {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
-        body.put("temperature", temperature);
-        body.put("stream", stream);
-        body.put("thinking", Map.of("type", thinkingType));
+        body.put("temperature", metadata.temperature());
+        body.put("stream", metadata.stream());
+        body.put("thinking", Map.of("type", metadata.thinkingType()));
         if (maxCompletionTokens != null && maxCompletionTokens > 0) {
             body.put("max_completion_tokens", maxCompletionTokens);
         }
 
         List<Map<String, String>> reqMessages = new ArrayList<>();
-        for (ChatMessage m : messages) {
+        for (ChatMessage m : metadata.messages()) {
             reqMessages.add(Map.of("role", m.getRole(), "content", m.getContent()));
         }
-        List<String> roles = messages.stream().map(ChatMessage::getRole).toList();
+        List<String> roles = metadata.messages().stream().map(ChatMessage::getRole).toList();
         log.info("Prepared {} request messages with roles {}", reqMessages.size(), roles);
         body.put("messages", reqMessages);
         return body;
@@ -136,6 +114,46 @@ public class DoubaoClient implements DictionaryModelClient {
                 }
             })
             .bodyValue(body);
+    }
+
+    private RequestMetadata buildRequestMetadata(
+        List<ChatMessage> messages,
+        double temperature,
+        DictionaryModelRequestOptions options
+    ) {
+        DictionaryModelRequestOptions safeOptions = options == null
+            ? DictionaryModelRequestOptions.defaults()
+            : options;
+        boolean stream = safeOptions.resolveStream(defaultStream);
+        String thinkingType = safeOptions.resolveThinkingType(defaultThinkingType);
+        return new RequestMetadata(messages, temperature, stream, thinkingType);
+    }
+
+    private void logRequest(RequestMetadata metadata) {
+        log.info(
+            "DoubaoClient.generateEntry called with {} messages, temperature={}, stream={}, thinkingType={}",
+            metadata.messages().size(),
+            metadata.temperature(),
+            metadata.stream(),
+            metadata.thinkingType()
+        );
+    }
+
+    private String executeOnlineRequest(Map<String, Object> body) {
+        return prepareRequest(body)
+            .exchangeToMono(this::handleSyncResponse)
+            .map(this::extractAssistantContent)
+            .doOnNext(content -> log.info("DoubaoClient.generateEntry aggregated response length={}", content.length()))
+            .blockOptional()
+            .orElse("");
+    }
+
+    private String handleUnauthorized(List<ChatMessage> messages, UnauthorizedException ex) {
+        if (!offlineMode) {
+            throw ex;
+        }
+        log.warn("Doubao API returned unauthorized, falling back to offline response", ex);
+        return offlineResponseBuilder.build(messages);
     }
 
     private Mono<ChatCompletionResponse> handleSyncResponse(ClientResponse resp) {
@@ -191,67 +209,11 @@ public class DoubaoClient implements DictionaryModelClient {
         return key.substring(0, 4) + "****" + key.substring(end);
     }
 
-    private String buildOfflineResponse(List<ChatMessage> messages) {
-        String term = inferTerm(messages);
-        String sanitizedTerm = term.replaceAll("[\\r\\n]+", " ").trim();
-        if (sanitizedTerm.isEmpty()) {
-            sanitizedTerm = "entry";
-        }
-        String definition = "Offline definition generated locally for '" + sanitizedTerm + "'.";
-        String json =
-            "{" +
-            "\"term\":\"" +
-            escapeJson(sanitizedTerm) +
-            "\"," +
-            "\"language\":\"ENGLISH\"," +
-            "\"definitions\":[{\"partOfSpeech\":\"general\",\"meanings\":[\"" +
-            escapeJson(definition) +
-            "\"]}]" +
-            "}";
-        log.info("Returning offline Doubao response for term '{}'", sanitizedTerm);
-        return json;
-    }
 
-    private String inferTerm(List<ChatMessage> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return "";
-        }
-        for (int i = messages.size() - 1; i >= 0; i--) {
-            ChatMessage message = messages.get(i);
-            if (!"user".equalsIgnoreCase(message.getRole())) {
-                continue;
-            }
-            String content = message.getContent();
-            String candidate = extractTermFromPayload(content);
-            if (!candidate.isEmpty()) {
-                return candidate;
-            }
-        }
-        return messages.get(messages.size() - 1).getContent();
-    }
-
-    private String extractTermFromPayload(String payload) {
-        if (payload == null) {
-            return "";
-        }
-        Matcher matcher = TERM_PATTERN.matcher(payload);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        matcher = TERM_LINE_PATTERN.matcher(payload);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return payload.trim();
-    }
-
-    private String escapeJson(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private static final Pattern TERM_PATTERN = Pattern.compile("\\\"term\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
-    private static final Pattern TERM_LINE_PATTERN = Pattern.compile(
-        "term\\s*[:：]\\s*([^\\n]+)",
-        Pattern.CASE_INSENSITIVE
-    );
+    private record RequestMetadata(
+        List<ChatMessage> messages,
+        double temperature,
+        boolean stream,
+        String thinkingType
+    ) {}
 }

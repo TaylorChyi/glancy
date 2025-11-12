@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Aug 20 01:58:32 CST 2025
-maven-compiler-plugin-3.11.0.jar>central=
-maven-compiler-plugin-3.11.0.pom>central=
+#Thu Nov 13 01:19:37 CST 2025
+maven-compiler-plugin-3.11.0.pom>central-plugins=
+maven-compiler-plugin-3.11.0.jar>central-plugins=

@@ -15,26 +15,8 @@ public record UserDetailResponse(
 ) {
     public static final int CURRENT_VERSION = 2;
 
-    public static UserDetailResponse of(
-        Long id,
-        String username,
-        String email,
-        String avatar,
-        String phone,
-        Boolean member,
-        MembershipType membershipType,
-        LocalDateTime membershipExpiresAt,
-        Boolean deleted,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime lastLoginAt
-    ) {
-        return new UserDetailResponse(
-            CURRENT_VERSION,
-            new Identity(id, username, email, avatar, phone),
-            new Membership(member, membershipType, membershipExpiresAt),
-            new Audit(deleted, createdAt, updatedAt, lastLoginAt)
-        );
+    public static UserDetailResponse of(Identity identity, Membership membership, Audit audit) {
+        return new UserDetailResponse(CURRENT_VERSION, identity, membership, audit);
     }
 
     public record Identity(Long id, String username, String email, String avatar, String phone) {}

@@ -33,39 +33,12 @@ public class EmailVerificationProperties {
 
     @PostConstruct
     void validate() {
-        if (!StringUtils.hasText(from)) {
-            throw new IllegalStateException("mail.verification.from must be configured");
-        }
-        if (codeLength < 4) {
-            throw new IllegalStateException("mail.verification.code-length must be at least 4");
-        }
-        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
-            throw new IllegalStateException("mail.verification.ttl must be positive");
-        }
-        for (EmailVerificationPurpose purpose : EmailVerificationPurpose.values()) {
-            EmailVerificationTemplateProperties template = templates.get(purpose);
-            if (template == null || !StringUtils.hasText(template.getSubject())) {
-                throw new IllegalStateException(
-                    "mail.verification.templates." + purpose.name().toLowerCase() + ".subject must be set"
-                );
-            }
-            if (!StringUtils.hasText(template.getBody())) {
-                throw new IllegalStateException(
-                    "mail.verification.templates." + purpose.name().toLowerCase() + ".body must be set"
-                );
-            }
-        }
-        if (
-            !StringUtils.hasText(compliance.getUnsubscribeMailto()) &&
-            !StringUtils.hasText(compliance.getUnsubscribeUrl())
-        ) {
-            throw new IllegalStateException("mail.verification.compliance.unsubscribe contact must be configured");
-        }
-        audiencePolicy.validate();
-        infrastructure.validate();
-        streams.validate(from);
-        deliverability.validate(compliance);
-        localization.validate();
+        validateSender();
+        validateCodeLength();
+        validateTtl();
+        validateTemplates();
+        validateCompliance();
+        validateNestedComponents();
     }
 
     public String getFrom() {
@@ -126,5 +99,53 @@ public class EmailVerificationProperties {
 
     public EmailVerificationLocalizationProperties getLocalization() {
         return localization;
+    }
+
+    private void validateSender() {
+        if (!StringUtils.hasText(from)) {
+            throw new IllegalStateException("mail.verification.from must be configured");
+        }
+    }
+
+    private void validateCodeLength() {
+        if (codeLength < 4) {
+            throw new IllegalStateException("mail.verification.code-length must be at least 4");
+        }
+    }
+
+    private void validateTtl() {
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            throw new IllegalStateException("mail.verification.ttl must be positive");
+        }
+    }
+
+    private void validateTemplates() {
+        for (EmailVerificationPurpose purpose : EmailVerificationPurpose.values()) {
+            EmailVerificationTemplateProperties template = templates.get(purpose);
+            String path = "mail.verification.templates." + purpose.name().toLowerCase();
+            if (template == null || !StringUtils.hasText(template.getSubject())) {
+                throw new IllegalStateException(path + ".subject must be set");
+            }
+            if (!StringUtils.hasText(template.getBody())) {
+                throw new IllegalStateException(path + ".body must be set");
+            }
+        }
+    }
+
+    private void validateCompliance() {
+        if (
+            !StringUtils.hasText(compliance.getUnsubscribeMailto()) &&
+            !StringUtils.hasText(compliance.getUnsubscribeUrl())
+        ) {
+            throw new IllegalStateException("mail.verification.compliance.unsubscribe contact must be configured");
+        }
+    }
+
+    private void validateNestedComponents() {
+        audiencePolicy.validate();
+        infrastructure.validate();
+        streams.validate(from);
+        deliverability.validate(compliance);
+        localization.validate();
     }
 }

@@ -58,6 +58,12 @@ public class SynchronousWordRetrievalStrategy implements WordRetrievalStrategy<W
             context.normalizedTerm(),
             context.model()
         );
+        WordResponse response = requestWordFromModel(context);
+        PersistenceOutcome outcome = persistResponse(context, record, response);
+        return outcome.response();
+    }
+
+    private WordResponse requestWordFromModel(WordQueryContext context) {
         WordResponse response = wordSearcher.search(
             context.rawTerm(),
             context.language(),
@@ -66,7 +72,15 @@ public class SynchronousWordRetrievalStrategy implements WordRetrievalStrategy<W
             context.personalizationContext()
         );
         response.setFlavor(context.flavor());
-        PersistenceOutcome outcome = contextFactory.persist(
+        return response;
+    }
+
+    private PersistenceOutcome persistResponse(
+        WordQueryContext context,
+        SearchRecordResponse record,
+        WordResponse response
+    ) {
+        return contextFactory.persist(
             coordinator,
             new WordPersistenceContextFactory.WordPersistenceRequest(
                 context.userId(),
@@ -82,7 +96,6 @@ public class SynchronousWordRetrievalStrategy implements WordRetrievalStrategy<W
             ),
             defaultContentStrategy
         );
-        return outcome.response();
     }
 
     private Long idOf(SearchRecordResponse record) {

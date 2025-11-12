@@ -24,7 +24,7 @@
                 <java.version>17</java.version>
                 <prettier.version>3.2.5</prettier.version>
                 <prettier-plugin-java.version>2.7.4</prettier-plugin-java.version>
-        <spring-boot.version>3.5.4</spring-boot.version>
+        <spring-boot.version>3.4.11</spring-boot.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
         <sevntu.version>1.44.1</sevntu.version>
@@ -101,6 +101,10 @@
                 <dependency>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-starter-actuator</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-core</artifactId>
                 </dependency>
 
                 <!-- YAML support for hot-reloadable TTS configuration -->

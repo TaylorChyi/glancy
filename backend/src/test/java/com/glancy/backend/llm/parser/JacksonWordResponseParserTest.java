@@ -9,37 +9,37 @@ import org.junit.jupiter.api.Test;
 class JacksonWordResponseParserTest {
 
     private final JacksonWordResponseParser parser = new JacksonWordResponseParser(new ObjectMapper());
+    private static final String CHINESE_JSON = """
+        {
+          "词条": "glow",
+          "原始输入": "glow",
+          "纠正": false,
+          "变形": [],
+          "发音": {"英音": "/gloʊ/"},
+          "发音解释": [
+            {
+              "释义": [
+                {
+                  "定义": "发出柔和的光",
+                  "类别": "动词",
+                  "例句": []
+                }
+              ]
+            }
+          ],
+          "常见词组": []
+        }
+        """;
 
     /**
      * 测试流程：构造包含中文字段的 JSON 结构，验证解析器能够正确读取词条、释义与音标信息。
      */
     @Test
     void shouldParseChineseJsonPayload() {
-        String json =
-            "{\n" +
-            "  \"词条\": \"glow\",\n" +
-            "  \"原始输入\": \"glow\",\n" +
-            "  \"纠正\": false,\n" +
-            "  \"变形\": [],\n" +
-            "  \"发音\": {\"英音\": \"/gloʊ/\"},\n" +
-            "  \"发音解释\": [\n" +
-            "    {\n" +
-            "      \"释义\": [\n" +
-            "        {\n" +
-            "          \"定义\": \"发出柔和的光\",\n" +
-            "          \"类别\": \"动词\",\n" +
-            "          \"例句\": []\n" +
-            "        }\n" +
-            "      ]\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"常见词组\": []\n" +
-            "}";
-
-        ParsedWord parsed = parser.parse(json, "glow", Language.ENGLISH);
-        Assertions.assertEquals(json, parsed.markdown());
+        ParsedWord parsed = parser.parse(CHINESE_JSON, "glow", Language.ENGLISH);
+        Assertions.assertEquals(CHINESE_JSON, parsed.markdown());
         var resp = parsed.parsed();
-        Assertions.assertEquals(json, resp.getMarkdown());
+        Assertions.assertEquals(CHINESE_JSON, resp.getMarkdown());
         Assertions.assertEquals("glow", resp.getTerm());
         Assertions.assertFalse(resp.getDefinitions().isEmpty());
         Assertions.assertNotNull(resp.getPhonetic());

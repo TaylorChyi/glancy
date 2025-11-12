@@ -59,9 +59,7 @@ public class RedemptionCodeService {
         this.clock = clock;
     }
 
-    /**
-     * 意图：创建新的兑换码配置。
-     */
+    /** 意图：创建新的兑换码配置。 */
     @Transactional
     public RedemptionCodeResponse createCode(RedemptionCodeCreateRequest request) {
         validateTimeRange(request.redeemableFrom(), request.redeemableUntil());
@@ -85,9 +83,7 @@ public class RedemptionCodeService {
         return toResponse(saved);
     }
 
-    /**
-     * 意图：根据编码查询兑换码。
-     */
+    /** 意图：根据编码查询兑换码。 */
     public RedemptionCodeResponse findByCode(String code) {
         RedemptionCode redemptionCode = redemptionCodeRepository
             .findByCodeAndDeletedFalse(normalizeCode(code))
@@ -95,31 +91,52 @@ public class RedemptionCodeService {
         return toResponse(redemptionCode);
     }
 
-    /**
-     * 意图：执行兑换流程并返回权益结果。
-     */
+    /** 意图：执行兑换流程并返回权益结果。 */
     @Transactional
     public RedemptionRedeemResponse redeem(Long userId, RedemptionRedeemRequest request) {
-        String normalizedCode = normalizeCode(request.code());
-        RedemptionCode code = redemptionCodeRepository
-            .findByCodeAndDeletedFalse(normalizedCode)
-            .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在"));
+        RedemptionCode code = findActiveCode(request.code());
         LocalDateTime now = LocalDateTime.now(clock);
+        validateRedeemWindow(code, now);
+        validateUserQuota(userId, code);
+        User user = loadUser(userId);
+        RedemptionOutcome outcome = resolveProcessor(code).process(code, user, now);
+        persistUsage(code, user, now);
+        return buildRedeemResponse(code, outcome);
+    }
+
+    private RedemptionCode findActiveCode(String rawCode) {
+        return redemptionCodeRepository
+            .findByCodeAndDeletedFalse(normalizeCode(rawCode))
+            .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在"));
+    }
+
+    private void validateRedeemWindow(RedemptionCode code, LocalDateTime now) {
         if (!code.isRedeemableAt(now)) {
             throw new InvalidRequestException("兑换未在有效期内");
         }
         if (!code.hasRemainingQuota()) {
             throw new InvalidRequestException("兑换次数已用尽");
         }
-        long userRedeemed = redemptionRecordRepository.countByCodeIdAndUserIdAndDeletedFalse(code.getId(), userId);
-        if (userRedeemed >= code.getPerUserQuota()) {
+    }
+
+    private void validateUserQuota(Long userId, RedemptionCode code) {
+        long redeemed = redemptionRecordRepository.countByCodeIdAndUserIdAndDeletedFalse(code.getId(), userId);
+        if (redeemed >= code.getPerUserQuota()) {
             throw new InvalidRequestException("已超过个人兑换次数");
         }
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-        RedemptionEffectProcessor processor = Optional.ofNullable(
-            processorRegistry.get(code.getEffectType())
-        ).orElseThrow(() -> new InvalidRequestException("不支持的兑换效果"));
-        RedemptionOutcome outcome = processor.process(code, user, now);
+    }
+
+    private User loadUser(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+    }
+
+    private RedemptionEffectProcessor resolveProcessor(RedemptionCode code) {
+        return Optional
+            .ofNullable(processorRegistry.get(code.getEffectType()))
+            .orElseThrow(() -> new InvalidRequestException("不支持的兑换效果"));
+    }
+
+    private void persistUsage(RedemptionCode code, User user, LocalDateTime now) {
         code.increaseRedemptionCount();
         try {
             redemptionCodeRepository.save(code);
@@ -131,6 +148,9 @@ public class RedemptionCodeService {
         record.setUser(user);
         record.setRedeemedAt(now);
         redemptionRecordRepository.save(record);
+    }
+
+    private RedemptionRedeemResponse buildRedeemResponse(RedemptionCode code, RedemptionOutcome outcome) {
         return new RedemptionRedeemResponse(
             code.getCode(),
             code.getEffectType(),

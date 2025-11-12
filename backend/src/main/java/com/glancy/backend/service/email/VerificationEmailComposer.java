@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Locale;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -89,38 +90,10 @@ public class VerificationEmailComposer {
 
     private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)
         throws MessagingException {
-        message.setSentDate(new Date());
-        message.setHeader("Auto-Submitted", "auto-generated");
-        message.setHeader("X-Auto-Response-Suppress", "All");
-
-        EmailComplianceSupport.buildListUnsubscribeHeader(properties).ifPresent(listUnsubscribe -> {
-                try {
-                    message.setHeader("List-Unsubscribe", listUnsubscribe);
-                    if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
-                        message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
-                    }
-                } catch (MessagingException exception) {
-                    throw new IllegalStateException("无法设置退订头部", exception);
-                }
-            });
-
-        String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
-        if (StringUtils.hasText(feedbackIdPrefix)) {
-            String companySlug = EmailComplianceSupport.resolveCompanyName(properties)
-                .replaceAll("\\s+", "-")
-                .toLowerCase(java.util.Locale.ROOT);
-            String feedbackId =
-                feedbackIdPrefix + ":" + purpose.name().toLowerCase(java.util.Locale.ROOT) + ":" + companySlug;
-            message.setHeader("Feedback-ID", feedbackId);
-        }
-
-        String entityRefIdPrefix = properties.getDeliverability().getEntityRefIdPrefix();
-        if (StringUtils.hasText(entityRefIdPrefix)) {
-            message.setHeader(
-                "X-Entity-Ref-ID",
-                entityRefIdPrefix + "-" + purpose.name().toLowerCase(java.util.Locale.ROOT)
-            );
-        }
+        stampAutoHeaders(message);
+        applyUnsubscribeHeaders(message);
+        applyFeedbackIdHeader(message, purpose);
+        applyEntityRefHeader(message, purpose);
     }
 
     private void applyArcHeaders(MimeMessage message) throws MessagingException {
@@ -131,5 +104,46 @@ public class VerificationEmailComposer {
         message.setHeader("ARC-Authentication-Results", infrastructure.getArcAuthenticationResults());
         message.setHeader("ARC-Message-Signature", infrastructure.getArcMessageSignature());
         message.setHeader("ARC-Seal", infrastructure.getArcSeal());
+    }
+
+    private void stampAutoHeaders(MimeMessage message) throws MessagingException {
+        message.setSentDate(new Date());
+        message.setHeader("Auto-Submitted", "auto-generated");
+        message.setHeader("X-Auto-Response-Suppress", "All");
+    }
+
+    private void applyUnsubscribeHeaders(MimeMessage message) {
+        EmailComplianceSupport.buildListUnsubscribeHeader(properties).ifPresent(listUnsubscribe -> {
+            try {
+                message.setHeader("List-Unsubscribe", listUnsubscribe);
+                if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
+                    message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+                }
+            } catch (MessagingException exception) {
+                throw new IllegalStateException("无法设置退订头部", exception);
+            }
+        });
+    }
+
+    private void applyFeedbackIdHeader(MimeMessage message, EmailVerificationPurpose purpose)
+        throws MessagingException {
+        String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
+        if (!StringUtils.hasText(feedbackIdPrefix)) {
+            return;
+        }
+        String companySlug = EmailComplianceSupport.resolveCompanyName(properties)
+            .replaceAll("\\s+", "-")
+            .toLowerCase(Locale.ROOT);
+        String feedbackId = feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
+        message.setHeader("Feedback-ID", feedbackId);
+    }
+
+    private void applyEntityRefHeader(MimeMessage message, EmailVerificationPurpose purpose) throws MessagingException {
+        String entityRefIdPrefix = properties.getDeliverability().getEntityRefIdPrefix();
+        if (!StringUtils.hasText(entityRefIdPrefix)) {
+            return;
+        }
+        String entityRefId = entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT);
+        message.setHeader("X-Entity-Ref-ID", entityRefId);
     }
 }

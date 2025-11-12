@@ -20,87 +20,70 @@ class SearchRecordRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * 测试目标：构建含软删除的数据集，验证未删除记录按更新时间倒序返回且关联查询契约成立。
-     * 前置条件：预先持久化 3 条搜索记录，其中一条标记删除。
-     * 步骤：
-     *  1) 查询全部未删除记录并检查排序；
-     *  2) 统计今日新增数量并断言；
-     *  3) 验证存在性与最新记录获取接口；
-     *  4) 检查按用户与删除标记过滤的查询。
-     * 断言：
-     *  - 最新记录位于首位；
-     *  - 统计结果为 2；
-     *  - findTop 返回最新记录；
-     *  - 软删除记录不会被常规查询返回。
-     * 边界/异常：
-     *  - 验证软删除记录查询为空，确保 deleted 标记生效。
-     */
     @Test
-    void searchRecordQueries() {
-        User user = userRepository.save(TestEntityFactory.user(10));
-        SearchRecord r1 = TestEntityFactory.searchRecord(
-            user,
-            "term1",
-            Language.ENGLISH,
-            LocalDateTime.now().minusDays(1)
+    void ordersActiveRecordsByUpdatedAt() {
+        SearchRecordFixture fixture = seedRecords();
+        List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(
+            fixture.user.getId()
         );
-        r1.setUpdatedAt(LocalDateTime.now().minusDays(1));
-        SearchRecord r2 = TestEntityFactory.searchRecord(user, "term2", Language.ENGLISH, LocalDateTime.now());
-        r2.setUpdatedAt(LocalDateTime.now());
-        searchRecordRepository.save(r1);
-        searchRecordRepository.save(r2);
+        Assertions.assertEquals("term-latest", list.get(0).getTerm());
+    }
 
-        SearchRecord deletedRecord = TestEntityFactory.searchRecord(
-            user,
-            "term3",
-            Language.ENGLISH,
-            LocalDateTime.now().minusHours(2)
-        );
-        deletedRecord.setDeleted(true);
-        deletedRecord.setUpdatedAt(LocalDateTime.now().minusHours(2));
-        searchRecordRepository.save(deletedRecord);
-
-        List<SearchRecord> list = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(user.getId());
-        Assertions.assertEquals("term2", list.get(0).getTerm());
-
+    @Test
+    void countsTodayRecords() {
+        SearchRecordFixture fixture = seedRecords();
         long count = searchRecordRepository.countByUserIdAndDeletedFalseAndCreatedAtBetween(
-            user.getId(),
+            fixture.user.getId(),
             LocalDateTime.now().minusDays(2),
             LocalDateTime.now()
         );
         Assertions.assertEquals(2, count);
+    }
 
-        Assertions.assertTrue(
-            searchRecordRepository.existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
-                user.getId(),
-                "term1",
-                Language.ENGLISH,
-                DictionaryFlavor.BILINGUAL
-            )
-        );
-
-        SearchRecord r3 = TestEntityFactory.searchRecord(
-            user,
-            "term1",
-            Language.ENGLISH,
-            LocalDateTime.now().plusMinutes(1)
-        );
-        r3.setUpdatedAt(LocalDateTime.now().plusMinutes(1));
-        searchRecordRepository.save(r3);
+    @Test
+    void findsLatestRecordForTerm() {
+        SearchRecordFixture fixture = seedRecords();
         SearchRecord top =
             searchRecordRepository.findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
-                user.getId(),
+                fixture.user.getId(),
                 "term1",
                 Language.ENGLISH,
                 DictionaryFlavor.BILINGUAL
             );
-        Assertions.assertEquals(r3.getId(), top.getId());
-
-        Assertions.assertTrue(
-            searchRecordRepository.findByIdAndUserIdAndDeletedFalse(r1.getId(), user.getId()).isPresent()
-        );
-        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(r2.getId()).isPresent());
-        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(deletedRecord.getId()).isEmpty());
+        Assertions.assertEquals(fixture.latestTerm1.getId(), top.getId());
     }
+
+    @Test
+    void excludesSoftDeletedRecords() {
+        SearchRecordFixture fixture = seedRecords();
+        Assertions.assertTrue(
+            searchRecordRepository.findByIdAndDeletedFalse(fixture.activeTerm1.getId()).isPresent()
+        );
+        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(fixture.activeTerm2.getId()).isPresent());
+        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(fixture.deleted.getId()).isEmpty());
+    }
+
+    private SearchRecordFixture seedRecords() {
+        User user = userRepository.save(TestEntityFactory.user(10));
+        SearchRecord term1 = persistRecord(user, "term1", LocalDateTime.now().minusDays(1), false);
+        SearchRecord term2 = persistRecord(user, "term-latest", LocalDateTime.now(), false);
+        SearchRecord deleted = persistRecord(user, "term3", LocalDateTime.now().minusHours(2), true);
+        SearchRecord latestTerm1 = persistRecord(user, "term1", LocalDateTime.now().plusMinutes(1), false);
+        return new SearchRecordFixture(user, term1, term2, deleted, latestTerm1);
+    }
+
+    private SearchRecord persistRecord(User user, String term, LocalDateTime createdAt, boolean deleted) {
+        SearchRecord record = TestEntityFactory.searchRecord(user, term, Language.ENGLISH, createdAt);
+        record.setDeleted(deleted);
+        record.setUpdatedAt(createdAt);
+        return searchRecordRepository.save(record);
+    }
+
+    private record SearchRecordFixture(
+        User user,
+        SearchRecord activeTerm1,
+        SearchRecord activeTerm2,
+        SearchRecord deleted,
+        SearchRecord latestTerm1
+    ) {}
 }

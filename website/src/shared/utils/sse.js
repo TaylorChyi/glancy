@@ -1,9 +1,13 @@
+import { logger } from "./logger.js";
+
 export async function* parseSse(stream) {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   const dev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
   const log = (...args) => {
-    if (dev) console.info("[parseSse]", ...args);
+    if (dev) {
+      logger.info("[parseSse]", ...args);
+    }
   };
   let buffer = "";
   try {

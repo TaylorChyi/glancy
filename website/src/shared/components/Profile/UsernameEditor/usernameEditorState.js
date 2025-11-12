@@ -40,50 +40,76 @@ export function createUsernameEditorInitialState(username = "") {
  * 复杂度：O(1)，仅根据动作类型做有限分支。
  */
 export function usernameEditorReducer(state, action) {
-  switch (action.type) {
-    case UsernameEditorActions.SYNC_VALUE: {
-      if (state.mode !== UsernameEditorModes.VIEW) return state;
-      const nextValue = action.value ?? "";
-      if (nextValue === state.value) return state;
-      return { ...state, value: nextValue, draft: nextValue };
-    }
-    case UsernameEditorActions.START_EDIT:
-      if (state.mode === UsernameEditorModes.SAVING) return state;
-      return {
-        ...state,
-        mode: UsernameEditorModes.EDIT,
-        draft: state.value,
-        error: null,
-      };
-    case UsernameEditorActions.CHANGE:
-      if (state.mode === UsernameEditorModes.VIEW) return state;
-      return { ...state, draft: action.value, error: null };
-    case UsernameEditorActions.CANCEL_EDIT:
-      if (state.mode !== UsernameEditorModes.EDIT) return state;
-      return {
-        ...state,
-        mode: UsernameEditorModes.VIEW,
-        draft: state.value,
-        error: null,
-      };
-    case UsernameEditorActions.SUBMIT_START:
-      return { ...state, mode: UsernameEditorModes.SAVING, error: null };
-    case UsernameEditorActions.SUBMIT_SUCCESS: {
-      const nextValue = action.value ?? "";
-      return {
-        mode: UsernameEditorModes.VIEW,
-        value: nextValue,
-        draft: nextValue,
-        error: null,
-      };
-    }
-    case UsernameEditorActions.SUBMIT_FAILURE:
-      return {
-        ...state,
-        mode: UsernameEditorModes.EDIT,
-        error: action.error ?? null,
-      };
-    default:
-      return state;
-  }
+  const handler = usernameEditorTransitions[action.type];
+  return handler ? handler(state, action) : state;
 }
+
+const identity = (value) => value;
+
+function createTransition({ guard = () => true, normalize = identity, apply }) {
+  return (state, action) => {
+    if (!guard(state, action)) {
+      return state;
+    }
+    const payload = normalize(state, action);
+    return apply(state, payload, action);
+  };
+}
+
+const usernameEditorTransitions = {
+  [UsernameEditorActions.SYNC_VALUE]: createTransition({
+    guard: (state) => state.mode === UsernameEditorModes.VIEW,
+    normalize: (_, action) => action.value ?? "",
+    apply: (state, nextValue) =>
+      nextValue === state.value
+        ? state
+        : { ...state, value: nextValue, draft: nextValue },
+  }),
+  [UsernameEditorActions.START_EDIT]: createTransition({
+    guard: (state) => state.mode !== UsernameEditorModes.SAVING,
+    apply: (state) => ({
+      ...state,
+      mode: UsernameEditorModes.EDIT,
+      draft: state.value,
+      error: null,
+    }),
+  }),
+  [UsernameEditorActions.CHANGE]: createTransition({
+    guard: (state) => state.mode !== UsernameEditorModes.VIEW,
+    normalize: (_, action) => action.value ?? "",
+    apply: (state, draft) => ({ ...state, draft, error: null }),
+  }),
+  [UsernameEditorActions.CANCEL_EDIT]: createTransition({
+    guard: (state) => state.mode === UsernameEditorModes.EDIT,
+    apply: (state) => ({
+      ...state,
+      mode: UsernameEditorModes.VIEW,
+      draft: state.value,
+      error: null,
+    }),
+  }),
+  [UsernameEditorActions.SUBMIT_START]: createTransition({
+    apply: (state) => ({
+      ...state,
+      mode: UsernameEditorModes.SAVING,
+      error: null,
+    }),
+  }),
+  [UsernameEditorActions.SUBMIT_SUCCESS]: createTransition({
+    normalize: (_, action) => action.value ?? "",
+    apply: (_, nextValue) => ({
+      mode: UsernameEditorModes.VIEW,
+      value: nextValue,
+      draft: nextValue,
+      error: null,
+    }),
+  }),
+  [UsernameEditorActions.SUBMIT_FAILURE]: createTransition({
+    normalize: (_, action) => action.error ?? null,
+    apply: (state, error) => ({
+      ...state,
+      mode: UsernameEditorModes.EDIT,
+      error,
+    }),
+  }),
+};

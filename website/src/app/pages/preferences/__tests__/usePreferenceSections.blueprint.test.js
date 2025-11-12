@@ -28,29 +28,19 @@ afterEach(() => {
   }
 });
 
-/**
- * 测试目标：默认渲染时分区顺序应为 general→response style→data→keyboard→account→subscription，且默认激活 general。
- * 前置条件：使用默认语言文案与账户信息渲染 Hook。
- * 步骤：
- *  1) 渲染 usePreferenceSections；
- *  2) 读取 sections 与 panel 结构。
- * 断言：
- *  - sections 顺序符合蓝图；
- *  - activeSectionId 为 general；
- *  - focusHeadingId 与 headingId 指向 general 分区；
- *  - responseStyle 分区未暴露描述信息，message 应为 undefined；
- *  - modalHeadingText 等于 General 文案。
- * 边界/异常：
- *  - 若 general 被禁用，应回退到下一个可用分区（由 sanitizeActiveSectionId 覆盖）。
- */
-test("Given default sections When reading blueprint Then general leads navigation", async () => {
-  const context = setupContext();
-  const { result } = renderHook(() =>
+const findSectionById = (result, sectionId) =>
+  result.current.sections.find((section) => section.id === sectionId);
+
+const givenDefaultSections = () => setupContext();
+
+const whenDefaultSectionsAreRendered = () =>
+  renderHook(() =>
     usePreferenceSections({
       initialSectionId: undefined,
     }),
   );
 
+const thenDefaultBlueprintSettles = async ({ context, result }) => {
   await waitFor(() => {
     expect(context.fetchProfileMock).toHaveBeenCalledWith({
       token: "token-123",
@@ -58,118 +48,168 @@ test("Given default sections When reading blueprint Then general leads navigatio
   });
 
   await waitFor(() => {
-    const responseStyleSection = result.current.sections.find(
-      (section) => section.id === "responseStyle",
-    );
+    const responseStyleSection = findSectionById(result, "responseStyle");
     expect(responseStyleSection.componentProps.state.status).toBe("ready");
     expect(responseStyleSection.componentProps.message).toBeUndefined();
   });
+};
 
-  expect(result.current.sections.map((section) => section.id)).toEqual([
-    "general",
-    "responseStyle",
-    "data",
-    "keyboard",
-    "account",
-    "subscription",
-  ]);
-  expect(result.current.activeSectionId).toBe("general");
-  expect(result.current.panel.headingId).toBe("general-section-heading");
-  expect(result.current.panel.focusHeadingId).toBe("general-section-heading");
-  expect(result.current.panel.modalHeadingId).toBe(
-    "settings-modal-fallback-heading",
+const runDefaultBlueprintScenario = async () => {
+  const context = givenDefaultSections();
+  const { result } = whenDefaultSectionsAreRendered();
+  await thenDefaultBlueprintSettles({ context, result });
+  return { context, result };
+};
+
+const defaultBlueprintExpectations = [
+  {
+    expectation: "general leads navigation",
+    assertThen: ({ result }) => {
+      expect(result.current.sections.map((section) => section.id)).toEqual([
+        "general",
+        "responseStyle",
+        "data",
+        "keyboard",
+        "account",
+        "subscription",
+      ]);
+      expect(result.current.activeSectionId).toBe("general");
+      expect(result.current.panel.headingId).toBe("general-section-heading");
+      expect(result.current.panel.focusHeadingId).toBe(
+        "general-section-heading",
+      );
+      expect(result.current.panel.modalHeadingId).toBe(
+        "settings-modal-fallback-heading",
+      );
+      expect(result.current.panel.modalHeadingText).toBe("General");
+    },
+  },
+  {
+    expectation: "account section renders identity and bindings",
+    assertThen: ({ result, context }) => {
+      const accountSection = findSectionById(result, "account");
+      expect(accountSection).toBeDefined();
+      expect(accountSection.Component).toBeDefined();
+      expect(accountSection.componentProps.identity.displayName).toBe("amy");
+      expect(accountSection.componentProps.identity.changeLabel).toBe(
+        context.translations.changeAvatar,
+      );
+      expect(accountSection.componentProps.identity.avatarAlt).toBe(
+        context.translations.prefAccountTitle,
+      );
+      expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
+        "function",
+      );
+      expect(accountSection.componentProps.identity.isUploading).toBe(false);
+      expect(accountSection.componentProps.fields[0].type).toBe(
+        ACCOUNT_USERNAME_FIELD_TYPE,
+      );
+      expect(
+        accountSection.componentProps.fields[0].usernameEditorProps,
+      ).toMatchObject({
+        username: "amy",
+      });
+      expect(accountSection.componentProps.bindings.title).toBe(
+        context.translations.settingsAccountBindingTitle,
+      );
+      expect(accountSection.componentProps.bindings.items).toHaveLength(3);
+      expect(
+        accountSection.componentProps.bindings.items.map((item) => item.name),
+      ).toEqual([
+        context.translations.settingsAccountBindingApple,
+        context.translations.settingsAccountBindingGoogle,
+        context.translations.settingsAccountBindingWeChat,
+      ]);
+      expect(
+        accountSection.componentProps.bindings.items.every(
+          (item) =>
+            item.status ===
+              context.translations.settingsAccountBindingStatusUnlinked &&
+            item.actionLabel ===
+              context.translations.settingsAccountBindingActionPlaceholder,
+        ),
+      ).toBe(true);
+    },
+  },
+  {
+    expectation: "subscription section exposes plans",
+    assertThen: ({ result }) => {
+      const subscriptionSection = findSectionById(result, "subscription");
+      expect(subscriptionSection).toBeDefined();
+      expect(subscriptionSection.Component).toBeDefined();
+      expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
+      expect(
+        subscriptionSection.componentProps.planCards.some(
+          (card) => card.id === "PLUS" && card.state === "current",
+        ),
+      ).toBe(true);
+    },
+  },
+  {
+    expectation: "response style section populates copy and values",
+    assertThen: ({ result, context }) => {
+      const responseStyleSection = findSectionById(result, "responseStyle");
+      expect(responseStyleSection.componentProps.copy.dropdownLabel).toBe(
+        context.translations.responseStyleSelectLabel,
+      );
+      expect(responseStyleSection.componentProps.copy.options).toHaveLength(5);
+      expect(
+        responseStyleSection.componentProps.copy.fields.map(
+          (field) => field.id,
+        ),
+      ).toEqual(["job", "education", "currentAbility", "goal", "interests"]);
+      expect(
+        responseStyleSection.componentProps.copy.fields
+          .filter((field) => field.multiline)
+          .map((field) => field.id),
+      ).toEqual(["goal", "interests"]);
+      expect(
+        responseStyleSection.componentProps.copy.fields.find(
+          (field) => field.id === "goal",
+        ).rows,
+      ).toBe(3);
+      expect(responseStyleSection.componentProps.state.values.goal).toBe("B2");
+      expect(
+        responseStyleSection.componentProps.state.values.responseStyle,
+      ).toBe("default");
+    },
+  },
+  {
+    expectation: "avatar editor and feedback metadata defaults",
+    assertThen: ({ result, context }) => {
+      expect(result.current.avatarEditor).toBeDefined();
+      expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
+        "function",
+      );
+      expect(result.current.avatarEditor.modalProps.open).toBe(false);
+      expect(result.current.feedback.redeemToast).toMatchObject({
+        open: false,
+        message: "",
+        closeLabel: context.translations.toastDismissLabel,
+        duration: 3000,
+      });
+    },
+  },
+];
+
+/**
+ * 测试目标：默认渲染时的蓝图应确保导航顺序、账号/订阅分区与响应风格元数据均符合设计文档。
+ * 方案拆解：Given/When 阶段通过 runDefaultBlueprintScenario 统一准备上下文，再使用 test.each 将各个断言主题拆分到独立 Then helper 中。
+ * 断言：
+ *  - general 领衔导航；
+ *  - account section 注入身份与绑定信息；
+ *  - subscription section 提供预期套餐；
+ *  - response style section 填充表单文案与默认值；
+ *  - avatar editor 与 toast 元数据符合默认值。
+ */
+describe("default preference sections blueprint", () => {
+  test.each(defaultBlueprintExpectations)(
+    "Given default sections When reading blueprint Then $expectation",
+    async ({ assertThen }) => {
+      const scenario = await runDefaultBlueprintScenario();
+      await assertThen(scenario);
+    },
   );
-  expect(result.current.panel.modalHeadingText).toBe("General");
-  const accountSection = result.current.sections.find(
-    (section) => section.id === "account",
-  );
-  expect(accountSection).toBeDefined();
-  expect(accountSection.Component).toBeDefined();
-  expect(accountSection.componentProps.identity.displayName).toBe("amy");
-  expect(accountSection.componentProps.identity.changeLabel).toBe(
-    context.translations.changeAvatar,
-  );
-  expect(accountSection.componentProps.identity.avatarAlt).toBe(
-    context.translations.prefAccountTitle,
-  );
-  expect(typeof accountSection.componentProps.identity.onSelectAvatar).toBe(
-    "function",
-  );
-  expect(accountSection.componentProps.identity.isUploading).toBe(false);
-  expect(accountSection.componentProps.fields[0].type).toBe(
-    ACCOUNT_USERNAME_FIELD_TYPE,
-  );
-  expect(
-    accountSection.componentProps.fields[0].usernameEditorProps,
-  ).toMatchObject({
-    username: "amy",
-  });
-  expect(accountSection.componentProps.bindings.title).toBe(
-    context.translations.settingsAccountBindingTitle,
-  );
-  expect(accountSection.componentProps.bindings.items).toHaveLength(3);
-  expect(
-    accountSection.componentProps.bindings.items.map((item) => item.name),
-  ).toEqual([
-    context.translations.settingsAccountBindingApple,
-    context.translations.settingsAccountBindingGoogle,
-    context.translations.settingsAccountBindingWeChat,
-  ]);
-  expect(
-    accountSection.componentProps.bindings.items.every(
-      (item) =>
-        item.status ===
-          context.translations.settingsAccountBindingStatusUnlinked &&
-        item.actionLabel ===
-          context.translations.settingsAccountBindingActionPlaceholder,
-    ),
-  ).toBe(true);
-  expect(result.current.avatarEditor).toBeDefined();
-  expect(typeof result.current.avatarEditor.modalProps.onConfirm).toBe(
-    "function",
-  );
-  expect(result.current.avatarEditor.modalProps.open).toBe(false);
-  const subscriptionSection = result.current.sections.find(
-    (section) => section.id === "subscription",
-  );
-  expect(subscriptionSection).toBeDefined();
-  expect(subscriptionSection.Component).toBeDefined();
-  expect(subscriptionSection.componentProps.planCards).toHaveLength(3);
-  expect(
-    subscriptionSection.componentProps.planCards.some(
-      (card) => card.id === "PLUS" && card.state === "current",
-    ),
-  ).toBe(true);
-  const responseStyleSection = result.current.sections.find(
-    (section) => section.id === "responseStyle",
-  );
-  expect(responseStyleSection.componentProps.copy.dropdownLabel).toBe(
-    context.translations.responseStyleSelectLabel,
-  );
-  expect(responseStyleSection.componentProps.copy.options).toHaveLength(5);
-  expect(
-    responseStyleSection.componentProps.copy.fields.map((field) => field.id),
-  ).toEqual(["job", "education", "currentAbility", "goal", "interests"]);
-  expect(
-    responseStyleSection.componentProps.copy.fields
-      .filter((field) => field.multiline)
-      .map((field) => field.id),
-  ).toEqual(["goal", "interests"]);
-  expect(
-    responseStyleSection.componentProps.copy.fields.find(
-      (field) => field.id === "goal",
-    ).rows,
-  ).toBe(3);
-  expect(responseStyleSection.componentProps.state.values.goal).toBe("B2");
-  expect(responseStyleSection.componentProps.state.values.responseStyle).toBe(
-    "default",
-  );
-  expect(result.current.feedback.redeemToast).toMatchObject({
-    open: false,
-    message: "",
-    closeLabel: context.translations.toastDismissLabel,
-    duration: 3000,
-  });
 });
 
 /**

@@ -82,25 +82,12 @@ public class EmailVerificationService {
         LocalDateTime now = LocalDateTime.now(clock);
         log.info("Consuming verification code for {} with purpose {} at {}", normalizedEmail, purpose, now);
         repository.markExpiredAsUsed(normalizedEmail, purpose, now);
-        EmailVerificationCode latest = repository
-            .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(normalizedEmail, purpose, code)
-            .orElseThrow(() -> new InvalidRequestException("验证码无效或已过期"));
-
-        if (Boolean.TRUE.equals(latest.getUsed()) || latest.getExpiresAt().isBefore(now)) {
-            latest.setUsed(true);
-            repository.save(latest);
-            log.warn(
-                "Verification code {} for {} purpose {} already used or expired at {}",
-                latest.getId(),
-                normalizedEmail,
-                purpose,
-                now
-            );
-            throw new InvalidRequestException("验证码无效或已过期");
+        EmailVerificationCode latest = loadLatestCode(normalizedEmail, purpose, code);
+        if (isExpiredOrUsed(latest, now)) {
+            handleInvalidConsumption(latest, normalizedEmail, purpose, now);
+            return;
         }
-
-        latest.setUsed(true);
-        repository.save(latest);
+        markAsUsed(latest);
         log.info(
             "Verification code {} for {} purpose {} consumed successfully",
             latest.getId(),
@@ -182,5 +169,37 @@ public class EmailVerificationService {
         LocalDateTime now = LocalDateTime.now(clock);
         log.info("Invalidating verification codes for {} with purpose {} at {}", normalizedEmail, purpose, now);
         invalidateExisting(normalizedEmail, purpose, now);
+    }
+
+    private EmailVerificationCode loadLatestCode(String email, EmailVerificationPurpose purpose, String code) {
+        return repository
+            .findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(email, purpose, code)
+            .orElseThrow(() -> new InvalidRequestException("验证码无效或已过期"));
+    }
+
+    private boolean isExpiredOrUsed(EmailVerificationCode code, LocalDateTime now) {
+        return Boolean.TRUE.equals(code.getUsed()) || code.getExpiresAt().isBefore(now);
+    }
+
+    private void handleInvalidConsumption(
+        EmailVerificationCode code,
+        String email,
+        EmailVerificationPurpose purpose,
+        LocalDateTime now
+    ) {
+        markAsUsed(code);
+        log.warn(
+            "Verification code {} for {} purpose {} already used or expired at {}",
+            code.getId(),
+            email,
+            purpose,
+            now
+        );
+        throw new InvalidRequestException("验证码无效或已过期");
+    }
+
+    private void markAsUsed(EmailVerificationCode code) {
+        code.setUsed(true);
+        repository.save(code);
     }
 }

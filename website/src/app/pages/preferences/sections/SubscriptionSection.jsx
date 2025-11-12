@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import SettingsSection from "@shared/components/settings/SettingsSection";
-import styles from "../Preferences.module.css";
+import SubscriptionSectionView from "./SubscriptionSection/SubscriptionSectionView.jsx";
+import { createSubscriptionSectionViewModel } from "./SubscriptionSection/viewModel";
 
 const REDEEM_CODE_GROUP_SIZE = 4;
 const REDEEM_CODE_MAX_LENGTH = 16;
@@ -26,21 +26,12 @@ function formatRedeemCodeForDisplay(code) {
   return groups.join("-");
 }
 
-function SubscriptionSection({
-  title,
-  headingId,
-  descriptionId,
-  planCards,
-  featureMatrix,
-  visiblePlanIds,
-  planLabels,
-  pricingNote,
-  taxNote,
-  redeemCopy,
-  defaultSelectedPlanId,
-  onRedeem,
-  featureColumnLabel,
-}) {
+function useSubscriptionSectionController(props) {
+  const {
+    defaultSelectedPlanId,
+    planCards,
+    onRedeem,
+  } = props;
   const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
   const [redeemCode, setRedeemCode] = useState("");
   const redeemInputRef = useRef(null);
@@ -60,13 +51,20 @@ function SubscriptionSection({
     setSelectedPlanId(planId);
   }, []);
 
+  const handleRedeemCodeChange = useCallback((event) => {
+    if (!event || typeof event !== "object" || !("target" in event)) {
+      return;
+    }
+    const target = event.target;
+    setRedeemCode(normalizeRedeemCodeInput(target?.value ?? ""));
+  }, []);
+
   const handleRedeemAction = useCallback(() => {
     if (onRedeem) {
       onRedeem(redeemCode);
     }
   }, [onRedeem, redeemCode]);
 
-  
   const syncPlanRailPosition = useCallback(() => {
     const node = planCarouselRef.current;
     if (!node) {
@@ -110,173 +108,51 @@ function SubscriptionSection({
   }, []);
 
   const shouldRenderPlanRailNav = planCards.length > 1;
-  /**
-   * 以导航显隐取代禁用态，避免读屏软件聚焦到无效按钮，并减少视觉噪点。
-   * 如后续需要保留占位，可改为渲染按钮容器并在样式层做透明处理。
-   */
-  const shouldShowPlanRailPreviousNav =
-    shouldRenderPlanRailNav && !isPlanRailAtStart;
-  const shouldShowPlanRailNextNav = shouldRenderPlanRailNav && !isPlanRailAtEnd;
+  const planRailNav = {
+    viewportRef: planCarouselRef,
+    showPrevNav: shouldRenderPlanRailNav && !isPlanRailAtStart,
+    showNextNav: shouldRenderPlanRailNav && !isPlanRailAtEnd,
+    isAtStart: isPlanRailAtStart,
+    isAtEnd: isPlanRailAtEnd,
+    onPrev: () => handlePlanRailNav(-1),
+    onNext: () => handlePlanRailNav(1),
+    prevLabel: "查看前一个订阅方案",
+    nextLabel: "查看后一个订阅方案",
+  };
 
-  return (
-    <SettingsSection
-      headingId={headingId}
-      title={title}
-      describedBy={descriptionId}
-      classes={{
-        section: `${styles.section} ${styles["section-plain"]} ${styles["subscription-section"]}`,
-        header: styles["section-header"],
-        title: styles["section-title"],
-        divider: styles["section-divider"],
-      }}
-    >
-      <div className={styles["subscription-matrix"]}>
-        <div className={styles["subscription-plan-carousel"]}>
-          {shouldShowPlanRailPreviousNav ? (
-            <button
-              type="button"
-              className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-previous"]}`}
-              onClick={() => handlePlanRailNav(-1)}
-              aria-label="查看前一个订阅方案"
-            >
-              <span aria-hidden="true">‹</span>
-            </button>
-          ) : null}
-          <div
-            className={styles["subscription-plan-viewport"]}
-            data-scroll-at-start={isPlanRailAtStart}
-            data-scroll-at-end={isPlanRailAtEnd}
-          >
-            <div
-              ref={planCarouselRef}
-              className={styles["subscription-plan-grid"]}
-              role="list"
-            >
-              {planCards.map((plan) => {
-                const isSelected = plan.id === selectedPlanId;
-                const priceLineEntries = Array.isArray(plan.priceLines)
-                  ? plan.priceLines
-                  : [];
-                const linesToRender =
-                  isSelected && plan.subscriptionExpiryLine
-                    ? [...priceLineEntries, plan.subscriptionExpiryLine]
-                    : priceLineEntries;
-                return (
-                  <article
-                    key={plan.id}
-                    className={styles["subscription-plan"]}
-                    data-state={plan.state}
-                    data-selected={isSelected}
-                    role="listitem"
-                  >
-                    <div className={styles["subscription-plan-body"]}>
-                      <span className={styles["subscription-plan-badge"]}>
-                        {plan.badge}
-                      </span>
-                      <h4 className={styles["subscription-plan-title"]}>
-                        {plan.title}
-                      </h4>
-                      <p className={styles["subscription-plan-summary"]}>
-                        {plan.summary}
-                      </p>
-                      <ul className={styles["subscription-plan-pricing"]}>
-                        {linesToRender.map((line, index) => (
-                          <li key={`${plan.id}-line-${index}`}>{line}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <button
-                      type="button"
-                      className={styles["subscription-plan-cta"]}
-                      onClick={() => handlePlanSelect(plan.id, plan.disabled)}
-                      disabled={plan.disabled}
-                      aria-pressed={isSelected}
-                    >
-                      {plan.ctaLabel}
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-          {shouldShowPlanRailNextNav ? (
-            <button
-              type="button"
-              className={`${styles["subscription-plan-nav"]} ${styles["subscription-plan-nav-next"]}`}
-              onClick={() => handlePlanRailNav(1)}
-              aria-label="查看后一个订阅方案"
-            >
-              <span aria-hidden="true">›</span>
-            </button>
-          ) : null}
-        </div>
-        <div className={styles["subscription-table-wrapper"]}>
-          <table className={styles["subscription-table"]}>
-            <thead>
-              <tr>
-                <th scope="col">{featureColumnLabel}</th>
-                {visiblePlanIds.map((planId) => (
-                  <th key={planId} scope="col">
-                    {planLabels[planId] ?? planId}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {featureMatrix.map((feature) => (
-                <tr key={feature.id}>
-                  <th scope="row">{feature.label}</th>
-                  {visiblePlanIds.map((planId) => (
-                    <td
-                      key={planId}
-                      data-plan-state={
-                        planId === defaultSelectedPlanId ? "current" : undefined
-                      }
-                    >
-                      {feature.values[planId] ?? ""}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div className={styles["subscription-footnotes"]}>
-        <p>{pricingNote}</p>
-        <p>{taxNote}</p>
-      </div>
-      <div className={styles["subscription-actions"]}>
-        <div className={styles["subscription-redeem"]}>
-          <h4 className={styles["subscription-redeem-title"]}>
-            {redeemCopy.title}
-          </h4>
-          <div className={styles["subscription-redeem-form"]}>
-            <input
-              ref={redeemInputRef}
-              type="text"
-              className={styles["subscription-redeem-input"]}
-              placeholder={redeemCopy.placeholder}
-              value={formattedRedeemCode}
-              onChange={(event) =>
-                setRedeemCode(normalizeRedeemCodeInput(event.target.value))
-              }
-            />
-            <button
-              type="button"
-              className={styles["subscription-redeem-button"]}
-              onClick={handleRedeemAction}
-            >
-              {redeemCopy.buttonLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-    </SettingsSection>
-  );
+  const handlers = {
+    onPlanSelect: handlePlanSelect,
+    onRedeemCodeChange: handleRedeemCodeChange,
+    onRedeem: handleRedeemAction,
+  };
+
+  return createSubscriptionSectionViewModel({
+    title: props.title,
+    headingId: props.headingId,
+    descriptionId: props.descriptionId,
+    planCards: props.planCards,
+    featureMatrix: props.featureMatrix,
+    visiblePlanIds: props.visiblePlanIds,
+    planLabels: props.planLabels,
+    pricingNote: props.pricingNote,
+    taxNote: props.taxNote,
+    redeemCopy: props.redeemCopy,
+    defaultSelectedPlanId,
+    selectedPlanId,
+    formattedRedeemCode,
+    planRailNav,
+    handlers,
+    redeemRefs: { inputRef: redeemInputRef },
+    featureColumnLabel: props.featureColumnLabel,
+  });
 }
 
-SubscriptionSection.propTypes = {
+function SubscriptionSectionContainer(props) {
+  const viewModel = useSubscriptionSectionController(props);
+  return <SubscriptionSectionView {...viewModel} />;
+}
+
+SubscriptionSectionContainer.propTypes = {
   title: PropTypes.string.isRequired,
   headingId: PropTypes.string.isRequired,
   descriptionId: PropTypes.string,
@@ -314,9 +190,9 @@ SubscriptionSection.propTypes = {
   featureColumnLabel: PropTypes.string.isRequired,
 };
 
-SubscriptionSection.defaultProps = {
+SubscriptionSectionContainer.defaultProps = {
   descriptionId: undefined,
   onRedeem: undefined,
 };
 
-export default SubscriptionSection;
+export default SubscriptionSectionContainer;

@@ -42,6 +42,125 @@ describe("useFrameReveal", () => {
     jest.clearAllMocks();
   });
 
+  const givenIntervalAnimationEnvironment = () => {
+    jest.useFakeTimers();
+    let animationFrameCallback;
+    let intervalCallback;
+    const frameRequestId = 11;
+    const intervalRequestId = 13;
+
+    const raf = jest.fn((callback) => {
+      animationFrameCallback = callback;
+      return frameRequestId;
+    });
+    const cancel = jest.fn();
+    const scheduleInterval = jest.fn((callback) => {
+      intervalCallback = callback;
+      return intervalRequestId;
+    });
+    const clearScheduledInterval = jest.fn();
+
+    global.requestAnimationFrame = raf;
+    global.cancelAnimationFrame = cancel;
+    global.setInterval = scheduleInterval;
+    global.clearInterval = clearScheduledInterval;
+
+    return {
+      frameRequestId,
+      intervalRequestId,
+      cancel,
+      clearScheduledInterval,
+      getAnimationFrameCallback: () => animationFrameCallback,
+      getIntervalCallback: () => intervalCallback,
+    };
+  };
+
+  const whenFrameRevealRuns = (
+    props = { token: "frame-a", interval: 700 },
+  ) =>
+    renderHook(
+      ({ token, interval }) => useFrameReveal(token, { intervalMs: interval }),
+      {
+        initialProps: props,
+      },
+    );
+
+  const runIntervalScenario = () => {
+    const env = givenIntervalAnimationEnvironment();
+    const hook = whenFrameRevealRuns();
+    return { ...env, ...hook };
+  };
+
+  const intervalExpectationCases = [
+    {
+      expectation: "initializes hidden and schedules callbacks",
+      assertThen: ({
+        result,
+        getAnimationFrameCallback,
+        getIntervalCallback,
+      }) => {
+        expect(result.current).toBe(false);
+        expect(typeof getAnimationFrameCallback()).toBe("function");
+        expect(typeof getIntervalCallback()).toBe("function");
+      },
+    },
+    {
+      expectation: "animation frame reveals overlay",
+      assertThen: ({ result, getAnimationFrameCallback }) => {
+        expect(result.current).toBe(false);
+        const animationFrameCallback = getAnimationFrameCallback();
+        expect(typeof animationFrameCallback).toBe("function");
+
+        act(() => {
+          animationFrameCallback();
+        });
+
+        expect(result.current).toBe(true);
+      },
+    },
+    {
+      expectation: "interval callback toggles visibility",
+      assertThen: ({
+        result,
+        getAnimationFrameCallback,
+        getIntervalCallback,
+      }) => {
+        const animationFrameCallback = getAnimationFrameCallback();
+        expect(typeof animationFrameCallback).toBe("function");
+        act(() => {
+          animationFrameCallback();
+        });
+
+        const intervalCallback = getIntervalCallback();
+        expect(typeof intervalCallback).toBe("function");
+
+        act(() => {
+          intervalCallback();
+        });
+        expect(result.current).toBe(false);
+
+        act(() => {
+          intervalCallback();
+        });
+        expect(result.current).toBe(true);
+      },
+    },
+    {
+      expectation: "rerender cancels scheduled work",
+      assertThen: ({
+        rerender,
+        cancel,
+        clearScheduledInterval,
+        frameRequestId,
+        intervalRequestId,
+      }) => {
+        rerender({ token: "frame-b", interval: 700 });
+        expect(cancel).toHaveBeenCalledWith(frameRequestId);
+        expect(clearScheduledInterval).toHaveBeenCalledWith(intervalRequestId);
+      },
+    },
+  ];
+
   /**
    * 测试目标：验证默认动效路径下首帧显隐与周期性翻转逻辑。
    * 前置条件：伪造 requestAnimationFrame/cancelAnimationFrame 与 setInterval/clearInterval。
@@ -55,60 +174,14 @@ describe("useFrameReveal", () => {
    *  - rerender 时调用 cancelAnimationFrame 与 clearInterval。
    * 边界/异常：使用假的计时器以确保定时任务可控。
    */
-  it("GivenInterval_WhenCallbacksFired_ThenTogglesRevealState", () => {
-    jest.useFakeTimers();
-    let storedAnimationFrameCallback;
-    let storedIntervalCallback;
-
-    const raf = jest.fn((callback) => {
-      storedAnimationFrameCallback = callback;
-      return 11;
-    });
-    const cancel = jest.fn();
-    const scheduleInterval = jest.fn((callback) => {
-      storedIntervalCallback = callback;
-      return 13;
-    });
-    const clearScheduledInterval = jest.fn();
-
-    global.requestAnimationFrame = raf;
-    global.cancelAnimationFrame = cancel;
-    global.setInterval = scheduleInterval;
-    global.clearInterval = clearScheduledInterval;
-
-    const { result, rerender } = renderHook(
-      ({ token, interval }) => useFrameReveal(token, { intervalMs: interval }),
-      {
-        initialProps: { token: "frame-a", interval: 700 },
+  describe("default interval reveal blueprint", () => {
+    test.each(intervalExpectationCases)(
+      "Given interval animation When callbacks fire Then $expectation",
+      ({ assertThen }) => {
+        const scenario = runIntervalScenario();
+        assertThen(scenario);
       },
     );
-
-    expect(result.current).toBe(false);
-    expect(typeof storedAnimationFrameCallback).toBe("function");
-    expect(typeof storedIntervalCallback).toBe("function");
-
-    act(() => {
-      storedAnimationFrameCallback();
-    });
-
-    expect(result.current).toBe(true);
-
-    act(() => {
-      storedIntervalCallback();
-    });
-
-    expect(result.current).toBe(false);
-
-    act(() => {
-      storedIntervalCallback();
-    });
-
-    expect(result.current).toBe(true);
-
-    rerender({ token: "frame-b", interval: 700 });
-
-    expect(cancel).toHaveBeenCalledWith(11);
-    expect(clearScheduledInterval).toHaveBeenCalledWith(13);
   });
 
   /**

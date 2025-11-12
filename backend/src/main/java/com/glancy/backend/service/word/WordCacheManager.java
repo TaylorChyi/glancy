@@ -30,35 +30,17 @@ public class WordCacheManager {
     }
 
     public Word saveWord(String requestedTerm, WordResponse resp, Language language, DictionaryFlavor flavor) {
-        String preferredTerm = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
-        if (preferredTerm == null || preferredTerm.isBlank()) {
-            throw new IllegalArgumentException("Term must not be blank when persisting word");
-        }
-        String term = preferredTerm.trim();
-        Language lang = resp.getLanguage() != null ? resp.getLanguage() : language;
-        DictionaryFlavor resolvedFlavor = resp.getFlavor() != null ? resp.getFlavor() : flavor;
-        String normalizedTerm = resolveNormalizedKey(requestedTerm, term);
-        Word word = findCachedWord(normalizedTerm, lang, resolvedFlavor).orElseGet(Word::new);
-        word.setTerm(term);
-        word.setNormalizedTerm(normalizedTerm);
-        word.setLanguage(lang);
-        word.setFlavor(resolvedFlavor);
-        word.setMarkdown(resp.getMarkdown());
-        word.setDefinitions(resp.getDefinitions());
-        word.setVariations(resp.getVariations());
-        word.setSynonyms(resp.getSynonyms());
-        word.setAntonyms(resp.getAntonyms());
-        word.setRelated(resp.getRelated());
-        word.setPhrases(resp.getPhrases());
-        word.setExample(resp.getExample());
-        word.setPhonetic(resp.getPhonetic());
-        log.info("Persisting word '{}' with language {} flavor {}", term, lang, resolvedFlavor);
+        WordPersistenceContext context = buildContext(requestedTerm, resp, language, flavor);
+        Word word = findCachedWord(context.normalizedTerm(), context.language(), context.flavor()).orElseGet(Word::new);
+        applyResponseToWord(word, resp, context);
+        log.info(
+            "Persisting word '{}' with language {} flavor {}",
+            context.term(),
+            context.language(),
+            context.flavor()
+        );
         Word saved = wordRepository.save(word);
-        resp.setId(String.valueOf(saved.getId()));
-        resp.setLanguage(lang);
-        resp.setTerm(term);
-        resp.setMarkdown(word.getMarkdown());
-        resp.setFlavor(resolvedFlavor);
+        syncResponse(resp, saved, context);
         return saved;
     }
 
@@ -101,4 +83,52 @@ public class WordCacheManager {
         }
         return persistedNormalized;
     }
+
+    private WordPersistenceContext buildContext(
+        String requestedTerm,
+        WordResponse resp,
+        Language language,
+        DictionaryFlavor flavor
+    ) {
+        String preferredTerm = resp.getTerm() != null ? resp.getTerm() : requestedTerm;
+        if (preferredTerm == null || preferredTerm.isBlank()) {
+            throw new IllegalArgumentException("Term must not be blank when persisting word");
+        }
+        String term = preferredTerm.trim();
+        Language resolvedLanguage = resp.getLanguage() != null ? resp.getLanguage() : language;
+        DictionaryFlavor resolvedFlavor = resp.getFlavor() != null ? resp.getFlavor() : flavor;
+        String normalizedTerm = resolveNormalizedKey(requestedTerm, term);
+        return new WordPersistenceContext(term, resolvedLanguage, resolvedFlavor, normalizedTerm);
+    }
+
+    private void applyResponseToWord(Word word, WordResponse resp, WordPersistenceContext context) {
+        word.setTerm(context.term());
+        word.setNormalizedTerm(context.normalizedTerm());
+        word.setLanguage(context.language());
+        word.setFlavor(context.flavor());
+        word.setMarkdown(resp.getMarkdown());
+        word.setDefinitions(resp.getDefinitions());
+        word.setVariations(resp.getVariations());
+        word.setSynonyms(resp.getSynonyms());
+        word.setAntonyms(resp.getAntonyms());
+        word.setRelated(resp.getRelated());
+        word.setPhrases(resp.getPhrases());
+        word.setExample(resp.getExample());
+        word.setPhonetic(resp.getPhonetic());
+    }
+
+    private void syncResponse(WordResponse resp, Word saved, WordPersistenceContext context) {
+        resp.setId(String.valueOf(saved.getId()));
+        resp.setLanguage(context.language());
+        resp.setTerm(context.term());
+        resp.setMarkdown(saved.getMarkdown());
+        resp.setFlavor(context.flavor());
+    }
+
+    private record WordPersistenceContext(
+        String term,
+        Language language,
+        DictionaryFlavor flavor,
+        String normalizedTerm
+    ) {}
 }

@@ -12,7 +12,7 @@ let LanguageLauncher;
 
 beforeAll(async () => {
   ({ default: LanguageLauncher } = await import(
-    "../parts/LanguageLauncher.jsx"
+    "../parts/LanguageLauncher/index.jsx"
   ));
 });
 

@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Wed Nov 12 00:48:18 CST 2025
-plexus-utils-3.0.24.jar>central=
-plexus-utils-3.0.24.pom>central=
+#Thu Nov 13 01:20:05 CST 2025
+plexus-utils-3.0.24.jar>central-plugins=
+plexus-utils-3.0.24.pom>central-plugins=

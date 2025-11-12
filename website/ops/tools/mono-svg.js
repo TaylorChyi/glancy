@@ -8,6 +8,33 @@ const ICON_DIR = path.join(PATHS.assets, "icons");
 
 const LOG_PREFIX = "[mono-svg]";
 
+const formatDetail = (detail) => {
+  if (detail instanceof Error) {
+    return detail.stack || detail.message;
+  }
+  if (typeof detail === "string") {
+    return detail;
+  }
+  try {
+    return JSON.stringify(detail);
+  } catch {
+    return String(detail);
+  }
+};
+
+const logToStderr = (message, ...details) => {
+  const suffix = details.length
+    ? ` ${details.map((detail) => formatDetail(detail)).join(" ")}`
+    : "";
+  process.stderr.write(`${LOG_PREFIX} ${message}${suffix}\n`);
+};
+
+const logger = {
+  info: (message, ...details) => logToStderr(message, ...details),
+  warn: (message, ...details) => logToStderr(message, ...details),
+  error: (message, ...details) => logToStderr(message, ...details),
+};
+
 const safeReadFile = async (filePath) => {
   try {
     const data = await fs.readFile(filePath, "utf8");
@@ -90,7 +117,7 @@ async function run() {
     await fs.access(ICON_DIR);
   } catch (error) {
     if (error && error.code === "ENOENT") {
-      console.warn(`${LOG_PREFIX} icon directory missing, skip.`);
+      logger.warn("icon directory missing, skip.");
       return;
     }
     throw error;
@@ -107,12 +134,10 @@ async function run() {
     }
   }
 
-  console.log(
-    `${LOG_PREFIX} converted ${converted} icons to single-source currentColor`,
-  );
+  logger.info(`converted ${converted} icons to single-source currentColor`);
 }
 
 run().catch((error) => {
-  console.error(`${LOG_PREFIX} failed:`, error);
+  logger.error("failed:", error);
   process.exitCode = 1;
 });

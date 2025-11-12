@@ -4,11 +4,11 @@ export function useDictionaryExperienceLifecycle({
   user,
   loadHistory,
   state,
-  applyRecord,
   wordStoreApi,
   wordEntries,
   resetDictionaryHomeState,
   closeReportDialog,
+  hydrateRecord,
 }) {
   useEffect(() => {
     loadHistory(user);
@@ -18,9 +18,9 @@ export function useDictionaryExperienceLifecycle({
     if (!state.currentTermKey) return;
     const record = wordStoreApi.getState().getRecord?.(state.currentTermKey);
     if (record) {
-      applyRecord(state.currentTermKey, record, record.activeVersionId);
+      hydrateRecord(state.currentTermKey, record.activeVersionId);
     }
-  }, [wordEntries, state.currentTermKey, applyRecord, wordStoreApi]);
+  }, [wordEntries, state.currentTermKey, hydrateRecord, wordStoreApi]);
 
   useEffect(() => {
     if (!user) {
