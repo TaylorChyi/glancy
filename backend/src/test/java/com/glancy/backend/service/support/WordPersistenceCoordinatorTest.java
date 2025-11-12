@@ -193,6 +193,7 @@ class WordPersistenceCoordinatorTest {
             .sanitizedMarkdown("## sanitized output")
             .build();
     }
+
     private WordPersistenceContext buildSerializationFailureContext(AtomicReference<String> versionContent) {
         return baseContextBuilder()
             .saveWordStep((requested, resp, language, flavor) -> {
@@ -214,8 +215,7 @@ class WordPersistenceCoordinatorTest {
     }
 
     private WordPersistenceContext.Builder baseContextBuilder() {
-        return WordPersistenceCoordinator
-            .builder()
+        return WordPersistenceCoordinator.builder()
             .userId(1L)
             .requestedTerm("term")
             .language(Language.ENGLISH)

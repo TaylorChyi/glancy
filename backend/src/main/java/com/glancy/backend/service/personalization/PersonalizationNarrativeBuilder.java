@@ -121,11 +121,7 @@ class PersonalizationNarrativeBuilder {
         return List.copyOf(hooks);
     }
 
-    private void appendRecentTermHook(
-        WordPersonalizationContext context,
-        WordResponse response,
-        List<String> hooks
-    ) {
+    private void appendRecentTermHook(WordPersonalizationContext context, WordResponse response, List<String> hooks) {
         if (context.recentTerms().isEmpty() || !StringUtils.hasText(response.getTerm())) {
             return;
         }

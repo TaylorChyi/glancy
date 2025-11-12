@@ -150,8 +150,9 @@ public class SearchResultService {
             ? record.getTerm()
             : command.getTerm();
         Language effectiveLanguage = command.getLanguage() == null ? record.getLanguage() : command.getLanguage();
-        DictionaryFlavor effectiveFlavor =
-            command.getFlavor() != null ? command.getFlavor() : DictionaryFlavor.BILINGUAL;
+        DictionaryFlavor effectiveFlavor = command.getFlavor() != null
+            ? command.getFlavor()
+            : DictionaryFlavor.BILINGUAL;
         int nextVersion = determineNextVersionNumber(record.getId());
         return new VersionDraft(
             effectiveTerm,
@@ -198,7 +199,10 @@ public class SearchResultService {
             return Map.of();
         }
         Map<Long, List<SearchRecordVersionSummary>> grouped = new LinkedHashMap<>();
-        recordIds.stream().filter(Objects::nonNull).forEach(id -> grouped.putIfAbsent(id, new ArrayList<>()));
+        recordIds
+            .stream()
+            .filter(Objects::nonNull)
+            .forEach(id -> grouped.putIfAbsent(id, new ArrayList<>()));
         return grouped;
     }
 
@@ -206,8 +210,9 @@ public class SearchResultService {
         if (recordIds.isEmpty()) {
             return List.of();
         }
-        return searchResultVersionRepository
-            .findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(recordIds);
+        return searchResultVersionRepository.findBySearchRecordIdInAndDeletedFalseOrderBySearchRecordIdAscVersionNumberDesc(
+            recordIds
+        );
     }
 
     private void appendVersionSummaries(

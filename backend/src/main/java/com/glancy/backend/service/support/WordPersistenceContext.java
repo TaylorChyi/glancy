@@ -10,6 +10,7 @@ import com.glancy.backend.entity.Word;
 import java.util.Objects;
 
 public final class WordPersistenceContext {
+
     private final Long userId;
     private final String requestedTerm;
     private final Language language;
@@ -121,6 +122,7 @@ public final class WordPersistenceContext {
     }
 
     public static final class Builder {
+
         private Long userId;
         private String requestedTerm;
         private Language language;
@@ -217,15 +219,18 @@ public final class WordPersistenceContext {
         }
     }
 
-    @FunctionalInterface public interface SaveWordStep {
+    @FunctionalInterface
+    public interface SaveWordStep {
         Word save(String requestedTerm, WordResponse response, Language language, DictionaryFlavor flavor);
     }
 
-    @FunctionalInterface public interface RecordSynchronizationStep {
+    @FunctionalInterface
+    public interface RecordSynchronizationStep {
         void synchronize(Long userId, Long recordId, String canonicalTerm);
     }
 
-    @FunctionalInterface public interface VersionPersistStep {
+    @FunctionalInterface
+    public interface VersionPersistStep {
         SearchResultVersion persist(
             Long recordId,
             Long userId,
@@ -236,11 +241,13 @@ public final class WordPersistenceContext {
         );
     }
 
-    @FunctionalInterface public interface PersonalizationStep {
+    @FunctionalInterface
+    public interface PersonalizationStep {
         WordResponse apply(Long userId, WordResponse response, WordPersonalizationContext context);
     }
 
-    @FunctionalInterface public interface WordSerializationStep {
+    @FunctionalInterface
+    public interface WordSerializationStep {
         String serialize(Word word) throws JsonProcessingException;
     }
 }

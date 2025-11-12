@@ -31,8 +31,10 @@ class SearchRecordQueryService {
             pageRequest.page(),
             pageRequest.size()
         );
-        List<SearchRecord> records = searchRecordRepository
-            .findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(userId, pageable);
+        List<SearchRecord> records = searchRecordRepository.findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(
+            userId,
+            pageable
+        );
         log.info("Retrieved {} records from database for user {}", records.size(), userId);
         records.forEach(r -> log.debug("Fetched record: {}", SearchRecordLogFormatter.record(r)));
         return viewAssembler

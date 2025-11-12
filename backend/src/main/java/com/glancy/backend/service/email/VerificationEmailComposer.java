@@ -114,15 +114,15 @@ public class VerificationEmailComposer {
 
     private void applyUnsubscribeHeaders(MimeMessage message) {
         EmailComplianceSupport.buildListUnsubscribeHeader(properties).ifPresent(listUnsubscribe -> {
-            try {
-                message.setHeader("List-Unsubscribe", listUnsubscribe);
-                if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
-                    message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+                try {
+                    message.setHeader("List-Unsubscribe", listUnsubscribe);
+                    if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
+                        message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+                    }
+                } catch (MessagingException exception) {
+                    throw new IllegalStateException("无法设置退订头部", exception);
                 }
-            } catch (MessagingException exception) {
-                throw new IllegalStateException("无法设置退订头部", exception);
-            }
-        });
+            });
     }
 
     private void applyFeedbackIdHeader(MimeMessage message, EmailVerificationPurpose purpose)

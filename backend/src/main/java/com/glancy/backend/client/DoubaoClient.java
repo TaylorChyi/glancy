@@ -209,7 +209,6 @@ public class DoubaoClient implements DictionaryModelClient {
         return key.substring(0, 4) + "****" + key.substring(end);
     }
 
-
     private record RequestMetadata(
         List<ChatMessage> messages,
         double temperature,

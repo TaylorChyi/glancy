@@ -93,8 +93,7 @@ class ShortcutBindingNormalizer {
         if (binding == null || binding.isBlank()) {
             return List.of();
         }
-        return java.util.Arrays
-            .stream(binding.split("\\+"))
+        return java.util.Arrays.stream(binding.split("\\+"))
             .map(String::trim)
             .filter(token -> !token.isEmpty())
             .toList();

@@ -56,9 +56,7 @@ class SearchRecordRepositoryTest {
     @Test
     void excludesSoftDeletedRecords() {
         SearchRecordFixture fixture = seedRecords();
-        Assertions.assertTrue(
-            searchRecordRepository.findByIdAndDeletedFalse(fixture.activeTerm1.getId()).isPresent()
-        );
+        Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(fixture.activeTerm1.getId()).isPresent());
         Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(fixture.activeTerm2.getId()).isPresent());
         Assertions.assertTrue(searchRecordRepository.findByIdAndDeletedFalse(fixture.deleted.getId()).isEmpty());
     }

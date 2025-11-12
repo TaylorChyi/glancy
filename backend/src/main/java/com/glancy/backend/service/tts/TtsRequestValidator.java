@@ -78,11 +78,7 @@ public class TtsRequestValidator {
         return group;
     }
 
-    private TtsConfig.VoiceOption resolveVoiceOption(
-        User user,
-        TtsRequest request,
-        TtsConfig.VoiceGroup group
-    ) {
+    private TtsConfig.VoiceOption resolveVoiceOption(User user, TtsRequest request, TtsConfig.VoiceGroup group) {
         String voiceId = StringUtils.hasText(request.getVoice()) ? request.getVoice() : group.getDefaultVoice();
         if (!StringUtils.hasText(request.getVoice())) {
             log.debug("Using default voice={} for lang={}", voiceId, request.getLang());

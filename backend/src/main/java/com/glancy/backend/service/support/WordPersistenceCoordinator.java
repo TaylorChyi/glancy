@@ -45,12 +45,9 @@ public class WordPersistenceCoordinator {
     }
 
     private Word saveWord(PersistenceContext context) {
-        return context.saveWordStep().save(
-            context.requestedTerm(),
-            context.response(),
-            context.language(),
-            context.flavor()
-        );
+        return context
+            .saveWordStep()
+            .save(context.requestedTerm(), context.response(), context.language(), context.flavor());
     }
 
     private SearchResultVersion persistHistory(
@@ -63,22 +60,13 @@ public class WordPersistenceCoordinator {
         return persistVersionIfPresent(context, savedWord, content);
     }
 
-    private SearchResultVersion persistVersionIfPresent(
-        PersistenceContext context,
-        Word savedWord,
-        String content
-    ) {
+    private SearchResultVersion persistVersionIfPresent(PersistenceContext context, Word savedWord, String content) {
         if (content == null) {
             return null;
         }
-        SearchResultVersion version = context.versionPersistStep().persist(
-            context.recordId(),
-            context.userId(),
-            context.model(),
-            content,
-            savedWord,
-            context.flavor()
-        );
+        SearchResultVersion version = context
+            .versionPersistStep()
+            .persist(context.recordId(), context.userId(), context.model(), content, savedWord, context.flavor());
         if (version != null && version.getId() != null) {
             context.response().setVersionId(version.getId());
         }
@@ -86,10 +74,8 @@ public class WordPersistenceCoordinator {
     }
 
     private WordResponse personalize(PersistenceContext context) {
-        return context.personalizationStep().apply(
-            context.userId(),
-            context.response(),
-            context.personalizationContext()
-        );
+        return context
+            .personalizationStep()
+            .apply(context.userId(), context.response(), context.personalizationContext());
     }
 }

@@ -73,8 +73,7 @@ final class PersonaClassifierRegistry {
                 return Optional.empty();
             }
             String normalized = job.toLowerCase(Locale.ROOT);
-            return JOB_RULES
-                .stream()
+            return JOB_RULES.stream()
                 .filter(rule -> rule.matches(normalized))
                 .findFirst()
                 .map(JobPersonaRule::profile)

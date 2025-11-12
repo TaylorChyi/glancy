@@ -193,9 +193,9 @@ class WordSearcherImplTest {
         Mockito.when(factory.get(DEFAULT_CLIENT)).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt(promptKey)).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize(term)).thenReturn(term);
-        Mockito
-            .when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature())))
-            .thenReturn("content<END>");
+        Mockito.when(
+            defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature()))
+        ).thenReturn("content<END>");
         Mockito.when(parser.parse("content", term, language)).thenReturn(
             new ParsedWord(new WordResponse(), "content<END>")
         );
@@ -206,14 +206,12 @@ class WordSearcherImplTest {
         Mockito.when(factory.get(DEFAULT_CLIENT)).thenReturn(defaultClient);
         Mockito.when(promptManager.loadPrompt("path-en")).thenReturn("prompt");
         Mockito.when(searchContentManager.normalize(term)).thenReturn(term);
-        Mockito
-            .when(defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature())))
-            .thenReturn("content");
+        Mockito.when(
+            defaultClient.generateEntry(ArgumentMatchers.anyList(), ArgumentMatchers.eq(config.getTemperature()))
+        ).thenReturn("content");
         WordResponse expected = new WordResponse();
         expected.setMarkdown("content");
-        Mockito.when(parser.parse("content", term, language)).thenReturn(
-            new ParsedWord(expected, "content")
-        );
+        Mockito.when(parser.parse("content", term, language)).thenReturn(new ParsedWord(expected, "content"));
         return expected;
     }
 

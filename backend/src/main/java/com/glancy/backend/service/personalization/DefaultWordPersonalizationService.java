@@ -125,7 +125,6 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         return List.copyOf(deduplicated);
     }
 
-
     private String normalizeText(String value) {
         if (!StringUtils.hasText(value)) {
             return null;
@@ -152,5 +151,4 @@ public class DefaultWordPersonalizationService implements WordPersonalizationSer
         }
         return Collections.unmodifiableList(interests);
     }
-
 }

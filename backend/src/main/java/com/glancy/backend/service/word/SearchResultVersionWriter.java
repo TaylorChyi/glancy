@@ -25,8 +25,7 @@ public class SearchResultVersionWriter {
         if (recordId == null) {
             return null;
         }
-        CreateVersionCommand command = CreateVersionCommand
-            .builder()
+        CreateVersionCommand command = CreateVersionCommand.builder()
             .recordId(recordId)
             .userId(userId)
             .term(word.getTerm())

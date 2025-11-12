@@ -131,9 +131,9 @@ public class RedemptionCodeService {
     }
 
     private RedemptionEffectProcessor resolveProcessor(RedemptionCode code) {
-        return Optional
-            .ofNullable(processorRegistry.get(code.getEffectType()))
-            .orElseThrow(() -> new InvalidRequestException("不支持的兑换效果"));
+        return Optional.ofNullable(processorRegistry.get(code.getEffectType())).orElseThrow(() ->
+            new InvalidRequestException("不支持的兑换效果")
+        );
     }
 
     private void persistUsage(RedemptionCode code, User user, LocalDateTime now) {
