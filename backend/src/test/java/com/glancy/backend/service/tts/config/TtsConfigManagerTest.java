@@ -94,64 +94,12 @@ class TtsConfigManagerTest {
     @Test
     void reloadRejectsInvalidConfig() throws IOException {
         Path file = tempDir.resolve("tts.yml");
-        Files.writeString(
-            file,
-            """
-            voices:
-              zh-CN:
-                default: voice1
-                options:
-                  - id: voice1
-                    label: A
-                    plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
-            features:
-              hotReload: false
-              useCdn: true
-              returnUrl: true
-              countCachedAsUsage: false
-            """
-        );
+        writeDefaultConfig(file, "voice1");
         TtsConfigManager mgr = new TtsConfigManager(file.toString());
         mgr.reload();
         assertEquals("voice1", mgr.current().getVoices().get("zh-CN").getDefaultVoice());
 
-        Files.writeString(
-            file,
-            """
-            voices:
-              zh-CN:
-                default: missing
-                options:
-                  - id: voice1
-                    label: A
-                    plan: all
-            quota:
-              daily: { pro: 100, free: 5 }
-            cache:
-              ttlDays: { pro: 90, free: 30 }
-              audioSampleRate: 48000
-            ratelimit:
-              userPerMinute: 30
-              ipPerMinute: 120
-              burst: 20
-              cooldownSeconds: 60
-            features:
-              hotReload: false
-              useCdn: true
-              returnUrl: true
-              countCachedAsUsage: false
-            """
-        );
+        writeDefaultConfig(file, "missing");
         mgr.reload();
         assertEquals(
             "voice1",
@@ -159,5 +107,35 @@ class TtsConfigManagerTest {
             "Invalid config should not replace snapshot"
         );
         mgr.close();
+    }
+
+    private void writeDefaultConfig(Path file, String defaultVoice) throws IOException {
+        Files.writeString(
+            file,
+            """
+            voices:
+              zh-CN:
+                default: %s
+                options:
+                  - id: voice1
+                    label: A
+                    plan: all
+            quota:
+              daily: { pro: 100, free: 5 }
+            cache:
+              ttlDays: { pro: 90, free: 30 }
+              audioSampleRate: 48000
+            ratelimit:
+              userPerMinute: 30
+              ipPerMinute: 120
+              burst: 20
+              cooldownSeconds: 60
+            features:
+              hotReload: false
+              useCdn: true
+              returnUrl: true
+              countCachedAsUsage: false
+            """.formatted(defaultVoice)
+        );
     }
 }

@@ -184,13 +184,7 @@ class RedemptionCodeServiceTest {
             new RedemptionRedeemRequest("SALE20")
         );
 
-        List<UserDiscountBenefit> benefits = userDiscountBenefitRepository.findAll();
-        assertThat(response.discount()).isNotNull();
-        assertThat(response.discount().percentage()).isEqualByComparingTo(BigDecimal.valueOf(20));
-        assertThat(benefits).hasSize(1);
-        assertThat(benefits.get(0).getDiscountPercentage()).isEqualByComparingTo(BigDecimal.valueOf(20));
-        assertThat(benefits.get(0).getValidFrom()).isEqualTo(discountFrom);
-        assertThat(benefits.get(0).getValidUntil()).isEqualTo(discountUntil);
+        assertDiscountBenefit(response, BigDecimal.valueOf(20), discountFrom, discountUntil);
     }
 
     /**
@@ -240,5 +234,20 @@ class RedemptionCodeServiceTest {
         user.setEmail(username + "@example.com");
         user.setPhone("1" + Math.abs(username.hashCode()));
         return userRepository.save(user);
+    }
+
+    private void assertDiscountBenefit(
+        RedemptionRedeemResponse response,
+        BigDecimal expectedPercentage,
+        LocalDateTime validFrom,
+        LocalDateTime validUntil
+    ) {
+        List<UserDiscountBenefit> benefits = userDiscountBenefitRepository.findAll();
+        assertThat(response.discount()).isNotNull();
+        assertThat(response.discount().percentage()).isEqualByComparingTo(expectedPercentage);
+        assertThat(benefits).hasSize(1);
+        assertThat(benefits.get(0).getDiscountPercentage()).isEqualByComparingTo(expectedPercentage);
+        assertThat(benefits.get(0).getValidFrom()).isEqualTo(validFrom);
+        assertThat(benefits.get(0).getValidUntil()).isEqualTo(validUntil);
     }
 }

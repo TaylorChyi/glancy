@@ -42,25 +42,37 @@ class VerificationEmailComposerTest {
             "198.51.100.1"
         );
 
+        assertMessageMetadata(message);
+        assertMultipartContent(message);
+        assertComplianceHeaders(message);
+        assertFeedbackHeaders(message);
+    }
+
+    private void assertMessageMetadata(MimeMessage message) throws Exception {
         assertEquals("Glancy 登录验证码", message.getSubject());
         assertNotNull(message.getFrom());
         assertTrue(message.getFrom()[0].toString().contains("Glancy 测试"));
         assertTrue(message.getReplyTo()[0].toString().contains("support@test.glancy.xyz"));
+    }
 
+    private void assertMultipartContent(MimeMessage message) throws Exception {
         MimeMultipart multipart = (MimeMultipart) message.getContent();
         assertEquals(2, multipart.getCount());
         String plainText = (String) multipart.getBodyPart(0).getContent();
         assertEquals("验证码：123456", plainText.trim());
-
         String html = (String) multipart.getBodyPart(1).getContent();
         assertTrue(html.contains("<p"));
         assertTrue(html.contains("验证码：123456"));
+    }
 
+    private void assertComplianceHeaders(MimeMessage message) {
         String listUnsubscribe = message.getHeader("List-Unsubscribe", null);
         assertNotNull(listUnsubscribe);
         assertTrue(listUnsubscribe.contains("mailto:unsubscribe@test.glancy.xyz"));
         assertTrue(listUnsubscribe.contains("https://test.glancy.xyz/unsubscribe"));
+    }
 
+    private void assertFeedbackHeaders(MimeMessage message) {
         String feedbackId = message.getHeader("Feedback-ID", null);
         assertNotNull(feedbackId);
         assertTrue(feedbackId.contains("glancy-test:login"));

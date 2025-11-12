@@ -72,44 +72,14 @@ class UserProfileServiceTest {
      */
     @Test
     void testSaveAndGetProfile() {
-        User user = new User();
-        user.setUsername("profileuser");
-        user.setPassword("pass");
-        user.setEmail("profile@example.com");
-        user.setPhone("111");
-        userRepository.save(user);
-
-        List<ProfileCustomSectionDto> customSections = List.of(
-            new ProfileCustomSectionDto("作品集", List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练")))
-        );
-        UserProfileRequest req = new UserProfileRequest(
-            "dev",
-            "code",
-            "learn",
-            "master",
-            "B2",
-            15,
-            "exchange study",
-            "沉稳而有条理",
-            customSections
-        );
+        User user = persistUser("profileuser");
+        UserProfileRequest req = buildProfileRequest();
         UserProfileResponse saved = userProfileService.saveProfile(user.getId(), req);
 
-        Assertions.assertNotNull(saved.id());
-        Assertions.assertEquals("dev", saved.job());
-        Assertions.assertEquals("code", saved.interest());
-        Assertions.assertEquals("master", saved.education());
-        Assertions.assertEquals("B2", saved.currentAbility());
-        Assertions.assertEquals("沉稳而有条理", saved.responseStyle());
-        Assertions.assertEquals(1, saved.customSections().size());
+        assertSavedProfile(saved, user.getId());
 
         UserProfileResponse fetched = userProfileService.getProfile(user.getId());
-        Assertions.assertEquals(saved.id(), fetched.id());
-        Assertions.assertEquals(saved.job(), fetched.job());
-        Assertions.assertEquals(user.getId(), fetched.userId());
-        Assertions.assertEquals("master", fetched.education());
-        Assertions.assertEquals(1, fetched.customSections().size());
-        Assertions.assertEquals("沉稳而有条理", fetched.responseStyle());
+        assertProfileMatches(saved, fetched);
     }
 
     /**
@@ -137,5 +107,56 @@ class UserProfileServiceTest {
         Assertions.assertEquals(user.getId(), fetched.userId());
         Assertions.assertTrue(fetched.customSections().isEmpty(), "custom sections should default to empty list");
         Assertions.assertNull(fetched.responseStyle());
+    }
+
+    private User persistUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword("pass");
+        user.setEmail(username + "@example.com");
+        user.setPhone("111");
+        return userRepository.save(user);
+    }
+
+    private UserProfileRequest buildProfileRequest() {
+        List<ProfileCustomSectionDto> customSections = List.of(
+            new ProfileCustomSectionDto(
+                "作品集",
+                List.of(new ProfileCustomSectionItemDto("近期项目", "AI 口语教练"))
+            )
+        );
+        return new UserProfileRequest(
+            "dev",
+            "code",
+            "learn",
+            "master",
+            "B2",
+            15,
+            "exchange study",
+            "沉稳而有条理",
+            customSections
+        );
+    }
+
+    private void assertSavedProfile(UserProfileResponse response, Long userId) {
+        Assertions.assertNotNull(response.id());
+        Assertions.assertEquals("dev", response.job());
+        Assertions.assertEquals("code", response.interest());
+        Assertions.assertEquals("master", response.education());
+        Assertions.assertEquals("B2", response.currentAbility());
+        Assertions.assertEquals("沉稳而有条理", response.responseStyle());
+        Assertions.assertEquals(1, response.customSections().size());
+        Assertions.assertEquals(userId, response.userId());
+    }
+
+    private void assertProfileMatches(UserProfileResponse expected, UserProfileResponse actual) {
+        Assertions.assertEquals(expected.id(), actual.id());
+        Assertions.assertEquals(expected.job(), actual.job());
+        Assertions.assertEquals(expected.interest(), actual.interest());
+        Assertions.assertEquals(expected.userId(), actual.userId());
+        Assertions.assertEquals(expected.education(), actual.education());
+        Assertions.assertEquals(expected.currentAbility(), actual.currentAbility());
+        Assertions.assertEquals(expected.responseStyle(), actual.responseStyle());
+        Assertions.assertEquals(expected.customSections().size(), actual.customSections().size());
     }
 }
