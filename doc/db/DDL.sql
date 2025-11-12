@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS billing_transactions (
     order_id            UUID NOT NULL REFERENCES billing_orders(order_id) ON DELETE CASCADE,
     subscription_id     UUID REFERENCES subscriptions(sub_id),
     platform_txn_id     TEXT,
+    idem_key            TEXT NOT NULL,
     status              TEXT NOT NULL CHECK (status IN ('pending','succeeded','failed','chargeback','refunded')),
     paid_at             TIMESTAMPTZ,
     raw_callback        JSONB,
@@ -117,6 +118,8 @@ CREATE TABLE IF NOT EXISTS billing_transactions (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS billing_transactions_platform_txn_uq
     ON billing_transactions(platform_txn_id) WHERE platform_txn_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS billing_transactions_idem_key_uq
+    ON billing_transactions(idem_key);
 
 CREATE TABLE IF NOT EXISTS billing_invoices (
     invoice_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

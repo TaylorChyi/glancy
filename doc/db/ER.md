@@ -57,7 +57,7 @@
 
 ### 3.7 计费流水（`billing_orders`、`billing_transactions`、`billing_invoices`）
 - `billing_orders`：`order_id`、`user_id`、`price_id`、`channel`、`currency`、`amount`、`status`、`idem_key`、`created_at`。
-- `billing_transactions`：`txn_id`、`order_id`、`subscription_id`、`platform_txn_id`、`status`、`paid_at`、`raw_callback`、`trace_id`。
+- `billing_transactions`：`txn_id`、`order_id`、`subscription_id`、`platform_txn_id`、`idem_key`、`status`、`paid_at`、`raw_callback`、`trace_id`。
 - `billing_invoices`：`invoice_id`、`order_id`、`amount`、`tax_amount`、`discount_amount`、`receipt_url`（短 TTL）、`expires_at`。
 - 约束：`platform_txn_id`、`idem_key` 唯一，满足幂等；`order_id` 外键→`subscriptions` 以便回写权益（`doc/需求说明文档/第 11 章 订阅、计费与账单.md:21-145`）。
 
