@@ -78,13 +78,7 @@ class SearchRecordControllerTest {
     void testList() throws Exception {
         LocalDateTime createdAt = LocalDateTime.now();
         SearchRecordVersionSummary latestVersion = version(3L, 2, createdAt, "gpt-4", "preview");
-        SearchRecordVersionSummary previousVersion = version(
-            4L,
-            1,
-            createdAt.minusMinutes(1),
-            "gpt-3.5",
-            "older"
-        );
+        SearchRecordVersionSummary previousVersion = version(4L, 1, createdAt.minusMinutes(1), "gpt-3.5", "older");
         when(searchRecordService.getRecords(eq(1L), any(SearchRecordPageRequest.class))).thenReturn(
             List.of(response(createdAt, true, latestVersion, List.of(previousVersion, latestVersion)))
         );

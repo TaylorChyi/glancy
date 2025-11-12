@@ -60,4 +60,3 @@ public class EmailVerificationComplianceProperties {
         this.unsubscribeMailto = unsubscribeMailto;
     }
 }
-

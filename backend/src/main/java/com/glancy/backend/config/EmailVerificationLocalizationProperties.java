@@ -80,9 +80,7 @@ public class EmailVerificationLocalizationProperties {
             }
             if (!body.contains("{{code}}")) {
                 throw new IllegalStateException(
-                    "mail.verification.localization.messages." +
-                    languageTag +
-                    ".body must contain {{code}} placeholder"
+                    "mail.verification.localization.messages." + languageTag + ".body must contain {{code}} placeholder"
                 );
             }
         }
@@ -129,4 +127,3 @@ public class EmailVerificationLocalizationProperties {
         }
     }
 }
-

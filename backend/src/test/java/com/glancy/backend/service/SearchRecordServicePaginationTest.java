@@ -96,10 +96,7 @@ class SearchRecordServicePaginationTest extends AbstractSearchRecordServiceTest 
         Assertions.assertEquals(1, response.latestVersion().versionNumber());
     }
 
-    private void assertPaginationOrdering(
-        List<SearchRecordResponse> firstPage,
-        List<SearchRecordResponse> secondPage
-    ) {
+    private void assertPaginationOrdering(List<SearchRecordResponse> firstPage, List<SearchRecordResponse> secondPage) {
         Assertions.assertEquals(10, firstPage.size(), "第一页应返回 10 条记录");
         Assertions.assertEquals(10, secondPage.size(), "第二页应返回 10 条记录");
 

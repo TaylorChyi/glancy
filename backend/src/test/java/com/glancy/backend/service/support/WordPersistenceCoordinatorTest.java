@@ -198,8 +198,7 @@ class WordPersistenceCoordinatorTest {
     }
 
     private WordPersistenceCoordinator.Builder baseContext() {
-        return WordPersistenceCoordinator
-            .builder()
+        return WordPersistenceCoordinator.builder()
             .userId(1L)
             .requestedTerm("term")
             .language(Language.ENGLISH)

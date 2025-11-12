@@ -24,4 +24,3 @@ public class EmailVerificationSenderProperties {
         this.replyTo = replyTo;
     }
 }
-

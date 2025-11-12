@@ -17,8 +17,9 @@ public class EmailVerificationProperties {
     private String from;
     private int codeLength = 6;
     private Duration ttl = Duration.ofMinutes(10);
-    private Map<EmailVerificationPurpose, EmailVerificationTemplateProperties> templates =
-        new EnumMap<>(EmailVerificationPurpose.class);
+    private Map<EmailVerificationPurpose, EmailVerificationTemplateProperties> templates = new EnumMap<>(
+        EmailVerificationPurpose.class
+    );
     private final EmailVerificationSenderProperties sender = new EmailVerificationSenderProperties();
     private final EmailVerificationComplianceProperties compliance = new EmailVerificationComplianceProperties();
     private final EmailVerificationDeliverabilityProperties deliverability =
@@ -127,4 +128,3 @@ public class EmailVerificationProperties {
         return localization;
     }
 }
-

@@ -24,4 +24,3 @@ public class EmailVerificationTemplateProperties {
         this.body = body;
     }
 }
-

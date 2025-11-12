@@ -34,9 +34,7 @@ public class EmailVerificationAudiencePolicyProperties {
 
     void validate() {
         if (inactivityThreshold == null || inactivityThreshold.isZero() || inactivityThreshold.isNegative()) {
-            throw new IllegalStateException(
-                "mail.verification.audience-policy.inactivity-threshold must be positive"
-            );
+            throw new IllegalStateException("mail.verification.audience-policy.inactivity-threshold must be positive");
         }
         if (softBounceSuppressionThreshold < 1) {
             throw new IllegalStateException(
@@ -50,4 +48,3 @@ public class EmailVerificationAudiencePolicyProperties {
         }
     }
 }
-
