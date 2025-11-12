@@ -5,6 +5,7 @@ import com.glancy.backend.dto.UserEmailResponse;
 import com.glancy.backend.dto.UserRegistrationRequest;
 import com.glancy.backend.dto.UserResponse;
 import com.glancy.backend.entity.EmailVerificationPurpose;
+import com.glancy.backend.entity.User;
 import com.glancy.backend.exception.DuplicateResourceException;
 import com.glancy.backend.exception.InvalidRequestException;
 import org.junit.jupiter.api.Assertions;

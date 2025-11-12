@@ -2,6 +2,7 @@ package com.glancy.backend.service.email;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.glancy.backend.config.EmailVerificationDeliverabilityProperties.MailboxProviderPolicy;
 import com.glancy.backend.config.EmailVerificationProperties;
 import com.glancy.backend.entity.EmailStream;
 import jakarta.mail.Session;
@@ -28,8 +29,7 @@ class MailboxProviderPolicyEngineTest {
         properties.getCompliance().setUnsubscribeUrl("https://www.glancy.xyz/email/unsubscribe");
         properties.getDeliverability().setFeedbackIdPrefix("glancy-txn");
 
-        EmailVerificationProperties.Deliverability.MailboxProviderPolicy icloudPolicy =
-            new EmailVerificationProperties.Deliverability.MailboxProviderPolicy();
+        MailboxProviderPolicy icloudPolicy = new MailboxProviderPolicy();
         icloudPolicy.setDomains(List.of("icloud.com", "me.com", "mac.com"));
         icloudPolicy.setListId("Glancy 事务通知 <mail.glancy.xyz>");
         icloudPolicy.setComplaintsMailto("abuse@mail.glancy.xyz");

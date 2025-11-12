@@ -3,14 +3,9 @@ package com.glancy.backend.config;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import jakarta.annotation.PostConstruct;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -22,18 +17,22 @@ public class EmailVerificationProperties {
     private String from;
     private int codeLength = 6;
     private Duration ttl = Duration.ofMinutes(10);
-    private Map<EmailVerificationPurpose, Template> templates = new EnumMap<>(EmailVerificationPurpose.class);
-    private final Sender sender = new Sender();
-    private final Compliance compliance = new Compliance();
-    private final Deliverability deliverability = new Deliverability();
-    private final Infrastructure infrastructure = new Infrastructure();
-    private final AudiencePolicy audiencePolicy = new AudiencePolicy();
-    private final Streams streams = new Streams();
-    private final Localization localization = new Localization();
+    private Map<EmailVerificationPurpose, EmailVerificationTemplateProperties> templates =
+        new EnumMap<>(EmailVerificationPurpose.class);
+    private final EmailVerificationSenderProperties sender = new EmailVerificationSenderProperties();
+    private final EmailVerificationComplianceProperties compliance = new EmailVerificationComplianceProperties();
+    private final EmailVerificationDeliverabilityProperties deliverability =
+        new EmailVerificationDeliverabilityProperties();
+    private final EmailVerificationInfrastructureProperties infrastructure =
+        new EmailVerificationInfrastructureProperties();
+    private final EmailVerificationAudiencePolicyProperties audiencePolicy =
+        new EmailVerificationAudiencePolicyProperties();
+    private final EmailVerificationStreamsProperties streams = new EmailVerificationStreamsProperties();
+    private final EmailVerificationLocalizationProperties localization = new EmailVerificationLocalizationProperties();
 
     @PostConstruct
     void validate() {
-        if (from == null || from.isBlank()) {
+        if (!StringUtils.hasText(from)) {
             throw new IllegalStateException("mail.verification.from must be configured");
         }
         if (codeLength < 4) {
@@ -43,13 +42,13 @@ public class EmailVerificationProperties {
             throw new IllegalStateException("mail.verification.ttl must be positive");
         }
         for (EmailVerificationPurpose purpose : EmailVerificationPurpose.values()) {
-            Template template = templates.get(purpose);
-            if (template == null || template.subject == null || template.subject.isBlank()) {
+            EmailVerificationTemplateProperties template = templates.get(purpose);
+            if (template == null || !StringUtils.hasText(template.getSubject())) {
                 throw new IllegalStateException(
                     "mail.verification.templates." + purpose.name().toLowerCase() + ".subject must be set"
                 );
             }
-            if (template.body == null || template.body.isBlank()) {
+            if (!StringUtils.hasText(template.getBody())) {
                 throw new IllegalStateException(
                     "mail.verification.templates." + purpose.name().toLowerCase() + ".body must be set"
                 );
@@ -92,623 +91,40 @@ public class EmailVerificationProperties {
         this.ttl = ttl;
     }
 
-    public Map<EmailVerificationPurpose, Template> getTemplates() {
+    public Map<EmailVerificationPurpose, EmailVerificationTemplateProperties> getTemplates() {
         return templates;
     }
 
-    public void setTemplates(Map<EmailVerificationPurpose, Template> templates) {
+    public void setTemplates(Map<EmailVerificationPurpose, EmailVerificationTemplateProperties> templates) {
         this.templates = templates;
     }
 
-    public Sender getSender() {
+    public EmailVerificationSenderProperties getSender() {
         return sender;
     }
 
-    public Compliance getCompliance() {
+    public EmailVerificationComplianceProperties getCompliance() {
         return compliance;
     }
 
-    public Deliverability getDeliverability() {
+    public EmailVerificationDeliverabilityProperties getDeliverability() {
         return deliverability;
     }
 
-    public Infrastructure getInfrastructure() {
+    public EmailVerificationInfrastructureProperties getInfrastructure() {
         return infrastructure;
     }
 
-    public AudiencePolicy getAudiencePolicy() {
+    public EmailVerificationAudiencePolicyProperties getAudiencePolicy() {
         return audiencePolicy;
     }
 
-    public Streams getStreams() {
+    public EmailVerificationStreamsProperties getStreams() {
         return streams;
     }
 
-    public Localization getLocalization() {
+    public EmailVerificationLocalizationProperties getLocalization() {
         return localization;
     }
-
-    /**
-     * Template details for a single verification purpose.
-     */
-    public static class Template {
-
-        private String subject;
-        private String body;
-
-        public String getSubject() {
-            return subject;
-        }
-
-        public void setSubject(String subject) {
-            this.subject = subject;
-        }
-
-        public String getBody() {
-            return body;
-        }
-
-        public void setBody(String body) {
-            this.body = body;
-        }
-    }
-
-    /**
-     * Structured localization preferences that tune verification content per client locale.
-     */
-    public static class Localization {
-
-        private String defaultLanguageTag = Locale.SIMPLIFIED_CHINESE.toLanguageTag();
-        private Map<String, Message> messages = new LinkedHashMap<>();
-        private List<Rule> rules = new ArrayList<>();
-
-        public String getDefaultLanguageTag() {
-            return defaultLanguageTag;
-        }
-
-        public void setDefaultLanguageTag(String defaultLanguageTag) {
-            this.defaultLanguageTag = defaultLanguageTag;
-        }
-
-        public Map<String, Message> getMessages() {
-            return messages;
-        }
-
-        public void setMessages(Map<String, Message> messages) {
-            this.messages = messages;
-        }
-
-        public List<Rule> getRules() {
-            return rules;
-        }
-
-        public void setRules(List<Rule> rules) {
-            this.rules = rules;
-        }
-
-        void validate() {
-            if (!StringUtils.hasText(defaultLanguageTag)) {
-                throw new IllegalStateException("mail.verification.localization.default-language-tag must be set");
-            }
-            if (CollectionUtils.isEmpty(messages)) {
-                throw new IllegalStateException("mail.verification.localization.messages must not be empty");
-            }
-            if (!messages.containsKey(defaultLanguageTag)) {
-                throw new IllegalStateException(
-                    "mail.verification.localization.messages must contain default language tag " + defaultLanguageTag
-                );
-            }
-            messages.forEach((languageTag, message) -> message.validate(languageTag));
-            rules.forEach(rule -> rule.validate(messages));
-        }
-
-        /**
-         * Localized message template used to render verification content.
-         */
-        public static class Message {
-
-            private String body;
-
-            public String getBody() {
-                return body;
-            }
-
-            public void setBody(String body) {
-                this.body = body;
-            }
-
-            void validate(String languageTag) {
-                if (!StringUtils.hasText(body)) {
-                    throw new IllegalStateException(
-                        "mail.verification.localization.messages." + languageTag + ".body must be set"
-                    );
-                }
-                if (!body.contains("{{code}}")) {
-                    throw new IllegalStateException(
-                        "mail.verification.localization.messages." +
-                        languageTag +
-                        ".body must contain {{code}} placeholder"
-                    );
-                }
-            }
-        }
-
-        /**
-         * Rule mapping an IP CIDR range to a language tag.
-         */
-        public static class Rule {
-
-            private String cidr;
-            private String languageTag;
-
-            public String getCidr() {
-                return cidr;
-            }
-
-            public void setCidr(String cidr) {
-                this.cidr = cidr;
-            }
-
-            public String getLanguageTag() {
-                return languageTag;
-            }
-
-            public void setLanguageTag(String languageTag) {
-                this.languageTag = languageTag;
-            }
-
-            void validate(Map<String, Message> messages) {
-                if (!StringUtils.hasText(cidr)) {
-                    throw new IllegalStateException("mail.verification.localization.rules entries must define cidr");
-                }
-                if (!StringUtils.hasText(languageTag)) {
-                    throw new IllegalStateException(
-                        "mail.verification.localization.rules entries must define language-tag"
-                    );
-                }
-                if (!messages.containsKey(languageTag)) {
-                    throw new IllegalStateException(
-                        "mail.verification.localization.messages must contain language-tag " + languageTag
-                    );
-                }
-            }
-        }
-    }
-
-    /**
-     * Sender customization that augments the bare mailbox address.
-     */
-    public static class Sender {
-
-        private String displayName;
-        private String replyTo;
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public void setDisplayName(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getReplyTo() {
-            return replyTo;
-        }
-
-        public void setReplyTo(String replyTo) {
-            this.replyTo = replyTo;
-        }
-    }
-
-    /**
-     * Compliance block appended to the verification mail for deliverability and
-     * policy clarity.
-     */
-    public static class Compliance {
-
-        private String companyName;
-        private String companyAddress;
-        private String supportEmail;
-        private String website;
-        private String unsubscribeUrl;
-        private String unsubscribeMailto;
-
-        public String getCompanyName() {
-            return companyName;
-        }
-
-        public void setCompanyName(String companyName) {
-            this.companyName = companyName;
-        }
-
-        public String getCompanyAddress() {
-            return companyAddress;
-        }
-
-        public void setCompanyAddress(String companyAddress) {
-            this.companyAddress = companyAddress;
-        }
-
-        public String getSupportEmail() {
-            return supportEmail;
-        }
-
-        public void setSupportEmail(String supportEmail) {
-            this.supportEmail = supportEmail;
-        }
-
-        public String getWebsite() {
-            return website;
-        }
-
-        public void setWebsite(String website) {
-            this.website = website;
-        }
-
-        public String getUnsubscribeUrl() {
-            return unsubscribeUrl;
-        }
-
-        public void setUnsubscribeUrl(String unsubscribeUrl) {
-            this.unsubscribeUrl = unsubscribeUrl;
-        }
-
-        public String getUnsubscribeMailto() {
-            return unsubscribeMailto;
-        }
-
-        public void setUnsubscribeMailto(String unsubscribeMailto) {
-            this.unsubscribeMailto = unsubscribeMailto;
-        }
-    }
-
-    /**
-     * Additional metadata that helps mailbox providers evaluate authenticity of
-     * transactional mails.
-     */
-    public static class Deliverability {
-
-        private String feedbackIdPrefix;
-        private String entityRefIdPrefix;
-        private Map<String, MailboxProviderPolicy> mailboxProviderPolicies = new LinkedHashMap<>();
-
-        public String getFeedbackIdPrefix() {
-            return feedbackIdPrefix;
-        }
-
-        public void setFeedbackIdPrefix(String feedbackIdPrefix) {
-            this.feedbackIdPrefix = feedbackIdPrefix;
-        }
-
-        public String getEntityRefIdPrefix() {
-            return entityRefIdPrefix;
-        }
-
-        public void setEntityRefIdPrefix(String entityRefIdPrefix) {
-            this.entityRefIdPrefix = entityRefIdPrefix;
-        }
-
-        public Map<String, MailboxProviderPolicy> getMailboxProviderPolicies() {
-            return mailboxProviderPolicies;
-        }
-
-        public void setMailboxProviderPolicies(Map<String, MailboxProviderPolicy> mailboxProviderPolicies) {
-            this.mailboxProviderPolicies = mailboxProviderPolicies == null
-                ? new LinkedHashMap<>()
-                : new LinkedHashMap<>(mailboxProviderPolicies);
-        }
-
-        void validate(Compliance compliance) {
-            for (Map.Entry<String, MailboxProviderPolicy> entry : mailboxProviderPolicies.entrySet()) {
-                entry.getValue().validate(entry.getKey(), compliance);
-            }
-        }
-
-        public static class MailboxProviderPolicy {
-
-            private List<String> domains = new ArrayList<>();
-            private String listId;
-            private String complaintsMailto;
-            private boolean enforceListUnsubscribe = true;
-
-            public List<String> getDomains() {
-                return domains;
-            }
-
-            public void setDomains(List<String> domains) {
-                this.domains = domains == null ? new ArrayList<>() : new ArrayList<>(domains);
-            }
-
-            public String getListId() {
-                return listId;
-            }
-
-            public void setListId(String listId) {
-                this.listId = listId;
-            }
-
-            public String getComplaintsMailto() {
-                return complaintsMailto;
-            }
-
-            public void setComplaintsMailto(String complaintsMailto) {
-                this.complaintsMailto = complaintsMailto;
-            }
-
-            public boolean isEnforceListUnsubscribe() {
-                return enforceListUnsubscribe;
-            }
-
-            public void setEnforceListUnsubscribe(boolean enforceListUnsubscribe) {
-                this.enforceListUnsubscribe = enforceListUnsubscribe;
-            }
-
-            public boolean appliesTo(String domain) {
-                if (!StringUtils.hasText(domain) || CollectionUtils.isEmpty(domains)) {
-                    return false;
-                }
-                String normalized = domain.toLowerCase(Locale.ROOT);
-                for (String candidate : domains) {
-                    if (!StringUtils.hasText(candidate)) {
-                        continue;
-                    }
-                    String trimmed = candidate.trim().toLowerCase(Locale.ROOT);
-                    if (trimmed.startsWith("*")) {
-                        String suffix = trimmed.substring(1);
-                        if (normalized.endsWith(suffix)) {
-                            return true;
-                        }
-                    } else if (normalized.equals(trimmed)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            void validate(String key, Compliance compliance) {
-                if (CollectionUtils.isEmpty(domains)) {
-                    throw new IllegalStateException(
-                        "mail.verification.deliverability.mailbox-provider-policies." +
-                        key +
-                        ".domains must not be empty"
-                    );
-                }
-                if (enforceListUnsubscribe) {
-                    boolean hasMailto = StringUtils.hasText(compliance.getUnsubscribeMailto());
-                    boolean hasUrl = StringUtils.hasText(compliance.getUnsubscribeUrl());
-                    if (!hasMailto && !hasUrl) {
-                        throw new IllegalStateException(
-                            "mail.verification.deliverability.mailbox-provider-policies." +
-                            key +
-                            " requires unsubscribe configuration"
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    public static class Infrastructure {
-
-        private String reverseDnsDomain;
-        private String spfRecord;
-        private String dkimSelector;
-        private String dmarcPolicy;
-        private boolean arcSealEnabled;
-        private String arcAuthenticationResults;
-        private String arcMessageSignature;
-        private String arcSeal;
-
-        public String getReverseDnsDomain() {
-            return reverseDnsDomain;
-        }
-
-        public void setReverseDnsDomain(String reverseDnsDomain) {
-            this.reverseDnsDomain = reverseDnsDomain;
-        }
-
-        public String getSpfRecord() {
-            return spfRecord;
-        }
-
-        public void setSpfRecord(String spfRecord) {
-            this.spfRecord = spfRecord;
-        }
-
-        public String getDkimSelector() {
-            return dkimSelector;
-        }
-
-        public void setDkimSelector(String dkimSelector) {
-            this.dkimSelector = dkimSelector;
-        }
-
-        public String getDmarcPolicy() {
-            return dmarcPolicy;
-        }
-
-        public void setDmarcPolicy(String dmarcPolicy) {
-            this.dmarcPolicy = dmarcPolicy;
-        }
-
-        public boolean isArcSealEnabled() {
-            return arcSealEnabled;
-        }
-
-        public void setArcSealEnabled(boolean arcSealEnabled) {
-            this.arcSealEnabled = arcSealEnabled;
-        }
-
-        public String getArcAuthenticationResults() {
-            return arcAuthenticationResults;
-        }
-
-        public void setArcAuthenticationResults(String arcAuthenticationResults) {
-            this.arcAuthenticationResults = arcAuthenticationResults;
-        }
-
-        public String getArcMessageSignature() {
-            return arcMessageSignature;
-        }
-
-        public void setArcMessageSignature(String arcMessageSignature) {
-            this.arcMessageSignature = arcMessageSignature;
-        }
-
-        public String getArcSeal() {
-            return arcSeal;
-        }
-
-        public void setArcSeal(String arcSeal) {
-            this.arcSeal = arcSeal;
-        }
-
-        void validate() {
-            if (!StringUtils.hasText(reverseDnsDomain)) {
-                throw new IllegalStateException(
-                    "mail.verification.infrastructure.reverse-dns-domain must be configured"
-                );
-            }
-            if (!StringUtils.hasText(spfRecord)) {
-                throw new IllegalStateException("mail.verification.infrastructure.spf-record must be configured");
-            }
-            if (!StringUtils.hasText(dkimSelector)) {
-                throw new IllegalStateException("mail.verification.infrastructure.dkim-selector must be configured");
-            }
-            if (!StringUtils.hasText(dmarcPolicy)) {
-                throw new IllegalStateException("mail.verification.infrastructure.dmarc-policy must be configured");
-            }
-            if (arcSealEnabled) {
-                if (!StringUtils.hasText(arcAuthenticationResults)) {
-                    throw new IllegalStateException(
-                        "mail.verification.infrastructure.arc-authentication-results " +
-                        "must be configured when arcSealEnabled=true"
-                    );
-                }
-                if (!StringUtils.hasText(arcMessageSignature)) {
-                    throw new IllegalStateException(
-                        "mail.verification.infrastructure.arc-message-signature " +
-                        "must be configured when arcSealEnabled=true"
-                    );
-                }
-                if (!StringUtils.hasText(arcSeal)) {
-                    throw new IllegalStateException(
-                        "mail.verification.infrastructure.arc-seal must be configured when arcSealEnabled=true"
-                    );
-                }
-            }
-        }
-    }
-
-    public static class AudiencePolicy {
-
-        private Duration inactivityThreshold = Duration.ofDays(365);
-        private int softBounceSuppressionThreshold = 3;
-        private int hardBounceSuppressionThreshold = 1;
-
-        public Duration getInactivityThreshold() {
-            return inactivityThreshold;
-        }
-
-        public void setInactivityThreshold(Duration inactivityThreshold) {
-            this.inactivityThreshold = inactivityThreshold;
-        }
-
-        public int getSoftBounceSuppressionThreshold() {
-            return softBounceSuppressionThreshold;
-        }
-
-        public void setSoftBounceSuppressionThreshold(int softBounceSuppressionThreshold) {
-            this.softBounceSuppressionThreshold = softBounceSuppressionThreshold;
-        }
-
-        public int getHardBounceSuppressionThreshold() {
-            return hardBounceSuppressionThreshold;
-        }
-
-        public void setHardBounceSuppressionThreshold(int hardBounceSuppressionThreshold) {
-            this.hardBounceSuppressionThreshold = hardBounceSuppressionThreshold;
-        }
-
-        void validate() {
-            if (inactivityThreshold == null || inactivityThreshold.isZero() || inactivityThreshold.isNegative()) {
-                throw new IllegalStateException(
-                    "mail.verification.audience-policy.inactivity-threshold must be positive"
-                );
-            }
-            if (softBounceSuppressionThreshold < 1) {
-                throw new IllegalStateException(
-                    "mail.verification.audience-policy.soft-bounce-suppression-threshold must be >= 1"
-                );
-            }
-            if (hardBounceSuppressionThreshold < 1) {
-                throw new IllegalStateException(
-                    "mail.verification.audience-policy.hard-bounce-suppression-threshold must be >= 1"
-                );
-            }
-        }
-    }
-
-    public static class Streams {
-
-        private String transactionalDomain;
-        private String transactionalIpPool;
-        private String marketingDomain;
-        private String marketingIpPool;
-
-        public String getTransactionalDomain() {
-            return transactionalDomain;
-        }
-
-        public void setTransactionalDomain(String transactionalDomain) {
-            this.transactionalDomain = transactionalDomain;
-        }
-
-        public String getTransactionalIpPool() {
-            return transactionalIpPool;
-        }
-
-        public void setTransactionalIpPool(String transactionalIpPool) {
-            this.transactionalIpPool = transactionalIpPool;
-        }
-
-        public String getMarketingDomain() {
-            return marketingDomain;
-        }
-
-        public void setMarketingDomain(String marketingDomain) {
-            this.marketingDomain = marketingDomain;
-        }
-
-        public String getMarketingIpPool() {
-            return marketingIpPool;
-        }
-
-        public void setMarketingIpPool(String marketingIpPool) {
-            this.marketingIpPool = marketingIpPool;
-        }
-
-        void validate(String from) {
-            if (!StringUtils.hasText(transactionalDomain)) {
-                throw new IllegalStateException("mail.verification.streams.transactional-domain must be configured");
-            }
-            if (StringUtils.hasText(marketingDomain) && marketingDomain.equalsIgnoreCase(transactionalDomain)) {
-                throw new IllegalStateException(
-                    "mail.verification.streams.marketing-domain " +
-                    "must differ from transactional-domain for proper segmentation"
-                );
-            }
-            if (StringUtils.hasText(from)) {
-                int atIndex = from.indexOf('@');
-                if (atIndex > 0 && atIndex < from.length() - 1) {
-                    String fromDomain = from.substring(atIndex + 1);
-                    if (!fromDomain.equalsIgnoreCase(transactionalDomain)) {
-                        throw new IllegalStateException(
-                            "mail.verification.from domain must match mail.verification.streams.transactional-domain"
-                        );
-                    }
-                }
-            }
-        }
-    }
 }
+

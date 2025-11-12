@@ -1,5 +1,6 @@
 package com.glancy.backend.service.email.localization;
 
+import com.glancy.backend.config.EmailVerificationLocalizationProperties;
 import com.glancy.backend.config.EmailVerificationProperties;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import java.util.LinkedHashMap;
@@ -25,7 +26,7 @@ public class TemplateDrivenVerificationEmailContentResolver implements Verificat
         Objects.requireNonNull(properties, "properties");
         this.localeResolver = Objects.requireNonNull(localeResolver, "localeResolver");
         this.bodyTemplates = new LinkedHashMap<>();
-        EmailVerificationProperties.Localization localization = properties.getLocalization();
+        EmailVerificationLocalizationProperties localization = properties.getLocalization();
         localization
             .getMessages()
             .forEach((languageTag, message) -> bodyTemplates.put(languageTag, message.getBody().trim()));

@@ -4,10 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.glancy.backend.config.EmailVerificationLocalizationProperties;
+import com.glancy.backend.config.EmailVerificationLocalizationProperties.Message;
 import com.glancy.backend.config.EmailVerificationProperties;
+import com.glancy.backend.config.EmailVerificationTemplateProperties;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
@@ -65,14 +69,14 @@ class VerificationEmailComposerTest {
         assertTrue(html.contains("验证码：123456"));
     }
 
-    private void assertComplianceHeaders(MimeMessage message) {
+    private void assertComplianceHeaders(MimeMessage message) throws MessagingException {
         String listUnsubscribe = message.getHeader("List-Unsubscribe", null);
         assertNotNull(listUnsubscribe);
         assertTrue(listUnsubscribe.contains("mailto:unsubscribe@test.glancy.xyz"));
         assertTrue(listUnsubscribe.contains("https://test.glancy.xyz/unsubscribe"));
     }
 
-    private void assertFeedbackHeaders(MimeMessage message) {
+    private void assertFeedbackHeaders(MimeMessage message) throws MessagingException {
         String feedbackId = message.getHeader("Feedback-ID", null);
         assertNotNull(feedbackId);
         assertTrue(feedbackId.contains("glancy-test:login"));
@@ -97,14 +101,13 @@ class VerificationEmailComposerTest {
         properties.getDeliverability().setFeedbackIdPrefix("glancy-test");
         properties.getDeliverability().setEntityRefIdPrefix("verification-flow");
 
-        EmailVerificationProperties.Template template = new EmailVerificationProperties.Template();
+        EmailVerificationTemplateProperties template = new EmailVerificationTemplateProperties();
         template.setSubject("Glancy 登录验证码");
         template.setBody("验证码：{{code}}");
         properties.getTemplates().put(EmailVerificationPurpose.LOGIN, template);
-        EmailVerificationProperties.Localization localization = properties.getLocalization();
+        EmailVerificationLocalizationProperties localization = properties.getLocalization();
         localization.setDefaultLanguageTag("zh-CN");
-        EmailVerificationProperties.Localization.Message message =
-            new EmailVerificationProperties.Localization.Message();
+        Message message = new EmailVerificationLocalizationProperties.Message();
         message.setBody("验证码：{{code}}");
         localization.getMessages().put("zh-CN", message);
         return properties;

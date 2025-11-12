@@ -1,5 +1,6 @@
 package com.glancy.backend.service.email;
 
+import com.glancy.backend.config.EmailVerificationComplianceProperties;
 import com.glancy.backend.config.EmailVerificationProperties;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ final class EmailComplianceSupport {
     private EmailComplianceSupport() {}
 
     static Optional<String> buildListUnsubscribeHeader(EmailVerificationProperties properties) {
-        EmailVerificationProperties.Compliance compliance = properties.getCompliance();
+        EmailVerificationComplianceProperties compliance = properties.getCompliance();
         List<String> entries = new ArrayList<>();
         if (StringUtils.hasText(compliance.getUnsubscribeMailto())) {
             String address = compliance.getUnsubscribeMailto();
@@ -87,7 +88,7 @@ final class EmailComplianceSupport {
         if (StringUtils.hasText(configuredMailbox)) {
             return Optional.of(configuredMailbox.trim());
         }
-        EmailVerificationProperties.Compliance compliance = properties.getCompliance();
+        EmailVerificationComplianceProperties compliance = properties.getCompliance();
         if (StringUtils.hasText(compliance.getUnsubscribeMailto())) {
             return Optional.of(compliance.getUnsubscribeMailto().trim());
         }

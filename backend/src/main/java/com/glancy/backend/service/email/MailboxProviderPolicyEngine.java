@@ -1,8 +1,8 @@
 package com.glancy.backend.service.email;
 
+import com.glancy.backend.config.EmailVerificationDeliverabilityProperties;
+import com.glancy.backend.config.EmailVerificationDeliverabilityProperties.MailboxProviderPolicy;
 import com.glancy.backend.config.EmailVerificationProperties;
-import com.glancy.backend.config.EmailVerificationProperties.Deliverability;
-import com.glancy.backend.config.EmailVerificationProperties.Deliverability.MailboxProviderPolicy;
 import com.glancy.backend.entity.EmailStream;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -31,7 +31,7 @@ public class MailboxProviderPolicyEngine {
         if (!StringUtils.hasText(domain)) {
             return;
         }
-        Deliverability deliverability = properties.getDeliverability();
+        EmailVerificationDeliverabilityProperties deliverability = properties.getDeliverability();
         if (deliverability == null) {
             return;
         }

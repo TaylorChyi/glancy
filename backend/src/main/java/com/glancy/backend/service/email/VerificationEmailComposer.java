@@ -1,6 +1,8 @@
 package com.glancy.backend.service.email;
 
+import com.glancy.backend.config.EmailVerificationInfrastructureProperties;
 import com.glancy.backend.config.EmailVerificationProperties;
+import com.glancy.backend.config.EmailVerificationTemplateProperties;
 import com.glancy.backend.entity.EmailVerificationPurpose;
 import com.glancy.backend.service.email.localization.VerificationEmailContentResolver;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
@@ -37,7 +39,7 @@ public class VerificationEmailComposer {
         LocalDateTime expiresAt,
         String clientIp
     ) throws MessagingException {
-        EmailVerificationProperties.Template template = resolveTemplate(purpose);
+        EmailVerificationTemplateProperties template = resolveTemplate(purpose);
         MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
         helper.setTo(recipient);
         helper.setSubject(template.getSubject());
@@ -53,8 +55,8 @@ public class VerificationEmailComposer {
         applyArcHeaders(message);
     }
 
-    private EmailVerificationProperties.Template resolveTemplate(EmailVerificationPurpose purpose) {
-        EmailVerificationProperties.Template template = properties.getTemplates().get(purpose);
+    private EmailVerificationTemplateProperties resolveTemplate(EmailVerificationPurpose purpose) {
+        EmailVerificationTemplateProperties template = properties.getTemplates().get(purpose);
         if (template == null) {
             throw new IllegalStateException("Missing email template configuration for purpose " + purpose);
         }
@@ -122,7 +124,7 @@ public class VerificationEmailComposer {
     }
 
     private void applyArcHeaders(MimeMessage message) throws MessagingException {
-        EmailVerificationProperties.Infrastructure infrastructure = properties.getInfrastructure();
+        EmailVerificationInfrastructureProperties infrastructure = properties.getInfrastructure();
         if (!infrastructure.isArcSealEnabled()) {
             return;
         }

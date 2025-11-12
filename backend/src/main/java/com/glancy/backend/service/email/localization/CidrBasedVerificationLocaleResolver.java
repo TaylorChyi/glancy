@@ -1,5 +1,7 @@
 package com.glancy.backend.service.email.localization;
 
+import com.glancy.backend.config.EmailVerificationLocalizationProperties;
+import com.glancy.backend.config.EmailVerificationLocalizationProperties.Rule;
 import com.glancy.backend.config.EmailVerificationProperties;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -22,10 +24,10 @@ public class CidrBasedVerificationLocaleResolver implements VerificationLocaleRe
 
     public CidrBasedVerificationLocaleResolver(EmailVerificationProperties properties) {
         Objects.requireNonNull(properties, "properties");
-        EmailVerificationProperties.Localization localization = properties.getLocalization();
+        EmailVerificationLocalizationProperties localization = properties.getLocalization();
         this.defaultLocale = Locale.forLanguageTag(localization.getDefaultLanguageTag());
         this.rules = new ArrayList<>();
-        for (EmailVerificationProperties.Localization.Rule rule : localization.getRules()) {
+        for (Rule rule : localization.getRules()) {
             this.rules.add(ResolvedRule.from(rule));
         }
     }
@@ -44,7 +46,7 @@ public class CidrBasedVerificationLocaleResolver implements VerificationLocaleRe
     }
 
     private record ResolvedRule(CidrBlock block, Locale locale) {
-        private static ResolvedRule from(EmailVerificationProperties.Localization.Rule rule) {
+        private static ResolvedRule from(Rule rule) {
             Locale locale = Locale.forLanguageTag(rule.getLanguageTag());
             return new ResolvedRule(CidrBlock.parse(rule.getCidr()), locale);
         }

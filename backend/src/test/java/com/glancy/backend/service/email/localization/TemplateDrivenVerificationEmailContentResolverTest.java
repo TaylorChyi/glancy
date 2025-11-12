@@ -2,6 +2,8 @@ package com.glancy.backend.service.email.localization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.glancy.backend.config.EmailVerificationLocalizationProperties;
+import com.glancy.backend.config.EmailVerificationLocalizationProperties.Message;
 import com.glancy.backend.config.EmailVerificationProperties;
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import java.util.LinkedHashMap;
@@ -16,9 +18,9 @@ class TemplateDrivenVerificationEmailContentResolverTest {
     @BeforeEach
     void setUp() {
         properties = new EmailVerificationProperties();
-        EmailVerificationProperties.Localization localization = properties.getLocalization();
+        EmailVerificationLocalizationProperties localization = properties.getLocalization();
         localization.setDefaultLanguageTag("zh-CN");
-        LinkedHashMap<String, EmailVerificationProperties.Localization.Message> messages = new LinkedHashMap<>();
+        LinkedHashMap<String, EmailVerificationLocalizationProperties.Message> messages = new LinkedHashMap<>();
         messages.put("zh-CN", createMessage("验证码：{{code}}"));
         messages.put("ja-JP", createMessage("認証コード：{{code}}"));
         messages.put("en-US", createMessage("Verification code: {{code}}"));
@@ -81,9 +83,8 @@ class TemplateDrivenVerificationEmailContentResolverTest {
         );
     }
 
-    private EmailVerificationProperties.Localization.Message createMessage(String body) {
-        EmailVerificationProperties.Localization.Message message =
-            new EmailVerificationProperties.Localization.Message();
+    private Message createMessage(String body) {
+        EmailVerificationLocalizationProperties.Message message = new EmailVerificationLocalizationProperties.Message();
         message.setBody(body);
         return message;
     }
