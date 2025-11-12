@@ -141,4 +141,23 @@ kmsctl export --key-id alias/glancy-dr --wrap-key alias/glancy-archive \
 - **对齐第 13 章**：若监控/指标与第 13 章存在差异，以更严格者为准；RTO/RPO 结果需在 13.4 的 DR-02、DR-04 表中更新。
 - **验收凭证**：演练结束后 24 小时内提交：演练台账（4.2）、抽查截图（4.3）、脚本日志、 Route53/RDS 操作记录；SRE 每月与 13.5 复盘记录对账。
 
+## 7. 指标度量与追踪
+- **指标采集**：
+  - RTO 以 `incident_start` 到关键接口（`/lookup`、`/history`、`/exports`）恢复 99% 成功率的 Prometheus 事件间隔为准；RPO 以 `pg_last_wal_receive_lsn()` 与 `pg_last_wal_replay_lsn()` 差值对应的时间窗计算。
+  - 导出任务恢复通过消费延迟指标 `exports_consumer_lag_seconds` 与失败任务补偿完成时间衡量，目标 ≤15 min 闭环。
+- **演练核对脚本**：
+  ```bash
+  # 计算历史/配置数据 RPO：
+  psql "postgresql://readonly@lookup" -c \
+    "SELECT now() - pg_last_xact_replay_timestamp() AS rpo_window" | tee /tmp/rpo.txt
+
+  # 计算导出任务消费延迟：
+  aws cloudwatch get-metric-statistics \
+    --namespace Glancy/Exports --metric-name exports_consumer_lag_seconds \
+    --statistics Maximum --period 60 --start-time "$(date -u -d '-10 minutes' +%FT%TZ)" \
+    --end-time "$(date -u +%FT%TZ)" | jq '.Datapoints | max_by(.Timestamp)'
+  ```
+  > 脚本输出需纳入演练记录，与台账编号关联；若任一指标超阈，必须在闭环报告中说明原因与补救计划。
+- **持续改进**：PMO 每季度汇总 RTO/RPO、演练闭环耗时、抽查通过率，形成趋势图并存档于 `s3://glancy-dr-ap-sg/reports/<year>/Q<qtr>.pdf`，供 13 章复审与内控合规使用。
+
 > 本文档受控文件：若系统架构或依赖拓扑调整，需同步刷新备份矩阵、演练日历与切换脚本并重新走评审。
