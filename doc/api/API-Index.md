@@ -47,7 +47,7 @@ This index summarizes the public REST surface of the Glancy backend located unde
 - **Backoff strategy**: use the retry-after seconds embedded in `RateLimitExceededException` messages, exponential backoff for 5xx/424, and never retry membership/commerce mutations without explicit user consent.
 
 ## Streaming Delivery Overview
-`TtsController` exposes "stream" variants (`GET /api/tts/word|sentence`) for latency-sensitive clients. These routes share the same `TtsResponse` schema per chunk: `{ "data": "<base64>", "duration_ms": 1000, "format": "mp3", "from_cache": false }`. When clients request `Accept: text/event-stream`, edge proxies stream each such object as an SSE event named `audio` with fields documented in [Module-TTS](Module-TTS.md). The server also supports traditional JSON responses for simpler clients.
+`TtsController` exposes "stream" variants (`GET /api/tts/word|sentence`) for latency-sensitive clients. These routes return the `TtsResponse` schema `{ "data": "<base64>", "duration_ms": 1000, "format": "mp3", "from_cache": false }`. As of this release responses remain JSON even for `Accept: text/event-stream` requests, while the SSE envelope documented in [Module-TTS](Module-TTS.md) is reserved for the future `operation=SUBMIT` rollout.
 
 ## Module Documents
 - [Module-Users](Module-Users.md)
