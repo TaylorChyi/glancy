@@ -1,7 +1,7 @@
 # 测试计划（Test Plan）
 
 - **项目**：Glancy T19（流式查词与知识库套件）
-- **版本 / 日期**：v1.0 / 2024-05-08
+- **版本 / 日期**：v1.1 / 2024-05-10
 - **文档所有人**：QA Owner（@qa-owner），备份：@release-captain
 - **关联文档**：SRS 第 4、8、16、20 章；`doc/用例说明书` UC 列表；`scripts/perf/README.md`；`scripts/ops/runbook.md`；`doc/需求说明文档/AC 汇总`
 
@@ -16,13 +16,13 @@
 
 ### 1.2 测试范围（需求领域 × 策略）
 
-| 领域 | 功能/场景 | 业务目标 | 对应策略 |
-| --- | --- | --- | --- |
-| F1 多语言查词 | 请求路由、缓存、流式响应 | SLA：P99 1.5s，成功率 99.5% | 单元（缓存命中）、集成（BFF↔LLM）、E2E（L10N UI） |
-| F2 再生成 / 历史 | 再生成、导出、归档 | SLA：导出 RPO ≤ 5min | 单元（状态机）、集成（作业队列）、性能（RTO 场景 P5） |
-| F3 订阅与配额 | 订阅矩阵、配额扣减、计费 | SLA：扣减一致性 100% | 集成（计费服务）、安全（权限）、E2E（控制台） |
-| F4 控制台 & API | Web 控制台、公开 API | SLA：错误预算 2%/月 | E2E（Playwright）、安全（OWASP），性能（突发 P2） |
-| F5 运营配置 | Feature Flag、灰度 | SLA：灰度窗口 ≤ 30min | 集成（配置同步）、容灾（回滚演练） |
+| 领域 | 功能/场景 | 业务目标 | 对应策略 | 关键 AC / 门禁 |
+| --- | --- | --- | --- | --- |
+| F1 多语言查词 | 请求路由、缓存、流式响应 | SLA：P99 1.5s，成功率 99.5% | 单元（缓存命中）、集成（BFF↔LLM）、E2E（L10N UI） | AC-LOOKUP-01/02；`release-gate` 对接 `gray_lookup_health` |
+| F2 再生成 / 历史 | 再生成、导出、归档 | SLA：导出 RPO ≤ 5min | 单元（状态机）、集成（作业队列）、性能（RTO 场景 P5） | AC-EXPORT-03；`perf-regression` P5、`dr-drill` RPO 校验 |
+| F3 订阅与配额 | 订阅矩阵、配额扣减、计费 | SLA：扣减一致性 100% | 集成（计费服务）、安全（权限）、E2E（控制台） | AC-BILLING-04；`contract-nightly` + `security-gate` |
+| F4 控制台 & API | Web 控制台、公开 API | SLA：错误预算 2%/月 | E2E（Playwright）、安全（OWASP），性能（突发 P2） | AC-UI-02/05；`website-e2e` + `post-deploy-e2e` |
+| F5 运营配置 | Feature Flag、灰度 | SLA：灰度窗口 ≤ 30min | 集成（配置同步）、容灾（回滚演练） | AC-FLAG-01；`dr-drill` + `release-gate` |
 
 ### 1.3 不在范围
 - 线下培训材料与第三方 SDK（单独文档负责）；  
@@ -46,6 +46,8 @@
 
 ### 3.1 测试环境
 
+- 版本基线：所有环境配置文件以 `ops/env-manifest` 分支为准；环境差异必须登记在发布检查清单。
+
 | 环境 | 组成 | 用途 | SLA/SLO 对齐点 |
 | --- | --- | --- | --- |
 | DEV | `backend` Maven profile `dev`, `website` Vite dev server，mock LLM | 单元/组件、开发自检 | 无强 SLA，速率与可观测性验证 |
@@ -53,6 +55,8 @@
 | PERF | 独立白名单租户 + `scripts/perf` 工具链 | P1–P6 压测、容量回归 | 复制生产限速，SLO 指标与 SLA 相同 |
 | DRY-RUN | 双 AZ + 断链注入 | 容灾演练、混沌测试 | 验证 RTO/RPO：15min/5min |
 | STAGE / 灰度 | 与生产同规模，Feature Flag -> 5% 流量 | 发布前 E2E、灰度指标对齐 | 门禁指标与生产一致 |
+
+> 所有非生产环境共享集中观测栈（Grafana Cloud `glancy-nonprod`），指标命名遵循 `env_service_metric` 约定，保证门禁与灰度指标一致。
 
 ### 3.2 测试数据与依赖
 - 数据分层：匿名合成数据（DEV）、遮蔽生产快照（SIT）、专用白名单租户（PERF/STAGE）。  
@@ -62,14 +66,14 @@
 
 ### 3.3 工具与自动化流水线
 
-| 层级 | 工具 / 命令 | 自动化入口 |
-| --- | --- | --- |
-| 单元 | Maven Surefire (`backend/mvnw test`)，Vitest/Jest (`website pnpm test`) | GitHub Actions `backend-unit.yml`、`website-unit.yml` |
-| 集成 | Testcontainers、WireMock、Contract Test (`mvn verify -Pintegration`) | GitHub Actions `backend-integration.yml` |
-| E2E | Playwright (`website/tests`), Postman/Newman for API | `website-e2e.yml`，Nightly `post-deploy-e2e.yml` |
-| 性能 | JMeter/Gatling/Locust/k6，参见 `scripts/perf/README.md` | Jenkins `perf-regression` job（触发 P1–P6 场景） |
-| 容灾 | Chaos Mesh、自研断链脚本 `scripts/ops/failover.sh` | 每双周 `dr-drill.yml` 流水线 |
-| 安全 | OWASP ZAP、Snyk/Trivy、依赖审计脚本 `scripts/security/sbom.sh` | `security-gate.yml` |
+| 层级 | 工具 / 命令 | 自动化入口 | 质量门禁输出 |
+| --- | --- | --- | --- |
+| 单元 | Maven Surefire (`backend/mvnw test`)，Vitest/Jest (`website pnpm test`) | GitHub Actions `backend-unit.yml`、`website-unit.yml` | Jacoco/NYC 报告推送至 Quality Dashboard |
+| 集成 | Testcontainers、WireMock、Contract Test (`mvn verify -Pintegration`) | GitHub Actions `backend-integration.yml` | Pact Broker tag `t19`，破坏契约阻断合并 |
+| E2E | Playwright (`website/tests`), Postman/Newman for API | `website-e2e.yml`，Nightly `post-deploy-e2e.yml` | 旅程截图 + 失败录屏上传 S3，Stage 门禁读取 |
+| 性能 | JMeter/Gatling/Locust/k6，参见 `scripts/perf/README.md` | Jenkins `perf-regression` job（触发 P1–P6 场景） | 指标 CSV + Prometheus 对比脚本 `perf/gate.py` |
+| 容灾 | Chaos Mesh、自研断链脚本 `scripts/ops/failover.sh` | 每双周 `dr-drill.yml` 流水线 | Drill 报告存档，RTO/RPO 自动判分 |
+| 安全 | OWASP ZAP、Snyk/Trivy、依赖审计脚本 `scripts/security/sbom.sh` | `security-gate.yml` | SBOM 生成 + 漏洞分级（Critical 阻断） |
 
 所有流水线测试结果同步至 Release Dashboard（Datasource：GitHub Checks + Jenkins + Grafana Loki），失败将阻断 `main` 分支合并或生产部署。
 
@@ -119,9 +123,10 @@
 - 验收：事件线、回执、观察指标（`error_budget_burn`）归档。
 
 ### 4.7 安全测试
-- 静态/依赖扫描：Snyk、Trivy、`mvn -Psecurity verify`。  
-- 动态扫描：OWASP ZAP 对 Control Center 与公开 API；暴露面覆盖 OAuth、RBAC、速率限制。  
-- 合规：日志脱敏、PII 访问审计；满足第 20 章安全 AC。  
+- 静态/依赖扫描：Snyk、Trivy、`mvn -Psecurity verify`。
+- 动态扫描：OWASP ZAP 对 Control Center 与公开 API；暴露面覆盖 OAuth、RBAC、速率限制。
+- 合规：日志脱敏、PII 访问审计；满足第 20 章安全 AC。
+- 渗透演练：与 AppSec 协同执行脚本化渗透场景（API 越权、配额绕过），对高风险模块进行灰盒评估。
 - 门禁：`security-gate` 失败 → 阻断发布，需 AppSec 复核豁免。
 
 ---
@@ -139,9 +144,10 @@
 | STAGE → PROD | 灰度指标稳定（24h）；告警 0；监控回传 | 发布委员会签字；Runbook 更新 | Release-Gate-01/02 | 同 Stage（成功率 / P95 / JS 错误率） |
 
 ### 5.2 门禁与灰度指标对齐
-- 所有性能门槛使用与生产同一 Grafana Dashboard 的变量；灰度阶段以 `gray_lookup_success_rate`, `gray_export_rto`、`gray_ui_js_error_rate` 三个指标为准。  
-- 门禁脚本读取同一 Prometheus API，不另外维护独立阈值，避免指标漂移。  
+- 所有性能门槛使用与生产同一 Grafana Dashboard 的变量；灰度阶段以 `gray_lookup_success_rate`, `gray_export_rto`、`gray_ui_js_error_rate` 三个指标为准。
+- 门禁脚本读取同一 Prometheus API，不另外维护独立阈值，避免指标漂移。
 - 若灰度窗口内 Burn Rate > 2，则自动触发 `release halt`，并回滚至上一稳定版本。
+- 灰度周期内由 SRE 负责比对 `metrics-config.yml` 的阈值与 Dashboard，任何变更需在 Release Notes 中备案，QA 复核签字。
 
 ---
 
@@ -159,12 +165,12 @@
 
 ### 6.2 排期 & 进度
 
-| 周次 | 里程碑 | 交付物 | 自动化流水线 / 指标 |
-| --- | --- | --- | --- |
-| W1 | 需求冻结、测试设计 | 用例矩阵、数据准备脚本 | `backend-unit`, `website-unit` |
-| W2 | SIT 回归 | 集成报告、缺陷列表 | `backend-integration`, `contract-nightly` |
-| W3 | PERF + DR 演练 | 压测报告、DR 报告、指标截图 | `perf-regression`, `dr-drill` |
-| W4 | STAGE 灰度 & 发布 | 灰度监控、发布决议 | `website-e2e`, `release-gate`, Grafana 灰度面板 |
+| 周次 | 里程碑 | 交付物 | 自动化流水线 / 指标 | 发布门禁 |
+| --- | --- | --- | --- | --- |
+| W1 | 需求冻结、测试设计 | 用例矩阵、数据准备脚本 | `backend-unit`, `website-unit` | 需求评审单 `QAR-001` |
+| W2 | SIT 回归 | 集成报告、缺陷列表 | `backend-integration`, `contract-nightly` | `integration-pass` GitHub Check |
+| W3 | PERF + DR 演练 | 压测报告、DR 报告、指标截图 | `perf-regression`, `dr-drill` | Jenkins `perf-gate`, Chaos Drill 判分 |
+| W4 | STAGE 灰度 & 发布 | 灰度监控、发布决议 | `website-e2e`, `release-gate`, Grafana 灰度面板 | `release-gate` + 灰度指标 24h 稳定 |
 
 进度跟踪：Jira Dashboard「T19-Quality」，字段来自流水线状态（GitHub Checks API）与 Grafana Webhook；缺陷燃尽目标：W4 之前 P1=0、P2≤2、P3≤6。
 
