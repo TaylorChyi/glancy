@@ -14,12 +14,9 @@ export interface UseLanguageControlsConfigParams {
   sourceLanguage?: LanguageValue;
   sourceLanguageOptions?: LanguageOption[];
   sourceLanguageLabel?: string;
-  onSourceLanguageChange?: (value: LanguageValue) => void;
   targetLanguage?: LanguageValue;
   targetLanguageOptions?: LanguageOption[];
   targetLanguageLabel?: string;
-  onTargetLanguageChange?: (value: LanguageValue) => void;
-  onSwapLanguages?: () => void;
   swapLabel?: string;
   normalizeSourceLanguageFn: NonNullable<
     UseActionInputBehaviorParams["normalizeSourceLanguageFn"]
@@ -27,28 +24,29 @@ export interface UseLanguageControlsConfigParams {
   normalizeTargetLanguageFn: NonNullable<
     UseActionInputBehaviorParams["normalizeTargetLanguageFn"]
   >;
-  onMenuOpen?: (variant?: "source" | "target") => void;
 }
 
 export interface UseLanguageControlsConfigResult {
   isVisible: boolean;
-  props: UseActionInputBehaviorResult["languageControls"]["props"];
+  props: Omit<
+    UseActionInputBehaviorResult["languageControls"]["props"],
+    | "onSourceLanguageChange"
+    | "onTargetLanguageChange"
+    | "onSwapLanguages"
+    | "onMenuOpen"
+  >;
 }
 
 export const useLanguageControlsConfig = ({
   sourceLanguage,
   sourceLanguageOptions,
   sourceLanguageLabel,
-  onSourceLanguageChange,
   targetLanguage,
   targetLanguageOptions,
   targetLanguageLabel,
-  onTargetLanguageChange,
-  onSwapLanguages,
   swapLabel,
   normalizeSourceLanguageFn,
   normalizeTargetLanguageFn,
-  onMenuOpen,
 }: UseLanguageControlsConfigParams): UseLanguageControlsConfigResult => {
   const [normalizedSourceOptions, normalizedTargetOptions] = useMemo(
     () => [
@@ -63,26 +61,18 @@ export const useLanguageControlsConfig = ({
       sourceLanguage,
       sourceLanguageOptions: normalizedSourceOptions,
       sourceLanguageLabel,
-      onSourceLanguageChange,
       targetLanguage,
       targetLanguageOptions: normalizedTargetOptions,
       targetLanguageLabel,
-      onTargetLanguageChange,
-      onSwapLanguages,
       swapLabel,
       normalizeSourceLanguage: normalizeSourceLanguageFn,
       normalizeTargetLanguage: normalizeTargetLanguageFn,
-      onMenuOpen,
     }),
     [
       normalizeSourceLanguageFn,
       normalizeTargetLanguageFn,
       normalizedSourceOptions,
       normalizedTargetOptions,
-      onMenuOpen,
-      onSourceLanguageChange,
-      onSwapLanguages,
-      onTargetLanguageChange,
       sourceLanguage,
       sourceLanguageLabel,
       swapLabel,

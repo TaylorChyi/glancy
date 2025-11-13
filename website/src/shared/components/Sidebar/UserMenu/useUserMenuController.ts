@@ -9,11 +9,8 @@ import {
   useMenuOpenState,
   useOutsideAndTabGuards,
 } from "./userMenuLifecycle";
-import {
-  useItemViewModels,
-  useKeyboardHandlers,
-  usePlacement,
-} from "./userMenuInteractions";
+import { useItemViewModels } from "./userMenuInteractions";
+import { useUserMenuSurfaceInteractions } from "./useUserMenuSurfaceInteractions";
 
 const MENU_MAX_HEIGHT = 420;
 
@@ -35,21 +32,17 @@ export function useUserMenuController({
 
   useOutsideAndTabGuards({ open, close, rootRef, itemRefs });
 
-  const placement = usePlacement({
-    open,
-    maxMenuHeight,
-    triggerRef,
-    menuRef,
-  });
-
   useActiveItemFocus({ open, activeIndex, itemRefs });
 
-  const handleSurfaceKeyDown = useKeyboardHandlers({
-    items,
+  const { placement, handleSurfaceKeyDown } = useUserMenuSurfaceInteractions({
     open,
+    items,
     activeIndex,
     setActiveIndex,
     close,
+    triggerRef,
+    menuRef,
+    maxMenuHeight,
   });
 
   const itemViewModels = useItemViewModels({
@@ -67,6 +60,7 @@ export function useUserMenuController({
     triggerRef,
     menuRef,
     toggle,
+    close,
     handleSurfaceKeyDown,
     itemViewModels,
   };

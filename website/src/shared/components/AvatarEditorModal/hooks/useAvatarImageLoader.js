@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { extractSvgIntrinsicSize } from "@shared/utils/svgIntrinsicSize.js";
+import { extractSvgIntrinsicSize } from "@shared/parsers/svgIntrinsicSize.js";
 import { DEFAULT_VIEWPORT_SIZE } from "../constants.js";
 
 const applySize = ({

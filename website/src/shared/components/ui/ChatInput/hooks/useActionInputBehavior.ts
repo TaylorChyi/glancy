@@ -5,6 +5,7 @@ import type {
 } from "./useActionInputBehavior.types";
 import { useActionButtonConfig } from "./useActionButtonConfig";
 import { useFocusChangeHandlers } from "./useFocusChangeHandlers";
+import { useLanguageActions } from "./useLanguageActions";
 import { useLanguageControlsConfig } from "./useLanguageControlsConfig";
 import { useSubmissionHandlers } from "./useSubmissionHandlers";
 import { useTextareaAutoResize } from "./useTextareaAutoResize";
@@ -43,19 +44,22 @@ const normalizeParams = (
       params.normalizeTargetLanguageFn ?? identityLanguage,
   }) as NormalizedParams;
 
-const buildLanguageControlsParams = (config: NormalizedParams) => ({
+const buildLanguageControlsConfigParams = (config: NormalizedParams) => ({
   sourceLanguage: config.sourceLanguage,
   sourceLanguageOptions: config.sourceLanguageOptions,
   sourceLanguageLabel: config.sourceLanguageLabel,
-  onSourceLanguageChange: config.onSourceLanguageChange,
   targetLanguage: config.targetLanguage,
   targetLanguageOptions: config.targetLanguageOptions,
   targetLanguageLabel: config.targetLanguageLabel,
-  onTargetLanguageChange: config.onTargetLanguageChange,
-  onSwapLanguages: config.onSwapLanguages,
   swapLabel: config.swapLabel,
   normalizeSourceLanguageFn: config.normalizeSourceLanguageFn,
   normalizeTargetLanguageFn: config.normalizeTargetLanguageFn,
+});
+
+const buildLanguageActionsParams = (config: NormalizedParams) => ({
+  onSourceLanguageChange: config.onSourceLanguageChange,
+  onTargetLanguageChange: config.onTargetLanguageChange,
+  onSwapLanguages: config.onSwapLanguages,
   onMenuOpen: config.onMenuOpen,
 });
 
@@ -117,9 +121,19 @@ export default function useActionInputBehavior(
     formRef,
     restoreFocus,
   });
-  const languageControls = useLanguageControlsConfig(
-    buildLanguageControlsParams(config),
+  const languageConfig = useLanguageControlsConfig(
+    buildLanguageControlsConfigParams(config),
   );
+  const languageActions = useLanguageActions(
+    buildLanguageActionsParams(config),
+  );
+  const languageControls: UseActionInputBehaviorResult["languageControls"] = {
+    isVisible: languageConfig.isVisible,
+    props: {
+      ...languageConfig.props,
+      ...languageActions,
+    },
+  };
   const submissionHandlers = useSubmissionHandlers({
     value: config.value,
     onSubmit: config.onSubmit,

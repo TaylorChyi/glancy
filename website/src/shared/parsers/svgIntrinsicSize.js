@@ -8,7 +8,19 @@ const LENGTH_UNIT_TO_PX = Object.freeze({
   q: 96 / (2.54 * 40),
 });
 
-function convertLengthToPixels(value, unitToken) {
+const composeParsers =
+  (...parsers) =>
+  (input) => {
+    for (const parser of parsers) {
+      const result = parser(input);
+      if (result) {
+        return result;
+      }
+    }
+    return null;
+  };
+
+const convertLengthToPixels = (value, unitToken) => {
   const normalizedUnit = unitToken ? unitToken.toLowerCase() : "";
   if (!normalizedUnit || normalizedUnit === "px") {
     return value;
@@ -18,19 +30,9 @@ function convertLengthToPixels(value, unitToken) {
     return null;
   }
   return value * factor;
-}
+};
 
-/**
- * 意图：解析 width/height 属性中的数值部分，忽略像素或常见物理单位后缀。
- * 输入：SVG 节点属性值字符串。
- * 输出：成功解析返回 number，失败返回 null。
- * 流程：
- *  1) 去除空白并匹配数值及单位；
- *  2) 将匹配结果转换为浮点数后按单位换算像素；
- * 错误处理：无法解析或数值非法时返回 null。
- * 复杂度：O(1)。
- */
-function parseNumericDimension(value) {
+const parseNumericDimension = (value) => {
   if (typeof value !== "string") {
     return null;
   }
@@ -48,10 +50,9 @@ function parseNumericDimension(value) {
   if (!Number.isFinite(numeric) || numeric <= 0) {
     return null;
   }
-  const unitToken = match[2] ?? "";
-  const converted = convertLengthToPixels(numeric, unitToken);
+  const converted = convertLengthToPixels(numeric, match[2] ?? "");
   return converted == null ? null : converted;
-}
+};
 
 const parseSvgDocument = (svgContent) => {
   if (typeof svgContent !== "string" || svgContent.trim() === "") {
@@ -66,7 +67,14 @@ const parseSvgDocument = (svgContent) => {
   return svgElement;
 };
 
-const readDimensionsFromAttributes = (element) => {
+const parseViewBoxTokens = (viewBox) =>
+  viewBox
+    .replaceAll(",", " ")
+    .split(/\s+/u)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+const attributeDimensionParser = (element) => {
   const width = parseNumericDimension(element.getAttribute("width"));
   const height = parseNumericDimension(element.getAttribute("height"));
   if (width && height) {
@@ -75,14 +83,7 @@ const readDimensionsFromAttributes = (element) => {
   return null;
 };
 
-const parseViewBoxTokens = (viewBox) =>
-  viewBox
-    .replaceAll(",", " ")
-    .split(/\s+/u)
-    .map((token) => token.trim())
-    .filter(Boolean);
-
-const readDimensionsFromViewBox = (element) => {
+const viewBoxDimensionParser = (element) => {
   const viewBox = element.getAttribute("viewBox");
   if (typeof viewBox !== "string" || viewBox.trim() === "") {
     return null;
@@ -104,26 +105,17 @@ const readDimensionsFromViewBox = (element) => {
   return null;
 };
 
-/**
- * 意图：从 SVG 文本中推导固有宽高。
- * 输入：完整的 SVG 文本内容。
- * 输出：若成功解析返回 { width, height }，否则返回 null。
- * 流程：
- *  1) 使用 DOMParser 解析 SVG；
- *  2) 先读取 width/height 属性的数值；
- *  3) 若缺失则尝试解析 viewBox 的宽高；
- * 错误处理：解析失败或不满足约束时返回 null。
- * 复杂度：O(n)，其中 n 为文本长度，解析由浏览器优化处理。
- */
+const resolveSvgIntrinsicSize = composeParsers(
+  attributeDimensionParser,
+  viewBoxDimensionParser,
+);
+
 export function extractSvgIntrinsicSize(svgContent) {
   const svgElement = parseSvgDocument(svgContent);
   if (!svgElement) {
     return null;
   }
-  return (
-    readDimensionsFromAttributes(svgElement) ??
-    readDimensionsFromViewBox(svgElement)
-  );
+  return resolveSvgIntrinsicSize(svgElement);
 }
 
 export default {

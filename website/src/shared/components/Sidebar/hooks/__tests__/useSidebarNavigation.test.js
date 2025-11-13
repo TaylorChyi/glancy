@@ -7,11 +7,13 @@ const mockUseLanguage = jest.fn(() => ({
   },
   lang: "en",
 }));
+const mockUseUser = jest.fn(() => ({ user: null }));
 
 const mockUseIsMobile = jest.fn(() => false);
 
 jest.unstable_mockModule("@core/context", () => ({
   useLanguage: mockUseLanguage,
+  useUser: mockUseUser,
 }));
 
 jest.unstable_mockModule("@shared/utils/device.js", () => ({
@@ -29,6 +31,7 @@ beforeAll(async () => {
 describe("useSidebarNavigation", () => {
   beforeEach(() => {
     mockUseLanguage.mockClear();
+    mockUseUser.mockClear();
     mockUseIsMobile.mockClear();
   });
 

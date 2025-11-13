@@ -2,17 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@core/context";
 // 避免通过 utils/index 的桶状导出造成 rollup chunk 循环，直接引用具体实现。
 import { useIsMobile } from "@shared/utils/device.js";
-
-const NAVIGATION_KEYS = {
-  DICTIONARY: "dictionary",
-  LIBRARY: "library",
-};
-
-const ICON_NAMES = Object.freeze({
-  // 采用品牌版主图标以保持导航与站点品牌一致，避免多处手动维护别名。
-  DICTIONARY: "brand-glancy-website",
-  LIBRARY: "library",
-});
+import useNavAccess from "./useNavAccess.js";
+import { NAVIGATION_KEYS, useNavItems } from "./useNavItems.js";
 
 /**
  * 意图：集中管理侧边栏导航所需的状态、文案与回调，输出给展示组件。
@@ -64,6 +55,7 @@ export default function useSidebarNavigation({
   }, [isControlled]);
 
   const { t, lang } = useLanguage();
+  const access = useNavAccess();
 
   const headerLabel = useMemo(() => {
     if (t.sidebarNavigationLabel) return t.sidebarNavigationLabel;
@@ -112,33 +104,18 @@ export default function useSidebarNavigation({
     }
   }, [closeSidebar, isMobile, onShowLibrary]);
 
-  const navigationActions = useMemo(
-    () => [
-      {
-        key: NAVIGATION_KEYS.DICTIONARY,
-        label: dictionaryLabel,
-        icon: ICON_NAMES.DICTIONARY,
-        onClick: handleDictionary,
-        active: activeView === NAVIGATION_KEYS.DICTIONARY,
-        testId: "sidebar-nav-dictionary",
-      },
-      {
-        key: NAVIGATION_KEYS.LIBRARY,
-        label: libraryLabel,
-        icon: ICON_NAMES.LIBRARY,
-        onClick: handleLibrary,
-        active: activeView === NAVIGATION_KEYS.LIBRARY,
-        testId: "sidebar-nav-library",
-      },
-    ],
-    [
-      activeView,
-      dictionaryLabel,
-      libraryLabel,
-      handleDictionary,
-      handleLibrary,
-    ],
-  );
+  const navigationActions = useNavItems({
+    access,
+    labels: {
+      dictionary: dictionaryLabel,
+      library: libraryLabel,
+    },
+    handlers: {
+      onDictionary: handleDictionary,
+      onLibrary: handleLibrary,
+    },
+    activeView,
+  });
 
   const shouldShowOverlay = isMobile && resolvedOpen;
 

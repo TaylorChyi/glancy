@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { useTheme } from "@core/context";
 import styles from "./ThemeIcon.module.css";
 import type { ResolvedTheme } from "@shared/theme/mode";
@@ -47,6 +47,34 @@ type FallbackPreset = {
   label: string;
   variant: FallbackPresetKey;
 };
+
+type IconRenderContext = {
+  name: string;
+  inline: string | null;
+  url: string | null;
+  iconRole: IconRoleClass;
+  className: string;
+  style: CSSProperties | undefined;
+  width?: number | string;
+  height?: number | string;
+  decorative: boolean;
+  altText: string;
+  title?: string;
+};
+
+type IconRenderer = (context: IconRenderContext) => ReactElement | null;
+
+const composeRenderers =
+  (...renderers: IconRenderer[]) =>
+  (context: IconRenderContext): ReactElement | null => {
+    for (const renderer of renderers) {
+      const result = renderer(context);
+      if (result) {
+        return result;
+      }
+    }
+    return null;
+  };
 
 const FALLBACK_PRESETS: Record<FallbackPresetKey, FallbackPreset> =
   Object.freeze({
@@ -158,7 +186,7 @@ const pickRenderableAsset = (variant: IconVariantResource | null) => {
   return { inline, url };
 };
 
-const renderInlineIcon = ({
+const renderInlineIcon: IconRenderer = ({
   inline,
   iconRole,
   className,
@@ -168,33 +196,28 @@ const renderInlineIcon = ({
   decorative,
   altText,
   title,
-}: {
-  inline: string;
-  iconRole: IconRoleClass;
-  className: string;
-  style: CSSProperties | undefined;
-  width?: number | string;
-  height?: number | string;
-  decorative: boolean;
-  altText: string;
-  title?: string;
-}) => (
-  <span
-    role={decorative ? undefined : "img"}
-    aria-label={decorative ? undefined : altText}
-    className={composeClassName(
-      `inline-block align-middle ${styles.inline}`,
-      iconRole,
-      className,
-    )}
-    style={computeInlineStyle(style, width, height)}
-    aria-hidden={decorative || undefined}
-    title={title}
-    dangerouslySetInnerHTML={{ __html: inline }}
-  />
-);
+}) => {
+  if (!inline) {
+    return null;
+  }
+  return (
+    <span
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : altText}
+      className={composeClassName(
+        `inline-block align-middle ${styles.inline}`,
+        iconRole,
+        className,
+      )}
+      style={computeInlineStyle(style, width, height)}
+      aria-hidden={decorative || undefined}
+      title={title}
+      dangerouslySetInnerHTML={{ __html: inline }}
+    />
+  );
+};
 
-const renderBitmapIcon = ({
+const renderBitmapIcon: IconRenderer = ({
   url,
   iconRole,
   className,
@@ -204,35 +227,30 @@ const renderBitmapIcon = ({
   decorative,
   altText,
   title,
-}: {
-  url: string;
-  iconRole: IconRoleClass;
-  className: string;
-  style: CSSProperties | undefined;
-  width?: number | string;
-  height?: number | string;
-  decorative: boolean;
-  altText: string;
-  title?: string;
-}) => (
-  <img
-    src={url}
-    alt={altText}
-    className={composeClassName(
-      "inline-block align-middle",
-      iconRole,
-      className,
-    )}
-    width={width}
-    height={height}
-    style={style}
-    aria-hidden={decorative || undefined}
-    title={title}
-    loading="lazy"
-  />
-);
+}) => {
+  if (!url) {
+    return null;
+  }
+  return (
+    <img
+      src={url}
+      alt={altText}
+      className={composeClassName(
+        "inline-block align-middle",
+        iconRole,
+        className,
+      )}
+      width={width}
+      height={height}
+      style={style}
+      aria-hidden={decorative || undefined}
+      title={title}
+      loading="lazy"
+    />
+  );
+};
 
-const renderFallbackIcon = ({
+const renderFallbackIcon: IconRenderer = ({
   name,
   iconRole,
   className,
@@ -242,16 +260,6 @@ const renderFallbackIcon = ({
   decorative,
   altText,
   title,
-}: {
-  name: string;
-  iconRole: IconRoleClass;
-  className: string;
-  style: CSSProperties | undefined;
-  width?: number | string;
-  height?: number | string;
-  decorative: boolean;
-  altText: string;
-  title?: string;
 }) => {
   const fallback = resolveFallback(name as FallbackPresetKey);
   return (
@@ -268,6 +276,12 @@ const renderFallbackIcon = ({
     </span>
   );
 };
+
+const renderIcon = composeRenderers(
+  renderInlineIcon,
+  renderBitmapIcon,
+  renderFallbackIcon,
+);
 
 export function ThemeIcon({
   name,
@@ -287,36 +301,10 @@ export function ThemeIcon({
   const { inline, url } = pickRenderableAsset(resolvedVariant);
   const altText = decorative ? "" : (alt ?? name);
 
-  if (inline) {
-    return renderInlineIcon({
-      inline,
-      iconRole,
-      className,
-      style,
-      width,
-      height,
-      decorative,
-      altText,
-      title,
-    });
-  }
-
-  if (url) {
-    return renderBitmapIcon({
-      url,
-      iconRole,
-      className,
-      style,
-      width,
-      height,
-      decorative,
-      altText,
-      title,
-    });
-  }
-
-  return renderFallbackIcon({
+  const rendered = renderIcon({
     name,
+    inline,
+    url,
     iconRole,
     className,
     style,
@@ -326,6 +314,8 @@ export function ThemeIcon({
     altText,
     title,
   });
+
+  return rendered;
 }
 
 export const EllipsisVerticalIcon = (props: IconProps) => (
