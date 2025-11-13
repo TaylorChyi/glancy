@@ -1,6 +1,31 @@
 import FormRow from "./FormRow.jsx";
 import styles from "./Form.module.css";
 
+const normalizeOption = (option) =>
+  typeof option === "string" ? { value: option, label: option } : option;
+
+const buildSelectConfig = ({
+  className = "",
+  options = [],
+  onChange,
+  ...selectProps
+}) => {
+  const normalizedOptions = options.map(normalizeOption);
+  const cls = [styles.select, className].filter(Boolean).join(" ");
+  const handleChange = (event) => {
+    onChange?.(event.target.value);
+  };
+
+  return {
+    selectProps: {
+      ...selectProps,
+      className: cls,
+      onChange: handleChange,
+    },
+    options: normalizedOptions,
+  };
+};
+
 function SelectField({
   label,
   id,
@@ -10,27 +35,23 @@ function SelectField({
   className = "",
   ...props
 }) {
-  const cls = [styles.select, className].filter(Boolean).join(" ");
-  const handleChange = (e) => {
-    onChange && onChange(e.target.value);
-  };
+  const { selectProps, options: normalizedOptions } = buildSelectConfig({
+    id,
+    value,
+    onChange,
+    options,
+    className,
+    ...props,
+  });
   const selectEl = (
     <select
-      id={id}
-      className={cls}
-      value={value}
-      onChange={handleChange}
-      {...props}
+      {...selectProps}
     >
-      {options.map((opt) => {
-        const option =
-          typeof opt === "string" ? { value: opt, label: opt } : opt;
-        return (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        );
-      })}
+      {normalizedOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
     </select>
   );
 

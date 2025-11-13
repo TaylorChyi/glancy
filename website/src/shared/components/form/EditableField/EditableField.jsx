@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import useEditableField from "@shared/hooks/useEditableField.js";
 import styles from "./EditableField.module.css";
 
 function EditableField({
@@ -11,19 +11,13 @@ function EditableField({
   buttonClassName = "",
   buttonText = "Edit",
 }) {
-  const [editing, setEditing] = useState(!disabled);
-
-  useEffect(() => {
-    setEditing(!disabled);
-  }, [disabled]);
+  const { editing, enableEdit } = useEditableField(disabled);
 
   const containerCls = [styles.field, className].filter(Boolean).join(" ");
   const inputCls = [styles.input, inputClassName].filter(Boolean).join(" ");
   const btnCls = [styles["edit-btn"], buttonClassName]
     .filter(Boolean)
     .join(" ");
-
-  const enableEdit = () => setEditing(true);
 
   return (
     <div className={containerCls}>
