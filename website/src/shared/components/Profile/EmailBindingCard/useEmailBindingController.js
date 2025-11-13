@@ -12,113 +12,71 @@ const computeSubmitDisabled = (
   isVerifying,
 ) => !isVerificationForDraft || !isAwaitingVerification || isVerifying;
 
-const buildViewModelParams = ({
-  email,
-  mode,
-  isSendingCode,
-  isVerifying,
-  isUnbinding,
-  isAwaitingVerification,
-  requestedEmail,
-  normalizedRequestedEmail,
-  draftEmail,
-  verificationCode,
-  remainingSeconds,
-  isSubmitDisabled,
-  isVerificationForDraft,
-  onStart,
-  onCancel,
-  onUnbind,
-  t,
-  handlers,
-}) => ({
-  email,
-  mode,
-  isSendingCode,
-  isVerifying,
-  isUnbinding,
-  isAwaitingVerification,
-  requestedEmail,
-  normalizedRequestedEmail,
-  draftEmail,
-  verificationCode,
-  remainingSeconds,
-  isSubmitDisabled,
-  isVerificationForDraft,
-  onStart,
-  onCancel,
-  onRequestCode: handlers.handleRequestCode,
-  onConfirm: handlers.handleSubmit,
-  onUnbind,
-  onDraftEmailChange: handlers.handleDraftEmailChange,
-  onVerificationCodeChange: handlers.handleVerificationCodeChange,
-  t,
-});
-
-export default function useEmailBindingController(props) {
-  const {
-    email,
-    mode,
-    isSendingCode,
-    isVerifying,
-    isUnbinding,
-    isAwaitingVerification,
-    requestedEmail,
-    onStart,
-    onCancel,
-    onRequestCode,
-    onConfirm,
-    onUnbind,
-    t,
-  } = props;
-
+function useEmailBindingPreparation(props) {
   const countdown = useCountdownTimer(COUNTDOWN_SECONDS);
   const state = useEmailBindingState({
-    email,
-    mode,
+    email: props.email,
+    mode: props.mode,
     resetCountdown: countdown.reset,
   });
   const normalized = useEmailBindingNormalization(
     state.draftEmail,
-    requestedEmail,
+    props.requestedEmail,
   );
-
   const handlers = useEmailBindingHandlers({
     draftEmail: state.draftEmail,
     setDraftEmail: state.setDraftEmail,
     verificationCode: state.verificationCode,
     setVerificationCode: state.setVerificationCode,
-    onRequestCode,
-    onConfirm,
+    onRequestCode: props.onRequestCode,
+    onConfirm: props.onConfirm,
     startCountdown: countdown.start,
   });
-
   const isSubmitDisabled = computeSubmitDisabled(
     normalized.isVerificationForDraft,
-    isAwaitingVerification,
-    isVerifying,
+    props.isAwaitingVerification,
+    props.isVerifying,
   );
 
-  return createEmailBindingViewModel(
-    buildViewModelParams({
-      email,
-      mode,
-      isSendingCode,
-      isVerifying,
-      isUnbinding,
-      isAwaitingVerification,
-      requestedEmail,
-      normalizedRequestedEmail: normalized.normalizedRequestedEmail,
-      draftEmail: state.draftEmail,
-      verificationCode: state.verificationCode,
-      remainingSeconds: countdown.remainingSeconds,
-      isSubmitDisabled,
-      isVerificationForDraft: normalized.isVerificationForDraft,
-      onStart,
-      onCancel,
-      onUnbind,
-      t,
-      handlers,
-    }),
-  );
+  return {
+    countdown,
+    state,
+    normalized,
+    handlers,
+    isSubmitDisabled,
+  };
+}
+
+function mapToViewModelParams(props, preparation) {
+  return {
+    email: props.email,
+    mode: props.mode,
+    isSendingCode: props.isSendingCode,
+    isVerifying: props.isVerifying,
+    isUnbinding: props.isUnbinding,
+    isAwaitingVerification: props.isAwaitingVerification,
+    requestedEmail: props.requestedEmail,
+    normalizedRequestedEmail:
+      preparation.normalized.normalizedRequestedEmail,
+    draftEmail: preparation.state.draftEmail,
+    verificationCode: preparation.state.verificationCode,
+    remainingSeconds: preparation.countdown.remainingSeconds,
+    isSubmitDisabled: preparation.isSubmitDisabled,
+    isVerificationForDraft: preparation.normalized.isVerificationForDraft,
+    onStart: props.onStart,
+    onCancel: props.onCancel,
+    onUnbind: props.onUnbind,
+    t: props.t,
+    onRequestCode: preparation.handlers.handleRequestCode,
+    onConfirm: preparation.handlers.handleSubmit,
+    onDraftEmailChange: preparation.handlers.handleDraftEmailChange,
+    onVerificationCodeChange:
+      preparation.handlers.handleVerificationCodeChange,
+  };
+}
+
+export default function useEmailBindingController(props) {
+  const preparation = useEmailBindingPreparation(props);
+  const viewModelParams = mapToViewModelParams(props, preparation);
+  return createEmailBindingViewModel(viewModelParams);
 }

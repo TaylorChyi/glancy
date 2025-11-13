@@ -101,4 +101,28 @@ describe("EmailBindingCard code request cooldown", () => {
 
     expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
   });
+
+  /**
+   * 测试目标：解绑按钮被点击时应调用 onUnbind。
+   * 前置条件：组件处于已绑定查看态，提供 onUnbind mock。
+   * 步骤：
+   *  1) 渲染组件；
+   *  2) 点击 Unbind 按钮。
+   * 断言：
+   *  - onUnbind 被调用一次。
+   * 边界/异常：
+   *  - 覆盖解绑操作仍可响应的路径。
+   */
+  test("GivenBoundEmail_WhenClickingUnbind_ThenInvokeUnbindHandler", () => {
+    const handleUnbind = jest.fn();
+    renderEmailBindingCard({
+      email: "user@example.com",
+      mode: "idle",
+      onUnbind: handleUnbind,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Unbind email" }));
+
+    expect(handleUnbind).toHaveBeenCalledTimes(1);
+  });
 });
