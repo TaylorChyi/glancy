@@ -269,6 +269,7 @@
                                 <configuration>
                                         <source>17</source>
                                         <target>17</target>
+                                        <generatedSourcesDirectory>target/generated-sources/annotations</generatedSourcesDirectory>
                                         <parameters>true</parameters>
                                         <annotationProcessorPaths>
                                                 <path>

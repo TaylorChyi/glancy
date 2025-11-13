@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -93,10 +94,8 @@ public class GlobalExceptionHandler {
     if (ex instanceof MethodArgumentNotValidException manve
         && manve.getParameter() != null
         && manve.getParameter().hasParameterAnnotation(ModelAttribute.class)) {
-      String fieldName =
-          manve.getBindingResult().getFieldError() != null
-              ? manve.getBindingResult().getFieldError().getField()
-              : "parameter";
+      FieldError fieldError = manve.getBindingResult().getFieldError();
+      String fieldName = fieldError != null ? fieldError.getField() : "parameter";
       log.error("Invalid model attribute parameter: {}", fieldName, ex);
       String msg = "Invalid value for parameter: " + fieldName;
       return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
@@ -147,8 +146,8 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(BindException.class)
   public ResponseEntity<?> handleBindException(BindException ex) {
-    String fieldName =
-        ex.getFieldError() != null ? ex.getFieldError().getField() : "request parameter";
+    FieldError fieldError = ex.getFieldError();
+    String fieldName = fieldError != null ? fieldError.getField() : "request parameter";
     log.error("Failed to bind request parameter: {}", fieldName, ex);
     String msg = "Invalid value for parameter: " + fieldName;
     return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);

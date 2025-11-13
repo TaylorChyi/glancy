@@ -5,18 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.dto.WordResponse;
 import com.glancy.backend.entity.Language;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JacksonWordResponseParser implements WordResponseParser {
 
   private final ObjectMapper objectMapper;
-
-  public JacksonWordResponseParser(ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
-  }
 
   @Override
   public ParsedWord parse(String content, String term, Language language) {
