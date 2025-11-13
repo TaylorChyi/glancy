@@ -1,8 +1,8 @@
 import type { RefObject } from "react";
 
 import useDictionaryBottomPanelModel from "./useDictionaryBottomPanelModel.ts";
-import useDictionaryLayoutViewProps from "./useDictionaryLayoutViewProps.ts";
-import useDictionaryReportingProps from "./useDictionaryReportingProps.ts";
+import useDictionaryLayoutViewPropsHook from "./useDictionaryLayoutViewProps.ts";
+import useDictionaryReportingPropsHook from "./useDictionaryReportingProps.ts";
 
 type DictionaryExperienceShellProps = {
   t: Record<string, string> | undefined;
@@ -50,6 +50,71 @@ type DictionaryExperienceShellProps = {
   reportDialogHandlers: Record<string, any>;
 };
 
+type DictionaryBottomPanelSelectorArgs = Pick<
+  DictionaryExperienceShellProps,
+  | "t"
+  | "viewState"
+  | "entry"
+  | "finalText"
+  | "text"
+  | "setText"
+  | "dictionarySourceLanguage"
+  | "setDictionarySourceLanguage"
+  | "dictionaryTargetLanguage"
+  | "setDictionaryTargetLanguage"
+  | "sourceLanguageOptions"
+  | "targetLanguageOptions"
+  | "handleSwapLanguages"
+  | "handleSend"
+  | "dictionaryActionBarProps"
+  | "inputRef"
+  | "focusInput"
+  | "dictionarySourceLanguageLabel"
+  | "dictionaryTargetLanguageLabel"
+  | "dictionarySwapLanguagesLabel"
+  | "chatInputPlaceholder"
+>;
+
+export const useDictionaryBottomPanel = (
+  props: DictionaryBottomPanelSelectorArgs,
+) => useDictionaryBottomPanelModel(props);
+
+type DictionaryLayoutSelectorArgs = Pick<
+  DictionaryExperienceShellProps,
+  | "viewState"
+  | "activeView"
+  | "handleShowDictionary"
+  | "handleShowLibrary"
+  | "handleSelectHistory"
+  | "displayClassName"
+  | "libraryLandingLabel"
+  | "focusInput"
+  | "entry"
+  | "finalText"
+  | "loading"
+  | "searchEmptyState"
+> & {
+  bottomPanelState: ReturnType<typeof useDictionaryBottomPanelModel>["bottomPanelState"];
+};
+
+export const useDictionaryLayoutProps = ({
+  bottomPanelState,
+  ...layoutArgs
+}: DictionaryLayoutSelectorArgs) =>
+  useDictionaryLayoutViewPropsHook({
+    ...layoutArgs,
+    bottomPanelState,
+  });
+
+type DictionaryReportingSelectorArgs = Pick<
+  DictionaryExperienceShellProps,
+  "reportDialog" | "reportDialogHandlers" | "popupConfig" | "toast" | "closeToast"
+>;
+
+export const useDictionaryReportingPropsSelector = (
+  props: DictionaryReportingSelectorArgs,
+) => useDictionaryReportingPropsHook(props);
+
 export const useDictionaryExperienceShellModel = (
   props: DictionaryExperienceShellProps,
 ) => {
@@ -90,7 +155,7 @@ export const useDictionaryExperienceShellModel = (
     reportDialogHandlers,
   } = props;
 
-  const { bottomPanel, bottomPanelState } = useDictionaryBottomPanelModel({
+  const { bottomPanel, bottomPanelState } = useDictionaryBottomPanel({
     t,
     viewState,
     entry,
@@ -114,7 +179,7 @@ export const useDictionaryExperienceShellModel = (
     chatInputPlaceholder,
   });
 
-  const layoutProps = useDictionaryLayoutViewProps({
+  const layoutProps = useDictionaryLayoutProps({
     viewState,
     activeView,
     handleShowDictionary,
@@ -130,7 +195,7 @@ export const useDictionaryExperienceShellModel = (
     searchEmptyState,
   });
 
-  const reportingProps = useDictionaryReportingProps({
+  const reportingProps = useDictionaryReportingPropsSelector({
     reportDialog,
     reportDialogHandlers,
     popupConfig,

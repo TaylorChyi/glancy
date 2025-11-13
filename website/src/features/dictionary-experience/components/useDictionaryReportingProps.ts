@@ -17,6 +17,48 @@ export type UseDictionaryReportingPropsArgs = {
   closeToast: (() => void) | undefined;
 };
 
+type CreateDictionaryReportingPropsArgs = UseDictionaryReportingPropsArgs;
+
+export const createDictionaryReportingProps = ({
+  reportDialog,
+  reportDialogHandlers,
+  popupConfig,
+  toast,
+  closeToast,
+}: CreateDictionaryReportingPropsArgs) => ({
+  reportPanel: {
+    open: reportDialog.open,
+    term: reportDialog.term,
+    language: reportDialog.language,
+    flavor: reportDialog.flavor,
+    sourceLanguage: reportDialog.sourceLanguage,
+    targetLanguage: reportDialog.targetLanguage,
+    category: reportDialog.category,
+    categories: reportDialog.categories ?? [],
+    description: reportDialog.description,
+    submitting: reportDialog.submitting,
+    error: reportDialog.error ?? "",
+    onClose: reportDialogHandlers.close,
+    onCategoryChange: reportDialogHandlers.setCategory,
+    onDescriptionChange: reportDialogHandlers.setDescription,
+    onSubmit: reportDialogHandlers.submit,
+  },
+  feedbackHub: {
+    popup: popupConfig,
+    toast: toast
+      ? {
+          open: toast.open,
+          message: toast.message,
+          duration: toast.duration,
+          backgroundColor: toast.backgroundColor,
+          textColor: toast.textColor,
+          closeLabel: toast.closeLabel,
+          onClose: closeToast,
+        }
+      : undefined,
+  },
+});
+
 export const useDictionaryReportingProps = ({
   reportDialog,
   reportDialogHandlers,
@@ -25,39 +67,14 @@ export const useDictionaryReportingProps = ({
   closeToast,
 }: UseDictionaryReportingPropsArgs) =>
   useMemo(
-    () => ({
-      reportPanel: {
-        open: reportDialog.open,
-        term: reportDialog.term,
-        language: reportDialog.language,
-        flavor: reportDialog.flavor,
-        sourceLanguage: reportDialog.sourceLanguage,
-        targetLanguage: reportDialog.targetLanguage,
-        category: reportDialog.category,
-        categories: reportDialog.categories ?? [],
-        description: reportDialog.description,
-        submitting: reportDialog.submitting,
-        error: reportDialog.error ?? "",
-        onClose: reportDialogHandlers.close,
-        onCategoryChange: reportDialogHandlers.setCategory,
-        onDescriptionChange: reportDialogHandlers.setDescription,
-        onSubmit: reportDialogHandlers.submit,
-      },
-      feedbackHub: {
-        popup: popupConfig,
-        toast: toast
-          ? {
-              open: toast.open,
-              message: toast.message,
-              duration: toast.duration,
-              backgroundColor: toast.backgroundColor,
-              textColor: toast.textColor,
-              closeLabel: toast.closeLabel,
-              onClose: closeToast,
-            }
-          : undefined,
-      },
-    }),
+    () =>
+      createDictionaryReportingProps({
+        reportDialog,
+        reportDialogHandlers,
+        popupConfig,
+        toast,
+        closeToast,
+      }),
     [closeToast, popupConfig, reportDialog, reportDialogHandlers, toast],
   );
 
