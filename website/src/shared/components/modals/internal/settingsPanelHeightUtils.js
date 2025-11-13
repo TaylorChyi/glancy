@@ -31,3 +31,16 @@ export const measureInstantly = (node) => {
   const rect = node.getBoundingClientRect();
   return sanitizeHeight(rect?.height ?? null);
 };
+
+export const resolvePanelHeight = (heightMap) => {
+  if (!heightMap || typeof heightMap !== "object") {
+    return null;
+  }
+  if (heightMap.reference != null) {
+    return Math.ceil(heightMap.reference);
+  }
+  if (heightMap.active != null) {
+    return Math.ceil(heightMap.active);
+  }
+  return null;
+};
