@@ -154,73 +154,96 @@ const { useDictionaryExperience } = await import(
   "../hooks/useDictionaryExperience.js"
 );
 
+const mockExperienceState = (overrides) => {
+  useDictionaryExperience.mockImplementation(() =>
+    buildExperienceState(overrides),
+  );
+};
+
+const renderExperience = (overrides) => {
+  if (overrides !== undefined) {
+    mockExperienceState(overrides);
+  }
+
+  const user = userEvent.setup();
+  render(<DictionaryExperience />);
+
+  return {
+    user,
+    initialFocusCalls: focusInputMock.mock.calls.length,
+  };
+};
+
+const clickButtonByLabel = (user, label) =>
+  user.click(screen.getByRole("button", { name: label }));
+
+const expectSearchModeWithFocus = async (initialFocusCalls) => {
+  await waitFor(() => {
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
+  });
+};
+
+const performRetryFromActionsPanel = async () => {
+  const context = renderExperience();
+  await clickButtonByLabel(context.user, "重试释义");
+  return context;
+};
+
+const switchToSearchMode = async (user) => {
+  await clickButtonByLabel(user, "返回搜索");
+  return screen.findByRole("textbox");
+};
+
+const focusTextarea = async (user, textarea) => {
+  await user.click(textarea);
+  expect(textarea).toHaveFocus();
+};
+
+const expectRetryHandlerCalled = async () => {
+  await waitFor(() => {
+    expect(handleReoutputMock).toHaveBeenCalledTimes(1);
+  });
+};
+
 describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
     focusInputMock.mockClear();
     handleReoutputMock.mockClear();
     inputRef.current = null;
-    useDictionaryExperience.mockImplementation(() =>
-      buildExperienceState(),
-    );
+    mockExperienceState();
   });
 
-  /**
-   * 测试目标：验证从操作面板切换回搜索模式时，底部输入框在重新挂载后被聚焦。
-   * 前置条件：useDictionaryExperience 与 useBottomPanelState 被桩件固定为“存在词条且初始模式为 actions”。
-   * 步骤：
-   *  1) 渲染 DictionaryExperience；
-   *  2) 确认初始渲染展示操作面板且未触发 focusInput；
-   *  3) 点击“返回搜索”按钮切换到底部搜索模式；
-   *  4) 等待 ChatInput 重新挂载并触发聚焦副作用。
-   * 断言：
-   *  - 初始阶段 focusInput 未被调用；
-   *  - 点击按钮后最终调用一次 focusInput。
-   * 边界/异常：
-   *  - 当输入框 ref 尚未建立时不会触发聚焦，避免空引用异常。
-   */
-  test("Given_actionsPanel_When_switchBackToSearch_Then_focusesChatInputAfterRemount", async () => {
-    const user = userEvent.setup();
-    render(<DictionaryExperience />);
+  describe("actions 面板与搜索模式切换", () => {
+    /**
+     * 测试目标：验证从操作面板切换回搜索模式时，底部输入框在重新挂载后被聚焦。
+     */
+    it("Given_actionsPanel_When_switchBackToSearch_Then_focusesChatInputAfterRemount", async () => {
+      const { user, initialFocusCalls } = renderExperience();
 
-    const searchButton = screen.getByRole("button", { name: "返回搜索" });
-    const initialFocusCalls = focusInputMock.mock.calls.length;
+      await clickButtonByLabel(user, "返回搜索");
 
-    await user.click(searchButton);
-
-    await waitFor(() => {
-      expect(screen.getByRole("textbox")).toBeInTheDocument();
-      expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
+      await expectSearchModeWithFocus(initialFocusCalls);
     });
-  });
 
-  /**
-   * 测试目标：验证点击“重试释义”按钮会触发重试逻辑并回落至搜索模式。
-   * 前置条件：底部面板初始处于 actions 模式且暴露 onReoutput 回调。
-   * 步骤：
-   *  1) 渲染 DictionaryExperience 并确认无搜索输入；
-   *  2) 点击“重试释义”按钮；
-   * 断言：
-   *  - onReoutput 被调用一次；
-   *  - ChatInput 重新挂载（表示模式切换至 search）；
-   *  - focusInput 被再次调用，确保聚焦恢复。
-   * 边界/异常：
-   *  - 若重试按钮在无释义场景下隐藏，该用例需同步调整前置条件。
-   */
-  test("Given_actionsPanel_When_retryDefinition_Then_switchToSearchAndFocusInput", async () => {
-    const user = userEvent.setup();
-    render(<DictionaryExperience />);
+    describe("重试释义", () => {
+      /**
+       * 测试目标：验证点击“重试释义”按钮会触发重试逻辑。
+       */
+      it("Given_actionsPanel_When_retryDefinition_Then_callsReoutputHandler", async () => {
+        await performRetryFromActionsPanel();
 
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+        await expectRetryHandlerCalled();
+      });
 
-    const retryButton = screen.getByRole("button", { name: "重试释义" });
-    const initialFocusCalls = focusInputMock.mock.calls.length;
+      /**
+       * 测试目标：验证重试后底部输入框重新获得焦点。
+       */
+      it("Given_actionsPanel_When_retryDefinition_Then_restoresSearchFocus", async () => {
+        const { initialFocusCalls } = await performRetryFromActionsPanel();
 
-    await user.click(retryButton);
-
-    await waitFor(() => {
-      expect(handleReoutputMock).toHaveBeenCalledTimes(1);
-      expect(screen.getByRole("textbox")).toBeInTheDocument();
-      expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
+        await expectSearchModeWithFocus(initialFocusCalls);
+      });
     });
   });
 
@@ -238,24 +261,15 @@ describe("DictionaryExperience focus management", () => {
    *  - 若未来引入自动补全导致按钮自动启用，需要同步调整断言。
    */
   test("Given_searchMode_When_sendDisabled_ThenRetainFocusWithoutSubmit", async () => {
-    const user = userEvent.setup();
     const handleSend = jest.fn();
-    useDictionaryExperience.mockImplementation(() =>
-      buildExperienceState({ handleSend }),
-    );
+    const { user } = renderExperience({ handleSend });
 
-    render(<DictionaryExperience />);
-
-    const searchButton = screen.getByRole("button", { name: "返回搜索" });
-    await user.click(searchButton);
-
-    const textarea = await screen.findByRole("textbox");
-    await user.click(textarea);
-    expect(textarea).toHaveFocus();
+    const textarea = await switchToSearchMode(user);
+    await focusTextarea(user, textarea);
 
     const sendButton = screen.getByRole("button", { name: "Send" });
     expect(sendButton).toBeDisabled();
-    await user.click(sendButton);
+    await clickButtonByLabel(user, "Send");
 
     expect(handleSend).not.toHaveBeenCalled();
   });
@@ -275,30 +289,24 @@ describe("DictionaryExperience focus management", () => {
    *  - 若未来回车提交逻辑新增组合键，需要同步调整触发输入。
    */
   test("Given_searchSubmission_When_pressEnter_Then_showActionsAndResetInput", async () => {
-    const user = userEvent.setup();
     const setTextMock = jest.fn();
     const handleSendMock = jest.fn((event) => {
       event.preventDefault();
       setTextMock("");
     });
 
-    useDictionaryExperience.mockImplementation(() =>
-      buildExperienceState({
-        text: "mock term",
-        setText: setTextMock,
-        handleSend: handleSendMock,
-      }),
-    );
-
-    render(<DictionaryExperience />);
+    const { user } = renderExperience({
+      text: "mock term",
+      setText: setTextMock,
+      handleSend: handleSendMock,
+    });
 
     expect(
       screen.queryByRole("button", { name: "返回搜索" }),
     ).not.toBeInTheDocument();
 
     const textarea = screen.getByRole("textbox");
-    await user.click(textarea);
-    expect(textarea).toHaveFocus();
+    await focusTextarea(user, textarea);
     await waitFor(() => {
       expect(textarea).toHaveValue("mock term");
     });
