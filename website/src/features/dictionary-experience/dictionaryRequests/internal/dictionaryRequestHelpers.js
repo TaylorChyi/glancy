@@ -1,17 +1,18 @@
-import { wordCacheKey } from "@shared/api/words.js";
 import {
   resolveDictionaryConfig,
   resolveDictionaryFlavor,
   WORD_LANGUAGE_AUTO,
 } from "@shared/utils";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../../dictionaryExperienceViews.js";
-import { normalizeDictionaryMarkdown } from "../../markdown/dictionaryMarkdownNormalizer.js";
 import { coerceResolvedTerm } from "../../hooks/coerceResolvedTerm.js";
+import {
+  buildCacheKey,
+  tryHydrateCachedVersion,
+  buildSuccessResult,
+  applyFallbackResult,
+} from "./dictionaryCacheUtils.js";
 
 export const sanitizeTerm = (value = "") => value.trim();
-
-export const buildCacheKey = ({ term, language, flavor }) =>
-  wordCacheKey({ term, language, flavor });
 
 const createLookupConfig = ({ term, sourceLanguage, targetLanguage, flavor }) =>
   resolveDictionaryConfig(term, {
@@ -19,30 +20,6 @@ const createLookupConfig = ({ term, sourceLanguage, targetLanguage, flavor }) =>
     targetLanguage,
     flavor,
   });
-
-const buildFallbackEntry = (data) => {
-  if (!data || typeof data !== "object") return null;
-  return {
-    ...data,
-    markdown: normalizeDictionaryMarkdown(data.markdown ?? ""),
-  };
-};
-
-export const tryHydrateCachedVersion = ({
-  cacheKey,
-  versionId,
-  applyRecord,
-  wordStoreApi,
-}) => {
-  if (!cacheKey) return null;
-  const cached = wordStoreApi.getState().getRecord?.(cacheKey);
-  if (!cached) return null;
-  return applyRecord(
-    cacheKey,
-    cached,
-    versionId ?? cached.activeVersionId,
-  );
-};
 
 export const resolveHistorySelection = ({
   strategy,
@@ -83,40 +60,6 @@ export const resolveHistorySelection = ({
     }),
     selection,
   };
-};
-
-export const buildSuccessResult = ({
-  resolvedTerm,
-  normalized,
-  language,
-  flavor,
-}) => ({
-  status: "success",
-  term: resolvedTerm,
-  queriedTerm: normalized,
-  detectedLanguage: language,
-  flavor,
-});
-
-export const applyFallbackResult = ({
-  data,
-  normalized,
-  setEntry,
-  setFinalText,
-  setCurrentTerm,
-}) => {
-  const entry = buildFallbackEntry(data);
-  if (!entry) {
-    resetFallbackState({ setEntry, setFinalText, setCurrentTerm, normalized });
-    return normalized;
-  }
-  return commitFallbackEntry({
-    entry,
-    normalized,
-    setEntry,
-    setFinalText,
-    setCurrentTerm,
-  });
 };
 
 export const prepareLookup = ({
@@ -211,26 +154,6 @@ function resolveHistoryVersionId(selection) {
     selection?.activeVersionId ??
     null
   );
-}
-
-function resetFallbackState({ setEntry, setFinalText, setCurrentTerm, normalized }) {
-  setEntry(null);
-  setFinalText("");
-  setCurrentTerm(normalized);
-}
-
-function commitFallbackEntry({
-  entry,
-  normalized,
-  setEntry,
-  setFinalText,
-  setCurrentTerm,
-}) {
-  setEntry(entry);
-  setFinalText(entry.markdown ?? "");
-  const resolvedTerm = entry.term ?? normalized;
-  setCurrentTerm(resolvedTerm);
-  return resolvedTerm;
 }
 
 function beginLookupSession({ state, copyController, lookupController }) {
