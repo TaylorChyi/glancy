@@ -1,71 +1,11 @@
-import { useEffect, useMemo } from "react";
-import type { RefObject, FocusEvent } from "react";
+import { useMemo } from "react";
+import type { RefObject } from "react";
 
-import useBottomPanelState, {
-  PANEL_MODE_SEARCH,
-} from "../hooks/useBottomPanelState";
+import useBottomPanelState from "../hooks/useBottomPanelState";
 import { buildBottomPanelModel } from "./helpers/dictionaryBottomPanelHelpers.ts";
-
-const useDictionaryActionBarViewModel = (
-  dictionaryActionBarProps: Record<string, unknown> | undefined,
-  activateSearchMode: () => void,
-) =>
-  useMemo(() => {
-    if (!dictionaryActionBarProps || typeof dictionaryActionBarProps !== "object") {
-      return dictionaryActionBarProps;
-    }
-    const originalReoutput = dictionaryActionBarProps.onReoutput;
-    if (typeof originalReoutput !== "function") {
-      return dictionaryActionBarProps;
-    }
-    const wrappedReoutput = (...args: unknown[]) => {
-      activateSearchMode();
-      return originalReoutput(...args);
-    };
-    return { ...dictionaryActionBarProps, onReoutput: wrappedReoutput };
-  }, [activateSearchMode, dictionaryActionBarProps]);
-
-const useSearchModeAutoFocus = ({
-  bottomPanelMode,
-  inputRef,
-  focusInput,
-}: {
-  bottomPanelMode: string;
-  inputRef: RefObject<HTMLInputElement>;
-  focusInput: () => void;
-}) => {
-  useEffect(() => {
-    if (bottomPanelMode !== PANEL_MODE_SEARCH) return;
-    if (!inputRef.current) return;
-    focusInput();
-  }, [bottomPanelMode, focusInput, inputRef]);
-};
-
-const createInputFocusChangeHandler = ({
-  handlePanelFocusChange,
-  activateActionsMode,
-}: {
-  handlePanelFocusChange: (context: any) => void;
-  activateActionsMode: () => void;
-}) =>
-  (context: {
-    isFocused: boolean;
-    formElement?: HTMLFormElement;
-    event: FocusEvent;
-  }) => {
-    handlePanelFocusChange(context);
-    if (context.isFocused) {
-      return;
-    }
-    const { formElement, event } = context;
-    const relatedTarget = (event as FocusEvent).relatedTarget as Node | null;
-    const isWithinForm = Boolean(
-      formElement && relatedTarget && formElement.contains(relatedTarget),
-    );
-    if (!isWithinForm) {
-      activateActionsMode();
-    }
-  };
+import { useDictionaryActionBarViewModel } from "./helpers/useDictionaryActionBarViewModel.ts";
+import { createInputFocusChangeHandler } from "./helpers/dictionaryInputFocusHandlers.ts";
+import { useDictionarySearchModeAutoFocus } from "./helpers/useDictionarySearchModeAutoFocus.ts";
 
 export type UseDictionaryBottomPanelModelArgs = {
   t: Record<string, string> | undefined;
@@ -118,12 +58,12 @@ export const useDictionaryBottomPanelModel = ({
     viewState.isDictionary && Boolean(entry?.term || finalText);
 
   const bottomPanelState = useBottomPanelState({ hasDefinition, text });
-  const dictionaryActionBarViewModel = useDictionaryActionBarViewModel(
+  const dictionaryActionBarViewModel = useDictionaryActionBarViewModel({
     dictionaryActionBarProps,
-    bottomPanelState.activateSearchMode,
-  );
+    activateSearchMode: bottomPanelState.activateSearchMode,
+  });
 
-  useSearchModeAutoFocus({
+  useDictionarySearchModeAutoFocus({
     bottomPanelMode: bottomPanelState.mode,
     inputRef,
     focusInput,

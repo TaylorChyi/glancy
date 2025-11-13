@@ -1,13 +1,9 @@
 import { useCallback } from "react";
 import { useDictionaryClient } from "@shared/services/dictionary/dictionaryClient.ts";
 import { useDictionaryRecordHydrator } from "../../hooks/useDictionaryRecordHydrator.js";
+import { normalizeDictionaryMarkdown } from "../../markdown/dictionaryMarkdownNormalizer.js";
 import { sanitizeTerm, prepareLookup, resolveResolvedTerm } from "./dictionaryRequestHelpers.js";
-import {
-  buildCacheKey,
-  tryHydrateCachedVersion,
-  buildSuccessResult,
-  applyFallbackResult,
-} from "./dictionaryCacheUtils.js";
+import { buildCacheKey } from "./dictionaryCacheUtils.js";
 
 const validateLoadEntryInput = ({ term, userId, popup }) => {
   const normalized = sanitizeTerm(term);
@@ -43,16 +39,61 @@ const prepareLoadEntryContext = ({
   return { type: "context", context };
 };
 
+const getCachedRecord = (cacheKey, wordStoreApi) => {
+  if (!cacheKey) return null;
+  return wordStoreApi.getState().getRecord?.(cacheKey) ?? null;
+};
+
+const hydrateCachedRecord = ({ cacheKey, versionId, applyRecord, wordStoreApi }) => {
+  const cached = getCachedRecord(cacheKey, wordStoreApi);
+  if (!cached) {
+    return null;
+  }
+  return applyRecord(cacheKey, cached, versionId ?? cached.activeVersionId);
+};
+
 const hydrateInitialCache = ({ context, options, applyRecord, wordStoreApi }) => {
   if (!options.versionId) {
     return null;
   }
-  return tryHydrateCachedVersion({
+  return hydrateCachedRecord({
     cacheKey: context.cacheKey,
     versionId: options.versionId,
     applyRecord,
     wordStoreApi,
   });
+};
+
+const buildSuccessResult = ({ resolvedTerm, normalized, language, flavor }) => ({
+  status: "success",
+  term: resolvedTerm,
+  queriedTerm: normalized,
+  detectedLanguage: language,
+  flavor,
+});
+
+const normalizeFallbackEntry = (data) => {
+  if (!data || typeof data !== "object") return null;
+  return {
+    ...data,
+    markdown: normalizeDictionaryMarkdown(data.markdown ?? ""),
+  };
+};
+
+const applyFallbackResult = ({ data, normalized, state }) => {
+  const entry = normalizeFallbackEntry(data);
+  if (!entry) {
+    state.setEntry(null);
+    state.setFinalText("");
+    state.setCurrentTerm(normalized);
+    return normalized;
+  }
+
+  state.setEntry(entry);
+  state.setFinalText(entry.markdown ?? "");
+  const resolvedTerm = entry.term ?? normalized;
+  state.setCurrentTerm(resolvedTerm);
+  return resolvedTerm;
 };
 
 const resolveCacheHit = ({
@@ -123,7 +164,7 @@ const normalizeNetworkResponse = ({
     state.setCurrentTermKey(resolvedKey);
   }
 
-  const hydrated = tryHydrateCachedVersion({
+  const hydrated = hydrateCachedRecord({
     cacheKey: resolvedKey,
     versionId: options.versionId,
     applyRecord,
@@ -135,9 +176,7 @@ const normalizeNetworkResponse = ({
     : applyFallbackResult({
         data: response.data,
         normalized: context.normalized,
-        setEntry: state.setEntry,
-        setFinalText: state.setFinalText,
-        setCurrentTerm: state.setCurrentTerm,
+        state,
       });
 
   return {
@@ -177,7 +216,7 @@ export const useDictionaryRequestLoaders = (core) => {
 
   const hydrateRecord = useCallback(
     (termKey, preferredVersionId) =>
-      tryHydrateCachedVersion({
+      hydrateCachedRecord({
         cacheKey: termKey,
         versionId: preferredVersionId,
         applyRecord,

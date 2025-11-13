@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from "react";
-import { DICTIONARY_EXPERIENCE_VIEWS } from "../../dictionaryExperienceViews.js";
 import { createHistoryStrategy } from "../../history/historyStrategy.js";
-import {
-  resolveHistorySelection,
-  sanitizeTerm,
-} from "./dictionaryRequestHelpers.js";
+import createDictionaryHistoryDeleteHandler from "./dictionaryHistoryDeleteHandler.js";
+import createDictionaryHistorySelectHandler from "./dictionaryHistorySelectHandler.js";
+import createDictionaryHistorySendHandler from "./dictionaryHistorySendHandler.js";
 
 export const useDictionaryHistoryActions = (
   core,
@@ -50,28 +48,18 @@ export const useDictionaryHistoryActions = (
     [historyEntries],
   );
 
-  const handleSend = useCallback(
-    async (event) => {
-      event.preventDefault();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-      const inputValue = sanitizeTerm(text);
-      if (!inputValue) return;
-      setText("");
-      const result = await loadEntry(inputValue);
-      if (result.status !== "success" || !historyCaptureEnabled) {
-        return;
-      }
-      const historyTerm = result.term ?? result.queriedTerm ?? inputValue;
-      addHistory(
-        historyTerm,
+  const handleSend = useMemo(
+    () =>
+      createDictionaryHistorySendHandler({
         user,
-        result.detectedLanguage,
-        result.flavor ?? dictionaryFlavor,
-      );
-    },
+        navigate,
+        text,
+        setText,
+        loadEntry,
+        historyCaptureEnabled,
+        addHistory,
+        dictionaryFlavor,
+      }),
     [
       user,
       navigate,
@@ -89,44 +77,24 @@ export const useDictionaryHistoryActions = (
     loadEntry(currentTerm, { forceNew: true });
   }, [currentTerm, loadEntry]);
 
-  const handleSelectHistory = useCallback(
-    async (identifier, versionId) => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
-      const selection = resolveHistorySelection({
-        strategy: historyStrategy,
-        identifier,
+  const handleSelectHistory = useMemo(
+    () =>
+      createDictionaryHistorySelectHandler({
+        user,
+        navigate,
+        historyStrategy,
         dictionarySourceLanguage,
         dictionaryTargetLanguage,
         dictionaryFlavor,
-      });
-
-      if (!selection) return;
-
-      setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-      setCurrentTermKey(selection.cacheKey);
-      setCurrentTerm(selection.term);
-      resetCopyFeedback();
-      cancelActiveLookup();
-
-      const hydrated = hydrateRecord(
-        selection.cacheKey,
-        versionId ?? selection.versionId,
-      );
-      if (hydrated) {
-        setLoading(false);
-        return;
-      }
-
-      await loadEntry(selection.term, {
-        language: selection.language,
-        flavor: selection.flavor,
-        versionId: versionId ?? selection.versionId,
-      });
-    },
+        setActiveView,
+        setCurrentTermKey,
+        setCurrentTerm,
+        resetCopyFeedback,
+        cancelActiveLookup,
+        hydrateRecord,
+        setLoading,
+        loadEntry,
+      }),
     [
       user,
       navigate,
@@ -145,32 +113,33 @@ export const useDictionaryHistoryActions = (
     ],
   );
 
-  const handleDeleteHistory = useCallback(async () => {
-    const activeTerm = entry?.term || currentTerm;
-    if (!activeTerm) return;
-    try {
-      await removeHistory(activeTerm, user);
-      setEntry(null);
-      setFinalText("");
-      setCurrentTermKey(null);
-      setCurrentTerm("");
-      resetCopyFeedback();
-    } catch (error) {
-      console.error("[DictionaryExperience] remove history failed", error);
-      showPopup(error.message ?? String(error));
-    }
-  }, [
-    entry,
-    currentTerm,
-    removeHistory,
-    user,
-    setEntry,
-    setFinalText,
-    setCurrentTermKey,
-    setCurrentTerm,
-    resetCopyFeedback,
-    showPopup,
-  ]);
+  const handleDeleteHistory = useMemo(
+    () =>
+      createDictionaryHistoryDeleteHandler({
+        entry,
+        currentTerm,
+        removeHistory,
+        user,
+        setEntry,
+        setFinalText,
+        setCurrentTermKey,
+        setCurrentTerm,
+        resetCopyFeedback,
+        showPopup,
+      }),
+    [
+      entry,
+      currentTerm,
+      removeHistory,
+      user,
+      setEntry,
+      setFinalText,
+      setCurrentTermKey,
+      setCurrentTerm,
+      resetCopyFeedback,
+      showPopup,
+    ],
+  );
 
   return {
     handleSend,
