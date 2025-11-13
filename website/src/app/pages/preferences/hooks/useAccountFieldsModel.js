@@ -70,21 +70,16 @@ const useEmailFieldAction = ({
     ],
   );
 
-export const useAccountFieldsModel = ({
+const useAccountFieldDependencies = ({
   translations,
   accountSnapshot,
-  fallbackValue,
   handleEmailUnbind,
   isEmailUnbinding,
   updateUsernameRequest,
   setUser,
   user,
 }) => {
-  const {
-    usernameEditorTranslations,
-    handleUsernameSubmit,
-    handleUsernameFailure,
-  } = useUsernameEditorHandlers({
+  const usernameHandlers = useUsernameEditorHandlers({
     translations,
     user,
     setUser,
@@ -98,7 +93,19 @@ export const useAccountFieldsModel = ({
     isEmailUnbinding,
   });
 
-  return useMemo(
+  return { ...usernameHandlers, emailAction };
+};
+
+const useAccountFieldBuilder = ({
+  translations,
+  accountSnapshot,
+  fallbackValue,
+  usernameEditorTranslations,
+  handleUsernameSubmit,
+  handleUsernameFailure,
+  emailAction,
+}) =>
+  useMemo(
     () =>
       createAccountFields({
         translations,
@@ -119,4 +126,20 @@ export const useAccountFieldsModel = ({
       usernameEditorTranslations,
     ],
   );
+
+export const useAccountFieldsModel = (props) => {
+  const {
+    usernameEditorTranslations,
+    handleUsernameSubmit,
+    handleUsernameFailure,
+    emailAction,
+  } = useAccountFieldDependencies(props);
+
+  return useAccountFieldBuilder({
+    ...props,
+    usernameEditorTranslations,
+    handleUsernameSubmit,
+    handleUsernameFailure,
+    emailAction,
+  });
 };

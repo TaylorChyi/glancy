@@ -10,51 +10,70 @@ const resolve = (translations, primaryKey, fallbackKey, fallback) => {
   return fallback;
 };
 
-export const createUsernameEditorTranslations = (translations) => ({
-  usernamePlaceholder: resolve(
-    translations,
+const createTranslationEntry = (key, primaryKey, fallbackKey, fallback) => ({
+  key,
+  primaryKey,
+  fallbackKey,
+  fallback,
+});
+
+const USERNAME_TRANSLATION_ENTRIES = [
+  createTranslationEntry(
+    "usernamePlaceholder",
     "usernamePlaceholder",
     "settingsAccountUsername",
     "Enter username",
   ),
-  changeUsernameButton: resolve(
-    translations,
+  createTranslationEntry(
+    "changeUsernameButton",
     "changeUsernameButton",
     "settingsManageProfile",
     "Change username",
   ),
-  saveUsernameButton: resolve(
-    translations,
+  createTranslationEntry(
+    "saveUsernameButton",
     "saveUsernameButton",
     null,
     "Save username",
   ),
-  saving: resolve(translations, "saving", null, "Saving..."),
-  usernameValidationEmpty: resolve(
-    translations,
+  createTranslationEntry("saving", "saving", null, "Saving..."),
+  createTranslationEntry(
+    "usernameValidationEmpty",
     "usernameValidationEmpty",
     null,
     "Username cannot be empty",
   ),
-  usernameValidationTooShort: resolve(
-    translations,
+  createTranslationEntry(
+    "usernameValidationTooShort",
     "usernameValidationTooShort",
     null,
     "Username is too short",
   ),
-  usernameValidationTooLong: resolve(
-    translations,
+  createTranslationEntry(
+    "usernameValidationTooLong",
     "usernameValidationTooLong",
     null,
     "Username is too long",
   ),
-  usernameUpdateFailed: resolve(
-    translations,
+  createTranslationEntry(
+    "usernameUpdateFailed",
     "usernameUpdateFailed",
     null,
     "Unable to update username",
   ),
-});
+];
+
+const mapTranslationEntry = (translations, entry) => [
+  entry.key,
+  resolve(translations, entry.primaryKey, entry.fallbackKey, entry.fallback),
+];
+
+export const createUsernameEditorTranslations = (translations) =>
+  Object.fromEntries(
+    USERNAME_TRANSLATION_ENTRIES.map((entry) =>
+      mapTranslationEntry(translations, entry),
+    ),
+  );
 
 const COMMAND_INITIAL_STATE = Object.freeze({
   status: "idle",
@@ -111,22 +130,23 @@ const persistUsername = async ({
   return resolvedUsername;
 };
 
-export const useUsernameSubmitCommand = ({
+const useUsernameFailureHandler = (dispatch) =>
+  useCallback(
+    (error) => {
+      dispatch({ type: "submit/failure", error });
+      console.error("Failed to update username from preferences", error);
+    },
+    [dispatch],
+  );
+
+const useUsernameSubmitHandler = ({
+  dispatch,
   user,
   setUser,
   updateUsernameRequest,
-}) => {
-  const [commandState, dispatch] = useReducer(
-    usernameCommandReducer,
-    COMMAND_INITIAL_STATE,
-  );
-
-  const handleUsernameFailure = useCallback((error) => {
-    dispatch({ type: "submit/failure", error });
-    console.error("Failed to update username from preferences", error);
-  }, []);
-
-  const handleUsernameSubmit = useCallback(
+  handleUsernameFailure,
+}) =>
+  useCallback(
     async (nextUsername) => {
       ensureSession(user);
       dispatch({ type: "submit/start" });
@@ -144,8 +164,45 @@ export const useUsernameSubmitCommand = ({
         throw error;
       }
     },
-    [handleUsernameFailure, setUser, updateUsernameRequest, user],
+    [dispatch, handleUsernameFailure, setUser, updateUsernameRequest, user],
   );
+
+const useUsernameCommandHandlers = ({
+  dispatch,
+  user,
+  setUser,
+  updateUsernameRequest,
+}) => {
+  const handleUsernameFailure = useUsernameFailureHandler(dispatch);
+
+  const handleUsernameSubmit = useUsernameSubmitHandler({
+    dispatch,
+    user,
+    setUser,
+    updateUsernameRequest,
+    handleUsernameFailure,
+  });
+
+  return { handleUsernameSubmit, handleUsernameFailure };
+};
+
+export const useUsernameSubmitCommand = ({
+  user,
+  setUser,
+  updateUsernameRequest,
+}) => {
+  const [commandState, dispatch] = useReducer(
+    usernameCommandReducer,
+    COMMAND_INITIAL_STATE,
+  );
+
+  const { handleUsernameSubmit, handleUsernameFailure } =
+    useUsernameCommandHandlers({
+      dispatch,
+      user,
+      setUser,
+      updateUsernameRequest,
+    });
 
   return { handleUsernameSubmit, handleUsernameFailure, commandState };
 };

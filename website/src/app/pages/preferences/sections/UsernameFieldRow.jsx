@@ -18,58 +18,110 @@ import styles from "../Preferences.module.css";
  * 错误处理：UsernameEditor 内部负责表单校验与错误提示。
  * 复杂度：O(1)。
  */
-function UsernameFieldRow({ field, labelId, valueId }) {
-  const [actionDescriptor, setActionDescriptor] = useState(null);
+const mergeInputClassNames = (inputClassName) =>
+  [inputClassName, DETAIL_INPUT_CLASSNAME].filter(Boolean).join(" ");
 
-  const handleResolveAction = useCallback((descriptor) => {
-    if (!descriptor) {
-      setActionDescriptor(null);
+const useUsernameActionDescriptor = () => {
+  const [descriptor, setDescriptor] = useState(null);
+
+  const handleResolveAction = useCallback((nextDescriptor) => {
+    if (!nextDescriptor) {
+      setDescriptor(null);
       return;
     }
 
-    setActionDescriptor((current) => {
+    setDescriptor((current) => {
       if (
         current &&
-        current.label === descriptor.label &&
-        current.disabled === descriptor.disabled &&
-        current.mode === descriptor.mode &&
-        current.onClick === descriptor.onClick
+        current.label === nextDescriptor.label &&
+        current.disabled === nextDescriptor.disabled &&
+        current.mode === nextDescriptor.mode &&
+        current.onClick === nextDescriptor.onClick
       ) {
         return current;
       }
-      return descriptor;
+      return nextDescriptor;
     });
   }, []);
 
-  const mergedInputClassName = [
+  return { descriptor, handleResolveAction };
+};
+
+const UsernameFieldLabel = ({ id, children }) => (
+  <dt id={id} className={styles["detail-label"]}>
+    {children}
+  </dt>
+);
+
+UsernameFieldLabel.propTypes = {
+  id: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+const UsernameFieldValue = ({ field, valueId, onResolveAction }) => {
+  const mergedInputClassName = mergeInputClassNames(
     field.usernameEditorProps?.inputClassName,
-    DETAIL_INPUT_CLASSNAME,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  );
+
+  return (
+    <dd className={styles["detail-value"]} id={valueId}>
+      <UsernameEditor
+        {...field.usernameEditorProps}
+        inputClassName={mergedInputClassName}
+        renderInlineAction={false}
+        onResolveAction={onResolveAction}
+      />
+    </dd>
+  );
+};
+
+UsernameFieldValue.propTypes = {
+  field: PropTypes.shape({
+    usernameEditorProps: PropTypes.shape({
+      inputClassName: PropTypes.string,
+    }).isRequired,
+  }).isRequired,
+  valueId: PropTypes.string.isRequired,
+  onResolveAction: PropTypes.func.isRequired,
+};
+
+const UsernameFieldAction = ({ descriptor }) => (
+  <div className={styles["detail-action"]}>
+    {descriptor ? (
+      <DetailActionButton
+        label={descriptor.label}
+        disabled={Boolean(descriptor.disabled)}
+        onClick={descriptor.onClick}
+      />
+    ) : null}
+  </div>
+);
+
+UsernameFieldAction.propTypes = {
+  descriptor: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    disabled: PropTypes.bool,
+    mode: PropTypes.string,
+    onClick: PropTypes.func,
+  }),
+};
+
+UsernameFieldAction.defaultProps = {
+  descriptor: null,
+};
+
+function UsernameFieldRow({ field, labelId, valueId }) {
+  const { descriptor, handleResolveAction } = useUsernameActionDescriptor();
 
   return (
     <div className={styles["detail-row"]}>
-      <dt id={labelId} className={styles["detail-label"]}>
-        {field.label}
-      </dt>
-      <dd className={styles["detail-value"]} id={valueId}>
-        <UsernameEditor
-          {...field.usernameEditorProps}
-          inputClassName={mergedInputClassName}
-          renderInlineAction={false}
-          onResolveAction={handleResolveAction}
-        />
-      </dd>
-      <div className={styles["detail-action"]}>
-        {actionDescriptor ? (
-          <DetailActionButton
-            label={actionDescriptor.label}
-            disabled={Boolean(actionDescriptor.disabled)}
-            onClick={actionDescriptor.onClick}
-          />
-        ) : null}
-      </div>
+      <UsernameFieldLabel id={labelId}>{field.label}</UsernameFieldLabel>
+      <UsernameFieldValue
+        field={field}
+        valueId={valueId}
+        onResolveAction={handleResolveAction}
+      />
+      <UsernameFieldAction descriptor={descriptor} />
     </div>
   );
 }
