@@ -7,6 +7,12 @@ import userEvent from "@testing-library/user-event";
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 import { useHistoryStore } from "@core/store/historyStore.ts";
 import { useWordStore } from "@core/store/wordStore.js";
+import { installDataGovernanceStoreState } from "./helpers/dataGovernanceStoreTestHelpers.js";
+import {
+  createHistoryRecord,
+  installHistoryStoreMocks,
+} from "./helpers/historyStoreTestHelpers.js";
+import { installWordStoreFixture } from "./helpers/wordStoreTestHelpers.js";
 
 const translations = {
   settingsDataDescription: "Data stewardship",
@@ -78,84 +84,108 @@ jest.unstable_mockModule("@shared/components/ui/LanguageMenu", () => ({
 }));
 
 let DataSection;
-let originalClearHistory;
-let originalClearHistoryByLanguage;
-let originalApplyRetentionPolicy;
-let originalWordStoreEntries;
+let dataGovernanceHarness;
+let historyHarness;
+let wordStoreHarness;
 
-const createHistoryItem = (overrides = {}) => ({
-  term: "hello",
-  language: "ENGLISH",
-  flavor: "BILINGUAL",
+const defaultWordEntry = {
   termKey: "ENGLISH:BILINGUAL:hello",
-  createdAt: "2024-05-01T10:00:00Z",
-  favorite: false,
-  versions: [{ id: "v1", createdAt: "2024-05-01T10:00:00Z", favorite: false }],
-  latestVersionId: "v1",
-  ...overrides,
-});
+  versions: [
+    {
+      id: "v1",
+      sections: [
+        { heading: "Overview", lines: ["UK /həˈləʊ/"] },
+        { heading: "Definitions", lines: ["A friendly greeting"] },
+      ],
+    },
+  ],
+  options: { activeVersionId: "v1" },
+};
+
+const renderDataSection = (props = {}) =>
+  render(
+    <DataSection
+      title="Data"
+      message="Control your data"
+      headingId="data-heading"
+      descriptionId="data-description"
+      {...props}
+    />,
+  );
+
+const setupDownloadHarness = () => {
+  if (!window.URL.createObjectURL) {
+    Object.defineProperty(window.URL, "createObjectURL", {
+      configurable: true,
+      writable: true,
+      value: () => "",
+    });
+  }
+  if (!window.URL.revokeObjectURL) {
+    Object.defineProperty(window.URL, "revokeObjectURL", {
+      configurable: true,
+      writable: true,
+      value: () => undefined,
+    });
+  }
+
+  const createUrl = jest
+    .spyOn(window.URL, "createObjectURL")
+    .mockReturnValue("blob:export");
+  const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
+  const appendSpy = jest.spyOn(document.body, "appendChild");
+  const removeSpy = jest.spyOn(Element.prototype, "remove");
+  const OriginalBlob = Blob;
+  const blobCalls = [];
+  const blobSpy = jest
+    .spyOn(globalThis, "Blob")
+    .mockImplementation((parts = [], options) => {
+      blobCalls.push({ parts, options });
+      return Reflect.construct(OriginalBlob, [parts, options]);
+    });
+
+  const restore = () => {
+    createUrl.mockRestore();
+    revokeUrl.mockRestore();
+    appendSpy.mockRestore();
+    removeSpy.mockRestore();
+    blobSpy.mockRestore();
+  };
+
+  const getCsvText = () =>
+    (blobCalls[0]?.parts ?? [])
+      .map((part) => (typeof part === "string" ? part : ""))
+      .join("");
+
+  return {
+    createUrl,
+    revokeUrl,
+    appendSpy,
+    removeSpy,
+    blobSpy,
+    OriginalBlob,
+    getCsvText,
+    restore,
+  };
+};
 
 beforeAll(async () => {
   ({ default: DataSection } = await import("../DataSection.jsx"));
 });
 
 beforeEach(() => {
-  originalClearHistory = useHistoryStore.getState().clearHistory;
-  originalClearHistoryByLanguage =
-    useHistoryStore.getState().clearHistoryByLanguage;
-  originalApplyRetentionPolicy =
-    useHistoryStore.getState().applyRetentionPolicy;
-  useDataGovernanceStore.setState({
-    historyCaptureEnabled: true,
-    retentionPolicyId: "90d",
+  dataGovernanceHarness = installDataGovernanceStoreState();
+  historyHarness = installHistoryStoreMocks({
+    history: [createHistoryRecord()],
   });
-  useHistoryStore.setState({
-    history: [createHistoryItem()],
-    clearHistory: jest.fn().mockResolvedValue(undefined),
-    clearHistoryByLanguage: jest.fn().mockResolvedValue(undefined),
-    applyRetentionPolicy: jest.fn().mockResolvedValue(undefined),
-  });
-  originalWordStoreEntries = useWordStore
-    .getState()
-    .getRecord("ENGLISH:BILINGUAL:hello");
-  useWordStore.getState().clear();
-  useWordStore.getState().setVersions(
-    "ENGLISH:BILINGUAL:hello",
-    [
-      {
-        id: "v1",
-        sections: [
-          { heading: "Overview", lines: ["UK /həˈləʊ/"] },
-          { heading: "Definitions", lines: ["A friendly greeting"] },
-        ],
-      },
-    ],
-    { activeVersionId: "v1" },
-  );
+  wordStoreHarness = installWordStoreFixture(defaultWordEntry);
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
-  useHistoryStore.setState({
-    history: [],
-    clearHistory: originalClearHistory,
-    clearHistoryByLanguage: originalClearHistoryByLanguage,
-    applyRetentionPolicy: originalApplyRetentionPolicy,
-  });
-  useWordStore.getState().clear();
-  if (originalWordStoreEntries) {
-    useWordStore
-      .getState()
-      .setVersions(
-        "ENGLISH:BILINGUAL:hello",
-        originalWordStoreEntries.versions,
-        {
-          activeVersionId: originalWordStoreEntries.activeVersionId,
-          metadata: originalWordStoreEntries.metadata,
-        },
-      );
-  }
-  originalWordStoreEntries = undefined;
+  historyHarness?.restore?.();
+  wordStoreHarness?.restore?.();
+  dataGovernanceHarness?.restore?.();
 });
 
 /**
@@ -171,14 +201,7 @@ afterEach(() => {
  *  - 若缺失关联则会影响屏幕阅读器理解上下文。
  */
 test("Given section message When rendering Then description linked for accessibility", () => {
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   const section = screen.getByRole("region", { name: "Data" });
   const description = screen.getByText("Control your data");
@@ -200,14 +223,7 @@ test("Given section message When rendering Then description linked for accessibi
  *  - 若描述缺失，用户可能误认为会清空全部历史。
  */
 test("Given language scoped controls When rendering Then language description clarifies scope", () => {
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   const description = screen.getByText(
     translations.settingsDataLanguageDescription,
@@ -233,14 +249,7 @@ test("Given language scoped controls When rendering Then language description cl
  */
 test("Given toggle control When pausing capture Then store reflects disabled", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(screen.getByRole("radio", { name: /Pause history/i }));
 
@@ -260,14 +269,7 @@ test("Given toggle control When pausing capture Then store reflects disabled", a
  */
 test("Given retention options When choosing shorter window Then retention command executed", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(screen.getByRole("radio", { name: /30 days/i }));
 
@@ -291,14 +293,7 @@ test("Given retention options When choosing shorter window Then retention comman
  */
 test("Given language actions When clearing selected language Then scoped command fired", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(
     screen.getByRole("button", { name: /Clear selected language/i }),
@@ -322,73 +317,31 @@ test("Given language actions When clearing selected language Then scoped command
  */
 test("Given export action When clicking export Then browser download initiated", async () => {
   const user = userEvent.setup();
-  if (!window.URL.createObjectURL) {
-    Object.defineProperty(window.URL, "createObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => "",
-    });
-  }
-  if (!window.URL.revokeObjectURL) {
-    Object.defineProperty(window.URL, "revokeObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => undefined,
-    });
-  }
-  const createUrl = jest
-    .spyOn(window.URL, "createObjectURL")
-    .mockReturnValue("blob:export");
-  const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
-  const appendSpy = jest.spyOn(document.body, "appendChild");
-  const removeSpy = jest.spyOn(Element.prototype, "remove");
-  const OriginalBlob = Blob;
-  const blobCalls = [];
-  const blobSpy = jest
-    .spyOn(globalThis, "Blob")
-    .mockImplementation((parts = [], options) => {
-      blobCalls.push({ parts, options });
-      return Reflect.construct(OriginalBlob, [parts, options]);
-    });
-
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  const downloadHarness = setupDownloadHarness();
+  renderDataSection();
 
   await user.click(screen.getByRole("button", { name: /Export data/i }));
 
-  expect(createUrl).toHaveBeenCalledTimes(1);
-  expect(revokeUrl).toHaveBeenCalledTimes(1);
-  expect(appendSpy).toHaveBeenCalled();
-  expect(removeSpy).toHaveBeenCalled();
+  expect(downloadHarness.createUrl).toHaveBeenCalledTimes(1);
+  expect(downloadHarness.revokeUrl).toHaveBeenCalledTimes(1);
+  expect(downloadHarness.appendSpy).toHaveBeenCalled();
+  expect(downloadHarness.removeSpy).toHaveBeenCalled();
 
-  const blob = createUrl.mock.calls[0][0];
-  expect(blob).toBeInstanceOf(OriginalBlob);
+  const blob = downloadHarness.createUrl.mock.calls[0][0];
+  expect(blob).toBeInstanceOf(downloadHarness.OriginalBlob);
   expect(blob.type).toBe("text/csv;charset=utf-8");
-  const csvText = (blobCalls[0]?.parts ?? [])
-    .map((part) => (typeof part === "string" ? part : ""))
-    .join("");
+  const csvText = downloadHarness.getCsvText();
   expect(csvText).toContain("term,language,flavor,chapter,content");
   expect(csvText).toContain(
     "hello,ENGLISH,BILINGUAL,Definitions,A friendly greeting",
   );
 
-  const appendedElements = appendSpy.mock.calls
+  const appendedElements = downloadHarness.appendSpy.mock.calls
     .map((call) => call?.[0])
     .filter(Boolean);
   const appendedAnchor = appendedElements.find(
     (element) => element?.tagName === "A",
   );
   expect(appendedAnchor).toBeDefined();
-
-  createUrl.mockRestore();
-  revokeUrl.mockRestore();
-  appendSpy.mockRestore();
-  removeSpy.mockRestore();
-  blobSpy.mockRestore();
+  downloadHarness.restore();
 });
