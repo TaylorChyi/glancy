@@ -40,49 +40,60 @@ export const normalizeDisplayValue = (value, fallback = FALLBACK_VALUE) => {
  *  - 不抛出异常，任何非法输入均退化为 fallbackValue，保障界面稳定。
  * 复杂度：O(n)，其中 n 为模板长度。
  */
+const normalizeTemplate = (template) =>
+  typeof template === "string" ? template.trim() : "";
+
+const resolveTemplateFallback = (fallbackValue) =>
+  normalizeDisplayValue(fallbackValue, FALLBACK_VALUE);
+
+const buildTokenDictionary = (replacements = {}) => {
+  const dictionary = new Map();
+  Object.entries(replacements).forEach(([key, value]) => {
+    if (!key) {
+      return;
+    }
+    dictionary.set(key, value);
+    dictionary.set(key.toLowerCase(), value);
+    dictionary.set(key.toUpperCase(), value);
+  });
+  return dictionary;
+};
+
+const evaluateToken = (token, dictionary, fallback) => {
+  if (dictionary.has(token)) {
+    return normalizeDisplayValue(dictionary.get(token), fallback);
+  }
+  const isValueToken = token === "value" && dictionary.has("amount");
+  if (isValueToken) {
+    return normalizeDisplayValue(dictionary.get("amount"), fallback);
+  }
+  const isAmountToken = token === "amount" && dictionary.has("value");
+  if (isAmountToken) {
+    return normalizeDisplayValue(dictionary.get("value"), fallback);
+  }
+  return fallback;
+};
+
 export const interpolateTemplate = (
   template,
   replacements,
   fallbackValue = FALLBACK_VALUE,
 ) => {
-  if (typeof template !== "string" || template.trim().length === 0) {
-    return fallbackValue;
+  const normalizedTemplate = normalizeTemplate(template);
+  if (!normalizedTemplate) {
+    return resolveTemplateFallback(fallbackValue);
   }
 
-  const resolvedFallback = normalizeDisplayValue(fallbackValue, FALLBACK_VALUE);
-  const candidatePairs = new Map();
+  const resolvedFallback = resolveTemplateFallback(fallbackValue);
+  const tokenDictionary = buildTokenDictionary(replacements);
 
-  Object.entries(replacements ?? {}).forEach(([key, value]) => {
-    if (!key) {
-      return;
-    }
-    candidatePairs.set(key, value);
-    candidatePairs.set(key.toLowerCase(), value);
-    candidatePairs.set(key.toUpperCase(), value);
-  });
-
-  return template.replace(/\{(\w+)\}/g, (_match, token) => {
-    if (candidatePairs.has(token)) {
-      return normalizeDisplayValue(candidatePairs.get(token), resolvedFallback);
-    }
-    if (token === "value" && candidatePairs.has("amount")) {
-      return normalizeDisplayValue(
-        candidatePairs.get("amount"),
-        resolvedFallback,
-      );
-    }
-    if (token === "amount" && candidatePairs.has("value")) {
-      return normalizeDisplayValue(
-        candidatePairs.get("value"),
-        resolvedFallback,
-      );
-    }
-    return resolvedFallback;
-  });
+  return normalizedTemplate.replace(/\{(\w+)\}/g, (_match, token) =>
+    evaluateToken(token, tokenDictionary, resolvedFallback),
+  );
 };
 
 export const formatWithTemplate = (template, value) => {
-  const fallback = normalizeDisplayValue(value, FALLBACK_VALUE);
+  const fallback = resolveTemplateFallback(value);
   if (!template) {
     return fallback;
   }
@@ -90,7 +101,7 @@ export const formatWithTemplate = (template, value) => {
 };
 
 export const formatTemplateWithPair = (template, amount, equivalent) => {
-  const fallback = normalizeDisplayValue(amount, FALLBACK_VALUE);
+  const fallback = resolveTemplateFallback(amount);
   if (!template) {
     return fallback;
   }

@@ -2,6 +2,43 @@ import { PLAN_SEQUENCE } from "@core/config/pricing";
 
 const KNOWN_PLAN_IDS = new Set(PLAN_SEQUENCE);
 
+const normalizePlanToken = (value) => {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed ? trimmed.toUpperCase() : null;
+};
+
+const collectPlanCandidates = (userProfile = {}) => {
+  const subscriptionMeta = userProfile.subscription ?? {};
+  return [
+    subscriptionMeta.planId,
+    subscriptionMeta.currentPlanId,
+    subscriptionMeta.plan,
+    subscriptionMeta.tier,
+    userProfile.plan,
+  ]
+    .map(normalizePlanToken)
+    .filter(Boolean);
+};
+
+const appendMembershipFallback = (candidates, userProfile = {}) => {
+  if (userProfile.member === true) {
+    return [...candidates, "PLUS"];
+  }
+  return candidates;
+};
+
+export const selectPlanId = (candidates, fallbackPlan) => {
+  for (const candidate of candidates) {
+    if (KNOWN_PLAN_IDS.has(candidate)) {
+      return candidate;
+    }
+  }
+  return fallbackPlan;
+};
+
 /**
  * 意图：
  *  - 根据用户上下文提炼订阅套餐标识，兼容历史字段与未来扩展。
@@ -21,35 +58,10 @@ export const resolveCurrentPlanId = (
   userProfile,
   { fallbackPlan = "FREE" } = {},
 ) => {
-  const subscriptionMeta = userProfile?.subscription ?? {};
-  const candidates = [
-    subscriptionMeta.planId,
-    subscriptionMeta.currentPlanId,
-    subscriptionMeta.plan,
-    subscriptionMeta.tier,
-    userProfile?.plan,
-  ]
-    .map((candidate) => {
-      if (typeof candidate !== "string") {
-        return null;
-      }
-      const trimmed = candidate.trim();
-      if (!trimmed) {
-        return null;
-      }
-      return trimmed.toUpperCase();
-    })
-    .filter(Boolean);
-
-  if (userProfile?.member === true) {
-    candidates.push("PLUS");
-  }
-
-  for (const candidate of candidates) {
-    if (KNOWN_PLAN_IDS.has(candidate)) {
-      return candidate;
-    }
-  }
-
-  return fallbackPlan;
+  const profile = userProfile ?? {};
+  const candidates = appendMembershipFallback(
+    collectPlanCandidates(profile),
+    profile,
+  );
+  return selectPlanId(candidates, fallbackPlan);
 };
