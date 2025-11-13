@@ -3,95 +3,9 @@ import {
   buildAccountSnapshot,
   useEmailUnbindCommand,
 } from "./accountSnapshot.js";
-import {
-  createAccountBindings,
-  createAccountIdentity,
-  createEmailAction,
-  buildEmailField,
-  buildPhoneField,
-  buildUsernameField,
-} from "./accountPresentation.js";
-import {
-  createUsernameEditorTranslations,
-  useUsernameSubmitCommand,
-} from "./accountUsername.js";
-
-const createAccountFields = ({
-  translations,
-  accountSnapshot,
-  fallbackValue,
-  usernameEditorTranslations,
-  handleUsernameSubmit,
-  handleUsernameFailure,
-  emailAction,
-}) => [
-  buildUsernameField({
-    translations,
-    accountSnapshot,
-    fallbackValue,
-    usernameEditorTranslations,
-    handleUsernameSubmit,
-    handleUsernameFailure,
-  }),
-  buildEmailField({ translations, accountSnapshot, emailAction }),
-  buildPhoneField(translations, accountSnapshot),
-];
-
-const useAccountFields = ({
-  translations,
-  accountSnapshot,
-  fallbackValue,
-  handleEmailUnbind,
-  isEmailUnbinding,
-  updateUsernameRequest,
-  setUser,
-  user,
-}) => {
-  const usernameEditorTranslations = useMemo(
-    () => createUsernameEditorTranslations(translations),
-    [translations],
-  );
-
-  const { handleUsernameSubmit, handleUsernameFailure } =
-    useUsernameSubmitCommand({
-      user,
-      setUser,
-      updateUsernameRequest,
-    });
-
-  const emailAction = useMemo(
-    () =>
-      createEmailAction({
-        translations,
-        accountSnapshot,
-        handleEmailUnbind,
-        isEmailUnbinding,
-      }),
-    [accountSnapshot, handleEmailUnbind, isEmailUnbinding, translations],
-  );
-
-  return useMemo(
-    () =>
-      createAccountFields({
-        translations,
-        accountSnapshot,
-        fallbackValue,
-        usernameEditorTranslations,
-        handleUsernameSubmit,
-        handleUsernameFailure,
-        emailAction,
-      }),
-    [
-      accountSnapshot,
-      emailAction,
-      fallbackValue,
-      handleUsernameFailure,
-      handleUsernameSubmit,
-      translations,
-      usernameEditorTranslations,
-    ],
-  );
-};
+import { useAccountFieldsModel } from "./useAccountFieldsModel.js";
+import { useAccountIdentityModel } from "./useAccountIdentityModel.js";
+import { useAccountBindingsModel } from "./useAccountBindingsModel.js";
 
 export const useAccountSectionModel = ({
   translations,
@@ -119,7 +33,7 @@ export const useAccountSectionModel = ({
     emailBinding,
   });
 
-  const fields = useAccountFields({
+  const fields = useAccountFieldsModel({
     translations,
     accountSnapshot,
     fallbackValue,
@@ -130,28 +44,15 @@ export const useAccountSectionModel = ({
     user,
   });
 
-  const identity = useMemo(
-    () =>
-      createAccountIdentity({
-        translations,
-        accountSnapshot,
-        accountCopy,
-        onAvatarSelection,
-        isAvatarUploading,
-      }),
-    [
-      accountCopy,
-      accountSnapshot,
-      isAvatarUploading,
-      onAvatarSelection,
-      translations,
-    ],
-  );
+  const identity = useAccountIdentityModel({
+    translations,
+    accountSnapshot,
+    accountCopy,
+    onAvatarSelection,
+    isAvatarUploading,
+  });
 
-  const bindings = useMemo(
-    () => createAccountBindings({ translations, accountCopy }),
-    [accountCopy, translations],
-  );
+  const bindings = useAccountBindingsModel({ translations, accountCopy });
 
   return { fields, identity, bindings };
 };
