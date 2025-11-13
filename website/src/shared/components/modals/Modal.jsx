@@ -1,8 +1,7 @@
 import PropTypes from "prop-types";
-import { createPortal } from "react-dom";
 import ModalContent from "./ModalContent.jsx";
 import styles from "./Modal.module.css";
-import { useModalLifecycle } from "./hooks/useModalLifecycle";
+import { useModalPortal } from "./hooks/useModalPortal";
 
 function Modal({
   onClose,
@@ -14,12 +13,12 @@ function Modal({
   ariaLabelledBy,
   ariaDescribedBy,
 }) {
-  const lifecycle = useModalLifecycle(onClose);
-  if (!lifecycle) return null;
-  const { contentRef, root } = lifecycle;
+  const portal = useModalPortal(onClose);
+  if (!portal) return null;
+  const { contentRef, renderInPortal } = portal;
   const contentClassName = className ? `${styles.content} ${className}` : styles.content;
   const shouldRenderDefaultCloseButton = !hideDefaultCloseButton && !closeButton;
-  return createPortal(
+  return renderInPortal(
     <ModalContent
       onClose={onClose}
       contentClassName={contentClassName}
@@ -32,7 +31,6 @@ function Modal({
     >
       {children}
     </ModalContent>,
-    root,
   );
 }
 

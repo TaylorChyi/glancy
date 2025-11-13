@@ -1,23 +1,9 @@
 import PropTypes from "prop-types";
 import { useLanguage } from "@core/context";
-import { useMediaQuery } from "@shared/hooks";
-import SettingsNavButton from "./SettingsNavButton.jsx";
 import { useSettingsNavCloseAction } from "./hooks/useSettingsNavCloseAction";
-import { formatSectionLabel } from "./formatSectionLabel.js";
-
-const HORIZONTAL_NAV_BREAKPOINT = 768;
-const HORIZONTAL_NAV_QUERY = `(max-width: ${HORIZONTAL_NAV_BREAKPOINT}px)`;
-
-const resolveClasses = (classes) => ({
-  container: classes?.container ?? "",
-  action: classes?.action ?? "",
-  nav: classes?.nav ?? "",
-  button: classes?.button ?? "",
-  label: classes?.label ?? "",
-  labelText: classes?.labelText ?? "",
-  icon: classes?.icon ?? "",
-  actionButton: classes?.actionButton ?? "",
-});
+import SettingsNavList from "./SettingsNavList.jsx";
+import { useSettingsNavClasses } from "./hooks/useSettingsNavClasses";
+import { useSettingsNavOrientation } from "./hooks/useSettingsNavOrientation";
 
 function SettingsNav({
   sections,
@@ -28,10 +14,8 @@ function SettingsNav({
   classes,
 }) {
   const { lang } = useLanguage();
-  const sectionCount = sections.length;
-  const isHorizontalLayout = useMediaQuery(HORIZONTAL_NAV_QUERY);
-  const navOrientation = isHorizontalLayout ? "horizontal" : "vertical";
-  const resolvedClasses = resolveClasses(classes);
+  const { orientation, isHorizontalLayout } = useSettingsNavOrientation();
+  const resolvedClasses = useSettingsNavClasses(classes);
   const closeActionNode = useSettingsNavCloseAction(
     renderCloseAction,
     resolvedClasses.actionButton,
@@ -40,39 +24,21 @@ function SettingsNav({
   return (
     <div
       className={resolvedClasses.container}
-      data-orientation={navOrientation}
+      data-orientation={orientation}
       data-compact={isHorizontalLayout || undefined}
     >
-      <nav
-        aria-label={tablistLabel}
-        aria-orientation={navOrientation}
-        className={resolvedClasses.nav}
-        role="tablist"
-        style={{ "--settings-nav-section-count": sectionCount }}
-        data-orientation={navOrientation}
-      >
-        {closeActionNode ? (
-          <div role="presentation" className={resolvedClasses.action}>
-            {closeActionNode}
-          </div>
-        ) : null}
-        {sections.map((section) => (
-          <SettingsNavButton
-            key={section.id}
-            section={section}
-            isActive={section.id === activeSectionId}
-            formattedLabel={formatSectionLabel(section.label, lang)}
-            onSelect={onSelect}
-            isHorizontalLayout={isHorizontalLayout}
-            classNames={{
-              button: resolvedClasses.button,
-              label: resolvedClasses.label,
-              labelText: resolvedClasses.labelText,
-              icon: resolvedClasses.icon,
-            }}
-          />
-        ))}
-      </nav>
+      <SettingsNavList
+        sections={sections}
+        activeSectionId={activeSectionId}
+        onSelect={onSelect}
+        tablistLabel={tablistLabel}
+        orientation={orientation}
+        sectionCount={sections.length}
+        isHorizontalLayout={isHorizontalLayout}
+        lang={lang}
+        classNames={resolvedClasses}
+        closeActionNode={closeActionNode}
+      />
     </div>
   );
 }
