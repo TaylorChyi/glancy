@@ -42,16 +42,13 @@ const handleEscapeKey = (event, setRecordingAction) => {
   return false;
 };
 
-const useCaptureHandlers = ({
-  recordingAction,
-  setRecordingAction,
-  updateShortcut,
-}) => {
-  const handleCaptureStart = useCallback((action) => {
+const useCaptureStartHandler = (setRecordingAction) =>
+  useCallback((action) => {
     setRecordingAction(action);
   }, [setRecordingAction]);
 
-  const handleCaptureBlur = useCallback(
+const useCaptureBlurHandler = (recordingAction, setRecordingAction) =>
+  useCallback(
     (action) => {
       if (recordingAction === action) {
         setRecordingAction(null);
@@ -60,7 +57,12 @@ const useCaptureHandlers = ({
     [recordingAction, setRecordingAction],
   );
 
-  const handleCaptureKeyDown = useCallback(
+const useCaptureKeyDownHandler = ({
+  recordingAction,
+  setRecordingAction,
+  updateShortcut,
+}) =>
+  useCallback(
     (action, event) => {
       const keyboardEvent = sanitizeKeyboardEvent(event);
       if (!shouldProcessKeyEvent(action, recordingAction, keyboardEvent)) {
@@ -80,12 +82,19 @@ const useCaptureHandlers = ({
     [recordingAction, setRecordingAction, updateShortcut],
   );
 
-  return {
-    onCaptureStart: handleCaptureStart,
-    onBlur: handleCaptureBlur,
-    onKeyDown: handleCaptureKeyDown,
-  };
-};
+const useCaptureHandlers = ({
+  recordingAction,
+  setRecordingAction,
+  updateShortcut,
+}) => ({
+  onCaptureStart: useCaptureStartHandler(setRecordingAction),
+  onBlur: useCaptureBlurHandler(recordingAction, setRecordingAction),
+  onKeyDown: useCaptureKeyDownHandler({
+    recordingAction,
+    setRecordingAction,
+    updateShortcut,
+  }),
+});
 
 const useResetHandler = ({ resetShortcuts, setRecordingAction }) =>
   useCallback(() => {
@@ -93,50 +102,34 @@ const useResetHandler = ({ resetShortcuts, setRecordingAction }) =>
     resetShortcuts().catch(() => {});
   }, [resetShortcuts, setRecordingAction]);
 
-const buildKeyboardSectionViewModel = ({
-  title,
-  headingId,
-  bindings,
-  translations,
+const buildKeyboardSectionViewModel = (args) =>
+  createKeyboardSectionViewModel(args);
+
+const useKeyboardSectionHandlers = ({
   recordingAction,
-  pendingAction,
-  status,
-  errors,
-  resetActionId,
-  handlers,
-}) =>
-  createKeyboardSectionViewModel({
-    title,
-    headingId,
-    bindings,
-    translations,
-    recordingAction,
-    pendingAction,
-    status,
-    errors,
-    resetActionId,
-    handlers,
-  });
+  setRecordingAction,
+  updateShortcut,
+  resetShortcuts,
+}) => ({
+  ...useCaptureHandlers({ recordingAction, setRecordingAction, updateShortcut }),
+  onReset: useResetHandler({ resetShortcuts, setRecordingAction }),
+});
+
+const useKeyboardSectionBindings = (shortcuts) =>
+  useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
 
 function useKeyboardSectionController({ title, headingId }) {
   const { t } = useLanguage();
-  const {
-    shortcuts,
-    updateShortcut,
-    resetShortcuts,
-    pendingAction,
-    errors,
-    status,
-  } = useKeyboardShortcutContext();
+  const { shortcuts, updateShortcut, resetShortcuts, pendingAction, errors, status } =
+    useKeyboardShortcutContext();
   const [recordingAction, setRecordingAction] = useState(null);
-
-  const bindings = useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
-  const captureHandlers = useCaptureHandlers({
+  const bindings = useKeyboardSectionBindings(shortcuts);
+  const handlers = useKeyboardSectionHandlers({
     recordingAction,
     setRecordingAction,
     updateShortcut,
+    resetShortcuts,
   });
-  const handleReset = useResetHandler({ resetShortcuts, setRecordingAction });
 
   return buildKeyboardSectionViewModel({
     title,
@@ -148,10 +141,7 @@ function useKeyboardSectionController({ title, headingId }) {
     status,
     errors,
     resetActionId: KEYBOARD_SHORTCUT_RESET_ACTION,
-    handlers: {
-      ...captureHandlers,
-      onReset: handleReset,
-    },
+    handlers,
   });
 }
 
