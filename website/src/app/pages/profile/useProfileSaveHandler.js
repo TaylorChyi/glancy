@@ -1,48 +1,5 @@
 import { useCallback, useState } from "react";
-import { mapProfileDetailsToRequest } from "./profileDetailsModel.js";
-
-async function persistProfile({
-  api,
-  currentUser,
-  details,
-  phone,
-  persistedMeta,
-}) {
-  const nextUser = { ...currentUser };
-  let hasIdentityUpdates = false;
-  const tasks = [];
-
-  if (phone !== currentUser.phone) {
-    tasks.push(
-      api.users
-        .updateContact({
-          userId: currentUser.id,
-          email: currentUser.email,
-          phone,
-          token: currentUser.token,
-        })
-        .then(({ phone: updatedPhone }) => {
-          nextUser.phone = updatedPhone;
-          hasIdentityUpdates = true;
-        }),
-    );
-  }
-
-  const profilePayload = mapProfileDetailsToRequest(details);
-  tasks.push(
-    api.profiles.saveProfile({
-      token: currentUser.token,
-      profile: {
-        ...profilePayload,
-        dailyWordTarget: persistedMeta.dailyWordTarget,
-        futurePlan: persistedMeta.futurePlan,
-      },
-    }),
-  );
-
-  await Promise.all(tasks);
-  return { hasIdentityUpdates, nextUser };
-}
+import { persistProfile } from "./profilePersistence.js";
 
 export function useProfileSaveHandler({
   api,
