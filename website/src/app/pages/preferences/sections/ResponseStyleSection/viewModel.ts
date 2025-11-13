@@ -96,6 +96,14 @@ const shouldShowPlaceholder = ({
   hasLoadedValues: boolean;
 }) => (status === "idle" || status === "loading") && !hasLoadedValues;
 
+const resolveStateContext = (state: ResponseStyleState) => {
+  const status = state?.status ?? "idle";
+  const values = resolveValues(state);
+  const savingField = state?.savingField ?? null;
+  const hasLoadedValues = Object.keys(values).length > 0;
+  return { status, values, savingField, hasLoadedValues };
+};
+
 const buildDropdownViewModel = ({
   hasLoadedValues,
   copy,
@@ -144,14 +152,21 @@ const createFieldViewModelFactory =
     isSaving: savingField === field.id && status === "saving",
   });
 
-const buildFieldViewModels = (
-  hasLoadedValues: boolean,
-  copy: ResponseStyleCopy,
-  handlers: ResponseStyleHandlers,
-  values: Record<string, string>,
-  savingField: string | null,
-  status: string,
-) => {
+const buildFieldViewModels = ({
+  hasLoadedValues,
+  copy,
+  handlers,
+  values,
+  savingField,
+  status,
+}: {
+  hasLoadedValues: boolean;
+  copy: ResponseStyleCopy;
+  handlers: ResponseStyleHandlers;
+  values: Record<string, string>;
+  savingField: string | null;
+  status: string;
+}) => {
   if (!hasLoadedValues) {
     return [];
   }
@@ -175,6 +190,31 @@ const buildErrorState = (
   onRetry: handlers.onRetry,
 });
 
+const buildSectionMetadata = ({
+  title,
+  headingId,
+  description,
+  descriptionId,
+}: {
+  title: string;
+  headingId: string;
+  description?: string;
+  descriptionId?: string;
+}) => ({ title, headingId, description, descriptionId });
+
+const buildPlaceholderState = ({
+  copy,
+  status,
+  hasLoadedValues,
+}: {
+  copy: ResponseStyleCopy;
+  status: string;
+  hasLoadedValues: boolean;
+}) => ({
+  visible: shouldShowPlaceholder({ status, hasLoadedValues }),
+  label: copy.loadingLabel,
+});
+
 export const createResponseStyleSectionViewModel = ({
   title,
   headingId,
@@ -184,11 +224,8 @@ export const createResponseStyleSectionViewModel = ({
   copy,
   handlers,
 }: CreateResponseStyleSectionViewModelArgs): ResponseStyleSectionViewModel => {
-  const status = state?.status ?? "idle";
-  const values = resolveValues(state);
-  const savingField = state?.savingField ?? null;
-  const hasLoadedValues = Object.keys(values).length > 0;
-  const showPlaceholder = shouldShowPlaceholder({ status, hasLoadedValues });
+  const { status, values, savingField, hasLoadedValues } =
+    resolveStateContext(state);
   const dropdown = buildDropdownViewModel({
     hasLoadedValues,
     copy,
@@ -197,18 +234,18 @@ export const createResponseStyleSectionViewModel = ({
     savingField,
     status,
   });
-  const fields = buildFieldViewModels(
+  const fields = buildFieldViewModels({
     hasLoadedValues,
     copy,
     handlers,
     values,
     savingField,
     status,
-  );
+  });
 
   return {
-    section: { title, headingId, description, descriptionId },
-    placeholder: { visible: showPlaceholder, label: copy.loadingLabel },
+    section: buildSectionMetadata({ title, headingId, description, descriptionId }),
+    placeholder: buildPlaceholderState({ copy, status, hasLoadedValues }),
     error: buildErrorState(state, copy, handlers),
     dropdown,
     fields,

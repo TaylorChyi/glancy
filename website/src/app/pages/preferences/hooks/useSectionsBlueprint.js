@@ -1,35 +1,41 @@
 import { useMemo } from "react";
 import { createSections } from "./createSections.js";
 
-export const useSectionsBlueprint = ({
+const mapResponseStyleHandlers = (preferences) => ({
+  onRetry: preferences.handleRetry,
+  onFieldChange: preferences.handleFieldChange,
+  onFieldCommit: preferences.handleFieldCommit,
+});
+
+const buildSectionsConfig = ({
   translations,
   responseStylePreferences,
   responseStyleCopy,
   accountModel,
   subscriptionSection,
-}) =>
-  useMemo(
-    () =>
-      createSections({
-        translations,
-        responseStyleState: responseStylePreferences.state,
-        responseStyleCopy,
-        responseStyleHandlers: {
-          onRetry: responseStylePreferences.handleRetry,
-          onFieldChange: responseStylePreferences.handleFieldChange,
-          onFieldCommit: responseStylePreferences.handleFieldCommit,
-        },
-        accountModel,
-        subscriptionSection,
-      }),
+}) => ({
+  translations,
+  responseStyleState: responseStylePreferences.state,
+  responseStyleCopy,
+  responseStyleHandlers: mapResponseStyleHandlers(responseStylePreferences),
+  accountModel,
+  subscriptionSection,
+});
+
+export const useSectionsBlueprint = (params) => {
+  const sectionsConfig = useMemo(
+    () => buildSectionsConfig(params),
     [
-      accountModel,
-      responseStyleCopy,
-      responseStylePreferences.handleFieldChange,
-      responseStylePreferences.handleFieldCommit,
-      responseStylePreferences.handleRetry,
-      responseStylePreferences.state,
-      subscriptionSection,
-      translations,
+      params.accountModel,
+      params.responseStyleCopy,
+      params.responseStylePreferences.handleFieldChange,
+      params.responseStylePreferences.handleFieldCommit,
+      params.responseStylePreferences.handleRetry,
+      params.responseStylePreferences.state,
+      params.subscriptionSection,
+      params.translations,
     ],
   );
+
+  return useMemo(() => createSections(sectionsConfig), [sectionsConfig]);
+};
