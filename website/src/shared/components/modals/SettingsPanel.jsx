@@ -1,5 +1,9 @@
-import { useLayoutEffect, useRef } from "react";
+import { useRef } from "react";
 import PropTypes from "prop-types";
+import {
+  useHeadingRegistration,
+  usePanelElementRegistration,
+} from "./useSettingsPanelRegistrations";
 
 function SettingsPanel({
   panelId,
@@ -13,48 +17,18 @@ function SettingsPanel({
   const panelElementRef = useRef(null);
   const headingElementRef = useRef(null);
 
-  useLayoutEffect(() => {
-    if (typeof onPanelElementChange !== "function") {
-      return undefined;
-    }
+  usePanelElementRegistration({
+    panelElementRef,
+    onPanelElementChange,
+    panelId,
+    tabId,
+  });
 
-    onPanelElementChange(panelElementRef.current ?? null);
-
-    return () => {
-      onPanelElementChange(null);
-    };
-  }, [onPanelElementChange, panelId, tabId]);
-
-  useLayoutEffect(() => {
-    if (typeof document === "undefined") {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
-      return undefined;
-    }
-
-    if (!headingId) {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
-      return undefined;
-    }
-
-    const nextHeading = document.getElementById(headingId);
-    headingElementRef.current = nextHeading ?? null;
-    if (typeof onHeadingElementChange === "function") {
-      onHeadingElementChange(headingElementRef.current);
-    }
-
-    return () => {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
-    };
-  }, [headingId, onHeadingElementChange]);
+  useHeadingRegistration({
+    headingId,
+    headingElementRef,
+    onHeadingElementChange,
+  });
 
   return (
     <div
