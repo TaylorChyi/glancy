@@ -3,8 +3,17 @@ import { WORD_LANGUAGE_AUTO } from "@shared/utils";
 
 import { buildCacheKey } from "../dictionaryCacheUtils.js";
 import createDictionaryHistoryDeleteHandler from "../dictionaryHistoryDeleteHandler.js";
-import createDictionaryHistorySelectHandler from "../dictionaryHistorySelectHandler.js";
-import createDictionaryHistorySendHandler from "../dictionaryHistorySendHandler.js";
+import {
+  createDictionaryHistorySelectHandler,
+  guardAuthenticated as guardSelectAuthenticated,
+  hydrateOrFetchSelection,
+} from "../dictionaryHistorySelectHandler.js";
+import {
+  createDictionaryHistorySendHandler,
+  guardAuthenticated as guardSendAuthenticated,
+  recordHistoryIfNecessary,
+  resolveInputValue,
+} from "../dictionaryHistorySendHandler.js";
 
 describe("dictionary history handlers", () => {
   describe("createDictionaryHistorySendHandler", () => {
@@ -50,6 +59,42 @@ describe("dictionary history handlers", () => {
 
       expect(setText).toHaveBeenCalledWith("");
       expect(addHistory).toHaveBeenCalledWith("hello", { id: "1" }, "en", "std");
+    });
+  });
+
+  describe("dictionary history send helpers", () => {
+    it("guards unauthenticated users", () => {
+      const navigate = jest.fn();
+      const authenticated = guardSendAuthenticated({ user: null, navigate });
+
+      expect(authenticated).toBe(false);
+      expect(navigate).toHaveBeenCalledWith("/login");
+    });
+
+    it("normalizes input values", () => {
+      expect(resolveInputValue("  hello  ")).toBe("hello");
+    });
+
+    it("records history when successful", () => {
+      const addHistory = jest.fn();
+      const record = recordHistoryIfNecessary({
+        addHistory,
+        user: { id: "1" },
+        historyCaptureEnabled: true,
+        dictionaryFlavor: "std",
+      });
+
+      record(
+        {
+          status: "success",
+          term: "hello",
+          detectedLanguage: "en",
+          flavor: "alt",
+        },
+        "hello",
+      );
+
+      expect(addHistory).toHaveBeenCalledWith("hello", { id: "1" }, "en", "alt");
     });
   });
 
@@ -104,6 +149,37 @@ describe("dictionary history handlers", () => {
         flavor: "std",
         versionId: "override",
       });
+    });
+  });
+
+  describe("dictionary history select helpers", () => {
+    it("guards navigation when unauthenticated", () => {
+      const navigate = jest.fn();
+      const authenticated = guardSelectAuthenticated({ user: null, navigate });
+
+      expect(authenticated).toBe(false);
+      expect(navigate).toHaveBeenCalledWith("/login");
+    });
+
+    it("hydrates cached selections before fetching", async () => {
+      const hydrateRecord = jest.fn().mockReturnValue({ term: "hello" });
+      const setLoading = jest.fn();
+      await hydrateOrFetchSelection(
+        {
+          hydrateRecord,
+          setLoading,
+          loadEntry: jest.fn(),
+        },
+        {
+          cacheKey: "cache",
+          term: "hello",
+          language: "en",
+          flavor: "std",
+          versionId: "v1",
+        },
+      );
+
+      expect(setLoading).toHaveBeenCalledWith(false);
     });
   });
 

@@ -1,27 +1,20 @@
 import { sanitizeTerm } from "./dictionaryRequestHelpers.js";
 
-export const createDictionaryHistorySendHandler = ({
-  user,
-  navigate,
-  text,
-  setText,
-  loadEntry,
-  historyCaptureEnabled,
+export const guardAuthenticated = ({ user, navigate }) => {
+  if (user) return true;
+  navigate("/login");
+  return false;
+};
+
+export const resolveInputValue = (text) => sanitizeTerm(text);
+
+export const recordHistoryIfNecessary = ({
   addHistory,
+  user,
+  historyCaptureEnabled,
   dictionaryFlavor,
 }) =>
-  async (event) => {
-    event.preventDefault();
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    const inputValue = sanitizeTerm(text);
-    if (!inputValue) return;
-
-    setText("");
-    const result = await loadEntry(inputValue);
+  (result, inputValue) => {
     if (result.status !== "success" || !historyCaptureEnabled) {
       return;
     }
@@ -34,5 +27,23 @@ export const createDictionaryHistorySendHandler = ({
       result.flavor ?? dictionaryFlavor,
     );
   };
+
+export const createDictionaryHistorySendHandler = (deps) => {
+  const guard = () => guardAuthenticated(deps);
+  const normalizeInput = () => resolveInputValue(deps.text);
+  const recordHistory = recordHistoryIfNecessary(deps);
+
+  return async (event) => {
+    event.preventDefault();
+    if (!guard()) return;
+
+    const inputValue = normalizeInput();
+    if (!inputValue) return;
+
+    deps.setText("");
+    const result = await deps.loadEntry(inputValue);
+    recordHistory(result, inputValue);
+  };
+};
 
 export default createDictionaryHistorySendHandler;
