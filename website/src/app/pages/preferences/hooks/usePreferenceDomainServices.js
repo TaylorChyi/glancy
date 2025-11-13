@@ -1,45 +1,27 @@
-import { useMemo } from "react";
-import { usePreferenceCopy } from "./usePreferenceCopy.js";
-import { useRedeemSubscription } from "./useRedeemSubscription.js";
-import { useResponseStylePreferences } from "./useResponseStylePreferences.js";
-import { createResponseStyleCopy } from "./createResponseStyleCopy.js";
-import { useSubscriptionBlueprint } from "./useSubscriptionBlueprint.js";
-import { usePreferenceApiClients } from "./usePreferenceApiClients.js";
+import { usePreferenceCopyService } from "./utils/usePreferenceCopyService.js";
+import { useResponseStyleResources } from "./utils/useResponseStyleResources.js";
+import { useSubscriptionServices } from "./utils/useSubscriptionServices.js";
+import { usePreferenceApiResources } from "./utils/usePreferenceApiResources.js";
 
-export const usePreferenceDomainServices = ({
-  translations,
-  user,
-  setUser,
-}) => {
-  const {
-    emailBinding,
-    updateUsernameRequest,
-    fetchProfile,
-    saveProfile,
-    redeemCodeRequest,
-  } = usePreferenceApiClients({ user, setUser });
+export const usePreferenceDomainServices = ({ translations, user, setUser }) => {
+  const apiResources = usePreferenceApiResources({ user, setUser });
 
-  const preferenceCopy = usePreferenceCopy({ translations, user });
-  const { redeemToast, handleRedeem } = useRedeemSubscription({
+  const preferenceCopy = usePreferenceCopyService({ translations, user });
+
+  const { subscriptionSection, redeemToast } = useSubscriptionServices({
     translations,
     user,
     setUser,
-    redeemCodeRequest,
+    redeemCodeRequest: apiResources.redeemCodeRequest,
   });
-  const responseStyleCopy = useMemo(
-    () => createResponseStyleCopy(translations),
-    [translations],
-  );
-  const responseStylePreferences = useResponseStylePreferences({
-    user,
-    fetchProfile,
-    saveProfile,
-  });
-  const subscriptionSection = useSubscriptionBlueprint({
-    translations,
-    user,
-    handleRedeem,
-  });
+
+  const { responseStyleCopy, responseStylePreferences } =
+    useResponseStyleResources({
+      translations,
+      user,
+      fetchProfile: apiResources.fetchProfile,
+      saveProfile: apiResources.saveProfile,
+    });
 
   return {
     preferenceCopy,
@@ -47,7 +29,7 @@ export const usePreferenceDomainServices = ({
     responseStylePreferences,
     subscriptionSection,
     redeemToast,
-    emailBinding,
-    updateUsernameRequest,
+    emailBinding: apiResources.emailBinding,
+    updateUsernameRequest: apiResources.updateUsernameRequest,
   };
 };
