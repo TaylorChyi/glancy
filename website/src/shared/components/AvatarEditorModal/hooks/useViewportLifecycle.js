@@ -1,4 +1,36 @@
 import { useEffect, useLayoutEffect } from "react";
+import { ensurePositiveFinite, shouldUpdateDimension } from "./viewportMath.js";
+
+const resetNaturalDimensions = (setNaturalSize) => {
+  setNaturalSize({ width: 0, height: 0 });
+};
+
+const updateViewportSize = ({ element, setViewportSize }) => {
+  const nextSize = ensurePositiveFinite(element.clientWidth);
+  if (!nextSize) {
+    return;
+  }
+  setViewportSize((previous) =>
+    shouldUpdateDimension(previous, nextSize) ? nextSize : previous,
+  );
+};
+
+const observeViewportElement = ({ element, updateSize }) => {
+  if (typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(() => updateSize());
+    observer.observe(element);
+    return () => observer.disconnect();
+  }
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("resize", updateSize);
+    return () => {
+      window.removeEventListener("resize", updateSize);
+    };
+  }
+
+  return undefined;
+};
 
 const useRecenterOnVisibility = ({ open, resetView, source }) => {
   useLayoutEffect(() => {
@@ -15,7 +47,7 @@ const useCleanupOnClose = ({ open, resetView, setNaturalSize }) => {
       return;
     }
     resetView();
-    setNaturalSize({ width: 0, height: 0 });
+    resetNaturalDimensions(setNaturalSize);
   }, [open, resetView, setNaturalSize]);
 };
 
@@ -56,34 +88,12 @@ const useViewportResizeSync = ({ open, containerRef, setViewportSize }) => {
     if (!element) {
       return undefined;
     }
-
-    const updateSize = () => {
-      const nextSize = element.clientWidth;
-      if (!Number.isFinite(nextSize) || nextSize <= 0) {
-        return;
-      }
-      setViewportSize((previous) =>
-        Math.abs(previous - nextSize) < 0.5 ? previous : nextSize,
-      );
-    };
+    const updateSize = () =>
+      updateViewportSize({ element, setViewportSize });
 
     updateSize();
 
-    if (typeof ResizeObserver === "function") {
-      const observer = new ResizeObserver(() => updateSize());
-      observer.observe(element);
-      return () => observer.disconnect();
-    }
-
-    if (typeof window !== "undefined") {
-      const handleResize = () => updateSize();
-      window.addEventListener("resize", handleResize);
-      return () => {
-        window.removeEventListener("resize", handleResize);
-      };
-    }
-
-    return undefined;
+    return observeViewportElement({ element, updateSize });
   }, [containerRef, open, setViewportSize]);
 };
 

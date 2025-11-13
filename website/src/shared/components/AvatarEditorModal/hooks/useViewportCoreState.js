@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { deriveCenteredViewportState } from "@shared/utils/avatarCropBox.js";
 import { DEFAULT_VIEWPORT_SIZE, MAX_ZOOM, MIN_ZOOM } from "../constants.js";
+import { ensurePositiveFinite } from "./viewportMath.js";
 
 const INITIAL_POINT = { x: 0, y: 0 };
 
@@ -24,13 +25,15 @@ const useViewportCoreState = () => {
       viewport = viewportSize,
       zoom: targetZoom = MIN_ZOOM,
     }) => {
-      const safeViewport = viewport > 0 ? viewport : viewportSize;
-      if (naturalWidth <= 0 || naturalHeight <= 0 || safeViewport <= 0) {
+      const width = ensurePositiveFinite(naturalWidth);
+      const height = ensurePositiveFinite(naturalHeight);
+      const safeViewport = ensurePositiveFinite(viewport, viewportSize);
+      if (!width || !height || !safeViewport) {
         return false;
       }
       const nextState = deriveCenteredViewportState({
-        naturalWidth,
-        naturalHeight,
+        naturalWidth: width,
+        naturalHeight: height,
         viewportSize: safeViewport,
         zoom: targetZoom,
         minZoom: MIN_ZOOM,

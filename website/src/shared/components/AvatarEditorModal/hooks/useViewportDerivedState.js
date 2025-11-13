@@ -5,6 +5,11 @@ import {
   computeOffsetBounds,
 } from "@shared/utils/avatarCropBox.js";
 import { composeTranslate3d } from "../utils.js";
+import {
+  ensureFinite,
+  ensurePositiveFinite,
+  halveIfPositive,
+} from "./viewportMath.js";
 
 const useDisplayMetrics = ({ naturalSize, viewportSize, zoom }) =>
   useMemo(
@@ -51,28 +56,18 @@ const useImageTransform = ({
   offset,
 }) =>
   useMemo(() => {
-    const safeViewport = Number.isFinite(viewportSize) ? viewportSize : 0;
-    const halfViewport = safeViewport / 2;
-    const safeScale =
-      Number.isFinite(displayMetrics.scaleFactor) &&
-      displayMetrics.scaleFactor > 0
-        ? displayMetrics.scaleFactor
-        : 1;
-    const halfWidth =
-      naturalSize.width > 0 && Number.isFinite(naturalSize.width)
-        ? naturalSize.width / 2
-        : 0;
-    const halfHeight =
-      naturalSize.height > 0 && Number.isFinite(naturalSize.height)
-        ? naturalSize.height / 2
-        : 0;
-    const safeOffsetX = Number.isFinite(offset.x) ? offset.x : 0;
-    const safeOffsetY = Number.isFinite(offset.y) ? offset.y : 0;
+    const safeViewport = ensurePositiveFinite(viewportSize);
+    const halfViewport = halveIfPositive(safeViewport);
+    const safeScale = ensurePositiveFinite(displayMetrics.scaleFactor, 1);
+    const halfWidth = halveIfPositive(naturalSize.width);
+    const halfHeight = halveIfPositive(naturalSize.height);
+    const safeOffsetX = ensureFinite(offset.x);
+    const safeOffsetY = ensureFinite(offset.y);
 
     return [
       composeTranslate3d(safeOffsetX, safeOffsetY),
       composeTranslate3d(halfViewport, halfViewport),
-      `scale(${safeScale})`,
+      `scale(${safeScale || 1})`,
       composeTranslate3d(-halfWidth, -halfHeight),
     ].join(" ");
   }, [
