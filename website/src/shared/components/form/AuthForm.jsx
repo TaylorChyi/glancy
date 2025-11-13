@@ -13,10 +13,7 @@ const defaultIcons = {
   google: "google",
 };
 
-function AuthForm({
-  title,
-  switchText,
-  switchLink,
+const useAuthFormPresentation = ({
   onSubmit,
   placeholders = {},
   formMethods = [],
@@ -28,7 +25,7 @@ function AuthForm({
   icons = defaultIcons,
   otherOptionsLabel,
   onRequestCode,
-}) {
+}) => {
   const { lang, t } = useLanguage();
   const brandText = useMemo(() => getBrandText(lang), [lang]);
   const controller = useAuthFormController({
@@ -46,16 +43,41 @@ function AuthForm({
     t,
   });
 
+  return { brandText, controller, t };
+};
+
+const AuthForm = ({
+  brandText,
+  controller,
+  switchLink,
+  switchText,
+  t,
+  title,
+}) => (
+  <AuthFormView
+    {...controller}
+    brandText={brandText}
+    switchLink={switchLink}
+    switchText={switchText}
+    t={t}
+    title={title}
+  />
+);
+
+const AuthFormContainer = (props) => {
+  const { brandText, controller, t } = useAuthFormPresentation(props);
+
   return (
-    <AuthFormView
-      {...controller}
+    <AuthForm
       brandText={brandText}
-      switchLink={switchLink}
-      switchText={switchText}
+      controller={controller}
+      switchLink={props.switchLink}
+      switchText={props.switchText}
       t={t}
-      title={title}
+      title={props.title}
     />
   );
-}
+};
 
-export default AuthForm;
+export { AuthForm };
+export default AuthFormContainer;

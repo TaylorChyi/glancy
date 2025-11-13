@@ -24,7 +24,7 @@ const useUnsupportedMessage = (t) =>
     [t],
   );
 
-const useCompleteSession = ({ setUser, recordLoginCookie, navigate }) =>
+const useSessionCompletionCallback = ({ setUser, recordLoginCookie, navigate }) =>
   useCallback(
     async (data) => {
       setUser(data);
@@ -97,28 +97,54 @@ const buildFormProps = ({ viewCopy, formConfig, handleSubmit, handleRequestCode 
   onRequestCode: handleRequestCode,
 });
 
-export function useAuthFormController({ mode }) {
+const useAuthViewModel = (mode) => {
   const { t } = useLanguage();
   const viewCopy = useAuthViewCopy(mode, t);
   const unsupportedMessage = useUnsupportedMessage(t);
-  const authProtocol = useAuthProtocol();
+  const formConfig = useAuthFormConfig({
+    includeUsername: viewCopy.includeUsername,
+  });
+
+  return { viewCopy, unsupportedMessage, formConfig };
+};
+
+const useAuthSessionCompletion = () => {
   const { setUser } = useUser();
   const navigate = useNavigate();
   const recordLoginCookie = useLoginCookieRecorder();
-  const completeSession = useCompleteSession({
+
+  return useSessionCompletionCallback({
     setUser,
     recordLoginCookie,
     navigate,
   });
-  const formConfig = useAuthFormConfig({
-    includeUsername: viewCopy.includeUsername,
-  });
-  const { handleSubmit, handleRequestCode } = useAuthSubmissionHandlers({
+};
+
+const useAuthSubmission = ({
+  mode,
+  authProtocol,
+  unsupportedMessage,
+  viewCopy,
+}) => {
+  const completeSession = useAuthSessionCompletion();
+
+  return useAuthSubmissionHandlers({
     mode,
     authProtocol,
     unsupportedMessage,
     viewCopy,
     completeSession,
+  });
+};
+
+export function useAuthFormController({ mode }) {
+  const { viewCopy, unsupportedMessage, formConfig } = useAuthViewModel(mode);
+  const authProtocol = useAuthProtocol();
+  const { handleSubmit, handleRequestCode } = useAuthSubmission({
+    mode,
+    authProtocol,
+    unsupportedMessage,
+    viewCopy,
   });
 
   return {
