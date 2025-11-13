@@ -5,12 +5,7 @@ import {
 } from "@shared/utils";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../../dictionaryExperienceViews.js";
 import { coerceResolvedTerm } from "../../hooks/coerceResolvedTerm.js";
-import {
-  buildCacheKey,
-  tryHydrateCachedVersion,
-  buildSuccessResult,
-  applyFallbackResult,
-} from "./dictionaryCacheUtils.js";
+import { buildCacheKey } from "./dictionaryCacheUtils.js";
 
 export const sanitizeTerm = (value = "") => value.trim();
 
