@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 import { useApi } from "@shared/hooks/useApi.js";
 import { useUser } from "@core/context";
-import { cacheBust } from "@shared/utils";
+import {
+  assertUploadContext,
+  resolveUploadedAvatar,
+  selectFirstValidFile,
+  uploadAvatar,
+} from "./avatarUploader/avatarUploadServices.js";
 
 export const AVATAR_UPLOAD_STATUS = Object.freeze({
   idle: "idle",
@@ -9,19 +14,6 @@ export const AVATAR_UPLOAD_STATUS = Object.freeze({
   succeeded: "succeeded",
   failed: "failed",
 });
-
-const normalizeFiles = (files) => {
-  if (!files) {
-    return [];
-  }
-  if (typeof files[Symbol.iterator] === "function") {
-    return Array.from(files);
-  }
-  if (typeof files.length === "number") {
-    return Array.from({ length: files.length }, (_, index) => files[index]);
-  }
-  return Array.isArray(files) ? files : [files];
-};
 
 /**
  * 意图：统一处理头像文件上传并在成功后刷新用户上下文。
@@ -52,38 +44,24 @@ export default function useAvatarUploader({ onSuccess, onError } = {}) {
 
   const onSelectAvatar = useCallback(
     async (filesLike) => {
-      const [file] = normalizeFiles(filesLike).filter(Boolean);
+      const file = selectFirstValidFile(filesLike);
       if (!file) {
         return false;
       }
 
-      if (!user || !user.id || !user.token) {
-        const missingUserError = new Error("avatar-upload-missing-user");
-        missingUserError.code = "avatar-upload-missing-user";
-        setStatus(AVATAR_UPLOAD_STATUS.failed);
-        setError(missingUserError);
-        if (typeof onError === "function") {
-          onError(missingUserError);
-        }
-        return false;
-      }
-
-      setStatus(AVATAR_UPLOAD_STATUS.uploading);
-      setError(null);
-
       try {
-        if (!users || typeof users.uploadAvatar !== "function") {
-          throw new Error("avatar-upload-missing-client");
-        }
+        const context = assertUploadContext({ user, usersClient: users });
 
-        const response = await users.uploadAvatar({
-          userId: user.id,
-          token: user.token,
+        setStatus(AVATAR_UPLOAD_STATUS.uploading);
+        setError(null);
+
+        const response = await uploadAvatar({
+          ...context,
           file,
         });
-        const nextAvatar = response?.avatar ? cacheBust(response.avatar) : null;
+        const nextAvatar = resolveUploadedAvatar(response);
         if (nextAvatar && typeof setUser === "function") {
-          setUser({ ...user, avatar: nextAvatar });
+          setUser({ ...context.user, avatar: nextAvatar });
         }
         setStatus(AVATAR_UPLOAD_STATUS.succeeded);
         if (typeof onSuccess === "function") {
