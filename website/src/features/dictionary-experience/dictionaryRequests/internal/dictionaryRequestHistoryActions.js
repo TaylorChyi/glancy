@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { createHistoryStrategy } from "../../history/historyStrategy.js";
-import createDictionaryHistoryDeleteHandler from "./dictionaryHistoryDeleteHandler.js";
-import createDictionaryHistorySelectHandler from "./dictionaryHistorySelectHandler.js";
-import createDictionaryHistorySendHandler from "./dictionaryHistorySendHandler.js";
+import useHistoryDeleteHandler from "./useHistoryDeleteHandler.js";
+import useHistoryReoutputHandler from "./useHistoryReoutputHandler.js";
+import useHistorySelectHandler from "./useHistorySelectHandler.js";
+import useHistorySendHandler from "./useHistorySendHandler.js";
 
 export const useDictionaryHistoryActions = (
   core,
@@ -48,98 +49,48 @@ export const useDictionaryHistoryActions = (
     [historyEntries],
   );
 
-  const handleSend = useMemo(
-    () =>
-      createDictionaryHistorySendHandler({
-        user,
-        navigate,
-        text,
-        setText,
-        loadEntry,
-        historyCaptureEnabled,
-        addHistory,
-        dictionaryFlavor,
-      }),
-    [
-      user,
-      navigate,
-      text,
-      setText,
-      loadEntry,
-      historyCaptureEnabled,
-      addHistory,
-      dictionaryFlavor,
-    ],
-  );
+  const handleSend = useHistorySendHandler({
+    user,
+    navigate,
+    text,
+    setText,
+    loadEntry,
+    historyCaptureEnabled,
+    addHistory,
+    dictionaryFlavor,
+  });
 
-  const handleReoutput = useCallback(() => {
-    if (!currentTerm) return;
-    loadEntry(currentTerm, { forceNew: true });
-  }, [currentTerm, loadEntry]);
+  const handleReoutput = useHistoryReoutputHandler({ currentTerm, loadEntry });
 
-  const handleSelectHistory = useMemo(
-    () =>
-      createDictionaryHistorySelectHandler({
-        user,
-        navigate,
-        historyStrategy,
-        dictionarySourceLanguage,
-        dictionaryTargetLanguage,
-        dictionaryFlavor,
-        setActiveView,
-        setCurrentTermKey,
-        setCurrentTerm,
-        resetCopyFeedback,
-        cancelActiveLookup,
-        hydrateRecord,
-        setLoading,
-        loadEntry,
-      }),
-    [
-      user,
-      navigate,
-      historyStrategy,
-      dictionarySourceLanguage,
-      dictionaryTargetLanguage,
-      dictionaryFlavor,
-      setActiveView,
-      setCurrentTermKey,
-      setCurrentTerm,
-      resetCopyFeedback,
-      cancelActiveLookup,
-      hydrateRecord,
-      setLoading,
-      loadEntry,
-    ],
-  );
+  const handleSelectHistory = useHistorySelectHandler({
+    user,
+    navigate,
+    historyStrategy,
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    dictionaryFlavor,
+    setActiveView,
+    setCurrentTermKey,
+    setCurrentTerm,
+    resetCopyFeedback,
+    cancelActiveLookup,
+    hydrateRecord,
+    setLoading,
+    loadEntry,
+  });
 
-  const handleDeleteHistory = useMemo(
-    () =>
-      createDictionaryHistoryDeleteHandler({
-        entry,
-        currentTerm,
-        removeHistory,
-        user,
-        setEntry,
-        setFinalText,
-        setCurrentTermKey,
-        setCurrentTerm,
-        resetCopyFeedback,
-        showPopup,
-      }),
-    [
-      entry,
-      currentTerm,
-      removeHistory,
-      user,
-      setEntry,
-      setFinalText,
-      setCurrentTermKey,
-      setCurrentTerm,
-      resetCopyFeedback,
-      showPopup,
-    ],
-  );
+  const handleDeleteHistory = useHistoryDeleteHandler({
+    entry,
+    currentTerm,
+    removeHistory,
+    user,
+    setEntry,
+    setFinalText,
+    setCurrentTermKey,
+    setCurrentTerm,
+    resetCopyFeedback,
+    showPopup,
+  });
 
   return {
     handleSend,
