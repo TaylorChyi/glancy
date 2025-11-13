@@ -32,40 +32,64 @@ export class HistoryMaintenanceCoordinator {
     private readonly pagination: HistoryPaginationCoordinator,
     private readonly errorBoundary: HistoryErrorBoundary,
   ) {
-    this.addCommand = new AddHistoryCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
+    this.addCommand = this.createAddCommand();
+    this.clearCommand = this.createClearCommand();
+    this.languageCleanupCommand = this.createLanguageCleanupCommand();
+    this.removeCommand = this.createRemoveCommand();
+    this.toggleFavoriteCommand = this.createToggleFavoriteCommand();
+    this.retentionCommand = this.createRetentionCommand();
+  }
+
+  private createAddCommand() {
+    return new AddHistoryCommand(
+      this.context,
+      this.dependencies,
+      this.pagination,
+      this.errorBoundary,
     );
-    this.clearCommand = new ClearHistoryCommand(
-      context,
-      dependencies,
-      errorBoundary,
+  }
+
+  private createClearCommand() {
+    return new ClearHistoryCommand(
+      this.context,
+      this.dependencies,
+      this.errorBoundary,
     );
-    this.languageCleanupCommand = new LanguageCleanupCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
+  }
+
+  private createLanguageCleanupCommand() {
+    return new LanguageCleanupCommand(
+      this.context,
+      this.dependencies,
+      this.pagination,
+      this.errorBoundary,
     );
-    this.removeCommand = new RemoveHistoryCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
+  }
+
+  private createRemoveCommand() {
+    return new RemoveHistoryCommand(
+      this.context,
+      this.dependencies,
+      this.pagination,
+      this.errorBoundary,
     );
-    this.toggleFavoriteCommand = new ToggleFavoriteCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
+  }
+
+  private createToggleFavoriteCommand() {
+    return new ToggleFavoriteCommand(
+      this.context,
+      this.dependencies,
+      this.pagination,
+      this.errorBoundary,
     );
-    this.retentionCommand = new RetentionPolicyCommand(
-      context,
-      dependencies,
-      pagination,
-      errorBoundary,
+  }
+
+  private createRetentionCommand() {
+    return new RetentionPolicyCommand(
+      this.context,
+      this.dependencies,
+      this.pagination,
+      this.errorBoundary,
     );
   }
 

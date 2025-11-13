@@ -4,8 +4,6 @@ import SegmentedControl from "@shared/components/ui/SegmentedControl";
 import LanguageMenu from "@shared/components/ui/LanguageMenu";
 import styles from "../../Preferences.module.css";
 
-const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
-
 function GeneralSectionView({
   section,
   themeField,

@@ -6,38 +6,80 @@ import {
 import { computeListIndentation } from "../indentation.js";
 import { shouldSplitInlineLabel } from "./candidates.js";
 
-const rewriteHyphenGap = (...args) => {
-  const [match, separator, label] = args;
-  if (!shouldSplitInlineLabel(label)) {
+const isListMarkerPrefix = (prefix) =>
+  prefix.length > 0 &&
+  (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
+
+const getLinePrefix = (source, offset) => {
+  const normalizedSource = typeof source === "string" ? source : "";
+  const normalizedOffset = Number.isFinite(offset) ? offset : 0;
+  const lineStart = normalizedSource.lastIndexOf("\n", normalizedOffset) + 1;
+  return normalizedSource.slice(lineStart, normalizedOffset + 1).trim();
+};
+
+const toHyphenGapContext = (args) => {
+  const [match = "", separator = "", label = ""] = args;
+  return { match, separator, label };
+};
+
+const rewriteHyphenGap = (context) => {
+  const { match, separator, label } = context;
+  if (typeof label !== "string" || !shouldSplitInlineLabel(label)) {
     return match;
   }
   return " ".repeat(Math.max(2, separator.length));
 };
 
-const rewriteSingleSpaceGap = (...args) => {
-  const [match, before, space, label, offset, source] = args;
-  if (!shouldSplitInlineLabel(label)) {
+const toSingleSpaceGapContext = (args) => {
+  const [
+    match = "",
+    before = "",
+    space = "",
+    label = "",
+    offset = 0,
+    source = "",
+  ] = args;
+  return { match, before, space, label, offset, source };
+};
+
+const rewriteSingleSpaceGap = (context) => {
+  const { match, before, space, label, offset, source } = context;
+  if (typeof label !== "string" || !shouldSplitInlineLabel(label)) {
     return match;
   }
-  const lineStart = source.lastIndexOf("\n", offset) + 1;
-  const prefix = source.slice(lineStart, offset + 1).trim();
-  const isListMarker =
-    prefix.length > 0 &&
-    (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
-  if (isListMarker) {
+  const prefix = getLinePrefix(source, offset);
+  if (isListMarkerPrefix(prefix)) {
     return match;
   }
   return `${before}${space}${space}`;
 };
 
+const toInlineLabelLineBreakContext = (args) => {
+  const [
+    match = "",
+    before = "",
+    spaces = "",
+    segment = "",
+    label = "",
+    offset = 0,
+    source = "",
+  ] = args;
+  return { match, before, spaces, segment, label, offset, source };
+};
+
+const rewriteInlineLabelLineBreak = (context) => {
+  const { before, indent, segment } = context;
+  return `${before}\n${indent}${segment}`;
+};
+
 function normalizeInlineLabelSpacing(text) {
   const hyphenNormalized = text.replace(
     INLINE_LABEL_HYPHEN_GAP_PATTERN,
-    rewriteHyphenGap,
+    (...args) => rewriteHyphenGap(toHyphenGapContext(args)),
   );
   return hyphenNormalized.replace(
     INLINE_LABEL_SINGLE_SPACE_PATTERN,
-    rewriteSingleSpaceGap,
+    (...args) => rewriteSingleSpaceGap(toSingleSpaceGapContext(args)),
   );
 }
 
@@ -46,23 +88,23 @@ export function ensureInlineLabelLineBreak(text) {
   return normalizedSpacing.replace(
     INLINE_LABEL_PATTERN,
     (...args) => {
-      const [match, before, spaces, segment, label, offset, source] = args;
-      if (!shouldSplitInlineLabel(label)) {
+      const context = toInlineLabelLineBreakContext(args);
+      const { match, spaces, label, offset, source } = context;
+      if (typeof label !== "string" || !shouldSplitInlineLabel(label)) {
         return match;
       }
       if (spaces.length === 1) {
-        const lineStart = source.lastIndexOf("\n", offset) + 1;
-        const prefix = source.slice(lineStart, offset + 1).trim();
-        const isListMarker =
-          prefix.length > 0 &&
-          (/^[-*+]$/.test(prefix) || /^\d+[.)]$/.test(prefix));
-        if (isListMarker) {
+        const prefix = getLinePrefix(source, offset);
+        if (isListMarkerPrefix(prefix)) {
           return match;
         }
       }
       const indent =
         computeListIndentation(source, offset) || spaces.replace(/\S/g, " ");
-      return `${before}\n${indent}${segment}`;
+      return rewriteInlineLabelLineBreak({
+        ...context,
+        indent,
+      });
     },
   );
 }

@@ -1,50 +1,14 @@
 /* eslint-env jest */
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { jest } from "@jest/globals";
-
-const mockLanguage = {
-  prefTitle: "Account preferences",
-  prefDescription: "Review and curate your Glancy identity.",
-  prefAccountTitle: "Account",
-  prefTablistLabel: "Preference sections",
-  settingsAccountDescription: "Details that travel with your workspace.",
-  settingsAccountAvatarLabel: "Avatar",
-  settingsAccountUsername: "Username",
-  settingsAccountEmail: "Email",
-  settingsAccountPhone: "Phone",
-  settingsAccountTitle: "Account",
-  settingsTabAccount: "Account",
-  settingsTabData: "Data controls",
-  settingsTabGeneral: "General",
-  settingsEmptyValue: "Not set",
-  changeAvatar: "Change avatar",
-  settingsAccountBindingTitle: "Connected accounts",
-  settingsAccountBindingApple: "Apple",
-  settingsAccountBindingGoogle: "Google",
-  settingsAccountBindingWeChat: "WeChat",
-  settingsAccountBindingStatusUnlinked: "Not linked",
-  settingsAccountBindingActionPlaceholder: "Coming soon",
-  settingsAccountEmailUnbindAction: "Unlink email",
-  settingsAccountEmailUnbinding: "Removing…",
-  settingsAccountPhoneRebindAction: "Change phone",
-  usernamePlaceholder: "Enter username",
-  changeUsernameButton: "Change username",
-  saveUsernameButton: "Save username",
-  saving: "Saving...",
-  usernameValidationEmpty: "Username cannot be empty",
-  usernameValidationTooShort: "Username must be at least {{min}} characters",
-  usernameValidationTooLong: "Username must be at most {{max}} characters",
-  usernameUpdateFailed: "Unable to update username",
-};
-
-let mockUser;
-let mockSetUser;
-let updateUsernameMock;
-const mockUseAvatarEditorWorkflow = jest.fn();
-const mockUseEmailBinding = jest.fn();
-let unbindEmailMock;
+import { renderWithProviders } from "./helpers/renderWithProviders.js";
+import { makeUser } from "./factories/makeUser.js";
+import {
+  preferencesLanguageFixture as mockLanguage,
+  preferencesTestState,
+  resetPreferencesTestState,
+} from "./fixtures/preferencesTestContext.js";
 
 beforeAll(() => {
   if (typeof window !== "undefined" && !window.matchMedia) {
@@ -59,87 +23,13 @@ beforeAll(() => {
   }
 });
 
-jest.unstable_mockModule("@core/context", () => ({
-  useLanguage: () => ({ t: mockLanguage }),
-  useUser: () => ({ user: mockUser, setUser: mockSetUser }),
-  useTheme: () => ({ theme: "light", setTheme: jest.fn() }),
-  useKeyboardShortcutContext: () => ({
-    register: jest.fn(),
-    unregister: jest.fn(),
-  }),
-  KEYBOARD_SHORTCUT_RESET_ACTION: "__GLOBAL_RESET__",
-}));
-
-jest.unstable_mockModule("@shared/api/users.js", () => ({
-  useUsersApi: () => ({
-    updateUsername: updateUsernameMock,
-    unbindEmail: jest.fn(),
-  }),
-}));
-
-jest.unstable_mockModule("@shared/components/ui/Avatar", () => ({
-  __esModule: true,
-  default: ({ className }) => (
-    <div data-testid="avatar" className={className}>
-      avatar
-    </div>
-  ),
-}));
-
-jest.unstable_mockModule("@shared/hooks/useAvatarEditorWorkflow.js", () => ({
-  __esModule: true,
-  default: mockUseAvatarEditorWorkflow,
-}));
-
-jest.unstable_mockModule("@shared/hooks/useEmailBinding.js", () => ({
-  __esModule: true,
-  default: mockUseEmailBinding,
-  useEmailBinding: mockUseEmailBinding,
-}));
-
 const { default: Preferences } = await import("@app/pages/preferences");
+const state = preferencesTestState;
+const renderPreferences = (props = {}) =>
+  renderWithProviders(<Preferences {...props} />, { withRouter: false });
 
 beforeEach(() => {
-  updateUsernameMock = jest.fn().mockResolvedValue({ username: "ada" });
-  mockSetUser = jest.fn();
-  mockUser = {
-    id: "user-1",
-    username: "Ada",
-    email: "ada@example.com",
-    phone: "+1-111",
-    plan: "plus",
-    token: "token-123",
-  };
-  mockUseAvatarEditorWorkflow.mockReset();
-  mockUseAvatarEditorWorkflow.mockReturnValue({
-    selectAvatar: jest.fn(),
-    modalProps: {
-      open: false,
-      source: "",
-      onCancel: jest.fn(),
-      onConfirm: jest.fn(),
-      labels: {},
-      isProcessing: false,
-    },
-    isBusy: false,
-  });
-  unbindEmailMock = jest.fn().mockResolvedValue({ email: null });
-  mockUseEmailBinding.mockReset();
-  mockUseEmailBinding.mockReturnValue({
-    mode: "idle",
-    startEditing: jest.fn(),
-    cancelEditing: jest.fn(),
-    requestCode: jest.fn(),
-    confirmChange: jest.fn(),
-    unbindEmail: unbindEmailMock,
-    isSendingCode: false,
-    isVerifying: false,
-    isUnbinding: false,
-    codeIssuedAt: null,
-    lastRequestedEmail: null,
-    requestedEmail: null,
-    hasBoundEmail: true,
-  });
+  resetPreferencesTestState();
 });
 
 /**
@@ -156,7 +46,7 @@ beforeEach(() => {
  *  - 若未查询到该按钮，提示 Markdown 控制未接入通用分区。
  */
 test("GivenPreferences_WhenGeneralSectionActive_ThenMarkdownPlainToggleVisible", () => {
-  render(<Preferences />);
+  renderPreferences();
 
   const activePanel = screen.getByRole("tabpanel");
   expect(
@@ -180,7 +70,7 @@ test("GivenPreferences_WhenGeneralSectionActive_ThenMarkdownPlainToggleVisible",
  *  - 若用户信息缺失，应在另一个用例中验证占位符（见下方测试）。
  */
 test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", async () => {
-  render(<Preferences />);
+  renderPreferences();
 
   const user = userEvent.setup();
   await user.click(
@@ -197,10 +87,10 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
     within(activePanel).getAllByText(mockLanguage.settingsAccountAvatarLabel),
   ).toHaveLength(1);
   expect(
-    within(activePanel).getByDisplayValue(mockUser.username),
+    within(activePanel).getByDisplayValue(state.user.username),
   ).toBeInTheDocument();
   expect(
-    within(activePanel).getByDisplayValue(mockUser.email),
+    within(activePanel).getByDisplayValue(state.user.email),
   ).toBeInTheDocument();
   expect(within(activePanel).getByDisplayValue("+1 111")).toBeInTheDocument();
   expect(
@@ -255,7 +145,7 @@ test("GivenUserContext_WhenSwitchingToAccountTab_ThenAccountFieldsVisible", asyn
 test("GivenBoundEmail_WhenClickingUnbind_ThenInvokeEmailBindingCommand", async () => {
   const user = userEvent.setup();
 
-  render(<Preferences />);
+  renderPreferences();
 
   await user.click(
     screen.getByRole("tab", {
@@ -272,7 +162,7 @@ test("GivenBoundEmail_WhenClickingUnbind_ThenInvokeEmailBindingCommand", async (
 
   await user.click(unbindButton);
 
-  expect(unbindEmailMock).toHaveBeenCalledTimes(1);
+  expect(state.unbindEmail).toHaveBeenCalledTimes(1);
 });
 
 /**
@@ -289,16 +179,13 @@ test("GivenBoundEmail_WhenClickingUnbind_ThenInvokeEmailBindingCommand", async (
  *  - 若翻译缺失，Fallback 文案 `settingsEmptyValue` 应仍生效。
  */
 test("GivenMissingAccountData_WhenSwitchingToAccountTab_ThenFallbackShown", async () => {
-  mockUser = {
-    id: "user-1",
-    username: "Ada",
+  state.user = makeUser({
     email: "",
     phone: undefined,
     plan: "",
-    token: "token-123",
-  };
+  });
 
-  render(<Preferences />);
+  renderPreferences();
 
   const user = userEvent.setup();
   await user.click(
@@ -328,7 +215,9 @@ test("GivenMissingAccountData_WhenSwitchingToAccountTab_ThenFallbackShown", asyn
  */
 test("GivenAccountTab_WhenSavingUsername_ThenApiInvokedAndStoreUpdated", async () => {
   const user = userEvent.setup();
-  render(<Preferences />);
+  const currentUser = state.user;
+
+  renderPreferences();
 
   await user.click(
     screen.getByRole("tab", {
@@ -341,17 +230,29 @@ test("GivenAccountTab_WhenSavingUsername_ThenApiInvokedAndStoreUpdated", async (
     mockLanguage.usernamePlaceholder,
   );
   expect(input).toBeDisabled();
-  expect(input).toHaveValue(mockUser.username);
+  expect(input).toHaveValue(currentUser.username);
 
-  await user.click(
-    within(panel).getByRole("button", {
-      name: mockLanguage.changeUsernameButton,
-    }),
+  const changeButtons = within(panel).getAllByRole("button", {
+    name: mockLanguage.changeUsernameButton,
+  });
+  expect(changeButtons).toHaveLength(1);
+  await user.click(changeButtons[0]);
+
+  await within(panel).findByRole("button", {
+    name: mockLanguage.saveUsernameButton,
+  });
+  await waitFor(() => {
+    expect(
+      within(panel).getByPlaceholderText(mockLanguage.usernamePlaceholder),
+    ).not.toBeDisabled();
+  });
+
+  const editableInput = within(panel).getByPlaceholderText(
+    mockLanguage.usernamePlaceholder,
   );
-
-  expect(input).not.toBeDisabled();
-  await user.clear(input);
-  await user.type(input, "  ada.glancy  ");
+  expect(editableInput).not.toBeDisabled();
+  await user.clear(editableInput);
+  await user.type(editableInput, "  ada.glancy  ");
 
   await user.click(
     within(panel).getByRole("button", {
@@ -363,16 +264,16 @@ test("GivenAccountTab_WhenSavingUsername_ThenApiInvokedAndStoreUpdated", async (
     name: mockLanguage.changeUsernameButton,
   });
 
-  expect(updateUsernameMock).toHaveBeenCalledWith({
-    userId: mockUser.id,
+  expect(state.updateUsername).toHaveBeenCalledWith({
+    userId: currentUser.id,
     username: "ada.glancy",
-    token: mockUser.token,
+    token: currentUser.token,
   });
-  expect(mockSetUser).toHaveBeenCalledWith({
-    ...mockUser,
+  expect(state.setUser).toHaveBeenCalledWith({
+    ...currentUser,
     username: "ada",
   });
-  expect(input).toBeDisabled();
+  expect(editableInput).toBeDisabled();
 });
 
 /**
@@ -390,7 +291,8 @@ test("GivenAccountTab_WhenSavingUsername_ThenApiInvokedAndStoreUpdated", async (
  */
 test("GivenInvalidUsername_WhenSaving_ThenInlineErrorShown", async () => {
   const user = userEvent.setup();
-  render(<Preferences />);
+
+  renderPreferences();
 
   await user.click(
     screen.getByRole("tab", {
@@ -420,5 +322,5 @@ test("GivenInvalidUsername_WhenSaving_ThenInlineErrorShown", async () => {
   const error = await within(panel).findByText(/at least 3 characters/);
   expect(error).toBeInTheDocument();
   expect(input).toHaveAttribute("aria-invalid", "true");
-  expect(updateUsernameMock).not.toHaveBeenCalled();
+  expect(state.updateUsername).not.toHaveBeenCalled();
 });

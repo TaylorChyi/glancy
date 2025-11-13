@@ -109,33 +109,16 @@ export class HistoryPaginationCoordinator {
     let page = 0;
 
     for (let visited = 0; visited < REMOTE_HISTORY_PAGE_LIMIT; visited += 1) {
-      try {
-        const response = await this.dependencies.api.fetchPage({
-          token: user.token,
-          page,
-          size: HISTORY_PAGE_SIZE,
-        });
-        const payload = this.normalizeFetchPayload(response);
-        if (payload.length === 0) {
-          break;
-        }
-
-        const items = payload.map(toHistoryItem);
-        items.forEach((item) => {
-          if (predicate(item)) {
-            matches.push(item);
-          }
-        });
-
-        if (payload.length < HISTORY_PAGE_SIZE) {
-          break;
-        }
-
-        page += 1;
-      } catch (error) {
-        this.errorBoundary.capture(error);
+      const batch = await this.fetchRemoteBatch(user, page);
+      if (!batch.length) {
         break;
       }
+      const items = batch.map(toHistoryItem);
+      this.collectMatches(items, predicate, matches);
+      if (batch.length < HISTORY_PAGE_SIZE) {
+        break;
+      }
+      page += 1;
     }
 
     return matches;
@@ -144,37 +127,13 @@ export class HistoryPaginationCoordinator {
   private async loadPage({ user, page, mode }: LoadHistoryPageParams) {
     const normalizedPage = Math.max(page, 0);
     const reducer = this.paginationReducers[mode];
-
-    this.context.setState(() => ({
-      isLoading: true,
-      ...(mode === HISTORY_PAGINATION_MODES.RESET
-        ? { history: [], error: null, hasMore: true, nextPage: 0 }
-        : {}),
-    }));
+    this.prepareLoadState(mode);
 
     try {
-      const response = await this.dependencies.api.fetchPage({
-        token: user.token,
-        page: normalizedPage,
-        size: HISTORY_PAGE_SIZE,
-      });
-      const payload = this.normalizeFetchPayload(response);
-      const incoming = payload.map(toHistoryItem);
-      this.context.setState((state) => {
-        const merged = reducer(state.history, incoming);
-        const ordered = [...merged].sort(compareByCreatedAtDesc);
-        const hasMore = incoming.length === HISTORY_PAGE_SIZE;
-        const nextPage = this.resolveNextPage(ordered.length);
-        return {
-          history: ordered,
-          error: null,
-          isLoading: false,
-          hasMore,
-          nextPage,
-        };
-      });
+      const incoming = await this.fetchIncomingItems(user, normalizedPage);
+      this.commitPageResult(reducer, incoming);
     } catch (error) {
-      this.errorBoundary.capture(error);
+      this.handleLoadError(error);
     }
   }
 
@@ -191,5 +150,73 @@ export class HistoryPaginationCoordinator {
       }
     }
     return [];
+  }
+
+  private prepareLoadState(mode: PaginationMode) {
+    this.context.setState(() => ({
+      isLoading: true,
+      ...(mode === HISTORY_PAGINATION_MODES.RESET
+        ? { history: [], error: null, hasMore: true, nextPage: 0 }
+        : {}),
+    }));
+  }
+
+  private async fetchIncomingItems(user: User, page: number) {
+    const response = await this.dependencies.api.fetchPage({
+      token: user.token,
+      page,
+      size: HISTORY_PAGE_SIZE,
+    });
+    const payload = this.normalizeFetchPayload(response);
+    return payload.map(toHistoryItem);
+  }
+
+  private commitPageResult(
+    reducer: (current: HistoryItem[], incoming: HistoryItem[]) => HistoryItem[],
+    incoming: HistoryItem[],
+  ) {
+    this.context.setState((state) => {
+      const merged = reducer(state.history, incoming);
+      const ordered = [...merged].sort(compareByCreatedAtDesc);
+      const hasMore = incoming.length === HISTORY_PAGE_SIZE;
+      const nextPage = this.resolveNextPage(ordered.length);
+      return {
+        history: ordered,
+        error: null,
+        isLoading: false,
+        hasMore,
+        nextPage,
+      };
+    });
+  }
+
+  private handleLoadError(error: unknown) {
+    this.errorBoundary.capture(error);
+  }
+
+  private async fetchRemoteBatch(user: User, page: number) {
+    try {
+      const response = await this.dependencies.api.fetchPage({
+        token: user.token,
+        page,
+        size: HISTORY_PAGE_SIZE,
+      });
+      return this.normalizeFetchPayload(response);
+    } catch (error) {
+      this.errorBoundary.capture(error);
+      return [];
+    }
+  }
+
+  private collectMatches(
+    items: HistoryItem[],
+    predicate: (item: HistoryItem) => boolean,
+    matches: HistoryItem[],
+  ) {
+    items.forEach((item) => {
+      if (predicate(item)) {
+        matches.push(item);
+      }
+    });
   }
 }

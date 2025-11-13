@@ -3,6 +3,8 @@ import { TtsButton, PronounceableWord } from "@shared/components";
 import MarkdownRenderer from "@shared/components/ui/MarkdownRenderer";
 import styles from "./DictionaryEntry.module.css";
 import { Section, PhoneticSection } from "./DictionarySections.jsx";
+import { VariantList, PhraseList } from "./ModernDictionaryLists.jsx";
+import { createStableKeyFactory } from "./stableKeyFactory.js";
 
 function buildModernMetadata(entry) {
   const pronunciations = entry["发音"] || {};
@@ -28,26 +30,6 @@ function buildRelationLabels(t) {
     phrases: t.phrasesLabel || "常见词组",
   };
 }
-
-function VariantList({ label, variants }) {
-  if (!variants.length) return null;
-  return (
-    <Section id="var-title" label={label} className={styles.variants}>
-      <ul>
-        {variants.map((variant, index) => (
-          <li key={index}>
-            {variant.状态}：{variant.词形}
-          </li>
-        ))}
-      </ul>
-    </Section>
-  );
-}
-
-VariantList.propTypes = {
-  label: PropTypes.string.isRequired,
-  variants: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
 
 function Relations({ relations, labels }) {
   if (!relations) return null;
@@ -89,10 +71,11 @@ Relations.defaultProps = {
 
 function Examples({ examples, lang }) {
   if (!examples?.length) return null;
+  const keyForExample = createStableKeyFactory("example");
   return (
     <ul className={styles.examples}>
-      {examples.map((example, index) => (
-        <li key={index}>
+      {examples.map((example) => (
+        <li key={keyForExample([example?.源语言, example?.翻译])}>
           <blockquote>
             <MarkdownRenderer>{example.源语言}</MarkdownRenderer>
             <TtsButton text={example.源语言} lang={lang} scope="sentence" />
@@ -163,13 +146,13 @@ function ModernDefinitions({
   if (!definitions.length) {
     return <p className={styles["no-definition"]}>{fallback}</p>;
   }
+  const keyForDefinition = createStableKeyFactory("definition");
   return (
     <Section id="def-title" label={definitionLabel} className={styles.definitions}>
       <ol>
-        {definitions.map((definition, index) => (
+        {definitions.map((definition) => (
           <ModernDefinition
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
+            key={keyForDefinition([definition?.定义, definition?.类别])}
             definition={definition}
             labels={labels}
             lang={lang}
@@ -186,24 +169,6 @@ ModernDefinitions.propTypes = {
   labels: PropTypes.object.isRequired,
   lang: PropTypes.string.isRequired,
   fallback: PropTypes.string.isRequired,
-};
-
-function PhraseList({ label, phrases }) {
-  if (!phrases.length) return null;
-  return (
-    <Section id="phr-title" label={label} className={styles.phrases}>
-      <ul>
-        {phrases.map((phrase, index) => (
-          <li key={index}>{phrase}</li>
-        ))}
-      </ul>
-    </Section>
-  );
-}
-
-PhraseList.propTypes = {
-  label: PropTypes.string.isRequired,
-  phrases: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default function ModernDictionaryArticle({ entry, className, t, lang }) {

@@ -1,9 +1,9 @@
 /* eslint-env jest */
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import { BRAND_LOGO_ICON } from "@shared/utils/brand.js";
+import { renderWithProviders } from "../../../__tests__/helpers/renderWithProviders.js";
 
 jest.unstable_mockModule("@core/context", () => ({
   // Provide minimal implementations for all hooks consumed by AuthForm
@@ -142,22 +142,20 @@ describe("AuthForm", () => {
   /**
    * Simulates a successful form submission and ensures the payload
    * matches the provided credentials while the UI renders as expected.
-   */
+  */
   test("submits valid credentials", async () => {
     const handleSubmit = jest.fn().mockResolvedValue(undefined);
-    const { asFragment } = render(
-      <MemoryRouter>
-        <AuthForm
-          title="Login"
-          switchText="Have account?"
-          switchLink="/register"
-          onSubmit={handleSubmit}
-          placeholders={{ username: "Username" }}
-          formMethods={["wechat", "username"]}
-          methodOrder={["username", "wechat"]}
-          defaultMethod="username"
-        />
-      </MemoryRouter>,
+    const { asFragment } = renderWithProviders(
+      <AuthForm
+        title="Login"
+        switchText="Have account?"
+        switchLink="/register"
+        onSubmit={handleSubmit}
+        placeholders={{ username: "Username" }}
+        formMethods={["wechat", "username"]}
+        methodOrder={["username", "wechat"]}
+        defaultMethod="username"
+      />,
     );
     fireEvent.change(screen.getByPlaceholderText("Username"), {
       target: { value: "alice" },
@@ -184,20 +182,18 @@ describe("AuthForm", () => {
    * context-aware messaging between login and registration flows.
    */
   test("renders custom alternative option label when provided", () => {
-    render(
-      <MemoryRouter>
-        <AuthForm
-          title="Register"
-          switchText="Back to login?"
-          switchLink="/login"
-          onSubmit={jest.fn()}
-          placeholders={{ username: "Username" }}
-          formMethods={["username", "wechat"]}
-          methodOrder={["username", "wechat"]}
-          defaultMethod="username"
-          otherOptionsLabel="Other register options"
-        />
-      </MemoryRouter>,
+    renderWithProviders(
+      <AuthForm
+        title="Register"
+        switchText="Back to login?"
+        switchLink="/login"
+        onSubmit={jest.fn()}
+        placeholders={{ username: "Username" }}
+        formMethods={["username", "wechat"]}
+        methodOrder={["username", "wechat"]}
+        defaultMethod="username"
+        otherOptionsLabel="Other register options"
+      />,
     );
 
     expect(
@@ -212,21 +208,19 @@ describe("AuthForm", () => {
   test("requests verification code for email method", async () => {
     const handleRequestCode = jest.fn().mockResolvedValue(undefined);
 
-    render(
-      <MemoryRouter>
-        <AuthForm
-          title="Login"
-          switchText="Have account?"
-          switchLink="/register"
-          onSubmit={jest.fn()}
-          placeholders={{ email: "Email" }}
-          formMethods={["email"]}
-          methodOrder={["email"]}
-          defaultMethod="email"
-          showCodeButton={() => true}
-          onRequestCode={handleRequestCode}
-        />
-      </MemoryRouter>,
+    renderWithProviders(
+      <AuthForm
+        title="Login"
+        switchText="Have account?"
+        switchLink="/register"
+        onSubmit={jest.fn()}
+        placeholders={{ email: "Email" }}
+        formMethods={["email"]}
+        methodOrder={["email"]}
+        defaultMethod="email"
+        showCodeButton={() => true}
+        onRequestCode={handleRequestCode}
+      />,
     );
 
     fireEvent.change(screen.getByPlaceholderText("Email"), {
@@ -255,20 +249,18 @@ describe("AuthForm", () => {
   test("shows error when validation fails", async () => {
     const handleSubmit = jest.fn();
     const validateAccount = () => false;
-    render(
-      <MemoryRouter>
-        <AuthForm
-          title="Login"
-          switchText="Have account?"
-          switchLink="/register"
-          onSubmit={handleSubmit}
-          placeholders={{ username: "Username" }}
-          formMethods={["wechat", "username"]}
-          methodOrder={["username", "wechat"]}
-          defaultMethod="username"
-          validateAccount={validateAccount}
-        />
-      </MemoryRouter>,
+    renderWithProviders(
+      <AuthForm
+        title="Login"
+        switchText="Have account?"
+        switchLink="/register"
+        onSubmit={handleSubmit}
+        placeholders={{ username: "Username" }}
+        formMethods={["wechat", "username"]}
+        methodOrder={["username", "wechat"]}
+        defaultMethod="username"
+        validateAccount={validateAccount}
+      />,
     );
     fireEvent.change(screen.getByPlaceholderText("Username"), {
       target: { value: "" },
@@ -282,19 +274,17 @@ describe("AuthForm", () => {
    * as explicit line breaks for better readability.
    */
   test("renders multi-line title correctly", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <AuthForm
-          title={"Welcome\nBack"}
-          switchText="Have account?"
-          switchLink="/register"
-          onSubmit={jest.fn()}
-          placeholders={{ username: "Username" }}
-          formMethods={["wechat", "username"]}
-          methodOrder={["username", "wechat"]}
-          defaultMethod="username"
-        />
-      </MemoryRouter>,
+    const { container } = renderWithProviders(
+      <AuthForm
+        title={"Welcome\nBack"}
+        switchText="Have account?"
+        switchLink="/register"
+        onSubmit={jest.fn()}
+        placeholders={{ username: "Username" }}
+        formMethods={["wechat", "username"]}
+        methodOrder={["username", "wechat"]}
+        defaultMethod="username"
+      />,
     );
     const title = container.querySelector("h1");
     expect(title.innerHTML).toBe("Welcome<br>Back");
@@ -305,19 +295,17 @@ describe("AuthForm", () => {
    * authentication is unavailable, preventing regressions for legacy flows.
    */
   test("falls back to configured default when username is unavailable", () => {
-    render(
-      <MemoryRouter>
-        <AuthForm
-          title="Login"
-          switchText="Have account?"
-          switchLink="/register"
-          onSubmit={jest.fn()}
-          placeholders={{ email: "Email" }}
-          formMethods={["phone", "email"]}
-          methodOrder={["phone", "email"]}
-          defaultMethod="email"
-        />
-      </MemoryRouter>,
+    renderWithProviders(
+      <AuthForm
+        title="Login"
+        switchText="Have account?"
+        switchLink="/register"
+        onSubmit={jest.fn()}
+        placeholders={{ email: "Email" }}
+        formMethods={["phone", "email"]}
+        methodOrder={["phone", "email"]}
+        defaultMethod="email"
+      />,
     );
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });

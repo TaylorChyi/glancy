@@ -19,10 +19,35 @@ export const useDictionaryHistoryActions = (
   } = core;
   const { user } = contexts.userContext;
   const { historyContext, popup, navigate, languageConfig } = contexts;
+  const {
+    history: historyEntries = [],
+    addHistory,
+    removeHistory,
+  } = historyContext ?? {};
+  const {
+    dictionaryFlavor,
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+  } = languageConfig;
+  const { resetCopyFeedback } = copyController;
+  const { cancelActiveLookup } = lookupController;
+  const { showPopup } = popup;
+  const {
+    text,
+    setText,
+    entry,
+    setEntry,
+    setFinalText,
+    currentTerm,
+    setCurrentTerm,
+    setCurrentTermKey,
+    setActiveView,
+    setLoading,
+  } = state;
 
   const historyStrategy = useMemo(
-    () => createHistoryStrategy(historyContext.history ?? []),
-    [historyContext.history],
+    () => createHistoryStrategy(historyEntries),
+    [historyEntries],
   );
 
   const handleSend = useCallback(
@@ -32,36 +57,37 @@ export const useDictionaryHistoryActions = (
         navigate("/login");
         return;
       }
-      if (!sanitizeTerm(state.text)) return;
-      const inputValue = sanitizeTerm(state.text);
-      state.setText("");
+      const inputValue = sanitizeTerm(text);
+      if (!inputValue) return;
+      setText("");
       const result = await loadEntry(inputValue);
       if (result.status !== "success" || !historyCaptureEnabled) {
         return;
       }
       const historyTerm = result.term ?? result.queriedTerm ?? inputValue;
-      historyContext.addHistory(
+      addHistory(
         historyTerm,
         user,
         result.detectedLanguage,
-        result.flavor ?? languageConfig.dictionaryFlavor,
+        result.flavor ?? dictionaryFlavor,
       );
     },
     [
       user,
       navigate,
-      state,
+      text,
+      setText,
       loadEntry,
       historyCaptureEnabled,
-      historyContext,
-      languageConfig.dictionaryFlavor,
+      addHistory,
+      dictionaryFlavor,
     ],
   );
 
   const handleReoutput = useCallback(() => {
-    if (!state.currentTerm) return;
-    loadEntry(state.currentTerm, { forceNew: true });
-  }, [state.currentTerm, loadEntry]);
+    if (!currentTerm) return;
+    loadEntry(currentTerm, { forceNew: true });
+  }, [currentTerm, loadEntry]);
 
   const handleSelectHistory = useCallback(
     async (identifier, versionId) => {
@@ -73,25 +99,25 @@ export const useDictionaryHistoryActions = (
       const selection = resolveHistorySelection({
         strategy: historyStrategy,
         identifier,
-        dictionarySourceLanguage: languageConfig.dictionarySourceLanguage,
-        dictionaryTargetLanguage: languageConfig.dictionaryTargetLanguage,
-        dictionaryFlavor: languageConfig.dictionaryFlavor,
+        dictionarySourceLanguage,
+        dictionaryTargetLanguage,
+        dictionaryFlavor,
       });
 
       if (!selection) return;
 
-      state.setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-      state.setCurrentTermKey(selection.cacheKey);
-      state.setCurrentTerm(selection.term);
-      copyController.resetCopyFeedback();
-      lookupController.cancelActiveLookup();
+      setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
+      setCurrentTermKey(selection.cacheKey);
+      setCurrentTerm(selection.term);
+      resetCopyFeedback();
+      cancelActiveLookup();
 
       const hydrated = hydrateRecord(
         selection.cacheKey,
         versionId ?? selection.versionId,
       );
       if (hydrated) {
-        state.setLoading(false);
+        setLoading(false);
         return;
       }
 
@@ -105,37 +131,45 @@ export const useDictionaryHistoryActions = (
       user,
       navigate,
       historyStrategy,
-      languageConfig,
-      state,
-      copyController,
-      lookupController,
+      dictionarySourceLanguage,
+      dictionaryTargetLanguage,
+      dictionaryFlavor,
+      setActiveView,
+      setCurrentTermKey,
+      setCurrentTerm,
+      resetCopyFeedback,
+      cancelActiveLookup,
       hydrateRecord,
+      setLoading,
       loadEntry,
     ],
   );
 
   const handleDeleteHistory = useCallback(async () => {
-    const activeTerm = state.entry?.term || state.currentTerm;
+    const activeTerm = entry?.term || currentTerm;
     if (!activeTerm) return;
     try {
-      await historyContext.removeHistory(activeTerm, user);
-      state.setEntry(null);
-      state.setFinalText("");
-      state.setCurrentTermKey(null);
-      state.setCurrentTerm("");
-      copyController.resetCopyFeedback();
+      await removeHistory(activeTerm, user);
+      setEntry(null);
+      setFinalText("");
+      setCurrentTermKey(null);
+      setCurrentTerm("");
+      resetCopyFeedback();
     } catch (error) {
       console.error("[DictionaryExperience] remove history failed", error);
-      popup.showPopup(error.message ?? String(error));
+      showPopup(error.message ?? String(error));
     }
   }, [
-    state.entry,
-    state.currentTerm,
-    historyContext,
+    entry,
+    currentTerm,
+    removeHistory,
     user,
-    state,
-    copyController,
-    popup,
+    setEntry,
+    setFinalText,
+    setCurrentTermKey,
+    setCurrentTerm,
+    resetCopyFeedback,
+    showPopup,
   ]);
 
   return {

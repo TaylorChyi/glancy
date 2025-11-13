@@ -14,8 +14,7 @@ afterEach(() => {
       writable: false,
     });
   } else {
-    // eslint-disable-next-line no-undef
-    delete global.navigator;
+    delete globalThis.navigator;
   }
 });
 

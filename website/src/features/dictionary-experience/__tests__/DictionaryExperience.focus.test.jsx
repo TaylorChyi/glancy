@@ -3,78 +3,27 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
+import { createDictionaryExperienceState } from "../../../__tests__/fixtures/dictionaryExperienceState.js";
 
 const focusInputMock = jest.fn();
 const inputRef = { current: null };
 const handleReoutputMock = jest.fn();
-
-function createDictionaryExperienceState(overrides = {}) {
-  return {
+const buildExperienceState = (overrides = {}) => {
+  const { dictionaryActionBarProps, ...rest } = overrides;
+  return createDictionaryExperienceState({
     inputRef,
-    t: { returnToSearch: "返回搜索", reoutput: "重试释义" },
-    text: "",
-    setText: jest.fn(),
-    dictionarySourceLanguage: "en",
-    setDictionarySourceLanguage: jest.fn(),
-    dictionaryTargetLanguage: "zh",
-    setDictionaryTargetLanguage: jest.fn(),
-    sourceLanguageOptions: [],
-    targetLanguageOptions: [],
-    handleSwapLanguages: jest.fn(),
-    handleSend: jest.fn(),
-    handleShowDictionary: jest.fn(),
-    handleShowLibrary: jest.fn(),
-    handleSelectHistory: jest.fn(),
-    activeView: "dictionary",
-    viewState: {
-      active: "dictionary",
-      isDictionary: true,
-      isHistory: false,
-      isLibrary: false,
-    },
     focusInput: focusInputMock,
-    entry: { term: "mock" },
-    finalText: "",
-    loading: false,
-    dictionaryActionBarProps: { onReoutput: handleReoutputMock },
-    displayClassName: "dictionary-experience",
-    popupOpen: false,
-    popupMsg: "",
-    closePopup: jest.fn(),
-    toast: null,
-    closeToast: jest.fn(),
-    dictionaryTargetLanguageLabel: "目标语言",
-    dictionarySourceLanguageLabel: "源语言",
-    dictionarySwapLanguagesLabel: "切换",
-    searchEmptyState: { title: "", description: "" },
-    chatInputPlaceholder: "",
-    libraryLandingLabel: "致用单词",
-    reportDialog: {
-      open: false,
-      term: "",
-      language: "ENGLISH",
-      flavor: "BILINGUAL",
-      sourceLanguage: "ENGLISH",
-      targetLanguage: "CHINESE",
-      category: null,
-      categories: [],
-      description: "",
-      submitting: false,
-      error: "",
+    dictionaryActionBarProps: {
+      onReoutput: handleReoutputMock,
+      ...(dictionaryActionBarProps ?? {}),
     },
-    reportDialogHandlers: {
-      close: jest.fn(),
-      setCategory: jest.fn(),
-      setDescription: jest.fn(),
-      submit: jest.fn(),
-    },
-    ...overrides,
-  };
-}
+    ...rest,
+  });
+};
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   __esModule: true,
-  useDictionaryExperience: jest.fn(() => createDictionaryExperienceState()),
+  useDictionaryExperience: jest.fn(() => buildExperienceState()),
 }));
 
 jest.unstable_mockModule("@shared/components/Layout", () => ({
@@ -183,7 +132,7 @@ jest.unstable_mockModule("../components/BottomPanelSwitcher.jsx", () => ({
   ),
 }));
 
-jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
+jest.unstable_mockModule("../components/panels/ActionPanel.jsx", () => ({
   __esModule: true,
   default: ({ onRequestSearch, searchButtonLabel, actionBarProps }) => (
     <div>
@@ -211,7 +160,7 @@ describe("DictionaryExperience focus management", () => {
     handleReoutputMock.mockClear();
     inputRef.current = null;
     useDictionaryExperience.mockImplementation(() =>
-      createDictionaryExperienceState(),
+      buildExperienceState(),
     );
   });
 
@@ -292,7 +241,7 @@ describe("DictionaryExperience focus management", () => {
     const user = userEvent.setup();
     const handleSend = jest.fn();
     useDictionaryExperience.mockImplementation(() =>
-      createDictionaryExperienceState({ handleSend }),
+      buildExperienceState({ handleSend }),
     );
 
     render(<DictionaryExperience />);
@@ -334,7 +283,7 @@ describe("DictionaryExperience focus management", () => {
     });
 
     useDictionaryExperience.mockImplementation(() =>
-      createDictionaryExperienceState({
+      buildExperienceState({
         text: "mock term",
         setText: setTextMock,
         handleSend: handleSendMock,
@@ -381,7 +330,7 @@ describe("DictionaryExperience focus management", () => {
    */
   test("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
     useDictionaryExperience.mockReturnValueOnce(
-      createDictionaryExperienceState({
+      buildExperienceState({
         t: {},
         activeView: "library",
         viewState: {

@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { createDictionaryExperienceState } from "../../../__tests__/fixtures/dictionaryExperienceState.js";
 
 const useDictionaryExperienceMock = jest.fn();
 const dictionaryEntryViewSpy = jest.fn();
@@ -8,69 +9,11 @@ const activateSearchModeMock = jest.fn();
 const activateActionsModeMock = jest.fn();
 const handleFocusChangeMock = jest.fn();
 const handleScrollEscapeMock = jest.fn();
-
-const createBaseExperienceState = () => ({
-  inputRef: { current: null },
-  t: { returnToSearch: "返回搜索" },
-  text: "",
-  setText: jest.fn(),
-  dictionarySourceLanguage: "en",
-  setDictionarySourceLanguage: jest.fn(),
-  dictionaryTargetLanguage: "zh",
-  setDictionaryTargetLanguage: jest.fn(),
-  sourceLanguageOptions: [],
-  targetLanguageOptions: [],
-  handleSwapLanguages: jest.fn(),
-  handleSend: jest.fn(),
-  handleShowDictionary: jest.fn(),
-  handleShowLibrary: jest.fn(),
-  handleSelectHistory: jest.fn(),
-  activeView: "dictionary",
-  viewState: {
-    isDictionary: true,
-    isHistory: false,
-    isLibrary: false,
-  },
-  focusInput: jest.fn(),
-  entry: null,
-  finalText: "",
-  loading: false,
-  dictionaryActionBarProps: { onReoutput: jest.fn() },
-  displayClassName: "dictionary-experience",
-  popupOpen: false,
-  popupMsg: "",
-  closePopup: jest.fn(),
-  toast: null,
-  closeToast: jest.fn(),
-  dictionaryTargetLanguageLabel: "目标语言",
-  dictionarySourceLanguageLabel: "源语言",
-  dictionarySwapLanguagesLabel: "切换",
-  searchEmptyState: {
-    title: "开始探索",
-    description: "输入任何词汇即可获取解释",
-  },
-  chatInputPlaceholder: "输入查询内容",
-  libraryLandingLabel: "致用单词",
-  reportDialog: {
-    open: false,
-    term: "",
-    language: "ENGLISH",
-    flavor: "BILINGUAL",
-    sourceLanguage: "ENGLISH",
-    targetLanguage: "CHINESE",
-    category: null,
-    categories: [],
-    description: "",
-    submitting: false,
-    error: "",
-  },
-  reportDialogHandlers: {
-    close: jest.fn(),
-    setCategory: jest.fn(),
-    setDescription: jest.fn(),
-    submit: jest.fn(),
-  },
-});
+const buildExperienceState = (overrides = {}) =>
+  createDictionaryExperienceState({
+    entry: null,
+    ...overrides,
+  });
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   __esModule: true,
@@ -98,7 +41,7 @@ jest.unstable_mockModule("../components/BottomPanelSwitcher.jsx", () => ({
   ),
 }));
 
-jest.unstable_mockModule("../components/DictionaryActionPanel.jsx", () => ({
+jest.unstable_mockModule("../components/panels/ActionPanel.jsx", () => ({
   __esModule: true,
   default: ({ actionBarProps }) => (
     <div
@@ -207,7 +150,7 @@ describe("DictionaryExperience preview rendering", () => {
    * 前置条件：useDictionaryExperience 返回空 entry、finalText 不为空。
    */
   it("GivenFinalMarkdown_WhenEntryUnavailable_ShouldPropagatePreview", () => {
-    const experienceState = createBaseExperienceState();
+    const experienceState = buildExperienceState();
     experienceState.finalText = "## 最终排版";
     experienceState.loading = false;
     useDictionaryExperienceMock.mockReturnValue(experienceState);
@@ -231,7 +174,7 @@ describe("DictionaryExperience preview rendering", () => {
    * 前置条件：useDictionaryExperience 返回 entry/finalText 皆为空，loading 为 false。
    */
   it("GivenIdleState_WhenNoPreview_ShouldRenderEmptyState", () => {
-    const experienceState = createBaseExperienceState();
+    const experienceState = buildExperienceState();
     useDictionaryExperienceMock.mockReturnValue(experienceState);
 
     render(<DictionaryExperience />);
@@ -245,7 +188,7 @@ describe("DictionaryExperience preview rendering", () => {
    * 前置条件：useDictionaryExperience 返回 loading 为真、finalText 为空。
    */
   it("GivenLoadingState_WhenEntryMissing_ShouldFlagPlaceholder", () => {
-    const experienceState = createBaseExperienceState();
+    const experienceState = buildExperienceState();
     experienceState.loading = true;
     useDictionaryExperienceMock.mockReturnValue(experienceState);
 

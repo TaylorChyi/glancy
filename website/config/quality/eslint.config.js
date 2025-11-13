@@ -3,6 +3,7 @@
  */
 import js from "@eslint/js";
 import globals from "globals";
+import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "@typescript-eslint/eslint-plugin";
@@ -89,6 +90,7 @@ export default defineConfig([
   {
     files: ["**/*.{js,jsx}"],
     plugins: {
+      react,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
       glancy: localPlugin,
@@ -101,6 +103,9 @@ export default defineConfig([
       },
       globals: { ...globals.browser, process: "readonly" },
     },
+    settings: {
+      react: { version: "detect" },
+    },
     rules: {
       ...js.configs.recommended.rules,
       ...reactHooks.configs["recommended-latest"].rules,
@@ -110,11 +115,13 @@ export default defineConfig([
         "no-console": ["error", { allow: ["warn", "error"] }],
         "glancy/cognitive-complexity": ["error", 15],
       }),
+      "react/no-array-index-key": "error",
     },
   },
   {
     files: ["**/*.{ts,tsx}"],
     plugins: {
+      react,
       "@typescript-eslint": tseslint,
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
@@ -129,6 +136,9 @@ export default defineConfig([
       },
       globals: { ...globals.browser, process: "readonly" },
     },
+    settings: {
+      react: { version: "detect" },
+    },
     rules: {
       ...tseslint.configs.recommended.rules,
       ...reactHooks.configs["recommended-latest"].rules,
@@ -142,6 +152,7 @@ export default defineConfig([
         "no-console": ["error", { allow: ["warn", "error"] }],
         "glancy/cognitive-complexity": ["error", 15],
       }),
+      "react/no-array-index-key": "error",
     },
   },
   {

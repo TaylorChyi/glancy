@@ -8,6 +8,12 @@ export const COPY_FEEDBACK_STATES = Object.freeze({
 });
 
 const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
+const COPY_STATUS = Object.freeze({
+  COPIED: "copied",
+  EMPTY: "empty",
+  FAILED: "failed",
+  DEFAULT: "default",
+});
 
 const useCopyPayload = ({ entry, finalText, currentTerm }) =>
   useMemo(() => {
@@ -106,6 +112,53 @@ const useCopyFeedbackTimer = () => {
   return { clear, schedule };
 };
 
+const useCopyAttemptResolver = ({ canCopyDefinition, copyPayload }) =>
+  useCallback(async () => {
+    if (!canCopyDefinition) {
+      return COPY_STATUS.EMPTY;
+    }
+
+    try {
+      const result = await copyTextToClipboard(copyPayload);
+      if (result?.status === COPY_STATUS.COPIED) {
+        return COPY_STATUS.COPIED;
+      }
+      return result?.status || COPY_STATUS.DEFAULT;
+    } catch {
+      return COPY_STATUS.FAILED;
+    }
+  }, [canCopyDefinition, copyPayload]);
+
+const useCopyStateMachine = ({ pushCopyPopup, onSuccess, onReset }) =>
+  useMemo(() => {
+    const transitions = {
+      [COPY_STATUS.COPIED]: () => {
+        onSuccess();
+        pushCopyPopup(COPY_STATUS.COPIED);
+      },
+      [COPY_STATUS.EMPTY]: () => {
+        onReset();
+        pushCopyPopup(COPY_STATUS.EMPTY);
+      },
+      [COPY_STATUS.FAILED]: () => {
+        onReset();
+        pushCopyPopup(COPY_STATUS.FAILED);
+      },
+    };
+
+    return (event = COPY_STATUS.DEFAULT) => {
+      const normalizedEvent = event || COPY_STATUS.DEFAULT;
+      const transition = transitions[normalizedEvent];
+      if (transition) {
+        transition();
+        return;
+      }
+
+      onReset();
+      pushCopyPopup(normalizedEvent);
+    };
+  }, [onReset, onSuccess, pushCopyPopup]);
+
 /**
  * 意图：集中管理复制行为的所有状态与副作用，为上层提供可组合的控制器。
  * 输入：
@@ -148,34 +201,28 @@ export function useDictionaryCopyController({
     schedule(() => setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE));
   }, [schedule]);
 
-  const handleCopy = useCallback(async () => {
-    if (!canCopyDefinition) {
-      resetCopyFeedback();
-      pushCopyPopup("empty");
-      return;
-    }
+  const markCopySuccess = useCallback(() => {
+    setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
+    scheduleCopyFeedbackReset();
+  }, [scheduleCopyFeedbackReset]);
 
-    try {
-      const result = await copyTextToClipboard(copyPayload);
-      if (result.status === "copied") {
-        setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
-        scheduleCopyFeedbackReset();
-        pushCopyPopup("copied");
-        return;
-      }
-
-      resetCopyFeedback();
-      pushCopyPopup(result.status || "default");
-    } catch {
-      resetCopyFeedback();
-      pushCopyPopup("failed");
-    }
-  }, [
+  const resolveCopyEvent = useCopyAttemptResolver({
     canCopyDefinition,
     copyPayload,
-    scheduleCopyFeedbackReset,
+  });
+
+  const dispatchCopyStatus = useCopyStateMachine({
+    onSuccess: markCopySuccess,
+    onReset: resetCopyFeedback,
     pushCopyPopup,
-    resetCopyFeedback,
+  });
+
+  const handleCopy = useCallback(async () => {
+    const event = await resolveCopyEvent();
+    dispatchCopyStatus(event);
+  }, [
+    dispatchCopyStatus,
+    resolveCopyEvent,
   ]);
 
   const isCopySuccessActive =

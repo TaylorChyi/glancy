@@ -5,6 +5,30 @@ import {
 import { computeListIndentation } from "../indentation.js";
 import { shouldSplitInlineLabel } from "./candidates.js";
 
+const toInlineLabelBoundaryContext = (args) => {
+  const [
+    match = "",
+    before = "",
+    segment = "",
+    label = "",
+    offset = 0,
+    source = "",
+  ] = args;
+  return { match, before, segment, label, offset, source };
+};
+
+const rewriteInlineLabelBoundary = (context) => {
+  const { match, before, segment, label, offset, source } = context;
+  if (!INLINE_LABEL_BOUNDARY_PREFIX_RE.test(before)) {
+    return match;
+  }
+  if (typeof label !== "string" || !shouldSplitInlineLabel(label)) {
+    return match;
+  }
+  const indent = computeListIndentation(source, offset) || "";
+  return `${before}\n${indent}${segment}`;
+};
+
 export function normalizeLabelBreakArtifacts(text) {
   return text
     .replace(/: ([\p{Lu}])\n/gu, (_match, labelStart) => `:\n${labelStart}`)
@@ -17,15 +41,6 @@ export function normalizeLabelBreakArtifacts(text) {
 export function enforceInlineLabelBoundary(text) {
   return text.replace(
     INLINE_LABEL_NO_BOUNDARY_PATTERN,
-    (match, before, segment, label, offset, source) => {
-      if (!INLINE_LABEL_BOUNDARY_PREFIX_RE.test(before)) {
-        return match;
-      }
-      if (!shouldSplitInlineLabel(label)) {
-        return match;
-      }
-      const indent = computeListIndentation(source, offset) || "";
-      return `${before}\n${indent}${segment}`;
-    },
+    (...args) => rewriteInlineLabelBoundary(toInlineLabelBoundaryContext(args)),
   );
 }
