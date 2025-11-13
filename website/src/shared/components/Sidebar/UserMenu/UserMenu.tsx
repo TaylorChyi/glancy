@@ -1,65 +1,9 @@
 import { useMemo } from "react";
-import ThemeIcon from "@shared/components/ui/Icon";
 import UserButton from "./UserButton";
 import styles from "./UserMenu.module.css";
 import { useUserMenuController } from "./useUserMenuController";
-import type { MenuActionItem, MenuItemViewModel } from "./contracts";
-
-interface MenuListProps {
-  itemViewModels: MenuItemViewModel[];
-}
-
-function MenuItemButton({
-  viewModel: {
-    item,
-    isActive,
-    disabled,
-    setNode,
-    handleFocus,
-    handlePointerEnter,
-    handleSelect,
-  },
-}: {
-  viewModel: MenuItemViewModel;
-}) {
-  return (
-    <button
-      type="button"
-      ref={setNode}
-      className={styles["menu-item"]}
-      data-active={isActive || undefined}
-      role="menuitem"
-      tabIndex={isActive ? 0 : -1}
-      onFocus={handleFocus}
-      onPointerEnter={handlePointerEnter}
-      onClick={handleSelect}
-      aria-disabled={disabled || undefined}
-    >
-      <span className={styles.icon}>
-        <ThemeIcon name={item.icon} width={18} height={18} />
-      </span>
-      <span className={styles.labels}>
-        <span className={styles["primary-label"]}>{item.label}</span>
-        {item.description ? (
-          <span className={styles["secondary-label"]}>{item.description}</span>
-        ) : null}
-      </span>
-      {item.secondaryLabel ? (
-        <span className={styles["meta-label"]}>{item.secondaryLabel}</span>
-      ) : null}
-    </button>
-  );
-}
-
-function MenuList({ itemViewModels }: MenuListProps) {
-  return (
-    <div className={styles.list}>
-      {itemViewModels.map((viewModel) => (
-        <MenuItemButton key={viewModel.item.id} viewModel={viewModel} />
-      ))}
-    </div>
-  );
-}
+import type { MenuActionItem } from "./contracts";
+import { MenuList } from "./MenuList";
 
 interface UserMenuProps {
   displayName: string;

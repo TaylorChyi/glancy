@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import type { UserMenuControllerOptions } from "./contracts";
 
-
 export const findFirstEnabledIndex = (
   items: UserMenuControllerOptions["items"],
 ) => {
@@ -20,6 +19,30 @@ export const useItemRefs = () => {
     [],
   );
   return { itemRefs, setItemRef };
+};
+
+const focusTriggerWhenClosing = (
+  previousOpen: boolean,
+  open: boolean,
+  triggerRef: MutableRefObject<HTMLButtonElement | null>,
+) => {
+  if (previousOpen && !open) {
+    triggerRef.current?.focus();
+  }
+};
+
+const resetActiveIndexIfNeeded = ({
+  open,
+  items,
+  setActiveIndex,
+}: {
+  open: boolean;
+  items: UserMenuControllerOptions["items"];
+  setActiveIndex: (index: number) => void;
+}) => {
+  if (!open) {
+    setActiveIndex(findFirstEnabledIndex(items));
+  }
 };
 
 export const useMenuOpenState = ({
@@ -44,21 +67,95 @@ export const useMenuOpenState = ({
   }, [close, items, open]);
 
   useEffect(() => {
-    if (!open) {
-      setActiveIndex(findFirstEnabledIndex(items));
-    }
+    resetActiveIndexIfNeeded({ open, items, setActiveIndex });
   }, [items, open]);
 
   const previousOpenRef = useRef(open);
   useEffect(() => {
-    if (previousOpenRef.current && !open) {
-      triggerRef.current?.focus();
-    }
+    focusTriggerWhenClosing(previousOpenRef.current, open, triggerRef);
     previousOpenRef.current = open;
   }, [open, triggerRef]);
 
   return { open, activeIndex, setActiveIndex, toggle, close };
 };
+
+const isEscapeKey = (event: KeyboardEvent) => event.key === "Escape";
+const isTabKey = (event: KeyboardEvent) => event.key === "Tab";
+
+const filterFocusableItems = (
+  itemRefs: MutableRefObject<Array<HTMLButtonElement | null>>,
+) => itemRefs.current.filter((node): node is HTMLButtonElement => Boolean(node));
+
+const cycleFocus = ({
+  focusables,
+  current,
+  direction,
+}: {
+  focusables: HTMLButtonElement[];
+  current: HTMLElement | null;
+  direction: 1 | -1;
+}) => {
+  const currentIndex = current ? focusables.indexOf(current as HTMLButtonElement) : -1;
+  if (focusables.length === 0) return;
+  const nextIndex =
+    currentIndex === -1
+      ? 0
+      : (currentIndex + direction + focusables.length) % focusables.length;
+  focusables[nextIndex].focus();
+};
+
+const handleTabWithinMenu = ({
+  event,
+  itemRefs,
+}: {
+  event: KeyboardEvent;
+  itemRefs: MutableRefObject<Array<HTMLButtonElement | null>>;
+}) => {
+  const focusables = filterFocusableItems(itemRefs);
+  if (focusables.length === 0) {
+    event.preventDefault();
+    return;
+  }
+  cycleFocus({
+    focusables,
+    current: document.activeElement as HTMLElement | null,
+    direction: event.shiftKey ? -1 : 1,
+  });
+  event.preventDefault();
+};
+
+const createOutsidePointerHandler = ({
+  close,
+  rootRef,
+}: {
+  close: () => void;
+  rootRef: MutableRefObject<HTMLDivElement | null>;
+}) =>
+  function handlePointerDown(event: MouseEvent) {
+    const rootNode = rootRef.current;
+    if (!rootNode) return;
+    if (!rootNode.contains(event.target as Node)) {
+      close();
+    }
+  };
+
+const createKeydownHandler = ({
+  close,
+  itemRefs,
+}: {
+  close: () => void;
+  itemRefs: MutableRefObject<Array<HTMLButtonElement | null>>;
+}) =>
+  function handleKeyDown(event: KeyboardEvent) {
+    if (isEscapeKey(event)) {
+      event.preventDefault();
+      close();
+      return;
+    }
+
+    if (!isTabKey(event)) return;
+    handleTabWithinMenu({ event, itemRefs });
+  };
 
 export const useOutsideAndTabGuards = ({
   open,
@@ -74,42 +171,8 @@ export const useOutsideAndTabGuards = ({
   useEffect(() => {
     if (!open) return undefined;
 
-    const handlePointerDown = (event: MouseEvent) => {
-      const rootNode = rootRef.current;
-      if (!rootNode) return;
-      if (!rootNode.contains(event.target as Node)) {
-        close();
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        close();
-        return;
-      }
-
-      if (event.key === "Tab") {
-        const focusables = itemRefs.current.filter(
-          (node): node is HTMLButtonElement => Boolean(node),
-        );
-        if (focusables.length === 0) {
-          event.preventDefault();
-          return;
-        }
-        const currentNode = document.activeElement as HTMLElement | null;
-        const currentIndex = currentNode
-          ? focusables.indexOf(currentNode as HTMLButtonElement)
-          : -1;
-        const delta = event.shiftKey ? -1 : 1;
-        const nextIndex =
-          currentIndex === -1
-            ? 0
-            : (currentIndex + delta + focusables.length) % focusables.length;
-        focusables[nextIndex].focus();
-        event.preventDefault();
-      }
-    };
+    const handlePointerDown = createOutsidePointerHandler({ close, rootRef });
+    const handleKeyDown = createKeydownHandler({ close, itemRefs });
 
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
