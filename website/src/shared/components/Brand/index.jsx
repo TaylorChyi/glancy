@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useLanguage } from "@core/context";
 import { UserMenu } from "@shared/components/Header";
@@ -49,10 +50,7 @@ PrimaryNavItem.defaultProps = {
   title: undefined,
 };
 
-function Brand({ activeView, onShowDictionary, onShowLibrary }) {
-  const { lang, t } = useLanguage();
-  const brandText = getBrandText(lang);
-
+function useBrandNavItems({ t, brandText, onShowDictionary, onShowLibrary }) {
   const dictionaryLabel = t.primaryNavDictionaryLabel || brandText;
   const libraryLabel = t.primaryNavLibraryLabel || t.favorites || "Favorites";
   const entriesLabel = t.primaryNavEntriesLabel || t.termLabel || "Entries";
@@ -61,65 +59,122 @@ function Brand({ activeView, onShowDictionary, onShowLibrary }) {
   const libraryHint =
     t.primaryNavLibraryDescription || t.favoritesEmptyTitle || libraryLabel;
 
-  const handleDictionary = () => {
+  const handleDictionary = useCallback(() => {
     if (typeof onShowDictionary === "function") {
       onShowDictionary();
       return;
     }
     window.location.reload();
-  };
+  }, [onShowDictionary]);
 
-  const handleLibrary = () => {
+  const handleLibrary = useCallback(() => {
     if (typeof onShowLibrary === "function") {
       onShowLibrary();
     }
-  };
+  }, [onShowLibrary]);
 
-  const navItems = [
-    {
-      key: "dictionary",
-      label: dictionaryLabel,
-      icon: BRAND_LOGO_ICON,
-      iconAlt: dictionaryLabel,
-      onClick: handleDictionary,
-      title: dictionaryHint,
-      enableActiveState: false,
-    },
-    {
-      key: "library",
-      label: libraryLabel,
-      icon: "library",
-      iconAlt: libraryLabel,
-      onClick: handleLibrary,
-      enableActiveState: true,
-      title: libraryHint,
-    },
-  ];
+  const navItems = useMemo(
+    () => [
+      {
+        key: "dictionary",
+        label: dictionaryLabel,
+        icon: BRAND_LOGO_ICON,
+        iconAlt: dictionaryLabel,
+        onClick: handleDictionary,
+        title: dictionaryHint,
+        enableActiveState: false,
+      },
+      {
+        key: "library",
+        label: libraryLabel,
+        icon: "library",
+        iconAlt: libraryLabel,
+        onClick: handleLibrary,
+        enableActiveState: true,
+        title: libraryHint,
+      },
+    ],
+    [
+      dictionaryHint,
+      dictionaryLabel,
+      handleDictionary,
+      handleLibrary,
+      libraryHint,
+      libraryLabel,
+    ],
+  );
+
+  return {
+    dictionaryLabel,
+    entriesLabel,
+    navItems,
+  };
+}
+
+function PrimaryNavList({ navItems, activeView, ariaLabel }) {
+  return (
+    <nav aria-label={ariaLabel}>
+      <ul className="sidebar-primary-nav">
+        {navItems.map((item) => {
+          const isActive = item.enableActiveState && activeView === item.key;
+
+          return (
+            <li key={item.key}>
+              <PrimaryNavItem
+                icon={item.icon}
+                iconAlt={item.iconAlt}
+                label={item.label}
+                onClick={item.onClick}
+                isActive={isActive}
+                title={item.title}
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+PrimaryNavList.propTypes = {
+  activeView: PropTypes.string,
+  ariaLabel: PropTypes.string.isRequired,
+  navItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      enableActiveState: PropTypes.bool.isRequired,
+      icon: PropTypes.string,
+      iconAlt: PropTypes.string,
+      key: PropTypes.string.isRequired,
+      label: PropTypes.node.isRequired,
+      onClick: PropTypes.func,
+      title: PropTypes.string,
+    }).isRequired,
+  ).isRequired,
+};
+
+PrimaryNavList.defaultProps = {
+  activeView: undefined,
+};
+
+function Brand({ activeView, onShowDictionary, onShowLibrary }) {
+  const { lang, t } = useLanguage();
+  const brandText = getBrandText(lang);
+
+  const { dictionaryLabel, entriesLabel, navItems } = useBrandNavItems({
+    t,
+    brandText,
+    onShowDictionary,
+    onShowLibrary,
+  });
 
   return (
     <div className="sidebar-brand">
       <div className="sidebar-brand-header">
-        <nav aria-label={dictionaryLabel}>
-          <ul className="sidebar-primary-nav">
-            {navItems.map((item) => {
-              const isActive =
-                item.enableActiveState && activeView === item.key;
-
-              return (
-                <li key={item.key}>
-                  <PrimaryNavItem
-                    icon={item.icon}
-                    iconAlt={item.iconAlt}
-                    label={item.label}
-                    onClick={item.onClick}
-                    isActive={isActive}
-                    title={item.title}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <PrimaryNavList
+          navItems={navItems}
+          activeView={activeView}
+          ariaLabel={dictionaryLabel}
+        />
         <div className="mobile-user-menu">
           <UserMenu size={28} />
         </div>
