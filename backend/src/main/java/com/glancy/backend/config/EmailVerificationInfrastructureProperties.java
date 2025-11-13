@@ -88,13 +88,13 @@ public class EmailVerificationInfrastructureProperties {
     }
 
     private void validateArcChain() {
-        requireText(
-                arcAuthenticationResults,
-                "mail.verification.infrastructure.arc-authentication-results must be configured when arcSealEnabled=true");
-        requireText(
-                arcMessageSignature,
-                "mail.verification.infrastructure.arc-message-signature must be configured when arcSealEnabled=true");
-        requireText(arcSeal, "mail.verification.infrastructure.arc-seal must be configured when arcSealEnabled=true");
+        final String ARC_SEAL_ENABLED_MESSAGE = " must be configured when arcSealEnabled=true";
+
+        requireText(arcAuthenticationResults, 
+        "mail.verification.infrastructure.arc-authentication-results" + ARC_SEAL_ENABLED_MESSAGE);
+        requireText(arcMessageSignature,
+        "mail.verification.infrastructure.arc-message-signature" + ARC_SEAL_ENABLED_MESSAGE);
+        requireText(arcSeal, "mail.verification.infrastructure.arc-seal" + ARC_SEAL_ENABLED_MESSAGE);
     }
 
     private void requireText(String value, String message) {
