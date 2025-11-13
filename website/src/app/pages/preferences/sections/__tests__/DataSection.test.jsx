@@ -95,6 +95,72 @@ const createHistoryItem = (overrides = {}) => ({
   ...overrides,
 });
 
+const defaultSectionProps = {
+  title: "Data",
+  message: "Control your data",
+  headingId: "data-heading",
+  descriptionId: "data-description",
+};
+
+const renderDataSection = (props = {}) =>
+  render(<DataSection {...defaultSectionProps} {...props} />);
+
+const ensureUrlSupport = (method, fallback) => {
+  if (!window.URL[method]) {
+    Object.defineProperty(window.URL, method, {
+      configurable: true,
+      writable: true,
+      value: fallback,
+    });
+  }
+};
+
+const createBlobSpy = () => {
+  const OriginalBlob = Blob;
+  const calls = [];
+  const spy = jest
+    .spyOn(globalThis, "Blob")
+    .mockImplementation((parts = [], options) => {
+      calls.push({ parts, options });
+      return Reflect.construct(OriginalBlob, [parts, options]);
+    });
+  return {
+    calls,
+    restore: () => spy.mockRestore(),
+  };
+};
+
+const setupExportSpies = () => {
+  ensureUrlSupport("createObjectURL", () => "");
+  ensureUrlSupport("revokeObjectURL", () => undefined);
+  const createUrl = jest
+    .spyOn(window.URL, "createObjectURL")
+    .mockReturnValue("blob:export");
+  const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
+  const appendSpy = jest.spyOn(document.body, "appendChild");
+  const removeSpy = jest.spyOn(Element.prototype, "remove");
+  const { calls: blobCalls, restore } = createBlobSpy();
+  return {
+    createUrl,
+    revokeUrl,
+    appendSpy,
+    removeSpy,
+    blobCalls,
+    restore: () => {
+      createUrl.mockRestore();
+      revokeUrl.mockRestore();
+      appendSpy.mockRestore();
+      removeSpy.mockRestore();
+      restore();
+    },
+  };
+};
+
+const extractCsvText = (blobCalls) =>
+  (blobCalls[0]?.parts ?? [])
+    .map((part) => (typeof part === "string" ? part : ""))
+    .join("");
+
 beforeAll(async () => {
   ({ default: DataSection } = await import("../DataSection.jsx"));
 });
@@ -171,14 +237,7 @@ afterEach(() => {
  *  - 若缺失关联则会影响屏幕阅读器理解上下文。
  */
 test("Given section message When rendering Then description linked for accessibility", () => {
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   const section = screen.getByRole("region", { name: "Data" });
   const description = screen.getByText("Control your data");
@@ -200,14 +259,7 @@ test("Given section message When rendering Then description linked for accessibi
  *  - 若描述缺失，用户可能误认为会清空全部历史。
  */
 test("Given language scoped controls When rendering Then language description clarifies scope", () => {
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   const description = screen.getByText(
     translations.settingsDataLanguageDescription,
@@ -233,14 +285,7 @@ test("Given language scoped controls When rendering Then language description cl
  */
 test("Given toggle control When pausing capture Then store reflects disabled", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(screen.getByRole("radio", { name: /Pause history/i }));
 
@@ -260,14 +305,7 @@ test("Given toggle control When pausing capture Then store reflects disabled", a
  */
 test("Given retention options When choosing shorter window Then retention command executed", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(screen.getByRole("radio", { name: /30 days/i }));
 
@@ -291,14 +329,7 @@ test("Given retention options When choosing shorter window Then retention comman
  */
 test("Given language actions When clearing selected language Then scoped command fired", async () => {
   const user = userEvent.setup();
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
+  renderDataSection();
 
   await user.click(
     screen.getByRole("button", { name: /Clear selected language/i }),
@@ -322,73 +353,40 @@ test("Given language actions When clearing selected language Then scoped command
  */
 test("Given export action When clicking export Then browser download initiated", async () => {
   const user = userEvent.setup();
-  if (!window.URL.createObjectURL) {
-    Object.defineProperty(window.URL, "createObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => "",
-    });
+  const spies = setupExportSpies();
+  try {
+    renderDataSection();
+    await user.click(screen.getByRole("button", { name: /Export data/i }));
+
+    expect(spies.createUrl).toHaveBeenCalledTimes(1);
+    expect(spies.revokeUrl).toHaveBeenCalledTimes(1);
+    expect(spies.appendSpy).toHaveBeenCalled();
+    expect(spies.removeSpy).toHaveBeenCalled();
+    expect(
+      spies.appendSpy.mock.calls.some((call) => call?.[0]?.tagName === "A"),
+    ).toBe(true);
+
+    const blob = spies.createUrl.mock.calls[0][0];
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe("text/csv;charset=utf-8");
+  } finally {
+    spies.restore();
   }
-  if (!window.URL.revokeObjectURL) {
-    Object.defineProperty(window.URL, "revokeObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => undefined,
-    });
+});
+
+test("Given export action When generating csv Then history rows captured", async () => {
+  const user = userEvent.setup();
+  const spies = setupExportSpies();
+  try {
+    renderDataSection();
+    await user.click(screen.getByRole("button", { name: /Export data/i }));
+
+    const csvText = extractCsvText(spies.blobCalls);
+    expect(csvText).toContain("term,language,flavor,chapter,content");
+    expect(csvText).toContain(
+      "hello,ENGLISH,BILINGUAL,Definitions,A friendly greeting",
+    );
+  } finally {
+    spies.restore();
   }
-  const createUrl = jest
-    .spyOn(window.URL, "createObjectURL")
-    .mockReturnValue("blob:export");
-  const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
-  const appendSpy = jest.spyOn(document.body, "appendChild");
-  const removeSpy = jest.spyOn(Element.prototype, "remove");
-  const OriginalBlob = Blob;
-  const blobCalls = [];
-  const blobSpy = jest
-    .spyOn(globalThis, "Blob")
-    .mockImplementation((parts = [], options) => {
-      blobCalls.push({ parts, options });
-      return Reflect.construct(OriginalBlob, [parts, options]);
-    });
-
-  render(
-    <DataSection
-      title="Data"
-      message="Control your data"
-      headingId="data-heading"
-      descriptionId="data-description"
-    />,
-  );
-
-  await user.click(screen.getByRole("button", { name: /Export data/i }));
-
-  expect(createUrl).toHaveBeenCalledTimes(1);
-  expect(revokeUrl).toHaveBeenCalledTimes(1);
-  expect(appendSpy).toHaveBeenCalled();
-  expect(removeSpy).toHaveBeenCalled();
-
-  const blob = createUrl.mock.calls[0][0];
-  expect(blob).toBeInstanceOf(OriginalBlob);
-  expect(blob.type).toBe("text/csv;charset=utf-8");
-  const csvText = (blobCalls[0]?.parts ?? [])
-    .map((part) => (typeof part === "string" ? part : ""))
-    .join("");
-  expect(csvText).toContain("term,language,flavor,chapter,content");
-  expect(csvText).toContain(
-    "hello,ENGLISH,BILINGUAL,Definitions,A friendly greeting",
-  );
-
-  const appendedElements = appendSpy.mock.calls
-    .map((call) => call?.[0])
-    .filter(Boolean);
-  const appendedAnchor = appendedElements.find(
-    (element) => element?.tagName === "A",
-  );
-  expect(appendedAnchor).toBeDefined();
-
-  createUrl.mockRestore();
-  revokeUrl.mockRestore();
-  appendSpy.mockRestore();
-  removeSpy.mockRestore();
-  blobSpy.mockRestore();
 });

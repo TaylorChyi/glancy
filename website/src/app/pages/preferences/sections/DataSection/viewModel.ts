@@ -3,6 +3,8 @@ type DataSectionDescription = {
   id?: string;
 };
 
+type FieldCopy = Record<string, unknown>;
+
 type DataFieldType = "history" | "retention" | "language" | "actions";
 
 type DataFieldModel = {
@@ -13,6 +15,15 @@ type DataFieldModel = {
 
 type PendingChecker = (pendingId?: string | null) => boolean;
 
+type PendingAwareControl<T extends Record<string, unknown>> = T & {
+  pendingId?: string | null;
+};
+
+type DataSectionCopy = {
+  toggle: FieldCopy;
+  retention: FieldCopy;
+};
+
 type CreateDataSectionViewModelArgs = {
   title: string;
   headingId: string;
@@ -22,11 +33,15 @@ type CreateDataSectionViewModelArgs = {
     retention: string;
     language: string;
   };
-  copy: Record<string, unknown>;
+  copy: DataSectionCopy;
   historyToggle: Record<string, unknown>;
-  retentionControl: Record<string, unknown> & { pendingId?: string };
-  languageControl: Record<string, unknown> & { pendingId?: string };
-  actionsControl: Record<string, unknown> & { pendingId?: string };
+  retentionControl: PendingAwareControl<Record<string, unknown>>;
+  languageControl: PendingAwareControl<Record<string, unknown>> & {
+    copy: FieldCopy;
+  };
+  actionsControl: PendingAwareControl<Record<string, unknown>> & {
+    copy: FieldCopy;
+  };
   isActionPending: PendingChecker;
 };
 
@@ -40,62 +55,98 @@ export type DataSectionViewModel = {
   fields: DataFieldModel[];
 };
 
-export const createDataSectionViewModel = ({
-  title,
-  headingId,
-  description,
+const isPending = (
+  pendingId: string | null | undefined,
+  checker: PendingChecker,
+) => checker(pendingId ?? undefined);
+
+const createHistoryField = ({
   ids,
   copy,
   historyToggle,
+}: Pick<CreateDataSectionViewModelArgs, "ids" | "copy" | "historyToggle">): DataFieldModel => ({
+  key: "history",
+  type: "history",
+  props: { fieldId: ids.toggle, copy: copy.toggle, control: historyToggle },
+});
+
+const createRetentionField = ({
+  ids,
+  copy,
   retentionControl,
+  isActionPending,
+}: Pick<
+  CreateDataSectionViewModelArgs,
+  "ids" | "copy" | "retentionControl" | "isActionPending"
+>): DataFieldModel => ({
+  key: "retention",
+  type: "retention",
+  props: {
+    fieldId: ids.retention,
+    copy: copy.retention,
+    control: retentionControl,
+    isPending: isPending(retentionControl.pendingId, isActionPending),
+  },
+});
+
+const createLanguageField = ({
+  ids,
   languageControl,
+  isActionPending,
+}: Pick<
+  CreateDataSectionViewModelArgs,
+  "ids" | "languageControl" | "isActionPending"
+>): DataFieldModel => ({
+  key: "language",
+  type: "language",
+  props: {
+    fieldId: ids.language,
+    copy: languageControl.copy,
+    control: languageControl,
+    isPending: isPending(languageControl.pendingId, isActionPending),
+  },
+});
+
+const createActionsField = ({
   actionsControl,
   isActionPending,
-}: CreateDataSectionViewModelArgs): DataSectionViewModel => {
-  const fields: DataFieldModel[] = [
-    {
-      key: "history",
-      type: "history",
-      props: { fieldId: ids.toggle, copy: copy.toggle, control: historyToggle },
-    },
-    {
-      key: "retention",
-      type: "retention",
-      props: {
-        fieldId: ids.retention,
-        copy: copy.retention,
-        control: retentionControl,
-        isPending: isActionPending(retentionControl.pendingId),
-      },
-    },
-    {
-      key: "language",
-      type: "language",
-      props: {
-        fieldId: ids.language,
-        copy: languageControl.copy,
-        control: languageControl,
-        isPending: isActionPending(languageControl.pendingId),
-      },
-    },
-    {
-      key: "actions",
-      type: "actions",
-      props: {
-        copy: actionsControl.copy,
-        control: actionsControl,
-        isClearingAll: isActionPending(actionsControl.pendingId),
-      },
-    },
-  ];
+}: Pick<
+  CreateDataSectionViewModelArgs,
+  "actionsControl" | "isActionPending"
+>): DataFieldModel => ({
+  key: "actions",
+  type: "actions",
+  props: {
+    copy: actionsControl.copy,
+    control: actionsControl,
+    isClearingAll: isPending(actionsControl.pendingId, isActionPending),
+  },
+});
 
-  return {
-    section: {
-      headingId,
-      title,
-      description: description.section,
-      descriptionId: description.id,
-    },
-    fields,
-  };
-};
+const createFields = (args: CreateDataSectionViewModelArgs): DataFieldModel[] => [
+  createHistoryField(args),
+  createRetentionField(args),
+  createLanguageField(args),
+  createActionsField(args),
+];
+
+const createSection = ({
+  headingId,
+  title,
+  description,
+}: Pick<
+  CreateDataSectionViewModelArgs,
+  "headingId" | "title" | "description"
+>): DataSectionViewModel["section"] => ({
+  headingId,
+  title,
+  description: description.section,
+  descriptionId: description.id,
+});
+
+export const createDataSectionViewModel = (
+  args: CreateDataSectionViewModelArgs,
+): DataSectionViewModel => ({
+  section: createSection(args),
+  fields: createFields(args),
+});
