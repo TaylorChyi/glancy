@@ -28,12 +28,9 @@ const getStorage = () =>
     ? window.localStorage
     : undefined;
 
-const useThemeController = () => {
-  const storage = getStorage();
+const useThemePreference = (storage) => {
   const orchestratorRef = useRef(null);
   const initialPreferenceRef = useRef(null);
-  const faviconRegistryRef = useRef(createBrowserFaviconRegistry());
-  const browserFaviconConfiguratorRef = useRef(null);
 
   const ensureOrchestrator = useCallback(() => {
     if (!orchestratorRef.current) {
@@ -61,6 +58,13 @@ const useThemeController = () => {
     };
   }, [ensureOrchestrator, setResolvedTheme, storage, theme]);
 
+  return { resolvedTheme, setTheme, theme };
+};
+
+const useFaviconSync = () => {
+  const faviconRegistryRef = useRef(createBrowserFaviconRegistry());
+  const browserFaviconConfiguratorRef = useRef(null);
+
   useEffect(() => {
     if (typeof document === "undefined") {
       return undefined;
@@ -77,6 +81,12 @@ const useThemeController = () => {
       configurator.stop();
     };
   }, []);
+};
+
+const useThemeController = () => {
+  const storage = getStorage();
+  const { resolvedTheme, setTheme, theme } = useThemePreference(storage);
+  useFaviconSync();
 
   return useMemo(
     () => ({
