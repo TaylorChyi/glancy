@@ -4,12 +4,79 @@ import SegmentedControl from "@shared/components/ui/SegmentedControl";
 import LanguageMenu from "@shared/components/ui/LanguageMenu";
 import styles from "../../Preferences.module.css";
 
-function GeneralSectionView({
-  section,
-  themeField,
-  languageField,
-  markdownField,
-}) {
+const optionShape = PropTypes.shape({
+  value: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+});
+
+const SectionFieldset = ({ fieldId, label, children }) => (
+  <fieldset className={styles["control-field"]} aria-labelledby={fieldId}>
+    <legend id={fieldId} className={styles["control-label"]}>
+      {label}
+    </legend>
+    {children}
+  </fieldset>
+);
+
+SectionFieldset.propTypes = {
+  fieldId: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+const SegmentedField = ({ field }) => (
+  <SectionFieldset fieldId={field.fieldId} label={field.label}>
+    <SegmentedControl
+      labelledBy={field.fieldId}
+      options={field.options}
+      value={field.value}
+      onChange={field.onSelect}
+    />
+  </SectionFieldset>
+);
+
+SegmentedField.propTypes = {
+  field: PropTypes.shape({
+    fieldId: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(optionShape).isRequired,
+    value: PropTypes.string.isRequired,
+    onSelect: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+const LanguageField = ({ field }) => (
+  <div className={styles["control-field"]}>
+    <label htmlFor={field.selectId} className={styles["control-label"]}>
+      {field.label}
+    </label>
+    <div className={styles["language-shell"]}>
+      <LanguageMenu
+        id={field.selectId}
+        options={field.options}
+        value={field.value}
+        onChange={field.onChange}
+        ariaLabel={field.label}
+        normalizeValue={field.normalizeValue}
+        showLabel
+        fullWidth
+      />
+    </div>
+  </div>
+);
+
+LanguageField.propTypes = {
+  field: PropTypes.shape({
+    selectId: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    options: PropTypes.arrayOf(optionShape).isRequired,
+    value: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+    normalizeValue: PropTypes.func.isRequired,
+  }).isRequired,
+};
+
+function GeneralSectionView({ section, themeField, languageField, markdownField }) {
   return (
     <SettingsSection
       headingId={section.headingId}
@@ -22,94 +89,22 @@ function GeneralSectionView({
       }}
     >
       <div className={styles.controls}>
-        <fieldset
-          className={styles["control-field"]}
-          aria-labelledby={themeField.fieldId}
-        >
-          <legend id={themeField.fieldId} className={styles["control-label"]}>
-            {themeField.label}
-          </legend>
-          <SegmentedControl
-            labelledBy={themeField.fieldId}
-            options={themeField.options}
-            value={themeField.value}
-            onChange={themeField.onSelect}
-          />
-        </fieldset>
-        <div className={styles["control-field"]}>
-          <label
-            htmlFor={languageField.selectId}
-            className={styles["control-label"]}
-          >
-            {languageField.label}
-          </label>
-          <div className={styles["language-shell"]}>
-            <LanguageMenu
-              id={languageField.selectId}
-              options={languageField.options}
-              value={languageField.value}
-              onChange={languageField.onChange}
-              ariaLabel={languageField.label}
-              normalizeValue={languageField.normalizeValue}
-              showLabel
-              fullWidth
-            />
-          </div>
-        </div>
-        <fieldset
-          className={styles["control-field"]}
-          aria-labelledby={markdownField.fieldId}
-        >
-          <legend
-            id={markdownField.fieldId}
-            className={styles["control-label"]}
-          >
-            {markdownField.label}
-          </legend>
-          <SegmentedControl
-            labelledBy={markdownField.fieldId}
-            options={markdownField.options}
-            value={markdownField.value}
-            onChange={markdownField.onSelect}
-          />
-        </fieldset>
+        <SegmentedField field={themeField} />
+        <LanguageField field={languageField} />
+        <SegmentedField field={markdownField} />
       </div>
     </SettingsSection>
   );
 }
-
-const optionShape = PropTypes.shape({
-  value: PropTypes.string.isRequired,
-  label: PropTypes.string.isRequired,
-});
 
 GeneralSectionView.propTypes = {
   section: PropTypes.shape({
     headingId: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
   }).isRequired,
-  themeField: PropTypes.shape({
-    fieldId: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(optionShape).isRequired,
-    value: PropTypes.string.isRequired,
-    onSelect: PropTypes.func.isRequired,
-  }).isRequired,
-  languageField: PropTypes.shape({
-    selectId: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(optionShape).isRequired,
-    value: PropTypes.string.isRequired,
-    onChange: PropTypes.func.isRequired,
-    normalizeValue: PropTypes.func.isRequired,
-  }).isRequired,
-  markdownField: PropTypes.shape({
-    fieldId: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    options: PropTypes.arrayOf(optionShape).isRequired,
-    value: PropTypes.string.isRequired,
-    onSelect: PropTypes.func.isRequired,
-  }).isRequired,
+  themeField: SegmentedField.propTypes.field,
+  languageField: LanguageField.propTypes.field,
+  markdownField: SegmentedField.propTypes.field,
 };
 
 export default GeneralSectionView;
