@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import AvatarEditorModal from "@shared/components/AvatarEditorModal";
 import PreferencesForm from "./parts/PreferencesForm.jsx";
-import RedeemToast from "./parts/RedeemToast.jsx";
+import RedeemToast from "@shared/components/modals/SettingsModalParts/RedeemToast.jsx";
 import styles from "./Preferences.module.css";
 
 function PreferencesView({ form, header, viewport, activeSection, avatarEditor, toast }) {
