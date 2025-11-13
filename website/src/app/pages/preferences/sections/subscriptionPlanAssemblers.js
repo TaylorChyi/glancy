@@ -116,13 +116,13 @@ const derivePriceLines = ({
   return lines;
 };
 
-const derivePlanState = ({ planId, currentPlanId, purchase }) => {
+export const derivePlanState = ({ planId, currentPlanId, purchase }) => {
   const isCurrent = planId === currentPlanId;
   const isRedeemOnly = purchase === "redeem_only" && !isCurrent;
   return { isCurrent, isRedeemOnly };
 };
 
-const resolveBadge = ({
+export const resolveBadge = ({
   isCurrent,
   isRedeemOnly,
   badgeCurrent,
@@ -170,6 +170,52 @@ const deriveSubscriptionExpiryLine = ({
   return formatWithTemplate(nextRenewalTemplate, formattedRenewalDate);
 };
 
+const resolvePlanContext = ({ planId, planCopy, pricing }) => {
+  const plan = getPlanDefinition(pricing, planId);
+  return { plan, copy: resolvePlanCopy(planId, planCopy) };
+};
+
+const resolvePlanPriceLines = ({ plan, pricing, labelConfig }) =>
+  derivePriceLines({
+    plan,
+    pricing,
+    freePrice: labelConfig.freePrice,
+    monthlyTemplate: labelConfig.monthlyTemplate,
+    yearlyTemplate: labelConfig.yearlyTemplate,
+    yearlyWithEquivalentTemplate: labelConfig.yearlyWithEquivalentTemplate,
+  });
+
+const composePlanCard = ({
+  planId,
+  copy,
+  priceLines,
+  state,
+  labelConfig,
+  subscriptionExpiryLine,
+}) => ({
+  id: planId,
+  title: copy.title,
+  summary: copy.summary,
+  priceLines,
+  state: state.isCurrent ? "current" : state.isRedeemOnly ? "locked" : "available",
+  badge: resolveBadge({
+    isCurrent: state.isCurrent,
+    isRedeemOnly: state.isRedeemOnly,
+    badgeCurrent: labelConfig.badgeCurrent,
+    badgeLocked: labelConfig.badgeLocked,
+    badgeSelected: labelConfig.badgeSelected,
+  }),
+  ctaLabel: resolveCtaLabel({
+    isCurrent: state.isCurrent,
+    isRedeemOnly: state.isRedeemOnly,
+    badgeCurrent: labelConfig.badgeCurrent,
+    badgeLocked: labelConfig.badgeLocked,
+    cta: copy.cta,
+  }),
+  disabled: state.isCurrent || state.isRedeemOnly,
+  subscriptionExpiryLine,
+});
+
 const createPlanCard = ({
   planId,
   planCopy,
@@ -178,51 +224,27 @@ const createPlanCard = ({
   currentPlanId,
   subscriptionMeta,
 }) => {
-  const plan = getPlanDefinition(pricing, planId);
-  const copy = resolvePlanCopy(planId, planCopy);
-  const { isCurrent, isRedeemOnly } = derivePlanState({
+  const { plan, copy } = resolvePlanContext({ planId, planCopy, pricing });
+  const state = derivePlanState({
     planId,
     currentPlanId,
     purchase: plan?.purchase,
   });
-  const priceLines = derivePriceLines({
-    plan,
-    pricing,
-    freePrice: labelConfig.freePrice,
-    monthlyTemplate: labelConfig.monthlyTemplate,
-    yearlyTemplate: labelConfig.yearlyTemplate,
-    yearlyWithEquivalentTemplate: labelConfig.yearlyWithEquivalentTemplate,
-  });
+  const priceLines = resolvePlanPriceLines({ plan, pricing, labelConfig });
   const subscriptionExpiryLine = deriveSubscriptionExpiryLine({
     planId,
-    isCurrent,
+    isCurrent: state.isCurrent,
     nextRenewalDate: subscriptionMeta?.nextRenewalDate,
     nextRenewalTemplate: labelConfig.nextRenewalTemplate,
   });
-
-  return {
-    id: planId,
-    title: copy.title,
-    summary: copy.summary,
+  return composePlanCard({
+    planId,
+    copy,
     priceLines,
-    state: isCurrent ? "current" : isRedeemOnly ? "locked" : "available",
-    badge: resolveBadge({
-      isCurrent,
-      isRedeemOnly,
-      badgeCurrent: labelConfig.badgeCurrent,
-      badgeLocked: labelConfig.badgeLocked,
-      badgeSelected: labelConfig.badgeSelected,
-    }),
-    ctaLabel: resolveCtaLabel({
-      isCurrent,
-      isRedeemOnly,
-      badgeCurrent: labelConfig.badgeCurrent,
-      badgeLocked: labelConfig.badgeLocked,
-      cta: copy.cta,
-    }),
-    disabled: isCurrent || isRedeemOnly,
+    state,
+    labelConfig,
     subscriptionExpiryLine,
-  };
+  });
 };
 
 /**
