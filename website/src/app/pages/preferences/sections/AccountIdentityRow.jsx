@@ -4,6 +4,93 @@ import Avatar from "@shared/components/ui/Avatar";
 
 import styles from "../Preferences.module.css";
 
+const IdentityRowLayout = ({ children }) => (
+  <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
+    {children}
+  </div>
+);
+
+IdentityRowLayout.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+const IdentityLabel = ({ label }) => (
+  <dt className={`${styles["detail-label"]} ${styles["identity-label"]}`}>
+    {label}
+  </dt>
+);
+
+IdentityLabel.propTypes = {
+  label: PropTypes.string.isRequired,
+};
+
+const IdentityAvatarDisplay = ({ avatarAlt, displayName, avatarSize }) => (
+  <dd className={`${styles["detail-value"]} ${styles["identity-value"]}`}>
+    <Avatar
+      width={avatarSize}
+      height={avatarSize}
+      aria-hidden={!displayName}
+      alt={avatarAlt}
+      className={styles["identity-avatar-image"]}
+    />
+    {displayName ? (
+      <span className={styles["visually-hidden"]}>{displayName}</span>
+    ) : null}
+  </dd>
+);
+
+IdentityAvatarDisplay.propTypes = {
+  avatarAlt: PropTypes.string.isRequired,
+  displayName: PropTypes.string,
+  avatarSize: PropTypes.number.isRequired,
+};
+
+IdentityAvatarDisplay.defaultProps = {
+  displayName: undefined,
+};
+
+const AvatarUploadControl = ({
+  changeLabel,
+  isUploading,
+  inputId,
+  inputRef,
+  onTrigger,
+  onChange,
+}) => (
+  <div className={styles["detail-action"]}>
+    <input
+      id={inputId}
+      ref={inputRef}
+      className={styles["avatar-input"]}
+      type="file"
+      accept="image/*"
+      onChange={onChange}
+    />
+    <button
+      type="button"
+      className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
+      aria-disabled={isUploading}
+      disabled={isUploading}
+      onClick={onTrigger}
+    >
+      {changeLabel}
+    </button>
+  </div>
+);
+
+AvatarUploadControl.propTypes = {
+  changeLabel: PropTypes.string.isRequired,
+  isUploading: PropTypes.bool.isRequired,
+  inputId: PropTypes.string.isRequired,
+  inputRef: PropTypes.shape({ current: PropTypes.any }),
+  onTrigger: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
+AvatarUploadControl.defaultProps = {
+  inputRef: undefined,
+};
+
 /**
  * 意图：渲染账号身份行，包括头像展示、隐藏的昵称文本与触发头像上传的按钮。
  * 输入：identity —— 归一化后的身份文案；avatarSize —— 头像尺寸；inputId/ref —— 关联 file input。
@@ -24,44 +111,22 @@ function AccountIdentityRow({
   onAvatarChange,
 }) {
   return (
-    <div className={`${styles["detail-row"]} ${styles["identity-row"]}`}>
-      <dt className={`${styles["detail-label"]} ${styles["identity-label"]}`}>
-        {identity.label}
-      </dt>
-      <dd className={`${styles["detail-value"]} ${styles["identity-value"]}`}>
-        <Avatar
-          width={avatarSize}
-          height={avatarSize}
-          aria-hidden={!identity.displayName}
-          alt={identity.avatarAlt}
-          className={styles["identity-avatar-image"]}
-        />
-        {identity.displayName ? (
-          <span className={styles["visually-hidden"]}>
-            {identity.displayName}
-          </span>
-        ) : null}
-      </dd>
-      <div className={styles["detail-action"]}>
-        <input
-          id={avatarInputId}
-          ref={avatarInputRef}
-          className={styles["avatar-input"]}
-          type="file"
-          accept="image/*"
-          onChange={onAvatarChange}
-        />
-        <button
-          type="button"
-          className={`${styles["avatar-trigger"]} ${styles["detail-action-button"]}`}
-          aria-disabled={identity.isUploading}
-          disabled={identity.isUploading}
-          onClick={onAvatarTrigger}
-        >
-          {identity.changeLabel}
-        </button>
-      </div>
-    </div>
+    <IdentityRowLayout>
+      <IdentityLabel label={identity.label} />
+      <IdentityAvatarDisplay
+        avatarAlt={identity.avatarAlt}
+        displayName={identity.displayName}
+        avatarSize={avatarSize}
+      />
+      <AvatarUploadControl
+        changeLabel={identity.changeLabel}
+        isUploading={identity.isUploading}
+        inputId={avatarInputId}
+        inputRef={avatarInputRef}
+        onTrigger={onAvatarTrigger}
+        onChange={onAvatarChange}
+      />
+    </IdentityRowLayout>
   );
 }
 

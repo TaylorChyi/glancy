@@ -4,6 +4,93 @@ import DetailActionButton from "./DetailActionButton.jsx";
 import { DETAIL_INPUT_CLASSNAME } from "./detailClassNames.js";
 import styles from "../Preferences.module.css";
 
+const createReadOnlyInputProps = (overrides = {}) => ({
+  type: "text",
+  inputMode: undefined,
+  autoComplete: "off",
+  ...overrides,
+});
+
+const DetailRowLayout = ({ children }) => (
+  <div className={styles["detail-row"]}>{children}</div>
+);
+
+DetailRowLayout.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+const StaticFieldLabel = ({ id, label }) => (
+  <dt id={id} className={styles["detail-label"]}>
+    {label}
+  </dt>
+);
+
+StaticFieldLabel.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+};
+
+const StaticFieldValue = ({
+  inputProps,
+  labelId,
+  value,
+  valueId,
+}) => (
+  <dd className={styles["detail-value"]} id={valueId}>
+    <input
+      {...inputProps}
+      className={DETAIL_INPUT_CLASSNAME}
+      value={value}
+      disabled
+      readOnly
+      aria-readonly="true"
+      aria-labelledby={labelId}
+    />
+  </dd>
+);
+
+StaticFieldValue.propTypes = {
+  inputProps: PropTypes.shape({
+    type: PropTypes.string,
+    inputMode: PropTypes.string,
+    autoComplete: PropTypes.string,
+    name: PropTypes.string,
+    placeholder: PropTypes.string,
+  }).isRequired,
+  labelId: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  valueId: PropTypes.string.isRequired,
+};
+
+const StaticFieldAction = ({ action }) => (
+  <div className={styles["detail-action"]}>
+    {action ? (
+      <DetailActionButton
+        label={action.label}
+        pendingLabel={action.pendingLabel}
+        disabled={action.disabled}
+        isPending={action.isPending}
+        onClick={action.onClick}
+      />
+    ) : null}
+  </div>
+);
+
+StaticFieldAction.propTypes = {
+  action: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    disabled: PropTypes.bool,
+    onClick: PropTypes.func,
+    isPending: PropTypes.bool,
+    pendingLabel: PropTypes.string,
+  }),
+};
+
+StaticFieldAction.defaultProps = {
+  action: undefined,
+};
+
 /**
  * 意图：渲染 detail 布局下的只读字段行，并可选附带动作按钮。
  * 输入：field —— 字段配置；labelId/valueId —— 可访问性关联。
@@ -16,41 +103,19 @@ import styles from "../Preferences.module.css";
  * 复杂度：O(1)。
  */
 function StaticFieldRow({ field, labelId, valueId }) {
-  const inputProps = {
-    type: "text",
-    inputMode: undefined,
-    autoComplete: "off",
-    ...field.readOnlyInputProps,
-  };
+  const inputProps = createReadOnlyInputProps(field.readOnlyInputProps);
 
   return (
-    <div className={styles["detail-row"]}>
-      <dt id={labelId} className={styles["detail-label"]}>
-        {field.label}
-      </dt>
-      <dd className={styles["detail-value"]} id={valueId}>
-        <input
-          {...inputProps}
-          className={DETAIL_INPUT_CLASSNAME}
-          value={field.value}
-          disabled
-          readOnly
-          aria-readonly="true"
-          aria-labelledby={labelId}
-        />
-      </dd>
-      <div className={styles["detail-action"]}>
-        {field.action ? (
-          <DetailActionButton
-            label={field.action.label}
-            pendingLabel={field.action.pendingLabel}
-            disabled={field.action.disabled}
-            isPending={field.action.isPending}
-            onClick={field.action.onClick}
-          />
-        ) : null}
-      </div>
-    </div>
+    <DetailRowLayout>
+      <StaticFieldLabel id={labelId} label={field.label} />
+      <StaticFieldValue
+        inputProps={inputProps}
+        labelId={labelId}
+        value={field.value}
+        valueId={valueId}
+      />
+      <StaticFieldAction action={field.action} />
+    </DetailRowLayout>
   );
 }
 

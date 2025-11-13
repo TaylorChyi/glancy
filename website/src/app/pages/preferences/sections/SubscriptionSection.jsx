@@ -1,30 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+
 import SubscriptionSectionView from "./SubscriptionSection/SubscriptionSectionView.jsx";
-import { createSubscriptionSectionViewModel } from "./SubscriptionSection/viewModel";
-
-const REDEEM_CODE_GROUP_SIZE = 4;
-const REDEEM_CODE_MAX_LENGTH = 16;
-
-
-function normalizeRedeemCodeInput(rawValue) {
-  if (!rawValue) {
-    return "";
-  }
-  return rawValue.replace(/[^0-9a-zA-Z]/g, "").slice(0, REDEEM_CODE_MAX_LENGTH);
-}
-
-
-function formatRedeemCodeForDisplay(code) {
-  if (!code) {
-    return "";
-  }
-  const groups = [];
-  for (let index = 0; index < code.length; index += REDEEM_CODE_GROUP_SIZE) {
-    groups.push(code.slice(index, index + REDEEM_CODE_GROUP_SIZE));
-  }
-  return groups.join("-");
-}
+import { useRedeemCodeField } from "./SubscriptionSection/useRedeemCodeField.js";
+import { usePlanCarouselNavigation } from "./SubscriptionSection/usePlanCarouselNavigation.js";
+import { useSubscriptionSectionViewModel } from "./SubscriptionSection/useSubscriptionSectionViewModel.js";
 
 function useSubscriptionSectionController(props) {
   const {
@@ -32,17 +12,17 @@ function useSubscriptionSectionController(props) {
     planCards,
     onRedeem,
   } = props;
-  const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
-  const [redeemCode, setRedeemCode] = useState("");
-  const redeemInputRef = useRef(null);
-  const planCarouselRef = useRef(null);
-  const [isPlanRailAtStart, setIsPlanRailAtStart] = useState(true);
-  const [isPlanRailAtEnd, setIsPlanRailAtEnd] = useState(false);
 
-  const formattedRedeemCode = useMemo(
-    () => formatRedeemCodeForDisplay(redeemCode),
-    [redeemCode],
-  );
+  const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
+
+  const {
+    redeemCode,
+    formattedRedeemCode,
+    handleRedeemCodeChange,
+    redeemInputRef,
+  } = useRedeemCodeField();
+
+  const { planRailNav } = usePlanCarouselNavigation(planCards.length);
 
   const handlePlanSelect = useCallback((planId, disabled) => {
     if (disabled) {
@@ -51,99 +31,28 @@ function useSubscriptionSectionController(props) {
     setSelectedPlanId(planId);
   }, []);
 
-  const handleRedeemCodeChange = useCallback((event) => {
-    if (!event || typeof event !== "object" || !("target" in event)) {
-      return;
-    }
-    const target = event.target;
-    setRedeemCode(normalizeRedeemCodeInput(target?.value ?? ""));
-  }, []);
-
   const handleRedeemAction = useCallback(() => {
     if (onRedeem) {
       onRedeem(redeemCode);
     }
   }, [onRedeem, redeemCode]);
 
-  const syncPlanRailPosition = useCallback(() => {
-    const node = planCarouselRef.current;
-    if (!node) {
-      setIsPlanRailAtStart(true);
-      setIsPlanRailAtEnd(true);
-      return;
-    }
-    const { scrollLeft, clientWidth, scrollWidth } = node;
-    setIsPlanRailAtStart(scrollLeft <= 1);
-    setIsPlanRailAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
-  }, []);
+  const handlers = useMemo(
+    () => ({
+      onPlanSelect: handlePlanSelect,
+      onRedeemCodeChange: handleRedeemCodeChange,
+      onRedeem: handleRedeemAction,
+    }),
+    [handlePlanSelect, handleRedeemAction, handleRedeemCodeChange],
+  );
 
-  useEffect(() => {
-    const node = planCarouselRef.current;
-    if (!node) {
-      return undefined;
-    }
-    const handleScroll = () => {
-      syncPlanRailPosition();
-    };
-    handleScroll();
-    node.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", handleScroll);
-    return () => {
-      node.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [syncPlanRailPosition]);
-
-  useEffect(() => {
-    syncPlanRailPosition();
-  }, [planCards.length, syncPlanRailPosition]);
-
-  const handlePlanRailNav = useCallback((direction) => {
-    const node = planCarouselRef.current;
-    if (!node) {
-      return;
-    }
-    const scrollAmount = node.clientWidth * 0.85;
-    node.scrollBy({ left: direction * scrollAmount, behavior: "smooth" });
-  }, []);
-
-  const shouldRenderPlanRailNav = planCards.length > 1;
-  const planRailNav = {
-    viewportRef: planCarouselRef,
-    showPrevNav: shouldRenderPlanRailNav && !isPlanRailAtStart,
-    showNextNav: shouldRenderPlanRailNav && !isPlanRailAtEnd,
-    isAtStart: isPlanRailAtStart,
-    isAtEnd: isPlanRailAtEnd,
-    onPrev: () => handlePlanRailNav(-1),
-    onNext: () => handlePlanRailNav(1),
-    prevLabel: "查看前一个订阅方案",
-    nextLabel: "查看后一个订阅方案",
-  };
-
-  const handlers = {
-    onPlanSelect: handlePlanSelect,
-    onRedeemCodeChange: handleRedeemCodeChange,
-    onRedeem: handleRedeemAction,
-  };
-
-  return createSubscriptionSectionViewModel({
-    title: props.title,
-    headingId: props.headingId,
-    descriptionId: props.descriptionId,
-    planCards: props.planCards,
-    featureMatrix: props.featureMatrix,
-    visiblePlanIds: props.visiblePlanIds,
-    planLabels: props.planLabels,
-    pricingNote: props.pricingNote,
-    taxNote: props.taxNote,
-    redeemCopy: props.redeemCopy,
-    defaultSelectedPlanId,
+  return useSubscriptionSectionViewModel({
+    baseProps: props,
     selectedPlanId,
     formattedRedeemCode,
     planRailNav,
     handlers,
-    redeemRefs: { inputRef: redeemInputRef },
-    featureColumnLabel: props.featureColumnLabel,
+    redeemInputRef,
   });
 }
 
