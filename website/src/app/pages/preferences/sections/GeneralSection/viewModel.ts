@@ -91,69 +91,81 @@ const resolveMarkdownLabel = (translations: TranslationMap, value: string) => {
   return value;
 };
 
-export const createGeneralSectionViewModel = ({
-  title,
-  headingId,
+const createThemeField = ({
   ids,
   theme,
-  systemLanguage,
-  markdownMode,
+  translations,
+  handlers,
+}: CreateViewModelArgs): GeneralFieldModel => ({
+  fieldId: ids.theme,
+  label:
+    translations.settingsGeneralThemeLabel ??
+    translations.prefTheme ??
+    "Theme",
+  options: THEME_ORDER.map((value) => ({
+    value,
+    label: resolveThemeLabel(translations, value),
+  })),
+  value: theme,
+  onSelect: handlers.onThemeSelect,
+});
+
+const createLanguageField = ({
+  ids,
   translations,
   availableLanguages,
+  systemLanguage,
   systemLanguageAutoValue,
   handlers,
+}: CreateViewModelArgs): LanguageFieldModel => ({
+  selectId: ids.language,
+  label:
+    translations.settingsGeneralLanguageLabel ??
+    translations.prefSystemLanguage ??
+    "System language",
+  options: [
+    {
+      value: systemLanguageAutoValue,
+      label:
+        translations.prefSystemLanguageAuto ?? "Match device language",
+    },
+    ...availableLanguages.map((code) => ({
+      value: code,
+      label: resolveLanguageLabel(translations, code),
+    })),
+  ],
+  value: systemLanguage ?? systemLanguageAutoValue,
+  onChange: handlers.onLanguageSelect,
+  normalizeValue: handlers.normalizeSystemLanguage,
+});
+
+const createMarkdownField = ({
+  ids,
+  translations,
   markdownModes,
-}: CreateViewModelArgs): GeneralSectionViewModel => {
-  const themeField: GeneralFieldModel = {
-    fieldId: ids.theme,
-    label: translations.settingsGeneralThemeLabel ??
-      translations.prefTheme ??
-      "Theme",
-    options: THEME_ORDER.map((value) => ({
-      value,
-      label: resolveThemeLabel(translations, value),
-    })),
-    value: theme,
-    onSelect: handlers.onThemeSelect,
-  };
+  markdownMode,
+  handlers,
+}: CreateViewModelArgs): GeneralFieldModel => ({
+  fieldId: ids.markdown,
+  label: translations.settingsGeneralMarkdownLabel ?? "Markdown rendering",
+  options: markdownModes.map((value) => ({
+    value,
+    label: resolveMarkdownLabel(translations, value),
+  })),
+  value: markdownMode,
+  onSelect: handlers.onMarkdownModeSelect,
+});
 
-  const languageField: LanguageFieldModel = {
-    selectId: ids.language,
-    label:
-      translations.settingsGeneralLanguageLabel ??
-      translations.prefSystemLanguage ??
-      "System language",
-    options: [
-      {
-        value: systemLanguageAutoValue,
-        label:
-          translations.prefSystemLanguageAuto ?? "Match device language",
-      },
-      ...availableLanguages.map((code) => ({
-        value: code,
-        label: resolveLanguageLabel(translations, code),
-      })),
-    ],
-    value: systemLanguage ?? systemLanguageAutoValue,
-    onChange: handlers.onLanguageSelect,
-    normalizeValue: handlers.normalizeSystemLanguage,
-  };
+const createSectionDetails = (title: string, headingId: string) => ({
+  title,
+  headingId,
+});
 
-  const markdownField: GeneralFieldModel = {
-    fieldId: ids.markdown,
-    label: translations.settingsGeneralMarkdownLabel ?? "Markdown rendering",
-    options: markdownModes.map((value) => ({
-      value,
-      label: resolveMarkdownLabel(translations, value),
-    })),
-    value: markdownMode,
-    onSelect: handlers.onMarkdownModeSelect,
-  };
-
-  return {
-    section: { title, headingId },
-    themeField,
-    languageField,
-    markdownField,
-  };
-};
+export const createGeneralSectionViewModel = (
+  args: CreateViewModelArgs,
+): GeneralSectionViewModel => ({
+  section: createSectionDetails(args.title, args.headingId),
+  themeField: createThemeField(args),
+  languageField: createLanguageField(args),
+  markdownField: createMarkdownField(args),
+});

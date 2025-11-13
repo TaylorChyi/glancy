@@ -16,7 +16,7 @@ const MARKDOWN_RENDER_MODE_ORDER = Object.freeze([
   MARKDOWN_RENDERING_MODE_PLAIN,
 ]);
 
-function useGeneralSectionController({ title, headingId }) {
+function useGeneralSectionSettingsState() {
   const ids = useGeneralSectionFieldIds();
   const {
     theme,
@@ -37,6 +37,26 @@ function useGeneralSectionController({ title, headingId }) {
     setMarkdownMode,
   });
 
+  return {
+    ids,
+    theme,
+    systemLanguage,
+    markdownMode,
+    translations,
+    handlers,
+  };
+}
+
+function useGeneralSectionViewModel({ title, headingId }) {
+  const {
+    ids,
+    theme,
+    systemLanguage,
+    markdownMode,
+    translations,
+    handlers,
+  } = useGeneralSectionSettingsState();
+
   return createGeneralSectionViewModel({
     title,
     headingId,
@@ -53,7 +73,7 @@ function useGeneralSectionController({ title, headingId }) {
 }
 
 function GeneralSectionContainer({ title, headingId }) {
-  const viewModel = useGeneralSectionController({ title, headingId });
+  const viewModel = useGeneralSectionViewModel({ title, headingId });
   return <GeneralSectionView {...viewModel} />;
 }
 
