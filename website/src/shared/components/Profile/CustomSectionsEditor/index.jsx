@@ -1,14 +1,132 @@
 import PropTypes from "prop-types";
-import {
-  createCustomItem,
-  createCustomSection,
-} from "@app/pages/profile/profileDetailsModel.js";
+import { useCustomSections } from "./useCustomSections.js";
 
-function updateSection(sections, sectionId, updater) {
-  return sections.map((section) => {
-    if (section.id !== sectionId) return section;
-    return updater(section);
-  });
+function CustomSectionsHeader({ t, styles, onAddSection }) {
+  return (
+    <header className={styles["custom-sections-header"]}>
+      <div>
+        <h3>{t.customSectionsTitle}</h3>
+        <p>{t.customSectionsDescription}</p>
+      </div>
+      <button
+        type="button"
+        className={styles["custom-section-add"]}
+        onClick={onAddSection}
+      >
+        {t.customSectionAdd}
+      </button>
+    </header>
+  );
+}
+
+function CustomSectionsBody({ sections, t, styles, handlers }) {
+  if (sections.length === 0) {
+    return (
+      <p className={styles["custom-sections-empty"]}>{t.customSectionsEmpty}</p>
+    );
+  }
+
+  return sections.map((section) => (
+    <CustomSectionCard
+      key={section.id}
+      section={section}
+      t={t}
+      styles={styles}
+      handlers={handlers}
+    />
+  ));
+}
+
+function CustomSectionCard({ section, t, styles, handlers }) {
+  return (
+    <div className={styles["custom-section-card"]}>
+      <div className={styles["custom-section-header"]}>
+        <input
+          value={section.title}
+          onChange={(event) =>
+            handlers.handleSectionTitleChange(section.id, event.target.value)
+          }
+          placeholder={t.customSectionTitlePlaceholder}
+        />
+        <button
+          type="button"
+          className={styles["custom-section-remove"]}
+          onClick={() => handlers.handleRemoveSection(section.id)}
+        >
+          {t.customSectionRemove}
+        </button>
+      </div>
+      <CustomItemsList
+        sectionId={section.id}
+        items={section.items}
+        t={t}
+        styles={styles}
+        handlers={handlers}
+      />
+    </div>
+  );
+}
+
+function CustomItemsList({ sectionId, items, t, styles, handlers }) {
+  return (
+    <div className={styles["custom-items"]}>
+      {items.map((item) => (
+        <CustomItemRow
+          key={item.id}
+          sectionId={sectionId}
+          item={item}
+          t={t}
+          styles={styles}
+          handlers={handlers}
+        />
+      ))}
+      <button
+        type="button"
+        className={styles["custom-item-add"]}
+        onClick={() => handlers.handleAddItem(sectionId)}
+      >
+        {t.customSectionItemAdd}
+      </button>
+    </div>
+  );
+}
+
+function CustomItemRow({ sectionId, item, t, styles, handlers }) {
+  return (
+    <div className={styles["custom-item-row"]}>
+      <input
+        value={item.label}
+        onChange={(event) =>
+          handlers.handleItemChange(
+            sectionId,
+            item.id,
+            "label",
+            event.target.value,
+          )
+        }
+        placeholder={t.customSectionItemLabelPlaceholder}
+      />
+      <input
+        value={item.value}
+        onChange={(event) =>
+          handlers.handleItemChange(
+            sectionId,
+            item.id,
+            "value",
+            event.target.value,
+          )
+        }
+        placeholder={t.customSectionItemValuePlaceholder}
+      />
+      <button
+        type="button"
+        className={styles["custom-item-remove"]}
+        onClick={() => handlers.handleRemoveItem(sectionId, item.id)}
+      >
+        {t.customSectionItemRemove}
+      </button>
+    </div>
+  );
 }
 
 export default function CustomSectionsEditor({
@@ -17,143 +135,18 @@ export default function CustomSectionsEditor({
   t,
   styles,
 }) {
-  const handleSectionTitleChange = (sectionId, value) => {
-    const next = updateSection(sections, sectionId, (section) => ({
-      ...section,
-      title: value,
-    }));
-    onChange(next);
-  };
-
-  const handleItemChange = (sectionId, itemId, field, value) => {
-    const next = updateSection(sections, sectionId, (section) => ({
-      ...section,
-      items: section.items.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              [field]: value,
-            }
-          : item,
-      ),
-    }));
-    onChange(next);
-  };
-
-  const handleAddSection = () => {
-    onChange([...sections, createCustomSection()]);
-  };
-
-  const handleRemoveSection = (sectionId) => {
-    const next = sections.filter((section) => section.id !== sectionId);
-    onChange(next);
-  };
-
-  const handleAddItem = (sectionId) => {
-    const next = updateSection(sections, sectionId, (section) => ({
-      ...section,
-      items: [...section.items, createCustomItem()],
-    }));
-    onChange(next);
-  };
-
-  const handleRemoveItem = (sectionId, itemId) => {
-    const next = updateSection(sections, sectionId, (section) => {
-      const remaining = section.items.filter((item) => item.id !== itemId);
-      return {
-        ...section,
-        items: remaining.length > 0 ? remaining : [createCustomItem()],
-      };
-    });
-    onChange(next);
-  };
+  const handlers = useCustomSections({ sections, onChange });
 
   return (
     <section className={styles["custom-sections"]}>
-      <header className={styles["custom-sections-header"]}>
-        <div>
-          <h3>{t.customSectionsTitle}</h3>
-          <p>{t.customSectionsDescription}</p>
-        </div>
-        <button
-          type="button"
-          className={styles["custom-section-add"]}
-          onClick={handleAddSection}
-        >
-          {t.customSectionAdd}
-        </button>
-      </header>
+      <CustomSectionsHeader t={t} styles={styles} onAddSection={handlers.handleAddSection} />
       <div className={styles["custom-sections-body"]}>
-        {sections.length === 0 ? (
-          <p className={styles["custom-sections-empty"]}>
-            {t.customSectionsEmpty}
-          </p>
-        ) : (
-          sections.map((section) => (
-            <div key={section.id} className={styles["custom-section-card"]}>
-              <div className={styles["custom-section-header"]}>
-                <input
-                  value={section.title}
-                  onChange={(event) =>
-                    handleSectionTitleChange(section.id, event.target.value)
-                  }
-                  placeholder={t.customSectionTitlePlaceholder}
-                />
-                <button
-                  type="button"
-                  className={styles["custom-section-remove"]}
-                  onClick={() => handleRemoveSection(section.id)}
-                >
-                  {t.customSectionRemove}
-                </button>
-              </div>
-              <div className={styles["custom-items"]}>
-                {section.items.map((item) => (
-                  <div key={item.id} className={styles["custom-item-row"]}>
-                    <input
-                      value={item.label}
-                      onChange={(event) =>
-                        handleItemChange(
-                          section.id,
-                          item.id,
-                          "label",
-                          event.target.value,
-                        )
-                      }
-                      placeholder={t.customSectionItemLabelPlaceholder}
-                    />
-                    <input
-                      value={item.value}
-                      onChange={(event) =>
-                        handleItemChange(
-                          section.id,
-                          item.id,
-                          "value",
-                          event.target.value,
-                        )
-                      }
-                      placeholder={t.customSectionItemValuePlaceholder}
-                    />
-                    <button
-                      type="button"
-                      className={styles["custom-item-remove"]}
-                      onClick={() => handleRemoveItem(section.id, item.id)}
-                    >
-                      {t.customSectionItemRemove}
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className={styles["custom-item-add"]}
-                  onClick={() => handleAddItem(section.id)}
-                >
-                  {t.customSectionItemAdd}
-                </button>
-              </div>
-            </div>
-          ))
-        )}
+        <CustomSectionsBody
+          sections={sections}
+          t={t}
+          styles={styles}
+          handlers={handlers}
+        />
       </div>
     </section>
   );
