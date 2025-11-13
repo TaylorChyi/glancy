@@ -24,10 +24,11 @@
 ### 2.2 图 1：系统上下文
 
 - FigJam：<https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-1#SystemContext>
-- Mermaid 源：`doc/系统设计文档/图/HLD-Context.mmd`
+- Mermaid 源：`doc/图/src/context.mmd`
 
 ```mermaid
 %% FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-1#SystemContext
+%% Canonical source: doc/图/src/context.mmd （更新请同步该文件）
 %% 摘要：Glancy 词汇助手在终端、边缘、应用、数据与第三方依赖之间的流向与信任边界。
 flowchart LR
     classDef boundary fill:#f2f6ff,stroke:#4a64d6,stroke-width:1px,color:#0c1b3a
@@ -142,61 +143,15 @@ flowchart LR
 ### 3.2 图 2：部署拓扑
 
 - FigJam：<https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-100#Deployment>
-- Mermaid 源：`doc/系统设计文档/图/HLD-Deployment.mmd`
+- PlantUML 源：`doc/图/src/deployment.puml`
 
-```mermaid
-%% FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-100#Deployment
-%% 源文件：doc/系统设计文档/图/HLD-Deployment.mmd
-flowchart TB
-    subgraph RegionA[Region A]
-        subgraph AZ1[A Z 1]
-            EdgeA1[CDN/WAF PoP]
-            GW1[API 网关 Pod]
-            BFF1[BFF Deployment]
-            Adapter1[LLM 适配层]
-            RedisL11[(Redis L1 Shard)]
-        end
-        subgraph AZ2[A Z 2]
-            EdgeA2[CDN/WAF PoP]
-            GW2[API 网关 Pod]
-            BFF2[BFF Deployment]
-            Adapter2[LLM 适配层]
-            RedisL12[(Redis L1 Shard)]
-        end
-        subgraph DataA[数据层]
-            RDBMSA[(RDBMS 主)]
-            RedisL2A[(Redis L2 Cluster)]
-            ObjA[(对象存储 Bucket A)]
-        end
-        subgraph OpsA[编排/可观测]
-            MQ[消息队列]
-            Orchestrator[任务编排]
-            Observability[采集 Agent/监控]
-        end
-    end
-
-    subgraph RegionB[Region B (Warm Standby)]
-        RDBMSB[(RDBMS 备)]
-        RedisL2B[(Redis L2 备)]
-        ObjB[(对象存储 CRR 备份)]
-    end
-
-    EdgeA1 --> GW1 --> BFF1 --> Adapter1
-    EdgeA2 --> GW2 --> BFF2 --> Adapter2
-    GW1 --> RDBMSA
-    GW2 --> RDBMSA
-    BFF1 --> RedisL2A
-    BFF2 --> RedisL2A
-    Orchestrator --> MQ --> BFF1
-    Orchestrator --> MQ --> BFF2
-    ObjA --> CDNUser[CDN 分发导出链接]
-
-    RDBMSA ==PITR/同步==> RDBMSB
-    RedisL2A ==异步复制==> RedisL2B
-    ObjA ==CRR==> ObjB
+```plantuml
+' FigJam: https://www.figma.com/file/glancy-sdd-figjam?type=whiteboard&node-id=230-100#Deployment
+' Canonical source: doc/图/src/deployment.puml
+!include ../图/src/deployment.puml
 ```
 
-> 展示区域/AZ 关系、组件冗余、数据主从与流量切换路径（包括冷/热备、半自动切换 Runbook）；统一收敛到 `doc/系统设计文档/图/` 便于 FigJam 与 Mermaid 同步。
+> 展示区域/AZ 关系、组件冗余、数据主从与流量切换路径（包括冷/热备、半自动切换 Runbook）；源码集中于 `doc/图/src/` 便于 FigJam 与文本同步。
 
 ### 3.3 弹性与容灾要点
 
@@ -251,7 +206,7 @@ flowchart TB
 
 1. **查词主链路**：用户→网关→BFF（鉴权/配额/缓存命中）→[命中] 直接返回；[未命中] 调用 LLM 适配→Doubao→流式回传→缓写历史/缓存。
 2. **Doubao 回退**：默认 `defaultStream`；遇到 4xx/5xx/超时→触发 fallback（缓存模板、`defaultStream` 重试 1 次、或返回降级内容）。
-3. **配额/订阅**：请求头包含 `Idempotency-Key`；BFF 先查 Redis 计数与订阅快照，不一致时从 RDBMS 更新并写回（详见 LLD 模块）。
+3. **配额/订阅**：请求头包含 `Idempotency-Key`；BFF 先查 Redis 计数与订阅快照，不一致时从 RDBMS 更新并写回（详见 LLD 模块与图 `SEQ-SB`）。
 4. **导出流水线**：同步接口仅入列 + 返回回执；异步任务消费→查询数据→生成 CSV/JSON→上传对象存储→回执包含签名链接（TTL 10 分钟）。
 5. **可观测性**：trace_id 自网关注入并贯穿；关键指标（SLA/SLO、缓存命中、熔断、导出 RTO/RPO）均写入指标平台，满足第 20 章 20.14。
 
@@ -265,13 +220,14 @@ flowchart TB
 
 | 图 ID  | 描述                         | 图源                                   | 渲染方式                               | FigJam 链接片段 |
 | ------ | ---------------------------- | -------------------------------------- | -------------------------------------- | ---------------- |
-| HLD-CTX| 系统上下文                   | `doc/系统设计文档/图/HLD-Context.mmd`               | Mermaid 代码块                         | `node-id=230-1` |
-| HLD-DEP| 部署拓扑与容灾               | `doc/系统设计文档/图/HLD-Deployment.mmd`           | Mermaid 代码块                         | `node-id=230-100` |
-| SEQ-LK | 查词与流式渲染主时序         | `doc/系统设计文档/图/LLD-Lookup-Sequence.mmd`      | Mermaid 代码块                         | `node-id=230-20` |
-| SEQ-EX | 历史导出与一次性链接时序     | `doc/系统设计文档/图/LLD-Export-Pipeline.mmd`      | Mermaid 代码块                         | `node-id=230-40` |
-| SEQ-LLM| Doubao 请求构造与回退时序    | `doc/系统设计文档/图/LLD-Doubao-Sequence.mmd`      | Mermaid 代码块                         | `node-id=2-200` |
-| FLOW-QUOTA| 配额/订阅一致性流程       | `doc/系统设计文档/图/LLD-Quota-Flow.mmd`           | Mermaid 代码块                         | `node-id=2-300` |
-| ER-CORE| 核心数据域 ER（账户/查词/导出)| `doc/图/src/er-core.mmd`                            | Mermaid 代码块                         | `node-id=230-80` |
-| T29-GT | T29 制图交付甘特图           | `doc/图/src/gantt-t29.mmd`                           | Mermaid 代码块                         | `node-id=230-140` |
+| HLD-CTX| 系统上下文                   | `doc/图/src/context.mmd`                             | Mermaid 代码块                        | `node-id=230-1` |
+| HLD-DEP| 部署拓扑与容灾               | `doc/图/src/deployment.puml`                         | PlantUML 代码块（`!include`）         | `node-id=230-100` |
+| SEQ-LK | 查词与流式渲染主时序         | `doc/图/src/sequence-lookup.puml`                    | PlantUML 代码块（`!include`）         | `node-id=230-20` |
+| SEQ-EX | 历史导出与一次性链接时序     | `doc/图/src/sequence-export.puml`                    | PlantUML 代码块（`!include`）         | `node-id=230-40` |
+| SEQ-SB | 订阅购买/回调/权益同步时序   | `doc/图/src/sequence-subscription.puml`              | PlantUML 代码块（`!include`）         | `node-id=230-60` |
+| SEQ-LLM| Doubao 请求构造与回退时序    | `doc/系统设计文档/图/LLD-Doubao-Sequence.mmd`      | Mermaid 代码块                        | `node-id=2-200` |
+| FLOW-QUOTA| 配额/订阅一致性流程       | `doc/系统设计文档/图/LLD-Quota-Flow.mmd`           | Mermaid 代码块                        | `node-id=2-300` |
+| ER-CORE| 核心数据域 ER（账户/查词/导出)| `doc/图/src/er-core.mmd`                            | Mermaid 代码块                        | `node-id=230-80` |
+| T29-GT | T29 制图交付甘特图           | `doc/图/src/gantt-t29.mmd`                           | Mermaid 代码块                        | `node-id=230-140` |
 
 > 维护统一入口：见 `doc/图/README.md`。所有图的 FigJam 权限需保持“Anyone with the link → can view/comment”。
