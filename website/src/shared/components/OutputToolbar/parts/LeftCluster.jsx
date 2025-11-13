@@ -2,45 +2,58 @@ import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
 import styles from "../OutputToolbar.module.css";
 
-function LeftCluster({
-  showTts,
-  showReplay,
-  ttsComponent,
-  term,
-  lang,
-  speakableTerm,
-  disabled,
-  onReoutput,
-  baseToolButtonClass,
-  reoutputLabel,
-}) {
-  if (!showTts && !showReplay) {
+const renderTtsButton = ({ showTts, ttsComponent, term, lang, speakableTerm }) => {
+  if (!showTts) {
     return null;
   }
 
   const TtsComponent = ttsComponent;
+  return (
+    <TtsComponent
+      text={term}
+      lang={lang}
+      size={20}
+      disabled={!speakableTerm}
+    />
+  );
+};
+
+const renderReplayButton = ({
+  showReplay,
+  baseToolButtonClass,
+  onReoutput,
+  disabled,
+  speakableTerm,
+  reoutputLabel,
+}) => {
+  if (!showReplay) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      className={`${baseToolButtonClass} ${styles["tool-button-replay"]}`}
+      onClick={onReoutput}
+      disabled={disabled || !speakableTerm}
+      aria-label={reoutputLabel}
+    >
+      <ThemeIcon name="refresh" width={16} height={16} aria-hidden="true" />
+    </button>
+  );
+};
+
+function LeftCluster(props) {
+  const { showTts, showReplay } = props;
+
+  if (!showTts && !showReplay) {
+    return null;
+  }
 
   return (
     <div className={styles["left-cluster"]}>
-      {showTts ? (
-        <TtsComponent
-          text={term}
-          lang={lang}
-          size={20}
-          disabled={!speakableTerm}
-        />
-      ) : null}
-      {showReplay ? (
-        <button
-          type="button"
-          className={`${baseToolButtonClass} ${styles["tool-button-replay"]}`}
-          onClick={onReoutput}
-          disabled={disabled || !speakableTerm}
-          aria-label={reoutputLabel}
-        >
-          <ThemeIcon name="refresh" width={16} height={16} aria-hidden="true" />
-        </button>
-      ) : null}
+      {renderTtsButton(props)}
+      {renderReplayButton(props)}
     </div>
   );
 }

@@ -31,146 +31,132 @@ const { default: OutputToolbar } = await import(
   "@shared/components/OutputToolbar"
 );
 
+const renderToolbar = (props) => render(<OutputToolbar {...props} />);
+
+const getTtsCallArgs = () => mockTtsButton.mock.calls.at(0)?.[0];
+
 describe("OutputToolbar", () => {
   beforeEach(() => {
     mockTtsButton.mockClear();
     userState.user = { id: "u" };
   });
 
-  /**
-   * 验证语音按钮仅在 term 存在时渲染，并保留 reoutput 功能。
-   */
-  test("renders tts when term provided and handles reoutput", () => {
-    const onReoutput = jest.fn();
-    render(
-      <OutputToolbar term="hello" lang="en" onReoutput={onReoutput} />,
-    );
+  describe("text to speech", () => {
+    test("renders default tts when term provided", () => {
+      const onReoutput = jest.fn();
+      renderToolbar({ term: "hello", lang: "en", onReoutput });
 
-    const toolbar = screen.getByRole("toolbar", { name: "词条工具栏" });
-    expect(toolbar.className).toContain("entry__toolbar");
-    expect(mockTtsButton).toHaveBeenCalledTimes(1);
-    expect(mockTtsButton.mock.calls[0][0]).toEqual(
-      expect.objectContaining({ text: "hello", lang: "en" }),
-    );
+      const toolbar = screen.getByRole("toolbar", { name: "词条工具栏" });
+      expect(toolbar.className).toContain("entry__toolbar");
+      expect(mockTtsButton).toHaveBeenCalledTimes(1);
+      expect(getTtsCallArgs()).toEqual(
+        expect.objectContaining({ text: "hello", lang: "en" }),
+      );
 
-    fireEvent.click(screen.getByRole("button", { name: "重新输出" }));
-    expect(onReoutput).toHaveBeenCalledTimes(1);
+      fireEvent.click(screen.getByRole("button", { name: "重新输出" }));
+      expect(onReoutput).toHaveBeenCalledTimes(1);
+    });
+
+    test("hides default tts when no term and keeps copy disabled", () => {
+      renderToolbar({ term: "" });
+
+      expect(mockTtsButton).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "复制" })).toBeDisabled();
+      expect(
+        screen.queryByRole("button", { name: "选择版本" }),
+      ).not.toBeInTheDocument();
+    });
+
+    test("prefers injected tts component", () => {
+      const customTts = jest.fn(() => <div data-testid="custom-tts" />);
+      renderToolbar({ term: "hello", ttsComponent: customTts });
+
+      expect(customTts).toHaveBeenCalled();
+      expect(mockTtsButton).not.toHaveBeenCalled();
+    });
   });
 
-  /**
-   * 验证无 term 时不会渲染语音按钮且复制按钮保持禁用，并确认版本菜单不再出现。
-   */
-  test("hides tts without term and keeps copy disabled", () => {
-    render(<OutputToolbar term="" />);
+  describe("action buttons", () => {
+    test("respond to delete, report and copy", () => {
+      const onDelete = jest.fn();
+      const onReport = jest.fn();
+      const onCopy = jest.fn();
 
-    expect(mockTtsButton).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "复制" })).toBeDisabled();
-    expect(
-      screen.queryByRole("button", { name: "选择版本" }),
-    ).not.toBeInTheDocument();
+      renderToolbar({
+        term: "hello",
+        canCopy: true,
+        onCopy,
+        onDelete,
+        canDelete: true,
+        onReport,
+        canReport: true,
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "删除" }));
+      fireEvent.click(screen.getByRole("button", { name: "反馈" }));
+      fireEvent.click(screen.getByRole("button", { name: "复制" }));
+
+      expect(onDelete).toHaveBeenCalledTimes(1);
+      expect(onReport).toHaveBeenCalledTimes(1);
+      expect(onCopy).toHaveBeenCalledTimes(1);
+    });
+
+    test("shows copy success state then returns to idle", () => {
+      const { rerender } = renderToolbar({
+        term: "gamma",
+        canCopy: true,
+        onCopy: jest.fn(),
+        copyFeedbackState: "success",
+        isCopySuccess: true,
+      });
+
+      const successButton = screen.getByRole("button", { name: "复制完成" });
+      expect(successButton).toBeDisabled();
+      expect(
+        within(successButton).getByRole("img", { name: "copy-success" }),
+      ).toBeInTheDocument();
+
+      rerender(
+        <OutputToolbar
+          term="gamma"
+          canCopy
+          onCopy={jest.fn()}
+          copyFeedbackState="idle"
+          isCopySuccess={false}
+        />,
+      );
+
+      const idleButton = screen.getByRole("button", { name: "复制" });
+      expect(idleButton).not.toBeDisabled();
+      expect(
+        within(idleButton).getByRole("img", { name: "copy" }),
+      ).toBeInTheDocument();
+    });
   });
 
-  /**
-   * 验证注入自定义 TTS 组件时不会调用默认组件。
-   */
-  test("prefers injected tts component", () => {
-    const customTts = jest.fn(() => <div data-testid="custom-tts" />);
-    render(<OutputToolbar term="hello" ttsComponent={customTts} />);
+  describe("custom root rendering", () => {
+    test("uses provided renderRoot", () => {
+      const renderRoot = jest.fn(
+        ({ children, className, role, ariaLabel, dataTestId }) => (
+          <section
+            data-testid="custom-toolbar"
+            data-original-testid={dataTestId}
+            data-role={role}
+            aria-label={ariaLabel}
+            className={`host ${className}`}
+          >
+            {children}
+          </section>
+        ),
+      );
 
-    expect(customTts).toHaveBeenCalled();
-    expect(mockTtsButton).not.toHaveBeenCalled();
-  });
+      renderToolbar({ term: "hello", renderRoot });
 
-  /**
-   * 确认启用动作按钮时在工具栏中渲染并响应交互。
-   */
-  test("renders action buttons when permitted", () => {
-    const onDelete = jest.fn();
-    const onReport = jest.fn();
-    const onCopy = jest.fn();
-
-    render(
-      <OutputToolbar
-        term="hello"
-        canCopy
-        onCopy={onCopy}
-        onDelete={onDelete}
-        canDelete
-        onReport={onReport}
-        canReport
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "删除" }));
-    fireEvent.click(screen.getByRole("button", { name: "反馈" }));
-    fireEvent.click(screen.getByRole("button", { name: "复制" }));
-
-    expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onReport).toHaveBeenCalledTimes(1);
-    expect(onCopy).toHaveBeenCalledTimes(1);
-  });
-
-  /**
-   * 测试目标：复制成功态下按钮需禁用并显示勾选图标，恢复 idle 后重新启用。
-   */
-  test("GivenCopySuccessState_WhenRendering_ThenShowsSuccessIconAndDisables", () => {
-    const { rerender } = render(
-      <OutputToolbar
-        term="gamma"
-        canCopy
-        onCopy={jest.fn()}
-        copyFeedbackState="success"
-        isCopySuccess
-      />,
-    );
-
-    const successButton = screen.getByRole("button", { name: "复制完成" });
-    expect(successButton).toBeDisabled();
-    expect(
-      within(successButton).getByRole("img", { name: "copy-success" }),
-    ).toBeInTheDocument();
-
-    rerender(
-      <OutputToolbar
-        term="gamma"
-        canCopy
-        onCopy={jest.fn()}
-        copyFeedbackState="idle"
-        isCopySuccess={false}
-      />,
-    );
-
-    const idleButton = screen.getByRole("button", { name: "复制" });
-    expect(idleButton).not.toBeDisabled();
-    expect(
-      within(idleButton).getByRole("img", { name: "copy" }),
-    ).toBeInTheDocument();
-  });
-
-  /**
-   * 验证 renderRoot 策略可替换默认容器，且仍保留 aria 语义。
-   */
-  test("supports custom root renderer", () => {
-    const renderRoot = jest.fn(
-      ({ children, className, role, ariaLabel, dataTestId }) => (
-        <section
-          data-testid="custom-toolbar"
-          data-original-testid={dataTestId}
-          data-role={role}
-          aria-label={ariaLabel}
-          className={`host ${className}`}
-        >
-          {children}
-        </section>
-      ),
-    );
-
-    render(<OutputToolbar term="hello" renderRoot={renderRoot} />);
-
-    expect(renderRoot).toHaveBeenCalled();
-    expect(screen.getByTestId("custom-toolbar")).toHaveAttribute(
-      "data-role",
-      "toolbar",
-    );
+      expect(renderRoot).toHaveBeenCalled();
+      expect(screen.getByTestId("custom-toolbar")).toHaveAttribute(
+        "data-role",
+        "toolbar",
+      );
+    });
   });
 });

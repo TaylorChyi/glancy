@@ -24,32 +24,74 @@ export const ACTION_BLUEPRINTS = [
   },
 ];
 
-export const buildBlueprintItems = ({ actionContext, disabled, user }) => {
-  const items = [];
+const resolveHandler = (blueprint, actionContext) =>
+  blueprint.getHandler?.(actionContext);
 
-  ACTION_BLUEPRINTS.forEach((blueprint) => {
-    const handler = blueprint.getHandler?.(actionContext);
-    const label = blueprint.getLabel(actionContext);
-    const canUseAction = blueprint.canUse?.(actionContext) ?? true;
-    const hasUser = !blueprint.requiresUser || Boolean(user);
-    const isHandlerFunction = typeof handler === "function";
-    const itemDisabled =
-      disabled || !hasUser || !canUseAction || !isHandlerFunction;
+const resolveLabel = (blueprint, actionContext) =>
+  blueprint.getLabel(actionContext);
 
-    if (blueprint.hiddenWhenInactive && itemDisabled) {
-      return;
+const isHiddenWhenInactive = (blueprint) => Boolean(blueprint.hiddenWhenInactive);
+
+const canRenderForUser = (blueprint, user) =>
+  !blueprint.requiresUser || Boolean(user);
+
+const canUseBlueprint = (blueprint, actionContext) =>
+  blueprint.canUse?.(actionContext) ?? true;
+
+const isValidHandler = (handler) => typeof handler === "function";
+
+const isBlueprintDisabled = ({
+  blueprint,
+  handler,
+  disabled,
+  user,
+  actionContext,
+}) =>
+  disabled ||
+  !canRenderForUser(blueprint, user) ||
+  !canUseBlueprint(blueprint, actionContext) ||
+  !isValidHandler(handler);
+
+const shouldIncludeBlueprint = (options) =>
+  !(isHiddenWhenInactive(options.blueprint) && options.itemDisabled);
+
+const createBlueprintItem = ({
+  blueprint,
+  actionContext,
+  handler,
+  itemDisabled,
+}) => ({
+  key: blueprint.key,
+  label: resolveLabel(blueprint, actionContext),
+  icon: blueprint.getIcon(actionContext),
+  onClick: handler,
+  active: blueprint.isActive?.(actionContext) ?? false,
+  variant: blueprint.variant,
+  disabled: itemDisabled,
+});
+
+export const buildBlueprintItems = ({ actionContext, disabled, user }) =>
+  ACTION_BLUEPRINTS.reduce((items, blueprint) => {
+    const handler = resolveHandler(blueprint, actionContext);
+    const itemDisabled = isBlueprintDisabled({
+      blueprint,
+      handler,
+      disabled,
+      user,
+      actionContext,
+    });
+
+    if (!shouldIncludeBlueprint({ blueprint, itemDisabled })) {
+      return items;
     }
 
-    items.push({
-      key: blueprint.key,
-      label,
-      icon: blueprint.getIcon(actionContext),
-      onClick: handler,
-      active: blueprint.isActive?.(actionContext) ?? false,
-      variant: blueprint.variant,
-      disabled: itemDisabled,
+    const item = createBlueprintItem({
+      blueprint,
+      actionContext,
+      handler,
+      itemDisabled,
     });
-  });
 
-  return items;
-};
+    items.push(item);
+    return items;
+  }, []);
