@@ -58,6 +58,58 @@ export const makeRecord = (idx) => {
   };
 };
 
+export const createBilingualRecord = ({
+  id,
+  term,
+  language,
+  createdAt,
+  favorite = false,
+  versions = [
+    {
+      id: `${id}-v1`,
+      createdAt,
+      favorite,
+    },
+  ],
+}) => ({
+  id,
+  term,
+  language,
+  flavor: WORD_FLAVOR_BILINGUAL,
+  createdAt,
+  favorite,
+  versions,
+});
+
+export const buildTermKey = (language, flavor, term) =>
+  `${language}:${flavor}:${term}`;
+
+export const createHistoryEntryFromRecord = (record) => ({
+  recordId: record.id,
+  term: record.term,
+  language: record.language,
+  flavor: record.flavor,
+  termKey: buildTermKey(record.language, record.flavor, record.term),
+  createdAt: record.createdAt,
+  favorite: record.favorite,
+  versions: record.versions,
+  latestVersionId: record.versions[record.versions.length - 1].id,
+});
+
+export const seedHistory = (records) => {
+  historyStore.setState({
+    history: records.map(createHistoryEntryFromRecord),
+    error: null,
+  });
+  return historyStore.getState().history;
+};
+
+export const queueHistoryPages = (...pages) => {
+  pages.forEach((page) => {
+    mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce(page);
+  });
+};
+
 export const resetHistoryTestState = () => {
   localStorage.clear();
   jest.clearAllMocks();
