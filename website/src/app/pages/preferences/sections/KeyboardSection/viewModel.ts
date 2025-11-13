@@ -95,6 +95,211 @@ const getAriaLabel = (translations: TranslationMap, label: string) => {
   return `Edit shortcut for ${label}`;
 };
 
+const buildHint = (
+  translations: TranslationMap,
+  recordingAction: string | null,
+) => getHint(translations, recordingAction);
+
+const resolveItemError = (
+  errors: Record<string, string | null>,
+  action: string,
+  fallback: string,
+) => {
+  const message = errors?.[action];
+  if (!message) {
+    return { hasError: false, errorMessage: "" };
+  }
+  return { hasError: true, errorMessage: message || fallback };
+};
+
+type ResolveItemStateArgs = {
+  pendingAction: string | null;
+  status: string;
+  isResetting: boolean;
+  action: string;
+};
+
+const resolveItemState = ({
+  pendingAction,
+  status,
+  isResetting,
+  action,
+}: ResolveItemStateArgs) => {
+  const isSaving = pendingAction === action;
+  const isLoading = status === "loading";
+  return {
+    isSaving,
+    disabled: isSaving || isResetting || isLoading,
+  };
+};
+
+type CreateItemViewModelArgs = {
+  binding: ShortcutBinding;
+  translations: TranslationMap;
+  recordingAction: string | null;
+  pendingAction: string | null;
+  status: string;
+  errors: Record<string, string | null>;
+  handlers: KeyboardSectionHandlers;
+  recordingLabel: string;
+  statusLabel: string;
+  errorLabel: string;
+  isResetting: boolean;
+};
+
+type DeriveItemPresentationArgs = {
+  translations: TranslationMap;
+  binding: ShortcutBinding;
+};
+
+const deriveItemPresentation = ({
+  translations,
+  binding,
+}: DeriveItemPresentationArgs) => {
+  const label = translateShortcutAction(translations, binding.action);
+  return {
+    label,
+    ariaLabel: getAriaLabel(translations, label),
+    displayValue: formatShortcutKeys(binding.keys).join(" + "),
+  };
+};
+
+type AssembleItemViewModelArgs = {
+  action: string;
+  label: string;
+  ariaLabel: string;
+  displayValue: string;
+  recordingLabel: string;
+  statusLabel: string;
+  errorMessage: string;
+  hasError: boolean;
+  recordingAction: string | null;
+  isSaving: boolean;
+  disabled: boolean;
+  handlers: KeyboardSectionHandlers;
+};
+
+const assembleItemViewModel = ({
+  action,
+  label,
+  ariaLabel,
+  displayValue,
+  recordingLabel,
+  statusLabel,
+  errorMessage,
+  hasError,
+  recordingAction,
+  isSaving,
+  disabled,
+  handlers,
+}: AssembleItemViewModelArgs) => ({
+  action,
+  label,
+  ariaLabel,
+  displayValue,
+  recordingLabel,
+  statusLabel,
+  errorMessage,
+  hasError,
+  isRecording: recordingAction === action,
+  isSaving,
+  disabled,
+  onCaptureStart: () => handlers.onCaptureStart(action),
+  onKeyDown: (event: unknown) => handlers.onKeyDown(action, event),
+  onBlur: () => handlers.onBlur(action),
+});
+
+const createItemViewModel = ({
+  binding,
+  translations,
+  recordingAction,
+  pendingAction,
+  status,
+  errors,
+  handlers,
+  recordingLabel,
+  statusLabel,
+  errorLabel,
+  isResetting,
+}: CreateItemViewModelArgs) => {
+  const action = binding.action;
+  return assembleItemViewModel({
+    action,
+    ...deriveItemPresentation({ translations, binding }),
+    recordingLabel,
+    statusLabel,
+    ...resolveItemError(errors, action, errorLabel),
+    recordingAction,
+    ...resolveItemState({ pendingAction, status, isResetting, action }),
+    handlers,
+  });
+};
+
+type BuildItemsArgs = Omit<CreateItemViewModelArgs, "binding"> & {
+  bindings: ShortcutBinding[];
+};
+
+const buildItems = ({ bindings, ...rest }: BuildItemsArgs) =>
+  bindings.map((binding) => createItemViewModel({ binding, ...rest }));
+
+type BuildResetButtonArgs = {
+  translations: TranslationMap;
+  handlers: KeyboardSectionHandlers;
+  isResetting: boolean;
+  status: string;
+};
+
+const buildResetButton = ({
+  translations,
+  handlers,
+  isResetting,
+  status,
+}: BuildResetButtonArgs) => ({
+  label: getResetLabel(translations),
+  disabled: isResetting || status === "loading",
+  onClick: handlers.onReset,
+});
+
+type BuildViewModelDetailsArgs = {
+  bindings: ShortcutBinding[];
+  translations: TranslationMap;
+  recordingAction: string | null;
+  pendingAction: string | null;
+  status: string;
+  errors: Record<string, string | null>;
+  handlers: KeyboardSectionHandlers;
+  resetActionId: string;
+};
+
+const getViewModelLabels = (translations: TranslationMap) => ({
+  recordingLabel: getRecordingLabel(translations),
+  statusLabel: getStatusLabel(translations),
+  errorLabel: getErrorLabel(translations),
+});
+
+const buildViewModelDetails = (args: BuildViewModelDetailsArgs) => {
+  const { bindings, translations, recordingAction, pendingAction, status, errors, handlers, resetActionId } = args;
+  const labels = getViewModelLabels(translations);
+  const isResetting = pendingAction === resetActionId;
+  const itemArgs = {
+    bindings,
+    translations,
+    recordingAction,
+    pendingAction,
+    status,
+    errors,
+    handlers,
+    ...labels,
+    isResetting,
+  };
+
+  return {
+    hint: buildHint(translations, recordingAction),
+    items: buildItems(itemArgs),
+    resetButton: buildResetButton({ translations, handlers, isResetting, status }),
+  };
+};
+
 export const createKeyboardSectionViewModel = ({
   title,
   headingId,
@@ -107,48 +312,21 @@ export const createKeyboardSectionViewModel = ({
   handlers,
   resetActionId,
 }: CreateKeyboardSectionViewModelArgs): KeyboardSectionViewModel => {
-  const recordingLabel = getRecordingLabel(translations);
-  const statusLabel = getStatusLabel(translations);
-  const hint = getHint(translations, recordingAction);
-  const errorLabel = getErrorLabel(translations);
-  const isResetting = pendingAction === resetActionId;
-  const isLoading = status === "loading";
-
-  const items = bindings.map((binding) => {
-    const label = translateShortcutAction(translations, binding.action);
-    const displayValue = formatShortcutKeys(binding.keys).join(" + ");
-    const hasError = Boolean(errors?.[binding.action]);
-    const errorMessage = hasError
-      ? errors[binding.action] || errorLabel
-      : "";
-    const isSaving = pendingAction === binding.action;
-    return {
-      action: binding.action,
-      label,
-      ariaLabel: getAriaLabel(translations, label),
-      displayValue,
-      recordingLabel,
-      statusLabel,
-      errorMessage,
-      hasError,
-      isRecording: recordingAction === binding.action,
-      isSaving,
-      disabled: isSaving || isResetting || isLoading,
-      onCaptureStart: () => handlers.onCaptureStart(binding.action),
-      onKeyDown: (event: unknown) =>
-        handlers.onKeyDown(binding.action, event),
-      onBlur: () => handlers.onBlur(binding.action),
-    };
+  const details = buildViewModelDetails({
+    bindings,
+    translations,
+    recordingAction,
+    pendingAction,
+    status,
+    errors,
+    handlers,
+    resetActionId,
   });
 
   return {
     section: { title, headingId },
-    hint,
-    items,
-    resetButton: {
-      label: getResetLabel(translations),
-      disabled: isResetting || isLoading,
-      onClick: handlers.onReset,
-    },
+    hint: details.hint,
+    items: details.items,
+    resetButton: details.resetButton,
   };
 };
