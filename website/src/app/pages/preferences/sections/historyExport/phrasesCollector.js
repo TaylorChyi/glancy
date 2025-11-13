@@ -4,6 +4,34 @@ import { pushChapter } from "./chapterNormalization.js";
 
 const DEFAULT_LABEL = "常见词组";
 
+const sanitizePhraseField = (value) =>
+  typeof value === "string" ? stripMarkdownArtifacts(value) : "";
+
+export const normalizePhraseEntry = (phrase) => {
+  if (typeof phrase === "string") {
+    const text = sanitizePhraseField(phrase);
+    return text ? { name: text, meaning: "" } : null;
+  }
+
+  const name = sanitizePhraseField(phrase?.词组);
+  const meaning = sanitizePhraseField(phrase?.释义 ?? phrase?.解释);
+
+  if (!name) {
+    return null;
+  }
+
+  return { name, meaning };
+};
+
+export const formatPhraseBullet = ({ name, meaning }) =>
+  meaning ? `• ${name} — ${meaning}` : `• ${name}`;
+
+export const buildPhraseLines = (phrases = []) =>
+  phrases
+    .map(normalizePhraseEntry)
+    .filter(Boolean)
+    .map(formatPhraseBullet);
+
 /**
  * 意图：将常见词组规范化并写入章节集合。
  * 输入：entry、translations、chapters、fallback。
@@ -19,26 +47,17 @@ export const collectStructuredPhrases = ({
   if (phrases.length === 0) {
     return;
   }
-  const lines = phrases
-    .map((phrase) => {
-      if (typeof phrase === "string") {
-        const text = stripMarkdownArtifacts(phrase);
-        return text ? `• ${text}` : "";
-      }
-      const name = stripMarkdownArtifacts(phrase?.词组);
-      const meaning = stripMarkdownArtifacts(phrase?.释义 ?? phrase?.解释);
-      if (!name) {
-        return "";
-      }
-      return meaning ? `• ${name} — ${meaning}` : `• ${name}`;
-    })
-    .filter(Boolean);
-  if (lines.length > 0) {
-    pushChapter(
-      chapters,
-      translations?.phrasesLabel ?? DEFAULT_LABEL,
-      lines,
-      fallback,
-    );
+
+  const lines = buildPhraseLines(phrases);
+
+  if (lines.length === 0) {
+    return;
   }
+
+  pushChapter(
+    chapters,
+    translations?.phrasesLabel ?? DEFAULT_LABEL,
+    lines,
+    fallback,
+  );
 };
