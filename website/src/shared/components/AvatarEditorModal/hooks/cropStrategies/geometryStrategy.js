@@ -3,6 +3,39 @@ import { isValidRect } from "./rectUtils.js";
 
 export const GEOMETRY_STRATEGY_ID = "geometry";
 
+const hasValidGeometryInputs = ({
+  image,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+}) => Boolean(image) && viewportSize > 0 && naturalWidth > 0 && naturalHeight > 0;
+
+const extractScaleFactor = (displayMetrics) => {
+  const scaleFactor = displayMetrics?.scaleFactor;
+  return Number.isFinite(scaleFactor) && scaleFactor > 0 ? scaleFactor : null;
+};
+
+export const resolveGeometryCropRect = ({
+  naturalWidth,
+  naturalHeight,
+  viewportSize,
+  displayMetrics,
+  offset,
+}) => {
+  const scaleFactor = extractScaleFactor(displayMetrics);
+  if (!scaleFactor) {
+    return null;
+  }
+
+  return computeCropSourceRect({
+    naturalWidth,
+    naturalHeight,
+    viewportSize,
+    scaleFactor,
+    offset,
+  });
+};
+
 const geometryStrategy = {
   id: GEOMETRY_STRATEGY_ID,
   execute: ({
@@ -13,22 +46,14 @@ const geometryStrategy = {
     displayMetrics,
     offset,
   }) => {
-    if (!image || viewportSize <= 0) {
+    if (!hasValidGeometryInputs({ image, viewportSize, naturalWidth, naturalHeight })) {
       return null;
     }
-    if (naturalWidth <= 0 || naturalHeight <= 0) {
-      return null;
-    }
-    const scaleFactor = displayMetrics?.scaleFactor;
-    if (!(scaleFactor > 0) || !Number.isFinite(scaleFactor)) {
-      return null;
-    }
-
-    const cropRect = computeCropSourceRect({
+    const cropRect = resolveGeometryCropRect({
       naturalWidth,
       naturalHeight,
       viewportSize,
-      scaleFactor,
+      displayMetrics,
       offset,
     });
 
