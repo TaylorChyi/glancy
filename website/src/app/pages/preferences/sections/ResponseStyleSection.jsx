@@ -1,10 +1,9 @@
-import { useId } from "react";
 import PropTypes from "prop-types";
 import ResponseStyleSectionView from "./ResponseStyleSection/ResponseStyleSectionView.jsx";
 import { createResponseStyleSectionViewModel } from "./ResponseStyleSection/viewModel";
-
-const isMeaningful = (value) =>
-  typeof value === "string" && value.trim().length > 0;
+import { useResponseStyleSectionDescription } from "./ResponseStyleSection/useResponseStyleSectionDescription.js";
+import { useResponseStyleSectionHandlers } from "./ResponseStyleSection/useResponseStyleSectionHandlers.js";
+import { normalizeResponseStyleState } from "./ResponseStyleSection/normalizeResponseStyleState.js";
 
 const ResponseOptionShape = PropTypes.shape({
   value: PropTypes.string.isRequired,
@@ -31,31 +30,22 @@ function ResponseStyleSection({
   onFieldChange,
   onFieldCommit,
 }) {
-  const fallbackDescriptionId = useId();
-  const hasMessage = isMeaningful(message);
-  const resolvedDescription = hasMessage ? message : undefined;
-  const resolvedDescriptionId = hasMessage
-    ? descriptionId ?? fallbackDescriptionId
-    : undefined;
-
-  const handleChange =
-    typeof onFieldChange === "function" ? onFieldChange : () => {};
-  const handleCommit =
-    typeof onFieldCommit === "function" ? onFieldCommit : () => {};
-  const handleRetry = typeof onRetry === "function" ? () => onRetry() : undefined;
+  const { description, descriptionId: resolvedDescriptionId } =
+    useResponseStyleSectionDescription({ message, descriptionId });
+  const handlers = useResponseStyleSectionHandlers({
+    onRetry,
+    onFieldChange,
+    onFieldCommit,
+  });
 
   const viewModel = createResponseStyleSectionViewModel({
     title,
     headingId,
-    description: resolvedDescription,
+    description,
     descriptionId: resolvedDescriptionId,
-    state,
+    state: normalizeResponseStyleState(state, copy.errorLabel),
     copy,
-    handlers: {
-      onRetry: handleRetry,
-      onFieldChange: handleChange,
-      onFieldCommit: handleCommit,
-    },
+    handlers,
   });
 
   return <ResponseStyleSectionView {...viewModel} />;
