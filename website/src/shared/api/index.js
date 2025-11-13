@@ -1,8 +1,5 @@
 import { createApiClient, createJsonRequest } from "./client.js";
-import {
-  createFetchWord,
-  createFetchWordAudio,
-} from "./words.js";
+import { createFetchWord, createFetchWordAudio } from "./words.js";
 import {
   createFetchSearchRecords,
   createSaveSearchRecord,
@@ -25,38 +22,49 @@ import { createKeyboardShortcutsApi } from "./keyboardShortcuts.js";
 import { createWordReportsApi } from "./wordReports.js";
 import { createRedemptionCodesApi } from "./redemptionCodes.js";
 
+const createWordsApi = (request) => ({
+  fetchWord: createFetchWord({ request }),
+  fetchWordAudio: createFetchWordAudio({ request }),
+});
+
+const createSearchRecordsApi = (deps) => ({
+  fetchSearchRecords: createFetchSearchRecords(deps),
+  saveSearchRecord: createSaveSearchRecord(deps),
+  clearSearchRecords: createClearSearchRecords(deps),
+  deleteSearchRecord: createDeleteSearchRecord(deps),
+  favoriteSearchRecord: createFavoriteSearchRecord(deps),
+  unfavoriteSearchRecord: createUnfavoriteSearchRecord(deps),
+});
+
+const createUsersApi = (deps) => ({
+  uploadAvatar: createUploadAvatar(deps),
+  updateUsername: createUpdateUsername(deps),
+  updateContact: createUpdateContact(deps),
+  requestEmailChangeCode: createRequestEmailChangeCode(deps),
+  confirmEmailChange: createConfirmEmailChange(deps),
+  unbindEmail: createUnbindEmail(deps),
+});
+
+const createAncillaryApis = (request) => ({
+  profiles: createProfilesApi(request),
+  tts: createTtsApi(request),
+  keyboardShortcuts: createKeyboardShortcutsApi(request),
+  wordReports: createWordReportsApi(request),
+  redemptionCodes: createRedemptionCodesApi(request),
+});
+
 export function createApi(config) {
   const request = createApiClient(config);
   const jsonRequest = createJsonRequest(request);
   const sharedDeps = { request, jsonRequest };
+
   return {
     request,
     jsonRequest,
-    words: {
-      fetchWord: createFetchWord({ request }),
-      fetchWordAudio: createFetchWordAudio({ request }),
-    },
-    searchRecords: {
-      fetchSearchRecords: createFetchSearchRecords(sharedDeps),
-      saveSearchRecord: createSaveSearchRecord(sharedDeps),
-      clearSearchRecords: createClearSearchRecords(sharedDeps),
-      deleteSearchRecord: createDeleteSearchRecord(sharedDeps),
-      favoriteSearchRecord: createFavoriteSearchRecord(sharedDeps),
-      unfavoriteSearchRecord: createUnfavoriteSearchRecord(sharedDeps),
-    },
-    users: {
-      uploadAvatar: createUploadAvatar(sharedDeps),
-      updateUsername: createUpdateUsername(sharedDeps),
-      updateContact: createUpdateContact(sharedDeps),
-      requestEmailChangeCode: createRequestEmailChangeCode(sharedDeps),
-      confirmEmailChange: createConfirmEmailChange(sharedDeps),
-      unbindEmail: createUnbindEmail(sharedDeps),
-    },
-    profiles: createProfilesApi(request),
-    tts: createTtsApi(request),
-    keyboardShortcuts: createKeyboardShortcutsApi(request),
-    wordReports: createWordReportsApi(request),
-    redemptionCodes: createRedemptionCodesApi(request),
+    words: createWordsApi(request),
+    searchRecords: createSearchRecordsApi(sharedDeps),
+    users: createUsersApi(sharedDeps),
+    ...createAncillaryApis(request),
   };
 }
 
