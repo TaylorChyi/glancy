@@ -95,6 +95,10 @@ describe("useDataSectionController", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsActionPending.mockReturnValue(false);
+    mockRunWithPending.mockImplementation((_actionId, action) => {
+      const result = action();
+      return result instanceof Promise ? result : Promise.resolve(result);
+    });
 
     governanceState = {
       historyCaptureEnabled: true,
@@ -142,6 +146,9 @@ describe("useDataSectionController", () => {
     global.URL.revokeObjectURL = global.URL.revokeObjectURL ?? jest.fn();
   });
 
+  const renderController = (props = {}) =>
+    renderHook(() => useDataSectionController({ message: "", descriptionId: "desc", ...props }));
+
   /**
    * 测试目标：验证控制器输出的基础字段与控制对象结构。
    * 前置条件：提供含历史记录的 store 与翻译上下文。
@@ -156,9 +163,7 @@ describe("useDataSectionController", () => {
    *  - ids 应为稳定字符串且存在多个字段。
    */
   it("Given store snapshots when controller renders then exposes structured controls", () => {
-    const { result } = renderHook(() =>
-      useDataSectionController({ message: "", descriptionId: "desc" }),
-    );
+    const { result } = renderController();
 
     expect(result.current.copy.actions.label).toBe("Data actions");
     expect(result.current.ids.toggle).toBeTruthy();
@@ -167,60 +172,60 @@ describe("useDataSectionController", () => {
   });
 
   /**
-   * 测试目标：验证保留策略与清理动作会触发对应 store 方法并维护 pending 状态。
-   * 前置条件：提供可解析的策略、历史操作与用户上下文。
-   * 步骤：
-   *  1) 调用 retentionControl.onChange 并等待完成；
-   *  2) 调用 actionsControl.onClearAll 并观察 pending 标记；
-   *  3) 调用 languageControl.onClear 并确保语言被归一化。
+   * 测试目标：验证保留策略更新会触发治理 store 与历史 store，并通过 pending 包装执行。
+   * 前置条件：提供可解析的策略与用户上下文。
+   * 步骤：调用 retentionControl.onChange。
    * 断言：
-   *  - setRetentionPolicy 与 applyRetentionPolicy 均按顺序执行；
-   *  - 清理动作期间 isActionPending 返回 true，结束后恢复；
-   *  - clearHistory 与 clearHistoryByLanguage 传入用户及归一化语言。
-   * 边界/异常：
-   *  - 遇到无效策略 id 时不会抛出异常（通过 mock 返回 null 覆盖）。
+   *  - setRetentionPolicy 接收策略 id；
+   *  - runWithPending 以 ACTION_RETENTION 包装调用；
+   *  - applyRetentionPolicy 接收策略天数与用户。
    */
-  it("Given control interactions when executed then drives stores and pending lifecycle", async () => {
-    mockGetRetentionPolicyById.mockImplementation((policyId) =>
-      policyId === "30d" ? { id: "30d", days: 30 } : null,
-    );
+  it("Given retention control when policy changes then synchronizes stores", async () => {
+    const { result } = renderController();
 
-    const { result } = renderHook(() =>
-      useDataSectionController({ message: "", descriptionId: "desc" }),
-    );
-
-    await act(async () => {
-      await result.current.retentionControl.onChange("30d");
-    });
+    await act(() => result.current.retentionControl.onChange("30d"));
 
     expect(governanceState.setRetentionPolicy).toHaveBeenCalledWith("30d");
-    const retentionCall = mockRunWithPending.mock.calls.find(
-      ([actionId]) => actionId === ACTION_RETENTION,
+    expect(mockRunWithPending).toHaveBeenCalledWith(
+      ACTION_RETENTION,
+      expect.any(Function),
     );
-    expect(retentionCall).toBeDefined();
-    await retentionCall[1]();
     expect(historyState.applyRetentionPolicy).toHaveBeenCalledWith(30, user);
+  });
 
-    await act(async () => {
-      await result.current.actionsControl.onClearAll();
-    });
+  /**
+   * 测试目标：验证清空历史操作会通过 pending 包装触发 clearHistory。
+   * 前置条件：用户上下文存在。
+   * 步骤：调用 actionsControl.onClearAll。
+   * 断言：runWithPending 使用 ACTION_CLEAR_ALL，clearHistory 接收用户。
+   */
+  it("Given clear all command when executed then removes history via pending workflow", async () => {
+    const { result } = renderController();
 
-    const clearAllCall = mockRunWithPending.mock.calls.find(
-      ([actionId]) => actionId === ACTION_CLEAR_ALL,
+    await act(() => result.current.actionsControl.onClearAll());
+
+    expect(mockRunWithPending).toHaveBeenCalledWith(
+      ACTION_CLEAR_ALL,
+      expect.any(Function),
     );
-    expect(clearAllCall).toBeDefined();
-    await clearAllCall[1]();
     expect(historyState.clearHistory).toHaveBeenCalledWith(user);
+  });
 
-    await act(async () => {
-      await result.current.languageControl.onClear();
-    });
+  /**
+   * 测试目标：验证按语言清空操作会归一化语言并调用 clearHistoryByLanguage。
+   * 前置条件：历史记录含有不同语言。
+   * 步骤：调用 languageControl.onClear。
+   * 断言：runWithPending 使用 ACTION_CLEAR_LANGUAGE，且传入 ENGLISH 与用户。
+   */
+  it("Given scoped clear action when executed then normalizes language and clears history", async () => {
+    const { result } = renderController();
 
-    const clearLanguageCall = mockRunWithPending.mock.calls.find(
-      ([actionId]) => actionId === ACTION_CLEAR_LANGUAGE,
+    await act(() => result.current.languageControl.onClear());
+
+    expect(mockRunWithPending).toHaveBeenCalledWith(
+      ACTION_CLEAR_LANGUAGE,
+      expect.any(Function),
     );
-    expect(clearLanguageCall).toBeDefined();
-    await clearLanguageCall[1]();
     expect(historyState.clearHistoryByLanguage).toHaveBeenCalledWith(
       "ENGLISH",
       user,
