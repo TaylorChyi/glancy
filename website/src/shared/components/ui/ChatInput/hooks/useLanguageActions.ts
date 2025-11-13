@@ -13,7 +13,7 @@ export type UseLanguageActionsResult = Pick<
   | "onMenuOpen"
 >;
 
-export interface UseLanguageActionsParams extends UseLanguageActionsResult {}
+export type UseLanguageActionsParams = UseLanguageActionsResult;
 
 export const useLanguageActions = ({
   onSourceLanguageChange,

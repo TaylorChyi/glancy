@@ -1,13 +1,29 @@
+import { useMemo } from "react";
+
 import layoutStyles from "./DictionaryEntry.module.css";
 import styles from "./DictionaryEntrySkeleton.module.css";
 
+const generateSkeletonId = () => {
+  const cryptoApi = globalThis?.crypto;
+  if (cryptoApi?.randomUUID) {
+    return cryptoApi.randomUUID();
+  }
+
+  return `skeleton-${Math.random().toString(36).slice(2, 11)}`;
+};
+
 function SkeletonSection({ lines = 2 }) {
+  const lineIds = useMemo(
+    () => Array.from({ length: lines }, () => generateSkeletonId()),
+    [lines],
+  );
+
   return (
     <div className={styles.section}>
       <div className={styles.label} />
       <div className={styles.lines}>
-        {Array.from({ length: lines }).map((_, index) => (
-          <div key={index} className={styles.line} />
+        {lineIds.map((lineId) => (
+          <div key={lineId} className={styles.line} />
         ))}
       </div>
     </div>

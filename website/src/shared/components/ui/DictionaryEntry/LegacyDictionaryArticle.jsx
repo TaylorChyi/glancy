@@ -4,19 +4,36 @@ import DictionaryMarkdown from "./DictionaryMarkdown.jsx";
 import styles from "./DictionaryEntry.module.css";
 import { Section, PhoneticSection } from "./DictionarySections.jsx";
 
+const createDefinitionKey = (definition) =>
+  (definition ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 48) || "definition";
+
 function LegacyDefinitions({ label, definitions }) {
   if (!definitions?.length) {
     return <p className={styles["no-definition"]}>{label}</p>;
   }
 
+  const keyUsage = new Map();
+
   return (
     <Section id="def-title" label={label} className={styles.definitions}>
       <ol>
-        {definitions.map((definition, index) => (
-          <li key={index}>
-            <DictionaryMarkdown>{definition}</DictionaryMarkdown>
-          </li>
-        ))}
+        {definitions.map((definition) => {
+          const baseKey = createDefinitionKey(definition);
+          const count = keyUsage.get(baseKey) ?? 0;
+          keyUsage.set(baseKey, count + 1);
+          const key = count === 0 ? baseKey : `${baseKey}-${count}`;
+
+          return (
+            <li key={key}>
+              <DictionaryMarkdown>{definition}</DictionaryMarkdown>
+            </li>
+          );
+        })}
       </ol>
     </Section>
   );

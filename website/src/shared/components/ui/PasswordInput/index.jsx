@@ -1,10 +1,7 @@
 import { forwardRef } from "react";
 import PropTypes from "prop-types";
 import PasswordInputView from "./PasswordInputView.jsx";
-import {
-  usePasswordInputModel,
-  usePasswordVisibility,
-} from "./usePasswordInputModel.ts";
+import { usePasswordInputModel } from "./usePasswordInputModel.ts";
 
 const PasswordInput = forwardRef(function PasswordInput(props, ref) {
   const { viewProps } = usePasswordInputModel(props);
@@ -40,5 +37,4 @@ PasswordInput.defaultProps = {
   autoComplete: undefined,
 };
 
-export { usePasswordVisibility };
 export default PasswordInput;
