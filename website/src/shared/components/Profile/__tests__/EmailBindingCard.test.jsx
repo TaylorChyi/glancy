@@ -35,6 +35,46 @@ const t = {
   emailStepVerify: "Step 2",
 };
 
+const buildProps = (overrides = {}) => ({
+  email: "",
+  mode: "idle",
+  isAwaitingVerification: false,
+  requestedEmail: "",
+  onStart: jest.fn(),
+  onCancel: jest.fn(),
+  onRequestCode: jest.fn(),
+  onConfirm: jest.fn(),
+  onUnbind: jest.fn(),
+  t,
+  ...overrides,
+});
+
+const renderEmailBindingCard = (overrides = {}) =>
+  render(<EmailBindingCard {...buildProps(overrides)} />);
+
+const renderEditingState = (overrides = {}) =>
+  renderEmailBindingCard({
+    email: "user@example.com",
+    mode: "editing",
+    isAwaitingVerification: true,
+    requestedEmail: "user@example.com",
+    ...overrides,
+  });
+
+const rerenderEmailBindingCard = (rerenderFn, overrides = {}) =>
+  rerenderFn(<EmailBindingCard {...buildProps(overrides)} />);
+
+const requestVerificationCode = async () => {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+    await Promise.resolve();
+  });
+};
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe("EmailBindingCard", () => {
   /**
    * 测试目标：已绑定邮箱的查看态应展示“更换邮箱”与可点击的“解绑邮箱”。
@@ -49,20 +89,10 @@ describe("EmailBindingCard", () => {
    *  - 覆盖 hasBoundEmail 分支。
    */
   test("GivenBoundEmail_WhenViewingSummary_ThenRenderChangeAndUnbindActions", () => {
-    render(
-      <EmailBindingCard
-        email="user@example.com"
-        mode="idle"
-        isAwaitingVerification={false}
-        requestedEmail=""
-        onStart={jest.fn()}
-        onCancel={jest.fn()}
-        onRequestCode={jest.fn()}
-        onConfirm={jest.fn()}
-        onUnbind={jest.fn()}
-        t={t}
-      />,
-    );
+    renderEmailBindingCard({
+      email: "user@example.com",
+      mode: "idle",
+    });
 
     expect(
       screen.getByRole("button", { name: "Change email" }),
@@ -84,20 +114,7 @@ describe("EmailBindingCard", () => {
    */
   test("GivenUnboundEmail_WhenInvokingPrimaryAction_ThenTriggerStartEditing", () => {
     const handleStart = jest.fn();
-    render(
-      <EmailBindingCard
-        email=""
-        mode="idle"
-        isAwaitingVerification={false}
-        requestedEmail=""
-        onStart={handleStart}
-        onCancel={jest.fn()}
-        onRequestCode={jest.fn()}
-        onConfirm={jest.fn()}
-        onUnbind={jest.fn()}
-        t={t}
-      />,
-    );
+    renderEmailBindingCard({ onStart: handleStart });
 
     fireEvent.click(screen.getByRole("button", { name: "Bind email" }));
     expect(handleStart).toHaveBeenCalledTimes(1);
@@ -117,39 +134,20 @@ describe("EmailBindingCard", () => {
    *  - 确保文案切换不依赖验证码状态。
    */
   test("GivenDifferentBindingStates_WhenEditing_ThenSwitchConfirmLabels", () => {
-    const { rerender } = render(
-      <EmailBindingCard
-        email=""
-        mode="editing"
-        isAwaitingVerification={false}
-        requestedEmail=""
-        onStart={jest.fn()}
-        onCancel={jest.fn()}
-        onRequestCode={jest.fn()}
-        onConfirm={jest.fn()}
-        onUnbind={jest.fn()}
-        t={t}
-      />,
-    );
+    const { rerender } = renderEmailBindingCard({
+      mode: "editing",
+      requestedEmail: "",
+    });
 
     expect(
       screen.getByRole("button", { name: "Confirm binding" }),
     ).toBeInTheDocument();
 
-    rerender(
-      <EmailBindingCard
-        email="a@b.com"
-        mode="editing"
-        isAwaitingVerification={false}
-        requestedEmail="a@b.com"
-        onStart={jest.fn()}
-        onCancel={jest.fn()}
-        onRequestCode={jest.fn()}
-        onConfirm={jest.fn()}
-        onUnbind={jest.fn()}
-        t={t}
-      />,
-    );
+    rerenderEmailBindingCard(rerender, {
+      email: "a@b.com",
+      mode: "editing",
+      requestedEmail: "a@b.com",
+    });
 
     expect(
       screen.getByRole("button", { name: "Confirm update" }),
@@ -170,30 +168,13 @@ describe("EmailBindingCard", () => {
    * 边界/异常：
    *  - 覆盖 onRequestCode 返回 true 的路径及倒计时重置逻辑。
    */
-  test("GivenSuccessfulCodeRequest_WhenCooldownActive_ThenDisableResendAndShowCountdown", async () => {
-    jest.useFakeTimers();
-    const handleRequestCode = jest.fn().mockResolvedValue(true);
+  describe("code request cooldown", () => {
+    test("GivenSuccessfulCodeRequest_WhenCooldownActive_ThenDisableResendAndShowCountdown", async () => {
+      jest.useFakeTimers();
+      const handleRequestCode = jest.fn().mockResolvedValue(true);
 
-    try {
-      const { rerender } = render(
-        <EmailBindingCard
-          email="user@example.com"
-          mode="editing"
-          isAwaitingVerification
-          requestedEmail="user@example.com"
-          onStart={jest.fn()}
-          onCancel={jest.fn()}
-          onRequestCode={handleRequestCode}
-          onConfirm={jest.fn()}
-          onUnbind={jest.fn()}
-          t={t}
-        />,
-      );
-
-      await act(async () => {
-        fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-        await Promise.resolve();
-      });
+      renderEditingState({ onRequestCode: handleRequestCode });
+      await requestVerificationCode();
 
       expect(handleRequestCode).toHaveBeenCalledTimes(1);
       expect(await screen.findByRole("button", { name: "60s" })).toBeDisabled();
@@ -203,40 +184,31 @@ describe("EmailBindingCard", () => {
       });
 
       expect(await screen.findByRole("button", { name: "59s" })).toBeDisabled();
+    });
 
-      rerender(
-        <EmailBindingCard
-          email="user@example.com"
-          mode="idle"
-          isAwaitingVerification={false}
-          requestedEmail="user@example.com"
-          onStart={jest.fn()}
-          onCancel={jest.fn()}
-          onRequestCode={handleRequestCode}
-          onConfirm={jest.fn()}
-          onUnbind={jest.fn()}
-          t={t}
-        />,
-      );
+    test("GivenCooldown_WhenReturningToIdle_ThenResetRequestButton", async () => {
+      jest.useFakeTimers();
+      const handleRequestCode = jest.fn().mockResolvedValue(true);
 
-      rerender(
-        <EmailBindingCard
-          email="user@example.com"
-          mode="editing"
-          isAwaitingVerification
-          requestedEmail="user@example.com"
-          onStart={jest.fn()}
-          onCancel={jest.fn()}
-          onRequestCode={handleRequestCode}
-          onConfirm={jest.fn()}
-          onUnbind={jest.fn()}
-          t={t}
-        />,
-      );
+      const { rerender } = renderEditingState({ onRequestCode: handleRequestCode });
+      await requestVerificationCode();
+
+      rerenderEmailBindingCard(rerender, {
+        email: "user@example.com",
+        mode: "idle",
+        requestedEmail: "user@example.com",
+        onRequestCode: handleRequestCode,
+      });
+
+      rerenderEmailBindingCard(rerender, {
+        email: "user@example.com",
+        mode: "editing",
+        isAwaitingVerification: true,
+        requestedEmail: "user@example.com",
+        onRequestCode: handleRequestCode,
+      });
 
       expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
-    } finally {
-      jest.useRealTimers();
-    }
+    });
   });
 });
