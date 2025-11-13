@@ -1,58 +1,67 @@
 import { useMemo } from "react";
 
-const buildHeaderLabel = ({ t, lang }) => {
-  if (t.sidebarNavigationLabel) return t.sidebarNavigationLabel;
+const buildHeaderLabel = ({ label, lang }) => {
+  if (label) return label;
   return lang === "zh" ? "导航" : "Navigation";
 };
 
-const buildDictionaryLabel = ({ t }) =>
-  t.primaryNavDictionaryLabel || "Glancy";
+const buildDictionaryLabel = ({ dictionaryLabel }) => dictionaryLabel || "Glancy";
 
-const buildLibraryLabel = ({ t }) => {
-  if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
-  if (t.favorites) return t.favorites;
-  if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
+const buildLibraryLabel = ({ libraryLabel, favorites, entriesLabel }) => {
+  if (libraryLabel) return libraryLabel;
+  if (favorites) return favorites;
+  if (entriesLabel) return entriesLabel;
   return "Library";
 };
 
-const buildHistoryLabel = ({ t, lang }) => {
-  if (t.searchHistory) return t.searchHistory;
+const buildHistoryLabel = ({ searchHistory, lang }) => {
+  if (searchHistory) return searchHistory;
   return lang === "zh" ? "搜索记录" : "History";
 };
 
-const buildEntriesLabel = ({ t, lang }) => {
-  if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
+const buildEntriesLabel = ({ entriesLabel, lang }) => {
+  if (entriesLabel) return entriesLabel;
   return lang === "zh" ? "词条" : "Entries";
 };
 
-export const useSidebarLabels = ({ t, lang }) => {
-  const headerLabel = useMemo(
-    () => buildHeaderLabel({ t, lang }),
-    [lang, t.sidebarNavigationLabel],
-  );
-  const dictionaryLabel = useMemo(
-    () => buildDictionaryLabel({ t }),
-    [t.primaryNavDictionaryLabel],
-  );
-  const libraryLabel = useMemo(
-    () => buildLibraryLabel({ t }),
-    [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel],
-  );
-  const historyLabel = useMemo(
-    () => buildHistoryLabel({ t, lang }),
-    [lang, t.searchHistory],
-  );
-  const entriesLabel = useMemo(
-    () => buildEntriesLabel({ t, lang }),
-    [lang, t.primaryNavEntriesLabel],
+const useHeaderLabel = (label, lang) =>
+  useMemo(() => buildHeaderLabel({ label, lang }), [label, lang]);
+
+const useDictionaryLabel = (dictionaryLabel) =>
+  useMemo(() => buildDictionaryLabel({ dictionaryLabel }), [dictionaryLabel]);
+
+const useLibraryLabel = ({ libraryLabel, favorites, entriesLabel }) =>
+  useMemo(
+    () => buildLibraryLabel({ libraryLabel, favorites, entriesLabel }),
+    [entriesLabel, favorites, libraryLabel],
   );
 
+const useHistoryLabel = (searchHistory, lang) =>
+  useMemo(() => buildHistoryLabel({ searchHistory, lang }), [lang, searchHistory]);
+
+const useEntriesLabel = (entriesLabel, lang) =>
+  useMemo(() => buildEntriesLabel({ entriesLabel, lang }), [entriesLabel, lang]);
+
+export const useSidebarLabels = ({ t, lang }) => {
+  const {
+    sidebarNavigationLabel,
+    primaryNavDictionaryLabel,
+    primaryNavLibraryLabel,
+    favorites,
+    searchHistory,
+    primaryNavEntriesLabel,
+  } = t;
+
   return {
-    headerLabel,
-    dictionaryLabel,
-    libraryLabel,
-    historyLabel,
-    entriesLabel,
+    headerLabel: useHeaderLabel(sidebarNavigationLabel, lang),
+    dictionaryLabel: useDictionaryLabel(primaryNavDictionaryLabel),
+    libraryLabel: useLibraryLabel({
+      libraryLabel: primaryNavLibraryLabel,
+      favorites,
+      entriesLabel: primaryNavEntriesLabel,
+    }),
+    historyLabel: useHistoryLabel(searchHistory, lang),
+    entriesLabel: useEntriesLabel(primaryNavEntriesLabel, lang),
   };
 };
 
