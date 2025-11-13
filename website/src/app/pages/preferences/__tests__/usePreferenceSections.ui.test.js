@@ -1,13 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import {
-  createPreferenceSectionsBlueprintTestkit,
-} from "./preferenceSectionsBlueprintTestkit.js";
+import { createPreferenceSectionsContextManager } from "./preferenceSectionsBlueprintTestkit.js";
 import { loadPreferenceSectionsModules } from "../testing/usePreferenceSections.fixtures.js";
 
 let usePreferenceSections;
-let ACCOUNT_USERNAME_FIELD_TYPE;
 let setupContext;
 let teardown;
+let contextManager;
 
 const renderPreferenceSections = (hookProps = {}, contextOptions) => {
   setupContext(contextOptions);
@@ -24,14 +22,9 @@ const selectSection = (result, sectionId) => {
 };
 
 beforeAll(async () => {
-  ({ usePreferenceSections, ACCOUNT_USERNAME_FIELD_TYPE } =
-    await loadPreferenceSectionsModules());
-  const testkit = createPreferenceSectionsBlueprintTestkit({
-    usePreferenceSections,
-    ACCOUNT_USERNAME_FIELD_TYPE,
-  });
-  setupContext = testkit.setupContext;
-  teardown = testkit.teardown;
+  ({ usePreferenceSections } = await loadPreferenceSectionsModules());
+  contextManager = createPreferenceSectionsContextManager();
+  ({ setupContext, teardown } = contextManager);
 });
 
 afterEach(() => {
