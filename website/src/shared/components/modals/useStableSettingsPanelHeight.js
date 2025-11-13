@@ -1,5 +1,8 @@
 import { useMemo } from "react";
-import { DEFAULT_REFERENCE_SECTION_ID } from "./internal/settingsPanelHeightUtils.js";
+import {
+  DEFAULT_REFERENCE_SECTION_ID,
+  resolvePanelHeight,
+} from "./internal/settingsPanelHeightUtils.js";
 import { usePanelHeightRegistry } from "./internal/settingsPanelHeightRegistry.js";
 
 function useStableSettingsPanelHeight({
@@ -16,31 +19,17 @@ function useStableSettingsPanelHeight({
     activeSectionId,
     referenceSectionId,
   });
-
-  const resolvedHeight = useMemo(() => {
-    if (heightMap.reference) {
-      return Math.ceil(heightMap.reference);
-    }
-    if (heightMap.active) {
-      return Math.ceil(heightMap.active);
-    }
-    return null;
-  }, [heightMap]);
-
-  const bodyStyle = useMemo(() => {
-    if (!resolvedHeight) {
-      return undefined;
-    }
+  return useMemo(() => {
+    const resolvedHeight = resolvePanelHeight(heightMap);
     return {
-      "--settings-body-height": `${resolvedHeight}px`,
+      bodyStyle:
+        resolvedHeight == null
+          ? undefined
+          : { "--settings-body-height": `${resolvedHeight}px` },
+      registerActivePanelNode,
+      referenceMeasurement,
     };
-  }, [resolvedHeight]);
-
-  return {
-    bodyStyle,
-    registerActivePanelNode,
-    referenceMeasurement,
-  };
+  }, [heightMap, registerActivePanelNode, referenceMeasurement]);
 }
 
 export default useStableSettingsPanelHeight;
