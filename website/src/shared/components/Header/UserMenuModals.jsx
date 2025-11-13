@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import SettingsModal from "@shared/components/modals/SettingsModal.jsx";
 import UpgradeModal from "@shared/components/modals/UpgradeModal.jsx";
 import LogoutConfirmModal from "@shared/components/modals/LogoutConfirmModal.jsx";
 
-function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
+const useUserMenuModalState = ({ isPro, user, clearUser, clearHistory }) => {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [settingsState, setSettingsState] = useState({
@@ -23,38 +23,73 @@ function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
       document.removeEventListener("open-shortcuts", handleShortcuts);
   }, [openSettings]);
 
-  const handlers = {
-    openSettings,
-    openShortcuts: () => openSettings("keyboard"),
-    openUpgrade: () => setUpgradeOpen(true),
-    openLogout: () => setLogoutOpen(true),
+  const closeUpgrade = useCallback(() => setUpgradeOpen(false), []);
+  const closeLogout = useCallback(() => setLogoutOpen(false), []);
+  const closeSettings = useCallback(
+    () => setSettingsState((previous) => ({ ...previous, open: false })),
+    [],
+  );
+
+  const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
+  const openLogout = useCallback(() => setLogoutOpen(true), []);
+  const openShortcuts = useCallback(() => openSettings("keyboard"), [openSettings]);
+
+  const confirmLogout = useCallback(() => {
+    clearHistory();
+    clearUser();
+    closeLogout();
+  }, [clearHistory, clearUser, closeLogout]);
+
+  const handlers = useMemo(
+    () => ({
+      openSettings,
+      openShortcuts,
+      openUpgrade,
+      openLogout,
+    }),
+    [openLogout, openSettings, openShortcuts, openUpgrade],
+  );
+
+  return {
+    handlers,
+    modals: {
+      isPro,
+      upgradeOpen,
+      closeUpgrade,
+      settingsState,
+      closeSettings,
+      logoutOpen,
+      confirmLogout,
+      closeLogout,
+      email: user?.email ?? "",
+    },
   };
+};
+
+function UserMenuModals({ isPro, user, clearUser, clearHistory, children }) {
+  const { handlers, modals } = useUserMenuModalState({
+    isPro,
+    user,
+    clearUser,
+    clearHistory,
+  });
 
   return (
     <>
       {children(handlers)}
-      {!isPro && (
-        <UpgradeModal
-          open={upgradeOpen}
-          onClose={() => setUpgradeOpen(false)}
-        />
+      {!modals.isPro && (
+        <UpgradeModal open={modals.upgradeOpen} onClose={modals.closeUpgrade} />
       )}
       <SettingsModal
-        open={settingsState.open}
-        onClose={() =>
-          setSettingsState((previous) => ({ ...previous, open: false }))
-        }
-        initialSection={settingsState.section}
+        open={modals.settingsState.open}
+        onClose={modals.closeSettings}
+        initialSection={modals.settingsState.section}
       />
       <LogoutConfirmModal
-        open={logoutOpen}
-        onConfirm={() => {
-          clearHistory();
-          clearUser();
-          setLogoutOpen(false);
-        }}
-        onCancel={() => setLogoutOpen(false)}
-        email={user?.email || ""}
+        open={modals.logoutOpen}
+        onConfirm={modals.confirmLogout}
+        onCancel={modals.closeLogout}
+        email={modals.email}
       />
     </>
   );
