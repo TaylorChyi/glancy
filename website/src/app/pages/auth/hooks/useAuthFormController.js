@@ -38,26 +38,14 @@ const MODE_VIEW_COPY = {
 
 const DEFAULT_ERROR_MESSAGE = "Not implemented yet";
 
-export function useAuthFormController({ mode }) {
-  const { t } = useLanguage();
-  const viewCopy = useMemo(() => {
+const useAuthViewCopy = (mode, t) =>
+  useMemo(() => {
     const factory = MODE_VIEW_COPY[mode] ?? MODE_VIEW_COPY.login;
     return factory(t);
   }, [mode, t]);
-  const api = useApi();
-  const authProtocol = useMemo(
-    () => createAuthSubmissionProtocol({ api, paths: API_PATHS }),
-    [api],
-  );
-  const { setUser } = useUser();
-  const navigate = useNavigate();
-  const recordLoginCookie = useCookieConsentStore(
-    (state) => state.recordLoginCookie,
-  );
-  const formConfig = useAuthFormConfig({
-    includeUsername: viewCopy.includeUsername,
-  });
-  const unsupportedMessage = useMemo(
+
+const useUnsupportedMessage = (t) =>
+  useMemo(
     () =>
       t.codeRequestInvalidMethod ||
       t.notImplementedYet ||
@@ -65,7 +53,8 @@ export function useAuthFormController({ mode }) {
     [t],
   );
 
-  const completeSession = useCallback(
+const useCompleteSession = ({ setUser, recordLoginCookie, navigate }) =>
+  useCallback(
     async (data) => {
       setUser(data);
       recordLoginCookie();
@@ -75,6 +64,13 @@ export function useAuthFormController({ mode }) {
     [navigate, recordLoginCookie, setUser],
   );
 
+const useAuthSubmissionHandlers = ({
+  mode,
+  authProtocol,
+  unsupportedMessage,
+  viewCopy,
+  completeSession,
+}) => {
   const handleSubmit = useCallback(
     async ({ account, password, method }) => {
       if (mode === "register") {
@@ -102,6 +98,39 @@ export function useAuthFormController({ mode }) {
     },
     [authProtocol, unsupportedMessage, viewCopy.codePurpose],
   );
+
+  return { handleSubmit, handleRequestCode };
+};
+
+export function useAuthFormController({ mode }) {
+  const { t } = useLanguage();
+  const viewCopy = useAuthViewCopy(mode, t);
+  const unsupportedMessage = useUnsupportedMessage(t);
+  const api = useApi();
+  const authProtocol = useMemo(
+    () => createAuthSubmissionProtocol({ api, paths: API_PATHS }),
+    [api],
+  );
+  const { setUser } = useUser();
+  const navigate = useNavigate();
+  const recordLoginCookie = useCookieConsentStore(
+    (state) => state.recordLoginCookie,
+  );
+  const completeSession = useCompleteSession({
+    setUser,
+    recordLoginCookie,
+    navigate,
+  });
+  const formConfig = useAuthFormConfig({
+    includeUsername: viewCopy.includeUsername,
+  });
+  const { handleSubmit, handleRequestCode } = useAuthSubmissionHandlers({
+    mode,
+    authProtocol,
+    unsupportedMessage,
+    viewCopy,
+    completeSession,
+  });
 
   return {
     formProps: {

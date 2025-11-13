@@ -3,7 +3,7 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
-import { createDictionaryExperienceState } from "../../../__tests__/fixtures/dictionaryExperienceState.js";
+import { createDictionaryExperienceState } from "../../../../tests/setup/dictionary/experienceState.js";
 
 const focusInputMock = jest.fn();
 const inputRef = { current: null };

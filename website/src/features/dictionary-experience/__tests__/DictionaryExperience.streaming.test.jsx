@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { jest } from "@jest/globals";
-import { createDictionaryExperienceState } from "../../../__tests__/fixtures/dictionaryExperienceState.js";
+import { createDictionaryExperienceState } from "../../../../tests/setup/dictionary/experienceState.js";
 
 const useDictionaryExperienceMock = jest.fn();
 const dictionaryEntryViewSpy = jest.fn();

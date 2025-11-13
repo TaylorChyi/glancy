@@ -1,5 +1,10 @@
 import { jest } from "@jest/globals";
-import { makeEntry } from "../factories/makeEntry.js";
+import { makeEntry } from "../../../src/__tests__/factories/makeEntry.js";
+
+const defaultTranslations = {
+  returnToSearch: "返回搜索",
+  reoutput: "重试释义",
+};
 
 const createReportDialog = () => ({
   open: false,
@@ -19,23 +24,19 @@ const createActionBarProps = () => ({
   onReoutput: jest.fn(),
 });
 
-/**
- * Builds a mocked dictionary experience view-model with exhaustive defaults while
- * allowing granular overrides per test.
- */
-export const createDictionaryExperienceState = (overrides = {}) => {
-  const {
-    entry = makeEntry(),
-    dictionaryActionBarProps = createActionBarProps(),
-    viewState: viewStateOverrides,
-    reportDialog: reportDialogOverrides,
-    t = {
-      returnToSearch: "返回搜索",
-      reoutput: "重试释义",
-    },
-    ...restOverrides
-  } = overrides;
+const mergeState = (base, overrides) => ({
+  ...base,
+  ...(overrides ?? {}),
+});
 
+const buildBaseState = ({
+  entry = makeEntry(),
+  dictionaryActionBarProps = createActionBarProps(),
+  viewState: viewStateOverrides,
+  reportDialog: reportDialogOverrides,
+  t = defaultTranslations,
+  ...restOverrides
+} = {}) => {
   const baseState = {
     inputRef: { current: null },
     t,
@@ -91,13 +92,11 @@ export const createDictionaryExperienceState = (overrides = {}) => {
 
   return {
     ...baseState,
-    viewState: {
-      ...baseState.viewState,
-      ...viewStateOverrides,
-    },
-    reportDialog: {
-      ...baseState.reportDialog,
-      ...reportDialogOverrides,
-    },
+    viewState: mergeState(baseState.viewState, viewStateOverrides),
+    reportDialog: mergeState(baseState.reportDialog, reportDialogOverrides),
   };
 };
+
+export function createDictionaryExperienceState(overrides = {}) {
+  return buildBaseState(overrides);
+}
