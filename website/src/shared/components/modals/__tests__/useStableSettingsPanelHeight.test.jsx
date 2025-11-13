@@ -41,37 +41,29 @@ TestSection.propTypes = {
   headingId: PropTypes.string.isRequired,
 };
 
-function HeightHarness({
-  referenceSectionId = "data",
-  activeHeight = 320,
-  referenceHeight = 640,
-}) {
-  const sections = useMemo(
-    () => [
-      {
-        id: "general",
-        label: "General",
-        Component: TestSection,
-        componentProps: { title: "General" },
-      },
-      {
-        id: "data",
-        label: "Data",
-        Component: TestSection,
-        componentProps: { title: "Data" },
-      },
-    ],
-    [],
-  );
+function createHeightHarnessSections() {
+  return [
+    {
+      id: "general",
+      label: "General",
+      Component: TestSection,
+      componentProps: { title: "General" },
+    },
+    {
+      id: "data",
+      label: "Data",
+      Component: TestSection,
+      componentProps: { title: "Data" },
+    },
+  ];
+}
 
-  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
-    useStableSettingsPanelHeight({
-      sections,
-      activeSectionId: "general",
-      referenceSectionId,
-    });
+function createReferenceMeasurementProbe(referenceMeasurement, referenceHeight) {
+  if (!referenceMeasurement) {
+    return null;
+  }
 
-  const measurementProbe = referenceMeasurement ? (
+  return (
     <div
       aria-hidden
       data-test-height={referenceHeight}
@@ -84,24 +76,58 @@ function HeightHarness({
     >
       <referenceMeasurement.Component {...referenceMeasurement.props} />
     </div>
-  ) : null;
+  );
+}
+
+function HarnessSettingsPanel({ activeHeight, registerActivePanelNode }) {
+  return (
+    <SettingsPanel
+      panelId="general-panel"
+      tabId="general-tab"
+      headingId="general-heading"
+      onPanelElementChange={(node) => {
+        if (node) {
+          node.dataset.testHeight = String(activeHeight);
+        }
+        registerActivePanelNode(node);
+      }}
+    >
+      <TestSection headingId="general-heading" />
+    </SettingsPanel>
+  );
+}
+
+HarnessSettingsPanel.propTypes = {
+  activeHeight: PropTypes.number.isRequired,
+  registerActivePanelNode: PropTypes.func.isRequired,
+};
+
+function HeightHarness({
+  referenceSectionId = "data",
+  activeHeight = 320,
+  referenceHeight = 640,
+}) {
+  const sections = useMemo(createHeightHarnessSections, []);
+
+  const { bodyStyle, registerActivePanelNode, referenceMeasurement } =
+    useStableSettingsPanelHeight({
+      sections,
+      activeSectionId: "general",
+      referenceSectionId,
+    });
+
+  const measurementProbe = createReferenceMeasurementProbe(
+    referenceMeasurement,
+    referenceHeight,
+  );
 
   return (
     <SettingsBody style={bodyStyle} measurementProbe={measurementProbe}>
       <div role="presentation">navigation</div>
-      <SettingsPanel
-        panelId="general-panel"
-        tabId="general-tab"
-        headingId="general-heading"
-        onPanelElementChange={(node) => {
-          if (node) {
-            node.dataset.testHeight = String(activeHeight);
-          }
-          registerActivePanelNode(node);
-        }}
-      >
-        <TestSection headingId="general-heading" />
-      </SettingsPanel>
+      <HarnessSettingsPanel
+        activeHeight={activeHeight}
+        registerActivePanelNode={registerActivePanelNode}
+      />
     </SettingsBody>
   );
 }
