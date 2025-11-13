@@ -4,6 +4,55 @@ import SettingsNav from "@shared/components/modals/SettingsNav.jsx";
 import SettingsPanel from "@shared/components/modals/SettingsPanel.jsx";
 import MeasurementProbe from "./parts/MeasurementProbe.jsx";
 
+function SettingsViewportBody({ body, measurement, children }) {
+  return (
+    <SettingsBody
+      className={body.className}
+      style={body.style}
+      measurementProbe={<MeasurementProbe measurement={measurement} />}
+      {...body.rest}
+    >
+      {children}
+    </SettingsBody>
+  );
+}
+
+function SettingsViewportNav({
+  nav,
+  sections,
+  activeSectionId,
+  onSectionSelect,
+  tablistLabel,
+  renderCloseAction,
+}) {
+  return (
+    <SettingsNav
+      sections={sections}
+      activeSectionId={activeSectionId}
+      onSelect={onSectionSelect}
+      tablistLabel={tablistLabel}
+      renderCloseAction={renderCloseAction}
+      classes={nav.classes}
+      {...nav.rest}
+    />
+  );
+}
+
+function SettingsViewportPanel({ panel, handlers, children }) {
+  return (
+    <SettingsPanel
+      panelId={panel.panelId}
+      tabId={panel.tabId}
+      headingId={panel.headingId}
+      className={panel.className}
+      onHeadingElementChange={handlers.onHeadingElementChange}
+      onPanelElementChange={handlers.onPanelElementChange}
+    >
+      {children}
+    </SettingsPanel>
+  );
+}
+
 function SettingsSectionsViewportView({
   body,
   nav,
@@ -18,32 +67,19 @@ function SettingsSectionsViewportView({
   children,
 }) {
   return (
-    <SettingsBody
-      className={body.className}
-      style={body.style}
-      measurementProbe={<MeasurementProbe measurement={measurement} />}
-      {...body.rest}
-    >
-      <SettingsNav
+    <SettingsViewportBody body={body} measurement={measurement}>
+      <SettingsViewportNav
+        nav={nav}
         sections={sections}
         activeSectionId={activeSectionId}
-        onSelect={onSectionSelect}
+        onSectionSelect={onSectionSelect}
         tablistLabel={tablistLabel}
         renderCloseAction={renderCloseAction}
-        classes={nav.classes}
-        {...nav.rest}
       />
-      <SettingsPanel
-        panelId={panel.panelId}
-        tabId={panel.tabId}
-        headingId={panel.headingId}
-        className={panel.className}
-        onHeadingElementChange={handlers.onHeadingElementChange}
-        onPanelElementChange={handlers.onPanelElementChange}
-      >
+      <SettingsViewportPanel panel={panel} handlers={handlers}>
         {children}
-      </SettingsPanel>
-    </SettingsBody>
+      </SettingsViewportPanel>
+    </SettingsViewportBody>
   );
 }
 
