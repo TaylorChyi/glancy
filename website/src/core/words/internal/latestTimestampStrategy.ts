@@ -33,6 +33,35 @@ const rankVersionsByTimestamp = (versions: WordVersion[]) =>
       return b.timestamp - a.timestamp;
     });
 
+const resolvePriorityCandidates = ({
+  preferredId,
+  current,
+  metadata,
+}: VersionSelectionContext) => [
+  normalizeIdentifier(preferredId),
+  normalizeIdentifier(current?.activeVersionId ?? null),
+  normalizeIdentifier(metadata?.latestVersionId ?? null),
+  normalizeIdentifier(metadata?.activeVersionId ?? null),
+];
+
+const selectPrioritizedMatch = (
+  versions: WordVersion[],
+  candidates: (WordIdentifier | null | undefined)[],
+) => {
+  for (const candidate of candidates) {
+    const matched = findMatchingId(versions, candidate ?? null);
+    if (matched) {
+      return matched;
+    }
+  }
+  return null;
+};
+
+const selectLatestVersionByTimestamp = (versions: WordVersion[]) => {
+  const ranked = rankVersionsByTimestamp(versions);
+  return ranked[0]?.version?.id ?? versions[0]?.id ?? null;
+};
+
 export class LatestTimestampStrategy implements VersionSelectionStrategy {
   pick({
     versions,
@@ -44,21 +73,17 @@ export class LatestTimestampStrategy implements VersionSelectionStrategy {
       return null;
     }
 
-    const prioritized = [
-      normalizeIdentifier(preferredId),
-      normalizeIdentifier(current?.activeVersionId ?? null),
-      normalizeIdentifier(metadata?.latestVersionId ?? null),
-      normalizeIdentifier(metadata?.activeVersionId ?? null),
-    ];
-
-    for (const candidate of prioritized) {
-      const matched = findMatchingId(versions, candidate ?? null);
-      if (matched) {
-        return matched;
-      }
+    const prioritized = resolvePriorityCandidates({
+      versions,
+      preferredId,
+      current,
+      metadata,
+    });
+    const matched = selectPrioritizedMatch(versions, prioritized);
+    if (matched) {
+      return matched;
     }
 
-    const ranked = rankVersionsByTimestamp(versions);
-    return ranked[0]?.version?.id ?? versions[0]?.id ?? null;
+    return selectLatestVersionByTimestamp(versions);
   }
 }
