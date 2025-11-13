@@ -4,6 +4,66 @@ import CodeButton from "../CodeButton.jsx";
 import PhoneInput from "../PhoneInput.jsx";
 import styles from "../AuthForm.module.css";
 
+const AccountField = ({
+  method,
+  account,
+  setAccount,
+  placeholders,
+}) => {
+  if (method === "phone") {
+    return (
+      <PhoneInput
+        value={account}
+        onChange={setAccount}
+        placeholder={placeholders.phone}
+      />
+    );
+  }
+
+  const handleChange = (event) => setAccount(event.target.value);
+
+  return (
+    <input
+      className={styles["auth-input"]}
+      placeholder={placeholders[method]}
+      value={account}
+      onChange={handleChange}
+    />
+  );
+};
+
+const PasswordRow = ({
+  hasCodeButton,
+  password,
+  setPassword,
+  passHolder,
+  handleSendCode,
+}) => {
+  const passwordRowClassName =
+    styles[hasCodeButton ? "password-row" : "password-row-single"];
+  const handlePasswordChange = (event) => setPassword(event.target.value);
+
+  return (
+    <div className={passwordRowClassName}>
+      <PasswordInput
+        value={password}
+        onChange={handlePasswordChange}
+        placeholder={passHolder}
+        mask={!hasCodeButton}
+        inputClassName={styles["auth-input"]}
+        autoComplete={hasCodeButton ? "one-time-code" : undefined}
+      />
+      {hasCodeButton && <CodeButton onClick={handleSendCode} />}
+    </div>
+  );
+};
+
+const SubmitButton = ({ label }) => (
+  <Button type="submit" className={styles["auth-primary-btn"]}>
+    {label}
+  </Button>
+);
+
 function AuthMethodForm({
   account,
   availableFormMethods,
@@ -27,39 +87,23 @@ function AuthMethodForm({
       ? passwordPlaceholder(method)
       : passwordPlaceholder;
   const hasCodeButton = showCodeButton(method);
-  const passwordRowClassName =
-    styles[hasCodeButton ? "password-row" : "password-row-single"];
 
   return (
     <form onSubmit={handleSubmit} className={styles["auth-form"]}>
-      {method === "phone" ? (
-        <PhoneInput
-          value={account}
-          onChange={setAccount}
-          placeholder={placeholders.phone}
-        />
-      ) : (
-        <input
-          className={styles["auth-input"]}
-          placeholder={placeholders[method]}
-          value={account}
-          onChange={(event) => setAccount(event.target.value)}
-        />
-      )}
-      <div className={passwordRowClassName}>
-        <PasswordInput
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={passHolder}
-          mask={!hasCodeButton}
-          inputClassName={styles["auth-input"]}
-          autoComplete={hasCodeButton ? "one-time-code" : undefined}
-        />
-        {hasCodeButton && <CodeButton onClick={handleSendCode} />}
-      </div>
-      <Button type="submit" className={styles["auth-primary-btn"]}>
-        {t.continueButton}
-      </Button>
+      <AccountField
+        method={method}
+        account={account}
+        setAccount={setAccount}
+        placeholders={placeholders}
+      />
+      <PasswordRow
+        hasCodeButton={hasCodeButton}
+        password={password}
+        setPassword={setPassword}
+        passHolder={passHolder}
+        handleSendCode={handleSendCode}
+      />
+      <SubmitButton label={t.continueButton} />
     </form>
   );
 }

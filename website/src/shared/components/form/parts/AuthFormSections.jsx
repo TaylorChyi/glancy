@@ -41,6 +41,44 @@ export function AuthMethodDivider({ label }) {
   );
 }
 
+const resolveIconName = (icons, candidate) => icons[candidate];
+
+const createMethodClickHandler = ({
+  availableFormMethods,
+  candidate,
+  onMethodChange,
+  onUnavailableMethod,
+}) => () => {
+  if (availableFormMethods.includes(candidate)) {
+    onMethodChange(candidate);
+    return;
+  }
+
+  onUnavailableMethod();
+};
+
+const renderSwitchOption = ({
+  availableFormMethods,
+  candidate,
+  icons,
+  onMethodChange,
+  onUnavailableMethod,
+}) => {
+  const iconName = resolveIconName(icons, candidate);
+  const handleClick = createMethodClickHandler({
+    availableFormMethods,
+    candidate,
+    onMethodChange,
+    onUnavailableMethod,
+  });
+
+  return (
+    <Button key={candidate} type="button" onClick={handleClick}>
+      <ThemeIcon name={iconName} alt={candidate} />
+    </Button>
+  );
+};
+
 export function AuthMethodSwitcher({
   availableFormMethods,
   icons,
@@ -53,24 +91,15 @@ export function AuthMethodSwitcher({
     <div className={styles["login-options"]}>
       {orderedMethods
         .filter((candidate) => candidate !== method)
-        .map((candidate) => {
-          const iconName = icons[candidate];
-          return (
-            <Button
-              key={candidate}
-              type="button"
-              onClick={() => {
-                if (availableFormMethods.includes(candidate)) {
-                  onMethodChange(candidate);
-                } else {
-                  onUnavailableMethod();
-                }
-              }}
-            >
-              <ThemeIcon name={iconName} alt={candidate} />
-            </Button>
-          );
-        })}
+        .map((candidate) =>
+          renderSwitchOption({
+            availableFormMethods,
+            candidate,
+            icons,
+            onMethodChange,
+            onUnavailableMethod,
+          }),
+        )}
     </div>
   );
 }
