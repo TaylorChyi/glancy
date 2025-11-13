@@ -5,62 +5,20 @@ import {
   hasFieldChanged,
   responseStyleReducer,
 } from "../sections/responseStyleModel.js";
-import {
-  createEmptyProfileDetails,
-  mapResponseToProfileDetails,
-} from "@app/pages/profile/profileDetailsModel.js";
+import { createEmptyProfileDetails } from "@app/pages/profile/profileDetailsModel.js";
 import {
   ensureAuthenticatedForSave,
   persistResponseStyleChanges,
   synchronizeUnchangedField,
 } from "./utils/responseStylePersistence.js";
+import { createResponseStyleRequest } from "./utils/responseStyleRequest.js";
 
-const hydrateWithEmptyProfile = (dispatch, profileDetailsRef) => {
-  profileDetailsRef.current = createEmptyProfileDetails();
-  dispatch({
-    type: RESPONSE_STYLE_ACTIONS.hydrate,
-    payload: profileDetailsRef.current,
-  });
-};
-
-const createRequestResponseStyle =
-  ({ dispatch, user, fetchProfile, profileDetailsRef }) =>
-  async ({ signal, withLoading = true } = {}) => {
-    const abortRequested = () => Boolean(signal?.aborted);
-    const safeDispatch = (action) => {
-      if (!abortRequested()) {
-        dispatch(action);
-      }
-    };
-
-    if (!user?.token || typeof fetchProfile !== "function") {
-      hydrateWithEmptyProfile(safeDispatch, profileDetailsRef);
-      return;
-    }
-
-    if (withLoading) {
-      safeDispatch({ type: RESPONSE_STYLE_ACTIONS.loading });
-    }
-
-    try {
-      const response = await fetchProfile({ token: user.token });
-      if (abortRequested()) {
-        return;
-      }
-      const details = mapResponseToProfileDetails(response);
-      profileDetailsRef.current = details;
-      safeDispatch({
-        type: RESPONSE_STYLE_ACTIONS.hydrate,
-        payload: details,
-      });
-    } catch (error) {
-      console.error("Failed to load response style preferences", error);
-      if (abortRequested()) {
-        return;
-      }
-      safeDispatch({ type: RESPONSE_STYLE_ACTIONS.failure, error });
-    }
-  };
+const useResponseStyleReducer = () =>
+  useReducer(
+    responseStyleReducer,
+    undefined,
+    createResponseStyleInitialState,
+  );
 
 const useResponseStyleHandlers = ({
   dispatch,
@@ -129,7 +87,7 @@ const useResponseStyleRequest = ({
 }) => {
   const requestResponseStyle = useMemo(
     () =>
-      createRequestResponseStyle({
+      createResponseStyleRequest({
         dispatch,
         user,
         fetchProfile,
@@ -151,17 +109,15 @@ const useResponseStyleRequest = ({
   return { handleRetry };
 };
 
-export const useResponseStylePreferences = ({
+const useProfileDetailsRef = () => useRef(createEmptyProfileDetails());
+
+const useResponseStyleController = ({
   user,
   fetchProfile,
   saveProfile,
+  profileDetailsRef,
 }) => {
-  const [state, dispatch] = useReducer(
-    responseStyleReducer,
-    undefined,
-    createResponseStyleInitialState,
-  );
-  const profileDetailsRef = useRef(createEmptyProfileDetails());
+  const [state, dispatch] = useResponseStyleReducer();
 
   const { handleRetry } = useResponseStyleRequest({
     dispatch,
@@ -170,7 +126,7 @@ export const useResponseStylePreferences = ({
     profileDetailsRef,
   });
 
-  const { handleFieldChange, handleFieldCommit } = useResponseStyleHandlers({
+  const handlers = useResponseStyleHandlers({
     dispatch,
     state,
     user,
@@ -178,10 +134,19 @@ export const useResponseStylePreferences = ({
     profileDetailsRef,
   });
 
-  return {
-    state,
-    handleRetry,
-    handleFieldChange,
-    handleFieldCommit,
-  };
+  return { state, ...handlers, handleRetry };
+};
+
+export const useResponseStylePreferences = ({
+  user,
+  fetchProfile,
+  saveProfile,
+}) => {
+  const profileDetailsRef = useProfileDetailsRef();
+  return useResponseStyleController({
+    user,
+    fetchProfile,
+    saveProfile,
+    profileDetailsRef,
+  });
 };

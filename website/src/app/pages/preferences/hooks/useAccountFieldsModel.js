@@ -62,7 +62,12 @@ const useEmailFieldAction = ({
         handleEmailUnbind,
         isEmailUnbinding,
       }),
-    [accountSnapshot, handleEmailUnbind, isEmailUnbinding, translations],
+    [
+      accountSnapshot,
+      handleEmailUnbind,
+      isEmailUnbinding,
+      translations,
+    ],
   );
 
 export const useAccountFieldsModel = ({
@@ -75,10 +80,23 @@ export const useAccountFieldsModel = ({
   setUser,
   user,
 }) => {
-  const { usernameEditorTranslations, handleUsernameSubmit, handleUsernameFailure } =
-    useUsernameEditorHandlers({ translations, user, setUser, updateUsernameRequest });
+  const {
+    usernameEditorTranslations,
+    handleUsernameSubmit,
+    handleUsernameFailure,
+  } = useUsernameEditorHandlers({
+    translations,
+    user,
+    setUser,
+    updateUsernameRequest,
+  });
 
-  const emailAction = useEmailFieldAction({ translations, accountSnapshot, handleEmailUnbind, isEmailUnbinding });
+  const emailAction = useEmailFieldAction({
+    translations,
+    accountSnapshot,
+    handleEmailUnbind,
+    isEmailUnbinding,
+  });
 
   return useMemo(
     () =>
@@ -91,6 +109,14 @@ export const useAccountFieldsModel = ({
         handleUsernameFailure,
         emailAction,
       }),
-    [accountSnapshot, emailAction, fallbackValue, handleUsernameFailure, handleUsernameSubmit, translations, usernameEditorTranslations],
+    [
+      accountSnapshot,
+      emailAction,
+      fallbackValue,
+      handleUsernameFailure,
+      handleUsernameSubmit,
+      translations,
+      usernameEditorTranslations,
+    ],
   );
 };
