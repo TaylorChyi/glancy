@@ -6,23 +6,8 @@ import { useRedeemCodeField } from "./SubscriptionSection/useRedeemCodeField.js"
 import { usePlanCarouselNavigation } from "./SubscriptionSection/usePlanCarouselNavigation.js";
 import { useSubscriptionSectionViewModel } from "./SubscriptionSection/useSubscriptionSectionViewModel.js";
 
-function useSubscriptionSectionController(props) {
-  const {
-    defaultSelectedPlanId,
-    planCards,
-    onRedeem,
-  } = props;
-
+function usePlanSelection(defaultSelectedPlanId) {
   const [selectedPlanId, setSelectedPlanId] = useState(defaultSelectedPlanId);
-
-  const {
-    redeemCode,
-    formattedRedeemCode,
-    handleRedeemCodeChange,
-    redeemInputRef,
-  } = useRedeemCodeField();
-
-  const { planRailNav } = usePlanCarouselNavigation(planCards.length);
 
   const handlePlanSelect = useCallback((planId, disabled) => {
     if (disabled) {
@@ -31,20 +16,66 @@ function useSubscriptionSectionController(props) {
     setSelectedPlanId(planId);
   }, []);
 
-  const handleRedeemAction = useCallback(() => {
+  return { selectedPlanId, handlePlanSelect };
+}
+
+function useRedeemInteraction(onRedeem) {
+  const {
+    redeemCode,
+    formattedRedeemCode,
+    handleRedeemCodeChange,
+    redeemInputRef,
+  } = useRedeemCodeField();
+
+  const handleRedeem = useCallback(() => {
     if (onRedeem) {
       onRedeem(redeemCode);
     }
   }, [onRedeem, redeemCode]);
 
-  const handlers = useMemo(
+  return {
+    formattedRedeemCode,
+    onRedeemCodeChange: handleRedeemCodeChange,
+    onRedeem: handleRedeem,
+    redeemInputRef,
+  };
+}
+
+const useSubscriptionHandlers = ({
+  onPlanSelect,
+  onRedeemCodeChange,
+  onRedeem,
+}) =>
+  useMemo(
     () => ({
-      onPlanSelect: handlePlanSelect,
-      onRedeemCodeChange: handleRedeemCodeChange,
-      onRedeem: handleRedeemAction,
+      onPlanSelect,
+      onRedeemCodeChange,
+      onRedeem,
     }),
-    [handlePlanSelect, handleRedeemAction, handleRedeemCodeChange],
+    [onPlanSelect, onRedeem, onRedeemCodeChange],
   );
+
+function useSubscriptionSectionController(props) {
+  const { defaultSelectedPlanId, planCards, onRedeem } = props;
+
+  const { selectedPlanId, handlePlanSelect } = usePlanSelection(
+    defaultSelectedPlanId,
+  );
+
+  const {
+    formattedRedeemCode,
+    onRedeemCodeChange,
+    onRedeem: handleRedeem,
+    redeemInputRef,
+  } = useRedeemInteraction(onRedeem);
+
+  const { planRailNav } = usePlanCarouselNavigation(planCards.length);
+
+  const handlers = useSubscriptionHandlers({
+    onPlanSelect: handlePlanSelect,
+    onRedeemCodeChange,
+    onRedeem: handleRedeem,
+  });
 
   return useSubscriptionSectionViewModel({
     baseProps: props,

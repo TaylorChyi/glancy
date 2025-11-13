@@ -94,49 +94,75 @@ export type SubscriptionSectionViewModel = {
   };
 };
 
-export const createSubscriptionSectionViewModel = ({
+type ViewModelArgs = CreateSubscriptionSectionViewModelArgs & {
+  featureColumnLabel?: string;
+};
+
+const createSection = ({
   title,
   headingId,
   descriptionId,
+}: ViewModelArgs): SubscriptionSectionViewModel["section"] => ({
+  title,
+  headingId,
+  descriptionId,
+});
+
+const createPlanRail = ({
+  planRailNav,
   planCards,
+  selectedPlanId,
+  handlers,
+}: ViewModelArgs): SubscriptionSectionViewModel["planRail"] => ({
+  ...planRailNav,
+  cards: planCards,
+  selectedPlanId,
+  onSelect: handlers.onPlanSelect,
+});
+
+const createFeatureMatrix = ({
   featureMatrix,
   visiblePlanIds,
   planLabels,
+  featureColumnLabel,
+  defaultSelectedPlanId,
+}: ViewModelArgs): SubscriptionSectionViewModel["featureMatrix"] => ({
+  rows: featureMatrix,
+  visiblePlanIds,
+  planLabels,
+  featureColumnLabel: featureColumnLabel ?? "",
+  currentPlanId: defaultSelectedPlanId,
+});
+
+const createFootnotes = ({
   pricingNote,
   taxNote,
+}: ViewModelArgs): SubscriptionSectionViewModel["footnotes"] => ({
+  pricingNote,
+  taxNote,
+});
+
+const createRedeemForm = ({
   redeemCopy,
-  selectedPlanId,
-  defaultSelectedPlanId,
   formattedRedeemCode,
-  planRailNav,
   handlers,
   redeemRefs,
-  featureColumnLabel = "",
-}: CreateSubscriptionSectionViewModelArgs & {
-  featureColumnLabel?: string;
-}): SubscriptionSectionViewModel => ({
-  section: { title, headingId, descriptionId },
-  planRail: {
-    ...planRailNav,
-    cards: planCards,
-    selectedPlanId,
-    onSelect: handlers.onPlanSelect,
-  },
-  featureMatrix: {
-    rows: featureMatrix,
-    visiblePlanIds,
-    planLabels,
-    featureColumnLabel,
-    currentPlanId: defaultSelectedPlanId,
-  },
-  footnotes: { pricingNote, taxNote },
-  redeemForm: {
-    title: redeemCopy.title,
-    placeholder: redeemCopy.placeholder,
-    value: formattedRedeemCode,
-    onChange: handlers.onRedeemCodeChange,
-    onRedeem: handlers.onRedeem,
-    buttonLabel: redeemCopy.buttonLabel,
-    inputRef: redeemRefs.inputRef,
-  },
+}: ViewModelArgs): SubscriptionSectionViewModel["redeemForm"] => ({
+  title: redeemCopy.title,
+  placeholder: redeemCopy.placeholder,
+  value: formattedRedeemCode,
+  onChange: handlers.onRedeemCodeChange,
+  onRedeem: handlers.onRedeem,
+  buttonLabel: redeemCopy.buttonLabel,
+  inputRef: redeemRefs.inputRef,
+});
+
+export const createSubscriptionSectionViewModel = (
+  args: ViewModelArgs,
+): SubscriptionSectionViewModel => ({
+  section: createSection(args),
+  planRail: createPlanRail(args),
+  featureMatrix: createFeatureMatrix(args),
+  footnotes: createFootnotes(args),
+  redeemForm: createRedeemForm(args),
 });
