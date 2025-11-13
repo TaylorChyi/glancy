@@ -83,10 +83,15 @@ const DEFAULT_TEST_SECTIONS = Object.freeze([
   { id: "privacy", label: "Privacy" },
 ]);
 
-function TestSettingsHarness({
-  withCloseAction = false,
-  sections: overrideSections,
-}) {
+function renderCloseActionButton({ className = "" } = {}) {
+  return (
+    <button type="button" aria-label="Close preferences" className={className}>
+      <span aria-hidden="true">×</span>
+    </button>
+  );
+}
+
+function useTestSettingsHarness({ withCloseAction, overrideSections }) {
   const sections = useMemo(
     () => overrideSections ?? DEFAULT_TEST_SECTIONS,
     [overrideSections],
@@ -109,20 +114,35 @@ function TestSettingsHarness({
     [captureFocusOrigin],
   );
 
-  const closeRenderer = useMemo(() => {
-    if (!withCloseAction) {
-      return undefined;
-    }
-    return ({ className = "" } = {}) => (
-      <button
-        type="button"
-        aria-label="Close preferences"
-        className={className}
-      >
-        <span aria-hidden="true">×</span>
-      </button>
-    );
-  }, [withCloseAction]);
+  const closeRenderer = useMemo(
+    () => (withCloseAction ? renderCloseActionButton : undefined),
+    [withCloseAction],
+  );
+
+  return {
+    sections,
+    activeSection,
+    activeSectionId,
+    headingId,
+    handleSectionSelect,
+    registerHeading,
+    closeRenderer,
+  };
+}
+
+function TestSettingsHarness({
+  withCloseAction = false,
+  sections: overrideSections,
+}) {
+  const {
+    sections,
+    activeSection,
+    activeSectionId,
+    headingId,
+    handleSectionSelect,
+    registerHeading,
+    closeRenderer,
+  } = useTestSettingsHarness({ withCloseAction, overrideSections });
 
   return (
     <div role="dialog" aria-modal="true">
