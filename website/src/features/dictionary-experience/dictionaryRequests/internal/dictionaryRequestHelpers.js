@@ -52,32 +52,25 @@ export const resolveHistorySelection = ({
   dictionaryFlavor,
 }) => {
   const selection = strategy.find(identifier);
-  const term =
-    typeof identifier === "string"
-      ? identifier
-      : selection?.term ?? "";
+  const term = resolveHistoryTerm(identifier, selection);
   if (!term) {
     return null;
   }
-  const fallback = resolveDictionaryConfig(term, {
-    sourceLanguage:
-      selection?.language ?? dictionarySourceLanguage ?? WORD_LANGUAGE_AUTO,
-    targetLanguage: dictionaryTargetLanguage,
+  const fallback = buildHistoryFallback({
+    term,
+    selection,
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
   });
-  const resolvedLanguage = selection?.language ?? fallback.language;
-  const resolvedFlavor =
-    selection?.flavor ??
-    resolveDictionaryFlavor({
-      sourceLanguage: selection?.language ?? dictionarySourceLanguage,
-      targetLanguage: dictionaryTargetLanguage,
-      resolvedSourceLanguage: fallback.language,
-    }) ??
-    dictionaryFlavor;
-  const versionId =
-    selection?.latestVersionId ??
-    selection?.versionId ??
-    selection?.activeVersionId ??
-    null;
+  const { language: resolvedLanguage, flavor: resolvedFlavor } =
+    resolveHistoryPreferences({
+      selection,
+      fallback,
+      dictionarySourceLanguage,
+      dictionaryTargetLanguage,
+      dictionaryFlavor,
+    });
+  const versionId = resolveHistoryVersionId(selection);
   return {
     term,
     language: resolvedLanguage,
@@ -114,15 +107,16 @@ export const applyFallbackResult = ({
 }) => {
   const entry = buildFallbackEntry(data);
   if (!entry) {
-    setEntry(null);
-    setFinalText("");
-    setCurrentTerm(normalized);
+    resetFallbackState({ setEntry, setFinalText, setCurrentTerm, normalized });
     return normalized;
   }
-  setEntry(entry);
-  setFinalText(entry.markdown ?? "");
-  setCurrentTerm(entry.term ?? normalized);
-  return entry.term ?? normalized;
+  return commitFallbackEntry({
+    entry,
+    normalized,
+    setEntry,
+    setFinalText,
+    setCurrentTerm,
+  });
 };
 
 export const prepareLookup = ({
@@ -137,32 +131,27 @@ export const prepareLookup = ({
   if (!normalized) {
     return { ready: false, result: { status: "idle", term: "" } };
   }
-  state.setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-  copyController.resetCopyFeedback();
-  const controller = lookupController.beginLookup();
-  state.setLoading(true);
-  const preferences = {
-    sourceLanguage: options.language ?? languageConfig.dictionarySourceLanguage,
-    targetLanguage: languageConfig.dictionaryTargetLanguage,
-    flavor: options.flavor ?? languageConfig.dictionaryFlavor,
-  };
+  const lookupOptions = options ?? {};
+  const controller = beginLookupSession({
+    state,
+    copyController,
+    lookupController,
+  });
+  const preferences = resolveLookupPreferences({
+    options: lookupOptions,
+    languageConfig,
+  });
   const config = createLookupConfig({
     term: normalized,
     ...preferences,
   });
-  const cacheKey = buildCacheKey({
-    term: normalized,
-    language: config.language,
-    flavor: config.flavor,
+  const cacheKey = buildCacheKeyFromConfig({ normalized, config });
+  const shouldReset = shouldResetLookup({
+    state,
+    cacheKey,
+    options: lookupOptions,
   });
-  const shouldReset =
-    state.currentTermKey !== cacheKey || Boolean(options.forceNew);
-  state.setCurrentTerm(normalized);
-  state.setCurrentTermKey(cacheKey);
-  if (shouldReset) {
-    state.setEntry(null);
-    state.setFinalText("");
-  }
+  updateLookupState({ state, normalized, cacheKey, shouldReset });
   return {
     ready: true,
     normalized,
@@ -175,3 +164,108 @@ export const prepareLookup = ({
 
 export const resolveResolvedTerm = (hydrated, normalized) =>
   coerceResolvedTerm(hydrated?.term, normalized);
+
+function resolveHistoryTerm(identifier, selection) {
+  if (typeof identifier === "string") {
+    return identifier;
+  }
+  return selection?.term ?? "";
+}
+
+function buildHistoryFallback({
+  term,
+  selection,
+  dictionarySourceLanguage,
+  dictionaryTargetLanguage,
+}) {
+  return resolveDictionaryConfig(term, {
+    sourceLanguage:
+      selection?.language ?? dictionarySourceLanguage ?? WORD_LANGUAGE_AUTO,
+    targetLanguage: dictionaryTargetLanguage,
+  });
+}
+
+function resolveHistoryPreferences({
+  selection,
+  fallback,
+  dictionarySourceLanguage,
+  dictionaryTargetLanguage,
+  dictionaryFlavor,
+}) {
+  const language = selection?.language ?? fallback.language;
+  const flavor =
+    selection?.flavor ??
+    resolveDictionaryFlavor({
+      sourceLanguage: selection?.language ?? dictionarySourceLanguage,
+      targetLanguage: dictionaryTargetLanguage,
+      resolvedSourceLanguage: fallback.language,
+    }) ??
+    dictionaryFlavor;
+  return { language, flavor };
+}
+
+function resolveHistoryVersionId(selection) {
+  return (
+    selection?.latestVersionId ??
+    selection?.versionId ??
+    selection?.activeVersionId ??
+    null
+  );
+}
+
+function resetFallbackState({ setEntry, setFinalText, setCurrentTerm, normalized }) {
+  setEntry(null);
+  setFinalText("");
+  setCurrentTerm(normalized);
+}
+
+function commitFallbackEntry({
+  entry,
+  normalized,
+  setEntry,
+  setFinalText,
+  setCurrentTerm,
+}) {
+  setEntry(entry);
+  setFinalText(entry.markdown ?? "");
+  const resolvedTerm = entry.term ?? normalized;
+  setCurrentTerm(resolvedTerm);
+  return resolvedTerm;
+}
+
+function beginLookupSession({ state, copyController, lookupController }) {
+  state.setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
+  copyController.resetCopyFeedback();
+  state.setLoading(true);
+  return lookupController.beginLookup();
+}
+
+function resolveLookupPreferences({ options, languageConfig }) {
+  return {
+    sourceLanguage:
+      options.language ?? languageConfig.dictionarySourceLanguage,
+    targetLanguage: languageConfig.dictionaryTargetLanguage,
+    flavor: options.flavor ?? languageConfig.dictionaryFlavor,
+  };
+}
+
+function buildCacheKeyFromConfig({ normalized, config }) {
+  return buildCacheKey({
+    term: normalized,
+    language: config.language,
+    flavor: config.flavor,
+  });
+}
+
+function shouldResetLookup({ state, cacheKey, options }) {
+  return state.currentTermKey !== cacheKey || Boolean(options.forceNew);
+}
+
+function updateLookupState({ state, normalized, cacheKey, shouldReset }) {
+  state.setCurrentTerm(normalized);
+  state.setCurrentTermKey(cacheKey);
+  if (shouldReset) {
+    state.setEntry(null);
+    state.setFinalText("");
+  }
+}

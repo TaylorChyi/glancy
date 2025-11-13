@@ -101,6 +101,46 @@ const beginLookup = (result) => {
   return pendingSend;
 };
 
+const runAbortLookupScenario = async (assertion) => {
+  const abortSpy = jest.fn();
+  const restoreAbortController = installAbortControllerOverride(
+    createAbortControllerDouble(abortSpy),
+  );
+
+  let resolveFetch;
+  const pendingFetch = new Promise((resolve) => {
+    resolveFetch = resolve;
+  });
+  mockFetchWordWithHandling.mockReturnValueOnce(pendingFetch);
+
+  const { restore: restoreConsole, spy: consoleErrorSpy } = muteConsoleError();
+  const { result, unmount } = renderHook(() => useDictionaryExperience());
+
+  try {
+    const pendingSend = beginLookup(result);
+
+    expect(abortSpy).not.toHaveBeenCalled();
+
+    act(() => {
+      unmount();
+    });
+
+    resolveFetch({
+      data: null,
+      error: null,
+      language: "ENGLISH",
+      flavor: "default",
+    });
+
+    await pendingSend.catch(() => {});
+
+    await assertion({ abortSpy, consoleErrorSpy });
+  } finally {
+    restoreConsole();
+    restoreAbortController();
+  }
+};
+
 describe("useDictionaryExperience/lifecycle", () => {
   beforeEach(() => {
     resetDictionaryExperienceTestState();
@@ -111,36 +151,13 @@ describe("useDictionaryExperience/lifecycle", () => {
   });
 
   it("aborts in-flight lookups on unmount to avoid stale state updates", async () => {
-    const abortSpy = jest.fn();
-    const restoreAbortController = installAbortControllerOverride(
-      createAbortControllerDouble(abortSpy),
-    );
-
-    let resolveFetch;
-    const pendingFetch = new Promise((resolve) => {
-      resolveFetch = resolve;
-    });
-    mockFetchWordWithHandling.mockReturnValueOnce(pendingFetch);
-
-    const { restore: restoreConsole, spy: consoleErrorSpy } =
-      muteConsoleError();
-    const { result, unmount } = renderHook(() => useDictionaryExperience());
-
-    try {
-      const pendingSend = beginLookup(result);
-
-      expect(mockFetchWordWithHandling).toHaveBeenCalledTimes(1);
-      expect(abortSpy).not.toHaveBeenCalled();
-
-      act(() => {
-        unmount();
-      });
-
+    await runAbortLookupScenario(async ({ abortSpy }) => {
       expect(abortSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 
-      resolveFetch({ data: null, error: null, language: "ENGLISH", flavor: "default" });
-      await pendingSend.catch(() => {});
-
+  it("suppresses state update warnings after aborting on unmount", async () => {
+    await runAbortLookupScenario(async ({ consoleErrorSpy }) => {
       const hasUnmountWarning = consoleErrorSpy.mock.calls.some(
         (call) =>
           typeof call[0] === "string" &&
@@ -149,10 +166,7 @@ describe("useDictionaryExperience/lifecycle", () => {
           ),
       );
       expect(hasUnmountWarning).toBe(false);
-    } finally {
-      restoreConsole();
-      restoreAbortController();
-    }
+    });
   });
 
   it("GivenSynchronousFetch_WhenMarkdownPolished_ShouldExposeNormalizedFinal", async () => {

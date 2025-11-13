@@ -80,7 +80,17 @@ jest.unstable_mockModule("@shared/hooks", () => ({
 }));
 
 jest.unstable_mockModule("@shared/hooks/useApi.js", () => ({
-  useApi: () => ({ wordReports: { submitWordReport: submitWordReportMock } }),
+  useApi: () => ({
+    words: {
+      fetchWord: async (...args) => {
+        const result = await mockFetchWordWithHandling(...args);
+        return result && typeof result === "object" && "data" in result
+          ? result.data
+          : result;
+      },
+    },
+    wordReports: { submitWordReport: submitWordReportMock },
+  }),
 }));
 
 jest.unstable_mockModule("@shared/utils", () => ({
