@@ -42,31 +42,6 @@ const handleEscapeKey = (event, setRecordingAction) => {
   return false;
 };
 
-const createKeyDownHandler = ({
-  recordingAction,
-  setRecordingAction,
-  updateShortcut,
-}) =>
-  useCallback(
-    (action, event) => {
-      const keyboardEvent = sanitizeKeyboardEvent(event);
-      if (!shouldProcessKeyEvent(action, recordingAction, keyboardEvent)) {
-        return;
-      }
-      haltEventPropagation(keyboardEvent);
-      if (handleEscapeKey(keyboardEvent, setRecordingAction)) {
-        return;
-      }
-      const keys = captureKeysFromEvent(keyboardEvent);
-      if (!keys?.length) {
-        return;
-      }
-      setRecordingAction(null);
-      updateShortcut(action, keys).catch(() => {});
-    },
-    [recordingAction, setRecordingAction, updateShortcut],
-  );
-
 const useCaptureHandlers = ({
   recordingAction,
   setRecordingAction,
@@ -85,11 +60,25 @@ const useCaptureHandlers = ({
     [recordingAction, setRecordingAction],
   );
 
-  const handleCaptureKeyDown = createKeyDownHandler({
-    recordingAction,
-    setRecordingAction,
-    updateShortcut,
-  });
+  const handleCaptureKeyDown = useCallback(
+    (action, event) => {
+      const keyboardEvent = sanitizeKeyboardEvent(event);
+      if (!shouldProcessKeyEvent(action, recordingAction, keyboardEvent)) {
+        return;
+      }
+      haltEventPropagation(keyboardEvent);
+      if (handleEscapeKey(keyboardEvent, setRecordingAction)) {
+        return;
+      }
+      const keys = captureKeysFromEvent(keyboardEvent);
+      if (!keys?.length) {
+        return;
+      }
+      setRecordingAction(null);
+      updateShortcut(action, keys).catch(() => {});
+    },
+    [recordingAction, setRecordingAction, updateShortcut],
+  );
 
   return {
     onCaptureStart: handleCaptureStart,
