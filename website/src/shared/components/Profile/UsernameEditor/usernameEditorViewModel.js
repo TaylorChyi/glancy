@@ -1,80 +1,12 @@
-import styles from "./UsernameEditor.module.css";
-import { UsernameEditorModes } from "./usernameEditorState.js";
 import { resolveUsernameErrorMessage } from "./usernameErrorResolver.js";
-
-const composeClassName = (...parts) => parts.filter(Boolean).join(" ");
-
-const buildButtonLabel = (t, mode) => {
-  if (mode === UsernameEditorModes.VIEW) {
-    return t.changeUsernameButton;
-  }
-  if (mode === UsernameEditorModes.SAVING) {
-    return t.saving;
-  }
-  return t.saveUsernameButton;
-};
-
-const resolveViewValue = (mode, value, emptyDisplayValue) => {
-  if (mode !== UsernameEditorModes.VIEW) {
-    return value;
-  }
-  if (!value || value.trim().length === 0) {
-    return emptyDisplayValue ?? "";
-  }
-  return value;
-};
-
-const buildInputProps = ({
-  controlId,
-  messageId,
-  mode,
-  error,
-  value,
-  t,
-  inputRef,
-  handlers,
-  inputClassName,
-}) => ({
-  id: controlId,
-  ref: inputRef,
-  className: composeClassName(
-    styles.input,
-    inputClassName,
-    error ? styles["input-invalid"] : "",
-  ),
-  value,
-  onChange: handlers.handleChange,
-  onKeyDown: handlers.handleKeyDown,
-  onBlur: handlers.handleBlur,
-  placeholder: t.usernamePlaceholder,
-  disabled: mode === UsernameEditorModes.VIEW,
-  "aria-invalid": error ? "true" : "false",
-  "aria-describedby": error ? messageId : undefined,
-});
-
-const buildButtonProps = ({ buttonClassName, handlers, mode }) => ({
-  type: "button",
-  className: composeClassName(styles.button, buttonClassName),
-  onClick: handlers.handleButtonClick,
-  disabled: mode === UsernameEditorModes.SAVING,
-});
-
-const buildErrorProps = (message, messageId) =>
-  message
-    ? {
-        className: styles["error-message"],
-        id: messageId,
-        role: "alert",
-        message,
-      }
-    : null;
-
-const createActionDescriptor = (label, handlers, mode) => ({
-  label,
-  onClick: handlers.handleButtonClick,
-  disabled: mode === UsernameEditorModes.SAVING,
-  mode,
-});
+import { UsernameEditorModes } from "./usernameEditorState.js";
+import { buildLayout } from "./buildUsernameLayout.js";
+import { buildButtonLabel } from "./buildUsernameButtonLabel.js";
+import { resolveViewValue } from "./resolveUsernameViewValue.js";
+import { createInputProps } from "./createUsernameInputProps.js";
+import { createButtonProps } from "./createUsernameButtonProps.js";
+import { createErrorProps } from "./createUsernameErrorProps.js";
+import { createActionDescriptor } from "./createUsernameActionDescriptor.js";
 
 export const composeUsernameViewModel = ({
   mode,
@@ -98,11 +30,8 @@ export const composeUsernameViewModel = ({
   const errorMessage = resolveUsernameErrorMessage(t, error);
 
   return {
-    layout: {
-      container: composeClassName(styles.container, className),
-      controls: styles.controls,
-    },
-    inputProps: buildInputProps({
+    layout: buildLayout(className),
+    inputProps: createInputProps({
       controlId,
       messageId,
       mode,
@@ -113,14 +42,14 @@ export const composeUsernameViewModel = ({
       handlers,
       inputClassName,
     }),
-    buttonProps: buildButtonProps({
+    buttonProps: createButtonProps({
       buttonClassName,
       handlers,
       mode,
     }),
     buttonLabel,
     shouldRenderButton: renderInlineAction,
-    errorProps: buildErrorProps(errorMessage, messageId),
+    errorProps: createErrorProps(errorMessage, messageId),
     actionDescriptor: createActionDescriptor(buttonLabel, handlers, mode),
   };
 };
