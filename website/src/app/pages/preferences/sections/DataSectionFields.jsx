@@ -5,19 +5,47 @@ import { normalizeLanguageValue } from "./dataSectionToolkit.js";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
-export const HistoryCaptureField = ({ fieldId, copy, control, styles }) => (
+const FieldDescription = ({ text, styles }) => (
+  <p className={styles.description}>{text}</p>
+);
+
+FieldDescription.propTypes = {
+  text: PropTypes.string.isRequired,
+  styles: PropTypes.object.isRequired,
+};
+
+const FieldsetLayout = ({ fieldId, label, description, styles, children }) => (
   <fieldset className={styles["control-field"]} aria-labelledby={fieldId}>
     <legend id={fieldId} className={styles["control-label"]}>
-      {copy.label}
+      {label}
     </legend>
-    <p className={styles.description}>{copy.description}</p>
+    <FieldDescription text={description} styles={styles} />
+    {children}
+  </fieldset>
+);
+
+FieldsetLayout.propTypes = {
+  fieldId: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  styles: PropTypes.object.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+export const HistoryCaptureField = ({ fieldId, copy, control, styles }) => (
+  <FieldsetLayout
+    fieldId={fieldId}
+    label={copy.label}
+    description={copy.description}
+    styles={styles}
+  >
     <SegmentedControl
       labelledBy={fieldId}
       options={control.options}
       value={control.value}
       onChange={control.onChange}
     />
-  </fieldset>
+  </FieldsetLayout>
 );
 
 HistoryCaptureField.propTypes = {
@@ -48,11 +76,12 @@ export const RetentionField = ({
   isPending,
   styles,
 }) => (
-  <fieldset className={styles["control-field"]} aria-labelledby={fieldId}>
-    <legend id={fieldId} className={styles["control-label"]}>
-      {copy.label}
-    </legend>
-    <p className={styles.description}>{copy.description}</p>
+  <FieldsetLayout
+    fieldId={fieldId}
+    label={copy.label}
+    description={copy.description}
+    styles={styles}
+  >
     <SegmentedControl
       labelledBy={fieldId}
       options={control.options}
@@ -60,7 +89,7 @@ export const RetentionField = ({
       onChange={control.onChange}
       disabled={isPending}
     />
-  </fieldset>
+  </FieldsetLayout>
 );
 
 RetentionField.propTypes = {
@@ -89,6 +118,68 @@ RetentionField.defaultProps = {
   isPending: false,
 };
 
+const LanguageMenuShell = ({ fieldId, copy, control, styles }) => (
+  <div className={styles["language-shell"]}>
+    <LanguageMenu
+      id={fieldId}
+      options={control.options}
+      value={control.value}
+      onChange={control.onChange}
+      ariaLabel={copy.label}
+      normalizeValue={normalizeLanguageValue}
+      showLabel
+      fullWidth
+    />
+  </div>
+);
+
+LanguageMenuShell.propTypes = {
+  fieldId: PropTypes.string.isRequired,
+  copy: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+  }).isRequired,
+  control: PropTypes.shape({
+    options: PropTypes.array.isRequired,
+    value: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
+  }).isRequired,
+  styles: PropTypes.object.isRequired,
+};
+
+const LanguagePlaceholder = ({ placeholder, styles }) => (
+  <FieldDescription text={placeholder} styles={styles} />
+);
+
+LanguagePlaceholder.propTypes = {
+  placeholder: PropTypes.string.isRequired,
+  styles: PropTypes.object.isRequired,
+};
+
+const LanguageActions = ({ copy, control, isPending, styles }) => (
+  <div className={styles["subscription-current-actions"]}>
+    <button
+      type="button"
+      className={styles["subscription-action"]}
+      onClick={control.onClear}
+      disabled={!control.canClear || isPending}
+    >
+      {copy.clearLabel}
+    </button>
+  </div>
+);
+
+LanguageActions.propTypes = {
+  copy: PropTypes.shape({
+    clearLabel: PropTypes.string.isRequired,
+  }).isRequired,
+  control: PropTypes.shape({
+    onClear: PropTypes.func.isRequired,
+    canClear: PropTypes.bool.isRequired,
+  }).isRequired,
+  isPending: PropTypes.bool.isRequired,
+  styles: PropTypes.object.isRequired,
+};
+
 export const LanguageHistoryField = ({
   fieldId,
   copy,
@@ -100,33 +191,23 @@ export const LanguageHistoryField = ({
     <label htmlFor={fieldId} className={styles["control-label"]}>
       {copy.label}
     </label>
-    <p className={styles.description}>{copy.description}</p>
+    <FieldDescription text={copy.description} styles={styles} />
     {control.options.length > 0 ? (
-      <div className={styles["language-shell"]}>
-        <LanguageMenu
-          id={fieldId}
-          options={control.options}
-          value={control.value}
-          onChange={control.onChange}
-          ariaLabel={copy.label}
-          normalizeValue={normalizeLanguageValue}
-          showLabel
-          fullWidth
-        />
-      </div>
+      <LanguageMenuShell
+        fieldId={fieldId}
+        copy={copy}
+        control={control}
+        styles={styles}
+      />
     ) : (
-      <p className={styles.description}>{copy.placeholder}</p>
+      <LanguagePlaceholder placeholder={copy.placeholder} styles={styles} />
     )}
-    <div className={styles["subscription-current-actions"]}>
-      <button
-        type="button"
-        className={styles["subscription-action"]}
-        onClick={control.onClear}
-        disabled={!control.canClear || isPending}
-      >
-        {copy.clearLabel}
-      </button>
-    </div>
+    <LanguageActions
+      copy={copy}
+      control={control}
+      isPending={isPending}
+      styles={styles}
+    />
   </div>
 );
 
@@ -154,30 +235,57 @@ LanguageHistoryField.propTypes = {
   styles: PropTypes.object.isRequired,
 };
 
+const ActionButton = ({
+  label,
+  onClick,
+  disabled,
+  className,
+}) => (
+  <button type="button" className={className} onClick={onClick} disabled={disabled}>
+    {label}
+  </button>
+);
+
+ActionButton.propTypes = {
+  label: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  className: PropTypes.string.isRequired,
+};
+
+ActionButton.defaultProps = {
+  disabled: false,
+};
+
+const ActionGroup = ({ children, styles }) => (
+  <div className={styles["subscription-current-actions"]}>{children}</div>
+);
+
+ActionGroup.propTypes = {
+  children: PropTypes.node.isRequired,
+  styles: PropTypes.object.isRequired,
+};
+
 export const DataActionsField = ({ copy, control, isClearingAll, styles }) => (
   <div className={styles["control-field"]}>
     <span className={styles["control-label"]}>{copy.label}</span>
-    <p className={styles.description}>{copy.description}</p>
-    <div className={styles["subscription-current-actions"]}>
-      <button
-        type="button"
+    <FieldDescription text={copy.description} styles={styles} />
+    <ActionGroup styles={styles}>
+      <ActionButton
+        label={copy.clearAllLabel}
+        onClick={control.onClearAll}
+        disabled={!control.canClearAll || isClearingAll}
         className={composeClassName(
           styles["subscription-action"],
           styles["subscription-action-danger"],
         )}
-        onClick={control.onClearAll}
-        disabled={!control.canClearAll || isClearingAll}
-      >
-        {copy.clearAllLabel}
-      </button>
-      <button
-        type="button"
-        className={styles["subscription-action"]}
+      />
+      <ActionButton
+        label={copy.exportLabel}
         onClick={control.onExport}
-      >
-        {copy.exportLabel}
-      </button>
-    </div>
+        className={styles["subscription-action"]}
+      />
+    </ActionGroup>
   </div>
 );
 

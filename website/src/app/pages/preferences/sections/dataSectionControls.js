@@ -11,15 +11,32 @@ import {
   useRetentionOptions,
 } from "./dataSectionActions.js";
 
+const useHistoryToggleChangeHandler = (setHistoryCaptureEnabled) =>
+  useCallback(
+    (enabled) => setHistoryCaptureEnabled(enabled),
+    [setHistoryCaptureEnabled],
+  );
+
+const buildLanguageCopy = (copy) => ({
+  ...copy.language,
+  clearLabel: copy.actions.clearLanguageLabel,
+});
+
+const buildActionsCopy = (copy) => ({
+  label: copy.actions.label,
+  description: copy.actions.exportDescription,
+  clearAllLabel: copy.actions.clearAllLabel,
+  exportLabel: copy.actions.exportLabel,
+});
+
 export const useHistoryToggleControl = ({
   copy,
   historyCaptureEnabled,
   setHistoryCaptureEnabled,
 }) => {
   const options = useHistoryToggleOptions(copy.toggle);
-  const handleToggleHistory = useCallback(
-    (enabled) => setHistoryCaptureEnabled(enabled),
-    [setHistoryCaptureEnabled],
+  const handleToggleHistory = useHistoryToggleChangeHandler(
+    setHistoryCaptureEnabled,
   );
   return {
     value: historyCaptureEnabled,
@@ -65,10 +82,7 @@ export const useLanguageControl = ({
     user,
   });
   return {
-    copy: {
-      ...copy.language,
-      clearLabel: copy.actions.clearLanguageLabel,
-    },
+    copy: buildLanguageCopy(copy),
     value: languageSelection.selectedLanguage,
     options: languageSelection.options,
     onChange: languageSelection.selectLanguage,
@@ -97,12 +111,7 @@ export const useActionsControl = ({
     fileName: copy.actions.fileName,
   });
   return {
-    copy: {
-      label: copy.actions.label,
-      description: copy.actions.exportDescription,
-      clearAllLabel: copy.actions.clearAllLabel,
-      exportLabel: copy.actions.exportLabel,
-    },
+    copy: buildActionsCopy(copy),
     onClearAll: handleClearAll,
     onExport: handleExport,
     canClearAll: history.length > 0,
