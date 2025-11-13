@@ -1,100 +1,73 @@
 import { pipeline } from "../../../pipeline.js";
+import { isInlineLabelTerminator } from "../candidates.js";
 import {
-  isInlineLabelTerminator,
-  shouldSplitInlineLabel,
-} from "../candidates.js";
+  canApplyLabelToken,
+  findNextLabelToken,
+  isLabelContinuation,
+  shouldRemoveSeparator,
+} from "./tokenMatching.js";
+import { resolveContinuation } from "./continuation.js";
+import { collectSpacingInfo } from "./spacing.js";
 
-const LABEL_TOKEN_PATTERN = /[A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*/gu;
-const SAFE_PREFIX_PATTERN = /[([{-–—>•·,，.。!！?？:：;；“”"'‘’]/u;
+const finalizeToken = (state, parts, cursor, carryLabelContext = false) => ({
+  cursor,
+  carryLabelContext,
+  result: state.result + parts.join(""),
+});
 
-const hasSafePrefix = (source, index) => {
-  if (index === 0) {
-    return true;
+const processApplicableToken = ({ line, state, tokenMatch, parts }) => {
+  const { end } = tokenMatch;
+  const immediateNext = line[end];
+  if (immediateNext === ":" || immediateNext === "：") {
+    return finalizeToken(state, parts, end);
   }
-  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-    const char = source[cursor];
-    if (char === "\n") {
-      return true;
-    }
-    if (/\s/.test(char)) {
-      continue;
-    }
-    if (SAFE_PREFIX_PATTERN.test(char)) {
-      return true;
-    }
-    return false;
-  }
-  return true;
-};
 
-const isLabelToken = (token) =>
-  shouldSplitInlineLabel(token) && Boolean(token?.trim());
+  const { spacing, nextIndex } = collectSpacingInfo(line, end);
+  const nextChar = nextIndex < line.length ? line[nextIndex] : "";
+  if (isInlineLabelTerminator(nextChar)) {
+    parts.push(spacing);
+    return finalizeToken(state, parts, nextIndex);
+  }
 
-const shouldRemoveSeparator = ({ separator, canApply, line, end }) => {
-  if (!canApply || !separator || !/^[.·]+$/.test(separator.trim())) {
-    return false;
+  const nextToken = findNextLabelToken(line, nextIndex);
+  if (isLabelContinuation({ line, nextIndex, nextToken })) {
+    const continuation = resolveContinuation({
+      spacing,
+      nextIndex,
+      nextToken,
+      line,
+    });
+    parts.push(continuation.append);
+    return finalizeToken(state, parts, continuation.cursor, continuation.carryLabelContext);
   }
-  const lookahead = line
-    .slice(end)
-    .match(/^[.·]+([A-Za-z\p{L}\u4e00-\u9fff][\w\u4e00-\u9fff-]*)/u);
-  return Boolean(lookahead && shouldSplitInlineLabel(lookahead[1]));
-};
 
-const collectSpacingInfo = (line, end) => {
-  let spacingEnd = end;
-  while (spacingEnd < line.length && /[ \t]/.test(line[spacingEnd])) {
-    spacingEnd += 1;
-  }
-  return {
-    spacing: line.slice(end, spacingEnd),
-    nextIndex: spacingEnd,
-  };
-};
-
-const isImmediateLabel = (line, nextIndex, nextMatch) => {
-  if (!nextMatch) {
-    return false;
-  }
-  if (nextMatch.index === nextIndex) {
-    return true;
-  }
-  const bridge = line.slice(nextIndex, nextMatch.index);
-  return /^[.·]+$/.test(bridge);
-};
-
-const advancePastDotLeaders = (line, cursor) => {
-  let nextCursor = cursor;
-  while (
-    nextCursor < line.length &&
-    (line[nextCursor] === "." || line[nextCursor] === "·")
-  ) {
-    nextCursor += 1;
-  }
-  return nextCursor;
-};
-
-const handleLabelContinuation = ({
-  spacing,
-  nextIndex,
-  nextMatch,
-  line,
-  state,
-}) => {
-  const nextToken = nextMatch ? nextMatch[0] : null;
-  const nextIsLabel = nextToken ? shouldSplitInlineLabel(nextToken) : false;
-  state.result += ":";
-  if (nextIsLabel) {
-    const indent = spacing.length > 1 ? spacing.replace(/\S/g, " ") : "";
-    state.result += `\n${indent}`;
-    state.cursor = advancePastDotLeaders(line, nextIndex);
-    state.carryLabelContext = true;
-    return true;
-  }
   const preservedSpacing = spacing.length > 0 ? spacing : " ";
-  state.result += preservedSpacing;
-  state.cursor = nextIndex;
-  state.carryLabelContext = false;
-  return false;
+  parts.push(":", preservedSpacing);
+  return finalizeToken(state, parts, nextIndex);
+};
+
+const processToken = ({ line, state, tokenMatch }) => {
+  const { token, start, end } = tokenMatch;
+  const separator = line.slice(state.cursor, start);
+  const canApply = canApplyLabelToken({
+    token,
+    line,
+    start,
+    carryLabelContext: state.carryLabelContext,
+  });
+  const parts = [];
+
+  if (!shouldRemoveSeparator({ separator, canApply, line, end })) {
+    parts.push(separator);
+  }
+
+  if (!canApply) {
+    parts.push(token);
+    return finalizeToken(state, parts, end);
+  }
+
+  parts.push(token);
+  return processApplicableToken({ line, state, tokenMatch, parts });
 };
 
 const rewriteLine = (line) => {
@@ -102,75 +75,16 @@ const rewriteLine = (line) => {
     return line;
   }
 
-  const state = { cursor: 0, result: "", carryLabelContext: false };
+  let state = { cursor: 0, result: "", carryLabelContext: false };
 
   while (state.cursor < line.length) {
-    LABEL_TOKEN_PATTERN.lastIndex = state.cursor;
-    const match = LABEL_TOKEN_PATTERN.exec(line);
-    if (!match) {
-      state.result += line.slice(state.cursor);
+    const tokenMatch = findNextLabelToken(line, state.cursor);
+    if (!tokenMatch) {
+      const tail = line.slice(state.cursor);
+      state = finalizeToken(state, [tail], line.length, state.carryLabelContext);
       break;
     }
-
-    const [token] = match;
-    const start = match.index;
-    const end = start + token.length;
-    const separator = line.slice(state.cursor, start);
-    const canApply =
-      isLabelToken(token) &&
-      (state.carryLabelContext || hasSafePrefix(line, start));
-
-    if (!shouldRemoveSeparator({ separator, canApply, line, end })) {
-      state.result += separator;
-    }
-
-    if (!canApply) {
-      state.result += token;
-      state.cursor = end;
-      state.carryLabelContext = false;
-      continue;
-    }
-
-    const immediateNext = line[end];
-    if (immediateNext === ":" || immediateNext === "：") {
-      state.result += token;
-      state.cursor = end;
-      state.carryLabelContext = false;
-      continue;
-    }
-
-    const { spacing, nextIndex } = collectSpacingInfo(line, end);
-    const nextChar = nextIndex < line.length ? line[nextIndex] : "";
-    if (isInlineLabelTerminator(nextChar)) {
-      state.result += token + spacing;
-      state.cursor = nextIndex;
-      state.carryLabelContext = false;
-      continue;
-    }
-
-    LABEL_TOKEN_PATTERN.lastIndex = nextIndex;
-    const nextMatch = LABEL_TOKEN_PATTERN.exec(line);
-    const hasImmediateNext = isImmediateLabel(line, nextIndex, nextMatch);
-
-    state.result += token;
-    if (hasImmediateNext) {
-      const continued = handleLabelContinuation({
-        spacing,
-        nextIndex,
-        nextMatch,
-        line,
-        state,
-      });
-      if (continued) {
-        continue;
-      }
-    } else {
-      state.result += ":";
-      const preservedSpacing = spacing.length > 0 ? spacing : " ";
-      state.result += preservedSpacing;
-      state.cursor = nextIndex;
-      state.carryLabelContext = false;
-    }
+    state = processToken({ line, state, tokenMatch });
   }
 
   return state.result;
@@ -179,8 +93,8 @@ const rewriteLine = (line) => {
 const ensureTextInput = (text) => (typeof text === "string" ? text : "");
 
 const rewriteLabelLines = (text) =>
-  text.replace(/(^|\n)([^\n]*)/g, (full, boundary, line) => {
-    const rewritten = rewriteLine(line);
+  text.replace(/(^|\n)([^\n]*)/g, (full, boundary, segment) => {
+    const rewritten = rewriteLine(segment);
     return `${boundary}${rewritten}`;
   });
 
