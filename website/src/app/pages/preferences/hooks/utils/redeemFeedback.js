@@ -20,46 +20,39 @@ export const REDEEM_TOAST_DURATION = 3000;
  * 输入：错误对象 error、兜底文案 fallbackMessage。
  * 输出：最终 toast 提示字符串。
  */
-export const composeRedeemFailureMessage = (error, fallbackMessage) => {
-  const fallback = typeof fallbackMessage === "string" ? fallbackMessage : "";
-  const candidates = [];
+const NOISE_TOKENS = new Set([
+  "",
+  "redeem-auth-missing",
+  "redeem-api-unavailable",
+  "network error",
+  "request failed",
+]);
+
+const extractErrorCandidates = (error) => {
   if (typeof error === "string") {
-    candidates.push(error);
-  } else if (error && typeof error === "object") {
-    if (typeof error.message === "string") {
-      candidates.push(error.message);
-    }
-    if (typeof error.reason === "string") {
-      candidates.push(error.reason);
-    }
-    if (typeof error.detail === "string") {
-      candidates.push(error.detail);
-    }
+    return [error];
   }
 
-  const noiseTokens = new Set([
-    "",
-    "redeem-auth-missing",
-    "redeem-api-unavailable",
-    "network error",
-    "request failed",
-  ]);
-  const reason = candidates
+  if (!error || typeof error !== "object") {
+    return [];
+  }
+
+  const fields = [error.message, error.reason, error.detail];
+  return fields.filter((candidate) => typeof candidate === "string");
+};
+
+const pickMeaningfulReason = (candidates) =>
+  candidates
     .map((candidate) => (typeof candidate === "string" ? candidate.trim() : ""))
-    .find((candidate) => {
-      if (!candidate) {
-        return false;
-      }
-      return !noiseTokens.has(candidate.toLowerCase());
-    });
+    .find((candidate) => candidate && !NOISE_TOKENS.has(candidate.toLowerCase()));
+
+export const composeRedeemFailureMessage = (error, fallbackMessage) => {
+  const fallback = typeof fallbackMessage === "string" ? fallbackMessage : "";
+  const reason = pickMeaningfulReason(extractErrorCandidates(error));
 
   if (!reason) {
     return fallback;
   }
 
-  if (!fallback) {
-    return reason;
-  }
-
-  return `${fallback} (${reason})`;
+  return fallback ? `${fallback} (${reason})` : reason;
 };
