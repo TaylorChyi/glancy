@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@core/context";
 // 避免通过 utils/index 的桶状导出造成 rollup chunk 循环，直接引用具体实现。
 import { useIsMobile } from "@shared/utils/device.js";
 import useNavAccess from "./useNavAccess.js";
-import { NAVIGATION_KEYS, useNavItems } from "./useNavItems.js";
+import useNavItems from "./useNavItems.js";
+import useSidebarLabels from "./useSidebarLabels.js";
+import useNavigationHandlers from "./useNavigationHandlers.js";
 
 /**
  * 意图：集中管理侧边栏导航所需的状态、文案与回调，输出给展示组件。
@@ -56,59 +58,19 @@ export default function useSidebarNavigation({
 
   const { t, lang } = useLanguage();
   const access = useNavAccess();
-
-  const headerLabel = useMemo(() => {
-    if (t.sidebarNavigationLabel) return t.sidebarNavigationLabel;
-    return lang === "zh" ? "导航" : "Navigation";
-  }, [lang, t.sidebarNavigationLabel]);
-
-  const dictionaryLabel = useMemo(
-    () => t.primaryNavDictionaryLabel || "Glancy",
-    [t.primaryNavDictionaryLabel],
-  );
-
-  const libraryLabel = useMemo(() => {
-    if (t.primaryNavLibraryLabel) return t.primaryNavLibraryLabel;
-    if (t.favorites) return t.favorites;
-    if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
-    return "Library";
-  }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
-
-  const historyLabel = useMemo(() => {
-    if (t.searchHistory) return t.searchHistory;
-    return lang === "zh" ? "搜索记录" : "History";
-  }, [lang, t.searchHistory]);
-
-  const entriesLabel = useMemo(() => {
-    if (t.primaryNavEntriesLabel) return t.primaryNavEntriesLabel;
-    return lang === "zh" ? "词条" : "Entries";
-  }, [lang, t.primaryNavEntriesLabel]);
-
-  const handleDictionary = useCallback(() => {
-    if (typeof onShowDictionary === "function") {
-      onShowDictionary();
-    } else if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-    if (isMobile) {
-      closeSidebar();
-    }
-  }, [closeSidebar, isMobile, onShowDictionary]);
-
-  const handleLibrary = useCallback(() => {
-    if (typeof onShowLibrary === "function") {
-      onShowLibrary();
-    }
-    if (isMobile) {
-      closeSidebar();
-    }
-  }, [closeSidebar, isMobile, onShowLibrary]);
+  const labels = useSidebarLabels({ t, lang });
+  const { handleDictionary, handleLibrary } = useNavigationHandlers({
+    isMobile,
+    closeSidebar,
+    onShowDictionary,
+    onShowLibrary,
+  });
 
   const navigationActions = useNavItems({
     access,
     labels: {
-      dictionary: dictionaryLabel,
-      library: libraryLabel,
+      dictionary: labels.dictionaryLabel,
+      library: labels.libraryLabel,
     },
     handlers: {
       onDictionary: handleDictionary,
@@ -125,9 +87,9 @@ export default function useSidebarNavigation({
     shouldShowOverlay,
     openSidebar,
     closeSidebar,
-    headerLabel,
+    headerLabel: labels.headerLabel,
     navigationActions,
-    historyLabel,
-    entriesLabel,
+    historyLabel: labels.historyLabel,
+    entriesLabel: labels.entriesLabel,
   };
 }
