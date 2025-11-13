@@ -35,14 +35,13 @@ const useSessionCompletionCallback = ({ setUser, recordLoginCookie, navigate }) 
     [navigate, recordLoginCookie, setUser],
   );
 
-const useAuthSubmissionHandlers = ({
+const useHandleSubmit = ({
   mode,
   authProtocol,
   unsupportedMessage,
-  viewCopy,
   completeSession,
-}) => ({
-  handleSubmit: useCallback(
+}) =>
+  useCallback(
     async ({ account, password, method }) => {
       if (mode === "register") {
         await authProtocol.register({ method, account, password });
@@ -56,8 +55,10 @@ const useAuthSubmissionHandlers = ({
       await completeSession(data);
     },
     [authProtocol, completeSession, mode, unsupportedMessage],
-  ),
-  handleRequestCode: useCallback(
+  );
+
+const useHandleRequestCode = ({ authProtocol, unsupportedMessage, viewCopy }) =>
+  useCallback(
     async ({ account, method }) => {
       await authProtocol.requestCode({
         method,
@@ -67,7 +68,11 @@ const useAuthSubmissionHandlers = ({
       });
     },
     [authProtocol, unsupportedMessage, viewCopy.codePurpose],
-  ),
+  );
+
+const useAuthSubmissionHandlers = (params) => ({
+  handleSubmit: useHandleSubmit(params),
+  handleRequestCode: useHandleRequestCode(params),
 });
 
 const useAuthProtocol = () => {
