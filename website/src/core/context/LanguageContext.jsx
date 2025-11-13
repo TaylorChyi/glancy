@@ -43,6 +43,37 @@ const useBrowserLanguageSource = () => {
   return browserLanguage;
 };
 
+const useResolvedLanguage = (systemLanguage) => {
+  const browserLanguage = useBrowserLanguageSource();
+  return useMemo(
+    () => resolveLanguage({ systemLanguage, browserLanguage }),
+    [systemLanguage, browserLanguage],
+  );
+};
+
+const useLanguageTranslations = (lang) =>
+  useMemo(
+    () => translations[lang] || translations[DEFAULT_LANGUAGE],
+    [lang],
+  );
+
+const useLanguageContextValue = ({
+  changeLanguage,
+  lang,
+  systemLanguage,
+  t,
+}) =>
+  useMemo(
+    () => ({
+      lang,
+      t,
+      setLang: changeLanguage,
+      systemLanguage,
+      setSystemLanguage: changeLanguage,
+    }),
+    [changeLanguage, lang, systemLanguage, t],
+  );
+
 const useDocumentLanguageSync = (lang, t) => {
   useEffect(() => {
     document.title = t.welcomeTitle;
@@ -55,15 +86,8 @@ function useLanguageController() {
   const storeSetSystemLanguage = useSettingsStore(
     (state) => state.setSystemLanguage,
   );
-  const browserLanguage = useBrowserLanguageSource();
-  const lang = useMemo(
-    () => resolveLanguage({ systemLanguage, browserLanguage }),
-    [systemLanguage, browserLanguage],
-  );
-  const t = useMemo(
-    () => translations[lang] || translations[DEFAULT_LANGUAGE],
-    [lang],
-  );
+  const lang = useResolvedLanguage(systemLanguage);
+  const t = useLanguageTranslations(lang);
   const changeLanguage = useCallback(
     (next) => {
       storeSetSystemLanguage(next ?? SYSTEM_LANGUAGE_AUTO);
@@ -71,16 +95,12 @@ function useLanguageController() {
     [storeSetSystemLanguage],
   );
   useDocumentLanguageSync(lang, t);
-  return useMemo(
-    () => ({
-      lang,
-      t,
-      setLang: changeLanguage,
-      systemLanguage,
-      setSystemLanguage: changeLanguage,
-    }),
-    [changeLanguage, lang, systemLanguage, t],
-  );
+  return useLanguageContextValue({
+    changeLanguage,
+    lang,
+    systemLanguage,
+    t,
+  });
 }
 
 export function LanguageProvider({ children }) {
