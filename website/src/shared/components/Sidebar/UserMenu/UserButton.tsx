@@ -1,6 +1,7 @@
-import { forwardRef, KeyboardEvent, MouseEvent } from "react";
+import { forwardRef } from "react";
 import Avatar from "@shared/components/ui/Avatar";
 import styles from "./UserButton.module.css";
+import { useUserButtonInteractions } from "./useUserButtonInteractions";
 
 export interface UserButtonProps {
   displayName: string;
@@ -11,22 +12,9 @@ export interface UserButtonProps {
 
 const UserButton = forwardRef<HTMLButtonElement, UserButtonProps>(
   ({ displayName, planLabel, onToggle, open }, ref) => {
-    const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-      if (
-        event.key === "Enter" ||
-        event.key === " " ||
-        event.key === "ArrowDown" ||
-        event.key === "ArrowUp"
-      ) {
-        event.preventDefault();
-        onToggle();
-      }
-    };
-
-    const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      onToggle();
-    };
+    const { handleClick, handleKeyDown } = useUserButtonInteractions({
+      onToggle,
+    });
 
     return (
       <button

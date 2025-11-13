@@ -11,6 +11,38 @@ import type {
   UserMenuControllerOptions,
 } from "./contracts";
 
+const getViewportHeight = () =>
+  window.innerHeight || document.documentElement.clientHeight;
+
+const getMenuHeight = (
+  surfaceNode: HTMLDivElement,
+  maxMenuHeight: number,
+  viewportHeight: number,
+) => Math.min(surfaceNode.scrollHeight, Math.min(viewportHeight * 0.6, maxMenuHeight));
+
+const shouldPlaceMenuDown = (
+  spaceAbove: number,
+  spaceBelow: number,
+  menuHeight: number,
+) => spaceAbove < menuHeight && spaceBelow > spaceAbove;
+
+export const calculateMenuPlacement = ({
+  triggerRect,
+  maxMenuHeight,
+  menuRef,
+}: {
+  triggerRect: DOMRect;
+  maxMenuHeight: number;
+  menuRef: MutableRefObject<HTMLDivElement | null>;
+}): MenuPlacement => {
+  const surfaceNode = menuRef.current;
+  if (!surfaceNode) return "up";
+  const viewportHeight = getViewportHeight();
+  const menuHeight = getMenuHeight(surfaceNode, maxMenuHeight, viewportHeight);
+  const spaceAbove = triggerRect.top;
+  const spaceBelow = viewportHeight - triggerRect.bottom;
+  return shouldPlaceMenuDown(spaceAbove, spaceBelow, menuHeight) ? "down" : "up";
+};
 
 export const usePlacement = ({
   open,
@@ -28,19 +60,14 @@ export const usePlacement = ({
   const updatePlacement = useCallback(() => {
     if (!open) return;
     const triggerNode = triggerRef.current;
-    const surfaceNode = menuRef.current;
-    if (!triggerNode || !surfaceNode) return;
+    if (!triggerNode) return;
     const triggerRect = triggerNode.getBoundingClientRect();
-    const viewportHeight =
-      window.innerHeight || document.documentElement.clientHeight;
-    const menuHeight = Math.min(
-      surfaceNode.scrollHeight,
-      Math.min(viewportHeight * 0.6, maxMenuHeight),
-    );
-    const spaceAbove = triggerRect.top;
-    const spaceBelow = viewportHeight - triggerRect.bottom;
     setPlacement(
-      spaceAbove < menuHeight && spaceBelow > spaceAbove ? "down" : "up",
+      calculateMenuPlacement({
+        triggerRect,
+        maxMenuHeight,
+        menuRef,
+      }),
     );
   }, [maxMenuHeight, menuRef, open, triggerRef]);
 
@@ -55,6 +82,32 @@ export const usePlacement = ({
   }, [open, updatePlacement]);
 
   return placement;
+};
+
+const isArrowKey = (key: string): key is "ArrowDown" | "ArrowUp" =>
+  key === "ArrowDown" || key === "ArrowUp";
+
+const isActivationKey = (key: string) => key === "Enter" || key === " ";
+
+interface FindNextEnabledIndexOptions {
+  items: UserMenuControllerOptions["items"];
+  startIndex: number;
+  direction: 1 | -1;
+}
+
+export const findNextEnabledIndex = ({
+  items,
+  startIndex,
+  direction,
+}: FindNextEnabledIndexOptions) => {
+  let next = startIndex;
+  for (let i = 0; i < items.length; i += 1) {
+    next = (next + direction + items.length) % items.length;
+    if (!items[next].disabled) {
+      break;
+    }
+  }
+  return next;
 };
 
 export const useKeyboardHandlers = ({
@@ -73,14 +126,13 @@ export const useKeyboardHandlers = ({
   const moveFocus = useCallback(
     (direction: 1 | -1) => {
       if (items.length === 0) return;
-      setActiveIndex((previous) => {
-        let next = previous;
-        for (let i = 0; i < items.length; i += 1) {
-          next = (next + direction + items.length) % items.length;
-          if (!items[next].disabled) break;
-        }
-        return next;
-      });
+      setActiveIndex((previous) =>
+        findNextEnabledIndex({
+          items,
+          startIndex: previous,
+          direction,
+        }),
+      );
     },
     [items, setActiveIndex],
   );
@@ -91,18 +143,17 @@ export const useKeyboardHandlers = ({
       const currentItem = items[activeIndex];
       if (!currentItem) return;
 
-      if (event.key === "ArrowDown") {
+      if (isArrowKey(event.key)) {
         event.preventDefault();
-        moveFocus(1);
-      } else if (event.key === "ArrowUp") {
-        event.preventDefault();
-        moveFocus(-1);
-      } else if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        if (!currentItem.disabled) {
-          currentItem.onSelect();
-          close();
-        }
+        moveFocus(event.key === "ArrowDown" ? 1 : -1);
+        return;
+      }
+
+      if (!isActivationKey(event.key)) return;
+      event.preventDefault();
+      if (!currentItem.disabled) {
+        currentItem.onSelect();
+        close();
       }
     },
     [activeIndex, close, items, moveFocus, open],
