@@ -16,6 +16,33 @@ const clampWithin = (value, min, max) => {
   return value;
 };
 
+const toNumericList = (raw) => raw.split(",").map((value) => Number(value.trim()));
+
+const hasExpectedFiniteValues = (values, expectedLength) =>
+  values.length === expectedLength && values.every((value) => Number.isFinite(value));
+
+export const parseMatrixComponents = (normalized) => {
+  if (normalized.startsWith("matrix3d(") && normalized.endsWith(")")) {
+    const values = toNumericList(normalized.slice(9, -1));
+    if (!hasExpectedFiniteValues(values, 16)) {
+      return null;
+    }
+    const [m11, m12, , , m21, m22, , , , , , , m41, m42] = values;
+    return { a: m11, b: m12, c: m21, d: m22, e: m41, f: m42 };
+  }
+
+  if (normalized.startsWith("matrix(") && normalized.endsWith(")")) {
+    const values = toNumericList(normalized.slice(7, -1));
+    if (!hasExpectedFiniteValues(values, 6)) {
+      return null;
+    }
+    const [a, b, c, d, e, f] = values;
+    return { a, b, c, d, e, f };
+  }
+
+  return null;
+};
+
 /**
  * 意图：解析浏览器返回的 transform 字符串，提取可逆的 2D 仿射矩阵。
  * 输入：transform - getComputedStyle 返回的 transform 字符串。
@@ -29,49 +56,60 @@ export const parseTransformMatrix = (transform) => {
   if (!transform || transform === "none") {
     return null;
   }
+  return parseMatrixComponents(transform.trim());
+};
 
-  const normalized = transform.trim();
-  let components = [];
+const computeDeterminant = (matrix) => matrix.a * matrix.d - matrix.b * matrix.c;
 
-  if (normalized.startsWith("matrix3d(") && normalized.endsWith(")")) {
-    components = normalized
-      .slice(9, -1)
-      .split(",")
-      .map((value) => Number(value.trim()));
-    if (
-      components.length !== 16 ||
-      components.some((value) => !Number.isFinite(value))
-    ) {
-      return null;
-    }
-    const [m11, m12, , , m21, m22, , , , , , , m41, m42] = components;
+const isSafeDeterminant = (determinant) =>
+  Number.isFinite(determinant) && Math.abs(determinant) >= SAFE_DETERMINANT_THRESHOLD;
 
-    return {
-      a: m11,
-      b: m12,
-      c: m21,
-      d: m22,
-      e: m41,
-      f: m42,
-    };
+const createInverseTransform = (matrix, determinant) => (corner) => {
+  const translatedX = corner.x - matrix.e;
+  const translatedY = corner.y - matrix.f;
+  return {
+    x: (matrix.d * translatedX - matrix.c * translatedY) / determinant,
+    y: (-matrix.b * translatedX + matrix.a * translatedY) / determinant,
+  };
+};
+
+const buildViewportCorners = (viewportSize) => [
+  { x: 0, y: 0 },
+  { x: viewportSize, y: 0 },
+  { x: 0, y: viewportSize },
+  { x: viewportSize, y: viewportSize },
+];
+
+const areFiniteCorners = (corners) =>
+  corners.every((corner) => Number.isFinite(corner.x) && Number.isFinite(corner.y));
+
+const clampCorners = ({ corners, naturalWidth, naturalHeight }) =>
+  corners.map((corner) => ({
+    x: clampWithin(corner.x, 0, naturalWidth),
+    y: clampWithin(corner.y, 0, naturalHeight),
+  }));
+
+const buildBoundingRect = (corners) => {
+  const xs = corners.map((corner) => corner.x);
+  const ys = corners.map((corner) => corner.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  if (maxX <= minX || maxY <= minY) {
+    return null;
   }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+};
 
-  if (normalized.startsWith("matrix(") && normalized.endsWith(")")) {
-    components = normalized
-      .slice(7, -1)
-      .split(",")
-      .map((value) => Number(value.trim()));
-    if (
-      components.length !== 6 ||
-      components.some((value) => !Number.isFinite(value))
-    ) {
-      return null;
-    }
-    const [a, b, c, d, e, f] = components;
-    return { a, b, c, d, e, f };
+const invertViewportCorners = ({ matrix, viewportSize }) => {
+  const determinant = computeDeterminant(matrix);
+  if (!isSafeDeterminant(determinant)) {
+    return null;
   }
-
-  return null;
+  const transformCorner = createInverseTransform(matrix, determinant);
+  const corners = buildViewportCorners(viewportSize).map(transformCorner);
+  return areFiniteCorners(corners) ? corners : null;
 };
 
 /**
@@ -89,77 +127,39 @@ export const computeCropRectFromMatrix = ({
   naturalWidth,
   naturalHeight,
 }) => {
-  const determinant = matrix.a * matrix.d - matrix.b * matrix.c;
-  if (
-    !Number.isFinite(determinant) ||
-    Math.abs(determinant) < SAFE_DETERMINANT_THRESHOLD
-  ) {
+  const corners = invertViewportCorners({ matrix, viewportSize });
+  if (!corners) {
     return null;
   }
 
-  const transformPoint = (x, y) => {
-    const translatedX = x - matrix.e;
-    const translatedY = y - matrix.f;
-    const naturalX =
-      (matrix.d * translatedX - matrix.c * translatedY) / determinant;
-    const naturalY =
-      (-matrix.b * translatedX + matrix.a * translatedY) / determinant;
-    return { x: naturalX, y: naturalY };
-  };
-
-  const corners = [
-    transformPoint(0, 0),
-    transformPoint(viewportSize, 0),
-    transformPoint(0, viewportSize),
-    transformPoint(viewportSize, viewportSize),
-  ];
-
-  if (
-    corners.some(
-      (point) => !Number.isFinite(point.x) || !Number.isFinite(point.y),
-    )
-  ) {
-    return null;
-  }
-
-  const xs = corners.map((point) => point.x);
-  const ys = corners.map((point) => point.y);
-
-  let minX = Math.min(...xs);
-  let maxX = Math.max(...xs);
-  let minY = Math.min(...ys);
-  let maxY = Math.max(...ys);
-
-  minX = clampWithin(minX, 0, naturalWidth);
-  maxX = clampWithin(maxX, 0, naturalWidth);
-  minY = clampWithin(minY, 0, naturalHeight);
-  maxY = clampWithin(maxY, 0, naturalHeight);
-
-  if (maxX <= minX || maxY <= minY) {
-    return null;
-  }
-
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
-  };
+  const clampedCorners = clampCorners({
+    corners,
+    naturalWidth,
+    naturalHeight,
+  });
+  return buildBoundingRect(clampedCorners);
 };
 
-const resolveCropRectUsingMatrix = ({
+export const clampCornersWithinImage = clampCorners;
+
+const hasValidMatrixInputs = ({ image, viewportSize, naturalWidth, naturalHeight }) =>
+  Boolean(image) && viewportSize > 0 && naturalWidth > 0 && naturalHeight > 0;
+
+const readImageMatrix = (image) => {
+  const view = image?.ownerDocument?.defaultView;
+  if (!view) {
+    return null;
+  }
+  return parseTransformMatrix(view.getComputedStyle(image).transform);
+};
+
+export const resolveCropRectUsingMatrix = ({
   image,
   viewportSize,
   naturalWidth,
   naturalHeight,
 }) => {
-  const view = image?.ownerDocument?.defaultView;
-  if (!view || viewportSize <= 0) {
-    return null;
-  }
-
-  const transform = view.getComputedStyle(image).transform;
-  const matrix = parseTransformMatrix(transform);
+  const matrix = readImageMatrix(image);
   if (!matrix) {
     return null;
   }
@@ -175,10 +175,12 @@ const resolveCropRectUsingMatrix = ({
 const cssMatrixStrategy = {
   id: CSS_MATRIX_STRATEGY_ID,
   execute: ({ image, viewportSize, naturalWidth, naturalHeight }) => {
-    if (!image || viewportSize <= 0) {
-      return null;
-    }
-    if (naturalWidth <= 0 || naturalHeight <= 0) {
+    if (!hasValidMatrixInputs({
+      image,
+      viewportSize,
+      naturalWidth,
+      naturalHeight,
+    })) {
       return null;
     }
 
