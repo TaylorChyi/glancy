@@ -42,59 +42,73 @@ const useHistorySlice = () =>
     applyRetentionPolicy: state.applyRetentionPolicy,
   }));
 
-const useDataSectionControls = ({
-  copy,
-  translations,
+const useDataSectionState = () => {
+  const user = useUser()?.user ?? null;
+  const governance = useGovernanceSlice();
+  const historyState = useHistorySlice();
+
+  return { user, governance, historyState };
+};
+
+const useHistoryToggle = ({ copy, governance }) =>
+  useHistoryToggleControl({
+    copy,
+    historyCaptureEnabled: governance.historyCaptureEnabled,
+    setHistoryCaptureEnabled: governance.setHistoryCaptureEnabled,
+  });
+
+const useRetentionSelection = ({
   governance,
-  historyState,
-  languageSelection,
   runWithPending,
   user,
-}) => {
-  const {
-    historyCaptureEnabled,
-    retentionPolicyId,
-    setHistoryCaptureEnabled,
-    setRetentionPolicy,
-  } = governance;
-  const {
-    history,
-    clearHistory,
-    clearHistoryByLanguage,
-    applyRetentionPolicy,
-  } = historyState;
-
-  const historyToggle = useHistoryToggleControl({
-    copy,
-    historyCaptureEnabled,
-    setHistoryCaptureEnabled,
-  });
-  const retentionControl = useRetentionControl({
-    retentionPolicyId,
-    setRetentionPolicy,
-    applyRetentionPolicy,
+  translations,
+}) =>
+  useRetentionControl({
+    retentionPolicyId: governance.retentionPolicyId,
+    setRetentionPolicy: governance.setRetentionPolicy,
+    applyRetentionPolicy: governance.applyRetentionPolicy,
     runWithPending,
     user,
     translations,
   });
-  const languageControl = useLanguageControl({
+
+const useLanguageActions = ({
+  copy,
+  languageSelection,
+  historyState,
+  runWithPending,
+  user,
+}) =>
+  useLanguageControl({
     copy,
     languageSelection,
-    clearHistoryByLanguage,
+    clearHistoryByLanguage: historyState.clearHistoryByLanguage,
     runWithPending,
     user,
   });
-  const actionsControl = useActionsControl({
+
+const useActionCommands = ({
+  copy,
+  historyState,
+  runWithPending,
+  user,
+  translations,
+}) =>
+  useActionsControl({
     copy,
-    history,
-    clearHistory,
+    history: historyState.history,
+    clearHistory: historyState.clearHistory,
     runWithPending,
     user,
     translations,
   });
 
-  return { historyToggle, retentionControl, languageControl, actionsControl };
-};
+const useDataSectionControls = (dependencies) => ({
+  historyToggle: useHistoryToggle(dependencies),
+  retentionControl: useRetentionSelection(dependencies),
+  languageControl: useLanguageActions(dependencies),
+  actionsControl: useActionCommands(dependencies),
+});
 
 /**
  * 意图：聚合 DataSection 所需的配置与动作，为视图层提供解耦接口。
@@ -103,19 +117,20 @@ const useDataSectionControls = ({
  *  - descriptionId: 辅助描述 aria id；
  * 输出：视图渲染所需的 copy、状态、命令、挂载 id 等。
  */
+const useDataSectionMetadata = (message, descriptionId) => ({
+  description: useSectionDescription(message, descriptionId),
+  ids: useSectionIdentifiers(),
+});
+
 export const useDataSectionController = ({ message, descriptionId }) => {
-  const description = useSectionDescription(message, descriptionId);
-  const ids = useSectionIdentifiers();
+  const { description, ids } = useDataSectionMetadata(message, descriptionId);
   const { copy, translations } = useDataSectionCopy();
-  const user = useUser()?.user ?? null;
-  const governance = useGovernanceSlice();
-  const historyState = useHistorySlice();
+  const { user, governance, historyState } = useDataSectionState();
   const languageSelection = useDataSectionLanguageSelection(
     historyState.history,
     translations,
   );
   const { runWithPending, isActionPending } = usePendingAction();
-
   const controls = useDataSectionControls({
     copy,
     translations,

@@ -4,12 +4,13 @@ import {
   toLanguageOptions,
 } from "./dataSectionToolkit.js";
 
-export const useDataSectionLanguageSelection = (history, translations) => {
-  const options = useMemo(
-    () => toLanguageOptions(history, translations),
-    [history, translations],
-  );
+const useLanguageOptions = (history, translations) =>
+  useMemo(() => toLanguageOptions(history, translations), [
+    history,
+    translations,
+  ]);
 
+const useLanguageSelectionState = (options) => {
   const [selectedLanguage, setSelectedLanguage] = useState(
     () => options[0]?.value ?? "",
   );
@@ -19,6 +20,7 @@ export const useDataSectionLanguageSelection = (history, translations) => {
       setSelectedLanguage("");
       return;
     }
+
     setSelectedLanguage((current) =>
       options.some((option) => option.value === current)
         ? current
@@ -30,9 +32,23 @@ export const useDataSectionLanguageSelection = (history, translations) => {
     setSelectedLanguage(normalizeLanguageValue(language));
   }, []);
 
-  const canClear = Boolean(
-    normalizeLanguageValue(selectedLanguage) && options.length > 0,
+  return { selectedLanguage, selectLanguage };
+};
+
+const useLanguageClearability = (selectedLanguage, options) =>
+  useMemo(
+    () =>
+      Boolean(
+        normalizeLanguageValue(selectedLanguage) && options.length > 0,
+      ),
+    [options, selectedLanguage],
   );
+
+export const useDataSectionLanguageSelection = (history, translations) => {
+  const options = useLanguageOptions(history, translations);
+  const { selectedLanguage, selectLanguage } =
+    useLanguageSelectionState(options);
+  const canClear = useLanguageClearability(selectedLanguage, options);
 
   return {
     options,

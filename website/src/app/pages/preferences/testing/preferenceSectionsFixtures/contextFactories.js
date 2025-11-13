@@ -78,12 +78,13 @@ const mergeOverrides = (base, overrides) => {
   };
 };
 
-export const createPreferenceSectionsTestContext = (options = {}) => {
-  resetPreferenceSectionMocks();
-
-  const translations = createTranslations(options.translationOverrides);
+const applyTranslations = (translationOverrides) => {
+  const translations = createTranslations(translationOverrides);
   preferenceSectionsMocks.useLanguage.mockReturnValue({ t: translations });
+  return translations;
+};
 
+const createUserContext = (options) => {
   const user = mergeOverrides(createDefaultUser(), options.user);
   const setUserMock = jest.fn();
   preferenceSectionsMocks.useUser.mockReturnValue({
@@ -92,6 +93,18 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
     ...options.useUserResultOverrides,
   });
 
+  const unbindEmailMock =
+    options.unbindEmailMock ?? jest.fn().mockResolvedValue({ email: null });
+  const emailBindingState = mergeOverrides(
+    createDefaultEmailBinding(unbindEmailMock),
+    options.emailBinding,
+  );
+  preferenceSectionsMocks.useEmailBinding.mockReturnValue(emailBindingState);
+
+  return { user, setUserMock, unbindEmailMock, emailBindingState };
+};
+
+const createThemeContext = (options) => {
   const themeContext = mergeOverrides(
     createDefaultThemeContext(),
     options.themeContext,
@@ -105,7 +118,9 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
   preferenceSectionsMocks.useKeyboardShortcutContext.mockReturnValue(
     keyboardContext,
   );
+};
 
+const createAvatarContext = (options) => {
   const avatarWorkflow = mergeOverrides(
     createDefaultAvatarWorkflow(),
     options.avatarWorkflow,
@@ -114,15 +129,10 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
     avatarWorkflow,
   );
 
-  const unbindEmailMock =
-    options.unbindEmailMock ?? jest.fn().mockResolvedValue({ email: null });
+  return { avatarWorkflow };
+};
 
-  const emailBindingState = mergeOverrides(
-    createDefaultEmailBinding(unbindEmailMock),
-    options.emailBinding,
-  );
-  preferenceSectionsMocks.useEmailBinding.mockReturnValue(emailBindingState);
-
+const createApiContext = (options, { user, unbindEmailMock }) => {
   const profileSnapshot = mergeOverrides(
     createDefaultProfile(),
     options.profileResponse,
@@ -152,21 +162,33 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
     ...options.usersApiOverrides,
   });
 
+  return { fetchProfileMock, saveProfileMock, redeemMock, updateUsernameMock };
+};
+
+export const createPreferenceSectionsTestContext = (options = {}) => {
+  resetPreferenceSectionMocks();
+
+  const translations = applyTranslations(options.translationOverrides);
+  const userContext = createUserContext(options);
+  createThemeContext(options);
+  const avatarContext = createAvatarContext(options);
+  const apiContext = createApiContext(options, userContext);
+
   const consoleErrorStub = jest
     .spyOn(console, "error")
     .mockImplementation(() => {});
 
   return {
     translations,
-    user,
-    setUserMock,
-    updateUsernameMock,
-    fetchProfileMock,
-    saveProfileMock,
-    redeemMock,
-    unbindEmailMock,
-    emailBindingState,
-    avatarWorkflow,
+    user: userContext.user,
+    setUserMock: userContext.setUserMock,
+    updateUsernameMock: apiContext.updateUsernameMock,
+    fetchProfileMock: apiContext.fetchProfileMock,
+    saveProfileMock: apiContext.saveProfileMock,
+    redeemMock: apiContext.redeemMock,
+    unbindEmailMock: userContext.unbindEmailMock,
+    emailBindingState: userContext.emailBindingState,
+    avatarWorkflow: avatarContext.avatarWorkflow,
     consoleErrorStub,
     restore: () => {
       consoleErrorStub.mockRestore();

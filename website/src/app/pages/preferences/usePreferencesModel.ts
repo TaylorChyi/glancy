@@ -9,39 +9,11 @@ type PreferencesModelInput = {
   renderCloseAction?: (args: { className?: string }) => ReactNode;
 };
 
-export const usePreferencesModel = ({
-  initialSection,
-  renderCloseAction,
-}: PreferencesModelInput) => {
-  const {
-    copy,
-    header,
-    sections,
-    activeSection,
-    activeSectionId,
-    handleSectionSelect,
-    handleSubmit,
-    panel,
-    avatarEditor,
-    feedback,
-  } = usePreferenceSections({
-    initialSectionId: initialSection,
-  });
+type PreferenceSectionsModel = ReturnType<typeof usePreferenceSections>;
+type SectionFocusHelpers = ReturnType<typeof useSectionFocusManager>;
 
-  const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
-    activeSectionId,
-    headingId: header.headingId,
-  });
-
-  const handleSectionSelectWithFocus = useCallback(
-    (section) => {
-      captureFocusOrigin();
-      handleSectionSelect(section);
-    },
-    [captureFocusOrigin, handleSectionSelect],
-  );
-
-  const closeRenderer = useMemo(
+const useCloseRenderer = (renderCloseAction?: PreferencesModelInput["renderCloseAction"]) =>
+  useMemo(
     () =>
       renderCloseAction
         ? ({ className = "" } = {}) => renderCloseAction({ className })
@@ -49,19 +21,68 @@ export const usePreferencesModel = ({
     [renderCloseAction],
   );
 
-  const activeSectionDescriptor = activeSection
-    ? {
-        Component: activeSection.Component,
-        props: {
-          headingId: panel.headingId,
-          descriptionId: panel.descriptionId,
-          ...activeSection.componentProps,
-        },
-      }
-    : undefined;
+const useActiveSectionDescriptor = (
+  activeSection: PreferenceSectionsModel["activeSection"],
+  panel: PreferenceSectionsModel["panel"],
+) =>
+  useMemo(
+    () =>
+      activeSection
+        ? {
+            Component: activeSection.Component,
+            props: {
+              headingId: panel.headingId,
+              descriptionId: panel.descriptionId,
+              ...activeSection.componentProps,
+            },
+          }
+        : undefined,
+    [activeSection, panel.descriptionId, panel.headingId],
+  );
 
-  return {
-    viewProps: {
+const useSectionSelectionHandler = (
+  handleSectionSelect: PreferenceSectionsModel["handleSectionSelect"],
+  captureFocusOrigin: SectionFocusHelpers["captureFocusOrigin"],
+) =>
+  useCallback(
+    (section: string) => {
+      captureFocusOrigin();
+      handleSectionSelect(section);
+    },
+    [captureFocusOrigin, handleSectionSelect],
+  );
+
+const usePreferencesViewProps = ({
+  copy,
+  header,
+  sections,
+  activeSectionId,
+  handleSubmit,
+  onSectionSelect,
+  closeRenderer,
+  panel,
+  registerHeading,
+  activeSection,
+  avatarEditor,
+  feedback,
+}: Pick<
+  PreferenceSectionsModel,
+  | "copy"
+  | "header"
+  | "sections"
+  | "activeSectionId"
+  | "handleSubmit"
+  | "panel"
+  | "avatarEditor"
+  | "feedback"
+> & {
+  onSectionSelect: (section: string) => void;
+  closeRenderer: ReturnType<typeof useCloseRenderer>;
+  registerHeading: SectionFocusHelpers["registerHeading"];
+  activeSection: ReturnType<typeof useActiveSectionDescriptor>;
+}) =>
+  useMemo(
+    () => ({
       form: {
         ariaHeadingId: header.headingId,
         ariaDescriptionId: header.descriptionId,
@@ -86,7 +107,7 @@ export const usePreferencesModel = ({
       viewport: {
         sections,
         activeSectionId,
-        onSectionSelect: handleSectionSelectWithFocus,
+        onSectionSelect,
         tablistLabel: copy.tablistLabel,
         renderCloseAction: closeRenderer,
         referenceSectionId: "data",
@@ -115,10 +136,94 @@ export const usePreferencesModel = ({
         },
         onHeadingElementChange: registerHeading,
       },
-      activeSection: activeSectionDescriptor,
+      activeSection,
       avatarEditor: avatarEditor ? avatarEditor.modalProps : undefined,
       toast: feedback?.redeemToast,
-    },
+    }),
+    [
+      activeSection,
+      activeSectionId,
+      avatarEditor,
+      closeRenderer,
+      copy.description,
+      copy.tablistLabel,
+      copy.title,
+      feedback,
+      handleSubmit,
+      header.descriptionId,
+      header.headingId,
+      header.planLabel,
+      onSectionSelect,
+      panel,
+      registerHeading,
+      sections,
+    ],
+  );
+
+const usePreferencesSectionsState = (initialSection?: string) => {
+  const {
+    copy,
+    header,
+    sections,
+    activeSection: activeSectionModel,
+    activeSectionId,
+    handleSectionSelect,
+    handleSubmit,
+    panel,
+    avatarEditor,
+    feedback,
+  } = usePreferenceSections({
+    initialSectionId: initialSection,
+  });
+
+  const { captureFocusOrigin, registerHeading } = useSectionFocusManager({
+    activeSectionId,
+    headingId: header.headingId,
+  });
+
+  const onSectionSelect = useSectionSelectionHandler(
+    handleSectionSelect,
+    captureFocusOrigin,
+  );
+
+  return {
+    copy,
+    header,
+    sections,
+    activeSectionModel,
+    activeSectionId,
+    handleSubmit,
+    panel,
+    avatarEditor,
+    feedback,
+    registerHeading,
+    onSectionSelect,
+  };
+};
+
+export const usePreferencesModel = ({
+  initialSection,
+  renderCloseAction,
+}: PreferencesModelInput) => {
+  const { copy, header, sections, activeSectionModel, activeSectionId, handleSubmit, panel, avatarEditor, feedback, registerHeading, onSectionSelect } =
+    usePreferencesSectionsState(initialSection);
+  const closeRenderer = useCloseRenderer(renderCloseAction);
+  const activeSection = useActiveSectionDescriptor(activeSectionModel, panel);
+  return {
+    viewProps: usePreferencesViewProps({
+      copy,
+      header,
+      sections,
+      activeSectionId,
+      handleSubmit,
+      onSectionSelect,
+      closeRenderer,
+      panel,
+      registerHeading,
+      activeSection,
+      avatarEditor,
+      feedback,
+    }),
   };
 };
 
