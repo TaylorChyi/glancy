@@ -20,43 +20,55 @@ const createToastConfig = (state, dismissLabel, handleClose) => {
   };
 };
 
-export const useRedeemToast = ({ success, failure, dismiss }) => {
-  const [redeemToastState, setRedeemToastState] = useState({
+const useRedeemToastState = () => {
+  const [state, setState] = useState({
     open: false,
     message: "",
     variant: "success",
   });
 
-  const handleRedeemToastClose = useCallback(() => {
-    setRedeemToastState((current) =>
+  const handleClose = useCallback(() => {
+    setState((current) =>
       current.open ? { ...current, open: false } : current,
     );
   }, []);
 
-  const redeemToast = useMemo(
-    () => createToastConfig(redeemToastState, dismiss, handleRedeemToastClose),
-    [dismiss, handleRedeemToastClose, redeemToastState],
+  return { state, setState, handleClose };
+};
+
+const useRedeemToastConfig = (state, dismissLabel, handleClose) =>
+  useMemo(
+    () => createToastConfig(state, dismissLabel, handleClose),
+    [dismissLabel, handleClose, state],
   );
 
-  const showSuccessToast = useCallback(() => {
-    setRedeemToastState({
+const useRedeemSuccessHandler = (setState, message) =>
+  useCallback(() => {
+    setState({
       open: true,
-      message: success,
+      message,
       variant: "success",
     });
-  }, [success]);
+  }, [message, setState]);
 
-  const showFailureToast = useCallback(
+const useRedeemFailureHandler = (setState, fallbackMessage) =>
+  useCallback(
     (error) => {
-      setRedeemToastState({
+      setState({
         open: true,
-        message: composeRedeemFailureMessage(error, failure),
+        message: composeRedeemFailureMessage(error, fallbackMessage),
         variant: "failure",
       });
       return error;
     },
-    [failure],
+    [fallbackMessage, setState],
   );
+
+export const useRedeemToast = ({ success, failure, dismiss }) => {
+  const { state, setState, handleClose } = useRedeemToastState();
+  const redeemToast = useRedeemToastConfig(state, dismiss, handleClose);
+  const showSuccessToast = useRedeemSuccessHandler(setState, success);
+  const showFailureToast = useRedeemFailureHandler(setState, failure);
 
   return { redeemToast, showSuccessToast, showFailureToast };
 };

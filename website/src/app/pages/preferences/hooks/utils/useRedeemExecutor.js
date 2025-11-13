@@ -6,6 +6,34 @@ import {
 } from "./membershipAdapter.js";
 import { ensureRedeemPreconditions } from "./ensureRedeemPreconditions.js";
 
+const createFailureEmitter = (onFailure) =>
+  typeof onFailure === "function" ? onFailure : (error) => error;
+
+const executeRedeemRequest = (redeemCodeRequest, token, code) =>
+  redeemCodeRequest({ token, code });
+
+const applyRedeemResponse = ({ response, user, setUser, onSuccess }) => {
+  if (
+    response?.effectType === MEMBERSHIP_EFFECT_TYPE &&
+    response?.membership &&
+    typeof setUser === "function"
+  ) {
+    const nextUser = mergeMembershipRewardIntoUser(user, response.membership);
+    setUser(nextUser);
+  }
+
+  if (typeof onSuccess === "function") {
+    onSuccess();
+  }
+};
+
+const handleRedeemFailure = (error, onFailure) => {
+  console.error("Failed to redeem subscription code", error);
+  if (typeof onFailure === "function") {
+    onFailure(error);
+  }
+};
+
 export const useRedeemExecutor = ({
   user,
   setUser,
@@ -15,7 +43,7 @@ export const useRedeemExecutor = ({
 }) =>
   useCallback(
     async (normalizedCode) => {
-      const emitFailure = typeof onFailure === "function" ? onFailure : (error) => error;
+      const emitFailure = createFailureEmitter(onFailure);
 
       ensureRedeemPreconditions({
         user,
@@ -24,33 +52,16 @@ export const useRedeemExecutor = ({
       });
 
       try {
-        const response = await redeemCodeRequest({
-          token: user.token,
-          code: normalizedCode,
-        });
+        const response = await executeRedeemRequest(
+          redeemCodeRequest,
+          user.token,
+          normalizedCode,
+        );
 
-        if (
-          response?.effectType === MEMBERSHIP_EFFECT_TYPE &&
-          response?.membership &&
-          typeof setUser === "function"
-        ) {
-          const nextUser = mergeMembershipRewardIntoUser(
-            user,
-            response.membership,
-          );
-          setUser(nextUser);
-        }
-
-        if (typeof onSuccess === "function") {
-          onSuccess();
-        }
-
+        applyRedeemResponse({ response, user, setUser, onSuccess });
         return response;
       } catch (error) {
-        console.error("Failed to redeem subscription code", error);
-        if (typeof onFailure === "function") {
-          onFailure(error);
-        }
+        handleRedeemFailure(error, onFailure);
         throw error;
       }
     },
