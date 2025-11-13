@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`AuthForm submits valid credentials 1`] = `
+exports[`AuthForm matches snapshot for default login view 1`] = `
 <DocumentFragment>
   <div
     class="auth-page"
@@ -30,7 +30,7 @@ exports[`AuthForm submits valid credentials 1`] = `
       <input
         class="auth-input"
         placeholder="Username"
-        value="alice"
+        value=""
       />
       <div
         class="password-row-single"
@@ -44,7 +44,7 @@ exports[`AuthForm submits valid credentials 1`] = `
             class="input auth-input"
             placeholder="Password"
             type="password"
-            value="secret"
+            value=""
           />
           <button
             aria-label="Show password"
@@ -146,3 +146,4 @@ exports[`AuthForm submits valid credentials 1`] = `
   </div>
 </DocumentFragment>
 `;
+
