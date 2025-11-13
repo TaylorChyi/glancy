@@ -1,10 +1,7 @@
 import React from "react";
 import { jest } from "@jest/globals";
 import { MockUsernameEditor } from "./MockUsernameEditor.jsx";
-import {
-  preferencesLanguageFixture,
-  preferencesTestState,
-} from "./state.js";
+import { preferencesTestState } from "./state.js";
 
 const mockCoreContext = () => {
   jest.unstable_mockModule("@core/context", () => ({
@@ -76,5 +73,3 @@ export const setupPreferencesTestEnvironment = () => {
   mockUsernameEditor();
   mocksRegistered = true;
 };
-
-export { preferencesLanguageFixture } from "./state.js";
