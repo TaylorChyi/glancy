@@ -3,35 +3,22 @@ import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
 import styles from "./Header.module.css";
 
-function UserMenuDropdown({
-  open,
-  setOpen,
-  t,
-  isPro,
-  onOpenSettings,
-  onOpenUpgrade,
-  onOpenLogout,
-}) {
+const useMenuClose = (open, setOpen) => {
   const rootRef = useRef(null);
+  const closeMenu = useCallback(() => setOpen(false), [setOpen]);
 
   useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
+    if (!open) return undefined;
     const handlePointerDown = (event) => {
       if (!rootRef.current?.contains(event.target)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [open, setOpen]);
-
-  const closeMenu = useCallback(() => {
-    setOpen(false);
-  }, [setOpen]);
+  }, [open, closeMenu]);
 
   const handleMenuAction = useCallback(
     (callback) => () => {
@@ -43,20 +30,36 @@ function UserMenuDropdown({
     [closeMenu],
   );
 
-  const translate = useCallback(
-    (key, fallback) => {
-      if (!t || typeof t !== "object") return fallback;
-      return t[key] || fallback;
-    },
+  return { rootRef, handleMenuAction };
+};
+
+const useTranslate = (t) =>
+  useCallback(
+    (key, fallback) =>
+      t && typeof t === "object" && t[key] ? t[key] : fallback,
     [t],
   );
 
-  
-  const menuSections = useMemo(() => {
-    const primaryItems = [];
+const useMenuSections = ({
+  isPro,
+  translate,
+  onOpenSettings,
+  onOpenUpgrade,
+  onOpenLogout,
+}) =>
+  useMemo(() => {
+    const primaryItems = [
+      {
+        key: "settings",
+        icon: "cog-6-tooth",
+        label: translate("settings", "Settings"),
+        action: onOpenSettings,
+        tone: "default",
+      },
+    ];
 
     if (!isPro) {
-      primaryItems.push({
+      primaryItems.unshift({
         key: "upgrade",
         icon: "shield-check",
         label: translate("upgrade", "Upgrade"),
@@ -64,14 +67,6 @@ function UserMenuDropdown({
         tone: "default",
       });
     }
-
-    primaryItems.push({
-      key: "settings",
-      icon: "cog-6-tooth",
-      label: translate("settings", "Settings"),
-      action: onOpenSettings,
-      tone: "default",
-    });
 
     const exitItems = [
       {
@@ -89,49 +84,67 @@ function UserMenuDropdown({
     ];
   }, [isPro, onOpenLogout, onOpenSettings, onOpenUpgrade, translate]);
 
-  if (!open) {
-    return null;
-  }
+const renderSection = (section, index, totalSections, handleMenuAction) => (
+  <Fragment key={section.key}>
+    {section.items.map((item) => {
+      const buttonClassName =
+        item.tone === "danger"
+          ? `${styles["menu-item"]} ${styles["menu-item-danger"]}`
+          : styles["menu-item"];
+      return (
+        <button
+          key={item.key}
+          type="button"
+          role="menuitem"
+          className={buttonClassName}
+          onClick={handleMenuAction(item.action)}
+        >
+          <span className={styles["menu-item-leading"]} aria-hidden="true">
+            <ThemeIcon
+              name={item.icon}
+              className={styles["menu-icon"]}
+              width={20}
+              height={20}
+              tone="dark"
+            />
+          </span>
+          <span className={styles["menu-label"]}>{item.label}</span>
+        </button>
+      );
+    })}
+    {index < totalSections - 1 ? (
+      <div className={styles["menu-divider"]} aria-hidden="true" />
+    ) : null}
+  </Fragment>
+);
+
+function UserMenuDropdown({
+  open,
+  setOpen,
+  t,
+  isPro,
+  onOpenSettings,
+  onOpenUpgrade,
+  onOpenLogout,
+}) {
+  const { rootRef, handleMenuAction } = useMenuClose(open, setOpen);
+  const translate = useTranslate(t);
+  const menuSections = useMenuSections({
+    isPro,
+    translate,
+    onOpenSettings,
+    onOpenUpgrade,
+    onOpenLogout,
+  });
+
+  if (!open) return null;
 
   return (
     <div ref={rootRef} className={styles["user-menu-dropdown"]}>
       <div className={styles["menu-panel"]} role="menu">
-        {menuSections.map((section, sectionIndex) => (
-          <Fragment key={section.key}>
-            {section.items.map((item) => {
-              const buttonClassName =
-                item.tone === "danger"
-                  ? `${styles["menu-item"]} ${styles["menu-item-danger"]}`
-                  : styles["menu-item"];
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  role="menuitem"
-                  className={buttonClassName}
-                  onClick={handleMenuAction(item.action)}
-                >
-                  <span
-                    className={styles["menu-item-leading"]}
-                    aria-hidden="true"
-                  >
-                    <ThemeIcon
-                      name={item.icon}
-                      className={styles["menu-icon"]}
-                      width={20}
-                      height={20}
-                      tone="dark"
-                    />
-                  </span>
-                  <span className={styles["menu-label"]}>{item.label}</span>
-                </button>
-              );
-            })}
-            {sectionIndex < menuSections.length - 1 ? (
-              <div className={styles["menu-divider"]} aria-hidden="true" />
-            ) : null}
-          </Fragment>
-        ))}
+        {menuSections.map((section, index) =>
+          renderSection(section, index, menuSections.length, handleMenuAction),
+        )}
       </div>
     </div>
   );
