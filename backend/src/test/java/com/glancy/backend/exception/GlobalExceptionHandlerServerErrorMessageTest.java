@@ -2,7 +2,6 @@ package com.glancy.backend.exception;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -30,8 +29,7 @@ class GlobalExceptionHandlerServerErrorMessageTest {
   @BeforeEach
   void setUp() {
     GlobalExceptionHandler handler =
-        new GlobalExceptionHandler(
-            new ObjectMapper(), HttpStatusAwareErrorMessageResolver.defaultResolver());
+        new GlobalExceptionHandler(HttpStatusAwareErrorMessageResolver.defaultResolver());
     mvc =
         MockMvcBuilders.standaloneSetup(new UnstableController())
             .setControllerAdvice(handler)

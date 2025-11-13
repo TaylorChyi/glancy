@@ -1,6 +1,5 @@
 package com.glancy.backend.exception;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancy.backend.config.security.TokenTraceFilter;
 import com.glancy.backend.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,17 +25,18 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  private final ObjectMapper mapper;
   private final HttpStatusAwareErrorMessageResolver messageResolver;
 
-  @Autowired
-  public GlobalExceptionHandler(ObjectMapper mapper) {
-    this(mapper, HttpStatusAwareErrorMessageResolver.defaultResolver());
+  public GlobalExceptionHandler() {
+    this(HttpStatusAwareErrorMessageResolver.defaultResolver());
   }
 
-  GlobalExceptionHandler(ObjectMapper mapper, HttpStatusAwareErrorMessageResolver messageResolver) {
-    this.mapper = mapper;
-    this.messageResolver = messageResolver;
+  @Autowired
+  GlobalExceptionHandler(@Nullable HttpStatusAwareErrorMessageResolver messageResolver) {
+    this.messageResolver =
+        messageResolver != null
+            ? messageResolver
+            : HttpStatusAwareErrorMessageResolver.defaultResolver();
   }
 
   private ResponseEntity<?> buildResponse(Object body, HttpStatus status) {

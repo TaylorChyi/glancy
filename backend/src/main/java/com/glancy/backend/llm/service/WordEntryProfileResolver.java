@@ -19,10 +19,8 @@ public class WordEntryProfileResolver {
   private final Map<Language, LanguageEntryProfileStrategy> strategies =
       new EnumMap<>(Language.class);
   private final LanguageEntryProfileStrategy defaultStrategy;
-  private final PromptTemplateRenderer templateRenderer;
 
   public WordEntryProfileResolver(PromptTemplateRenderer templateRenderer) {
-    this.templateRenderer = templateRenderer;
     this.defaultStrategy = new DefaultEntryProfileStrategy(templateRenderer);
     strategies.put(Language.CHINESE, new ChineseEntryProfileStrategy(templateRenderer));
   }

@@ -59,6 +59,7 @@ class DoubaoClientTest {
 
   private DoubaoClient client;
   private DoubaoProperties properties;
+  private DoubaoOfflineResponseBuilder offlineResponseBuilder;
 
   @BeforeEach
   void setUp() {
@@ -67,6 +68,7 @@ class DoubaoClientTest {
     properties.setChatPath("/api/v3/chat/completions");
     properties.setApiKey(" key ");
     properties.setModel("test-model");
+    offlineResponseBuilder = new DoubaoOfflineResponseBuilder();
   }
 
   @Test
@@ -76,7 +78,9 @@ class DoubaoClientTest {
    */
   void GivenValidResponse_WhenGenerateEntry_ThenReturnAssistantContent() {
     ExchangeFunction ef = this::successResponse;
-    client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+    client =
+        new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef), properties, offlineResponseBuilder);
     String result = client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5);
     assertEquals("hi", result);
   }
@@ -96,7 +100,9 @@ class DoubaoClientTest {
           assertTrue(requestBody.contains("\"thinking\":{\"type\":\"disabled\"}"));
           return Mono.just(ClientResponse.create(HttpStatus.UNAUTHORIZED).build());
         };
-    client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+    client =
+        new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef), properties, offlineResponseBuilder);
     assertThrows(
         com.glancy.backend.exception.UnauthorizedException.class,
         () -> client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5));
@@ -110,7 +116,9 @@ class DoubaoClientTest {
   void GivenServerError_WhenGenerateEntry_ThenThrowBusinessException() {
     ExchangeFunction ef =
         req -> Mono.just(ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR).build());
-    client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+    client =
+        new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef), properties, offlineResponseBuilder);
     assertThrows(
         com.glancy.backend.exception.BusinessException.class,
         () -> client.generateEntry(List.of(new ChatMessage(ChatRole.USER.role(), "hi")), 0.5));
@@ -133,7 +141,9 @@ class DoubaoClientTest {
                   .body("{\"choices\":[]}")
                   .build());
         };
-    client = new DoubaoClient(WebClient.builder().exchangeFunction(ef), properties);
+    client =
+        new DoubaoClient(
+            WebClient.builder().exchangeFunction(ef), properties, offlineResponseBuilder);
     DictionaryModelRequestOptions options =
         DictionaryModelRequestOptions.builder().thinkingType("detailed").build();
     String result =

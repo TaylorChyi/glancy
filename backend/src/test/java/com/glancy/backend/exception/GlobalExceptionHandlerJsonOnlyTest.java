@@ -4,7 +4,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -21,8 +20,7 @@ class GlobalExceptionHandlerJsonOnlyTest {
   @BeforeEach
   void setUp() {
     GlobalExceptionHandler handler =
-        new GlobalExceptionHandler(
-            new ObjectMapper(), HttpStatusAwareErrorMessageResolver.defaultResolver());
+        new GlobalExceptionHandler(HttpStatusAwareErrorMessageResolver.defaultResolver());
     mvc =
         MockMvcBuilders.standaloneSetup(new DummyController())
             .setControllerAdvice(handler)

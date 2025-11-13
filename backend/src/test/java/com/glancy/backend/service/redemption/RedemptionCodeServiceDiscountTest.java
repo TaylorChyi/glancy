@@ -20,14 +20,15 @@ class RedemptionCodeServiceDiscountTest extends AbstractRedemptionCodeServiceTes
     LocalDateTime discountUntil = now.plusDays(3);
     RedemptionCodeCreateRequest createRequest =
         discountCode(
-            "SALE20",
-            now.minusHours(2),
-            now.plusDays(2),
-            5,
-            2,
-            BigDecimal.valueOf(20),
-            discountFrom,
-            discountUntil);
+            new DiscountCodeParams(
+                "SALE20",
+                now.minusHours(2),
+                now.plusDays(2),
+                5,
+                2,
+                BigDecimal.valueOf(20),
+                discountFrom,
+                discountUntil));
     redemptionCodeService.createCode(createRequest);
 
     RedemptionRedeemResponse response =

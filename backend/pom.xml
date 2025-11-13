@@ -24,7 +24,7 @@
                 <java.version>17</java.version>
                 <prettier.version>3.2.5</prettier.version>
                 <prettier-plugin-java.version>2.7.4</prettier-plugin-java.version>
-        <spring-boot.version>3.4.11</spring-boot.version>
+        <spring-boot.version>3.5.7</spring-boot.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
         <sevntu.version>1.44.1</sevntu.version>
@@ -107,11 +107,19 @@
                         <groupId>org.springframework</groupId>
                         <artifactId>spring-core</artifactId>
                 </dependency>
+                <dependency>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter</artifactId>
+                </dependency>
 
                 <!-- YAML support for hot-reloadable TTS configuration -->
                 <dependency>
                         <groupId>com.fasterxml.jackson.dataformat</groupId>
                         <artifactId>jackson-dataformat-yaml</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
                 </dependency>
 
                 <dependency>
@@ -143,6 +151,20 @@
                 <dependency>
                         <groupId>org.springframework.security</groupId>
                         <artifactId>spring-security-crypto</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-lang3</artifactId>
+                        <version>3.14.0</version>
+                </dependency>
+                <dependency>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-collections4</artifactId>
+                        <version>4.4</version>
                 </dependency>
                 <dependency>
                         <groupId>com.squareup.okhttp3</groupId>

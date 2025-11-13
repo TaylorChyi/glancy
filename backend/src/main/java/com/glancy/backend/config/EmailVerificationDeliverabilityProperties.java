@@ -5,8 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Additional metadata that helps mailbox providers evaluate authenticity of transactional mails.
@@ -91,12 +91,12 @@ public class EmailVerificationDeliverabilityProperties {
     }
 
     public boolean appliesTo(String domain) {
-      if (!StringUtils.hasText(domain) || CollectionUtils.isEmpty(domains)) {
+      if (StringUtils.isBlank(domain) || CollectionUtils.isEmpty(domains)) {
         return false;
       }
       String normalized = domain.toLowerCase(Locale.ROOT);
       for (String candidate : domains) {
-        if (!StringUtils.hasText(candidate)) {
+        if (StringUtils.isBlank(candidate)) {
           continue;
         }
         String trimmed = candidate.trim().toLowerCase(Locale.ROOT);
@@ -120,8 +120,8 @@ public class EmailVerificationDeliverabilityProperties {
                 + ".domains must not be empty");
       }
       if (enforceListUnsubscribe) {
-        boolean hasMailto = StringUtils.hasText(compliance.getUnsubscribeMailto());
-        boolean hasUrl = StringUtils.hasText(compliance.getUnsubscribeUrl());
+        boolean hasMailto = StringUtils.isNotBlank(compliance.getUnsubscribeMailto());
+        boolean hasUrl = StringUtils.isNotBlank(compliance.getUnsubscribeUrl());
         if (!hasMailto && !hasUrl) {
           throw new IllegalStateException(
               "mail.verification.deliverability.mailbox-provider-policies."

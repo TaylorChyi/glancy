@@ -31,11 +31,15 @@ class DefaultWordPersonalizationServiceTest {
   @Mock private UserProfileRepository userProfileRepository;
 
   @Mock private SearchRecordRepository searchRecordRepository;
+  private PersonalizationNarrativeBuilder narrativeBuilder;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    service = new DefaultWordPersonalizationService(userProfileRepository, searchRecordRepository);
+    narrativeBuilder = new PersonalizationNarrativeBuilder();
+    service =
+        new DefaultWordPersonalizationService(
+            userProfileRepository, searchRecordRepository, narrativeBuilder);
   }
 
   @Test

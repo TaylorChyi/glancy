@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ class VolcengineTtsHealthIndicatorTest {
 
   private RestTemplate restTemplate;
   private VolcengineTtsProperties props;
+  private ObjectMapper objectMapper;
   private VolcengineTtsHealthIndicator indicator;
 
   @BeforeEach
@@ -35,7 +37,8 @@ class VolcengineTtsHealthIndicatorTest {
     props.setAccessKeyId("ak");
     props.setSecretKey("sk");
     props.setVoiceType("voice");
-    indicator = new VolcengineTtsHealthIndicator(restTemplate, props);
+    objectMapper = new ObjectMapper();
+    indicator = new VolcengineTtsHealthIndicator(restTemplate, props, objectMapper);
   }
 
   /** Verifies a 2xx response marks the health as UP. */

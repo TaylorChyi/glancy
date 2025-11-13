@@ -24,7 +24,8 @@ class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceT
     LocalDateTime now = LocalDateTime.now();
     RedemptionCodeCreateRequest createRequest =
         membershipCode(
-            "VIP2024", now.minusHours(1), now.plusDays(1), 10, 2, MembershipType.PLUS, 24L);
+            new MembershipCodeParams(
+                "VIP2024", now.minusHours(1), now.plusDays(1), 10, 2, MembershipType.PLUS, 24L));
     redemptionCodeService.createCode(createRequest);
 
     RedemptionRedeemResponse response =
@@ -44,7 +45,8 @@ class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceT
     LocalDateTime now = LocalDateTime.now();
     RedemptionCodeCreateRequest createRequest =
         membershipCode(
-            "LIMIT1", now.minusHours(1), now.plusDays(1), 1, 1, MembershipType.PLUS, 12L);
+            new MembershipCodeParams(
+                "LIMIT1", now.minusHours(1), now.plusDays(1), 1, 1, MembershipType.PLUS, 12L));
     redemptionCodeService.createCode(createRequest);
     redemptionCodeService.redeem(user.getId(), new RedemptionRedeemRequest("LIMIT1"));
 
