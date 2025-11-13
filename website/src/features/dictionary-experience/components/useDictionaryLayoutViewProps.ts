@@ -20,6 +20,63 @@ export type UseDictionaryLayoutViewPropsArgs = {
   searchEmptyState: Record<string, unknown> | undefined;
 };
 
+type CreateDictionaryLayoutViewPropsArgs = {
+  displayClassName: string | undefined;
+  handleShowDictionary: () => void;
+  handleShowLibrary: () => void;
+  handleSelectHistory: (identifier: unknown) => void;
+  activeView: string | undefined;
+  handleScrollEscape: ReturnType<typeof useBottomPanelState>["handleScrollEscape"];
+  viewState: Record<string, any>;
+  libraryLandingLabel: string | undefined;
+  focusInput: () => void;
+  entry: unknown;
+  finalText: string | undefined;
+  loading: boolean | undefined;
+  searchEmptyState: Record<string, unknown> | undefined;
+  entryShouldRender: boolean;
+};
+
+export const createDictionaryLayoutViewProps = ({
+  displayClassName,
+  handleShowDictionary,
+  handleShowLibrary,
+  handleSelectHistory,
+  activeView,
+  handleScrollEscape,
+  viewState,
+  libraryLandingLabel,
+  focusInput,
+  entry,
+  finalText,
+  loading,
+  searchEmptyState,
+  entryShouldRender,
+}: CreateDictionaryLayoutViewPropsArgs) => ({
+  displayClassName,
+  layout: {
+    sidebarProps: {
+      onShowDictionary: handleShowDictionary,
+      onShowLibrary: handleShowLibrary,
+      onSelectHistory: handleSelectHistory,
+      activeView: activeView ?? DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
+    },
+    onMainMiddleScroll: handleScrollEscape,
+  },
+  mainContent: {
+    viewState,
+    libraryLandingLabel,
+    handleShowDictionary,
+    focusInput,
+    handleSelectHistory,
+    shouldRenderEntry: entryShouldRender,
+    entry,
+    finalText,
+    loading,
+    searchEmptyState,
+  },
+});
+
 export const useDictionaryLayoutViewProps = ({
   viewState,
   activeView,
@@ -47,30 +104,23 @@ export const useDictionaryLayoutViewProps = ({
   );
 
   return useMemo(
-    () => ({
-      displayClassName,
-      layout: {
-        sidebarProps: {
-          onShowDictionary: handleShowDictionary,
-          onShowLibrary: handleShowLibrary,
-          onSelectHistory: handleSelectHistory,
-          activeView: activeView ?? DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY,
-        },
-        onMainMiddleScroll: bottomPanelState.handleScrollEscape,
-      },
-      mainContent: {
+    () =>
+      createDictionaryLayoutViewProps({
+        displayClassName,
+        handleShowDictionary,
+        handleShowLibrary,
+        handleSelectHistory,
+        activeView,
+        handleScrollEscape: bottomPanelState.handleScrollEscape,
         viewState,
         libraryLandingLabel,
-        handleShowDictionary,
         focusInput,
-        handleSelectHistory,
-        shouldRenderEntry: entryShouldRender,
         entry,
         finalText,
         loading,
         searchEmptyState,
-      },
-    }),
+        entryShouldRender,
+      }),
     [
       activeView,
       bottomPanelState.handleScrollEscape,
