@@ -3,10 +3,10 @@ import { renderHook, act } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import { ApiError } from "@shared/api/client.js";
 
-// mock global Audio element with basic event system
 const playSpy = jest.fn().mockResolvedValue();
-const pauseSpies = [];
+const audioPool = [];
 let audioB64;
+
 beforeAll(() => {
   class MockResponse {
     constructor(_body, init = {}) {
@@ -19,19 +19,26 @@ beforeAll(() => {
   audioB64 = btoa("audio");
   global.Audio = jest.fn().mockImplementation(() => {
     const handlers = {};
-    const pause = jest.fn(() => handlers.pause?.());
-    pauseSpies.push(pause);
-    return {
+    const audio = {
       play: playSpy,
-      pause,
+      pause: jest.fn(() => handlers.pause?.()),
       addEventListener: jest.fn((e, cb) => {
         handlers[e] = cb;
       }),
       removeEventListener: jest.fn((e) => {
         delete handlers[e];
       }),
+      __handlers: handlers,
+      src: "",
+      currentTime: 0,
     };
+    audioPool.push(audio);
+    return audio;
   });
+});
+
+afterAll(() => {
+  global.Audio.mockReset?.();
 });
 
 // mock useApi to supply tts methods
@@ -49,7 +56,7 @@ describe("useTtsPlayer", () => {
   afterEach(() => {
     speakWord.mockReset();
     playSpy.mockClear();
-    pauseSpies.length = 0;
+    audioPool.length = 0;
     global.URL.createObjectURL.mockClear();
     global.URL.revokeObjectURL.mockClear();
   });
@@ -117,7 +124,7 @@ describe("useTtsPlayer", () => {
     await act(() => {
       result.current.stop();
     });
-    expect(pauseSpies[0]).toHaveBeenCalled();
+    expect(audioPool[0].pause).toHaveBeenCalled();
     expect(global.URL.revokeObjectURL).toHaveBeenCalled();
     expect(result.current.playing).toBe(false);
   });
@@ -136,6 +143,30 @@ describe("useTtsPlayer", () => {
     await act(async () => {
       await second.result.current.play({ text: "b", lang: "en" });
     });
-    expect(pauseSpies[0]).toHaveBeenCalled();
+    expect(audioPool[0].pause).toHaveBeenCalled();
+  });
+
+  /**
+   * When playback was paused but the buffer is still in memory,
+   * the hook should resume without hitting the network again.
+   */
+  test("resumes playback without refetching audio", async () => {
+    speakWord.mockResolvedValue({ data: audioB64, format: "mp3" });
+    const { result } = renderHook(() => useTtsPlayer());
+
+    await act(async () => {
+      await result.current.play({ text: "hi", lang: "en" });
+    });
+    expect(speakWord).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      audioPool[0].__handlers.pause?.();
+    });
+
+    await act(async () => {
+      await result.current.play({ text: "hi", lang: "en" });
+    });
+    expect(speakWord).toHaveBeenCalledTimes(1);
+    expect(playSpy).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,3 +1,4 @@
+import { pipeline } from "../pipeline.js";
 import {
   ASCII_PUNCTUATION,
   ASCII_PUNCTUATION_BOUNDARY,
@@ -103,7 +104,7 @@ const shouldAppendPunctuationSpace = ({
   return true;
 };
 
-export function ensureEnglishPunctuationSpacing(text) {
+const rewritePunctuationSpacing = (text) => {
   if (!text) {
     return text;
   }
@@ -141,4 +142,17 @@ export function ensureEnglishPunctuationSpacing(text) {
     }
   }
   return result;
+};
+
+const ensureTextInput = (text) => (typeof text === "string" ? text : "");
+
+const applyPunctuationSpacing = (text) => rewritePunctuationSpacing(text);
+
+const ensureEnglishPunctuationSpacingPipeline = pipeline([
+  ensureTextInput,
+  applyPunctuationSpacing,
+]);
+
+export function ensureEnglishPunctuationSpacing(text) {
+  return ensureEnglishPunctuationSpacingPipeline(text);
 }

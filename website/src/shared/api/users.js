@@ -1,11 +1,15 @@
 import { API_PATHS } from "@core/config/api.js";
-import { apiRequest, createJsonRequest } from "./client.js";
+import { apiRequest, jsonRequest as defaultJsonRequest } from "./client.js";
 import { useApi } from "@shared/hooks/useApi.js";
 
-export function createUsersApi(request = apiRequest) {
-  const jsonRequest = createJsonRequest(request);
+const defaultDeps = {
+  request: apiRequest,
+  jsonRequest: defaultJsonRequest,
+};
 
-  const uploadAvatar = async ({ userId, file, token }) => {
+export function createUploadAvatar(overrides = {}) {
+  const { request } = { ...defaultDeps, ...overrides };
+  return async ({ userId, file, token }) => {
     const formData = new FormData();
     formData.append("file", file);
     return request(`${API_PATHS.users}/${userId}/avatar-file`, {
@@ -14,59 +18,63 @@ export function createUsersApi(request = apiRequest) {
       token,
     });
   };
+}
 
-  const updateUsername = ({ userId, username, token }) =>
+export function createUpdateUsername(overrides = {}) {
+  const { jsonRequest } = { ...defaultDeps, ...overrides };
+  return ({ userId, username, token }) =>
     jsonRequest(`${API_PATHS.users}/${userId}/username`, {
       method: "PUT",
       token,
       body: { username },
     });
+}
 
-  const updateContact = ({ userId, email, phone, token }) =>
+export function createUpdateContact(overrides = {}) {
+  const { jsonRequest } = { ...defaultDeps, ...overrides };
+  return ({ userId, email, phone, token }) =>
     jsonRequest(`${API_PATHS.users}/${userId}/contact`, {
       method: "PUT",
       token,
       body: { email, phone },
     });
+}
 
-  const requestEmailChangeCode = ({ userId, email, token }) =>
+export function createRequestEmailChangeCode(overrides = {}) {
+  const { jsonRequest } = { ...defaultDeps, ...overrides };
+  return ({ userId, email, token }) =>
     jsonRequest(`${API_PATHS.users}/${userId}/email/change-code`, {
       method: "POST",
       token,
       body: { email },
     });
+}
 
-  const confirmEmailChange = ({ userId, email, code, token }) =>
+export function createConfirmEmailChange(overrides = {}) {
+  const { jsonRequest } = { ...defaultDeps, ...overrides };
+  return ({ userId, email, code, token }) =>
     jsonRequest(`${API_PATHS.users}/${userId}/email`, {
       method: "PUT",
       token,
       body: { email, code },
     });
+}
 
-  const unbindEmail = ({ userId, token }) =>
+export function createUnbindEmail(overrides = {}) {
+  const { jsonRequest } = { ...defaultDeps, ...overrides };
+  return ({ userId, token }) =>
     jsonRequest(`${API_PATHS.users}/${userId}/email`, {
       method: "DELETE",
       token,
     });
-
-  return {
-    uploadAvatar,
-    updateUsername,
-    updateContact,
-    requestEmailChangeCode,
-    confirmEmailChange,
-    unbindEmail,
-  };
 }
 
-export const {
-  uploadAvatar,
-  updateUsername,
-  updateContact,
-  requestEmailChangeCode,
-  confirmEmailChange,
-  unbindEmail,
-} = createUsersApi();
+export const uploadAvatar = createUploadAvatar();
+export const updateUsername = createUpdateUsername();
+export const updateContact = createUpdateContact();
+export const requestEmailChangeCode = createRequestEmailChangeCode();
+export const confirmEmailChange = createConfirmEmailChange();
+export const unbindEmail = createUnbindEmail();
 
 export function useUsersApi() {
   return useApi().users;

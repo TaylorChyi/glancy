@@ -1,5 +1,22 @@
 import { useCallback } from "react";
-import { computePopoverPosition, getViewportMetrics } from "./placementEngine";
+import { computePopoverPosition } from "./placementEngine";
+
+const INFINITE_VIEWPORT = {
+  width: Number.POSITIVE_INFINITY,
+  height: Number.POSITIVE_INFINITY,
+};
+
+const getViewportMetrics = (
+  targetWindow = typeof window === "undefined" ? undefined : window,
+) => {
+  if (!targetWindow) {
+    return INFINITE_VIEWPORT;
+  }
+  return {
+    width: targetWindow.innerWidth,
+    height: targetWindow.innerHeight,
+  };
+};
 
 function resolveNextPosition({
   anchorRef,
@@ -35,15 +52,9 @@ export function usePopoverPositionUpdater({
   fallbackPlacements,
   align,
   offset,
-  isOpen,
-  setPosition,
-  setActivePlacement,
-  setVisible,
 }) {
   return useCallback(() => {
-    if (!isOpen || typeof window === "undefined") return;
-
-    const resolution = resolveNextPosition({
+    return resolveNextPosition({
       anchorRef,
       contentRef,
       placement,
@@ -51,29 +62,5 @@ export function usePopoverPositionUpdater({
       align,
       offset,
     });
-    if (!resolution) return;
-
-    setPosition((prev) => {
-      if (
-        prev.top === resolution.position.top &&
-        prev.left === resolution.position.left
-      ) {
-        return prev;
-      }
-      return resolution.position;
-    });
-    setActivePlacement(resolution.placement);
-    setVisible(true);
-  }, [
-    align,
-    anchorRef,
-    contentRef,
-    fallbackPlacements,
-    isOpen,
-    offset,
-    placement,
-    setActivePlacement,
-    setPosition,
-    setVisible,
-  ]);
+  }, [align, anchorRef, contentRef, fallbackPlacements, offset, placement]);
 }

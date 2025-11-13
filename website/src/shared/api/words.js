@@ -7,6 +7,12 @@ import { useWordStore } from "@core/store/wordStore.js";
 // 直接引用数据治理 store，避免 utils/store 桶状导出间的循环依赖在 SSR 或打包阶段触发。
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 
+const defaultWordDeps = {
+  request: apiRequest,
+  store: useWordStore,
+  governanceStore: useDataGovernanceStore,
+};
+
 export const WORD_CACHE_VERSION = "md1";
 
 export const wordCacheKey = ({
@@ -31,6 +37,8 @@ const resolveKey = ({
   flavor = WORD_FLAVOR_BILINGUAL,
   model = DEFAULT_MODEL,
 }) => wordCacheKey({ term, language, flavor, model });
+
+const getCachedWord = (store, key) => store.getState().getEntry(key);
 
 const collectResponseVersions = (response) => {
   if (Array.isArray(response?.versions)) {
@@ -101,46 +109,57 @@ const buildWordQueryParams = ({
   return params;
 };
 
-const createWordFetcher = ({ request, store, governanceStore }) => {
-  const persistWordRecord = createWordRecordPersister(store);
-  const resolveCaptureHistory = createCaptureHistoryResolver(governanceStore);
-
-  return async ({
+const buildWordRequestContext = (
+  options,
+  resolveCaptureHistory,
+) => {
+  const {
     userId,
     term,
     language,
     model = DEFAULT_MODEL,
     flavor = WORD_FLAVOR_BILINGUAL,
-    token,
     forceNew = false,
     versionId,
     captureHistory,
-  }) => {
-    const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
-    const shouldCaptureHistory =
-      captureHistory ?? resolveCaptureHistory();
-    const key = resolveKey({
-      term,
-      language,
-      flavor: resolvedFlavor,
-      model,
-    });
+  } = options ?? {};
+  const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
+  const shouldCaptureHistory =
+    captureHistory ?? resolveCaptureHistory();
+  const key = resolveKey({
+    term,
+    language,
+    flavor: resolvedFlavor,
+    model,
+  });
+  const params = buildWordQueryParams({
+    userId,
+    term,
+    language,
+    flavor: resolvedFlavor,
+    model,
+    forceNew,
+    versionId,
+    captureHistory: shouldCaptureHistory,
+  });
+  return { key, params, forceNew };
+};
+
+const createWordFetcher = ({ request, store, governanceStore }) => {
+  const persistWordRecord = createWordRecordPersister(store);
+  const resolveCaptureHistory = createCaptureHistoryResolver(governanceStore);
+
+  return async (options = {}) => {
+    const { key, params, forceNew } = buildWordRequestContext(
+      options,
+      resolveCaptureHistory,
+    );
     if (!forceNew) {
-      const cached = store.getState().getEntry(key);
+      const cached = getCachedWord(store, key);
       if (cached) return cached;
     }
-    const params = buildWordQueryParams({
-      userId,
-      term,
-      language,
-      flavor: resolvedFlavor,
-      model,
-      forceNew,
-      versionId,
-      captureHistory: shouldCaptureHistory,
-    });
     const result = await request(`${API_PATHS.words}?${params.toString()}`, {
-      token,
+      token: options.token,
     });
     return persistWordRecord(key, result);
   };
@@ -156,24 +175,24 @@ const createWordAudioFetcher = (request) => async ({
   return resp.blob();
 };
 
-export function createWordsApi(request = apiRequest) {
-  const store = useWordStore;
-  const governanceStore = useDataGovernanceStore;
-  const fetchWordImpl = createWordFetcher({ request, store, governanceStore });
+export function createFetchWord(overrides = {}) {
+  const deps = { ...defaultWordDeps, ...overrides };
+  const fetchWordImpl = createWordFetcher(deps);
   const fetchWordCached = createCachedFetcher(fetchWordImpl, resolveKey);
-
-  const fetchWord = async (options) =>
+  return (options = {}) =>
     options?.forceNew ? fetchWordImpl(options) : fetchWordCached(options);
+}
 
-  const fetchWordAudio = createCachedFetcher(
+export function createFetchWordAudio(overrides = {}) {
+  const { request } = { ...defaultWordDeps, ...overrides };
+  return createCachedFetcher(
     createWordAudioFetcher(request),
     ({ term, language }) => `${language}:${term}`,
   );
-
-  return { fetchWord, fetchWordAudio };
 }
 
-export const { fetchWord, fetchWordAudio } = createWordsApi();
+export const fetchWord = createFetchWord();
+export const fetchWordAudio = createFetchWordAudio();
 
 export function useWordsApi() {
   return useApi().words;

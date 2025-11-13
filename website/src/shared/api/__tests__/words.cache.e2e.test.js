@@ -4,12 +4,12 @@ jest.unstable_mockModule("@shared/hooks/useApi.js", () => ({
   useApi: () => ({ words: {} }),
 }));
 
-const { createWordsApi } = await import("@shared/api/words.js");
+const { createFetchWord } = await import("@shared/api/words.js");
 const { useWordStore } = await import("@core/store");
 const { WORD_FLAVOR_BILINGUAL } = await import("@shared/utils/language.js");
 
 const request = jest.fn();
-const api = createWordsApi(request);
+const fetchWord = createFetchWord({ request });
 
 beforeEach(() => {
   useWordStore.getState().clear();
@@ -23,7 +23,7 @@ test("fetchWord caches markdown across calls", async () => {
   const response = { id: "v1", term: "hello", markdown: "**hello**" };
   request.mockResolvedValueOnce(response);
 
-  const result = await api.fetchWord({
+  const result = await fetchWord({
     userId: "u",
     term: "hello",
     language: "ENGLISH",
@@ -33,7 +33,7 @@ test("fetchWord caches markdown across calls", async () => {
   expect(result.markdown).toBe("**hello**");
   expect(request).toHaveBeenCalledTimes(1);
 
-  const cached = await api.fetchWord({
+  const cached = await fetchWord({
     userId: "u",
     term: "hello",
     language: "ENGLISH",

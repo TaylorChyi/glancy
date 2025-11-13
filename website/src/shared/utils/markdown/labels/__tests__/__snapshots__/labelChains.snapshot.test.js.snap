@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`markdown label chain pipelines renders {
+  label: 'expand collapsed label chain',
+  transform: [Function: expandCollapsedLabelChains],
+  input: '- 释义:同义词:精准
+- Definition:Synonyms:precise'
+} golden snapshot 1`] = `
+"- 释义:
+  同义词:精准
+- Definition:
+  Synonyms:precise"
+`;
+
+exports[`markdown label chain pipelines renders {
+  label: 'resolve dangling label separators',
+  transform: [Function: resolveDanglingLabelSeparators],
+  input: '- **Example**:Line -
+  **Translation**:Segment
+- **例句**：继续 -
+  **译文**：下一行'
+} golden snapshot 1`] = `
+"- **Example**:Line
+  **Translation**:Segment
+- **例句**：继续 -
+  **译文**：下一行"
+`;
+
+exports[`markdown label chain pipelines renders {
+  label: 'restore missing delimiters',
+  transform: [Function: restoreMissingLabelDelimiters],
+  input: 'Synonyms swift swift
+同义词 精准 严谨
+Example She walks Translation 她走路'
+} golden snapshot 1`] = `
+"Synonyms: swift swift
+同义词: 精准 严谨
+Example: She walks Translation 她走路"
+`;
+
+exports[`markdown label chain pipelines renders {
+  label: 'separate adjacent inline labels',
+  transform: [Function: separateAdjacentInlineLabels],
+  input: 'Synonyms:fastTranslation:quick
+释义:例句:示例'
+} golden snapshot 1`] = `
+"Synonyms:fast
+Translation:quick
+释义:
+例句:示例"
+`;

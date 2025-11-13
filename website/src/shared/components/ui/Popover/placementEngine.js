@@ -101,26 +101,6 @@ function fitsWithinViewport({
 }
 
 /**
- * 意图：提供统一方式获取视窗尺寸，在 SSR 或测试环境中返回无限空间以避免截断。
- * 输入：可选的 window 对象。
- * 输出：包含 width 与 height 的视窗维度对象。
- * 流程：
- *  1) 若提供 window 或全局存在 window，则读取 innerWidth/innerHeight；
- *  2) 否则返回无穷大视窗，表示无需裁剪。
- */
-export function getViewportMetrics(
-  targetWindow = typeof window === "undefined" ? undefined : window,
-) {
-  if (!targetWindow) {
-    return INFINITE_VIEWPORT;
-  }
-  return {
-    width: targetWindow.innerWidth,
-    height: targetWindow.innerHeight,
-  };
-}
-
-/**
  * 意图：生成主候选与备用候选的去重列表，确保顺序稳定。
  * 输入：placement 字符串与备用 placement 数组。
  * 输出：按优先级排列、不含重复项的 placement 列表。
@@ -338,23 +318,24 @@ export function computePopoverPosition({
   fallbackPlacements,
   align,
   offset,
-  viewport = getViewportMetrics(),
+  viewport,
   margin = VIEWPORT_MARGIN,
 }) {
+  const effectiveViewport = viewport ?? INFINITE_VIEWPORT;
   const { resolution, alignedPosition } = resolveAlignedPosition({
     anchorRect,
     popRect,
     placement,
     fallbackPlacements,
     offset,
-    viewport,
+    viewport: effectiveViewport,
     align,
   });
 
   const position = clampToViewport({
     position: alignedPosition,
     popRect,
-    viewport,
+    viewport: effectiveViewport,
     margin,
     axis: resolution.axis,
   });

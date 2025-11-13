@@ -1,3 +1,4 @@
+import { pipeline } from "../../../shared/utils/pipeline.js";
 import { normalizeDictionaryMarkdown } from "./dictionaryMarkdownNormalizer.js";
 
 const DEFAULT_HEADINGS = Object.freeze({
@@ -32,6 +33,222 @@ const sanitizeText = (value) =>
     index === 0 ? "" : " ",
   );
 
+const createMarkdownState = (
+  entry,
+  headings = DEFAULT_HEADINGS,
+  labels = DEFAULT_LABELS,
+) => ({
+  entry: entry ?? {},
+  headings: headings ?? DEFAULT_HEADINGS,
+  labels: labels ?? DEFAULT_LABELS,
+  lines: [],
+});
+
+const resolveHeading = (state, key) => state.headings?.[key] ?? DEFAULT_HEADINGS[key];
+
+const appendLines = (state, additions) =>
+  isNonEmptyArray(additions)
+    ? { ...state, lines: [...state.lines, ...additions] }
+    : state;
+
+const appendSection = (state, headingKey, content) => {
+  if (!isNonEmptyArray(content)) {
+    return state;
+  }
+  const heading = resolveHeading(state, headingKey);
+  return heading ? appendLines(state, [heading, ...content, ""]) : state;
+};
+
+const ensureTermHeading = (state) => {
+  const template = resolveHeading(state, "term");
+  const term = sanitizeText(state.entry["词条"] ?? state.entry.term);
+  if (!template || !term) {
+    return state;
+  }
+  return appendLines(state, [template.replace("%term%", term), ""]);
+};
+
+const finalizeMarkdown = (state) => {
+  const content = Array.isArray(state?.lines) ? state.lines.join("\n").trim() : "";
+  return normalizeDictionaryMarkdown(content);
+};
+
+const injectStructuredPhonetics = (state) =>
+  appendSection(
+    state,
+    "phonetic",
+    buildStructuredPhoneticLines(state.entry, state.labels),
+  );
+
+const injectStructuredDefinitions = (state) =>
+  appendSection(
+    state,
+    "definitions",
+    buildStructuredDefinitionBlocks(state.entry, state.labels),
+  );
+
+const injectStructuredVariants = (state) =>
+  appendSection(state, "variants", buildVariantLines(state.entry));
+
+const injectStructuredPhrases = (state) =>
+  appendSection(state, "phrases", buildPhraseLines(state.entry));
+
+const structuredMarkdownPipeline = pipeline([
+  ensureTermHeading,
+  injectStructuredPhonetics,
+  injectStructuredDefinitions,
+  injectStructuredVariants,
+  injectStructuredPhrases,
+  finalizeMarkdown,
+]);
+
+const buildStructuredPhoneticLines = (entry, labels) => {
+  const phonetic = entry?.["发音"] ?? {};
+  const pairs = [
+    { label: labels.phoneticEn, value: sanitizeText(phonetic?.["英音"]) },
+    { label: labels.phoneticUs, value: sanitizeText(phonetic?.["美音"]) },
+  ];
+  return pairs
+    .map(({ label, value }) => (value ? `- ${label}：${value}` : ""))
+    .filter(Boolean);
+};
+
+const buildStructuredDefinitionBlocks = (entry, labels) => {
+  const groups = Array.isArray(entry?.["发音解释"]) ? entry["发音解释"] : [];
+  return groups.flatMap((group, groupIndex) =>
+    buildGroupDefinitionBlocks(group, groupIndex, labels),
+  );
+};
+
+const buildGroupDefinitionBlocks = (group, groupIndex, labels) => {
+  const senses = Array.isArray(group?.释义) ? group.释义 : [];
+  return senses.flatMap((sense, senseIndex) =>
+    buildSenseBlocks({
+      sense,
+      order: `${groupIndex + 1}.${senseIndex + 1}`,
+      labels,
+    }),
+  );
+};
+
+const buildSenseBlocks = ({ sense, order, labels }) => {
+  const lines = [];
+  const definitionLine = formatDefinitionLine({
+    order,
+    category: sanitizeText(sense?.类别),
+    definition: sanitizeText(sense?.定义),
+  });
+  if (definitionLine) {
+    lines.push(definitionLine);
+  }
+  lines.push(...buildRelationLines(sense?.关系词, labels));
+  lines.push(...buildExampleLines(sense?.例句, labels));
+  return lines;
+};
+
+const formatDefinitionLine = ({ order, category, definition }) => {
+  if (!category && !definition) {
+    return "";
+  }
+  const categoryPrefix = category
+    ? `${category}${definition ? " · " : ""}`
+    : "";
+  return `${order}. ${categoryPrefix}${definition ?? ""}`.trimEnd();
+};
+
+const buildRelationLines = (relations = {}, labels) => {
+  const synonyms = formatRelationLine(labels.synonyms, relations?.同义词);
+  const antonyms = formatRelationLine(labels.antonyms, relations?.反义词);
+  const related = formatRelationLine(labels.related, relations?.相关词);
+  return [synonyms, antonyms, related].filter(Boolean);
+};
+
+const formatRelationLine = (label, values) => {
+  const tokens = (Array.isArray(values) ? values : [])
+    .map(sanitizeText)
+    .filter(Boolean);
+  return tokens.length ? `  - ${label}：${tokens.join("、")}` : "";
+};
+
+const buildExampleLines = (examples, labels) =>
+  (Array.isArray(examples) ? examples : []).flatMap((example) => {
+    const source = sanitizeText(example?.源语言);
+    const translation = sanitizeText(example?.翻译);
+    const lines = [];
+    if (source) {
+      lines.push(`  - ${labels.example}：${source}`);
+    }
+    if (translation) {
+      lines.push(`    ${labels.translation}：${translation}`);
+    }
+    return lines;
+  });
+
+const buildVariantLines = (entry) =>
+  (Array.isArray(entry?.["变形"]) ? entry["变形"] : [])
+    .map((variant) => {
+      const form = sanitizeText(variant?.词形);
+      if (!form) return "";
+      const state = sanitizeText(variant?.状态);
+      return `- ${state ? `${state}：` : ""}${form}`;
+    })
+    .filter(Boolean);
+
+const buildPhraseLines = (entry) =>
+  (Array.isArray(entry?.["常见词组"]) ? entry["常见词组"] : [])
+    .map((phrase) => {
+      if (typeof phrase === "string") {
+        const value = sanitizeText(phrase);
+        return value ? `- ${value}` : "";
+      }
+      const name = sanitizeText(phrase?.词组);
+      if (!name) return "";
+      const meaning = sanitizeText(phrase?.释义 ?? phrase?.解释);
+      return meaning ? `- ${name} — ${meaning}` : `- ${name}`;
+    })
+    .filter(Boolean);
+
+const buildLegacyPhoneticLines = (entry, labels) => {
+  const phonetic = sanitizeText(entry?.phonetic);
+  return phonetic ? [`- ${labels.phoneticEn}：${phonetic}`] : [];
+};
+
+const injectLegacyPhonetic = (state) =>
+  appendSection(
+    state,
+    "phonetic",
+    buildLegacyPhoneticLines(state.entry, state.labels),
+  );
+
+const buildLegacyDefinitionLines = (entry) =>
+  (Array.isArray(entry?.definitions) ? entry.definitions : [])
+    .map((definition, index) => {
+      const content = sanitizeText(definition);
+      return content ? `${index + 1}. ${content}` : "";
+    })
+    .filter(Boolean);
+
+const injectLegacyDefinitions = (state) =>
+  appendSection(state, "definitions", buildLegacyDefinitionLines(state.entry));
+
+const buildLegacyExampleLine = (entry, labels) => {
+  const example = sanitizeText(entry?.example);
+  return example ? `- ${labels.example}：${example}` : "";
+};
+
+const appendLegacyExample = (state) => {
+  const exampleLine = buildLegacyExampleLine(state.entry, state.labels);
+  return exampleLine ? appendLines(state, [exampleLine, ""]) : state;
+};
+
+const legacyMarkdownPipeline = pipeline([
+  ensureTermHeading,
+  injectLegacyPhonetic,
+  injectLegacyDefinitions,
+  appendLegacyExample,
+  finalizeMarkdown,
+]);
+
 class MarkdownStrategy {
   supports(entry) {
     return Boolean(
@@ -55,41 +272,7 @@ class LegacyEnglishStrategy {
   }
 
   build(entry) {
-    const lines = [];
-    const headings = DEFAULT_HEADINGS;
-
-    const term = sanitizeText(entry.term);
-    if (term) {
-      lines.push(headings.term.replace("%term%", term));
-      lines.push("");
-    }
-
-    if (entry.phonetic) {
-      lines.push(headings.phonetic);
-      lines.push(
-        `- ${DEFAULT_LABELS.phoneticEn}：${sanitizeText(entry.phonetic)}`,
-      );
-      lines.push("");
-    }
-
-    if (isNonEmptyArray(entry.definitions)) {
-      lines.push(headings.definitions);
-      entry.definitions.forEach((definition, index) => {
-        const content = sanitizeText(definition);
-        if (content) {
-          lines.push(`${index + 1}. ${content}`);
-        }
-      });
-      lines.push("");
-    }
-
-    const example = sanitizeText(entry.example);
-    if (example) {
-      lines.push(`- ${DEFAULT_LABELS.example}：${example}`);
-      lines.push("");
-    }
-
-    return normalizeDictionaryMarkdown(lines.join("\n").trim());
+    return legacyMarkdownPipeline(createMarkdownState(entry));
   }
 }
 
@@ -104,129 +287,7 @@ class StructuredChineseStrategy {
   }
 
   build(entry) {
-    const headings = DEFAULT_HEADINGS;
-    const labels = DEFAULT_LABELS;
-    const lines = [];
-
-    const term = sanitizeText(entry["词条"] ?? entry.term);
-    if (term) {
-      lines.push(headings.term.replace("%term%", term));
-      lines.push("");
-    }
-
-    const phonetic = entry["发音"] || {};
-    const phoneticLines = [];
-    const en = sanitizeText(phonetic["英音"]);
-    const us = sanitizeText(phonetic["美音"]);
-    if (en) {
-      phoneticLines.push(`- ${labels.phoneticEn}：${en}`);
-    }
-    if (us) {
-      phoneticLines.push(`- ${labels.phoneticUs}：${us}`);
-    }
-    if (phoneticLines.length > 0) {
-      lines.push(headings.phonetic);
-      lines.push(...phoneticLines);
-      lines.push("");
-    }
-
-    const groups = Array.isArray(entry["发音解释"]) ? entry["发音解释"] : [];
-    const definitionBlocks = [];
-    groups.forEach((group, groupIndex) => {
-      const senses = Array.isArray(group?.释义) ? group.释义 : [];
-      senses.forEach((sense, senseIndex) => {
-        const order = `${groupIndex + 1}.${senseIndex + 1}`;
-        const definition = sanitizeText(sense?.定义);
-        const category = sanitizeText(sense?.类别);
-        const headline = [order, category, definition]
-          .filter(Boolean)
-          .join(category && definition ? " " : " ");
-        if (headline) {
-          definitionBlocks.push(
-            `${order}. ${category ? `${category} · ` : ""}${definition}`,
-          );
-        }
-
-        const relations = sense?.关系词 || {};
-        const synonyms = Array.isArray(relations?.同义词)
-          ? relations.同义词
-          : [];
-        const antonyms = Array.isArray(relations?.反义词)
-          ? relations.反义词
-          : [];
-        const related = Array.isArray(relations?.相关词)
-          ? relations.相关词
-          : [];
-        if (synonyms.length > 0) {
-          definitionBlocks.push(
-            `  - ${labels.synonyms}：${synonyms.map(sanitizeText).filter(Boolean).join("、")}`,
-          );
-        }
-        if (antonyms.length > 0) {
-          definitionBlocks.push(
-            `  - ${labels.antonyms}：${antonyms.map(sanitizeText).filter(Boolean).join("、")}`,
-          );
-        }
-        if (related.length > 0) {
-          definitionBlocks.push(
-            `  - ${labels.related}：${related.map(sanitizeText).filter(Boolean).join("、")}`,
-          );
-        }
-
-        const examples = Array.isArray(sense?.例句) ? sense.例句 : [];
-        examples.forEach((example) => {
-          const source = sanitizeText(example?.源语言);
-          const translation = sanitizeText(example?.翻译);
-          if (source) {
-            definitionBlocks.push(`  - ${labels.example}：${source}`);
-          }
-          if (translation) {
-            definitionBlocks.push(`    ${labels.translation}：${translation}`);
-          }
-        });
-      });
-    });
-    if (definitionBlocks.length > 0) {
-      lines.push(headings.definitions);
-      lines.push(...definitionBlocks);
-      lines.push("");
-    }
-
-    const variants = Array.isArray(entry["变形"]) ? entry["变形"] : [];
-    const variantLines = variants
-      .map((variant) => {
-        const state = sanitizeText(variant?.状态);
-        const form = sanitizeText(variant?.词形);
-        if (!form) return "";
-        return `- ${state ? `${state}：` : ""}${form}`;
-      })
-      .filter(Boolean);
-    if (variantLines.length > 0) {
-      lines.push(headings.variants);
-      lines.push(...variantLines);
-      lines.push("");
-    }
-
-    const phrases = Array.isArray(entry["常见词组"]) ? entry["常见词组"] : [];
-    const phraseLines = phrases
-      .map((phrase) => {
-        if (typeof phrase === "string") {
-          const value = sanitizeText(phrase);
-          return value ? `- ${value}` : "";
-        }
-        const name = sanitizeText(phrase?.词组);
-        const meaning = sanitizeText(phrase?.释义 ?? phrase?.解释);
-        if (!name) return "";
-        return meaning ? `- ${name} — ${meaning}` : `- ${name}`;
-      })
-      .filter(Boolean);
-    if (phraseLines.length > 0) {
-      lines.push(headings.phrases);
-      lines.push(...phraseLines);
-      lines.push("");
-    }
-
-    return normalizeDictionaryMarkdown(lines.join("\n").trim());
+    return structuredMarkdownPipeline(createMarkdownState(entry));
   }
 }
 
@@ -236,15 +297,6 @@ const STRATEGIES = [
   new LegacyEnglishStrategy(),
 ];
 
-/**
- * 意图：对外暴露统一的词条 Markdown 构建入口。
- * 输入：词条对象（可能为 Markdown 字符串/传统 JSON/英中 JSON），可选标题映射。
- * 输出：标准化后的 Markdown 字符串，若无法识别则回退为空串。
- * 流程：
- *  1) 依次尝试策略，命中后生成 Markdown；
- *  2) 若全部策略未命中则返回空字符串；
- * 错误处理：策略内部已对异常做兜底，确保返回字符串。
- */
 export function buildDictionaryEntryMarkdown(entry) {
   for (const strategy of STRATEGIES) {
     if (strategy.supports(entry)) {

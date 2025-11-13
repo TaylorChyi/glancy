@@ -1,4 +1,4 @@
-import { createWordsApi } from "../words.js";
+import { createFetchWord, createFetchWordAudio } from "../words.js";
 import { API_PATHS } from "@core/config/api.js";
 import { DEFAULT_MODEL } from "@core/config";
 import { WORD_FLAVOR_BILINGUAL } from "@shared/utils/language.js";
@@ -12,8 +12,8 @@ import { jest } from "@jest/globals";
  */
 test("fetchWord builds query string", async () => {
   const request = jest.fn().mockResolvedValue({});
-  const api = createWordsApi(request);
-  await api.fetchWord({
+  const fetchWord = createFetchWord({ request });
+  await fetchWord({
     userId: "u",
     term: "hello",
     language: "ENGLISH",
@@ -39,8 +39,8 @@ test("fetchWord builds query string", async () => {
 test("fetchWord passes captureHistory=false when disabled", async () => {
   useDataGovernanceStore.setState({ historyCaptureEnabled: false });
   const request = jest.fn().mockResolvedValue({});
-  const api = createWordsApi(request);
-  await api.fetchWord({
+  const fetchWord = createFetchWord({ request });
+  await fetchWord({
     userId: "u",
     term: "hello",
     language: "ENGLISH",
@@ -56,15 +56,15 @@ test("fetchWord passes captureHistory=false when disabled", async () => {
  */
 test("fetchWord caches repeated queries", async () => {
   const request = jest.fn().mockResolvedValue({ word: "hello" });
-  const api = createWordsApi(request);
+  const fetchWord = createFetchWord({ request });
   const args = {
     userId: "u",
     term: "hello",
     language: "ENGLISH",
     flavor: WORD_FLAVOR_BILINGUAL,
   };
-  await api.fetchWord(args);
-  await api.fetchWord(args);
+  await fetchWord(args);
+  await fetchWord(args);
   expect(request).toHaveBeenCalledTimes(1);
 });
 
@@ -74,10 +74,10 @@ test("fetchWord caches repeated queries", async () => {
 test("fetchWordAudio caches repeated queries", async () => {
   const blob = new Blob();
   const request = jest.fn().mockResolvedValue({ blob: () => blob });
-  const api = createWordsApi(request);
+  const fetchWordAudio = createFetchWordAudio({ request });
   const args = { userId: "u", term: "hello", language: "ENGLISH" };
-  const first = await api.fetchWordAudio(args);
-  const second = await api.fetchWordAudio(args);
+  const first = await fetchWordAudio(args);
+  const second = await fetchWordAudio(args);
   expect(request).toHaveBeenCalledTimes(1);
   expect(second).toBe(first);
 });

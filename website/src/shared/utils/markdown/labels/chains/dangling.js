@@ -1,3 +1,4 @@
+import { pipeline } from "../../../pipeline.js";
 import {
   DANGLING_LABEL_INLINE_CHAIN_PATTERN,
   DANGLING_LABEL_SEPARATOR_PATTERN,
@@ -83,20 +84,23 @@ const applyInlineRewrites = (input, pattern) => {
   return current;
 };
 
-export function resolveDanglingLabelSeparators(text) {
-  const withoutTrailingHyphen = text.replace(
-    DANGLING_LABEL_SEPARATOR_PATTERN,
-    (...args) =>
-      rewriteDanglingLabelSeparator(toSeparatorRewriteContext(args)),
+const ensureTextInput = (text) => (typeof text === "string" ? text : "");
+
+const removeDanglingSeparators = (text) =>
+  text.replace(DANGLING_LABEL_SEPARATOR_PATTERN, (...args) =>
+    rewriteDanglingLabelSeparator(toSeparatorRewriteContext(args)),
   );
 
-  let normalized = applyInlineRewrites(
-    withoutTrailingHyphen,
-    DANGLING_LABEL_INLINE_CHAIN_PATTERN,
-  );
-  normalized = applyInlineRewrites(
-    normalized,
-    DANGLING_LABEL_SPACE_CHAIN_PATTERN,
-  );
-  return normalized;
+const normalizeDanglingChains = (pattern) => (text) =>
+  applyInlineRewrites(text, pattern);
+
+const resolveDanglingLabelSeparatorsPipeline = pipeline([
+  ensureTextInput,
+  removeDanglingSeparators,
+  normalizeDanglingChains(DANGLING_LABEL_INLINE_CHAIN_PATTERN),
+  normalizeDanglingChains(DANGLING_LABEL_SPACE_CHAIN_PATTERN),
+]);
+
+export function resolveDanglingLabelSeparators(text) {
+  return resolveDanglingLabelSeparatorsPipeline(text);
 }

@@ -1,59 +1,12 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef } from "react";
 import PropTypes from "prop-types";
-import SidebarHistorySection from "./SidebarHistorySection.jsx";
-import SidebarUserSection from "./SidebarUserSection.jsx";
-import SidebarHeader from "./header/SidebarHeader.jsx";
-import SidebarLayout from "./layout/SidebarLayout.jsx";
-import useSidebarNavigation from "./hooks/useSidebarNavigation.js";
+import SidebarView from "./SidebarView.jsx";
+import { useSidebarModel } from "./useSidebarModel.ts";
 
-function Sidebar(
-  {
-    isMobile: mobileProp,
-    open,
-    onClose,
-    onShowDictionary,
-    onShowLibrary,
-    activeView,
-    onSelectHistory,
-  },
-  ref,
-) {
-  const navigationState = useSidebarNavigation({
-    isMobile: mobileProp,
-    open,
-    onClose,
-    onShowDictionary,
-    onShowLibrary,
-    activeView,
-  });
-
-  const historyAriaLabel = useMemo(() => {
-    return navigationState.historyLabel || navigationState.entriesLabel;
-  }, [navigationState.entriesLabel, navigationState.historyLabel]);
-
-  return (
-    <SidebarLayout
-      ref={ref}
-      isMobile={navigationState.isMobile}
-      open={navigationState.isOpen}
-      showOverlay={navigationState.shouldShowOverlay}
-      onOverlayClick={
-        navigationState.isMobile ? navigationState.closeSidebar : undefined
-      }
-      navigation={
-        <SidebarHeader
-          items={navigationState.navigationActions}
-          ariaLabel={navigationState.headerLabel}
-        />
-      }
-      historyAriaLabel={historyAriaLabel}
-      historySection={
-        <SidebarHistorySection onSelectHistory={onSelectHistory} />
-      }
-      footerSection={<SidebarUserSection />}
-    />
-  );
-}
+const Sidebar = forwardRef(function Sidebar(props, ref) {
+  const { viewProps } = useSidebarModel(props);
+  return <SidebarView ref={ref} {...viewProps} />;
+});
 
 Sidebar.propTypes = {
   isMobile: PropTypes.bool,
@@ -75,4 +28,4 @@ Sidebar.defaultProps = {
   onSelectHistory: undefined,
 };
 
-export default forwardRef(Sidebar);
+export default Sidebar;

@@ -1,3 +1,4 @@
+import { pipeline } from "../../../pipeline.js";
 import {
   isInlineLabelTerminator,
   shouldSplitInlineLabel,
@@ -175,9 +176,19 @@ const rewriteLine = (line) => {
   return state.result;
 };
 
-export function restoreMissingLabelDelimiters(text) {
-  return text.replace(/(^|\n)([^\n]*)/g, (full, boundary, line) => {
+const ensureTextInput = (text) => (typeof text === "string" ? text : "");
+
+const rewriteLabelLines = (text) =>
+  text.replace(/(^|\n)([^\n]*)/g, (full, boundary, line) => {
     const rewritten = rewriteLine(line);
     return `${boundary}${rewritten}`;
   });
+
+const restoreMissingLabelDelimitersPipeline = pipeline([
+  ensureTextInput,
+  rewriteLabelLines,
+]);
+
+export function restoreMissingLabelDelimiters(text) {
+  return restoreMissingLabelDelimitersPipeline(text);
 }

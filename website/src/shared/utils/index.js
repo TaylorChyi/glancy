@@ -34,3 +34,4 @@ export {
   polishDictionaryMarkdown,
 } from "./markdown.js";
 export { copyTextToClipboard } from "./clipboard.js";
+export { pipeline, runPipeline } from "./pipeline.js";

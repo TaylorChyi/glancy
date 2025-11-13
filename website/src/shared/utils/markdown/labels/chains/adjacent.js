@@ -1,3 +1,4 @@
+import { pipeline } from "../../../pipeline.js";
 import {
   ADJACENT_LABEL_PATTERN,
   INLINE_LABEL_TOKENS,
@@ -13,6 +14,32 @@ import {
 } from "../candidates.js";
 
 const STRONG_LABEL_BOUNDARY_PATTERN = /^[A-Z\u4e00-\u9fff]/u;
+
+const ensureTextInput = (text) => (typeof text === "string" ? text : "");
+
+const splitAdjacentLabels = (text) =>
+  text.replace(ADJACENT_LABEL_PATTERN, rewriteAdjacentSegment);
+
+const rewriteAdjacentSegment = (segment, offset, source) => {
+  const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
+  const precedingSlice = source.slice(lineStart, offset);
+  if (!precedingSlice.includes(":") && !precedingSlice.includes("：")) {
+    return segment;
+  }
+  const boundaryChar = source[offset - 1];
+  const resolved =
+    boundaryChar === ":" || boundaryChar === "："
+      ? resolveAdjacentLabelSplit(segment)
+      : null;
+  const indent =
+    computeListIndentation(source, offset - 1) ||
+    deriveLineIndentation(source, offset);
+  if (!resolved) {
+    return `\n${indent}${segment}`;
+  }
+  const { prefix, label } = resolved;
+  return `${prefix}\n${indent}${label}:`;
+};
 
 const buildSplitCandidate = (token, index) => {
   const suffix = token.slice(index);
@@ -65,25 +92,11 @@ function resolveAdjacentLabelSplit(segment) {
   return best ? { prefix: best.prefix, label: best.label } : null;
 }
 
+const separateAdjacentInlineLabelsPipeline = pipeline([
+  ensureTextInput,
+  splitAdjacentLabels,
+]);
+
 export function separateAdjacentInlineLabels(text) {
-  return text.replace(ADJACENT_LABEL_PATTERN, (segment, offset, source) => {
-    const lineStart = source.lastIndexOf("\n", offset - 1) + 1;
-    const precedingSlice = source.slice(lineStart, offset);
-    if (!precedingSlice.includes(":") && !precedingSlice.includes("：")) {
-      return segment;
-    }
-    const boundaryChar = source[offset - 1];
-    const resolved =
-      boundaryChar === ":" || boundaryChar === "："
-        ? resolveAdjacentLabelSplit(segment)
-        : null;
-    const indent =
-      computeListIndentation(source, offset - 1) ||
-      deriveLineIndentation(source, offset);
-    if (!resolved) {
-      return `\n${indent}${segment}`;
-    }
-    const { prefix, label } = resolved;
-    return `${prefix}\n${indent}${label}:`;
-  });
+  return separateAdjacentInlineLabelsPipeline(text);
 }
