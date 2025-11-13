@@ -22,21 +22,22 @@ export const wordCacheKey = ({
   model = DEFAULT_MODEL,
 }) => `${language}:${flavor}:${term}:${model ?? ""}:${WORD_CACHE_VERSION}`;
 
-/**
- * Query a word definition
- * @param {Object} opts
- * @param {string} opts.userId user identifier
- * @param {string} opts.term word to search
- * @param {string} opts.language CHINESE or ENGLISH
- * @param {string} [opts.flavor] dictionary flavor variant
- * @param {string} [opts.token] user token for auth header
- */
-const resolveKey = ({
-  term,
-  language,
-  flavor = WORD_FLAVOR_BILINGUAL,
-  model = DEFAULT_MODEL,
-}) => wordCacheKey({ term, language, flavor, model });
+const wordAudioCacheKey = ({ term, language }) => `${language}:${term}`;
+
+const resolveWordDeps = (overrides = {}) => ({
+  ...defaultWordDeps,
+  ...overrides,
+});
+
+const ensureFlavor = (flavor) => flavor ?? WORD_FLAVOR_BILINGUAL;
+
+const resolveWordCacheKeyFromOptions = (options = {}) =>
+  wordCacheKey({
+    term: options.term,
+    language: options.language,
+    flavor: options.flavor,
+    model: options.model,
+  });
 
 const getCachedWord = (store, key) => store.getState().getEntry(key);
 
@@ -67,19 +68,21 @@ const normalizeVersionFlavors = (versions, resolvedFlavor) =>
       : version,
   );
 
+const buildWordMetadata = (response) => ({
+  ...(response?.metadata ?? {}),
+  ...(response?.flavor ? { flavor: response.flavor } : {}),
+});
+
 const createWordRecordPersister = (store) => (key, response) => {
   if (!response) return undefined;
   const versions = collectResponseVersions(response);
-  const activeVersionId = resolveActiveVersionId(response, versions);
-  const metadata = {
-    ...(response.metadata ?? {}),
-    ...(response.flavor ? { flavor: response.flavor } : {}),
-  };
+  const metadata = buildWordMetadata(response);
   const resolvedFlavor = metadata.flavor ?? WORD_FLAVOR_BILINGUAL;
   const versionsWithFlavor = normalizeVersionFlavors(
     versions,
     resolvedFlavor,
   );
+  const activeVersionId = resolveActiveVersionId(response, versions);
   store.getState().setVersions(key, versionsWithFlavor, {
     activeVersionId,
     metadata,
@@ -87,8 +90,16 @@ const createWordRecordPersister = (store) => (key, response) => {
   return store.getState().getEntry(key, activeVersionId);
 };
 
+const createWordCache = (store) => ({
+  get: (key) => getCachedWord(store, key),
+  persist: createWordRecordPersister(store),
+});
+
 const createCaptureHistoryResolver = (governanceStore) => () =>
   Boolean(governanceStore.getState().historyCaptureEnabled);
+
+const resolveCaptureHistoryPreference = (captureHistory, resolver) =>
+  captureHistory ?? resolver();
 
 const buildWordQueryParams = ({
   userId,
@@ -109,86 +120,120 @@ const buildWordQueryParams = ({
   return params;
 };
 
-const buildWordRequestContext = (
-  options,
-  resolveCaptureHistory,
-) => {
-  const {
-    userId,
-    term,
-    language,
-    model = DEFAULT_MODEL,
-    flavor = WORD_FLAVOR_BILINGUAL,
-    forceNew = false,
-    versionId,
-    captureHistory,
-  } = options ?? {};
-  const resolvedFlavor = flavor ?? WORD_FLAVOR_BILINGUAL;
-  const shouldCaptureHistory =
-    captureHistory ?? resolveCaptureHistory();
-  const key = resolveKey({
-    term,
-    language,
-    flavor: resolvedFlavor,
-    model,
-  });
-  const params = buildWordQueryParams({
-    userId,
-    term,
-    language,
-    flavor: resolvedFlavor,
-    model,
-    forceNew,
-    versionId,
-    captureHistory: shouldCaptureHistory,
-  });
-  return { key, params, forceNew };
-};
+const buildWordRequestUrl = (params) => `${API_PATHS.words}?${params.toString()}`;
+
+const shouldUseCache = (forceNew) => !forceNew;
+
+const createWordRequestBuilder =
+  (resolveCaptureHistory) =>
+  (options = {}) => {
+    const {
+      userId,
+      term,
+      language,
+      model = DEFAULT_MODEL,
+      flavor,
+      forceNew = false,
+      versionId,
+      captureHistory,
+      token,
+    } = options;
+
+    const resolvedFlavor = ensureFlavor(flavor);
+    const key = wordCacheKey({
+      term,
+      language,
+      flavor: resolvedFlavor,
+      model,
+    });
+    const params = buildWordQueryParams({
+      userId,
+      term,
+      language,
+      flavor: resolvedFlavor,
+      model,
+      forceNew,
+      versionId,
+      captureHistory: resolveCaptureHistoryPreference(
+        captureHistory,
+        resolveCaptureHistory,
+      ),
+    });
+
+    return {
+      key,
+      url: buildWordRequestUrl(params),
+      token,
+      shouldUseCache: shouldUseCache(forceNew),
+    };
+  };
+
+const shouldReturnCachedWord = ({ shouldUseCache, cachedWord }) =>
+  shouldUseCache && Boolean(cachedWord);
+
+const createWordRequestExecutor =
+  (request) =>
+  async ({ url, token }) =>
+    request(url, { token });
 
 const createWordFetcher = ({ request, store, governanceStore }) => {
-  const persistWordRecord = createWordRecordPersister(store);
-  const resolveCaptureHistory = createCaptureHistoryResolver(governanceStore);
+  const cache = createWordCache(store);
+  const buildRequest = createWordRequestBuilder(
+    createCaptureHistoryResolver(governanceStore),
+  );
+  const execute = createWordRequestExecutor(request);
 
   return async (options = {}) => {
-    const { key, params, forceNew } = buildWordRequestContext(
-      options,
-      resolveCaptureHistory,
-    );
-    if (!forceNew) {
-      const cached = getCachedWord(store, key);
-      if (cached) return cached;
+    const requestContext = buildRequest(options);
+    const cachedWord = cache.get(requestContext.key);
+
+    if (
+      shouldReturnCachedWord({
+        shouldUseCache: requestContext.shouldUseCache,
+        cachedWord,
+      })
+    ) {
+      return cachedWord;
     }
-    const result = await request(`${API_PATHS.words}?${params.toString()}`, {
-      token: options.token,
-    });
-    return persistWordRecord(key, result);
+
+    const response = await execute(requestContext);
+    return cache.persist(requestContext.key, response);
   };
 };
 
-const createWordAudioFetcher = (request) => async ({
-  userId,
-  term,
-  language,
-}) => {
-  const params = new URLSearchParams({ userId, term, language });
-  const resp = await request(`${API_PATHS.words}/audio?${params.toString()}`);
-  return resp.blob();
+const shouldBypassInFlightCache = (options = {}) => Boolean(options.forceNew);
+
+const createWordFetchEntryPoint = (fetchWordImpl) => {
+  const cachedFetcher = createCachedFetcher(
+    fetchWordImpl,
+    resolveWordCacheKeyFromOptions,
+  );
+  return (options = {}) =>
+    shouldBypassInFlightCache(options)
+      ? fetchWordImpl(options)
+      : cachedFetcher(options);
+};
+
+const buildWordAudioParams = ({ userId, term, language }) =>
+  new URLSearchParams({ userId, term, language });
+
+const buildWordAudioUrl = (params) =>
+  `${API_PATHS.words}/audio?${params.toString()}`;
+
+const createWordAudioFetcher = (request) => async (options = {}) => {
+  const params = buildWordAudioParams(options);
+  const response = await request(buildWordAudioUrl(params));
+  return response.blob();
 };
 
 export function createFetchWord(overrides = {}) {
-  const deps = { ...defaultWordDeps, ...overrides };
-  const fetchWordImpl = createWordFetcher(deps);
-  const fetchWordCached = createCachedFetcher(fetchWordImpl, resolveKey);
-  return (options = {}) =>
-    options?.forceNew ? fetchWordImpl(options) : fetchWordCached(options);
+  const fetchWordImpl = createWordFetcher(resolveWordDeps(overrides));
+  return createWordFetchEntryPoint(fetchWordImpl);
 }
 
 export function createFetchWordAudio(overrides = {}) {
-  const { request } = { ...defaultWordDeps, ...overrides };
-  return createCachedFetcher(
-    createWordAudioFetcher(request),
-    ({ term, language }) => `${language}:${term}`,
-  );
+  const { request } = resolveWordDeps(overrides);
+  return createCachedFetcher(createWordAudioFetcher(request), wordAudioCacheKey);
 }
 
 export const fetchWord = createFetchWord();
