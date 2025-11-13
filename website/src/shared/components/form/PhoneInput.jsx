@@ -1,115 +1,31 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import styles from "./PhoneInput.module.css";
-
-const COUNTRY_CODE_CATALOG = Object.freeze([
-  { country: "CN", code: "+86" },
-  { country: "US", code: "+1" },
-  { country: "GB", code: "+44" },
-  { country: "DE", code: "+49" },
-  { country: "FR", code: "+33" },
-  { country: "RU", code: "+7" },
-  { country: "JP", code: "+81" },
-  { country: "ES", code: "+34" },
-  { country: "IN", code: "+91" },
-  { country: "AU", code: "+61" },
-]);
-
-const CODE_LIST = [...COUNTRY_CODE_CATALOG].sort((a, b) =>
-  a.code[1].localeCompare(b.code[1]),
-);
-
-const DEFAULT_CODE = COUNTRY_CODE_CATALOG[0].code;
-
-const CODE_LIST_BY_LENGTH_DESC = [...CODE_LIST].sort(
-  (a, b) => b.code.length - a.code.length,
-);
-
-const parsePhoneValue = (rawValue, fallbackCode = DEFAULT_CODE) => {
-  if (typeof rawValue !== "string" || rawValue.length === 0) {
-    return { code: fallbackCode, number: "" };
-  }
-
-  const matchedEntry = CODE_LIST_BY_LENGTH_DESC.find(({ code }) =>
-    rawValue.startsWith(code),
-  );
-
-  if (matchedEntry) {
-    return {
-      code: matchedEntry.code,
-      number: rawValue.slice(matchedEntry.code.length),
-    };
-  }
-
-  if (rawValue.startsWith("+")) {
-    const match = rawValue.match(/^\+\d+/);
-    if (match) {
-      return {
-        code: match[0],
-        number: rawValue.slice(match[0].length),
-      };
-    }
-  }
-
-  return { code: fallbackCode, number: rawValue };
-};
+import {
+  CODE_LIST,
+  usePhoneDropdown,
+  usePhoneValue,
+} from "@shared/hooks/usePhoneInput.js";
 
 function PhoneInput({ value = "", onChange, placeholder = "" }) {
-  const initial = parsePhoneValue(value, DEFAULT_CODE);
-  const [code, setCode] = useState(initial.code);
-  const [number, setNumber] = useState(initial.number);
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  const emitChange = useCallback(
-    (nextCode, nextNumber) => {
-      if (onChange) {
-        onChange(`${nextCode}${nextNumber}`);
-      }
-    },
-    [onChange],
+  const { code, number, selectCode, handleNumberChange } = usePhoneValue(
+    value,
+    onChange,
   );
+  const { open, toggle, close, ref } = usePhoneDropdown();
 
-  useEffect(() => {
-    const parsed = parsePhoneValue(value, DEFAULT_CODE);
-    setCode(parsed.code);
-    setNumber(parsed.number);
-  }, [value]);
-
-  useEffect(() => {
-    const handler = (event) => {
-      if (!ref.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, []);
-
-  const select = (nextCode) => {
-    setCode(nextCode);
-    setOpen(false);
-    emitChange(nextCode, number);
-  };
-
-  const handleNumber = (event) => {
-    const nextNumber = event.target.value;
-    setNumber(nextNumber);
-    emitChange(code, nextNumber);
+  const handleSelect = (nextCode) => {
+    selectCode(nextCode);
+    close();
   };
 
   return (
     <div className={styles["phone-input"]} ref={ref}>
-      <div
-        className={styles["phone-code"]}
-        onClick={() => setOpen((openState) => !openState)}
-      >
+      <div className={styles["phone-code"]} onClick={toggle}>
         {code}
       </div>
       {open && (
         <div className={styles["code-options"]}>
           {CODE_LIST.map((c) => (
-            <div key={c.code} onClick={() => select(c.code)}>
+            <div key={c.code} onClick={() => handleSelect(c.code)}>
               {c.code}
             </div>
           ))}
@@ -118,7 +34,7 @@ function PhoneInput({ value = "", onChange, placeholder = "" }) {
       <input
         className={styles["phone-number"]}
         value={number}
-        onChange={handleNumber}
+        onChange={handleNumberChange}
         placeholder={placeholder}
       />
     </div>

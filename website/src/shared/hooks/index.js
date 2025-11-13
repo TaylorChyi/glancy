@@ -8,6 +8,7 @@ export { useTtsQueue } from "./useTtsQueue.js";
 export { default as useEscapeKey } from "./useEscapeKey.js";
 export { default as useMediaQuery } from "./useMediaQuery.js";
 export { default as useOutsideToggle } from "./useOutsideToggle.js";
+export { default as useEditableField } from "./useEditableField.js";
 export { default as useSpeechInput } from "./useSpeechInput.js";
 export { default as useMenuNavigation } from "./useMenuNavigation.js";
 export {
@@ -17,3 +18,10 @@ export {
 export { default as useIconToneController } from "./useIconToneController.js";
 export { default as useInfiniteScroll } from "./useInfiniteScroll.js";
 export { default as useAvatarUploader } from "./useAvatarUploader.js";
+export {
+  CODE_LIST as PHONE_CODE_LIST,
+  DEFAULT_CODE as PHONE_DEFAULT_CODE,
+  parsePhoneValue,
+  usePhoneDropdown,
+  usePhoneValue,
+} from "./usePhoneInput.js";
