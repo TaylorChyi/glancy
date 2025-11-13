@@ -7,7 +7,6 @@ import {
   mockWordStore,
   historyTestUser,
   resetHistoryTestState,
-  makeRecord,
 } from "./historyStoreTestkit.js";
 
 describe("historyStore clearance policies", () => {
