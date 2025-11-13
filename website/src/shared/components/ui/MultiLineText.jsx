@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import PropTypes from "prop-types";
 
 /**
@@ -11,15 +11,38 @@ import PropTypes from "prop-types";
  * @param {React.ElementType} [props.as='span'] - The HTML tag or component to render as the container.
  * @param {string} [props.className] - Optional class name for styling the container.
  */
+const sanitizeLineKey = (line) =>
+  line
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 32) || "line";
+
 export default function MultiLineText({ text = "", as = "span", className }) {
-  const lines = String(text).split(/\r?\n/);
+  const lineEntries = useMemo(() => {
+    const rawLines = String(text).split(/\r?\n/);
+    const occurrences = new Map();
+
+    return rawLines.map((line) => {
+      const baseKey = sanitizeLineKey(line);
+      const count = occurrences.get(baseKey) ?? 0;
+      occurrences.set(baseKey, count + 1);
+
+      return {
+        key: count === 0 ? baseKey : `${baseKey}-${count}`,
+        content: line,
+      };
+    });
+  }, [text]);
+
   const Element = as;
   return (
     <Element className={className}>
-      {lines.map((line, index) => (
-        <Fragment key={index}>
-          {line}
-          {index < lines.length - 1 && <br />}
+      {lineEntries.map(({ key, content }, index) => (
+        <Fragment key={key}>
+          {content}
+          {index < lineEntries.length - 1 && <br />}
         </Fragment>
       ))}
     </Element>

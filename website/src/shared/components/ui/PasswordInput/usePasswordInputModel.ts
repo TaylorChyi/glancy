@@ -1,35 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+
 import styles from "./PasswordInput.module.css";
+import { usePasswordVisibility } from "./usePasswordVisibility";
 
 const ICON_SIZE = 20;
 const DEFAULT_LABELS = Object.freeze({
   show: "Show password",
   hide: "Hide password",
 });
-
-export function usePasswordVisibility({
-  defaultVisible = false,
-  onVisibilityChange,
-}: {
-  defaultVisible?: boolean;
-  onVisibilityChange?: (visible: boolean) => void;
-} = {}) {
-  const [visible, setVisible] = useState(defaultVisible);
-
-  const toggleVisibility = useCallback(() => {
-    setVisible((prev) => {
-      const next = !prev;
-      onVisibilityChange?.(next);
-      return next;
-    });
-  }, [onVisibilityChange]);
-
-  return {
-    visible,
-    inputType: visible ? "text" : "password",
-    toggleVisibility,
-  };
-}
 
 const useToggleMetadata = ({
   mask,
