@@ -28,42 +28,67 @@ const persistedMeta = {
   futurePlan: "plan",
 };
 
-const createApi = () => ({
+const createApi = ({ phone = "222" } = {}) => ({
   users: {
-    updateContact: jest.fn().mockResolvedValue({ phone: "222" }),
+    updateContact: jest.fn().mockResolvedValue({ phone }),
   },
   profiles: {
     saveProfile: jest.fn().mockResolvedValue(undefined),
   },
 });
 
-describe("profilePersistence", () => {
-  it("updateContactIfChanged 跳过未变化的电话", async () => {
-    const api = createApi();
-    const result = await updateContactIfChanged({
-      api,
-      currentUser: baseUser,
-      phone: "111",
-    });
-    expect(api.users.updateContact).not.toHaveBeenCalled();
-    expect(result).toEqual({ hasIdentityUpdates: false, nextUser: baseUser });
+const expectIdentityOutcome = (result, { hasUpdates, phone = baseUser.phone }) => {
+  expect(result).toEqual({
+    hasIdentityUpdates: hasUpdates,
+    nextUser: hasUpdates ? { ...baseUser, phone } : baseUser,
   });
+};
 
-  it("updateContactIfChanged 更新电话并返回新用户", async () => {
-    const api = createApi();
-    const result = await updateContactIfChanged({
-      api,
-      currentUser: baseUser,
-      phone: "222",
+const expectProfileSavedWith = (api, matcher) => {
+  expect(api.profiles.saveProfile).toHaveBeenCalledWith({
+    token: baseUser.token,
+    profile: expect.objectContaining(matcher),
+  });
+};
+
+const buildPersistParams = ({ api, phone = "222" }) => ({
+  api,
+  currentUser: baseUser,
+  details,
+  phone,
+  persistedMeta,
+});
+
+describe("profilePersistence", () => {
+  describe("updateContactIfChanged", () => {
+    let api;
+
+    const callUpdateContact = (phone) =>
+      updateContactIfChanged({ api, currentUser: baseUser, phone });
+
+    beforeEach(() => {
+      api = createApi();
     });
-    expect(api.users.updateContact).toHaveBeenCalledWith({
-      userId: "user-1",
-      email: "foo@bar",
-      phone: "222",
-      token: "token",
+
+    it("updateContactIfChanged 跳过未变化的电话", async () => {
+      const result = await callUpdateContact(baseUser.phone);
+
+      expect(api.users.updateContact).not.toHaveBeenCalled();
+      expectIdentityOutcome(result, { hasUpdates: false });
     });
-    expect(result.hasIdentityUpdates).toBe(true);
-    expect(result.nextUser).toEqual({ ...baseUser, phone: "222" });
+
+    it("updateContactIfChanged 更新电话并返回新用户", async () => {
+      const nextPhone = "222";
+      const result = await callUpdateContact(nextPhone);
+
+      expect(api.users.updateContact).toHaveBeenCalledWith({
+        userId: baseUser.id,
+        email: baseUser.email,
+        phone: nextPhone,
+        token: baseUser.token,
+      });
+      expectIdentityOutcome(result, { hasUpdates: true, phone: nextPhone });
+    });
   });
 
   it("createProfileSavePayload 合并详情与元数据", () => {
@@ -76,36 +101,41 @@ describe("profilePersistence", () => {
     });
   });
 
-  it("saveProfileDetails 调用保存接口", async () => {
-    const api = createApi();
-    await saveProfileDetails({
-      api,
-      currentUser: baseUser,
-      profile: { foo: "bar" },
+  describe("saveProfileDetails", () => {
+    let api;
+
+    beforeEach(() => {
+      api = createApi();
     });
-    expect(api.profiles.saveProfile).toHaveBeenCalledWith({
-      token: "token",
-      profile: { foo: "bar" },
+
+    it("saveProfileDetails 调用保存接口", async () => {
+      await saveProfileDetails({
+        api,
+        currentUser: baseUser,
+        profile: { foo: "bar" },
+      });
+
+      expectProfileSavedWith(api, { foo: "bar" });
     });
   });
 
-  it("persistProfile 组合更新与保存流程", async () => {
-    const api = createApi();
-    const outcome = await persistProfile({
-      api,
-      currentUser: baseUser,
-      details,
-      phone: "222",
-      persistedMeta,
+  describe("persistProfile", () => {
+    let api;
+
+    const callPersistProfile = (phone = "222") =>
+      persistProfile(buildPersistParams({ api, phone }));
+
+    beforeEach(() => {
+      api = createApi();
     });
-    expect(api.users.updateContact).toHaveBeenCalled();
-    expect(api.profiles.saveProfile).toHaveBeenCalledWith({
-      token: "token",
-      profile: expect.objectContaining({ dailyWordTarget: 30 }),
-    });
-    expect(outcome).toEqual({
-      hasIdentityUpdates: true,
-      nextUser: { ...baseUser, phone: "222" },
+
+    it("persistProfile 组合更新与保存流程", async () => {
+      const nextPhone = "222";
+      const outcome = await callPersistProfile(nextPhone);
+
+      expect(api.users.updateContact).toHaveBeenCalled();
+      expectProfileSavedWith(api, { dailyWordTarget: 30 });
+      expectIdentityOutcome(outcome, { hasUpdates: true, phone: nextPhone });
     });
   });
 });
