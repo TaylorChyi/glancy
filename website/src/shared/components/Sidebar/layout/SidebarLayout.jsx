@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import PropTypes from "prop-types";
 import styles from "../Sidebar.module.css";
+import { getSidebarClassName } from "./classNames.js";
 
 const SidebarLayout = forwardRef(function SidebarLayout(
   {
@@ -24,7 +25,11 @@ const SidebarLayout = forwardRef(function SidebarLayout(
         ref={ref}
         id="sidebar"
         data-testid="sidebar"
-        className={`sidebar${isMobile ? (open ? " mobile-open" : "") : ""} ${styles.container}`}
+        className={getSidebarClassName({
+          isMobile,
+          open,
+          containerClass: styles.container,
+        })}
       >
         <div className={styles.header} data-testid="sidebar-header">
           {navigation}
