@@ -1,31 +1,15 @@
-import { useMemo } from "react";
 import BaseModal from "./BaseModal.jsx";
+import ShortcutList from "./ShortcutList.jsx";
 import styles from "./ShortcutsModal.module.css";
 import { useLanguage, useKeyboardShortcutContext } from "@core/context";
 import { SettingsSurface } from "@shared/components";
-import {
-  DEFAULT_SHORTCUTS,
-  formatShortcutKeys,
-  translateShortcutAction,
-} from "@shared/utils/keyboardShortcuts.js";
+import useResolvedShortcuts from "./useResolvedShortcuts.js";
 
 function ShortcutsModal({ open, onClose }) {
   const { t } = useLanguage();
   const { shortcuts: shortcutList } = useKeyboardShortcutContext();
 
-  const shortcuts = useMemo(() => {
-    const resolved = new Map(
-      DEFAULT_SHORTCUTS.map((item) => [item.action, item.keys]),
-    );
-    (shortcutList ?? []).forEach((item) => {
-      resolved.set(item.action, item.keys);
-    });
-    return Array.from(resolved.entries()).map(([action, keys]) => ({
-      action,
-      keys: formatShortcutKeys(keys),
-      label: translateShortcutAction(t, action),
-    }));
-  }, [shortcutList, t]);
+  const shortcuts = useResolvedShortcuts(shortcutList, t);
 
   return (
     <BaseModal open={open} onClose={onClose} className="modal-content">
@@ -41,20 +25,7 @@ function ShortcutsModal({ open, onClose }) {
           </button>
         }
       >
-        <ul className={styles.list}>
-          {shortcuts.map((shortcut) => (
-            <li key={shortcut.action} className={styles.item}>
-              <div className={styles.keys}>
-                {shortcut.keys.map((key) => (
-                  <kbd key={`${shortcut.action}-${key}`} className={styles.key}>
-                    {key}
-                  </kbd>
-                ))}
-              </div>
-              <span className={styles.action}>{shortcut.label}</span>
-            </li>
-          ))}
-        </ul>
+        <ShortcutList shortcuts={shortcuts} />
       </SettingsSurface>
     </BaseModal>
   );
