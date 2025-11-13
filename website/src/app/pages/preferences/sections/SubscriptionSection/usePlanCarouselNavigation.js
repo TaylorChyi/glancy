@@ -1,33 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export const usePlanCarouselNavigation = (planCount) => {
-  const planCarouselRef = useRef(null);
-  const [isPlanRailAtStart, setIsPlanRailAtStart] = useState(true);
-  const [isPlanRailAtEnd, setIsPlanRailAtEnd] = useState(false);
-
-  const syncPlanRailPosition = useCallback(() => {
-    const node = planCarouselRef.current;
-    if (!node) {
-      setIsPlanRailAtStart(true);
-      setIsPlanRailAtEnd(true);
-      return;
-    }
-
-    const { scrollLeft, clientWidth, scrollWidth } = node;
-    setIsPlanRailAtStart(scrollLeft <= 1);
-    setIsPlanRailAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
-  }, []);
-
+const usePlanRailScrollSync = (viewportRef, syncPosition) => {
   useEffect(() => {
-    const node = planCarouselRef.current;
+    const node = viewportRef.current;
     if (!node) {
       return undefined;
     }
 
-    const handleScroll = () => {
-      syncPlanRailPosition();
-    };
-
+    const handleScroll = () => syncPosition();
     handleScroll();
     node.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleScroll);
@@ -36,51 +16,79 @@ export const usePlanCarouselNavigation = (planCount) => {
       node.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, [syncPlanRailPosition]);
+  }, [syncPosition, viewportRef]);
+};
 
+const usePlanRailInitialSync = (planCount, syncPosition) => {
   useEffect(() => {
-    syncPlanRailPosition();
-  }, [planCount, syncPlanRailPosition]);
+    syncPosition();
+  }, [planCount, syncPosition]);
+};
 
-  const handlePlanRailNav = useCallback((direction) => {
-    const node = planCarouselRef.current;
+const usePlanRailViewport = (planCount) => {
+  const viewportRef = useRef(null);
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
+
+  const syncPosition = useCallback(() => {
+    const node = viewportRef.current;
+    if (!node) {
+      setIsAtStart(true);
+      setIsAtEnd(true);
+      return;
+    }
+
+    const { scrollLeft, clientWidth, scrollWidth } = node;
+    setIsAtStart(scrollLeft <= 1);
+    setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
+  }, []);
+
+  usePlanRailScrollSync(viewportRef, syncPosition);
+  usePlanRailInitialSync(planCount, syncPosition);
+
+  return { viewportRef, isAtStart, isAtEnd };
+};
+
+const usePlanRailControls = (viewportRef) => {
+  const scrollByDirection = useCallback((direction) => {
+    const node = viewportRef.current;
     if (!node) {
       return;
     }
 
     const scrollAmount = node.clientWidth * 0.85;
     node.scrollBy({ left: direction * scrollAmount, behavior: "smooth" });
-  }, []);
+  }, [viewportRef]);
 
-  const handlePrevNav = useCallback(() => {
-    handlePlanRailNav(-1);
-  }, [handlePlanRailNav]);
+  const onPrev = useCallback(() => {
+    scrollByDirection(-1);
+  }, [scrollByDirection]);
 
-  const handleNextNav = useCallback(() => {
-    handlePlanRailNav(1);
-  }, [handlePlanRailNav]);
+  const onNext = useCallback(() => {
+    scrollByDirection(1);
+  }, [scrollByDirection]);
 
-  const shouldRenderPlanRailNav = planCount > 1;
+  return { onPrev, onNext };
+};
+
+export const usePlanCarouselNavigation = (planCount) => {
+  const { viewportRef, isAtStart, isAtEnd } = usePlanRailViewport(planCount);
+  const { onPrev, onNext } = usePlanRailControls(viewportRef);
+  const shouldRenderNav = planCount > 1;
 
   const planRailNav = useMemo(
     () => ({
-      viewportRef: planCarouselRef,
-      showPrevNav: shouldRenderPlanRailNav && !isPlanRailAtStart,
-      showNextNav: shouldRenderPlanRailNav && !isPlanRailAtEnd,
-      isAtStart: isPlanRailAtStart,
-      isAtEnd: isPlanRailAtEnd,
-      onPrev: handlePrevNav,
-      onNext: handleNextNav,
+      viewportRef,
+      showPrevNav: shouldRenderNav && !isAtStart,
+      showNextNav: shouldRenderNav && !isAtEnd,
+      isAtStart,
+      isAtEnd,
+      onPrev,
+      onNext,
       prevLabel: "查看前一个订阅方案",
       nextLabel: "查看后一个订阅方案",
     }),
-    [
-      handleNextNav,
-      handlePrevNav,
-      isPlanRailAtEnd,
-      isPlanRailAtStart,
-      shouldRenderPlanRailNav,
-    ],
+    [isAtEnd, isAtStart, onNext, onPrev, shouldRenderNav, viewportRef],
   );
 
   return { planRailNav };
