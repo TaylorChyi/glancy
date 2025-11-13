@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@core/context";
 // 避免通过 utils/index 的桶状导出造成 rollup chunk 循环，直接引用具体实现。
 import { useIsMobile } from "@shared/utils/device.js";
@@ -6,6 +5,7 @@ import useNavAccess from "./useNavAccess.js";
 import useNavItems from "./useNavItems.js";
 import useSidebarLabels from "./useSidebarLabels.js";
 import useNavigationHandlers from "./useNavigationHandlers.js";
+import useSidebarOpenState from "./useSidebarOpenState.js";
 
 /**
  * 意图：集中管理侧边栏导航所需的状态、文案与回调，输出给展示组件。
@@ -29,32 +29,10 @@ export default function useSidebarNavigation({
   const defaultMobile = useIsMobile();
   const isMobile = isMobileProp ?? defaultMobile;
 
-  const [internalOpen, setInternalOpen] = useState(Boolean(openProp));
-  const isControlled = typeof openProp === "boolean";
-
-  useEffect(() => {
-    if (isControlled) return;
-    if (typeof openProp === "boolean") {
-      setInternalOpen(openProp);
-    }
-  }, [isControlled, openProp]);
-
-  const resolvedOpen = isControlled ? Boolean(openProp) : internalOpen;
-
-  const closeSidebar = useCallback(() => {
-    if (typeof onClose === "function") {
-      onClose();
-      return;
-    }
-    if (!isControlled) {
-      setInternalOpen(false);
-    }
-  }, [isControlled, onClose]);
-
-  const openSidebar = useCallback(() => {
-    if (isControlled) return;
-    setInternalOpen(true);
-  }, [isControlled]);
+  const { isOpen, closeSidebar, openSidebar } = useSidebarOpenState({
+    open: openProp,
+    onClose,
+  });
 
   const { t, lang } = useLanguage();
   const access = useNavAccess();
@@ -79,11 +57,11 @@ export default function useSidebarNavigation({
     activeView,
   });
 
-  const shouldShowOverlay = isMobile && resolvedOpen;
+  const shouldShowOverlay = isMobile && isOpen;
 
   return {
     isMobile,
-    isOpen: resolvedOpen,
+    isOpen,
     shouldShowOverlay,
     openSidebar,
     closeSidebar,

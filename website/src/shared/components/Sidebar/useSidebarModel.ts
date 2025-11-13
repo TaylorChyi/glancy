@@ -1,5 +1,10 @@
 import { useMemo } from "react";
 import useSidebarNavigation from "./hooks/useSidebarNavigation.js";
+import {
+  buildHistoryProps,
+  buildLayoutProps,
+  buildNavigationProps,
+} from "./sidebarViewMappers";
 
 type SidebarModelInput = {
   isMobile?: boolean;
@@ -51,19 +56,8 @@ export const useSidebarModel = ({
     activeView,
   });
 
-  const historyAriaLabel = useMemo(() => {
-    return navigationState.historyLabel || navigationState.entriesLabel;
-  }, [navigationState.entriesLabel, navigationState.historyLabel]);
-
   const layout = useMemo(
-    () => ({
-      isMobile: navigationState.isMobile,
-      open: navigationState.isOpen,
-      showOverlay: navigationState.shouldShowOverlay,
-      onOverlayClick: navigationState.isMobile
-        ? navigationState.closeSidebar
-        : undefined,
-    }),
+    () => buildLayoutProps(navigationState),
     [
       navigationState.closeSidebar,
       navigationState.isMobile,
@@ -75,14 +69,8 @@ export const useSidebarModel = ({
   return {
     viewProps: {
       layout,
-      navigation: {
-        items: navigationState.navigationActions as Array<Record<string, unknown>>,
-        ariaLabel: navigationState.headerLabel,
-      },
-      history: {
-        ariaLabel: historyAriaLabel,
-        onSelectHistory,
-      },
+      navigation: buildNavigationProps(navigationState),
+      history: buildHistoryProps({ navigationState, onSelectHistory }),
       footer: {},
     },
   };

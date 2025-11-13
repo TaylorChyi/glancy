@@ -1,20 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import styles from "./NavItem.module.css";
-
-const INTERACTION_VARIANTS = {
-  accent: {
-    baseClass: "",
-    activeClass: styles.active,
-  },
-  flat: {
-    baseClass: styles.flat,
-    activeClass: styles["flat-active"],
-  },
-};
-
-const joinClassNames = (...tokens: Array<string | undefined | null | false>) =>
-  tokens.filter(Boolean).join(" ");
+import {
+  buildBaseClassName,
+  buildLabelClassName,
+  buildNavLinkClassName,
+  buildResolvedClassName,
+  getVariantStyles,
+  resolveComponentType,
+} from "./navItemClassNames";
+import type { InteractionVariant } from "./navItemClassNames";
 
 type NavItemModelInput = {
   icon?: ReactNode;
@@ -28,7 +22,7 @@ type NavItemModelInput = {
   onClick?: (event: MouseEvent<HTMLElement>) => void;
   type?: "button" | "submit" | "reset";
   children?: ReactNode;
-  variant?: keyof typeof INTERACTION_VARIANTS;
+  variant?: InteractionVariant;
   allowMultilineLabel?: boolean;
   [key: string]: unknown;
 };
@@ -82,51 +76,50 @@ export const useNavItemModel = (props: NavItemModelInput): NavItemModel => {
     ...restProps
   } = props;
 
-  const variantStyles =
-    INTERACTION_VARIANTS[variant] ?? INTERACTION_VARIANTS.accent;
+  const variantStyles = getVariantStyles(variant);
 
   const labelClassName = useMemo(
-    () =>
-      joinClassNames(
-        styles.label,
-        allowMultilineLabel ? styles["label-multiline"] : "",
-      ),
+    () => buildLabelClassName(allowMultilineLabel),
     [allowMultilineLabel],
   );
 
   const baseClassName = useMemo(
     () =>
-      joinClassNames(
-        styles.item,
-        allowMultilineLabel ? styles["item-multiline"] : "",
-        tone === "muted" ? styles.muted : "",
-        variantStyles.baseClass,
+      buildBaseClassName({
+        allowMultilineLabel,
+        tone,
+        variantBaseClass: variantStyles.baseClass,
         className,
-      ),
+      }),
     [allowMultilineLabel, className, tone, variantStyles.baseClass],
   );
 
   const activeClassName = variantStyles.activeClass;
 
   const resolvedClassName = useMemo(
-    () => joinClassNames(baseClassName, active ? activeClassName : ""),
-    [active, activeClassName, baseClassName],
-  );
-
-  const navLinkClassName = useCallback(
-    (isActive: boolean) =>
-      joinClassNames(
+    () =>
+      buildResolvedClassName({
         baseClassName,
-        (isActive || active) ? activeClassName : "",
-      ),
+        activeClassName,
+        active,
+      }),
     [active, activeClassName, baseClassName],
   );
 
-  const componentType: NavItemViewProps["componentType"] = to
-    ? "navlink"
-    : href
-      ? "anchor"
-      : "button";
+  const navLinkClassName = useMemo(
+    () =>
+      buildNavLinkClassName({
+        baseClassName,
+        activeClassName,
+        active,
+      }),
+    [active, activeClassName, baseClassName],
+  );
+
+  const componentType: NavItemViewProps["componentType"] = resolveComponentType({
+    to,
+    href,
+  });
 
   return {
     viewProps: {

@@ -1,38 +1,27 @@
 import { useCallback, useMemo } from "react";
 import { useHistory, useLanguage, useUser } from "@core/context";
 
-export function useSidebarUserDock() {
-  const { user, clearUser } = useUser();
-  const { clearHistory } = useHistory();
-  const { t } = useLanguage();
+const formatPlanName = (planName) => {
+  const safePlanName = String(planName);
+  return safePlanName.charAt(0).toUpperCase() + safePlanName.slice(1);
+};
 
-  const hasUser = Boolean(user);
-
-  const isPro = useMemo(() => {
-    if (!user) {
-      return false;
-    }
-
-    if (user.member || user.isPro) {
-      return true;
-    }
-
-    if (user.plan && user.plan !== "free") {
-      return true;
-    }
-
+export const useIsUserPro = (user) =>
+  useMemo(() => {
+    if (!user) return false;
+    if (user.member || user.isPro) return true;
+    if (user.plan && user.plan !== "free") return true;
     return false;
   }, [user]);
 
-  const displayName = useMemo(() => {
-    if (!user) {
-      return "";
-    }
-
+export const useUserDisplayName = (user) =>
+  useMemo(() => {
+    if (!user) return "";
     return user.username || user.email || "";
   }, [user]);
 
-  const planLabel = useMemo(() => {
+export const useUserPlanLabel = ({ user, isPro }) =>
+  useMemo(() => {
     if (!user && !isPro) {
       return "";
     }
@@ -43,10 +32,11 @@ export function useSidebarUserDock() {
       return "";
     }
 
-    return planName.charAt(0).toUpperCase() + planName.slice(1);
+    return formatPlanName(planName);
   }, [isPro, user]);
 
-  const labels = useMemo(
+export const useDockLabels = (t) =>
+  useMemo(
     () => ({
       settings: t.settings || "Settings",
       logout: t.logout || "Logout",
@@ -54,7 +44,8 @@ export function useSidebarUserDock() {
     [t],
   );
 
-  const anonymousNav = useMemo(
+export const useAnonymousNav = (t) =>
+  useMemo(
     () => ({
       login: {
         icon: "arrow-right-on-rectangle",
@@ -70,7 +61,13 @@ export function useSidebarUserDock() {
     [t],
   );
 
-  const modalProps = useMemo(
+export const useUserModalProps = ({
+  user,
+  isPro,
+  clearUser,
+  clearHistory,
+}) =>
+  useMemo(
     () => ({
       isPro,
       user,
@@ -80,7 +77,12 @@ export function useSidebarUserDock() {
     [clearHistory, clearUser, isPro, user],
   );
 
-  const authenticatedBaseProps = useMemo(
+export const useAuthenticatedBaseProps = ({
+  displayName,
+  planLabel,
+  labels,
+}) =>
+  useMemo(
     () => ({
       displayName,
       planLabel,
@@ -89,7 +91,8 @@ export function useSidebarUserDock() {
     [displayName, labels, planLabel],
   );
 
-  const buildAuthenticatedProps = useCallback(
+export const useAuthenticatedPropsBuilder = (authenticatedBaseProps) =>
+  useCallback(
     ({ openSettings, openLogout }) => ({
       ...authenticatedBaseProps,
       onOpenSettings: openSettings,
@@ -98,8 +101,36 @@ export function useSidebarUserDock() {
     [authenticatedBaseProps],
   );
 
+export function useSidebarUserDock() {
+  const { user, clearUser } = useUser();
+  const { clearHistory } = useHistory();
+  const { t } = useLanguage();
+
+  const isPro = useIsUserPro(user);
+  const displayName = useUserDisplayName(user);
+  const planLabel = useUserPlanLabel({ user, isPro });
+  const labels = useDockLabels(t);
+  const anonymousNav = useAnonymousNav(t);
+
+  const modalProps = useUserModalProps({
+    user,
+    isPro,
+    clearUser,
+    clearHistory,
+  });
+
+  const authenticatedBaseProps = useAuthenticatedBaseProps({
+    displayName,
+    planLabel,
+    labels,
+  });
+
+  const buildAuthenticatedProps = useAuthenticatedPropsBuilder(
+    authenticatedBaseProps,
+  );
+
   return {
-    hasUser,
+    hasUser: Boolean(user),
     anonymousNav,
     modalProps,
     buildAuthenticatedProps,
