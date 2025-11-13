@@ -50,6 +50,28 @@ export class WordVersionRegistry {
       });
   }
 
+  private registerVersionCandidate(
+    registry: Map<WordIdentifier, WordVersion>,
+    order: WordIdentifier[],
+    candidate: WordVersion | undefined,
+    preferIncoming: boolean,
+  ) {
+    if (!candidate) {
+      return;
+    }
+    const key = candidate.id;
+    const stored = registry.get(key);
+    if (!stored) {
+      registry.set(key, { ...candidate });
+      order.push(key);
+      return;
+    }
+    const merged = preferIncoming
+      ? { ...stored, ...candidate }
+      : { ...candidate, ...stored };
+    registry.set(key, merged);
+  }
+
   mergeVersionCollections(
     existing: WordVersion[],
     incoming: WordVersion[],
@@ -61,28 +83,12 @@ export class WordVersionRegistry {
     const registry = new Map<WordIdentifier, WordVersion>();
     const order: WordIdentifier[] = [];
 
-    const register = (
-      candidate: WordVersion | undefined,
-      preferIncoming: boolean,
-    ) => {
-      if (!candidate) {
-        return;
-      }
-      const key = candidate.id;
-      const stored = registry.get(key);
-      if (!stored) {
-        registry.set(key, { ...candidate });
-        order.push(key);
-        return;
-      }
-      const merged = preferIncoming
-        ? { ...stored, ...candidate }
-        : { ...candidate, ...stored };
-      registry.set(key, merged);
-    };
-
-    incoming.forEach((version) => register(version, true));
-    existing.forEach((version) => register(version, false));
+    incoming.forEach((version) =>
+      this.registerVersionCandidate(registry, order, version, true),
+    );
+    existing.forEach((version) =>
+      this.registerVersionCandidate(registry, order, version, false),
+    );
 
     return order
       .map((key) => registry.get(key))
@@ -121,28 +127,22 @@ export class WordVersionRegistry {
     return entry.versions[entry.versions.length - 1];
   }
 
-  resolveLatestVersionId(
+  private resolveMetadataPreferredId(
     versions: WordVersion[],
     metadata?: WordVersionMetadata | null,
-  ): WordIdentifier | null {
-    if (!versions.length) {
-      return null;
-    }
-
-    const metadataPreferred =
+  ) {
+    const preferred =
       normalizeIdentifier(metadata?.latestVersionId ?? null) ??
       normalizeIdentifier(metadata?.activeVersionId ?? null);
-
-    if (metadataPreferred) {
-      const matched = versions.find(
-        (version) => version.id === metadataPreferred,
-      );
-      if (matched) {
-        return matched.id;
-      }
+    if (!preferred) {
+      return null;
     }
+    const matched = versions.find((version) => version.id === preferred);
+    return matched ? matched.id : null;
+  }
 
-    const ranked = versions
+  private rankVersionsByTimestamp(versions: WordVersion[]) {
+    return versions
       .map((version, index) => ({
         version,
         index,
@@ -163,7 +163,25 @@ export class WordVersionRegistry {
         }
         return b.timestamp - a.timestamp;
       });
+  }
 
+  resolveLatestVersionId(
+    versions: WordVersion[],
+    metadata?: WordVersionMetadata | null,
+  ): WordIdentifier | null {
+    if (!versions.length) {
+      return null;
+    }
+
+    const metadataPreferred = this.resolveMetadataPreferredId(
+      versions,
+      metadata,
+    );
+    if (metadataPreferred) {
+      return metadataPreferred;
+    }
+
+    const ranked = this.rankVersionsByTimestamp(versions);
     return ranked[0]?.version?.id ?? versions[0]?.id ?? null;
   }
 

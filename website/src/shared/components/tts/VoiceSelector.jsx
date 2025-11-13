@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useApi } from "@shared/hooks/useApi.js";
 import { useLanguage } from "@core/context";
@@ -10,6 +10,29 @@ import styles from "./VoiceSelector.module.css";
  * Dropdown for selecting available voices for a given language.
  * Voices requiring Pro plan are disabled for non-pro users.
  */
+const resolveSubscriptionSignature = (user) =>
+  `${user?.id ?? ""}|${user?.plan ?? ""}|${user?.member ? "1" : "0"}|${
+    user?.isPro ? "1" : "0"
+  }`;
+
+const isUserPro = (user) =>
+  Boolean(user?.member || user?.isPro || (user?.plan && user.plan !== "free"));
+
+const useVoiceSelection = (lang) => {
+  const selected = useVoiceStore((s) => s.getVoice(lang));
+  const setVoice = useVoiceStore((s) => s.setVoice);
+  const handleChange = useCallback(
+    (event) => setVoice(lang, event.target.value),
+    [lang, setVoice],
+  );
+  return { selected, handleChange };
+};
+
+const useVoiceSelectorStyles = (variant, className) => {
+  const normalizedVariant = variant === "pill" ? "pill" : "form";
+  return buildSelectClassName(normalizedVariant, className);
+};
+
 export default function VoiceSelector({
   lang,
   id,
@@ -20,12 +43,8 @@ export default function VoiceSelector({
   const api = useApi();
   const { t } = useLanguage();
   const user = useUserStore((s) => s.user);
-  const selected = useVoiceStore((s) => s.getVoice(lang));
-  const setVoice = useVoiceStore((s) => s.setVoice);
   const sessionToken = user?.token;
-  const subscriptionSignature = `${user?.id ?? ""}|${user?.plan ?? ""}|${
-    user?.member ? "1" : "0"
-  }|${user?.isPro ? "1" : "0"}`;
+  const subscriptionSignature = resolveSubscriptionSignature(user);
   const voices = useVoiceOptions({
     api,
     lang,
@@ -33,28 +52,20 @@ export default function VoiceSelector({
     subscriptionSignature,
   });
 
-  const isPro = !!(
-    user?.member ||
-    user?.isPro ||
-    (user?.plan && user.plan !== "free")
-  );
-
-  const normalizedVariant = variant === "pill" ? "pill" : "form";
-  const composedClassName = buildSelectClassName(
-    normalizedVariant,
-    className,
-  );
+  const isPro = isUserPro(user);
+  const composedClassName = useVoiceSelectorStyles(variant, className);
   const renderVoiceOption = useMemo(
     () => createVoiceOptionRenderer(isPro, t.upgradeAvailable),
     [isPro, t.upgradeAvailable],
   );
+  const { selected, handleChange } = useVoiceSelection(lang);
 
   return (
     <select
       id={id}
       className={composedClassName}
       value={selected || ""}
-      onChange={(e) => setVoice(lang, e.target.value)}
+      onChange={handleChange}
       {...props}
     >
       {voices.map(renderVoiceOption)}

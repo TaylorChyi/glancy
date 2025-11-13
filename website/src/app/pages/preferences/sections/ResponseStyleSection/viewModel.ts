@@ -88,6 +88,93 @@ const createDropdownSelectHandler =
     handlers.onFieldCommit(fieldId);
   };
 
+const shouldShowPlaceholder = ({
+  status,
+  hasLoadedValues,
+}: {
+  status: string;
+  hasLoadedValues: boolean;
+}) => (status === "idle" || status === "loading") && !hasLoadedValues;
+
+const buildDropdownViewModel = ({
+  hasLoadedValues,
+  copy,
+  handlers,
+  values,
+  savingField,
+  status,
+}: {
+  hasLoadedValues: boolean;
+  copy: ResponseStyleCopy;
+  handlers: ResponseStyleHandlers;
+  values: Record<string, string>;
+  savingField: string | null;
+  status: string;
+}) => {
+  if (!hasLoadedValues) {
+    return null;
+  }
+  const fieldId = "responseStyle";
+  return {
+    selectId: "response-style-select",
+    label: copy.dropdownLabel,
+    options: copy.options,
+    value: values[fieldId] ?? "",
+    onSelect: createDropdownSelectHandler(handlers, fieldId),
+    isSaving: savingField === fieldId && status === "saving",
+  };
+};
+
+const createFieldViewModelFactory =
+  (
+    handlers: ResponseStyleHandlers,
+    values: Record<string, string>,
+    savingField: string | null,
+    status: string,
+  ) =>
+  (field: ResponseStyleCopyField) => ({
+    inputId: `${field.id}-input`,
+    label: field.label,
+    placeholder: field.placeholder,
+    multiline: field.multiline,
+    rows: field.rows,
+    value: values[field.id] ?? "",
+    onChange: createFieldChangeHandler(handlers, field.id),
+    onBlur: () => handlers.onFieldCommit(field.id),
+    isSaving: savingField === field.id && status === "saving",
+  });
+
+const buildFieldViewModels = (
+  hasLoadedValues: boolean,
+  copy: ResponseStyleCopy,
+  handlers: ResponseStyleHandlers,
+  values: Record<string, string>,
+  savingField: string | null,
+  status: string,
+) => {
+  if (!hasLoadedValues) {
+    return [];
+  }
+  const factory = createFieldViewModelFactory(
+    handlers,
+    values,
+    savingField,
+    status,
+  );
+  return (copy.fields ?? []).map(factory);
+};
+
+const buildErrorState = (
+  state: ResponseStyleState,
+  copy: ResponseStyleCopy,
+  handlers: ResponseStyleHandlers,
+) => ({
+  visible: Boolean(state?.error),
+  label: state?.error ?? copy.errorLabel,
+  retryLabel: copy.retryLabel,
+  onRetry: handlers.onRetry,
+});
+
 export const createResponseStyleSectionViewModel = ({
   title,
   headingId,
@@ -101,44 +188,28 @@ export const createResponseStyleSectionViewModel = ({
   const values = resolveValues(state);
   const savingField = state?.savingField ?? null;
   const hasLoadedValues = Object.keys(values).length > 0;
-  const showPlaceholder =
-    (status === "idle" || status === "loading") && !hasLoadedValues;
-  const showError = Boolean(state?.error);
-
-  const dropdown = hasLoadedValues
-    ? {
-        selectId: "response-style-select",
-        label: copy.dropdownLabel,
-        options: copy.options,
-        value: values.responseStyle ?? "",
-        onSelect: createDropdownSelectHandler(handlers, "responseStyle"),
-        isSaving: savingField === "responseStyle" && status === "saving",
-      }
-    : null;
-
-  const fields = hasLoadedValues
-    ? (copy.fields ?? []).map((field) => ({
-        inputId: `${field.id}-input`,
-        label: field.label,
-        placeholder: field.placeholder,
-        multiline: field.multiline,
-        rows: field.rows,
-        value: values[field.id] ?? "",
-        onChange: createFieldChangeHandler(handlers, field.id),
-        onBlur: () => handlers.onFieldCommit(field.id),
-        isSaving: savingField === field.id && status === "saving",
-      }))
-    : [];
+  const showPlaceholder = shouldShowPlaceholder({ status, hasLoadedValues });
+  const dropdown = buildDropdownViewModel({
+    hasLoadedValues,
+    copy,
+    handlers,
+    values,
+    savingField,
+    status,
+  });
+  const fields = buildFieldViewModels(
+    hasLoadedValues,
+    copy,
+    handlers,
+    values,
+    savingField,
+    status,
+  );
 
   return {
     section: { title, headingId, description, descriptionId },
     placeholder: { visible: showPlaceholder, label: copy.loadingLabel },
-    error: {
-      visible: showError,
-      label: state?.error ?? copy.errorLabel,
-      retryLabel: copy.retryLabel,
-      onRetry: handlers.onRetry,
-    },
+    error: buildErrorState(state, copy, handlers),
     dropdown,
     fields,
     savingLabel: copy.savingLabel,

@@ -22,6 +22,43 @@ export class ApiError extends Error {
  * @param {Function} [config.onUnauthorized] callback when response is 401
  * @returns {Function} request function
  */
+const buildRequestHeaders = (baseHeaders, overrideHeaders, token) => {
+  const mergedHeaders = { ...baseHeaders, ...overrideHeaders };
+  if (token) {
+    mergedHeaders["X-USER-TOKEN"] = token;
+  }
+  return mergedHeaders;
+};
+
+const performFetch = async (url, options) => {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    console.error(err);
+    throw new Error("Network error");
+  }
+};
+
+const parseErrorResponse = async (resp, onUnauthorized) => {
+  if (resp.status === 401) {
+    onUnauthorized?.();
+  }
+  const text = await resp.text().catch((err) => {
+    console.error(err);
+    return "";
+  });
+  const message = extractMessage(text) || "Request failed";
+  throw new ApiError(resp.status, message, resp.headers);
+};
+
+const parseResponseBody = async (resp) => {
+  const contentType = resp.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return resp.json();
+  }
+  return resp;
+};
+
 export function createApiClient({
   token,
   headers: defaultHeaders = {},
@@ -31,31 +68,22 @@ export function createApiClient({
     url,
     { token: reqToken, headers = {}, ...options } = {},
   ) {
-    const mergedHeaders = { ...defaultHeaders, ...headers };
-    const authToken = reqToken ?? token;
-    if (authToken) mergedHeaders["X-USER-TOKEN"] = authToken;
+    const mergedHeaders = buildRequestHeaders(
+      defaultHeaders,
+      headers,
+      reqToken ?? token,
+    );
 
-    let resp;
-    try {
-      resp = await fetch(url, { ...options, headers: mergedHeaders });
-    } catch (err) {
-      console.error(err);
-      throw new Error("Network error");
+    const response = await performFetch(url, {
+      ...options,
+      headers: mergedHeaders,
+    });
+
+    if (!response.ok) {
+      await parseErrorResponse(response, onUnauthorized);
     }
-    if (!resp.ok) {
-      if (resp.status === 401) onUnauthorized?.();
-      const text = await resp.text().catch((err) => {
-        console.error(err);
-        return "";
-      });
-      const message = extractMessage(text) || "Request failed";
-      throw new ApiError(resp.status, message, resp.headers);
-    }
-    const contentType = resp.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      return resp.json();
-    }
-    return resp;
+
+    return parseResponseBody(response);
   };
 }
 

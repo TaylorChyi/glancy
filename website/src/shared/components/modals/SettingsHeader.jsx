@@ -3,6 +3,26 @@ import Avatar from "@shared/components/ui/Avatar";
 
 const composeClassName = (...parts) => parts.filter(Boolean).join(" ");
 
+const resolveClasses = (classes = {}) => ({
+  container: classes.container ?? "",
+  identity: classes.identity ?? "",
+  identityCopy: classes.identityCopy ?? "",
+  avatar: classes.avatar ?? "",
+  plan: classes.plan ?? "",
+  title: classes.title ?? "",
+  description: classes.description ?? "",
+});
+
+const renderPlanLabel = (planLabel, planClassName) =>
+  planLabel ? <p className={planClassName}>{planLabel}</p> : null;
+
+const renderDescription = (description, descriptionId, descriptionClassName) =>
+  description ? (
+    <p id={descriptionId} className={descriptionClassName}>
+      {description}
+    </p>
+  ) : null;
+
 function SettingsHeader({
   headingId,
   descriptionId,
@@ -12,34 +32,25 @@ function SettingsHeader({
   avatarProps,
   classes,
 }) {
+  const resolvedClasses = resolveClasses(classes);
   const { className: avatarClassName, ...avatarRest } = avatarProps ?? {};
-  const containerClassName = classes?.container ?? "";
-  const identityClassName = classes?.identity ?? "";
-  const identityCopyClassName = classes?.identityCopy ?? "";
-  const planClassName = classes?.plan ?? "";
-  const titleClassName = classes?.title ?? "";
-  const descriptionClassName = classes?.description ?? "";
-  const avatarWrapperClassName = classes?.avatar ?? "";
+  const avatarClass = composeClassName(
+    resolvedClasses.avatar,
+    avatarClassName,
+  );
 
   return (
-    <header className={containerClassName}>
-      <div className={identityClassName}>
-        <Avatar
-          {...avatarRest}
-          className={composeClassName(avatarWrapperClassName, avatarClassName)}
-        />
-        <div className={identityCopyClassName}>
-          {planLabel ? <p className={planClassName}>{planLabel}</p> : null}
-          <h2 id={headingId} className={titleClassName}>
+    <header className={resolvedClasses.container}>
+      <div className={resolvedClasses.identity}>
+        <Avatar {...avatarRest} className={avatarClass} />
+        <div className={resolvedClasses.identityCopy}>
+          {renderPlanLabel(planLabel, resolvedClasses.plan)}
+          <h2 id={headingId} className={resolvedClasses.title}>
             {title}
           </h2>
         </div>
       </div>
-      {description ? (
-        <p id={descriptionId} className={descriptionClassName}>
-          {description}
-        </p>
-      ) : null}
+      {renderDescription(description, descriptionId, resolvedClasses.description)}
     </header>
   );
 }

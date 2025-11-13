@@ -16,45 +16,52 @@ const resolveResolvedTheme = (preference: string, prefersDark: boolean) => {
   return prefersDark ? "dark" : "light";
 };
 
-(() => {
+const getGlobalScope = () => {
   if (typeof window === "undefined" || typeof document === "undefined") {
-    return;
+    return null;
   }
+  return window as typeof window & { [key: string]: unknown };
+};
 
-  const globalScope = window as typeof window & {
-    [key: string]: unknown;
-  };
+const bootstrapFaviconManifest = (globalScope: ReturnType<typeof getGlobalScope>) => {
+  if (!globalScope) {
+    return null;
+  }
   const baseSvgKey = getBrowserFaviconBaseSvgGlobalKey();
   globalScope[baseSvgKey] = glancyWebBaseSvg;
   setBrowserFaviconBaseSvg(globalScope, glancyWebBaseSvg);
   const manifest = ensureBrowserFaviconManifest(globalScope);
   const manifestKey = getBrowserFaviconManifestGlobalKey();
-  // 将 manifest 写回全局，供 React 生命周期与调试复用。
   globalScope[manifestKey] = manifest;
+  return createBrowserFaviconRegistry(globalScope);
+};
 
-  const { localStorage } = window;
+const readStoredValue = (key: string, fallback: string) => {
   try {
-    const storedLang = localStorage?.getItem("lang");
-    if (storedLang) {
-      document.documentElement.lang = storedLang;
-    }
+    return window.localStorage?.getItem(key) ?? fallback;
   } catch {
-    // 访问 localStorage 可能因隐私模式被拒绝，忽略即可。
+    return fallback;
   }
+};
 
-  let preference = "system";
-  try {
-    preference = localStorage?.getItem("theme") ?? "system";
-  } catch {
-    preference = "system";
+const applyStoredLanguage = () => {
+  const storedLang = readStoredValue("lang", "");
+  if (storedLang) {
+    document.documentElement.lang = storedLang;
   }
+};
 
-  const prefersDark = window.matchMedia(DARK_MEDIA_QUERY).matches;
-  const resolvedTheme = resolveResolvedTheme(preference, prefersDark);
+const resolveThemePreference = () => readStoredValue("theme", "system");
+
+const applyThemeToDocument = (preference: string, resolvedTheme: string) => {
   document.documentElement.dataset.themePreference = preference;
   document.documentElement.dataset.theme = resolvedTheme;
+};
 
-  const registry = createBrowserFaviconRegistry(globalScope);
+const updateFaviconLink = (registry: ReturnType<typeof createBrowserFaviconRegistry>, prefersDark: boolean) => {
+  if (!registry) {
+    return;
+  }
   const link = document.getElementById("favicon");
   if (link instanceof HTMLLinkElement) {
     const scheme = prefersDark ? "dark" : "light";
@@ -62,4 +69,20 @@ const resolveResolvedTheme = (preference: string, prefersDark: boolean) => {
     link.href = asset;
     link.dataset.browserColorScheme = scheme;
   }
+};
+
+(() => {
+  const globalScope = getGlobalScope();
+  if (!globalScope) {
+    return;
+  }
+
+  const registry = bootstrapFaviconManifest(globalScope);
+  applyStoredLanguage();
+
+  const preference = resolveThemePreference();
+  const prefersDark = window.matchMedia(DARK_MEDIA_QUERY).matches;
+  const resolvedTheme = resolveResolvedTheme(preference, prefersDark);
+  applyThemeToDocument(preference, resolvedTheme);
+  updateFaviconLink(registry, prefersDark);
 })();

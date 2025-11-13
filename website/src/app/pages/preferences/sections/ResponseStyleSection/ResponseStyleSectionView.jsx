@@ -5,6 +5,152 @@ import styles from "../../Preferences.module.css";
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
+const PlaceholderMessage = ({ placeholder }) =>
+  placeholder.visible ? (
+    <p className={styles.placeholder}>{placeholder.label}</p>
+  ) : null;
+
+const ErrorMessage = ({ error }) =>
+  error.visible ? (
+    <div role="alert" className={styles["detail-row"]}>
+      <p className={styles.placeholder}>{error.label}</p>
+      <div />
+      <div className={styles["detail-action"]}>
+        {error.onRetry ? (
+          <button
+            type="button"
+            className={composeClassName(
+              styles["avatar-trigger"],
+              styles["detail-action-button"],
+            )}
+            onClick={error.onRetry}
+          >
+            {error.retryLabel}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
+
+const DetailRow = ({ children }) => (
+  <div className={styles["detail-row"]}>{children}</div>
+);
+
+const DetailLabel = ({ htmlFor, children }) => (
+  <dt className={styles["detail-label"]}>
+    <label htmlFor={htmlFor}>{children}</label>
+  </dt>
+);
+
+const DetailValue = ({
+  interactive,
+  hasArrow,
+  children,
+}) => (
+  <dd className={styles["detail-value"]}>
+    <div
+      className={styles["field-shell"]}
+      data-interactive={interactive}
+      data-has-arrow={hasArrow ? "true" : undefined}
+    >
+      {children}
+    </div>
+  </dd>
+);
+
+const DetailAction = ({ children }) => (
+  <div className={styles["detail-action"]} aria-live="polite">
+    {children}
+  </div>
+);
+
+const DropdownRow = ({ dropdown, savingLabel }) => {
+  if (!dropdown) {
+    return null;
+  }
+  return (
+    <DetailRow>
+      <DetailLabel htmlFor={dropdown.selectId}>{dropdown.label}</DetailLabel>
+      <DetailValue interactive="menu" hasArrow>
+        <SelectMenu
+          id={dropdown.selectId}
+          options={dropdown.options}
+          value={dropdown.value}
+          onChange={dropdown.onSelect}
+          ariaLabel={dropdown.label}
+          fullWidth
+        />
+      </DetailValue>
+      <DetailAction>
+        {dropdown.isSaving ? (
+          <span className={styles.placeholder}>{savingLabel}</span>
+        ) : null}
+      </DetailAction>
+    </DetailRow>
+  );
+};
+
+const FieldControl = ({ field }) => {
+  const controlClass = composeClassName(
+    styles["field-control"],
+    field.multiline
+      ? styles["field-control-textarea"]
+      : styles["field-control-input"],
+  );
+  if (field.multiline) {
+    return (
+      <textarea
+        id={field.inputId}
+        className={controlClass}
+        value={field.value}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
+        placeholder={field.placeholder}
+        rows={field.rows ?? 3}
+      />
+    );
+  }
+  return (
+    <input
+      id={field.inputId}
+      type="text"
+      className={controlClass}
+      value={field.value}
+      onChange={field.onChange}
+      onBlur={field.onBlur}
+      placeholder={field.placeholder}
+    />
+  );
+};
+
+const FieldRow = ({ field, savingLabel }) => (
+  <DetailRow>
+    <DetailLabel htmlFor={field.inputId}>{field.label}</DetailLabel>
+    <DetailValue interactive={field.multiline ? "textarea" : "input"}>
+      <FieldControl field={field} />
+    </DetailValue>
+    <DetailAction>
+      {field.isSaving ? (
+        <span className={styles.placeholder}>{savingLabel}</span>
+      ) : null}
+    </DetailAction>
+  </DetailRow>
+);
+
+const FieldsPanel = ({ dropdown, fields, savingLabel }) => {
+  if (!dropdown && fields.length === 0) {
+    return null;
+  }
+  return (
+    <dl className={styles.details}>
+      <DropdownRow dropdown={dropdown} savingLabel={savingLabel} />
+      {fields.map((field) => (
+        <FieldRow key={field.inputId} field={field} savingLabel={savingLabel} />
+      ))}
+    </dl>
+  );
+};
+
 function ResponseStyleSectionView({
   section,
   placeholder,
@@ -13,7 +159,6 @@ function ResponseStyleSectionView({
   fields,
   savingLabel,
 }) {
-  const shouldRenderFields = dropdown || fields.length > 0;
   return (
     <SettingsSection
       headingId={section.headingId}
@@ -29,107 +174,13 @@ function ResponseStyleSectionView({
       }}
     >
       <div aria-live="polite" className={styles.details}>
-        {placeholder.visible ? (
-          <p className={styles.placeholder}>{placeholder.label}</p>
-        ) : null}
-        {error.visible ? (
-          <div role="alert" className={styles["detail-row"]}>
-            <p className={styles.placeholder}>{error.label}</p>
-            <div />
-            <div className={styles["detail-action"]}>
-              {error.onRetry ? (
-                <button
-                  type="button"
-                  className={composeClassName(
-                    styles["avatar-trigger"],
-                    styles["detail-action-button"],
-                  )}
-                  onClick={error.onRetry}
-                >
-                  {error.retryLabel}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-        {shouldRenderFields ? (
-          <dl className={styles.details}>
-            {dropdown ? (
-              <div className={styles["detail-row"]}>
-                <dt className={styles["detail-label"]}>
-                  <label htmlFor={dropdown.selectId}>{dropdown.label}</label>
-                </dt>
-                <dd className={styles["detail-value"]}>
-                  <div
-                    className={styles["field-shell"]}
-                    data-interactive="menu"
-                    data-has-arrow="true"
-                  >
-                    <SelectMenu
-                      id={dropdown.selectId}
-                      options={dropdown.options}
-                      value={dropdown.value}
-                      onChange={dropdown.onSelect}
-                      ariaLabel={dropdown.label}
-                      fullWidth
-                    />
-                  </div>
-                </dd>
-                <div className={styles["detail-action"]} aria-live="polite">
-                  {dropdown.isSaving ? (
-                    <span className={styles.placeholder}>{savingLabel}</span>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-            {fields.map((field) => (
-              <div key={field.inputId} className={styles["detail-row"]}>
-                <dt className={styles["detail-label"]}>
-                  <label htmlFor={field.inputId}>{field.label}</label>
-                </dt>
-                <dd className={styles["detail-value"]}>
-                  <div
-                    className={styles["field-shell"]}
-                    data-interactive={field.multiline ? "textarea" : "input"}
-                  >
-                    {field.multiline ? (
-                      <textarea
-                        id={field.inputId}
-                        className={composeClassName(
-                          styles["field-control"],
-                          styles["field-control-textarea"],
-                        )}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        placeholder={field.placeholder}
-                        rows={field.rows ?? 3}
-                      />
-                    ) : (
-                      <input
-                        id={field.inputId}
-                        type="text"
-                        className={composeClassName(
-                          styles["field-control"],
-                          styles["field-control-input"],
-                        )}
-                        value={field.value}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        placeholder={field.placeholder}
-                      />
-                    )}
-                  </div>
-                </dd>
-                <div className={styles["detail-action"]} aria-live="polite">
-                  {field.isSaving ? (
-                    <span className={styles.placeholder}>{savingLabel}</span>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </dl>
-        ) : null}
+        <PlaceholderMessage placeholder={placeholder} />
+        <ErrorMessage error={error} />
+        <FieldsPanel
+          dropdown={dropdown}
+          fields={fields}
+          savingLabel={savingLabel}
+        />
       </div>
     </SettingsSection>
   );

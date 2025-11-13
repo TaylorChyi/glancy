@@ -77,33 +77,40 @@ const composeVariantEntry = (urlEntry, inlineEntry) => {
   });
 };
 
-export const buildDynamicRegistry = (urlEntries = {}, inlineEntries = {}) => {
-  const collected = {};
-
-  const allPaths = new Set([
+const collectResourcePaths = (urlEntries, inlineEntries) =>
+  new Set([
     ...Object.keys(urlEntries || {}),
     ...Object.keys(inlineEntries || {}),
   ]);
 
+const registerVariantEntry = ({
+  collected,
+  path,
+  urlEntries,
+  inlineEntries,
+}) => {
+  const descriptor = extractIconDescriptor(path);
+  if (!descriptor || !descriptor.name || !descriptor.variant) {
+    return;
+  }
+  const variantEntry = composeVariantEntry(
+    urlEntries?.[path],
+    inlineEntries?.[path],
+  );
+  if (!variantEntry) {
+    return;
+  }
+  const current = collected[descriptor.name] ?? {};
+  current[descriptor.variant] = variantEntry;
+  collected[descriptor.name] = current;
+};
+
+export const buildDynamicRegistry = (urlEntries = {}, inlineEntries = {}) => {
+  const collected = {};
+  const allPaths = collectResourcePaths(urlEntries, inlineEntries);
+
   for (const path of allPaths) {
-    const descriptor = extractIconDescriptor(path);
-
-    if (!descriptor || !descriptor.name || !descriptor.variant) {
-      continue;
-    }
-
-    const current = collected[descriptor.name] ?? {};
-    const variantEntry = composeVariantEntry(
-      urlEntries?.[path],
-      inlineEntries?.[path],
-    );
-
-    if (!variantEntry) {
-      continue;
-    }
-
-    current[descriptor.variant] = variantEntry;
-    collected[descriptor.name] = current;
+    registerVariantEntry({ collected, path, urlEntries, inlineEntries });
   }
 
   return collected;

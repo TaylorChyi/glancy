@@ -9,33 +9,8 @@ export const COPY_FEEDBACK_STATES = Object.freeze({
 
 const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
 
-/**
- * 意图：集中管理复制行为的所有状态与副作用，为上层提供可组合的控制器。
- * 输入：
- *  - entry/finalText/currentTerm：复制内容的候选来源；
- *  - t：国际化字典，需包含复制相关文案；
- *  - showPopup：弹窗提示函数。
- * 输出：复制能力是否可用、当前状态、复制动作、复位方法等。
- * 流程：
- *  1) 按优先级计算可复制文本并标准化；
- *  2) 依据复制结果更新状态并触发提示；
- *  3) 通过定时器在成功态两秒后恢复空闲态。
- * 错误处理：捕获剪贴板写入异常并回退至 idle。
- * 复杂度：O(n) 取决于候选数组长度，当前为常量 3。
- */
-export function useDictionaryCopyController({
-  entry,
-  finalText,
-  currentTerm,
-  t,
-  showPopup,
-}) {
-  const [copyFeedbackState, setCopyFeedbackState] = useState(
-    COPY_FEEDBACK_STATES.IDLE,
-  );
-  const copyFeedbackResetTimerRef = useRef(null);
-
-  const copyPayload = useMemo(() => {
+const useCopyPayload = ({ entry, finalText, currentTerm }) =>
+  useMemo(() => {
     const stringCandidates = [
       typeof entry?.markdown === "string" ? entry.markdown : null,
       typeof finalText === "string" ? finalText : null,
@@ -61,12 +36,8 @@ export function useDictionaryCopyController({
     return currentTerm || "";
   }, [entry, finalText, currentTerm]);
 
-  const canCopyDefinition = useMemo(
-    () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
-    [copyPayload],
-  );
-
-  const copyFeedbackMessages = useMemo(() => {
+const useCopyFeedbackMessages = (t) =>
+  useMemo(() => {
     const base = t.copyAction || "Copy";
     const failure = t.copyFailed || base;
     return Object.freeze({
@@ -82,9 +53,10 @@ export function useDictionaryCopyController({
     });
   }, [t.copyAction, t.copyFailed, t.copyEmpty, t.copyUnavailable]);
 
+const useCopyPopup = (messages, showPopup) => {
   const resolveCopyPopupMessage = useCallback(
     (status) => {
-      const { base, fallback, statuses } = copyFeedbackMessages;
+      const { base, fallback, statuses } = messages;
       const resolvedFallback = statuses.default ?? fallback ?? base ?? "Copy";
       if (!status) {
         return resolvedFallback;
@@ -94,10 +66,10 @@ export function useDictionaryCopyController({
       }
       return resolvedFallback;
     },
-    [copyFeedbackMessages],
+    [messages],
   );
 
-  const pushCopyPopup = useCallback(
+  return useCallback(
     (status) => {
       const message = resolveCopyPopupMessage(status);
       if (message) {
@@ -106,26 +78,75 @@ export function useDictionaryCopyController({
     },
     [resolveCopyPopupMessage, showPopup],
   );
+};
 
-  const clearCopyFeedbackResetTimer = useCallback(() => {
-    if (copyFeedbackResetTimerRef.current) {
-      clearTimeout(copyFeedbackResetTimerRef.current);
-      copyFeedbackResetTimerRef.current = null;
+const useCopyFeedbackTimer = () => {
+  const timerRef = useRef(null);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
   }, []);
 
+  const schedule = useCallback(
+    (callback) => {
+      clear();
+      timerRef.current = setTimeout(() => {
+        callback();
+        timerRef.current = null;
+      }, COPY_FEEDBACK_RESET_DELAY_MS);
+    },
+    [clear],
+  );
+
+  useEffect(() => () => clear(), [clear]);
+
+  return { clear, schedule };
+};
+
+/**
+ * 意图：集中管理复制行为的所有状态与副作用，为上层提供可组合的控制器。
+ * 输入：
+ *  - entry/finalText/currentTerm：复制内容的候选来源；
+ *  - t：国际化字典，需包含复制相关文案；
+ *  - showPopup：弹窗提示函数。
+ * 输出：复制能力是否可用、当前状态、复制动作、复位方法等。
+ * 流程：
+ *  1) 按优先级计算可复制文本并标准化；
+ *  2) 依据复制结果更新状态并触发提示；
+ *  3) 通过定时器在成功态两秒后恢复空闲态。
+ * 错误处理：捕获剪贴板写入异常并回退至 idle。
+ * 复杂度：O(n) 取决于候选数组长度，当前为常量 3。
+ */
+export function useDictionaryCopyController({
+  entry,
+  finalText,
+  currentTerm,
+  t,
+  showPopup,
+}) {
+  const [copyFeedbackState, setCopyFeedbackState] = useState(
+    COPY_FEEDBACK_STATES.IDLE,
+  );
+  const copyPayload = useCopyPayload({ entry, finalText, currentTerm });
+  const canCopyDefinition = useMemo(
+    () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
+    [copyPayload],
+  );
+  const copyFeedbackMessages = useCopyFeedbackMessages(t);
+  const pushCopyPopup = useCopyPopup(copyFeedbackMessages, showPopup);
+  const { clear, schedule } = useCopyFeedbackTimer();
+
   const resetCopyFeedback = useCallback(() => {
-    clearCopyFeedbackResetTimer();
+    clear();
     setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-  }, [clearCopyFeedbackResetTimer]);
+  }, [clear]);
 
   const scheduleCopyFeedbackReset = useCallback(() => {
-    clearCopyFeedbackResetTimer();
-    copyFeedbackResetTimerRef.current = setTimeout(() => {
-      setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-      copyFeedbackResetTimerRef.current = null;
-    }, COPY_FEEDBACK_RESET_DELAY_MS);
-  }, [clearCopyFeedbackResetTimer]);
+    schedule(() => setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE));
+  }, [schedule]);
 
   const handleCopy = useCallback(async () => {
     if (!canCopyDefinition) {
@@ -156,11 +177,6 @@ export function useDictionaryCopyController({
     pushCopyPopup,
     resetCopyFeedback,
   ]);
-
-  useEffect(
-    () => () => clearCopyFeedbackResetTimer(),
-    [clearCopyFeedbackResetTimer],
-  );
 
   const isCopySuccessActive =
     copyFeedbackState === COPY_FEEDBACK_STATES.SUCCESS;

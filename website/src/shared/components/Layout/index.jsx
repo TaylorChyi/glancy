@@ -7,22 +7,67 @@ import { useIsMobile } from "@shared/utils/device.js";
 import { BRAND_LOGO_ICON } from "@shared/utils/brand.js";
 import styles from "./Layout.module.css";
 
-function Layout({
-  children,
-  sidebarProps = {},
-  bottomContent = null,
-  onMainMiddleScroll,
-}) {
-  const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(null);
-  const containerRef = useRef(null);
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const resolveSidebarBounds = (container) => {
+  const computed = window.getComputedStyle(container);
+  const min = Number.parseFloat(
+    computed.getPropertyValue("--layout-sidebar-min"),
+  );
+  const max = Number.parseFloat(
+    computed.getPropertyValue("--layout-sidebar-max"),
+  );
+  return {
+    minWidth: Number.isNaN(min) ? 240 : min,
+    maxWidth: Number.isNaN(max) ? 420 : max,
+  };
+};
+
+const attachSidebarResizeListeners = ({
+  event,
+  sidebarRef,
+  containerRef,
+  resizeFrame,
+  setSidebarWidth,
+}) => {
+  event.preventDefault();
+  document.body.style.userSelect = "none";
+
+  const { width: initialWidth } =
+    sidebarRef.current.getBoundingClientRect();
+  const { minWidth, maxWidth } = resolveSidebarBounds(containerRef.current);
+  const startX = event.clientX;
+
+  const handlePointerMove = (moveEvent) => {
+    if (resizeFrame.current) {
+      cancelAnimationFrame(resizeFrame.current);
+      resizeFrame.current = null;
+    }
+    resizeFrame.current = requestAnimationFrame(() => {
+      const delta = moveEvent.clientX - startX;
+      const nextWidth = clamp(initialWidth + delta, minWidth, maxWidth);
+      setSidebarWidth(nextWidth);
+    });
+  };
+
+  const handlePointerUp = () => {
+    if (resizeFrame.current) {
+      cancelAnimationFrame(resizeFrame.current);
+      resizeFrame.current = null;
+    }
+    document.removeEventListener("pointermove", handlePointerMove);
+    document.removeEventListener("pointerup", handlePointerUp);
+    document.body.style.removeProperty("user-select");
+  };
+
+  document.addEventListener("pointermove", handlePointerMove);
+  document.addEventListener("pointerup", handlePointerUp);
+};
+
+const useSidebarResizer = (isMobile, containerRef) => {
   const sidebarRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(null);
   const resizeFrame = useRef(null);
-  const contentRef = useRef(null);
-  const dockerRef = useRef(null);
-  const [dockerHeight, setDockerHeight] = useState(0);
-  const shouldRenderDocker = Boolean(bottomContent);
 
   useEffect(() => {
     if (isMobile) {
@@ -45,66 +90,22 @@ function Layout({
     (event) => {
       if (isMobile) return;
       if (!sidebarRef.current || !containerRef.current) return;
-
-      event.preventDefault();
-      document.body.style.userSelect = "none";
-
-      const { clientX: startX } = event;
-      const computed = window.getComputedStyle(containerRef.current);
-      const min = Number.parseFloat(
-        computed.getPropertyValue("--layout-sidebar-min"),
-      );
-      const max = Number.parseFloat(
-        computed.getPropertyValue("--layout-sidebar-max"),
-      );
-      const { width: initialWidth } =
-        sidebarRef.current.getBoundingClientRect();
-      const minWidth = Number.isNaN(min) ? 240 : min;
-      const maxWidth = Number.isNaN(max) ? 420 : max;
-
-      const handlePointerMove = (moveEvent) => {
-        if (resizeFrame.current) {
-          cancelAnimationFrame(resizeFrame.current);
-          resizeFrame.current = null;
-        }
-
-        resizeFrame.current = requestAnimationFrame(() => {
-          const delta = moveEvent.clientX - startX;
-          const nextWidth = Math.max(
-            minWidth,
-            Math.min(maxWidth, initialWidth + delta),
-          );
-          setSidebarWidth(nextWidth);
-        });
-      };
-
-      const handlePointerUp = () => {
-        if (resizeFrame.current) {
-          cancelAnimationFrame(resizeFrame.current);
-          resizeFrame.current = null;
-        }
-        document.removeEventListener("pointermove", handlePointerMove);
-        document.removeEventListener("pointerup", handlePointerUp);
-        document.body.style.removeProperty("user-select");
-      };
-
-      document.addEventListener("pointermove", handlePointerMove);
-      document.addEventListener("pointerup", handlePointerUp);
+      attachSidebarResizeListeners({
+        event,
+        sidebarRef,
+        containerRef,
+        resizeFrame,
+        setSidebarWidth,
+      });
     },
-    [isMobile],
+    [containerRef, isMobile],
   );
 
-  const containerStyle = useMemo(() => {
-    const resolvedDockerHeight = shouldRenderDocker ? dockerHeight : 0;
-    const style = {
-      "--docker-h": `${resolvedDockerHeight}px`,
-    };
-    if (!isMobile && typeof sidebarWidth === "number") {
-      style["--sidebar-w"] = `${Math.round(sidebarWidth)}px`;
-    }
-    return style;
-  }, [dockerHeight, isMobile, sidebarWidth, shouldRenderDocker]);
+  return { sidebarRef, sidebarWidth, handlePointerDown };
+};
 
+const useMainScrollRef = (onMainMiddleScroll) => {
+  const contentRef = useRef(null);
   useEffect(() => {
     if (!onMainMiddleScroll) {
       return undefined;
@@ -117,10 +118,14 @@ function Layout({
       onMainMiddleScroll(event);
     };
     node.addEventListener("scroll", handleScroll);
-    return () => {
-      node.removeEventListener("scroll", handleScroll);
-    };
-  }, [onMainMiddleScroll]);
+    return () => node.removeEventListener("scroll", handleScroll);
+  }, [contentRef, onMainMiddleScroll]);
+  return contentRef;
+};
+
+const useDockerMeasurements = (shouldRenderDocker) => {
+  const dockerRef = useRef(null);
+  const [dockerHeight, setDockerHeight] = useState(0);
 
   useEffect(() => {
     if (!shouldRenderDocker) {
@@ -142,7 +147,39 @@ function Layout({
       observer.disconnect();
       setDockerHeight((prev) => (prev === 0 ? prev : 0));
     };
-  }, [shouldRenderDocker]);
+  }, [dockerRef, shouldRenderDocker]);
+
+  return { dockerRef, dockerHeight };
+};
+
+function Layout({
+  children,
+  sidebarProps = {},
+  bottomContent = null,
+  onMainMiddleScroll,
+}) {
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const containerRef = useRef(null);
+  const shouldRenderDocker = Boolean(bottomContent);
+  const { sidebarRef, sidebarWidth, handlePointerDown } = useSidebarResizer(
+    isMobile,
+    containerRef,
+  );
+  const contentRef = useMainScrollRef(onMainMiddleScroll);
+  const { dockerRef, dockerHeight } =
+    useDockerMeasurements(shouldRenderDocker);
+
+  const containerStyle = useMemo(() => {
+    const resolvedDockerHeight = shouldRenderDocker ? dockerHeight : 0;
+    const style = {
+      "--docker-h": `${resolvedDockerHeight}px`,
+    };
+    if (!isMobile && typeof sidebarWidth === "number") {
+      style["--sidebar-w"] = `${Math.round(sidebarWidth)}px`;
+    }
+    return style;
+  }, [dockerHeight, isMobile, sidebarWidth, shouldRenderDocker]);
 
   return (
     <div

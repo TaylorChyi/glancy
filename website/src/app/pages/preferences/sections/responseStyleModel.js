@@ -54,83 +54,75 @@ export const RESPONSE_STYLE_ACTIONS = Object.freeze({
  * 错误处理：未知动作直接返回原状态。
  * 复杂度：O(1)。
  */
-export function responseStyleReducer(state, action) {
-  switch (action.type) {
-    case RESPONSE_STYLE_ACTIONS.hydrate: {
-      const nextDraft = Object.freeze(createDraft(action.payload));
-      return {
-        status: "ready",
-        values: nextDraft,
-        persisted: nextDraft,
-        savingField: null,
-        error: null,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.loading: {
-      return {
-        ...state,
-        status: "loading",
-        savingField: null,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.change: {
-      if (!RESPONSE_STYLE_FIELDS.includes(action.field)) {
-        return state;
-      }
-      const nextValues = { ...state.values, [action.field]: action.value };
-      return { ...state, values: nextValues };
-    }
-    case RESPONSE_STYLE_ACTIONS.synchronize: {
-      if (!RESPONSE_STYLE_FIELDS.includes(action.field)) {
-        return state;
-      }
-      const normalized = sanitizeText(action.value);
-      const nextValues = { ...state.values, [action.field]: normalized };
-      const nextPersisted = { ...state.persisted, [action.field]: normalized };
-      return {
-        ...state,
-        status: "ready",
-        values: nextValues,
-        persisted: nextPersisted,
-        savingField: null,
-        error: null,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.saving: {
-      return {
-        ...state,
-        status: "saving",
-        savingField: action.field,
-        error: null,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.success: {
-      const nextDraft = Object.freeze(createDraft(action.payload));
-      return {
-        status: "ready",
-        values: nextDraft,
-        persisted: nextDraft,
-        savingField: null,
-        error: null,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.failure: {
-      return {
-        ...state,
-        status: "error",
-        savingField: null,
-        error: action.error,
-      };
-    }
-    case RESPONSE_STYLE_ACTIONS.clearError: {
-      if (!state.error) {
-        return state;
-      }
-      return { ...state, error: null };
-    }
-    default:
+const isKnownResponseField = (field) =>
+  RESPONSE_STYLE_FIELDS.includes(field);
+
+const createDraftState = (payload) => {
+  const nextDraft = Object.freeze(createDraft(payload));
+  return {
+    status: "ready",
+    values: nextDraft,
+    persisted: nextDraft,
+    savingField: null,
+    error: null,
+  };
+};
+
+const responseReducerHandlers = {
+  [RESPONSE_STYLE_ACTIONS.hydrate]: (_state, action) =>
+    createDraftState(action.payload),
+  [RESPONSE_STYLE_ACTIONS.loading]: (state) => ({
+    ...state,
+    status: "loading",
+    savingField: null,
+  }),
+  [RESPONSE_STYLE_ACTIONS.change]: (state, action) => {
+    if (!isKnownResponseField(action.field)) {
       return state;
+    }
+    return {
+      ...state,
+      values: { ...state.values, [action.field]: action.value },
+    };
+  },
+  [RESPONSE_STYLE_ACTIONS.synchronize]: (state, action) => {
+    if (!isKnownResponseField(action.field)) {
+      return state;
+    }
+    const normalized = sanitizeText(action.value);
+    return {
+      ...state,
+      status: "ready",
+      values: { ...state.values, [action.field]: normalized },
+      persisted: { ...state.persisted, [action.field]: normalized },
+      savingField: null,
+      error: null,
+    };
+  },
+  [RESPONSE_STYLE_ACTIONS.saving]: (state, action) => ({
+    ...state,
+    status: "saving",
+    savingField: action.field,
+    error: null,
+  }),
+  [RESPONSE_STYLE_ACTIONS.success]: (_state, action) =>
+    createDraftState(action.payload),
+  [RESPONSE_STYLE_ACTIONS.failure]: (state, action) => ({
+    ...state,
+    status: "error",
+    savingField: null,
+    error: action.error,
+  }),
+  [RESPONSE_STYLE_ACTIONS.clearError]: (state) =>
+    state.error ? { ...state, error: null } : state,
+};
+
+export function responseStyleReducer(state, action) {
+  const handler = responseReducerHandlers[action.type];
+  if (!handler) {
+    return state;
   }
+  return handler(state, action);
 }
 
 export function hasFieldChanged(state, field) {

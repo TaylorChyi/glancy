@@ -1,33 +1,49 @@
 import { useCallback } from "react";
 import { normalizeMarkdownEntity } from "../markdown/dictionaryMarkdownNormalizer.js";
 
+const collectRecordVersions = (record) =>
+  Array.isArray(record?.versions) ? record.versions : [];
+
+const resolvePreferredVersionId = (record, preferredVersionId, versions) => {
+  const fallbackId = versions[0]?.id ?? versions[0]?.versionId ?? null;
+  return preferredVersionId ?? record?.activeVersionId ?? fallbackId ?? null;
+};
+
+const hydrateFromStore = (termKey, resolvedId, wordStoreApi) => {
+  if (!resolvedId || !wordStoreApi?.getState) {
+    return null;
+  }
+  return wordStoreApi.getState().getEntry?.(termKey, resolvedId) ?? null;
+};
+
+const findVersionMatch = (versions, resolvedId) => {
+  if (!resolvedId) {
+    return null;
+  }
+  return (
+    versions.find(
+      (item) => String(item.id ?? item.versionId) === String(resolvedId),
+    ) ?? null
+  );
+};
+
 const pickVersionCandidate = ({
   termKey,
   record,
   preferredVersionId,
   wordStoreApi,
 }) => {
-  const versions = Array.isArray(record?.versions) ? record.versions : [];
-  const fallbackId = versions[0]?.id ?? versions[0]?.versionId ?? null;
-  const resolvedId =
-    preferredVersionId ?? record?.activeVersionId ?? fallbackId ?? null;
+  const versions = collectRecordVersions(record);
+  const resolvedId = resolvePreferredVersionId(record, preferredVersionId, versions);
 
-  if (resolvedId && wordStoreApi?.getState) {
-    const hydrated = wordStoreApi
-      .getState()
-      .getEntry?.(termKey, resolvedId);
-    if (hydrated) {
-      return hydrated;
-    }
+  const storeMatch = hydrateFromStore(termKey, resolvedId, wordStoreApi);
+  if (storeMatch) {
+    return storeMatch;
   }
 
-  if (resolvedId) {
-    const matched = versions.find(
-      (item) => String(item.id ?? item.versionId) === String(resolvedId),
-    );
-    if (matched) {
-      return matched;
-    }
+  const directMatch = findVersionMatch(versions, resolvedId);
+  if (directMatch) {
+    return directMatch;
   }
 
   if (record?.entry) {
@@ -37,12 +53,21 @@ const pickVersionCandidate = ({
   return versions[versions.length - 1] ?? record ?? null;
 };
 
-export function useDictionaryRecordHydrator({
-  wordStoreApi,
+const applyHydratedEntry = (
   setEntry,
   setFinalText,
   setCurrentTerm,
-}) {
+  normalized,
+) => {
+  setEntry(normalized);
+  setFinalText(normalized.markdown ?? "");
+  if (normalized.term) {
+    setCurrentTerm(normalized.term);
+  }
+};
+
+export function useDictionaryRecordHydrator(deps) {
+  const { wordStoreApi, setEntry, setFinalText, setCurrentTerm } = deps;
   return useCallback(
     (termKey, record, preferredVersionId) => {
       if (!termKey || !record) {
@@ -60,14 +85,9 @@ export function useDictionaryRecordHydrator({
         return null;
       }
 
-      setEntry(normalized);
-      setFinalText(normalized.markdown ?? "");
-      if (normalized.term) {
-        setCurrentTerm(normalized.term);
-      }
-
+      applyHydratedEntry(setEntry, setFinalText, setCurrentTerm, normalized);
       return normalized;
     },
-    [wordStoreApi, setEntry, setFinalText, setCurrentTerm],
+    [setCurrentTerm, setEntry, setFinalText, wordStoreApi],
   );
 }

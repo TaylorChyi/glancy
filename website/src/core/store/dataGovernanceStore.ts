@@ -105,31 +105,53 @@ const INITIAL_RETENTION_POLICY_ID = sanitizePolicyId(
   persistedSnapshot?.retentionPolicyId,
 );
 
+type StoreSetter = (
+  updater: (state: DataGovernanceState) => Partial<DataGovernanceState>,
+) => void;
+
+const createRetentionPolicySetter =
+  (set: StoreSetter) => (policyId: string) => {
+    const normalized = sanitizePolicyId(policyId);
+    set((state) =>
+      state.retentionPolicyId === normalized
+        ? {}
+        : { retentionPolicyId: normalized },
+    );
+  };
+
+const createHistoryCaptureSetter =
+  (set: StoreSetter) => (enabled: boolean) => {
+    const next = Boolean(enabled);
+    set((state) =>
+      state.historyCaptureEnabled === next
+        ? {}
+        : { historyCaptureEnabled: next },
+    );
+  };
+
+const buildInitialGovernanceState = (
+  set: StoreSetter,
+  retentionPolicyId: string,
+  historyCaptureEnabled: boolean,
+) => ({
+  retentionPolicyId,
+  historyCaptureEnabled,
+  setRetentionPolicy: createRetentionPolicySetter(set),
+  setHistoryCaptureEnabled: createHistoryCaptureSetter(set),
+});
+
+const createDataGovernanceInitializer =
+  (retentionPolicyId: string, historyCaptureEnabled: boolean) =>
+  (set: StoreSetter) =>
+    buildInitialGovernanceState(set, retentionPolicyId, historyCaptureEnabled);
+
 export const useDataGovernanceStore =
   createPersistentStore<DataGovernanceState>({
     key: DATA_GOVERNANCE_STORAGE_KEY,
-    initializer: (set) => ({
-      retentionPolicyId: INITIAL_RETENTION_POLICY_ID,
-      historyCaptureEnabled: INITIAL_HISTORY_CAPTURE,
-      setRetentionPolicy: (policyId: string) => {
-        const normalized = sanitizePolicyId(policyId);
-        set((state) => {
-          if (state.retentionPolicyId === normalized) {
-            return {};
-          }
-          return { retentionPolicyId: normalized };
-        });
-      },
-      setHistoryCaptureEnabled: (enabled: boolean) => {
-        const next = Boolean(enabled);
-        set((state) => {
-          if (state.historyCaptureEnabled === next) {
-            return {};
-          }
-          return { historyCaptureEnabled: next };
-        });
-      },
-    }),
+    initializer: createDataGovernanceInitializer(
+      INITIAL_RETENTION_POLICY_ID,
+      INITIAL_HISTORY_CAPTURE,
+    ),
     persistOptions: {
       partialize: pickState(["retentionPolicyId", "historyCaptureEnabled"]),
       onRehydrateStorage: () => (state) => {

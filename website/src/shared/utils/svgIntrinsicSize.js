@@ -53,6 +53,57 @@ function parseNumericDimension(value) {
   return converted == null ? null : converted;
 }
 
+const parseSvgDocument = (svgContent) => {
+  if (typeof svgContent !== "string" || svgContent.trim() === "") {
+    return null;
+  }
+  const parser = new DOMParser();
+  const documentResult = parser.parseFromString(svgContent, "image/svg+xml");
+  const svgElement = documentResult.documentElement;
+  if (!svgElement || svgElement.tagName.toLowerCase() !== "svg") {
+    return null;
+  }
+  return svgElement;
+};
+
+const readDimensionsFromAttributes = (element) => {
+  const width = parseNumericDimension(element.getAttribute("width"));
+  const height = parseNumericDimension(element.getAttribute("height"));
+  if (width && height) {
+    return { width, height };
+  }
+  return null;
+};
+
+const parseViewBoxTokens = (viewBox) =>
+  viewBox
+    .replaceAll(",", " ")
+    .split(/\s+/u)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+const readDimensionsFromViewBox = (element) => {
+  const viewBox = element.getAttribute("viewBox");
+  if (typeof viewBox !== "string" || viewBox.trim() === "") {
+    return null;
+  }
+  const tokens = parseViewBoxTokens(viewBox);
+  if (tokens.length !== 4) {
+    return null;
+  }
+  const viewBoxWidth = Number.parseFloat(tokens[2]);
+  const viewBoxHeight = Number.parseFloat(tokens[3]);
+  if (
+    Number.isFinite(viewBoxWidth) &&
+    Number.isFinite(viewBoxHeight) &&
+    viewBoxWidth > 0 &&
+    viewBoxHeight > 0
+  ) {
+    return { width: viewBoxWidth, height: viewBoxHeight };
+  }
+  return null;
+};
+
 /**
  * 意图：从 SVG 文本中推导固有宽高。
  * 输入：完整的 SVG 文本内容。
@@ -65,47 +116,14 @@ function parseNumericDimension(value) {
  * 复杂度：O(n)，其中 n 为文本长度，解析由浏览器优化处理。
  */
 export function extractSvgIntrinsicSize(svgContent) {
-  if (typeof svgContent !== "string" || svgContent.trim() === "") {
+  const svgElement = parseSvgDocument(svgContent);
+  if (!svgElement) {
     return null;
   }
-
-  const parser = new DOMParser();
-  const documentResult = parser.parseFromString(svgContent, "image/svg+xml");
-  const svgElement = documentResult.documentElement;
-
-  if (!svgElement || svgElement.tagName.toLowerCase() !== "svg") {
-    return null;
-  }
-
-  const width = parseNumericDimension(svgElement.getAttribute("width"));
-  const height = parseNumericDimension(svgElement.getAttribute("height"));
-
-  if (width && height) {
-    return { width, height };
-  }
-
-  const viewBox = svgElement.getAttribute("viewBox");
-  if (typeof viewBox === "string" && viewBox.trim() !== "") {
-    const tokens = viewBox
-      .replaceAll(",", " ")
-      .split(/\s+/u)
-      .map((token) => token.trim())
-      .filter(Boolean);
-    if (tokens.length === 4) {
-      const viewBoxWidth = Number.parseFloat(tokens[2]);
-      const viewBoxHeight = Number.parseFloat(tokens[3]);
-      if (
-        Number.isFinite(viewBoxWidth) &&
-        Number.isFinite(viewBoxHeight) &&
-        viewBoxWidth > 0 &&
-        viewBoxHeight > 0
-      ) {
-        return { width: viewBoxWidth, height: viewBoxHeight };
-      }
-    }
-  }
-
-  return null;
+  return (
+    readDimensionsFromAttributes(svgElement) ??
+    readDimensionsFromViewBox(svgElement)
+  );
 }
 
 export default {

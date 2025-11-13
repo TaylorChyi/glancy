@@ -14,6 +14,42 @@ import {
 
 const STRONG_LABEL_BOUNDARY_PATTERN = /^[A-Z\u4e00-\u9fff]/u;
 
+const buildSplitCandidate = (token, index) => {
+  const suffix = token.slice(index);
+  if (!shouldSplitInlineLabel(suffix)) {
+    return null;
+  }
+  const prefix = token.slice(0, index);
+  if (!prefix.trim()) {
+    return null;
+  }
+  const normalized = normalizeInlineLabelCandidate(suffix);
+  return {
+    prefix,
+    label: suffix,
+    exact: INLINE_LABEL_TOKENS.has(normalized),
+    strong: STRONG_LABEL_BOUNDARY_PATTERN.test(suffix),
+    length: suffix.length,
+    index,
+  };
+};
+
+const pickBetterCandidate = (current, candidate) => {
+  if (!current) {
+    return candidate;
+  }
+  if (candidate.exact !== current.exact) {
+    return candidate.exact ? candidate : current;
+  }
+  if (candidate.strong !== current.strong) {
+    return candidate.strong ? candidate : current;
+  }
+  if (candidate.length !== current.length) {
+    return candidate.length > current.length ? candidate : current;
+  }
+  return candidate.index < current.index ? candidate : current;
+};
+
 function resolveAdjacentLabelSplit(segment) {
   const token = segment.slice(0, -1);
   if (formatSenseLabel(token)) {
@@ -21,47 +57,12 @@ function resolveAdjacentLabelSplit(segment) {
   }
   let best = null;
   for (let index = 1; index < token.length; index += 1) {
-    const suffix = token.slice(index);
-    if (!shouldSplitInlineLabel(suffix)) {
-      continue;
-    }
-    const prefix = token.slice(0, index);
-    if (!prefix.trim()) {
-      continue;
-    }
-    const normalized = normalizeInlineLabelCandidate(suffix);
-    const candidate = {
-      prefix,
-      label: suffix,
-      exact: INLINE_LABEL_TOKENS.has(normalized),
-      strong: STRONG_LABEL_BOUNDARY_PATTERN.test(suffix),
-      length: suffix.length,
-      index,
-    };
-    if (!best) {
-      best = candidate;
-      continue;
-    }
-    if (candidate.exact !== best.exact) {
-      best = candidate.exact ? candidate : best;
-      continue;
-    }
-    if (candidate.strong !== best.strong) {
-      best = candidate.strong ? candidate : best;
-      continue;
-    }
-    if (candidate.length !== best.length) {
-      best = candidate.length > best.length ? candidate : best;
-      continue;
-    }
-    if (candidate.index < best.index) {
-      best = candidate;
+    const candidate = buildSplitCandidate(token, index);
+    if (candidate) {
+      best = pickBetterCandidate(best, candidate);
     }
   }
-  if (!best) {
-    return null;
-  }
-  return { prefix: best.prefix, label: best.label };
+  return best ? { prefix: best.prefix, label: best.label } : null;
 }
 
 export function separateAdjacentInlineLabels(text) {

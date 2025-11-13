@@ -80,30 +80,17 @@ const toFocusableElements = (root) => {
   });
 };
 
-function Modal({
-  onClose,
-  className = "",
-  children,
-  closeLabel = "Close",
-  closeButton,
-  hideDefaultCloseButton = false,
-  ariaLabelledBy,
-  ariaDescribedBy,
-}) {
-  useEscapeKey(onClose);
-  const contentRef = useRef(null);
-  const previousFocusRef = useRef(null);
-
+const useBodyScrollLock = () => {
   useEffect(() => {
     const root = ensureModalRoot();
     if (!root) return undefined;
-
     lockBodyScroll();
-
-    return () => {
-      unlockBodyScroll();
-    };
+    return () => unlockBodyScroll();
   }, []);
+};
+
+const useFocusTrap = (contentRef) => {
+  const previousFocusRef = useRef(null);
 
   useEffect(() => {
     const content = contentRef.current;
@@ -163,6 +150,46 @@ function Modal({
       }
     };
   }, []);
+};
+
+const renderCloseControl = ({
+  closeButton,
+  shouldRenderDefaultCloseButton,
+  closeLabel,
+  onClose,
+}) => {
+  if (closeButton) {
+    return <div className={styles["close-slot"]}>{closeButton}</div>;
+  }
+  if (!shouldRenderDefaultCloseButton) {
+    return null;
+  }
+  return (
+    <button
+      type="button"
+      className={styles["close-button"]}
+      aria-label={closeLabel}
+      onClick={onClose}
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+  );
+};
+
+function Modal({
+  onClose,
+  className = "",
+  children,
+  closeLabel = "Close",
+  closeButton,
+  hideDefaultCloseButton = false,
+  ariaLabelledBy,
+  ariaDescribedBy,
+}) {
+  useEscapeKey(onClose);
+  const contentRef = useRef(null);
+  useBodyScrollLock();
+  useFocusTrap(contentRef);
 
   if (typeof document === "undefined") {
     return null;
@@ -180,32 +207,6 @@ function Modal({
   const shouldRenderDefaultCloseButton =
     !hideDefaultCloseButton && !closeButton;
 
-  /**
-   * 意图：
-   *  - 在保持默认关闭按钮体验的同时，为设计稿要求的差异化方案预留插槽。
-   * 流程：
-   *  1) 如提供 `closeButton`，优先渲染该节点；否则按需渲染默认按钮。
-   *  2) 关闭控件始终位于内容首部，确保焦点环顺序稳定。
-   */
-  const renderCloseControl = () => {
-    if (closeButton) {
-      return <div className={styles["close-slot"]}>{closeButton}</div>;
-    }
-    if (!shouldRenderDefaultCloseButton) {
-      return null;
-    }
-    return (
-      <button
-        type="button"
-        className={styles["close-button"]}
-        aria-label={closeLabel}
-        onClick={onClose}
-      >
-        <span aria-hidden="true">&times;</span>
-      </button>
-    );
-  };
-
   return createPortal(
     <div className={styles.overlay} role="presentation" onClick={onClose}>
       <div
@@ -218,7 +219,12 @@ function Modal({
         ref={contentRef}
         onClick={withStopPropagation()}
       >
-        {renderCloseControl()}
+        {renderCloseControl({
+          closeButton,
+          shouldRenderDefaultCloseButton,
+          closeLabel,
+          onClose,
+        })}
         {children}
       </div>
     </div>,

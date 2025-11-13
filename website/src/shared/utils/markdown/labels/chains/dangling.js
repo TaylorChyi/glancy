@@ -9,6 +9,32 @@ import {
 } from "../../indentation.js";
 import { shouldSplitInlineLabel } from "../candidates.js";
 
+const applyInlineRewrites = (input, pattern) => {
+  let current = input;
+  for (let iteration = 0; iteration < 4; iteration += 1) {
+    let mutated = false;
+    current = current.replace(
+      pattern,
+      (...args) => {
+        const [match, , segment, nextLabel, offset, source] = args;
+        if (!shouldSplitInlineLabel(nextLabel)) {
+          return match;
+        }
+        mutated = true;
+        const indent =
+          deriveLineIndentation(source, offset) ||
+          computeListIndentation(source, offset) ||
+          "  ";
+        return `\n${indent}${segment}`;
+      },
+    );
+    if (!mutated) {
+      break;
+    }
+  }
+  return current;
+};
+
 export function resolveDanglingLabelSeparators(text) {
   const withoutTrailingHyphen = text.replace(
     DANGLING_LABEL_SEPARATOR_PATTERN,
@@ -24,31 +50,6 @@ export function resolveDanglingLabelSeparators(text) {
       return `${trimmedLine}\n${indent}${segment}`;
     },
   );
-
-  const applyInlineRewrites = (input, pattern) => {
-    let current = input;
-    for (let iteration = 0; iteration < 4; iteration += 1) {
-      let mutated = false;
-      current = current.replace(
-        pattern,
-        (match, marker, segment, nextLabel, offset, source) => {
-          if (!shouldSplitInlineLabel(nextLabel)) {
-            return match;
-          }
-          mutated = true;
-          const indent =
-            deriveLineIndentation(source, offset) ||
-            computeListIndentation(source, offset) ||
-            "  ";
-          return `\n${indent}${segment}`;
-        },
-      );
-      if (!mutated) {
-        break;
-      }
-    }
-    return current;
-  };
 
   let normalized = applyInlineRewrites(
     withoutTrailingHyphen,

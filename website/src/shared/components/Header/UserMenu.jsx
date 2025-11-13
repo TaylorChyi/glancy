@@ -6,10 +6,7 @@ import UserMenuButton from "./UserMenuButton.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
 import UserMenuModals from "./UserMenuModals.jsx";
 
-function UserMenu({ size = 24, showName = false, TriggerComponent }) {
-  const { user, clearUser } = useUser();
-  const { clearHistory } = useHistory();
-  const { t } = useLanguage();
+const resolvePlanDetails = (user) => {
   const username = user?.username || "";
   const isPro =
     user?.member || user?.isPro || (user?.plan && user.plan !== "free");
@@ -17,23 +14,33 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
   const planLabel = planName
     ? planName.charAt(0).toUpperCase() + planName.slice(1)
     : "";
+  return { username, isPro, planLabel };
+};
 
-  if (!user) {
-    return (
-      <div
-        className={`${styles["header-section"]} ${styles["login-actions"]} ${showName ? styles["with-name"] : ""}`}
-      >
-        <Link to="/login" className={styles["login-btn"]}>
-          {t.navLogin}
-        </Link>
-        <Link to="/register" className={styles["login-btn"]}>
-          {t.navRegister}
-        </Link>
-      </div>
-    );
-  }
+const GuestActions = ({ showName, t }) => (
+  <div
+    className={`${styles["header-section"]} ${styles["login-actions"]} ${showName ? styles["with-name"] : ""}`}
+  >
+    <Link to="/login" className={styles["login-btn"]}>
+      {t.navLogin}
+    </Link>
+    <Link to="/register" className={styles["login-btn"]}>
+      {t.navRegister}
+    </Link>
+  </div>
+);
 
+const AuthenticatedMenu = ({
+  user,
+  clearUser,
+  clearHistory,
+  showName,
+  size,
+  TriggerComponent,
+  t,
+}) => {
   const Trigger = TriggerComponent ?? UserMenuButton;
+  const { username, isPro, planLabel } = resolvePlanDetails(user);
 
   return (
     <UserMenuModals
@@ -64,6 +71,28 @@ function UserMenu({ size = 24, showName = false, TriggerComponent }) {
         </Trigger>
       )}
     </UserMenuModals>
+  );
+};
+
+function UserMenu({ size = 24, showName = false, TriggerComponent }) {
+  const { user, clearUser } = useUser();
+  const { clearHistory } = useHistory();
+  const { t } = useLanguage();
+
+  if (!user) {
+    return <GuestActions showName={showName} t={t} />;
+  }
+
+  return (
+    <AuthenticatedMenu
+      user={user}
+      clearUser={clearUser}
+      clearHistory={clearHistory}
+      showName={showName}
+      size={size}
+      TriggerComponent={TriggerComponent}
+      t={t}
+    />
   );
 }
 

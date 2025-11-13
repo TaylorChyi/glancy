@@ -13,6 +13,55 @@ export function usePositioningCycle({ isOpen, scheduleUpdate, clearFrame }) {
   }, [clearFrame, isOpen, scheduleUpdate]);
 }
 
+const attachGlobalListeners = ({
+  handleResize,
+  handleScroll,
+  handlePointerDown,
+  handleKeyDown,
+}) => {
+  window.addEventListener("resize", handleResize);
+  window.addEventListener("scroll", handleScroll, true);
+  document.addEventListener("pointerdown", handlePointerDown);
+  document.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+    window.removeEventListener("scroll", handleScroll, true);
+    document.removeEventListener("pointerdown", handlePointerDown);
+    document.removeEventListener("keydown", handleKeyDown);
+  };
+};
+
+const createPointerDownHandler = ({ anchorRef, contentRef, onClose }) => {
+  return (event) => {
+    const anchorEl = anchorRef?.current;
+    const popoverEl = contentRef.current;
+    if (popoverEl?.contains(event.target)) return;
+    if (anchorEl?.contains(event.target)) return;
+    onClose?.();
+  };
+};
+
+const createKeyDownHandler = (onClose) => (event) => {
+  if (event.key === "Escape") {
+    onClose?.();
+  }
+};
+
+const observeAnchorAndContent = ({
+  anchorRef,
+  contentRef,
+  scheduleUpdate,
+}) => {
+  if (typeof ResizeObserver === "undefined") {
+    return null;
+  }
+  const observer = new ResizeObserver(() => scheduleUpdate());
+  if (anchorRef?.current) observer.observe(anchorRef.current);
+  if (contentRef.current) observer.observe(contentRef.current);
+  return observer;
+};
+
 export function useGlobalDismissHandlers({
   isOpen,
   anchorRef,
@@ -26,50 +75,25 @@ export function useGlobalDismissHandlers({
 
     setVisible(false);
 
-    const handleResize = () => {
-      scheduleUpdate();
-    };
+    const listenerCleanup = attachGlobalListeners({
+      handleResize: scheduleUpdate,
+      handleScroll: scheduleUpdate,
+      handlePointerDown: createPointerDownHandler({
+        anchorRef,
+        contentRef,
+        onClose,
+      }),
+      handleKeyDown: createKeyDownHandler(onClose),
+    });
 
-    const handleScroll = () => {
-      scheduleUpdate();
-    };
-
-    const handlePointerDown = (event) => {
-      const anchorEl = anchorRef?.current;
-      const popoverEl = contentRef.current;
-      if (popoverEl?.contains(event.target)) return;
-      if (anchorEl?.contains(event.target)) return;
-      onClose?.();
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        onClose?.();
-      }
-    };
-
-    const anchorEl = anchorRef?.current;
-    const popoverEl = contentRef.current;
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => scheduleUpdate())
-        : null;
-
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", handleScroll, true);
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    if (resizeObserver) {
-      if (anchorEl) resizeObserver.observe(anchorEl);
-      if (popoverEl) resizeObserver.observe(popoverEl);
-    }
+    const resizeObserver = observeAnchorAndContent({
+      anchorRef,
+      contentRef,
+      scheduleUpdate,
+    });
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("scroll", handleScroll, true);
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
+      listenerCleanup();
       resizeObserver?.disconnect();
     };
   }, [anchorRef, contentRef, isOpen, onClose, scheduleUpdate, setVisible]);

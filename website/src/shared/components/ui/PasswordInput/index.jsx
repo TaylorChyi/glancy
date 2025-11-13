@@ -31,6 +31,60 @@ export function usePasswordVisibility({
   };
 }
 
+const useToggleMetadata = ({
+  mask,
+  disabled,
+  visible,
+  toggleVisibility,
+  labels,
+  inputType,
+}) => {
+  const allowToggle = mask && !disabled;
+  const type = allowToggle ? inputType : "text";
+  const resolvedLabels = useMemo(
+    () => ({ ...DEFAULT_LABELS, ...labels }),
+    [labels],
+  );
+  const ariaLabel = allowToggle && visible ? resolvedLabels.hide : resolvedLabels.show;
+
+  const handleToggle = useCallback(() => {
+    if (!allowToggle) {
+      return;
+    }
+    toggleVisibility();
+  }, [allowToggle, toggleVisibility]);
+
+  return { allowToggle, type, ariaLabel, handleToggle };
+};
+
+const useClassName = (base, extra) =>
+  useMemo(() => [base, extra].filter(Boolean).join(" "), [base, extra]);
+
+const PasswordToggleButton = ({
+  allowToggle,
+  handleToggle,
+  ariaLabel,
+  visible,
+  iconSize,
+  className,
+}) =>
+  allowToggle ? (
+    <button
+      type="button"
+      className={className}
+      onClick={handleToggle}
+      aria-label={ariaLabel}
+      aria-pressed={visible}
+    >
+      <ThemeIcon
+        name={visible ? "eye-off" : "eye"}
+        width={iconSize}
+        height={iconSize}
+        alt={ariaLabel}
+      />
+    </button>
+  ) : null;
+
 const PasswordInput = forwardRef(function PasswordInput(
   {
     className = "",
@@ -52,35 +106,18 @@ const PasswordInput = forwardRef(function PasswordInput(
     onVisibilityChange,
   });
 
-  const allowToggle = mask && !disabled;
-  const type = allowToggle ? inputType : "text";
+  const { allowToggle, type, ariaLabel, handleToggle } = useToggleMetadata({
+    mask,
+    disabled,
+    visible,
+    toggleVisibility,
+    labels,
+    inputType,
+  });
 
-  const { show, hide } = useMemo(
-    () => ({ ...DEFAULT_LABELS, ...labels }),
-    [labels],
-  );
-
-  const ariaLabel = allowToggle && visible ? hide : show;
-
-  const handleToggle = useCallback(() => {
-    if (!allowToggle) {
-      return;
-    }
-    toggleVisibility();
-  }, [allowToggle, toggleVisibility]);
-
-  const wrapperClassName = useMemo(
-    () => [styles.wrapper, className].filter(Boolean).join(" "),
-    [className],
-  );
-  const inputClassNames = useMemo(
-    () => [styles.input, inputClassName].filter(Boolean).join(" "),
-    [inputClassName],
-  );
-  const toggleClassNames = useMemo(
-    () => [styles.toggle, toggleClassName].filter(Boolean).join(" "),
-    [toggleClassName],
-  );
+  const wrapperClassName = useClassName(styles.wrapper, className);
+  const inputClassNames = useClassName(styles.input, inputClassName);
+  const toggleClassNames = useClassName(styles.toggle, toggleClassName);
 
   return (
     <div className={wrapperClassName} data-visible={allowToggle && visible}>
@@ -92,22 +129,14 @@ const PasswordInput = forwardRef(function PasswordInput(
         className={inputClassNames}
         autoComplete={autoComplete ?? "current-password"}
       />
-      {allowToggle && (
-        <button
-          type="button"
-          className={toggleClassNames}
-          onClick={handleToggle}
-          aria-label={ariaLabel}
-          aria-pressed={visible}
-        >
-          <ThemeIcon
-            name={visible ? "eye-off" : "eye"}
-            width={iconSize}
-            height={iconSize}
-            alt={ariaLabel}
-          />
-        </button>
-      )}
+      <PasswordToggleButton
+        allowToggle={allowToggle}
+        handleToggle={handleToggle}
+        ariaLabel={ariaLabel}
+        visible={visible}
+        iconSize={iconSize}
+        className={toggleClassNames}
+      />
     </div>
   );
 });

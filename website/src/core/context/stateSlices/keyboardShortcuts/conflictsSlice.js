@@ -17,67 +17,51 @@ const clearActionError = (errors, actionId) => {
   return nextErrors;
 };
 
-export function conflictsReducer(state = conflictsInitialState, action) {
-  switch (action.type) {
-    case KEYBOARD_SHORTCUT_ACTIONS.RESET:
-      return conflictsInitialState;
-    case KEYBOARD_SHORTCUT_ACTIONS.LOAD_START:
-      return {
-        errors: {},
-        lastError: null,
-      };
-    case KEYBOARD_SHORTCUT_ACTIONS.LOAD_SUCCESS:
-      return {
-        errors: {},
-        lastError: null,
-      };
-    case KEYBOARD_SHORTCUT_ACTIONS.LOAD_FAILURE:
-      return {
-        errors: {},
-        lastError: action.error ?? null,
-      };
-    case KEYBOARD_SHORTCUT_ACTIONS.UPDATE_START: {
-      if (!isShortcutActionPayload(action.action)) {
-        return {
-          ...state,
-          lastError: null,
-        };
-      }
-      return {
-        ...state,
-        errors: clearActionError(state.errors, action.action),
-        lastError: null,
-      };
-    }
-    case KEYBOARD_SHORTCUT_ACTIONS.UPDATE_SUCCESS: {
-      if (!isShortcutActionPayload(action.action)) {
-        return {
-          ...state,
-          lastError: null,
-        };
-      }
-      return {
-        ...state,
-        errors: clearActionError(state.errors, action.action),
-        lastError: null,
-      };
-    }
-    case KEYBOARD_SHORTCUT_ACTIONS.UPDATE_FAILURE: {
-      if (!isShortcutActionPayload(action.action)) {
-        return {
-          ...state,
-          lastError: action.errorMessage ?? null,
-        };
-      }
-      return {
-        errors: {
-          ...state.errors,
-          [action.action]: action.errorMessage ?? null,
-        },
-        lastError: action.errorMessage ?? null,
-      };
-    }
-    default:
-      return state;
+const resetConflictsState = (lastError = null) => ({
+  errors: {},
+  lastError,
+});
+
+const applyUpdateProgress = (state, action) => {
+  if (!isShortcutActionPayload(action.action)) {
+    return { ...state, lastError: null };
   }
+  return {
+    ...state,
+    errors: clearActionError(state.errors, action.action),
+    lastError: null,
+  };
+};
+
+const applyUpdateFailure = (state, action) => {
+  const nextError = action.errorMessage ?? null;
+  if (!isShortcutActionPayload(action.action)) {
+    return { ...state, lastError: nextError };
+  }
+  return {
+    errors: {
+      ...state.errors,
+      [action.action]: nextError,
+    },
+    lastError: nextError,
+  };
+};
+
+const conflictActionHandlers = {
+  [KEYBOARD_SHORTCUT_ACTIONS.RESET]: () => conflictsInitialState,
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_START]: () => resetConflictsState(),
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_SUCCESS]: () => resetConflictsState(),
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_FAILURE]: (_state, action) =>
+    resetConflictsState(action.error ?? null),
+  [KEYBOARD_SHORTCUT_ACTIONS.UPDATE_START]: applyUpdateProgress,
+  [KEYBOARD_SHORTCUT_ACTIONS.UPDATE_SUCCESS]: applyUpdateProgress,
+  [KEYBOARD_SHORTCUT_ACTIONS.UPDATE_FAILURE]: applyUpdateFailure,
+};
+
+export function conflictsReducer(state = conflictsInitialState, action) {
+  const handler = conflictActionHandlers[action.type];
+  if (!handler) {
+    return state;
+  }
+  return handler(state, action);
 }

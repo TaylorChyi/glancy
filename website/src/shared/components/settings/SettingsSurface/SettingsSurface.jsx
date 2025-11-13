@@ -8,6 +8,29 @@ const variantClassName = {
   [SETTINGS_SURFACE_VARIANTS.PAGE]: styles["surface-page"],
 };
 
+const renderDefaultHeader = ({ headingId, descriptionId, title, description }) => (
+  <header className={styles.header}>
+    <h2 id={headingId} className={styles.title}>
+      {title}
+    </h2>
+    {description ? (
+      <p id={descriptionId} className={styles.description}>
+        {description}
+      </p>
+    ) : null}
+  </header>
+);
+
+const resolveHeaderContent = (renderHeader, context) =>
+  typeof renderHeader === "function"
+    ? renderHeader(context)
+    : renderDefaultHeader(context);
+
+const composeSurfaceClassName = (variant, className) =>
+  [styles.surface, variantClassName[variant] ?? "", className]
+    .filter(Boolean)
+    .join(" ");
+
 const SettingsSurface = forwardRef(function SettingsSurface(
   {
     title,
@@ -33,37 +56,13 @@ const SettingsSurface = forwardRef(function SettingsSurface(
     : undefined;
 
   const Component = as ?? (onSubmit ? "form" : "section");
-  const resolvedVariantClassName = variantClassName[variant] ?? "";
-  const composedClassName = [
-    styles.surface,
-    resolvedVariantClassName,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  /**
-   * 意图：
-   *  - 当上层需要自定义抬头布局（如插入关闭按钮或多列信息）时，允许通过 renderHeader 覆盖默认结构。
-   * 流程：
-   *  1) 优先调用 renderHeader，并注入 headingId/descriptionId/title/description 等上下文。
-   *  2) 未提供时回退到原有的语义化标题与描述栈，确保默认路径无感知。
-   */
-  const headerContent =
-    typeof renderHeader === "function" ? (
-      renderHeader({ headingId, descriptionId, title, description })
-    ) : (
-      <header className={styles.header}>
-        <h2 id={headingId} className={styles.title}>
-          {title}
-        </h2>
-        {description ? (
-          <p id={descriptionId} className={styles.description}>
-            {description}
-          </p>
-        ) : null}
-      </header>
-    );
+  const composedClassName = composeSurfaceClassName(variant, className);
+  const headerContent = resolveHeaderContent(renderHeader, {
+    headingId,
+    descriptionId,
+    title,
+    description,
+  });
 
   return (
     <Component

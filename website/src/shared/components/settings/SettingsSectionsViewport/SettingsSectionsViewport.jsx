@@ -7,6 +7,49 @@ import useStableSettingsPanelHeight from "@shared/components/modals/useStableSet
 
 const composeClassName = (...tokens) => tokens.filter(Boolean).join(" ");
 
+const useMergedBodyStyle = (inlineStyle, measuredBodyStyle) =>
+  useMemo(() => {
+    if (!inlineStyle && !measuredBodyStyle) {
+      return undefined;
+    }
+    return { ...measuredBodyStyle, ...inlineStyle };
+  }, [inlineStyle, measuredBodyStyle]);
+
+const useBodyProps = (body, measuredBodyStyle) => {
+  const bodyClassName = body?.className ?? "";
+  const bodyInlineStyle = body?.style;
+  const bodyRest = body?.props ?? {};
+  const mergedBodyStyle = useMergedBodyStyle(bodyInlineStyle, measuredBodyStyle);
+  return { bodyClassName, mergedBodyStyle, bodyRest };
+};
+
+const usePanelClassNames = (panel) => {
+  const panelBaseClassName = panel?.className ?? "";
+  return {
+    panelSurfaceClassName: composeClassName(
+      panelBaseClassName,
+      panel?.surfaceClassName ?? "",
+    ),
+    panelProbeClassName: composeClassName(
+      panelBaseClassName,
+      panel?.probeClassName ?? "",
+    ),
+  };
+};
+
+const useMeasurementProbe = (referenceMeasurement, panelProbeClassName) =>
+  useMemo(() => {
+    if (!referenceMeasurement) {
+      return null;
+    }
+    const { Component, props, registerNode } = referenceMeasurement;
+    return (
+      <div aria-hidden className={panelProbeClassName} ref={registerNode}>
+        <Component {...props} />
+      </div>
+    );
+  }, [panelProbeClassName, referenceMeasurement]);
+
 function SettingsSectionsViewport({
   sections,
   activeSectionId,
@@ -30,42 +73,20 @@ function SettingsSectionsViewport({
     activeSectionId,
     referenceSectionId,
   });
-
-  const bodyClassName = body?.className ?? "";
-  const bodyInlineStyle = body?.style;
-  const bodyRest = body?.props ?? {};
-
-  const mergedBodyStyle = useMemo(() => {
-    if (!bodyInlineStyle && !measuredBodyStyle) {
-      return undefined;
-    }
-    return { ...measuredBodyStyle, ...bodyInlineStyle };
-  }, [bodyInlineStyle, measuredBodyStyle]);
-
+  const { bodyClassName, mergedBodyStyle, bodyRest } = useBodyProps(
+    body,
+    measuredBodyStyle,
+  );
   const navClasses = nav?.classes;
   const navRest = nav?.props ?? {};
 
-  const panelBaseClassName = panel?.className ?? "";
-  const panelSurfaceClassName = composeClassName(
-    panelBaseClassName,
-    panel?.surfaceClassName ?? "",
+  const { panelSurfaceClassName, panelProbeClassName } = usePanelClassNames(
+    panel,
   );
-  const panelProbeClassName = composeClassName(
-    panelBaseClassName,
-    panel?.probeClassName ?? "",
+  const measurementProbe = useMeasurementProbe(
+    referenceMeasurement,
+    panelProbeClassName,
   );
-
-  const measurementProbe = useMemo(() => {
-    if (!referenceMeasurement) {
-      return null;
-    }
-    const { Component, props, registerNode } = referenceMeasurement;
-    return (
-      <div aria-hidden className={panelProbeClassName} ref={registerNode}>
-        <Component {...props} />
-      </div>
-    );
-  }, [panelProbeClassName, referenceMeasurement]);
 
   const handlePanelElementChange = useCallback(
     (node) => {

@@ -58,6 +58,30 @@ const FIT_CHECKERS = {
  * 输入：placement、position、浮层尺寸、视窗尺寸与安全边距。
  * 输出：布尔值表示是否在安全区内。
  */
+const isUnboundedViewport = (viewport) =>
+  viewport.width === Number.POSITIVE_INFINITY &&
+  viewport.height === Number.POSITIVE_INFINITY;
+
+const resolveViewportBounds = (viewport, margin) => ({
+  top: margin,
+  left: margin,
+  bottom: viewport.height - margin,
+  right: viewport.width - margin,
+});
+
+const resolvePopoverEdges = (position, popRect) => ({
+  top: position.top,
+  left: position.left,
+  bottom: position.top + popRect.height,
+  right: position.left + popRect.width,
+});
+
+const defaultBoundsChecker = (edges, bounds) =>
+  edges.top >= bounds.top &&
+  edges.left >= bounds.left &&
+  edges.bottom <= bounds.bottom &&
+  edges.right <= bounds.right;
+
 function fitsWithinViewport({
   placement,
   position,
@@ -66,37 +90,14 @@ function fitsWithinViewport({
   margin = VIEWPORT_MARGIN,
 }) {
   const effectiveViewport = viewport ?? INFINITE_VIEWPORT;
-  if (
-    effectiveViewport.width === Number.POSITIVE_INFINITY &&
-    effectiveViewport.height === Number.POSITIVE_INFINITY
-  ) {
+  if (isUnboundedViewport(effectiveViewport)) {
     return true;
   }
 
-  const bounds = {
-    top: margin,
-    left: margin,
-    bottom: effectiveViewport.height - margin,
-    right: effectiveViewport.width - margin,
-  };
-  const edges = {
-    top: position.top,
-    left: position.left,
-    bottom: position.top + popRect.height,
-    right: position.left + popRect.width,
-  };
-
-  const checker = FIT_CHECKERS[placement];
-  if (checker) {
-    return checker(edges, bounds);
-  }
-
-  return (
-    edges.top >= bounds.top &&
-    edges.left >= bounds.left &&
-    edges.bottom <= bounds.bottom &&
-    edges.right <= bounds.right
-  );
+  const bounds = resolveViewportBounds(effectiveViewport, margin);
+  const edges = resolvePopoverEdges(position, popRect);
+  const checker = FIT_CHECKERS[placement] ?? defaultBoundsChecker;
+  return checker(edges, bounds);
 }
 
 /**
@@ -151,6 +152,41 @@ export function computePreferredPlacements(primary, fallbacks = []) {
  *  3) 选择第一个满足条件的方案，否则回退到主 placement。
  * 错误处理：如无任何有效 placement，则返回默认 bottom 方案避免崩溃。
  */
+const evaluatePlacementCandidate = ({
+  candidate,
+  anchorRect,
+  popRect,
+  offset,
+  viewport,
+}) => {
+  const config = PLACEMENT_CONFIG[candidate];
+  if (!config) {
+    return null;
+  }
+  const position = config.compute(anchorRect, popRect, offset);
+  const resolution = {
+    placement: candidate,
+    axis: config.axis,
+    position,
+  };
+  const fits = fitsWithinViewport({
+    placement: candidate,
+    position,
+    popRect,
+    viewport,
+  });
+  return { resolution, fits };
+};
+
+const buildFallbackResolution = (anchorRect, popRect, offset) => {
+  const fallbackConfig = PLACEMENT_CONFIG.bottom;
+  return {
+    placement: "bottom",
+    axis: fallbackConfig.axis,
+    position: fallbackConfig.compute(anchorRect, popRect, offset),
+  };
+};
+
 export function resolvePlacement({
   anchorRect,
   popRect,
@@ -158,46 +194,31 @@ export function resolvePlacement({
   offset,
   viewport,
 }) {
-  let resolution = null;
   const safePlacements = placements.length ? placements : ["bottom"];
+  let firstResolution = null;
 
   for (const candidate of safePlacements) {
-    const config = PLACEMENT_CONFIG[candidate];
-    if (!config) {
+    const evaluation = evaluatePlacementCandidate({
+      candidate,
+      anchorRect,
+      popRect,
+      offset,
+      viewport,
+    });
+    if (!evaluation) {
       continue;
     }
-    const basePosition = config.compute(anchorRect, popRect, offset);
-    const nextResolution = {
-      placement: candidate,
-      axis: config.axis,
-      position: basePosition,
-    };
-    if (!resolution) {
-      resolution = nextResolution;
+    if (!firstResolution) {
+      firstResolution = evaluation.resolution;
     }
-    if (
-      fitsWithinViewport({
-        placement: candidate,
-        position: basePosition,
-        popRect,
-        viewport,
-      })
-    ) {
-      resolution = nextResolution;
-      break;
+    if (evaluation.fits) {
+      return evaluation.resolution;
     }
   }
 
-  if (!resolution) {
-    const fallbackConfig = PLACEMENT_CONFIG.bottom;
-    resolution = {
-      placement: "bottom",
-      axis: fallbackConfig.axis,
-      position: fallbackConfig.compute(anchorRect, popRect, offset),
-    };
-  }
-
-  return resolution;
+  return (
+    firstResolution ?? buildFallbackResolution(anchorRect, popRect, offset)
+  );
 }
 
 /**
@@ -284,16 +305,15 @@ export function clampToViewport({ position, popRect, viewport, margin, axis }) {
  *  5) 返回 { position, placement } 供外部使用。
  * 复杂度：O(n) 遍历候选列表；空间复杂度 O(1)。
  */
-export function computePopoverPosition({
+const resolveAlignedPosition = ({
   anchorRect,
   popRect,
   placement,
   fallbackPlacements,
-  align,
   offset,
-  viewport = getViewportMetrics(),
-  margin = VIEWPORT_MARGIN,
-}) {
+  viewport,
+  align,
+}) => {
   const placements = computePreferredPlacements(placement, fallbackPlacements);
   const resolution = resolvePlacement({
     anchorRect,
@@ -308,6 +328,29 @@ export function computePopoverPosition({
     anchorRect,
     popRect,
   });
+  return { resolution, alignedPosition };
+};
+
+export function computePopoverPosition({
+  anchorRect,
+  popRect,
+  placement,
+  fallbackPlacements,
+  align,
+  offset,
+  viewport = getViewportMetrics(),
+  margin = VIEWPORT_MARGIN,
+}) {
+  const { resolution, alignedPosition } = resolveAlignedPosition({
+    anchorRect,
+    popRect,
+    placement,
+    fallbackPlacements,
+    offset,
+    viewport,
+    align,
+  });
+
   const position = clampToViewport({
     position: alignedPosition,
     popRect,

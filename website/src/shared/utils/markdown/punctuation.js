@@ -18,19 +18,19 @@ function countBackticks(source, startIndex) {
   return length;
 }
 
+const PERIOD_SKIP_CHECKS = [
+  ({ prev, next }) => prev === "." || next === ".",
+  ({ prev, next }) =>
+    Boolean(prev && next && isAsciiDigit(prev) && isAsciiDigit(next)),
+  ({ prev, next }) =>
+    Boolean(prev && next && isAsciiUppercase(prev) && isAsciiUppercase(next)),
+];
+
 function shouldSkipPeriodSpacing(source, index) {
   const prev = source[index - 1];
   const next = source[index + 1];
-  if (prev === "." || next === ".") {
-    return true;
-  }
-  if (prev && next && isAsciiDigit(prev) && isAsciiDigit(next)) {
-    return true;
-  }
-  if (prev && next && isAsciiUppercase(prev) && isAsciiUppercase(next)) {
-    return true;
-  }
-  return false;
+  const context = { prev, next };
+  return PERIOD_SKIP_CHECKS.some((check) => check(context));
 }
 
 function shouldInsertPeriodSpace(prev, next) {
@@ -43,59 +43,102 @@ function shouldInsertPeriodSpace(prev, next) {
   return isAsciiUppercase(next);
 }
 
+const handleBacktickFence = ({ text, index, activeFenceSize }) => {
+  if (text[index] !== "`") {
+    return {
+      handled: false,
+      nextIndex: index,
+      activeFenceSize,
+      segment: "",
+    };
+  }
+  const fenceSize = countBackticks(text, index);
+  const nextActiveFence =
+    activeFenceSize === 0
+      ? fenceSize
+      : fenceSize >= activeFenceSize
+        ? 0
+        : activeFenceSize;
+  return {
+    handled: true,
+    nextIndex: index + fenceSize,
+    activeFenceSize: nextActiveFence,
+    segment: "`".repeat(fenceSize),
+  };
+};
+
+const shouldAppendPunctuationSpace = ({
+  char,
+  prev,
+  next,
+  text,
+  index,
+  activeFenceSize,
+}) => {
+  if (activeFenceSize > 0) {
+    return false;
+  }
+  if (!ASCII_PUNCTUATION.has(char)) {
+    return false;
+  }
+  if (char === "." && shouldSkipPeriodSpacing(text, index)) {
+    return false;
+  }
+  if (!next || /\s/.test(next)) {
+    return false;
+  }
+  if (
+    ASCII_PUNCTUATION.has(next) ||
+    ASCII_PUNCTUATION_BOUNDARY.has(next) ||
+    isCjkPunctuation(next)
+  ) {
+    return false;
+  }
+  if (!isSpacingCandidate(prev) || !isSpacingCandidate(next)) {
+    return false;
+  }
+  if (char === "." && !shouldInsertPeriodSpace(prev, next)) {
+    return false;
+  }
+  return true;
+};
+
 export function ensureEnglishPunctuationSpacing(text) {
   if (!text) {
     return text;
   }
   let result = "";
   let activeFenceSize = 0;
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (char === "`") {
-      const fenceSize = countBackticks(text, i);
-      result += "`".repeat(fenceSize);
-      i += fenceSize - 1;
-      if (activeFenceSize === 0) {
-        activeFenceSize = fenceSize;
-      } else if (fenceSize >= activeFenceSize) {
-        activeFenceSize = 0;
-      }
+  let index = 0;
+  while (index < text.length) {
+    const char = text[index];
+    const fenceState = handleBacktickFence({
+      text,
+      index,
+      activeFenceSize,
+    });
+    if (fenceState.handled) {
+      result += fenceState.segment;
+      activeFenceSize = fenceState.activeFenceSize;
+      index = fenceState.nextIndex;
       continue;
     }
+    index += 1;
     result += char;
-    if (activeFenceSize > 0) {
-      continue;
+    const prev = text[index - 2];
+    const next = text[index];
+    if (
+      shouldAppendPunctuationSpace({
+        char,
+        prev,
+        next,
+        text,
+        index: index - 1,
+        activeFenceSize,
+      })
+    ) {
+      result += " ";
     }
-    if (!ASCII_PUNCTUATION.has(char)) {
-      continue;
-    }
-    const prev = text[i - 1];
-    const next = text[i + 1];
-    if (char === "." && shouldSkipPeriodSpacing(text, i)) {
-      continue;
-    }
-    if (!next) {
-      continue;
-    }
-    if (/\s/.test(next)) {
-      continue;
-    }
-    if (ASCII_PUNCTUATION.has(next)) {
-      continue;
-    }
-    if (ASCII_PUNCTUATION_BOUNDARY.has(next)) {
-      continue;
-    }
-    if (isCjkPunctuation(next)) {
-      continue;
-    }
-    if (!isSpacingCandidate(prev) || !isSpacingCandidate(next)) {
-      continue;
-    }
-    if (char === "." && !shouldInsertPeriodSpace(prev, next)) {
-      continue;
-    }
-    result += " ";
   }
   return result;
 }

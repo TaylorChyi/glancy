@@ -19,6 +19,149 @@ import ActionPanel from "./panels/ActionPanel.jsx";
 import ReportIssuePanel from "./panels/ReportIssuePanel.jsx";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../dictionaryExperienceViews.js";
 
+const useDictionaryActionBarViewModel = (
+  dictionaryActionBarProps,
+  activateSearchMode,
+) =>
+  useMemo(() => {
+    if (!dictionaryActionBarProps || typeof dictionaryActionBarProps !== "object") {
+      return dictionaryActionBarProps;
+    }
+    const originalReoutput = dictionaryActionBarProps.onReoutput;
+    if (typeof originalReoutput !== "function") {
+      return dictionaryActionBarProps;
+    }
+    const wrappedReoutput = (...args) => {
+      activateSearchMode();
+      return originalReoutput(...args);
+    };
+    return { ...dictionaryActionBarProps, onReoutput: wrappedReoutput };
+  }, [activateSearchMode, dictionaryActionBarProps]);
+
+const useSearchModeAutoFocus = ({
+  bottomPanelMode,
+  inputRef,
+  focusInput,
+}) => {
+  useEffect(() => {
+    if (bottomPanelMode !== PANEL_MODE_SEARCH) return;
+    if (!inputRef.current) return;
+    focusInput();
+  }, [bottomPanelMode, focusInput, inputRef]);
+};
+
+const createInputFocusChangeHandler = ({
+  handlePanelFocusChange,
+  activateActionsMode,
+}) => (context) => {
+  handlePanelFocusChange(context);
+  if (context.isFocused) {
+    return;
+  }
+  const { formElement, event } = context;
+  const relatedTarget = event.relatedTarget;
+  const isNodeTarget =
+    typeof Node !== "undefined" && relatedTarget instanceof Node;
+  const isWithinForm = Boolean(
+    formElement && isNodeTarget && formElement.contains(relatedTarget),
+  );
+  if (!isWithinForm) {
+    activateActionsMode();
+  }
+};
+
+const shouldRenderDictionaryEntry = ({ viewState, entry, finalText, loading }) =>
+  viewState.isDictionary && (entry || finalText || loading);
+
+const DictionaryBottomPanel = ({
+  bottomPanelMode,
+  inputProps,
+  actionPanelProps,
+  hasDefinition,
+  onSearchButtonClick,
+  handleInputFocusChange,
+}) => (
+  <>
+    <BottomPanelSwitcher
+      mode={bottomPanelMode}
+      searchContent={
+        <ChatInput
+          inputRef={inputProps.inputRef}
+          value={inputProps.text}
+          onChange={(event) => inputProps.setText(event.target.value)}
+          onSubmit={inputProps.handleSend}
+          placeholder={inputProps.placeholder}
+          maxRows={5}
+          maxWidth="var(--docker-row-max-width, var(--sb-max-width))"
+          sourceLanguage={inputProps.sourceLanguage}
+          sourceLanguageOptions={inputProps.sourceLanguageOptions}
+          sourceLanguageLabel={inputProps.sourceLanguageLabel}
+          onSourceLanguageChange={inputProps.setSourceLanguage}
+          targetLanguage={inputProps.targetLanguage}
+          targetLanguageOptions={inputProps.targetLanguageOptions}
+          targetLanguageLabel={inputProps.targetLanguageLabel}
+          onTargetLanguageChange={inputProps.setTargetLanguage}
+          onSwapLanguages={inputProps.handleSwapLanguages}
+          swapLabel={inputProps.swapLabel}
+          normalizeSourceLanguageFn={normalizeWordSourceLanguage}
+          normalizeTargetLanguageFn={normalizeWordTargetLanguage}
+          onFocusChange={handleInputFocusChange}
+        />
+      }
+      actionsContent={
+        hasDefinition ? (
+          <ActionPanel
+            actionBarProps={actionPanelProps ?? {}}
+            onRequestSearch={onSearchButtonClick}
+            searchButtonLabel={inputProps.searchButtonLabel}
+          />
+        ) : null
+      }
+    />
+    <DockedICP />
+  </>
+);
+
+const DictionaryMainContent = ({
+  viewState,
+  libraryLandingLabel,
+  handleShowDictionary,
+  focusInput,
+  handleSelectHistory,
+  shouldRenderEntry,
+  entry,
+  finalText,
+  loading,
+  searchEmptyState,
+}) => {
+  if (viewState.isLibrary) {
+    return <LibraryLandingView label={libraryLandingLabel} />;
+  }
+  if (viewState.isHistory) {
+    return (
+      <HistoryDisplay
+        onEmptyAction={() => {
+          handleShowDictionary();
+          focusInput();
+        }}
+        onSelect={handleSelectHistory}
+      />
+    );
+  }
+  if (shouldRenderEntry) {
+    return (
+      <DictionaryEntryView entry={entry} preview={finalText} isLoading={loading} />
+    );
+  }
+  return (
+    <EmptyState
+      tone="plain"
+      title={searchEmptyState.title}
+      description={searchEmptyState.description}
+    />
+  );
+};
+
 export default function DictionaryExperienceShell(props) {
   const {
     t,
@@ -67,44 +210,16 @@ export default function DictionaryExperienceShell(props) {
     handleScrollEscape,
   } = useBottomPanelState({ hasDefinition, text });
 
-  const dictionaryActionBarViewModel = useMemo(() => {
-    if (!dictionaryActionBarProps || typeof dictionaryActionBarProps !== "object") {
-      return dictionaryActionBarProps;
-    }
-    const originalReoutput = dictionaryActionBarProps.onReoutput;
-    if (typeof originalReoutput !== "function") {
-      return dictionaryActionBarProps;
-    }
-    const wrappedReoutput = (...args) => {
-      activateSearchMode();
-      return originalReoutput(...args);
-    };
-    return { ...dictionaryActionBarProps, onReoutput: wrappedReoutput };
-  }, [activateSearchMode, dictionaryActionBarProps]);
+  const dictionaryActionBarViewModel = useDictionaryActionBarViewModel(
+    dictionaryActionBarProps,
+    activateSearchMode,
+  );
+  useSearchModeAutoFocus({ bottomPanelMode, inputRef, focusInput });
 
-  useEffect(() => {
-    if (bottomPanelMode !== PANEL_MODE_SEARCH) return;
-    if (!inputRef.current) return;
-    focusInput();
-  }, [bottomPanelMode, focusInput, inputRef]);
-
-  const handleInputFocusChange = (context) => {
-    handlePanelFocusChange(context);
-    if (context.isFocused) {
-      return;
-    }
-    const { formElement, event } = context;
-    const relatedTarget = event.relatedTarget;
-    const isNodeTarget =
-      typeof Node !== "undefined" && relatedTarget instanceof Node;
-    const isWithinForm = Boolean(
-      formElement && isNodeTarget && formElement.contains(relatedTarget),
-    );
-    if (isWithinForm) {
-      return;
-    }
-    activateActionsMode();
-  };
+  const handleInputFocusChange = createInputFocusChangeHandler({
+    handlePanelFocusChange,
+    activateActionsMode,
+  });
 
   const handleMainScroll = () => {
     handleScrollEscape();
@@ -114,49 +229,39 @@ export default function DictionaryExperienceShell(props) {
     activateSearchMode();
   };
 
-  const shouldRenderEntry =
-    viewState.isDictionary && (entry || finalText || loading);
+  const shouldRenderEntry = shouldRenderDictionaryEntry({
+    viewState,
+    entry,
+    finalText,
+    loading,
+  });
 
   const bottomPanelContent = (
-    <>
-      <BottomPanelSwitcher
-        mode={bottomPanelMode}
-        searchContent={
-          <ChatInput
-            inputRef={inputRef}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            onSubmit={handleSend}
-            placeholder={chatInputPlaceholder}
-            maxRows={5}
-            maxWidth="var(--docker-row-max-width, var(--sb-max-width))"
-            sourceLanguage={dictionarySourceLanguage}
-            sourceLanguageOptions={sourceLanguageOptions}
-            sourceLanguageLabel={dictionarySourceLanguageLabel}
-            onSourceLanguageChange={setDictionarySourceLanguage}
-            targetLanguage={dictionaryTargetLanguage}
-            targetLanguageOptions={targetLanguageOptions}
-            targetLanguageLabel={dictionaryTargetLanguageLabel}
-            onTargetLanguageChange={setDictionaryTargetLanguage}
-            onSwapLanguages={handleSwapLanguages}
-            swapLabel={dictionarySwapLanguagesLabel}
-            normalizeSourceLanguageFn={normalizeWordSourceLanguage}
-            normalizeTargetLanguageFn={normalizeWordTargetLanguage}
-            onFocusChange={handleInputFocusChange}
-          />
-        }
-        actionsContent={
-          hasDefinition ? (
-            <ActionPanel
-              actionBarProps={dictionaryActionBarViewModel ?? {}}
-              onRequestSearch={handleSearchButtonClick}
-              searchButtonLabel={t?.returnToSearch ?? "切换到搜索输入"}
-            />
-          ) : null
-        }
-      />
-      <DockedICP />
-    </>
+    <DictionaryBottomPanel
+      bottomPanelMode={bottomPanelMode}
+      inputProps={{
+        inputRef,
+        text,
+        setText,
+        handleSend,
+        placeholder: chatInputPlaceholder,
+        sourceLanguage: dictionarySourceLanguage,
+        sourceLanguageOptions,
+        sourceLanguageLabel: dictionarySourceLanguageLabel,
+        setSourceLanguage: setDictionarySourceLanguage,
+        targetLanguage: dictionaryTargetLanguage,
+        targetLanguageOptions,
+        targetLanguageLabel: dictionaryTargetLanguageLabel,
+        setTargetLanguage: setDictionaryTargetLanguage,
+        handleSwapLanguages,
+        swapLabel: dictionarySwapLanguagesLabel,
+        searchButtonLabel: t?.returnToSearch ?? "切换到搜索输入",
+      }}
+      actionPanelProps={dictionaryActionBarViewModel}
+      hasDefinition={hasDefinition}
+      onSearchButtonClick={handleSearchButtonClick}
+      handleInputFocusChange={handleInputFocusChange}
+    />
   );
 
   return (
@@ -172,29 +277,18 @@ export default function DictionaryExperienceShell(props) {
         bottomContent={viewState.isLibrary ? null : bottomPanelContent}
       >
         <div className={displayClassName}>
-          {viewState.isLibrary ? (
-            <LibraryLandingView label={libraryLandingLabel} />
-          ) : viewState.isHistory ? (
-            <HistoryDisplay
-              onEmptyAction={() => {
-                handleShowDictionary();
-                focusInput();
-              }}
-              onSelect={handleSelectHistory}
-            />
-          ) : shouldRenderEntry ? (
-            <DictionaryEntryView
-              entry={entry}
-              preview={finalText}
-              isLoading={loading}
-            />
-          ) : (
-            <EmptyState
-              tone="plain"
-              title={searchEmptyState.title}
-              description={searchEmptyState.description}
-            />
-          )}
+          <DictionaryMainContent
+            viewState={viewState}
+            libraryLandingLabel={libraryLandingLabel}
+            handleShowDictionary={handleShowDictionary}
+            focusInput={focusInput}
+            handleSelectHistory={handleSelectHistory}
+            shouldRenderEntry={shouldRenderEntry}
+            entry={entry}
+            finalText={finalText}
+            loading={loading}
+            searchEmptyState={searchEmptyState}
+          />
         </div>
       </Layout>
       <ReportIssuePanel
