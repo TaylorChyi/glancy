@@ -4,27 +4,28 @@ import usePointerControls from "./usePointerControls.js";
 import useAvatarCropper from "./useAvatarCropper.js";
 import useZoomControls from "./useZoomControls.js";
 
-const useControllerDependencies = ({
-  open,
-  source,
-  onConfirm,
-  isProcessing,
-}) => {
-  const viewport = useAvatarViewportModel({ open, source });
-  const pointer = usePointerControls({
+const useViewportDependencies = ({ open, source }) =>
+  useAvatarViewportModel({ open, source });
+
+const usePointerDependencies = ({ open, source, viewport }) =>
+  usePointerControls({
     open,
     source,
     containerRef: viewport.containerRef,
     onOffsetChange: viewport.applyOffsetDelta,
   });
-  const { handleImageLoad } = useAvatarImageLoader({
+
+const useImageLoaderDependencies = ({ source, viewport }) =>
+  useAvatarImageLoader({
     source,
     viewportSize: viewport.viewportSize,
     setNaturalSize: viewport.setNaturalSize,
     recenterViewport: viewport.recenterViewport,
     shouldRecenterRef: viewport.shouldRecenterRef,
   });
-  const { handleConfirm } = useAvatarCropper({
+
+const useCropperDependencies = ({ viewport, onConfirm }) =>
+  useAvatarCropper({
     imageRef: viewport.imageRef,
     displayMetrics: viewport.displayMetrics,
     viewportSize: viewport.viewportSize,
@@ -32,13 +33,41 @@ const useControllerDependencies = ({
     offset: viewport.offset,
     onConfirm,
   });
-  const zoomControls = useZoomControls({
+
+const useZoomDependencies = ({ viewport, isProcessing }) =>
+  useZoomControls({
     zoom: viewport.zoom,
     setZoom: viewport.setZoom,
     isProcessing,
   });
 
-  return { viewport, pointer, zoomControls, handleConfirm, handleImageLoad };
+const composeControllerResult = ({
+  viewport,
+  pointer,
+  zoomControls,
+  handleConfirm,
+  handleImageLoad,
+}) => ({ viewport, pointer, zoomControls, handleConfirm, handleImageLoad });
+
+const useControllerDependencies = ({
+  open,
+  source,
+  onConfirm,
+  isProcessing,
+}) => {
+  const viewport = useViewportDependencies({ open, source });
+  const pointer = usePointerDependencies({ open, source, viewport });
+  const { handleImageLoad } = useImageLoaderDependencies({ source, viewport });
+  const { handleConfirm } = useCropperDependencies({ viewport, onConfirm });
+  const zoomControls = useZoomDependencies({ viewport, isProcessing });
+
+  return composeControllerResult({
+    viewport,
+    pointer,
+    zoomControls,
+    handleConfirm,
+    handleImageLoad,
+  });
 };
 
 export default useControllerDependencies;

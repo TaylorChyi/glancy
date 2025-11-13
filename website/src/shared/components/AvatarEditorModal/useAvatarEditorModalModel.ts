@@ -1,5 +1,91 @@
 import useAvatarEditorController from "./hooks/useAvatarEditorController.js";
 
+const buildViewportHandlers = ({
+  handlePointerDown,
+  handlePointerMove,
+  handlePointerUp,
+}) => ({
+  onPointerDown: handlePointerDown,
+  onPointerMove: handlePointerMove,
+  onPointerUp: handlePointerUp,
+});
+
+const buildViewportProps = ({ controller, source }: {
+  controller: ReturnType<typeof useAvatarEditorController>;
+  source: string;
+}) => ({
+  containerRef: controller.containerRef,
+  imageRef: controller.imageRef,
+  source,
+  imageTransform: controller.imageTransform,
+  pointerHandlers: buildViewportHandlers({
+    handlePointerDown: controller.handlePointerDown,
+    handlePointerMove: controller.handlePointerMove,
+    handlePointerUp: controller.handlePointerUp,
+  }),
+  onImageLoad: controller.handleImageLoad,
+});
+
+const buildZoomControls = ({
+  handleZoomIn,
+  handleZoomOut,
+  isZoomInDisabled,
+  isZoomOutDisabled,
+}) => ({
+  onZoomIn: handleZoomIn,
+  onZoomOut: handleZoomOut,
+  isZoomInDisabled,
+  isZoomOutDisabled,
+});
+
+const buildActionControls = ({
+  onCancel,
+  onConfirm,
+  isProcessing,
+}) => ({
+  onCancel,
+  onConfirm,
+  isProcessing,
+});
+
+const buildControlProps = ({
+  controller,
+  onCancel,
+  isProcessing,
+}: {
+  controller: ReturnType<typeof useAvatarEditorController>;
+  onCancel: () => void;
+  isProcessing: boolean;
+}) => ({
+  zoom: buildZoomControls({
+    handleZoomIn: controller.handleZoomIn,
+    handleZoomOut: controller.handleZoomOut,
+    isZoomInDisabled: controller.isZoomInDisabled,
+    isZoomOutDisabled: controller.isZoomOutDisabled,
+  }),
+  actions: buildActionControls({
+    onCancel,
+    onConfirm: controller.handleConfirm,
+    isProcessing,
+  }),
+});
+
+const buildViewProps = ({
+  controller,
+  source,
+  onCancel,
+  isProcessing,
+}: {
+  controller: ReturnType<typeof useAvatarEditorController>;
+  source: string;
+  onCancel: () => void;
+  isProcessing: boolean;
+}) => ({
+  labels: controller.mergedLabels,
+  viewport: buildViewportProps({ controller, source }),
+  controls: buildControlProps({ controller, onCancel, isProcessing }),
+});
+
 type AvatarEditorModalInput = {
   open: boolean;
   source?: string;
@@ -25,52 +111,14 @@ export const useAvatarEditorModalModel = ({
     isProcessing,
   });
 
-  const {
-    mergedLabels,
-    imageTransform,
-    imageRef,
-    containerRef,
-    isZoomInDisabled,
-    isZoomOutDisabled,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleZoomIn,
-    handleZoomOut,
-    handleConfirm,
-    handleImageLoad,
-  } = controller;
-
   return {
     isOpen: open,
-    viewProps: {
-      labels: mergedLabels,
-      viewport: {
-        containerRef,
-        imageRef,
-        source,
-        imageTransform,
-        pointerHandlers: {
-          onPointerDown: handlePointerDown,
-          onPointerMove: handlePointerMove,
-          onPointerUp: handlePointerUp,
-        },
-        onImageLoad: handleImageLoad,
-      },
-      controls: {
-        zoom: {
-          onZoomIn: handleZoomIn,
-          onZoomOut: handleZoomOut,
-          isZoomInDisabled,
-          isZoomOutDisabled,
-        },
-        actions: {
-          onCancel,
-          onConfirm: handleConfirm,
-          isProcessing,
-        },
-      },
-    },
+    viewProps: buildViewProps({
+      controller,
+      source,
+      onCancel,
+      isProcessing,
+    }),
   };
 };
 

@@ -1,6 +1,34 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import renderCroppedAvatar from "./avatarCropRenderer.js";
 import resolveCropParameters from "./cropParameterResolver.js";
+
+const createCropParametersBuilder = ({
+  imageRef,
+  displayMetrics,
+  viewportSize,
+  naturalSize,
+  offset,
+}) => () =>
+  resolveCropParameters({
+    imageRef,
+    displayMetrics,
+    viewportSize,
+    naturalSize,
+    offset,
+  });
+
+const executeCrop = async ({ buildCropParameters, onConfirm }) => {
+  const parameters = buildCropParameters();
+  if (!parameters) {
+    return;
+  }
+  const result = await renderCroppedAvatar(parameters);
+  await onConfirm(result);
+};
+
+const handleCropError = (error) => {
+  console.error(error);
+};
 
 const useAvatarCropper = ({
   imageRef,
@@ -10,9 +38,9 @@ const useAvatarCropper = ({
   offset,
   onConfirm,
 }) => {
-  const buildCropParameters = useCallback(
+  const buildCropParameters = useMemo(
     () =>
-      resolveCropParameters({
+      createCropParametersBuilder({
         imageRef,
         displayMetrics,
         viewportSize,
@@ -24,14 +52,9 @@ const useAvatarCropper = ({
 
   const handleConfirm = useCallback(async () => {
     try {
-      const parameters = buildCropParameters();
-      if (!parameters) {
-        return;
-      }
-      const result = await renderCroppedAvatar(parameters);
-      await onConfirm(result);
+      await executeCrop({ buildCropParameters, onConfirm });
     } catch (error) {
-      console.error(error);
+      handleCropError(error);
     }
   }, [buildCropParameters, onConfirm]);
 
