@@ -1,14 +1,11 @@
-import { useId, useReducer, useRef } from "react";
-import {
-  createUsernameEditorInitialState,
-  usernameEditorReducer,
-} from "./usernameEditorState.js";
+import { useId, useRef } from "react";
 import {
   useEditFocusManagement,
   useUsernameSynchronization,
 } from "./usernameEditorEffects.js";
 import { useUsernameEditingActions } from "./useUsernameEditingActions.js";
 import { useUsernameViewModel } from "./useUsernameViewModel.js";
+import { useUsernameEditorState } from "./useUsernameEditorState.js";
 
 export default function useUsernameEditorController({
   username,
@@ -23,11 +20,7 @@ export default function useUsernameEditorController({
   onResolveAction,
   t,
 }) {
-  const [state, dispatch] = useReducer(
-    usernameEditorReducer,
-    username ?? "",
-    createUsernameEditorInitialState,
-  );
+  const [state, dispatch] = useUsernameEditorState(username);
   const inputRef = useRef(null);
   const controlId = useId();
   const messageId = useId();
