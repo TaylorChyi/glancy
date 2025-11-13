@@ -1,35 +1,59 @@
 import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon/index.tsx";
 
-function SettingsNavIcon({ icon, labelText, className }) {
+function normalizeIconProps(icon, labelText) {
   if (!icon || typeof icon.name !== "string") {
     return null;
   }
-  const width = icon.width ?? 20;
-  const height = icon.height ?? 20;
+
   const decorative = icon.decorative !== false;
-  const roleClass = icon.roleClass ?? "inherit";
-  const title = icon.title;
-  const altText = decorative ? "" : icon.alt ?? `${labelText} icon`;
+
+  return {
+    name: icon.name,
+    width: icon.width ?? 20,
+    height: icon.height ?? 20,
+    decorative,
+    roleClass: icon.roleClass ?? "inherit",
+    alt: decorative ? "" : icon.alt ?? `${labelText} icon`,
+    title: icon.title,
+    className: icon.className,
+    style: icon.style,
+  };
+}
+
+function SectionIcon({ icon }) {
+  return <ThemeIcon {...icon} />;
+}
+
+SectionIcon.propTypes = {
+  icon: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    decorative: PropTypes.bool.isRequired,
+    roleClass: PropTypes.string.isRequired,
+    alt: PropTypes.string,
+    title: PropTypes.string,
+    className: PropTypes.string,
+    style: PropTypes.object,
+  }).isRequired,
+};
+
+function SettingsNavIcon({ icon, labelText, className }) {
+  const normalizedIcon = normalizeIconProps(icon, labelText);
+
+  if (!normalizedIcon) {
+    return null;
+  }
 
   return (
     <span
-      aria-hidden={decorative || undefined}
+      aria-hidden={normalizedIcon.decorative || undefined}
       className={className}
-      data-section-icon={icon.name}
-      key={icon.name}
+      data-section-icon={normalizedIcon.name}
+      key={normalizedIcon.name}
     >
-      <ThemeIcon
-        name={icon.name}
-        width={width}
-        height={height}
-        decorative={decorative}
-        roleClass={roleClass}
-        alt={altText}
-        title={title}
-        className={icon.className}
-        style={icon.style}
-      />
+      <SectionIcon icon={normalizedIcon} />
     </span>
   );
 }
