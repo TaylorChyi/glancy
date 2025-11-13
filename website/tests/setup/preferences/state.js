@@ -76,24 +76,45 @@ const createShortcuts = () => ({
   unregister: jest.fn(),
 });
 
+const resolveUser = (overrides) => overrides.user ?? makeUser();
+
+const resolveUnbindEmail = (overrides) =>
+  overrides.unbindEmail ?? jest.fn().mockResolvedValue({ email: null });
+
+const resolveTheme = (overrides) => overrides.theme ?? createTheme();
+
+const resolveShortcuts = (overrides) =>
+  overrides.shortcuts ?? createShortcuts();
+
+const resolveAvatarWorkflow = (overrides) =>
+  overrides.avatarWorkflow ?? createAvatarWorkflow();
+
+const resolveLanguage = (overrides) =>
+  overrides.language ?? preferencesLanguageFixture;
+
+const resolveSetUser = (overrides) => overrides.setUser ?? jest.fn();
+
+const resolveUpdateUsername = (overrides, user) =>
+  overrides.updateUsername ??
+  jest.fn().mockResolvedValue(createUpdatedUsernamePayload(user));
+
+const resolveEmailBinding = (overrides, unbindEmail) =>
+  overrides.emailBinding ?? createEmailBindingState(unbindEmail);
+
 const applyBaseState = (target, overrides = {}) => {
-  const user = overrides.user ?? makeUser();
-  const unbindEmail =
-    overrides.unbindEmail ?? jest.fn().mockResolvedValue({ email: null });
+  const user = resolveUser(overrides);
+  const unbindEmail = resolveUnbindEmail(overrides);
 
   const nextState = {
-    language: overrides.language ?? preferencesLanguageFixture,
+    language: resolveLanguage(overrides),
     user,
-    setUser: overrides.setUser ?? jest.fn(),
-    theme: overrides.theme ?? createTheme(),
-    shortcuts: overrides.shortcuts ?? createShortcuts(),
-    avatarWorkflow: overrides.avatarWorkflow ?? createAvatarWorkflow(),
+    setUser: resolveSetUser(overrides),
+    theme: resolveTheme(overrides),
+    shortcuts: resolveShortcuts(overrides),
+    avatarWorkflow: resolveAvatarWorkflow(overrides),
     unbindEmail,
-    emailBinding:
-      overrides.emailBinding ?? createEmailBindingState(unbindEmail),
-    updateUsername:
-      overrides.updateUsername ??
-      jest.fn().mockResolvedValue(createUpdatedUsernamePayload(user)),
+    emailBinding: resolveEmailBinding(overrides, unbindEmail),
+    updateUsername: resolveUpdateUsername(overrides, user),
   };
 
   Object.assign(target, nextState);

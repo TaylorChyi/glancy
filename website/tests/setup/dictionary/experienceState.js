@@ -29,6 +29,74 @@ const mergeState = (base, overrides) => ({
   ...(overrides ?? {}),
 });
 
+const createInputControls = () => ({
+  inputRef: { current: null },
+  text: "",
+  setText: jest.fn(),
+  finalText: "",
+  loading: false,
+  focusInput: jest.fn(),
+});
+
+const createLanguageControls = () => ({
+  dictionarySourceLanguage: "en",
+  setDictionarySourceLanguage: jest.fn(),
+  dictionaryTargetLanguage: "zh",
+  setDictionaryTargetLanguage: jest.fn(),
+  sourceLanguageOptions: [],
+  targetLanguageOptions: [],
+});
+
+const createInteractionHandlers = () => ({
+  handleSwapLanguages: jest.fn(),
+  handleSend: jest.fn(),
+  handleShowDictionary: jest.fn(),
+  handleShowLibrary: jest.fn(),
+  handleSelectHistory: jest.fn(),
+});
+
+const createExperienceViewState = () => ({
+  activeView: "dictionary",
+  viewState: {
+    active: "dictionary",
+    isDictionary: true,
+    isHistory: false,
+    isLibrary: false,
+  },
+});
+
+const createDisplayState = (dictionaryActionBarProps) => ({
+  dictionaryActionBarProps,
+  displayClassName: "dictionary-experience",
+  popupOpen: false,
+  popupMsg: "",
+  closePopup: jest.fn(),
+  toast: null,
+  closeToast: jest.fn(),
+});
+
+const createLabels = () => ({
+  dictionaryTargetLanguageLabel: "目标语言",
+  dictionarySourceLanguageLabel: "源语言",
+  dictionarySwapLanguagesLabel: "切换",
+  chatInputPlaceholder: "输入查询内容",
+  libraryLandingLabel: "致用单词",
+});
+
+const createSearchState = () => ({
+  searchEmptyState: {
+    title: "开始探索",
+    description: "输入任何词汇即可获取解释",
+  },
+});
+
+const createReportDialogHandlers = () => ({
+  close: jest.fn(),
+  setCategory: jest.fn(),
+  setDescription: jest.fn(),
+  submit: jest.fn(),
+});
+
 const buildBaseState = ({
   entry = makeEntry(),
   dictionaryActionBarProps = createActionBarProps(),
@@ -38,55 +106,17 @@ const buildBaseState = ({
   ...restOverrides
 } = {}) => {
   const baseState = {
-    inputRef: { current: null },
+    ...createInputControls(),
+    ...createLanguageControls(),
+    ...createInteractionHandlers(),
+    ...createExperienceViewState(),
+    ...createDisplayState(dictionaryActionBarProps),
+    ...createLabels(),
+    ...createSearchState(),
     t,
-    text: "",
-    setText: jest.fn(),
-    dictionarySourceLanguage: "en",
-    setDictionarySourceLanguage: jest.fn(),
-    dictionaryTargetLanguage: "zh",
-    setDictionaryTargetLanguage: jest.fn(),
-    sourceLanguageOptions: [],
-    targetLanguageOptions: [],
-    handleSwapLanguages: jest.fn(),
-    handleSend: jest.fn(),
-    handleShowDictionary: jest.fn(),
-    handleShowLibrary: jest.fn(),
-    handleSelectHistory: jest.fn(),
-    activeView: "dictionary",
-    viewState: {
-      active: "dictionary",
-      isDictionary: true,
-      isHistory: false,
-      isLibrary: false,
-    },
-    focusInput: jest.fn(),
     entry,
-    finalText: "",
-    loading: false,
-    dictionaryActionBarProps,
-    displayClassName: "dictionary-experience",
-    popupOpen: false,
-    popupMsg: "",
-    closePopup: jest.fn(),
-    toast: null,
-    closeToast: jest.fn(),
-    dictionaryTargetLanguageLabel: "目标语言",
-    dictionarySourceLanguageLabel: "源语言",
-    dictionarySwapLanguagesLabel: "切换",
-    searchEmptyState: {
-      title: "开始探索",
-      description: "输入任何词汇即可获取解释",
-    },
-    chatInputPlaceholder: "输入查询内容",
-    libraryLandingLabel: "致用单词",
     reportDialog: createReportDialog(),
-    reportDialogHandlers: {
-      close: jest.fn(),
-      setCategory: jest.fn(),
-      setDescription: jest.fn(),
-      submit: jest.fn(),
-    },
+    reportDialogHandlers: createReportDialogHandlers(),
     ...restOverrides,
   };
 
