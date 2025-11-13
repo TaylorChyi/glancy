@@ -24,44 +24,43 @@ import org.springframework.web.client.RestTemplate;
  */
 class VolcengineTtsHealthIndicatorTest {
 
-  private RestTemplate restTemplate;
-  private VolcengineTtsProperties props;
-  private ObjectMapper objectMapper;
-  private VolcengineTtsHealthIndicator indicator;
+    private RestTemplate restTemplate;
+    private VolcengineTtsProperties props;
+    private ObjectMapper objectMapper;
+    private VolcengineTtsHealthIndicator indicator;
 
-  @BeforeEach
-  void setup() {
-    restTemplate = mock(RestTemplate.class);
-    props = new VolcengineTtsProperties();
-    props.setAppId("app");
-    props.setAccessKeyId("ak");
-    props.setSecretKey("sk");
-    props.setVoiceType("voice");
-    objectMapper = new ObjectMapper();
-    indicator = new VolcengineTtsHealthIndicator(restTemplate, props, objectMapper);
-  }
+    @BeforeEach
+    void setup() {
+        restTemplate = mock(RestTemplate.class);
+        props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setAccessKeyId("ak");
+        props.setSecretKey("sk");
+        props.setVoiceType("voice");
+        objectMapper = new ObjectMapper();
+        indicator = new VolcengineTtsHealthIndicator(restTemplate, props, objectMapper);
+    }
 
-  /** Verifies a 2xx response marks the health as UP. */
-  @Test
-  void healthUpOn2xx() {
-    when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
-        .thenReturn(ResponseEntity.ok("{}"));
-    indicator.scheduledProbe();
-    assertThat(indicator.health().getStatus()).isEqualTo(Status.UP);
-  }
+    /** Verifies a 2xx response marks the health as UP. */
+    @Test
+    void healthUpOn2xx() {
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(ResponseEntity.ok("{}"));
+        indicator.scheduledProbe();
+        assertThat(indicator.health().getStatus()).isEqualTo(Status.UP);
+    }
 
-  /** Verifies error responses containing InvalidCredential mark health DOWN. */
-  @Test
-  void healthDownOnCredentialError() {
-    HttpClientErrorException ex =
-        new HttpClientErrorException(
-            HttpStatus.FORBIDDEN,
-            "Forbidden",
-            "{\"Code\":\"InvalidCredential\"}".getBytes(StandardCharsets.UTF_8),
-            StandardCharsets.UTF_8);
-    when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
-        .thenThrow(ex);
-    indicator.scheduledProbe();
-    assertThat(indicator.health().getStatus()).isEqualTo(Status.DOWN);
-  }
+    /** Verifies error responses containing InvalidCredential mark health DOWN. */
+    @Test
+    void healthDownOnCredentialError() {
+        HttpClientErrorException ex = new HttpClientErrorException(
+                HttpStatus.FORBIDDEN,
+                "Forbidden",
+                "{\"Code\":\"InvalidCredential\"}".getBytes(StandardCharsets.UTF_8),
+                StandardCharsets.UTF_8);
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(ex);
+        indicator.scheduledProbe();
+        assertThat(indicator.health().getStatus()).isEqualTo(Status.DOWN);
+    }
 }

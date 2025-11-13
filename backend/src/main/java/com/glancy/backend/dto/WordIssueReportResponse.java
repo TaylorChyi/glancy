@@ -6,11 +6,11 @@ import com.glancy.backend.entity.WordIssueCategory;
 import java.time.LocalDateTime;
 
 public record WordIssueReportResponse(
-    Long id,
-    String term,
-    Language language,
-    DictionaryFlavor flavor,
-    WordIssueCategory category,
-    String description,
-    String sourceUrl,
-    LocalDateTime createdAt) {}
+        Long id,
+        String term,
+        Language language,
+        DictionaryFlavor flavor,
+        WordIssueCategory category,
+        String description,
+        String sourceUrl,
+        LocalDateTime createdAt) {}

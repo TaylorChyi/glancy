@@ -20,23 +20,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 public abstract class BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(nullable = false)
-  private Boolean deleted = false;
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
-  @CreatedDate
-  @Column(
-      nullable = false,
-      updatable = false,
-      columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)")
-  private LocalDateTime createdAt;
+    @CreatedDate
+    @Column(nullable = false, updatable = false, columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)")
+    private LocalDateTime createdAt;
 
-  @LastModifiedDate
-  @Column(
-      nullable = false,
-      columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
-  private LocalDateTime updatedAt;
+    @LastModifiedDate
+    @Column(
+            nullable = false,
+            columnDefinition = "DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)")
+    private LocalDateTime updatedAt;
 }

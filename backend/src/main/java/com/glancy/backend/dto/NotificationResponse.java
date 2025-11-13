@@ -8,8 +8,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class NotificationResponse {
 
-  private Long id;
-  private String message;
-  private Boolean systemLevel;
-  private Long userId;
+    private Long id;
+    private String message;
+    private Boolean systemLevel;
+    private Long userId;
 }

@@ -9,57 +9,57 @@ import java.util.Objects;
  */
 public final class DictionaryModelRequestOptions {
 
-  private final Boolean stream;
-  private final String thinkingType;
+    private final Boolean stream;
+    private final String thinkingType;
 
-  private DictionaryModelRequestOptions(Builder builder) {
-    this.stream = builder.stream;
-    this.thinkingType = builder.thinkingType;
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static DictionaryModelRequestOptions defaults() {
-    return builder().build();
-  }
-
-  public Boolean stream() {
-    return stream;
-  }
-
-  public String thinkingType() {
-    return thinkingType;
-  }
-
-  public boolean resolveStream(boolean fallback) {
-    return stream == null ? fallback : stream.booleanValue();
-  }
-
-  public String resolveThinkingType(String fallback) {
-    return Objects.requireNonNullElse(thinkingType, fallback);
-  }
-
-  public static final class Builder {
-
-    private Boolean stream;
-    private String thinkingType;
-
-    private Builder() {}
-
-    public Builder stream(Boolean stream) {
-      this.stream = stream;
-      return this;
+    private DictionaryModelRequestOptions(Builder builder) {
+        this.stream = builder.stream;
+        this.thinkingType = builder.thinkingType;
     }
 
-    public Builder thinkingType(String thinkingType) {
-      this.thinkingType = thinkingType;
-      return this;
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public DictionaryModelRequestOptions build() {
-      return new DictionaryModelRequestOptions(this);
+    public static DictionaryModelRequestOptions defaults() {
+        return builder().build();
     }
-  }
+
+    public Boolean stream() {
+        return stream;
+    }
+
+    public String thinkingType() {
+        return thinkingType;
+    }
+
+    public boolean resolveStream(boolean fallback) {
+        return stream == null ? fallback : stream.booleanValue();
+    }
+
+    public String resolveThinkingType(String fallback) {
+        return Objects.requireNonNullElse(thinkingType, fallback);
+    }
+
+    public static final class Builder {
+
+        private Boolean stream;
+        private String thinkingType;
+
+        private Builder() {}
+
+        public Builder stream(Boolean stream) {
+            this.stream = stream;
+            return this;
+        }
+
+        public Builder thinkingType(String thinkingType) {
+            this.thinkingType = thinkingType;
+            return this;
+        }
+
+        public DictionaryModelRequestOptions build() {
+            return new DictionaryModelRequestOptions(this);
+        }
+    }
 }

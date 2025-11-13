@@ -12,19 +12,17 @@ import java.util.function.Consumer;
  */
 public final class WordPromptContext {
 
-  private WordPromptContext() {}
+    private WordPromptContext() {}
 
-  public static Map<String, String> build(
-      Consumer<EnumMap<WordPromptContextKey, String>> populator) {
-    EnumMap<WordPromptContextKey, String> values = new EnumMap<>(WordPromptContextKey.class);
-    populator.accept(values);
-    Map<String, String> resolved = new HashMap<>();
-    values.forEach(
-        (key, value) -> {
-          if (value != null) {
-            resolved.put(key.placeholder(), value);
-          }
+    public static Map<String, String> build(Consumer<EnumMap<WordPromptContextKey, String>> populator) {
+        EnumMap<WordPromptContextKey, String> values = new EnumMap<>(WordPromptContextKey.class);
+        populator.accept(values);
+        Map<String, String> resolved = new HashMap<>();
+        values.forEach((key, value) -> {
+            if (value != null) {
+                resolved.put(key.placeholder(), value);
+            }
         });
-    return resolved;
-  }
+        return resolved;
+    }
 }

@@ -22,32 +22,32 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class UserPreferenceController {
 
-  private final UserPreferenceService userPreferenceService;
+    private final UserPreferenceService userPreferenceService;
 
-  public UserPreferenceController(UserPreferenceService userPreferenceService) {
-    this.userPreferenceService = userPreferenceService;
-  }
+    public UserPreferenceController(UserPreferenceService userPreferenceService) {
+        this.userPreferenceService = userPreferenceService;
+    }
 
-  /** Persist UI and language preferences for a user. */
-  @PostMapping("/user")
-  public ResponseEntity<UserPreferenceResponse> savePreference(
-      @AuthenticatedUser Long userId, @Valid @RequestBody UserPreferenceRequest req) {
-    UserPreferenceResponse resp = userPreferenceService.savePreference(userId, req);
-    return new ResponseEntity<>(resp, HttpStatus.CREATED);
-  }
+    /** Persist UI and language preferences for a user. */
+    @PostMapping("/user")
+    public ResponseEntity<UserPreferenceResponse> savePreference(
+            @AuthenticatedUser Long userId, @Valid @RequestBody UserPreferenceRequest req) {
+        UserPreferenceResponse resp = userPreferenceService.savePreference(userId, req);
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
 
-  /** Partially update stored preferences for the user. */
-  @PatchMapping("/user")
-  public ResponseEntity<UserPreferenceResponse> updatePreference(
-      @AuthenticatedUser Long userId, @RequestBody UserPreferenceUpdateRequest req) {
-    UserPreferenceResponse resp = userPreferenceService.updatePreference(userId, req);
-    return ResponseEntity.ok(resp);
-  }
+    /** Partially update stored preferences for the user. */
+    @PatchMapping("/user")
+    public ResponseEntity<UserPreferenceResponse> updatePreference(
+            @AuthenticatedUser Long userId, @RequestBody UserPreferenceUpdateRequest req) {
+        UserPreferenceResponse resp = userPreferenceService.updatePreference(userId, req);
+        return ResponseEntity.ok(resp);
+    }
 
-  /** Retrieve preferences previously saved for the user. */
-  @GetMapping("/user")
-  public ResponseEntity<UserPreferenceResponse> getPreference(@AuthenticatedUser Long userId) {
-    UserPreferenceResponse resp = userPreferenceService.getPreference(userId);
-    return ResponseEntity.ok(resp);
-  }
+    /** Retrieve preferences previously saved for the user. */
+    @GetMapping("/user")
+    public ResponseEntity<UserPreferenceResponse> getPreference(@AuthenticatedUser Long userId) {
+        UserPreferenceResponse resp = userPreferenceService.getPreference(userId);
+        return ResponseEntity.ok(resp);
+    }
 }

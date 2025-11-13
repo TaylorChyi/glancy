@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 public class NotificationRequest {
 
-  @NotBlank(message = "{validation.notification.message.notblank}")
-  private String message;
+    @NotBlank(message = "{validation.notification.message.notblank}")
+    private String message;
 }

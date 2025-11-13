@@ -22,142 +22,135 @@ import org.springframework.util.StringUtils;
 @Component
 public class VerificationEmailComposer {
 
-  private final EmailVerificationProperties properties;
-  private final VerificationEmailContentResolver contentResolver;
+    private final EmailVerificationProperties properties;
+    private final VerificationEmailContentResolver contentResolver;
 
-  public VerificationEmailComposer(
-      EmailVerificationProperties properties, VerificationEmailContentResolver contentResolver) {
-    this.properties = properties;
-    this.contentResolver = contentResolver;
-  }
-
-  public void populate(
-      MimeMessage message,
-      String recipient,
-      EmailVerificationPurpose purpose,
-      String code,
-      LocalDateTime expiresAt,
-      String clientIp)
-      throws MessagingException {
-    EmailVerificationTemplateProperties template = resolveTemplate(purpose);
-    MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-    helper.setTo(recipient);
-    helper.setSubject(template.getSubject());
-    helper.setSentDate(new Date());
-    setSender(helper);
-    setReplyTo(helper);
-
-    LocalizedVerificationContent content = contentResolver.resolve(clientIp, code);
-    setBody(message, content);
-    helper.setPriority(1);
-
-    applyComplianceHeaders(message, purpose);
-    applyArcHeaders(message);
-  }
-
-  private EmailVerificationTemplateProperties resolveTemplate(EmailVerificationPurpose purpose) {
-    EmailVerificationTemplateProperties template = properties.getTemplates().get(purpose);
-    if (template == null) {
-      throw new IllegalStateException(
-          "Missing email template configuration for purpose " + purpose);
+    public VerificationEmailComposer(
+            EmailVerificationProperties properties, VerificationEmailContentResolver contentResolver) {
+        this.properties = properties;
+        this.contentResolver = contentResolver;
     }
-    return template;
-  }
 
-  private void setSender(MimeMessageHelper helper) throws MessagingException {
-    String mailbox = properties.getFrom();
-    String displayName = properties.getSender().getDisplayName();
-    if (!StringUtils.hasText(displayName)) {
-      displayName = properties.getCompliance().getCompanyName();
+    public void populate(
+            MimeMessage message,
+            String recipient,
+            EmailVerificationPurpose purpose,
+            String code,
+            LocalDateTime expiresAt,
+            String clientIp)
+            throws MessagingException {
+        EmailVerificationTemplateProperties template = resolveTemplate(purpose);
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+        helper.setTo(recipient);
+        helper.setSubject(template.getSubject());
+        helper.setSentDate(new Date());
+        setSender(helper);
+        setReplyTo(helper);
+
+        LocalizedVerificationContent content = contentResolver.resolve(clientIp, code);
+        setBody(message, content);
+        helper.setPriority(1);
+
+        applyComplianceHeaders(message, purpose);
+        applyArcHeaders(message);
     }
-    if (StringUtils.hasText(displayName)) {
-      helper.getMimeMessage().setHeader("From", displayName + " <" + mailbox + ">");
-    } else {
-      helper.setFrom(mailbox);
+
+    private EmailVerificationTemplateProperties resolveTemplate(EmailVerificationPurpose purpose) {
+        EmailVerificationTemplateProperties template = properties.getTemplates().get(purpose);
+        if (template == null) {
+            throw new IllegalStateException("Missing email template configuration for purpose " + purpose);
+        }
+        return template;
     }
-  }
 
-  private void setReplyTo(MimeMessageHelper helper) throws MessagingException {
-    String replyTo = properties.getSender().getReplyTo();
-    if (!StringUtils.hasText(replyTo)) {
-      return;
+    private void setSender(MimeMessageHelper helper) throws MessagingException {
+        String mailbox = properties.getFrom();
+        String displayName = properties.getSender().getDisplayName();
+        if (!StringUtils.hasText(displayName)) {
+            displayName = properties.getCompliance().getCompanyName();
+        }
+        if (StringUtils.hasText(displayName)) {
+            helper.getMimeMessage().setHeader("From", displayName + " <" + mailbox + ">");
+        } else {
+            helper.setFrom(mailbox);
+        }
     }
-    helper.getMimeMessage().setReplyTo(new InternetAddress[] {new InternetAddress(replyTo)});
-  }
 
-  private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)
-      throws MessagingException {
-    stampAutoHeaders(message);
-    applyUnsubscribeHeaders(message);
-    applyFeedbackIdHeader(message, purpose);
-    applyEntityRefHeader(message, purpose);
-  }
-
-  private void applyArcHeaders(MimeMessage message) throws MessagingException {
-    EmailVerificationInfrastructureProperties infrastructure = properties.getInfrastructure();
-    if (!infrastructure.isArcSealEnabled()) {
-      return;
+    private void setReplyTo(MimeMessageHelper helper) throws MessagingException {
+        String replyTo = properties.getSender().getReplyTo();
+        if (!StringUtils.hasText(replyTo)) {
+            return;
+        }
+        helper.getMimeMessage().setReplyTo(new InternetAddress[] {new InternetAddress(replyTo)});
     }
-    message.setHeader("ARC-Authentication-Results", infrastructure.getArcAuthenticationResults());
-    message.setHeader("ARC-Message-Signature", infrastructure.getArcMessageSignature());
-    message.setHeader("ARC-Seal", infrastructure.getArcSeal());
-  }
 
-  private void stampAutoHeaders(MimeMessage message) throws MessagingException {
-    message.setSentDate(new Date());
-    message.setHeader("Auto-Submitted", "auto-generated");
-    message.setHeader("X-Auto-Response-Suppress", "All");
-  }
+    private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)
+            throws MessagingException {
+        stampAutoHeaders(message);
+        applyUnsubscribeHeaders(message);
+        applyFeedbackIdHeader(message, purpose);
+        applyEntityRefHeader(message, purpose);
+    }
 
-  private void applyUnsubscribeHeaders(MimeMessage message) {
-    EmailComplianceSupport.buildListUnsubscribeHeader(properties)
-        .ifPresent(
-            listUnsubscribe -> {
-              try {
+    private void applyArcHeaders(MimeMessage message) throws MessagingException {
+        EmailVerificationInfrastructureProperties infrastructure = properties.getInfrastructure();
+        if (!infrastructure.isArcSealEnabled()) {
+            return;
+        }
+        message.setHeader("ARC-Authentication-Results", infrastructure.getArcAuthenticationResults());
+        message.setHeader("ARC-Message-Signature", infrastructure.getArcMessageSignature());
+        message.setHeader("ARC-Seal", infrastructure.getArcSeal());
+    }
+
+    private void stampAutoHeaders(MimeMessage message) throws MessagingException {
+        message.setSentDate(new Date());
+        message.setHeader("Auto-Submitted", "auto-generated");
+        message.setHeader("X-Auto-Response-Suppress", "All");
+    }
+
+    private void applyUnsubscribeHeaders(MimeMessage message) {
+        EmailComplianceSupport.buildListUnsubscribeHeader(properties).ifPresent(listUnsubscribe -> {
+            try {
                 message.setHeader("List-Unsubscribe", listUnsubscribe);
                 if (EmailComplianceSupport.supportsOneClickUnsubscribe(properties)) {
-                  message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
+                    message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
                 }
-              } catch (MessagingException exception) {
+            } catch (MessagingException exception) {
                 throw new IllegalStateException("无法设置退订头部", exception);
-              }
-            });
-  }
-
-  private void applyFeedbackIdHeader(MimeMessage message, EmailVerificationPurpose purpose)
-      throws MessagingException {
-    String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
-    if (!StringUtils.hasText(feedbackIdPrefix)) {
-      return;
+            }
+        });
     }
-    String companySlug =
-        EmailComplianceSupport.resolveCompanyName(properties)
-            .replaceAll("\\s+", "-")
-            .toLowerCase(Locale.ROOT);
-    String feedbackId =
-        feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
-    message.setHeader("Feedback-ID", feedbackId);
-  }
 
-  private void applyEntityRefHeader(MimeMessage message, EmailVerificationPurpose purpose)
-      throws MessagingException {
-    String entityRefIdPrefix = properties.getDeliverability().getEntityRefIdPrefix();
-    if (!StringUtils.hasText(entityRefIdPrefix)) {
-      return;
+    private void applyFeedbackIdHeader(MimeMessage message, EmailVerificationPurpose purpose)
+            throws MessagingException {
+        String feedbackIdPrefix = properties.getDeliverability().getFeedbackIdPrefix();
+        if (!StringUtils.hasText(feedbackIdPrefix)) {
+            return;
+        }
+        String companySlug = EmailComplianceSupport.resolveCompanyName(properties)
+                .replaceAll("\\s+", "-")
+                .toLowerCase(Locale.ROOT);
+        String feedbackId = feedbackIdPrefix + ":" + purpose.name().toLowerCase(Locale.ROOT) + ":" + companySlug;
+        message.setHeader("Feedback-ID", feedbackId);
     }
-    String entityRefId = entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT);
-    message.setHeader("X-Entity-Ref-ID", entityRefId);
-  }
 
-  private void setBody(MimeMessage message, LocalizedVerificationContent content)
-      throws MessagingException {
-    MimeMultipart multipart = new MimeMultipart("alternative");
-    MimeBodyPart plainPart = new MimeBodyPart();
-    plainPart.setText(content.plainText(), StandardCharsets.UTF_8.name());
-    multipart.addBodyPart(plainPart);
-    MimeBodyPart htmlPart = new MimeBodyPart();
-    htmlPart.setContent(content.htmlBody(), "text/html; charset=UTF-8");
-    multipart.addBodyPart(htmlPart);
-    message.setContent(multipart);
-  }
+    private void applyEntityRefHeader(MimeMessage message, EmailVerificationPurpose purpose) throws MessagingException {
+        String entityRefIdPrefix = properties.getDeliverability().getEntityRefIdPrefix();
+        if (!StringUtils.hasText(entityRefIdPrefix)) {
+            return;
+        }
+        String entityRefId = entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT);
+        message.setHeader("X-Entity-Ref-ID", entityRefId);
+    }
+
+    private void setBody(MimeMessage message, LocalizedVerificationContent content) throws MessagingException {
+        MimeMultipart multipart = new MimeMultipart("alternative");
+        MimeBodyPart plainPart = new MimeBodyPart();
+        plainPart.setText(content.plainText(), StandardCharsets.UTF_8.name());
+        multipart.addBodyPart(plainPart);
+        MimeBodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(content.htmlBody(), "text/html; charset=UTF-8");
+        multipart.addBodyPart(htmlPart);
+        message.setContent(multipart);
+    }
 }

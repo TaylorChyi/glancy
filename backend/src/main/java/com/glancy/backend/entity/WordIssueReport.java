@@ -16,27 +16,27 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WordIssueReport extends BaseEntity {
 
-  @Column(nullable = false, length = 120)
-  private String term;
+    @Column(nullable = false, length = 120)
+    private String term;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 16)
-  private Language language;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Language language;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 32)
-  private DictionaryFlavor flavor;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private DictionaryFlavor flavor;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "issue_category", nullable = false, length = 40)
-  private WordIssueCategory category;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "issue_category", nullable = false, length = 40)
+    private WordIssueCategory category;
 
-  @Column(columnDefinition = "TEXT")
-  private String description;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-  @Column(name = "source_url", length = 500)
-  private String sourceUrl;
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
 
-  @Column(name = "report_user_id")
-  private Long userId;
+    @Column(name = "report_user_id")
+    private Long userId;
 }

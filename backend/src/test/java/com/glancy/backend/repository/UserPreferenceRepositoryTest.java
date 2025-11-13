@@ -11,18 +11,20 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 @DataJpaTest
 class UserPreferenceRepositoryTest {
 
-  @Autowired private UserPreferenceRepository userPreferenceRepository;
+    @Autowired
+    private UserPreferenceRepository userPreferenceRepository;
 
-  @Autowired private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-  @Test
-  void findByUserId() {
-    User user = userRepository.save(TestEntityFactory.user(40));
-    UserPreference pref = TestEntityFactory.userPreference(user);
-    userPreferenceRepository.save(pref);
+    @Test
+    void findByUserId() {
+        User user = userRepository.save(TestEntityFactory.user(40));
+        UserPreference pref = TestEntityFactory.userPreference(user);
+        userPreferenceRepository.save(pref);
 
-    Optional<UserPreference> found = userPreferenceRepository.findByUserId(user.getId());
-    Assertions.assertTrue(found.isPresent());
-    Assertions.assertEquals("light", found.get().getTheme());
-  }
+        Optional<UserPreference> found = userPreferenceRepository.findByUserId(user.getId());
+        Assertions.assertTrue(found.isPresent());
+        Assertions.assertEquals("light", found.get().getTheme());
+    }
 }

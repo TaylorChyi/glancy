@@ -6,6 +6,6 @@ package com.glancy.backend.entity;
  * collide.
  */
 public enum TtsScope {
-  WORD,
-  SENTENCE,
+    WORD,
+    SENTENCE,
 }

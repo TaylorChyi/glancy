@@ -9,21 +9,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResponseMarkdownOrSerializedWordStrategy implements WordVersionContentStrategy {
 
-  @Override
-  public String resolveContent(WordPersistenceContext context, Word savedWord) {
-    WordResponse response = context.response();
-    if (response != null && response.getMarkdown() != null && !response.getMarkdown().isBlank()) {
-      return response.getMarkdown();
+    @Override
+    public String resolveContent(WordPersistenceContext context, Word savedWord) {
+        WordResponse response = context.response();
+        if (response != null
+                && response.getMarkdown() != null
+                && !response.getMarkdown().isBlank()) {
+            return response.getMarkdown();
+        }
+        try {
+            return context.serializeWord(savedWord);
+        } catch (JsonProcessingException e) {
+            log.warn(
+                    "Failed to serialize word '{}' for version content: {}",
+                    savedWord.getTerm(),
+                    e.getOriginalMessage(),
+                    e);
+            return SensitiveDataUtil.previewText(savedWord.getMarkdown());
+        }
     }
-    try {
-      return context.serializeWord(savedWord);
-    } catch (JsonProcessingException e) {
-      log.warn(
-          "Failed to serialize word '{}' for version content: {}",
-          savedWord.getTerm(),
-          e.getOriginalMessage(),
-          e);
-      return SensitiveDataUtil.previewText(savedWord.getMarkdown());
-    }
-  }
 }

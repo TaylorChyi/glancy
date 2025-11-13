@@ -15,21 +15,20 @@ import org.springframework.util.Assert;
 @Component
 public class PromptTemplateRenderer {
 
-  private static final Pattern PLACEHOLDER_PATTERN =
-      Pattern.compile("\\{\\{(.*?)\\}}", Pattern.DOTALL);
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{(.*?)\\}}", Pattern.DOTALL);
 
-  public String render(String templateContent, Map<String, String> context) {
-    Assert.hasText(templateContent, "templateContent must not be empty");
-    Map<String, String> safeContext = context == null ? Map.of() : context;
-    String template = templateContent;
-    Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
-    StringBuffer buffer = new StringBuffer();
-    while (matcher.find()) {
-      String key = matcher.group(1).trim();
-      String replacement = safeContext.getOrDefault(key, "");
-      matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+    public String render(String templateContent, Map<String, String> context) {
+        Assert.hasText(templateContent, "templateContent must not be empty");
+        Map<String, String> safeContext = context == null ? Map.of() : context;
+        String template = templateContent;
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            String key = matcher.group(1).trim();
+            String replacement = safeContext.getOrDefault(key, "");
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
-    matcher.appendTail(buffer);
-    return buffer.toString();
-  }
 }

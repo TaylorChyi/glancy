@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 /** Repository storing per-user overrides for keyboard shortcuts. */
 public interface UserKeyboardShortcutRepository extends JpaRepository<UserKeyboardShortcut, Long> {
-  List<UserKeyboardShortcut> findByUserId(Long userId);
+    List<UserKeyboardShortcut> findByUserId(Long userId);
 
-  Optional<UserKeyboardShortcut> findByUserIdAndAction(Long userId, ShortcutAction action);
+    Optional<UserKeyboardShortcut> findByUserIdAndAction(Long userId, ShortcutAction action);
 
-  void deleteByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

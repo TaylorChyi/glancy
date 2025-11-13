@@ -13,25 +13,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WordPersonalizationApplier {
 
-  private final WordPersonalizationService wordPersonalizationService;
+    private final WordPersonalizationService wordPersonalizationService;
 
-  public WordResponse apply(
-      Long userId, WordResponse response, WordPersonalizationContext context) {
-    if (response == null) {
-      return null;
+    public WordResponse apply(Long userId, WordResponse response, WordPersonalizationContext context) {
+        if (response == null) {
+            return null;
+        }
+        try {
+            WordPersonalizationContext effectiveContext =
+                    context != null ? context : wordPersonalizationService.resolveContext(userId);
+            response.setPersonalization(wordPersonalizationService.personalize(effectiveContext, response));
+        } catch (Exception ex) {
+            log.warn(
+                    "Failed to personalize response for user {} term '{}': {}",
+                    userId,
+                    response.getTerm(),
+                    SensitiveDataUtil.previewText(ex.getMessage()));
+        }
+        return response;
     }
-    try {
-      WordPersonalizationContext effectiveContext =
-          context != null ? context : wordPersonalizationService.resolveContext(userId);
-      response.setPersonalization(
-          wordPersonalizationService.personalize(effectiveContext, response));
-    } catch (Exception ex) {
-      log.warn(
-          "Failed to personalize response for user {} term '{}': {}",
-          userId,
-          response.getTerm(),
-          SensitiveDataUtil.previewText(ex.getMessage()));
-    }
-    return response;
-  }
 }

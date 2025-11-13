@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class VoiceOption {
 
-  /** Unique voice identifier. */
-  private String id;
+    /** Unique voice identifier. */
+    private String id;
 
-  /** Human readable voice label. */
-  private String label;
+    /** Human readable voice label. */
+    private String label;
 
-  /** Subscription plan that can access this voice. */
-  private String plan;
+    /** Subscription plan that can access this voice. */
+    private String plan;
 }

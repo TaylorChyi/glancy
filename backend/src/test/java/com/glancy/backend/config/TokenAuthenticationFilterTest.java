@@ -19,55 +19,54 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(com.glancy.backend.controller.SearchRecordController.class)
 @Import({
-  com.glancy.backend.config.security.SecurityConfig.class,
-  WebConfig.class,
-  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    com.glancy.backend.config.security.SecurityConfig.class,
+    WebConfig.class,
+    com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
 })
 class TokenAuthenticationFilterTest {
 
-  @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @MockitoBean private SearchRecordService searchRecordService;
+    @MockitoBean
+    private SearchRecordService searchRecordService;
 
-  @MockitoBean private UserService userService;
+    @MockitoBean
+    private UserService userService;
 
-  /** 测试 missingTokenReturnsUnauthorized 接口 */
-  @Test
-  void missingTokenReturnsUnauthorized() throws Exception {
-    mockMvc.perform(get("/api/search-records/user")).andExpect(status().isUnauthorized());
-  }
+    /** 测试 missingTokenReturnsUnauthorized 接口 */
+    @Test
+    void missingTokenReturnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/search-records/user")).andExpect(status().isUnauthorized());
+    }
 
-  /** Token resolves to user and allows access. */
-  @Test
-  void validTokenReturnsOk() throws Exception {
-    when(userService.authenticateToken("good")).thenReturn(7L);
-    when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class)))
-        .thenReturn(Collections.emptyList());
+    /** Token resolves to user and allows access. */
+    @Test
+    void validTokenReturnsOk() throws Exception {
+        when(userService.authenticateToken("good")).thenReturn(7L);
+        when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class)))
+                .thenReturn(Collections.emptyList());
 
-    mockMvc
-        .perform(get("/api/search-records/user").header("X-USER-TOKEN", "good"))
-        .andExpect(status().isOk());
-  }
+        mockMvc.perform(get("/api/search-records/user").header("X-USER-TOKEN", "good"))
+                .andExpect(status().isOk());
+    }
 
-  /** Invalid token results in unauthorized. */
-  @Test
-  void invalidTokenReturnsUnauthorized() throws Exception {
-    when(userService.authenticateToken("bad")).thenThrow(new IllegalArgumentException("invalid"));
+    /** Invalid token results in unauthorized. */
+    @Test
+    void invalidTokenReturnsUnauthorized() throws Exception {
+        when(userService.authenticateToken("bad")).thenThrow(new IllegalArgumentException("invalid"));
 
-    mockMvc
-        .perform(get("/api/search-records/user").header("X-USER-TOKEN", "bad"))
-        .andExpect(status().isUnauthorized());
-  }
+        mockMvc.perform(get("/api/search-records/user").header("X-USER-TOKEN", "bad"))
+                .andExpect(status().isUnauthorized());
+    }
 
-  /** Test that token provided via query parameter is accepted. */
-  @Test
-  void tokenQueryParamAccepted() throws Exception {
-    when(userService.authenticateToken("tkn")).thenReturn(7L);
-    when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class)))
-        .thenReturn(Collections.emptyList());
+    /** Test that token provided via query parameter is accepted. */
+    @Test
+    void tokenQueryParamAccepted() throws Exception {
+        when(userService.authenticateToken("tkn")).thenReturn(7L);
+        when(searchRecordService.getRecords(eq(7L), any(SearchRecordPageRequest.class)))
+                .thenReturn(Collections.emptyList());
 
-    mockMvc
-        .perform(get("/api/search-records/user").param("token", "tkn"))
-        .andExpect(status().isOk());
-  }
+        mockMvc.perform(get("/api/search-records/user").param("token", "tkn")).andExpect(status().isOk());
+    }
 }

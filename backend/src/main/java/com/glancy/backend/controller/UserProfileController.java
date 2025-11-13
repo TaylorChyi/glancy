@@ -19,24 +19,24 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class UserProfileController {
 
-  private final UserProfileService userProfileService;
+    private final UserProfileService userProfileService;
 
-  public UserProfileController(UserProfileService userProfileService) {
-    this.userProfileService = userProfileService;
-  }
+    public UserProfileController(UserProfileService userProfileService) {
+        this.userProfileService = userProfileService;
+    }
 
-  /** Save profile for a user. */
-  @PostMapping("/user")
-  public ResponseEntity<UserProfileResponse> saveProfile(
-      @AuthenticatedUser Long userId, @RequestBody UserProfileRequest req) {
-    UserProfileResponse resp = userProfileService.saveProfile(userId, req);
-    return new ResponseEntity<>(resp, HttpStatus.CREATED);
-  }
+    /** Save profile for a user. */
+    @PostMapping("/user")
+    public ResponseEntity<UserProfileResponse> saveProfile(
+            @AuthenticatedUser Long userId, @RequestBody UserProfileRequest req) {
+        UserProfileResponse resp = userProfileService.saveProfile(userId, req);
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
 
-  /** Retrieve profile for a user. */
-  @GetMapping("/user")
-  public ResponseEntity<UserProfileResponse> getProfile(@AuthenticatedUser Long userId) {
-    UserProfileResponse resp = userProfileService.getProfile(userId);
-    return ResponseEntity.ok(resp);
-  }
+    /** Retrieve profile for a user. */
+    @GetMapping("/user")
+    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticatedUser Long userId) {
+        UserProfileResponse resp = userProfileService.getProfile(userId);
+        return ResponseEntity.ok(resp);
+    }
 }

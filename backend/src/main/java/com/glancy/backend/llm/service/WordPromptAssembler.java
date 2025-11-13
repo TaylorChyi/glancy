@@ -21,224 +21,196 @@ import org.springframework.util.StringUtils;
 @Component
 public class WordPromptAssembler {
 
-  private final Map<DictionaryFlavor, WordPromptToneStrategy> toneStrategies;
-  private final PromptTemplateRenderer templateRenderer;
-  private final WordEntryProfileResolver entryProfileResolver;
+    private final Map<DictionaryFlavor, WordPromptToneStrategy> toneStrategies;
+    private final PromptTemplateRenderer templateRenderer;
+    private final WordEntryProfileResolver entryProfileResolver;
 
-  public WordPromptAssembler(
-      PromptTemplateRenderer templateRenderer, WordEntryProfileResolver entryProfileResolver) {
-    this.templateRenderer = templateRenderer;
-    this.entryProfileResolver = entryProfileResolver;
-    this.toneStrategies = initialiseToneStrategies();
-  }
-
-  public List<ChatMessage> composeMessages(
-      String systemPrompt,
-      String normalizedTerm,
-      WordPersonalizationContext personalizationContext,
-      Language language,
-      DictionaryFlavor flavor) {
-    List<ChatMessage> messages = new ArrayList<>();
-    messages.add(new ChatMessage(ChatRole.SYSTEM.role(), systemPrompt));
-    String personaInstruction = renderPersonaInstruction(personalizationContext);
-    if (personaInstruction != null) {
-      messages.add(new ChatMessage(ChatRole.SYSTEM.role(), personaInstruction));
+    public WordPromptAssembler(PromptTemplateRenderer templateRenderer, WordEntryProfileResolver entryProfileResolver) {
+        this.templateRenderer = templateRenderer;
+        this.entryProfileResolver = entryProfileResolver;
+        this.toneStrategies = initialiseToneStrategies();
     }
-    String flavorInstruction = renderFlavorInstruction(language, flavor);
-    if (flavorInstruction != null) {
-      messages.add(new ChatMessage(ChatRole.SYSTEM.role(), flavorInstruction));
+
+    public List<ChatMessage> composeMessages(
+            String systemPrompt,
+            String normalizedTerm,
+            WordPersonalizationContext personalizationContext,
+            Language language,
+            DictionaryFlavor flavor) {
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(new ChatMessage(ChatRole.SYSTEM.role(), systemPrompt));
+        String personaInstruction = renderPersonaInstruction(personalizationContext);
+        if (personaInstruction != null) {
+            messages.add(new ChatMessage(ChatRole.SYSTEM.role(), personaInstruction));
+        }
+        String flavorInstruction = renderFlavorInstruction(language, flavor);
+        if (flavorInstruction != null) {
+            messages.add(new ChatMessage(ChatRole.SYSTEM.role(), flavorInstruction));
+        }
+        String payload = renderUserPayload(normalizedTerm, personalizationContext, language, flavor);
+        messages.add(new ChatMessage(ChatRole.USER.role(), payload));
+        return messages;
     }
-    String payload = renderUserPayload(normalizedTerm, personalizationContext, language, flavor);
-    messages.add(new ChatMessage(ChatRole.USER.role(), payload));
-    return messages;
-  }
 
-  private Map<DictionaryFlavor, WordPromptToneStrategy> initialiseToneStrategies() {
-    return Map.of(
-        DictionaryFlavor.MONOLINGUAL_ENGLISH,
-        WordPromptToneStrategy.ENGLISH,
-        DictionaryFlavor.MONOLINGUAL_CHINESE,
-        WordPromptToneStrategy.CHINESE,
-        DictionaryFlavor.BILINGUAL,
-        WordPromptToneStrategy.BILINGUAL);
-  }
-
-  private String renderPersonaInstruction(WordPersonalizationContext context) {
-    if (context == null || !context.hasSignals()) {
-      return null;
+    private Map<DictionaryFlavor, WordPromptToneStrategy> initialiseToneStrategies() {
+        return Map.of(
+                DictionaryFlavor.MONOLINGUAL_ENGLISH,
+                WordPromptToneStrategy.ENGLISH,
+                DictionaryFlavor.MONOLINGUAL_CHINESE,
+                WordPromptToneStrategy.CHINESE,
+                DictionaryFlavor.BILINGUAL,
+                WordPromptToneStrategy.BILINGUAL);
     }
-    String descriptor =
-        StringUtils.hasText(context.personaDescriptor())
-            ? context.personaDescriptor()
-            : WordPromptFallbacks.personaDescriptor();
-    return templateRenderer.render(
-        WordPromptTemplateConstants.PERSONA_BASE, buildPersonaContext(context, descriptor));
-  }
 
-  private String renderTextClause(String value, String template, WordPromptContextKey placeholder) {
-    if (!StringUtils.hasText(value)) {
-      return "";
+    private String renderPersonaInstruction(WordPersonalizationContext context) {
+        if (context == null || !context.hasSignals()) {
+            return null;
+        }
+        String descriptor = StringUtils.hasText(context.personaDescriptor())
+                ? context.personaDescriptor()
+                : WordPromptFallbacks.personaDescriptor();
+        return templateRenderer.render(
+                WordPromptTemplateConstants.PERSONA_BASE, buildPersonaContext(context, descriptor));
     }
-    return templateRenderer.render(
-        template, WordPromptContext.build(values -> values.put(placeholder, value)));
-  }
 
-  private String renderInterestsClause(WordPersonalizationContext context) {
-    if (context.interests() == null || context.interests().isEmpty()) {
-      return "";
+    private String renderTextClause(String value, String template, WordPromptContextKey placeholder) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+        return templateRenderer.render(template, WordPromptContext.build(values -> values.put(placeholder, value)));
     }
-    String interests = String.join(WordPromptFallbacks.listDelimiter(), context.interests());
-    return templateRenderer.render(
-        WordPromptTemplateConstants.PERSONA_INTERESTS_CLAUSE,
-        WordPromptContext.build(
-            values -> values.put(WordPromptContextKey.CLAUSE_INTERESTS, interests)));
-  }
 
-  private Map<String, String> buildPersonaContext(
-      WordPersonalizationContext context, String descriptor) {
-    return WordPromptContext.build(
-        values -> {
-          values.put(WordPromptContextKey.PERSONA_DESCRIPTOR, descriptor);
-          values.put(
-              WordPromptContextKey.PERSONA_TONE_CLAUSE,
-              renderTextClause(
-                  context.preferredTone(),
-                  WordPromptTemplateConstants.PERSONA_TONE_CLAUSE,
-                  WordPromptContextKey.CLAUSE_TONE));
-          values.put(
-              WordPromptContextKey.PERSONA_GOAL_CLAUSE,
-              renderTextClause(
-                  context.goal(),
-                  WordPromptTemplateConstants.PERSONA_GOAL_CLAUSE,
-                  WordPromptContextKey.CLAUSE_GOAL));
-          values.put(WordPromptContextKey.PERSONA_INTERESTS_CLAUSE, renderInterestsClause(context));
+    private String renderInterestsClause(WordPersonalizationContext context) {
+        if (context.interests() == null || context.interests().isEmpty()) {
+            return "";
+        }
+        String interests = String.join(WordPromptFallbacks.listDelimiter(), context.interests());
+        return templateRenderer.render(
+                WordPromptTemplateConstants.PERSONA_INTERESTS_CLAUSE,
+                WordPromptContext.build(values -> values.put(WordPromptContextKey.CLAUSE_INTERESTS, interests)));
+    }
+
+    private Map<String, String> buildPersonaContext(WordPersonalizationContext context, String descriptor) {
+        return WordPromptContext.build(values -> {
+            values.put(WordPromptContextKey.PERSONA_DESCRIPTOR, descriptor);
+            values.put(
+                    WordPromptContextKey.PERSONA_TONE_CLAUSE,
+                    renderTextClause(
+                            context.preferredTone(),
+                            WordPromptTemplateConstants.PERSONA_TONE_CLAUSE,
+                            WordPromptContextKey.CLAUSE_TONE));
+            values.put(
+                    WordPromptContextKey.PERSONA_GOAL_CLAUSE,
+                    renderTextClause(
+                            context.goal(),
+                            WordPromptTemplateConstants.PERSONA_GOAL_CLAUSE,
+                            WordPromptContextKey.CLAUSE_GOAL));
+            values.put(WordPromptContextKey.PERSONA_INTERESTS_CLAUSE, renderInterestsClause(context));
         });
-  }
-
-  private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
-    if (flavor == null) {
-      return null;
     }
-    if (language == Language.ENGLISH) {
-      if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+
+    private String renderFlavorInstruction(Language language, DictionaryFlavor flavor) {
+        if (flavor == null) {
+            return null;
+        }
+        if (language == Language.ENGLISH) {
+            if (flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH) {
+                return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_ENGLISH_MONOLINGUAL, Map.of());
+            }
+            if (flavor == DictionaryFlavor.BILINGUAL) {
+                return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_ENGLISH_BILINGUAL, Map.of());
+            }
+        }
+        if (language == Language.CHINESE && flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
+            return templateRenderer.render(WordPromptTemplateConstants.FLAVOR_CHINESE_MONOLINGUAL, Map.of());
+        }
+        return null;
+    }
+
+    private String renderUserPayload(
+            String normalizedTerm, WordPersonalizationContext context, Language language, DictionaryFlavor flavor) {
+        WordPromptToneStrategy strategy = toneStrategies.getOrDefault(flavor, WordPromptToneStrategy.NEUTRAL);
+        if (language == Language.CHINESE) {
+            return renderChinesePayload(normalizedTerm, context, flavor, strategy);
+        }
+        return renderEnglishPayload(normalizedTerm, context, flavor, strategy);
+    }
+
+    private String renderChinesePayload(
+            String normalizedTerm,
+            WordPersonalizationContext context,
+            DictionaryFlavor flavor,
+            WordPromptToneStrategy strategy) {
+        EntryProfile profile = entryProfileResolver.resolve(Language.CHINESE, normalizedTerm, flavor);
         return templateRenderer.render(
-            WordPromptTemplateConstants.FLAVOR_ENGLISH_MONOLINGUAL, Map.of());
-      }
-      if (flavor == DictionaryFlavor.BILINGUAL) {
+                WordPromptTemplateConstants.USER_CHINESE_PAYLOAD, WordPromptContext.build(values -> {
+                    values.put(WordPromptContextKey.TERM, nullToEmpty(normalizedTerm));
+                    values.put(WordPromptContextKey.ENTRY_TYPE, profile.typeLabel());
+                    values.put(WordPromptContextKey.ENTRY_GUIDANCE, profile.guidance());
+                    values.put(WordPromptContextKey.STRUCTURE_REQUIREMENT, renderChineseStructureRequirement(flavor));
+                    values.put(WordPromptContextKey.RECENT_TERMS_SECTION, renderRecentTermsSection(context));
+                    values.put(WordPromptContextKey.GOAL_SECTION, renderGoalSection(context));
+                    values.put(WordPromptContextKey.TONE_DIRECTIVE, renderToneDirective(context, strategy));
+                }));
+    }
+
+    private String renderEnglishPayload(
+            String normalizedTerm,
+            WordPersonalizationContext context,
+            DictionaryFlavor flavor,
+            WordPromptToneStrategy strategy) {
         return templateRenderer.render(
-            WordPromptTemplateConstants.FLAVOR_ENGLISH_BILINGUAL, Map.of());
-      }
+                WordPromptTemplateConstants.USER_ENGLISH_PAYLOAD, WordPromptContext.build(values -> {
+                    values.put(WordPromptContextKey.TERM, nullToEmpty(normalizedTerm));
+                    values.put(WordPromptContextKey.STRUCTURE_REQUIREMENT, renderEnglishStructureRequirement(flavor));
+                    values.put(WordPromptContextKey.RECENT_TERMS_SECTION, renderRecentTermsSection(context));
+                    values.put(WordPromptContextKey.GOAL_SECTION, renderGoalSection(context));
+                    values.put(WordPromptContextKey.TONE_DIRECTIVE, renderToneDirective(context, strategy));
+                }));
     }
-    if (language == Language.CHINESE && flavor == DictionaryFlavor.MONOLINGUAL_CHINESE) {
-      return templateRenderer.render(
-          WordPromptTemplateConstants.FLAVOR_CHINESE_MONOLINGUAL, Map.of());
+
+    private String renderChineseStructureRequirement(DictionaryFlavor flavor) {
+        String template = flavor == DictionaryFlavor.MONOLINGUAL_CHINESE
+                ? WordPromptTemplateConstants.STRUCTURE_CHINESE_MONOLINGUAL
+                : WordPromptTemplateConstants.STRUCTURE_CHINESE_BILINGUAL;
+        return templateRenderer.render(template, Map.of());
     }
-    return null;
-  }
 
-  private String renderUserPayload(
-      String normalizedTerm,
-      WordPersonalizationContext context,
-      Language language,
-      DictionaryFlavor flavor) {
-    WordPromptToneStrategy strategy =
-        toneStrategies.getOrDefault(flavor, WordPromptToneStrategy.NEUTRAL);
-    if (language == Language.CHINESE) {
-      return renderChinesePayload(normalizedTerm, context, flavor, strategy);
+    private String renderEnglishStructureRequirement(DictionaryFlavor flavor) {
+        String template = flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH
+                ? WordPromptTemplateConstants.STRUCTURE_ENGLISH_MONOLINGUAL
+                : WordPromptTemplateConstants.STRUCTURE_ENGLISH_BILINGUAL;
+        return templateRenderer.render(template, Map.of());
     }
-    return renderEnglishPayload(normalizedTerm, context, flavor, strategy);
-  }
 
-  private String renderChinesePayload(
-      String normalizedTerm,
-      WordPersonalizationContext context,
-      DictionaryFlavor flavor,
-      WordPromptToneStrategy strategy) {
-    EntryProfile profile = entryProfileResolver.resolve(Language.CHINESE, normalizedTerm, flavor);
-    return templateRenderer.render(
-        WordPromptTemplateConstants.USER_CHINESE_PAYLOAD,
-        WordPromptContext.build(
-            values -> {
-              values.put(WordPromptContextKey.TERM, nullToEmpty(normalizedTerm));
-              values.put(WordPromptContextKey.ENTRY_TYPE, profile.typeLabel());
-              values.put(WordPromptContextKey.ENTRY_GUIDANCE, profile.guidance());
-              values.put(
-                  WordPromptContextKey.STRUCTURE_REQUIREMENT,
-                  renderChineseStructureRequirement(flavor));
-              values.put(
-                  WordPromptContextKey.RECENT_TERMS_SECTION, renderRecentTermsSection(context));
-              values.put(WordPromptContextKey.GOAL_SECTION, renderGoalSection(context));
-              values.put(
-                  WordPromptContextKey.TONE_DIRECTIVE, renderToneDirective(context, strategy));
-            }));
-  }
-
-  private String renderEnglishPayload(
-      String normalizedTerm,
-      WordPersonalizationContext context,
-      DictionaryFlavor flavor,
-      WordPromptToneStrategy strategy) {
-    return templateRenderer.render(
-        WordPromptTemplateConstants.USER_ENGLISH_PAYLOAD,
-        WordPromptContext.build(
-            values -> {
-              values.put(WordPromptContextKey.TERM, nullToEmpty(normalizedTerm));
-              values.put(
-                  WordPromptContextKey.STRUCTURE_REQUIREMENT,
-                  renderEnglishStructureRequirement(flavor));
-              values.put(
-                  WordPromptContextKey.RECENT_TERMS_SECTION, renderRecentTermsSection(context));
-              values.put(WordPromptContextKey.GOAL_SECTION, renderGoalSection(context));
-              values.put(
-                  WordPromptContextKey.TONE_DIRECTIVE, renderToneDirective(context, strategy));
-            }));
-  }
-
-  private String renderChineseStructureRequirement(DictionaryFlavor flavor) {
-    String template =
-        flavor == DictionaryFlavor.MONOLINGUAL_CHINESE
-            ? WordPromptTemplateConstants.STRUCTURE_CHINESE_MONOLINGUAL
-            : WordPromptTemplateConstants.STRUCTURE_CHINESE_BILINGUAL;
-    return templateRenderer.render(template, Map.of());
-  }
-
-  private String renderEnglishStructureRequirement(DictionaryFlavor flavor) {
-    String template =
-        flavor == DictionaryFlavor.MONOLINGUAL_ENGLISH
-            ? WordPromptTemplateConstants.STRUCTURE_ENGLISH_MONOLINGUAL
-            : WordPromptTemplateConstants.STRUCTURE_ENGLISH_BILINGUAL;
-    return templateRenderer.render(template, Map.of());
-  }
-
-  private String renderRecentTermsSection(WordPersonalizationContext context) {
-    if (context == null || context.recentTerms() == null || context.recentTerms().isEmpty()) {
-      return "";
+    private String renderRecentTermsSection(WordPersonalizationContext context) {
+        if (context == null
+                || context.recentTerms() == null
+                || context.recentTerms().isEmpty()) {
+            return "";
+        }
+        String joined = String.join(WordPromptFallbacks.listDelimiter(), context.recentTerms());
+        return templateRenderer.render(
+                WordPromptTemplateConstants.USER_RECENT_TERMS,
+                WordPromptContext.build(values -> values.put(WordPromptContextKey.CLAUSE_TERMS, joined)));
     }
-    String joined = String.join(WordPromptFallbacks.listDelimiter(), context.recentTerms());
-    return templateRenderer.render(
-        WordPromptTemplateConstants.USER_RECENT_TERMS,
-        WordPromptContext.build(values -> values.put(WordPromptContextKey.CLAUSE_TERMS, joined)));
-  }
 
-  private String renderGoalSection(WordPersonalizationContext context) {
-    if (context == null || !StringUtils.hasText(context.goal())) {
-      return "";
+    private String renderGoalSection(WordPersonalizationContext context) {
+        if (context == null || !StringUtils.hasText(context.goal())) {
+            return "";
+        }
+        return templateRenderer.render(
+                WordPromptTemplateConstants.USER_GOAL,
+                WordPromptContext.build(values -> values.put(WordPromptContextKey.CLAUSE_GOAL, context.goal())));
     }
-    return templateRenderer.render(
-        WordPromptTemplateConstants.USER_GOAL,
-        WordPromptContext.build(
-            values -> values.put(WordPromptContextKey.CLAUSE_GOAL, context.goal())));
-  }
 
-  private String renderToneDirective(
-      WordPersonalizationContext context, WordPromptToneStrategy strategy) {
-    boolean hasPersonaSignals = context != null && context.hasSignals();
-    String template =
-        hasPersonaSignals ? strategy.personalizedTemplate() : strategy.defaultTemplate();
-    return templateRenderer.render(template, Map.of());
-  }
+    private String renderToneDirective(WordPersonalizationContext context, WordPromptToneStrategy strategy) {
+        boolean hasPersonaSignals = context != null && context.hasSignals();
+        String template = hasPersonaSignals ? strategy.personalizedTemplate() : strategy.defaultTemplate();
+        return templateRenderer.render(template, Map.of());
+    }
 
-  private String nullToEmpty(String value) {
-    return value == null ? "" : value;
-  }
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
 }

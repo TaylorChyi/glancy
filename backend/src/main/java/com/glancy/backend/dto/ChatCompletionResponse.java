@@ -8,20 +8,20 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ChatCompletionResponse {
 
-  private List<Choice> choices;
+    private List<Choice> choices;
 
-  @Data
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class Choice {
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Choice {
 
-    private Message message;
-  }
+        private Message message;
+    }
 
-  @Data
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class Message {
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Message {
 
-    private String role;
-    private String content;
-  }
+        private String role;
+        private String content;
+    }
 }

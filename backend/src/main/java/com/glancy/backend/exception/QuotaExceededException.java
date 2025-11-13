@@ -6,7 +6,7 @@ package com.glancy.backend.exception;
  */
 public class QuotaExceededException extends RuntimeException {
 
-  public QuotaExceededException(String message) {
-    super(message);
-  }
+    public QuotaExceededException(String message) {
+        super(message);
+    }
 }

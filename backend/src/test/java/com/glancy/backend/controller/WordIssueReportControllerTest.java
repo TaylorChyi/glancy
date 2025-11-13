@@ -27,64 +27,67 @@ import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(WordIssueReportController.class)
 @Import({
-  com.glancy.backend.config.security.SecurityConfig.class,
-  com.glancy.backend.config.WebConfig.class,
-  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    com.glancy.backend.config.security.SecurityConfig.class,
+    com.glancy.backend.config.WebConfig.class,
+    com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
 })
 class WordIssueReportControllerTest {
 
-  @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-  @MockitoBean private WordIssueReportService wordIssueReportService;
+    @MockitoBean
+    private WordIssueReportService wordIssueReportService;
 
-  @MockitoBean private UserService userService;
+    @MockitoBean
+    private UserService userService;
 
-  @BeforeEach
-  void mockAuth() {
-    when(userService.authenticateToken("token")).thenReturn(9L);
-  }
+    @BeforeEach
+    void mockAuth() {
+        when(userService.authenticateToken("token")).thenReturn(9L);
+    }
 
-  @Test
-  void whenCreatingReport_thenStatusIsCreated() throws Exception {
-    performCreateReport().andExpect(status().isCreated());
-  }
+    @Test
+    void whenCreatingReport_thenStatusIsCreated() throws Exception {
+        performCreateReport().andExpect(status().isCreated());
+    }
 
-  @Test
-  void whenCreatingReport_thenResponseBodyContainsId() throws Exception {
-    performCreateReport().andExpect(jsonPath("$.id").value(42));
-  }
+    @Test
+    void whenCreatingReport_thenResponseBodyContainsId() throws Exception {
+        performCreateReport().andExpect(jsonPath("$.id").value(42));
+    }
 
-  private ResultActions performCreateReport() throws Exception {
-    when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class)))
-        .thenReturn(sampleResponse());
-    return mockMvc.perform(
-        post("/api/word-reports")
-            .header("X-USER-TOKEN", "token")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(sampleRequest())));
-  }
+    private ResultActions performCreateReport() throws Exception {
+        when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class)))
+                .thenReturn(sampleResponse());
+        return mockMvc.perform(post("/api/word-reports")
+                .header("X-USER-TOKEN", "token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sampleRequest())));
+    }
 
-  private WordIssueReportResponse sampleResponse() {
-    return new WordIssueReportResponse(
-        42L,
-        "hello",
-        Language.ENGLISH,
-        DictionaryFlavor.BILINGUAL,
-        WordIssueCategory.MISSING_INFORMATION,
-        null,
-        null,
-        LocalDateTime.now());
-  }
+    private WordIssueReportResponse sampleResponse() {
+        return new WordIssueReportResponse(
+                42L,
+                "hello",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL,
+                WordIssueCategory.MISSING_INFORMATION,
+                null,
+                null,
+                LocalDateTime.now());
+    }
 
-  private WordIssueReportRequest sampleRequest() {
-    return new WordIssueReportRequest(
-        "hello",
-        Language.ENGLISH,
-        DictionaryFlavor.BILINGUAL,
-        WordIssueCategory.MISSING_INFORMATION,
-        null,
-        null);
-  }
+    private WordIssueReportRequest sampleRequest() {
+        return new WordIssueReportRequest(
+                "hello",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL,
+                WordIssueCategory.MISSING_INFORMATION,
+                null,
+                null);
+    }
 }

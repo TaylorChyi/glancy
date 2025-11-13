@@ -6,32 +6,26 @@ package com.glancy.backend.llm.service;
  * 如需支持区域化或版本化语气，可在枚举中补充元数据或拆分子策略。
  */
 public enum WordPromptToneStrategy {
-  ENGLISH(
-      WordPromptTemplateConstants.TONE_ENGLISH_DEFAULT,
-      WordPromptTemplateConstants.TONE_ENGLISH_PERSONALIZED),
-  CHINESE(
-      WordPromptTemplateConstants.TONE_CHINESE_DEFAULT,
-      WordPromptTemplateConstants.TONE_CHINESE_PERSONALIZED),
-  BILINGUAL(
-      WordPromptTemplateConstants.TONE_BILINGUAL_DEFAULT,
-      WordPromptTemplateConstants.TONE_BILINGUAL_PERSONALIZED),
-  NEUTRAL(
-      WordPromptTemplateConstants.TONE_NEUTRAL_DEFAULT,
-      WordPromptTemplateConstants.TONE_NEUTRAL_PERSONALIZED);
+    ENGLISH(WordPromptTemplateConstants.TONE_ENGLISH_DEFAULT, WordPromptTemplateConstants.TONE_ENGLISH_PERSONALIZED),
+    CHINESE(WordPromptTemplateConstants.TONE_CHINESE_DEFAULT, WordPromptTemplateConstants.TONE_CHINESE_PERSONALIZED),
+    BILINGUAL(
+            WordPromptTemplateConstants.TONE_BILINGUAL_DEFAULT,
+            WordPromptTemplateConstants.TONE_BILINGUAL_PERSONALIZED),
+    NEUTRAL(WordPromptTemplateConstants.TONE_NEUTRAL_DEFAULT, WordPromptTemplateConstants.TONE_NEUTRAL_PERSONALIZED);
 
-  private final String defaultTemplate;
-  private final String personalizedTemplate;
+    private final String defaultTemplate;
+    private final String personalizedTemplate;
 
-  WordPromptToneStrategy(String defaultTemplate, String personalizedTemplate) {
-    this.defaultTemplate = defaultTemplate;
-    this.personalizedTemplate = personalizedTemplate;
-  }
+    WordPromptToneStrategy(String defaultTemplate, String personalizedTemplate) {
+        this.defaultTemplate = defaultTemplate;
+        this.personalizedTemplate = personalizedTemplate;
+    }
 
-  public String defaultTemplate() {
-    return defaultTemplate;
-  }
+    public String defaultTemplate() {
+        return defaultTemplate;
+    }
 
-  public String personalizedTemplate() {
-    return personalizedTemplate;
-  }
+    public String personalizedTemplate() {
+        return personalizedTemplate;
+    }
 }

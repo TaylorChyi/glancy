@@ -19,17 +19,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LoginDevice {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false)
-  private String deviceInfo;
+    @Column(nullable = false)
+    private String deviceInfo;
 
-  @Column(nullable = false)
-  private LocalDateTime loginTime = LocalDateTime.now();
+    @Column(nullable = false)
+    private LocalDateTime loginTime = LocalDateTime.now();
 }

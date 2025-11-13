@@ -6,17 +6,17 @@ package com.glancy.backend.llm.model;
  * 演进与TODO： - 若后续引入多代理角色，可扩展额外字段标注可见性或上下文限制。
  */
 public enum ChatRole {
-  SYSTEM("system"),
-  USER("user"),
-  ASSISTANT("assistant");
+    SYSTEM("system"),
+    USER("user"),
+    ASSISTANT("assistant");
 
-  private final String role;
+    private final String role;
 
-  ChatRole(String role) {
-    this.role = role;
-  }
+    ChatRole(String role) {
+        this.role = role;
+    }
 
-  public String role() {
-    return role;
-  }
+    public String role() {
+        return role;
+    }
 }

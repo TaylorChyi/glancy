@@ -38,212 +38,194 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RedemptionCodeService {
 
-  private final RedemptionCodeRepository redemptionCodeRepository;
-  private final RedemptionRecordRepository redemptionRecordRepository;
-  private final UserRepository userRepository;
-  private final Map<RedemptionEffectType, RedemptionEffectProcessor> processorRegistry;
-  private final Clock clock;
+    private final RedemptionCodeRepository redemptionCodeRepository;
+    private final RedemptionRecordRepository redemptionRecordRepository;
+    private final UserRepository userRepository;
+    private final Map<RedemptionEffectType, RedemptionEffectProcessor> processorRegistry;
+    private final Clock clock;
 
-  public RedemptionCodeService(
-      RedemptionCodeRepository redemptionCodeRepository,
-      RedemptionRecordRepository redemptionRecordRepository,
-      UserRepository userRepository,
-      List<RedemptionEffectProcessor> processors,
-      Clock clock) {
-    this.redemptionCodeRepository = redemptionCodeRepository;
-    this.redemptionRecordRepository = redemptionRecordRepository;
-    this.userRepository = userRepository;
-    this.processorRegistry = new EnumMap<>(RedemptionEffectType.class);
-    processors.forEach(p -> this.processorRegistry.put(p.supportedType(), p));
-    this.clock = clock;
-  }
-
-  /** 意图：创建新的兑换码配置。 */
-  @Transactional
-  public RedemptionCodeResponse createCode(RedemptionCodeCreateRequest request) {
-    validateTimeRange(request.redeemableFrom(), request.redeemableUntil());
-    if (request.perUserQuota() > request.totalQuota()) {
-      throw new InvalidRequestException("单用户兑换次数不可超过总次数");
+    public RedemptionCodeService(
+            RedemptionCodeRepository redemptionCodeRepository,
+            RedemptionRecordRepository redemptionRecordRepository,
+            UserRepository userRepository,
+            List<RedemptionEffectProcessor> processors,
+            Clock clock) {
+        this.redemptionCodeRepository = redemptionCodeRepository;
+        this.redemptionRecordRepository = redemptionRecordRepository;
+        this.userRepository = userRepository;
+        this.processorRegistry = new EnumMap<>(RedemptionEffectType.class);
+        processors.forEach(p -> this.processorRegistry.put(p.supportedType(), p));
+        this.clock = clock;
     }
-    String normalizedCode = normalizeCode(request.code());
-    redemptionCodeRepository
-        .findByCodeAndDeletedFalse(normalizedCode)
-        .ifPresent(
-            c -> {
-              throw new DuplicateResourceException("兑换码已存在");
-            });
-    RedemptionCode code = new RedemptionCode();
-    code.setCode(normalizedCode);
-    code.setRedeemableFrom(request.redeemableFrom());
-    code.setRedeemableUntil(request.redeemableUntil());
-    code.setTotalQuota(request.totalQuota());
-    code.setPerUserQuota(request.perUserQuota());
-    applyEffectConfig(code, request.effect());
-    return toResponse(redemptionCodeRepository.save(code));
-  }
 
-  /** 意图：根据编码查询兑换码。 */
-  public RedemptionCodeResponse findByCode(String code) {
-    return toResponse(
-        redemptionCodeRepository
-            .findByCodeAndDeletedFalse(normalizeCode(code))
-            .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在")));
-  }
-
-  /** 意图：执行兑换流程并返回权益结果。 */
-  @Transactional
-  public RedemptionRedeemResponse redeem(Long userId, RedemptionRedeemRequest request) {
-    RedemptionCode code = findActiveCode(request.code());
-    LocalDateTime now = LocalDateTime.now(clock);
-    validateRedeemWindow(code, now);
-    validateUserQuota(userId, code);
-    User user = loadUser(userId);
-    RedemptionOutcome outcome = resolveProcessor(code).process(code, user, now);
-    persistUsage(code, user, now);
-    return buildRedeemResponse(code, outcome);
-  }
-
-  private RedemptionCode findActiveCode(String rawCode) {
-    return redemptionCodeRepository
-        .findByCodeAndDeletedFalse(normalizeCode(rawCode))
-        .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在"));
-  }
-
-  private void validateRedeemWindow(RedemptionCode code, LocalDateTime now) {
-    if (!code.isRedeemableAt(now)) {
-      throw new InvalidRequestException("兑换未在有效期内");
+    /** 意图：创建新的兑换码配置。 */
+    @Transactional
+    public RedemptionCodeResponse createCode(RedemptionCodeCreateRequest request) {
+        validateTimeRange(request.redeemableFrom(), request.redeemableUntil());
+        if (request.perUserQuota() > request.totalQuota()) {
+            throw new InvalidRequestException("单用户兑换次数不可超过总次数");
+        }
+        String normalizedCode = normalizeCode(request.code());
+        redemptionCodeRepository.findByCodeAndDeletedFalse(normalizedCode).ifPresent(c -> {
+            throw new DuplicateResourceException("兑换码已存在");
+        });
+        RedemptionCode code = new RedemptionCode();
+        code.setCode(normalizedCode);
+        code.setRedeemableFrom(request.redeemableFrom());
+        code.setRedeemableUntil(request.redeemableUntil());
+        code.setTotalQuota(request.totalQuota());
+        code.setPerUserQuota(request.perUserQuota());
+        applyEffectConfig(code, request.effect());
+        return toResponse(redemptionCodeRepository.save(code));
     }
-    if (!code.hasRemainingQuota()) {
-      throw new InvalidRequestException("兑换次数已用尽");
+
+    /** 意图：根据编码查询兑换码。 */
+    public RedemptionCodeResponse findByCode(String code) {
+        return toResponse(redemptionCodeRepository
+                .findByCodeAndDeletedFalse(normalizeCode(code))
+                .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在")));
     }
-  }
 
-  private void validateUserQuota(Long userId, RedemptionCode code) {
-    long redeemed =
-        redemptionRecordRepository.countByCodeIdAndUserIdAndDeletedFalse(code.getId(), userId);
-    if (redeemed >= code.getPerUserQuota()) {
-      throw new InvalidRequestException("已超过个人兑换次数");
+    /** 意图：执行兑换流程并返回权益结果。 */
+    @Transactional
+    public RedemptionRedeemResponse redeem(Long userId, RedemptionRedeemRequest request) {
+        RedemptionCode code = findActiveCode(request.code());
+        LocalDateTime now = LocalDateTime.now(clock);
+        validateRedeemWindow(code, now);
+        validateUserQuota(userId, code);
+        User user = loadUser(userId);
+        RedemptionOutcome outcome = resolveProcessor(code).process(code, user, now);
+        persistUsage(code, user, now);
+        return buildRedeemResponse(code, outcome);
     }
-  }
 
-  private User loadUser(Long userId) {
-    return userRepository
-        .findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
-  }
-
-  private RedemptionEffectProcessor resolveProcessor(RedemptionCode code) {
-    return Optional.ofNullable(processorRegistry.get(code.getEffectType()))
-        .orElseThrow(() -> new InvalidRequestException("不支持的兑换效果"));
-  }
-
-  private void persistUsage(RedemptionCode code, User user, LocalDateTime now) {
-    code.increaseRedemptionCount();
-    try {
-      redemptionCodeRepository.save(code);
-    } catch (OptimisticLockingFailureException ex) {
-      throw new InvalidRequestException("兑换冲突，请稍后重试");
+    private RedemptionCode findActiveCode(String rawCode) {
+        return redemptionCodeRepository
+                .findByCodeAndDeletedFalse(normalizeCode(rawCode))
+                .orElseThrow(() -> new ResourceNotFoundException("兑换码不存在"));
     }
-    RedemptionRecord record = new RedemptionRecord();
-    record.setCode(code);
-    record.setUser(user);
-    record.setRedeemedAt(now);
-    redemptionRecordRepository.save(record);
-  }
 
-  private RedemptionRedeemResponse buildRedeemResponse(
-      RedemptionCode code, RedemptionOutcome outcome) {
-    return new RedemptionRedeemResponse(
-        code.getCode(),
-        code.getEffectType(),
-        outcome.membership().map(this::toMembershipRewardResponse).orElse(null),
-        outcome
-            .discountPercentageOptional()
-            .map(
-                discount ->
-                    new DiscountRewardResponse(
-                        discount, outcome.discountValidFrom(), outcome.discountValidUntil()))
-            .orElse(null));
-  }
+    private void validateRedeemWindow(RedemptionCode code, LocalDateTime now) {
+        if (!code.isRedeemableAt(now)) {
+            throw new InvalidRequestException("兑换未在有效期内");
+        }
+        if (!code.hasRemainingQuota()) {
+            throw new InvalidRequestException("兑换次数已用尽");
+        }
+    }
 
-  private void applyEffectConfig(RedemptionCode entity, RedemptionEffectConfig effect) {
-    RedemptionEffectType type = effect.type();
-    entity.setEffectType(type);
-    if (type == RedemptionEffectType.MEMBERSHIP) {
-      MembershipEffectConfig membership =
-          Optional.ofNullable(effect.membership())
-              .orElseThrow(() -> new InvalidRequestException("会员兑换需配置会员参数"));
-      if (membership.extensionHours() > Integer.MAX_VALUE) {
-        throw new InvalidRequestException("会员延长时长超出系统上限");
-      }
-      entity.setMembershipType(membership.membershipType());
-      entity.setMembershipExtensionHours(Math.toIntExact(membership.extensionHours()));
-      entity.setDiscountPercentage(null);
-      entity.setDiscountValidFrom(null);
-      entity.setDiscountValidUntil(null);
-    } else if (type == RedemptionEffectType.DISCOUNT) {
-      DiscountEffectConfig discount =
-          Optional.ofNullable(effect.discount())
-              .orElseThrow(() -> new InvalidRequestException("折扣兑换需配置折扣参数"));
-      validateTimeRange(discount.validFrom(), discount.validUntil());
-      entity.setDiscountPercentage(discount.percentage());
-      entity.setDiscountValidFrom(discount.validFrom());
-      entity.setDiscountValidUntil(discount.validUntil());
-      entity.setMembershipType(null);
-      entity.setMembershipExtensionHours(null);
-    } else {
-      throw new InvalidRequestException("未知的兑换效果类型");
+    private void validateUserQuota(Long userId, RedemptionCode code) {
+        long redeemed = redemptionRecordRepository.countByCodeIdAndUserIdAndDeletedFalse(code.getId(), userId);
+        if (redeemed >= code.getPerUserQuota()) {
+            throw new InvalidRequestException("已超过个人兑换次数");
+        }
     }
-  }
 
-  private MembershipRewardResponse toMembershipRewardResponse(MembershipSnapshot snapshot) {
-    return new MembershipRewardResponse(snapshot.type(), snapshot.expiresAt());
-  }
+    private User loadUser(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("用户不存在"));
+    }
 
-  private RedemptionCodeResponse toResponse(RedemptionCode code) {
-    MembershipEffectConfig membership = null;
-    if (code.getEffectType() == RedemptionEffectType.MEMBERSHIP) {
-      long extensionHours =
-          code.getMembershipExtensionHours() == null
-              ? 0L
-              : code.getMembershipExtensionHours().longValue();
-      membership = new MembershipEffectConfig(code.getMembershipType(), extensionHours);
+    private RedemptionEffectProcessor resolveProcessor(RedemptionCode code) {
+        return Optional.ofNullable(processorRegistry.get(code.getEffectType()))
+                .orElseThrow(() -> new InvalidRequestException("不支持的兑换效果"));
     }
-    DiscountEffectConfig discount = null;
-    if (code.getEffectType() == RedemptionEffectType.DISCOUNT
-        && code.getDiscountPercentage() != null) {
-      discount =
-          new DiscountEffectConfig(
-              code.getDiscountPercentage(),
-              code.getDiscountValidFrom(),
-              code.getDiscountValidUntil());
-    }
-    return new RedemptionCodeResponse(
-        code.getCode(),
-        code.getRedeemableFrom(),
-        code.getRedeemableUntil(),
-        code.getTotalQuota(),
-        code.getPerUserQuota(),
-        code.getTotalRedeemed(),
-        code.getEffectType(),
-        membership,
-        discount);
-  }
 
-  private String normalizeCode(String code) {
-    String trimmed = code == null ? "" : code.trim();
-    if (trimmed.isEmpty()) {
-      throw new InvalidRequestException("兑换码不能为空");
+    private void persistUsage(RedemptionCode code, User user, LocalDateTime now) {
+        code.increaseRedemptionCount();
+        try {
+            redemptionCodeRepository.save(code);
+        } catch (OptimisticLockingFailureException ex) {
+            throw new InvalidRequestException("兑换冲突，请稍后重试");
+        }
+        RedemptionRecord record = new RedemptionRecord();
+        record.setCode(code);
+        record.setUser(user);
+        record.setRedeemedAt(now);
+        redemptionRecordRepository.save(record);
     }
-    return trimmed.toUpperCase(Locale.ROOT);
-  }
 
-  private void validateTimeRange(LocalDateTime start, LocalDateTime end) {
-    if (start == null || end == null) {
-      throw new InvalidRequestException("时间范围不能为空");
+    private RedemptionRedeemResponse buildRedeemResponse(RedemptionCode code, RedemptionOutcome outcome) {
+        return new RedemptionRedeemResponse(
+                code.getCode(),
+                code.getEffectType(),
+                outcome.membership().map(this::toMembershipRewardResponse).orElse(null),
+                outcome.discountPercentageOptional()
+                        .map(discount -> new DiscountRewardResponse(
+                                discount, outcome.discountValidFrom(), outcome.discountValidUntil()))
+                        .orElse(null));
     }
-    if (!end.isAfter(start)) {
-      throw new InvalidRequestException("结束时间需晚于开始时间");
+
+    private void applyEffectConfig(RedemptionCode entity, RedemptionEffectConfig effect) {
+        RedemptionEffectType type = effect.type();
+        entity.setEffectType(type);
+        if (type == RedemptionEffectType.MEMBERSHIP) {
+            MembershipEffectConfig membership = Optional.ofNullable(effect.membership())
+                    .orElseThrow(() -> new InvalidRequestException("会员兑换需配置会员参数"));
+            if (membership.extensionHours() > Integer.MAX_VALUE) {
+                throw new InvalidRequestException("会员延长时长超出系统上限");
+            }
+            entity.setMembershipType(membership.membershipType());
+            entity.setMembershipExtensionHours(Math.toIntExact(membership.extensionHours()));
+            entity.setDiscountPercentage(null);
+            entity.setDiscountValidFrom(null);
+            entity.setDiscountValidUntil(null);
+        } else if (type == RedemptionEffectType.DISCOUNT) {
+            DiscountEffectConfig discount = Optional.ofNullable(effect.discount())
+                    .orElseThrow(() -> new InvalidRequestException("折扣兑换需配置折扣参数"));
+            validateTimeRange(discount.validFrom(), discount.validUntil());
+            entity.setDiscountPercentage(discount.percentage());
+            entity.setDiscountValidFrom(discount.validFrom());
+            entity.setDiscountValidUntil(discount.validUntil());
+            entity.setMembershipType(null);
+            entity.setMembershipExtensionHours(null);
+        } else {
+            throw new InvalidRequestException("未知的兑换效果类型");
+        }
     }
-  }
+
+    private MembershipRewardResponse toMembershipRewardResponse(MembershipSnapshot snapshot) {
+        return new MembershipRewardResponse(snapshot.type(), snapshot.expiresAt());
+    }
+
+    private RedemptionCodeResponse toResponse(RedemptionCode code) {
+        MembershipEffectConfig membership = null;
+        if (code.getEffectType() == RedemptionEffectType.MEMBERSHIP) {
+            long extensionHours = code.getMembershipExtensionHours() == null
+                    ? 0L
+                    : code.getMembershipExtensionHours().longValue();
+            membership = new MembershipEffectConfig(code.getMembershipType(), extensionHours);
+        }
+        DiscountEffectConfig discount = null;
+        if (code.getEffectType() == RedemptionEffectType.DISCOUNT && code.getDiscountPercentage() != null) {
+            discount = new DiscountEffectConfig(
+                    code.getDiscountPercentage(), code.getDiscountValidFrom(), code.getDiscountValidUntil());
+        }
+        return new RedemptionCodeResponse(
+                code.getCode(),
+                code.getRedeemableFrom(),
+                code.getRedeemableUntil(),
+                code.getTotalQuota(),
+                code.getPerUserQuota(),
+                code.getTotalRedeemed(),
+                code.getEffectType(),
+                membership,
+                discount);
+    }
+
+    private String normalizeCode(String code) {
+        String trimmed = code == null ? "" : code.trim();
+        if (trimmed.isEmpty()) {
+            throw new InvalidRequestException("兑换码不能为空");
+        }
+        return trimmed.toUpperCase(Locale.ROOT);
+    }
+
+    private void validateTimeRange(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) {
+            throw new InvalidRequestException("时间范围不能为空");
+        }
+        if (!end.isAfter(start)) {
+            throw new InvalidRequestException("结束时间需晚于开始时间");
+        }
+    }
 }

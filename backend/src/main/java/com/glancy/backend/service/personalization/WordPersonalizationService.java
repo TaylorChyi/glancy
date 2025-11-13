@@ -9,12 +9,11 @@ import com.glancy.backend.dto.WordResponse;
  * study traces.
  */
 public interface WordPersonalizationService {
-  WordPersonalizationContext resolveContext(Long userId);
+    WordPersonalizationContext resolveContext(Long userId);
 
-  PersonalizedWordExplanation personalize(
-      WordPersonalizationContext context, WordResponse response);
+    PersonalizedWordExplanation personalize(WordPersonalizationContext context, WordResponse response);
 
-  default PersonalizedWordExplanation personalize(Long userId, WordResponse response) {
-    return personalize(resolveContext(userId), response);
-  }
+    default PersonalizedWordExplanation personalize(Long userId, WordResponse response) {
+        return personalize(resolveContext(userId), response);
+    }
 }

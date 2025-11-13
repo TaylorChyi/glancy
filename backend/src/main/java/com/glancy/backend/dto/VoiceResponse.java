@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class VoiceResponse {
 
-  /** Default voice identifier for the language. */
-  @JsonProperty("default")
-  private String defaultVoice;
+    /** Default voice identifier for the language. */
+    @JsonProperty("default")
+    private String defaultVoice;
 
-  /** All voice options available. */
-  private List<VoiceOption> options;
+    /** All voice options available. */
+    private List<VoiceOption> options;
 }

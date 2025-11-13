@@ -11,12 +11,12 @@ import lombok.Getter;
 @Builder
 public class CreateVersionCommand {
 
-  private final Long recordId;
-  private final Long userId;
-  private final String term;
-  private final Language language;
-  private final String model;
-  private final String content;
-  private final Word word;
-  private final DictionaryFlavor flavor;
+    private final Long recordId;
+    private final Long userId;
+    private final String term;
+    private final Language language;
+    private final String model;
+    private final String content;
+    private final Word word;
+    private final DictionaryFlavor flavor;
 }

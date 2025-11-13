@@ -8,8 +8,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class ThirdPartyAccountResponse {
 
-  private Long id;
-  private String provider;
-  private String externalId;
-  private Long userId;
+    private Long id;
+    private String provider;
+    private String externalId;
+    private Long userId;
 }

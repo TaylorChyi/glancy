@@ -21,35 +21,34 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
-  private final UserService userService;
+    private final UserService userService;
 
-  public TokenAuthenticationFilter(UserService userService) {
-    this.userService = userService;
-  }
-
-  @Override
-  protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
-      throws ServletException, IOException {
-    String token = TokenResolver.resolveToken(request);
-    if (token == null) {
-      filterChain.doFilter(request, response);
-      return;
+    public TokenAuthenticationFilter(UserService userService) {
+        this.userService = userService;
     }
 
-    try {
-      Long userId = userService.authenticateToken(token);
-      if (userId != null) {
-        request.setAttribute("userId", userId);
-      }
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(userId, token, List.of());
-      SecurityContextHolder.getContext().setAuthentication(authentication);
-      filterChain.doFilter(request, response);
-    } catch (Exception ex) {
-      response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid token");
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
+        String token = TokenResolver.resolveToken(request);
+        if (token == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        try {
+            Long userId = userService.authenticateToken(token);
+            if (userId != null) {
+                request.setAttribute("userId", userId);
+            }
+            Authentication authentication = new UsernamePasswordAuthenticationToken(userId, token, List.of());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            filterChain.doFilter(request, response);
+        } catch (Exception ex) {
+            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid token");
+        }
     }
-  }
 }

@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class ChatMessage {
 
-  private String role;
-  private String content;
+    private String role;
+    private String content;
 }

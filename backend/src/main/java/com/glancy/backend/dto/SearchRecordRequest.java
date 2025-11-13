@@ -10,11 +10,11 @@ import lombok.Data;
 @Data
 public class SearchRecordRequest {
 
-  @NotBlank(message = "{validation.searchRecord.term.notblank}")
-  private String term;
+    @NotBlank(message = "{validation.searchRecord.term.notblank}")
+    private String term;
 
-  @NotNull(message = "{validation.searchRecord.language.notnull}")
-  private Language language;
+    @NotNull(message = "{validation.searchRecord.language.notnull}")
+    private Language language;
 
-  private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
+    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
 }

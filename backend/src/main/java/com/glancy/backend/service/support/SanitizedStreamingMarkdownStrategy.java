@@ -8,15 +8,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class SanitizedStreamingMarkdownStrategy implements WordVersionContentStrategy {
 
-  @Override
-  public String resolveContent(WordPersistenceContext context, Word savedWord) {
-    String sanitized = context.sanitizedMarkdown();
-    if (sanitized == null || sanitized.isBlank()) {
-      log.warn(
-          "Sanitized markdown missing for term '{}', falling back to persisted markdown",
-          savedWord.getTerm());
-      return savedWord.getMarkdown();
+    @Override
+    public String resolveContent(WordPersistenceContext context, Word savedWord) {
+        String sanitized = context.sanitizedMarkdown();
+        if (sanitized == null || sanitized.isBlank()) {
+            log.warn(
+                    "Sanitized markdown missing for term '{}', falling back to persisted markdown",
+                    savedWord.getTerm());
+            return savedWord.getMarkdown();
+        }
+        return sanitized;
     }
-    return sanitized;
-  }
 }

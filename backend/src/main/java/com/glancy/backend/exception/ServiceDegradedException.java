@@ -6,7 +6,7 @@ package com.glancy.backend.exception;
  */
 public class ServiceDegradedException extends RuntimeException {
 
-  public ServiceDegradedException(String message) {
-    super(message);
-  }
+    public ServiceDegradedException(String message) {
+        super(message);
+    }
 }

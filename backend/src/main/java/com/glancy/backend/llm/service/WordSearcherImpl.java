@@ -28,99 +28,96 @@ import org.springframework.stereotype.Service;
 @Service
 public class WordSearcherImpl implements WordSearcher {
 
-  private final DictionaryModelClientFactory clientFactory;
-  private final LLMConfig config;
-  private final PromptManager promptManager;
-  private final SearchContentManager searchContentManager;
-  private final WordResponseParser parser;
-  private final WordPromptAssembler promptAssembler;
+    private final DictionaryModelClientFactory clientFactory;
+    private final LLMConfig config;
+    private final PromptManager promptManager;
+    private final SearchContentManager searchContentManager;
+    private final WordResponseParser parser;
+    private final WordPromptAssembler promptAssembler;
 
-  public WordSearcherImpl(
-      DictionaryModelClientFactory clientFactory,
-      LLMConfig config,
-      PromptManager promptManager,
-      SearchContentManager searchContentManager,
-      WordResponseParser parser,
-      WordPromptAssembler promptAssembler) {
-    this.clientFactory = clientFactory;
-    this.config = config;
-    this.promptManager = promptManager;
-    this.searchContentManager = searchContentManager;
-    this.parser = parser;
-    this.promptAssembler = promptAssembler;
-  }
-
-  @Override
-  public WordResponse search(
-      String term,
-      Language language,
-      DictionaryFlavor flavor,
-      String clientName,
-      WordPersonalizationContext personalizationContext) {
-    log.info(
-        "WordSearcher searching for '{}' using dictionary client {} "
-            + "language={} flavor={} personalizationSignals={}",
-        term,
-        clientName,
-        language,
-        flavor,
-        personalizationContext != null && personalizationContext.hasSignals());
-    SearchInputs inputs = buildSearchInputs(term, language, flavor, clientName);
-    DictionaryModelClient client = resolveClient(inputs.clientName());
-    List<ChatMessage> messages =
-        promptAssembler.composeMessages(
-            inputs.prompt(), inputs.cleanInput(), personalizationContext, language, flavor);
-    String content = client.generateEntry(messages, config.getTemperature());
-    CompletionCheck completion = inspectCompletion(inputs.clientName(), content);
-    ParsedWord parsed = parser.parse(sanitizedContent(content, completion), term, language);
-    return parsed.parsed();
-  }
-
-  private SearchInputs buildSearchInputs(
-      String term, Language language, DictionaryFlavor flavor, String clientName) {
-    String cleanInput = searchContentManager.normalize(term);
-    String promptPath = config.resolvePromptPath(language, flavor);
-    String prompt = promptManager.loadPrompt(promptPath);
-    String resolvedClientName = clientName != null ? clientName : config.getDefaultClient();
-    return new SearchInputs(cleanInput, prompt, resolvedClientName);
-  }
-
-  private CompletionCheck inspectCompletion(String resolvedClientName, String content) {
-    CompletionCheck completion = CompletionSentinel.inspect(content);
-    log.info(
-        "Dictionary model client '{}' returned content (sentinelPresent={}): {}",
-        resolvedClientName,
-        completion.satisfied(),
-        content);
-    if (!completion.satisfied()) {
-      log.warn(
-          "Dictionary model client '{}' response missing completion sentinel '{}'",
-          resolvedClientName,
-          CompletionSentinel.MARKER);
+    public WordSearcherImpl(
+            DictionaryModelClientFactory clientFactory,
+            LLMConfig config,
+            PromptManager promptManager,
+            SearchContentManager searchContentManager,
+            WordResponseParser parser,
+            WordPromptAssembler promptAssembler) {
+        this.clientFactory = clientFactory;
+        this.config = config;
+        this.promptManager = promptManager;
+        this.searchContentManager = searchContentManager;
+        this.parser = parser;
+        this.promptAssembler = promptAssembler;
     }
-    return completion;
-  }
 
-  private String sanitizedContent(String content, CompletionCheck completion) {
-    return completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
-  }
-
-  private DictionaryModelClient resolveClient(String clientName) {
-    DictionaryModelClient client = clientFactory.get(clientName);
-    if (client != null) {
-      return client;
+    @Override
+    public WordResponse search(
+            String term,
+            Language language,
+            DictionaryFlavor flavor,
+            String clientName,
+            WordPersonalizationContext personalizationContext) {
+        log.info(
+                "WordSearcher searching for '{}' using dictionary client {} "
+                        + "language={} flavor={} personalizationSignals={}",
+                term,
+                clientName,
+                language,
+                flavor,
+                personalizationContext != null && personalizationContext.hasSignals());
+        SearchInputs inputs = buildSearchInputs(term, language, flavor, clientName);
+        DictionaryModelClient client = resolveClient(inputs.clientName());
+        List<ChatMessage> messages = promptAssembler.composeMessages(
+                inputs.prompt(), inputs.cleanInput(), personalizationContext, language, flavor);
+        String content = client.generateEntry(messages, config.getTemperature());
+        CompletionCheck completion = inspectCompletion(inputs.clientName(), content);
+        ParsedWord parsed = parser.parse(sanitizedContent(content, completion), term, language);
+        return parsed.parsed();
     }
-    log.warn("Dictionary model client '{}' not found, falling back to default", clientName);
-    String fallback = config.getDefaultClient();
-    DictionaryModelClient fallbackClient = clientFactory.get(fallback);
-    if (fallbackClient == null) {
-      throw new IllegalStateException(
-          String.format(
-              "Dictionary model client '%s' not available and default '%s' not configured",
-              clientName, fallback));
-    }
-    return fallbackClient;
-  }
 
-  private record SearchInputs(String cleanInput, String prompt, String clientName) {}
+    private SearchInputs buildSearchInputs(String term, Language language, DictionaryFlavor flavor, String clientName) {
+        String cleanInput = searchContentManager.normalize(term);
+        String promptPath = config.resolvePromptPath(language, flavor);
+        String prompt = promptManager.loadPrompt(promptPath);
+        String resolvedClientName = clientName != null ? clientName : config.getDefaultClient();
+        return new SearchInputs(cleanInput, prompt, resolvedClientName);
+    }
+
+    private CompletionCheck inspectCompletion(String resolvedClientName, String content) {
+        CompletionCheck completion = CompletionSentinel.inspect(content);
+        log.info(
+                "Dictionary model client '{}' returned content (sentinelPresent={}): {}",
+                resolvedClientName,
+                completion.satisfied(),
+                content);
+        if (!completion.satisfied()) {
+            log.warn(
+                    "Dictionary model client '{}' response missing completion sentinel '{}'",
+                    resolvedClientName,
+                    CompletionSentinel.MARKER);
+        }
+        return completion;
+    }
+
+    private String sanitizedContent(String content, CompletionCheck completion) {
+        return completion.sanitizedContent() != null ? completion.sanitizedContent() : content;
+    }
+
+    private DictionaryModelClient resolveClient(String clientName) {
+        DictionaryModelClient client = clientFactory.get(clientName);
+        if (client != null) {
+            return client;
+        }
+        log.warn("Dictionary model client '{}' not found, falling back to default", clientName);
+        String fallback = config.getDefaultClient();
+        DictionaryModelClient fallbackClient = clientFactory.get(fallback);
+        if (fallbackClient == null) {
+            throw new IllegalStateException(String.format(
+                    "Dictionary model client '%s' not available and default '%s' not configured",
+                    clientName, fallback));
+        }
+        return fallbackClient;
+    }
+
+    private record SearchInputs(String cleanInput, String prompt, String clientName) {}
 }

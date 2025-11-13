@@ -26,141 +26,130 @@ import org.springframework.web.client.RestTemplate;
 
 class VolcengineTtsClientTest {
 
-  private MockRestServiceServer server;
-  private VolcengineTtsClient client;
+    private MockRestServiceServer server;
+    private VolcengineTtsClient client;
 
-  @BeforeEach
-  void setUp() {
-    RestTemplate restTemplate = new RestTemplate();
-    VolcengineTtsProperties props = new VolcengineTtsProperties();
-    props.setAppId("app");
-    props.setAccessToken("tok");
-    props.setCluster("cluster");
-    props.setVoiceType("v1");
-    props.setApiUrl("http://localhost/tts");
-    client = new VolcengineTtsClient(restTemplate, props);
-    server = MockRestServiceServer.createServer(restTemplate);
-  }
+    @BeforeEach
+    void setUp() {
+        RestTemplate restTemplate = new RestTemplate();
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setAccessToken("tok");
+        props.setCluster("cluster");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        client = new VolcengineTtsClient(restTemplate, props);
+        server = MockRestServiceServer.createServer(restTemplate);
+    }
 
-  @Test
-  void includesCredentialsInRequest() {
-    server
-        .expect(requestTo("http://localhost/tts"))
-        .andExpect(method(HttpMethod.POST))
-        .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer; tok"))
-        .andExpect(jsonPath("$.app.appid").value("app"))
-        .andExpect(jsonPath("$.app.token").value("tok"))
-        .andExpect(jsonPath("$.app.cluster").value("cluster"))
-        .andExpect(jsonPath("$.user.uid").value("123"))
-        .andExpect(jsonPath("$.audio.voice_type").value("v2"))
-        .andExpect(jsonPath("$.request.text").value("hi"))
-        .andExpect(jsonPath("$.request.operation").value("query"))
-        .andRespond(
-            withSuccess(
-                "{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}",
-                MediaType.APPLICATION_JSON));
+    @Test
+    void includesCredentialsInRequest() {
+        server.expect(requestTo("http://localhost/tts"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer; tok"))
+                .andExpect(jsonPath("$.app.appid").value("app"))
+                .andExpect(jsonPath("$.app.token").value("tok"))
+                .andExpect(jsonPath("$.app.cluster").value("cluster"))
+                .andExpect(jsonPath("$.user.uid").value("123"))
+                .andExpect(jsonPath("$.audio.voice_type").value("v2"))
+                .andExpect(jsonPath("$.request.text").value("hi"))
+                .andExpect(jsonPath("$.request.operation").value("query"))
+                .andRespond(withSuccess(
+                        "{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON));
 
-    TtsRequest req = new TtsRequest();
-    req.setText("hi");
-    req.setLang("en");
-    req.setVoice("v2");
-    TtsResponse resp = client.synthesize(123L, req);
-    assertThat(new String(resp.getData(), StandardCharsets.UTF_8)).isEqualTo("data");
-    assertThat(resp.getDurationMs()).isEqualTo(1);
-    server.verify();
-  }
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
+        req.setVoice("v2");
+        TtsResponse resp = client.synthesize(123L, req);
+        assertThat(new String(resp.getData(), StandardCharsets.UTF_8)).isEqualTo("data");
+        assertThat(resp.getDurationMs()).isEqualTo(1);
+        server.verify();
+    }
 
-  @Test
-  void wrapsClientErrorsFromProvider() {
-    server
-        .expect(requestTo("http://localhost/tts"))
-        .andExpect(method(HttpMethod.POST))
-        .andRespond(
-            withBadRequest().body("{\"code\":\"E400\"}").contentType(MediaType.APPLICATION_JSON));
+    @Test
+    void wrapsClientErrorsFromProvider() {
+        server.expect(requestTo("http://localhost/tts"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withBadRequest().body("{\"code\":\"E400\"}").contentType(MediaType.APPLICATION_JSON));
 
-    TtsRequest req = new TtsRequest();
-    req.setText("hi");
-    req.setLang("en");
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
 
-    assertThatThrownBy(() -> client.synthesize(1L, req))
-        .isInstanceOf(TtsFailedException.class)
-        .hasMessageContaining("status=400");
+        assertThatThrownBy(() -> client.synthesize(1L, req))
+                .isInstanceOf(TtsFailedException.class)
+                .hasMessageContaining("status=400");
 
-    server.verify();
-  }
+        server.verify();
+    }
 
-  @Test
-  void wrapsServerErrorsFromProvider() {
-    server
-        .expect(requestTo("http://localhost/tts"))
-        .andExpect(method(HttpMethod.POST))
-        .andRespond(
-            withServerError().body("{\"code\":\"E500\"}").contentType(MediaType.APPLICATION_JSON));
+    @Test
+    void wrapsServerErrorsFromProvider() {
+        server.expect(requestTo("http://localhost/tts"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withServerError().body("{\"code\":\"E500\"}").contentType(MediaType.APPLICATION_JSON));
 
-    TtsRequest req = new TtsRequest();
-    req.setText("hi");
-    req.setLang("en");
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
 
-    assertThatThrownBy(() -> client.synthesize(1L, req))
-        .isInstanceOf(TtsFailedException.class)
-        .hasMessageContaining("status=500");
+        assertThatThrownBy(() -> client.synthesize(1L, req))
+                .isInstanceOf(TtsFailedException.class)
+                .hasMessageContaining("status=500");
 
-    server.verify();
-  }
+        server.verify();
+    }
 
-  @Test
-  void networkFailureContainsCauseMessage() {
-    RestTemplate restTemplate = org.mockito.Mockito.mock(RestTemplate.class);
-    VolcengineTtsProperties props = new VolcengineTtsProperties();
-    props.setAppId("app");
-    props.setAccessToken("tok");
-    props.setCluster("cluster");
-    props.setVoiceType("v1");
-    props.setApiUrl("http://localhost/tts");
-    org.mockito.Mockito.when(
-            restTemplate.postForEntity(
-                org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(ObjectNode.class)))
-        .thenThrow(new ResourceAccessException("timeout"));
-    VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
+    @Test
+    void networkFailureContainsCauseMessage() {
+        RestTemplate restTemplate = org.mockito.Mockito.mock(RestTemplate.class);
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setAccessToken("tok");
+        props.setCluster("cluster");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        org.mockito.Mockito.when(restTemplate.postForEntity(
+                        org.mockito.ArgumentMatchers.anyString(),
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.eq(ObjectNode.class)))
+                .thenThrow(new ResourceAccessException("timeout"));
+        VolcengineTtsClient failingClient = new VolcengineTtsClient(restTemplate, props);
 
-    TtsRequest req = new TtsRequest();
-    req.setText("hi");
-    req.setLang("en");
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
 
-    assertThatThrownBy(() -> failingClient.synthesize(1L, req))
-        .isInstanceOf(TtsFailedException.class)
-        .hasMessageContaining("timeout");
-  }
+        assertThatThrownBy(() -> failingClient.synthesize(1L, req))
+                .isInstanceOf(TtsFailedException.class)
+                .hasMessageContaining("timeout");
+    }
 
-  @Test
-  void usesPlaceholderTokenWhenMissing() {
-    RestTemplate restTemplate = new RestTemplate();
-    VolcengineTtsProperties props = new VolcengineTtsProperties();
-    props.setAppId("app");
-    props.setCluster("cluster");
-    props.setVoiceType("v1");
-    props.setApiUrl("http://localhost/tts");
-    VolcengineTtsClient noTokenClient = new VolcengineTtsClient(restTemplate, props);
-    MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
+    @Test
+    void usesPlaceholderTokenWhenMissing() {
+        RestTemplate restTemplate = new RestTemplate();
+        VolcengineTtsProperties props = new VolcengineTtsProperties();
+        props.setAppId("app");
+        props.setCluster("cluster");
+        props.setVoiceType("v1");
+        props.setApiUrl("http://localhost/tts");
+        VolcengineTtsClient noTokenClient = new VolcengineTtsClient(restTemplate, props);
+        MockRestServiceServer localServer = MockRestServiceServer.createServer(restTemplate);
 
-    localServer
-        .expect(requestTo("http://localhost/tts"))
-        .andExpect(method(HttpMethod.POST))
-        .andExpect(
-            header(HttpHeaders.AUTHORIZATION, "Bearer; " + VolcengineTtsProperties.FAKE_TOKEN))
-        .andRespond(
-            withSuccess(
-                "{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}",
-                MediaType.APPLICATION_JSON));
+        localServer
+                .expect(requestTo("http://localhost/tts"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer; " + VolcengineTtsProperties.FAKE_TOKEN))
+                .andRespond(withSuccess(
+                        "{\"data\":\"ZGF0YQ==\",\"addition\":{\"duration\":1}}", MediaType.APPLICATION_JSON));
 
-    TtsRequest req = new TtsRequest();
-    req.setText("hi");
-    req.setLang("en");
+        TtsRequest req = new TtsRequest();
+        req.setText("hi");
+        req.setLang("en");
 
-    TtsResponse resp = noTokenClient.synthesize(1L, req);
-    assertThat(resp.getDurationMs()).isEqualTo(1);
-    localServer.verify();
-  }
+        TtsResponse resp = noTokenClient.synthesize(1L, req);
+        assertThat(resp.getDurationMs()).isEqualTo(1);
+        localServer.verify();
+    }
 }

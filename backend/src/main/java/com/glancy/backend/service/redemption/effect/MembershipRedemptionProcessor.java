@@ -14,26 +14,25 @@ import org.springframework.stereotype.Component;
 @Component
 public class MembershipRedemptionProcessor implements RedemptionEffectProcessor {
 
-  private final MembershipLifecycleService membershipLifecycleService;
+    private final MembershipLifecycleService membershipLifecycleService;
 
-  public MembershipRedemptionProcessor(MembershipLifecycleService membershipLifecycleService) {
-    this.membershipLifecycleService = membershipLifecycleService;
-  }
-
-  @Override
-  public RedemptionEffectType supportedType() {
-    return RedemptionEffectType.MEMBERSHIP;
-  }
-
-  @Override
-  public RedemptionOutcome process(RedemptionCode code, User user, LocalDateTime redemptionTime) {
-    Duration extension = code.membershipExtensionDuration();
-    if (extension.isZero()) {
-      throw new InvalidRequestException("会员兑换未配置延长时长");
+    public MembershipRedemptionProcessor(MembershipLifecycleService membershipLifecycleService) {
+        this.membershipLifecycleService = membershipLifecycleService;
     }
-    MembershipSnapshot snapshot =
-        membershipLifecycleService.extendMembership(
-            user.getId(), code.getMembershipType(), extension, redemptionTime);
-    return RedemptionOutcome.forMembership(snapshot);
-  }
+
+    @Override
+    public RedemptionEffectType supportedType() {
+        return RedemptionEffectType.MEMBERSHIP;
+    }
+
+    @Override
+    public RedemptionOutcome process(RedemptionCode code, User user, LocalDateTime redemptionTime) {
+        Duration extension = code.membershipExtensionDuration();
+        if (extension.isZero()) {
+            throw new InvalidRequestException("会员兑换未配置延长时长");
+        }
+        MembershipSnapshot snapshot = membershipLifecycleService.extendMembership(
+                user.getId(), code.getMembershipType(), extension, redemptionTime);
+        return RedemptionOutcome.forMembership(snapshot);
+    }
 }

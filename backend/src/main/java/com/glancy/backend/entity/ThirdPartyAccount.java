@@ -18,17 +18,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ThirdPartyAccount {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false, length = 50)
-  private String provider;
+    @Column(nullable = false, length = 50)
+    private String provider;
 
-  @Column(nullable = false, length = 100)
-  private String externalId;
+    @Column(nullable = false, length = 100)
+    private String externalId;
 }

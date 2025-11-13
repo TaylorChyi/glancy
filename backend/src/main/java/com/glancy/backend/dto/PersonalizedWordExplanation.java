@@ -7,8 +7,8 @@ import java.util.List;
  * learning context.
  */
 public record PersonalizedWordExplanation(
-    String personaSummary,
-    String keyTakeaway,
-    String contextualExplanation,
-    List<String> learningHooks,
-    List<String> reflectionPrompts) {}
+        String personaSummary,
+        String keyTakeaway,
+        String contextualExplanation,
+        List<String> learningHooks,
+        List<String> reflectionPrompts) {}

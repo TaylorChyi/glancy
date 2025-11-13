@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 
 class EnvLoaderTest {
 
-  @Test
-  void loadRemovesSurroundingQuotes() throws Exception {
-    Path file = Files.createTempFile("env", ".tmp");
-    Files.writeString(file, "TEST_KEY=\"secret\"");
-    assertNull(System.getProperty("TEST_KEY"));
-    EnvLoader.load(file);
-    assertEquals("secret", System.getProperty("TEST_KEY"));
-    Files.deleteIfExists(file);
-  }
+    @Test
+    void loadRemovesSurroundingQuotes() throws Exception {
+        Path file = Files.createTempFile("env", ".tmp");
+        Files.writeString(file, "TEST_KEY=\"secret\"");
+        assertNull(System.getProperty("TEST_KEY"));
+        EnvLoader.load(file);
+        assertEquals("secret", System.getProperty("TEST_KEY"));
+        Files.deleteIfExists(file);
+    }
 }

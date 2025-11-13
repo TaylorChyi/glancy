@@ -8,9 +8,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class UserPreferenceResponse {
 
-  private Long id;
-  private Long userId;
-  private String theme;
-  private String systemLanguage;
-  private String searchLanguage;
+    private Long id;
+    private Long userId;
+    private String theme;
+    private String systemLanguage;
+    private String searchLanguage;
 }

@@ -14,29 +14,29 @@ import org.springframework.util.StreamUtils;
 
 class PromptManagerImplJarTest {
 
-  @Test
-  void loadPromptFromJar() throws Exception {
-    ClassPathResource original = new ClassPathResource("prompts/english_to_chinese.txt");
-    byte[] data = StreamUtils.copyToByteArray(original.getInputStream());
+    @Test
+    void loadPromptFromJar() throws Exception {
+        ClassPathResource original = new ClassPathResource("prompts/english_to_chinese.txt");
+        byte[] data = StreamUtils.copyToByteArray(original.getInputStream());
 
-    Path jar = Files.createTempFile("prompt", ".jar");
-    try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar))) {
-      JarEntry entry = new JarEntry("prompts/english_to_chinese.txt");
-      jos.putNextEntry(entry);
-      jos.write(data);
-      jos.closeEntry();
-    }
+        Path jar = Files.createTempFile("prompt", ".jar");
+        try (JarOutputStream jos = new JarOutputStream(Files.newOutputStream(jar))) {
+            JarEntry entry = new JarEntry("prompts/english_to_chinese.txt");
+            jos.putNextEntry(entry);
+            jos.write(data);
+            jos.closeEntry();
+        }
 
-    URLClassLoader loader = new URLClassLoader(new URL[] {jar.toUri().toURL()}, null);
-    ClassLoader previous = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(loader);
-    try {
-      PromptManagerImpl manager = new PromptManagerImpl();
-      String prompt = manager.loadPrompt("prompts/english_to_chinese.txt");
-      Assertions.assertEquals(new String(data, StandardCharsets.UTF_8), prompt);
-    } finally {
-      Thread.currentThread().setContextClassLoader(previous);
-      loader.close();
+        URLClassLoader loader = new URLClassLoader(new URL[] {jar.toUri().toURL()}, null);
+        ClassLoader previous = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
+        try {
+            PromptManagerImpl manager = new PromptManagerImpl();
+            String prompt = manager.loadPrompt("prompts/english_to_chinese.txt");
+            Assertions.assertEquals(new String(data, StandardCharsets.UTF_8), prompt);
+        } finally {
+            Thread.currentThread().setContextClassLoader(previous);
+            loader.close();
+        }
     }
-  }
 }

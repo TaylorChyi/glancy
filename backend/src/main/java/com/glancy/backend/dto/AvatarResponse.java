@@ -8,5 +8,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class AvatarResponse {
 
-  private String avatar;
+    private String avatar;
 }

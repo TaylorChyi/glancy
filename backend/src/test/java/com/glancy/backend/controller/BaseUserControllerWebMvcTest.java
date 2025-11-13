@@ -14,16 +14,20 @@ import org.springframework.test.web.servlet.MockMvc;
 
 abstract class BaseUserControllerWebMvcTest {
 
-  @Autowired protected MockMvc mockMvc;
+    @Autowired
+    protected MockMvc mockMvc;
 
-  @MockitoBean protected UserService userService;
+    @MockitoBean
+    protected UserService userService;
 
-  @MockitoBean protected ClientIpResolver clientIpResolver;
+    @MockitoBean
+    protected ClientIpResolver clientIpResolver;
 
-  @Autowired protected ObjectMapper objectMapper;
+    @Autowired
+    protected ObjectMapper objectMapper;
 
-  @BeforeEach
-  void baseSetUpClientIp() {
-    when(clientIpResolver.resolve(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
-  }
+    @BeforeEach
+    void baseSetUpClientIp() {
+        when(clientIpResolver.resolve(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+    }
 }

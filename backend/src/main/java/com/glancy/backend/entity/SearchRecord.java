@@ -19,21 +19,21 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class SearchRecord extends BaseEntity {
 
-  @ManyToOne
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false, length = 100)
-  private String term;
+    @Column(nullable = false, length = 100)
+    private String term;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 10)
-  private Language language;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Language language;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 32)
-  private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private DictionaryFlavor flavor = DictionaryFlavor.BILINGUAL;
 
-  @Column(nullable = false)
-  private Boolean favorite = false;
+    @Column(nullable = false)
+    private Boolean favorite = false;
 }

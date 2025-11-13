@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 /** Repository storing each user's configuration preferences. */
 @Repository
 public interface UserPreferenceRepository extends JpaRepository<UserPreference, Long> {
-  Optional<UserPreference> findByUserId(Long userId);
+    Optional<UserPreference> findByUserId(Long userId);
 }

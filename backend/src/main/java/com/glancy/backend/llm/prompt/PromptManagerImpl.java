@@ -9,13 +9,13 @@ import org.springframework.util.StreamUtils;
 @Component
 public class PromptManagerImpl implements PromptManager {
 
-  @Override
-  public String loadPrompt(String path) {
-    try {
-      ClassPathResource resource = new ClassPathResource(path);
-      return StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException("Prompt load failed: " + path, e);
+    @Override
+    public String loadPrompt(String path) {
+        try {
+            ClassPathResource resource = new ClassPathResource(path);
+            return StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Prompt load failed: " + path, e);
+        }
     }
-  }
 }

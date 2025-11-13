@@ -21,77 +21,76 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(UserPreferenceController.class)
 @Import({
-  com.glancy.backend.config.security.SecurityConfig.class,
-  com.glancy.backend.config.WebConfig.class,
-  com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
+    com.glancy.backend.config.security.SecurityConfig.class,
+    com.glancy.backend.config.WebConfig.class,
+    com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
 })
 class UserPreferenceControllerTest {
 
-  @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @MockitoBean private UserPreferenceService userPreferenceService;
+    @MockitoBean
+    private UserPreferenceService userPreferenceService;
 
-  @MockitoBean private com.glancy.backend.service.UserService userService;
+    @MockitoBean
+    private com.glancy.backend.service.UserService userService;
 
-  @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-  /** 测试 savePreference 接口 */
-  @Test
-  void savePreference() throws Exception {
-    UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
-    when(userPreferenceService.savePreference(eq(2L), any(UserPreferenceRequest.class)))
-        .thenReturn(resp);
+    /** 测试 savePreference 接口 */
+    @Test
+    void savePreference() throws Exception {
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
+        when(userPreferenceService.savePreference(eq(2L), any(UserPreferenceRequest.class)))
+                .thenReturn(resp);
 
-    UserPreferenceRequest req = new UserPreferenceRequest();
-    req.setTheme("dark");
-    req.setSystemLanguage("en");
-    req.setSearchLanguage("en");
+        UserPreferenceRequest req = new UserPreferenceRequest();
+        req.setTheme("dark");
+        req.setSystemLanguage("en");
+        req.setSearchLanguage("en");
 
-    when(userService.authenticateToken("tkn")).thenReturn(2L);
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
 
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.post("/api/preferences/user")
-                .header("X-USER-TOKEN", "tkn")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-        .andExpect(MockMvcResultMatchers.status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
-  }
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/preferences/user")
+                        .header("X-USER-TOKEN", "tkn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
+    }
 
-  /** 测试 getPreference 接口 */
-  @Test
-  void getPreference() throws Exception {
-    UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
-    when(userPreferenceService.getPreference(2L)).thenReturn(resp);
+    /** 测试 getPreference 接口 */
+    @Test
+    void getPreference() throws Exception {
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
+        when(userPreferenceService.getPreference(2L)).thenReturn(resp);
 
-    when(userService.authenticateToken("tkn")).thenReturn(2L);
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
 
-    mockMvc
-        .perform(MockMvcRequestBuilders.get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
-  }
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/preferences/user").header("X-USER-TOKEN", "tkn"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.userId").value(2L));
+    }
 
-  /** 测试 updatePreference 接口 */
-  @Test
-  void updatePreference() throws Exception {
-    UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
-    when(userPreferenceService.updatePreference(eq(2L), any(UserPreferenceUpdateRequest.class)))
-        .thenReturn(resp);
+    /** 测试 updatePreference 接口 */
+    @Test
+    void updatePreference() throws Exception {
+        UserPreferenceResponse resp = new UserPreferenceResponse(1L, 2L, "dark", "en", "en");
+        when(userPreferenceService.updatePreference(eq(2L), any(UserPreferenceUpdateRequest.class)))
+                .thenReturn(resp);
 
-    UserPreferenceUpdateRequest req = new UserPreferenceUpdateRequest();
-    req.setTheme("dark");
+        UserPreferenceUpdateRequest req = new UserPreferenceUpdateRequest();
+        req.setTheme("dark");
 
-    when(userService.authenticateToken("tkn")).thenReturn(2L);
+        when(userService.authenticateToken("tkn")).thenReturn(2L);
 
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.patch("/api/preferences/user")
-                .header("X-USER-TOKEN", "tkn")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.theme").value("dark"));
-  }
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/preferences/user")
+                        .header("X-USER-TOKEN", "tkn")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.theme").value("dark"));
+    }
 }

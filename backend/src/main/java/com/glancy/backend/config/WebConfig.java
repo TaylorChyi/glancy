@@ -12,24 +12,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-  private final AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
+    private final AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
-  public WebConfig(AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver) {
-    this.authenticatedUserArgumentResolver = authenticatedUserArgumentResolver;
-  }
+    public WebConfig(AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver) {
+        this.authenticatedUserArgumentResolver = authenticatedUserArgumentResolver;
+    }
 
-  @Override
-  public void addCorsMappings(@NonNull CorsRegistry registry) {
-    registry
-        .addMapping("/api/**")
-        .allowedOriginPatterns("*")
-        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        .allowedHeaders("*")
-        .allowCredentials(true);
-  }
+    @Override
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
+    }
 
-  @Override
-  public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
-    resolvers.add(authenticatedUserArgumentResolver);
-  }
+    @Override
+    public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(authenticatedUserArgumentResolver);
+    }
 }

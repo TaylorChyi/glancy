@@ -7,16 +7,16 @@ package com.glancy.backend.llm.service;
  */
 public final class WordPromptFallbacks {
 
-  private static final String DEFAULT_PERSONA_DESCRIPTOR = "学习者";
-  private static final String DEFAULT_LIST_DELIMITER = "、";
+    private static final String DEFAULT_PERSONA_DESCRIPTOR = "学习者";
+    private static final String DEFAULT_LIST_DELIMITER = "、";
 
-  private WordPromptFallbacks() {}
+    private WordPromptFallbacks() {}
 
-  public static String personaDescriptor() {
-    return DEFAULT_PERSONA_DESCRIPTOR;
-  }
+    public static String personaDescriptor() {
+        return DEFAULT_PERSONA_DESCRIPTOR;
+    }
 
-  public static String listDelimiter() {
-    return DEFAULT_LIST_DELIMITER;
-  }
+    public static String listDelimiter() {
+        return DEFAULT_LIST_DELIMITER;
+    }
 }

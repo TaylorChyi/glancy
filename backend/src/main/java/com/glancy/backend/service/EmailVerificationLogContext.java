@@ -11,29 +11,28 @@ import org.slf4j.MDC;
  */
 public final class EmailVerificationLogContext implements AutoCloseable {
 
-  private static final String KEY_TRACE_ID = "emailVerificationTraceId";
-  private static final String KEY_EMAIL = "emailVerificationEmail";
-  private static final String KEY_PURPOSE = "emailVerificationPurpose";
+    private static final String KEY_TRACE_ID = "emailVerificationTraceId";
+    private static final String KEY_EMAIL = "emailVerificationEmail";
+    private static final String KEY_PURPOSE = "emailVerificationPurpose";
 
-  private EmailVerificationLogContext() {}
+    private EmailVerificationLogContext() {}
 
-  public static EmailVerificationLogContext create(
-      String normalizedEmail, EmailVerificationPurpose purpose) {
-    String traceId = UUID.randomUUID().toString();
-    MDC.put(KEY_TRACE_ID, traceId);
-    if (normalizedEmail != null && !normalizedEmail.isBlank()) {
-      MDC.put(KEY_EMAIL, normalizedEmail);
+    public static EmailVerificationLogContext create(String normalizedEmail, EmailVerificationPurpose purpose) {
+        String traceId = UUID.randomUUID().toString();
+        MDC.put(KEY_TRACE_ID, traceId);
+        if (normalizedEmail != null && !normalizedEmail.isBlank()) {
+            MDC.put(KEY_EMAIL, normalizedEmail);
+        }
+        if (Objects.nonNull(purpose)) {
+            MDC.put(KEY_PURPOSE, purpose.name());
+        }
+        return new EmailVerificationLogContext();
     }
-    if (Objects.nonNull(purpose)) {
-      MDC.put(KEY_PURPOSE, purpose.name());
-    }
-    return new EmailVerificationLogContext();
-  }
 
-  @Override
-  public void close() {
-    MDC.remove(KEY_TRACE_ID);
-    MDC.remove(KEY_EMAIL);
-    MDC.remove(KEY_PURPOSE);
-  }
+    @Override
+    public void close() {
+        MDC.remove(KEY_TRACE_ID);
+        MDC.remove(KEY_EMAIL);
+        MDC.remove(KEY_PURPOSE);
+    }
 }

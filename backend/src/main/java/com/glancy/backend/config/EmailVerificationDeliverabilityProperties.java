@@ -13,122 +13,117 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class EmailVerificationDeliverabilityProperties {
 
-  private String feedbackIdPrefix;
-  private String entityRefIdPrefix;
-  private Map<String, MailboxProviderPolicy> mailboxProviderPolicies = new LinkedHashMap<>();
+    private String feedbackIdPrefix;
+    private String entityRefIdPrefix;
+    private Map<String, MailboxProviderPolicy> mailboxProviderPolicies = new LinkedHashMap<>();
 
-  public String getFeedbackIdPrefix() {
-    return feedbackIdPrefix;
-  }
-
-  public void setFeedbackIdPrefix(String feedbackIdPrefix) {
-    this.feedbackIdPrefix = feedbackIdPrefix;
-  }
-
-  public String getEntityRefIdPrefix() {
-    return entityRefIdPrefix;
-  }
-
-  public void setEntityRefIdPrefix(String entityRefIdPrefix) {
-    this.entityRefIdPrefix = entityRefIdPrefix;
-  }
-
-  public Map<String, MailboxProviderPolicy> getMailboxProviderPolicies() {
-    return mailboxProviderPolicies;
-  }
-
-  public void setMailboxProviderPolicies(
-      Map<String, MailboxProviderPolicy> mailboxProviderPolicies) {
-    this.mailboxProviderPolicies =
-        mailboxProviderPolicies == null
-            ? new LinkedHashMap<>()
-            : new LinkedHashMap<>(mailboxProviderPolicies);
-  }
-
-  void validate(EmailVerificationComplianceProperties compliance) {
-    for (Map.Entry<String, MailboxProviderPolicy> entry : mailboxProviderPolicies.entrySet()) {
-      entry.getValue().validate(entry.getKey(), compliance);
-    }
-  }
-
-  public static class MailboxProviderPolicy {
-
-    private List<String> domains = new ArrayList<>();
-    private String listId;
-    private String complaintsMailto;
-    private boolean enforceListUnsubscribe = true;
-
-    public List<String> getDomains() {
-      return domains;
+    public String getFeedbackIdPrefix() {
+        return feedbackIdPrefix;
     }
 
-    public void setDomains(List<String> domains) {
-      this.domains = domains == null ? new ArrayList<>() : new ArrayList<>(domains);
+    public void setFeedbackIdPrefix(String feedbackIdPrefix) {
+        this.feedbackIdPrefix = feedbackIdPrefix;
     }
 
-    public String getListId() {
-      return listId;
+    public String getEntityRefIdPrefix() {
+        return entityRefIdPrefix;
     }
 
-    public void setListId(String listId) {
-      this.listId = listId;
+    public void setEntityRefIdPrefix(String entityRefIdPrefix) {
+        this.entityRefIdPrefix = entityRefIdPrefix;
     }
 
-    public String getComplaintsMailto() {
-      return complaintsMailto;
+    public Map<String, MailboxProviderPolicy> getMailboxProviderPolicies() {
+        return mailboxProviderPolicies;
     }
 
-    public void setComplaintsMailto(String complaintsMailto) {
-      this.complaintsMailto = complaintsMailto;
+    public void setMailboxProviderPolicies(Map<String, MailboxProviderPolicy> mailboxProviderPolicies) {
+        this.mailboxProviderPolicies =
+                mailboxProviderPolicies == null ? new LinkedHashMap<>() : new LinkedHashMap<>(mailboxProviderPolicies);
     }
 
-    public boolean isEnforceListUnsubscribe() {
-      return enforceListUnsubscribe;
-    }
-
-    public void setEnforceListUnsubscribe(boolean enforceListUnsubscribe) {
-      this.enforceListUnsubscribe = enforceListUnsubscribe;
-    }
-
-    public boolean appliesTo(String domain) {
-      if (StringUtils.isBlank(domain) || CollectionUtils.isEmpty(domains)) {
-        return false;
-      }
-      String normalized = domain.toLowerCase(Locale.ROOT);
-      for (String candidate : domains) {
-        if (StringUtils.isBlank(candidate)) {
-          continue;
+    void validate(EmailVerificationComplianceProperties compliance) {
+        for (Map.Entry<String, MailboxProviderPolicy> entry : mailboxProviderPolicies.entrySet()) {
+            entry.getValue().validate(entry.getKey(), compliance);
         }
-        String trimmed = candidate.trim().toLowerCase(Locale.ROOT);
-        if (trimmed.startsWith("*")) {
-          String suffix = trimmed.substring(1);
-          if (normalized.endsWith(suffix)) {
-            return true;
-          }
-        } else if (normalized.equals(trimmed)) {
-          return true;
-        }
-      }
-      return false;
     }
 
-    void validate(String key, EmailVerificationComplianceProperties compliance) {
-      if (CollectionUtils.isEmpty(domains)) {
-        throw new IllegalStateException(
-            "mail.verification.deliverability.mailbox-provider-policies."
-                + key
-                + ".domains must not be empty");
-      }
-      if (enforceListUnsubscribe) {
-        boolean hasMailto = StringUtils.isNotBlank(compliance.getUnsubscribeMailto());
-        boolean hasUrl = StringUtils.isNotBlank(compliance.getUnsubscribeUrl());
-        if (!hasMailto && !hasUrl) {
-          throw new IllegalStateException(
-              "mail.verification.deliverability.mailbox-provider-policies."
-                  + key
-                  + " requires unsubscribe configuration");
+    public static class MailboxProviderPolicy {
+
+        private List<String> domains = new ArrayList<>();
+        private String listId;
+        private String complaintsMailto;
+        private boolean enforceListUnsubscribe = true;
+
+        public List<String> getDomains() {
+            return domains;
         }
-      }
+
+        public void setDomains(List<String> domains) {
+            this.domains = domains == null ? new ArrayList<>() : new ArrayList<>(domains);
+        }
+
+        public String getListId() {
+            return listId;
+        }
+
+        public void setListId(String listId) {
+            this.listId = listId;
+        }
+
+        public String getComplaintsMailto() {
+            return complaintsMailto;
+        }
+
+        public void setComplaintsMailto(String complaintsMailto) {
+            this.complaintsMailto = complaintsMailto;
+        }
+
+        public boolean isEnforceListUnsubscribe() {
+            return enforceListUnsubscribe;
+        }
+
+        public void setEnforceListUnsubscribe(boolean enforceListUnsubscribe) {
+            this.enforceListUnsubscribe = enforceListUnsubscribe;
+        }
+
+        public boolean appliesTo(String domain) {
+            if (StringUtils.isBlank(domain) || CollectionUtils.isEmpty(domains)) {
+                return false;
+            }
+            String normalized = domain.toLowerCase(Locale.ROOT);
+            for (String candidate : domains) {
+                if (StringUtils.isBlank(candidate)) {
+                    continue;
+                }
+                String trimmed = candidate.trim().toLowerCase(Locale.ROOT);
+                if (trimmed.startsWith("*")) {
+                    String suffix = trimmed.substring(1);
+                    if (normalized.endsWith(suffix)) {
+                        return true;
+                    }
+                } else if (normalized.equals(trimmed)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void validate(String key, EmailVerificationComplianceProperties compliance) {
+            if (CollectionUtils.isEmpty(domains)) {
+                throw new IllegalStateException("mail.verification.deliverability.mailbox-provider-policies."
+                        + key
+                        + ".domains must not be empty");
+            }
+            if (enforceListUnsubscribe) {
+                boolean hasMailto = StringUtils.isNotBlank(compliance.getUnsubscribeMailto());
+                boolean hasUrl = StringUtils.isNotBlank(compliance.getUnsubscribeUrl());
+                if (!hasMailto && !hasUrl) {
+                    throw new IllegalStateException("mail.verification.deliverability.mailbox-provider-policies."
+                            + key
+                            + " requires unsubscribe configuration");
+                }
+            }
+        }
     }
-  }
 }

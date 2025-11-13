@@ -15,22 +15,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class DictionaryModelClientFactory {
 
-  private final Map<String, DictionaryModelClient> clientMap = new HashMap<>();
+    private final Map<String, DictionaryModelClient> clientMap = new HashMap<>();
 
-  public DictionaryModelClientFactory(List<DictionaryModelClient> clients) {
-    for (DictionaryModelClient client : clients) {
-      clientMap.put(client.name(), client);
+    public DictionaryModelClientFactory(List<DictionaryModelClient> clients) {
+        for (DictionaryModelClient client : clients) {
+            clientMap.put(client.name(), client);
+        }
     }
-  }
 
-  public DictionaryModelClient get(String name) {
-    return clientMap.get(name);
-  }
+    public DictionaryModelClient get(String name) {
+        return clientMap.get(name);
+    }
 
-  /** 返回所有已注册客户端的名称，便于控制台或测试探测可选模型。 */
-  public List<String> getClientNames() {
-    List<String> names = new ArrayList<>(clientMap.keySet());
-    Collections.sort(names);
-    return names;
-  }
+    /** 返回所有已注册客户端的名称，便于控制台或测试探测可选模型。 */
+    public List<String> getClientNames() {
+        List<String> names = new ArrayList<>(clientMap.keySet());
+        Collections.sort(names);
+        return names;
+    }
 }

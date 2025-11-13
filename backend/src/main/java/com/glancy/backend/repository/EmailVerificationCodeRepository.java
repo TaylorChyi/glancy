@@ -13,22 +13,19 @@ import org.springframework.stereotype.Repository;
 
 /** Repository for persisting issued email verification codes. */
 @Repository
-public interface EmailVerificationCodeRepository
-    extends JpaRepository<EmailVerificationCode, Long> {
-  Optional<EmailVerificationCode>
-      findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(
-          String email, EmailVerificationPurpose purpose, String code);
+public interface EmailVerificationCodeRepository extends JpaRepository<EmailVerificationCode, Long> {
+    Optional<EmailVerificationCode> findTopByEmailAndPurposeAndCodeAndDeletedFalseOrderByCreatedAtDesc(
+            String email, EmailVerificationPurpose purpose, String code);
 
-  List<EmailVerificationCode> findByEmailAndPurposeAndUsedFalseAndDeletedFalse(
-      String email, EmailVerificationPurpose purpose);
+    List<EmailVerificationCode> findByEmailAndPurposeAndUsedFalseAndDeletedFalse(
+            String email, EmailVerificationPurpose purpose);
 
-  @Modifying
-  @Query(
-      "update EmailVerificationCode c set c.used = true "
-          + "where c.email = :email and c.purpose = :purpose "
-          + "and c.used = false and c.deleted = false and c.expiresAt < :now")
-  int markExpiredAsUsed(
-      @Param("email") String email,
-      @Param("purpose") EmailVerificationPurpose purpose,
-      @Param("now") LocalDateTime now);
+    @Modifying
+    @Query("update EmailVerificationCode c set c.used = true "
+            + "where c.email = :email and c.purpose = :purpose "
+            + "and c.used = false and c.deleted = false and c.expiresAt < :now")
+    int markExpiredAsUsed(
+            @Param("email") String email,
+            @Param("purpose") EmailVerificationPurpose purpose,
+            @Param("now") LocalDateTime now);
 }

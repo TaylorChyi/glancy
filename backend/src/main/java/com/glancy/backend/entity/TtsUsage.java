@@ -23,13 +23,13 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class TtsUsage extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false)
-  private LocalDate date;
+    @Column(nullable = false)
+    private LocalDate date;
 
-  @Column(nullable = false)
-  private int count;
+    @Column(nullable = false)
+    private int count;
 }

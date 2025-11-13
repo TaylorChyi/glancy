@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RedemptionCodeRepository extends JpaRepository<RedemptionCode, Long> {
-  // 兼容早期直接插入数据库的兑换码大小写不规范问题，通过 UPPER 保证查询一致性。
-  @Query("SELECT c FROM RedemptionCode c WHERE c.deleted = false AND UPPER(c.code) = UPPER(:code)")
-  Optional<RedemptionCode> findByCodeAndDeletedFalse(@Param("code") String code);
+    // 兼容早期直接插入数据库的兑换码大小写不规范问题，通过 UPPER 保证查询一致性。
+    @Query("SELECT c FROM RedemptionCode c WHERE c.deleted = false AND UPPER(c.code) = UPPER(:code)")
+    Optional<RedemptionCode> findByCodeAndDeletedFalse(@Param("code") String code);
 }

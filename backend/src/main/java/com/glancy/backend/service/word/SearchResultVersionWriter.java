@@ -12,29 +12,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SearchResultVersionWriter {
 
-  private final SearchResultService searchResultService;
+    private final SearchResultService searchResultService;
 
-  public SearchResultVersion persistVersion(
-      Long recordId,
-      Long userId,
-      String model,
-      String content,
-      Word word,
-      DictionaryFlavor flavor) {
-    if (recordId == null) {
-      return null;
+    public SearchResultVersion persistVersion(
+            Long recordId, Long userId, String model, String content, Word word, DictionaryFlavor flavor) {
+        if (recordId == null) {
+            return null;
+        }
+        CreateVersionCommand command = CreateVersionCommand.builder()
+                .recordId(recordId)
+                .userId(userId)
+                .term(word.getTerm())
+                .language(word.getLanguage())
+                .model(model)
+                .content(content)
+                .word(word)
+                .flavor(flavor)
+                .build();
+        return searchResultService.createVersion(command);
     }
-    CreateVersionCommand command =
-        CreateVersionCommand.builder()
-            .recordId(recordId)
-            .userId(userId)
-            .term(word.getTerm())
-            .language(word.getLanguage())
-            .model(model)
-            .content(content)
-            .word(word)
-            .flavor(flavor)
-            .build();
-    return searchResultService.createVersion(command);
-  }
 }

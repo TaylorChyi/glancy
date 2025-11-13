@@ -15,28 +15,20 @@ import org.junit.jupiter.api.Test;
  */
 class TtsCacheKeyTest {
 
-  @Test
-  void computeGeneratesSha256OfNormalisedInput() throws Exception {
-    String text = "Hello";
-    String lang = "en";
-    String voice = "v1";
-    String format = "mp3";
-    double speed = 1.0;
-    TtsScope scope = TtsScope.WORD;
+    @Test
+    void computeGeneratesSha256OfNormalisedInput() throws Exception {
+        String text = "Hello";
+        String lang = "en";
+        String voice = "v1";
+        String format = "mp3";
+        double speed = 1.0;
+        TtsScope scope = TtsScope.WORD;
 
-    String expectedRaw =
-        String.join(
-            "|",
-            text.trim().toLowerCase(Locale.ROOT),
-            lang,
-            voice,
-            format,
-            String.valueOf(speed),
-            scope.name());
-    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    String expected =
-        HexFormat.of().formatHex(digest.digest(expectedRaw.getBytes(StandardCharsets.UTF_8)));
+        String expectedRaw = String.join(
+                "|", text.trim().toLowerCase(Locale.ROOT), lang, voice, format, String.valueOf(speed), scope.name());
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String expected = HexFormat.of().formatHex(digest.digest(expectedRaw.getBytes(StandardCharsets.UTF_8)));
 
-    assertEquals(expected, TtsCacheKey.compute(text, lang, voice, format, speed, scope));
-  }
+        assertEquals(expected, TtsCacheKey.compute(text, lang, voice, format, speed, scope));
+    }
 }

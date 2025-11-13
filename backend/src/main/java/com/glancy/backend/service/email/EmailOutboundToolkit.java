@@ -10,28 +10,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class EmailOutboundToolkit {
 
-  private final EmailVerificationProperties properties;
-  private final EmailMessagePreparer messagePreparer;
-  private final MailboxProviderPolicyEngine mailboxProviderPolicyEngine;
+    private final EmailVerificationProperties properties;
+    private final EmailMessagePreparer messagePreparer;
+    private final MailboxProviderPolicyEngine mailboxProviderPolicyEngine;
 
-  public EmailOutboundToolkit(
-      EmailVerificationProperties properties,
-      EmailMessagePreparer messagePreparer,
-      MailboxProviderPolicyEngine mailboxProviderPolicyEngine) {
-    this.properties = properties;
-    this.messagePreparer = messagePreparer;
-    this.mailboxProviderPolicyEngine = mailboxProviderPolicyEngine;
-  }
+    public EmailOutboundToolkit(
+            EmailVerificationProperties properties,
+            EmailMessagePreparer messagePreparer,
+            MailboxProviderPolicyEngine mailboxProviderPolicyEngine) {
+        this.properties = properties;
+        this.messagePreparer = messagePreparer;
+        this.mailboxProviderPolicyEngine = mailboxProviderPolicyEngine;
+    }
 
-  public EmailVerificationProperties properties() {
-    return properties;
-  }
+    public EmailVerificationProperties properties() {
+        return properties;
+    }
 
-  public EmailMessagePreparer messagePreparer() {
-    return messagePreparer;
-  }
+    public EmailMessagePreparer messagePreparer() {
+        return messagePreparer;
+    }
 
-  public MailboxProviderPolicyEngine mailboxProviderPolicyEngine() {
-    return mailboxProviderPolicyEngine;
-  }
+    public MailboxProviderPolicyEngine mailboxProviderPolicyEngine() {
+        return mailboxProviderPolicyEngine;
+    }
 }

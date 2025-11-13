@@ -8,5 +8,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class UsernameResponse {
 
-  private String username;
+    private String username;
 }

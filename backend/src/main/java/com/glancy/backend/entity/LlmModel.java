@@ -2,16 +2,16 @@ package com.glancy.backend.entity;
 
 /** Available large language models. */
 public enum LlmModel {
-  /** Doubao base model */
-  DOUBAO("doubao-seed-1-6-flash-250715");
+    /** Doubao base model */
+    DOUBAO("doubao-seed-1-6-flash-250715");
 
-  private final String modelName;
+    private final String modelName;
 
-  LlmModel(String modelName) {
-    this.modelName = modelName;
-  }
+    LlmModel(String modelName) {
+        this.modelName = modelName;
+    }
 
-  public String getModelName() {
-    return modelName;
-  }
+    public String getModelName() {
+        return modelName;
+    }
 }

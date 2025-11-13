@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 /** Repository storing external authentication bindings for users. */
 @Repository
 public interface ThirdPartyAccountRepository extends JpaRepository<ThirdPartyAccount, Long> {
-  Optional<ThirdPartyAccount> findByProviderAndExternalId(String provider, String externalId);
+    Optional<ThirdPartyAccount> findByProviderAndExternalId(String provider, String externalId);
 }

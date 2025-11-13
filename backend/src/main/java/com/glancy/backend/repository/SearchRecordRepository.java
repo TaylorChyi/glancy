@@ -12,26 +12,24 @@ import org.springframework.stereotype.Repository;
 /** Repository for persisting and querying user search history. */
 @Repository
 public interface SearchRecordRepository extends JpaRepository<SearchRecord, Long> {
-  List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId);
+    List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId);
 
-  List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(
-      Long userId, Pageable pageable);
+    List<SearchRecord> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId, Pageable pageable);
 
-  List<SearchRecord> findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
-      Long userId, Language language, DictionaryFlavor flavor, Pageable pageable);
+    List<SearchRecord> findByUserIdAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
+            Long userId, Language language, DictionaryFlavor flavor, Pageable pageable);
 
-  long countByUserIdAndDeletedFalseAndCreatedAtBetween(
-      Long userId, LocalDateTime start, LocalDateTime end);
+    long countByUserIdAndDeletedFalseAndCreatedAtBetween(Long userId, LocalDateTime start, LocalDateTime end);
 
-  boolean existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
-      Long userId, String term, Language language, DictionaryFlavor flavor);
+    boolean existsByUserIdAndTermAndLanguageAndFlavorAndDeletedFalse(
+            Long userId, String term, Language language, DictionaryFlavor flavor);
 
-  SearchRecord findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
-      Long userId, String term, Language language, DictionaryFlavor flavor);
+    SearchRecord findTopByUserIdAndTermAndLanguageAndFlavorAndDeletedFalseOrderByUpdatedAtDesc(
+            Long userId, String term, Language language, DictionaryFlavor flavor);
 
-  java.util.Optional<SearchRecord> findByIdAndUserIdAndDeletedFalse(Long id, Long userId);
+    java.util.Optional<SearchRecord> findByIdAndUserIdAndDeletedFalse(Long id, Long userId);
 
-  java.util.Optional<SearchRecord> findByIdAndDeletedFalse(Long id);
+    java.util.Optional<SearchRecord> findByIdAndDeletedFalse(Long id);
 
-  List<SearchRecord> findByUserIdAndDeletedFalse(Long userId);
+    List<SearchRecord> findByUserIdAndDeletedFalse(Long userId);
 }

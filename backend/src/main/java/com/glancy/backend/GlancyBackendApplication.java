@@ -17,27 +17,27 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class GlancyBackendApplication {
 
-  /**
-   * Bootstraps the Spring application while loading DB credentials from a .env file for convenience
-   * during development.
-   */
-  public static void main(String[] args) {
-    EnvLoader.load(java.nio.file.Paths.get(".env"));
-    SpringApplication.run(GlancyBackendApplication.class, args);
-  }
+    /**
+     * Bootstraps the Spring application while loading DB credentials from a .env file for convenience
+     * during development.
+     */
+    public static void main(String[] args) {
+        EnvLoader.load(java.nio.file.Paths.get(".env"));
+        SpringApplication.run(GlancyBackendApplication.class, args);
+    }
 
-  /** Shared RestTemplate bean for downstream API calls. */
-  @Bean
-  public RestTemplate restTemplate() {
-    return new RestTemplate();
-  }
+    /** Shared RestTemplate bean for downstream API calls. */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 
-  /**
-   * Provide a system UTC clock for time-based services. Keeping this as a bean allows tests to
-   * supply a deterministic clock while the application defaults to the system clock.
-   */
-  @Bean
-  public Clock systemClock() {
-    return Clock.systemUTC();
-  }
+    /**
+     * Provide a system UTC clock for time-based services. Keeping this as a bean allows tests to
+     * supply a deterministic clock while the application defaults to the system clock.
+     */
+    @Bean
+    public Clock systemClock() {
+        return Clock.systemUTC();
+    }
 }

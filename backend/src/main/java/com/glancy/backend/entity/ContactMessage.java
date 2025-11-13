@@ -18,12 +18,12 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class ContactMessage extends BaseEntity {
 
-  @Column(nullable = false, length = 100)
-  private String name;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-  @Column(nullable = false, length = 150)
-  private String email;
+    @Column(nullable = false, length = 150)
+    private String email;
 
-  @Column(nullable = false, columnDefinition = "TEXT")
-  private String message;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String message;
 }

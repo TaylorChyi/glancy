@@ -7,9 +7,9 @@ import lombok.Data;
 @Data
 public class ThirdPartyAccountRequest {
 
-  @NotBlank(message = "{validation.thirdPartyAccount.provider.notblank}")
-  private String provider;
+    @NotBlank(message = "{validation.thirdPartyAccount.provider.notblank}")
+    private String provider;
 
-  @NotBlank(message = "{validation.thirdPartyAccount.externalId.notblank}")
-  private String externalId;
+    @NotBlank(message = "{validation.thirdPartyAccount.externalId.notblank}")
+    private String externalId;
 }

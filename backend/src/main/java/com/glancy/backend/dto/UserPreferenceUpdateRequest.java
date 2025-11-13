@@ -9,9 +9,12 @@ import org.springframework.lang.Nullable;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserPreferenceUpdateRequest {
 
-  @Nullable private String theme;
+    @Nullable
+    private String theme;
 
-  @Nullable private String systemLanguage;
+    @Nullable
+    private String systemLanguage;
 
-  @Nullable private String searchLanguage;
+    @Nullable
+    private String searchLanguage;
 }

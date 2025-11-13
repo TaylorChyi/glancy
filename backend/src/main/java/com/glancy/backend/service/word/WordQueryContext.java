@@ -5,12 +5,12 @@ import com.glancy.backend.entity.DictionaryFlavor;
 import com.glancy.backend.entity.Language;
 
 public record WordQueryContext(
-    Long userId,
-    String rawTerm,
-    String normalizedTerm,
-    Language language,
-    DictionaryFlavor flavor,
-    String model,
-    boolean forceNew,
-    boolean captureHistory,
-    WordPersonalizationContext personalizationContext) {}
+        Long userId,
+        String rawTerm,
+        String normalizedTerm,
+        Language language,
+        DictionaryFlavor flavor,
+        String model,
+        boolean forceNew,
+        boolean captureHistory,
+        WordPersonalizationContext personalizationContext) {}
