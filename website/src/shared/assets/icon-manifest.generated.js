@@ -69,108 +69,108 @@ import iconAsset66 from "./communication/channels/wechat.svg";
 import iconAsset67 from "./communication/channels/wechat.svg?raw";
 
 const registry = Object.freeze({
-  apple: Object.freeze({
-    single: Object.freeze({ url: iconAsset0, inline: iconAsset1 }),
+  "apple": Object.freeze({
+    single: Object.freeze({ url: iconAsset0, inline: iconAsset1 })
   }),
   "arrow-left": Object.freeze({
-    single: Object.freeze({ url: iconAsset2, inline: iconAsset3 }),
+    single: Object.freeze({ url: iconAsset2, inline: iconAsset3 })
   }),
   "arrow-right": Object.freeze({
-    single: Object.freeze({ url: iconAsset4, inline: iconAsset5 }),
+    single: Object.freeze({ url: iconAsset4, inline: iconAsset5 })
   }),
   "arrow-right-on-rectangle": Object.freeze({
-    single: Object.freeze({ url: iconAsset6, inline: iconAsset7 }),
+    single: Object.freeze({ url: iconAsset6, inline: iconAsset7 })
   }),
   "brand-glancy-app": Object.freeze({
-    single: Object.freeze({ url: iconAsset8, inline: iconAsset9 }),
+    single: Object.freeze({ url: iconAsset8, inline: iconAsset9 })
   }),
   "brand-glancy-website": Object.freeze({
-    single: Object.freeze({ url: iconAsset10, inline: iconAsset11 }),
+    single: Object.freeze({ url: iconAsset10, inline: iconAsset11 })
   }),
-  close: Object.freeze({
-    single: Object.freeze({ url: iconAsset12, inline: iconAsset13 }),
+  "close": Object.freeze({
+    single: Object.freeze({ url: iconAsset12, inline: iconAsset13 })
   }),
   "cog-6-tooth": Object.freeze({
-    single: Object.freeze({ url: iconAsset14, inline: iconAsset15 }),
+    single: Object.freeze({ url: iconAsset14, inline: iconAsset15 })
   }),
   "command-line": Object.freeze({
-    single: Object.freeze({ url: iconAsset16, inline: iconAsset17 }),
+    single: Object.freeze({ url: iconAsset16, inline: iconAsset17 })
   }),
-  copy: Object.freeze({
-    single: Object.freeze({ url: iconAsset18, inline: iconAsset19 }),
+  "copy": Object.freeze({
+    single: Object.freeze({ url: iconAsset18, inline: iconAsset19 })
   }),
   "copy-success": Object.freeze({
-    single: Object.freeze({ url: iconAsset20, inline: iconAsset21 }),
+    single: Object.freeze({ url: iconAsset20, inline: iconAsset21 })
   }),
   "default-user-avatar": Object.freeze({
-    single: Object.freeze({ url: iconAsset22, inline: iconAsset23 }),
+    single: Object.freeze({ url: iconAsset22, inline: iconAsset23 })
   }),
   "ellipsis-vertical": Object.freeze({
-    single: Object.freeze({ url: iconAsset24, inline: iconAsset25 }),
+    single: Object.freeze({ url: iconAsset24, inline: iconAsset25 })
   }),
-  email: Object.freeze({
-    single: Object.freeze({ url: iconAsset26, inline: iconAsset27 }),
+  "email": Object.freeze({
+    single: Object.freeze({ url: iconAsset26, inline: iconAsset27 })
   }),
-  eye: Object.freeze({
-    single: Object.freeze({ url: iconAsset28, inline: iconAsset29 }),
+  "eye": Object.freeze({
+    single: Object.freeze({ url: iconAsset28, inline: iconAsset29 })
   }),
   "eye-off": Object.freeze({
-    single: Object.freeze({ url: iconAsset30, inline: iconAsset31 }),
+    single: Object.freeze({ url: iconAsset30, inline: iconAsset31 })
   }),
-  flag: Object.freeze({
-    single: Object.freeze({ url: iconAsset32, inline: iconAsset33 }),
+  "flag": Object.freeze({
+    single: Object.freeze({ url: iconAsset32, inline: iconAsset33 })
   }),
-  google: Object.freeze({
-    single: Object.freeze({ url: iconAsset34, inline: iconAsset35 }),
+  "google": Object.freeze({
+    single: Object.freeze({ url: iconAsset34, inline: iconAsset35 })
   }),
-  library: Object.freeze({
-    single: Object.freeze({ url: iconAsset36, inline: iconAsset37 }),
+  "library": Object.freeze({
+    single: Object.freeze({ url: iconAsset36, inline: iconAsset37 })
   }),
-  link: Object.freeze({
-    single: Object.freeze({ url: iconAsset38, inline: iconAsset39 }),
+  "link": Object.freeze({
+    single: Object.freeze({ url: iconAsset38, inline: iconAsset39 })
   }),
-  personalization: Object.freeze({
-    single: Object.freeze({ url: iconAsset40, inline: iconAsset41 }),
+  "personalization": Object.freeze({
+    single: Object.freeze({ url: iconAsset40, inline: iconAsset41 })
   }),
-  phone: Object.freeze({
-    single: Object.freeze({ url: iconAsset42, inline: iconAsset43 }),
+  "phone": Object.freeze({
+    single: Object.freeze({ url: iconAsset42, inline: iconAsset43 })
   }),
-  refresh: Object.freeze({
-    single: Object.freeze({ url: iconAsset44, inline: iconAsset45 }),
+  "refresh": Object.freeze({
+    single: Object.freeze({ url: iconAsset44, inline: iconAsset45 })
   }),
-  search: Object.freeze({
-    single: Object.freeze({ url: iconAsset46, inline: iconAsset47 }),
+  "search": Object.freeze({
+    single: Object.freeze({ url: iconAsset46, inline: iconAsset47 })
   }),
   "send-button": Object.freeze({
-    single: Object.freeze({ url: iconAsset48, inline: iconAsset49 }),
+    single: Object.freeze({ url: iconAsset48, inline: iconAsset49 })
   }),
   "shield-check": Object.freeze({
-    single: Object.freeze({ url: iconAsset50, inline: iconAsset51 }),
+    single: Object.freeze({ url: iconAsset50, inline: iconAsset51 })
   }),
   "star-outline": Object.freeze({
-    single: Object.freeze({ url: iconAsset52, inline: iconAsset53 }),
+    single: Object.freeze({ url: iconAsset52, inline: iconAsset53 })
   }),
   "star-solid": Object.freeze({
-    single: Object.freeze({ url: iconAsset54, inline: iconAsset55 }),
+    single: Object.freeze({ url: iconAsset54, inline: iconAsset55 })
   }),
-  subscription: Object.freeze({
-    single: Object.freeze({ url: iconAsset56, inline: iconAsset57 }),
+  "subscription": Object.freeze({
+    single: Object.freeze({ url: iconAsset56, inline: iconAsset57 })
   }),
-  trash: Object.freeze({
-    single: Object.freeze({ url: iconAsset58, inline: iconAsset59 }),
+  "trash": Object.freeze({
+    single: Object.freeze({ url: iconAsset58, inline: iconAsset59 })
   }),
-  user: Object.freeze({
-    single: Object.freeze({ url: iconAsset60, inline: iconAsset61 }),
+  "user": Object.freeze({
+    single: Object.freeze({ url: iconAsset60, inline: iconAsset61 })
   }),
   "voice-button": Object.freeze({
-    single: Object.freeze({ url: iconAsset62, inline: iconAsset63 }),
+    single: Object.freeze({ url: iconAsset62, inline: iconAsset63 })
   }),
   "waitting-frame": Object.freeze({
-    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 }),
+    single: Object.freeze({ url: iconAsset64, inline: iconAsset65 })
   }),
-  wechat: Object.freeze({
-    single: Object.freeze({ url: iconAsset66, inline: iconAsset67 }),
-  }),
+  "wechat": Object.freeze({
+    single: Object.freeze({ url: iconAsset66, inline: iconAsset67 })
+  })
 });
 
 export default registry;

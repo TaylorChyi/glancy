@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -59,27 +61,20 @@ class KeyboardShortcutControllerTest {
         .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[1]").value("SHIFT"));
   }
 
-  /**
-   * 测试目标：PUT /api/preferences/shortcuts/user/{action} 应调用服务更新快捷键。 前置条件：服务层返回更新后的列表。 步骤： 1) 模拟服务层响应；
-   * 2) 发送 PUT 请求并携带 JSON； 断言： - HTTP 状态 200； - 服务层收到正确的参数。 边界/异常： - 无。
-   */
+  @Test
+  void Given_putRequest_When_updateShortcut_Then_statusOk() throws Exception {
+    performShortcutUpdate().andExpect(MockMvcResultMatchers.status().isOk());
+  }
+
+  @Test
+  void Given_putRequest_When_updateShortcut_Then_returnUpdatedKeys() throws Exception {
+    performShortcutUpdate()
+        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
+  }
+
   @Test
   void Given_putRequest_When_updateShortcut_Then_delegateToService() throws Exception {
-    KeyboardShortcutView view = focusSearchView(List.of("CONTROL", "SHIFT", "P"));
-    given(
-            keyboardShortcutService.updateShortcut(
-                eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class)))
-        .willReturn(new KeyboardShortcutResponse(List.of(view)));
-    mockToken("token-2", 2L);
-
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.put("/api/preferences/shortcuts/user/FOCUS_SEARCH")
-                .header("X-USER-TOKEN", "token-2")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"keys\":[\"control\",\"shift\",\"p\"]}"))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.shortcuts[0].keys[0]").value("CONTROL"));
+    performShortcutUpdate();
 
     verify(keyboardShortcutService)
         .updateShortcut(
@@ -111,6 +106,25 @@ class KeyboardShortcutControllerTest {
     verify(keyboardShortcutService).resetShortcuts(3L);
   }
 
+  private ResultActions performShortcutUpdate() throws Exception {
+    KeyboardShortcutView view = focusSearchView(List.of("CONTROL", "SHIFT", "P"));
+    given(
+            keyboardShortcutService.updateShortcut(
+                eq(2L), eq(ShortcutAction.FOCUS_SEARCH), any(KeyboardShortcutUpdateRequest.class)))
+        .willReturn(new KeyboardShortcutResponse(List.of(view)));
+    mockToken("token-2", 2L);
+
+    return mockMvc.perform(
+        shortcutRequest("FOCUS_SEARCH")
+            .withToken("token-2")
+            .withJsonBody("{\"keys\":[\"control\",\"shift\",\"p\"]}")
+            .build());
+  }
+
+  private ShortcutRequestBuilder shortcutRequest(String action) {
+    return new ShortcutRequestBuilder(action);
+  }
+
   private KeyboardShortcutView focusSearchView(List<String> keys) {
     return new KeyboardShortcutView(
         ShortcutAction.FOCUS_SEARCH.name(), keys, List.of("MOD", "SHIFT", "F"));
@@ -118,5 +132,29 @@ class KeyboardShortcutControllerTest {
 
   private void mockToken(String token, long userId) {
     given(userService.authenticateToken(token)).willReturn(userId);
+  }
+
+  private static final class ShortcutRequestBuilder {
+    private final MockHttpServletRequestBuilder delegate;
+
+    private ShortcutRequestBuilder(String action) {
+      this.delegate =
+          MockMvcRequestBuilders.put("/api/preferences/shortcuts/user/" + action)
+              .contentType(MediaType.APPLICATION_JSON);
+    }
+
+    private ShortcutRequestBuilder withToken(String token) {
+      delegate.header("X-USER-TOKEN", token);
+      return this;
+    }
+
+    private ShortcutRequestBuilder withJsonBody(String body) {
+      delegate.content(body);
+      return this;
+    }
+
+    private MockHttpServletRequestBuilder build() {
+      return delegate;
+    }
   }
 }

@@ -60,3 +60,4 @@ logs/
 
 # Environment files
 .env
+# BMAD (local only)

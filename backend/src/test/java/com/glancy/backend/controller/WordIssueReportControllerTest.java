@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(WordIssueReportController.class)
 @Import({
@@ -46,18 +47,23 @@ class WordIssueReportControllerTest {
   }
 
   @Test
-  void createReport_returnsCreated() throws Exception {
+  void whenCreatingReport_thenStatusIsCreated() throws Exception {
+    performCreateReport().andExpect(status().isCreated());
+  }
+
+  @Test
+  void whenCreatingReport_thenResponseBodyContainsId() throws Exception {
+    performCreateReport().andExpect(jsonPath("$.id").value(42));
+  }
+
+  private ResultActions performCreateReport() throws Exception {
     when(wordIssueReportService.registerReport(any(Long.class), any(WordIssueReportRequest.class)))
         .thenReturn(sampleResponse());
-
-    mockMvc
-        .perform(
-            post("/api/word-reports")
-                .header("X-USER-TOKEN", "token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sampleRequest())))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.id").value(42));
+    return mockMvc.perform(
+        post("/api/word-reports")
+            .header("X-USER-TOKEN", "token")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(sampleRequest())));
   }
 
   private WordIssueReportResponse sampleResponse() {

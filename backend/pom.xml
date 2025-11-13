@@ -31,7 +31,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <dependency-check.version>10.0.4</dependency-check.version>
         <cyclonedx.version>2.9.0</cyclonedx.version>
-        <google-java-format.version>1.18.1</google-java-format.version>
+        <palantir-java-format.version>2.37.0</palantir-java-format.version>
         </properties>
 
     <repositories>
@@ -120,6 +120,14 @@
                 <dependency>
                         <groupId>com.fasterxml.jackson.core</groupId>
                         <artifactId>jackson-databind</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-core</artifactId>
+                </dependency>
+                <dependency>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-annotations</artifactId>
                 </dependency>
 
                 <dependency>
@@ -210,10 +218,10 @@
                                 <version>2.43.0</version>
                                 <configuration>
                                         <java>
-                                                <googleJavaFormat>
-                                                        <version>${google-java-format.version}</version>
-                                                        <style>GOOGLE</style>
-                                                </googleJavaFormat>
+                                                <palantirJavaFormat>
+                                                        <version>${palantir-java-format.version}</version>
+                                                        <style>PALANTIR</style>
+                                                </palantirJavaFormat>
                                         </java>
                                         <format>
                                                 <name>yaml</name>

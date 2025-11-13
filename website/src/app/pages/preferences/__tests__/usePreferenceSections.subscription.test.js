@@ -15,6 +15,31 @@ const setupContext = (options) => {
   return activeContext;
 };
 
+const renderSubscriptionScenario = (options) => {
+  const context = setupContext(options);
+  const rendered = renderHook(() =>
+    usePreferenceSections({
+      initialSectionId: undefined,
+    }),
+  );
+  return { context, rendered };
+};
+
+const resolveSubscriptionSection = async (result) => {
+  await waitFor(() => {
+    expect(
+      result.current.sections.find((section) => section.id === "subscription"),
+    ).toBeDefined();
+  });
+  return result.current.sections.find((section) => section.id === "subscription");
+};
+
+const redeemCode = async (section, code) => {
+  await act(async () => {
+    await section.componentProps.onRedeem(code);
+  });
+};
+
 beforeAll(async () => {
   ({ usePreferenceSections } = await loadPreferenceSectionsModules());
 });
@@ -42,7 +67,8 @@ afterEach(() => {
  *  - 若 onRedeem 不返回 Promise 或未更新用户则测试失败。
  */
 test("Given valid code When redeem resolves Then membership snapshot merges into user", async () => {
-  const context = setupContext();
+  // Arrange
+  const { context, rendered } = renderSubscriptionScenario();
   const reward = {
     membershipType: "PRO",
     expiresAt: "2025-12-31T00:00:00Z",
@@ -52,26 +78,12 @@ test("Given valid code When redeem resolves Then membership snapshot merges into
     membership: reward,
   });
 
-  const { result } = renderHook(() =>
-    usePreferenceSections({
-      initialSectionId: undefined,
-    }),
-  );
+  const subscriptionSection = await resolveSubscriptionSection(rendered.result);
 
-  await waitFor(() => {
-    expect(
-      result.current.sections.find((section) => section.id === "subscription"),
-    ).toBeDefined();
-  });
+  // Act
+  await redeemCode(subscriptionSection, "  vip-pro-2025  ");
 
-  const subscriptionSection = result.current.sections.find(
-    (section) => section.id === "subscription",
-  );
-
-  await act(async () => {
-    await subscriptionSection.componentProps.onRedeem("  vip-pro-2025  ");
-  });
-
+  // Assert
   expect(context.redeemMock).toHaveBeenCalledWith({
     token: "token-123",
     code: "vip-pro-2025",
@@ -91,7 +103,7 @@ test("Given valid code When redeem resolves Then membership snapshot merges into
       }),
     }),
   );
-  expect(result.current.feedback.redeemToast).toMatchObject({
+  expect(rendered.result.current.feedback.redeemToast).toMatchObject({
     open: true,
     message: context.translations.subscriptionRedeemSuccessToast,
     closeLabel: context.translations.toastDismissLabel,
@@ -115,39 +127,28 @@ test("Given valid code When redeem resolves Then membership snapshot merges into
  *  - 若错误被吞掉或 setUser 被调用则测试失败。
  */
 test("Given redeem failure When onRedeem invoked Then error bubbles without user mutation", async () => {
-  const context = setupContext();
+  // Arrange
+  const { context, rendered } = renderSubscriptionScenario();
   const failure = new Error("invalid-code");
   context.redeemMock.mockRejectedValueOnce(failure);
 
-  const { result } = renderHook(() =>
-    usePreferenceSections({
-      initialSectionId: undefined,
-    }),
-  );
+  const subscriptionSection = await resolveSubscriptionSection(rendered.result);
 
-  await waitFor(() => {
-    expect(
-      result.current.sections.find((section) => section.id === "subscription"),
-    ).toBeDefined();
-  });
-
-  const subscriptionSection = result.current.sections.find(
-    (section) => section.id === "subscription",
-  );
-
+  // Act & Assert
   await act(async () => {
     await expect(
       subscriptionSection.componentProps.onRedeem("bad-code"),
     ).rejects.toThrow("invalid-code");
   });
 
+  // Assert
   expect(context.consoleErrorStub).toHaveBeenCalledWith(
     "Failed to redeem subscription code",
     failure,
   );
   expect(context.setUserMock).not.toHaveBeenCalled();
   await waitFor(() => {
-    expect(result.current.feedback.redeemToast).toMatchObject({
+    expect(rendered.result.current.feedback.redeemToast).toMatchObject({
       open: true,
       message: `${context.translations.subscriptionRedeemFailureToast} (invalid-code)`,
       closeLabel: context.translations.toastDismissLabel,
@@ -168,7 +169,8 @@ test("Given redeem failure When onRedeem invoked Then error bubbles without user
  *  - 若未来提供更细颗粒度的 tier 字段，应优先使用新字段。
  */
 test("Given member flag only When mapping subscription plan Then membership fallback resolves to paid plan", () => {
-  setupContext({
+  // Arrange
+  const { rendered } = renderSubscriptionScenario({
     user: {
       plan: undefined,
       isPro: undefined,
@@ -177,16 +179,12 @@ test("Given member flag only When mapping subscription plan Then membership fall
     },
   });
 
-  const { result } = renderHook(() =>
-    usePreferenceSections({
-      initialSectionId: undefined,
-    }),
-  );
-
-  const subscriptionSection = result.current.sections.find(
+  // Act
+  const subscriptionSection = rendered.result.current.sections.find(
     (section) => section.id === "subscription",
   );
 
+  // Assert
   expect(subscriptionSection).toBeDefined();
   expect(subscriptionSection.componentProps.defaultSelectedPlanId).toBe("PLUS");
   const plusCard = subscriptionSection.componentProps.planCards.find(

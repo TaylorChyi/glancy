@@ -23,6 +23,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -33,6 +35,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
   com.glancy.backend.config.auth.AuthenticatedUserArgumentResolver.class,
 })
 class SearchRecordControllerTest {
+
+  private static final String CREATE_PAYLOAD = "{\"term\":\"hello\",\"language\":\"ENGLISH\"}";
 
   @Autowired private MockMvc mockMvc;
 
@@ -46,27 +50,74 @@ class SearchRecordControllerTest {
   }
 
   @Test
-  void testCreate() throws Exception {
+  void whenCreatingRecord_thenStatusCreated() throws Exception {
+    performCreateRecord().andExpect(MockMvcResultMatchers.status().isCreated());
+  }
+
+  @Test
+  void whenCreatingRecord_thenResponseContainsId() throws Exception {
+    performCreateRecord().andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1));
+  }
+
+  @Test
+  void whenCreatingRecord_thenResponseContainsTerm() throws Exception {
+    performCreateRecord().andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hello"));
+  }
+
+  @Test
+  void whenCreatingRecord_thenVersionsArrayReturned() throws Exception {
+    performCreateRecord().andExpect(MockMvcResultMatchers.jsonPath("$.versions").isArray());
+  }
+
+  @Test
+  void whenListingRecords_thenStatusOk() throws Exception {
+    performListRecords().andExpect(MockMvcResultMatchers.status().isOk());
+  }
+
+  @Test
+  void whenListingRecords_thenResponseContainsId() throws Exception {
+    performListRecords().andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(1));
+  }
+
+  @Test
+  void whenListingRecords_thenResponseContainsTerm() throws Exception {
+    performListRecords().andExpect(MockMvcResultMatchers.jsonPath("$[0].term").value("hello"));
+  }
+
+  @Test
+  void whenListingRecords_thenVersionsArrayReturned() throws Exception {
+    performListRecords().andExpect(MockMvcResultMatchers.jsonPath("$[0].versions").isArray());
+  }
+
+  @Test
+  void whenListingRecords_thenRequestsFirstPage() throws Exception {
+    performListRecords();
+    verify(searchRecordService).getRecords(eq(1L), eq(SearchRecordPageRequest.firstPage()));
+  }
+
+  /** 模拟自定义分页参数请求，断言服务层收到归一化后的 page 与 size。 */
+  @Test
+  void whenListingWithPagination_thenStatusOk() throws Exception {
+    performListRecordsWithPagination(2, 50)
+        .andExpect(MockMvcResultMatchers.status().isOk());
+  }
+
+  @Test
+  void whenListingWithPagination_thenRequestsProvidedPage() throws Exception {
+    performListRecordsWithPagination(2, 50);
+    verify(searchRecordService).getRecords(eq(1L), eq(new SearchRecordPageRequest(2, 50)));
+  }
+
+  private ResultActions performCreateRecord() throws Exception {
     LocalDateTime createdAt = LocalDateTime.now();
     SearchRecordVersionSummary version = version(2L, 1, createdAt, "gpt-4", "preview");
     when(searchRecordService.saveRecord(any(Long.class), any(SearchRecordRequest.class)))
         .thenReturn(response(createdAt, false, version, List.of(version)));
 
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.post("/api/search-records/user")
-                .header("X-USER-TOKEN", "tkn")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"term\":\"hello\",\"language\":\"ENGLISH\"}"))
-        .andExpect(MockMvcResultMatchers.status().isCreated())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
-        .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hello"))
-        .andExpect(MockMvcResultMatchers.jsonPath("$.versions").isArray());
+    return mockMvc.perform(postRecordRequest().withBody(CREATE_PAYLOAD).build());
   }
 
-  /** 模拟认证成功后获取历史列表，断言列表项携带最新版本与完整版本数组并保持成功状态。 */
-  @Test
-  void testList() throws Exception {
+  private ResultActions performListRecords() throws Exception {
     LocalDateTime createdAt = LocalDateTime.now();
     SearchRecordVersionSummary latestVersion = version(3L, 2, createdAt, "gpt-4", "preview");
     SearchRecordVersionSummary previousVersion =
@@ -75,31 +126,21 @@ class SearchRecordControllerTest {
         .thenReturn(
             List.of(
                 response(createdAt, true, latestVersion, List.of(previousVersion, latestVersion))));
-
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.get("/api/search-records/user").header("X-USER-TOKEN", "tkn"))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$[0].id").value(1))
-        .andExpect(MockMvcResultMatchers.jsonPath("$[0].term").value("hello"))
-        .andExpect(MockMvcResultMatchers.jsonPath("$[0].versions").isArray());
-
-    verify(searchRecordService).getRecords(eq(1L), eq(SearchRecordPageRequest.firstPage()));
+    return mockMvc.perform(listRecordRequest().build());
   }
 
-  /** 模拟自定义分页参数请求，断言服务层收到归一化后的 page 与 size。 */
-  @Test
-  void testListWithPagination() throws Exception {
+  private ResultActions performListRecordsWithPagination(int page, int size) throws Exception {
     when(searchRecordService.getRecords(eq(1L), any(SearchRecordPageRequest.class)))
         .thenReturn(List.of());
+    return mockMvc.perform(listRecordRequest().withPage(page).withSize(size).build());
+  }
 
-    mockMvc
-        .perform(
-            MockMvcRequestBuilders.get("/api/search-records/user?page=2&size=50")
-                .header("X-USER-TOKEN", "tkn"))
-        .andExpect(MockMvcResultMatchers.status().isOk());
+  private SearchRecordRequestBuilder postRecordRequest() {
+    return SearchRecordRequestBuilder.postUserRecord();
+  }
 
-    verify(searchRecordService).getRecords(eq(1L), eq(new SearchRecordPageRequest(2, 50)));
+  private SearchRecordRequestBuilder listRecordRequest() {
+    return SearchRecordRequestBuilder.getUserRecords();
   }
 
   private SearchRecordVersionSummary version(
@@ -123,5 +164,43 @@ class SearchRecordControllerTest {
         pinned,
         latest,
         versions);
+  }
+
+  private static final class SearchRecordRequestBuilder {
+    private final MockHttpServletRequestBuilder delegate;
+
+    private SearchRecordRequestBuilder(MockHttpServletRequestBuilder delegate) {
+      this.delegate = delegate.header("X-USER-TOKEN", "tkn");
+    }
+
+    static SearchRecordRequestBuilder postUserRecord() {
+      return new SearchRecordRequestBuilder(
+          MockMvcRequestBuilders.post("/api/search-records/user")
+              .contentType(MediaType.APPLICATION_JSON));
+    }
+
+    static SearchRecordRequestBuilder getUserRecords() {
+      return new SearchRecordRequestBuilder(
+          MockMvcRequestBuilders.get("/api/search-records/user"));
+    }
+
+    SearchRecordRequestBuilder withBody(String body) {
+      delegate.content(body);
+      return this;
+    }
+
+    SearchRecordRequestBuilder withPage(int page) {
+      delegate.param("page", Integer.toString(page));
+      return this;
+    }
+
+    SearchRecordRequestBuilder withSize(int size) {
+      delegate.param("size", Integer.toString(size));
+      return this;
+    }
+
+    MockHttpServletRequestBuilder build() {
+      return delegate;
+    }
   }
 }

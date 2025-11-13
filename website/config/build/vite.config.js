@@ -1,8 +1,9 @@
 import { fileURLToPath } from "node:url";
-import path from "node:path";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { MODULE_ALIASES, PATHS } from "../shared/projectPaths.js";
+import { PURE_CONSOLE_FNS } from "./consolePurity.js";
+import { buildAssetFileNames } from "./assetNaming.js";
 
 /**
  * 意图：将共享别名映射转换为 Vite 识别的配置结构。
@@ -21,8 +22,6 @@ const DEFAULT_PORTS = Object.freeze({
 });
 
 const booleanFlags = new Set(["true", "1", "yes"]);
-
-const normalisePath = (value) => value.split(path.sep).join(path.posix.sep);
 
 /**
  * 意图：解析环境变量端口并提供兜底值。
@@ -78,12 +77,12 @@ const createBuildConfig = (env) => ({
   emptyOutDir: true,
   sourcemap: booleanFlags.has(env.VITE_BUILD_SOURCEMAP),
   rollupOptions: {
-    output: {
-      chunkFileNames: normalisePath("assets/[name]-[hash].js"),
-      entryFileNames: normalisePath("assets/[name]-[hash].js"),
-      assetFileNames: normalisePath("assets/[name]-[hash][extname]"),
-    },
+    output: buildAssetFileNames(),
   },
+});
+
+const createEsbuildConfig = () => ({
+  pure: PURE_CONSOLE_FNS,
 });
 
 /**
@@ -104,21 +103,37 @@ const createDefineConfig = (env) => ({
   ),
 });
 
+const createBaseConfig = (env) => ({
+  root: PATHS.projectRoot,
+  plugins: createPlugins(),
+  resolve: {
+    alias: aliasEntries,
+  },
+  define: createDefineConfig(env),
+  envPrefix: "VITE_",
+  css: {
+    postcss: fileURLToPath(new URL("./postcss.config.js", import.meta.url)),
+  },
+});
+
+const createDevelopmentConfig = (env) => ({
+  server: createServerConfig(env),
+  preview: createPreviewConfig(env),
+});
+
+const createProductionConfig = (env) => ({
+  ...createDevelopmentConfig(env),
+  build: createBuildConfig(env),
+  esbuild: createEsbuildConfig(),
+});
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, PATHS.projectRoot, ["VITE_"]);
+  const baseConfig = createBaseConfig(env);
+  const modeConfig =
+    mode === "production" ? createProductionConfig(env) : createDevelopmentConfig(env);
   return {
-    root: PATHS.projectRoot,
-    plugins: createPlugins(),
-    resolve: {
-      alias: aliasEntries,
-    },
-    server: createServerConfig(env),
-    preview: createPreviewConfig(env),
-    build: createBuildConfig(env),
-    define: createDefineConfig(env),
-    envPrefix: "VITE_",
-    css: {
-      postcss: fileURLToPath(new URL("./postcss.config.js", import.meta.url)),
-    },
+    ...baseConfig,
+    ...modeConfig,
   };
 });

@@ -10,6 +10,7 @@ import com.glancy.backend.service.UserService;
 import com.glancy.backend.service.WordService;
 import com.glancy.backend.service.word.WordSearchOptions;
 import java.util.List;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -20,6 +21,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(WordController.class)
@@ -43,22 +46,14 @@ class WordControllerTest {
 
   @Test
   void testGetWord() throws Exception {
-    WordResponse resp = response("1", "hello");
-    Mockito.when(
-            wordService.findWordForUser(
-                ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq(
-                    WordSearchOptions.of(
-                        "hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true))))
-        .thenReturn(resp);
-
-    mockMvc
-        .perform(
-            get("/api/words")
-                .header("X-USER-TOKEN", "tkn")
-                .param("term", "hello")
-                .param("language", "ENGLISH")
-                .accept(MediaType.APPLICATION_JSON))
+    performWordLookup(
+            defaultOptions("hello"),
+            response("1", "hello"),
+            builder ->
+                builder
+                    .withHeaderToken("tkn")
+                    .withTerm("hello")
+                    .withLanguage(Language.ENGLISH))
         .andDo(print())
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"))
@@ -68,28 +63,21 @@ class WordControllerTest {
   /** 测试携带模型参数时接口正常工作 */
   @Test
   void testGetWordWithModel() throws Exception {
-    WordResponse resp = response("1", "hello");
-    Mockito.when(
-            wordService.findWordForUser(
-                ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq(
-                    WordSearchOptions.of(
-                        "hello",
-                        Language.ENGLISH,
-                        DictionaryFlavor.BILINGUAL,
-                        "doubao",
-                        false,
-                        true))))
-        .thenReturn(resp);
-
-    mockMvc
-        .perform(
-            get("/api/words")
-                .header("X-USER-TOKEN", "tkn")
-                .param("term", "hello")
-                .param("language", "ENGLISH")
-                .param("model", "doubao")
-                .accept(MediaType.APPLICATION_JSON))
+    performWordLookup(
+            WordSearchOptions.of(
+                "hello",
+                Language.ENGLISH,
+                DictionaryFlavor.BILINGUAL,
+                "doubao",
+                false,
+                true),
+            response("1", "hello"),
+            builder ->
+                builder
+                    .withHeaderToken("tkn")
+                    .withTerm("hello")
+                    .withLanguage(Language.ENGLISH)
+                    .withModel("doubao"))
         .andDo(print())
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
@@ -99,7 +87,11 @@ class WordControllerTest {
   @Test
   void testGetWordMissingTerm() throws Exception {
     mockMvc
-        .perform(get("/api/words").header("X-USER-TOKEN", "tkn").param("language", "ENGLISH"))
+        .perform(
+            wordRequest()
+                .withHeaderToken("tkn")
+                .withLanguage(Language.ENGLISH)
+                .build())
         .andDo(print())
         .andExpect(MockMvcResultMatchers.status().isBadRequest())
         .andExpect(
@@ -111,10 +103,11 @@ class WordControllerTest {
   void testGetWordInvalidLanguage() throws Exception {
     mockMvc
         .perform(
-            get("/api/words")
-                .header("X-USER-TOKEN", "tkn")
-                .param("term", "hello")
-                .param("language", "INVALID"))
+            wordRequest()
+                .withHeaderToken("tkn")
+                .withTerm("hello")
+                .withLanguageValue("INVALID")
+                .build())
         .andDo(print())
         .andExpect(MockMvcResultMatchers.status().isBadRequest())
         .andExpect(
@@ -124,49 +117,79 @@ class WordControllerTest {
 
   /** Test access with token query parameter. */
   @Test
-  void testGetWordTokenQueryParam() throws Exception {
-    WordResponse resp = response("1", "hi");
-    Mockito.when(
-            wordService.findWordForUser(
-                ArgumentMatchers.eq(1L),
-                ArgumentMatchers.eq(
-                    WordSearchOptions.of(
-                        "hi", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, true))))
-        .thenReturn(resp);
+  void whenTokenProvidedViaQueryParam_thenStatusIsOk() throws Exception {
+    performQueryTokenLookup().andExpect(MockMvcResultMatchers.status().isOk());
+  }
 
-    mockMvc
-        .perform(
-            get("/api/words")
-                .param("token", "tkn")
-                .param("term", "hi")
-                .param("language", "ENGLISH")
-                .accept(MediaType.APPLICATION_JSON))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hi"));
+  @Test
+  void whenTokenProvidedViaQueryParam_thenTermEchoesResponse() throws Exception {
+    performQueryTokenLookup().andExpect(MockMvcResultMatchers.jsonPath("$.term").value("hi"));
   }
 
   /** 验证 captureHistory=false 时会禁用历史记录采集。 */
   @Test
-  void testGetWordWithCaptureHistoryDisabled() throws Exception {
-    WordResponse resp = response("1", "hello");
-    WordSearchOptions options =
-        WordSearchOptions.of(
-            "hello", Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, false);
-    Mockito.when(wordService.findWordForUser(ArgumentMatchers.eq(1L), ArgumentMatchers.eq(options)))
-        .thenReturn(resp);
-
-    mockMvc
-        .perform(
-            get("/api/words")
-                .header("X-USER-TOKEN", "tkn")
-                .param("term", "hello")
-                .param("language", "ENGLISH")
-                .param("captureHistory", "false")
-                .accept(MediaType.APPLICATION_JSON))
+  void whenCaptureHistoryDisabled_thenStatusIsOk() throws Exception {
+    WordSearchOptions options = captureHistoryOptions("hello", false);
+    performCaptureHistoryDisabledLookup(options)
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").value("1"));
-    Mockito.verify(wordService, Mockito.times(1))
+  }
+
+  @Test
+  void whenCaptureHistoryDisabled_thenHistoryFlagFalse() throws Exception {
+    WordSearchOptions options = captureHistoryOptions("hello", false);
+    performCaptureHistoryDisabledLookup(options);
+    Mockito.verify(wordService)
         .findWordForUser(ArgumentMatchers.eq(1L), ArgumentMatchers.eq(options));
+  }
+
+  private ResultActions performQueryTokenLookup() throws Exception {
+    return performWordLookup(
+        defaultOptions("hi"),
+        response("1", "hi"),
+        builder ->
+            builder
+                .withQueryToken("tkn")
+                .withTerm("hi")
+                .withLanguage(Language.ENGLISH));
+  }
+  private ResultActions performCaptureHistoryDisabledLookup(WordSearchOptions options)
+      throws Exception {
+    return performWordLookup(
+        options,
+        response("1", "hello"),
+        builder ->
+            builder
+                .withHeaderToken("tkn")
+                .withTerm("hello")
+                .withLanguage(Language.ENGLISH)
+                .withCaptureHistory(false));
+  }
+  private ResultActions performWordLookup(
+      WordSearchOptions expectedOptions,
+      WordResponse resp,
+      Consumer<WordRequestBuilder> customizer)
+      throws Exception {
+    Mockito.when(
+            wordService.findWordForUser(
+                ArgumentMatchers.eq(1L), ArgumentMatchers.eq(expectedOptions)))
+        .thenReturn(resp);
+    WordRequestBuilder builder = wordRequest();
+    customizer.accept(builder);
+    return mockMvc.perform(builder.build());
+  }
+
+  private WordSearchOptions defaultOptions(String term) {
+    return captureHistoryOptions(term, true);
+  }
+
+  private WordSearchOptions captureHistoryOptions(String term, boolean captureHistory) {
+    return WordSearchOptions.of(
+        term, Language.ENGLISH, DictionaryFlavor.BILINGUAL, null, false, captureHistory);
+  }
+
+  private WordRequestBuilder wordRequest() {
+    return new WordRequestBuilder();
   }
 
   private WordResponse response(String id, String term) {
@@ -186,5 +209,42 @@ class WordControllerTest {
         null,
         null,
         DictionaryFlavor.BILINGUAL);
+  }
+
+  private static final class WordRequestBuilder {
+    private final MockHttpServletRequestBuilder delegate;
+    private WordRequestBuilder() {
+      this.delegate = get("/api/words").accept(MediaType.APPLICATION_JSON);
+    }
+    private WordRequestBuilder withHeaderToken(String token) {
+      delegate.header("X-USER-TOKEN", token);
+      return this;
+    }
+    private WordRequestBuilder withQueryToken(String token) {
+      delegate.param("token", token);
+      return this;
+    }
+    private WordRequestBuilder withTerm(String term) {
+      delegate.param("term", term);
+      return this;
+    }
+    private WordRequestBuilder withLanguage(Language language) {
+      return withLanguageValue(language.name());
+    }
+    private WordRequestBuilder withLanguageValue(String language) {
+      delegate.param("language", language);
+      return this;
+    }
+    private WordRequestBuilder withModel(String model) {
+      delegate.param("model", model);
+      return this;
+    }
+    private WordRequestBuilder withCaptureHistory(boolean captureHistory) {
+      delegate.param("captureHistory", Boolean.toString(captureHistory));
+      return this;
+    }
+    private MockHttpServletRequestBuilder build() {
+      return delegate;
+    }
   }
 }
