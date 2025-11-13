@@ -14,9 +14,8 @@ function AvatarEditorModalView({ labels, viewport, controls }) {
         imageRef={viewport.imageRef}
         source={viewport.source}
         imageTransform={viewport.imageTransform}
-        pointerHandlers={viewport.pointerHandlers}
+        interactions={viewport.interactions}
         onImageLoad={viewport.onImageLoad}
-        title={labels.title}
       />
       <EditorControls zoom={controls.zoom} actions={controls.actions} labels={labels} />
     </Modal>
@@ -37,10 +36,13 @@ AvatarEditorModalView.propTypes = {
     imageRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
     source: PropTypes.string.isRequired,
     imageTransform: PropTypes.string.isRequired,
-    pointerHandlers: PropTypes.shape({
-      onPointerDown: PropTypes.func.isRequired,
-      onPointerMove: PropTypes.func.isRequired,
-      onPointerUp: PropTypes.func.isRequired,
+    interactions: PropTypes.shape({
+      pointerHandlers: PropTypes.shape({
+        onPointerDown: PropTypes.func.isRequired,
+        onPointerMove: PropTypes.func.isRequired,
+        onPointerUp: PropTypes.func.isRequired,
+      }).isRequired,
+      label: PropTypes.string.isRequired,
     }).isRequired,
     onImageLoad: PropTypes.func.isRequired,
   }).isRequired,
