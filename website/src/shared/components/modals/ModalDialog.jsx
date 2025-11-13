@@ -1,9 +1,10 @@
 import PropTypes from "prop-types";
-import ModalDialog from "./ModalDialog.jsx";
-import ModalOverlay from "./ModalOverlay.jsx";
 
-function ModalContent({
-  onClose,
+import { withStopPropagation } from "@shared/utils/stopPropagation.js";
+
+import ModalCloseControl from "./ModalCloseControl.jsx";
+
+function ModalDialog({
   contentClassName,
   ariaLabelledBy,
   ariaDescribedBy,
@@ -11,28 +12,32 @@ function ModalContent({
   closeButton,
   shouldRenderDefaultCloseButton,
   closeLabel,
+  onClose,
   children,
 }) {
   return (
-    <ModalOverlay onClose={onClose}>
-      <ModalDialog
-        contentClassName={contentClassName}
-        ariaLabelledBy={ariaLabelledBy}
-        ariaDescribedBy={ariaDescribedBy}
-        contentRef={contentRef}
+    <div
+      className={contentClassName}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
+      tabIndex={-1}
+      ref={contentRef}
+      onClick={withStopPropagation()}
+    >
+      <ModalCloseControl
         closeButton={closeButton}
         shouldRenderDefaultCloseButton={shouldRenderDefaultCloseButton}
         closeLabel={closeLabel}
         onClose={onClose}
-      >
-        {children}
-      </ModalDialog>
-    </ModalOverlay>
+      />
+      {children}
+    </div>
   );
 }
 
-ModalContent.propTypes = {
-  onClose: PropTypes.func.isRequired,
+ModalDialog.propTypes = {
   contentClassName: PropTypes.string.isRequired,
   ariaLabelledBy: PropTypes.string,
   ariaDescribedBy: PropTypes.string,
@@ -40,13 +45,14 @@ ModalContent.propTypes = {
   closeButton: PropTypes.node,
   shouldRenderDefaultCloseButton: PropTypes.bool.isRequired,
   closeLabel: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
   children: PropTypes.node.isRequired,
 };
 
-ModalContent.defaultProps = {
+ModalDialog.defaultProps = {
   ariaLabelledBy: undefined,
   ariaDescribedBy: undefined,
   closeButton: null,
 };
 
-export default ModalContent;
+export default ModalDialog;

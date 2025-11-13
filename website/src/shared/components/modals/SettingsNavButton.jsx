@@ -1,6 +1,14 @@
 import PropTypes from "prop-types";
 import SettingsNavIcon from "./SettingsNavIcon.jsx";
 
+const isSectionDisabled = (section) => Boolean(section.disabled);
+
+const createClickHandler = (section, onSelect) => () => {
+  if (!isSectionDisabled(section)) {
+    onSelect(section);
+  }
+};
+
 function SettingsNavButton({
   section,
   isActive,
@@ -12,6 +20,8 @@ function SettingsNavButton({
   const tabId = `${section.id}-tab`;
   const panelId = `${section.id}-panel`;
   const hideLabelText = isHorizontalLayout && Boolean(section.icon?.name);
+  const disabled = isSectionDisabled(section);
+  const handleClick = createClickHandler(section, onSelect);
 
   return (
     <button
@@ -21,15 +31,11 @@ function SettingsNavButton({
       aria-controls={panelId}
       aria-selected={isActive}
       tabIndex={isActive ? 0 : -1}
-      disabled={section.disabled}
+      disabled={disabled}
       className={classNames.button}
       data-state={isActive ? "active" : "inactive"}
       aria-label={hideLabelText ? formattedLabel : undefined}
-      onClick={() => {
-        if (!section.disabled) {
-          onSelect(section);
-        }
-      }}
+      onClick={handleClick}
     >
       <span className={classNames.label}>
         <SettingsNavIcon
