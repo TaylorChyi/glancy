@@ -1,6 +1,42 @@
 import { useCallback } from "react";
 import { sanitizeAccount } from "./authFormPrimitives.js";
 
+const sanitizeAccountValue = (account) => sanitizeAccount(account);
+
+const shouldSyncSanitizedAccount = (account, sanitizedAccount) =>
+  sanitizedAccount !== account;
+
+const isAccountValid = (account, method, validateAccount) =>
+  typeof validateAccount === "function" && validateAccount(account, method);
+
+const getInvalidAccountMessage = (t) => t.invalidAccount || "Invalid account";
+
+const getUnavailableCodeMessage = (t) =>
+  t.codeRequestInvalidMethod ||
+  t.notImplementedYet ||
+  "Verification code request is unavailable";
+
+const getCodeRequestSuccessMessage = (t) =>
+  t.codeRequestSuccess ||
+  "Verification code sent. Please check your inbox.";
+
+const getCodeRequestErrorMessage = (error, t) =>
+  (typeof error?.message === "string" && error.message.trim()) ||
+  t.codeRequestFailed ||
+  "Failed to send verification code";
+
+const getSubmitErrorMessage = (error, t) =>
+  (typeof error?.message === "string" && error.message.trim()) ||
+  t.genericRequestFailed ||
+  "Request failed";
+
+const resetFeedbackChannels = (showPopup, showToast) => {
+  showPopup("");
+  if (typeof showToast === "function") {
+    showToast("");
+  }
+};
+
 const useCodeRequestHandler = ({
   account,
   method,
@@ -12,42 +48,30 @@ const useCodeRequestHandler = ({
   validateAccount,
 }) =>
   useCallback(async () => {
-    const sanitizedAccount = sanitizeAccount(account);
+    const sanitizedAccount = sanitizeAccountValue(account);
 
-    if (sanitizedAccount !== account) {
+    if (shouldSyncSanitizedAccount(account, sanitizedAccount)) {
       setAccount(sanitizedAccount);
     }
 
-    if (!validateAccount(sanitizedAccount, method)) {
-      showPopup(t.invalidAccount || "Invalid account");
+    if (!isAccountValid(sanitizedAccount, method, validateAccount)) {
+      showPopup(getInvalidAccountMessage(t));
       return false;
     }
 
     if (typeof onRequestCode !== "function") {
-      const fallbackMessage =
-        t.codeRequestInvalidMethod ||
-        t.notImplementedYet ||
-        "Verification code request is unavailable";
-      showPopup(fallbackMessage);
+      showPopup(getUnavailableCodeMessage(t));
       return false;
     }
 
-    showPopup("");
-    showToast("");
+    resetFeedbackChannels(showPopup, showToast);
 
     try {
       await onRequestCode({ account: sanitizedAccount, method });
-      const successMessage =
-        t.codeRequestSuccess ||
-        "Verification code sent. Please check your inbox.";
-      showToast(successMessage);
+      showToast(getCodeRequestSuccessMessage(t));
       return true;
-    } catch (err) {
-      const errorMessage =
-        (typeof err?.message === "string" && err.message.trim()) ||
-        t.codeRequestFailed ||
-        "Failed to send verification code";
-      showPopup(errorMessage);
+    } catch (error) {
+      showPopup(getCodeRequestErrorMessage(error, t));
       return false;
     }
   }, [
@@ -74,18 +98,14 @@ const useSubmitHandler = ({
     async (event) => {
       event.preventDefault();
       showPopup("");
-      if (!validateAccount(account, method)) {
-        showPopup(t.invalidAccount || "Invalid account");
+      if (!isAccountValid(account, method, validateAccount)) {
+        showPopup(getInvalidAccountMessage(t));
         return;
       }
       try {
         await onSubmit({ account, password, method });
-      } catch (err) {
-        const fallbackMessage =
-          (typeof err?.message === "string" && err.message.trim()) ||
-          t.genericRequestFailed ||
-          "Request failed";
-        showPopup(fallbackMessage);
+      } catch (error) {
+        showPopup(getSubmitErrorMessage(error, t));
       }
     },
     [account, method, onSubmit, password, showPopup, t, validateAccount],
@@ -142,6 +162,15 @@ const composeControllerModel = ({
 
 export {
   composeControllerModel,
+  getCodeRequestErrorMessage,
+  getCodeRequestSuccessMessage,
+  getInvalidAccountMessage,
+  getSubmitErrorMessage,
+  getUnavailableCodeMessage,
+  isAccountValid,
+  resetFeedbackChannels,
+  sanitizeAccountValue,
+  shouldSyncSanitizedAccount,
   useCodeRequestHandler,
   useSubmitHandler,
   useUnavailableMethodHandler,
