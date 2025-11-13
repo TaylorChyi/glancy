@@ -5,39 +5,51 @@ import { useCookieConsentStore } from "@core/store";
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 
+const useCookieGate = () =>
+  useCookieConsentStore((state) => ({
+    hasLoginCookie: state.hasLoginCookie,
+    requireCookieAccess: state.requireCookieAccess,
+    synchronizeLoginCookie: state.synchronizeLoginCookie,
+  }));
+
+const resolveRedirectTarget = ({
+  user,
+  pathname,
+  hasLoginCookie,
+  requireCookieAccess,
+  synchronizeLoginCookie,
+}) => {
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+
+  if (!user && !isPublicRoute) {
+    const shouldRedirectToLogin =
+      (requireCookieAccess() && synchronizeLoginCookie()) || hasLoginCookie;
+    return shouldRedirectToLogin ? "/login" : "/register";
+  }
+
+  if (user && isPublicRoute) {
+    return "/";
+  }
+
+  return null;
+};
+
 function AuthWatcher() {
   const { user } = useUser();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const requireCookieAccess = useCookieConsentStore(
-    (state) => state.requireCookieAccess,
-  );
-  const synchronizeLoginCookie = useCookieConsentStore(
-    (state) => state.synchronizeLoginCookie,
-  );
-  const hasLoginCookie = useCookieConsentStore((state) => state.hasLoginCookie);
+  const { hasLoginCookie, requireCookieAccess, synchronizeLoginCookie } =
+    useCookieGate();
 
   useEffect(() => {
-    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-
-    if (!user && !isPublicRoute) {
-      let shouldRedirectToLogin = false;
-      if (requireCookieAccess()) {
-        shouldRedirectToLogin = synchronizeLoginCookie();
-      } else {
-        shouldRedirectToLogin = false;
-      }
-      if (shouldRedirectToLogin || hasLoginCookie) {
-        navigate("/login", { replace: true });
-      } else {
-        navigate("/register", { replace: true });
-      }
-      return;
-    }
-
-    if (user && isPublicRoute) {
-      navigate("/", { replace: true });
-    }
+    const target = resolveRedirectTarget({
+      user,
+      pathname,
+      hasLoginCookie,
+      requireCookieAccess,
+      synchronizeLoginCookie,
+    });
+    if (target) navigate(target, { replace: true });
   }, [
     user,
     pathname,
