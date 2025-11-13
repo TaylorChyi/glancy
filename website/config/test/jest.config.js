@@ -10,9 +10,11 @@ const mapAlias = (aliasKey) => `${normalise(MODULE_ALIASES[aliasKey])}/$1`;
  * 便于 Jest 根据 moduleFileExtensions 自动补全 .ts/.js。
  */
 const mapAliasWithoutExtension = (aliasKey) => mapAlias(aliasKey);
+const shouldCollectCoverage = process.env.COLLECT_COVERAGE !== "false";
 
 export default {
   testEnvironment: "jsdom",
+  testPathIgnorePatterns: ["/node_modules/", "/__tests__/helpers/"],
   moduleNameMapper: {
     "^@shared/api/index.js$": `${mocksDir}/apiIndexMock.cjs`,
     "^@assets/(.*)\\.svg\\?raw$": `${mocksDir}/rawSvgMock.cjs`,
@@ -55,7 +57,7 @@ export default {
     ],
   },
   setupFilesAfterEnv: ["@testing-library/jest-dom"],
-  collectCoverage: true,
+  collectCoverage: shouldCollectCoverage,
   collectCoverageFrom: ["src/**/*.{js,jsx,ts,tsx}", "!src/**/generated/**"],
   coverageDirectory: "coverage/unit",
   coveragePathIgnorePatterns: [
@@ -66,18 +68,20 @@ export default {
     "/generated/",
   ],
   coverageReporters: ["text-summary", "lcov"],
-  coverageThreshold: {
-    global: {
-      statements: 0.7,
-      lines: 0.7,
-      branches: 0.7,
-      functions: 0.7,
-    },
-    "./src/app/pages/auth/": {
-      statements: 0.85,
-      lines: 0.85,
-      branches: 0.85,
-      functions: 0.85,
-    },
-  },
+  coverageThreshold: shouldCollectCoverage
+    ? {
+        global: {
+          statements: 0.7,
+          lines: 0.7,
+          branches: 0.7,
+          functions: 0.7,
+        },
+        "./src/app/pages/auth/": {
+          statements: 0.85,
+          lines: 0.85,
+          branches: 0.85,
+          functions: 0.85,
+        },
+      }
+    : undefined,
 };
