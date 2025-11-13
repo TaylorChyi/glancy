@@ -90,10 +90,12 @@ public class EmailVerificationInfrastructureProperties {
     private void validateArcChain() {
         final String ARC_SEAL_ENABLED_MESSAGE = " must be configured when arcSealEnabled=true";
 
-        requireText(arcAuthenticationResults, 
-        "mail.verification.infrastructure.arc-authentication-results" + ARC_SEAL_ENABLED_MESSAGE);
-        requireText(arcMessageSignature,
-        "mail.verification.infrastructure.arc-message-signature" + ARC_SEAL_ENABLED_MESSAGE);
+        requireText(
+                arcAuthenticationResults,
+                "mail.verification.infrastructure.arc-authentication-results" + ARC_SEAL_ENABLED_MESSAGE);
+        requireText(
+                arcMessageSignature,
+                "mail.verification.infrastructure.arc-message-signature" + ARC_SEAL_ENABLED_MESSAGE);
         requireText(arcSeal, "mail.verification.infrastructure.arc-seal" + ARC_SEAL_ENABLED_MESSAGE);
     }
 

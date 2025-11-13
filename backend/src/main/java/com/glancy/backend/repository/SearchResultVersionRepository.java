@@ -22,8 +22,7 @@ public interface SearchResultVersionRepository extends JpaRepository<SearchResul
             Collection<Long> recordIds);
 
     @Modifying(clearAutomatically = true)
-    @Query(
-            "update SearchResultVersion v set v.deleted = true "
+    @Query("update SearchResultVersion v set v.deleted = true "
             + "where v.searchRecord.id = :recordId and v.deleted = false")
     int softDeleteBySearchRecordId(Long recordId);
 
