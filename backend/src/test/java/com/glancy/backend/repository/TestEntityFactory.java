@@ -50,6 +50,9 @@ final class TestEntityFactory {
     word.setLanguage(language);
     word.setFlavor(DictionaryFlavor.BILINGUAL);
     word.setDefinitions(Collections.singletonList("def"));
+    LocalDateTime now = LocalDateTime.now();
+    word.setCreatedAt(now);
+    word.setUpdatedAt(now);
     return word;
   }
 
@@ -67,6 +70,9 @@ final class TestEntityFactory {
     msg.setName(name);
     msg.setEmail(name + "@example.com");
     msg.setMessage("hello");
+    LocalDateTime now = LocalDateTime.now();
+    msg.setCreatedAt(now);
+    msg.setUpdatedAt(now);
     return msg;
   }
 

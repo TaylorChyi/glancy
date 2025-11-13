@@ -59,11 +59,11 @@ class SearchRecordRepositoryTest {
 
   private SearchRecordFixture seedRecords() {
     User user = userRepository.save(TestEntityFactory.user(10));
-    SearchRecord term1 = persistRecord(user, "term1", LocalDateTime.now().minusDays(1), false);
-    SearchRecord term2 = persistRecord(user, "term-latest", LocalDateTime.now(), false);
-    SearchRecord deleted = persistRecord(user, "term3", LocalDateTime.now().minusHours(2), true);
-    SearchRecord latestTerm1 =
-        persistRecord(user, "term1", LocalDateTime.now().plusMinutes(1), false);
+    LocalDateTime now = LocalDateTime.now();
+    SearchRecord term1 = persistRecord(user, "term1", now.minusDays(3), false);
+    SearchRecord term2 = persistRecord(user, "term-latest", now, false);
+    SearchRecord deleted = persistRecord(user, "term3", now.minusHours(2), true);
+    SearchRecord latestTerm1 = persistRecord(user, "term1", now.minusDays(1), false);
     return new SearchRecordFixture(user, term1, term2, deleted, latestTerm1);
   }
 

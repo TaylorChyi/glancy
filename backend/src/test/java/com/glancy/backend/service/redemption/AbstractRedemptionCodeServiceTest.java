@@ -14,6 +14,7 @@ import com.glancy.backend.repository.RedemptionRecordRepository;
 import com.glancy.backend.repository.UserDiscountBenefitRepository;
 import com.glancy.backend.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.assertj.core.api.Assertions;
@@ -42,6 +43,8 @@ abstract class AbstractRedemptionCodeServiceTest {
   @Autowired protected UserRepository userRepository;
 
   @Autowired protected UserDiscountBenefitRepository userDiscountBenefitRepository;
+
+  @Autowired protected Clock clock;
 
   @BeforeEach
   void cleanRepositories() {
@@ -104,6 +107,10 @@ abstract class AbstractRedemptionCodeServiceTest {
         .isEqualByComparingTo(expectedPercentage);
     Assertions.assertThat(benefits.get(0).getValidFrom()).isEqualTo(validFrom);
     Assertions.assertThat(benefits.get(0).getValidUntil()).isEqualTo(validUntil);
+  }
+
+  protected LocalDateTime currentTime() {
+    return LocalDateTime.now(clock);
   }
 
   protected record MembershipCodeParams(

@@ -21,7 +21,7 @@ class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceT
   @Test
   void GivenMembershipCode_WhenRedeem_ThenExtendMembership() {
     User user = persistUser("member-user");
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = currentTime();
     RedemptionCodeCreateRequest createRequest =
         membershipCode(
             new MembershipCodeParams(
@@ -42,7 +42,7 @@ class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceT
   @Test
   void GivenQuotaExhausted_WhenRedeem_ThenThrow() {
     User user = persistUser("quota-user");
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = currentTime();
     RedemptionCodeCreateRequest createRequest =
         membershipCode(
             new MembershipCodeParams(
@@ -61,7 +61,7 @@ class RedemptionCodeServiceMembershipTest extends AbstractRedemptionCodeServiceT
   @Test
   void GivenLegacyCodeWithLowercase_WhenRedeem_ThenNormalizeAndPersistRecord() {
     User user = persistUser("legacy-user");
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = currentTime();
     RedemptionCode legacy = new RedemptionCode();
     legacy.setCode("legacy1");
     legacy.setRedeemableFrom(now.minusHours(2));

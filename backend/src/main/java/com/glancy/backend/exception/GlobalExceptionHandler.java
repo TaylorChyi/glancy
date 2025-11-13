@@ -11,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -88,6 +90,17 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class})
   public ResponseEntity<?> handleValidation(Exception ex) {
+    if (ex instanceof MethodArgumentNotValidException manve
+        && manve.getParameter() != null
+        && manve.getParameter().hasParameterAnnotation(ModelAttribute.class)) {
+      String fieldName =
+          manve.getBindingResult().getFieldError() != null
+              ? manve.getBindingResult().getFieldError().getField()
+              : "parameter";
+      log.error("Invalid model attribute parameter: {}", fieldName, ex);
+      String msg = "Invalid value for parameter: " + fieldName;
+      return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
+    }
     String msg = "请求参数不合法";
     log.error(msg, ex);
     return buildResponse(new ErrorResponse(msg), HttpStatus.UNPROCESSABLE_ENTITY);
@@ -129,6 +142,15 @@ public class GlobalExceptionHandler {
   public ResponseEntity<?> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
     log.error("Invalid parameter: {}", ex.getName());
     String msg = "Invalid value for parameter: " + ex.getName();
+    return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(BindException.class)
+  public ResponseEntity<?> handleBindException(BindException ex) {
+    String fieldName =
+        ex.getFieldError() != null ? ex.getFieldError().getField() : "request parameter";
+    log.error("Failed to bind request parameter: {}", fieldName, ex);
+    String msg = "Invalid value for parameter: " + fieldName;
     return buildResponse(new ErrorResponse(msg), HttpStatus.BAD_REQUEST);
   }
 

@@ -8,8 +8,9 @@ import com.glancy.backend.service.email.localization.VerificationEmailContentRes
 import com.glancy.backend.service.email.localization.model.LocalizedVerificationContent;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
+import jakarta.mail.internet.MimeMultipart;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -47,7 +48,7 @@ public class VerificationEmailComposer {
     setReplyTo(helper);
 
     LocalizedVerificationContent content = contentResolver.resolve(clientIp, code);
-    helper.setText(content.plainText(), content.htmlBody());
+    setBody(message, content);
     helper.setPriority(1);
 
     applyComplianceHeaders(message, purpose);
@@ -70,21 +71,18 @@ public class VerificationEmailComposer {
       displayName = properties.getCompliance().getCompanyName();
     }
     if (StringUtils.hasText(displayName)) {
-      try {
-        helper.setFrom(new InternetAddress(mailbox, displayName, StandardCharsets.UTF_8.name()));
-        return;
-      } catch (UnsupportedEncodingException ex) {
-        throw new MessagingException("Unable to encode sender personal name", ex);
-      }
+      helper.getMimeMessage().setHeader("From", displayName + " <" + mailbox + ">");
+    } else {
+      helper.setFrom(mailbox);
     }
-    helper.setFrom(mailbox);
   }
 
   private void setReplyTo(MimeMessageHelper helper) throws MessagingException {
     String replyTo = properties.getSender().getReplyTo();
-    if (StringUtils.hasText(replyTo)) {
-      helper.setReplyTo(replyTo);
+    if (!StringUtils.hasText(replyTo)) {
+      return;
     }
+    helper.getMimeMessage().setReplyTo(new InternetAddress[] {new InternetAddress(replyTo)});
   }
 
   private void applyComplianceHeaders(MimeMessage message, EmailVerificationPurpose purpose)
@@ -149,5 +147,17 @@ public class VerificationEmailComposer {
     }
     String entityRefId = entityRefIdPrefix + "-" + purpose.name().toLowerCase(Locale.ROOT);
     message.setHeader("X-Entity-Ref-ID", entityRefId);
+  }
+
+  private void setBody(MimeMessage message, LocalizedVerificationContent content)
+      throws MessagingException {
+    MimeMultipart multipart = new MimeMultipart("alternative");
+    MimeBodyPart plainPart = new MimeBodyPart();
+    plainPart.setText(content.plainText(), StandardCharsets.UTF_8.name());
+    multipart.addBodyPart(plainPart);
+    MimeBodyPart htmlPart = new MimeBodyPart();
+    htmlPart.setContent(content.htmlBody(), "text/html; charset=UTF-8");
+    multipart.addBodyPart(htmlPart);
+    message.setContent(multipart);
   }
 }

@@ -15,7 +15,7 @@ class RedemptionCodeServiceDiscountTest extends AbstractRedemptionCodeServiceTes
   @Test
   void GivenDiscountCode_WhenRedeem_ThenPersistBenefit() {
     User user = persistUser("discount-user");
-    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime now = currentTime();
     LocalDateTime discountFrom = now.minusHours(1);
     LocalDateTime discountUntil = now.plusDays(3);
     RedemptionCodeCreateRequest createRequest =
