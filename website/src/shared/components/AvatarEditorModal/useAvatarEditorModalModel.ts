@@ -9,6 +9,72 @@ type AvatarEditorModalInput = {
   isProcessing?: boolean;
 };
 
+type ControllerState = ReturnType<typeof useAvatarEditorController>;
+
+type BuildViewPropsInput = {
+  controller: ControllerState;
+  onCancel: () => void;
+  isProcessing: boolean;
+  source: string;
+};
+
+const buildPointerHandlers = (controller: ControllerState) => ({
+  onPointerDown: controller.handlePointerDown,
+  onPointerMove: controller.handlePointerMove,
+  onPointerUp: controller.handlePointerUp,
+});
+
+const buildViewportProps = ({
+  controller,
+  source,
+}: {
+  controller: ControllerState;
+  source: string;
+}) => ({
+  containerRef: controller.containerRef,
+  imageRef: controller.imageRef,
+  source,
+  imageTransform: controller.imageTransform,
+  interactions: {
+    pointerHandlers: buildPointerHandlers(controller),
+    label: controller.mergedLabels.title,
+  },
+  onImageLoad: controller.handleImageLoad,
+});
+
+const buildControlProps = ({
+  controller,
+  onCancel,
+  isProcessing,
+}: {
+  controller: ControllerState;
+  onCancel: () => void;
+  isProcessing: boolean;
+}) => ({
+  zoom: {
+    onZoomIn: controller.handleZoomIn,
+    onZoomOut: controller.handleZoomOut,
+    isZoomInDisabled: controller.isZoomInDisabled,
+    isZoomOutDisabled: controller.isZoomOutDisabled,
+  },
+  actions: {
+    onCancel,
+    onConfirm: controller.handleConfirm,
+    isProcessing,
+  },
+});
+
+const buildViewProps = ({
+  controller,
+  onCancel,
+  isProcessing,
+  source,
+}: BuildViewPropsInput) => ({
+  labels: controller.mergedLabels,
+  viewport: buildViewportProps({ controller, source }),
+  controls: buildControlProps({ controller, onCancel, isProcessing }),
+});
+
 export const useAvatarEditorModalModel = ({
   open,
   source = "",
@@ -24,56 +90,16 @@ export const useAvatarEditorModalModel = ({
     labels,
     isProcessing,
   });
-
-  const {
-    mergedLabels,
-    imageTransform,
-    imageRef,
-    containerRef,
-    isZoomInDisabled,
-    isZoomOutDisabled,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleZoomIn,
-    handleZoomOut,
-    handleConfirm,
-    handleImageLoad,
-  } = controller;
+  const viewProps = buildViewProps({
+    controller,
+    onCancel,
+    isProcessing,
+    source,
+  });
 
   return {
     isOpen: open,
-    viewProps: {
-      labels: mergedLabels,
-      viewport: {
-        containerRef,
-        imageRef,
-        source,
-        imageTransform,
-        interactions: {
-          pointerHandlers: {
-            onPointerDown: handlePointerDown,
-            onPointerMove: handlePointerMove,
-            onPointerUp: handlePointerUp,
-          },
-          label: mergedLabels.title,
-        },
-        onImageLoad: handleImageLoad,
-      },
-      controls: {
-        zoom: {
-          onZoomIn: handleZoomIn,
-          onZoomOut: handleZoomOut,
-          isZoomInDisabled,
-          isZoomOutDisabled,
-        },
-        actions: {
-          onCancel,
-          onConfirm: handleConfirm,
-          isProcessing,
-        },
-      },
-    },
+    viewProps,
   };
 };
 

@@ -1,4 +1,9 @@
 import { useEffect, useLayoutEffect } from "react";
+import {
+  ensurePositiveNumber,
+  hasPositiveDimensions,
+  isPositiveNumber,
+} from "./utils/viewportGuards.js";
 
 const useRecenterOnVisibility = ({ open, resetView, source }) => {
   useLayoutEffect(() => {
@@ -31,6 +36,12 @@ const useReadyRecenter = ({
     if (!open || !shouldRecenterRef.current) {
       return;
     }
+    if (!hasPositiveDimensions({
+      width: naturalSize.width,
+      height: naturalSize.height,
+    })) {
+      return;
+    }
     recenterViewport({
       naturalWidth: naturalSize.width,
       naturalHeight: naturalSize.height,
@@ -58,8 +69,8 @@ const useViewportResizeSync = ({ open, containerRef, setViewportSize }) => {
     }
 
     const updateSize = () => {
-      const nextSize = element.clientWidth;
-      if (!Number.isFinite(nextSize) || nextSize <= 0) {
+      const nextSize = ensurePositiveNumber(element.clientWidth, 0);
+      if (!isPositiveNumber(nextSize)) {
         return;
       }
       setViewportSize((previous) =>

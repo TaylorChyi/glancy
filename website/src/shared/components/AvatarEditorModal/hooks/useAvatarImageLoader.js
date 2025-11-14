@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { extractSvgIntrinsicSize } from "@shared/parsers/svgIntrinsicSize.js";
 import { DEFAULT_VIEWPORT_SIZE } from "../constants.js";
+import { hasPositiveDimensions, isPositiveNumber } from "./utils/viewportGuards.js";
 
 const applySize = ({
   size,
@@ -19,17 +20,6 @@ const applySize = ({
   }
 };
 
-const fetchSvgContent = async ({ source, controller }) => {
-  if (typeof fetch !== "function") {
-    return null;
-  }
-  const response = await fetch(source, { signal: controller.signal });
-  if (!response.ok) {
-    return null;
-  }
-  return response.text();
-};
-
 const applyFallbackSize = ({
   fallbackViewport,
   setNaturalSize,
@@ -45,6 +35,30 @@ const applyFallbackSize = ({
   });
 };
 
+const fetchSvgContent = async ({ source, controller }) => {
+  if (typeof fetch !== "function") {
+    return null;
+  }
+  const response = await fetch(source, { signal: controller.signal });
+  if (!response.ok) {
+    return null;
+  }
+  return response.text();
+};
+
+const resolveSvgSize = ({ svgText, fallbackViewport, viewportSize }) => {
+  const size = extractSvgIntrinsicSize(svgText);
+  const finalSize =
+    size && hasPositiveDimensions(size)
+      ? size
+      : { width: fallbackViewport, height: fallbackViewport };
+  const viewport = isPositiveNumber(viewportSize)
+    ? viewportSize
+    : fallbackViewport;
+
+  return { size: finalSize, viewport };
+};
+
 const applySvgResult = ({
   svgText,
   fallbackViewport,
@@ -53,13 +67,14 @@ const applySvgResult = ({
   shouldRecenterRef,
   recenterViewport,
 }) => {
-  const svgSize = extractSvgIntrinsicSize(svgText) ?? {
-    width: fallbackViewport,
-    height: fallbackViewport,
-  };
+  const { size, viewport } = resolveSvgSize({
+    svgText,
+    fallbackViewport,
+    viewportSize,
+  });
   applySize({
-    size: svgSize,
-    viewport: viewportSize || fallbackViewport,
+    size,
+    viewport,
     setNaturalSize,
     shouldRecenterRef,
     recenterViewport,
@@ -99,8 +114,94 @@ const handleSvgFetch = async ({
   });
 };
 
-const createLoadHandler =
-  ({
+const finalizeController = ({ fallbackSizeControllerRef, controller }) => {
+  if (fallbackSizeControllerRef.current === controller) {
+    fallbackSizeControllerRef.current = null;
+  }
+};
+
+const logAndFallback = ({
+  error,
+  fallbackViewport,
+  setNaturalSize,
+  shouldRecenterRef,
+  recenterViewport,
+}) => {
+  if (error.name !== "AbortError") {
+    console.error("avatar-editor-resolve-intrinsic-size", error);
+  }
+  applyFallbackSize({
+    fallbackViewport,
+    setNaturalSize,
+    shouldRecenterRef,
+    recenterViewport,
+  });
+};
+
+const resolveFallbackIntrinsicSize = async ({
+  source,
+  viewportSize,
+  fallbackSizeControllerRef,
+  latestSourceRef,
+  setNaturalSize,
+  shouldRecenterRef,
+  recenterViewport,
+}) => {
+  if (fallbackSizeControllerRef.current) {
+    fallbackSizeControllerRef.current.abort();
+  }
+
+  const controller = new AbortController();
+  fallbackSizeControllerRef.current = controller;
+  latestSourceRef.current = source;
+  const fallbackViewport = isPositiveNumber(viewportSize)
+    ? viewportSize
+    : DEFAULT_VIEWPORT_SIZE;
+
+  try {
+    await handleSvgFetch({
+      source,
+      controller,
+      fallbackViewport,
+      viewportSize,
+      latestSourceRef,
+      setNaturalSize,
+      shouldRecenterRef,
+      recenterViewport,
+    });
+  } catch (error) {
+    logAndFallback({
+      error,
+      fallbackViewport,
+      setNaturalSize,
+      shouldRecenterRef,
+      recenterViewport,
+    });
+  } finally {
+    finalizeController({ fallbackSizeControllerRef, controller });
+  }
+};
+
+const readIntrinsicSize = (event) => ({
+  width: event.currentTarget.naturalWidth,
+  height: event.currentTarget.naturalHeight,
+});
+
+const handleLoadFailure = async ({
+  source,
+  viewportSize,
+  fallbackSizeControllerRef,
+  latestSourceRef,
+  setNaturalSize,
+  shouldRecenterRef,
+  recenterViewport,
+}) => {
+  if (!source) {
+    setNaturalSize({ width: 0, height: 0 });
+    return;
+  }
+
+  await resolveFallbackIntrinsicSize({
     source,
     viewportSize,
     fallbackSizeControllerRef,
@@ -108,60 +209,56 @@ const createLoadHandler =
     setNaturalSize,
     shouldRecenterRef,
     recenterViewport,
-  }) =>
+  });
+};
+
+const handleLoadSuccess = ({
+  size,
+  viewportSize,
+  setNaturalSize,
+  shouldRecenterRef,
+  recenterViewport,
+}) => {
+  applySize({
+    size,
+    viewport: viewportSize,
+    setNaturalSize,
+    shouldRecenterRef,
+    recenterViewport,
+  });
+};
+
+const createLoadHandler = ({
+  source,
+  viewportSize,
+  fallbackSizeControllerRef,
+  latestSourceRef,
+  setNaturalSize,
+  shouldRecenterRef,
+  recenterViewport,
+}) =>
   async (event) => {
-    const { naturalWidth: width, naturalHeight: height } = event.currentTarget;
-    if (width > 0 && height > 0) {
-      applySize({
-        size: { width, height },
-        viewport: viewportSize,
-        setNaturalSize,
-        shouldRecenterRef,
-        recenterViewport,
-      });
-      return;
-    }
-
-    if (!source) {
-      setNaturalSize({ width: 0, height: 0 });
-      return;
-    }
-
-    if (fallbackSizeControllerRef.current) {
-      fallbackSizeControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    fallbackSizeControllerRef.current = controller;
-    latestSourceRef.current = source;
-    const fallbackViewport = viewportSize || DEFAULT_VIEWPORT_SIZE;
-
-    try {
-      await handleSvgFetch({
-        source,
-        controller,
-        fallbackViewport,
+    const size = readIntrinsicSize(event);
+    if (hasPositiveDimensions(size)) {
+      handleLoadSuccess({
+        size,
         viewportSize,
-        latestSourceRef,
         setNaturalSize,
         shouldRecenterRef,
         recenterViewport,
       });
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("avatar-editor-resolve-intrinsic-size", error);
-      }
-      applyFallbackSize({
-        fallbackViewport,
-        setNaturalSize,
-        shouldRecenterRef,
-        recenterViewport,
-      });
-    } finally {
-      if (fallbackSizeControllerRef.current === controller) {
-        fallbackSizeControllerRef.current = null;
-      }
+      return;
     }
+
+    await handleLoadFailure({
+      source,
+      viewportSize,
+      fallbackSizeControllerRef,
+      latestSourceRef,
+      setNaturalSize,
+      shouldRecenterRef,
+      recenterViewport,
+    });
   };
 
 const useAvatarImageLoader = ({
