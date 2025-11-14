@@ -29,98 +29,100 @@ function TestComponent({
   );
 }
 
+function renderScrollContainer(props) {
+  const renderResult = render(<TestComponent {...props} />);
+  const container = renderResult.getByTestId("scroll-container");
+
+  return { container, ...renderResult };
+}
+
+function mockContainerMetrics(
+  container,
+  { scrollHeight = 300, clientHeight = 100, scrollTop = 0 } = {},
+) {
+  Object.defineProperty(container, "scrollHeight", {
+    value: scrollHeight,
+    configurable: true,
+  });
+  Object.defineProperty(container, "clientHeight", {
+    value: clientHeight,
+    configurable: true,
+  });
+  container.scrollTop = scrollTop;
+}
+
 describe("useInfiniteScroll", () => {
-  /**
-   * 测试目标：当滚动接近底部且存在更多数据时触发加载回调。
-   * 前置条件：容器高度 100、内容高度 300，滚动到底部附近。
-   * 步骤：
-   *  1) 渲染组件并设置 scrollTop；
-   *  2) 触发 scroll 事件；
-   * 断言：
-   *  - onLoadMore 被调用一次。
-   * 边界/异常：
-   *  - 若 hasMore 为 false 应短路（在其他用例覆盖）。
-   */
-  test("Given_more_data_When_scrolled_near_bottom_Then_invokes_loader", () => {
-    const handleLoadMore = jest.fn();
-    const { getByTestId } = render(
-      <TestComponent onLoadMore={handleLoadMore} threshold={48} />,
-    );
-    const container = getByTestId("scroll-container");
-    Object.defineProperty(container, "scrollHeight", {
-      value: 300,
-      configurable: true,
-    });
-    Object.defineProperty(container, "clientHeight", {
-      value: 100,
-      configurable: true,
-    });
-    container.scrollTop = 190;
+  describe("when the user scrolls near the bottom", () => {
+    /**
+     * 测试目标：当滚动接近底部且存在更多数据时触发加载回调。
+     * 前置条件：容器高度 100、内容高度 300，滚动到底部附近。
+     * 步骤：
+     *  1) 渲染组件并设置 scrollTop；
+     *  2) 触发 scroll 事件；
+     * 断言：
+     *  - onLoadMore 被调用一次。
+     * 边界/异常：
+     *  - 若 hasMore 为 false 应短路（在其他用例覆盖）。
+     */
+    test("Given_more_data_When_scrolled_near_bottom_Then_invokes_loader", () => {
+      const handleLoadMore = jest.fn();
+      const { container } = renderScrollContainer({
+        onLoadMore: handleLoadMore,
+        threshold: 48,
+      });
 
-    fireEvent.scroll(container);
+      mockContainerMetrics(container, { scrollTop: 190 });
+      fireEvent.scroll(container);
 
-    const callCount = handleLoadMore.mock.calls.length;
-    expect(callCount).toBeGreaterThanOrEqual(1);
-    expect(callCount).toBeLessThanOrEqual(2);
+      const callCount = handleLoadMore.mock.calls.length;
+      expect(callCount).toBeGreaterThanOrEqual(1);
+      expect(callCount).toBeLessThanOrEqual(2);
+    });
   });
 
-  /**
-   * 测试目标：当 hasMore 为 false 时不会触发加载回调。
-   * 前置条件：容器同上，但 hasMore=false。
-   * 步骤：触发 scroll 事件。
-   * 断言：
-   *  - onLoadMore 未被调用。
-   * 边界/异常：
-   *  - isLoading=true 场景在下一用例覆盖。
-   */
-  test("Given_no_more_data_When_scrolled_Then_does_not_call_loader", () => {
-    const handleLoadMore = jest.fn();
-    const { getByTestId } = render(
-      <TestComponent hasMore={false} onLoadMore={handleLoadMore} />,
-    );
-    const container = getByTestId("scroll-container");
-    Object.defineProperty(container, "scrollHeight", {
-      value: 300,
-      configurable: true,
+  describe("short-circuit conditions", () => {
+    /**
+     * 测试目标：当 hasMore 为 false 时不会触发加载回调。
+     * 前置条件：容器同上，但 hasMore=false。
+     * 步骤：触发 scroll 事件。
+     * 断言：
+     *  - onLoadMore 未被调用。
+     * 边界/异常：
+     *  - isLoading=true 场景在下一用例覆盖。
+     */
+    test("Given_no_more_data_When_scrolled_Then_does_not_call_loader", () => {
+      const handleLoadMore = jest.fn();
+      const { container } = renderScrollContainer({
+        hasMore: false,
+        onLoadMore: handleLoadMore,
+      });
+
+      mockContainerMetrics(container, { scrollTop: 220 });
+      fireEvent.scroll(container);
+
+      expect(handleLoadMore).not.toHaveBeenCalled();
     });
-    Object.defineProperty(container, "clientHeight", {
-      value: 100,
-      configurable: true,
+
+    /**
+     * 测试目标：当处于加载中状态时忽略滚动触发，避免重复请求。
+     * 前置条件：isLoading=true，其他参数为默认。
+     * 步骤：触发 scroll 事件。
+     * 断言：
+     *  - onLoadMore 未被调用。
+     * 边界/异常：
+     *  - 与上一用例互补覆盖。
+     */
+    test("Given_loading_in_progress_When_scrolled_Then_skips_loader", () => {
+      const handleLoadMore = jest.fn();
+      const { container } = renderScrollContainer({
+        isLoading: true,
+        onLoadMore: handleLoadMore,
+      });
+
+      mockContainerMetrics(container, { scrollTop: 260 });
+      fireEvent.scroll(container);
+
+      expect(handleLoadMore).not.toHaveBeenCalled();
     });
-    container.scrollTop = 220;
-
-    fireEvent.scroll(container);
-
-    expect(handleLoadMore).not.toHaveBeenCalled();
-  });
-
-  /**
-   * 测试目标：当处于加载中状态时忽略滚动触发，避免重复请求。
-   * 前置条件：isLoading=true，其他参数为默认。
-   * 步骤：触发 scroll 事件。
-   * 断言：
-   *  - onLoadMore 未被调用。
-   * 边界/异常：
-   *  - 与上一用例互补覆盖。
-   */
-  test("Given_loading_in_progress_When_scrolled_Then_skips_loader", () => {
-    const handleLoadMore = jest.fn();
-    const { getByTestId } = render(
-      <TestComponent isLoading onLoadMore={handleLoadMore} />,
-    );
-    const container = getByTestId("scroll-container");
-    Object.defineProperty(container, "scrollHeight", {
-      value: 300,
-      configurable: true,
-    });
-    Object.defineProperty(container, "clientHeight", {
-      value: 100,
-      configurable: true,
-    });
-    container.scrollTop = 260;
-
-    fireEvent.scroll(container);
-
-    expect(handleLoadMore).not.toHaveBeenCalled();
   });
 });
