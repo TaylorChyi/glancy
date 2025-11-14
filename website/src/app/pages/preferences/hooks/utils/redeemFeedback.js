@@ -28,7 +28,7 @@ const NOISE_TOKENS = new Set([
   "request failed",
 ]);
 
-const extractErrorCandidates = (error) => {
+const parseErrorFields = (error) => {
   if (typeof error === "string") {
     return [error];
   }
@@ -37,18 +37,35 @@ const extractErrorCandidates = (error) => {
     return [];
   }
 
-  const fields = [error.message, error.reason, error.detail];
-  return fields.filter((candidate) => typeof candidate === "string");
+  return [error.message, error.reason, error.detail];
 };
 
-const pickMeaningfulReason = (candidates) =>
+const sanitizeErrorCandidates = (candidates) =>
   candidates
-    .map((candidate) => (typeof candidate === "string" ? candidate.trim() : ""))
-    .find((candidate) => candidate && !NOISE_TOKENS.has(candidate.toLowerCase()));
+    .filter((candidate) => typeof candidate === "string")
+    .map((candidate) => candidate.trim());
+
+const filterNoiseTokens = (candidates) =>
+  candidates.filter((candidate) => {
+    if (!candidate) {
+      return false;
+    }
+
+    const normalized = candidate.toLowerCase();
+    return !NOISE_TOKENS.has(normalized);
+  });
+
+const pickMeaningfulReason = (error) => {
+  const parsedCandidates = parseErrorFields(error);
+  const sanitizedCandidates = sanitizeErrorCandidates(parsedCandidates);
+  const meaningfulCandidates = filterNoiseTokens(sanitizedCandidates);
+
+  return meaningfulCandidates[0];
+};
 
 export const composeRedeemFailureMessage = (error, fallbackMessage) => {
   const fallback = typeof fallbackMessage === "string" ? fallbackMessage : "";
-  const reason = pickMeaningfulReason(extractErrorCandidates(error));
+  const reason = pickMeaningfulReason(error);
 
   if (!reason) {
     return fallback;
