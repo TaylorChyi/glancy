@@ -8,20 +8,16 @@ export const bindingsInitialState = {
 const pendingActionFrom = (action) =>
   typeof action.action === "string" ? action.action : action.actionId;
 
+const createStatusState = (status) => ({
+  status,
+  pendingAction: null,
+});
+
 const bindingsHandlers = {
   [KEYBOARD_SHORTCUT_ACTIONS.RESET]: () => bindingsInitialState,
-  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_START]: () => ({
-    status: "loading",
-    pendingAction: null,
-  }),
-  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_SUCCESS]: () => ({
-    status: "ready",
-    pendingAction: null,
-  }),
-  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_FAILURE]: () => ({
-    status: "error",
-    pendingAction: null,
-  }),
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_START]: () => createStatusState("loading"),
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_SUCCESS]: () => createStatusState("ready"),
+  [KEYBOARD_SHORTCUT_ACTIONS.LOAD_FAILURE]: () => createStatusState("error"),
   [KEYBOARD_SHORTCUT_ACTIONS.UPDATE_START]: (state, action) => ({
     ...state,
     pendingAction: pendingActionFrom(action),

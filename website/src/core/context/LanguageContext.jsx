@@ -74,6 +74,28 @@ const useLanguageContextValue = ({
     [changeLanguage, lang, systemLanguage, t],
   );
 
+const useLanguagePreference = () => {
+  const systemLanguage = useSettingsStore((state) => state.systemLanguage);
+  const storeSetSystemLanguage = useSettingsStore(
+    (state) => state.setSystemLanguage,
+  );
+  const changeLanguage = useCallback(
+    (next) => {
+      storeSetSystemLanguage(next ?? SYSTEM_LANGUAGE_AUTO);
+    },
+    [storeSetSystemLanguage],
+  );
+  const lang = useResolvedLanguage(systemLanguage);
+  const t = useLanguageTranslations(lang);
+
+  return {
+    changeLanguage,
+    lang,
+    systemLanguage,
+    t,
+  };
+};
+
 const useDocumentLanguageSync = (lang, t) => {
   useEffect(() => {
     document.title = t.welcomeTitle;
@@ -82,18 +104,7 @@ const useDocumentLanguageSync = (lang, t) => {
 };
 
 function useLanguageController() {
-  const systemLanguage = useSettingsStore((state) => state.systemLanguage);
-  const storeSetSystemLanguage = useSettingsStore(
-    (state) => state.setSystemLanguage,
-  );
-  const lang = useResolvedLanguage(systemLanguage);
-  const t = useLanguageTranslations(lang);
-  const changeLanguage = useCallback(
-    (next) => {
-      storeSetSystemLanguage(next ?? SYSTEM_LANGUAGE_AUTO);
-    },
-    [storeSetSystemLanguage],
-  );
+  const { changeLanguage, lang, systemLanguage, t } = useLanguagePreference();
   useDocumentLanguageSync(lang, t);
   return useLanguageContextValue({
     changeLanguage,
