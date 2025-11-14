@@ -52,13 +52,13 @@ const submitAuthRequest = async (
 };
 
 const requestAuthCode = async (
-  { authProtocol, unsupportedMessage, viewCopy },
+  { authProtocol, unsupportedMessage, codePurpose },
   { account, method },
 ) => {
   await authProtocol.requestCode({
     method,
     account,
-    purpose: viewCopy.codePurpose,
+    purpose: codePurpose,
     unsupportedMessage,
   });
 };
@@ -79,16 +79,19 @@ const useHandleSubmit = ({
     [authProtocol, completeSession, mode, unsupportedMessage],
   );
 
-const useHandleRequestCode = ({ authProtocol, unsupportedMessage, viewCopy }) =>
-  useCallback(
+const useHandleRequestCode = ({ authProtocol, unsupportedMessage, viewCopy }) => {
+  const { codePurpose } = viewCopy;
+
+  return useCallback(
     async (request) => {
       await requestAuthCode(
-        { authProtocol, unsupportedMessage, viewCopy },
+        { authProtocol, unsupportedMessage, codePurpose },
         request,
       );
     },
-    [authProtocol, unsupportedMessage, viewCopy.codePurpose],
+    [authProtocol, unsupportedMessage, codePurpose],
   );
+};
 
 const useAuthSubmissionHandlers = (params) => {
   const handleSubmit = useHandleSubmit(params);
