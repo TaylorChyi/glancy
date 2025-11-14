@@ -9,39 +9,27 @@ function shouldAttachToDom(audio) {
   );
 }
 
-export function useAudioDevice() {
-  const audioRef = useRef(null);
-  const urlRef = useRef("");
+function useReleaseAudioSource(audioRef, urlRef) {
+  return useCallback(
+    (audioInstance = audioRef.current) => {
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = "";
+      }
+      if (audioInstance) {
+        audioInstance.src = "";
+      }
+    },
+    [],
+  );
+}
 
-  const releaseSource = useCallback(() => {
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = "";
-    }
-    if (audioRef.current) {
-      audioRef.current.src = "";
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof Audio === "undefined") return undefined;
-    const audio = new Audio();
-    if (audio.style) audio.style.display = "none";
-    const attach = shouldAttachToDom(audio);
-    if (attach) document.body.appendChild(audio);
-    audioRef.current = audio;
-    return () => {
-      releaseSource();
-      audioManager.stop(audio);
-      if (attach) document.body.removeChild(audio);
-    };
-  }, [releaseSource]);
-
-  const hydrate = useCallback(
+function useHydrateAudioSource(audioRef, urlRef, releaseSource) {
+  return useCallback(
     (data) => {
       const audio = audioRef.current;
       if (!audio) return null;
-      releaseSource();
+      releaseSource(audio);
       const url = decodeTtsAudio(data);
       audio.src = url;
       urlRef.current = url;
@@ -49,6 +37,33 @@ export function useAudioDevice() {
     },
     [releaseSource],
   );
+}
+
+function useManagedAudioElement(audioRef, releaseSource) {
+  useEffect(() => {
+    if (typeof Audio === "undefined") return undefined;
+    const audio = new Audio();
+    if (audio.style) audio.style.display = "none";
+    const attach = shouldAttachToDom(audio);
+    if (attach) document.body.appendChild(audio);
+    audioRef.current = audio;
+
+    return () => {
+      releaseSource(audio);
+      audioManager.stop(audio);
+      if (attach) document.body.removeChild(audio);
+    };
+  }, [audioRef, releaseSource]);
+}
+
+export function useAudioDevice() {
+  const audioRef = useRef(null);
+  const urlRef = useRef("");
+
+  const releaseSource = useReleaseAudioSource(audioRef, urlRef);
+  const hydrate = useHydrateAudioSource(audioRef, urlRef, releaseSource);
+
+  useManagedAudioElement(audioRef, releaseSource);
 
   return { audioRef, hydrate, releaseSource };
 }
