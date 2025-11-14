@@ -43,13 +43,57 @@ const createMediaQuery = (initialMatches: boolean): MutableMediaQueryList => {
   return media as MutableMediaQueryList;
 };
 
-describe("BrowserFaviconConfigurator", () => {
-  const registry = createFaviconRegistry({
-    default: "https://assets.local/light.svg",
-    light: "https://assets.local/light.svg",
-    dark: "https://assets.local/dark.svg",
-  });
+const registry = createFaviconRegistry({
+  default: "https://assets.local/light.svg",
+  light: "https://assets.local/light.svg",
+  dark: "https://assets.local/dark.svg",
+});
 
+const renderFaviconLink = (
+  href = "https://assets.local/light.svg",
+): HTMLLinkElement | null => {
+  document.head.innerHTML = `<link id="favicon" rel="icon" href="${href}" />`;
+  return document.getElementById("favicon") as HTMLLinkElement | null;
+};
+
+type ConfiguratorOptions = {
+  linkId?: string;
+};
+
+const createConfigurator = (
+  mediaMatches: boolean,
+  options: ConfiguratorOptions = {},
+) => {
+  const media = createMediaQuery(mediaMatches);
+
+  return {
+    media,
+    configurator: createBrowserFaviconConfigurator({
+      registry,
+      matchMedia: () => media,
+      document,
+      ...options,
+    }),
+  };
+};
+
+const expectDarkIcon = (link: HTMLLinkElement | null) => {
+  expect(link).toBeInstanceOf(HTMLLinkElement);
+  const element = link as HTMLLinkElement;
+
+  expect(element.href).toBe("https://assets.local/dark.svg");
+  expect(element.dataset.browserColorScheme).toBe("dark");
+};
+
+const expectLightIcon = (link: HTMLLinkElement | null) => {
+  expect(link).toBeInstanceOf(HTMLLinkElement);
+  const element = link as HTMLLinkElement;
+
+  expect(element.href).toBe("https://assets.local/light.svg");
+  expect(element.dataset.browserColorScheme).toBe("light");
+};
+
+describe("BrowserFaviconConfigurator", () => {
   beforeEach(() => {
     document.head.innerHTML = "";
     document.body.innerHTML = "";
@@ -66,25 +110,16 @@ describe("BrowserFaviconConfigurator", () => {
    *  - dataset.browserColorScheme === "dark"。
    * 边界/异常：
    *  - 验证不会抛出异常。
-   */
+  */
   test("Given_dark_preference_When_starting_Then_apply_dark_icon", () => {
-    document.head.innerHTML =
-      '<link id="favicon" rel="icon" href="https://assets.local/light.svg" />';
-    const media = createMediaQuery(true);
-    const configurator = createBrowserFaviconConfigurator({
-      registry,
-      matchMedia: () => media,
-      document,
-    });
+    renderFaviconLink();
+    const { configurator } = createConfigurator(true);
 
     expect(() => configurator.start()).not.toThrow();
 
-    const link = document.getElementById("favicon");
-    expect(link).toBeInstanceOf(HTMLLinkElement);
-    expect((link as HTMLLinkElement).href).toBe(
-      "https://assets.local/dark.svg",
+    expectDarkIcon(
+      document.getElementById("favicon") as HTMLLinkElement | null,
     );
-    expect((link as HTMLLinkElement).dataset.browserColorScheme).toBe("dark");
   });
 
   /**
@@ -100,25 +135,17 @@ describe("BrowserFaviconConfigurator", () => {
    *  - 停止后监听列表为空。
    * 边界/异常：
    *  - 覆盖 stop 释放监听的路径。
-   */
+  */
   test("Given_media_change_When_dispatching_Then_update_icon_and_detach_on_stop", () => {
-    document.head.innerHTML =
-      '<link id="favicon" rel="icon" href="https://assets.local/light.svg" />';
-    const media = createMediaQuery(true);
-    const configurator = createBrowserFaviconConfigurator({
-      registry,
-      matchMedia: () => media,
-      document,
-    });
+    renderFaviconLink();
+    const { configurator, media } = createConfigurator(true);
 
     configurator.start();
     media.dispatch(false);
 
-    const link = document.getElementById("favicon");
-    expect((link as HTMLLinkElement).href).toBe(
-      "https://assets.local/light.svg",
+    expectLightIcon(
+      document.getElementById("favicon") as HTMLLinkElement | null,
     );
-    expect((link as HTMLLinkElement).dataset.browserColorScheme).toBe("light");
 
     configurator.stop();
     expect(media.listeners).toHaveLength(0);
@@ -135,13 +162,9 @@ describe("BrowserFaviconConfigurator", () => {
    *  - start 返回后未抛异常。
    * 边界/异常：
    *  - 验证容错路径。
-   */
+  */
   test("Given_missing_link_When_starting_Then_fail_silently", () => {
-    const media = createMediaQuery(true);
-    const configurator = createBrowserFaviconConfigurator({
-      registry,
-      matchMedia: () => media,
-      document,
+    const { configurator, media } = createConfigurator(true, {
       linkId: "missing",
     });
 
