@@ -20,6 +20,11 @@ const createSafeDispatch = (dispatch, isAborted) => (action) => {
   }
 };
 
+const createRequestGuards = ({ dispatch, signal }) => {
+  const isAborted = createAbortChecker(signal);
+  return { isAborted, safeDispatch: createSafeDispatch(dispatch, isAborted) };
+};
+
 const shouldHydrateWithEmptyProfile = (user, fetchProfile) =>
   !user?.token || typeof fetchProfile !== "function";
 
@@ -110,17 +115,16 @@ export const createResponseStyleRequest = ({
   user,
   fetchProfile,
   profileDetailsRef,
-}) =>
-  async ({ signal, withLoading = true } = {}) => {
-    const isAborted = createAbortChecker(signal);
-    const safeDispatch = createSafeDispatch(dispatch, isAborted);
+}) => {
+  const baseContext = { user, fetchProfile, profileDetailsRef };
+
+  return async ({ signal, withLoading = true } = {}) => {
+    const guards = createRequestGuards({ dispatch, signal });
 
     await executeResponseStyleRequest({
-      safeDispatch,
-      user,
-      fetchProfile,
-      profileDetailsRef,
+      ...baseContext,
+      ...guards,
       withLoading,
-      isAborted,
     });
   };
+};
