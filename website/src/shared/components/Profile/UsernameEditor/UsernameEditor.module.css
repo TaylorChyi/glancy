@@ -7,7 +7,6 @@
 }
 
 .controls {
-  
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -16,7 +15,6 @@
 }
 
 .input {
-  
   flex: 1;
   min-height: 40px;
   padding: 10px 16px;

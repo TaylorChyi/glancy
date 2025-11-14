@@ -519,8 +519,6 @@
 .field-control-textarea {
   cursor: text;
   caret-color: var(--preferences-panel-text);
-
-  
   resize: none;
   min-height: calc(var(--language-trigger-height) + 36px);
   line-height: 1.6;

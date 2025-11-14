@@ -13,8 +13,6 @@
     --shadow-elevated,
     0 12px 30px color-mix(in srgb, var(--shadow-color) 40%, transparent)
   );
-
-  
   overflow: var(--output-toolbar-overflow, hidden);
   min-height: 44px;
   flex-wrap: var(--output-toolbar-wrap, nowrap);

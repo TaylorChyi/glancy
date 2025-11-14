@@ -1,5 +1,4 @@
 .container {
-  
   width: var(
     --docker-row-width,
     var(--chat-input-shell-width, var(--sb-shell-width, 100%))
@@ -23,7 +22,6 @@
  *  - 窄屏：降级为单列栈结构，移除额外分隔符避免冗余装饰。
  */
 .input-surface {
-  
   --sb-bg: var(--sidebar-panel, var(--sb-surface));
   --sb-bg-hover: var(
     --sidebar-hover-bg,
@@ -301,8 +299,6 @@
 
 .core-input {
   flex: 1 1 auto;
-
-  
   min-width: 30ch;
   display: flex;
   align-items: center;

@@ -2,8 +2,6 @@
   position: relative;
   display: flex;
   align-items: center;
-
-  
   width: var(--sb-shell-width, min(100%, var(--sb-max-width)));
   min-height: var(--sb-h, 56px);
   padding-block: var(--padding-y, 0);
