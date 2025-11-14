@@ -1,12 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useApi } from "@shared/hooks/useApi.js";
 import { useUser } from "@core/context";
-import {
-  assertUploadContext,
-  resolveUploadedAvatar,
-  selectFirstValidFile,
-  uploadAvatar,
-} from "./avatarUploader/avatarUploadServices.js";
+import { performAvatarUpload } from "./avatarUploader/avatarUploadServices.js";
 
 export const AVATAR_UPLOAD_STATUS = Object.freeze({
   idle: "idle",
@@ -43,40 +38,18 @@ export default function useAvatarUploader({ onSuccess, onError } = {}) {
   }, []);
 
   const onSelectAvatar = useCallback(
-    async (filesLike) => {
-      const file = selectFirstValidFile(filesLike);
-      if (!file) {
-        return false;
-      }
-
-      try {
-        const context = assertUploadContext({ user, usersClient: users });
-
-        setStatus(AVATAR_UPLOAD_STATUS.uploading);
-        setError(null);
-
-        const response = await uploadAvatar({
-          ...context,
-          file,
-        });
-        const nextAvatar = resolveUploadedAvatar(response);
-        if (nextAvatar && typeof setUser === "function") {
-          setUser({ ...context.user, avatar: nextAvatar });
-        }
-        setStatus(AVATAR_UPLOAD_STATUS.succeeded);
-        if (typeof onSuccess === "function") {
-          onSuccess({ avatar: nextAvatar, response });
-        }
-        return true;
-      } catch (uploadError) {
-        setStatus(AVATAR_UPLOAD_STATUS.failed);
-        setError(uploadError);
-        if (typeof onError === "function") {
-          onError(uploadError);
-        }
-        return false;
-      }
-    },
+    (filesLike) =>
+      performAvatarUpload({
+        filesLike,
+        user,
+        usersClient: users,
+        setUser,
+        setStatus,
+        setError,
+        onSuccess,
+        onError,
+        statusMap: AVATAR_UPLOAD_STATUS,
+      }),
     [onError, onSuccess, setUser, user, users],
   );
 
