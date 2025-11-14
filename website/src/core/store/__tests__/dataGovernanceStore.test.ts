@@ -21,7 +21,7 @@ const importStoreModule = async () => {
   return storeModule;
 };
 
-describe("dataGovernanceStore", () => {
+const registerLifecycleHooks = () => {
   beforeEach(() => {
     localStorage.clear();
     jest.resetModules();
@@ -38,6 +38,10 @@ describe("dataGovernanceStore", () => {
       historyCaptureEnabled: true,
     });
   });
+};
+
+describe("dataGovernanceStore defaults", () => {
+  registerLifecycleHooks();
 
   /**
    * 测试目标：验证 Store 初始值与默认策略一致。
@@ -72,6 +76,10 @@ describe("dataGovernanceStore", () => {
     useDataGovernanceStore.getState().setHistoryCaptureEnabled(false);
     expect(useDataGovernanceStore.getState().historyCaptureEnabled).toBe(false);
   });
+});
+
+describe("dataGovernanceStore retention policies", () => {
+  registerLifecycleHooks();
 
   /**
    * 测试目标：设置保留策略时仅接受受支持策略。
@@ -107,6 +115,11 @@ describe("dataGovernanceStore", () => {
     expect(useDataGovernanceStore.getState().retentionPolicyId).toBe("90d");
     expect(getRetentionPolicyById(alternative.id)).toEqual(alternative);
   });
+
+});
+
+describe("dataGovernanceStore hydration", () => {
+  registerLifecycleHooks();
 
   /**
    * 测试目标：
