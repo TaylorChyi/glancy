@@ -62,28 +62,22 @@ const selectLatestVersionByTimestamp = (versions: WordVersion[]) => {
   return ranked[0]?.version?.id ?? versions[0]?.id ?? null;
 };
 
+const pickPrioritizedVersion = (
+  versions: WordVersion[],
+  context: VersionSelectionContext,
+) => {
+  const prioritized = resolvePriorityCandidates(context);
+  return selectPrioritizedMatch(versions, prioritized);
+};
+
 export class LatestTimestampStrategy implements VersionSelectionStrategy {
-  pick({
-    versions,
-    preferredId,
-    current,
-    metadata,
-  }: VersionSelectionContext): WordIdentifier | null {
+  pick(context: VersionSelectionContext): WordIdentifier | null {
+    const { versions } = context;
     if (!versions.length) {
       return null;
     }
 
-    const prioritized = resolvePriorityCandidates({
-      versions,
-      preferredId,
-      current,
-      metadata,
-    });
-    const matched = selectPrioritizedMatch(versions, prioritized);
-    if (matched) {
-      return matched;
-    }
-
-    return selectLatestVersionByTimestamp(versions);
+    return pickPrioritizedVersion(versions, context)
+      ?? selectLatestVersionByTimestamp(versions);
   }
 }
