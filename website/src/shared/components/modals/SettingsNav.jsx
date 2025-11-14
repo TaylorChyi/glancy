@@ -10,31 +10,25 @@ function SettingsNav({
   renderCloseAction,
   classes,
 }) {
-  const {
-    orientation,
-    isHorizontalLayout,
-    lang,
-    classNames,
-    closeActionNode,
-  } = useSettingsNavContext({ classes, renderCloseAction });
+  const context = useSettingsNavContext({ classes, renderCloseAction });
 
   return (
     <div
-      className={classNames.container}
-      data-orientation={orientation}
-      data-compact={isHorizontalLayout || undefined}
+      className={context.classNames.container}
+      data-orientation={context.orientation}
+      data-compact={context.isHorizontalLayout || undefined}
     >
       <SettingsNavList
         sections={sections}
         activeSectionId={activeSectionId}
         onSelect={onSelect}
         tablistLabel={tablistLabel}
-        orientation={orientation}
+        orientation={context.orientation}
         sectionCount={sections.length}
-        isHorizontalLayout={isHorizontalLayout}
-        lang={lang}
-        classNames={classNames}
-        closeActionNode={closeActionNode}
+        isHorizontalLayout={context.isHorizontalLayout}
+        lang={context.lang}
+        classNames={context.classNames}
+        closeActionNode={context.closeActionNode}
       />
     </div>
   );

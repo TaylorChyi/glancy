@@ -21,8 +21,17 @@ const SettingsModalForm = ({
     className={modalStyles.form}
     onSubmit={onSubmit}
   >
-    <FallbackHeading shouldRender={shouldRenderFallbackHeading} id={fallbackHeadingId} text={fallbackHeadingText} register={registerFallbackHeading} />
-    <ActiveSectionRenderer activeSection={activeSection} headingId={sectionHeadingId} descriptionId={sectionDescriptionId} />
+    <FallbackHeading
+      shouldRender={shouldRenderFallbackHeading}
+      id={fallbackHeadingId}
+      text={fallbackHeadingText}
+      register={registerFallbackHeading}
+    />
+    <ActiveSectionRenderer
+      activeSection={activeSection}
+      headingId={sectionHeadingId}
+      descriptionId={sectionDescriptionId}
+    />
   </form>
 );
 

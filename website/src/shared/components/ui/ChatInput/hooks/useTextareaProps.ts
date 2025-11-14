@@ -35,14 +35,5 @@ export const useTextareaProps = ({
       onFocus: onFocus ?? noop,
       onBlur: onBlur ?? noop,
     }),
-    [
-      setTextareaRef,
-      rows,
-      placeholder,
-      value,
-      onChange,
-      onKeyDown,
-      onFocus,
-      onBlur,
-    ],
+    [setTextareaRef, rows, placeholder, value, onChange, onKeyDown, onFocus, onBlur],
   );

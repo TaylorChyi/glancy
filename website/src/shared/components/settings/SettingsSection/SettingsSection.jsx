@@ -30,57 +30,34 @@ const splitSectionProps = (sectionProps) => {
   return { ariaDescribedByFromProps, restSectionProps };
 };
 
-const useSettingsSectionProps = ({
+const buildHeaderProps = ({ headingId, title, showDivider, classes }) => ({
   headingId,
   title,
-  description,
-  descriptionId,
-  describedBy,
-  showDivider = true,
-  classes = {},
-  ...sectionProps
-}) => {
-  const autoDescriptionId = useId();
-  const shouldRenderDescription = isRenderable(description);
-  const resolvedDescriptionId = useResolvedDescriptionId({
-    shouldRenderDescription,
-    descriptionId,
-    headingId,
-    autoDescriptionId,
-  });
-  const {
-    sectionClassName,
-    headerClassName,
-    titleClassName,
-    dividerClassName,
-    descriptionClassName,
-  } = getSectionClasses(classes);
-  const { ariaDescribedByFromProps, restSectionProps } =
-    splitSectionProps(sectionProps);
-  const ariaDescribedBy = resolveAriaDescribedBy({
-    describedBy,
-    ariaDescribedByFromProps,
-    shouldRenderDescription,
-    resolvedDescriptionId,
-  });
+  showDivider,
+  headerClassName: classes.headerClassName,
+  titleClassName: classes.titleClassName,
+  dividerClassName: classes.dividerClassName,
+});
 
+const buildDescriptionProps = ({ shouldRender, id, className }) => ({
+  shouldRender,
+  id,
+  className,
+});
+
+const useSettingsSectionProps = (props) => {
+  const { headingId, title, description, descriptionId, describedBy, showDivider = true, classes = {}, ...sectionProps } = props;
+  const autoDescriptionId = useId(), shouldRenderDescription = isRenderable(description);
+  const resolvedDescriptionId = useResolvedDescriptionId({ shouldRenderDescription, descriptionId, headingId, autoDescriptionId });
+  const sectionClasses = getSectionClasses(classes);
+  const { ariaDescribedByFromProps, restSectionProps } = splitSectionProps(sectionProps);
+  const ariaDescribedBy = resolveAriaDescribedBy({ describedBy, ariaDescribedByFromProps, shouldRenderDescription, resolvedDescriptionId });
   return {
     ariaDescribedBy,
-    sectionClassName,
+    sectionClassName: sectionClasses.sectionClassName,
     restSectionProps,
-    headerProps: {
-      headingId,
-      title,
-      showDivider,
-      headerClassName,
-      titleClassName,
-      dividerClassName,
-    },
-    descriptionProps: {
-      shouldRender: shouldRenderDescription,
-      id: resolvedDescriptionId,
-      className: descriptionClassName,
-    },
+    headerProps: buildHeaderProps({ headingId, title, showDivider, classes: sectionClasses }),
+    descriptionProps: buildDescriptionProps({ shouldRender: shouldRenderDescription, id: resolvedDescriptionId, className: sectionClasses.descriptionClassName }),
   };
 };
 

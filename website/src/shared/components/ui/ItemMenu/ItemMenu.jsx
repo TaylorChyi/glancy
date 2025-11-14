@@ -34,35 +34,49 @@ function MenuActionItem({ className, icon, label, onClick }) {
   );
 }
 
-function ItemMenuContent({
+const createItemMenuActions = ({
+  onFavorite,
+  onDelete,
+  favoriteLabel,
+  deleteLabel,
+  closeMenu,
+}) => [
+  {
+    key: "favorite",
+    handler: () => {
+      onFavorite();
+      closeMenu();
+    },
+    icon: "star-solid",
+    label: favoriteLabel,
+  },
+  {
+    key: "delete",
+    handler: () => {
+      onDelete();
+      closeMenu();
+    },
+    icon: "trash",
+    label: deleteLabel,
+    className: styles["delete-btn"],
+  },
+];
+
+const ItemMenuContent = ({
   menuRef,
   onFavorite,
   onDelete,
   favoriteLabel,
   deleteLabel,
   closeMenu,
-}) {
-  const actions = [
-    {
-      key: "favorite",
-      handler: () => {
-        onFavorite();
-        closeMenu();
-      },
-      icon: "star-solid",
-      label: favoriteLabel,
-    },
-    {
-      key: "delete",
-      handler: () => {
-        onDelete();
-        closeMenu();
-      },
-      icon: "trash",
-      label: deleteLabel,
-      className: styles["delete-btn"],
-    },
-  ];
+}) => {
+  const actions = createItemMenuActions({
+    onFavorite,
+    onDelete,
+    favoriteLabel,
+    deleteLabel,
+    closeMenu,
+  });
 
   return (
     <ul className={styles.menu} role="menu" ref={menuRef}>
@@ -77,7 +91,7 @@ function ItemMenuContent({
       ))}
     </ul>
   );
-}
+};
 
 function ItemMenuTrigger({
   open,
@@ -100,7 +114,7 @@ function ItemMenuTrigger({
   );
 }
 
-function ItemMenuPopover({
+const ItemMenuPopover = ({
   open,
   triggerRef,
   menuRef,
@@ -109,63 +123,48 @@ function ItemMenuPopover({
   onDelete,
   favoriteLabel,
   deleteLabel,
-}) {
-  return (
-    <Popover
-      isOpen={open}
-      anchorRef={triggerRef}
-      onClose={closeMenu}
-      placement="bottom"
-      align="end"
-      offset={4}
-    >
-      {open && (
-        <ItemMenuContent
-          menuRef={menuRef}
-          onFavorite={onFavorite}
-          onDelete={onDelete}
-          favoriteLabel={favoriteLabel}
-          deleteLabel={deleteLabel}
-          closeMenu={closeMenu}
-        />
-      )}
-    </Popover>
-  );
-}
-
-function ItemMenuView({
-  open,
-  triggerRef,
-  menuRef,
-  closeMenu,
-  toggleMenu,
-  handleTriggerKeyDown,
-  onFavorite,
-  onDelete,
-  favoriteLabel,
-  deleteLabel,
-}) {
-  return (
-    <div className={styles.wrapper}>
-      <ItemMenuTrigger
-        open={open}
-        toggleMenu={toggleMenu}
-        handleTriggerKeyDown={handleTriggerKeyDown}
-        triggerRef={triggerRef}
-      />
-      <ItemMenuPopover
-        open={open}
-        triggerRef={triggerRef}
+}) => (
+  <Popover
+    isOpen={open}
+    anchorRef={triggerRef}
+    onClose={closeMenu}
+    placement="bottom"
+    align="end"
+    offset={4}
+  >
+    {open && (
+      <ItemMenuContent
         menuRef={menuRef}
-        closeMenu={closeMenu}
         onFavorite={onFavorite}
         onDelete={onDelete}
         favoriteLabel={favoriteLabel}
         deleteLabel={deleteLabel}
+        closeMenu={closeMenu}
       />
-    </div>
-  );
-}
+    )}
+  </Popover>
+);
+
+const ItemMenuView = (props) => (
+  <div className={styles.wrapper}>
+    <ItemMenuTrigger
+      open={props.open}
+      toggleMenu={props.toggleMenu}
+      handleTriggerKeyDown={props.handleTriggerKeyDown}
+      triggerRef={props.triggerRef}
+    />
+    <ItemMenuPopover
+      open={props.open}
+      triggerRef={props.triggerRef}
+      menuRef={props.menuRef}
+      closeMenu={props.closeMenu}
+      onFavorite={props.onFavorite}
+      onDelete={props.onDelete}
+      favoriteLabel={props.favoriteLabel}
+      deleteLabel={props.deleteLabel}
+    />
+  </div>
+);
 
 function ItemMenu({ onFavorite, onDelete, favoriteLabel, deleteLabel }) {
   const [open, setOpen] = useState(false);

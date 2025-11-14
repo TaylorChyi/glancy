@@ -108,7 +108,16 @@ const renderActionNode = (closeActionNode, actionClassName) =>
     </div>
   ) : null;
 
-function SettingsNavList({
+const getNavProps = ({ tablistLabel, orientation, navClassName, sectionCount }) => ({
+  "aria-label": tablistLabel,
+  "aria-orientation": orientation,
+  className: navClassName,
+  role: "tablist",
+  style: { "--settings-nav-section-count": sectionCount },
+  "data-orientation": orientation,
+});
+
+const SettingsNavList = ({
   sections,
   activeSectionId,
   onSelect,
@@ -119,28 +128,19 @@ function SettingsNavList({
   lang,
   classNames,
   closeActionNode,
-}) {
-  return (
-    <nav
-      aria-label={tablistLabel}
-      aria-orientation={orientation}
-      className={classNames.nav}
-      role="tablist"
-      style={{ "--settings-nav-section-count": sectionCount }}
-      data-orientation={orientation}
-    >
-      {renderActionNode(closeActionNode, classNames.action)}
-      <SettingsNavListItems
-        sections={sections}
-        activeSectionId={activeSectionId}
-        onSelect={onSelect}
-        isHorizontalLayout={isHorizontalLayout}
-        lang={lang}
-        classNames={getButtonClassNames(classNames)}
-      />
-    </nav>
-  );
-}
+}) => (
+  <nav {...getNavProps({ tablistLabel, orientation, navClassName: classNames.nav, sectionCount })}>
+    {renderActionNode(closeActionNode, classNames.action)}
+    <SettingsNavListItems
+      sections={sections}
+      activeSectionId={activeSectionId}
+      onSelect={onSelect}
+      isHorizontalLayout={isHorizontalLayout}
+      lang={lang}
+      classNames={getButtonClassNames(classNames)}
+    />
+  </nav>
+);
 
 SettingsNavList.propTypes = {
   sections: PropTypes.arrayOf(sectionPropType).isRequired,

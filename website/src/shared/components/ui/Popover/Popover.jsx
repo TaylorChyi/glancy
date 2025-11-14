@@ -37,9 +37,9 @@ function Popover({
   className,
   style,
 }) {
-  if (!isOpen || typeof document === "undefined") return null;
   const { setContentNode, position, visible, activePlacement } =
     usePopoverPositioning({ anchorRef, isOpen, placement, fallbackPlacements, align, offset, onClose });
+  if (!isOpen || typeof document === "undefined") return null;
   return renderPopoverContent({
     setContentNode,
     className: getPopoverClassName(className),

@@ -60,12 +60,8 @@ function usePopoverPositioningLifecycle({
     setActivePlacement: state.setActivePlacement,
     clearFrame,
   });
-  return {
-    setContentNode: state.setContentNode,
-    position: state.position,
-    visible: state.visible,
-    activePlacement: state.activePlacement,
-  };
+  const { setContentNode, position, visible, activePlacement } = state;
+  return { setContentNode, position, visible, activePlacement };
 }
 
 function usePopoverFrame({ frameRef, isOpen, applyPosition }) {

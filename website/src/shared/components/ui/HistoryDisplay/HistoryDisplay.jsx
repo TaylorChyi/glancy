@@ -15,27 +15,45 @@ const formatHistoryDate = (formatter, timestamp) => {
   }
 };
 
+const useHistoryDisplayData = () => {
+  const { history } = useHistory();
+  const { lang, t } = useLanguage();
+
+  const items = useMemo(() => history ?? [], [history]);
+  const locale = lang === "en" ? "en-US" : "zh-CN";
+  const dateFormatter = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return null;
+    }
+  }, [locale]);
+
+  return { items, dateFormatter, t };
+};
+
 const HistoryItem = ({ item, dateFormatter, onSelect }) => {
   const displayDate = formatHistoryDate(dateFormatter, item.createdAt);
-  const handleClick = () => {
-    if (!onSelect) return;
-    const versionId = item?.latestVersionId ?? undefined;
-    onSelect(item, versionId);
-  };
-
+  const handleClick = () =>
+    onSelect?.(item, item?.latestVersionId ?? undefined);
   return (
-    <li key={item.termKey} className={styles.card}>
+    <li className={styles.card}>
       <button type="button" className={styles.term} onClick={handleClick}>
         <span className={styles["term-text"]}>{item.term}</span>
         <span className={styles.trailing}>
-          {displayDate ? (
+          {displayDate && (
             <time
               dateTime={item.createdAt ?? undefined}
               className={styles.meta}
             >
               {displayDate}
             </time>
-          ) : null}
+          )}
           <ThemeIcon
             name="arrow-right"
             width={18}
@@ -62,41 +80,27 @@ const HistoryList = ({ items, dateFormatter, onSelect }) => (
   </ul>
 );
 
-function HistoryDisplay({ onEmptyAction, onSelect }) {
-  const { history } = useHistory();
-  const { t, lang } = useLanguage();
-
-  const items = useMemo(() => history ?? [], [history]);
-  const locale = lang === "en" ? "en-US" : "zh-CN";
-  const dateFormatter = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat(locale, {
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return null;
+const HistoryEmptyState = ({ onEmptyAction, t }) => (
+  <EmptyState
+    size="sm"
+    iconName="command-line"
+    title={t.historyEmptyTitle}
+    description={t.historyEmptyDescription}
+    actions={
+      onEmptyAction ? (
+        <Button type="button" onClick={onEmptyAction}>
+          {t.historyEmptyAction}
+        </Button>
+      ) : null
     }
-  }, [locale]);
+  />
+);
+
+function HistoryDisplay({ onEmptyAction, onSelect }) {
+  const { items, dateFormatter, t } = useHistoryDisplayData();
 
   if (!items.length) {
-    return (
-      <EmptyState
-        size="sm"
-        iconName="command-line"
-        title={t.historyEmptyTitle}
-        description={t.historyEmptyDescription}
-        actions={
-          onEmptyAction ? (
-            <Button type="button" onClick={onEmptyAction}>
-              {t.historyEmptyAction}
-            </Button>
-          ) : null
-        }
-      />
-    );
+    return <HistoryEmptyState onEmptyAction={onEmptyAction} t={t} />;
   }
 
   return (

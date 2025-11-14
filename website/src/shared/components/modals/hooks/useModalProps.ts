@@ -34,9 +34,6 @@ const useModalProps = ({
   [
     open,
     onClose,
-    metadata.closeLabel,
-    metadata.headingId,
-    metadata.descriptionId,
     metadata,
   ],
   );

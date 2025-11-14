@@ -37,6 +37,57 @@ export const expectViewProps = ({
   });
 };
 
+const expectDockerViewModelCall = (
+  mock: jest.Mock,
+  bottomContent: React.ReactNode,
+  shouldRenderDocker: boolean,
+) => {
+  expect(mock).toHaveBeenCalledWith({ bottomContent, shouldRenderDocker });
+};
+
+const expectSidebarViewModelCall = (
+  mock: jest.Mock,
+  isMobile: boolean,
+  containerRef: MutableRefObject<HTMLDivElement | null>,
+  sidebarProps: Record<string, unknown>,
+) => {
+  expect(mock).toHaveBeenCalledWith({
+    isMobile,
+    containerRef,
+    sidebarProps,
+  });
+};
+
+const expectMainViewModelCall = (
+  mock: jest.Mock,
+  isMobile: boolean,
+  children: React.ReactNode,
+  onToggleSidebar: () => void,
+  onMainMiddleScroll?: () => void,
+) => {
+  expect(mock).toHaveBeenCalledWith({
+    isMobile,
+    children,
+    onToggleSidebar,
+    onMainMiddleScroll,
+  });
+};
+
+const expectContainerStyleCall = (
+  mock: jest.Mock,
+  shouldRenderDocker: boolean,
+  dockerModel: DockerModel,
+  isMobile: boolean,
+  sidebarModel: SidebarModel,
+) => {
+  expect(mock).toHaveBeenCalledWith({
+    shouldRenderDocker,
+    dockerHeight: dockerModel.dockerHeight,
+    isMobile,
+    sidebarWidth: sidebarModel.sidebarWidth,
+  });
+};
+
 export function expectHookUsage({
   bottomContent,
   shouldRenderDocker,
@@ -70,27 +121,10 @@ export function expectHookUsage({
   const { useDockerViewModelMock, useSidebarViewModelMock, useMainViewModelMock, useContainerStyleMock } =
     mocks;
 
-  expect(useDockerViewModelMock).toHaveBeenCalledWith({
-    bottomContent,
-    shouldRenderDocker,
-  });
-  expect(useSidebarViewModelMock).toHaveBeenCalledWith({
-    isMobile,
-    containerRef,
-    sidebarProps,
-  });
-  expect(useMainViewModelMock).toHaveBeenCalledWith({
-    isMobile,
-    children,
-    onToggleSidebar,
-    onMainMiddleScroll,
-  });
-  expect(useContainerStyleMock).toHaveBeenCalledWith({
-    shouldRenderDocker,
-    dockerHeight: dockerModel.dockerHeight,
-    isMobile,
-    sidebarWidth: sidebarModel.sidebarWidth,
-  });
+  expectDockerViewModelCall(useDockerViewModelMock, bottomContent, shouldRenderDocker);
+  expectSidebarViewModelCall(useSidebarViewModelMock, isMobile, containerRef, sidebarProps);
+  expectMainViewModelCall(useMainViewModelMock, isMobile, children, onToggleSidebar, onMainMiddleScroll);
+  expectContainerStyleCall(useContainerStyleMock, shouldRenderDocker, dockerModel, isMobile, sidebarModel);
 };
 
 export function createComposedScenario({
@@ -106,28 +140,32 @@ export function createComposedScenario({
   onMainMiddleScroll: () => void;
   onToggleSidebar: () => void;
 }): LayoutScenarioOptions {
+  const dockerModel = createDockerModel({
+    shouldRender: true,
+    content: bottomContent,
+    dockerHeight: 96,
+  });
+  const sidebarModel = createSidebarModel({
+    props: { role: "complementary" },
+    sidebarWidth: 320,
+    visibleResizer: true,
+    onToggleSidebar,
+  });
+  const mainModel = createMainModel({
+    isMobile: true,
+    children,
+    onToggleSidebar,
+  });
+
   return {
     isMobile: true,
     children,
     bottomContent,
     sidebarProps,
     onMainMiddleScroll,
-    dockerModel: createDockerModel({
-      shouldRender: true,
-      content: bottomContent,
-      dockerHeight: 96,
-    }),
-    sidebarModel: createSidebarModel({
-      props: { role: "complementary" },
-      sidebarWidth: 320,
-      visibleResizer: true,
-      onToggleSidebar,
-    }),
-    mainModel: createMainModel({
-      isMobile: true,
-      children,
-      onToggleSidebar,
-    }),
+    dockerModel,
+    sidebarModel,
+    mainModel,
     containerStyle: { "--docker-h": "96px" },
   };
 }

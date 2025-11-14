@@ -46,19 +46,23 @@ const useCurrentOptionModel = (
   );
 
 const buildVariantModel = (
-  input: VariantInput,
+  key: LanguageVariantKey,
+  label: VariantInput["label"],
   normalizedOptions: NormalizedOption[],
   currentOption: NormalizedOption | null,
   hasOptions: boolean,
+  onChange?: VariantInput["onChange"],
+  normalizeValue?: VariantInput["normalizeValue"],
+  onOpen?: VariantInput["onOpen"],
 ): VariantModel => ({
-  key: input.key,
-  label: resolveLabel(input.key, input.label),
+  key,
+  label: resolveLabel(key, label),
   normalizedOptions,
   currentOption,
   hasOptions,
-  onChange: input.onChange,
-  normalizeValue: input.normalizeValue,
-  onOpen: input.onOpen,
+  onChange,
+  normalizeValue,
+  onOpen,
 });
 
 export const useVariantModel = (input: VariantInput): VariantModel => {
@@ -78,7 +82,16 @@ export const useVariantModel = (input: VariantInput): VariantModel => {
 
   return useMemo(
     () =>
-      buildVariantModel(input, normalizedOptions, currentOption, hasOptions),
+      buildVariantModel(
+        input.key,
+        input.label,
+        normalizedOptions,
+        currentOption,
+        hasOptions,
+        input.onChange,
+        input.normalizeValue,
+        input.onOpen,
+      ),
     [
       currentOption,
       hasOptions,

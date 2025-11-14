@@ -86,94 +86,96 @@ function renderLayoutModelHook(options: LayoutScenarioOptions = {}) {
 
   return { result, containerRef, dockerModel, sidebarModel, mainModel, containerStyle };
 };
+function runComposedScenarioTest() {
+  const onMainMiddleScroll = jest.fn();
+  const bottomContent = <footer>tools</footer>;
+  const children = <section>content</section>;
+  const sidebarProps = { collapsed: false };
+  const onToggleSidebar = jest.fn();
+  const {
+    result,
+    containerRef,
+    dockerModel,
+    sidebarModel,
+    mainModel,
+    containerStyle,
+  } = renderLayoutModelHook(
+    createComposedScenario({
+      children,
+      bottomContent,
+      sidebarProps,
+      onMainMiddleScroll,
+      onToggleSidebar,
+    }),
+  );
+  expectViewProps({
+    result,
+    containerRef,
+    containerStyle,
+    sidebarModel,
+    mainModel,
+    dockerModel,
+  });
+  expectHookUsage({
+    bottomContent,
+    shouldRenderDocker: true,
+    isMobile: true,
+    containerRef,
+    sidebarProps,
+    children,
+    onToggleSidebar,
+    onMainMiddleScroll,
+    dockerModel,
+    sidebarModel,
+    mocks: {
+      useDockerViewModelMock,
+      useSidebarViewModelMock,
+      useMainViewModelMock,
+      useContainerStyleMock,
+    },
+  });
+}
+function runFallbackScenarioTest() {
+  const children = <div>slot</div>;
+  const {
+    result,
+    containerRef,
+    dockerModel,
+    sidebarModel,
+    mainModel,
+    containerStyle,
+  } = renderLayoutModelHook(createFallbackScenario({ children }));
+  expectViewProps({
+    result,
+    containerRef,
+    containerStyle,
+    sidebarModel,
+    mainModel,
+    dockerModel,
+  });
+  expectHookUsage({
+    bottomContent: null,
+    shouldRenderDocker: false,
+    isMobile: false,
+    containerRef,
+    sidebarProps: {},
+    children,
+    onToggleSidebar: sidebarModel.onToggleSidebar,
+    onMainMiddleScroll: undefined,
+    dockerModel,
+    sidebarModel,
+    mocks: {
+      useDockerViewModelMock,
+      useSidebarViewModelMock,
+      useMainViewModelMock,
+      useContainerStyleMock,
+    },
+  });
+}
 describe("useLayoutModel", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  test("composes docker, sidebar, main, and style props via helper hooks", () => {
-    const onMainMiddleScroll = jest.fn();
-    const bottomContent = <footer>tools</footer>;
-    const children = <section>content</section>;
-    const sidebarProps = { collapsed: false };
-    const onToggleSidebar = jest.fn();
-    const {
-      result,
-      containerRef,
-      dockerModel,
-      sidebarModel,
-      mainModel,
-      containerStyle,
-    } = renderLayoutModelHook(
-      createComposedScenario({
-        children,
-        bottomContent,
-        sidebarProps,
-        onMainMiddleScroll,
-        onToggleSidebar,
-      }),
-    );
-    expectViewProps({
-      result,
-      containerRef,
-      containerStyle,
-      sidebarModel,
-      mainModel,
-      dockerModel,
-    });
-    expectHookUsage({
-      bottomContent,
-      shouldRenderDocker: true,
-      isMobile: true,
-      containerRef,
-      sidebarProps,
-      children,
-      onToggleSidebar,
-      onMainMiddleScroll,
-      dockerModel,
-      sidebarModel,
-      mocks: {
-        useDockerViewModelMock,
-        useSidebarViewModelMock,
-        useMainViewModelMock,
-        useContainerStyleMock,
-      },
-    });
-    });
-  test("falls back to defaults when docker and sidebar props are omitted", () => {
-    const children = <div>slot</div>;
-    const {
-      result,
-      containerRef,
-      dockerModel,
-      sidebarModel,
-      mainModel,
-      containerStyle,
-    } = renderLayoutModelHook(createFallbackScenario({ children }));
-    expectViewProps({
-      result,
-      containerRef,
-      containerStyle,
-      sidebarModel,
-      mainModel,
-      dockerModel,
-    });
-    expectHookUsage({
-      bottomContent: null,
-      shouldRenderDocker: false,
-      isMobile: false,
-      containerRef,
-      sidebarProps: {},
-      children,
-      onToggleSidebar: sidebarModel.onToggleSidebar,
-      onMainMiddleScroll: undefined,
-      dockerModel,
-      sidebarModel,
-      mocks: {
-        useDockerViewModelMock,
-        useSidebarViewModelMock,
-        useMainViewModelMock,
-        useContainerStyleMock,
-      },
-    });
-  });
+  test("composes docker, sidebar, main, and style props via helper hooks", runComposedScenarioTest);
+  test("falls back to defaults when docker and sidebar props are omitted", runFallbackScenarioTest);
 });

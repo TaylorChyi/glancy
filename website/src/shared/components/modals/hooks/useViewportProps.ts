@@ -36,6 +36,15 @@ const createPanelProps = (panel: PanelData) => ({
   ...PANEL_CLASSNAMES,
 });
 
+type ViewportPropsArgs = {
+  sections: SectionsData;
+  activeSectionId: PreferenceSectionsData["activeSectionId"];
+  onSectionSelect: (section: HandleSectionSelectArg) => void;
+  tablistLabel: string;
+  registerHeading: RegisterHeading;
+  panel: PanelData;
+};
+
 const createViewportProps = ({
   sections,
   activeSectionId,
@@ -43,14 +52,7 @@ const createViewportProps = ({
   tablistLabel,
   registerHeading,
   panel,
-}: {
-  sections: SectionsData;
-  activeSectionId: PreferenceSectionsData["activeSectionId"];
-  onSectionSelect: (section: HandleSectionSelectArg) => void;
-  tablistLabel: string;
-  registerHeading: RegisterHeading;
-  panel: PanelData;
-}): ViewportProps => ({
+}: ViewportPropsArgs): ViewportProps => ({
   sections,
   activeSectionId,
   onSectionSelect,
@@ -77,17 +79,16 @@ const useViewportProps = ({
   registerHeading: RegisterHeading;
   panel: PanelData;
 }): ViewportProps => {
-  const viewportPropsArgs = {
-    sections,
-    activeSectionId,
-    onSectionSelect,
-    tablistLabel,
-    registerHeading,
-    panel,
-  };
-
   return useMemo(
-    () => createViewportProps(viewportPropsArgs),
+    () =>
+      createViewportProps({
+        sections,
+        activeSectionId,
+        onSectionSelect,
+        tablistLabel,
+        registerHeading,
+        panel,
+      }),
     [
       sections,
       activeSectionId,

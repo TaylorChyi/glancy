@@ -17,7 +17,7 @@ import useWaitingFrameCycle from "../useWaitingFrameCycle";
 
 const waitingFrames = ["frame-a.svg", "frame-b.svg", "frame-c.svg"];
 
-describe("useWaitingFrameCycle", () => {
+const describeInitialSelection = () => {
   it("GivenRandomSequence_WhenInitialised_ThenUsesFirstRandomValue", () => {
     const randomValues = [0.6];
     const { result } = renderHook(() =>
@@ -47,7 +47,9 @@ describe("useWaitingFrameCycle", () => {
 
     expect(result.current.currentFrame).toBe("frame-c.svg");
   });
+};
 
+const describeSingleFramePool = () => {
   it("GivenSingleFramePool_WhenIterating_ThenKeepsReturningSameFrame", () => {
     const singleFrame = ["only-frame.svg"];
     const { result } = renderHook(() =>
@@ -64,36 +66,6 @@ describe("useWaitingFrameCycle", () => {
     });
 
     expect(result.current.currentFrame).toBe("only-frame.svg");
-  });
-
-  it("GivenCustomScheduler_WhenAutoStartEnabled_ThenInvokesAndCleansUp", () => {
-    const randomValues = [0.1, 0.8];
-    let scheduledCallback;
-    const scheduler = jest.fn((callback) => {
-      scheduledCallback = callback;
-      return 42;
-    });
-    const cancel = jest.fn();
-
-    const { result } = renderHook(() =>
-      useWaitingFrameCycle(waitingFrames, {
-        random: () => randomValues.shift() ?? 0,
-        scheduler,
-        cancel,
-      }),
-    );
-
-    expect(result.current.currentFrame).toBe("frame-a.svg");
-    expect(scheduler).toHaveBeenCalledTimes(1);
-    expect(typeof scheduledCallback).toBe("function");
-
-    act(() => {
-      scheduledCallback();
-    });
-
-    expect(cancel).toHaveBeenCalledWith(42);
-    expect(scheduler).toHaveBeenCalledTimes(2);
-    expect(result.current.currentFrame).toBe("frame-c.svg");
   });
 
   it("GivenSingleFramePool_WhenUsingDefaultOptions_ThenSkipsScheduling", () => {
@@ -125,6 +97,38 @@ describe("useWaitingFrameCycle", () => {
     expect(scheduler).not.toHaveBeenCalled();
     expect(cancel).not.toHaveBeenCalled();
   });
+};
+
+const describeScheduling = () => {
+  it("GivenCustomScheduler_WhenAutoStartEnabled_ThenInvokesAndCleansUp", () => {
+    const randomValues = [0.1, 0.8];
+    let scheduledCallback;
+    const scheduler = jest.fn((callback) => {
+      scheduledCallback = callback;
+      return 42;
+    });
+    const cancel = jest.fn();
+
+    const { result } = renderHook(() =>
+      useWaitingFrameCycle(waitingFrames, {
+        random: () => randomValues.shift() ?? 0,
+        scheduler,
+        cancel,
+      }),
+    );
+
+    expect(result.current.currentFrame).toBe("frame-a.svg");
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    expect(typeof scheduledCallback).toBe("function");
+
+    act(() => {
+      scheduledCallback();
+    });
+
+    expect(cancel).toHaveBeenCalledWith(42);
+    expect(scheduler).toHaveBeenCalledTimes(2);
+    expect(result.current.currentFrame).toBe("frame-c.svg");
+  });
 
   it("GivenMultiFramePool_WhenSchedulingDisabled_ThenNeverEnqueuesTimer", () => {
     /**
@@ -155,7 +159,9 @@ describe("useWaitingFrameCycle", () => {
     expect(scheduler).not.toHaveBeenCalled();
     expect(cancel).not.toHaveBeenCalled();
   });
+};
 
+const describeStrategy = () => {
   it("GivenStrategyConfiguration_WhenReadingCycleDuration_ThenReturnsFixedInterval", () => {
     /**
      * 测试目标：确认 Hook 返回的 cycleDurationMs 与策略文件设定的 1500ms 常量一致。
@@ -178,4 +184,11 @@ describe("useWaitingFrameCycle", () => {
 
     expect(result.current.cycleDurationMs).toBe(1500);
   });
+};
+
+describe("useWaitingFrameCycle", () => {
+  describe("initial selection", describeInitialSelection);
+  describe("single frame pool", describeSingleFramePool);
+  describe("scheduling", describeScheduling);
+  describe("strategy", describeStrategy);
 });

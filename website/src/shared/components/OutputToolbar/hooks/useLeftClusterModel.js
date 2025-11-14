@@ -55,19 +55,7 @@ const useLeftClusterPropsMemo = (memoInput) =>
       memoInput.shouldRender
         ? buildPropsFromMemoInput(memoInput)
         : null,
-    [
-      memoInput.shouldRender,
-      memoInput.showTts,
-      memoInput.showReplay,
-      memoInput.ttsComponent,
-      memoInput.term,
-      memoInput.lang,
-      memoInput.speakableTerm,
-      memoInput.disabled,
-      memoInput.onReoutput,
-      memoInput.reoutputLabel,
-      memoInput,
-    ],
+    [memoInput],
   );
 
 const buildLeftClusterMemoPlan = (input) => {

@@ -1,13 +1,10 @@
-import { useMemo } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import {
-  buildBaseClassName,
-  buildLabelClassName,
-  buildNavLinkClassName,
-  buildResolvedClassName,
   getVariantStyles,
   resolveComponentType,
 } from "./navItemClassNames";
+import { useNavItemClassNames } from "./useNavItemClassNames";
+import type { UseNavItemClassNamesResult } from "./useNavItemClassNames";
 import type { InteractionVariant } from "./navItemClassNames";
 
 type NavItemModelInput = {
@@ -54,118 +51,6 @@ type NavItemViewProps = {
   restProps?: Record<string, unknown>;
 };
 
-type UseNavItemClassNamesArgs = {
-  active: boolean;
-  allowMultilineLabel: boolean;
-  className: string;
-  tone: "default" | "muted";
-  variantStyles: ReturnType<typeof getVariantStyles>;
-};
-
-type UseNavItemClassNamesResult = {
-  labelClassName: string;
-  resolvedClassName: string;
-  navLinkClassName: string;
-};
-
-function useLabelClassName(allowMultilineLabel: boolean): string {
-  return useMemo(
-    () => buildLabelClassName(allowMultilineLabel),
-    [allowMultilineLabel],
-  );
-}
-
-type BaseClassNameArgs = {
-  allowMultilineLabel: boolean;
-  tone: "default" | "muted";
-  variantBaseClass: string;
-  className: string;
-};
-
-function useBaseClassName({
-  allowMultilineLabel,
-  tone,
-  variantBaseClass,
-  className,
-}: BaseClassNameArgs): string {
-  return useMemo(
-    () =>
-      buildBaseClassName({
-        allowMultilineLabel,
-        tone,
-        variantBaseClass,
-        className,
-      }),
-    [allowMultilineLabel, className, tone, variantBaseClass],
-  );
-}
-
-type NamedClassNameArgs = {
-  baseClassName: string;
-  activeClassName: string;
-  active: boolean;
-};
-
-function useResolvedClassName({
-  baseClassName,
-  activeClassName,
-  active,
-}: NamedClassNameArgs): string {
-  return useMemo(
-    () =>
-      buildResolvedClassName({
-        baseClassName,
-        activeClassName,
-        active,
-      }),
-    [active, activeClassName, baseClassName],
-  );
-}
-
-function useNavLinkClassName({
-  baseClassName,
-  activeClassName,
-  active,
-}: NamedClassNameArgs): string {
-  return useMemo(
-    () =>
-      buildNavLinkClassName({
-        baseClassName,
-        activeClassName,
-        active,
-      }),
-    [active, activeClassName, baseClassName],
-  );
-}
-
-function useNavItemClassNames({
-  active,
-  allowMultilineLabel,
-  className,
-  tone,
-  variantStyles,
-}: UseNavItemClassNamesArgs): UseNavItemClassNamesResult {
-  const labelClassName = useLabelClassName(allowMultilineLabel);
-  const baseClassName = useBaseClassName({
-    allowMultilineLabel,
-    tone,
-    variantBaseClass: variantStyles.baseClass,
-    className,
-  });
-  const resolvedClassName = useResolvedClassName({
-    baseClassName,
-    activeClassName: variantStyles.activeClass,
-    active,
-  });
-  const navLinkClassName = useNavLinkClassName({
-    baseClassName,
-    activeClassName: variantStyles.activeClass,
-    active,
-  });
-
-  return { labelClassName, resolvedClassName, navLinkClassName };
-}
-
 export type NavItemModel = {
   viewProps: NavItemViewProps;
 };
@@ -194,9 +79,30 @@ type NormalizedNavItemModelInput = {
 };
 
 function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {
-  const { active, allowMultilineLabel, children, className, description, href, icon, label, onClick, to, tone, type, variant, ...restProps } = props;
+  const {
+    active,
+    allowMultilineLabel,
+    children,
+    className,
+    description,
+    href,
+    icon,
+    label,
+    onClick,
+    to,
+    tone,
+    type,
+    variant,
+    ...restProps
+  } = props;
   const normalizedProps: NormalizedNavItemModelInput = {
-    icon, label, description, to, href, onClick, restProps,
+    icon,
+    label,
+    description,
+    to,
+    href,
+    onClick,
+    restProps,
     active: active ?? false,
     className: className ?? "",
     tone: tone ?? "default",
@@ -235,7 +141,18 @@ function buildNavItemViewProps({
   classNames,
   props,
 }: BuildNavItemViewPropsArgs): NavItemViewProps {
-  const { icon, label, description, children, onClick, active, to, href, type, restProps } = props;
+  const {
+    icon,
+    label,
+    description,
+    children,
+    onClick,
+    active,
+    to,
+    href,
+    type,
+    restProps,
+  } = props;
   return {
     componentType,
     classNames: {

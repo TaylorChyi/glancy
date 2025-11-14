@@ -22,16 +22,9 @@ function ListItem({
 }) {
   const itemClassName = [styles.item, className].filter(Boolean).join(" ");
   return (
-    <li
-      className={itemClassName}
-      data-active={isActive || undefined}
-      onClick={onClick}
-      {...props}
-    >
+    <li className={itemClassName} data-active={isActive || undefined} onClick={onClick} {...props}>
       <span className={styles.indicator} aria-hidden="true" />
-      <span className={styles.icon} aria-hidden={icon ? undefined : "true"}>
-        {icon || null}
-      </span>
+      <span className={styles.icon} aria-hidden={icon ? undefined : "true"}>{icon || null}</span>
       <span
         className={[styles.text, textClassName].filter(Boolean).join(" ")}
         title={deriveTitle(title, text)}

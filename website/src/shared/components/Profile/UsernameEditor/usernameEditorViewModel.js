@@ -20,25 +20,31 @@ function buildUsernameViewModel(props) {
   });
 }
 
-function createUsernameViewModel({
-  mode,
-  draft,
-  error,
+function createUsernameViewModel(props) {
+  return buildUsernameViewModelPayload({
+    ...props,
+    inputValue:
+      props.mode === UsernameEditorModes.VIEW ? props.viewValue : props.draft,
+    errorMessage: resolveUsernameErrorMessage(props.t, props.error),
+  });
+}
+
+function buildUsernameViewModelPayload({
   className,
-  inputClassName,
-  buttonClassName,
+  controlId,
+  messageId,
+  mode,
+  error,
+  inputValue,
   t,
   inputRef,
   handlers,
-  controlId,
-  messageId,
-  renderInlineAction,
-  viewValue,
+  inputClassName,
+  buttonClassName,
   buttonLabel,
+  renderInlineAction,
+  errorMessage,
 }) {
-  const inputValue = mode === UsernameEditorModes.VIEW ? viewValue : draft;
-  const errorMessage = resolveUsernameErrorMessage(t, error);
-
   return {
     layout: buildLayout(className),
     inputProps: createInputProps({

@@ -38,39 +38,39 @@ const composeViewModelOptions = ({
   renderInlineAction,
 });
 
-const viewModelDependencies = ({
-  state: { mode, value, draft, error },
-  emptyDisplayValue,
-  className,
-  inputClassName,
-  buttonClassName,
-  t,
-  inputRef,
-  handlers,
-  controlId,
-  messageId,
-  renderInlineAction,
-}) => [
-  mode,
-  value,
-  draft,
-  error,
-  emptyDisplayValue,
-  className,
-  inputClassName,
-  buttonClassName,
-  t,
-  inputRef,
-  handlers,
-  controlId,
-  messageId,
-  renderInlineAction,
-];
-
 export const useUsernameViewModel = (params) => {
+  const {
+    state: { mode, value, draft, error },
+    emptyDisplayValue,
+    className,
+    inputClassName,
+    buttonClassName,
+    t,
+    inputRef,
+    handlers,
+    controlId,
+    messageId,
+    renderInlineAction,
+  } = params;
+
   const viewModel = useMemo(
     () => composeUsernameViewModel(composeViewModelOptions(params)),
-    viewModelDependencies(params),
+    [
+      mode,
+      value,
+      draft,
+      error,
+      emptyDisplayValue,
+      className,
+      inputClassName,
+      buttonClassName,
+      t,
+      inputRef,
+      handlers,
+      controlId,
+      messageId,
+      renderInlineAction,
+    ],
   );
 
   useActionResolutionEffect(params.onResolveAction, viewModel.actionDescriptor);

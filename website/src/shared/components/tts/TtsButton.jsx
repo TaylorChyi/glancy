@@ -53,20 +53,11 @@ function useTtsButtonState({
 }) {
   const { t } = useLanguage();
   const { play, stop, loading, playing, error } = useTtsPlayer({ scope });
-  const feedback = useTtsFeedback(error);
-  const tooltip = useTooltipText(scope, t);
-  const btnClass = useButtonClass(disabled, loading, playing);
-  const iconSize = size || (scope === "sentence" ? 24 : 20);
-  const handleClick = useHandleClick({
-    disabled,
-    loading,
-    playing,
-    stop,
-    play,
-    text,
-    lang,
-    voice,
-  });
+  const handleClick = useHandleClick({ disabled, loading, playing, stop, play, text, lang, voice });
+  const tooltip = useTooltipText(scope, t),
+    btnClass = useButtonClass(disabled, loading, playing),
+    iconSize = size || (scope === "sentence" ? 24 : 20),
+    feedback = useTtsFeedback(error);
 
   return {
     tooltip,

@@ -43,88 +43,78 @@ const useFormFeedbackData = ({ otherOptionsLabel, t }) => {
   };
 };
 
-function useFormHandlers({
+const createHandlerConfig = ({ account, method, t, validateAccount }) => ({
   account,
   method,
-  onRequestCode,
-  onSubmit,
-  password,
-  validateAccount,
-  feedback,
-  setAccount,
   t,
-}) {
+  validateAccount,
+});
+
+const createSendCodeConfig = (handlerConfig, extras) => ({
+  ...handlerConfig,
+  onRequestCode: extras.onRequestCode,
+  setAccount: extras.setAccount,
+  showPopup: extras.feedback.showPopup,
+  showToast: extras.feedback.showToast,
+});
+
+const createSubmitConfig = (handlerConfig, extras) => ({
+  ...handlerConfig,
+  onSubmit: extras.onSubmit,
+  password: extras.password,
+  showPopup: extras.feedback.showPopup,
+});
+
+function useFormHandlers(handlerArgs) {
+  const handlerConfig = createHandlerConfig(handlerArgs);
+
   return {
-    handleSendCode: useCodeRequestHandler({
-      account,
-      method,
-      onRequestCode,
-      setAccount,
-      showPopup: feedback.showPopup,
-      showToast: feedback.showToast,
-      t,
-      validateAccount,
-    }),
-    handleSubmit: useSubmitHandler({
-      account,
-      method,
-      onSubmit,
-      password,
-      showPopup: feedback.showPopup,
-      t,
-      validateAccount,
-    }),
+    handleSendCode: useCodeRequestHandler(
+      createSendCodeConfig(handlerConfig, handlerArgs),
+    ),
+    handleSubmit: useSubmitHandler(
+      createSubmitConfig(handlerConfig, handlerArgs),
+    ),
   };
 }
 
+const buildControllerModel = ({
+  feedbackData,
+  formState,
+  handlers,
+  props,
+}) =>
+  composeControllerModel({
+    ...formState,
+    feedback: feedbackData.feedback,
+    handleSendCode: handlers.handleSendCode,
+    handleSubmit: handlers.handleSubmit,
+    icons: props.icons,
+    onUnavailableMethod: feedbackData.onUnavailableMethod,
+    otherOptionsLabel: feedbackData.otherOptionsLabel,
+    passwordPlaceholder: props.passwordPlaceholder,
+    placeholders: props.placeholders,
+    showCodeButton: props.showCodeButton,
+    toastDismissLabel: feedbackData.toastDismissLabel,
+  });
+
 function useAuthFormController(props) {
-  const {
-    account,
-    availableFormMethods,
-    method,
-    orderedMethods,
-    password,
-    setAccount,
-    setMethod,
-    setPassword,
-  } = useFormState(props);
-  const {
-    feedback,
-    onUnavailableMethod,
-    otherOptionsLabel,
-    toastDismissLabel,
-  } = useFormFeedbackData(props);
-  const { handleSendCode, handleSubmit } = useFormHandlers({
-    account,
-    method,
+  const formState = useFormState(props);
+  const feedbackData = useFormFeedbackData(props);
+  const handlers = useFormHandlers({
+    ...formState,
+    feedback: feedbackData.feedback,
     onRequestCode: props.onRequestCode,
     onSubmit: props.onSubmit,
-    password,
     validateAccount: props.validateAccount,
-    feedback,
-    setAccount,
     t: props.t,
   });
 
-  return composeControllerModel({
-    account,
-    availableFormMethods,
-    feedback,
-    handleSendCode,
-    handleSubmit,
-    icons: props.icons,
-    method,
-    onUnavailableMethod,
-    orderedMethods,
-    otherOptionsLabel,
-    password,
-    passwordPlaceholder: props.passwordPlaceholder,
-    placeholders: props.placeholders,
-    setAccount,
-    setMethod,
-    setPassword,
-    showCodeButton: props.showCodeButton,
-    toastDismissLabel,
+  return buildControllerModel({
+    feedbackData,
+    formState,
+    handlers,
+    props,
   });
 }
 

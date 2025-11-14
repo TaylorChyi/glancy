@@ -23,7 +23,7 @@ function useToggleMetadata({
   toggleVisibility: () => void;
   labels: typeof DEFAULT_LABELS;
   inputType: string;
-}) => {
+}) {
   const allowToggle = mask && !disabled;
   const type = allowToggle ? inputType : "text";
   const resolvedLabels = useMemo(
