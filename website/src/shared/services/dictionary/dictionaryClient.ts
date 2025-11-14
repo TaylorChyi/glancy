@@ -46,6 +46,20 @@ const sanitizeTerm = (term: string): string => term?.trim() ?? "";
 const hasLookupPrerequisites = (command: DictionaryEntryCommand): boolean =>
   Boolean(command?.userId) && Boolean(sanitizeTerm(command.term));
 
+const handleMissingPrerequisites = (
+  command: DictionaryEntryCommand,
+): DictionaryEntryResponse | null => {
+  if (hasLookupPrerequisites(command)) {
+    return null;
+  }
+
+  return mapDictionaryEntryResponse({
+    data: null,
+    language: "ENGLISH",
+    flavor: WORD_FLAVOR_BILINGUAL,
+  });
+};
+
 const resolveLookupConfig = (command: DictionaryEntryCommand) => {
   const term = sanitizeTerm(command.term);
   const sourceLanguage = command.sourceLanguage ?? WORD_LANGUAGE_AUTO;
@@ -95,28 +109,35 @@ const createErrorResponse = ({
   flavor,
 });
 
+const fetchDictionaryEntry = (
+  wordsApi: WordsApi,
+  command: DictionaryEntryCommand,
+  config: ReturnType<typeof resolveLookupConfig>,
+): Promise<unknown> => wordsApi.fetchWord(buildRequest(command, config));
+
+const buildDictionarySuccess = (
+  data: unknown,
+  config: ReturnType<typeof resolveLookupConfig>,
+): DictionaryEntryResponse =>
+  mapDictionaryEntryResponse({
+    data,
+    language: config.language,
+    flavor: config.flavor,
+  });
+
 export const createDictionaryClient = (wordsApi: WordsApi): DictionaryClient => {
   const loadEntry = async (
     command: DictionaryEntryCommand,
   ): Promise<DictionaryEntryResponse> => {
-    if (!hasLookupPrerequisites(command)) {
-      return mapDictionaryEntryResponse({
-        data: null,
-        language: "ENGLISH",
-        flavor: WORD_FLAVOR_BILINGUAL,
-      });
+    const missingPrerequisitesResponse = handleMissingPrerequisites(command);
+    if (missingPrerequisitesResponse) {
+      return missingPrerequisitesResponse;
     }
 
     const config = resolveLookupConfig(command);
     try {
-      const data = await wordsApi.fetchWord(
-        buildRequest(command, config),
-      );
-      return mapDictionaryEntryResponse({
-        data,
-        language: config.language,
-        flavor: config.flavor,
-      });
+      const data = await fetchDictionaryEntry(wordsApi, command, config);
+      return buildDictionarySuccess(data, config);
     } catch (error) {
       return createErrorResponse({
         error,
