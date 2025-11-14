@@ -43,10 +43,7 @@ const useSectionsConfig = (params) => {
     [
       accountModel,
       responseStyleCopy,
-      responseStylePreferences.handleFieldChange,
-      responseStylePreferences.handleFieldCommit,
-      responseStylePreferences.handleRetry,
-      responseStylePreferences.state,
+      responseStylePreferences,
       subscriptionSection,
       translations,
     ],
