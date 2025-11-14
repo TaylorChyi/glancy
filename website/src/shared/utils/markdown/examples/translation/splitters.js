@@ -5,47 +5,101 @@ import {
 import { isTranslationLabel } from "../labels.js";
 import { stripTranslationWrappers } from "./wrappers.js";
 
-export function splitInlineTranslation(prefix, rest) {
+const FOLLOWING_TRANSLATION_PATTERN =
+  /^(\*\*([^*]+)\*\*|[^\s:：]{1,32})(?:\s*)([:：])(.*)$/u;
+const TRAILING_WHITESPACE_PATTERN = /[ \t]+$/u;
+
+export function findInlineTranslationMatch(rest) {
   INLINE_TRANSLATION_LABEL_PATTERN.lastIndex = 0;
   while (true) {
-    const translationMatch = INLINE_TRANSLATION_LABEL_PATTERN.exec(rest);
-    if (!translationMatch) {
-      break;
+    const match = INLINE_TRANSLATION_LABEL_PATTERN.exec(rest);
+    if (!match) {
+      return null;
     }
-    const [, rawLabel, innerLabel] = translationMatch;
+    const [, rawLabel, innerLabel] = match;
     const candidate = innerLabel ?? rawLabel;
     if (!isTranslationLabel(candidate)) {
       continue;
     }
-    let start = translationMatch.index;
-    while (start > 0) {
-      const previous = rest[start - 1];
-      if (!previous) {
-        break;
-      }
-      if (TRANSLATION_LABEL_BOUNDARY_PATTERN.test(previous)) {
-        start -= 1;
-        continue;
-      }
-      break;
-    }
-    let exampleBody = rest.slice(0, start).trimEnd();
-    let translationSegment = rest.slice(start).trimStart();
-    const sanitizedSegments = stripTranslationWrappers(
-      exampleBody,
-      translationSegment,
-    );
-    exampleBody = sanitizedSegments.exampleBody;
-    translationSegment = sanitizedSegments.translationSegment;
-    const exampleLine = exampleBody
-      ? `${prefix}${exampleBody}`.trimEnd()
-      : prefix.trimEnd();
     return {
-      exampleLine: exampleLine.replace(/[ \t]+$/u, ""),
-      translationSegment,
+      match,
+      startIndex: resolveInlineStart(rest, match.index),
     };
   }
-  return null;
+}
+
+export function normalizeExampleLine(prefix, exampleBody) {
+  const composed = exampleBody ? `${prefix}${exampleBody}`.trimEnd() : prefix.trimEnd();
+  return composed.replace(TRAILING_WHITESPACE_PATTERN, "");
+}
+
+export function sanitizeTranslationSegments(exampleBody, translationSegment) {
+  return stripTranslationWrappers(exampleBody, translationSegment);
+}
+
+export function normalizeInlineSegments(prefix, exampleBody, translationSegment) {
+  const sanitizedSegments = sanitizeTranslationSegments(
+    exampleBody,
+    translationSegment,
+  );
+  return {
+    exampleLine: normalizeExampleLine(prefix, sanitizedSegments.exampleBody),
+    translationSegment: sanitizedSegments.translationSegment,
+  };
+}
+
+export function parseTranslationLine(translationContent) {
+  const match = translationContent.match(FOLLOWING_TRANSLATION_PATTERN);
+  if (!match) {
+    return null;
+  }
+  const [, rawLabel, innerLabel] = match;
+  const candidateLabel = innerLabel ?? rawLabel;
+  if (!isTranslationLabel(candidateLabel)) {
+    return null;
+  }
+  return { match, candidateLabel };
+}
+
+export function shouldUseSanitizedSegments(
+  originalExampleBody,
+  originalTranslationSegment,
+  sanitizedSegments,
+) {
+  return (
+    sanitizedSegments.exampleBody !== originalExampleBody ||
+    sanitizedSegments.translationSegment !== originalTranslationSegment
+  );
+}
+
+export function assembleFollowingTranslationResult(
+  prefix,
+  sanitizedSegments,
+  upcomingLine,
+  translationContent,
+) {
+  const translationIndent = upcomingLine.slice(
+    0,
+    upcomingLine.length - translationContent.length,
+  );
+  return {
+    exampleLine: normalizeExampleLine(prefix, sanitizedSegments.exampleBody),
+    translationLine: `${translationIndent}${sanitizedSegments.translationSegment}`.replace(
+      TRAILING_WHITESPACE_PATTERN,
+      "",
+    ),
+  };
+}
+
+export function splitInlineTranslation(prefix, rest) {
+  const result = findInlineTranslationMatch(rest);
+  if (!result) {
+    return null;
+  }
+  const { startIndex } = result;
+  const exampleBody = rest.slice(0, startIndex).trimEnd();
+  const translationSegment = rest.slice(startIndex).trimStart();
+  return normalizeInlineSegments(prefix, exampleBody, translationSegment);
 }
 
 export function splitFollowingTranslation(
@@ -57,40 +111,43 @@ export function splitFollowingTranslation(
     return null;
   }
   const translationContent = upcomingLine.trimStart();
-  const translationMatch = translationContent.match(
-    /^(\*\*([^*]+)\*\*|[^\s:：]{1,32})(?:\s*)([:：])(.*)$/u,
-  );
-  if (!translationMatch) {
+  const parsed = parseTranslationLine(translationContent);
+  if (!parsed) {
     return null;
   }
-  const [, rawLabel, innerLabel] = translationMatch;
-  const candidateLabel = innerLabel ?? rawLabel;
-  if (!isTranslationLabel(candidateLabel)) {
-    return null;
-  }
-  const sanitizedSegments = stripTranslationWrappers(
+  const sanitizedSegments = sanitizeTranslationSegments(
     trimmedExampleBody,
     translationContent,
   );
-  const changedExample = sanitizedSegments.exampleBody !== trimmedExampleBody;
-  const changedTranslation =
-    sanitizedSegments.translationSegment !== translationContent;
-  if (!changedExample && !changedTranslation) {
+  if (
+    !shouldUseSanitizedSegments(
+      trimmedExampleBody,
+      translationContent,
+      sanitizedSegments,
+    )
+  ) {
     return null;
   }
-  const normalizedExample = sanitizedSegments.exampleBody
-    ? `${prefix}${sanitizedSegments.exampleBody}`.trimEnd()
-    : prefix.trimEnd();
-  const translationIndent = upcomingLine.slice(
-    0,
-    upcomingLine.length - translationContent.length,
+  return assembleFollowingTranslationResult(
+    prefix,
+    sanitizedSegments,
+    upcomingLine,
+    translationContent,
   );
-  return {
-    exampleLine: normalizedExample.replace(/[ \t]+$/u, ""),
-    translationLine:
-      `${translationIndent}${sanitizedSegments.translationSegment}`.replace(
-        /[ \t]+$/u,
-        "",
-      ),
-  };
+}
+
+function resolveInlineStart(rest, startIndex) {
+  let index = startIndex;
+  while (index > 0) {
+    const previous = rest[index - 1];
+    if (!previous) {
+      break;
+    }
+    if (TRANSLATION_LABEL_BOUNDARY_PATTERN.test(previous)) {
+      index -= 1;
+      continue;
+    }
+    break;
+  }
+  return index;
 }
