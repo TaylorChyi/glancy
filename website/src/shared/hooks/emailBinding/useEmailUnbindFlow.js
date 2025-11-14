@@ -1,5 +1,41 @@
 import { useCallback, useState } from "react";
 
+function extractEmailFromResponse(response) {
+  return response?.email ?? null;
+}
+
+function handleUserUpdate({ user, updatedEmail, onUserUpdate }) {
+  if (typeof onUserUpdate === "function" && user) {
+    onUserUpdate({ ...user, email: updatedEmail });
+  }
+}
+
+function handleReset(resetRequestState) {
+  if (typeof resetRequestState === "function") {
+    resetRequestState();
+  }
+}
+
+function handleSuccess(updatedEmail, onSuccess) {
+  if (typeof onSuccess === "function") {
+    onSuccess(updatedEmail);
+  }
+}
+
+function processUnbindResult({
+  response,
+  user,
+  onUserUpdate,
+  onSuccess,
+  resetRequestState,
+}) {
+  const updatedEmail = extractEmailFromResponse(response);
+  handleUserUpdate({ user, updatedEmail, onUserUpdate });
+  handleReset(resetRequestState);
+  handleSuccess(updatedEmail, onSuccess);
+  return updatedEmail;
+}
+
 export function useEmailUnbindFlow({
   client,
   ensureClient,
@@ -18,17 +54,13 @@ export function useEmailUnbindFlow({
         userId: user.id,
         token: user.token,
       });
-      const updatedEmail = response?.email ?? null;
-      if (typeof onUserUpdate === "function" && user) {
-        onUserUpdate({ ...user, email: updatedEmail });
-      }
-      if (typeof resetRequestState === "function") {
-        resetRequestState();
-      }
-      if (typeof onSuccess === "function") {
-        onSuccess(updatedEmail);
-      }
-      return updatedEmail;
+      return processUnbindResult({
+        response,
+        user,
+        onUserUpdate,
+        onSuccess,
+        resetRequestState,
+      });
     } finally {
       setIsUnbinding(false);
     }
