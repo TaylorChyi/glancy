@@ -6,6 +6,7 @@ import {
   useCloseRenderer,
   useSectionSelectionHandler,
 } from "./preferencesHooks.js";
+import type { ActiveSectionDescriptor } from "./preferencesHooks.js";
 import { usePreferencesViewProps } from "./preferencesViewProps.js";
 import type {
   PreferenceSectionsModel,
@@ -53,41 +54,54 @@ const usePreferencesSectionsState = (initialSection?: string) => {
   return buildSectionsState(sectionsModel, registerHeading, onSectionSelect);
 };
 
+type PreferencesSectionsState = ReturnType<typeof usePreferencesSectionsState>;
+
+const usePreferencesCloseRenderer = (
+  renderCloseAction?: PreferencesModelInput["renderCloseAction"],
+) => useCloseRenderer(renderCloseAction);
+
+const usePreferencesActiveSection = (
+  activeSection: PreferencesSectionsState["activeSectionModel"],
+  panel: PreferencesSectionsState["panel"],
+) => useActiveSectionDescriptor(activeSection, panel);
+
+const usePreferencesViewPropsFromState = (
+  sectionsState: PreferencesSectionsState,
+  closeRenderer: ReturnType<typeof useCloseRenderer>,
+  activeSection: ActiveSectionDescriptor,
+) =>
+  usePreferencesViewProps({
+    copy: sectionsState.copy,
+    header: sectionsState.header,
+    sections: sectionsState.sections,
+    activeSectionId: sectionsState.activeSectionId,
+    handleSubmit: sectionsState.handleSubmit,
+    onSectionSelect: sectionsState.onSectionSelect,
+    closeRenderer,
+    panel: sectionsState.panel,
+    registerHeading: sectionsState.registerHeading,
+    activeSection,
+    avatarEditor: sectionsState.avatarEditor,
+    feedback: sectionsState.feedback,
+  });
+
 export const usePreferencesModel = ({
   initialSection,
   renderCloseAction,
 }: PreferencesModelInput) => {
-  const {
-    copy,
-    header,
-    sections,
-    activeSectionModel,
-    activeSectionId,
-    handleSubmit,
-    panel,
-    avatarEditor,
-    feedback,
-    registerHeading,
-    onSectionSelect,
-  } = usePreferencesSectionsState(initialSection);
-  const closeRenderer = useCloseRenderer(renderCloseAction);
-  const activeSection = useActiveSectionDescriptor(activeSectionModel, panel);
-  return {
-    viewProps: usePreferencesViewProps({
-      copy,
-      header,
-      sections,
-      activeSectionId,
-      handleSubmit,
-      onSectionSelect,
-      closeRenderer,
-      panel,
-      registerHeading,
-      activeSection,
-      avatarEditor,
-      feedback,
-    }),
-  };
+  const sectionsState = usePreferencesSectionsState(initialSection);
+  const closeRenderer = usePreferencesCloseRenderer(renderCloseAction);
+  const activeSection = usePreferencesActiveSection(
+    sectionsState.activeSectionModel,
+    sectionsState.panel,
+  );
+  const viewProps = usePreferencesViewPropsFromState(
+    sectionsState,
+    closeRenderer,
+    activeSection,
+  );
+
+  return { viewProps };
 };
 
 export default usePreferencesModel;
