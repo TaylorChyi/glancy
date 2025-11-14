@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import {
   ERROR_CODE_REQUIRED,
   ERROR_EMAIL_MISMATCH,
@@ -80,6 +80,62 @@ function handleSuccessfulConfirmation({
   return updatedEmail;
 }
 
+function runConfirmationRequest({
+  client,
+  user,
+  normalizedEmail,
+  normalizedCode,
+  setIsVerifying,
+  onUserUpdate,
+  resetRequestState,
+  onSuccess,
+}) {
+  return withVerificationState(setIsVerifying, async () => {
+    const response = await confirmEmailChangeRequest({
+      client,
+      user,
+      normalizedEmail,
+      normalizedCode,
+    });
+
+    return handleSuccessfulConfirmation({
+      response,
+      user,
+      onUserUpdate,
+      resetRequestState,
+      onSuccess,
+    });
+  });
+}
+
+function confirmChangeAction({
+  ensureClient,
+  lastRequestedEmailRef,
+  setIsVerifying,
+  client,
+  user,
+  onUserUpdate,
+  resetRequestState,
+  onSuccess,
+  email,
+  code,
+}) {
+  ensureClient();
+  const { normalizedEmail, normalizedCode } = validateEmailAndCode(email, code);
+  ensureRequestedEmail({ lastRequestedEmailRef, normalizedEmail });
+
+  return runConfirmationRequest({
+    client,
+    user,
+    normalizedEmail,
+    normalizedCode,
+    setIsVerifying,
+    onUserUpdate,
+    resetRequestState,
+    onSuccess,
+  });
+}
+
 export function useEmailConfirmationFlow({
   client,
   ensureClient,
@@ -90,40 +146,19 @@ export function useEmailConfirmationFlow({
 }) {
   const { lastRequestedEmailRef, resetRequestState } = requestState;
   const [isVerifying, setIsVerifying] = useState(false);
-
-  const confirmChange = useCallback(
-    async ({ email, code }) => {
-      ensureClient();
-      const { normalizedEmail, normalizedCode } = validateEmailAndCode(email, code);
-      ensureRequestedEmail({ lastRequestedEmailRef, normalizedEmail });
-
-      return withVerificationState(setIsVerifying, async () => {
-        const response = await confirmEmailChangeRequest({
-          client,
-          user,
-          normalizedEmail,
-          normalizedCode,
-        });
-
-        return handleSuccessfulConfirmation({
-          response,
-          user,
-          onUserUpdate,
-          resetRequestState,
-          onSuccess,
-        });
-      });
-    },
-    [
-      client,
+  const confirmChange = ({ email, code }) =>
+    confirmChangeAction({
       ensureClient,
       lastRequestedEmailRef,
-      onSuccess,
+      setIsVerifying,
+      client,
+      user,
       onUserUpdate,
       resetRequestState,
-      user,
-    ],
-  );
+      onSuccess,
+      email,
+      code,
+    });
 
   return { confirmChange, isVerifying };
 }

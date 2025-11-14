@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * 测试目标：验证 avatarCropBox 几何策略函数的边界行为与约束逻辑。
  * 前置条件：直接调用纯函数，无需模拟 DOM 或状态。

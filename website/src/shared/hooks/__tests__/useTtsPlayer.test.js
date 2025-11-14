@@ -17,6 +17,16 @@ const resetSharedMocks = () => {
 
 const createPlayerHook = () => renderHook(() => useTtsPlayer());
 
+const playWithAct = (result, payload) =>
+  act(async () => {
+    await result.current.play(payload);
+  });
+
+const emitPause = () =>
+  act(() => {
+    audioPool[0]?.__handlers.pause?.();
+  });
+
 const getAudioResponse = (overrides = {}) => ({
   data: audioB64,
   format: "mp3",
@@ -68,121 +78,103 @@ jest.unstable_mockModule("@core/store", () => ({
 
 const { useTtsPlayer } = await import("@shared/hooks/useTtsPlayer.js");
 
-describe("useTtsPlayer", () => {
-  afterEach(resetSharedMocks);
+afterEach(resetSharedMocks);
 
-  describe("play", () => {
-    /**
-     * Ensures shortcut request retries with shortcut=false when server responds 204
-     * and that all parameters are forwarded correctly.
-     */
-    test("retries with fallback when cache miss", async () => {
-      speakWord.mockResolvedValueOnce(new Response(null, { status: 204 }));
-      speakWord.mockResolvedValueOnce(getAudioResponse());
+describe("useTtsPlayer play", () => {
+  /**
+   * Ensures shortcut request retries with shortcut=false when server responds 204
+   * and that all parameters are forwarded correctly.
+   */
+  test("retries with fallback when cache miss", async () => {
+    speakWord.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    speakWord.mockResolvedValueOnce(getAudioResponse());
 
-      const { result } = createPlayerHook();
+    const { result } = createPlayerHook();
 
-      await act(async () => {
-        await result.current.play({ text: "hi", lang: "en", voice: "v1" });
-      });
+    await playWithAct(result, { text: "hi", lang: "en", voice: "v1" });
 
-      const payload = {
-        text: "hi",
-        lang: "en",
-        voice: "v1",
-        speed: 1,
-        format: "mp3",
-        shortcut: true,
-      };
-      expect(speakWord).toHaveBeenNthCalledWith(1, payload);
-      expect(speakWord).toHaveBeenNthCalledWith(2, {
-        ...payload,
-        shortcut: false,
-      });
-      expect(playSpy).toHaveBeenCalled();
+    const payload = {
+      text: "hi",
+      lang: "en",
+      voice: "v1",
+      speed: 1,
+      format: "mp3",
+      shortcut: true,
+    };
+    expect(speakWord).toHaveBeenNthCalledWith(1, payload);
+    expect(speakWord).toHaveBeenNthCalledWith(2, {
+      ...payload,
+      shortcut: false,
     });
-
-    /**
-     * Confirms 401 errors prompt login feedback.
-     */
-    test("handles unauthorized error", async () => {
-      speakWord.mockRejectedValueOnce(new ApiError(401, "Unauthorized"));
-
-      const { result } = createPlayerHook();
-
-      await act(async () => {
-        await result.current.play({ text: "hi", lang: "en" });
-      });
-
-      expect(result.current.error).toEqual({
-        code: 401,
-        message: "请登录后重试",
-      });
-    });
+    expect(playSpy).toHaveBeenCalled();
   });
 
-  describe("stop", () => {
-    /**
-     * Verifies stop pauses audio and resets playing flag.
-     */
-    test("halts playback", async () => {
-      speakWord.mockResolvedValueOnce(getAudioResponse());
-      const { result } = createPlayerHook();
+  /**
+   * Confirms 401 errors prompt login feedback.
+   */
+  test("handles unauthorized error", async () => {
+    speakWord.mockRejectedValueOnce(new ApiError(401, "Unauthorized"));
 
-      await act(async () => {
-        await result.current.play({ text: "hi", lang: "en" });
-      });
-      expect(result.current.playing).toBe(true);
+    const { result } = createPlayerHook();
 
-      await act(() => {
-        result.current.stop();
-      });
-      expect(audioPool[0].pause).toHaveBeenCalled();
-      expect(global.URL.revokeObjectURL).toHaveBeenCalled();
-      expect(result.current.playing).toBe(false);
-    });
+    await playWithAct(result, { text: "hi", lang: "en" });
 
-    /**
-     * Ensures a new play request pauses the previous audio element.
-     */
-    test("pauses previous audio on new play", async () => {
-      speakWord.mockResolvedValue(getAudioResponse());
-      const first = createPlayerHook();
-      await act(async () => {
-        await first.result.current.play({ text: "a", lang: "en" });
-      });
-
-      const second = createPlayerHook();
-      await act(async () => {
-        await second.result.current.play({ text: "b", lang: "en" });
-      });
-      expect(audioPool[0].pause).toHaveBeenCalled();
+    expect(result.current.error).toEqual({
+      code: 401,
+      message: "请登录后重试",
     });
   });
+});
 
-  describe("resume", () => {
-    /**
-     * When playback was paused but the buffer is still in memory,
-     * the hook should resume without hitting the network again.
-     */
-    test("reuses buffered audio", async () => {
-      speakWord.mockResolvedValue(getAudioResponse());
-      const { result } = createPlayerHook();
+describe("useTtsPlayer stop", () => {
+  /**
+   * Verifies stop pauses audio and resets playing flag.
+   */
+  test("halts playback", async () => {
+    speakWord.mockResolvedValueOnce(getAudioResponse());
+    const { result } = createPlayerHook();
 
-      await act(async () => {
-        await result.current.play({ text: "hi", lang: "en" });
-      });
-      expect(speakWord).toHaveBeenCalledTimes(1);
+    await playWithAct(result, { text: "hi", lang: "en" });
+    expect(result.current.playing).toBe(true);
 
-      act(() => {
-        audioPool[0].__handlers.pause?.();
-      });
-
-      await act(async () => {
-        await result.current.play({ text: "hi", lang: "en" });
-      });
-      expect(speakWord).toHaveBeenCalledTimes(1);
-      expect(playSpy).toHaveBeenCalledTimes(2);
+    await act(() => {
+      result.current.stop();
     });
+    expect(audioPool[0].pause).toHaveBeenCalled();
+    expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+    expect(result.current.playing).toBe(false);
+  });
+
+  /**
+   * Ensures a new play request pauses the previous audio element.
+   */
+  test("pauses previous audio on new play", async () => {
+    speakWord.mockResolvedValue(getAudioResponse());
+    const first = createPlayerHook();
+    await playWithAct(first.result, { text: "a", lang: "en" });
+
+    const second = createPlayerHook();
+    await playWithAct(second.result, { text: "b", lang: "en" });
+    expect(audioPool[0].pause).toHaveBeenCalled();
+  });
+});
+
+describe("useTtsPlayer resume", () => {
+  /**
+   * When playback was paused but the buffer is still in memory,
+   * the hook should resume without hitting the network again.
+   */
+  test("reuses buffered audio", async () => {
+    speakWord.mockResolvedValue(getAudioResponse());
+    const { result } = createPlayerHook();
+
+    await playWithAct(result, { text: "hi", lang: "en" });
+    expect(speakWord).toHaveBeenCalledTimes(1);
+
+    await emitPause();
+
+    await playWithAct(result, { text: "hi", lang: "en" });
+    expect(speakWord).toHaveBeenCalledTimes(1);
+    expect(playSpy).toHaveBeenCalledTimes(2);
   });
 });

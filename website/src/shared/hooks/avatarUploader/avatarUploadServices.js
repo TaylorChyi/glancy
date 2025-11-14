@@ -105,6 +105,32 @@ export const applyAvatarUploadFailure = ({
   return false;
 };
 
+const executePreparedUpload = async ({
+  prepared,
+  setStatus,
+  setError,
+  setUser,
+  onSuccess,
+  statusMap,
+}) => {
+  const { file, context } = prepared;
+  beginAvatarUpload({ setStatus, setError, statusMap });
+
+  const response = await uploadAvatar({
+    ...context,
+    file,
+  });
+
+  return applyAvatarUploadSuccess({
+    context,
+    response,
+    setStatus,
+    setUser,
+    onSuccess,
+    statusMap,
+  });
+};
+
 export const orchestrateAvatarUpload = async (options) => {
   const {
     setStatus,
@@ -115,25 +141,16 @@ export const orchestrateAvatarUpload = async (options) => {
     statusMap,
   } = options;
 
+  const prepared = prepareAvatarUpload(options);
+  if (!prepared) {
+    return false;
+  }
+
   try {
-    const prepared = prepareAvatarUpload(options);
-    if (!prepared) {
-      return false;
-    }
-
-    const { file, context } = prepared;
-
-    beginAvatarUpload({ setStatus, setError, statusMap });
-
-    const response = await uploadAvatar({
-      ...context,
-      file,
-    });
-
-    return applyAvatarUploadSuccess({
-      context,
-      response,
+    return await executePreparedUpload({
+      prepared,
       setStatus,
+      setError,
       setUser,
       onSuccess,
       statusMap,

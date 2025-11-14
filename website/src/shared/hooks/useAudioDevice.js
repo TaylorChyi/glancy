@@ -20,7 +20,7 @@ function useReleaseAudioSource(audioRef, urlRef) {
         audioInstance.src = "";
       }
     },
-    [],
+    [audioRef, urlRef],
   );
 }
 
@@ -35,7 +35,7 @@ function useHydrateAudioSource(audioRef, urlRef, releaseSource) {
       urlRef.current = url;
       return audio;
     },
-    [releaseSource],
+    [audioRef, releaseSource, urlRef],
   );
 }
 

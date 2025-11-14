@@ -114,6 +114,38 @@ function useHandleCancel(dispatch, reset) {
   }, [dispatch, reset]);
 }
 
+async function confirmAvatarSelection(
+  payload,
+  { dispatch, reset, onSelectAvatar, fileName, fileType },
+) {
+  const { blob, previewUrl } = payload;
+  if (!blob) {
+    revokeIfPresent(previewUrl);
+    return false;
+  }
+
+  dispatch({ type: ACTIONS.startUpload });
+  const preferredType = blob.type || fileType || DEFAULT_FILE_TYPE;
+  const normalizedName = normalizeAvatarFileName(fileName, preferredType);
+  const file = new File([blob], normalizedName, { type: preferredType });
+
+  let success = false;
+  try {
+    success = await onSelectAvatar([file]);
+  } finally {
+    revokeIfPresent(previewUrl);
+  }
+
+  if (success) {
+    dispatch({ type: ACTIONS.complete });
+    reset();
+    return true;
+  }
+
+  dispatch({ type: ACTIONS.fail });
+  return false;
+}
+
 function useHandleConfirm({
   dispatch,
   reset,
@@ -122,36 +154,14 @@ function useHandleConfirm({
   fileType,
 }) {
   return useCallback(
-    async ({ blob, previewUrl }) => {
-      if (!blob) {
-        revokeIfPresent(previewUrl);
-        return false;
-      }
-
-      dispatch({ type: ACTIONS.startUpload });
-      const preferredType = blob.type || fileType || DEFAULT_FILE_TYPE;
-      const normalizedName = normalizeAvatarFileName(
+    (payload) =>
+      confirmAvatarSelection(payload, {
+        dispatch,
+        reset,
+        onSelectAvatar,
         fileName,
-        preferredType,
-      );
-      const file = new File([blob], normalizedName, { type: preferredType });
-
-      let success = false;
-      try {
-        success = await onSelectAvatar([file]);
-      } finally {
-        revokeIfPresent(previewUrl);
-      }
-
-      if (success) {
-        dispatch({ type: ACTIONS.complete });
-        reset();
-        return true;
-      }
-
-      dispatch({ type: ACTIONS.fail });
-      return false;
-    },
+        fileType,
+      }),
     [dispatch, fileName, fileType, onSelectAvatar, reset],
   );
 }
