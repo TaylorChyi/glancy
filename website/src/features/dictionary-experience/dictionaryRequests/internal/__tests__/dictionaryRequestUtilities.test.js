@@ -13,17 +13,12 @@ import {
   buildSuccessResult,
 } from "../dictionaryRequestCache.js";
 import { normalizeNetworkResponse } from "../dictionaryRequestNetwork.js";
+import {
+  createDictionaryRequestState,
+  createLookupControllers,
+} from "./helpers/dictionaryRequestTestFixtures.js";
 
-const buildState = () => ({
-  setActiveView: jest.fn(),
-  setLoading: jest.fn(),
-  setEntry: jest.fn(),
-  setFinalText: jest.fn(),
-  setCurrentTerm: jest.fn(),
-  setCurrentTermKey: jest.fn(),
-});
-
-describe("dictionary request utilities", () => {
+describe("resolveHistorySelection", () => {
   it("returns null when history selection lacks a term", () => {
     const strategy = { find: jest.fn().mockReturnValue({ term: "" }) };
 
@@ -37,12 +32,12 @@ describe("dictionary request utilities", () => {
 
     expect(result).toBeNull();
   });
+});
 
+describe("prepareLookup", () => {
   it("prepares lookup context with sanitized input", () => {
-    const controller = { signal: { aborted: false } };
-    const state = buildState();
-    const lookupController = { beginLookup: jest.fn().mockReturnValue(controller) };
-    const copyController = { resetCopyFeedback: jest.fn() };
+    const state = createDictionaryRequestState();
+    const { lookupController, copyController, controller } = createLookupControllers();
     const context = prepareLookup({
       term: "  hello  ",
       options: {},
@@ -60,9 +55,12 @@ describe("dictionary request utilities", () => {
     expect(context.normalized).toBe("hello");
     expect(state.setCurrentTerm).toHaveBeenCalledWith("hello");
     expect(lookupController.beginLookup).toHaveBeenCalled();
+    expect(context.controller).toBe(controller);
   });
+});
 
-  it("validates load entry input and reports unauthenticated users", () => {
+describe("validateLoadEntryInput", () => {
+  it("reports unauthenticated users", () => {
     const popup = { showPopup: jest.fn() };
     const result = validateLoadEntryInput({
       term: "term",
@@ -83,11 +81,14 @@ describe("dictionary request utilities", () => {
 
     expect(result).toEqual({ type: "result", result: { status: "idle", term: "" } });
   });
+});
 
+describe("prepareLoadEntryContext", () => {
   it("prepares load entry context when lookup is ready", () => {
-    const state = buildState();
-    const lookupController = { beginLookup: jest.fn().mockReturnValue({ signal: {} }) };
-    const copyController = { resetCopyFeedback: jest.fn() };
+    const state = createDictionaryRequestState();
+    const { lookupController, copyController } = createLookupControllers({
+      controller: { signal: {} },
+    });
     const resolution = prepareLoadEntryContext({
       term: "hello",
       options: {},
@@ -104,13 +105,16 @@ describe("dictionary request utilities", () => {
     expect(resolution.type).toBe("context");
     expect(resolution.context.ready).toBe(true);
   });
+});
 
-  it("resolves cache hits without forcing new lookup", () => {
+describe("resolveCacheHit", () => {
+  it("returns cached success results without forcing new lookup", () => {
+    const { lookupController } = createLookupControllers();
     const result = resolveCacheHit({
       cached: { term: "hello", language: "en", flavor: "std" },
       options: { forceNew: false },
       context: { normalized: "hello", config: { language: "en", flavor: "std" } },
-      lookupController: { clearActiveLookup: jest.fn() },
+      lookupController,
       state: { setLoading: jest.fn() },
     });
 
@@ -122,10 +126,13 @@ describe("dictionary request utilities", () => {
         flavor: "std",
       }),
     );
+    expect(lookupController.clearActiveLookup).toHaveBeenCalled();
   });
+});
 
-  it("applies fallback results when network response lacks cache", () => {
-    const state = buildState();
+describe("applyFallbackResult", () => {
+  it("hydrates state when network response lacks cache payload", () => {
+    const state = createDictionaryRequestState();
     const resolved = applyFallbackResult({
       data: { term: "hello", markdown: "**hi**" },
       normalized: "hello",
@@ -136,7 +143,9 @@ describe("dictionary request utilities", () => {
     expect(state.setEntry).toHaveBeenCalled();
     expect(state.setFinalText).toHaveBeenCalledWith(expect.stringContaining("**hi**"));
   });
+});
 
+describe("normalizeNetworkResponse", () => {
   it("normalizes network errors", () => {
     const response = normalizeNetworkResponse({
       response: { error: { message: "boom" } },
@@ -144,7 +153,7 @@ describe("dictionary request utilities", () => {
       options: {},
       applyRecord: jest.fn(),
       wordStoreApi: { getState: () => ({}) },
-      state: buildState(),
+      state: createDictionaryRequestState(),
     });
 
     expect(response.type).toBe("error");
@@ -152,7 +161,7 @@ describe("dictionary request utilities", () => {
   });
 
   it("normalizes successful responses and updates cache keys", () => {
-    const state = buildState();
+    const state = createDictionaryRequestState();
     const response = normalizeNetworkResponse({
       response: {
         data: { term: "hello", markdown: "hi" },
