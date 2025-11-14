@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import ThemeIcon from "@shared/components/ui/Icon";
 import styles from "../OutputToolbar.module.css";
 
-const renderTtsButton = ({ showTts, ttsComponent, term, lang, speakableTerm }) => {
+const TtsControl = ({ showTts, ttsComponent, term, lang, speakableTerm }) => {
   if (!showTts) {
     return null;
   }
@@ -18,7 +18,7 @@ const renderTtsButton = ({ showTts, ttsComponent, term, lang, speakableTerm }) =
   );
 };
 
-const renderReplayButton = ({
+const ReplayControl = ({
   showReplay,
   baseToolButtonClass,
   onReoutput,
@@ -52,8 +52,8 @@ function LeftCluster(props) {
 
   return (
     <div className={styles["left-cluster"]}>
-      {renderTtsButton(props)}
-      {renderReplayButton(props)}
+      <TtsControl {...props} />
+      <ReplayControl {...props} />
     </div>
   );
 }

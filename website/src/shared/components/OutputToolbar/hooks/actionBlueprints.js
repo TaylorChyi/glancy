@@ -70,28 +70,64 @@ const createBlueprintItem = ({
   disabled: itemDisabled,
 });
 
+const evaluateBlueprintPermissions = ({
+  blueprint,
+  actionContext,
+  disabled,
+  user,
+}) => {
+  const handler = resolveHandler(blueprint, actionContext);
+  const itemDisabled = isBlueprintDisabled({
+    blueprint,
+    handler,
+    disabled,
+    user,
+    actionContext,
+  });
+
+  return { handler, itemDisabled };
+};
+
+const buildRenderableBlueprintItem = ({
+  blueprint,
+  actionContext,
+  handler,
+  itemDisabled,
+}) => {
+  if (!shouldIncludeBlueprint({ blueprint, itemDisabled })) {
+    return null;
+  }
+
+  return createBlueprintItem({
+    blueprint,
+    actionContext,
+    handler,
+    itemDisabled,
+  });
+};
+
+const appendItemIfPresent = (items, item) => {
+  if (item) {
+    items.push(item);
+  }
+  return items;
+};
+
 export const buildBlueprintItems = ({ actionContext, disabled, user }) =>
   ACTION_BLUEPRINTS.reduce((items, blueprint) => {
-    const handler = resolveHandler(blueprint, actionContext);
-    const itemDisabled = isBlueprintDisabled({
+    const evaluation = evaluateBlueprintPermissions({
       blueprint,
-      handler,
+      actionContext,
       disabled,
       user,
-      actionContext,
     });
 
-    if (!shouldIncludeBlueprint({ blueprint, itemDisabled })) {
-      return items;
-    }
-
-    const item = createBlueprintItem({
+    const item = buildRenderableBlueprintItem({
       blueprint,
       actionContext,
-      handler,
-      itemDisabled,
+      handler: evaluation.handler,
+      itemDisabled: evaluation.itemDisabled,
     });
 
-    items.push(item);
-    return items;
+    return appendItemIfPresent(items, item);
   }, []);
