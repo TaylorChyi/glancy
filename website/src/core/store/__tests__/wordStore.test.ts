@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 import { useWordStore } from "../wordStore.js";
 
-describe("wordStore", () => {
+const registerWordStoreHooks = () => {
   beforeEach(() => {
     useWordStore.getState().clear();
   });
+};
+
+const getStore = () => useWordStore.getState();
+
+describe("wordStore version lifecycle", () => {
+  registerWordStoreHooks();
 
   /**
    * 测试目标：验证 setVersions 能够写入多版本并保持激活指针及元数据。
@@ -20,7 +26,7 @@ describe("wordStore", () => {
    *  - 移除激活版本后应回退到剩余版本。
    */
   test("manages version lifecycle", () => {
-    const store = useWordStore.getState();
+    const store = getStore();
     store.setVersions(
       "term:en",
       [
@@ -30,23 +36,23 @@ describe("wordStore", () => {
       { activeVersionId: "v1", metadata: { tone: "warm" } },
     );
 
-    expect(useWordStore.getState().getEntry("term:en")?.markdown).toBe("first");
-    expect(useWordStore.getState().getRecord("term:en")?.metadata).toEqual({
+    expect(getStore().getEntry("term:en")?.markdown).toBe("first");
+    expect(getStore().getRecord("term:en")?.metadata).toEqual({
       tone: "warm",
     });
 
     store.setActiveVersion("term:en", "v2");
-    expect(useWordStore.getState().getEntry("term:en")?.markdown).toBe(
-      "second",
-    );
+    expect(getStore().getEntry("term:en")?.markdown).toBe("second");
 
     store.removeVersions("term:en", "v2");
-    const entry = useWordStore.getState().getEntry("term:en");
+    const entry = getStore().getEntry("term:en");
     expect(entry?.markdown).toBe("first");
-    expect(useWordStore.getState().getRecord("term:en")?.activeVersionId).toBe(
-      "v1",
-    );
+    expect(getStore().getRecord("term:en")?.activeVersionId).toBe("v1");
   });
+});
+
+describe("wordStore active version defaults", () => {
+  registerWordStoreHooks();
 
   /**
    * 测试目标：确保未指定激活版本时默认选中最新时间戳版本。
@@ -60,15 +66,19 @@ describe("wordStore", () => {
    *  - 当时间戳无效时按照插入顺序回退。
    */
   test("defaults to the most recent version when active id missing", () => {
-    const store = useWordStore.getState();
+    const store = getStore();
     store.setVersions("term:fr", [
       { id: "old", createdAt: "2024-01-01T10:00:00Z" },
       { id: "new", createdAt: "2024-05-01T08:00:00Z" },
     ]);
 
-    const record = useWordStore.getState().getRecord("term:fr");
+    const record = getStore().getRecord("term:fr");
     expect(record?.activeVersionId).toBe("new");
   });
+});
+
+describe("wordStore incremental updates", () => {
+  registerWordStoreHooks();
 
   /**
    * 测试目标：验证增量写入仅包含部分版本时可正确合并与保留历史。
@@ -84,7 +94,7 @@ describe("wordStore", () => {
    *  - 若增量未包含激活版本，激活 ID 不应变更。
    */
   test("merges partial payloads with existing versions", () => {
-    const store = useWordStore.getState();
+    const store = getStore();
     store.setVersions(
       "term:es",
       [
@@ -98,7 +108,7 @@ describe("wordStore", () => {
       activeVersionId: "v2",
     });
 
-    const record = useWordStore.getState().getRecord("term:es");
+    const record = getStore().getRecord("term:es");
     expect(record?.versions).toHaveLength(2);
     expect(
       record?.versions.find((version) => version.id === "v1")?.markdown,
@@ -108,6 +118,10 @@ describe("wordStore", () => {
     ).toBe("dos actualizado");
     expect(record?.activeVersionId).toBe("v2");
   });
+});
+
+describe("wordStore removal edge cases", () => {
+  registerWordStoreHooks();
 
   /**
    * 测试目标：确认 removeVersions 在清除激活版本后会重新选取有效指针。
@@ -122,7 +136,7 @@ describe("wordStore", () => {
    *  - 删除全部版本时应移除缓存记录（通过 getRecord 返回 undefined 验证）。
    */
   test("reselects active version when current is removed", () => {
-    const store = useWordStore.getState();
+    const store = getStore();
     store.setVersions(
       "term:jp",
       [
@@ -134,10 +148,10 @@ describe("wordStore", () => {
     );
 
     store.removeVersions("term:jp", "v2");
-    const record = useWordStore.getState().getRecord("term:jp");
+    const record = getStore().getRecord("term:jp");
     expect(record?.activeVersionId).toBe("v1");
 
     store.removeVersions("term:jp");
-    expect(useWordStore.getState().getRecord("term:jp")).toBeUndefined();
+    expect(getStore().getRecord("term:jp")).toBeUndefined();
   });
 });
