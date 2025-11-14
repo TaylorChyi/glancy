@@ -99,47 +99,70 @@ export function mapResponseToProfileDetails(response) {
   };
 }
 
-function sanitizeText(value) {
+export function sanitizeProfileText(value) {
   if (typeof value !== "string") return "";
-  const trimmed = value.trim();
-  return trimmed;
+  return value.trim();
+}
+
+export function normalizeCoreProfileFields(details) {
+  return {
+    job: sanitizeProfileText(details.job),
+    interest: sanitizeProfileText(details.interests),
+    goal: sanitizeProfileText(details.goal),
+    education: sanitizeProfileText(details.education),
+    currentAbility: sanitizeProfileText(details.currentAbility),
+    responseStyle: sanitizeProfileText(details.responseStyle),
+  };
+}
+
+export function normalizeCustomProfileItem(item) {
+  const label = sanitizeProfileText(item?.label);
+  const value = sanitizeProfileText(item?.value);
+  if (!label && !value) {
+    return null;
+  }
+  return { label, value };
+}
+
+export function normalizeCustomProfileSection(section = {}) {
+  const title = sanitizeProfileText(section.title);
+  const items = (section.items ?? [])
+    .map((item) => normalizeCustomProfileItem(item))
+    .filter(Boolean);
+  if (!title && items.length === 0) {
+    return null;
+  }
+  return { title, items };
+}
+
+export function normalizeCustomProfileSections(sections = []) {
+  return sections
+    .map((section) => normalizeCustomProfileSection(section))
+    .filter(Boolean);
+}
+
+export function mapNormalizedFieldsToRequestPayload({
+  coreFields,
+  customSections,
+}) {
+  return {
+    job: coreFields.job || null,
+    interest: coreFields.interest || null,
+    goal: coreFields.goal || null,
+    education: coreFields.education || null,
+    currentAbility: coreFields.currentAbility || null,
+    responseStyle: coreFields.responseStyle || null,
+    customSections,
+  };
 }
 
 export function mapProfileDetailsToRequest(details) {
-  const normalized = {
-    job: sanitizeText(details.job),
-    interest: sanitizeText(details.interests),
-    goal: sanitizeText(details.goal),
-    education: sanitizeText(details.education),
-    currentAbility: sanitizeText(details.currentAbility),
-    responseStyle: sanitizeText(details.responseStyle),
-    customSections: (details.customSections ?? [])
-      .map((section) => {
-        const title = sanitizeText(section.title);
-        const items = (section.items ?? [])
-          .map((item) => ({
-            label: sanitizeText(item.label),
-            value: sanitizeText(item.value),
-          }))
-          .filter((item) => item.label || item.value);
-        if (!title && items.length === 0) {
-          return null;
-        }
-        return {
-          title,
-          items,
-        };
-      })
-      .filter(Boolean),
-  };
-
-  return {
-    job: normalized.job || null,
-    interest: normalized.interest || null,
-    goal: normalized.goal || null,
-    education: normalized.education || null,
-    currentAbility: normalized.currentAbility || null,
-    responseStyle: normalized.responseStyle || null,
-    customSections: normalized.customSections,
-  };
+  const coreFields = normalizeCoreProfileFields(details);
+  const customSections = normalizeCustomProfileSections(
+    details.customSections ?? [],
+  );
+  return mapNormalizedFieldsToRequestPayload({
+    coreFields,
+    customSections,
+  });
 }

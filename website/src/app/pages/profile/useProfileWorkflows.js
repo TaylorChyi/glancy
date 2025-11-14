@@ -29,7 +29,7 @@ function useUsernameWorkflow({ api, currentUser, setUser, popup, t }) {
   return { onSubmit: submit, onFailure: handleFailure };
 }
 
-function useProfileInitialLoad({
+export const useProfileBootstrapper = ({
   api,
   currentUser,
   detailsState,
@@ -37,7 +37,7 @@ function useProfileInitialLoad({
   applyAvatar,
   popup,
   t,
-}) {
+}) => {
   useProfileBootstrap({
     api,
     currentUser,
@@ -46,9 +46,9 @@ function useProfileInitialLoad({
     applyAvatar,
     showError: () => popup.showPopup(t.fail),
   });
-}
+};
 
-function useProfileControllers({ api, currentUser, setUser, popup, t }) {
+export function useProfileControllers({ api, currentUser, setUser, popup, t }) {
   const usernameHandlers = useUsernameWorkflow({
     api,
     currentUser,
@@ -74,15 +74,10 @@ function useProfileControllers({ api, currentUser, setUser, popup, t }) {
     notifyFailure: popup.showPopup,
     t,
   });
-  return {
-    usernameHandlers,
-    avatarController,
-    emailBinding,
-    emailWorkflow,
-  };
+  return { usernameHandlers, avatarController, emailBinding, emailWorkflow };
 }
 
-function useProfilePersistence({
+export function useProfilePersistence({
   api,
   currentUser,
   detailsState,
@@ -105,65 +100,47 @@ function useProfilePersistence({
   return { isSaving, handleSave };
 }
 
-function useProfileBootstrapper({
-  api,
-  currentUser,
-  detailsState,
-  setPersistedMeta,
-  avatarController,
-  popup,
-  t,
-}) {
-  useProfileInitialLoad({
-    api,
-    currentUser,
-    detailsState,
-    setPersistedMeta,
-    applyAvatar: avatarController.applyServerAvatar,
-    popup,
-    t,
-  });
-}
-
-export function useProfileWorkflows({
+const selectControllerParams = ({ api, currentUser, setUser, popup, t }) => ({
   api,
   currentUser,
   setUser,
   popup,
   t,
+});
+
+const selectPersistenceParams = ({
+  api,
+  currentUser,
   detailsState,
   phoneState,
+  setUser,
   persistedMeta,
-  setPersistedMeta,
-}) {
-  const controllers = useProfileControllers({
-    api,
-    currentUser,
-    setUser,
-    popup,
-    t,
-  });
-  const persistence = useProfilePersistence({
-    api,
-    currentUser,
-    detailsState,
-    phoneState,
-    setUser,
-    persistedMeta,
-    popup,
-    t,
-  });
-  useProfileBootstrapper({
-    api,
-    currentUser,
-    detailsState,
-    setPersistedMeta,
-    avatarController: controllers.avatarController,
-    popup,
-    t,
-  });
-  return {
-    ...controllers,
-    ...persistence,
-  };
+  popup,
+  t,
+}) => ({
+  api,
+  currentUser,
+  detailsState,
+  phoneState,
+  setUser,
+  persistedMeta,
+  popup,
+  t,
+});
+
+const selectBootstrapParams = (params, controllers) => ({
+  api: params.api,
+  currentUser: params.currentUser,
+  detailsState: params.detailsState,
+  setPersistedMeta: params.setPersistedMeta,
+  applyAvatar: controllers.avatarController.applyServerAvatar,
+  popup: params.popup,
+  t: params.t,
+});
+
+export function useProfileWorkflows(params) {
+  const controllers = useProfileControllers(selectControllerParams(params));
+  const persistence = useProfilePersistence(selectPersistenceParams(params));
+  useProfileBootstrapper(selectBootstrapParams(params, controllers));
+  return { ...controllers, ...persistence };
 }
