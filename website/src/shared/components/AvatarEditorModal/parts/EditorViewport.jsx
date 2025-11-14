@@ -1,23 +1,7 @@
-import { useMemo } from "react";
 import PropTypes from "prop-types";
+import ViewportOverlay from "./ViewportOverlay.jsx";
+import useViewportInteractions from "../hooks/useViewportInteractions.js";
 import styles from "../AvatarEditorModal.module.css";
-
-function useViewportInteractions({ pointerHandlers, label }) {
-  const { onPointerDown, onPointerMove, onPointerUp } = pointerHandlers;
-
-  return useMemo(
-    () => ({
-      onPointerDown,
-      onPointerMove,
-      onPointerUp,
-      onPointerCancel: onPointerUp,
-      onPointerLeave: onPointerUp,
-      role: "presentation",
-      "aria-label": label,
-    }),
-    [label, onPointerDown, onPointerMove, onPointerUp],
-  );
-}
 
 function ViewportImage({ imageRef, source, imageTransform, onImageLoad }) {
   return (
@@ -33,19 +17,16 @@ function ViewportImage({ imageRef, source, imageTransform, onImageLoad }) {
   );
 }
 
-function ViewportOverlay() {
-  return <div className={styles.overlay} aria-hidden />;
-}
-
 function EditorViewport({
   containerRef,
   imageRef,
   source,
   imageTransform,
-  interactions,
+  pointerHandlers,
+  interactionLabel,
   onImageLoad,
 }) {
-  const interactionBindings = useViewportInteractions(interactions);
+  const interactionBindings = useViewportInteractions(pointerHandlers, interactionLabel);
 
   return (
     <div ref={containerRef} className={styles.viewport} {...interactionBindings}>
@@ -72,14 +53,12 @@ EditorViewport.propTypes = {
   imageRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
   source: PropTypes.string.isRequired,
   imageTransform: PropTypes.string.isRequired,
-  interactions: PropTypes.shape({
-    pointerHandlers: PropTypes.shape({
-      onPointerDown: PropTypes.func.isRequired,
-      onPointerMove: PropTypes.func.isRequired,
-      onPointerUp: PropTypes.func.isRequired,
-    }).isRequired,
-    label: PropTypes.string.isRequired,
+  pointerHandlers: PropTypes.shape({
+    onPointerDown: PropTypes.func.isRequired,
+    onPointerMove: PropTypes.func.isRequired,
+    onPointerUp: PropTypes.func.isRequired,
   }).isRequired,
+  interactionLabel: PropTypes.string.isRequired,
   onImageLoad: PropTypes.func.isRequired,
 };
 

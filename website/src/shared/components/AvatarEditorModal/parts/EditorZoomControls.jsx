@@ -1,19 +1,6 @@
 import PropTypes from "prop-types";
+import ZoomButton from "./ZoomButton.jsx";
 import styles from "../AvatarEditorModal.module.css";
-
-function ZoomButton({ label, onClick, disabled, children }) {
-  return (
-    <button
-      type="button"
-      className={styles["zoom-button"]}
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-    >
-      {children}
-    </button>
-  );
-}
 
 function EditorZoomControls({
   zoomInLabel,
@@ -38,13 +25,6 @@ function EditorZoomControls({
     </div>
   );
 }
-
-ZoomButton.propTypes = {
-  label: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
-  disabled: PropTypes.bool.isRequired,
-  children: PropTypes.node.isRequired,
-};
 
 EditorZoomControls.propTypes = {
   zoomInLabel: PropTypes.string.isRequired,
