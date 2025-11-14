@@ -1,7 +1,6 @@
 import PropTypes from "prop-types";
 import UserMenuButton from "./UserMenuButton.jsx";
-import UserMenuDropdown from "./UserMenuDropdown.jsx";
-import UserMenuModals from "./UserMenuModals.jsx";
+import AuthenticatedUserMenuContent from "./AuthenticatedUserMenuContent.jsx";
 import { resolvePlanDetails } from "./userPlan.js";
 
 function AuthenticatedUserMenu({
@@ -17,34 +16,26 @@ function AuthenticatedUserMenu({
   const { username, isPro, planLabel } = resolvePlanDetails(user);
 
   return (
-    <UserMenuModals
-      isPro={isPro}
-      user={user}
-      clearUser={clearUser}
-      clearHistory={clearHistory}
-    >
-      {({ openSettings, openUpgrade, openLogout }) => (
-        <Trigger
-          size={size}
-          showName={showName}
-          isPro={isPro}
-          username={username}
-          planLabel={planLabel}
-        >
-          {({ open, setOpen }) => (
-            <UserMenuDropdown
-              open={open}
-              setOpen={setOpen}
-              t={t}
-              isPro={isPro}
-              onOpenSettings={() => openSettings("general")}
-              onOpenUpgrade={openUpgrade}
-              onOpenLogout={openLogout}
-            />
-          )}
-        </Trigger>
-      )}
-    </UserMenuModals>
+    <AuthenticatedUserMenuContent
+      Trigger={Trigger}
+      triggerProps={{
+        size,
+        showName: Boolean(showName),
+        isPro,
+        username,
+        planLabel,
+      }}
+      dropdownProps={{
+        t,
+        isPro,
+      }}
+      modalProps={{
+        isPro,
+        user,
+        clearUser,
+        clearHistory,
+      }}
+    />
   );
 }
 
