@@ -1,25 +1,17 @@
 import { useMemo } from "react";
 import createDictionaryHistorySendHandler from "./dictionaryHistorySendHandler.js";
+import { buildHistoryHandlerParams } from "./historyHandlerBuilder.js";
 
-const buildDependencies = ({
-  user,
-  navigate,
-  text,
-  setText,
-  loadEntry,
-  historyCaptureEnabled,
-  addHistory,
-  dictionaryFlavor,
-}) => ({
-  user,
-  navigate,
-  text,
-  setText,
-  loadEntry,
-  historyCaptureEnabled,
-  addHistory,
-  dictionaryFlavor,
-});
+const SEND_HANDLER_KEYS = [
+  "user",
+  "navigate",
+  "text",
+  "setText",
+  "loadEntry",
+  "historyCaptureEnabled",
+  "addHistory",
+  "dictionaryFlavor",
+];
 
 export const useHistorySendHandler = ({
   user,
@@ -34,7 +26,7 @@ export const useHistorySendHandler = ({
   useMemo(
     () =>
       createDictionaryHistorySendHandler(
-        buildDependencies({
+        buildHistoryHandlerParams(SEND_HANDLER_KEYS, {
           user,
           navigate,
           text,
@@ -46,14 +38,8 @@ export const useHistorySendHandler = ({
         }),
       ),
     [
-      user,
-      navigate,
-      text,
-      setText,
-      loadEntry,
-      historyCaptureEnabled,
-      addHistory,
-      dictionaryFlavor,
+      user, navigate, text, setText,
+      loadEntry, historyCaptureEnabled, addHistory, dictionaryFlavor,
     ],
   );
 
