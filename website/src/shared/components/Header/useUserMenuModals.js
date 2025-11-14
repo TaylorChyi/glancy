@@ -26,10 +26,11 @@ const useUserMenuModalState = () => {
   };
 };
 
-const useUserMenuModalHandlers = (
-  { openSettings, setUpgradeOpen, setLogoutOpen, setSettingsState },
-  { clearHistory, clearUser },
-) => {
+const useUserMenuModalCloseHandlers = ({
+  setUpgradeOpen,
+  setLogoutOpen,
+  setSettingsState,
+}) => {
   const closeUpgrade = useCallback(() => setUpgradeOpen(false), [setUpgradeOpen]);
   const closeLogout = useCallback(() => setLogoutOpen(false), [setLogoutOpen]);
   const closeSettings = useCallback(
@@ -37,24 +38,53 @@ const useUserMenuModalHandlers = (
     [setSettingsState],
   );
 
+  return {
+    closeUpgrade,
+    closeLogout,
+    closeSettings,
+  };
+};
+
+const useUserMenuModalOpenHandlers = ({
+  openSettings,
+  setUpgradeOpen,
+  setLogoutOpen,
+}) => {
   const openUpgrade = useCallback(() => setUpgradeOpen(true), [setUpgradeOpen]);
   const openLogout = useCallback(() => setLogoutOpen(true), [setLogoutOpen]);
   const openShortcuts = useCallback(() => openSettings("keyboard"), [openSettings]);
 
+  return {
+    openUpgrade,
+    openLogout,
+    openShortcuts,
+  };
+};
+
+const useUserMenuModalHandlers = (
+  { openSettings, setUpgradeOpen, setLogoutOpen, setSettingsState },
+  { clearHistory, clearUser },
+) => {
+  const closeHandlers = useUserMenuModalCloseHandlers({
+    setUpgradeOpen,
+    setLogoutOpen,
+    setSettingsState,
+  });
+  const openHandlers = useUserMenuModalOpenHandlers({
+    openSettings,
+    setUpgradeOpen,
+    setLogoutOpen,
+  });
+  const { closeLogout } = closeHandlers;
   const confirmLogout = useCallback(() => {
     clearHistory();
     clearUser();
     closeLogout();
   }, [clearHistory, clearUser, closeLogout]);
-
   return {
-    closeUpgrade,
-    closeLogout,
-    closeSettings,
-    openUpgrade,
-    openLogout,
+    ...closeHandlers,
+    ...openHandlers,
     openSettings,
-    openShortcuts,
     confirmLogout,
   };
 };
@@ -87,21 +117,21 @@ const buildUserMenuModalsState = ({
   email: userEmail ?? "",
 });
 
-const useUserMenuModalsMemo = (options) => {
-  const dependencies = [
-    options.closeUpgrade,
-    options.closeLogout,
-    options.closeSettings,
-    options.confirmLogout,
-    options.isPro,
-    options.logoutOpen,
-    options.settingsState,
-    options.upgradeOpen,
-    options.userEmail,
-  ];
-
-  return useMemo(() => buildUserMenuModalsState(options), dependencies);
-};
+const useUserMenuModalsMemo = ({
+  closeUpgrade, closeLogout, closeSettings, confirmLogout,
+  isPro, logoutOpen, settingsState, upgradeOpen, userEmail,
+}) =>
+  useMemo(
+    () =>
+      buildUserMenuModalsState({
+        closeUpgrade, closeLogout, closeSettings, confirmLogout,
+        isPro, logoutOpen, settingsState, upgradeOpen, userEmail,
+      }),
+    [
+      closeUpgrade, closeLogout, closeSettings, confirmLogout,
+      isPro, logoutOpen, settingsState, upgradeOpen, userEmail,
+    ],
+  );
 
 const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
   const { upgradeOpen, logoutOpen, settingsState } = state;

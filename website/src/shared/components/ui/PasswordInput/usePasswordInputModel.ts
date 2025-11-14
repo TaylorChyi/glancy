@@ -71,41 +71,73 @@ type BuildPasswordInputViewPropsArgs = {
   autoComplete?: string;
 };
 
-function buildPasswordInputViewProps({
+const buildInputProps = ({
+  inputProps,
+  type,
+  disabled,
+  className,
+  autoComplete,
+}: {
+  inputProps: Record<string, unknown>;
+  type: string;
+  disabled: boolean;
+  className: string;
+  autoComplete?: string;
+}) => ({
+  ...inputProps,
+  type,
+  disabled,
+  className,
+  autoComplete: autoComplete ?? "current-password",
+});
+
+const buildToggleProps = ({
   allowToggle,
   handleToggle,
   ariaLabel,
   visible,
   iconSize,
-  wrapperClassName,
-  inputClassNames,
-  toggleClassNames,
-  inputProps,
-  type,
-  disabled,
-  autoComplete,
-}: BuildPasswordInputViewPropsArgs) {
-  return {
-    viewProps: {
-      wrapperClassName,
-      inputProps: {
-        ...inputProps,
-        type,
-        disabled,
-        className: inputClassNames,
-        autoComplete: autoComplete ?? "current-password",
-      },
-      toggle: {
-        allowToggle,
-        handleToggle,
-        ariaLabel,
-        visible,
-        iconSize,
-        className: toggleClassNames,
-      },
-    },
-  };
-}
+  className,
+}: {
+  allowToggle: boolean;
+  handleToggle: () => void;
+  ariaLabel: string;
+  visible: boolean;
+  iconSize: number;
+  className: string;
+}) => ({
+  allowToggle,
+  handleToggle,
+  ariaLabel,
+  visible,
+  iconSize,
+  className,
+});
+
+const buildPasswordInputViewProps = ({
+  wrapperClassName, inputClassNames, toggleClassNames,
+  inputProps, allowToggle, handleToggle, ariaLabel, visible, iconSize,
+  type, disabled, autoComplete,
+}: BuildPasswordInputViewPropsArgs) => ({
+  viewProps: {
+    wrapperClassName,
+    inputProps: buildInputProps({
+      inputProps,
+      type,
+      disabled,
+      className: inputClassNames,
+      autoComplete,
+    }),
+    toggle: buildToggleProps({
+      allowToggle,
+      handleToggle,
+      ariaLabel,
+      visible,
+      iconSize,
+      className: toggleClassNames,
+    }),
+  },
+});
 
 export function usePasswordInputModel({ className = "", inputClassName = "", toggleClassName = "", defaultVisible = false, onVisibilityChange, labels = DEFAULT_LABELS, iconSize = ICON_SIZE, mask = true, disabled = false, autoComplete, ...inputProps }: PasswordInputModelProps) {
   const { visible, inputType, toggleVisibility } = usePasswordVisibility({

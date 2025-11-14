@@ -62,46 +62,30 @@ const buildLanguageControlsProps = ({
 });
 
 const useLanguageControlsProps = (
-  params: Pick<
-    UseLanguageControlsConfigParams,
-    | "sourceLanguage"
-    | "sourceLanguageLabel"
-    | "targetLanguage"
-    | "targetLanguageLabel"
-    | "swapLabel"
-    | "normalizeSourceLanguageFn"
-    | "normalizeTargetLanguageFn"
-  >,
+  params: UseLanguageControlsConfigParams,
   normalizedSourceOptions: LanguageOption[],
   normalizedTargetOptions: LanguageOption[],
 ) => {
   const {
-    sourceLanguage,
-    sourceLanguageLabel,
-    targetLanguage,
-    targetLanguageLabel,
-    swapLabel,
-    normalizeSourceLanguageFn,
-    normalizeTargetLanguageFn,
+    sourceLanguage, sourceLanguageLabel, targetLanguage,
+    targetLanguageLabel, swapLabel,
+    normalizeSourceLanguageFn, normalizeTargetLanguageFn,
   } = params;
-
   return useMemo(
     () =>
       buildLanguageControlsProps({
-        ...params,
+        sourceLanguage, sourceLanguageLabel, targetLanguage,
+        targetLanguageLabel, swapLabel,
+        normalizeSourceLanguage: normalizeSourceLanguageFn,
+        normalizeTargetLanguage: normalizeTargetLanguageFn,
         normalizedSourceOptions,
         normalizedTargetOptions,
       }),
     [
-      normalizedSourceOptions,
-      normalizedTargetOptions,
-      sourceLanguage,
-      sourceLanguageLabel,
-      swapLabel,
-      targetLanguage,
-      targetLanguageLabel,
-      normalizeSourceLanguageFn,
-      normalizeTargetLanguageFn,
+      normalizedSourceOptions, normalizedTargetOptions,
+      sourceLanguage, sourceLanguageLabel, swapLabel,
+      targetLanguage, targetLanguageLabel,
+      normalizeSourceLanguageFn, normalizeTargetLanguageFn,
     ],
   );
 };

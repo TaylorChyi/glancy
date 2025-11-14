@@ -78,42 +78,46 @@ type NormalizedNavItemModelInput = {
   restProps: Record<string, unknown>;
 };
 
-function normalizeNavItemModelInput(
-  props: NavItemModelInput,
-): NormalizedNavItemModelInput {
-  const {
-    active,
-    allowMultilineLabel,
-    children,
-    className,
-    description,
-    href,
-    icon,
-    label,
-    onClick,
-    to,
-    tone,
-    type,
-    variant,
-    ...restProps
-  } = props;
+const NAV_ITEM_MODEL_KNOWN_KEYS = new Set<string>([
+  "icon",
+  "label",
+  "description",
+  "active",
+  "to",
+  "href",
+  "className",
+  "tone",
+  "onClick",
+  "type",
+  "children",
+  "variant",
+  "allowMultilineLabel",
+]);
 
-  return {
-    icon,
-    label,
-    description,
-    to,
-    href,
-    onClick,
-    restProps,
-    active: active ?? false,
-    className: className ?? "",
-    tone: tone ?? "default",
-    type: type ?? "button",
-    children: children ?? null,
-    variant: variant ?? "accent",
-    allowMultilineLabel: allowMultilineLabel ?? false,
+function normalizeNavItemModelInput(props: NavItemModelInput): NormalizedNavItemModelInput {
+  const restProps = getNavItemRestProps(props);
+  const normalizedCore = {
+    active: props.active ?? false,
+    allowMultilineLabel: props.allowMultilineLabel ?? false,
+    children: props.children ?? null,
+    className: props.className ?? "",
+    tone: props.tone ?? "default",
+    type: props.type ?? "button",
+    variant: props.variant ?? "accent",
+    description: props.description,
+    href: props.href,
+    icon: props.icon,
+    label: props.label,
+    onClick: props.onClick,
+    to: props.to,
   };
+  return { ...normalizedCore, restProps };
+}
+
+function getNavItemRestProps(props: NavItemModelInput): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(props).filter(([key]) => !NAV_ITEM_MODEL_KNOWN_KEYS.has(key)),
+  );
 }
 
 function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {

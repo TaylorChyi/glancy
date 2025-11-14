@@ -67,16 +67,18 @@ const createViewportProps = ({
 const useViewportProps = (args: ViewportPropsArgs): ViewportProps => {
   const { sections, activeSectionId, onSectionSelect, tablistLabel, registerHeading, panel } =
     args;
-  const dependencies = [
-    sections,
-    activeSectionId,
-    onSectionSelect,
-    tablistLabel,
-    registerHeading,
-    panel,
-  ];
-
-  return useMemo(() => createViewportProps(args), dependencies);
+  return useMemo(
+    () =>
+      createViewportProps({
+        sections,
+        activeSectionId,
+        onSectionSelect,
+        tablistLabel,
+        registerHeading,
+        panel,
+      }),
+    [sections, activeSectionId, onSectionSelect, tablistLabel, registerHeading, panel],
+  );
 };
 
 export default useViewportProps;

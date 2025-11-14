@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useAppShortcuts } from "@shared/hooks";
 import { DICTIONARY_EXPERIENCE_VIEWS } from "../dictionaryExperienceViews.js";
 
@@ -25,52 +25,39 @@ const useFocusInput = (inputRef) =>
     focusInputRef(inputRef);
   }, [inputRef]);
 
-const runHomeReset = ({
-  resetCopyFeedback,
+const resetEntryState = ({
   setEntry,
   setFinalText,
-  setLoading,
   setCurrentTermKey,
   setCurrentTerm,
+}) => {
+  setEntry(null);
+  setFinalText("");
+  setCurrentTermKey(null);
+  setCurrentTerm("");
+};
+
+const runHomeReset = ({
+  resetCopyFeedback,
+  setLoading,
   setActiveView,
   focusInput,
   closeToast,
+  ...entrySetters
 }) => {
   resetCopyFeedback();
-  setEntry(null);
-  setFinalText("");
+  resetEntryState(entrySetters);
   setLoading(false);
-  setCurrentTermKey(null);
-  setCurrentTerm("");
   setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
   focusInput();
   closeToast();
 };
 
-const getHomeResetDependencies = ({
-  resetCopyFeedback,
-  setEntry,
-  setFinalText,
-  setLoading,
-  setCurrentTermKey,
-  setCurrentTerm,
-  setActiveView,
-  focusInput,
-  closeToast,
-}) => [
-  resetCopyFeedback,
-  setEntry,
-  setFinalText,
-  setLoading,
-  setCurrentTermKey,
-  setCurrentTerm,
-  setActiveView,
-  focusInput,
-  closeToast,
-];
-
-const useHomeResetHandler = (params) =>
-  useCallback(() => runHomeReset(params), getHomeResetDependencies(params));
+function useHomeResetHandler(config) {
+  const configRef = useRef(config);
+  configRef.current = config;
+  return useCallback(() => runHomeReset(configRef.current), []);
+}
 
 const useShowLibraryHandler = (setActiveView) =>
   useCallback(

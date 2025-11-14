@@ -4,6 +4,10 @@ import AccountSectionView from "./AccountSection/AccountSectionView.jsx";
 import { createAccountSectionViewModel } from "./AccountSection/viewModel";
 import { useAvatarInteraction } from "./useAvatarInteraction.js";
 import { useNormalizedIdentity } from "./useNormalizedIdentity.js";
+import {
+  accountBindingsPropType,
+  accountFieldsPropType,
+} from "./AccountSection/propTypes.js";
 
 function AccountSectionContainer({
   title,
@@ -27,39 +31,7 @@ function AccountSectionContainer({
 
 AccountSectionContainer.propTypes = {
   title: PropTypes.string.isRequired,
-  fields: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-      value: PropTypes.string.isRequired,
-      renderValue: PropTypes.func,
-      type: PropTypes.string,
-      readOnlyInputProps: PropTypes.shape({
-        type: PropTypes.string,
-        inputMode: PropTypes.string,
-        autoComplete: PropTypes.string,
-        name: PropTypes.string,
-        placeholder: PropTypes.string,
-      }),
-      usernameEditorProps: PropTypes.shape({
-        username: PropTypes.string,
-        emptyDisplayValue: PropTypes.string,
-        onSubmit: PropTypes.func,
-        onSuccess: PropTypes.func,
-        onFailure: PropTypes.func,
-        t: PropTypes.func,
-        inputClassName: PropTypes.string,
-      }),
-      action: PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        label: PropTypes.string.isRequired,
-        disabled: PropTypes.bool,
-        onClick: PropTypes.func,
-        isPending: PropTypes.bool,
-        pendingLabel: PropTypes.string,
-      }),
-    }),
-  ).isRequired,
+  fields: accountFieldsPropType,
   headingId: PropTypes.string.isRequired,
   identity: PropTypes.shape({
     label: PropTypes.string,
@@ -69,17 +41,7 @@ AccountSectionContainer.propTypes = {
     onSelectAvatar: PropTypes.func,
     isUploading: PropTypes.bool,
   }).isRequired,
-  bindings: PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    items: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        status: PropTypes.string.isRequired,
-        actionLabel: PropTypes.string.isRequired,
-      }),
-    ).isRequired,
-  }).isRequired,
+  bindings: accountBindingsPropType,
 };
 
 export default AccountSectionContainer;

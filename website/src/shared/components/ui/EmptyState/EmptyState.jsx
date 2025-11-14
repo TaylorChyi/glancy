@@ -27,6 +27,37 @@ const EmptyStateVisual = ({ illustration, iconName }) => (
   </div>
 );
 
+const getOptionalBlocks = ({
+  illustration,
+  iconName,
+  title,
+  description,
+  actions,
+  shouldRenderVisual,
+}) => {
+  const blocks = [];
+
+  if (shouldRenderVisual) {
+    blocks.push(
+      <EmptyStateVisual illustration={illustration} iconName={iconName} />
+    );
+  }
+
+  if (title) {
+    blocks.push(<h2 className={styles.title}>{title}</h2>);
+  }
+
+  if (description) {
+    blocks.push(<p className={styles.description}>{description}</p>);
+  }
+
+  if (actions) {
+    blocks.push(<div className={styles.actions}>{actions}</div>);
+  }
+
+  return blocks;
+};
+
 function EmptyState({
   iconName,
   illustration,
@@ -39,27 +70,20 @@ function EmptyState({
 }) {
   const sizeClass = SIZE_CLASS_MAP[size] || SIZE_CLASS_MAP.md;
   const toneClass = TONE_CLASS_MAP[tone] || TONE_CLASS_MAP.decorated;
-  const shouldRenderVisual =
-    tone !== "plain" && (illustration || iconName);
-
+  const shouldRenderVisual = tone !== "plain" && (illustration || iconName);
   const sectionClassName = [styles.wrapper, sizeClass, toneClass, className]
     .filter(Boolean)
     .join(" ");
+  const optionalBlocks = getOptionalBlocks({
+    illustration,
+    iconName,
+    title,
+    description,
+    actions,
+    shouldRenderVisual,
+  });
 
-  return (
-    <section
-      className={sectionClassName}
-    >
-      {shouldRenderVisual && (
-        <EmptyStateVisual illustration={illustration} iconName={iconName} />
-      )}
-      {title && <h2 className={styles.title}>{title}</h2>}
-      {description && (
-        <p className={styles.description}>{description}</p>
-      )}
-      {actions && <div className={styles.actions}>{actions}</div>}
-    </section>
-  );
+  return <section className={sectionClassName}>{optionalBlocks}</section>;
 }
 
 EmptyState.propTypes = {

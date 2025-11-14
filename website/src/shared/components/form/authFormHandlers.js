@@ -107,19 +107,17 @@ const handleCodeRequest = async ({
   });
 };
 
-const useCodeRequestHandler = (props) => {
-  const {
-    account,
-    method,
-    onRequestCode,
-    setAccount,
-    showPopup,
-    showToast,
-    t,
-    validateAccount,
-  } = props;
-
-  return useCallback(
+const useCodeRequestHandler = ({
+  account,
+  method,
+  onRequestCode,
+  setAccount,
+  showPopup,
+  showToast,
+  t,
+  validateAccount,
+}) =>
+  useCallback(
     () =>
       handleCodeRequest({
         account,
@@ -131,18 +129,8 @@ const useCodeRequestHandler = (props) => {
         t,
         validateAccount,
       }),
-    [
-      account,
-      method,
-      onRequestCode,
-      setAccount,
-      showPopup,
-      showToast,
-      t,
-      validateAccount,
-    ],
+    [account, method, onRequestCode, setAccount, showPopup, showToast, t, validateAccount],
   );
-};
 
 const useSubmitHandler = ({
   account,

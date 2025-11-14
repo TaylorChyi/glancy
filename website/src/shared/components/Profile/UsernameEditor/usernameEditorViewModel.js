@@ -29,50 +29,33 @@ function createUsernameViewModel(props) {
   });
 }
 
-function buildUsernameViewModelPayload({
-  className,
-  controlId,
-  messageId,
-  mode,
-  error,
-  inputValue,
-  t,
-  inputRef,
-  handlers,
-  inputClassName,
-  buttonClassName,
-  buttonLabel,
-  renderInlineAction,
-  errorMessage,
-}) {
-  const layout = buildLayout(className);
-  const inputProps = createInputProps({
-    controlId,
-    messageId,
-    mode,
-    error,
-    value: inputValue,
-    t,
-    inputRef,
-    handlers,
-    inputClassName,
-  });
-  const buttonProps = createButtonProps({
-    buttonClassName,
-    handlers,
-    mode,
-  });
-  const errorProps = createErrorProps(errorMessage, messageId);
-  const actionDescriptor = createActionDescriptor(buttonLabel, handlers, mode);
-
+function buildUsernameViewModelPayload(payload) {
   return {
-    layout,
-    inputProps,
-    buttonProps,
-    buttonLabel,
-    shouldRenderButton: renderInlineAction,
-    errorProps,
-    actionDescriptor,
+    layout: buildLayout(payload.className),
+    inputProps: createInputProps({
+      controlId: payload.controlId,
+      messageId: payload.messageId,
+      mode: payload.mode,
+      error: payload.error,
+      value: payload.inputValue,
+      t: payload.t,
+      inputRef: payload.inputRef,
+      handlers: payload.handlers,
+      inputClassName: payload.inputClassName,
+    }),
+    buttonProps: createButtonProps({
+      buttonClassName: payload.buttonClassName,
+      handlers: payload.handlers,
+      mode: payload.mode,
+    }),
+    buttonLabel: payload.buttonLabel,
+    shouldRenderButton: payload.renderInlineAction,
+    errorProps: createErrorProps(payload.errorMessage, payload.messageId),
+    actionDescriptor: createActionDescriptor(
+      payload.buttonLabel,
+      payload.handlers,
+      payload.mode,
+    ),
   };
 }
 

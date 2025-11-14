@@ -76,6 +76,36 @@ const buildVariantModel = ({
   onOpen,
 });
 
+const useBuildVariantModelMemo = (
+  input: VariantInput,
+  normalizedOptions: NormalizedOption[],
+  currentOption: NormalizedOption | null,
+  hasOptions: boolean,
+) =>
+  useMemo(
+    () =>
+      buildVariantModel(
+        input.key,
+        input.label,
+        normalizedOptions,
+        currentOption,
+        hasOptions,
+        input.onChange,
+        input.normalizeValue,
+        input.onOpen,
+      ),
+    [
+      currentOption,
+      hasOptions,
+      normalizedOptions,
+      input.key,
+      input.label,
+      input.normalizeValue,
+      input.onChange,
+      input.onOpen,
+    ],
+  );
+
 export function useVariantModel(input: VariantInput): VariantModel {
   const normalizedOptions = useNormalizedOptions(
     input.options,
@@ -91,28 +121,11 @@ export function useVariantModel(input: VariantInput): VariantModel {
   );
   const hasOptions = normalizedOptions.length > 0 && Boolean(currentOption);
 
-  return useMemo(
-    () =>
-      buildVariantModel(
-        input.key,
-        input.label,
-        normalizedOptions,
-        currentOption,
-        hasOptions,
-        input.onChange,
-        input.normalizeValue,
-        input.onOpen,
-      ),
-    [
-      currentOption,
-      hasOptions,
-      input.key,
-      input.label,
-      input.normalizeValue,
-      normalizedOptions,
-      input.onChange,
-      input.onOpen,
-    ],
+  return useBuildVariantModelMemo(
+    input,
+    normalizedOptions,
+    currentOption,
+    hasOptions,
   );
 }
 
