@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 
 import { composeClassName } from "../utils/classNames.js";
-import styles from "../KeyboardSection.module.css";
+import styles from "../../KeyboardSection.module.css";
 import { keyboardShortcutItemPropType } from "../propTypes.js";
 
 function KeyboardShortcutMeta({ label, hasError, errorMessage }) {

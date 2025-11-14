@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 
-import styles from "../KeyboardSection.module.css";
+import styles from "../../KeyboardSection.module.css";
 
 function KeyboardHint({ hint }) {
   return <div className={styles.hint}>{hint}</div>;
