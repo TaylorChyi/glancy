@@ -1,7 +1,6 @@
 import { memo } from "react";
 import "@app/pages/App/App.css";
 import Avatar from "@shared/components/ui/Avatar";
-import FeedbackHub from "@shared/components/ui/FeedbackHub";
 import EditableField from "@shared/components/form/EditableField/EditableField.jsx";
 import FormField from "@shared/components/form/FormField.jsx";
 import ThemeIcon from "@shared/components/ui/Icon";
@@ -9,14 +8,13 @@ import Tooltip from "@shared/components/ui/Tooltip";
 import EmailBindingCard from "@shared/components/Profile/EmailBindingCard";
 import UsernameEditor from "@shared/components/Profile/UsernameEditor";
 import CustomSectionsEditor from "@shared/components/Profile/CustomSectionsEditor";
-import AvatarEditorModal from "@shared/components/AvatarEditorModal";
 import styles from "./Profile.module.css";
+import ProfileAvatarEditor from "./ProfileAvatarEditor.jsx";
+import ProfileLayout from "./ProfileLayout.jsx";
+import { useProfileViewComposition } from "./useProfileViewComposition.js";
 import {
   profileFormPropTypes,
   profileFormDefaultProps,
-  avatarEditorPropTypes,
-  profilePageLayoutPropTypes,
-  profilePageLayoutDefaultProps,
   profileViewPropTypes,
   profileViewDefaultProps,
 } from "./ProfileView.propTypes.js";
@@ -134,6 +132,19 @@ const ProfileFieldGroup = memo(function ProfileFieldGroup({ group, details, onFi
   );
 });
 
+const ActionsSection = memo(function ActionsSection({ isSaving, onCancel, t }) {
+  return (
+    <div className={styles.actions}>
+      <button type="submit" className={styles["save-btn"]} disabled={isSaving}>
+        {t.saveButton}
+      </button>
+      <button type="button" className={styles["cancel-btn"]} onClick={onCancel}>
+        {t.cancelButton}
+      </button>
+    </div>
+  );
+});
+
 const FieldsSection = memo(function FieldsSection({
   fieldGroups,
   details,
@@ -188,19 +199,7 @@ const buildFieldsProps = ({ detailsState, t }) => {
   };
 };
 
-const buildFormProps = (viewProps) => ({
-  t: viewProps.t,
-  avatarController: viewProps.avatarController,
-  currentUser: viewProps.currentUser,
-  usernameHandlers: viewProps.usernameHandlers,
-  emailBinding: viewProps.emailBinding,
-  emailWorkflow: viewProps.emailWorkflow,
-  phoneState: viewProps.phoneState,
-  detailsState: viewProps.detailsState,
-  isSaving: viewProps.isSaving,
-  onCancel: viewProps.onCancel,
-  handleSave: viewProps.handleSave,
-});
+const buildActionsProps = ({ isSaving, onCancel, t }) => ({ isSaving, onCancel, t });
 
 const FORM_SECTION_BUILDERS = [
   (context) => (
@@ -225,54 +224,44 @@ const FORM_SECTION_BUILDERS = [
   (context) => <ActionsSection key="actions" {...context.actionsProps} />,
 ];
 
-const buildFormContext = (formProps) => {
-  const contactProps = buildContactProps({
-    emailBinding: formProps.emailBinding,
-    emailWorkflow: formProps.emailWorkflow,
-    currentUser: formProps.currentUser,
-    phoneState: formProps.phoneState,
-    t: formProps.t,
-  });
-  const fieldsProps = buildFieldsProps({
-    detailsState: formProps.detailsState,
-    t: formProps.t,
-  });
-  const actionsProps = {
-    isSaving: formProps.isSaving,
-    onCancel: formProps.onCancel,
-    t: formProps.t,
-  };
+const getProfileFormSections = (formProps) => {
+  const context = buildFormContext(formProps);
+  return FORM_SECTION_BUILDERS.map((builder) => builder(context));
+};
+
+const buildFormContext = ({
+  t,
+  avatarController,
+  currentUser,
+  usernameHandlers,
+  emailBinding,
+  emailWorkflow,
+  phoneState,
+  detailsState,
+  isSaving,
+  onCancel,
+}) => {
+  const contactProps = buildContactProps({ emailBinding, emailWorkflow, currentUser, phoneState, t });
+  const fieldsProps = buildFieldsProps({ detailsState, t });
+  const actionsProps = buildActionsProps({ isSaving, onCancel, t });
+
   return {
-    avatar: formProps.avatarController.avatar,
-    onAvatarChange: formProps.avatarController.handleAvatarChange,
-    avatarHint: formProps.t.avatarHint,
-    username: formProps.currentUser?.username,
-    onSubmitUsername: formProps.usernameHandlers.onSubmit,
-    onFailUsername: formProps.usernameHandlers.onFailure,
+    avatar: avatarController.avatar,
+    onAvatarChange: avatarController.handleAvatarChange,
+    avatarHint: t.avatarHint,
+    username: currentUser?.username,
+    onSubmitUsername: usernameHandlers.onSubmit,
+    onFailUsername: usernameHandlers.onFailure,
     contactProps,
     fieldsProps,
     actionsProps,
-    t: formProps.t,
+    t,
   };
 };
 
-const ActionsSection = memo(function ActionsSection({ isSaving, onCancel, t }) {
-  return (
-    <div className={styles.actions}>
-      <button type="submit" className={styles["save-btn"]} disabled={isSaving}>
-        {t.saveButton}
-      </button>
-      <button type="button" className={styles["cancel-btn"]} onClick={onCancel}>
-        {t.cancelButton}
-      </button>
-    </div>
-  );
-});
-
 const ProfileForm = memo(function ProfileForm(props) {
   const { handleSave } = props;
-  const context = buildFormContext(props);
-  const formSections = FORM_SECTION_BUILDERS.map((builder) => builder(context));
+  const formSections = getProfileFormSections(props);
   return (
     <form onSubmit={handleSave} className={styles["profile-card"]}>
       {formSections}
@@ -280,47 +269,18 @@ const ProfileForm = memo(function ProfileForm(props) {
   );
 });
 
-const AvatarEditor = memo(function AvatarEditor({ controller }) {
-  return (
-    <AvatarEditorModal
-      open={controller.editor.phase !== "idle"}
-      source={controller.editor.source}
-      onCancel={controller.handleAvatarModalClose}
-      onConfirm={controller.handleAvatarConfirm}
-      labels={controller.labels}
-      isProcessing={controller.editor.phase === "uploading"}
-    />
-  );
-});
-
-const ProfilePageLayout = memo(function ProfilePageLayout({ title, popup, children }) {
-  return (
-    <div className="app">
-      <h2>{title}</h2>
-      {children}
-      <FeedbackHub popup={popup} />
-    </div>
-  );
-});
-
 function ProfileView(props) {
-  const { t, avatarController, popup } = props;
-  const formProps = buildFormProps(props);
+  const { formProps, layoutProps, avatarEditorProps } = useProfileViewComposition(props);
   return (
-    <ProfilePageLayout title={t.profileTitle} popup={popup.popupConfig}>
+    <ProfileLayout {...layoutProps}>
       <ProfileForm {...formProps} />
-      <AvatarEditor controller={avatarController} />
-    </ProfilePageLayout>
+      <ProfileAvatarEditor {...avatarEditorProps} />
+    </ProfileLayout>
   );
 }
 
 ProfileForm.propTypes = profileFormPropTypes;
 ProfileForm.defaultProps = profileFormDefaultProps;
-
-AvatarEditor.propTypes = avatarEditorPropTypes;
-
-ProfilePageLayout.propTypes = profilePageLayoutPropTypes;
-ProfilePageLayout.defaultProps = profilePageLayoutDefaultProps;
 
 ProfileView.propTypes = profileViewPropTypes;
 ProfileView.defaultProps = profileViewDefaultProps;
