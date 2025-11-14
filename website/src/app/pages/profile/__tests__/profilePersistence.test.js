@@ -59,141 +59,89 @@ const buildPersistParams = ({ api, phone = "222" }) => ({
   persistedMeta,
 });
 
-describe("profilePersistence", () => {
-  describe("updateContactIfChanged", () => {
-    let api;
-    const callUpdateContact = (phone) =>
-      updateContactIfChanged({ api, currentUser: baseUser, phone });
+const setupUpdateContact = () => {
+  const api = createApi();
+  const callUpdateContact = (phone) =>
+    updateContactIfChanged({ api, currentUser: baseUser, phone });
 
-    beforeEach(() => {
-      api = createApi();
-    });
+  return { api, callUpdateContact };
+};
 
-    describe("when the phone number is unchanged", () => {
-      let result;
+const executePersistProfile = async ({ phone }) => {
+  const api = createApi({ phone });
+  const params = buildPersistParams({ api, phone });
+  const outcome = await persistProfile(params);
+  return { api, outcome, phone };
+};
 
-      beforeEach(async () => {
-        result = await callUpdateContact(baseUser.phone);
-      });
+describe("updateContactIfChanged", () => {
+  it("skips updating the contact when the phone number is unchanged", async () => {
+    const { api, callUpdateContact } = setupUpdateContact();
+    const result = await callUpdateContact(baseUser.phone);
 
-      it("skips updating the contact", () => {
-        expect(api.users.updateContact).not.toHaveBeenCalled();
-      });
-
-      it("returns the current user identity", () => {
-        expectIdentityOutcome(result, { hasUpdates: false });
-      });
-    });
-
-    describe("when the phone number changes", () => {
-      const nextPhone = "222";
-      let result;
-
-      beforeEach(async () => {
-        result = await callUpdateContact(nextPhone);
-      });
-
-      it("sends the update request with new phone", () => {
-        expect(api.users.updateContact).toHaveBeenCalledWith({
-          userId: baseUser.id,
-          email: baseUser.email,
-          phone: nextPhone,
-          token: baseUser.token,
-        });
-      });
-
-      it("returns the updated identity payload", () => {
-        expectIdentityOutcome(result, { hasUpdates: true, phone: nextPhone });
-      });
-    });
+    expect(api.users.updateContact).not.toHaveBeenCalled();
+    expectIdentityOutcome(result, { hasUpdates: false });
   });
 
-  describe("createProfileSavePayload", () => {
-    let payload;
+  it("updates the contact record when the phone number changes", async () => {
+    const { api, callUpdateContact } = setupUpdateContact();
+    const nextPhone = "222";
+    const result = await callUpdateContact(nextPhone);
 
-    beforeEach(() => {
-      payload = createProfileSavePayload({ details, persistedMeta });
+    expect(api.users.updateContact).toHaveBeenCalledWith({
+      userId: baseUser.id,
+      email: baseUser.email,
+      phone: nextPhone,
+      token: baseUser.token,
     });
+    expectIdentityOutcome(result, { hasUpdates: true, phone: nextPhone });
+  });
+});
 
-    it("merges normalized details with persisted metadata", () => {
-      expect(payload).toMatchObject({
-        job: "engineer",
-        interest: "music",
-        dailyWordTarget: 30,
-        futurePlan: "plan",
-      });
+describe("createProfileSavePayload", () => {
+  it("merges normalized details with persisted metadata", () => {
+    const payload = createProfileSavePayload({ details, persistedMeta });
+
+    expect(payload).toMatchObject({
+      job: "engineer",
+      interest: "music",
+      dailyWordTarget: 30,
+      futurePlan: "plan",
     });
   });
+});
 
-  describe("saveProfileDetails", () => {
-    let api;
+describe("saveProfileDetails", () => {
+  it("delegates to the profiles.saveProfile API", async () => {
+    const api = createApi();
 
-    beforeEach(() => {
-      api = createApi();
+    await saveProfileDetails({
+      api,
+      currentUser: baseUser,
+      profile: { foo: "bar" },
     });
 
-    it("delegates to the profiles.saveProfile API", async () => {
-      await saveProfileDetails({
-        api,
-        currentUser: baseUser,
-        profile: { foo: "bar" },
-      });
+    expectProfileSavedWith(api, { foo: "bar" });
+  });
+});
 
-      expectProfileSavedWith(api, { foo: "bar" });
-    });
+describe("persistProfile", () => {
+  it("updates contact information when identity data changes", async () => {
+    const nextPhone = "222";
+    const { api, outcome } = await executePersistProfile({ phone: nextPhone });
+
+    expect(api.users.updateContact).toHaveBeenCalled();
+    expectProfileSavedWith(api, { dailyWordTarget: 30 });
+    expectIdentityOutcome(outcome, { hasUpdates: true, phone: nextPhone });
   });
 
-  describe("persistProfile", () => {
-    let api;
-    let params;
-    const callPersistProfile = () => persistProfile(params);
-
-    beforeEach(() => {
-      api = createApi();
-      params = buildPersistParams({ api });
+  it("skips the contact API call when identity data is unchanged", async () => {
+    const { api, outcome } = await executePersistProfile({
+      phone: baseUser.phone,
     });
 
-    describe("when identity data changes", () => {
-      const nextPhone = "222";
-      let outcome;
-
-      beforeEach(async () => {
-        params.phone = nextPhone;
-        outcome = await callPersistProfile();
-      });
-
-      it("updates the contact record", () => {
-        expect(api.users.updateContact).toHaveBeenCalled();
-      });
-
-      it("saves the profile payload", () => {
-        expectProfileSavedWith(api, { dailyWordTarget: 30 });
-      });
-
-      it("returns the identity update outcome", () => {
-        expectIdentityOutcome(outcome, { hasUpdates: true, phone: nextPhone });
-      });
-    });
-
-    describe("when identity data is unchanged", () => {
-      let outcome;
-
-      beforeEach(async () => {
-        params.phone = baseUser.phone;
-        outcome = await callPersistProfile();
-      });
-
-      it("skips the contact API call", () => {
-        expect(api.users.updateContact).not.toHaveBeenCalled();
-      });
-
-      it("still saves the profile payload", () => {
-        expectProfileSavedWith(api, { dailyWordTarget: 30 });
-      });
-
-      it("reports that identity data was unchanged", () => {
-        expectIdentityOutcome(outcome, { hasUpdates: false });
-      });
-    });
+    expect(api.users.updateContact).not.toHaveBeenCalled();
+    expectProfileSavedWith(api, { dailyWordTarget: 30 });
+    expectIdentityOutcome(outcome, { hasUpdates: false });
   });
 });

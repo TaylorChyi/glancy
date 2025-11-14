@@ -61,7 +61,7 @@ const renderSaveHandler = ({ phone = "222", users, profiles } = {}) => {
   const api = createApi({ phone, users, profiles });
   const setUser = jest.fn();
   const showPopup = jest.fn();
-  const hook = renderHook(() =>
+  const useHandler = () =>
     useProfileSaveHandler({
       api,
       currentUser,
@@ -71,8 +71,9 @@ const renderSaveHandler = ({ phone = "222", users, profiles } = {}) => {
       persistedMeta,
       showPopup,
       t,
-    }),
-  );
+    });
+  const hook = renderHook(useHandler);
+
   return { ...hook, api, setUser, showPopup, phone };
 };
 
@@ -106,54 +107,44 @@ const expectSavingCompleted = ({ result }) => {
   expect(result.current.isSaving).toBe(false);
 };
 
-describe("useProfileSaveHandler", () => {
-  describe("保存成功时", () => {
-    let context;
+const mockRejectedSaveProfile = (errorMessage) =>
+  jest.fn().mockRejectedValue(new Error(errorMessage));
 
-    beforeEach(() => {
-      context = renderSaveHandler({ phone: "222" });
-    });
+const silenceConsoleError = () =>
+  jest.spyOn(console, "error").mockImplementation(() => {});
 
-    it("更新用户并提示成功", async () => {
-      const { api, setUser, showPopup, phone } = context;
+describe("useProfileSaveHandler 保存成功时", () => {
+  it("更新用户并提示成功", async () => {
+    const context = renderSaveHandler({ phone: "222" });
+    const { api, setUser, showPopup, phone } = context;
 
-      await submitSave(context);
+    await submitSave(context);
 
-      expectUpdateContactCalledWith(api, phone);
-      expectProfileSaved(api);
-      expect(setUser).toHaveBeenCalledWith({ ...currentUser, phone });
-      expect(showPopup).toHaveBeenCalledWith(t.updateSuccess);
-      expectSavingCompleted(context);
-    });
+    expectUpdateContactCalledWith(api, phone);
+    expectProfileSaved(api);
+    expect(setUser).toHaveBeenCalledWith({ ...currentUser, phone });
+    expect(showPopup).toHaveBeenCalledWith(t.updateSuccess);
+    expectSavingCompleted(context);
   });
+});
 
-  describe("保存失败时", () => {
-    let context;
-    let consoleErrorMock;
-
-    beforeEach(() => {
-      context = renderSaveHandler({
-        phone: "333",
-        profiles: {
-          saveProfile: jest.fn().mockRejectedValue(new Error("boom")),
-        },
-      });
-      consoleErrorMock = jest.spyOn(console, "error").mockImplementation(() => {});
+describe("useProfileSaveHandler 保存失败时", () => {
+  it("提示失败且不更新用户", async () => {
+    const failingSave = mockRejectedSaveProfile("boom");
+    const context = renderSaveHandler({
+      phone: "333",
+      profiles: { saveProfile: failingSave },
     });
+    const consoleErrorMock = silenceConsoleError();
+    const { api, setUser, showPopup } = context;
 
-    afterEach(() => {
-      consoleErrorMock.mockRestore();
-    });
+    await submitSave(context);
 
-    it("提示失败且不更新用户", async () => {
-      const { api, setUser, showPopup } = context;
+    expect(api.profiles.saveProfile).toHaveBeenCalled();
+    expect(setUser).not.toHaveBeenCalled();
+    expect(showPopup).toHaveBeenCalledWith(t.fail);
+    expectSavingCompleted(context);
 
-      await submitSave(context);
-
-      expect(api.profiles.saveProfile).toHaveBeenCalled();
-      expect(setUser).not.toHaveBeenCalled();
-      expect(showPopup).toHaveBeenCalledWith(t.fail);
-      expectSavingCompleted(context);
-    });
+    consoleErrorMock.mockRestore();
   });
 });

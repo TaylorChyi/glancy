@@ -55,17 +55,19 @@ const renderWorkflow = (overrides = {}) => {
   return { ...hook, emailBinding, notifySuccess, notifyFailure };
 };
 
-describe("useEmailBindingWorkflow", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
+describe("useEmailBindingWorkflow requestCode", () => {
   it("requestCode 输入为空时提示失败", async () => {
     const { result, notifyFailure } = renderWorkflow();
+
     await act(async () => {
       const outcome = await result.current.requestCode("");
       expect(outcome).toBe(false);
     });
+
     expect(notifyFailure).toHaveBeenCalledWith("input-required");
   });
 
@@ -73,38 +75,49 @@ describe("useEmailBindingWorkflow", () => {
     const { result, emailBinding, notifySuccess } = renderWorkflow({
       requestCode: jest.fn().mockResolvedValue(undefined),
     });
+
     await act(async () => {
       const outcome = await result.current.requestCode("foo@bar");
       expect(outcome).toBe(true);
     });
+
     expect(emailBinding.requestCode).toHaveBeenCalledWith("foo@bar");
     expect(notifySuccess).toHaveBeenCalledWith("code-sent");
   });
+});
 
+describe("useEmailBindingWorkflow confirmChange", () => {
   it("confirmChange 失败时回退到错误提示", async () => {
     const error = new Error("boom");
     const { result, emailBinding, notifyFailure } = renderWorkflow({
       confirmChange: jest.fn().mockRejectedValue(error),
     });
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
     await act(async () => {
       await result.current.confirmChange({ email: "foo", code: "123" });
     });
+
     expect(emailBinding.confirmChange).toHaveBeenCalledWith({
       email: "foo",
       code: "123",
     });
     expect(notifyFailure).toHaveBeenCalledWith("boom");
-    console.error.mockRestore();
-  });
 
+    consoleErrorSpy.mockRestore();
+  });
+});
+
+describe("useEmailBindingWorkflow unbind", () => {
   it("unbind 成功时提示成功并重置编辑态", async () => {
     const { result, emailBinding, notifySuccess } = renderWorkflow({
       unbindEmail: jest.fn().mockResolvedValue(undefined),
     });
+
     await act(async () => {
       await result.current.unbind();
     });
+
     expect(emailBinding.unbindEmail).toHaveBeenCalled();
     expect(emailBinding.startEditing).toHaveBeenCalled();
     expect(notifySuccess).toHaveBeenCalledWith("unbind-success");
