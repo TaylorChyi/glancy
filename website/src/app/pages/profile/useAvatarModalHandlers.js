@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { cacheBust } from "@shared/utils";
 import confirmAvatarUpload from "./confirmAvatarUpload.js";
 
@@ -15,19 +15,29 @@ const handleFileInput = (event, { currentUser, dispatch }) => {
   });
 };
 
-const useAvatarChangeHandler = ({ currentUser, dispatchEditor }) =>
-  useCallback(
-    (event) => handleFileInput(event, { currentUser, dispatch: dispatchEditor }),
-    [currentUser, dispatchEditor],
-  );
+const buildConfirmContext = ({
+  api,
+  currentUser,
+  dispatchEditor,
+  editorStateRef,
+  avatarRef,
+  setAvatar,
+  setUser,
+  previousAvatarRef,
+  notifyFailure,
+}) => ({
+  api,
+  currentUser,
+  editorState: () => editorStateRef.current,
+  currentAvatar: () => avatarRef.current,
+  setAvatar,
+  setUser,
+  dispatch: dispatchEditor,
+  previousAvatarRef,
+  notifyFailure,
+});
 
-const useAvatarModalCloseHandler = ({ dispatchEditor, previousAvatarRef }) =>
-  useCallback(() => {
-    previousAvatarRef.current = "";
-    dispatchEditor({ type: "close" });
-  }, [dispatchEditor, previousAvatarRef]);
-
-const useAvatarConfirmHandler = ({
+const useConfirmContext = ({
   api,
   currentUser,
   dispatchEditor,
@@ -38,33 +48,40 @@ const useAvatarConfirmHandler = ({
   previousAvatarRef,
   notifyFailure,
 }) =>
-  useCallback(
-    (payload) =>
-      confirmAvatarUpload(payload, {
+  useMemo(
+    () =>
+      buildConfirmContext({
         api,
         currentUser,
-        editorState: () => editorStateRef.current,
-        currentAvatar: () => avatarRef.current,
+        dispatchEditor,
+        editorStateRef,
+        avatarRef,
         setAvatar,
         setUser,
-        dispatch: dispatchEditor,
         previousAvatarRef,
         notifyFailure,
       }),
-    [
-      api,
-      avatarRef,
-      currentUser,
-      dispatchEditor,
-      editorStateRef,
-      notifyFailure,
-      previousAvatarRef,
-      setAvatar,
-      setUser,
-    ],
+    [api, currentUser, dispatchEditor, editorStateRef, avatarRef, setAvatar, setUser, previousAvatarRef, notifyFailure],
   );
 
-const useApplyServerAvatar = (setAvatar) =>
+export const useAvatarChange = ({ currentUser, dispatchEditor }) =>
+  useCallback(
+    (event) => handleFileInput(event, { currentUser, dispatch: dispatchEditor }),
+    [currentUser, dispatchEditor],
+  );
+
+export const useAvatarModalClose = ({ dispatchEditor, previousAvatarRef }) =>
+  useCallback(() => {
+    previousAvatarRef.current = "";
+    dispatchEditor({ type: "close" });
+  }, [dispatchEditor, previousAvatarRef]);
+
+export const useAvatarConfirm = (params) => {
+  const context = useConfirmContext(params);
+  return useCallback((payload) => confirmAvatarUpload(payload, context), [context]);
+};
+
+export const useApplyServerAvatar = (setAvatar) =>
   useCallback(
     (nextAvatar) => {
       if (!nextAvatar) {
@@ -77,9 +94,9 @@ const useApplyServerAvatar = (setAvatar) =>
   );
 
 const useAvatarModalHandlers = (params) => ({
-  handleAvatarChange: useAvatarChangeHandler(params),
-  handleAvatarModalClose: useAvatarModalCloseHandler(params),
-  handleAvatarConfirm: useAvatarConfirmHandler(params),
+  handleAvatarChange: useAvatarChange(params),
+  handleAvatarModalClose: useAvatarModalClose(params),
+  handleAvatarConfirm: useAvatarConfirm(params),
   applyServerAvatar: useApplyServerAvatar(params.setAvatar),
 });
 
