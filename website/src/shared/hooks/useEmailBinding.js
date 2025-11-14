@@ -9,14 +9,12 @@ import { useEmailRequestFlow } from "./emailBinding/useEmailRequestFlow.js";
 import { useEmailConfirmationFlow } from "./emailBinding/useEmailConfirmationFlow.js";
 import { useEmailUnbindFlow } from "./emailBinding/useEmailUnbindFlow.js";
 
-export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
+function useEmailBindingClient({ user, apiClient }) {
   const api = useApi();
   const client = useMemo(
     () => apiClient ?? api?.users ?? null,
     [apiClient, api],
   );
-
-  const [mode, setMode] = useState(MODE_IDLE);
 
   const ensureClient = useCallback(() => {
     if (!client) {
@@ -29,6 +27,12 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
     }
   }, [client, user?.id, user?.token]);
 
+  return { client, ensureClient };
+}
+
+function useEmailBindingState({ client, ensureClient, user, onUserUpdate }) {
+  const [mode, setMode] = useState(MODE_IDLE);
+
   const {
     requestCode,
     isSendingCode,
@@ -36,11 +40,7 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
     lastRequestedEmail,
     lastRequestedEmailRef,
     resetRequestState,
-  } = useEmailRequestFlow({
-    client,
-    ensureClient,
-    user,
-  });
+  } = useEmailRequestFlow({ client, ensureClient, user });
 
   const resetBindingState = useCallback(() => {
     setMode(MODE_IDLE);
@@ -89,6 +89,16 @@ export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
     isUnbinding,
     codeIssuedAt,
     lastRequestedEmail,
+  };
+}
+
+export function useEmailBinding({ user, onUserUpdate, apiClient } = {}) {
+  const { client, ensureClient } = useEmailBindingClient({ user, apiClient });
+  const state = useEmailBindingState({ client, ensureClient, user, onUserUpdate });
+  const { lastRequestedEmail, codeIssuedAt } = state;
+
+  return {
+    ...state,
     requestedEmail: lastRequestedEmail,
     isAwaitingVerification: Boolean(lastRequestedEmail && codeIssuedAt),
     hasBoundEmail: Boolean(normalizeEmail(user?.email)),
