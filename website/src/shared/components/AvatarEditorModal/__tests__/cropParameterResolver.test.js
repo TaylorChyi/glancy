@@ -11,14 +11,18 @@ import {
   CSS_MATRIX_STRATEGY_ID,
   clampCornersWithinImage,
   computeCropRectFromMatrix,
+  deriveCssMatrixCropRect,
   parseMatrixComponents,
   parseTransformMatrix,
   resolveCropRectUsingMatrix,
+  validateCssMatrixInputs,
 } from "../hooks/cropStrategies/cssMatrixStrategy.js";
 
 import {
   GEOMETRY_STRATEGY_ID,
+  deriveGeometryCropRect,
   resolveGeometryCropRect,
+  validateGeometryInputs,
 } from "../hooks/cropStrategies/geometryStrategy.js";
 
 const buildMatrix = ({
@@ -189,6 +193,62 @@ describe("cropParameterResolver matrix helpers", () => {
         naturalHeight: 500,
       }),
     ).toBeNull();
+  });
+
+  it("Given invalid inputs When validateCssMatrixInputs Then returns false", () => {
+    expect(
+      validateCssMatrixInputs({
+        image: null,
+        viewportSize: 100,
+        naturalWidth: 200,
+        naturalHeight: 200,
+      }),
+    ).toBe(false);
+
+    expect(
+      validateCssMatrixInputs({
+        image: document.createElement("img"),
+        viewportSize: -10,
+        naturalWidth: 200,
+        naturalHeight: 200,
+      }),
+    ).toBe(false);
+  });
+
+  it("Given valid DOM inputs When deriveCssMatrixCropRect Then mirrors computeCropRectFromMatrix", () => {
+    const viewportSize = 220;
+    const natural = { width: 640, height: 640 };
+    const image = document.createElement("img");
+    document.body.appendChild(image);
+    const matrix = buildMatrix({
+      scale: 0.5,
+      offsetX: 25,
+      offsetY: -15,
+      viewportSize,
+      naturalWidth: natural.width,
+      naturalHeight: natural.height,
+    });
+
+    jest.spyOn(window, "getComputedStyle").mockReturnValue({ transform: toMatrixString(matrix) });
+
+    const rect = deriveCssMatrixCropRect({
+      image,
+      viewportSize,
+      naturalWidth: natural.width,
+      naturalHeight: natural.height,
+    });
+
+    const expected = computeCropRectFromMatrix({
+      matrix,
+      viewportSize,
+      naturalWidth: natural.width,
+      naturalHeight: natural.height,
+    });
+
+    expect(rect).toEqual(expected);
+
+    window.getComputedStyle.mockRestore();
+    document.body.removeChild(image);
   });
 
   it("Given DOM image When resolveCropRectUsingMatrix Then returns computed rectangle", () => {
@@ -425,5 +485,32 @@ describe("geometry strategy helpers", () => {
         offset: { x: 0, y: 0 },
       }),
     ).toBeNull();
+  });
+
+  it("Given invalid geometry inputs When validateGeometryInputs Then returns false", () => {
+    expect(
+      validateGeometryInputs({
+        image: null,
+        viewportSize: 100,
+        naturalWidth: 100,
+        naturalHeight: 100,
+      }),
+    ).toBe(false);
+  });
+
+  it("Given valid inputs When deriveGeometryCropRect Then returns normalized rectangle", () => {
+    const params = {
+      image: document.createElement("img"),
+      naturalWidth: 500,
+      naturalHeight: 500,
+      viewportSize: 200,
+      displayMetrics: { scaleFactor: 0.4 },
+      offset: { x: 10, y: -5 },
+    };
+
+    const rect = deriveGeometryCropRect(params);
+    const expected = resolveGeometryCropRect(params);
+
+    expect(rect).toEqual(expected);
   });
 });
