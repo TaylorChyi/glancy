@@ -1,6 +1,9 @@
 import { isValidRect } from "./rectUtils.js";
 
 const SAFE_DETERMINANT_THRESHOLD = 1e-6;
+const MATRIX_PREFIX = "matrix";
+const MATRIX3D_PREFIX = "matrix3d";
+
 export const CSS_MATRIX_STRATEGY_ID = "css-matrix";
 
 const clampWithin = (value, min, max) => {
@@ -21,27 +24,38 @@ const toNumericList = (raw) => raw.split(",").map((value) => Number(value.trim()
 const hasExpectedFiniteValues = (values, expectedLength) =>
   values.length === expectedLength && values.every((value) => Number.isFinite(value));
 
-export const parseMatrixComponents = (normalized) => {
-  if (normalized.startsWith("matrix3d(") && normalized.endsWith(")")) {
-    const values = toNumericList(normalized.slice(9, -1));
-    if (!hasExpectedFiniteValues(values, 16)) {
-      return null;
-    }
-    const [m11, m12, , , m21, m22, , , , , , , m41, m42] = values;
-    return { a: m11, b: m12, c: m21, d: m22, e: m41, f: m42 };
-  }
+const isMatrixOfType = (normalized, prefix) =>
+  normalized.startsWith(`${prefix}(`) && normalized.endsWith(")");
 
-  if (normalized.startsWith("matrix(") && normalized.endsWith(")")) {
-    const values = toNumericList(normalized.slice(7, -1));
-    if (!hasExpectedFiniteValues(values, 6)) {
-      return null;
-    }
-    const [a, b, c, d, e, f] = values;
-    return { a, b, c, d, e, f };
-  }
+const sliceMatrixValues = (normalized, prefix) =>
+  normalized.slice(prefix.length + 1, -1);
 
-  return null;
+const parseAffineMatrix2d = (normalized) => {
+  if (!isMatrixOfType(normalized, MATRIX_PREFIX)) {
+    return null;
+  }
+  const values = toNumericList(sliceMatrixValues(normalized, MATRIX_PREFIX));
+  if (!hasExpectedFiniteValues(values, 6)) {
+    return null;
+  }
+  const [a, b, c, d, e, f] = values;
+  return { a, b, c, d, e, f };
 };
+
+const parseAffineMatrix3d = (normalized) => {
+  if (!isMatrixOfType(normalized, MATRIX3D_PREFIX)) {
+    return null;
+  }
+  const values = toNumericList(sliceMatrixValues(normalized, MATRIX3D_PREFIX));
+  if (!hasExpectedFiniteValues(values, 16)) {
+    return null;
+  }
+  const [m11, m12, , , m21, m22, , , , , , , m41, m42] = values;
+  return { a: m11, b: m12, c: m21, d: m22, e: m41, f: m42 };
+};
+
+export const parseMatrixComponents = (normalized) =>
+  parseAffineMatrix3d(normalized) ?? parseAffineMatrix2d(normalized);
 
 /**
  * 意图：解析浏览器返回的 transform 字符串，提取可逆的 2D 仿射矩阵。
@@ -83,11 +97,15 @@ const buildViewportCorners = (viewportSize) => [
 const areFiniteCorners = (corners) =>
   corners.every((corner) => Number.isFinite(corner.x) && Number.isFinite(corner.y));
 
+const clampCornerWithinImage = ({ corner, naturalWidth, naturalHeight }) => ({
+  x: clampWithin(corner.x, 0, naturalWidth),
+  y: clampWithin(corner.y, 0, naturalHeight),
+});
+
 const clampCorners = ({ corners, naturalWidth, naturalHeight }) =>
-  corners.map((corner) => ({
-    x: clampWithin(corner.x, 0, naturalWidth),
-    y: clampWithin(corner.y, 0, naturalHeight),
-  }));
+  corners.map((corner) =>
+    clampCornerWithinImage({ corner, naturalWidth, naturalHeight }),
+  );
 
 const buildBoundingRect = (corners) => {
   const xs = corners.map((corner) => corner.x);
@@ -142,8 +160,12 @@ export const computeCropRectFromMatrix = ({
 
 export const clampCornersWithinImage = clampCorners;
 
-const hasValidMatrixInputs = ({ image, viewportSize, naturalWidth, naturalHeight }) =>
-  Boolean(image) && viewportSize > 0 && naturalWidth > 0 && naturalHeight > 0;
+export const validateCssMatrixInputs = ({
+  image,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+}) => Boolean(image) && viewportSize > 0 && naturalWidth > 0 && naturalHeight > 0;
 
 const readImageMatrix = (image) => {
   const view = image?.ownerDocument?.defaultView;
@@ -152,6 +174,13 @@ const readImageMatrix = (image) => {
   }
   return parseTransformMatrix(view.getComputedStyle(image).transform);
 };
+
+const buildMatrixCropParams = ({ matrix, viewportSize, naturalWidth, naturalHeight }) => ({
+  matrix,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+});
 
 export const resolveCropRectUsingMatrix = ({
   image,
@@ -164,42 +193,41 @@ export const resolveCropRectUsingMatrix = ({
     return null;
   }
 
-  return computeCropRectFromMatrix({
-    matrix,
+  return computeCropRectFromMatrix(
+    buildMatrixCropParams({ matrix, viewportSize, naturalWidth, naturalHeight }),
+  );
+};
+
+export const deriveCssMatrixCropRect = ({
+  image,
+  viewportSize,
+  naturalWidth,
+  naturalHeight,
+}) => {
+  const cropRect = resolveCropRectUsingMatrix({
+    image,
     viewportSize,
     naturalWidth,
     naturalHeight,
   });
+  return isValidRect(cropRect) ? cropRect : null;
 };
+
+const buildMatrixStrategyResult = ({ image, cropRect }) => ({
+  strategy: CSS_MATRIX_STRATEGY_ID,
+  image,
+  cropRect,
+});
 
 const cssMatrixStrategy = {
   id: CSS_MATRIX_STRATEGY_ID,
-  execute: ({ image, viewportSize, naturalWidth, naturalHeight }) => {
-    if (!hasValidMatrixInputs({
-      image,
-      viewportSize,
-      naturalWidth,
-      naturalHeight,
-    })) {
+  execute: (inputs) => {
+    if (!validateCssMatrixInputs(inputs)) {
       return null;
     }
 
-    const cropRect = resolveCropRectUsingMatrix({
-      image,
-      viewportSize,
-      naturalWidth,
-      naturalHeight,
-    });
-
-    if (!isValidRect(cropRect)) {
-      return null;
-    }
-
-    return {
-      strategy: CSS_MATRIX_STRATEGY_ID,
-      image,
-      cropRect,
-    };
+    const cropRect = deriveCssMatrixCropRect(inputs);
+    return cropRect ? buildMatrixStrategyResult({ image: inputs.image, cropRect }) : null;
   },
 };
 

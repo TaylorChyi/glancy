@@ -3,7 +3,7 @@ import { isValidRect } from "./rectUtils.js";
 
 export const GEOMETRY_STRATEGY_ID = "geometry";
 
-const hasValidGeometryInputs = ({
+export const validateGeometryInputs = ({
   image,
   viewportSize,
   naturalWidth,
@@ -36,36 +36,38 @@ export const resolveGeometryCropRect = ({
   });
 };
 
-const geometryStrategy = {
-  id: GEOMETRY_STRATEGY_ID,
-  execute: ({
-    image,
-    viewportSize,
+export const deriveGeometryCropRect = ({
+  naturalWidth,
+  naturalHeight,
+  viewportSize,
+  displayMetrics,
+  offset,
+}) => {
+  const cropRect = resolveGeometryCropRect({
     naturalWidth,
     naturalHeight,
+    viewportSize,
     displayMetrics,
     offset,
-  }) => {
-    if (!hasValidGeometryInputs({ image, viewportSize, naturalWidth, naturalHeight })) {
+  });
+  return isValidRect(cropRect) ? cropRect : null;
+};
+
+const buildGeometryStrategyResult = ({ image, cropRect }) => ({
+  strategy: GEOMETRY_STRATEGY_ID,
+  image,
+  cropRect,
+});
+
+const geometryStrategy = {
+  id: GEOMETRY_STRATEGY_ID,
+  execute: (inputs) => {
+    if (!validateGeometryInputs(inputs)) {
       return null;
     }
-    const cropRect = resolveGeometryCropRect({
-      naturalWidth,
-      naturalHeight,
-      viewportSize,
-      displayMetrics,
-      offset,
-    });
 
-    if (!isValidRect(cropRect)) {
-      return null;
-    }
-
-    return {
-      strategy: GEOMETRY_STRATEGY_ID,
-      image,
-      cropRect,
-    };
+    const cropRect = deriveGeometryCropRect(inputs);
+    return cropRect ? buildGeometryStrategyResult({ image: inputs.image, cropRect }) : null;
   },
 };
 
