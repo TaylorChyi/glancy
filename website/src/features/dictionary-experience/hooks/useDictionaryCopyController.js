@@ -1,163 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { extractMarkdownPreview, copyTextToClipboard } from "@shared/utils";
-import { normalizeDictionaryMarkdown } from "@features/dictionary-experience/markdown/dictionaryMarkdownNormalizer.js";
+import {
+  COPY_FEEDBACK_STATES,
+  useCopyAttemptResolver,
+  useCopyFeedbackController,
+  useCopyFeedbackMessages,
+  useCopyHandler,
+  useCopyPopup,
+} from "./useDictionaryCopyInternals.js";
 
-export const COPY_FEEDBACK_STATES = Object.freeze({
-  IDLE: "idle",
-  SUCCESS: "success",
-});
+export { COPY_FEEDBACK_STATES } from "./useDictionaryCopyInternals.js";
 
-const COPY_FEEDBACK_RESET_DELAY_MS = 2000;
-const COPY_STATUS = Object.freeze({
-  COPIED: "copied",
-  EMPTY: "empty",
-  FAILED: "failed",
-  DEFAULT: "default",
-});
-
-const useCopyPayload = ({ entry, finalText, currentTerm }) =>
-  useMemo(() => {
-    const stringCandidates = [
-      typeof entry?.markdown === "string" ? entry.markdown : null,
-      typeof finalText === "string" ? finalText : null,
-    ];
-
-    for (const candidate of stringCandidates) {
-      if (!candidate || !candidate.trim()) {
-        continue;
-      }
-      const preview = extractMarkdownPreview(candidate);
-      const normalized = preview == null ? candidate : preview;
-      return normalizeDictionaryMarkdown(normalized);
-    }
-
-    if (entry && typeof entry === "object") {
-      try {
-        return JSON.stringify(entry, null, 2);
-      } catch {
-        return currentTerm || "";
-      }
-    }
-
-    return currentTerm || "";
-  }, [entry, finalText, currentTerm]);
-
-const useCopyFeedbackMessages = (t) =>
-  useMemo(() => {
-    const base = t.copyAction || "Copy";
-    const failure = t.copyFailed || base;
-    return Object.freeze({
-      base,
-      fallback: failure,
-      statuses: Object.freeze({
-        copied: null,
-        empty: t.copyEmpty || failure,
-        unavailable: t.copyUnavailable || failure,
-        failed: failure,
-        default: failure,
-      }),
-    });
-  }, [t.copyAction, t.copyFailed, t.copyEmpty, t.copyUnavailable]);
-
-const useCopyPopup = (messages, showPopup) => {
-  const resolveCopyPopupMessage = useCallback(
-    (status) => {
-      const { base, fallback, statuses } = messages;
-      const resolvedFallback = statuses.default ?? fallback ?? base ?? "Copy";
-      if (!status) {
-        return resolvedFallback;
-      }
-      if (Object.prototype.hasOwnProperty.call(statuses, status)) {
-        return statuses[status];
-      }
-      return resolvedFallback;
-    },
-    [messages],
-  );
-
-  return useCallback(
-    (status) => {
-      const message = resolveCopyPopupMessage(status);
-      if (message) {
-        showPopup(message);
-      }
-    },
-    [resolveCopyPopupMessage, showPopup],
-  );
-};
-
-const useCopyFeedbackTimer = () => {
-  const timerRef = useRef(null);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  const schedule = useCallback(
-    (callback) => {
-      clear();
-      timerRef.current = setTimeout(() => {
-        callback();
-        timerRef.current = null;
-      }, COPY_FEEDBACK_RESET_DELAY_MS);
-    },
-    [clear],
-  );
-
-  useEffect(() => () => clear(), [clear]);
-
-  return { clear, schedule };
-};
-
-const useCopyAttemptResolver = ({ canCopyDefinition, copyPayload }) =>
-  useCallback(async () => {
-    if (!canCopyDefinition) {
-      return COPY_STATUS.EMPTY;
-    }
-
-    try {
-      const result = await copyTextToClipboard(copyPayload);
-      if (result?.status === COPY_STATUS.COPIED) {
-        return COPY_STATUS.COPIED;
-      }
-      return result?.status || COPY_STATUS.DEFAULT;
-    } catch {
-      return COPY_STATUS.FAILED;
-    }
-  }, [canCopyDefinition, copyPayload]);
-
-const useCopyStateMachine = ({ pushCopyPopup, onSuccess, onReset }) =>
-  useMemo(() => {
-    const transitions = {
-      [COPY_STATUS.COPIED]: () => {
-        onSuccess();
-        pushCopyPopup(COPY_STATUS.COPIED);
-      },
-      [COPY_STATUS.EMPTY]: () => {
-        onReset();
-        pushCopyPopup(COPY_STATUS.EMPTY);
-      },
-      [COPY_STATUS.FAILED]: () => {
-        onReset();
-        pushCopyPopup(COPY_STATUS.FAILED);
-      },
-    };
-
-    return (event = COPY_STATUS.DEFAULT) => {
-      const normalizedEvent = event || COPY_STATUS.DEFAULT;
-      const transition = transitions[normalizedEvent];
-      if (transition) {
-        transition();
-        return;
-      }
-
-      onReset();
-      pushCopyPopup(normalizedEvent);
-    };
-  }, [onReset, onSuccess, pushCopyPopup]);
+import {
+  useCopyAvailability,
+  useCopyPayload,
+} from "./useDictionaryCopyPayload.js";
 
 /**
  * 意图：集中管理复制行为的所有状态与副作用，为上层提供可组合的控制器。
@@ -180,54 +35,14 @@ export function useDictionaryCopyController({
   t,
   showPopup,
 }) {
-  const [copyFeedbackState, setCopyFeedbackState] = useState(
-    COPY_FEEDBACK_STATES.IDLE,
-  );
   const copyPayload = useCopyPayload({ entry, finalText, currentTerm });
-  const canCopyDefinition = useMemo(
-    () => typeof copyPayload === "string" && copyPayload.trim().length > 0,
-    [copyPayload],
-  );
+  const canCopyDefinition = useCopyAvailability(copyPayload);
   const copyFeedbackMessages = useCopyFeedbackMessages(t);
   const pushCopyPopup = useCopyPopup(copyFeedbackMessages, showPopup);
-  const { clear, schedule } = useCopyFeedbackTimer();
-
-  const resetCopyFeedback = useCallback(() => {
-    clear();
-    setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE);
-  }, [clear]);
-
-  const scheduleCopyFeedbackReset = useCallback(() => {
-    schedule(() => setCopyFeedbackState(COPY_FEEDBACK_STATES.IDLE));
-  }, [schedule]);
-
-  const markCopySuccess = useCallback(() => {
-    setCopyFeedbackState(COPY_FEEDBACK_STATES.SUCCESS);
-    scheduleCopyFeedbackReset();
-  }, [scheduleCopyFeedbackReset]);
-
-  const resolveCopyEvent = useCopyAttemptResolver({
-    canCopyDefinition,
-    copyPayload,
-  });
-
-  const dispatchCopyStatus = useCopyStateMachine({
-    onSuccess: markCopySuccess,
-    onReset: resetCopyFeedback,
-    pushCopyPopup,
-  });
-
-  const handleCopy = useCallback(async () => {
-    const event = await resolveCopyEvent();
-    dispatchCopyStatus(event);
-  }, [
-    dispatchCopyStatus,
-    resolveCopyEvent,
-  ]);
-
-  const isCopySuccessActive =
-    copyFeedbackState === COPY_FEEDBACK_STATES.SUCCESS;
-
+  const { copyFeedbackState, dispatchCopyStatus, isCopySuccessActive, resetCopyFeedback } =
+    useCopyFeedbackController({ pushCopyPopup });
+  const resolveCopyEvent = useCopyAttemptResolver({ canCopyDefinition, copyPayload });
+  const handleCopy = useCopyHandler({ resolveCopyEvent, dispatchCopyStatus });
   return {
     canCopyDefinition,
     copyFeedbackState,
