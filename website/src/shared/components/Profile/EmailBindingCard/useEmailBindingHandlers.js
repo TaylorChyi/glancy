@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import useDraftEmailHandler from "./useDraftEmailHandler.js";
 import useEmailSubmitHandler from "./useEmailSubmitHandler.js";
 import useVerificationHandlers from "./useVerificationHandlers.js";
@@ -25,12 +26,20 @@ const useEmailBindingHandlers = ({
     onConfirm,
   });
 
-  return {
-    handleDraftEmailChange,
-    handleVerificationCodeChange,
-    handleRequestCode,
-    handleSubmit,
-  };
+  return useMemo(
+    () => ({
+      handleDraftEmailChange,
+      handleVerificationCodeChange,
+      handleRequestCode,
+      handleSubmit,
+    }),
+    [
+      handleDraftEmailChange,
+      handleVerificationCodeChange,
+      handleRequestCode,
+      handleSubmit,
+    ],
+  );
 };
 
 export default useEmailBindingHandlers;
