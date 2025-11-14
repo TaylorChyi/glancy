@@ -2,9 +2,10 @@ import { useMemo } from "react";
 import type { RefObject } from "react";
 
 import useBottomPanelState from "../hooks/useBottomPanelState";
-import { buildBottomPanelModel } from "./helpers/dictionaryBottomPanelHelpers.ts";
+import { useDictionaryBottomPanelProps } from "./helpers/useDictionaryBottomPanelProps.ts";
+import { createDictionaryBottomPanelArgs } from "./helpers/createDictionaryBottomPanelArgs.ts";
 import { useDictionaryActionBarViewModel } from "./helpers/useDictionaryActionBarViewModel.ts";
-import { createInputFocusChangeHandler } from "./helpers/dictionaryInputFocusHandlers.ts";
+import { useDictionaryInputFocusChangeHandler } from "./helpers/useDictionaryInputFocusChangeHandler.ts";
 import { useDictionarySearchModeAutoFocus } from "./helpers/useDictionarySearchModeAutoFocus.ts";
 
 export type UseDictionaryBottomPanelModelArgs = {
@@ -34,184 +35,34 @@ export type UseDictionaryBottomPanelModelArgs = {
 const useDictionarySearchButtonLabel = (label: string | undefined) =>
   useMemo(() => label ?? "切换到搜索输入", [label]);
 
-type UseDictionaryBottomPanelPropsArgs = {
-  isLibraryView: boolean;
-  bottomPanelState: ReturnType<typeof useBottomPanelState>;
-  dictionaryActionBarViewModel: ReturnType<
-    typeof useDictionaryActionBarViewModel
-  >;
-  hasDefinition: boolean;
-  inputRef: RefObject<HTMLInputElement>;
-  text: string;
-  setText: (value: string) => void;
-  handleSend: (event: any) => void;
-  placeholder: string | undefined;
-  dictionarySourceLanguage: string | undefined;
-  dictionarySourceLanguageLabel: string | undefined;
-  setDictionarySourceLanguage: (value: string) => void;
-  dictionaryTargetLanguage: string | undefined;
-  dictionaryTargetLanguageLabel: string | undefined;
-  setDictionaryTargetLanguage: (value: string) => void;
-  sourceLanguageOptions: unknown;
-  targetLanguageOptions: unknown;
-  handleSwapLanguages: () => void;
-  swapLabel: string | undefined;
-  searchButtonLabel: string;
-  handleInputFocusChange: ReturnType<typeof createInputFocusChangeHandler>;
-};
-
-const useDictionaryBottomPanelProps = ({
-  isLibraryView,
-  bottomPanelState,
-  dictionaryActionBarViewModel,
-  hasDefinition,
-  inputRef,
-  text,
-  setText,
-  handleSend,
-  placeholder,
-  dictionarySourceLanguage,
-  dictionarySourceLanguageLabel,
-  setDictionarySourceLanguage,
-  dictionaryTargetLanguage,
-  dictionaryTargetLanguageLabel,
-  setDictionaryTargetLanguage,
-  sourceLanguageOptions,
-  targetLanguageOptions,
-  handleSwapLanguages,
-  swapLabel,
-  searchButtonLabel,
-  handleInputFocusChange,
-}: UseDictionaryBottomPanelPropsArgs) =>
-  useMemo(
-    () =>
-      buildBottomPanelModel({
-        isLibraryView,
-        bottomPanelState,
-        dictionaryActionBarViewModel,
-        hasDefinition,
-        inputRef,
-        text,
-        setText,
-        handleSend,
-        placeholder,
-        dictionarySourceLanguage,
-        dictionarySourceLanguageLabel,
-        setDictionarySourceLanguage,
-        dictionaryTargetLanguage,
-        dictionaryTargetLanguageLabel,
-        setDictionaryTargetLanguage,
-        sourceLanguageOptions,
-        targetLanguageOptions,
-        handleSwapLanguages,
-        swapLabel,
-        searchButtonLabel,
-        handleInputFocusChange,
-      }),
-    [
-      isLibraryView,
-      bottomPanelState,
-      dictionaryActionBarViewModel,
-      hasDefinition,
-      inputRef,
-      text,
-      setText,
-      handleSend,
-      placeholder,
-      dictionarySourceLanguage,
-      dictionarySourceLanguageLabel,
-      setDictionarySourceLanguage,
-      dictionaryTargetLanguage,
-      dictionaryTargetLanguageLabel,
-      setDictionaryTargetLanguage,
-      sourceLanguageOptions,
-      targetLanguageOptions,
-      handleSwapLanguages,
-      swapLabel,
-      searchButtonLabel,
-      handleInputFocusChange,
-    ],
-  );
-
-export const useDictionaryBottomPanelModel = ({
-  t,
-  viewState,
-  entry,
-  finalText,
-  text,
-  setText,
-  dictionarySourceLanguage,
-  setDictionarySourceLanguage,
-  dictionaryTargetLanguage,
-  setDictionaryTargetLanguage,
-  sourceLanguageOptions,
-  targetLanguageOptions,
-  handleSwapLanguages,
-  handleSend,
-  dictionaryActionBarProps,
-  inputRef,
-  focusInput,
-  dictionarySourceLanguageLabel,
-  dictionaryTargetLanguageLabel,
-  dictionarySwapLanguagesLabel,
-  chatInputPlaceholder,
-}: UseDictionaryBottomPanelModelArgs) => {
-  const hasDefinition =
-    viewState.isDictionary && Boolean(entry?.term || finalText);
-
-  const bottomPanelState = useBottomPanelState({ hasDefinition, text });
+export const useDictionaryBottomPanelModel = (
+  args: UseDictionaryBottomPanelModelArgs,
+) => {
+  const hasDefinition = args.viewState.isDictionary && Boolean(args.entry?.term || args.finalText);
+  const bottomPanelState = useBottomPanelState({ hasDefinition, text: args.text });
   const dictionaryActionBarViewModel = useDictionaryActionBarViewModel({
-    dictionaryActionBarProps,
+    dictionaryActionBarProps: args.dictionaryActionBarProps,
     activateSearchMode: bottomPanelState.activateSearchMode,
   });
-
   useDictionarySearchModeAutoFocus({
     bottomPanelMode: bottomPanelState.mode,
-    inputRef,
-    focusInput,
+    inputRef: args.inputRef,
+    focusInput: args.focusInput,
   });
-
-  const handleInputFocusChange = useMemo(
-    () =>
-      createInputFocusChangeHandler({
-        handlePanelFocusChange: bottomPanelState.handleFocusChange,
-        activateActionsMode: bottomPanelState.activateActionsMode,
-      }),
-    [
-      bottomPanelState.activateActionsMode,
-      bottomPanelState.handleFocusChange,
-    ],
-  );
-
-  const searchButtonLabel = useDictionarySearchButtonLabel(
-    t?.returnToSearch,
-  );
-
-  const bottomPanel = useDictionaryBottomPanelProps({
-    isLibraryView: Boolean(viewState.isLibrary),
+  const handleInputFocusChange = useDictionaryInputFocusChangeHandler(bottomPanelState);
+  const searchButtonLabel = useDictionarySearchButtonLabel(args.t?.returnToSearch);
+  const bottomPanelArgs = createDictionaryBottomPanelArgs({
+    ...args,
     bottomPanelState,
     dictionaryActionBarViewModel,
     hasDefinition,
-    inputRef,
-    text,
-    setText,
-    handleSend,
-    placeholder: chatInputPlaceholder,
-    dictionarySourceLanguage,
-    dictionarySourceLanguageLabel,
-    setDictionarySourceLanguage,
-    dictionaryTargetLanguage,
-    dictionaryTargetLanguageLabel,
-    setDictionaryTargetLanguage,
-    sourceLanguageOptions,
-    targetLanguageOptions,
-    handleSwapLanguages,
-    swapLabel: dictionarySwapLanguagesLabel,
-    searchButtonLabel,
     handleInputFocusChange,
+    searchButtonLabel,
   });
-
-  return { bottomPanel, bottomPanelState };
+  return {
+    bottomPanel: useDictionaryBottomPanelProps(bottomPanelArgs),
+    bottomPanelState,
+  };
 };
 
 export default useDictionaryBottomPanelModel;
