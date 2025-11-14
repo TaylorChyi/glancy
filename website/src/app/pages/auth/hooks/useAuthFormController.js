@@ -35,6 +35,34 @@ const useSessionCompletionCallback = ({ setUser, recordLoginCookie, navigate }) 
     [navigate, recordLoginCookie, setUser],
   );
 
+const submitAuthRequest = async (
+  { mode, authProtocol, unsupportedMessage, completeSession },
+  { account, password, method },
+) => {
+  if (mode === "register") {
+    await authProtocol.register({ method, account, password });
+  }
+  const data = await authProtocol.login({
+    method,
+    account,
+    password,
+    unsupportedMessage,
+  });
+  await completeSession(data);
+};
+
+const requestAuthCode = async (
+  { authProtocol, unsupportedMessage, viewCopy },
+  { account, method },
+) => {
+  await authProtocol.requestCode({
+    method,
+    account,
+    purpose: viewCopy.codePurpose,
+    unsupportedMessage,
+  });
+};
+
 const useHandleSubmit = ({
   mode,
   authProtocol,
@@ -42,38 +70,32 @@ const useHandleSubmit = ({
   completeSession,
 }) =>
   useCallback(
-    async ({ account, password, method }) => {
-      if (mode === "register") {
-        await authProtocol.register({ method, account, password });
-      }
-      const data = await authProtocol.login({
-        method,
-        account,
-        password,
-        unsupportedMessage,
-      });
-      await completeSession(data);
+    async (submission) => {
+      await submitAuthRequest(
+        { mode, authProtocol, unsupportedMessage, completeSession },
+        submission,
+      );
     },
     [authProtocol, completeSession, mode, unsupportedMessage],
   );
 
 const useHandleRequestCode = ({ authProtocol, unsupportedMessage, viewCopy }) =>
   useCallback(
-    async ({ account, method }) => {
-      await authProtocol.requestCode({
-        method,
-        account,
-        purpose: viewCopy.codePurpose,
-        unsupportedMessage,
-      });
+    async (request) => {
+      await requestAuthCode(
+        { authProtocol, unsupportedMessage, viewCopy },
+        request,
+      );
     },
     [authProtocol, unsupportedMessage, viewCopy.codePurpose],
   );
 
-const useAuthSubmissionHandlers = (params) => ({
-  handleSubmit: useHandleSubmit(params),
-  handleRequestCode: useHandleRequestCode(params),
-});
+const useAuthSubmissionHandlers = (params) => {
+  const handleSubmit = useHandleSubmit(params);
+  const handleRequestCode = useHandleRequestCode(params);
+
+  return { handleSubmit, handleRequestCode };
+};
 
 const useAuthProtocol = () => {
   const api = useApi();
