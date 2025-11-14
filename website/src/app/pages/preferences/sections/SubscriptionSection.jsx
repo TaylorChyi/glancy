@@ -55,36 +55,59 @@ const useSubscriptionHandlers = ({
     [onPlanSelect, onRedeem, onRedeemCodeChange],
   );
 
+const usePlanRailNav = (planCount) => {
+  const { planRailNav } = usePlanCarouselNavigation(planCount);
+  return planRailNav;
+};
+
+const useViewModelArgs = ({
+  props,
+  selection,
+  redeemInteraction,
+  planRailNav,
+  handlers,
+}) =>
+  useMemo(
+    () => ({
+      baseProps: props,
+      selectedPlanId: selection.selectedPlanId,
+      formattedRedeemCode: redeemInteraction.formattedRedeemCode,
+      planRailNav,
+      handlers,
+      redeemInputRef: redeemInteraction.redeemInputRef,
+    }),
+    [
+      handlers,
+      planRailNav,
+      props,
+      redeemInteraction.formattedRedeemCode,
+      redeemInteraction.redeemInputRef,
+      selection.selectedPlanId,
+    ],
+  );
+
 function useSubscriptionSectionController(props) {
   const { defaultSelectedPlanId, planCards, onRedeem } = props;
 
-  const { selectedPlanId, handlePlanSelect } = usePlanSelection(
-    defaultSelectedPlanId,
-  );
-
-  const {
-    formattedRedeemCode,
-    onRedeemCodeChange,
-    onRedeem: handleRedeem,
-    redeemInputRef,
-  } = useRedeemInteraction(onRedeem);
-
-  const { planRailNav } = usePlanCarouselNavigation(planCards.length);
+  const selection = usePlanSelection(defaultSelectedPlanId);
+  const redeemInteraction = useRedeemInteraction(onRedeem);
+  const planRailNav = usePlanRailNav(planCards.length);
 
   const handlers = useSubscriptionHandlers({
-    onPlanSelect: handlePlanSelect,
-    onRedeemCodeChange,
-    onRedeem: handleRedeem,
+    onPlanSelect: selection.handlePlanSelect,
+    onRedeemCodeChange: redeemInteraction.onRedeemCodeChange,
+    onRedeem: redeemInteraction.onRedeem,
   });
 
-  return useSubscriptionSectionViewModel({
-    baseProps: props,
-    selectedPlanId,
-    formattedRedeemCode,
+  const viewModelArgs = useViewModelArgs({
+    props,
+    selection,
+    redeemInteraction,
     planRailNav,
     handlers,
-    redeemInputRef,
   });
+
+  return useSubscriptionSectionViewModel(viewModelArgs);
 }
 
 function SubscriptionSectionContainer(props) {

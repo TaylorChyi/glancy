@@ -38,7 +38,10 @@ const useDynamicSubscriptionProps = ({
     [formattedRedeemCode, handlers, planRailNav, redeemInputRef, selectedPlanId],
   );
 
-export const useSubscriptionSectionViewModel = ({
+const useMergedSubscriptionProps = (staticProps, dynamicProps) =>
+  useMemo(() => ({ ...staticProps, ...dynamicProps }), [dynamicProps, staticProps]);
+
+const useViewModelArgs = ({
   baseProps,
   selectedPlanId,
   formattedRedeemCode,
@@ -55,11 +58,11 @@ export const useSubscriptionSectionViewModel = ({
     redeemInputRef,
   });
 
-  const viewModelArgs = useMemo(
-    () => ({ ...staticProps, ...dynamicProps }),
-    [dynamicProps, staticProps],
-  );
+  return useMergedSubscriptionProps(staticProps, dynamicProps);
+};
 
+export const useSubscriptionSectionViewModel = (params) => {
+  const viewModelArgs = useViewModelArgs(params);
   return useMemo(
     () => createSubscriptionSectionViewModel(viewModelArgs),
     [viewModelArgs],

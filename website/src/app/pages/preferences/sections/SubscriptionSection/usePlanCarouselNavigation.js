@@ -25,28 +25,42 @@ const usePlanRailInitialSync = (planCount, syncPosition) => {
   }, [planCount, syncPosition]);
 };
 
-const usePlanRailViewport = (planCount) => {
-  const viewportRef = useRef(null);
-  const [isAtStart, setIsAtStart] = useState(true);
-  const [isAtEnd, setIsAtEnd] = useState(false);
+const createInitialScrollState = (planCount) => ({
+  isAtStart: true,
+  isAtEnd: planCount <= 1,
+});
+
+const getScrollState = (node) => {
+  if (!node) {
+    return { isAtStart: true, isAtEnd: true };
+  }
+
+  const { scrollLeft, clientWidth, scrollWidth } = node;
+  return {
+    isAtStart: scrollLeft <= 1,
+    isAtEnd: scrollLeft + clientWidth >= scrollWidth - 1,
+  };
+};
+
+const usePlanRailScrollState = (viewportRef, planCount) => {
+  const [scrollState, setScrollState] = useState(() =>
+    createInitialScrollState(planCount),
+  );
 
   const syncPosition = useCallback(() => {
-    const node = viewportRef.current;
-    if (!node) {
-      setIsAtStart(true);
-      setIsAtEnd(true);
-      return;
-    }
-
-    const { scrollLeft, clientWidth, scrollWidth } = node;
-    setIsAtStart(scrollLeft <= 1);
-    setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
-  }, []);
+    setScrollState(getScrollState(viewportRef.current));
+  }, [viewportRef]);
 
   usePlanRailScrollSync(viewportRef, syncPosition);
   usePlanRailInitialSync(planCount, syncPosition);
 
-  return { viewportRef, isAtStart, isAtEnd };
+  return scrollState;
+};
+
+const usePlanRailViewport = (planCount) => {
+  const viewportRef = useRef(null);
+  const scrollState = usePlanRailScrollState(viewportRef, planCount);
+  return { viewportRef, ...scrollState };
 };
 
 const usePlanRailControls = (viewportRef) => {
@@ -71,25 +85,46 @@ const usePlanRailControls = (viewportRef) => {
   return { onPrev, onNext };
 };
 
-export const usePlanCarouselNavigation = (planCount) => {
+const createPlanRailNav = ({
+  planCount,
+  viewportRef,
+  isAtStart,
+  isAtEnd,
+  onPrev,
+  onNext,
+}) => {
+  const shouldRenderNav = planCount > 1;
+  return {
+    viewportRef,
+    showPrevNav: shouldRenderNav && !isAtStart,
+    showNextNav: shouldRenderNav && !isAtEnd,
+    isAtStart,
+    isAtEnd,
+    onPrev,
+    onNext,
+    prevLabel: "查看前一个订阅方案",
+    nextLabel: "查看后一个订阅方案",
+  };
+};
+
+const usePlanRailNav = (planCount) => {
   const { viewportRef, isAtStart, isAtEnd } = usePlanRailViewport(planCount);
   const { onPrev, onNext } = usePlanRailControls(viewportRef);
-  const shouldRenderNav = planCount > 1;
 
-  const planRailNav = useMemo(
-    () => ({
-      viewportRef,
-      showPrevNav: shouldRenderNav && !isAtStart,
-      showNextNav: shouldRenderNav && !isAtEnd,
-      isAtStart,
-      isAtEnd,
-      onPrev,
-      onNext,
-      prevLabel: "查看前一个订阅方案",
-      nextLabel: "查看后一个订阅方案",
-    }),
-    [isAtEnd, isAtStart, onNext, onPrev, shouldRenderNav, viewportRef],
+  return useMemo(
+    () =>
+      createPlanRailNav({
+        planCount,
+        viewportRef,
+        isAtStart,
+        isAtEnd,
+        onPrev,
+        onNext,
+      }),
+    [isAtEnd, isAtStart, onNext, onPrev, planCount, viewportRef],
   );
-
-  return { planRailNav };
 };
+
+export const usePlanCarouselNavigation = (planCount) => ({
+  planRailNav: usePlanRailNav(planCount),
+});
