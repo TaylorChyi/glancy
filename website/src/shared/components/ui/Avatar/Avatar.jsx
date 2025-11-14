@@ -12,15 +12,7 @@ const ELEVATIONS = Object.freeze({
 
 const VISUAL_SLOT = "avatar-visual";
 
-// 基于当前主题切换默认头像
-function Avatar({
-  src,
-  alt = "User Avatar",
-  className,
-  onError,
-  elevation = ELEVATIONS.soft,
-  ...props
-}) {
+function useAvatarDisplay({ src, className, onError }) {
   const { user } = useUser();
   const finalSrc = src || user?.avatar;
   const [hasError, setHasError] = useState(false);
@@ -50,6 +42,24 @@ function Avatar({
     },
     [onError],
   );
+
+  return { displaySrc, mergedClassName, handleImageError };
+}
+
+// 基于当前主题切换默认头像
+function Avatar({
+  src,
+  alt = "User Avatar",
+  className,
+  onError,
+  elevation = ELEVATIONS.soft,
+  ...props
+}) {
+  const { displaySrc, mergedClassName, handleImageError } = useAvatarDisplay({
+    src,
+    className,
+    onError,
+  });
 
   if (displaySrc) {
     return (
