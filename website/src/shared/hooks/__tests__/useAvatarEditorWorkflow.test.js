@@ -1,6 +1,7 @@
 /* eslint-env jest */
 import { act, renderHook } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { normalizeAvatarFileName } from "@shared/utils/avatarFile.js";
 
 const mockUseAvatarUploader = jest.fn();
 
@@ -73,7 +74,9 @@ test("GivenFileSelection_WhenConfirmingCrop_ThenUploaderReceivesNormalizedFile",
   expect(onSelectAvatar).toHaveBeenCalledTimes(1);
   const [[uploadedFiles]] = onSelectAvatar.mock.calls;
   expect(uploadedFiles[0]).toBeInstanceOf(File);
-  expect(uploadedFiles[0].name).toBe("原始头像.png");
+  expect(uploadedFiles[0].name).toBe(
+    normalizeAvatarFileName(file.name, blob.type),
+  );
   expect(result.current.modalProps.open).toBe(false);
   expect(reset).toHaveBeenCalledTimes(1);
   expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:crop");
@@ -114,4 +117,82 @@ test("GivenPreviewState_WhenCanceling_ThenStateResetsAndUrlRevoked", () => {
   expect(reset).toHaveBeenCalledTimes(1);
   expect(result.current.modalProps.open).toBe(false);
   expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+});
+
+/**
+ * 测试目标：
+ *  - 上传命令返回失败时保持预览态且不调用 reset。
+ * 前置条件：
+ *  - onSelectAvatar mock 返回 false。
+ * 步骤：
+ *  1) 打开预览态；
+ *  2) 触发 onConfirm 并返回失败。
+ * 断言：
+ *  - modalProps.open 仍为 true；
+ *  - reset 未被调用。
+ */
+test("GivenUploaderFailure_WhenConfirming_ThenStayInPreviewState", async () => {
+  const failSpy = jest.fn().mockResolvedValue(false);
+  mockUseAvatarUploader.mockReturnValue({
+    onSelectAvatar: failSpy,
+    isUploading: false,
+    reset: jest.fn(),
+  });
+
+  const file = new File(["avatar"], "avatar.webp", { type: "image/webp" });
+  const blob = new Blob(["cropped"], { type: "image/png" });
+  const { result } = renderHook(() => useAvatarEditorWorkflow());
+
+  act(() => {
+    result.current.selectAvatar([file]);
+  });
+
+  const { reset } = mockUseAvatarUploader.mock.results[0].value;
+
+  await act(async () => {
+    const completed = await result.current.modalProps.onConfirm({
+      blob,
+      previewUrl: "blob:failed",
+    });
+    expect(completed).toBe(false);
+  });
+
+  expect(reset).not.toHaveBeenCalled();
+  expect(result.current.modalProps.open).toBe(true);
+  expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:failed");
+});
+
+/**
+ * 测试目标：
+ *  - 裁剪回调缺失 blob 时跳过上传并回收 previewUrl。
+ * 前置条件：
+ *  - selectAvatar 已生成预览态；
+ *  - onSelectAvatar mock 为 jest.fn。
+ * 步骤：
+ *  1) 调用 onConfirm 且不传 blob；
+ * 断言：
+ *  - onSelectAvatar 未被调用；
+ *  - revokeObjectURL 被调用。
+ */
+test("GivenMissingBlob_WhenConfirming_ThenSkipUploaderAndRevokePreview", async () => {
+  const file = new File(["avatar"], "avatar.webp", { type: "image/webp" });
+  const { result } = renderHook(() => useAvatarEditorWorkflow());
+
+  act(() => {
+    result.current.selectAvatar([file]);
+  });
+
+  const { onSelectAvatar } = mockUseAvatarUploader.mock.results[0].value;
+
+  await act(async () => {
+    const completed = await result.current.modalProps.onConfirm({
+      blob: null,
+      previewUrl: "blob:missing",
+    });
+    expect(completed).toBe(false);
+  });
+
+  expect(onSelectAvatar).not.toHaveBeenCalled();
+  expect(result.current.modalProps.open).toBe(true);
+  expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("blob:missing");
 });

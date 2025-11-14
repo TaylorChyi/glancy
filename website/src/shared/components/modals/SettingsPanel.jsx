@@ -17,18 +17,21 @@ function SettingsPanel({
   const panelElementRef = useRef(null);
   const headingElementRef = useRef(null);
 
-  usePanelElementRegistration({
+  const panelRegistrationPayload = {
     panelElementRef,
     onPanelElementChange,
     panelId,
     tabId,
-  });
+  };
 
-  useHeadingRegistration({
+  const headingRegistrationPayload = {
     headingId,
     headingElementRef,
     onHeadingElementChange,
-  });
+  };
+
+  usePanelElementRegistration(panelRegistrationPayload);
+  useHeadingRegistration(headingRegistrationPayload);
 
   return (
     <div

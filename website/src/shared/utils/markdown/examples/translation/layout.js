@@ -69,14 +69,13 @@ function resolveTranslationSegments(prefix, rest, nextLine) {
   );
 }
 
-export function ensureExampleTranslationLayout(text) {
-  if (!text) {
-    return text;
-  }
-  const merged = text
+function mergeTranslationLabelLines(text) {
+  return text
     .replace(/翻\s*\n([ \t]+)译(?=[:：])/g, "\n$1翻译")
     .replace(/译\s*\n([ \t]+)文(?=[:：])/g, "\n$1译文");
-  const lines = merged.split("\n");
+}
+
+function normalizeExampleTranslationLines(lines) {
   const normalized = [];
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
@@ -100,5 +99,14 @@ export function ensureExampleTranslationLayout(text) {
     normalized.push(...resolved.lines);
     i += resolved.consumed;
   }
+  return normalized;
+}
+
+export function ensureExampleTranslationLayout(text) {
+  if (!text) {
+    return text;
+  }
+  const merged = mergeTranslationLabelLines(text);
+  const normalized = normalizeExampleTranslationLines(merged.split("\n"));
   return normalized.join("\n");
 }

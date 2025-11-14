@@ -30,17 +30,20 @@ function createResolution(placement, axis, position) {
   return { placement, axis, position };
 }
 
-describe("placementEngine helpers", () => {
-  test("computePreferredPlacements removes duplicates while preserving order", () => {
+describe("computePreferredPlacements", () => {
+  test("removes duplicates while preserving order", () => {
     const result = computePreferredPlacements("bottom", [
       "bottom",
       "top",
       "left",
     ]);
+
     expect(result).toEqual(["bottom", "top", "left"]);
   });
+});
 
-  test("resolvePlacement chooses the first candidate that fits", () => {
+describe("resolvePlacement", () => {
+  test("chooses the first candidate that fits", () => {
     const placements = ["bottom", "top"];
     const anchorRect = createRect({ top: 360, bottom: 400 });
     const popRect = { width: 80, height: 60 };
@@ -56,9 +59,14 @@ describe("placementEngine helpers", () => {
     expect(resolution.placement).toBe("top");
     expect(resolution.position).toEqual({ top: 292, left: 100 });
   });
+});
 
-  test("alignPosition centers horizontal placement when requested", () => {
-    const resolution = createResolution("right", "horizontal", { top: 100, left: 160 });
+describe("alignPosition", () => {
+  test("centers horizontal placement when requested", () => {
+    const resolution = createResolution("right", "horizontal", {
+      top: 100,
+      left: 160,
+    });
     const popRect = { width: 80, height: 20 };
 
     const aligned = alignPosition({
@@ -71,8 +79,10 @@ describe("placementEngine helpers", () => {
     expect(aligned.top).toBe(110);
     expect(aligned.left).toBe(160);
   });
+});
 
-  test("clampToViewport bounds overflowing coordinates", () => {
+describe("clampToViewport", () => {
+  test("bounds overflowing coordinates", () => {
     const result = clampToViewport({
       position: { top: -50, left: -120 },
       popRect: BASE_POP_RECT,
@@ -84,8 +94,10 @@ describe("placementEngine helpers", () => {
     expect(result.top).toBe(8);
     expect(result.left).toBe(8);
   });
+});
 
-  test("computePopoverPosition uses primary placement when it fits", () => {
+describe("computePopoverPosition", () => {
+  test("uses primary placement when it fits", () => {
     const { position, placement } = computePopoverPosition({
       anchorRect: createRect(),
       popRect: BASE_POP_RECT,
@@ -100,7 +112,7 @@ describe("placementEngine helpers", () => {
     expect(position).toEqual({ top: 148, left: 100 });
   });
 
-  test("computePopoverPosition falls back when space is insufficient", () => {
+  test("falls back when space is insufficient", () => {
     const { position, placement } = computePopoverPosition({
       anchorRect: createRect({ top: 360, bottom: 400 }),
       popRect: { width: 80, height: 60 },

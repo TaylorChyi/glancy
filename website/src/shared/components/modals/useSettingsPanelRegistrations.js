@@ -1,5 +1,16 @@
 import { useLayoutEffect } from "react";
 
+function notifyHeadingChange(headingElementRef, onHeadingElementChange, nextHeading) {
+  headingElementRef.current = nextHeading ?? null;
+  if (typeof onHeadingElementChange === "function") {
+    onHeadingElementChange(headingElementRef.current);
+  }
+}
+
+function resetHeadingRegistration(headingElementRef, onHeadingElementChange) {
+  notifyHeadingChange(headingElementRef, onHeadingElementChange, null);
+}
+
 export function usePanelElementRegistration({
   panelElementRef,
   onPanelElementChange,
@@ -16,7 +27,7 @@ export function usePanelElementRegistration({
     return () => {
       onPanelElementChange(null);
     };
-  }, [onPanelElementChange, panelId, tabId]);
+  }, [onPanelElementChange, panelElementRef, panelId, tabId]);
 }
 
 export function useHeadingRegistration({
@@ -25,33 +36,16 @@ export function useHeadingRegistration({
   onHeadingElementChange,
 }) {
   useLayoutEffect(() => {
-    if (typeof document === "undefined") {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
-      return undefined;
-    }
-
-    if (!headingId) {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
+    if (typeof document === "undefined" || !headingId) {
+      resetHeadingRegistration(headingElementRef, onHeadingElementChange);
       return undefined;
     }
 
     const nextHeading = document.getElementById(headingId);
-    headingElementRef.current = nextHeading ?? null;
-    if (typeof onHeadingElementChange === "function") {
-      onHeadingElementChange(headingElementRef.current);
-    }
+    notifyHeadingChange(headingElementRef, onHeadingElementChange, nextHeading);
 
     return () => {
-      headingElementRef.current = null;
-      if (typeof onHeadingElementChange === "function") {
-        onHeadingElementChange(null);
-      }
+      resetHeadingRegistration(headingElementRef, onHeadingElementChange);
     };
-  }, [headingId, onHeadingElementChange]);
+  }, [headingElementRef, headingId, onHeadingElementChange]);
 }

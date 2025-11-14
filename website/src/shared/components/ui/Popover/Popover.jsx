@@ -1,6 +1,9 @@
-import { createPortal } from "react-dom";
-import styles from "./Popover.module.css";
 import usePopoverPositioning from "./usePopoverPositioning";
+import PopoverContent from "./PopoverContent.jsx";
+import {
+  getPopoverClassName,
+  getPopoverInlineStyles,
+} from "./popoverHelpers.js";
 
 function Popover({
   anchorRef,
@@ -28,24 +31,20 @@ function Popover({
   if (!isOpen) return null;
   if (typeof document === "undefined") return null;
 
-  const classNames = [styles.popover, className].filter(Boolean).join(" ");
-  const inlineStyles = {
-    top: `${position.top}px`,
-    left: `${position.left}px`,
-    ...style,
-  };
+  const classNames = getPopoverClassName(className);
+  const inlineStyles = getPopoverInlineStyles(position, style);
 
-  return createPortal(
-    <div
-      ref={setContentNode}
+  return (
+    <PopoverContent
+      setContentNode={setContentNode}
       className={classNames}
-      data-visible={visible}
-      data-placement={activePlacement}
-      style={inlineStyles}
+      visible={visible}
+      activePlacement={activePlacement}
+      inlineStyles={inlineStyles}
+      portalTarget={document.body}
     >
       {children}
-    </div>,
-    document.body,
+    </PopoverContent>
   );
 }
 

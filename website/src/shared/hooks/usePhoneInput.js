@@ -54,12 +54,28 @@ export const parsePhoneValue = (rawValue, fallbackCode = DEFAULT_CODE) => {
   return { code: fallbackCode, number: rawValue };
 };
 
-export const usePhoneValue = (value, onChange, fallbackCode = DEFAULT_CODE) => {
-  const initial = parsePhoneValue(value, fallbackCode);
-  const [code, setCode] = useState(initial.code);
-  const [number, setNumber] = useState(initial.number);
+export const usePhoneValueState = (value, fallbackCode = DEFAULT_CODE) => {
+  const [{ code, number }, setState] = useState(() =>
+    parsePhoneValue(value, fallbackCode),
+  );
 
-  const emitChange = useCallback(
+  useEffect(() => {
+    setState(parsePhoneValue(value, fallbackCode));
+  }, [value, fallbackCode]);
+
+  const setCode = useCallback((nextCode) => {
+    setState((prev) => ({ ...prev, code: nextCode }));
+  }, []);
+
+  const setNumber = useCallback((nextNumber) => {
+    setState((prev) => ({ ...prev, number: nextNumber }));
+  }, []);
+
+  return { code, number, setCode, setNumber };
+};
+
+const usePhoneChangeEmitter = (onChange) =>
+  useCallback(
     (nextCode, nextNumber) => {
       if (onChange) {
         onChange(`${nextCode}${nextNumber}`);
@@ -68,18 +84,19 @@ export const usePhoneValue = (value, onChange, fallbackCode = DEFAULT_CODE) => {
     [onChange],
   );
 
-  useEffect(() => {
-    const parsed = parsePhoneValue(value, fallbackCode);
-    setCode(parsed.code);
-    setNumber(parsed.number);
-  }, [value, fallbackCode]);
-
+export const usePhoneValueHandlers = ({
+  code,
+  number,
+  setCode,
+  setNumber,
+  emitChange,
+}) => {
   const selectCode = useCallback(
     (nextCode) => {
       setCode(nextCode);
       emitChange(nextCode, number);
     },
-    [emitChange, number],
+    [emitChange, number, setCode],
   );
 
   const handleNumberChange = useCallback(
@@ -88,8 +105,26 @@ export const usePhoneValue = (value, onChange, fallbackCode = DEFAULT_CODE) => {
       setNumber(nextNumber);
       emitChange(code, nextNumber);
     },
-    [code, emitChange],
+    [code, emitChange, setNumber],
   );
+
+  return { selectCode, handleNumberChange };
+};
+
+export const usePhoneValue = (value, onChange, fallbackCode = DEFAULT_CODE) => {
+  const { code, number, setCode, setNumber } = usePhoneValueState(
+    value,
+    fallbackCode,
+  );
+
+  const emitChange = usePhoneChangeEmitter(onChange);
+  const { selectCode, handleNumberChange } = usePhoneValueHandlers({
+    code,
+    number,
+    setCode,
+    setNumber,
+    emitChange,
+  });
 
   return { code, number, selectCode, handleNumberChange };
 };

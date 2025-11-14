@@ -4,6 +4,21 @@ import useMenuNavigation from "@shared/hooks/useMenuNavigation.js";
 
 import { normalizeOptions, resolveDisplayState } from "./optionNormalizer.js";
 
+const focusMenuEdgeItem = (menuRef, direction) => {
+  if (typeof requestAnimationFrame !== "function") {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
+    if (!items?.length) {
+      return;
+    }
+    const index = direction === "ArrowUp" ? items.length - 1 : 0;
+    items[index]?.querySelector("button, [href], [tabindex]")?.focus();
+  });
+};
+
 const useSelectMenuModel = ({ options, value, placeholder, ariaLabel }) => {
   const normalizedOptions = useMemo(() => normalizeOptions(options), [options]);
 
@@ -36,29 +51,20 @@ const useSelectMenuModel = ({ options, value, placeholder, ariaLabel }) => {
 const useTriggerKeyDownHandler = ({ hasOptions, menuRef, setOpen }) =>
   useCallback(
     (event) => {
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-        event.preventDefault();
-        setOpen((prev) => {
-          if (
-            prev ||
-            !hasOptions ||
-            typeof requestAnimationFrame !== "function"
-          ) {
-            return true;
-          }
-          const direction = event.key;
-          requestAnimationFrame(() => {
-            const items =
-              menuRef.current?.querySelectorAll('[role="menuitem"]');
-            if (!items || items.length === 0) {
-              return;
-            }
-            const index = direction === "ArrowUp" ? items.length - 1 : 0;
-            items[index]?.querySelector("button, [href], [tabindex]")?.focus();
-          });
-          return true;
-        });
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+        return;
       }
+
+      event.preventDefault();
+
+      setOpen((prev) => {
+        if (prev || !hasOptions) {
+          return true;
+        }
+
+        focusMenuEdgeItem(menuRef, event.key);
+        return true;
+      });
     },
     [hasOptions, menuRef, setOpen],
   );

@@ -1,11 +1,8 @@
 import PropTypes from "prop-types";
 
-import MenuSurface from "./parts/MenuSurface.jsx";
-import SelectMenuTrigger from "./parts/Trigger.jsx";
 import { OptionShape } from "./optionNormalizer.js";
+import SelectMenuView from "./SelectMenuView.jsx";
 import useSelectMenuController from "./useSelectMenuController.js";
-
-import styles from "./SelectMenu.module.css";
 
 export default function SelectMenu({
   id,
@@ -43,30 +40,22 @@ export default function SelectMenu({
   }
 
   return (
-    <div
-      className={styles["menu-root"]}
-      data-fullwidth={fullWidth ? "true" : undefined}
-    >
-      <SelectMenuTrigger
-        id={id}
-        open={open}
-        triggerRef={triggerRef}
-        onToggle={handleToggle}
-        onKeyDown={handleTriggerKeyDown}
-        ariaLabel={resolvedAriaLabel}
-        label={triggerLabel}
-        isPlaceholder={isShowingPlaceholder}
-      />
-      <MenuSurface
-        open={open}
-        anchorRef={triggerRef}
-        onClose={handleClose}
-        menuRef={menuRef}
-        options={normalizedOptions}
-        activeValue={activeValue}
-        onSelect={handleSelect}
-      />
-    </div>
+    <SelectMenuView
+      id={id}
+      fullWidth={fullWidth}
+      open={open}
+      triggerRef={triggerRef}
+      menuRef={menuRef}
+      options={normalizedOptions}
+      activeValue={activeValue}
+      onToggle={handleToggle}
+      onTriggerKeyDown={handleTriggerKeyDown}
+      ariaLabel={resolvedAriaLabel}
+      label={triggerLabel}
+      isPlaceholder={isShowingPlaceholder}
+      onClose={handleClose}
+      onSelect={handleSelect}
+    />
   );
 }
 

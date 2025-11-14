@@ -10,6 +10,27 @@ export const AVATAR_UPLOAD_STATUS = Object.freeze({
   failed: "failed",
 });
 
+function useAvatarUploadState(initialStatus = AVATAR_UPLOAD_STATUS.idle) {
+  const [status, setStatus] = useState(initialStatus);
+  const [error, setError] = useState(null);
+
+  const reset = useCallback(() => {
+    setStatus(initialStatus);
+    setError(null);
+  }, [initialStatus]);
+
+  const state = useMemo(
+    () => ({
+      status,
+      error,
+      isUploading: status === AVATAR_UPLOAD_STATUS.uploading,
+    }),
+    [error, status],
+  );
+
+  return { ...state, setStatus, setError, reset };
+}
+
 /**
  * 意图：统一处理头像文件上传并在成功后刷新用户上下文。
  * 输入：
@@ -25,17 +46,10 @@ export const AVATAR_UPLOAD_STATUS = Object.freeze({
  * 复杂度：O(1) —— 仅对有限文件列表与常量状态进行操作。
  */
 export default function useAvatarUploader({ onSuccess, onError } = {}) {
-  const api = useApi();
-  const { users } = api ?? {};
-  const userStore = useUser();
-  const { user, setUser } = userStore ?? {};
-  const [status, setStatus] = useState(AVATAR_UPLOAD_STATUS.idle);
-  const [error, setError] = useState(null);
-
-  const reset = useCallback(() => {
-    setStatus(AVATAR_UPLOAD_STATUS.idle);
-    setError(null);
-  }, []);
+  const { users } = useApi() ?? {};
+  const { user, setUser } = useUser() ?? {};
+  const uploadState = useAvatarUploadState();
+  const { setStatus, setError, reset, ...state } = uploadState;
 
   const onSelectAvatar = useCallback(
     (filesLike) =>
@@ -50,16 +64,7 @@ export default function useAvatarUploader({ onSuccess, onError } = {}) {
         onError,
         statusMap: AVATAR_UPLOAD_STATUS,
       }),
-    [onError, onSuccess, setUser, user, users],
-  );
-
-  const state = useMemo(
-    () => ({
-      status,
-      error,
-      isUploading: status === AVATAR_UPLOAD_STATUS.uploading,
-    }),
-    [error, status],
+    [onError, onSuccess, setError, setStatus, setUser, user, users],
   );
 
   return { ...state, onSelectAvatar, reset };

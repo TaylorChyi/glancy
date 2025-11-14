@@ -74,6 +74,113 @@ const trackActiveSectionChange = ({
   return true;
 };
 
+const shouldProcessFocus = ({
+  activeSectionId,
+  headingRef,
+  hasInitializedRef,
+  lastActiveSectionIdRef,
+}) => {
+  if (!activeSectionId || !isBrowser) {
+    return false;
+  }
+
+  return trackActiveSectionChange({
+    activeSectionId,
+    headingRef,
+    lastActiveSectionIdRef,
+    hasInitializedRef,
+  });
+};
+
+const scheduleHeadingFocus = ({
+  headingId,
+  headingRef,
+  lastFocusOriginRef,
+}) =>
+  requestFrame(() =>
+    focusHeadingOrFallback({ headingRef, headingId, lastFocusOriginRef }),
+  );
+
+const runSectionFocusEffect = ({
+  activeSectionId,
+  headingId,
+  headingRef,
+  hasInitializedRef,
+  lastActiveSectionIdRef,
+  lastFocusOriginRef,
+}) => {
+  if (
+    !shouldProcessFocus({
+      activeSectionId,
+      headingRef,
+      hasInitializedRef,
+      lastActiveSectionIdRef,
+    })
+  ) {
+    return undefined;
+  }
+
+  const frameId = scheduleHeadingFocus({
+    headingId,
+    headingRef,
+    lastFocusOriginRef,
+  });
+
+  return () => {
+    cancelFrame(frameId);
+  };
+};
+
+const useFocusOriginCapture = (lastFocusOriginRef) =>
+  useCallback(() => {
+    if (!isBrowser) {
+      lastFocusOriginRef.current = null;
+      return;
+    }
+    const activeElement = document.activeElement;
+    if (isFocusable(activeElement) && activeElement !== document.body) {
+      lastFocusOriginRef.current = activeElement;
+      return;
+    }
+    lastFocusOriginRef.current = null;
+  }, [lastFocusOriginRef]);
+
+const useHeadingRegistration = (headingRef) =>
+  useCallback((headingElement) => {
+    headingRef.current = headingElement ?? null;
+    if (headingElement) {
+      ensureHeadingTabIndex(headingElement);
+    }
+  }, [headingRef]);
+
+const useSectionFocusEffect = ({
+  activeSectionId,
+  headingId,
+  headingRef,
+  hasInitializedRef,
+  lastActiveSectionIdRef,
+  lastFocusOriginRef,
+}) =>
+  useLayoutEffect(
+    () =>
+      runSectionFocusEffect({
+        activeSectionId,
+        headingId,
+        headingRef,
+        hasInitializedRef,
+        lastActiveSectionIdRef,
+        lastFocusOriginRef,
+      }),
+    [
+      activeSectionId,
+      headingId,
+      headingRef,
+      hasInitializedRef,
+      lastActiveSectionIdRef,
+      lastFocusOriginRef,
+    ],
+  );
+
 /**
  * 意图：在分区切换时聚焦指定标题，必要时回退至原始焦点来源。
  * 输入：
@@ -95,50 +202,17 @@ function useSectionFocusManager({ activeSectionId, headingId }) {
   const lastActiveSectionIdRef = useRef();
   const hasInitializedRef = useRef(false);
 
-  const captureFocusOrigin = useCallback(() => {
-    if (!isBrowser) {
-      lastFocusOriginRef.current = null;
-      return;
-    }
-    const activeElement = document.activeElement;
-    if (isFocusable(activeElement) && activeElement !== document.body) {
-      lastFocusOriginRef.current = activeElement;
-      return;
-    }
-    lastFocusOriginRef.current = null;
-  }, []);
+  const captureFocusOrigin = useFocusOriginCapture(lastFocusOriginRef);
+  const registerHeading = useHeadingRegistration(headingRef);
 
-  const registerHeading = useCallback((headingElement) => {
-    headingRef.current = headingElement ?? null;
-    if (headingElement) {
-      ensureHeadingTabIndex(headingElement);
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!activeSectionId || !isBrowser) {
-      return undefined;
-    }
-
-    const shouldHandleChange = trackActiveSectionChange({
-      activeSectionId,
-      headingRef,
-      lastActiveSectionIdRef,
-      hasInitializedRef,
-    });
-
-    if (!shouldHandleChange) {
-      return undefined;
-    }
-
-    const applyFocus = () =>
-      focusHeadingOrFallback({ headingRef, headingId, lastFocusOriginRef });
-    const frameId = requestFrame(applyFocus);
-
-    return () => {
-      cancelFrame(frameId);
-    };
-  }, [activeSectionId, headingId]);
+  useSectionFocusEffect({
+    activeSectionId,
+    headingId,
+    headingRef,
+    hasInitializedRef,
+    lastActiveSectionIdRef,
+    lastFocusOriginRef,
+  });
 
   return {
     captureFocusOrigin,

@@ -80,6 +80,39 @@ const buildFallbackResolution = (anchorRect, popRect, offset) => {
   };
 };
 
+const findFirstResolution = ({
+  placements,
+  anchorRect,
+  popRect,
+  offset,
+  viewport,
+  margin,
+}) => {
+  let firstResolution = null;
+
+  for (const candidate of placements) {
+    const evaluation = evaluatePlacementCandidate({
+      candidate,
+      anchorRect,
+      popRect,
+      offset,
+      viewport,
+      margin,
+    });
+    if (!evaluation) {
+      continue;
+    }
+    if (!firstResolution) {
+      firstResolution = evaluation.resolution;
+    }
+    if (evaluation.fits) {
+      return { resolution: evaluation.resolution, firstResolution };
+    }
+  }
+
+  return { resolution: null, firstResolution };
+};
+
 /**
  * Produce a deduplicated list of placement candidates ordered by priority.
  */
@@ -108,27 +141,14 @@ export function resolvePlacement({
   margin,
 }) {
   const safePlacements = placements.length ? placements : ["bottom"];
-  let firstResolution = null;
+  const { resolution, firstResolution } = findFirstResolution({
+    placements: safePlacements,
+    anchorRect,
+    popRect,
+    offset,
+    viewport,
+    margin,
+  });
 
-  for (const candidate of safePlacements) {
-    const evaluation = evaluatePlacementCandidate({
-      candidate,
-      anchorRect,
-      popRect,
-      offset,
-      viewport,
-      margin,
-    });
-    if (!evaluation) {
-      continue;
-    }
-    if (!firstResolution) {
-      firstResolution = evaluation.resolution;
-    }
-    if (evaluation.fits) {
-      return evaluation.resolution;
-    }
-  }
-
-  return firstResolution ?? buildFallbackResolution(anchorRect, popRect, offset);
+  return resolution ?? firstResolution ?? buildFallbackResolution(anchorRect, popRect, offset);
 }

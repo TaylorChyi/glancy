@@ -42,6 +42,16 @@ const createCropRectInput = (overrides = {}) => ({
 });
 
 describe("avatarCropBox geometry helpers", () => {
+  describeComputeCoverScaleSuite();
+  describeComputeDisplayMetricsSuite();
+  describeComputeOffsetBoundsSuite();
+  describeClampOffsetSuite();
+  describeClampZoomSuite();
+  describeDeriveCenteredViewportStateSuite();
+  describeComputeCropSourceRectSuite();
+});
+
+function describeComputeCoverScaleSuite() {
   describe("computeCoverScale", () => {
     it("Given rectangular source When computeCoverScale Then returns covering ratio", () => {
       expect(computeCoverScale(400, 200, 300)).toBeCloseTo(1.5);
@@ -54,7 +64,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(computeCoverScale(100, 100, 0)).toBe(1);
     });
   });
+}
 
+function describeComputeDisplayMetricsSuite() {
   describe("computeDisplayMetrics", () => {
     it("Given zoom factor When computeDisplayMetrics Then returns scaled size", () => {
       const metrics = computeDisplayMetrics(
@@ -86,7 +98,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(metrics.height).toBe(0);
     });
   });
+}
 
+function describeComputeOffsetBoundsSuite() {
   describe("computeOffsetBounds", () => {
     it("Given display dimensions When computeOffsetBounds Then halves delta", () => {
       const bounds = computeOffsetBounds(360, 300, 300);
@@ -101,7 +115,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(bounds).toEqual({ maxX: 0, maxY: 0 });
     });
   });
+}
 
+function describeClampOffsetSuite() {
   describe("clampOffset", () => {
     it("Given offset outside bounds When clampOffset Then returns clamped vector", () => {
       const clamped = clampOffset({ x: 120, y: -200 }, { maxX: 30, maxY: 50 });
@@ -109,7 +125,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(clamped).toEqual({ x: 30, y: -50 });
     });
   });
+}
 
+function describeClampZoomSuite() {
   describe("clampZoom", () => {
     it("Given zoom outside limits When clampZoom Then clamps accordingly", () => {
       expect(clampZoom(5, 1, 3)).toBe(3);
@@ -117,7 +135,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(clampZoom(2, 1, 3)).toBe(2);
     });
   });
+}
 
+function describeDeriveCenteredViewportStateSuite() {
   describe("deriveCenteredViewportState", () => {
     /**
      * 测试目标：验证 deriveCenteredViewportState 会输出以图片中心为原点的偏移与合法缩放值。
@@ -181,7 +201,9 @@ describe("avatarCropBox geometry helpers", () => {
       expect(zeroViewportState.bounds).toEqual({ maxX: 0, maxY: 0 });
     });
   });
+}
 
+function describeComputeCropSourceRectSuite() {
   describe("computeCropSourceRect", () => {
     /**
      * 测试目标：验证 computeCropSourceRect 在默认居中场景下计算正确矩形。
@@ -228,4 +250,4 @@ describe("avatarCropBox geometry helpers", () => {
       expect(rect.y).toBeCloseTo(0);
     });
   });
-});
+}

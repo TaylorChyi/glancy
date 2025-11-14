@@ -93,60 +93,72 @@ export const buildCodeRequest = ({
   };
 };
 
-export const createAuthSubmissionProtocol = ({ api, paths }) => {
-  const login = async ({
+export const login = async ({
+  api,
+  paths,
+  method,
+  account,
+  password,
+  unsupportedMessage,
+}) => {
+  const sanitizedAccount = normalizeAccountValue(account);
+  const request = buildLoginRequest({
     method,
-    account,
+    account: sanitizedAccount,
     password,
+    paths,
     unsupportedMessage,
-  }) => {
-    const sanitizedAccount = normalizeAccountValue(account);
-    const request = buildLoginRequest({
-      method,
-      account: sanitizedAccount,
-      password,
-      paths,
-      unsupportedMessage,
-    });
-    return api.jsonRequest(request.path, {
-      method: "POST",
-      body: request.body,
-    });
-  };
-
-  const register = async ({ method, account, password }) => {
-    const sanitizedAccount = normalizeAccountValue(account);
-    const request = buildRegisterRequest({
-      method,
-      account: sanitizedAccount,
-      password,
-      paths,
-    });
-    await api.jsonRequest(request.path, {
-      method: "POST",
-      body: request.body,
-    });
-  };
-
-  const requestCode = async ({
-    method,
-    account,
-    purpose,
-    unsupportedMessage,
-  }) => {
-    const sanitizedAccount = normalizeAccountValue(account);
-    const request = buildCodeRequest({
-      method,
-      account: sanitizedAccount,
-      purpose,
-      paths,
-      unsupportedMessage,
-    });
-    await api.jsonRequest(request.path, {
-      method: "POST",
-      body: request.body,
-    });
-  };
-
-  return { login, register, requestCode };
+  });
+  return api.jsonRequest(request.path, {
+    method: "POST",
+    body: request.body,
+  });
 };
+
+export const register = async ({
+  api,
+  paths,
+  method,
+  account,
+  password,
+}) => {
+  const sanitizedAccount = normalizeAccountValue(account);
+  const request = buildRegisterRequest({
+    method,
+    account: sanitizedAccount,
+    password,
+    paths,
+  });
+  await api.jsonRequest(request.path, {
+    method: "POST",
+    body: request.body,
+  });
+};
+
+export const requestCode = async ({
+  api,
+  paths,
+  method,
+  account,
+  purpose,
+  unsupportedMessage,
+}) => {
+  const sanitizedAccount = normalizeAccountValue(account);
+  const request = buildCodeRequest({
+    method,
+    account: sanitizedAccount,
+    purpose,
+    paths,
+    unsupportedMessage,
+  });
+  await api.jsonRequest(request.path, {
+    method: "POST",
+    body: request.body,
+  });
+};
+
+export const createAuthSubmissionProtocol = ({ api, paths }) => ({
+  login: (params) => login({ api, paths, ...params }),
+  register: (params) => register({ api, paths, ...params }),
+  requestCode: (params) => requestCode({ api, paths, ...params }),
+});

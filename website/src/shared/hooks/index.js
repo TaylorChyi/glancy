@@ -24,4 +24,6 @@ export {
   parsePhoneValue,
   usePhoneDropdown,
   usePhoneValue,
+  usePhoneValueHandlers,
+  usePhoneValueState,
 } from "./usePhoneInput.js";

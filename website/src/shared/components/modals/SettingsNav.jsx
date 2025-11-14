@@ -1,9 +1,6 @@
 import PropTypes from "prop-types";
-import { useLanguage } from "@core/context";
-import { useSettingsNavCloseAction } from "./hooks/useSettingsNavCloseAction";
 import SettingsNavList from "./SettingsNavList.jsx";
-import { useSettingsNavClasses } from "./hooks/useSettingsNavClasses";
-import { useSettingsNavOrientation } from "./hooks/useSettingsNavOrientation";
+import { useSettingsNavContext } from "./hooks/useSettingsNavContext";
 
 function SettingsNav({
   sections,
@@ -13,17 +10,20 @@ function SettingsNav({
   renderCloseAction,
   classes,
 }) {
-  const { lang } = useLanguage();
-  const { orientation, isHorizontalLayout } = useSettingsNavOrientation();
-  const resolvedClasses = useSettingsNavClasses(classes);
-  const closeActionNode = useSettingsNavCloseAction(
+  const {
+    lang,
+    orientation,
+    isHorizontalLayout,
+    classNames,
+    closeActionNode,
+  } = useSettingsNavContext({
+    classes,
     renderCloseAction,
-    resolvedClasses.actionButton,
-  );
+  });
 
   return (
     <div
-      className={resolvedClasses.container}
+      className={classNames.container}
       data-orientation={orientation}
       data-compact={isHorizontalLayout || undefined}
     >
@@ -36,7 +36,7 @@ function SettingsNav({
         sectionCount={sections.length}
         isHorizontalLayout={isHorizontalLayout}
         lang={lang}
-        classNames={resolvedClasses}
+        classNames={classNames}
         closeActionNode={closeActionNode}
       />
     </div>

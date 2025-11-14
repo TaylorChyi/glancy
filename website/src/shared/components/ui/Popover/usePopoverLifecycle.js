@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -74,6 +74,33 @@ export function useGlobalDismissHandlers({
     if (!isOpen) return undefined;
 
     setVisible(false);
+  }, [isOpen, setVisible]);
+
+  return useDismissListeners({
+    isOpen,
+    anchorRef,
+    contentRef,
+    onClose,
+    scheduleUpdate,
+  });
+}
+
+const noop = () => {};
+
+export function useDismissListeners({
+  isOpen,
+  anchorRef,
+  contentRef,
+  onClose,
+  scheduleUpdate,
+}) {
+  const cleanupRef = useRef(noop);
+
+  useEffect(() => {
+    if (!isOpen) {
+      cleanupRef.current = noop;
+      return undefined;
+    }
 
     const listenerCleanup = attachGlobalListeners({
       handleResize: scheduleUpdate,
@@ -92,11 +119,19 @@ export function useGlobalDismissHandlers({
       scheduleUpdate,
     });
 
-    return () => {
+    const cleanup = () => {
       listenerCleanup();
       resizeObserver?.disconnect();
     };
-  }, [anchorRef, contentRef, isOpen, onClose, scheduleUpdate, setVisible]);
+    cleanupRef.current = cleanup;
+
+    return () => {
+      cleanup();
+      cleanupRef.current = noop;
+    };
+  }, [anchorRef, contentRef, isOpen, onClose, scheduleUpdate]);
+
+  return cleanupRef.current;
 }
 
 export function usePlacementReset({

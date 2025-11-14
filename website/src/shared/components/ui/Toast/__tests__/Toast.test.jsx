@@ -2,8 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Toast from "../Toast.jsx";
 
-
-describe("Toast", () => {
+const setupTimers = () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -11,7 +10,9 @@ describe("Toast", () => {
   afterEach(() => {
     jest.useRealTimers();
   });
+};
 
+const describeTimerExpiryBehavior = () => {
   /**
    * 测试目标：确认开启状态下会在指定时长后触发 onClose。
    * 前置条件：渲染开启的 Toast，注入 1s 时长与 onClose 桩函数。
@@ -48,7 +49,9 @@ describe("Toast", () => {
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
+};
 
+const describeDismissButtonBehavior = () => {
   /**
    * 测试目标：点击关闭按钮应立即触发 onClose 并提供无障碍标签。
    * 前置条件：渲染开启的 Toast。
@@ -75,7 +78,9 @@ describe("Toast", () => {
 
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
+};
 
+const describeCssVariableExposure = () => {
   /**
    * 测试目标：确认背景色/文本色通过 CSS 变量暴露给调用方。
    * 前置条件：传入自定义颜色并保持开启状态。
@@ -106,4 +111,12 @@ describe("Toast", () => {
       "var(--text-inverse-light)",
     );
   });
+};
+
+describe("Toast", () => {
+  setupTimers();
+
+  describe("timer expiry behavior", describeTimerExpiryBehavior);
+  describe("dismiss button behavior", describeDismissButtonBehavior);
+  describe("css variable exposure", describeCssVariableExposure);
 });

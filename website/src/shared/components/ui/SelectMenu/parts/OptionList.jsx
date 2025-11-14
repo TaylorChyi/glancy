@@ -34,6 +34,34 @@ CheckIcon.defaultProps = {
   className: undefined,
 };
 
+function OptionListItem({ option, isActive, onSelect }) {
+  return (
+    <li role="none" className={styles["menu-item"]}>
+      <button
+        type="button"
+        role="menuitemradio"
+        aria-checked={isActive}
+        className={styles["menu-button"]}
+        data-active={isActive ? "true" : undefined}
+        onClick={() => onSelect(option)}
+        title={option.description || option.label}
+      >
+        <span className={styles["menu-option-text"]}>
+          <span className={styles["menu-option-label"]}>{option.label}</span>
+          {option.description ? (
+            <span className={styles["menu-option-description"]}>
+              {option.description}
+            </span>
+          ) : null}
+        </span>
+        <span className={styles["menu-option-check"]} aria-hidden="true">
+          {isActive ? <CheckIcon /> : null}
+        </span>
+      </button>
+    </li>
+  );
+}
+
 export default function OptionList({
   options,
   activeValue,
@@ -55,40 +83,23 @@ export default function OptionList({
       {options.map((option) => {
         const isActive = option.normalizedValue === activeValue;
         return (
-          <li
+          <OptionListItem
             key={option.normalizedValue}
-            role="none"
-            className={styles["menu-item"]}
-          >
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={isActive}
-              className={styles["menu-button"]}
-              data-active={isActive ? "true" : undefined}
-              onClick={() => onSelect(option)}
-              title={option.description || option.label}
-            >
-              <span className={styles["menu-option-text"]}>
-                <span className={styles["menu-option-label"]}>
-                  {option.label}
-                </span>
-                {option.description ? (
-                  <span className={styles["menu-option-description"]}>
-                    {option.description}
-                  </span>
-                ) : null}
-              </span>
-              <span className={styles["menu-option-check"]} aria-hidden="true">
-                {isActive ? <CheckIcon /> : null}
-              </span>
-            </button>
-          </li>
+            option={option}
+            isActive={isActive}
+            onSelect={onSelect}
+          />
         );
       })}
     </ul>
   );
 }
+
+OptionListItem.propTypes = {
+  option: OptionShape.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
 
 OptionList.propTypes = {
   options: PropTypes.arrayOf(OptionShape).isRequired,

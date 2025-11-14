@@ -45,40 +45,56 @@ export function normalizeOptions(options) {
 const toPlaceholderLabel = (placeholder) =>
   isMeaningfulValue(placeholder) ? placeholder.trim() : undefined;
 
+const getActivePresentation = (activeOption) => {
+  if (!activeOption) {
+    return null;
+  }
+
+  return {
+    displayOption: activeOption,
+    triggerLabel: activeOption.label,
+    isShowingPlaceholder: false,
+  };
+};
+
+const getPlaceholderPresentation = (placeholderLabel, fallbackOption) => {
+  if (!placeholderLabel) {
+    return null;
+  }
+
+  return {
+    displayOption: fallbackOption ?? null,
+    triggerLabel: placeholderLabel,
+    isShowingPlaceholder: true,
+  };
+};
+
+const getFallbackPresentation = (fallbackOption) => {
+  if (!fallbackOption) {
+    return null;
+  }
+
+  return {
+    displayOption: fallbackOption,
+    triggerLabel: fallbackOption.label,
+    isShowingPlaceholder: false,
+  };
+};
+
 const deriveTriggerPresentation = ({
   activeOption,
   fallbackOption,
   placeholderLabel,
 }) => {
-  if (activeOption) {
-    return {
-      displayOption: activeOption,
-      triggerLabel: activeOption.label,
+  return (
+    getActivePresentation(activeOption) ??
+    getPlaceholderPresentation(placeholderLabel, fallbackOption) ??
+    getFallbackPresentation(fallbackOption) ?? {
+      displayOption: null,
+      triggerLabel: "",
       isShowingPlaceholder: false,
-    };
-  }
-
-  if (placeholderLabel) {
-    return {
-      displayOption: fallbackOption ?? null,
-      triggerLabel: placeholderLabel,
-      isShowingPlaceholder: true,
-    };
-  }
-
-  if (fallbackOption) {
-    return {
-      displayOption: fallbackOption,
-      triggerLabel: fallbackOption.label,
-      isShowingPlaceholder: false,
-    };
-  }
-
-  return {
-    displayOption: null,
-    triggerLabel: "",
-    isShowingPlaceholder: false,
-  };
+    }
+  );
 };
 
 export function resolveDisplayState({ options, normalizedValue, placeholder }) {

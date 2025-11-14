@@ -9,6 +9,55 @@ const createClickHandler = (section, onSelect) => () => {
   }
 };
 
+function SettingsNavButtonLabel({
+  icon,
+  formattedLabel,
+  hideLabelText,
+  classNames,
+}) {
+  return (
+    <span className={classNames.label}>
+      <SettingsNavIcon
+        icon={icon}
+        labelText={formattedLabel}
+        className={classNames.icon}
+      />
+      <span
+        className={classNames.labelText}
+        data-element="label-text"
+        aria-hidden={hideLabelText || undefined}
+      >
+        {formattedLabel}
+      </span>
+    </span>
+  );
+}
+
+SettingsNavButtonLabel.propTypes = {
+  icon: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    decorative: PropTypes.bool,
+    roleClass: PropTypes.string,
+    alt: PropTypes.string,
+    title: PropTypes.string,
+    className: PropTypes.string,
+    style: PropTypes.object,
+  }),
+  formattedLabel: PropTypes.string.isRequired,
+  hideLabelText: PropTypes.bool.isRequired,
+  classNames: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    labelText: PropTypes.string.isRequired,
+    icon: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+SettingsNavButtonLabel.defaultProps = {
+  icon: undefined,
+};
+
 function SettingsNavButton({
   section,
   isActive,
@@ -22,6 +71,18 @@ function SettingsNavButton({
   const hideLabelText = isHorizontalLayout && Boolean(section.icon?.name);
   const disabled = isSectionDisabled(section);
   const handleClick = createClickHandler(section, onSelect);
+  const labelNode = (
+    <SettingsNavButtonLabel
+      icon={section.icon}
+      formattedLabel={formattedLabel}
+      hideLabelText={hideLabelText}
+      classNames={{
+        label: classNames.label,
+        labelText: classNames.labelText,
+        icon: classNames.icon,
+      }}
+    />
+  );
 
   return (
     <button
@@ -37,20 +98,7 @@ function SettingsNavButton({
       aria-label={hideLabelText ? formattedLabel : undefined}
       onClick={handleClick}
     >
-      <span className={classNames.label}>
-        <SettingsNavIcon
-          icon={section.icon}
-          labelText={formattedLabel}
-          className={classNames.icon}
-        />
-        <span
-          className={classNames.labelText}
-          data-element="label-text"
-          aria-hidden={hideLabelText || undefined}
-        >
-          {formattedLabel}
-        </span>
-      </span>
+      {labelNode}
     </button>
   );
 }

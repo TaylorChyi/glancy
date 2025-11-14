@@ -2,6 +2,25 @@ import PropTypes from "prop-types";
 
 import styles from "../SelectMenu.module.css";
 
+const getPlaceholderAttrs = (isPlaceholder) =>
+  isPlaceholder ? { "data-placeholder": "true" } : {};
+
+const getTriggerStateAttrs = (open, isPlaceholder) => ({
+  ...(open ? { "data-open": "true" } : {}),
+  ...getPlaceholderAttrs(isPlaceholder),
+});
+
+function SelectMenuTriggerLabel({ label, isPlaceholder }) {
+  return (
+    <span
+      className={styles["menu-trigger-label"]}
+      {...getPlaceholderAttrs(isPlaceholder)}
+    >
+      {label}
+    </span>
+  );
+}
+
 export default function SelectMenuTrigger({
   id,
   open,
@@ -12,6 +31,8 @@ export default function SelectMenuTrigger({
   label,
   isPlaceholder,
 }) {
+  const triggerStateAttrs = getTriggerStateAttrs(open, isPlaceholder);
+
   return (
     <button
       type="button"
@@ -22,16 +43,10 @@ export default function SelectMenuTrigger({
       onClick={onToggle}
       onKeyDown={onKeyDown}
       aria-label={ariaLabel}
-      data-open={open ? "true" : undefined}
-      data-placeholder={isPlaceholder ? "true" : undefined}
+      {...triggerStateAttrs}
       ref={triggerRef}
     >
-      <span
-        className={styles["menu-trigger-label"]}
-        data-placeholder={isPlaceholder ? "true" : undefined}
-      >
-        {label}
-      </span>
+      <SelectMenuTriggerLabel label={label} isPlaceholder={isPlaceholder} />
     </button>
   );
 }
@@ -49,4 +64,9 @@ SelectMenuTrigger.propTypes = {
 
 SelectMenuTrigger.defaultProps = {
   id: undefined,
+};
+
+SelectMenuTriggerLabel.propTypes = {
+  label: PropTypes.string.isRequired,
+  isPlaceholder: PropTypes.bool.isRequired,
 };

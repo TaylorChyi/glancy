@@ -30,65 +30,98 @@ function useEmailBindingClient({ user, apiClient }) {
   return { client, ensureClient };
 }
 
-function useEmailBindingState({ client, ensureClient, user, onUserUpdate }) {
+function useEmailBindingMode({ resetRequestFlowState, userEmail }) {
   const [mode, setMode] = useState(MODE_IDLE);
-
-  const {
-    requestCode,
-    isSendingCode,
-    codeIssuedAt,
-    lastRequestedEmail,
-    lastRequestedEmailRef,
-    resetRequestState,
-  } = useEmailRequestFlow({ client, ensureClient, user });
 
   const resetBindingState = useCallback(() => {
     setMode(MODE_IDLE);
-    resetRequestState();
-  }, [resetRequestState]);
+    resetRequestFlowState();
+  }, [resetRequestFlowState]);
 
   useEffect(() => {
     resetBindingState();
-  }, [resetBindingState, user?.email]);
+  }, [resetBindingState, userEmail]);
 
   const startEditing = useCallback(() => {
     setMode(MODE_EDITING);
   }, []);
 
-  const cancelEditing = useCallback(() => {
-    resetBindingState();
-  }, [resetBindingState]);
-
-  const { confirmChange, isVerifying } = useEmailConfirmationFlow({
-    client,
-    ensureClient,
-    user,
-    onUserUpdate,
-    requestState: { lastRequestedEmailRef, resetRequestState },
-    onSuccess: resetBindingState,
-  });
-
-  const { unbindEmail, isUnbinding } = useEmailUnbindFlow({
-    client,
-    ensureClient,
-    user,
-    onUserUpdate,
-    onSuccess: resetBindingState,
-    resetRequestState,
-  });
-
   return {
     mode,
     startEditing,
-    cancelEditing,
-    requestCode,
-    confirmChange,
-    unbindEmail,
-    isSendingCode,
-    isVerifying,
-    isUnbinding,
-    codeIssuedAt,
-    lastRequestedEmail,
+    cancelEditing: resetBindingState,
+    resetBindingState,
+  };
+}
+
+function useEmailBindingRequestState({ client, ensureClient, user }) {
+  const requestState = useEmailRequestFlow({ client, ensureClient, user });
+  const modeState = useEmailBindingMode({
+    resetRequestFlowState: requestState.resetRequestState,
+    userEmail: user?.email,
+  });
+
+  return {
+    ...modeState,
+    requestCode: requestState.requestCode,
+    isSendingCode: requestState.isSendingCode,
+    codeIssuedAt: requestState.codeIssuedAt,
+    lastRequestedEmail: requestState.lastRequestedEmail,
+    lastRequestedEmailRef: requestState.lastRequestedEmailRef,
+    resetRequestState: requestState.resetRequestState,
+  };
+}
+
+function useEmailBindingFlowHandlers(options) {
+  const {
+    client,
+    ensureClient,
+    user,
+    onUserUpdate,
+    requestState,
+    resetBindingState,
+  } = options;
+  const sharedFlowProps = { client, ensureClient, user, onUserUpdate };
+  const { lastRequestedEmailRef, resetRequestState } = requestState;
+  const confirmation = useEmailConfirmationFlow({
+    ...sharedFlowProps,
+    requestState: { lastRequestedEmailRef, resetRequestState },
+    onSuccess: resetBindingState,
+  });
+  const unbind = useEmailUnbindFlow({
+    ...sharedFlowProps,
+    onSuccess: resetBindingState,
+    resetRequestState,
+  });
+  return {
+    confirmChange: confirmation.confirmChange,
+    isVerifying: confirmation.isVerifying,
+    unbindEmail: unbind.unbindEmail,
+    isUnbinding: unbind.isUnbinding,
+  };
+}
+
+function useEmailBindingState({ client, ensureClient, user, onUserUpdate }) {
+  const requestState = useEmailBindingRequestState({ client, ensureClient, user });
+
+  const flowHandlers = useEmailBindingFlowHandlers({
+    client,
+    ensureClient,
+    user,
+    onUserUpdate,
+    requestState,
+    resetBindingState: requestState.resetBindingState,
+  });
+
+  return {
+    mode: requestState.mode,
+    startEditing: requestState.startEditing,
+    cancelEditing: requestState.cancelEditing,
+    requestCode: requestState.requestCode,
+    isSendingCode: requestState.isSendingCode,
+    codeIssuedAt: requestState.codeIssuedAt,
+    lastRequestedEmail: requestState.lastRequestedEmail,
+    ...flowHandlers,
   };
 }
 

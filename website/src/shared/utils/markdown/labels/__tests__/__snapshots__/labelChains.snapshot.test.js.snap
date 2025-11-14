@@ -49,3 +49,30 @@ Translation:quick
 释义:
 例句:示例"
 `;
+
+exports[`markdown label chain pipelines renders {\\n  label: 'expand collapsed label chain',\\n  transform: [Function: expandCollapsedLabelChains],\\n  input: '- 释义:同义词:精准\\n- Definition:Synonyms:precise'\\n} golden snapshot 1`] = `
+"- 释义:
+  同义词:精准
+- Definition:
+  Synonyms:precise"
+`;
+
+exports[`markdown label chain pipelines renders {\\n  label: 'resolve dangling label separators',\\n  transform: [Function: resolveDanglingLabelSeparators],\\n  input: '- **Example**:Line -\\n  **Translation**:Segment\\n- **例句**：继续 -\\n  **译文**：下一行'\\n} golden snapshot 1`] = `
+"- **Example**:Line
+  **Translation**:Segment
+- **例句**：继续 -
+  **译文**：下一行"
+`;
+
+exports[`markdown label chain pipelines renders {\\n  label: 'restore missing delimiters',\\n  transform: [Function: restoreMissingLabelDelimiters],\\n  input: 'Synonyms swift swift\\n同义词 精准 严谨\\nExample She walks Translation 她走路'\\n} golden snapshot 1`] = `
+"Synonyms: swift swift
+同义词: 精准 严谨
+Example: She walks Translation 她走路"
+`;
+
+exports[`markdown label chain pipelines renders {\\n  label: 'separate adjacent inline labels',\\n  transform: [Function: separateAdjacentInlineLabels],\\n  input: 'Synonyms:fastTranslation:quick\\n释义:例句:示例'\\n} golden snapshot 1`] = `
+"Synonyms:fast
+Translation:quick
+释义:
+例句:示例"
+`;

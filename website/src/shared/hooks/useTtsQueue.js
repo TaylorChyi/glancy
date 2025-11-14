@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useMemo, useState } from "react";
 import { ApiError } from "@shared/api/client.js";
 import { useApi } from "@shared/hooks/useApi.js";
 import { logger } from "@shared/utils/logger.js";
@@ -105,9 +105,9 @@ export function useTtsQueue(scope = "word") {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const request = useCallback(
-    createRequest({ tts, scope, hasSession, setLoading, setError }),
-    [tts, scope, hasSession],
+  const request = useMemo(
+    () => createRequest({ tts, scope, hasSession, setLoading, setError }),
+    [tts, scope, hasSession, setLoading, setError],
   );
 
   return { request, loading, error };

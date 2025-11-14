@@ -6,46 +6,54 @@ import {
   sanitizeHeight,
 } from "./settingsPanelHeightUtils.js";
 
+const commitHeightValue = (setHeightMap, type, rawHeight) => {
+  const normalized = sanitizeHeight(rawHeight);
+  setHeightMap((current) =>
+    current[type] === normalized ? current : { ...current, [type]: normalized },
+  );
+  return normalized;
+};
+
+const updateHeightCache = (cacheRef, setHeightMap, type, heightValue, sectionId) => {
+  const normalized = commitHeightValue(setHeightMap, type, heightValue);
+  if (!sectionId?.trim()) {
+    return;
+  }
+  if (normalized == null) {
+    cacheRef.current.delete(sectionId);
+  } else {
+    cacheRef.current.set(sectionId, normalized);
+  }
+};
+
+const applyCachedHeightValue = (cacheRef, setHeightMap, type, sectionId) => {
+  if (!sectionId?.trim()) {
+    return false;
+  }
+  const cachedHeight = cacheRef.current.get(sectionId);
+  if (cachedHeight == null) {
+    return false;
+  }
+  setHeightMap((current) =>
+    current[type] === cachedHeight ? current : { ...current, [type]: cachedHeight },
+  );
+  return true;
+};
+
 const useHeightCache = () => {
   const [heightMap, setHeightMap] = useState({ active: null, reference: null });
   const cacheRef = useRef(new Map());
 
-  const commitHeight = useCallback((type, rawHeight) => {
-    const normalized = sanitizeHeight(rawHeight);
-    setHeightMap((current) =>
-      current[type] === normalized ? current : { ...current, [type]: normalized },
-    );
-    return normalized;
-  }, []);
-
   const updateHeight = useCallback(
-    (type, heightValue, sectionId) => {
-      const normalized = commitHeight(type, heightValue);
-      if (!sectionId?.trim()) {
-        return;
-      }
-      if (normalized == null) {
-        cacheRef.current.delete(sectionId);
-      } else {
-        cacheRef.current.set(sectionId, normalized);
-      }
-    },
-    [commitHeight],
+    (type, heightValue, sectionId) =>
+      updateHeightCache(cacheRef, setHeightMap, type, heightValue, sectionId),
+    [cacheRef, setHeightMap],
   );
 
-  const applyCachedHeight = useCallback((type, sectionId) => {
-    if (!sectionId?.trim()) {
-      return false;
-    }
-    const cachedHeight = cacheRef.current.get(sectionId);
-    if (cachedHeight == null) {
-      return false;
-    }
-    setHeightMap((current) =>
-      current[type] === cachedHeight ? current : { ...current, [type]: cachedHeight },
-    );
-    return true;
-  }, []);
+  const applyCachedHeight = useCallback(
+    (type, sectionId) => applyCachedHeightValue(cacheRef, setHeightMap, type, sectionId),
+    [cacheRef, setHeightMap],
+  );
 
   return { heightMap, updateHeight, applyCachedHeight };
 };

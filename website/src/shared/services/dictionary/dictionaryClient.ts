@@ -125,10 +125,9 @@ const buildDictionarySuccess = (
     flavor: config.flavor,
   });
 
-export const createDictionaryClient = (wordsApi: WordsApi): DictionaryClient => {
-  const loadEntry = async (
-    command: DictionaryEntryCommand,
-  ): Promise<DictionaryEntryResponse> => {
+const buildLoadEntry =
+  (wordsApi: WordsApi): DictionaryClient["loadEntry"] =>
+  async (command) => {
     const missingPrerequisitesResponse = handleMissingPrerequisites(command);
     if (missingPrerequisitesResponse) {
       return missingPrerequisitesResponse;
@@ -147,19 +146,23 @@ export const createDictionaryClient = (wordsApi: WordsApi): DictionaryClient => 
     }
   };
 
-  const fetchExamples = async (
-    command: DictionaryEntryCommand,
-  ): Promise<{ examples: string[]; error: DictionaryServiceError | null }> => {
-    const result = await loadEntry({ ...command, forceNew: false });
-    if (result.error) {
-      return { examples: [], error: result.error };
-    }
-    return {
-      examples: mapDictionaryExamples(result.data),
-      error: null,
-    };
+const buildFetchExamples = (
+  wordsApi: WordsApi,
+  loadEntry: DictionaryClient["loadEntry"] = buildLoadEntry(wordsApi),
+): DictionaryClient["fetchExamples"] => async (command) => {
+  const result = await loadEntry({ ...command, forceNew: false });
+  if (result.error) {
+    return { examples: [], error: result.error };
+  }
+  return {
+    examples: mapDictionaryExamples(result.data),
+    error: null,
   };
+};
 
+export const createDictionaryClient = (wordsApi: WordsApi): DictionaryClient => {
+  const loadEntry = buildLoadEntry(wordsApi);
+  const fetchExamples = buildFetchExamples(wordsApi, loadEntry);
   return { loadEntry, fetchExamples };
 };
 

@@ -105,3 +105,32 @@ test("Given disabled control When clicking options Then ignore interactions", as
 
   expect(handleChange).not.toHaveBeenCalled();
 });
+
+/**
+ * 测试目标：禁用的个别选项不会触发 onChange。
+ * 前置条件：第二个选项 disabled=true。
+ * 步骤：
+ *  1) 点击被禁用的 Dark。
+ * 断言：
+ *  - onChange 未被调用。
+ */
+test("Given disabled option When clicking it Then selection ignored", async () => {
+  const user = userEvent.setup();
+  const handleChange = jest.fn();
+
+  render(
+    <SegmentedControl
+      ariaLabel="Theme"
+      value="light"
+      options={[
+        { id: "light", value: "light", label: "Light" },
+        { id: "dark", value: "dark", label: "Dark", disabled: true },
+      ]}
+      onChange={handleChange}
+    />,
+  );
+
+  await user.click(screen.getByRole("radio", { name: "Dark" }));
+
+  expect(handleChange).not.toHaveBeenCalled();
+});

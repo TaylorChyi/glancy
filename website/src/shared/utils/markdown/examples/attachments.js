@@ -2,6 +2,7 @@ import { isExampleLabel } from "./labels.js";
 
 const MARKER_WITH_TRAILING_HASH_PATTERN = /^#[^#\s]+#$/;
 const MARKER_PATTERN = /^#[^#\s]+$/;
+const ATTACHMENT_LINE_PATTERN = /^(#|\{\{|\[\[)/;
 
 function isSegmentationHeading(trimmed) {
   return trimmed.startsWith("#") && !/^##/.test(trimmed);
@@ -56,38 +57,56 @@ export function parseSegmentationMarker(lines, startIndex) {
   };
 }
 
+function createAttachmentState(startIndex) {
+  return { markerAttachments: [], preservedHeadings: [], consumed: 0, cursor: startIndex };
+}
+
+function advanceAttachmentState(state, steps = 1) {
+  state.consumed += steps;
+  state.cursor += steps;
+}
+
+function recordPreservedHeading(state, heading) {
+  state.preservedHeadings.push(heading);
+  advanceAttachmentState(state);
+}
+
+function tryAttachSegmentationMarker(lines, state) {
+  const parsed = parseSegmentationMarker(lines, state.cursor);
+  if (!parsed) {
+    recordPreservedHeading(state, lines[state.cursor]);
+    return false;
+  }
+  state.markerAttachments.push(parsed);
+  advanceAttachmentState(state, parsed.consumed);
+  return true;
+}
+
+function attachInlineMarker(state, trimmed) {
+  state.markerAttachments.push({ marker: trimmed, trailingText: "" });
+  advanceAttachmentState(state);
+}
+
 export function collectExampleSegmentationAttachments(lines, startIndex) {
-  const markerAttachments = [];
-  const preservedHeadings = [];
-  let consumed = 0;
-  let cursor = startIndex;
-  while (cursor < lines.length) {
-    const current = lines[cursor];
-    const trimmed = current.trimStart();
+  const state = createAttachmentState(startIndex);
+  while (state.cursor < lines.length) {
+    const trimmed = lines[state.cursor].trimStart();
     if (trimmed === "") {
-      consumed += 1;
-      cursor += 1;
+      advanceAttachmentState(state);
       continue;
     }
-    if (!/^(#|\{\{|\[\[)/.test(trimmed)) {
+    if (!ATTACHMENT_LINE_PATTERN.test(trimmed)) {
       break;
     }
     if (trimmed.startsWith("#")) {
-      const parsed = parseSegmentationMarker(lines, cursor);
-      if (!parsed) {
-        preservedHeadings.push(current);
-        consumed += 1;
+      if (!tryAttachSegmentationMarker(lines, state)) {
         break;
       }
-      markerAttachments.push(parsed);
-      consumed += parsed.consumed;
-      cursor += parsed.consumed;
       continue;
     }
-    markerAttachments.push({ marker: trimmed, trailingText: "" });
-    consumed += 1;
-    cursor += 1;
+    attachInlineMarker(state, trimmed);
   }
+  const { markerAttachments, preservedHeadings, consumed } = state;
   return { markerAttachments, preservedHeadings, consumed };
 }
 
