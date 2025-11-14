@@ -58,6 +58,41 @@ SettingsNavButtonLabel.defaultProps = {
   icon: undefined,
 };
 
+const buildSettingsNavButtonLabelProps = ({
+  section,
+  formattedLabel,
+  hideLabelText,
+  classNames,
+}) => ({
+  icon: section.icon,
+  formattedLabel,
+  hideLabelText,
+  classNames: {
+    label: classNames.label,
+    labelText: classNames.labelText,
+    icon: classNames.icon,
+  },
+});
+
+const buildSettingsNavButtonIdentityProps = (section) => ({
+  type: "button",
+  role: "tab",
+  id: `${section.id}-tab`,
+  "aria-controls": `${section.id}-panel`,
+});
+
+const buildSettingsNavButtonStateProps = ({
+  isActive,
+  hideLabelText,
+  formattedLabel,
+  disabled,
+}) => ({
+  "aria-selected": isActive,
+  tabIndex: isActive ? 0 : -1,
+  disabled,
+  "aria-label": hideLabelText ? formattedLabel : undefined,
+});
+
 function SettingsNavButton({
   section,
   isActive,
@@ -66,39 +101,20 @@ function SettingsNavButton({
   isHorizontalLayout,
   classNames,
 }) {
-  const tabId = `${section.id}-tab`;
-  const panelId = `${section.id}-panel`;
   const hideLabelText = isHorizontalLayout && Boolean(section.icon?.name);
   const disabled = isSectionDisabled(section);
   const handleClick = createClickHandler(section, onSelect);
-  const labelNode = (
-    <SettingsNavButtonLabel
-      icon={section.icon}
-      formattedLabel={formattedLabel}
-      hideLabelText={hideLabelText}
-      classNames={{
-        label: classNames.label,
-        labelText: classNames.labelText,
-        icon: classNames.icon,
-      }}
-    />
-  );
-
+  const buttonProps = {
+    ...buildSettingsNavButtonIdentityProps(section),
+    ...buildSettingsNavButtonStateProps({ isActive, hideLabelText, formattedLabel, disabled }),
+    className: classNames.button,
+    "data-state": isActive ? "active" : "inactive",
+    onClick: handleClick,
+  };
+  const labelProps = buildSettingsNavButtonLabelProps({ section, formattedLabel, hideLabelText, classNames });
   return (
-    <button
-      type="button"
-      role="tab"
-      id={tabId}
-      aria-controls={panelId}
-      aria-selected={isActive}
-      tabIndex={isActive ? 0 : -1}
-      disabled={disabled}
-      className={classNames.button}
-      data-state={isActive ? "active" : "inactive"}
-      aria-label={hideLabelText ? formattedLabel : undefined}
-      onClick={handleClick}
-    >
-      {labelNode}
+    <button {...buttonProps}>
+      <SettingsNavButtonLabel {...labelProps} />
     </button>
   );
 }

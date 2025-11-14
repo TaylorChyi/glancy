@@ -15,29 +15,9 @@ export default function DynamicMarkdownRenderer({
   ...props
 }) {
   const injectBreaks = useBreakableContent();
-  const baseComponents = useMemo(
-    () =>
-      buildMarkdownComponents({
-        injectBreaks,
-      }),
-    [injectBreaks],
-  );
-  const components = useMemo(
-    () => ({
-      ...baseComponents,
-      ...(additionalComponents ?? {}),
-    }),
-    [additionalComponents, baseComponents],
-  );
-
-  const remarkPlugins = useMemo(
-    () => [remarkGfm, ...(additionalRemarkPlugins ?? [])],
-    [additionalRemarkPlugins],
-  );
-  const rehypePlugins = useMemo(
-    () => [rehypeCollapsibleSections, ...(additionalRehypePlugins ?? [])],
-    [additionalRehypePlugins],
-  );
+  const components = useMarkdownComponents(injectBreaks, additionalComponents);
+  const remarkPlugins = useMarkdownRemarkPlugins(additionalRemarkPlugins);
+  const rehypePlugins = useMarkdownRehypePlugins(additionalRehypePlugins);
 
   if (!children) {
     return null;
@@ -52,6 +32,38 @@ export default function DynamicMarkdownRenderer({
     >
       {children}
     </ReactMarkdown>
+  );
+}
+
+function useMarkdownComponents(injectBreaks, additionalComponents) {
+  const baseComponents = useMemo(
+    () =>
+      buildMarkdownComponents({
+        injectBreaks,
+      }),
+    [injectBreaks],
+  );
+
+  return useMemo(
+    () => ({
+      ...baseComponents,
+      ...(additionalComponents ?? {}),
+    }),
+    [additionalComponents, baseComponents],
+  );
+}
+
+function useMarkdownRemarkPlugins(additionalRemarkPlugins) {
+  return useMemo(
+    () => [remarkGfm, ...(additionalRemarkPlugins ?? [])],
+    [additionalRemarkPlugins],
+  );
+}
+
+function useMarkdownRehypePlugins(additionalRehypePlugins) {
+  return useMemo(
+    () => [rehypeCollapsibleSections, ...(additionalRehypePlugins ?? [])],
+    [additionalRehypePlugins],
   );
 }
 

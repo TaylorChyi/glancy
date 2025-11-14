@@ -5,6 +5,26 @@ import {
   getPopoverInlineStyles,
 } from "./popoverHelpers.js";
 
+const renderPopoverContent = ({
+  setContentNode,
+  className,
+  visible,
+  activePlacement,
+  inlineStyles,
+  children,
+}) => (
+  <PopoverContent
+    setContentNode={setContentNode}
+    className={className}
+    visible={visible}
+    activePlacement={activePlacement}
+    inlineStyles={inlineStyles}
+    portalTarget={document.body}
+  >
+    {children}
+  </PopoverContent>
+);
+
 function Popover({
   anchorRef,
   isOpen,
@@ -28,24 +48,18 @@ function Popover({
       onClose,
     });
 
-  if (!isOpen) return null;
-  if (typeof document === "undefined") return null;
+  if (!isOpen || typeof document === "undefined") return null;
+  const classNames = getPopoverClassName(className),
+    inlineStyles = getPopoverInlineStyles(position, style);
 
-  const classNames = getPopoverClassName(className);
-  const inlineStyles = getPopoverInlineStyles(position, style);
-
-  return (
-    <PopoverContent
-      setContentNode={setContentNode}
-      className={classNames}
-      visible={visible}
-      activePlacement={activePlacement}
-      inlineStyles={inlineStyles}
-      portalTarget={document.body}
-    >
-      {children}
-    </PopoverContent>
-  );
+  return renderPopoverContent({
+    setContentNode,
+    className: classNames,
+    visible,
+    activePlacement,
+    inlineStyles,
+    children,
+  });
 }
 
 export default Popover;

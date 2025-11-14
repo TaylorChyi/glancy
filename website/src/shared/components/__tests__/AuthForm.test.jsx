@@ -4,7 +4,7 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import { renderAuthForm } from "./fixtures/authFormFixtures.js";
 
-describe("AuthForm", () => {
+const renderBrandTests = () => {
   test("renders brand logo using inline asset", async () => {
     await renderAuthForm();
 
@@ -18,7 +18,9 @@ describe("AuthForm", () => {
 
     expect(asFragment()).toMatchSnapshot();
   });
+};
 
+const renderCredentialTests = () => {
   test("submits provided credentials with username method", async () => {
     const handleSubmit = jest.fn().mockResolvedValue(undefined);
     await renderAuthForm({ onSubmit: handleSubmit });
@@ -52,7 +54,9 @@ describe("AuthForm", () => {
       screen.getByRole("separator", { name: "Other register options" }),
     ).toBeInTheDocument();
   });
+};
 
+const renderVerificationTests = () => {
   test("requests verification code for email method", async () => {
     const handleRequestCode = jest.fn().mockResolvedValue(undefined);
     await renderAuthForm({
@@ -94,7 +98,9 @@ describe("AuthForm", () => {
 
     expect(await screen.findByText("Invalid account")).toBeInTheDocument();
   });
+};
 
+const renderFallbackTests = () => {
   test("renders multi-line title with explicit breaks", async () => {
     const { container } = await renderAuthForm({ title: "Welcome\nBack" });
 
@@ -112,4 +118,11 @@ describe("AuthForm", () => {
 
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
   });
+};
+
+describe("AuthForm", () => {
+  renderBrandTests();
+  renderCredentialTests();
+  renderVerificationTests();
+  renderFallbackTests();
 });

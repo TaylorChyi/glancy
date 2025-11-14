@@ -13,7 +13,7 @@ import {
   restoreDictionaryExperienceTimers,
 } from "../testing/useDictionaryExperienceTestHarness.js";
 
-describe("useDictionaryExperience/history & auth", () => {
+describe("useDictionaryExperience/history & auth", function historyAuthSuite() {
   beforeEach(() => {
     resetDictionaryExperienceTestState();
   });

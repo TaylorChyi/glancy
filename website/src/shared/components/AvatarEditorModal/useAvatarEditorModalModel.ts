@@ -99,22 +99,21 @@ export const buildViewProps = ({
   controls,
 });
 
-export const useAvatarEditorModalModel = ({
-  open,
-  source = "",
-  onCancel,
-  onConfirm,
-  labels,
-  isProcessing = false,
-}: AvatarEditorModalInput) => {
-  const controller = useAvatarEditorController({
-    open,
-    source,
-    onConfirm,
-    labels,
-    isProcessing,
-  });
+type BuildModelInput = {
+  controller: AvatarEditorController;
+  open: boolean;
+  source: string;
+  onCancel: AvatarEditorModalInput["onCancel"];
+  isProcessing: boolean;
+};
 
+const buildModalModel = ({
+  controller,
+  open,
+  source,
+  onCancel,
+  isProcessing,
+}: BuildModelInput) => {
   const viewport = buildViewportProps({
     mergedLabels: controller.mergedLabels,
     containerRef: controller.containerRef,
@@ -145,6 +144,31 @@ export const useAvatarEditorModalModel = ({
       controls,
     }),
   };
+};
+
+export const useAvatarEditorModalModel = ({
+  open,
+  source = "",
+  onCancel,
+  onConfirm,
+  labels,
+  isProcessing = false,
+}: AvatarEditorModalInput) => {
+  const controller = useAvatarEditorController({
+    open,
+    source,
+    onConfirm,
+    labels,
+    isProcessing,
+  });
+
+  return buildModalModel({
+    controller,
+    open,
+    source,
+    onCancel,
+    isProcessing,
+  });
 };
 
 export default useAvatarEditorModalModel;

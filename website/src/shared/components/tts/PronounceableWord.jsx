@@ -5,32 +5,27 @@ import styles from "./PronounceableWord.module.css";
 import useTtsFeedback from "./useTtsFeedback.js";
 import TtsFeedbackSurfaces from "./TtsFeedbackSurfaces.jsx";
 
+const buildPronounceableWordClassName = ({ className, playing, loading }) =>
+  [styles.word, playing && styles.playing, loading && styles.loading, className]
+    .filter(Boolean)
+    .join(" ");
+
+const pronounceableWordClick = async ({ loading, playing, stop, play, lang, text }) => {
+  if (loading) return;
+  if (playing) {
+    stop();
+    return;
+  }
+  const voice = useVoiceStore.getState().getVoice(lang);
+  await play({ text, lang, voice });
+};
 
 export default function PronounceableWord({ text, lang, className }) {
   const { t } = useLanguage();
-  const { play, stop, loading, playing, error } = useTtsPlayer({
-    scope: "word",
-  });
+  const { play, stop, loading, playing, error } = useTtsPlayer({ scope: "word" });
   const feedback = useTtsFeedback(error);
-
-  const handleClick = async () => {
-    if (loading) return;
-    if (playing) {
-      stop();
-      return;
-    }
-    const voice = useVoiceStore.getState().getVoice(lang);
-    await play({ text, lang, voice });
-  };
-
-  const cls = [
-    styles.word,
-    playing && styles.playing,
-    loading && styles.loading,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const handleClick = () => pronounceableWordClick({ loading, playing, stop, play, lang, text });
+  const cls = buildPronounceableWordClassName({ className, loading, playing });
 
   return (
     <>

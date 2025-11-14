@@ -3,21 +3,21 @@ import { act, renderHook } from "@testing-library/react";
 import { jest } from "@jest/globals";
 import useEmailBindingHandlers from "@shared/components/Profile/EmailBindingCard/useEmailBindingHandlers.js";
 
-describe("useEmailBindingHandlers", () => {
-  const buildHandlers = (overrides = {}) =>
-    renderHook(() =>
-      useEmailBindingHandlers({
-        draftEmail: "user@example.com",
-        setDraftEmail: jest.fn(),
-        verificationCode: "135790",
-        setVerificationCode: jest.fn(),
-        onRequestCode: jest.fn(),
-        onConfirm: jest.fn(),
-        startCountdown: jest.fn(),
-        ...overrides,
-      }),
-    );
+const buildHandlers = (overrides = {}) =>
+  renderHook(() =>
+    useEmailBindingHandlers({
+      draftEmail: "user@example.com",
+      setDraftEmail: jest.fn(),
+      verificationCode: "135790",
+      setVerificationCode: jest.fn(),
+      onRequestCode: jest.fn(),
+      onConfirm: jest.fn(),
+      startCountdown: jest.fn(),
+      ...overrides,
+    }),
+  );
 
+const describeDraftEmailBehavior = () => {
   it("updates draft email when input changes", () => {
     const setDraftEmail = jest.fn();
     const { result } = buildHandlers({ setDraftEmail });
@@ -28,7 +28,9 @@ describe("useEmailBindingHandlers", () => {
 
     expect(setDraftEmail).toHaveBeenCalledWith("new@example.com");
   });
+};
 
+const describeRequestCodeBehavior = () => {
   it("resets verification code and starts countdown on successful request", async () => {
     const setVerificationCode = jest.fn();
     const startCountdown = jest.fn();
@@ -65,7 +67,9 @@ describe("useEmailBindingHandlers", () => {
     expect(setVerificationCode).not.toHaveBeenCalled();
     expect(startCountdown).not.toHaveBeenCalled();
   });
+};
 
+const describeSubmitBehavior = () => {
   it("prevents default submission when confirmation handler is missing", async () => {
     const preventDefault = jest.fn();
     const { result } = buildHandlers({ onConfirm: undefined });
@@ -90,4 +94,10 @@ describe("useEmailBindingHandlers", () => {
       code: "135790",
     });
   });
+};
+
+describe("useEmailBindingHandlers", () => {
+  describeDraftEmailBehavior();
+  describeRequestCodeBehavior();
+  describeSubmitBehavior();
 });

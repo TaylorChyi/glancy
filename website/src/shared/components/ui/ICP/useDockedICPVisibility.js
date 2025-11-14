@@ -24,41 +24,27 @@ function useDockedICPVisibility({
 } = {}) {
   const [isVisible, setIsVisible] = useState(true);
   const hideTimerRef = useRef(null);
-
-  const clearHideTimer = useCallback(() => {
-    if (!hideTimerRef.current) {
-      return;
-    }
-    clearTimeout(hideTimerRef.current);
-    hideTimerRef.current = null;
+  const scheduleHide = useCallback((delayMs) => {
+    if (typeof window === "undefined") return;
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = window.setTimeout(() => {
+      setIsVisible(false);
+      hideTimerRef.current = null;
+    }, delayMs);
   }, []);
-
-  const scheduleHide = useCallback(
-    (delayMs) => {
-      if (typeof window === "undefined") {
-        return;
-      }
-      clearHideTimer();
-      hideTimerRef.current = window.setTimeout(() => {
-        setIsVisible(false);
-        hideTimerRef.current = null;
-      }, delayMs);
-    },
-    [clearHideTimer],
-  );
-
   useEffect(() => {
     scheduleHide(initialVisibleDurationMs);
     return () => {
-      clearHideTimer();
+      const current = hideTimerRef.current;
+      if (!current) return;
+      clearTimeout(current);
+      hideTimerRef.current = null;
     };
-  }, [clearHideTimer, initialVisibleDurationMs, scheduleHide]);
-
+  }, [initialVisibleDurationMs, scheduleHide]);
   const reveal = useCallback(() => {
     setIsVisible(true);
     scheduleHide(revealDurationMs);
   }, [revealDurationMs, scheduleHide]);
-
   return { isVisible, reveal };
 }
 

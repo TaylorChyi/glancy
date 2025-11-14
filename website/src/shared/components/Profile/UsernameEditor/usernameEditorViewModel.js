@@ -8,7 +8,7 @@ import { createButtonProps } from "./createUsernameButtonProps.js";
 import { createErrorProps } from "./createUsernameErrorProps.js";
 import { createActionDescriptor } from "./createUsernameActionDescriptor.js";
 
-export const composeUsernameViewModel = ({
+function buildUsernameViewModel({
   mode,
   value,
   draft,
@@ -23,7 +23,7 @@ export const composeUsernameViewModel = ({
   controlId,
   messageId,
   renderInlineAction,
-}) => {
+}) {
   const viewValue = resolveViewValue(mode, value, emptyDisplayValue);
   const inputValue = mode === UsernameEditorModes.VIEW ? viewValue : draft;
   const buttonLabel = buildButtonLabel(t, mode);
@@ -52,4 +52,7 @@ export const composeUsernameViewModel = ({
     errorProps: createErrorProps(errorMessage, messageId),
     actionDescriptor: createActionDescriptor(buttonLabel, handlers, mode),
   };
-};
+}
+
+export const composeUsernameViewModel = (props) =>
+  buildUsernameViewModel(props);

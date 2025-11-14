@@ -147,7 +147,7 @@ export default function useLanguageMenu({
   onOpen,
   variant,
 }) {
-  const { open, setOpen, triggerRef, menuRef } = useMenuState();
+  const menuState = useMenuState();
   const { normalizedOptions, currentOption } = useNormalizedSelection({
     options,
     value,
@@ -160,14 +160,12 @@ export default function useLanguageMenu({
     onChange,
     onOpen,
     variant,
-    setOpen,
-    menuRef,
+    setOpen: menuState.setOpen,
+    menuRef: menuState.menuRef,
   });
 
   return {
-    open,
-    triggerRef,
-    menuRef,
+    ...menuState,
     normalizedOptions,
     currentOption,
     ...handlers,

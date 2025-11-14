@@ -3,32 +3,6 @@ import ActiveSectionRenderer from "./ActiveSectionRenderer.jsx";
 import FallbackHeading from "./FallbackHeading.jsx";
 import modalStyles from "../SettingsModal.module.css";
 
-const createFallbackHeadingNode = ({
-  shouldRenderFallbackHeading,
-  fallbackHeadingId,
-  fallbackHeadingText,
-  registerFallbackHeading,
-}) => (
-  <FallbackHeading
-    shouldRender={shouldRenderFallbackHeading}
-    id={fallbackHeadingId}
-    text={fallbackHeadingText}
-    register={registerFallbackHeading}
-  />
-);
-
-const createActiveSectionNode = ({
-  activeSection,
-  sectionHeadingId,
-  sectionDescriptionId,
-}) => (
-  <ActiveSectionRenderer
-    activeSection={activeSection}
-    headingId={sectionHeadingId}
-    descriptionId={sectionDescriptionId}
-  />
-);
-
 function SettingsModalForm({
   ariaHeadingId,
   ariaDescriptionId,
@@ -41,18 +15,6 @@ function SettingsModalForm({
   registerFallbackHeading,
   activeSection,
 }) {
-  const fallbackHeadingNode = createFallbackHeadingNode({
-    shouldRenderFallbackHeading,
-    fallbackHeadingId,
-    fallbackHeadingText,
-    registerFallbackHeading,
-  });
-  const activeSectionNode = createActiveSectionNode({
-    activeSection,
-    sectionHeadingId,
-    sectionDescriptionId,
-  });
-
   return (
     <form
       aria-labelledby={ariaHeadingId}
@@ -60,8 +22,17 @@ function SettingsModalForm({
       className={modalStyles.form}
       onSubmit={onSubmit}
     >
-      {fallbackHeadingNode}
-      {activeSectionNode}
+      <FallbackHeading
+        shouldRender={shouldRenderFallbackHeading}
+        id={fallbackHeadingId}
+        text={fallbackHeadingText}
+        register={registerFallbackHeading}
+      />
+      <ActiveSectionRenderer
+        activeSection={activeSection}
+        headingId={sectionHeadingId}
+        descriptionId={sectionDescriptionId}
+      />
     </form>
   );
 }

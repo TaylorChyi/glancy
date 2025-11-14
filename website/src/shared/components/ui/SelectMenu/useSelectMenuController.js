@@ -69,23 +69,17 @@ const useTriggerKeyDownHandler = ({ hasOptions, menuRef, setOpen }) =>
     [hasOptions, menuRef, setOpen],
   );
 
-const useSelectMenuInteractions = ({ hasOptions, onChange }) => {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef(null);
-  const menuRef = useRef(null);
-
-  useMenuNavigation(open, menuRef, triggerRef, setOpen);
-
+const useSelectMenuHandlers = ({ hasOptions, onChange, setOpen }) => {
   const handleToggle = useCallback(() => {
     if (!hasOptions) {
       return;
     }
     setOpen((prev) => !prev);
-  }, [hasOptions]);
+  }, [hasOptions, setOpen]);
 
   const handleClose = useCallback(() => {
     setOpen(false);
-  }, []);
+  }, [setOpen]);
 
   const handleSelect = useCallback(
     (option) => {
@@ -95,8 +89,24 @@ const useSelectMenuInteractions = ({ hasOptions, onChange }) => {
       onChange?.(option.rawValue);
       setOpen(false);
     },
-    [onChange],
+    [onChange, setOpen],
   );
+
+  return { handleToggle, handleClose, handleSelect };
+};
+
+const useSelectMenuInteractions = ({ hasOptions, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+
+  useMenuNavigation(open, menuRef, triggerRef, setOpen);
+
+  const { handleToggle, handleClose, handleSelect } = useSelectMenuHandlers({
+    hasOptions,
+    onChange,
+    setOpen,
+  });
 
   const handleTriggerKeyDown = useTriggerKeyDownHandler({
     hasOptions,

@@ -68,7 +68,7 @@ const { default: TtsButton } = await import(
   "@shared/components/tts/TtsButton.jsx"
 );
 
-describe("TtsButton", () => {
+describe("TtsButton", function () {
   afterEach(() => {
     play.mockReset();
     stop.mockReset();

@@ -63,28 +63,10 @@ const resolveLanguageSwap = ({
 };
 
 const useSourceLanguageOptions = (t) =>
-  useMemo(
-    () => buildSourceLanguageOptions(t),
-    [
-      t.dictionarySourceLanguageAuto,
-      t.dictionarySourceLanguageAutoDescription,
-      t.dictionarySourceLanguageEnglish,
-      t.dictionarySourceLanguageEnglishDescription,
-      t.dictionarySourceLanguageChinese,
-      t.dictionarySourceLanguageChineseDescription,
-    ],
-  );
+  useMemo(() => buildSourceLanguageOptions(t), [t]);
 
 const useTargetLanguageOptions = (t) =>
-  useMemo(
-    () => buildTargetLanguageOptions(t),
-    [
-      t.dictionaryTargetLanguageChinese,
-      t.dictionaryTargetLanguageChineseDescription,
-      t.dictionaryTargetLanguageEnglish,
-      t.dictionaryTargetLanguageEnglishDescription,
-    ],
-  );
+  useMemo(() => buildTargetLanguageOptions(t), [t]);
 
 const useDictionaryFlavorValue = (
   dictionarySourceLanguage,
@@ -119,7 +101,7 @@ const useLanguageSwap = ({
     setDictionaryTargetLanguage,
   ]);
 
-export function useDictionaryLanguageConfig({ t }) {
+const useDictionaryLanguageStoreValues = () => {
   const dictionarySourceLanguage = useSettingsStore(
     (state) => state.dictionarySourceLanguage,
   );
@@ -132,6 +114,22 @@ export function useDictionaryLanguageConfig({ t }) {
   const setDictionaryTargetLanguage = useSettingsStore(
     (state) => state.setDictionaryTargetLanguage,
   );
+
+  return {
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionarySourceLanguage,
+    setDictionaryTargetLanguage,
+  };
+};
+
+export function useDictionaryLanguageConfig({ t }) {
+  const {
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionarySourceLanguage,
+    setDictionaryTargetLanguage,
+  } = useDictionaryLanguageStoreValues();
   const sourceLanguageOptions = useSourceLanguageOptions(t);
   const targetLanguageOptions = useTargetLanguageOptions(t);
   const dictionaryFlavor = useDictionaryFlavorValue(

@@ -8,36 +8,28 @@ export const useResponseStyleSectionHandlers = ({
   onFieldCommit,
 }) => {
   const handleRetry = useCallback(() => {
-    if (typeof onRetry === "function") {
-      onRetry();
-    }
+    typeof onRetry === "function" && onRetry();
   }, [onRetry]);
-
-  const handleChange = useCallback(
-    (fieldId, value) => {
-      if (typeof onFieldChange === "function") {
-        onFieldChange(fieldId, value);
-      }
-    },
-    [onFieldChange],
-  );
-
-  const handleCommit = useCallback(
-    (fieldId) => {
-      if (typeof onFieldCommit === "function") {
-        onFieldCommit(fieldId);
-      }
-    },
-    [onFieldCommit],
-  );
-
+  const handleChange = useCallback((fieldId, value) => {
+    typeof onFieldChange === "function" && onFieldChange(fieldId, value);
+  }, [onFieldChange]);
+  const handleCommit = useCallback((fieldId) => {
+    typeof onFieldCommit === "function" && onFieldCommit(fieldId);
+  }, [onFieldCommit]);
   return useMemo(
     () => ({
       onRetry: typeof onRetry === "function" ? handleRetry : undefined,
       onFieldChange: typeof onFieldChange === "function" ? handleChange : noop,
       onFieldCommit: typeof onFieldCommit === "function" ? handleCommit : noop,
     }),
-    [handleChange, handleCommit, handleRetry, onFieldChange, onFieldCommit, onRetry],
+    [
+      handleChange,
+      handleCommit,
+      handleRetry,
+      onFieldChange,
+      onFieldCommit,
+      onRetry,
+    ],
   );
 };
 

@@ -59,6 +59,48 @@ const useUserMenuModalHandlers = (
   };
 };
 
+const useUserMenuHandlersMemo = ({ openSettings, openShortcuts, openUpgrade, openLogout }) =>
+  useMemo(
+    () => ({ openSettings, openShortcuts, openUpgrade, openLogout }),
+    [openLogout, openSettings, openShortcuts, openUpgrade],
+  );
+
+const useUserMenuModalsMemo = ({
+  closeUpgrade,
+  closeLogout,
+  closeSettings,
+  confirmLogout,
+  isPro,
+  logoutOpen,
+  settingsState,
+  upgradeOpen,
+  userEmail,
+}) =>
+  useMemo(
+    () => ({
+      isPro,
+      upgradeOpen,
+      closeUpgrade,
+      settingsState,
+      closeSettings,
+      logoutOpen,
+      confirmLogout,
+      closeLogout,
+      email: userEmail ?? "",
+    }),
+    [
+      closeLogout,
+      closeSettings,
+      closeUpgrade,
+      confirmLogout,
+      isPro,
+      logoutOpen,
+      settingsState,
+      upgradeOpen,
+      userEmail,
+    ],
+  );
+
 const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
   const { upgradeOpen, logoutOpen, settingsState } = state;
   const {
@@ -72,35 +114,24 @@ const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
     openLogout,
   } = handlerFns;
 
-  const handlers = useMemo(
-    () => ({ openSettings, openShortcuts, openUpgrade, openLogout }),
-    [openLogout, openSettings, openShortcuts, openUpgrade],
-  );
+  const handlers = useUserMenuHandlersMemo({
+    openSettings,
+    openShortcuts,
+    openUpgrade,
+    openLogout,
+  });
 
-  const modals = useMemo(
-    () => ({
-      isPro,
-      upgradeOpen,
-      closeUpgrade,
-      settingsState,
-      closeSettings,
-      logoutOpen,
-      confirmLogout,
-      closeLogout,
-      email: user?.email ?? "",
-    }),
-    [
-      closeLogout,
-      closeSettings,
-      closeUpgrade,
-      confirmLogout,
-      isPro,
-      logoutOpen,
-      settingsState,
-      upgradeOpen,
-      user?.email,
-    ],
-  );
+  const modals = useUserMenuModalsMemo({
+    closeUpgrade,
+    closeLogout,
+    closeSettings,
+    confirmLogout,
+    isPro,
+    logoutOpen,
+    settingsState,
+    upgradeOpen,
+    userEmail: user?.email,
+  });
 
   return { handlers, modals };
 };

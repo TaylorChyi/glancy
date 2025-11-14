@@ -33,15 +33,7 @@ const useVoiceSelectorStyles = (variant, className) => {
   return buildSelectClassName(normalizedVariant, className);
 };
 
-export default function VoiceSelector({
-  lang,
-  id,
-  className = "",
-  variant = "form",
-  ...props
-}) {
-  const api = useApi();
-  const { t } = useLanguage();
+const useVoiceSelectorState = (api, lang) => {
   const user = useUserStore((s) => s.user);
   const sessionToken = user?.token;
   const subscriptionSignature = resolveSubscriptionSignature(user);
@@ -51,15 +43,30 @@ export default function VoiceSelector({
     sessionToken,
     subscriptionSignature,
   });
-
   const isPro = isUserPro(user);
+  const { selected, handleChange } = useVoiceSelection(lang);
+
+  return { voices, isPro, selected, handleChange };
+};
+
+export default function VoiceSelector({
+  lang,
+  id,
+  className = "",
+  variant = "form",
+  ...props
+}) {
+  const api = useApi();
+  const { t } = useLanguage();
+  const { voices, isPro, selected, handleChange } = useVoiceSelectorState(
+    api,
+    lang,
+  );
   const composedClassName = useVoiceSelectorStyles(variant, className);
   const renderVoiceOption = useMemo(
     () => createVoiceOptionRenderer(isPro, t.upgradeAvailable),
     [isPro, t.upgradeAvailable],
   );
-  const { selected, handleChange } = useVoiceSelection(lang);
-
   return (
     <select
       id={id}

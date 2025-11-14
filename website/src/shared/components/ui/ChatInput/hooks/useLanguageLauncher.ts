@@ -84,28 +84,29 @@ export default function useLanguageLauncher({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const emitVariantOpen = useVariantOpenEmitter();
-  const filterScenario = useLauncherFilterScenario(
-    source,
-    target,
-    emitVariantOpen,
-  );
+  const {
+    variants,
+    activeVariant,
+    setActiveKey,
+    handleVariantEnter,
+  } = useLauncherFilterScenario(source, target, emitVariantOpen);
   const visibility = useLauncherOpenScenario({
-    variants: filterScenario.variants,
-    activeVariant: filterScenario.activeVariant,
-    setActiveKey: filterScenario.setActiveKey,
+    variants,
+    activeVariant,
+    setActiveKey,
     emitVariantOpen,
   });
   const { handleSelect } = useLauncherSubmitScenario(
-    filterScenario.variants,
+    variants,
     visibility.handleClose,
   );
 
   return {
     triggerRef,
     menuRef,
-    variants: filterScenario.variants,
-    activeVariant: filterScenario.activeVariant,
-    handleVariantEnter: filterScenario.handleVariantEnter,
+    variants,
+    activeVariant,
+    handleVariantEnter,
     handleSelect,
     ...visibility,
   };

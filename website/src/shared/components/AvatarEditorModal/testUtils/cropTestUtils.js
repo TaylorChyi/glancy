@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { expect, jest } from "@jest/globals";
 
 export const buildMatrix = ({
   scale,

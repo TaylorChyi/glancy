@@ -7,6 +7,13 @@ import { useUsernameEditingActions } from "./useUsernameEditingActions.js";
 import { useUsernameViewModel } from "./useUsernameViewModel.js";
 import { useUsernameEditorState } from "./useUsernameEditorState.js";
 
+const controllerDefaults = {
+  className: "",
+  inputClassName: "",
+  buttonClassName: "",
+  renderInlineAction: true,
+};
+
 const buildControllerResult = (state, viewModel) => ({
   mode: state.mode,
   layout: viewModel.layout,
@@ -77,43 +84,33 @@ function useUsernameControllerViewModel({
   });
 }
 
-export default function useUsernameEditorController({
-  username,
-  emptyDisplayValue,
-  className = "",
-  inputClassName = "",
-  buttonClassName = "",
-  renderInlineAction = true,
-  onSubmit,
-  onSuccess,
-  onFailure,
-  onResolveAction,
-  t,
-}) {
-  const { state, dispatch, inputRef, controlId, messageId } =
-    useUsernameControllerState(username);
-  const handlers = useUsernameControllerHandlers({
-    state,
-    dispatch,
-    onSubmit,
-    onSuccess,
-    onFailure,
-  });
-
-  const viewModel = useUsernameControllerViewModel({
-    state,
-    emptyDisplayValue,
+export default function useUsernameEditorController(userProps) {
+  const {
+    username,
     className,
     inputClassName,
     buttonClassName,
-    t,
-    inputRef,
-    handlers,
-    controlId,
-    messageId,
     renderInlineAction,
-    onResolveAction,
+    ...handlersProps
+  } = { ...controllerDefaults, ...userProps };
+  const controllerState = useUsernameControllerState(username);
+  const handlers = useUsernameControllerHandlers({
+    state: controllerState.state,
+    dispatch: controllerState.dispatch,
+    onSubmit: handlersProps.onSubmit,
+    onSuccess: handlersProps.onSuccess,
+    onFailure: handlersProps.onFailure,
   });
-
-  return buildControllerResult(state, viewModel);
+  const viewModel = useUsernameControllerViewModel({
+    ...controllerState,
+    emptyDisplayValue: handlersProps.emptyDisplayValue,
+    className,
+    inputClassName,
+    buttonClassName,
+    t: handlersProps.t,
+    handlers,
+    renderInlineAction,
+    onResolveAction: handlersProps.onResolveAction,
+  });
+  return buildControllerResult(controllerState.state, viewModel);
 }

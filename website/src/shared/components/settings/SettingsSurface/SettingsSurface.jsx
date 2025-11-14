@@ -31,6 +31,22 @@ const composeSurfaceClassName = (variant, className) =>
     .filter(Boolean)
     .join(" ");
 
+const useSettingsSurfaceIds = ({
+  description,
+  providedHeadingId,
+  providedDescriptionId,
+}) => {
+  const generatedHeadingId = useId();
+  const generatedDescriptionId = useId();
+
+  return {
+    headingId: providedHeadingId ?? generatedHeadingId,
+    descriptionId: description
+      ? providedDescriptionId ?? generatedDescriptionId
+      : undefined,
+  };
+};
+
 const SettingsSurface = forwardRef(function SettingsSurface(
   {
     title,
@@ -47,14 +63,11 @@ const SettingsSurface = forwardRef(function SettingsSurface(
   },
   ref,
 ) {
-  const generatedHeadingId = useId();
-  const generatedDescriptionId = useId();
-
-  const headingId = providedHeadingId ?? generatedHeadingId;
-  const descriptionId = description
-    ? (providedDescriptionId ?? generatedDescriptionId)
-    : undefined;
-
+  const { headingId, descriptionId } = useSettingsSurfaceIds({
+    description,
+    providedHeadingId,
+    providedDescriptionId,
+  });
   const Component = as ?? (onSubmit ? "form" : "section");
   const composedClassName = composeSurfaceClassName(variant, className);
   const headerContent = resolveHeaderContent(renderHeader, {

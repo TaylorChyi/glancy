@@ -54,18 +54,8 @@ export const useLayoutModel = ({
     containerRef,
     sidebarProps,
   });
-  const { main } = useMainModel({
-    isMobile,
-    children,
-    onToggleSidebar,
-    onMainMiddleScroll,
-  });
-  const containerStyle = useContainerStyleModel({
-    shouldRenderDocker,
-    dockerHeight,
-    isMobile,
-    sidebarWidth,
-  });
+  const { main } = useMainModel({ isMobile, children, onToggleSidebar, onMainMiddleScroll });
+  const containerStyle = useContainerStyleModel({ shouldRenderDocker, dockerHeight, isMobile, sidebarWidth });
 
   return {
     viewProps: {

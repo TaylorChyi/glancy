@@ -25,5 +25,10 @@ function SegmentedControlOption({ option, isActive, isDisabled, onSelect }) {
     </button>
   );
 }
-SegmentedControlOption.propTypes = { option: segmentedOptionShape.isRequired, isActive: PropTypes.bool.isRequired, isDisabled: PropTypes.bool.isRequired, onSelect: PropTypes.func.isRequired };
+SegmentedControlOption.propTypes = {
+  option: segmentedOptionShape.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  isDisabled: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
 export default SegmentedControlOption;

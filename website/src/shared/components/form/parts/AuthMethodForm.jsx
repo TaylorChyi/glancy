@@ -64,7 +64,43 @@ const SubmitButton = ({ label }) => (
   </Button>
 );
 
-function AuthMethodForm({
+const resolvePasswordPlaceholder = (passwordPlaceholder, method) =>
+  typeof passwordPlaceholder === "function"
+    ? passwordPlaceholder(method)
+    : passwordPlaceholder;
+
+const AuthMethodFormContent = ({
+  account,
+  handleSendCode,
+  handleSubmit,
+  hasCodeButton,
+  method,
+  passHolder,
+  password,
+  placeholders,
+  setAccount,
+  setPassword,
+  t,
+}) => (
+  <form onSubmit={handleSubmit} className={styles["auth-form"]}>
+    <AccountField
+      method={method}
+      account={account}
+      setAccount={setAccount}
+      placeholders={placeholders}
+    />
+    <PasswordRow
+      hasCodeButton={hasCodeButton}
+      password={password}
+      setPassword={setPassword}
+      passHolder={passHolder}
+      handleSendCode={handleSendCode}
+    />
+    <SubmitButton label={t.continueButton} />
+  </form>
+);
+
+const AuthMethodForm = ({
   account,
   availableFormMethods,
   handleSendCode,
@@ -77,35 +113,20 @@ function AuthMethodForm({
   setPassword,
   showCodeButton,
   t,
-}) {
-  if (!availableFormMethods.includes(method)) {
-    return null;
-  }
-
-  const passHolder =
-    typeof passwordPlaceholder === "function"
-      ? passwordPlaceholder(method)
-      : passwordPlaceholder;
-  const hasCodeButton = showCodeButton(method);
-
-  return (
-    <form onSubmit={handleSubmit} className={styles["auth-form"]}>
-      <AccountField
-        method={method}
-        account={account}
-        setAccount={setAccount}
-        placeholders={placeholders}
-      />
-      <PasswordRow
-        hasCodeButton={hasCodeButton}
-        password={password}
-        setPassword={setPassword}
-        passHolder={passHolder}
-        handleSendCode={handleSendCode}
-      />
-      <SubmitButton label={t.continueButton} />
-    </form>
-  );
-}
+}) =>
+  availableFormMethods.includes(method) ? (
+    <AuthMethodFormContent
+      account={account}
+      handleSendCode={handleSendCode}
+      handleSubmit={handleSubmit}
+      hasCodeButton={showCodeButton(method)}
+      method={method}
+      passHolder={resolvePasswordPlaceholder(passwordPlaceholder, method)}
+      password={password}
+      placeholders={placeholders}
+      setAccount={setAccount}
+      setPassword={setPassword}
+      t={t} />
+  ) : null;
 
 export default AuthMethodForm;

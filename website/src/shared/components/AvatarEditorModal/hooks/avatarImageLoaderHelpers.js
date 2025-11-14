@@ -66,37 +66,19 @@ const applySvgResult = ({
   });
 };
 
-const handleSvgFetch = async ({
-  source,
-  controller,
-  fallbackViewport,
-  viewportSize,
-  latestSourceRef,
-  setNaturalSize,
-  shouldRecenterRef,
-  recenterViewport,
-}) => {
-  const svgText = await fetchSvgContent({ source, controller });
+const handleSvgFetch = async (config) => {
+  const svgText = await fetchSvgContent(config);
   if (!svgText) {
-    applyFallbackSize({
-      fallbackViewport,
-      setNaturalSize,
-      shouldRecenterRef,
-      recenterViewport,
-    });
+    applyFallbackSize(config);
     return;
   }
-  if (controller.signal.aborted || latestSourceRef.current !== source) {
+  if (
+    config.controller.signal.aborted ||
+    config.latestSourceRef.current !== config.source
+  ) {
     return;
   }
-  applySvgResult({
-    svgText,
-    fallbackViewport,
-    viewportSize,
-    setNaturalSize,
-    shouldRecenterRef,
-    recenterViewport,
-  });
+  applySvgResult({ svgText, ...config });
 };
 
 export const getFallbackViewport = (viewportSize) =>

@@ -25,18 +25,12 @@ export const useSubmissionHandlers = ({
   formRef,
   releaseFocus,
 }: UseSubmissionHandlersParams): UseSubmissionHandlersResult => {
-  const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      if (value.trim() === "") {
-        return;
-      }
-      releaseFocus();
-      onSubmit?.(event);
-    },
-    [onSubmit, releaseFocus, value],
-  );
-
+  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (value.trim() === "") return;
+    releaseFocus();
+    onSubmit?.(event);
+  }, [onSubmit, releaseFocus, value]);
   const onTextareaKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -46,16 +40,9 @@ export const useSubmissionHandlers = ({
     },
     [formRef],
   );
-
-  const onActionSubmit = useCallback(() => {
-    formRef.current?.requestSubmit();
-  }, [formRef]);
-
+  const onActionSubmit = useCallback(() => formRef.current?.requestSubmit(), [formRef]);
   return {
-    formProps: {
-      ref: formRef,
-      onSubmit: handleSubmit,
-    },
+    formProps: { ref: formRef, onSubmit: handleSubmit },
     onTextareaKeyDown,
     onActionSubmit,
   };

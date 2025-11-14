@@ -10,7 +10,10 @@ import { useLanguageControlsConfig } from "./useLanguageControlsConfig";
 import { useSubmissionHandlers } from "./useSubmissionHandlers";
 import { useTextareaAutoResize } from "./useTextareaAutoResize";
 import { useTextareaChangeHandler } from "./useTextareaChangeHandler";
-import { useTextareaFocusBridge } from "./useTextareaFocusBridge";
+import {
+  UseTextareaFocusBridgeResult,
+  useTextareaFocusBridge,
+} from "./useTextareaFocusBridge";
 import { useTextareaProps } from "./useTextareaProps";
 
 const identityLanguage = (language: LanguageValue) => language;
@@ -100,13 +103,16 @@ const buildActionButtonParams = (
   restoreFocus: deps.restoreFocus,
 });
 
-export default function useActionInputBehavior(
-  params: UseActionInputBehaviorParams,
-): UseActionInputBehaviorResult {
-  const config = normalizeParams(params);
-  const { formRef, textareaRef, setTextareaRef, restoreFocus, releaseFocus } =
-    useTextareaFocusBridge({ inputRef: config.inputRef });
+type TextareaHandlersDeps = {
+  config: NormalizedParams;
+  focusBridge: UseTextareaFocusBridgeResult;
+};
 
+const useTextareaHandlers = ({
+  config,
+  focusBridge,
+}: TextareaHandlersDeps) => {
+  const { textareaRef, formRef, restoreFocus } = focusBridge;
   const { resize } = useTextareaAutoResize({
     textareaRef,
     maxRows: config.maxRows,
@@ -121,47 +127,68 @@ export default function useActionInputBehavior(
     formRef,
     restoreFocus,
   });
+
+  return { changeHandler, focusHandlers };
+};
+
+const useLanguageControlsState = (
+  config: NormalizedParams,
+): UseActionInputBehaviorResult["languageControls"] => {
   const languageConfig = useLanguageControlsConfig(
     buildLanguageControlsConfigParams(config),
   );
   const languageActions = useLanguageActions(
     buildLanguageActionsParams(config),
   );
-  const languageControls: UseActionInputBehaviorResult["languageControls"] = {
+
+  return {
     isVisible: languageConfig.isVisible,
     props: {
       ...languageConfig.props,
       ...languageActions,
     },
   };
+};
+
+export default function useActionInputBehavior(
+  params: UseActionInputBehaviorParams,
+): UseActionInputBehaviorResult {
+  const config = normalizeParams(params);
+  const focusBridge = useTextareaFocusBridge({ inputRef: config.inputRef });
+  const textareaHandlers = useTextareaHandlers({
+    config,
+    focusBridge,
+  });
+
   const submissionHandlers = useSubmissionHandlers({
     value: config.value,
     onSubmit: config.onSubmit,
-    formRef,
-    releaseFocus,
+    formRef: focusBridge.formRef,
+    releaseFocus: focusBridge.releaseFocus,
   });
   const textareaProps = useTextareaProps(
     buildTextareaPropsParams(config, {
-      setTextareaRef,
-      onChange: changeHandler,
+      setTextareaRef: focusBridge.setTextareaRef,
+      onChange: textareaHandlers.changeHandler,
       onKeyDown: submissionHandlers.onTextareaKeyDown,
-      onFocus: focusHandlers.onFocus,
-      onBlur: focusHandlers.onBlur,
+      onFocus: textareaHandlers.focusHandlers.onFocus,
+      onBlur: textareaHandlers.focusHandlers.onBlur,
     }),
   );
   const actionButtonProps = useActionButtonConfig(
     buildActionButtonParams(config, {
       onSubmit: submissionHandlers.onActionSubmit,
-      restoreFocus,
+      restoreFocus: focusBridge.restoreFocus,
     }),
   );
+  const languageControls = useLanguageControlsState(config);
 
   return {
     formProps: submissionHandlers.formProps,
     textareaProps,
     languageControls,
     actionButtonProps,
-    restoreFocus,
+    restoreFocus: focusBridge.restoreFocus,
   };
 }
 

@@ -6,25 +6,27 @@ import {
 } from "../hooks/cropStrategies/geometryStrategy.js";
 import { appendImage, expectRectCloseTo } from "../testUtils/cropTestUtils.js";
 
+const buildResolveParams = () => ({
+  naturalWidth: 600,
+  naturalHeight: 400,
+  viewportSize: 200,
+  displayMetrics: { scaleFactor: 0.5 },
+  offset: { x: 20, y: -10 },
+});
+
+const buildGeometryExpected = (params) =>
+  computeCropSourceRect({
+    naturalWidth: params.naturalWidth,
+    naturalHeight: params.naturalHeight,
+    viewportSize: params.viewportSize,
+    scaleFactor: params.displayMetrics.scaleFactor,
+    offset: params.offset,
+  });
+
 describe("geometryStrategy helpers", () => {
   it("Given valid metrics When resolveGeometryCropRect Then matches computeCropSourceRect", () => {
-    const params = {
-      naturalWidth: 600,
-      naturalHeight: 400,
-      viewportSize: 200,
-      displayMetrics: { scaleFactor: 0.5 },
-      offset: { x: 20, y: -10 },
-    };
-
-    const expected = computeCropSourceRect({
-      naturalWidth: params.naturalWidth,
-      naturalHeight: params.naturalHeight,
-      viewportSize: params.viewportSize,
-      scaleFactor: params.displayMetrics.scaleFactor,
-      offset: params.offset,
-    });
-
-    expect(resolveGeometryCropRect(params)).toEqual(expected);
+    const params = buildResolveParams();
+    expect(resolveGeometryCropRect(params)).toEqual(buildGeometryExpected(params));
   });
 
   it("Given invalid scale factor When resolveGeometryCropRect Then returns null", () => {

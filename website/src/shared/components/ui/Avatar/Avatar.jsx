@@ -60,29 +60,18 @@ function Avatar({
     className,
     onError,
   });
+  const widgetProps = {
+    alt,
+    className: mergedClassName,
+    "data-elevation": elevation,
+    "data-slot": VISUAL_SLOT,
+    ...props,
+  };
 
-  if (displaySrc) {
-    return (
-      <img
-        src={displaySrc}
-        alt={alt}
-        className={mergedClassName}
-        onError={handleImageError}
-        data-elevation={elevation}
-        data-slot={VISUAL_SLOT}
-        {...props}
-      />
-    );
-  }
-  return (
-    <ThemeIcon
-      name="default-user-avatar"
-      alt={alt}
-      className={mergedClassName}
-      data-elevation={elevation}
-      data-slot={VISUAL_SLOT}
-      {...props}
-    />
+  return displaySrc ? (
+    <img src={displaySrc} onError={handleImageError} {...widgetProps} />
+  ) : (
+    <ThemeIcon name="default-user-avatar" {...widgetProps} />
   );
 }
 

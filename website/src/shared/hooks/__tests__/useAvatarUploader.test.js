@@ -62,20 +62,7 @@ const expectResultState = (result, status, error = null) => {
   expect(result.current.error).toBe(error);
 };
 
-describe("useAvatarUploader", () => {
-  beforeAll(async () => {
-    ({ default: useAvatarUploader, AVATAR_UPLOAD_STATUS } = await import(
-      "../useAvatarUploader.js"
-    ));
-  });
-
-  beforeEach(() => {
-    mockUseApi.mockReset();
-    mockUseUser.mockReset();
-    mockCacheBust.mockReset();
-    mockCacheBust.mockImplementation((url) => `${url}?cache`);
-  });
-
+const registerSuccessScenarios = () => {
   describe("success scenarios", () => {
     /**
      * 测试目标：提供有效文件与用户上下文时应调用上传接口并刷新用户头像。
@@ -115,7 +102,9 @@ describe("useAvatarUploader", () => {
       expectResultState(result, AVATAR_UPLOAD_STATUS.succeeded);
     });
   });
+};
 
+const registerValidationScenarios = () => {
   describe("validation scenarios", () => {
     /**
      * 测试目标：当未选择任何文件时不应触发上传流程。
@@ -169,7 +158,9 @@ describe("useAvatarUploader", () => {
       expect(result.current.error?.code).toBe("avatar-upload-missing-user");
     });
   });
+};
 
+const registerErrorScenarios = () => {
   describe("error scenarios", () => {
     /**
      * 测试目标：上传接口异常时应回调 onError 并保留错误对象。
@@ -200,4 +191,23 @@ describe("useAvatarUploader", () => {
       expect(setUser).not.toHaveBeenCalled();
     });
   });
+};
+
+describe("useAvatarUploader", () => {
+  beforeAll(async () => {
+    ({ default: useAvatarUploader, AVATAR_UPLOAD_STATUS } = await import(
+      "../useAvatarUploader.js"
+    ));
+  });
+
+  beforeEach(() => {
+    mockUseApi.mockReset();
+    mockUseUser.mockReset();
+    mockCacheBust.mockReset();
+    mockCacheBust.mockImplementation((url) => `${url}?cache`);
+  });
+
+  registerSuccessScenarios();
+  registerValidationScenarios();
+  registerErrorScenarios();
 });

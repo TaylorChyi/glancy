@@ -51,6 +51,61 @@ const BASE_SECTIONS = [
   },
 ];
 
+function buildBaseViewportProps() {
+  const onSectionSelect = jest.fn();
+  const onPanelElementChange = jest.fn();
+  const onHeadingElementChange = jest.fn();
+  const renderCloseAction = jest.fn(({ className }) => (
+    <button
+      type="button"
+      data-testid="close-action"
+      className={className}
+      aria-label="Close"
+    >
+      ×
+    </button>
+  ));
+
+  return {
+    callbacks: {
+      onSectionSelect,
+      onPanelElementChange,
+      onHeadingElementChange,
+    },
+    props: {
+      sections: BASE_SECTIONS,
+      activeSectionId: "general",
+      onSectionSelect,
+      tablistLabel: "Preference sections",
+      renderCloseAction,
+      referenceSectionId: "privacy",
+      body: { className: "viewport-body" },
+      nav: {
+        classes: {
+          container: "nav-container",
+          action: "nav-action",
+          nav: "nav-list",
+          button: "nav-button",
+          label: "nav-label",
+          labelText: "nav-label-text",
+          icon: "nav-icon",
+          actionButton: "nav-close",
+        },
+      },
+      panel: {
+        panelId: "general-panel",
+        tabId: "general-tab",
+        headingId: "general-heading",
+        className: "panel-base",
+        surfaceClassName: "panel-surface",
+        probeClassName: "panel-probe",
+      },
+      onHeadingElementChange,
+      onPanelElementChange,
+    },
+  };
+}
+
 /**
  * 测试目标：组件应复用 SettingsNav/SettingsPanel，并维持测量探针与回调管道。
  * 前置条件：提供 sections、导航样式、panel 样式与回调函数。
@@ -67,52 +122,12 @@ const BASE_SECTIONS = [
  *  - 若测量探针缺失或回调未触发视为失败。
  */
 test("Given base props When rendering Then nav wiring and measurement remain intact", async () => {
-  const onSectionSelect = jest.fn();
-  const onPanelElementChange = jest.fn();
-  const onHeadingElementChange = jest.fn();
-  const renderCloseAction = jest.fn(({ className }) => (
-    <button
-      type="button"
-      data-testid="close-action"
-      className={className}
-      aria-label="Close"
-    >
-      ×
-    </button>
-  ));
+  const { callbacks, props } = buildBaseViewportProps();
+  const { onSectionSelect, onPanelElementChange, onHeadingElementChange } =
+    callbacks;
 
   render(
-    <SettingsSectionsViewport
-      sections={BASE_SECTIONS}
-      activeSectionId="general"
-      onSectionSelect={onSectionSelect}
-      tablistLabel="Preference sections"
-      renderCloseAction={renderCloseAction}
-      referenceSectionId="privacy"
-      body={{ className: "viewport-body" }}
-      nav={{
-        classes: {
-          container: "nav-container",
-          action: "nav-action",
-          nav: "nav-list",
-          button: "nav-button",
-          label: "nav-label",
-          labelText: "nav-label-text",
-          icon: "nav-icon",
-          actionButton: "nav-close",
-        },
-      }}
-      panel={{
-        panelId: "general-panel",
-        tabId: "general-tab",
-        headingId: "general-heading",
-        className: "panel-base",
-        surfaceClassName: "panel-surface",
-        probeClassName: "panel-probe",
-      }}
-      onHeadingElementChange={onHeadingElementChange}
-      onPanelElementChange={onPanelElementChange}
-    >
+    <SettingsSectionsViewport {...props}>
       <TestSection
         headingId="general-heading"
         descriptionId="general-description"

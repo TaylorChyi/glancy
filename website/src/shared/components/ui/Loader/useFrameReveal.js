@@ -136,13 +136,7 @@ const OSCILLATING_REVEAL_STRATEGY = {
   },
 };
 
-export default function useFrameReveal(frameToken, options = {}) {
-  const { intervalMs } = options;
-  const [isRevealed, setIsRevealed] = useState(false);
-  const animationFrameRef = useRef(null);
-  const intervalRef = useRef(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
-
+function useInitialReveal(setIsRevealed, animationFrameRef, frameToken) {
   useEffect(() => {
     setIsRevealed(false);
     animationFrameRef.current = scheduleInitialReveal(() => {
@@ -155,8 +149,16 @@ export default function useFrameReveal(frameToken, options = {}) {
         animationFrameRef.current = null;
       }
     };
-  }, [frameToken]);
+  }, [frameToken, setIsRevealed, animationFrameRef]);
+}
 
+function useOscillatingReveal({
+  frameToken,
+  intervalMs,
+  prefersReducedMotion,
+  intervalRef,
+  setIsRevealed,
+}) {
   useEffect(() => {
     if (intervalRef.current !== null) {
       cancelOscillation(intervalRef.current);
@@ -185,7 +187,30 @@ export default function useFrameReveal(frameToken, options = {}) {
         intervalRef.current = null;
       }
     };
-  }, [frameToken, intervalMs, prefersReducedMotion]);
+  }, [
+    frameToken,
+    intervalMs,
+    prefersReducedMotion,
+    intervalRef,
+    setIsRevealed,
+  ]);
+}
+
+export default function useFrameReveal(frameToken, options = {}) {
+  const { intervalMs } = options;
+  const [isRevealed, setIsRevealed] = useState(false);
+  const animationFrameRef = useRef(null);
+  const intervalRef = useRef(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  useInitialReveal(setIsRevealed, animationFrameRef, frameToken);
+  useOscillatingReveal({
+    frameToken,
+    intervalMs,
+    prefersReducedMotion,
+    intervalRef,
+    setIsRevealed,
+  });
 
   return isRevealed;
 }

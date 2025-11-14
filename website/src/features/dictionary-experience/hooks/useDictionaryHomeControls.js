@@ -86,8 +86,7 @@ export function useDictionaryHomeControls({
     focusInput,
     closeToast,
   });
-  const handleShowDictionary =
-    useShowDictionaryHandler(resetDictionaryHomeState);
+  const handleShowDictionary = useShowDictionaryHandler(resetDictionaryHomeState);
   const handleShowLibrary = useShowLibraryHandler(state.setActiveView);
   return {
     focusInput,

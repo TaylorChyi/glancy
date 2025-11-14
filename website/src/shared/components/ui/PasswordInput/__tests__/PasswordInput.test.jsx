@@ -38,6 +38,23 @@ const { default: PasswordInput } = await import(
   "@shared/components/ui/PasswordInput/index.jsx"
 );
 
+const renderPasswordInput = () =>
+  render(
+    <PasswordInput value="secret" onChange={() => {}} placeholder="Password" />,
+  );
+
+const expectInputType = (type) =>
+  expect(screen.getByPlaceholderText("Password")).toHaveAttribute("type", type);
+
+const toggleVisibility = (name) =>
+  fireEvent.click(screen.getByRole("button", { name }));
+
+const expectButtonPressed = (name, pressed) =>
+  expect(screen.getByRole("button", { name })).toHaveAttribute(
+    "aria-pressed",
+    pressed,
+  );
+
 describe("PasswordInput", () => {
   beforeEach(() => {
     currentTheme = "light";
@@ -51,38 +68,19 @@ describe("PasswordInput", () => {
    * the pressed status for accessibility tooling.
    */
   test("toggles visibility state", () => {
-    render(
-      <PasswordInput
-        value="secret"
-        onChange={() => {}}
-        placeholder="Password"
-      />,
-    );
+    renderPasswordInput();
 
-    expect(screen.getByPlaceholderText("Password")).toHaveAttribute(
-      "type",
-      "password",
-    );
+    expectInputType("password");
 
-    fireEvent.click(screen.getByRole("button", { name: "Show password" }));
+    toggleVisibility("Show password");
 
-    expect(screen.getByPlaceholderText("Password")).toHaveAttribute(
-      "type",
-      "text",
-    );
-    expect(
-      screen.getByRole("button", { name: "Hide password" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expectInputType("text");
+    expectButtonPressed("Hide password", "true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Hide password" }));
+    toggleVisibility("Hide password");
 
-    expect(
-      screen.getByRole("button", { name: "Show password" }),
-    ).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByPlaceholderText("Password")).toHaveAttribute(
-      "type",
-      "password",
-    );
+    expectButtonPressed("Show password", "false");
+    expectInputType("password");
   });
 
   /**

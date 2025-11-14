@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import ThemeIcon from "@shared/components/ui/Icon";
 import { useTtsPlayer } from "@shared/hooks/useTtsPlayer.js";
 import { useVoiceStore } from "@core/store";
@@ -11,7 +11,7 @@ import TtsFeedbackSurfaces from "./TtsFeedbackSurfaces.jsx";
  * Unified TTS play button for words and sentences.
  * Handles loading/playing states and stops playback on second click.
  */
-export default function TtsButton({
+function useTtsButtonState({
   text,
   lang,
   voice,
@@ -26,8 +26,20 @@ export default function TtsButton({
     () => (scope === "sentence" ? t.playSentenceAudio : t.playWordAudio),
     [scope, t],
   );
-
-  const handleClick = async () => {
+  const btnClass = useMemo(
+    () =>
+      [
+        styles.button,
+        playing && styles.playing,
+        loading && styles.loading,
+        disabled && styles.disabled,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    [disabled, loading, playing],
+  );
+  const iconSize = size || (scope === "sentence" ? 24 : 20);
+  const handleClick = useCallback(async () => {
     if (disabled || loading) return;
     if (playing) {
       stop();
@@ -35,21 +47,23 @@ export default function TtsButton({
     }
     const selectedVoice = voice ?? useVoiceStore.getState().getVoice(lang);
     await play({ text, lang, voice: selectedVoice });
+  }, [disabled, loading, playing, stop, play, text, lang, voice]);
+
+  return {
+    tooltip,
+    handleClick,
+    btnClass,
+    iconSize,
+    feedback,
+    loading,
+    t,
   };
+}
 
-  //
-  //  - UI 仅展示裸图标，按钮配色由 CSS 模块依据语义类自洽计算，逻辑层只负责组合基础状态。
-  //  - 保留 playing/loading/disabled 类用于覆盖色彩，其余语义交由样式统一治理。
-  const btnClass = [
-    styles.button,
-    playing && styles.playing,
-    loading && styles.loading,
-    disabled && styles.disabled,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const iconSize = size || (scope === "sentence" ? 24 : 20);
+export default function TtsButton(props) {
+  const { tooltip, handleClick, btnClass, iconSize, feedback, loading, t } =
+    useTtsButtonState(props);
+  const { disabled = false } = props;
 
   return (
     <>

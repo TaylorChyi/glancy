@@ -27,33 +27,7 @@ const TABLE_TAG_CLASS_MAP = {
 
 export default function buildMarkdownComponents({ injectBreaks }) {
   const components = Object.fromEntries(
-    BREAKABLE_TAGS.map((tag) => {
-      const BreakableElement = function BreakableElement({
-        children,
-        ...elementProps
-      }) {
-        const Tag = tag;
-        const { className, ...restElementProps } = elementProps;
-        const resolvedClassName = joinClassNames(
-          className,
-          TABLE_TAG_CLASS_MAP[tag],
-        );
-        return createElement(
-          Tag,
-          {
-            ...restElementProps,
-            className: resolvedClassName,
-          },
-          injectBreaks(children),
-        );
-      };
-
-      BreakableElement.propTypes = {
-        children: PropTypes.node,
-      };
-
-      return [tag, BreakableElement];
-    }),
+    BREAKABLE_TAGS.map((tag) => [tag, createBreakableElement(tag, injectBreaks)]),
   );
 
   return {
@@ -85,3 +59,32 @@ TableRenderer.propTypes = {
   children: PropTypes.node,
   className: PropTypes.string,
 };
+
+function createBreakableElement(tag, injectBreaks) {
+  const BreakableElement = function BreakableElement({
+    children,
+    ...elementProps
+  }) {
+    const Tag = tag;
+    const { className, ...restElementProps } = elementProps;
+    const resolvedClassName = joinClassNames(
+      className,
+      TABLE_TAG_CLASS_MAP[tag],
+    );
+
+    return createElement(
+      Tag,
+      {
+        ...restElementProps,
+        className: resolvedClassName,
+      },
+      injectBreaks(children),
+    );
+  };
+
+  BreakableElement.propTypes = {
+    children: PropTypes.node,
+  };
+
+  return BreakableElement;
+}

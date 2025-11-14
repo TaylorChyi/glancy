@@ -75,6 +75,62 @@ const buildSearchEmptyState = (t) => ({
   description: t.searchEmptyDescription,
 });
 
+const buildStateProps = (state) => ({
+  inputRef: state.inputRef,
+  text: state.text,
+  setText: state.setText,
+  activeView: state.activeView,
+  entry: state.entry,
+  finalText: state.finalText,
+  loading: state.loading,
+});
+
+const buildLanguageProps = (languageContext, languageConfig) => ({
+  t: languageContext.t,
+  dictionarySourceLanguage: languageConfig.dictionarySourceLanguage,
+  setDictionarySourceLanguage: languageConfig.setDictionarySourceLanguage,
+  dictionaryTargetLanguage: languageConfig.dictionaryTargetLanguage,
+  setDictionaryTargetLanguage: languageConfig.setDictionaryTargetLanguage,
+  sourceLanguageOptions: languageConfig.sourceLanguageOptions,
+  targetLanguageOptions: languageConfig.targetLanguageOptions,
+  handleSwapLanguages: languageConfig.handleSwapLanguages,
+  lang: languageContext.lang,
+  dictionaryFlavor: languageConfig.dictionaryFlavor,
+  dictionaryTargetLanguageLabel:
+    languageContext.t.dictionaryTargetLanguageLabel,
+  dictionarySourceLanguageLabel:
+    languageContext.t.dictionarySourceLanguageLabel,
+  dictionarySwapLanguagesLabel: languageContext.t.dictionarySwapLanguages,
+  chatInputPlaceholder: languageContext.t.inputPlaceholder,
+});
+
+const buildControlProps = ({ requests, homeControls }) => ({
+  handleSend: requests.handleSend,
+  handleShowDictionary: homeControls.handleShowDictionary,
+  handleShowLibrary: homeControls.handleShowLibrary,
+  handleSelectHistory: requests.handleSelectHistory,
+  focusInput: homeControls.focusInput,
+});
+
+const buildNotificationProps = ({ popup, toast }) => ({
+  popupOpen: popup.popupOpen,
+  popupMsg: popup.popupMsg,
+  popupConfig: popup.popupConfig,
+  closePopup: popup.closePopup,
+  toast: toast.state,
+  closeToast: toast.closeToast,
+});
+
+const buildReportProps = (reporting) => ({
+  reportDialog: reporting.reportDialog,
+  reportDialogHandlers: reporting.reportDialogHandlers,
+});
+
+const buildCopyProps = (copyController) => ({
+  canCopyDefinition: copyController.canCopyDefinition,
+  handleCopy: copyController.handleCopy,
+});
+
 const buildDictionaryViewModel = ({
   state,
   contexts,
@@ -90,48 +146,18 @@ const buildDictionaryViewModel = ({
 }) => {
   const { languageContext, toast, popup, languageConfig } = contexts;
   return {
-    inputRef: state.inputRef,
-    t: languageContext.t,
-    text: state.text,
-    setText: state.setText,
-    dictionarySourceLanguage: languageConfig.dictionarySourceLanguage,
-    setDictionarySourceLanguage: languageConfig.setDictionarySourceLanguage,
-    dictionaryTargetLanguage: languageConfig.dictionaryTargetLanguage,
-    setDictionaryTargetLanguage: languageConfig.setDictionaryTargetLanguage,
-    sourceLanguageOptions: languageConfig.sourceLanguageOptions,
-    targetLanguageOptions: languageConfig.targetLanguageOptions,
-    handleSwapLanguages: languageConfig.handleSwapLanguages,
-    handleSend: requests.handleSend,
-    handleShowDictionary: homeControls.handleShowDictionary,
-    handleShowLibrary: homeControls.handleShowLibrary,
-    handleSelectHistory: requests.handleSelectHistory,
-    activeView: state.activeView,
+    ...buildStateProps(state),
+    ...buildLanguageProps(languageContext, languageConfig),
+    ...buildControlProps({ requests, homeControls }),
+    ...buildNotificationProps({ popup, toast }),
+    ...buildReportProps(reporting),
+    ...buildCopyProps(copyController),
     viewState,
-    focusInput: homeControls.focusInput,
-    entry: state.entry,
-    finalText: state.finalText,
-    loading: state.loading,
     dictionaryActionBarProps,
     displayClassName: displayState.displayClassName,
     isEmptyStateActive: displayState.isEmptyStateActive,
-    popupOpen: popup.popupOpen,
-    popupMsg: popup.popupMsg,
-    popupConfig: popup.popupConfig,
-    closePopup: popup.closePopup,
-    toast: toast.state,
-    closeToast: toast.closeToast,
-    reportDialog: reporting.reportDialog,
-    reportDialogHandlers: reporting.reportDialogHandlers,
-    canCopyDefinition: copyController.canCopyDefinition,
-    handleCopy: copyController.handleCopy,
-    lang: languageContext.lang,
-    dictionaryFlavor: languageConfig.dictionaryFlavor,
     libraryLandingLabel,
-    dictionaryTargetLanguageLabel: languageContext.t.dictionaryTargetLanguageLabel,
-    dictionarySourceLanguageLabel: languageContext.t.dictionarySourceLanguageLabel,
-    dictionarySwapLanguagesLabel: languageContext.t.dictionarySwapLanguages,
     searchEmptyState,
-    chatInputPlaceholder: languageContext.t.inputPlaceholder,
   };
 };
 

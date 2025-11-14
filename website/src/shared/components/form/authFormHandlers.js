@@ -37,6 +37,46 @@ const resetFeedbackChannels = (showPopup, showToast) => {
   }
 };
 
+const sanitizeAndSyncAccount = (account, setAccount) => {
+  const sanitizedAccount = sanitizeAccountValue(account);
+
+  if (shouldSyncSanitizedAccount(account, sanitizedAccount)) {
+    setAccount(sanitizedAccount);
+  }
+
+  return sanitizedAccount;
+};
+
+const rejectInvalidAccount = (showPopup, t) => {
+  showPopup(getInvalidAccountMessage(t));
+  return false;
+};
+
+const rejectUnavailableMethod = (showPopup, t) => {
+  showPopup(getUnavailableCodeMessage(t));
+  return false;
+};
+
+const executeCodeRequest = async ({
+  method,
+  onRequestCode,
+  sanitizedAccount,
+  showPopup,
+  showToast,
+  t,
+}) => {
+  resetFeedbackChannels(showPopup, showToast);
+
+  try {
+    await onRequestCode({ account: sanitizedAccount, method });
+    showToast(getCodeRequestSuccessMessage(t));
+    return true;
+  } catch (error) {
+    showPopup(getCodeRequestErrorMessage(error, t));
+    return false;
+  }
+};
+
 const useCodeRequestHandler = ({
   account,
   method,
@@ -48,32 +88,24 @@ const useCodeRequestHandler = ({
   validateAccount,
 }) =>
   useCallback(async () => {
-    const sanitizedAccount = sanitizeAccountValue(account);
-
-    if (shouldSyncSanitizedAccount(account, sanitizedAccount)) {
-      setAccount(sanitizedAccount);
-    }
+    const sanitizedAccount = sanitizeAndSyncAccount(account, setAccount);
 
     if (!isAccountValid(sanitizedAccount, method, validateAccount)) {
-      showPopup(getInvalidAccountMessage(t));
-      return false;
+      return rejectInvalidAccount(showPopup, t);
     }
 
     if (typeof onRequestCode !== "function") {
-      showPopup(getUnavailableCodeMessage(t));
-      return false;
+      return rejectUnavailableMethod(showPopup, t);
     }
 
-    resetFeedbackChannels(showPopup, showToast);
-
-    try {
-      await onRequestCode({ account: sanitizedAccount, method });
-      showToast(getCodeRequestSuccessMessage(t));
-      return true;
-    } catch (error) {
-      showPopup(getCodeRequestErrorMessage(error, t));
-      return false;
-    }
+    return executeCodeRequest({
+      method,
+      onRequestCode,
+      sanitizedAccount,
+      showPopup,
+      showToast,
+      t,
+    });
   }, [
     account,
     method,
@@ -117,25 +149,18 @@ const useUnavailableMethodHandler = (showPopup, t) =>
     [showPopup, t],
   );
 
-const composeControllerModel = ({
+const getFormStateBindings = ({
   account,
   availableFormMethods,
-  feedback,
   handleSendCode,
   handleSubmit,
   icons,
   method,
-  onUnavailableMethod,
   orderedMethods,
   otherOptionsLabel,
   password,
   passwordPlaceholder,
   placeholders,
-  setAccount,
-  setMethod,
-  setPassword,
-  showCodeButton,
-  toastDismissLabel,
 }) => ({
   account,
   availableFormMethods,
@@ -143,21 +168,44 @@ const composeControllerModel = ({
   handleSubmit,
   icons,
   method,
-  onMethodChange: setMethod,
-  onUnavailableMethod,
   orderedMethods,
   otherOptionsLabel,
   password,
   passwordPlaceholder,
   placeholders,
-  popup: feedback.popup,
-  resetPopup: feedback.resetPopup,
-  resetToast: feedback.resetToast,
+});
+
+const getHandlerBindings = ({
+  onUnavailableMethod,
+  setAccount,
+  setMethod,
+  setPassword,
+  showCodeButton,
+  toastDismissLabel,
+}) => ({
+  onMethodChange: setMethod,
+  onUnavailableMethod,
   setAccount,
   setPassword,
   showCodeButton,
-  toast: feedback.toast,
   toastDismissLabel,
+});
+
+const buildBaseControllerProps = (props) => ({
+  ...getFormStateBindings(props),
+  ...getHandlerBindings(props),
+});
+
+const getFeedbackBindings = ({ popup, resetPopup, resetToast, toast }) => ({
+  popup,
+  resetPopup,
+  resetToast,
+  toast,
+});
+
+const composeControllerModel = (controllerProps) => ({
+  ...buildBaseControllerProps(controllerProps),
+  ...getFeedbackBindings(controllerProps.feedback),
 });
 
 export {

@@ -50,47 +50,28 @@ function deriveNextState(frames, randomFn, previousIndex) {
 export default function useWaitingFrameCycle(frames, options = {}) {
   assertValidFrames(frames);
   const framePool = useMemo(() => frames.slice(), [frames]);
-  const randomRef = useRef(options.random ?? Math.random);
-  const randomFn = randomRef.current;
+  const randomFn = useRef(options.random ?? Math.random).current;
   const schedulerRef = useRef(options.scheduler ?? setTimeout);
   const cancelRef = useRef(options.cancel ?? clearTimeout);
-  const autoStart = options.autoStart ?? true;
-  const shouldSchedule = options.shouldSchedule ?? framePool.length > 1;
-  const allowScheduling = autoStart && shouldSchedule && framePool.length > 1;
-
-  const [state, setState] = useState(() =>
-    createInitialState(framePool, randomFn),
-  );
-
-  const handleCycleComplete = useCallback(() => {
-    if (framePool.length <= 1) {
-      return;
-    }
+  const allowScheduling = (options.autoStart ?? true) && (options.shouldSchedule ?? framePool.length > 1) && framePool.length > 1;
+  const [state, setState] = useState(() => createInitialState(framePool, randomFn));
+  const advanceFrame = useCallback(() => {
+    if (framePool.length <= 1) return;
     setState((previous) =>
       deriveNextState(framePool, randomFn, previous.frameIndex),
     );
   }, [framePool, randomFn]);
-
   useEffect(() => {
-    if (!allowScheduling) {
-      return undefined;
-    }
-    const scheduler = schedulerRef.current;
-    const cancel = cancelRef.current;
-    const timerId = scheduler(() => {
-      setState((previous) =>
-        deriveNextState(framePool, randomFn, previous.frameIndex),
-      );
-    }, WAITING_CYCLE_INTERVAL_MS);
-    return () => cancel(timerId);
-  }, [allowScheduling, framePool, randomFn, state.frameIndex]);
-
+    if (!allowScheduling) return undefined;
+    const timerId = schedulerRef.current(() => advanceFrame(), WAITING_CYCLE_INTERVAL_MS);
+    return () => cancelRef.current(timerId);
+  }, [allowScheduling, advanceFrame]);
   return useMemo(
     () => ({
       currentFrame: state.frameSrc,
-      handleCycleComplete,
+      handleCycleComplete: advanceFrame,
       cycleDurationMs: WAITING_CYCLE_INTERVAL_MS,
     }),
-    [handleCycleComplete, state.frameSrc],
+    [advanceFrame, state.frameSrc],
   );
 }

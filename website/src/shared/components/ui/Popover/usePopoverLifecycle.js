@@ -87,6 +87,35 @@ export function useGlobalDismissHandlers({
 
 const noop = () => {};
 
+const setupDismissListeners = ({
+  anchorRef,
+  contentRef,
+  onClose,
+  scheduleUpdate,
+}) => {
+  const listenerCleanup = attachGlobalListeners({
+    handleResize: scheduleUpdate,
+    handleScroll: scheduleUpdate,
+    handlePointerDown: createPointerDownHandler({
+      anchorRef,
+      contentRef,
+      onClose,
+    }),
+    handleKeyDown: createKeyDownHandler(onClose),
+  });
+
+  const resizeObserver = observeAnchorAndContent({
+    anchorRef,
+    contentRef,
+    scheduleUpdate,
+  });
+
+  return () => {
+    listenerCleanup();
+    resizeObserver?.disconnect();
+  };
+};
+
 export function useDismissListeners({
   isOpen,
   anchorRef,
@@ -102,27 +131,12 @@ export function useDismissListeners({
       return undefined;
     }
 
-    const listenerCleanup = attachGlobalListeners({
-      handleResize: scheduleUpdate,
-      handleScroll: scheduleUpdate,
-      handlePointerDown: createPointerDownHandler({
-        anchorRef,
-        contentRef,
-        onClose,
-      }),
-      handleKeyDown: createKeyDownHandler(onClose),
-    });
-
-    const resizeObserver = observeAnchorAndContent({
+    const cleanup = setupDismissListeners({
       anchorRef,
       contentRef,
+      onClose,
       scheduleUpdate,
     });
-
-    const cleanup = () => {
-      listenerCleanup();
-      resizeObserver?.disconnect();
-    };
     cleanupRef.current = cleanup;
 
     return () => {

@@ -35,21 +35,13 @@ function SelectField({
   className = "",
   ...props
 }) {
-  const { selectProps, options: normalizedOptions } = buildSelectConfig({
-    id,
-    value,
-    onChange,
-    options,
-    className,
-    ...props,
-  });
+  const { selectProps, options: normalizedOptions } =
+    buildSelectConfig({ id, value, onChange, options, className, ...props });
   const selectEl = (
-    <select
-      {...selectProps}
-    >
-      {normalizedOptions.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
+    <select {...selectProps}>
+      {normalizedOptions.map(({ value, label }) => (
+        <option key={value} value={value}>
+          {label}
         </option>
       ))}
     </select>

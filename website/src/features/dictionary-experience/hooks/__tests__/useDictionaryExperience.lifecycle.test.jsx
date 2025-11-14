@@ -101,6 +101,12 @@ const beginLookup = (result) => {
   return pendingSend;
 };
 
+const isUnmountWarningCall = (call) =>
+  typeof call[0] === "string" &&
+  call[0].includes(
+    "Can't perform a React state update on an unmounted component.",
+  );
+
 const runAbortLookupScenario = async (assertion) => {
   const abortSpy = jest.fn();
   const restoreAbortController = installAbortControllerOverride(
@@ -159,11 +165,7 @@ describe("useDictionaryExperience/lifecycle", () => {
   it("suppresses state update warnings after aborting on unmount", async () => {
     await runAbortLookupScenario(async ({ consoleErrorSpy }) => {
       const hasUnmountWarning = consoleErrorSpy.mock.calls.some(
-        (call) =>
-          typeof call[0] === "string" &&
-          call[0].includes(
-            "Can't perform a React state update on an unmounted component.",
-          ),
+        isUnmountWarningCall,
       );
       expect(hasUnmountWarning).toBe(false);
     });

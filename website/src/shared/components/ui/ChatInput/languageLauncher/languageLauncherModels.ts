@@ -45,6 +45,38 @@ const useCurrentOptionModel = (
     [normalizedOptions, comparableValue],
   );
 
+const buildVariantModel = (
+  input: VariantInput,
+  normalizedOptions: NormalizedOption[],
+  currentOption: NormalizedOption | null,
+  hasOptions: boolean,
+): VariantModel => ({
+  key: input.key,
+  label: resolveLabel(input.key, input.label),
+  normalizedOptions,
+  currentOption,
+  hasOptions,
+  onChange: input.onChange,
+  normalizeValue: input.normalizeValue,
+  onOpen: input.onOpen,
+});
+
+const buildVariantModelDeps = (
+  input: VariantInput,
+  normalizedOptions: NormalizedOption[],
+  currentOption: NormalizedOption | null,
+  hasOptions: boolean,
+) => [
+  currentOption,
+  hasOptions,
+  input.key,
+  input.label,
+  input.normalizeValue,
+  normalizedOptions,
+  input.onChange,
+  input.onOpen,
+];
+
 export const useVariantModel = (input: VariantInput): VariantModel => {
   const normalizedOptions = useNormalizedOptions(
     input.options,
@@ -61,26 +93,14 @@ export const useVariantModel = (input: VariantInput): VariantModel => {
   const hasOptions = normalizedOptions.length > 0 && Boolean(currentOption);
 
   return useMemo(
-    () => ({
-      key: input.key,
-      label: resolveLabel(input.key, input.label),
+    () =>
+      buildVariantModel(input, normalizedOptions, currentOption, hasOptions),
+    buildVariantModelDeps(
+      input,
       normalizedOptions,
       currentOption,
       hasOptions,
-      onChange: input.onChange,
-      normalizeValue: input.normalizeValue,
-      onOpen: input.onOpen,
-    }),
-    [
-      currentOption,
-      hasOptions,
-      input.key,
-      input.label,
-      input.normalizeValue,
-      normalizedOptions,
-      input.onChange,
-      input.onOpen,
-    ],
+    ),
   );
 };
 

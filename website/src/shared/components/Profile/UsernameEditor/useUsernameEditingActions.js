@@ -74,20 +74,40 @@ export const useSubmitFailureHandler = ({ dispatch, onFailure }) =>
     [dispatch, onFailure],
   );
 
-const useHandleSubmit = ({
-  draft,
-  value,
+const useSubmitNormalizedDraft = ({
   dispatch,
   onSubmit,
-  onSuccess,
-  onFailure,
-}) => {
+  handleSuccess,
+  handleFailure,
+}) =>
+  useCallback(
+    async (normalized) => {
+      dispatch({ type: UsernameEditorActions.SUBMIT_START });
+      try {
+        const result = await onSubmit(normalized);
+        const nextValue = result ?? normalized;
+        handleSuccess(nextValue);
+      } catch (error) {
+        handleFailure(error);
+      }
+    },
+    [dispatch, handleFailure, handleSuccess, onSubmit],
+  );
+
+const useHandleSubmit = (options) => {
+  const { draft, value, dispatch, onSubmit, onSuccess, onFailure } = options;
   const validateDraft = useDraftValidator(dispatch);
   const handleNoOpSubmission = useNoOpSubmission({ dispatch, value, onSubmit });
   const handleSuccess = useSubmitSuccessHandler({ dispatch, onSuccess });
   const handleFailure = useSubmitFailureHandler({ dispatch, onFailure });
+  const submitNormalizedDraft = useSubmitNormalizedDraft({
+    dispatch,
+    onSubmit,
+    handleSuccess,
+    handleFailure,
+  });
 
-  return useCallback(async () => {
+  return useCallback(() => {
     const normalized = validateDraft(draft);
     if (!normalized) {
       return;
@@ -97,23 +117,8 @@ const useHandleSubmit = ({
       return;
     }
 
-    dispatch({ type: UsernameEditorActions.SUBMIT_START });
-    try {
-      const result = await onSubmit(normalized);
-      const nextValue = result ?? normalized;
-      handleSuccess(nextValue);
-    } catch (error) {
-      handleFailure(error);
-    }
-  }, [
-    dispatch,
-    draft,
-    handleFailure,
-    handleNoOpSubmission,
-    handleSuccess,
-    onSubmit,
-    validateDraft,
-  ]);
+    return submitNormalizedDraft(normalized);
+  }, [draft, handleNoOpSubmission, submitNormalizedDraft, validateDraft]);
 };
 
 export const useHandleChange = (dispatch) =>
@@ -157,32 +162,22 @@ export const useHandleButtonClick = ({ mode, dispatch, handleSubmit }) =>
     handleSubmit();
   }, [dispatch, handleSubmit, mode]);
 
-export const useUsernameEditingActions = ({
-  mode,
-  value,
-  draft,
-  dispatch,
-  onSubmit,
-  onSuccess,
-  onFailure,
-}) => {
-  const handleSubmit = useHandleSubmit({
-    draft,
+export const useUsernameEditingActions = (options) => {
+  const {
+    mode,
     value,
+    draft,
     dispatch,
     onSubmit,
     onSuccess,
     onFailure,
-  });
-
+  } = options;
+  const submissionOptions = { draft, value, dispatch, onSubmit, onSuccess, onFailure };
+  const handleSubmit = useHandleSubmit(submissionOptions);
   const handleChange = useHandleChange(dispatch);
   const handleKeyDown = useHandleKeyDown({ mode, handleSubmit });
   const handleBlur = useHandleBlur({ mode, draft, value, dispatch });
-  const handleButtonClick = useHandleButtonClick({
-    mode,
-    dispatch,
-    handleSubmit,
-  });
+  const handleButtonClick = useHandleButtonClick({ mode, dispatch, handleSubmit });
 
   return useMemo(
     () => ({

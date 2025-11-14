@@ -10,55 +10,47 @@ const segmentedControlClasses = {
   wrap: styles["group-wrap"],
 };
 
-function SegmentedControl({
-  value,
-  options,
-  onChange,
-  labelledBy,
-  ariaLabel,
-  ariaDescribedby,
-  className,
-  wrap,
-  disabled,
-  id,
-}) {
-  const groupClassName = joinClassNames(
-    segmentedControlClasses.group,
-    wrap ? segmentedControlClasses.wrap : "",
-    className,
-  );
+function SegmentedControlOptions({ options, value, disabled, onSelect }) {
+  return options.map((option) => {
+    const isActive = Object.is(option.value, value);
+    const isDisabled = disabled || Boolean(option.disabled);
 
-  const handleSelect = useSegmentedControlSelect({
-    disabled,
-    onChange,
-    value,
+    return (
+      <SegmentedControlOption
+        key={option.id ?? String(option.value)}
+        option={option}
+        isActive={isActive}
+        isDisabled={isDisabled}
+        onSelect={onSelect}
+      />
+    );
   });
+}
 
+function SegmentedControl(props) {
+  const groupClassName = joinClassNames(segmentedControlClasses.group, props.wrap ? segmentedControlClasses.wrap : "", props.className);
+  const handleSelect = useSegmentedControlSelect({
+    disabled: props.disabled,
+    onChange: props.onChange,
+    value: props.value,
+  });
   return (
     <div
-      id={id}
+      id={props.id}
       role="radiogroup"
-      aria-labelledby={labelledBy}
-      aria-label={labelledBy ? undefined : ariaLabel}
-      aria-describedby={ariaDescribedby}
-      aria-disabled={disabled ? "true" : undefined}
+      aria-labelledby={props.labelledBy}
+      aria-label={props.labelledBy ? undefined : props.ariaLabel}
+      aria-describedby={props.ariaDescribedby}
+      aria-disabled={props.disabled ? "true" : undefined}
       className={groupClassName}
-      data-wrap={wrap ? "true" : undefined}
+      data-wrap={props.wrap ? "true" : undefined}
     >
-      {options.map((option) => {
-        const isActive = Object.is(option.value, value);
-        const isDisabled = disabled || Boolean(option.disabled);
-
-        return (
-          <SegmentedControlOption
-            key={option.id ?? String(option.value)}
-            option={option}
-            isActive={isActive}
-            isDisabled={isDisabled}
-            onSelect={handleSelect}
-          />
-        );
-      })}
+      <SegmentedControlOptions
+        options={props.options}
+        value={props.value}
+        disabled={props.disabled}
+        onSelect={handleSelect}
+      />
     </div>
   );
 }

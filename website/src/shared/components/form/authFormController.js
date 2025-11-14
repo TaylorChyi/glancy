@@ -11,31 +11,50 @@ import {
   useSubmitHandler,
 } from "./authFormHandlers.js";
 
-const useAuthFormController = ({
-  formMethods,
-  methodOrder,
-  defaultMethod,
-  validateAccount,
-  passwordPlaceholder,
-  showCodeButton,
-  icons,
-  otherOptionsLabel,
-  placeholders,
-  onRequestCode,
-  onSubmit,
-  t,
-}) => {
+const useFormState = ({ formMethods, methodOrder, defaultMethod }) => {
   const { availableFormMethods, orderedMethods, method, setMethod } =
     useAuthMethodResolution({ formMethods, methodOrder, defaultMethod });
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
+  return {
+    account,
+    availableFormMethods,
+    method,
+    orderedMethods,
+    password,
+    setAccount,
+    setMethod,
+    setPassword,
+  };
+};
+
+const useFormFeedbackData = ({ otherOptionsLabel, t }) => {
   const { feedback, onUnavailableMethod } = useAuthFeedback(t);
   const toastDismissLabel = useAuthToastLabel(t);
   const resolvedOtherOptionsLabel = useAuthOtherOptionsLabel(
     otherOptionsLabel,
     t,
   );
-  const handleSendCode = useCodeRequestHandler({
+  return {
+    feedback,
+    onUnavailableMethod,
+    otherOptionsLabel: resolvedOtherOptionsLabel,
+    toastDismissLabel,
+  };
+};
+
+const useFormHandlers = ({
+  account,
+  method,
+  onRequestCode,
+  onSubmit,
+  password,
+  validateAccount,
+  feedback,
+  setAccount,
+  t,
+}) => ({
+  handleSendCode: useCodeRequestHandler({
     account,
     method,
     onRequestCode,
@@ -44,8 +63,8 @@ const useAuthFormController = ({
     showToast: feedback.showToast,
     t,
     validateAccount,
-  });
-  const handleSubmit = useSubmitHandler({
+  }),
+  handleSubmit: useSubmitHandler({
     account,
     method,
     onSubmit,
@@ -53,6 +72,36 @@ const useAuthFormController = ({
     showPopup: feedback.showPopup,
     t,
     validateAccount,
+  }),
+});
+
+const useAuthFormController = (props) => {
+  const {
+    account,
+    availableFormMethods,
+    method,
+    orderedMethods,
+    password,
+    setAccount,
+    setMethod,
+    setPassword,
+  } = useFormState(props);
+  const {
+    feedback,
+    onUnavailableMethod,
+    otherOptionsLabel,
+    toastDismissLabel,
+  } = useFormFeedbackData(props);
+  const { handleSendCode, handleSubmit } = useFormHandlers({
+    account,
+    method,
+    onRequestCode: props.onRequestCode,
+    onSubmit: props.onSubmit,
+    password,
+    validateAccount: props.validateAccount,
+    feedback,
+    setAccount,
+    t: props.t,
   });
 
   return composeControllerModel({
@@ -61,18 +110,18 @@ const useAuthFormController = ({
     feedback,
     handleSendCode,
     handleSubmit,
-    icons,
+    icons: props.icons,
     method,
     onUnavailableMethod,
     orderedMethods,
-    otherOptionsLabel: resolvedOtherOptionsLabel,
+    otherOptionsLabel,
     password,
-    passwordPlaceholder,
-    placeholders,
+    passwordPlaceholder: props.passwordPlaceholder,
+    placeholders: props.placeholders,
     setAccount,
     setMethod,
     setPassword,
-    showCodeButton,
+    showCodeButton: props.showCodeButton,
     toastDismissLabel,
   });
 };

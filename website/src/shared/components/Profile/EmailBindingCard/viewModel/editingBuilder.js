@@ -88,44 +88,35 @@ const assembleEditingComponents = ({
   isVerifying,
   isSubmitDisabled,
   onCancel,
-}) => {
-  const flow = buildFlowViewModel(t, isAwaitingVerification);
-  const emailField = buildEmailFieldViewModel(
+}) => ({
+  flow: buildFlowViewModel(t, isAwaitingVerification),
+  emailField: buildEmailFieldViewModel(
     draftEmail,
     onDraftEmailChange,
     t,
-  );
-  const codeField = buildCodeFieldViewModel({
+  ),
+  codeField: buildCodeFieldViewModel({
     verificationCode,
     onVerificationCodeChange,
     verificationMessage: metadata.verificationMessage,
     isAwaitingVerification,
     t,
-  });
-  const sendCodeButton = buildSendCodeButtonViewModel({
+  }),
+  sendCodeButton: buildSendCodeButtonViewModel({
     isSendingCode,
     sendCodeLabel: metadata.sendCodeLabel,
     onRequestCode,
     remainingSeconds,
     t,
-  });
-  const confirmButton = buildConfirmButtonViewModel({
+  }),
+  confirmButton: buildConfirmButtonViewModel({
     isVerifying,
     confirmButtonLabel: metadata.confirmButtonLabel,
     isSubmitDisabled,
     t,
-  });
-  const cancelButton = buildCancelButtonViewModel(t, onCancel);
-
-  return {
-    flow,
-    emailField,
-    codeField,
-    sendCodeButton,
-    confirmButton,
-    cancelButton,
-  };
-};
+  }),
+  cancelButton: buildCancelButtonViewModel(t, onCancel),
+});
 
 export default function createEditingViewModel(options) {
   const { mode, onConfirm } = options;

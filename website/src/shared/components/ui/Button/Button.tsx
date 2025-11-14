@@ -32,17 +32,10 @@ export default function Button({
 }: ButtonProps) {
   const dataAttributes: Record<string, string> = {
     "data-variant": variant,
+    ...(emphasis !== "default" ? { "data-emphasis": emphasis } : {}),
+    ...(iconTone ? { "data-icon": iconTone } : {}),
+    ...(labelTone ? { "data-label": labelTone } : {}),
   };
-
-  if (emphasis !== "default") {
-    dataAttributes["data-emphasis"] = emphasis;
-  }
-  if (iconTone) {
-    dataAttributes["data-icon"] = iconTone;
-  }
-  if (labelTone) {
-    dataAttributes["data-label"] = labelTone;
-  }
 
   const resolvedClassName = joinClass(
     "btn",

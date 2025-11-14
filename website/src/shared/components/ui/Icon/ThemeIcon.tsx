@@ -19,8 +19,9 @@ export function ThemeIcon({
 }: IconProps) {
   const { resolvedTheme } = useTheme();
   const iconRole = roleClass ?? legacyToneToRole(tone, resolvedTheme);
-  const resolvedVariant = iconSourceResolver.resolve(name, resolvedTheme);
-  const { inline, url } = pickRenderableAsset(resolvedVariant);
+  const { inline, url } = pickRenderableAsset(
+    iconSourceResolver.resolve(name, resolvedTheme),
+  );
   const altText = decorative ? "" : alt ?? name;
 
   return renderIcon({

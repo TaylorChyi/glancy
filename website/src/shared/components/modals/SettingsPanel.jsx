@@ -16,31 +16,10 @@ function SettingsPanel({
 }) {
   const panelElementRef = useRef(null);
   const headingElementRef = useRef(null);
-
-  const panelRegistrationPayload = {
-    panelElementRef,
-    onPanelElementChange,
-    panelId,
-    tabId,
-  };
-
-  const headingRegistrationPayload = {
-    headingId,
-    headingElementRef,
-    onHeadingElementChange,
-  };
-
-  usePanelElementRegistration(panelRegistrationPayload);
-  useHeadingRegistration(headingRegistrationPayload);
-
+  usePanelElementRegistration({ panelElementRef, onPanelElementChange, panelId, tabId });
+  useHeadingRegistration({ headingId, headingElementRef, onHeadingElementChange });
   return (
-    <div
-      role="tabpanel"
-      id={panelId}
-      aria-labelledby={tabId}
-      className={className}
-      ref={panelElementRef}
-    >
+    <div role="tabpanel" id={panelId} aria-labelledby={tabId} className={className} ref={panelElementRef}>
       {children}
     </div>
   );

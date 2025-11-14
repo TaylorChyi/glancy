@@ -16,7 +16,7 @@ import {
   UsernameEditorModes,
 } from "@shared/components/Profile/UsernameEditor/usernameEditorState.js";
 
-describe("useUsernameEditingActions helpers", () => {
+const registerDraftValidatorTests = () => {
   test("useDraftValidator normalizes valid usernames without dispatching failures", () => {
     const dispatch = jest.fn();
     const { result } = renderHook(() => useDraftValidator(dispatch));
@@ -35,7 +35,9 @@ describe("useUsernameEditingActions helpers", () => {
       error: { code: "too-short" },
     });
   });
+};
 
+const registerNoOpSubmissionTests = () => {
   test("useNoOpSubmission resolves immediately when onSubmit is not provided", () => {
     const dispatch = jest.fn();
     const { result } = renderHook(() =>
@@ -66,7 +68,9 @@ describe("useUsernameEditingActions helpers", () => {
     expect(result.current("glancy")).toBe(false);
     expect(dispatch).not.toHaveBeenCalled();
   });
+};
 
+const registerSubmitSuccessHandlerTests = () => {
   test("useSubmitSuccessHandler dispatches success and invokes callback", () => {
     const dispatch = jest.fn();
     const onSuccess = jest.fn();
@@ -84,7 +88,9 @@ describe("useUsernameEditingActions helpers", () => {
     });
     expect(onSuccess).toHaveBeenCalledWith("next-user");
   });
+};
 
+const registerSubmitFailureHandlerTests = () => {
   test("useSubmitFailureHandler dispatches normalized error and invokes callback", () => {
     const dispatch = jest.fn();
     const onFailure = jest.fn();
@@ -103,7 +109,9 @@ describe("useUsernameEditingActions helpers", () => {
     });
     expect(onFailure).toHaveBeenCalledWith(error);
   });
+};
 
+const registerHandleChangeTests = () => {
   test("useHandleChange dispatches change action with the latest target value", () => {
     const dispatch = jest.fn();
     const { result } = renderHook(() => useHandleChange(dispatch));
@@ -117,7 +125,9 @@ describe("useUsernameEditingActions helpers", () => {
       value: "neo",
     });
   });
+};
 
+const registerHandleKeyDownTests = () => {
   test("useHandleKeyDown triggers submit on Enter outside of view mode", () => {
     const handleSubmit = jest.fn();
     const preventDefault = jest.fn();
@@ -136,7 +146,9 @@ describe("useUsernameEditingActions helpers", () => {
     expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
+};
 
+const registerHandleBlurTests = () => {
   test("useHandleBlur cancels edit when draft matches persisted value", () => {
     const dispatch = jest.fn();
     const { result } = renderHook(() =>
@@ -156,7 +168,9 @@ describe("useUsernameEditingActions helpers", () => {
       type: UsernameEditorActions.CANCEL_EDIT,
     });
   });
+};
 
+const registerHandleButtonClickTests = () => {
   test("useHandleButtonClick toggles between edit and submit flows", () => {
     const dispatch = jest.fn();
     const handleSubmit = jest.fn();
@@ -193,4 +207,15 @@ describe("useUsernameEditingActions helpers", () => {
     expect(handleSubmit).toHaveBeenCalledTimes(1);
     expect(dispatch).not.toHaveBeenCalled();
   });
+};
+
+describe("useUsernameEditingActions helpers", () => {
+  registerDraftValidatorTests();
+  registerNoOpSubmissionTests();
+  registerSubmitSuccessHandlerTests();
+  registerSubmitFailureHandlerTests();
+  registerHandleChangeTests();
+  registerHandleKeyDownTests();
+  registerHandleBlurTests();
+  registerHandleButtonClickTests();
 });

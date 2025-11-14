@@ -13,46 +13,56 @@ const refShape = PropTypes.shape({
   current: PropTypes.instanceOf(ElementType),
 });
 
-export default function SelectMenuView({
+const getTriggerProps = ({
   id,
-  fullWidth,
   open,
   triggerRef,
-  menuRef,
-  options,
-  activeValue,
   onToggle,
   onTriggerKeyDown,
   ariaLabel,
   label,
   isPlaceholder,
+}) => ({
+  id,
+  open,
+  triggerRef,
+  onToggle,
+  onKeyDown: onTriggerKeyDown,
+  ariaLabel,
+  label,
+  isPlaceholder,
+});
+
+const getMenuSurfaceProps = ({
+  open,
+  triggerRef,
   onClose,
+  menuRef,
+  options,
+  activeValue,
   onSelect,
-}) {
+}) => ({
+  open,
+  anchorRef: triggerRef,
+  onClose,
+  menuRef,
+  options,
+  activeValue,
+  onSelect,
+});
+
+export default function SelectMenuView(props) {
+  const { fullWidth } = props;
+  const triggerProps = getTriggerProps(props);
+  const menuSurfaceProps = getMenuSurfaceProps(props);
+
   return (
     <div
       className={styles["menu-root"]}
       data-fullwidth={fullWidth ? "true" : undefined}
     >
-      <SelectMenuTrigger
-        id={id}
-        open={open}
-        triggerRef={triggerRef}
-        onToggle={onToggle}
-        onKeyDown={onTriggerKeyDown}
-        ariaLabel={ariaLabel}
-        label={label}
-        isPlaceholder={isPlaceholder}
-      />
-      <MenuSurface
-        open={open}
-        anchorRef={triggerRef}
-        onClose={onClose}
-        menuRef={menuRef}
-        options={options}
-        activeValue={activeValue}
-        onSelect={onSelect}
-      />
+      <SelectMenuTrigger {...triggerProps} />
+      <MenuSurface {...menuSurfaceProps} />
     </div>
   );
 }

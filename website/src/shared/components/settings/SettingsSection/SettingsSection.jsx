@@ -95,14 +95,47 @@ function SettingsSection({
 }) {
   const autoDescriptionId = useId();
   const shouldRenderDescription = isRenderable(description);
-  const resolvedDescriptionId = useResolvedDescriptionId({ shouldRenderDescription, descriptionId, headingId, autoDescriptionId });
-  const { sectionClassName, headerClassName, titleClassName, dividerClassName, descriptionClassName } = getSectionClasses(classes);
-  const { ariaDescribedByFromProps, restSectionProps } = splitSectionProps(sectionProps);
-  const ariaDescribedBy = resolveAriaDescribedBy({ describedBy, ariaDescribedByFromProps, shouldRenderDescription, resolvedDescriptionId });
-  const headerProps = { headingId, title, showDivider, headerClassName, titleClassName, dividerClassName };
-  const descriptionProps = { shouldRender: shouldRenderDescription, id: resolvedDescriptionId, className: descriptionClassName };
+  const resolvedDescriptionId = useResolvedDescriptionId({
+    shouldRenderDescription,
+    descriptionId,
+    headingId,
+    autoDescriptionId,
+  });
+  const {
+    sectionClassName,
+    headerClassName,
+    titleClassName,
+    dividerClassName,
+    descriptionClassName,
+  } = getSectionClasses(classes);
+  const { ariaDescribedByFromProps, restSectionProps } =
+    splitSectionProps(sectionProps);
+  const ariaDescribedBy = resolveAriaDescribedBy({
+    describedBy,
+    ariaDescribedByFromProps,
+    shouldRenderDescription,
+    resolvedDescriptionId,
+  });
+  const headerProps = {
+    headingId,
+    title,
+    showDivider,
+    headerClassName,
+    titleClassName,
+    dividerClassName,
+  };
+  const descriptionProps = {
+    shouldRender: shouldRenderDescription,
+    id: resolvedDescriptionId,
+    className: descriptionClassName,
+  };
   return (
-    <section aria-labelledby={headingId} {...restSectionProps} className={sectionClassName} aria-describedby={ariaDescribedBy}>
+    <section
+      aria-labelledby={headingId}
+      {...restSectionProps}
+      className={sectionClassName}
+      aria-describedby={ariaDescribedBy}
+    >
       <SectionHeader {...headerProps} />
       <SectionDescription {...descriptionProps}>{description}</SectionDescription>
       {children}

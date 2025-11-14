@@ -146,6 +146,27 @@ const verifyCopyLifecycle = async (result, steps) => {
   }
 };
 
+const buildSuccessfulCopySteps = (result) => [
+  {
+    before: () => executeCopyAction(result),
+    clipboardCalls: 1,
+    snapshot: {
+      state: COPY_FEEDBACK_STATES.SUCCESS,
+      success: true,
+      popupMsg: "",
+      popupOpen: false,
+    },
+  },
+  {
+    before: advanceCopyResetWindow,
+    snapshot: {
+      state: COPY_FEEDBACK_STATES.IDLE,
+      success: false,
+      popupMsg: "",
+    },
+  },
+];
+
 describe("useDictionaryExperience/copy feedback", () => {
   beforeEach(() => {
     resetDictionaryExperienceTestState();
@@ -181,26 +202,7 @@ describe("useDictionaryExperience/copy feedback", () => {
 
     expect(result.current.dictionaryActionBarProps.canCopy).toBe(true);
 
-    await verifyCopyLifecycle(result, [
-      {
-        before: () => executeCopyAction(result),
-        clipboardCalls: 1,
-        snapshot: {
-          state: COPY_FEEDBACK_STATES.SUCCESS,
-          success: true,
-          popupMsg: "",
-          popupOpen: false,
-        },
-      },
-      {
-        before: advanceCopyResetWindow,
-        snapshot: {
-          state: COPY_FEEDBACK_STATES.IDLE,
-          success: false,
-          popupMsg: "",
-        },
-      },
-    ]);
+    await verifyCopyLifecycle(result, buildSuccessfulCopySteps(result));
   });
 
   /**

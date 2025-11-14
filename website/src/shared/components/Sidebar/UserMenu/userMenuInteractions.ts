@@ -10,38 +10,51 @@ import type {
   MenuPlacement,
   UserMenuControllerOptions,
 } from "./contracts";
+import {
+  buildItemViewModels,
+  calculateMenuPlacement,
+  findNextEnabledIndex,
+  isActivationKey,
+  isArrowKey,
+} from "./userMenuInteractionUtils";
 
-const getViewportHeight = () =>
-  window.innerHeight || document.documentElement.clientHeight;
-
-const getMenuHeight = (
-  surfaceNode: HTMLDivElement,
-  maxMenuHeight: number,
-  viewportHeight: number,
-) => Math.min(surfaceNode.scrollHeight, Math.min(viewportHeight * 0.6, maxMenuHeight));
-
-const shouldPlaceMenuDown = (
-  spaceAbove: number,
-  spaceBelow: number,
-  menuHeight: number,
-) => spaceAbove < menuHeight && spaceBelow > spaceAbove;
-
-export const calculateMenuPlacement = ({
-  triggerRect,
+const usePlacementUpdater = ({
+  open,
   maxMenuHeight,
+  triggerRef,
   menuRef,
+  setPlacement,
 }: {
-  triggerRect: DOMRect;
+  open: boolean;
   maxMenuHeight: number;
+  triggerRef: MutableRefObject<HTMLButtonElement | null>;
   menuRef: MutableRefObject<HTMLDivElement | null>;
-}): MenuPlacement => {
-  const surfaceNode = menuRef.current;
-  if (!surfaceNode) return "up";
-  const viewportHeight = getViewportHeight();
-  const menuHeight = getMenuHeight(surfaceNode, maxMenuHeight, viewportHeight);
-  const spaceAbove = triggerRect.top;
-  const spaceBelow = viewportHeight - triggerRect.bottom;
-  return shouldPlaceMenuDown(spaceAbove, spaceBelow, menuHeight) ? "down" : "up";
+  setPlacement: Dispatch<SetStateAction<MenuPlacement>>;
+}) =>
+  useCallback(() => {
+    if (!open) return;
+    const triggerNode = triggerRef.current;
+    if (!triggerNode) return;
+    const triggerRect = triggerNode.getBoundingClientRect();
+    setPlacement(
+      calculateMenuPlacement({
+        triggerRect,
+        maxMenuHeight,
+        menuRef,
+      }),
+    );
+  }, [maxMenuHeight, menuRef, open, setPlacement, triggerRef]);
+
+const usePlacementResizeListener = (open: boolean, updatePlacement: () => void) => {
+  useEffect(() => {
+    if (!open) return undefined;
+    updatePlacement();
+    const handleResize = () => updatePlacement();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [open, updatePlacement]);
 };
 
 export const usePlacement = ({
@@ -57,58 +70,68 @@ export const usePlacement = ({
 }) => {
   const [placement, setPlacement] = useState<MenuPlacement>("up");
 
-  const updatePlacement = useCallback(() => {
-    if (!open) return;
-    const triggerNode = triggerRef.current;
-    if (!triggerNode) return;
-    const triggerRect = triggerNode.getBoundingClientRect();
-    setPlacement(
-      calculateMenuPlacement({
-        triggerRect,
-        maxMenuHeight,
-        menuRef,
-      }),
-    );
-  }, [maxMenuHeight, menuRef, open, triggerRef]);
+  const updatePlacement = usePlacementUpdater({
+    open,
+    maxMenuHeight,
+    triggerRef,
+    menuRef,
+    setPlacement,
+  });
 
-  useEffect(() => {
-    if (!open) return undefined;
-    updatePlacement();
-    const handleResize = () => updatePlacement();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [open, updatePlacement]);
+  usePlacementResizeListener(open, updatePlacement);
 
   return placement;
 };
 
-const isArrowKey = (key: string): key is "ArrowDown" | "ArrowUp" =>
-  key === "ArrowDown" || key === "ArrowUp";
-
-const isActivationKey = (key: string) => key === "Enter" || key === " ";
-
-interface FindNextEnabledIndexOptions {
+const useMoveFocus = ({
+  items,
+  setActiveIndex,
+}: {
   items: UserMenuControllerOptions["items"];
-  startIndex: number;
-  direction: 1 | -1;
+  setActiveIndex: Dispatch<SetStateAction<number>>;
+}) =>
+  useCallback(
+    (direction: 1 | -1) => {
+      if (items.length === 0) return;
+      setActiveIndex((previous) =>
+        findNextEnabledIndex({
+          items,
+          startIndex: previous,
+          direction,
+        }),
+      );
+    },
+    [items, setActiveIndex],
+  );
+
+interface KeyboardEventHandlerOptions {
+  items: UserMenuControllerOptions["items"];
+  open: boolean;
+  activeIndex: number;
+  moveFocus: (direction: 1 | -1) => void;
+  close: () => void;
 }
 
-export const findNextEnabledIndex = ({
-  items,
-  startIndex,
-  direction,
-}: FindNextEnabledIndexOptions) => {
-  let next = startIndex;
-  for (let i = 0; i < items.length; i += 1) {
-    next = (next + direction + items.length) % items.length;
-    if (!items[next].disabled) {
-      break;
+const createKeyboardEventHandler =
+  ({ items, open, activeIndex, moveFocus, close }: KeyboardEventHandlerOptions) =>
+  (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!open) return;
+    const currentItem = items[activeIndex];
+    if (!currentItem) return;
+
+    if (isArrowKey(event.key)) {
+      event.preventDefault();
+      moveFocus(event.key === "ArrowDown" ? 1 : -1);
+      return;
     }
-  }
-  return next;
-};
+
+    if (!isActivationKey(event.key)) return;
+    event.preventDefault();
+    if (!currentItem.disabled) {
+      currentItem.onSelect();
+      close();
+    }
+  };
 
 export const useKeyboardHandlers = ({
   items,
@@ -123,39 +146,20 @@ export const useKeyboardHandlers = ({
   setActiveIndex: Dispatch<SetStateAction<number>>;
   close: () => void;
 }) => {
-  const moveFocus = useCallback(
-    (direction: 1 | -1) => {
-      if (items.length === 0) return;
-      setActiveIndex((previous) =>
-        findNextEnabledIndex({
-          items,
-          startIndex: previous,
-          direction,
-        }),
-      );
-    },
-    [items, setActiveIndex],
-  );
+  const moveFocus = useMoveFocus({
+    items,
+    setActiveIndex,
+  });
 
-  return useCallback(
-    (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (!open) return;
-      const currentItem = items[activeIndex];
-      if (!currentItem) return;
-
-      if (isArrowKey(event.key)) {
-        event.preventDefault();
-        moveFocus(event.key === "ArrowDown" ? 1 : -1);
-        return;
-      }
-
-      if (!isActivationKey(event.key)) return;
-      event.preventDefault();
-      if (!currentItem.disabled) {
-        currentItem.onSelect();
-        close();
-      }
-    },
+  return useMemo(
+    () =>
+      createKeyboardEventHandler({
+        items,
+        open,
+        activeIndex,
+        moveFocus,
+        close,
+      }),
     [activeIndex, close, items, moveFocus, open],
   );
 };
@@ -175,22 +179,12 @@ export const useItemViewModels = ({
 }) =>
   useMemo<MenuItemViewModel[]>(
     () =>
-      items.map((item, index) => {
-        const disabled = Boolean(item.disabled);
-        return {
-          item,
-          disabled,
-          isActive: activeIndex === index,
-          setNode: setItemRef(index),
-          handleFocus: () => setActiveIndex(index),
-          handlePointerEnter: () => setActiveIndex(index),
-          handleSelect: () => {
-            if (!disabled) {
-              item.onSelect();
-              close();
-            }
-          },
-        };
+      buildItemViewModels({
+        items,
+        activeIndex,
+        setActiveIndex,
+        close,
+        setItemRef,
       }),
     [activeIndex, close, items, setActiveIndex, setItemRef],
   );

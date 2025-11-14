@@ -10,6 +10,68 @@ import type {
 const normalizeOptions = (options?: LanguageOption[]): LanguageOption[] =>
   Array.isArray(options) ? options : [];
 
+const useNormalizedLanguageOptions = ({
+  sourceLanguageOptions,
+  targetLanguageOptions,
+}: Pick<
+  UseLanguageControlsConfigParams,
+  "sourceLanguageOptions" | "targetLanguageOptions"
+>) =>
+  useMemo(
+    () => [
+      normalizeOptions(sourceLanguageOptions),
+      normalizeOptions(targetLanguageOptions),
+    ],
+    [sourceLanguageOptions, targetLanguageOptions],
+  );
+
+const useLanguageControlsProps = (
+  {
+    sourceLanguage,
+    sourceLanguageLabel,
+    targetLanguage,
+    targetLanguageLabel,
+    swapLabel,
+    normalizeSourceLanguageFn,
+    normalizeTargetLanguageFn,
+  }: Pick<
+    UseLanguageControlsConfigParams,
+    | "sourceLanguage"
+    | "sourceLanguageLabel"
+    | "targetLanguage"
+    | "targetLanguageLabel"
+    | "swapLabel"
+    | "normalizeSourceLanguageFn"
+    | "normalizeTargetLanguageFn"
+  >,
+  normalizedSourceOptions: LanguageOption[],
+  normalizedTargetOptions: LanguageOption[],
+) =>
+  useMemo(
+    () => ({
+      sourceLanguage,
+      sourceLanguageOptions: normalizedSourceOptions,
+      sourceLanguageLabel,
+      targetLanguage,
+      targetLanguageOptions: normalizedTargetOptions,
+      targetLanguageLabel,
+      swapLabel,
+      normalizeSourceLanguage: normalizeSourceLanguageFn,
+      normalizeTargetLanguage: normalizeTargetLanguageFn,
+    }),
+    [
+      normalizedSourceOptions,
+      normalizedTargetOptions,
+      sourceLanguage,
+      sourceLanguageLabel,
+      swapLabel,
+      targetLanguage,
+      targetLanguageLabel,
+      normalizeSourceLanguageFn,
+      normalizeTargetLanguageFn,
+    ],
+  );
+
 export interface UseLanguageControlsConfigParams {
   sourceLanguage?: LanguageValue;
   sourceLanguageOptions?: LanguageOption[];
@@ -37,48 +99,16 @@ export interface UseLanguageControlsConfigResult {
   >;
 }
 
-export const useLanguageControlsConfig = ({
-  sourceLanguage,
-  sourceLanguageOptions,
-  sourceLanguageLabel,
-  targetLanguage,
-  targetLanguageOptions,
-  targetLanguageLabel,
-  swapLabel,
-  normalizeSourceLanguageFn,
-  normalizeTargetLanguageFn,
-}: UseLanguageControlsConfigParams): UseLanguageControlsConfigResult => {
-  const [normalizedSourceOptions, normalizedTargetOptions] = useMemo(
-    () => [
-      normalizeOptions(sourceLanguageOptions),
-      normalizeOptions(targetLanguageOptions),
-    ],
-    [sourceLanguageOptions, targetLanguageOptions],
-  );
+export const useLanguageControlsConfig = (
+  params: UseLanguageControlsConfigParams,
+): UseLanguageControlsConfigResult => {
+  const [normalizedSourceOptions, normalizedTargetOptions] =
+    useNormalizedLanguageOptions(params);
 
-  const props = useMemo(
-    () => ({
-      sourceLanguage,
-      sourceLanguageOptions: normalizedSourceOptions,
-      sourceLanguageLabel,
-      targetLanguage,
-      targetLanguageOptions: normalizedTargetOptions,
-      targetLanguageLabel,
-      swapLabel,
-      normalizeSourceLanguage: normalizeSourceLanguageFn,
-      normalizeTargetLanguage: normalizeTargetLanguageFn,
-    }),
-    [
-      normalizeSourceLanguageFn,
-      normalizeTargetLanguageFn,
-      normalizedSourceOptions,
-      normalizedTargetOptions,
-      sourceLanguage,
-      sourceLanguageLabel,
-      swapLabel,
-      targetLanguage,
-      targetLanguageLabel,
-    ],
+  const props = useLanguageControlsProps(
+    params,
+    normalizedSourceOptions,
+    normalizedTargetOptions,
   );
 
   const isVisible =

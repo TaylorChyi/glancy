@@ -14,9 +14,10 @@ import useWaitingFrameCycle from "../useWaitingFrameCycle";
  * 边界/异常：
  *  - 随机函数命中上一帧索引时，Hook 应回退到下一合法帧。
  */
-describe("useWaitingFrameCycle", () => {
-  const frames = ["frame-a.svg", "frame-b.svg", "frame-c.svg"];
 
+const waitingFrames = ["frame-a.svg", "frame-b.svg", "frame-c.svg"];
+
+function registerWaitingFrameCycleTests(frames) {
   it("GivenRandomSequence_WhenInitialised_ThenUsesFirstRandomValue", () => {
     const randomValues = [0.6];
     const { result } = renderHook(() =>
@@ -165,7 +166,7 @@ describe("useWaitingFrameCycle", () => {
      * 断言：
      *  - cycleDurationMs 恰为 1500；
      *  - 行为与等待策略定义保持同步。
-     * 边界/异常：
+     *  边界/异常：
      *  - 若策略值调整，该测试提醒同步更新 Hook 或策略文件。
      */
     const { result } = renderHook(() =>
@@ -177,4 +178,8 @@ describe("useWaitingFrameCycle", () => {
 
     expect(result.current.cycleDurationMs).toBe(1500);
   });
+}
+
+describe("useWaitingFrameCycle", () => {
+  registerWaitingFrameCycleTests(waitingFrames);
 });

@@ -35,6 +35,26 @@ const setContextState = ({ user, history, language } = {}) => {
 
 const renderUserDock = () => renderHook(() => useSidebarUserDock());
 
+const expectProUserModalProps = (result) => {
+  expect(result.current.modalProps).toMatchObject({
+    isPro: true,
+    user: userState.user,
+  });
+};
+
+const expectProUserBuildProps = (props, openSettings, openLogout) => {
+  expect(props.displayName).toBe("alice");
+  expect(props.planLabel).toBe("Plus");
+  expect(props.labels).toEqual({
+    settings: translations.settings,
+    logout: translations.logout,
+  });
+  expect(props.labels).not.toHaveProperty("upgrade");
+  expect(props).not.toHaveProperty("onOpenUpgrade");
+  expect(props.onOpenSettings).toBe(openSettings);
+  expect(props.onOpenLogout).toBe(openLogout);
+};
+
 jest.unstable_mockModule("@core/context", () => ({
   useUser: () => userState,
   useHistory: () => historyState,
@@ -87,26 +107,13 @@ describe("useSidebarUserDock", () => {
 
       const { result } = renderUserDock();
 
-      expect(result.current.modalProps).toMatchObject({
-        isPro: true,
-        user: userState.user,
-      });
-
       const props = result.current.buildAuthenticatedProps({
         openSettings,
         openLogout,
       });
 
-      expect(props.displayName).toBe("alice");
-      expect(props.planLabel).toBe("Plus");
-      expect(props.labels).toEqual({
-        settings: translations.settings,
-        logout: translations.logout,
-      });
-      expect(props.labels).not.toHaveProperty("upgrade");
-      expect(props).not.toHaveProperty("onOpenUpgrade");
-      expect(props.onOpenSettings).toBe(openSettings);
-      expect(props.onOpenLogout).toBe(openLogout);
+      expectProUserModalProps(result);
+      expectProUserBuildProps(props, openSettings, openLogout);
     });
 
     test("Given free user When building props Then returns minimal labels", () => {

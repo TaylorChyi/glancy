@@ -12,9 +12,31 @@ function ActionInputView({
   actionButtonProps,
 }) {
   const { onFocus, onBlur, ...restTextareaProps } = textareaProps;
-  const { isVisible, props: languageProps } = languageControls;
-  const shouldRenderLanguageControls = isVisible;
+  const { isVisible: shouldRenderLanguageControls, props: languageProps } =
+    languageControls;
 
+  return (
+    <ActionInputStructure
+      formProps={formProps}
+      textareaProps={restTextareaProps}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      shouldRenderLanguageControls={shouldRenderLanguageControls}
+      languageProps={languageProps}
+      actionButtonProps={actionButtonProps}
+    />
+  );
+}
+
+function ActionInputStructure({
+  formProps,
+  textareaProps,
+  onFocus,
+  onBlur,
+  shouldRenderLanguageControls,
+  languageProps,
+  actionButtonProps,
+}) {
   const languageVisibility = shouldRenderLanguageControls ? "true" : "false";
 
   return (
@@ -23,35 +45,62 @@ function ActionInputView({
         className={styles["input-surface"]}
         data-language-visible={languageVisibility}
       >
-        <div
-          className={styles["language-slot"]}
-          data-visible={languageVisibility}
-        >
-          {shouldRenderLanguageControls ? (
-            <LanguageControls {...languageProps} />
-          ) : null}
-        </div>
-        <div className={styles["text-slot"]}>
-          <div className={styles["core-input"]}>
-            <textarea
-              {...restTextareaProps}
-              className={styles.textarea}
-              onFocus={onFocus}
-              onBlur={onBlur}
-            />
-            <button
-              type="submit"
-              className={styles["submit-proxy"]}
-              tabIndex={-1}
-              aria-hidden="true"
-            />
-          </div>
-        </div>
-        <div className={styles["action-slot"]}>
-          <ActionButton {...actionButtonProps} />
-        </div>
+        <LanguageSlot
+          shouldRenderLanguageControls={shouldRenderLanguageControls}
+          languageVisibility={languageVisibility}
+          languageProps={languageProps}
+        />
+        <TextSlot
+          textareaProps={textareaProps}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        <ActionSlot actionButtonProps={actionButtonProps} />
       </SearchBox>
     </form>
+  );
+}
+
+function LanguageSlot({
+  shouldRenderLanguageControls,
+  languageVisibility,
+  languageProps,
+}) {
+  return (
+    <div className={styles["language-slot"]} data-visible={languageVisibility}>
+      {shouldRenderLanguageControls ? (
+        <LanguageControls {...languageProps} />
+      ) : null}
+    </div>
+  );
+}
+
+function TextSlot({ textareaProps, onFocus, onBlur }) {
+  return (
+    <div className={styles["text-slot"]}>
+      <div className={styles["core-input"]}>
+        <textarea
+          {...textareaProps}
+          className={styles.textarea}
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        <button
+          type="submit"
+          className={styles["submit-proxy"]}
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ActionSlot({ actionButtonProps }) {
+  return (
+    <div className={styles["action-slot"]}>
+      <ActionButton {...actionButtonProps} />
+    </div>
   );
 }
 

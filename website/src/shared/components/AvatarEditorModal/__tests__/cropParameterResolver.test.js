@@ -18,29 +18,25 @@ import {
   toMatrixString,
 } from "../testUtils/cropTestUtils.js";
 
-describe("resolveCropParameters calibration", () => {
-  const viewportSize = 320;
-  const naturalSize = { width: 1200, height: 800 };
-  const displayMetrics = { scaleFactor: 0.48 };
-  const offset = { x: -80, y: 0 };
+const viewportSize = 320;
+const naturalSize = { width: 1200, height: 800 };
+const displayMetrics = { scaleFactor: 0.48 };
+const offset = { x: -80, y: 0 };
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  /**
-   * 测试目标：当 CSS 矩阵返回异常偏移时，应回退至纯几何计算并输出诊断日志。
-   * 前置条件：构造 transform 矩阵使得解析结果与几何算法差异较大。
-   * 步骤：
-   *  1) mock getComputedStyle 返回偏离实际状态的矩阵；
-   *  2) mock console.warn 捕获诊断；
-   *  3) 调用 resolveCropParameters；
-   * 断言：
-   *  - 返回的 cropRect 与 computeCropSourceRect 一致；
-   *  - console.warn 被调用一次。
-   * 边界/异常：
-   *  - 覆盖矩阵不可用路径。
-   */
+/**
+ * 测试目标：当 CSS 矩阵返回异常偏移时，应回退至纯几何计算并输出诊断日志。
+ * 前置条件：构造 transform 矩阵使得解析结果与几何算法差异较大。
+ * 步骤：
+ *  1) mock getComputedStyle 返回偏离实际状态的矩阵；
+ *  2) mock console.warn 捕获诊断；
+ *  3) 调用 resolveCropParameters；
+ * 断言：
+ *  - 返回的 cropRect 与 computeCropSourceRect 一致；
+ *  - console.warn 被调用一次。
+ * 边界/异常：
+ *  - 覆盖矩阵不可用路径。
+ */
+const runDeviantMatrixCalibrationTest = () => {
   it("Given deviant matrix When resolveCropParameters Then prefers CSS matrix with warning", () => {
     const matrix = { a: 2, b: 0, c: 0, d: 2, e: 0, f: 0 };
     const getComputedStyleSpy = jest
@@ -82,18 +78,20 @@ describe("resolveCropParameters calibration", () => {
     expect(consoleSpy).toHaveBeenCalledTimes(1);
     consoleSpy.mockRestore();
   });
+};
 
-  /**
-   * 测试目标：当浏览器未提供 transform 矩阵时，应回退至几何策略，保证导出与视图状态一致。
-   * 前置条件：mock getComputedStyle 返回 transform="none"，确保 CSS 策略失效。
-   * 步骤：
-   *  1) 调用 resolveCropParameters 推导结果；
-   * 断言：
-   *  - 返回策略为 geometry；
-   *  - 裁剪矩形与几何工具计算结果相符。
-   * 边界/异常：
-   *  - 覆盖矩阵缺失的回退分支。
-   */
+/**
+ * 测试目标：当浏览器未提供 transform 矩阵时，应回退至几何策略，保证导出与视图状态一致。
+ * 前置条件：mock getComputedStyle 返回 transform="none"，确保 CSS 策略失效。
+ * 步骤：
+ *  1) 调用 resolveCropParameters 推导结果；
+ *  断言：
+ *  - 返回策略为 geometry；
+ *  - 裁剪矩形与几何工具计算结果相符。
+ * 边界/异常：
+ *  - 覆盖矩阵缺失的回退分支。
+ */
+const runMissingCssMatrixTest = () => {
   it("Given missing CSS matrix When resolveCropParameters Then falls back to geometry result", () => {
     jest
       .spyOn(window, "getComputedStyle")
@@ -121,21 +119,23 @@ describe("resolveCropParameters calibration", () => {
     expect(result?.cropRect?.width).toBeCloseTo(expected.width, 3);
     expect(result?.cropRect?.height).toBeCloseTo(expected.height, 3);
   });
+};
 
-  /**
-   * 测试目标：当矩阵与几何结果仅存在微小差异时，应返回 CSS 策略产物且不输出告警。
-   * 前置条件：构造 transform 矩阵在容差范围内偏移。
-   * 步骤：
-   *  1) 生成接近实际状态的矩阵并 mock getComputedStyle；
-   *  2) mock console.warn；
-   *  3) 调用 resolveCropParameters；
-   * 断言：
-   *  - 返回策略标识为 CSS；
-   *  - 裁剪矩形与几何推导近似一致；
-   *  - console.warn 未被调用。
-   * 边界/异常：
-   *  - 覆盖容差判断逻辑。
-   */
+/**
+ * 测试目标：当矩阵与几何结果仅存在微小差异时，应返回 CSS 策略产物且不输出告警。
+ * 前置条件：构造 transform 矩阵在容差范围内偏移。
+ * 步骤：
+ *  1) 生成接近实际状态的矩阵并 mock getComputedStyle；
+ *  2) mock console.warn；
+ *  3) 调用 resolveCropParameters；
+ *  断言：
+ *  - 返回策略标识为 CSS；
+ *  - 裁剪矩形与几何推导近似一致；
+ *  - console.warn 未被调用。
+ *  边界/异常：
+ *  - 覆盖容差判断逻辑。
+ */
+const runNearPerfectMatrixTest = () => {
   it("Given near-perfect matrix When resolveCropParameters Then returns CSS result without warning", () => {
     const matrix = buildMatrix({
       scale: displayMetrics.scaleFactor,
@@ -178,4 +178,14 @@ describe("resolveCropParameters calibration", () => {
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+};
+
+describe("resolveCropParameters calibration", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  runDeviantMatrixCalibrationTest();
+  runMissingCssMatrixTest();
+  runNearPerfectMatrixTest();
 });

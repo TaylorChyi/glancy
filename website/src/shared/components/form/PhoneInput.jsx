@@ -11,12 +11,6 @@ function PhoneInput({ value = "", onChange, placeholder = "" }) {
     onChange,
   );
   const { open, toggle, close, ref } = usePhoneDropdown();
-
-  const handleSelect = (nextCode) => {
-    selectCode(nextCode);
-    close();
-  };
-
   return (
     <div className={styles["phone-input"]} ref={ref}>
       <div className={styles["phone-code"]} onClick={toggle}>
@@ -25,18 +19,13 @@ function PhoneInput({ value = "", onChange, placeholder = "" }) {
       {open && (
         <div className={styles["code-options"]}>
           {CODE_LIST.map((c) => (
-            <div key={c.code} onClick={() => handleSelect(c.code)}>
+            <div key={c.code} onClick={() => { selectCode(c.code); close(); }}>
               {c.code}
             </div>
           ))}
         </div>
       )}
-      <input
-        className={styles["phone-number"]}
-        value={number}
-        onChange={handleNumberChange}
-        placeholder={placeholder}
-      />
+      <input className={styles["phone-number"]} value={number} onChange={handleNumberChange} placeholder={placeholder} />
     </div>
   );
 }

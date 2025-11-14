@@ -106,6 +106,19 @@ function SettingsNavList({
   classNames,
   closeActionNode,
 }) {
+  const actionNode = closeActionNode ? (
+    <div role="presentation" className={classNames.action}>
+      {closeActionNode}
+    </div>
+  ) : null;
+
+  const buttonClassNames = {
+    button: classNames.button,
+    label: classNames.label,
+    labelText: classNames.labelText,
+    icon: classNames.icon,
+  };
+
   return (
     <nav
       aria-label={tablistLabel}
@@ -115,23 +128,14 @@ function SettingsNavList({
       style={{ "--settings-nav-section-count": sectionCount }}
       data-orientation={orientation}
     >
-      {closeActionNode ? (
-        <div role="presentation" className={classNames.action}>
-          {closeActionNode}
-        </div>
-      ) : null}
+      {actionNode}
       <SettingsNavListItems
         sections={sections}
         activeSectionId={activeSectionId}
         onSelect={onSelect}
         isHorizontalLayout={isHorizontalLayout}
         lang={lang}
-        classNames={{
-          button: classNames.button,
-          label: classNames.label,
-          labelText: classNames.labelText,
-          icon: classNames.icon,
-        }}
+        classNames={buttonClassNames}
       />
     </nav>
   );

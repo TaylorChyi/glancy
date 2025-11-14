@@ -12,6 +12,20 @@ const { default: useTtsFeedback } = await import(
   "@shared/components/tts/useTtsFeedback.js"
 );
 
+const renderFeedbackHook = () =>
+  renderHook(
+    ({ error }) => useTtsFeedback(error),
+    { initialProps: { error: null } },
+  );
+
+const renderWithError = (error) => {
+  const hook = renderFeedbackHook();
+  act(() => {
+    hook.rerender({ error });
+  });
+  return hook;
+};
+
 describe("useTtsFeedback", () => {
   beforeEach(() => {
     navigate.mockClear();
@@ -28,16 +42,7 @@ describe("useTtsFeedback", () => {
    *  - 若错误无 message，应退化为空字符串（另有默认覆盖）。
    */
   test("GivenForbiddenError_WhenHandlingFeedback_ThenPopupOpens", async () => {
-    const { result, rerender } = renderHook(
-      ({ error }) => useTtsFeedback(error),
-      {
-        initialProps: { error: null },
-      },
-    );
-
-    act(() => {
-      rerender({ error: { code: 403, message: "Pro only" } });
-    });
+    const { result } = renderWithError({ code: 403, message: "Pro only" });
 
     await waitFor(() => {
       expect(result.current.isPopupOpen).toBe(true);
@@ -56,16 +61,7 @@ describe("useTtsFeedback", () => {
    *  - 该路径不应影响 popup 与 upgrade 状态。
    */
   test("GivenRateLimitError_WhenHandlingFeedback_ThenToastOpens", async () => {
-    const { result, rerender } = renderHook(
-      ({ error }) => useTtsFeedback(error),
-      {
-        initialProps: { error: null },
-      },
-    );
-
-    act(() => {
-      rerender({ error: { code: 429, message: "Too many" } });
-    });
+    const { result } = renderWithError({ code: 429, message: "Too many" });
 
     await waitFor(() => {
       expect(result.current.isToastOpen).toBe(true);
@@ -85,13 +81,7 @@ describe("useTtsFeedback", () => {
    *  - 若未来允许自定义路径，应更新断言。
    */
   test("GivenUnauthorizedError_WhenHandlingFeedback_ThenNavigatesToLogin", async () => {
-    const { rerender } = renderHook(({ error }) => useTtsFeedback(error), {
-      initialProps: { error: null },
-    });
-
-    act(() => {
-      rerender({ error: { code: 401, message: "Login" } });
-    });
+    renderWithError({ code: 401, message: "Login" });
 
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/login");
@@ -109,16 +99,7 @@ describe("useTtsFeedback", () => {
    *  - closeUpgrade 后应可再次打开（属于后续扩展测试）。
    */
   test("GivenUpgradeRequest_WhenInvoked_ThenClosesPopupAndOpensModal", async () => {
-    const { result, rerender } = renderHook(
-      ({ error }) => useTtsFeedback(error),
-      {
-        initialProps: { error: null },
-      },
-    );
-
-    act(() => {
-      rerender({ error: { code: 403, message: "Pro only" } });
-    });
+    const { result } = renderWithError({ code: 403, message: "Pro only" });
 
     await waitFor(() => {
       expect(result.current.isPopupOpen).toBe(true);

@@ -13,13 +13,10 @@ export interface UseTextareaFocusBridgeResult {
   releaseFocus: () => void;
 }
 
-export const useTextareaFocusBridge = ({
-  inputRef,
-}: UseTextareaFocusBridgeParams): UseTextareaFocusBridgeResult => {
-  const formRef = useRef<HTMLFormElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const syncExternalRef = useCallback(
+const useSyncExternalRef = (
+  inputRef?: React.Ref<HTMLTextAreaElement> | null,
+) =>
+  useCallback(
     (node: HTMLTextAreaElement | null) => {
       if (!inputRef) {
         return;
@@ -45,15 +42,9 @@ export const useTextareaFocusBridge = ({
     [inputRef],
   );
 
-  /**
-   * 意图：提供稳定的聚焦恢复入口，避免按钮点击后焦点遗失。
-   * 输入：无；依赖内部 textarea 引用。
-   * 输出：调用时尝试将焦点移回 textarea。
-   * 流程：
-   *  1) 读取内部 ref，若存在则执行 focus(preventScroll)。
-   * 错误处理：若节点不存在则静默跳过。
-   * 复杂度：O(1)。
-   */
+const useTextareaFocusHandlers = (
+  textareaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
+) => {
   const restoreFocus = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) {
@@ -62,25 +53,27 @@ export const useTextareaFocusBridge = ({
     if (typeof textarea.focus === "function") {
       textarea.focus({ preventScroll: true });
     }
-  }, []);
+  }, [textareaRef]);
 
-  /**
-   * 意图：在提交触发时主动释放输入焦点，驱动底部面板回落至释义模式。
-   * 输入：依赖内部 textarea 引用。
-   * 输出：若存在 textarea，调用其 blur 方法。
-   * 流程：
-   *  1) 读取内部 textarea；
-   *  2) 若具备 blur 能力则执行以触发 onBlur 链路；
-   * 错误处理：节点缺失或不具备 blur 时静默退化；
-   * 复杂度：O(1)。
-   */
   const releaseFocus = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea || typeof textarea.blur !== "function") {
       return;
     }
     textarea.blur();
-  }, []);
+  }, [textareaRef]);
+
+  return { restoreFocus, releaseFocus };
+};
+
+export const useTextareaFocusBridge = ({
+  inputRef,
+}: UseTextareaFocusBridgeParams): UseTextareaFocusBridgeResult => {
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const syncExternalRef = useSyncExternalRef(inputRef);
+  const { restoreFocus, releaseFocus } = useTextareaFocusHandlers(textareaRef);
 
   const setTextareaRef = useCallback(
     (node: HTMLTextAreaElement | null) => {

@@ -60,13 +60,13 @@ const { default: PronounceableWord } = await import(
   "@shared/components/tts/PronounceableWord.jsx"
 );
 
-describe("PronounceableWord", () => {
-  afterEach(() => {
-    play.mockReset();
-    stop.mockReset();
-    useTtsPlayer.mockClear();
-  });
+afterEach(() => {
+  play.mockReset();
+  stop.mockReset();
+  useTtsPlayer.mockClear();
+});
 
+describe("PronounceableWord playback controls", () => {
   /**
    * Clicking text invokes play with provided parameters.
    */
@@ -96,7 +96,9 @@ describe("PronounceableWord", () => {
     expect(stop).toHaveBeenCalled();
     expect(play).not.toHaveBeenCalled();
   });
+});
 
+describe("PronounceableWord errors", () => {
   /**
    * Forbidden errors show upgrade popup.
    */
@@ -127,7 +129,9 @@ describe("PronounceableWord", () => {
     const { findByText } = render(<PronounceableWord text="hi" lang="en" />);
     expect(await findByText("Too many")).toBeInTheDocument();
   });
+});
 
+describe("PronounceableWord accessibility", () => {
   /**
    * Localized aria-label remains accessible via translations.
    */

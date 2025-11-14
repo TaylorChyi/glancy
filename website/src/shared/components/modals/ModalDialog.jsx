@@ -4,7 +4,7 @@ import { withStopPropagation } from "@shared/utils/stopPropagation.js";
 
 import ModalCloseControl from "./ModalCloseControl.jsx";
 
-function ModalDialog({
+const ModalDialog = ({
   contentClassName,
   ariaLabelledBy,
   ariaDescribedBy,
@@ -14,28 +14,26 @@ function ModalDialog({
   closeLabel,
   onClose,
   children,
-}) {
-  return (
-    <div
-      className={contentClassName}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={ariaLabelledBy}
-      aria-describedby={ariaDescribedBy}
-      tabIndex={-1}
-      ref={contentRef}
-      onClick={withStopPropagation()}
-    >
-      <ModalCloseControl
-        closeButton={closeButton}
-        shouldRenderDefaultCloseButton={shouldRenderDefaultCloseButton}
-        closeLabel={closeLabel}
-        onClose={onClose}
-      />
-      {children}
-    </div>
-  );
-}
+}) => (
+  <div
+    className={contentClassName}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={ariaLabelledBy}
+    aria-describedby={ariaDescribedBy}
+    tabIndex={-1}
+    ref={contentRef}
+    onClick={withStopPropagation()}
+  >
+    <ModalCloseControl
+      closeButton={closeButton}
+      shouldRenderDefaultCloseButton={shouldRenderDefaultCloseButton}
+      closeLabel={closeLabel}
+      onClose={onClose}
+    />
+    {children}
+  </div>
+);
 
 ModalDialog.propTypes = {
   contentClassName: PropTypes.string.isRequired,

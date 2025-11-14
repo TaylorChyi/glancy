@@ -139,37 +139,30 @@ const buildViewProps = ({
   toast: feedback?.redeemToast,
 });
 
-export const usePreferencesViewProps = (input: PreferencesViewPropsInput) => {
-  const {
+export const usePreferencesViewProps = ({
+  activeSection, activeSectionId,
+  avatarEditor, closeRenderer,
+  copy, feedback,
+  handleSubmit, header,
+  onSectionSelect, panel,
+  registerHeading, sections,
+}: PreferencesViewPropsInput) => useMemo(
+  () => buildViewProps({
     activeSection, activeSectionId,
     avatarEditor, closeRenderer,
     copy, feedback,
     handleSubmit, header,
     onSectionSelect, panel,
     registerHeading, sections,
-  } = input;
-
-  return useMemo(
-    () =>
-      buildViewProps({
-        activeSection, activeSectionId,
-        avatarEditor, closeRenderer,
-        copy, feedback,
-        handleSubmit, header,
-        onSectionSelect, panel,
-        registerHeading, sections,
-      }),
-    [
-      activeSection, activeSectionId,
-      avatarEditor, closeRenderer,
-      copy.description, copy.tablistLabel,
-      copy.title, feedback,
-      handleSubmit, header.descriptionId,
-      header.headingId, header.planLabel,
-      onSectionSelect, panel,
-      registerHeading, sections,
-    ],
-  );
-};
+  }),
+  [
+    activeSection, activeSectionId,
+    avatarEditor, closeRenderer,
+    copy, feedback,
+    handleSubmit, header,
+    onSectionSelect, panel,
+    registerHeading, sections,
+  ],
+);
 
 export default usePreferencesViewProps;

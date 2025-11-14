@@ -40,7 +40,7 @@ const renderHistoryListView = ({
   return { items, onSelect, onNavigate };
 };
 
-describe("HistoryListView", () => {
+describe("HistoryListView", function describeHistoryListView() {
   beforeEach(() => {
     itemSequence = 0;
     jest.clearAllMocks();

@@ -1,5 +1,20 @@
 import { useCallback, useEffect, useRef } from "react";
 
+const getNavigationIndex = (key, index, length) => {
+  switch (key) {
+    case "ArrowDown":
+      return Math.min(index + 1, length - 1);
+    case "ArrowUp":
+      return Math.max(index - 1, 0);
+    case "Home":
+      return 0;
+    case "End":
+      return length - 1;
+    default:
+      return undefined;
+  }
+};
+
 export default function useHistoryNavigation(items = []) {
   const itemRefs = useRef([]);
 
@@ -21,43 +36,17 @@ export default function useHistoryNavigation(items = []) {
     [],
   );
 
-  const handleNavigateKey = useCallback(
-    (event, index) => {
-      if (items.length === 0) return;
-
-      switch (event.key) {
-        case "ArrowDown": {
-          event.preventDefault();
-          focusItemAt(Math.min(index + 1, items.length - 1));
-          break;
-        }
-        case "ArrowUp": {
-          event.preventDefault();
-          focusItemAt(Math.max(index - 1, 0));
-          break;
-        }
-        case "Home": {
-          event.preventDefault();
-          focusItemAt(0);
-          break;
-        }
-        case "End": {
-          event.preventDefault();
-          focusItemAt(items.length - 1);
-          break;
-        }
-        default:
-          break;
-      }
-    },
-    [focusItemAt, items.length],
-  );
-
   return useCallback(
     (index) => ({
       ref: registerItemRef(index),
-      onKeyDown: (event) => handleNavigateKey(event, index),
+      onKeyDown: (event) => {
+        if (!items.length) return;
+        const nextIndex = getNavigationIndex(event.key, index, items.length);
+        if (nextIndex === undefined) return;
+        event.preventDefault();
+        focusItemAt(nextIndex);
+      },
     }),
-    [handleNavigateKey, registerItemRef],
+    [focusItemAt, items.length, registerItemRef],
   );
 }

@@ -20,6 +20,39 @@ export function resolveNormalizedValue(value, normalizeValue) {
   return value;
 }
 
+function normalizeOption({ value, label, description }, normalizeValue) {
+  if (typeof label !== "string") {
+    return null;
+  }
+
+  const normalized = resolveNormalizedValue(value, normalizeValue);
+  const resolved = normalized ?? value;
+  const stringValue =
+    resolved != null ? String(resolved).toUpperCase() : undefined;
+
+  if (!stringValue) {
+    return null;
+  }
+
+  const badge = resolveLanguageBadge(stringValue);
+
+  if (!badge) {
+    return null;
+  }
+
+  const normalizedDescription =
+    typeof description === "string" && description.trim().length > 0
+      ? description.trim()
+      : undefined;
+
+  return {
+    value: stringValue,
+    badge,
+    label,
+    description: normalizedDescription,
+  };
+}
+
 /**
  * 意图：将调用方提供的原始语言选项转化为菜单渲染所需的结构化数据。
  * 输入：
@@ -40,40 +73,7 @@ export function toNormalizedOptions(options, normalizeValue) {
     return [];
   }
 
-  return options
-    .map(({ value, label, description }) => {
-      if (typeof label !== "string") {
-        return null;
-      }
-
-      const normalized = resolveNormalizedValue(value, normalizeValue);
-      const resolved = normalized ?? value;
-      const stringValue =
-        resolved != null ? String(resolved).toUpperCase() : undefined;
-
-      if (!stringValue) {
-        return null;
-      }
-
-      const badge = resolveLanguageBadge(stringValue);
-
-      if (!badge) {
-        return null;
-      }
-
-      const normalizedDescription =
-        typeof description === "string" && description.trim().length > 0
-          ? description.trim()
-          : undefined;
-
-      return {
-        value: stringValue,
-        badge,
-        label,
-        description: normalizedDescription,
-      };
-    })
-    .filter(Boolean);
+  return options.map((option) => normalizeOption(option, normalizeValue)).filter(Boolean);
 }
 
 /**

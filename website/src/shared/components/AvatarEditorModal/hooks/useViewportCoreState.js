@@ -15,12 +15,7 @@ export const useViewportReset = ({
     setOffset(INITIAL_POINT);
   }, [setOffset, setZoom, shouldRecenterRef]);
 
-export const useViewportRecenter = ({
-  viewportSize,
-  setZoom,
-  setOffset,
-  shouldRecenterRef,
-}) =>
+export const useViewportRecenter = ({ viewportSize, setZoom, setOffset, shouldRecenterRef }) =>
   useCallback(
     ({
       naturalWidth,
@@ -55,18 +50,8 @@ const useViewportCoreState = () => {
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
 
-  const resetView = useViewportReset({
-    setZoom,
-    setOffset,
-    shouldRecenterRef,
-  });
-
-  const recenterViewport = useViewportRecenter({
-    viewportSize,
-    setZoom,
-    setOffset,
-    shouldRecenterRef,
-  });
+  const resetView = useViewportReset({ setZoom, setOffset, shouldRecenterRef });
+  const recenterViewport = useViewportRecenter({ viewportSize, setZoom, setOffset, shouldRecenterRef });
 
   return {
     shouldRecenterRef,

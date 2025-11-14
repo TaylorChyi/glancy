@@ -1,10 +1,21 @@
 import PropTypes from "prop-types";
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import SearchBox from "@shared/components/ui/SearchBox";
 import DictionaryEntryActionBar from "@shared/components/DictionaryEntryActionBar";
 import ThemeIcon from "@shared/components/ui/Icon";
 import toolbarStyles from "@shared/components/OutputToolbar/OutputToolbar.module.css";
 import styles from "./ActionPanel.module.css";
+
+const toolbarRootRenderer = ({ children }) => children;
+const searchToggleClassName = [
+  toolbarStyles["tool-button"],
+  "entry__tool-btn",
+  styles["search-toggle"],
+]
+  .filter(Boolean)
+  .join(" ");
+const buildPanelClassName = (actionBarClassName) =>
+  [styles.panel, actionBarClassName].filter(Boolean).join(" ");
 
 export default function ActionPanel({
   actionBarProps,
@@ -17,19 +28,31 @@ export default function ActionPanel({
     ...restActionBarProps
   } = actionBarProps;
   const panelClassName = useMemo(
-    () => [styles.panel, actionBarClassName].filter(Boolean).join(" "),
+    () => buildPanelClassName(actionBarClassName),
     [actionBarClassName],
   );
-  const searchToggleClassName = useMemo(
-    () =>
-      [toolbarStyles["tool-button"], "entry__tool-btn", styles["search-toggle"]]
-        .filter(Boolean)
-        .join(" "),
-    [],
-  );
-  const toolbarRootRenderer = useCallback(({ children }) => children, []);
   const resolvedRenderRoot = renderRoot ?? toolbarRootRenderer;
 
+  return (
+    <ActionPanelContent
+      panelClassName={panelClassName}
+      searchToggleClassName={searchToggleClassName}
+      resolvedRenderRoot={resolvedRenderRoot}
+      restActionBarProps={restActionBarProps}
+      onRequestSearch={onRequestSearch}
+      searchButtonLabel={searchButtonLabel}
+    />
+  );
+}
+
+function ActionPanelContent({
+  panelClassName,
+  searchToggleClassName,
+  resolvedRenderRoot,
+  restActionBarProps,
+  onRequestSearch,
+  searchButtonLabel,
+}) {
   return (
     <div className={styles["panel-shell"]}>
       <SearchBox

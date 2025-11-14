@@ -1,6 +1,9 @@
 import useEditableField from "@shared/hooks/useEditableField.js";
 import styles from "./EditableField.module.css";
 
+const combineClasses = (base, extra) =>
+  [styles[base], extra].filter(Boolean).join(" ");
+
 function EditableField({
   value,
   onChange,
@@ -12,12 +15,9 @@ function EditableField({
   buttonText = "Edit",
 }) {
   const { editing, enableEdit } = useEditableField(disabled);
-
-  const containerCls = [styles.field, className].filter(Boolean).join(" ");
-  const inputCls = [styles.input, inputClassName].filter(Boolean).join(" ");
-  const btnCls = [styles["edit-btn"], buttonClassName]
-    .filter(Boolean)
-    .join(" ");
+  const containerCls = combineClasses("field", className);
+  const inputCls = combineClasses("input", inputClassName);
+  const btnCls = combineClasses("edit-btn", buttonClassName);
 
   return (
     <div className={containerCls}>

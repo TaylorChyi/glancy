@@ -7,29 +7,30 @@ function TtsFeedbackSurfaces({
   upgradeLabel,
   upgradeButtonClassName,
 }) {
+  const popupProps = {
+    open: feedback.isPopupOpen,
+    message: feedback.popupMessage,
+    onClose: feedback.closePopup,
+    renderActions: () => (
+      <button
+        type="button"
+        className={upgradeButtonClassName}
+        onClick={feedback.openUpgrade}
+      >
+        {upgradeLabel}
+      </button>
+    ),
+  };
+
+  const toastProps = {
+    open: feedback.isToastOpen,
+    message: feedback.toastMessage,
+    onClose: feedback.closeToast,
+  };
+
   return (
     <>
-      <FeedbackHub
-        popup={{
-          open: feedback.isPopupOpen,
-          message: feedback.popupMessage,
-          onClose: feedback.closePopup,
-          renderActions: () => (
-            <button
-              type="button"
-              className={upgradeButtonClassName}
-              onClick={feedback.openUpgrade}
-            >
-              {upgradeLabel}
-            </button>
-          ),
-        }}
-        toast={{
-          open: feedback.isToastOpen,
-          message: feedback.toastMessage,
-          onClose: feedback.closeToast,
-        }}
-      />
+      <FeedbackHub popup={popupProps} toast={toastProps} />
       <UpgradeModal
         open={feedback.isUpgradeOpen}
         onClose={feedback.closeUpgrade}

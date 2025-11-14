@@ -72,7 +72,6 @@ export default function OptionList({
   if (!open) {
     return null;
   }
-
   return (
     <ul
       className={styles["menu-list"]}
@@ -80,17 +79,14 @@ export default function OptionList({
       ref={menuRef}
       data-open={open ? "true" : undefined}
     >
-      {options.map((option) => {
-        const isActive = option.normalizedValue === activeValue;
-        return (
-          <OptionListItem
-            key={option.normalizedValue}
-            option={option}
-            isActive={isActive}
-            onSelect={onSelect}
-          />
-        );
-      })}
+      {options.map((option) => (
+        <OptionListItem
+          key={option.normalizedValue}
+          option={option}
+          isActive={option.normalizedValue === activeValue}
+          onSelect={onSelect}
+        />
+      ))}
     </ul>
   );
 }

@@ -58,7 +58,7 @@ export type NavItemModel = {
   viewProps: NavItemViewProps;
 };
 
-export const useNavItemModel = (props: NavItemModelInput): NavItemModel => {
+export function useNavItemModel(props: NavItemModelInput): NavItemModel {
   const {
     icon,
     label,

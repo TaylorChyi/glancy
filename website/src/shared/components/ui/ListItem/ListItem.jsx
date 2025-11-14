@@ -2,6 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import styles from "./ListItem.module.css";
 
+const deriveTitle = (title, text) =>
+  typeof title === "string"
+    ? title
+    : typeof text === "string"
+      ? text
+      : undefined;
+
 function ListItem({
   text,
   title,
@@ -15,12 +22,7 @@ function ListItem({
 }) {
   const itemClassName = [styles.item, className].filter(Boolean).join(" ");
   const textClass = [styles.text, textClassName].filter(Boolean).join(" ");
-  const label =
-    typeof title === "string"
-      ? title
-      : typeof text === "string"
-        ? text
-        : undefined;
+  const label = deriveTitle(title, text);
 
   return (
     <li

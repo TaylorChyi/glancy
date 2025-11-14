@@ -9,70 +9,103 @@ import {
   AuthFeedbackHub,
 } from "./AuthFormSections.jsx";
 
-function AuthFormView({
+function AuthFormView(props) {
+  return (
+    <div className={styles["auth-page"]}>
+      {renderAuthFormHeader(props)}
+      {renderAuthMethodForm(props)}
+      {renderAuthFormSwitch(props)}
+      {renderAuthMethodDivider(props)}
+      {renderAuthMethodSwitcher(props)}
+      {renderAuthFormFooter(props)}
+      {renderAuthFeedbackHub(props)}
+    </div>
+  );
+}
+
+function renderAuthFormHeader({ brandText, title }) {
+  return <AuthFormHeader brandText={brandText} title={title} />;
+}
+
+function renderAuthMethodForm({
   account,
   availableFormMethods,
-  brandText,
   handleSendCode,
   handleSubmit,
+  method,
+  password,
+  passwordPlaceholder,
+  placeholders,
+  setAccount,
+  setPassword,
+  showCodeButton,
+  t,
+}) {
+  return (
+    <AuthMethodForm
+      account={account}
+      availableFormMethods={availableFormMethods}
+      handleSendCode={handleSendCode}
+      handleSubmit={handleSubmit}
+      method={method}
+      password={password}
+      passwordPlaceholder={passwordPlaceholder}
+      placeholders={placeholders}
+      setAccount={setAccount}
+      setPassword={setPassword}
+      showCodeButton={showCodeButton}
+      t={t}
+    />
+  );
+}
+
+function renderAuthFormSwitch({ switchLink, switchText, t }) {
+  return <AuthFormSwitch switchLink={switchLink} switchText={switchText} t={t} />;
+}
+
+function renderAuthMethodDivider({ otherOptionsLabel }) {
+  return <AuthMethodDivider label={otherOptionsLabel} />;
+}
+
+function renderAuthMethodSwitcher({
+  availableFormMethods,
   icons,
   method,
   onMethodChange,
   onUnavailableMethod,
   orderedMethods,
-  otherOptionsLabel,
-  password,
-  passwordPlaceholder,
-  placeholders,
+}) {
+  return (
+    <AuthMethodSwitcher
+      availableFormMethods={availableFormMethods}
+      icons={icons}
+      method={method}
+      onMethodChange={onMethodChange}
+      onUnavailableMethod={onUnavailableMethod}
+      orderedMethods={orderedMethods}
+    />
+  );
+}
+
+function renderAuthFormFooter({ t }) {
+  return <AuthFormFooter t={t} />;
+}
+
+function renderAuthFeedbackHub({
   popup,
+  toast,
   resetPopup,
   resetToast,
-  setAccount,
-  setPassword,
-  showCodeButton,
-  switchLink,
-  switchText,
-  t,
-  title,
-  toast,
   toastDismissLabel,
 }) {
   return (
-    <div className={styles["auth-page"]}>
-      <AuthFormHeader brandText={brandText} title={title} />
-      <AuthMethodForm
-        account={account}
-        availableFormMethods={availableFormMethods}
-        handleSendCode={handleSendCode}
-        handleSubmit={handleSubmit}
-        method={method}
-        password={password}
-        passwordPlaceholder={passwordPlaceholder}
-        placeholders={placeholders}
-        setAccount={setAccount}
-        setPassword={setPassword}
-        showCodeButton={showCodeButton}
-        t={t}
-      />
-      <AuthFormSwitch switchLink={switchLink} switchText={switchText} t={t} />
-      <AuthMethodDivider label={otherOptionsLabel} />
-      <AuthMethodSwitcher
-        availableFormMethods={availableFormMethods}
-        icons={icons}
-        method={method}
-        onMethodChange={onMethodChange}
-        onUnavailableMethod={onUnavailableMethod}
-        orderedMethods={orderedMethods}
-      />
-      <AuthFormFooter t={t} />
-      <AuthFeedbackHub
-        popup={popup}
-        toast={toast}
-        resetPopup={resetPopup}
-        resetToast={resetToast}
-        toastDismissLabel={toastDismissLabel}
-      />
-    </div>
+    <AuthFeedbackHub
+      popup={popup}
+      toast={toast}
+      resetPopup={resetPopup}
+      resetToast={resetToast}
+      toastDismissLabel={toastDismissLabel}
+    />
   );
 }
 

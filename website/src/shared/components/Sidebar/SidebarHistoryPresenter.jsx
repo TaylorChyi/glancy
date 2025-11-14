@@ -5,15 +5,7 @@ import useInfiniteScroll from "@shared/hooks/useInfiniteScroll.js";
 import styles from "./Sidebar.module.css";
 import HistoryListView from "./HistoryListView.jsx";
 
-function SidebarHistoryPresenter({
-  items,
-  onSelect,
-  onNavigate,
-  toast,
-  hasMore,
-  isLoading,
-  loadMore,
-}) {
+function useSidebarHistoryInfiniteScroll(hasMore, isLoading, loadMore) {
   const scrollContainerRef = useRef(null);
 
   useInfiniteScroll({
@@ -23,6 +15,24 @@ function SidebarHistoryPresenter({
     onLoadMore: loadMore,
     threshold: 72,
   });
+
+  return scrollContainerRef;
+}
+
+function SidebarHistoryPresenter({
+  items,
+  onSelect,
+  onNavigate,
+  toast,
+  hasMore,
+  isLoading,
+  loadMore,
+}) {
+  const scrollContainerRef = useSidebarHistoryInfiniteScroll(
+    hasMore,
+    isLoading,
+    loadMore,
+  );
 
   return (
     <div

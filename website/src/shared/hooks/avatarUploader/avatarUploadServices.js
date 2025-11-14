@@ -132,20 +132,12 @@ const executePreparedUpload = async ({
 };
 
 export const orchestrateAvatarUpload = async (options) => {
-  const {
-    setStatus,
-    setError,
-    setUser,
-    onSuccess,
-    onError,
-    statusMap,
-  } = options;
-
+  const { setStatus, setError, setUser, onSuccess, onError, statusMap } =
+    options;
   const prepared = prepareAvatarUpload(options);
   if (!prepared) {
     return false;
   }
-
   try {
     return await executePreparedUpload({
       prepared,

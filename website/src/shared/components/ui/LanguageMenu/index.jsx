@@ -3,19 +3,9 @@ import PropTypes from "prop-types";
 import LanguageMenuView from "./parts/LanguageMenuView.jsx";
 import useLanguageMenu from "./useLanguageMenu.js";
 
-export default function LanguageMenu({
-  id,
-  options,
-  value,
-  onChange,
-  ariaLabel,
-  normalizeValue,
-  showLabel,
-  variant,
-  onOpen,
-  fullWidth,
-}) {
-  const {
+function buildLanguageMenuViewProps(
+  { id, variant, fullWidth, ariaLabel, showLabel },
+  {
     open,
     triggerRef,
     menuRef,
@@ -25,41 +15,46 @@ export default function LanguageMenu({
     handleSelect,
     handleTriggerKeyDown,
     closeMenu,
-  } = useLanguageMenu({
-    options,
-    value,
-    normalizeValue,
-    onChange,
-    onOpen,
+  },
+) {
+  const triggerAriaLabel = ariaLabel || currentOption.label;
+  return {
+    id,
+    open,
     variant,
+    fullWidth,
+    triggerRef,
+    menuRef,
+    currentOption,
+    options: normalizedOptions,
+    onToggle: handleToggle,
+    onTriggerKeyDown: handleTriggerKeyDown,
+    onSelect: handleSelect,
+    onClose: closeMenu,
+    triggerAriaLabel,
+    triggerTitle: currentOption.label,
+    showTriggerLabel: Boolean(showLabel),
+  };
+}
+
+export default function LanguageMenu(props) {
+  const menuState = useLanguageMenu({
+    options: props.options,
+    value: props.value,
+    normalizeValue: props.normalizeValue,
+    onChange: props.onChange,
+    onOpen: props.onOpen,
+    variant: props.variant,
   });
+
+  const { normalizedOptions, currentOption } = menuState;
 
   if (normalizedOptions.length === 0 || !currentOption) {
     return null;
   }
 
-  const triggerAriaLabel = ariaLabel || currentOption.label;
-  const triggerTitle = currentOption.label;
-  const showTriggerLabel = Boolean(showLabel);
-
   return (
-    <LanguageMenuView
-      id={id}
-      open={open}
-      variant={variant}
-      fullWidth={fullWidth}
-      triggerRef={triggerRef}
-      menuRef={menuRef}
-      currentOption={currentOption}
-      options={normalizedOptions}
-      onToggle={handleToggle}
-      onTriggerKeyDown={handleTriggerKeyDown}
-      onSelect={handleSelect}
-      onClose={closeMenu}
-      triggerAriaLabel={triggerAriaLabel}
-      triggerTitle={triggerTitle}
-      showTriggerLabel={showTriggerLabel}
-    />
+    <LanguageMenuView {...buildLanguageMenuViewProps(props, menuState)} />
   );
 }
 

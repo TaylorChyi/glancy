@@ -11,10 +11,9 @@ export default function useHistoryLoading({ onSelectHistory } = {}) {
     loadHistory(user);
   }, [loadHistory, user]);
 
-  const items = useMemo(
-    () => (Array.isArray(history) ? history : []),
-    [history],
-  );
+  const items = useMemo(() => (Array.isArray(history) ? history : []), [
+    history,
+  ]);
 
   const loadMore = useCallback(() => {
     if (!user?.token) return;
@@ -24,18 +23,10 @@ export default function useHistoryLoading({ onSelectHistory } = {}) {
   const onSelect = useCallback(
     (item) => {
       if (typeof onSelectHistory !== "function") return;
-      const versionId = item?.latestVersionId ?? undefined;
-      onSelectHistory(item, versionId);
+      onSelectHistory(item, item?.latestVersionId ?? undefined);
     },
     [onSelectHistory],
   );
 
-  return {
-    items,
-    onSelect,
-    loadMore,
-    hasMore,
-    isLoading,
-    error,
-  };
+  return { items, onSelect, loadMore, hasMore, isLoading, error };
 }

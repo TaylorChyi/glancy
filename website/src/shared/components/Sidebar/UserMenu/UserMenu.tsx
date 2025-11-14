@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import UserButton from "./UserButton";
 import styles from "./UserMenu.module.css";
 import { useUserMenuController } from "./useUserMenuController";
-import type { MenuActionItem } from "./contracts";
+import type { MenuActionItem, UserMenuController } from "./contracts";
 import { MenuList } from "./MenuList";
 
 interface UserMenuProps {
@@ -41,15 +41,16 @@ const buildMenuItems = ({
   },
 ];
 
-
-function UserMenu({
-  displayName,
-  planLabel,
+function useMenuItems({
   labels,
   onOpenSettings,
   onOpenLogout,
-}: UserMenuProps) {
-  const menuItems = useMemo(
+}: {
+  labels: UserMenuProps["labels"];
+  onOpenSettings: UserMenuProps["onOpenSettings"];
+  onOpenLogout: UserMenuProps["onOpenLogout"];
+}) {
+  return useMemo(
     () =>
       buildMenuItems({
         settingsLabel: labels.settings,
@@ -59,39 +60,49 @@ function UserMenu({
       }),
     [labels.logout, labels.settings, onOpenLogout, onOpenSettings],
   );
+}
 
-  const {
-    open,
-    placement,
-    rootRef,
-    triggerRef,
-    menuRef,
-    toggle,
-    handleSurfaceKeyDown,
-    itemViewModels,
-  } = useUserMenuController({ items: menuItems });
+function UserMenu({
+  displayName,
+  planLabel,
+  labels,
+  onOpenSettings,
+  onOpenLogout,
+}: UserMenuProps) {
+  const menuItems = useMenuItems({ labels, onOpenSettings, onOpenLogout });
+  const controller = useUserMenuController({ items: menuItems });
 
   return (
-    <div ref={rootRef} className={styles.root} data-open={open}>
+    <div ref={controller.rootRef} className={styles.root} data-open={controller.open}>
       <UserButton
-        ref={triggerRef}
+        ref={controller.triggerRef}
         displayName={displayName}
         planLabel={planLabel}
-        onToggle={toggle}
-        open={open}
+        onToggle={controller.toggle}
+        open={controller.open}
       />
-      <div
-        ref={menuRef}
-        className={styles.surface}
-        data-open={open}
-        data-placement={placement === "down" ? "down" : undefined}
-        role="menu"
-        aria-hidden={!open}
-        tabIndex={-1}
-        onKeyDown={handleSurfaceKeyDown}
-      >
-        <MenuList itemViewModels={itemViewModels} />
-      </div>
+      <MenuSurface controller={controller} />
+    </div>
+  );
+}
+
+interface MenuSurfaceProps {
+  controller: UserMenuController;
+}
+
+function MenuSurface({ controller }: MenuSurfaceProps) {
+  return (
+    <div
+      ref={controller.menuRef}
+      className={styles.surface}
+      data-open={controller.open}
+      data-placement={controller.placement === "down" ? "down" : undefined}
+      role="menu"
+      aria-hidden={!controller.open}
+      tabIndex={-1}
+      onKeyDown={controller.handleSurfaceKeyDown}
+    >
+      <MenuList itemViewModels={controller.itemViewModels} />
     </div>
   );
 }

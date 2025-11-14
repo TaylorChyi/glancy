@@ -38,6 +38,23 @@ export type SidebarModel = {
   viewProps: SidebarViewProps;
 };
 
+const useSidebarLayout = (
+  navigationState: ReturnType<typeof useSidebarNavigation>,
+) => {
+  const { closeSidebar, isMobile, isOpen, shouldShowOverlay } = navigationState;
+
+  return useMemo(
+    () =>
+      buildLayoutProps({
+        closeSidebar,
+        isMobile,
+        isOpen,
+        shouldShowOverlay,
+      }),
+    [closeSidebar, isMobile, isOpen, shouldShowOverlay],
+  );
+};
+
 export const useSidebarModel = ({
   isMobile: isMobileProp,
   open,
@@ -55,16 +72,7 @@ export const useSidebarModel = ({
     onShowLibrary,
     activeView,
   });
-
-  const layout = useMemo(
-    () => buildLayoutProps(navigationState),
-    [
-      navigationState.closeSidebar,
-      navigationState.isMobile,
-      navigationState.isOpen,
-      navigationState.shouldShowOverlay,
-    ],
-  );
+  const layout = useSidebarLayout(navigationState);
 
   return {
     viewProps: {

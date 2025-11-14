@@ -40,13 +40,7 @@ VariantRow.propTypes = {
   onEnter: PropTypes.func.isRequired,
 };
 
-export default function LanguageVariantsColumn({
-  variants,
-  activeKey,
-  onVariantEnter,
-  swapAction,
-  onSwap,
-}) {
+export default function LanguageVariantsColumn({ variants, activeKey, onVariantEnter, swapAction, onSwap }) {
   return (
     <div className={styles["language-variant-column"]} role="presentation">
       <ul role="menu" className={styles["language-variant-list"]}>
@@ -59,7 +53,7 @@ export default function LanguageVariantsColumn({
           />
         ))}
       </ul>
-      {swapAction ? (
+      {swapAction && (
         <button
           type="button"
           className={styles["language-swap-action"]}
@@ -67,7 +61,7 @@ export default function LanguageVariantsColumn({
         >
           {swapAction.label}
         </button>
-      ) : null}
+      )}
     </div>
   );
 }

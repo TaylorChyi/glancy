@@ -18,56 +18,83 @@ import useSidebarOpenState from "./useSidebarOpenState.js";
  * 错误处理：无额外错误分支，全部依赖调用方传入的回调。
  * 复杂度：O(1)，只进行常量级计算。
  */
-export default function useSidebarNavigation({
-  isMobile: isMobileProp,
-  open: openProp,
-  onClose,
-  onShowDictionary,
-  onShowLibrary,
-  activeView,
-}) {
+export default function useSidebarNavigation(options) {
+  const presentation = useSidebarPresentation(options);
+  const actions = useSidebarLabelsAndActions({
+    isMobile: presentation.isMobile,
+    closeSidebar: presentation.closeSidebar,
+    onShowDictionary: options.onShowDictionary,
+    onShowLibrary: options.onShowLibrary,
+    activeView: options.activeView,
+  });
+  return { ...presentation, ...actions };
+}
+
+function useSidebarPresentation({ isMobile: isMobileProp, open: openProp, onClose }) {
   const defaultMobile = useIsMobile();
   const isMobile = isMobileProp ?? defaultMobile;
-
   const { isOpen, closeSidebar, openSidebar } = useSidebarOpenState({
     open: openProp,
     onClose,
   });
+  return {
+    isMobile,
+    isOpen,
+    shouldShowOverlay: isMobile && isOpen,
+    openSidebar,
+    closeSidebar,
+  };
+}
 
-  const { t, lang } = useLanguage();
-  const access = useNavAccess();
-  const labels = useSidebarLabels({ t, lang });
-  const { handleDictionary, handleLibrary } = useNavigationHandlers({
+function useSidebarLabelsAndActions({
+  isMobile,
+  closeSidebar,
+  onShowDictionary,
+  onShowLibrary,
+  activeView,
+}) {
+  const { access, labels } = useSidebarLabelResources();
+  const navigationHandlers = useNavigationHandlers({
     isMobile,
     closeSidebar,
     onShowDictionary,
     onShowLibrary,
   });
-
-  const navigationActions = useNavItems({
+  const navigationActions = useNavigationActions({
     access,
-    labels: {
-      dictionary: labels.dictionaryLabel,
-      library: labels.libraryLabel,
-    },
-    handlers: {
-      onDictionary: handleDictionary,
-      onLibrary: handleLibrary,
-    },
+    labels: getNavigationLabels(labels),
+    handlers: getNavigationHandlers(navigationHandlers),
     activeView,
   });
-
-  const shouldShowOverlay = isMobile && isOpen;
-
   return {
-    isMobile,
-    isOpen,
-    shouldShowOverlay,
-    openSidebar,
-    closeSidebar,
     headerLabel: labels.headerLabel,
-    navigationActions,
     historyLabel: labels.historyLabel,
     entriesLabel: labels.entriesLabel,
+    navigationActions,
+  };
+}
+
+function useSidebarLabelResources() {
+  const { t, lang } = useLanguage();
+  const access = useNavAccess();
+  const labels = useSidebarLabels({ t, lang });
+  return { access, labels };
+}
+
+function useNavigationActions(params) {
+  return useNavItems(params);
+}
+
+function getNavigationLabels(labels) {
+  return {
+    dictionary: labels.dictionaryLabel,
+    library: labels.libraryLabel,
+  };
+}
+
+function getNavigationHandlers(navigationHandlers) {
+  return {
+    onDictionary: navigationHandlers.handleDictionary,
+    onLibrary: navigationHandlers.handleLibrary,
   };
 }

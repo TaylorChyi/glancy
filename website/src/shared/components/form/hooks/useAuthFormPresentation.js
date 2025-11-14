@@ -12,8 +12,7 @@ const defaultIcons = {
   google: "google",
 };
 
-const useAuthFormPresentation = ({
-  onSubmit,
+const buildControllerOptions = ({
   placeholders = {},
   formMethods = [],
   methodOrder = [],
@@ -24,26 +23,29 @@ const useAuthFormPresentation = ({
   icons = defaultIcons,
   otherOptionsLabel,
   onRequestCode,
-  switchLink,
-  switchText,
-  title,
-}) => {
+  onSubmit,
+} = {}) => ({
+  placeholders,
+  formMethods,
+  methodOrder,
+  defaultMethod,
+  validateAccount,
+  passwordPlaceholder,
+  showCodeButton,
+  icons,
+  otherOptionsLabel,
+  onRequestCode,
+  onSubmit,
+});
+
+const useAuthFormPresentation = (options = {}) => {
   const { lang, t } = useLanguage();
   const brandText = useMemo(() => getBrandText(lang), [lang]);
   const controller = useAuthFormController({
-    formMethods,
-    methodOrder,
-    defaultMethod,
-    validateAccount,
-    passwordPlaceholder,
-    showCodeButton,
-    icons,
-    otherOptionsLabel,
-    placeholders,
-    onRequestCode,
-    onSubmit,
+    ...buildControllerOptions(options),
     t,
   });
+  const { switchLink, switchText, title } = options;
 
   return {
     ...controller,

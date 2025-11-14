@@ -55,65 +55,60 @@ describe("useFeedbackChannels", () => {
   });
 });
 
-describe("useAuthFormController", () => {
-  describe("handleSendCode", () => {
-    test("requests code when account validation succeeds", async () => {
-      const { props, result } = renderController();
+describe("useAuthFormController handleSendCode", () => {
+  test("requests code when account validation succeeds", async () => {
+    const { props, result } = renderController();
 
-      setControllerAccount(result, " 1234567890 ");
-      const success = await triggerSendCode(result);
+    setControllerAccount(result, " 1234567890 ");
+    const success = await triggerSendCode(result);
 
-      expect(success).toBe(true);
-      expect(props.onRequestCode).toHaveBeenCalledWith({
-        account: "1234567890",
-        method: "phone",
-      });
-      expect(result.current.toast).toEqual({
-        open: true,
-        message: props.t.codeRequestSuccess,
-      });
-      expect(props.validateAccount).toHaveBeenCalledWith(
-        "1234567890",
-        "phone",
-      );
+    expect(success).toBe(true);
+    expect(props.onRequestCode).toHaveBeenCalledWith({
+      account: "1234567890",
+      method: "phone",
     });
-
-    test("blocks code request when account validation fails", async () => {
-      const validateAccount = jest.fn(() => false);
-      const { props, result } = renderController({ validateAccount });
-
-      setControllerAccount(result, "invalid");
-      const success = await triggerSendCode(result);
-
-      expect(success).toBe(false);
-      expect(result.current.popup).toEqual({
-        open: true,
-        message: props.t.invalidAccount,
-      });
-      expect(props.onRequestCode).not.toHaveBeenCalled();
+    expect(result.current.toast).toEqual({
+      open: true,
+      message: props.t.codeRequestSuccess,
     });
+    expect(props.validateAccount).toHaveBeenCalledWith("1234567890", "phone");
   });
 
-  describe("handleSubmit", () => {
-    test("surfaces submit errors via popup", async () => {
-      const error = new Error("server down");
-      const onSubmit = jest.fn(() => Promise.reject(error));
-      const { props, result } = renderController({ onSubmit });
+  test("blocks code request when account validation fails", async () => {
+    const validateAccount = jest.fn(() => false);
+    const { props, result } = renderController({ validateAccount });
 
-      setControllerAccount(result, "user@example.com");
-      setControllerPassword(result, "secret");
+    setControllerAccount(result, "invalid");
+    const success = await triggerSendCode(result);
 
-      await triggerSubmit(result);
+    expect(success).toBe(false);
+    expect(result.current.popup).toEqual({
+      open: true,
+      message: props.t.invalidAccount,
+    });
+    expect(props.onRequestCode).not.toHaveBeenCalled();
+  });
+});
 
-      expect(props.onSubmit).toHaveBeenCalledWith({
-        account: "user@example.com",
-        method: "phone",
-        password: "secret",
-      });
-      expect(result.current.popup).toEqual({
-        open: true,
-        message: error.message,
-      });
+describe("useAuthFormController handleSubmit", () => {
+  test("surfaces submit errors via popup", async () => {
+    const error = new Error("server down");
+    const onSubmit = jest.fn(() => Promise.reject(error));
+    const { props, result } = renderController({ onSubmit });
+
+    setControllerAccount(result, "user@example.com");
+    setControllerPassword(result, "secret");
+
+    await triggerSubmit(result);
+
+    expect(props.onSubmit).toHaveBeenCalledWith({
+      account: "user@example.com",
+      method: "phone",
+      password: "secret",
+    });
+    expect(result.current.popup).toEqual({
+      open: true,
+      message: error.message,
     });
   });
 });

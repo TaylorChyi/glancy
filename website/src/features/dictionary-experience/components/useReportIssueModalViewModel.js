@@ -104,44 +104,37 @@ const createReportIssueModalViewModel = ({
   modalClassName: `modal-content ${styles["modal-shell"]}`,
 });
 
-export const useReportIssueModalViewModel = ({
-  categories,
-  category,
-  description,
-  submitting,
-  error,
-  term,
-  language,
-  flavor,
-  sourceLanguage,
-  targetLanguage,
-  onClose,
-  onCategoryChange,
-  onDescriptionChange,
-  onSubmit,
-}) => {
+const buildSurfaceDependenciesRequest = (
+  params,
+  legendId,
+  translations,
+) => ({
+  categories: params.categories,
+  category: params.category,
+  error: params.error,
+  language: params.language,
+  flavor: params.flavor,
+  sourceLanguage: params.sourceLanguage,
+  targetLanguage: params.targetLanguage,
+  term: params.term,
+  onCategoryChange: params.onCategoryChange,
+  submitting: params.submitting,
+  legendId,
+  translations,
+});
+
+export const useReportIssueModalViewModel = (params) => {
   const { t } = useLanguage();
   const headingId = useId();
   const legendId = useId();
   const { handleSubmit, handleClose } = useReportIssueHandlers(
-    onSubmit,
-    onClose,
-    submitting,
+    params.onSubmit,
+    params.onClose,
+    params.submitting,
   );
-  const surfaceDependencies = useReportIssueSurfaceDependencies({
-    categories,
-    category,
-    error,
-    legendId,
-    language,
-    flavor,
-    sourceLanguage,
-    targetLanguage,
-    term,
-    onCategoryChange,
-    submitting,
-    translations: t,
-  });
+  const surfaceDependencies = useReportIssueSurfaceDependencies(
+    buildSurfaceDependenciesRequest(params, legendId, t),
+  );
 
   return createReportIssueModalViewModel({
     headingId,
@@ -149,8 +142,8 @@ export const useReportIssueModalViewModel = ({
     handleSubmit,
     handleClose,
     surfaceDependencies,
-    description,
-    submitting,
-    onDescriptionChange,
+    description: params.description,
+    submitting: params.submitting,
+    onDescriptionChange: params.onDescriptionChange,
   });
 };

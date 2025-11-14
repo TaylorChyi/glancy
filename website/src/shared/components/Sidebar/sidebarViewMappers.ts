@@ -9,10 +9,15 @@ type NavigationState = {
   entriesLabel?: string;
 };
 
+type LayoutNavigationState = Pick<
+  NavigationState,
+  "isMobile" | "isOpen" | "shouldShowOverlay" | "closeSidebar"
+>;
+
 export const resolveHistoryAriaLabel = (state: NavigationState): string | undefined =>
   state.historyLabel || state.entriesLabel;
 
-export const buildLayoutProps = (state: NavigationState) => ({
+export const buildLayoutProps = (state: LayoutNavigationState) => ({
   isMobile: state.isMobile,
   open: state.isOpen,
   showOverlay: state.shouldShowOverlay,

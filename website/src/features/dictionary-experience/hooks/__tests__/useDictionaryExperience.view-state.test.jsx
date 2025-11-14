@@ -20,7 +20,7 @@ const runLookup = async (result, term) => {
   });
 };
 
-describe("useDictionaryExperience/view state", () => {
+describe("useDictionaryExperience/view state", function () {
   beforeEach(() => {
     resetDictionaryExperienceTestState();
   });

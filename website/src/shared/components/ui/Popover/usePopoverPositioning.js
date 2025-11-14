@@ -8,71 +8,48 @@ import {
 import { usePopoverCoreState } from "./usePopoverState";
 import { usePopoverPositionUpdater } from "./usePopoverPositionUpdater";
 
-export default function usePopoverPositioning({
-  anchorRef,
-  isOpen,
-  placement,
-  fallbackPlacements,
-  align,
-  offset,
-  onClose,
-}) {
-  const {
-    contentRef,
-    frameRef,
-    position,
-    setPosition,
-    visible,
-    setVisible,
-    activePlacement,
-    setActivePlacement,
-    setContentNode,
-  } = usePopoverCoreState(placement);
-
+export default function usePopoverPositioning(props) {
+  const { anchorRef, isOpen, placement, fallbackPlacements, align, offset, onClose } = props;
+  const state = usePopoverCoreState(placement);
   const resolvePosition = usePopoverPositionUpdater({
     anchorRef,
-    contentRef,
+    contentRef: state.contentRef,
     placement,
     fallbackPlacements,
     align,
     offset,
   });
-
   const applyPosition = useApplyPopoverPosition({
     isOpen,
     resolvePosition,
-    setPosition,
-    setActivePlacement,
-    setVisible,
+    setPosition: state.setPosition,
+    setActivePlacement: state.setActivePlacement,
+    setVisible: state.setVisible,
   });
-
   const { clearFrame, scheduleUpdate } = useFrameController({
-    frameRef,
+    frameRef: state.frameRef,
     isOpen,
     applyPosition,
   });
-
   usePositioningCycle({ isOpen, scheduleUpdate, clearFrame });
   useGlobalDismissHandlers({
     isOpen,
     anchorRef,
-    contentRef,
+    contentRef: state.contentRef,
     onClose,
     scheduleUpdate,
-    setVisible,
+    setVisible: state.setVisible,
   });
-
   usePlacementReset({
     isOpen,
     placement,
-    setVisible,
-    setActivePlacement,
+    setVisible: state.setVisible,
+    setActivePlacement: state.setActivePlacement,
   });
-
   return {
-    setContentNode,
-    position,
-    visible,
-    activePlacement,
+    setContentNode: state.setContentNode,
+    position: state.position,
+    visible: state.visible,
+    activePlacement: state.activePlacement,
   };
 }

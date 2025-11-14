@@ -6,6 +6,39 @@ import {
 } from "@shared/utils/avatarCropBox.js";
 import { composeTranslate3d } from "../utils.js";
 
+const getFiniteOrFallback = (value, fallback = 0) =>
+  Number.isFinite(value) ? value : fallback;
+
+const getHalfDimension = (value) =>
+  value > 0 && Number.isFinite(value) ? value / 2 : 0;
+
+const getSafeScale = (scale) =>
+  Number.isFinite(scale) && scale > 0 ? scale : 1;
+
+const getSafeOffsetValue = (value) => (Number.isFinite(value) ? value : 0);
+
+const buildImageTransform = ({
+  displayMetrics,
+  naturalSize,
+  offset,
+  viewportSize,
+}) => {
+  const safeViewport = getFiniteOrFallback(viewportSize);
+  const halfViewport = safeViewport / 2;
+  const safeScale = getSafeScale(displayMetrics.scaleFactor);
+  const halfWidth = getHalfDimension(naturalSize.width);
+  const halfHeight = getHalfDimension(naturalSize.height);
+  const safeOffsetX = getSafeOffsetValue(offset.x);
+  const safeOffsetY = getSafeOffsetValue(offset.y);
+
+  return [
+    composeTranslate3d(safeOffsetX, safeOffsetY),
+    composeTranslate3d(halfViewport, halfViewport),
+    `scale(${safeScale})`,
+    composeTranslate3d(-halfWidth, -halfHeight),
+  ].join(" ");
+};
+
 export const useDisplayMetricsMemo = ({ naturalSize, viewportSize, zoom }) =>
   useMemo(
     () =>
@@ -50,39 +83,23 @@ export const useImageTransformMemo = ({
   naturalSize,
   offset,
 }) =>
-  useMemo(() => {
-    const safeViewport = Number.isFinite(viewportSize) ? viewportSize : 0;
-    const halfViewport = safeViewport / 2;
-    const safeScale =
-      Number.isFinite(displayMetrics.scaleFactor) &&
-      displayMetrics.scaleFactor > 0
-        ? displayMetrics.scaleFactor
-        : 1;
-    const halfWidth =
-      naturalSize.width > 0 && Number.isFinite(naturalSize.width)
-        ? naturalSize.width / 2
-        : 0;
-    const halfHeight =
-      naturalSize.height > 0 && Number.isFinite(naturalSize.height)
-        ? naturalSize.height / 2
-        : 0;
-    const safeOffsetX = Number.isFinite(offset.x) ? offset.x : 0;
-    const safeOffsetY = Number.isFinite(offset.y) ? offset.y : 0;
-
-    return [
-      composeTranslate3d(safeOffsetX, safeOffsetY),
-      composeTranslate3d(halfViewport, halfViewport),
-      `scale(${safeScale})`,
-      composeTranslate3d(-halfWidth, -halfHeight),
-    ].join(" ");
-  }, [
-    displayMetrics.scaleFactor,
-    naturalSize.height,
-    naturalSize.width,
-    offset.x,
-    offset.y,
-    viewportSize,
-  ]);
+  useMemo(
+    () =>
+      buildImageTransform({
+        displayMetrics,
+        naturalSize,
+        offset,
+        viewportSize,
+      }),
+    [
+      displayMetrics.scaleFactor,
+      naturalSize.height,
+      naturalSize.width,
+      offset.x,
+      offset.y,
+      viewportSize,
+    ],
+  );
 
 const useViewportDerivedState = ({
   naturalSize,

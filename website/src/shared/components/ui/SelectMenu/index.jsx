@@ -4,57 +4,26 @@ import { OptionShape } from "./optionNormalizer.js";
 import SelectMenuView from "./SelectMenuView.jsx";
 import useSelectMenuController from "./useSelectMenuController.js";
 
-export default function SelectMenu({
-  id,
-  options,
-  value,
-  onChange,
-  ariaLabel,
-  placeholder,
-  fullWidth,
-}) {
-  const {
-    open,
-    menuRef,
-    triggerRef,
-    normalizedOptions,
-    handleToggle,
-    handleClose,
-    handleSelect,
-    handleTriggerKeyDown,
-    resolvedAriaLabel,
-    triggerLabel,
-    isShowingPlaceholder,
-    activeValue,
-    hasOptions,
-  } = useSelectMenuController({
-    options,
-    value,
-    onChange,
-    ariaLabel,
-    placeholder,
-  });
-
-  if (!hasOptions) {
-    return null;
-  }
+export default function SelectMenu({ id, options, value, onChange, ariaLabel, placeholder, fullWidth }) {
+  const controller = useSelectMenuController({ options, value, onChange, ariaLabel, placeholder });
+  if (!controller.hasOptions) return null;
 
   return (
     <SelectMenuView
       id={id}
       fullWidth={fullWidth}
-      open={open}
-      triggerRef={triggerRef}
-      menuRef={menuRef}
-      options={normalizedOptions}
-      activeValue={activeValue}
-      onToggle={handleToggle}
-      onTriggerKeyDown={handleTriggerKeyDown}
-      ariaLabel={resolvedAriaLabel}
-      label={triggerLabel}
-      isPlaceholder={isShowingPlaceholder}
-      onClose={handleClose}
-      onSelect={handleSelect}
+      open={controller.open}
+      triggerRef={controller.triggerRef}
+      menuRef={controller.menuRef}
+      options={controller.normalizedOptions}
+      activeValue={controller.activeValue}
+      onToggle={controller.handleToggle}
+      onTriggerKeyDown={controller.handleTriggerKeyDown}
+      ariaLabel={controller.resolvedAriaLabel}
+      label={controller.triggerLabel}
+      isPlaceholder={controller.isShowingPlaceholder}
+      onClose={controller.handleClose}
+      onSelect={controller.handleSelect}
     />
   );
 }

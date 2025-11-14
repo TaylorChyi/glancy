@@ -80,20 +80,10 @@ const resolvePositionWithinViewport = ({
   });
 
 export function computePopoverPosition({
-  anchorRect,
-  popRect,
-  placement,
-  fallbackPlacements,
-  align,
-  offset,
-  viewport,
-  margin = VIEWPORT_MARGIN,
+  anchorRect, popRect, placement, fallbackPlacements,
+  align, offset, viewport, margin = VIEWPORT_MARGIN,
 }) {
-  const {
-    resolution,
-    viewport: effectiveViewport,
-    alignedPosition,
-  } = resolvePositioningContext({
+  const { resolution, viewport: effectiveViewport, alignedPosition } = resolvePositioningContext({
     anchorRect,
     popRect,
     placement,
@@ -104,16 +94,14 @@ export function computePopoverPosition({
     margin,
   });
 
-  const position = resolvePositionWithinViewport({
-    resolution,
-    position: alignedPosition,
-    popRect,
-    viewport: effectiveViewport,
-    margin,
-  });
-
   return {
-    position,
+    position: resolvePositionWithinViewport({
+      resolution,
+      position: alignedPosition,
+      popRect,
+      viewport: effectiveViewport,
+      margin,
+    }),
     placement: resolution.placement,
     axis: resolution.axis,
   };

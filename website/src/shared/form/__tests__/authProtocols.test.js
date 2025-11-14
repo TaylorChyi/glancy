@@ -89,43 +89,54 @@ describe("authProtocols", () => {
     });
   });
 
-  test("createAuthSubmissionProtocol executes api calls", async () => {
-    const mockApi = {
-      jsonRequest: jest.fn().mockResolvedValue({ ok: true }),
-    };
-    const protocol = createAuthSubmissionProtocol({
-      api: mockApi,
-      paths: PATHS,
+  describe("createAuthSubmissionProtocol", () => {
+    let mockApi;
+    let protocol;
+
+    beforeEach(() => {
+      mockApi = {
+        jsonRequest: jest.fn().mockResolvedValue({ ok: true }),
+      };
+      protocol = createAuthSubmissionProtocol({
+        api: mockApi,
+        paths: PATHS,
+      });
     });
 
-    await protocol.login({
-      method: AUTH_METHODS.username,
-      account: " user ",
-      password: "secret",
-    });
-    expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.login, {
-      method: "POST",
-      body: { account: "user", password: "secret", method: "username" },
-    });
-
-    await protocol.register({
-      method: AUTH_METHODS.email,
-      account: "mail@example.com",
-      password: " 321 ",
-    });
-    expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.register, {
-      method: "POST",
-      body: { email: "mail@example.com", code: "321" },
+    test("login executes api call", async () => {
+      await protocol.login({
+        method: AUTH_METHODS.username,
+        account: " user ",
+        password: "secret",
+      });
+      expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.login, {
+        method: "POST",
+        body: { account: "user", password: "secret", method: "username" },
+      });
     });
 
-    await protocol.requestCode({
-      method: AUTH_METHODS.email,
-      account: "mail@example.com",
-      purpose: AUTH_CODE_PURPOSES.LOGIN,
+    test("register executes api call", async () => {
+      await protocol.register({
+        method: AUTH_METHODS.email,
+        account: "mail@example.com",
+        password: " 321 ",
+      });
+      expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.register, {
+        method: "POST",
+        body: { email: "mail@example.com", code: "321" },
+      });
     });
-    expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.emailVerificationCode, {
-      method: "POST",
-      body: { email: "mail@example.com", purpose: "LOGIN" },
+
+    test("requestCode executes api call", async () => {
+      await protocol.requestCode({
+        method: AUTH_METHODS.email,
+        account: "mail@example.com",
+        purpose: AUTH_CODE_PURPOSES.LOGIN,
+      });
+      expect(mockApi.jsonRequest).toHaveBeenCalledWith(PATHS.emailVerificationCode, {
+        method: "POST",
+        body: { email: "mail@example.com", purpose: "LOGIN" },
+      });
     });
   });
 });

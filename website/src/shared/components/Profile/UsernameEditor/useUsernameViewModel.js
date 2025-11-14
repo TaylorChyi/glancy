@@ -1,35 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { composeUsernameViewModel } from "./usernameEditorViewModel.js";
 
-const buildViewModelDependencies = ({
-  state,
-  emptyDisplayValue,
-  className,
-  inputClassName,
-  buttonClassName,
-  t,
-  inputRef,
-  handlers,
-  controlId,
-  messageId,
-  renderInlineAction,
-}) => [
-  state.mode,
-  state.value,
-  state.draft,
-  state.error,
-  emptyDisplayValue,
-  className,
-  inputClassName,
-  buttonClassName,
-  t,
-  inputRef,
-  handlers,
-  controlId,
-  messageId,
-  renderInlineAction,
-];
-
 const useActionResolutionEffect = (onResolveAction, descriptor) => {
   useEffect(() => {
     if (typeof onResolveAction === "function") {
@@ -39,29 +10,57 @@ const useActionResolutionEffect = (onResolveAction, descriptor) => {
 };
 
 export const useUsernameViewModel = (params) => {
-  const dependencies = buildViewModelDependencies(params);
+  const {
+    state,
+    emptyDisplayValue,
+    className,
+    inputClassName,
+    buttonClassName,
+    t,
+    inputRef,
+    handlers,
+    controlId,
+    messageId,
+    renderInlineAction,
+    onResolveAction,
+  } = params;
   const viewModel = useMemo(
     () =>
       composeUsernameViewModel({
-        mode: params.state.mode,
-        value: params.state.value,
-        draft: params.state.draft,
-        error: params.state.error,
-        emptyDisplayValue: params.emptyDisplayValue,
-        className: params.className,
-        inputClassName: params.inputClassName,
-        buttonClassName: params.buttonClassName,
-        t: params.t,
-        inputRef: params.inputRef,
-        handlers: params.handlers,
-        controlId: params.controlId,
-        messageId: params.messageId,
-        renderInlineAction: params.renderInlineAction,
+        mode: state.mode,
+        value: state.value,
+        draft: state.draft,
+        error: state.error,
+        emptyDisplayValue,
+        className,
+        inputClassName,
+        buttonClassName,
+        t,
+        inputRef,
+        handlers,
+        controlId,
+        messageId,
+        renderInlineAction,
       }),
-    dependencies,
+    [
+      state.mode,
+      state.value,
+      state.draft,
+      state.error,
+      emptyDisplayValue,
+      className,
+      inputClassName,
+      buttonClassName,
+      t,
+      inputRef,
+      handlers,
+      controlId,
+      messageId,
+      renderInlineAction,
+    ],
   );
 
-  useActionResolutionEffect(params.onResolveAction, viewModel.actionDescriptor);
+  useActionResolutionEffect(onResolveAction, viewModel.actionDescriptor);
 
   return viewModel;
 };

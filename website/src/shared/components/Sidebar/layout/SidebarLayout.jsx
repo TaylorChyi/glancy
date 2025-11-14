@@ -3,12 +3,37 @@ import PropTypes from "prop-types";
 import styles from "../Sidebar.module.css";
 import { getSidebarClassName } from "./classNames.js";
 
-const SidebarLayout = forwardRef(function SidebarLayout(
+const SidebarOverlay = ({ showOverlay, onOverlayClick }) =>
+  showOverlay ? (
+    <div className="sidebar-overlay" onClick={onOverlayClick} />
+  ) : null;
+
+const SidebarHeader = ({ navigation }) => (
+  <div className={styles.header} data-testid="sidebar-header">
+    {navigation}
+  </div>
+);
+
+const SidebarHistory = ({ historyAriaLabel, historySection }) => (
+  <nav
+    className={styles.entries}
+    aria-label={historyAriaLabel}
+    data-testid="sidebar-scroll"
+  >
+    {historySection}
+  </nav>
+);
+
+const SidebarFooter = ({ footerSection }) => (
+  <footer className={styles.footer} data-testid="sidebar-footer">
+    {footerSection}
+  </footer>
+);
+
+const SidebarContent = forwardRef(function SidebarContent(
   {
     isMobile,
     open,
-    showOverlay,
-    onOverlayClick,
     navigation,
     historyAriaLabel,
     historySection,
@@ -17,34 +42,37 @@ const SidebarLayout = forwardRef(function SidebarLayout(
   ref,
 ) {
   return (
+    <aside
+      ref={ref}
+      id="sidebar"
+      data-testid="sidebar"
+      className={getSidebarClassName({
+        isMobile,
+        open,
+        containerClass: styles.container,
+      })}
+    >
+      <SidebarHeader navigation={navigation} />
+      <SidebarHistory
+        historyAriaLabel={historyAriaLabel}
+        historySection={historySection}
+      />
+      <SidebarFooter footerSection={footerSection} />
+    </aside>
+  );
+});
+
+const SidebarLayout = forwardRef(function SidebarLayout(
+  { showOverlay, onOverlayClick, ...contentProps },
+  ref,
+) {
+  return (
     <>
-      {showOverlay ? (
-        <div className="sidebar-overlay" onClick={onOverlayClick} />
-      ) : null}
-      <aside
-        ref={ref}
-        id="sidebar"
-        data-testid="sidebar"
-        className={getSidebarClassName({
-          isMobile,
-          open,
-          containerClass: styles.container,
-        })}
-      >
-        <div className={styles.header} data-testid="sidebar-header">
-          {navigation}
-        </div>
-        <nav
-          className={styles.entries}
-          aria-label={historyAriaLabel}
-          data-testid="sidebar-scroll"
-        >
-          {historySection}
-        </nav>
-        <footer className={styles.footer} data-testid="sidebar-footer">
-          {footerSection}
-        </footer>
-      </aside>
+      <SidebarOverlay
+        showOverlay={showOverlay}
+        onOverlayClick={onOverlayClick}
+      />
+      <SidebarContent ref={ref} {...contentProps} />
     </>
   );
 });

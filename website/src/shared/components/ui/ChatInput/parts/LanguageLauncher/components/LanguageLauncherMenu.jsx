@@ -28,6 +28,18 @@ MenuSurface.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+function getSwapHandler(hoverGuards, swapAction, handleClose) {
+  if (!swapAction) {
+    return undefined;
+  }
+
+  return () => {
+    hoverGuards.cancel();
+    swapAction.onSwap();
+    handleClose();
+  };
+}
+
 export default function LanguageLauncherMenu({
   groupLabel,
   state,
@@ -42,14 +54,8 @@ export default function LanguageLauncherMenu({
     handleSelect,
     handleClose,
   } = state;
+  const swapHandler = getSwapHandler(hoverGuards, swapAction, handleClose);
   const activeKey = activeVariant?.key;
-  const swapHandler = swapAction
-    ? () => {
-        hoverGuards.cancel();
-        swapAction.onSwap();
-        handleClose();
-      }
-    : undefined;
 
   return (
     <MenuSurface

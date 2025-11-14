@@ -15,38 +15,20 @@ export default function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(depth <= 2);
   const labelledBy = `${sectionId}-summary`;
   const contentId = `${sectionId}-content`;
+  const toggleOpen = () => setIsOpen((value) => !value);
 
-  const items = Children.toArray(children);
   return (
     <section className={styles.section} data-depth={depth}>
-      {items.map((child) => {
-        const isSummary =
-          child.type === CollapsibleSummary ||
-          Boolean(child.type?.[SUMMARY_RENDERER_FLAG]);
-
-        if (isSummary) {
-          return cloneElement(child, {
-            key: "summary",
-            depth,
-            isOpen,
-            onToggle: () => setIsOpen((value) => !value),
-            labelId: labelledBy,
-            contentId,
-            injectBreaks,
-          });
-        }
-
-        if (child.type === CollapsibleBody) {
-          return cloneElement(child, {
-            key: "body",
-            isOpen,
-            contentId,
-            labelId: labelledBy,
-          });
-        }
-
-        return child;
-      })}
+      {Children.toArray(children).map((child) =>
+        renderCollapsibleChild(child, {
+          depth,
+          injectBreaks,
+          isOpen,
+          contentId,
+          labelledBy,
+          toggleOpen,
+        })
+      )}
     </section>
   );
 }
@@ -56,3 +38,35 @@ CollapsibleSection.propTypes = {
   depth: PropTypes.number,
   injectBreaks: PropTypes.func.isRequired,
 };
+
+function renderCollapsibleChild(
+  child,
+  { depth, injectBreaks, contentId, labelledBy, isOpen, toggleOpen }
+) {
+  const isSummary =
+    child.type === CollapsibleSummary ||
+    Boolean(child.type?.[SUMMARY_RENDERER_FLAG]);
+
+  if (isSummary) {
+    return cloneElement(child, {
+      key: "summary",
+      depth,
+      isOpen,
+      onToggle: toggleOpen,
+      labelId: labelledBy,
+      contentId,
+      injectBreaks,
+    });
+  }
+
+  if (child.type === CollapsibleBody) {
+    return cloneElement(child, {
+      key: "body",
+      isOpen,
+      contentId,
+      labelId: labelledBy,
+    });
+  }
+
+  return child;
+}
