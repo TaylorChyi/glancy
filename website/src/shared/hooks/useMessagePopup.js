@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 
-function createPopupState(message) {
+function resolvePopupState(message) {
   const normalizedMessage = message ?? "";
   return {
     open: Boolean(normalizedMessage),
@@ -8,26 +8,33 @@ function createPopupState(message) {
   };
 }
 
+function popupReducer(state, action) {
+  switch (action.type) {
+    case "show":
+      return resolvePopupState(action.message);
+    case "close":
+      return state.open
+        ? { open: false, message: state.message }
+        : state;
+    case "reset":
+      return resolvePopupState("");
+    default:
+      return state;
+  }
+}
+
 export function useMessagePopup(initialMessage = "") {
-  const [state, setState] = useState(() => createPopupState(initialMessage));
-
-  const showPopup = useCallback((message) => {
-    const nextMessage = message ?? "";
-    if (!nextMessage) {
-      setState(createPopupState(""));
-      return;
-    }
-    setState({ open: true, message: nextMessage });
-  }, []);
-
-  const closePopup = useCallback(() => {
-    setState((prev) => ({ ...prev, open: false }));
-  }, []);
-
-  const resetPopup = useCallback(() => {
-    setState(createPopupState(""));
-  }, []);
-
+  const [state, dispatch] = useReducer(
+    popupReducer,
+    initialMessage,
+    resolvePopupState,
+  );
+  const showPopup = useCallback(
+    (message) => dispatch({ type: "show", message }),
+    [],
+  );
+  const closePopup = useCallback(() => dispatch({ type: "close" }), []);
+  const resetPopup = useCallback(() => dispatch({ type: "reset" }), []);
   const popupConfig = useMemo(
     () => ({
       open: state.open,
@@ -36,7 +43,6 @@ export function useMessagePopup(initialMessage = "") {
     }),
     [closePopup, state.message, state.open],
   );
-
   return {
     popupOpen: state.open,
     popupMsg: state.message,
