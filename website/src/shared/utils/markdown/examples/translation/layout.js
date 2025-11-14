@@ -6,6 +6,43 @@ import {
   splitFollowingTranslation,
 } from "./splitters.js";
 
+function cleanupTranslationArtifacts(text) {
+  return text
+    .replace(/翻\s*\n([ \t]+)译(?=[:：])/g, "\n$1翻译")
+    .replace(/译\s*\n([ \t]+)文(?=[:：])/g, "\n$1译文");
+}
+
+function resolveExampleTranslationLine(line, nextLine) {
+  const match = line.match(
+    /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
+  );
+  if (!match) {
+    return { lines: [line], consumed: 0 };
+  }
+
+  const [, prefix, label, rest] = match;
+  if (!isExampleLabel(label)) {
+    return { lines: [line], consumed: 0 };
+  }
+
+  const resolved = resolveTranslationSegments(prefix, rest, nextLine);
+  if (!resolved) {
+    return { lines: [line], consumed: 0 };
+  }
+
+  return resolved;
+}
+
+function normalizeExampleTranslationLines(lines) {
+  const normalized = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const resolution = resolveExampleTranslationLine(lines[i], lines[i + 1]);
+    normalized.push(...resolution.lines);
+    i += resolution.consumed;
+  }
+  return normalized;
+}
+
 function resolveTranslationSegments(prefix, rest, nextLine) {
   const inlineSplit = splitInlineTranslation(prefix, rest);
   if (inlineSplit) {
@@ -60,32 +97,9 @@ export function ensureExampleTranslationLayout(text) {
   if (!text) {
     return text;
   }
-  const merged = text
-    .replace(/翻\s*\n([ \t]+)译(?=[:：])/g, "\n$1翻译")
-    .replace(/译\s*\n([ \t]+)文(?=[:：])/g, "\n$1译文");
+
+  const merged = cleanupTranslationArtifacts(text);
   const lines = merged.split("\n");
-  const normalized = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
-    const match = line.match(
-      /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
-    );
-    if (!match) {
-      normalized.push(line);
-      continue;
-    }
-    const [, prefix, label, rest] = match;
-    if (!isExampleLabel(label)) {
-      normalized.push(line);
-      continue;
-    }
-    const resolved = resolveTranslationSegments(prefix, rest, lines[i + 1]);
-    if (!resolved) {
-      normalized.push(line);
-      continue;
-    }
-    normalized.push(...resolved.lines);
-    i += resolved.consumed;
-  }
+  const normalized = normalizeExampleTranslationLines(lines);
   return normalized.join("\n");
 }
