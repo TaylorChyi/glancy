@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { act } from "@testing-library/react";
 import api from "@shared/api/index.js";
 import { useHistoryStore } from "@core/store/historyStore.ts";
 import { useWordStore } from "@core/store/wordStore.js";
@@ -36,6 +37,18 @@ mockApi.searchRecords = {
 };
 
 export const historyTestUser = { id: "u1", token: "t" };
+
+const runWithinAct = async (operation, ...params) => {
+  await act(async () => {
+    await operation(...params);
+  });
+};
+
+export const invokeHistoryStore = async (selector, ...params) => {
+  const action = selector(historyStore.getState());
+  await runWithinAct(action, ...params);
+  return historyStore.getState();
+};
 
 export const makeRecord = (idx) => {
   const createdAt = new Date(
@@ -121,9 +134,12 @@ export const resetHistoryTestState = () => {
     nextPage: 0,
   });
   mockWordStore.setState({ entries: {} });
-  dataGovernanceStore.setState({
+  dataGovernanceStore.setState((state) => ({
+    ...state,
     retentionPolicyId: "90d",
     historyCaptureEnabled: true,
-  });
+    applyRetentionPolicy:
+      state.applyRetentionPolicy ?? historyStore.getState().applyRetentionPolicy,
+  }));
   userStore.setState({ user: null });
 };
