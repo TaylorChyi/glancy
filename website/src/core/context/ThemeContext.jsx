@@ -83,19 +83,21 @@ const useFaviconSync = () => {
   }, []);
 };
 
-const useThemeController = () => {
-  const storage = getStorage();
-  const { resolvedTheme, setTheme, theme } = useThemePreference(storage);
-  useFaviconSync();
-
-  return useMemo(
+const useThemeContextValue = ({ resolvedTheme, setTheme, theme }) =>
+  useMemo(
     () => ({
       theme,
       resolvedTheme,
       setTheme,
     }),
-    [resolvedTheme, theme],
+    [resolvedTheme, setTheme, theme],
   );
+
+const useThemeController = () => {
+  const storage = getStorage();
+  const { resolvedTheme, setTheme, theme } = useThemePreference(storage);
+  useFaviconSync();
+  return useThemeContextValue({ resolvedTheme, setTheme, theme });
 };
 
 export function ThemeProvider({ children }) {
