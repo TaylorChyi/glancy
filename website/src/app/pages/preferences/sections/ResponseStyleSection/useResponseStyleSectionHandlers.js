@@ -2,18 +2,15 @@ import { useCallback, useMemo } from "react";
 
 const noop = () => {};
 
-export const useResponseStyleSectionHandlers = ({
-  onRetry,
-  onFieldChange,
-  onFieldCommit,
-}) => {
-  const handleRetry = useCallback(() => {
+const createRetryHandler = (onRetry) =>
+  useCallback(() => {
     if (typeof onRetry === "function") {
       onRetry();
     }
   }, [onRetry]);
 
-  const handleChange = useCallback(
+const createFieldChangeHandler = (onFieldChange) =>
+  useCallback(
     (fieldId, value) => {
       if (typeof onFieldChange === "function") {
         onFieldChange(fieldId, value);
@@ -22,7 +19,8 @@ export const useResponseStyleSectionHandlers = ({
     [onFieldChange],
   );
 
-  const handleCommit = useCallback(
+const createFieldCommitHandler = (onFieldCommit) =>
+  useCallback(
     (fieldId) => {
       if (typeof onFieldCommit === "function") {
         onFieldCommit(fieldId);
@@ -31,7 +29,15 @@ export const useResponseStyleSectionHandlers = ({
     [onFieldCommit],
   );
 
-  return useMemo(
+const useMemoizedHandlers = ({
+  handleRetry,
+  handleChange,
+  handleCommit,
+  onRetry,
+  onFieldChange,
+  onFieldCommit,
+}) =>
+  useMemo(
     () => ({
       onRetry: typeof onRetry === "function" ? handleRetry : undefined,
       onFieldChange: typeof onFieldChange === "function" ? handleChange : noop,
@@ -39,6 +45,24 @@ export const useResponseStyleSectionHandlers = ({
     }),
     [handleChange, handleCommit, handleRetry, onFieldChange, onFieldCommit, onRetry],
   );
+
+export const useResponseStyleSectionHandlers = ({
+  onRetry,
+  onFieldChange,
+  onFieldCommit,
+}) => {
+  const handleRetry = createRetryHandler(onRetry);
+  const handleChange = createFieldChangeHandler(onFieldChange);
+  const handleCommit = createFieldCommitHandler(onFieldCommit);
+
+  return useMemoizedHandlers({
+    handleRetry,
+    handleChange,
+    handleCommit,
+    onRetry,
+    onFieldChange,
+    onFieldCommit,
+  });
 };
 
 export default useResponseStyleSectionHandlers;
