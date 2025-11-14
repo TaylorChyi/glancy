@@ -1,29 +1,12 @@
 /* eslint-env jest */
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { jest } from "@jest/globals";
-import { createDictionaryExperienceState } from "../../../../tests/setup/dictionary/experienceState.js";
-
-const focusInputMock = jest.fn();
-const inputRef = { current: null };
-const handleReoutputMock = jest.fn();
-const buildExperienceState = (overrides = {}) => {
-  const { dictionaryActionBarProps, ...rest } = overrides;
-  return createDictionaryExperienceState({
-    inputRef,
-    focusInput: focusInputMock,
-    dictionaryActionBarProps: {
-      onReoutput: handleReoutputMock,
-      ...(dictionaryActionBarProps ?? {}),
-    },
-    ...rest,
-  });
-};
+import { createFocusTestHarness } from "./test-helpers/focusHarness.js";
 
 jest.unstable_mockModule("../hooks/useDictionaryExperience.js", () => ({
   __esModule: true,
-  useDictionaryExperience: jest.fn(() => buildExperienceState()),
+  useDictionaryExperience: jest.fn(),
 }));
 
 jest.unstable_mockModule("@shared/components/Layout", () => ({
@@ -154,67 +137,27 @@ const { useDictionaryExperience } = await import(
   "../hooks/useDictionaryExperience.js"
 );
 
-const mockExperienceState = (overrides) => {
-  useDictionaryExperience.mockImplementation(() =>
-    buildExperienceState(overrides),
-  );
-};
-
-const renderExperience = (overrides) => {
-  if (overrides !== undefined) {
-    mockExperienceState(overrides);
-  }
-
-  const user = userEvent.setup();
-  render(<DictionaryExperience />);
-
-  return {
-    user,
-    initialFocusCalls: focusInputMock.mock.calls.length,
-  };
-};
-
-const clickButtonByLabel = (user, label) =>
-  user.click(screen.getByRole("button", { name: label }));
-
-const expectSearchModeWithFocus = async (initialFocusCalls) => {
-  await waitFor(() => {
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
-    expect(focusInputMock).toHaveBeenCalledTimes(initialFocusCalls + 1);
-  });
-};
-
-const performRetryFromActionsPanel = async () => {
-  const context = renderExperience();
-  await clickButtonByLabel(context.user, "重试释义");
-  return context;
-};
-
-const switchToSearchMode = async (user) => {
-  await clickButtonByLabel(user, "返回搜索");
-  return screen.findByRole("textbox");
-};
-
-const focusTextarea = async (user, textarea) => {
-  await user.click(textarea);
-  expect(textarea).toHaveFocus();
-};
-
-const expectRetryHandlerCalled = async () => {
-  await waitFor(() => {
-    expect(handleReoutputMock).toHaveBeenCalledTimes(1);
-  });
-};
+const {
+  renderExperience,
+  clickButtonByLabel,
+  expectSearchModeWithFocus,
+  performRetryFromActionsPanel,
+  switchToSearchMode,
+  focusTextarea,
+  expectRetryHandlerCalled,
+  reset,
+  buildExperienceState,
+} = createFocusTestHarness({
+  DictionaryExperience,
+  useDictionaryExperience,
+});
 
 describe("DictionaryExperience focus management", () => {
   beforeEach(() => {
-    focusInputMock.mockClear();
-    handleReoutputMock.mockClear();
-    inputRef.current = null;
-    mockExperienceState();
+    reset();
   });
 
-  describe("actions 面板与搜索模式切换", () => {
+  describe("focus recovery", () => {
     /**
      * 测试目标：验证从操作面板切换回搜索模式时，底部输入框在重新挂载后被聚焦。
      */
@@ -226,24 +169,24 @@ describe("DictionaryExperience focus management", () => {
       await expectSearchModeWithFocus(initialFocusCalls);
     });
 
-    describe("重试释义", () => {
-      /**
-       * 测试目标：验证点击“重试释义”按钮会触发重试逻辑。
-       */
-      it("Given_actionsPanel_When_retryDefinition_Then_callsReoutputHandler", async () => {
-        await performRetryFromActionsPanel();
+    /**
+     * 测试目标：验证重试后底部输入框重新获得焦点。
+     */
+    it("Given_actionsPanel_When_retryDefinition_Then_restoresSearchFocus", async () => {
+      const { initialFocusCalls } = await performRetryFromActionsPanel();
 
-        await expectRetryHandlerCalled();
-      });
+      await expectSearchModeWithFocus(initialFocusCalls);
+    });
+  });
 
-      /**
-       * 测试目标：验证重试后底部输入框重新获得焦点。
-       */
-      it("Given_actionsPanel_When_retryDefinition_Then_restoresSearchFocus", async () => {
-        const { initialFocusCalls } = await performRetryFromActionsPanel();
+  describe("retry behaviour", () => {
+    /**
+     * 测试目标：验证点击“重试释义”按钮会触发重试逻辑。
+     */
+    it("Given_actionsPanel_When_retryDefinition_Then_callsReoutputHandler", async () => {
+      await performRetryFromActionsPanel();
 
-        await expectSearchModeWithFocus(initialFocusCalls);
-      });
+      await expectRetryHandlerCalled();
     });
   });
 
