@@ -36,17 +36,14 @@ const buildActionBarProps = ({
   });
 };
 
-const resolveEmptyState = (t) => ({
-  title: t.searchEmptyTitle,
-  description: t.searchEmptyDescription,
-});
-
-export function useDictionaryViewModel({ core, requests }) {
-  const { state, contexts, copyController, homeControls, reporting, libraryLandingLabel } =
-    core;
-  const { languageContext, toast, popup, languageConfig } = contexts;
-  const viewState = resolveViewFlags(state.activeView);
-  const dictionaryActionBarProps = useMemo(
+const useDictionaryActionBarProps = ({
+  state,
+  requests,
+  copyController,
+  reporting,
+  languageContext,
+}) =>
+  useMemo(
     () =>
       buildActionBarProps({
         state,
@@ -55,20 +52,43 @@ export function useDictionaryViewModel({ core, requests }) {
         reporting,
         languageContext,
       }),
-    [
-      state,
-      requests,
-      copyController,
-      reporting,
-      languageContext,
-    ],
+    [state, requests, copyController, reporting, languageContext],
   );
-  const isEmptyStateActive =
-    viewState.isDictionary && !state.entry && !state.finalText && !state.loading;
-  const displayClassName = ["display", isEmptyStateActive ? "display-empty" : ""]
-    .filter(Boolean)
-    .join(" ");
 
+const shouldShowDictionaryEmptyState = (state) =>
+  !state.entry && !state.finalText && !state.loading;
+
+const resolveDisplayClassName = (isEmpty) =>
+  ["display", isEmpty ? "display-empty" : ""].filter(Boolean).join(" ");
+
+const resolveDisplayState = (state, viewState) => {
+  const isEmptyStateActive =
+    viewState.isDictionary && shouldShowDictionaryEmptyState(state);
+  return {
+    isEmptyStateActive,
+    displayClassName: resolveDisplayClassName(isEmptyStateActive),
+  };
+};
+
+const buildSearchEmptyState = (t) => ({
+  title: t.searchEmptyTitle,
+  description: t.searchEmptyDescription,
+});
+
+const buildDictionaryViewModel = ({
+  state,
+  contexts,
+  requests,
+  copyController,
+  homeControls,
+  reporting,
+  viewState,
+  dictionaryActionBarProps,
+  displayState,
+  searchEmptyState,
+  libraryLandingLabel,
+}) => {
+  const { languageContext, toast, popup, languageConfig } = contexts;
   return {
     inputRef: state.inputRef,
     t: languageContext.t,
@@ -92,8 +112,8 @@ export function useDictionaryViewModel({ core, requests }) {
     finalText: state.finalText,
     loading: state.loading,
     dictionaryActionBarProps,
-    displayClassName,
-    isEmptyStateActive,
+    displayClassName: displayState.displayClassName,
+    isEmptyStateActive: displayState.isEmptyStateActive,
     popupOpen: popup.popupOpen,
     popupMsg: popup.popupMsg,
     popupConfig: popup.popupConfig,
@@ -110,7 +130,34 @@ export function useDictionaryViewModel({ core, requests }) {
     dictionaryTargetLanguageLabel: languageContext.t.dictionaryTargetLanguageLabel,
     dictionarySourceLanguageLabel: languageContext.t.dictionarySourceLanguageLabel,
     dictionarySwapLanguagesLabel: languageContext.t.dictionarySwapLanguages,
-    searchEmptyState: resolveEmptyState(languageContext.t),
+    searchEmptyState,
     chatInputPlaceholder: languageContext.t.inputPlaceholder,
   };
+};
+
+export function useDictionaryViewModel({ core, requests }) {
+  const { state, contexts, copyController, homeControls, reporting, libraryLandingLabel } = core;
+  const viewState = resolveViewFlags(state.activeView);
+  const dictionaryActionBarProps = useDictionaryActionBarProps({
+    state,
+    requests,
+    copyController,
+    reporting,
+    languageContext: contexts.languageContext,
+  });
+  const displayState = resolveDisplayState(state, viewState);
+  const searchEmptyState = buildSearchEmptyState(contexts.languageContext.t);
+  return buildDictionaryViewModel({
+    state,
+    contexts,
+    requests,
+    copyController,
+    homeControls,
+    reporting,
+    viewState,
+    dictionaryActionBarProps,
+    displayState,
+    searchEmptyState,
+    libraryLandingLabel,
+  });
 }

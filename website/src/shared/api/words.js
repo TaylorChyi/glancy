@@ -41,25 +41,39 @@ const resolveWordCacheKeyFromOptions = (options = {}) =>
 
 const getCachedWord = (store, key) => store.getState().getEntry(key);
 
-const collectResponseVersions = (response) => {
+const getVersionArray = (response) => {
   if (Array.isArray(response?.versions)) {
     return response.versions;
   }
   if (response?.version) {
     return [response.version];
   }
-  if (Array.isArray(response?.entries)) {
-    return response.entries;
-  }
-  return [response];
+  return undefined;
+};
+
+const getEntryArray = (response) =>
+  Array.isArray(response?.entries) ? response.entries : undefined;
+
+const getFallbackResponseArray = (response) => [response];
+
+const collectResponseVersions = (response) =>
+  getVersionArray(response) ??
+  getEntryArray(response) ??
+  getFallbackResponseArray(response);
+
+const getActiveVersionIdFromResponse = (response) =>
+  response?.activeVersionId ??
+  response?.version?.id ??
+  response?.version?.versionId;
+
+const getFallbackVersionId = (versions) => {
+  const lastVersion = versions[versions.length - 1];
+  if (!lastVersion) return undefined;
+  return lastVersion.id ?? lastVersion.versionId;
 };
 
 const resolveActiveVersionId = (response, versions) =>
-  response?.activeVersionId ??
-  response?.version?.id ??
-  response?.version?.versionId ??
-  versions[versions.length - 1]?.id ??
-  versions[versions.length - 1]?.versionId;
+  getActiveVersionIdFromResponse(response) ?? getFallbackVersionId(versions);
 
 const normalizeVersionFlavors = (versions, resolvedFlavor) =>
   versions.map((version) =>
@@ -124,49 +138,62 @@ const buildWordRequestUrl = (params) => `${API_PATHS.words}?${params.toString()}
 
 const shouldUseCache = (forceNew) => !forceNew;
 
+const normalizeWordRequestOptions = (
+  options = {},
+  resolveCaptureHistory,
+) => {
+  const {
+    userId,
+    term,
+    language,
+    model = DEFAULT_MODEL,
+    flavor,
+    forceNew = false,
+    versionId,
+    captureHistory,
+    token,
+  } = options;
+
+  return {
+    userId,
+    term,
+    language,
+    model,
+    flavor: ensureFlavor(flavor),
+    forceNew,
+    versionId,
+    captureHistory: resolveCaptureHistoryPreference(
+      captureHistory,
+      resolveCaptureHistory,
+    ),
+    token,
+  };
+};
+
+export const buildWordRequestContext = (
+  options = {},
+  resolveCaptureHistory,
+) => {
+  const normalizedOptions = normalizeWordRequestOptions(
+    options,
+    resolveCaptureHistory,
+  );
+  const { term, language, flavor, model, forceNew, token } = normalizedOptions;
+  const key = wordCacheKey({ term, language, flavor, model });
+  const params = buildWordQueryParams(normalizedOptions);
+
+  return {
+    key,
+    url: buildWordRequestUrl(params),
+    token,
+    shouldUseCache: shouldUseCache(forceNew),
+  };
+};
+
 const createWordRequestBuilder =
   (resolveCaptureHistory) =>
-  (options = {}) => {
-    const {
-      userId,
-      term,
-      language,
-      model = DEFAULT_MODEL,
-      flavor,
-      forceNew = false,
-      versionId,
-      captureHistory,
-      token,
-    } = options;
-
-    const resolvedFlavor = ensureFlavor(flavor);
-    const key = wordCacheKey({
-      term,
-      language,
-      flavor: resolvedFlavor,
-      model,
-    });
-    const params = buildWordQueryParams({
-      userId,
-      term,
-      language,
-      flavor: resolvedFlavor,
-      model,
-      forceNew,
-      versionId,
-      captureHistory: resolveCaptureHistoryPreference(
-        captureHistory,
-        resolveCaptureHistory,
-      ),
-    });
-
-    return {
-      key,
-      url: buildWordRequestUrl(params),
-      token,
-      shouldUseCache: shouldUseCache(forceNew),
-    };
-  };
+  (options = {}) =>
+    buildWordRequestContext(options, resolveCaptureHistory);
 
 const shouldReturnCachedWord = ({ shouldUseCache, cachedWord }) =>
   shouldUseCache && Boolean(cachedWord);
@@ -176,6 +203,30 @@ const createWordRequestExecutor =
   async ({ url, token }) =>
     request(url, { token });
 
+const getCachedWordOrFetch = async ({ cache, execute }, requestContext) => {
+  const cachedWord = cache.get(requestContext.key);
+
+  if (
+    shouldReturnCachedWord({
+      shouldUseCache: requestContext.shouldUseCache,
+      cachedWord,
+    })
+  ) {
+    return cachedWord;
+  }
+
+  const response = await execute(requestContext);
+  return cache.persist(requestContext.key, response);
+};
+
+const fetchWordWithCache = async (
+  { cache, buildRequest, execute },
+  options = {},
+) => {
+  const requestContext = buildRequest(options);
+  return getCachedWordOrFetch({ cache, execute }, requestContext);
+};
+
 const createWordFetcher = ({ request, store, governanceStore }) => {
   const cache = createWordCache(store);
   const buildRequest = createWordRequestBuilder(
@@ -183,22 +234,8 @@ const createWordFetcher = ({ request, store, governanceStore }) => {
   );
   const execute = createWordRequestExecutor(request);
 
-  return async (options = {}) => {
-    const requestContext = buildRequest(options);
-    const cachedWord = cache.get(requestContext.key);
-
-    if (
-      shouldReturnCachedWord({
-        shouldUseCache: requestContext.shouldUseCache,
-        cachedWord,
-      })
-    ) {
-      return cachedWord;
-    }
-
-    const response = await execute(requestContext);
-    return cache.persist(requestContext.key, response);
-  };
+  return (options = {}) =>
+    fetchWordWithCache({ cache, buildRequest, execute }, options);
 };
 
 const shouldBypassInFlightCache = (options = {}) => Boolean(options.forceNew);

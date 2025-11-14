@@ -6,7 +6,7 @@ import {
 } from "@shared/utils/avatarCropBox.js";
 import { composeTranslate3d } from "../utils.js";
 
-const useDisplayMetrics = ({ naturalSize, viewportSize, zoom }) =>
+export const useDisplayMetricsMemo = ({ naturalSize, viewportSize, zoom }) =>
   useMemo(
     () =>
       computeDisplayMetrics({
@@ -18,7 +18,7 @@ const useDisplayMetrics = ({ naturalSize, viewportSize, zoom }) =>
     [naturalSize.height, naturalSize.width, viewportSize, zoom],
   );
 
-const useOffsetBounds = ({ displayMetrics, viewportSize }) =>
+export const useOffsetBoundsMemo = ({ displayMetrics, viewportSize }) =>
   useMemo(
     () =>
       computeOffsetBounds(
@@ -29,7 +29,7 @@ const useOffsetBounds = ({ displayMetrics, viewportSize }) =>
     [displayMetrics.height, displayMetrics.width, viewportSize],
   );
 
-const useOffsetAdjustments = ({ bounds, setOffset }) => {
+export const useOffsetDeltaHandler = ({ bounds, setOffset }) => {
   useEffect(() => {
     setOffset((previous) => clampOffset(previous, bounds));
   }, [bounds, setOffset]);
@@ -44,7 +44,7 @@ const useOffsetAdjustments = ({ bounds, setOffset }) => {
   );
 };
 
-const useImageTransform = ({
+export const useImageTransformMemo = ({
   displayMetrics,
   viewportSize,
   naturalSize,
@@ -91,10 +91,14 @@ const useViewportDerivedState = ({
   offset,
   setOffset,
 }) => {
-  const displayMetrics = useDisplayMetrics({ naturalSize, viewportSize, zoom });
-  const bounds = useOffsetBounds({ displayMetrics, viewportSize });
-  const applyOffsetDelta = useOffsetAdjustments({ bounds, setOffset });
-  const imageTransform = useImageTransform({
+  const displayMetrics = useDisplayMetricsMemo({
+    naturalSize,
+    viewportSize,
+    zoom,
+  });
+  const bounds = useOffsetBoundsMemo({ displayMetrics, viewportSize });
+  const applyOffsetDelta = useOffsetDeltaHandler({ bounds, setOffset });
+  const imageTransform = useImageTransformMemo({
     displayMetrics,
     viewportSize,
     naturalSize,

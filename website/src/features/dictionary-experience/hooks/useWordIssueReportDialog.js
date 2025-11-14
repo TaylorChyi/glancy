@@ -5,137 +5,164 @@ import {
   DEFAULT_WORD_REPORT_CATEGORY,
   WORD_REPORT_CATEGORIES,
 } from "../reportCategories.js";
+import {
+  ACTIONS,
+  initialState,
+  wordIssueReportDialogReducer,
+} from "./wordIssueReportDialogReducer.js";
 
+export function isValidReportContext(context) {
+  return Boolean(context?.term);
+}
 
-const initialState = Object.freeze({
-  open: false,
-  submitting: false,
-  error: null,
-  context: null,
-  form: Object.freeze({
-    category: DEFAULT_WORD_REPORT_CATEGORY,
-    description: "",
-  }),
-});
+export function canSubmitReport(state) {
+  return Boolean(state?.open && !state?.submitting && state?.context);
+}
 
-const ACTIONS = Object.freeze({
-  OPEN: "open",
-  CLOSE: "close",
-  CHANGE_CATEGORY: "change-category",
-  CHANGE_DESCRIPTION: "change-description",
-  SUBMIT_START: "submit-start",
-  SUBMIT_SUCCESS: "submit-success",
-  SUBMIT_FAILURE: "submit-failure",
-});
+export function buildReportPayload({ context, form }) {
+  const {
+    term = "",
+    language = null,
+    flavor = null,
+    sourceUrl = "",
+  } = context ?? {};
+  const {
+    category = DEFAULT_WORD_REPORT_CATEGORY,
+    description = "",
+  } = form ?? {};
 
-function reducer(state, action) {
-  switch (action.type) {
-    case ACTIONS.OPEN:
-      return {
-        open: true,
-        submitting: false,
-        error: null,
-        context: action.payload,
-        form: {
-          category: DEFAULT_WORD_REPORT_CATEGORY,
-          description: "",
-        },
-      };
-    case ACTIONS.CLOSE:
-      return { ...state, open: false, submitting: false };
-    case ACTIONS.CHANGE_CATEGORY:
-      return {
-        ...state,
-        form: { ...state.form, category: action.payload },
-      };
-    case ACTIONS.CHANGE_DESCRIPTION:
-      return {
-        ...state,
-        form: { ...state.form, description: action.payload },
-      };
-    case ACTIONS.SUBMIT_START:
-      return { ...state, submitting: true, error: null };
-    case ACTIONS.SUBMIT_SUCCESS:
-      return {
-        open: false,
-        submitting: false,
-        error: null,
-        context: null,
-        form: {
-          category: DEFAULT_WORD_REPORT_CATEGORY,
-          description: "",
-        },
-      };
-    case ACTIONS.SUBMIT_FAILURE:
-      return { ...state, submitting: false, error: action.payload };
-    default:
-      return state;
+  return { term, language, flavor, category, description, sourceUrl };
+}
+
+export function createReportActions(dispatch) {
+  return {
+    open: (context) => dispatch({ type: ACTIONS.OPEN, payload: context }),
+    close: () => dispatch({ type: ACTIONS.CLOSE }),
+    changeCategory: (category) =>
+      dispatch({ type: ACTIONS.CHANGE_CATEGORY, payload: category }),
+    changeDescription: (description) =>
+      dispatch({ type: ACTIONS.CHANGE_DESCRIPTION, payload: description }),
+    submitStart: () => dispatch({ type: ACTIONS.SUBMIT_START }),
+    submitSuccess: () => dispatch({ type: ACTIONS.SUBMIT_SUCCESS }),
+    submitFailure: (error) =>
+      dispatch({ type: ACTIONS.SUBMIT_FAILURE, payload: error }),
+  };
+}
+
+function useReportDialogState() {
+  const [state, dispatch] = useReducer(
+    wordIssueReportDialogReducer,
+    initialState,
+  );
+  const actions = useMemo(() => createReportActions(dispatch), [dispatch]);
+  return { state, actions };
+}
+
+function useOpenDialogHandler(openAction) {
+  return useCallback(
+    (context) => {
+      if (isValidReportContext(context)) {
+        openAction(context);
+      }
+    },
+    [openAction],
+  );
+}
+
+function useSubmitArguments(args) {
+  const {
+    state,
+    submitWordReport,
+    submitStart,
+    submitSuccess,
+    submitFailure,
+    userToken,
+    onSuccess,
+    onError,
+  } = args;
+  return useMemo(
+    () => ({
+      state,
+      submitWordReport,
+      submitStart,
+      submitSuccess,
+      submitFailure,
+      userToken,
+      onSuccess,
+      onError,
+    }),
+    [state, submitWordReport, submitStart, submitSuccess, submitFailure, userToken, onSuccess, onError],
+  );
+}
+
+function useSubmitReportHandler(args) {
+  return useCallback(() => executeSubmit(args), [args]);
+}
+
+async function executeSubmit({
+  state,
+  submitWordReport,
+  submitStart,
+  submitSuccess,
+  submitFailure,
+  userToken,
+  onSuccess,
+  onError,
+}) {
+  if (!canSubmitReport(state)) {
+    return;
   }
+  submitStart();
+  try {
+    const response = await persistReportRequest({
+      state,
+      submitWordReport,
+      userToken,
+    });
+    submitSuccess();
+    onSuccess?.(response);
+  } catch (error) {
+    const message = error?.message || "REPORT_SUBMIT_FAILED";
+    submitFailure(message);
+    onError?.(error);
+  }
+}
+
+function persistReportRequest({ state, submitWordReport, userToken }) {
+  const payload = buildReportPayload({
+    context: state.context,
+    form: state.form,
+  });
+  return submitWordReport({
+    ...payload,
+    token: userToken,
+  });
 }
 
 export function useWordIssueReportDialog({ onSuccess, onError } = {}) {
   const api = useApi();
   const { user } = useUser();
-  const [state, dispatch] = useReducer(reducer, initialState);
-
+  const { state, actions } = useReportDialogState();
   const categories = useMemo(() => WORD_REPORT_CATEGORIES, []);
-
-  const openDialog = useCallback((context) => {
-    if (!context?.term) {
-      return;
-    }
-    dispatch({ type: ACTIONS.OPEN, payload: context });
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    dispatch({ type: ACTIONS.CLOSE });
-  }, []);
-
-  const setCategory = useCallback((category) => {
-    dispatch({ type: ACTIONS.CHANGE_CATEGORY, payload: category });
-  }, []);
-
-  const setDescription = useCallback((description) => {
-    dispatch({ type: ACTIONS.CHANGE_DESCRIPTION, payload: description });
-  }, []);
-
-  const submit = useCallback(async () => {
-    if (!state.open || state.submitting) {
-      return;
-    }
-    if (!state.context) {
-      return;
-    }
-    dispatch({ type: ACTIONS.SUBMIT_START });
-    try {
-      const payload = {
-        term: state.context.term,
-        language: state.context.language,
-        flavor: state.context.flavor,
-        category: state.form.category,
-        description: state.form.description,
-        sourceUrl: state.context.sourceUrl,
-      };
-      const response = await api.wordReports.submitWordReport({
-        ...payload,
-        token: user?.token,
-      });
-      dispatch({ type: ACTIONS.SUBMIT_SUCCESS });
-      onSuccess?.(response);
-    } catch (error) {
-      const message = error?.message || "REPORT_SUBMIT_FAILED";
-      dispatch({ type: ACTIONS.SUBMIT_FAILURE, payload: message });
-      onError?.(error);
-    }
-  }, [api.wordReports, onError, onSuccess, state, user?.token]);
-
+  const openDialog = useOpenDialogHandler(actions.open);
+  const submitArgs = useSubmitArguments({
+    state,
+    submitWordReport: api.wordReports.submitWordReport,
+    submitStart: actions.submitStart,
+    submitSuccess: actions.submitSuccess,
+    submitFailure: actions.submitFailure,
+    userToken: user?.token,
+    onSuccess,
+    onError,
+  });
+  const submit = useSubmitReportHandler(submitArgs);
   return {
     state,
     categories,
     openDialog,
-    closeDialog,
-    setCategory,
-    setDescription,
+    closeDialog: actions.close,
+    setCategory: actions.changeCategory,
+    setDescription: actions.changeDescription,
     submit,
   };
 }

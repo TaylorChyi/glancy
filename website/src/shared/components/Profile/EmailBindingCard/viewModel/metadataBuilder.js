@@ -47,27 +47,21 @@ export default function deriveEmailBindingMetadata({
   remainingSeconds,
 }) {
   const hasBoundEmail = Boolean(email);
-  const statusTone = buildStatusTone(hasBoundEmail);
-  const summaryLabel = buildSummaryLabel(hasBoundEmail, t);
-  const primaryActionLabel = buildPrimaryActionLabel(hasBoundEmail, t);
-  const confirmButtonLabel = buildConfirmLabel(hasBoundEmail, t);
-  const verificationMessage = buildVerificationMessage({
-    isAwaitingVerification,
-    isVerificationForDraft,
-    normalizedRequestedEmail,
-    requestedEmail,
-    t,
-  });
-  const sendCodeLabel = buildSendCodeLabel(remainingSeconds, t);
 
   return {
     hasBoundEmail,
-    statusTone,
-    summaryLabel,
-    primaryActionLabel,
-    confirmButtonLabel,
-    verificationMessage,
-    sendCodeLabel,
+    statusTone: buildStatusTone(hasBoundEmail),
+    summaryLabel: buildSummaryLabel(hasBoundEmail, t),
+    primaryActionLabel: buildPrimaryActionLabel(hasBoundEmail, t),
+    confirmButtonLabel: buildConfirmLabel(hasBoundEmail, t),
+    verificationMessage: buildVerificationMessage({
+      isAwaitingVerification,
+      isVerificationForDraft,
+      normalizedRequestedEmail,
+      requestedEmail,
+      t,
+    }),
+    sendCodeLabel: buildSendCodeLabel(remainingSeconds, t),
   };
 }
 

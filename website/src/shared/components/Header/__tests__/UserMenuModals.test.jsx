@@ -52,111 +52,114 @@ await jest.unstable_mockModule("@shared/components/modals/LogoutConfirmModal.jsx
 
 const { default: UserMenuModals } = await import("../UserMenuModals.jsx");
 
+const setup = (props = {}, renderChildren = () => null) => {
+  const clearUser = jest.fn();
+  const clearHistory = jest.fn();
+  const result = render(
+    <UserMenuModals
+      isPro={false}
+      user={{ email: "user@example.com" }}
+      clearUser={clearUser}
+      clearHistory={clearHistory}
+      {...props}
+    >
+      {(handlers) => renderChildren(handlers, { clearUser, clearHistory })}
+    </UserMenuModals>,
+  );
+
+  return { ...result, clearUser, clearHistory };
+};
+
+const resetModalMocks = () => {
+  upgradeModalMock.mockClear();
+  settingsModalMock.mockClear();
+  logoutModalMock.mockClear();
+};
+
+const triggerShortcutTest = async () => {
+  setup();
+
+  expect(screen.getByTestId("settings-modal")).toHaveAttribute("data-open", "false");
+
+  await act(async () => {
+    document.dispatchEvent(new Event("open-shortcuts"));
+  });
+
+  await waitFor(() =>
+    expect(screen.getByTestId("settings-modal")).toHaveAttribute("data-open", "true"),
+  );
+  expect(screen.getByTestId("settings-modal")).toHaveAttribute("data-section", "keyboard");
+};
+
+const triggerHandlersTest = async () => {
+  const { clearHistory, clearUser } = setup(
+    {},
+    (handlers) => (
+      <>
+        <button type="button" data-testid="trigger-upgrade" onClick={handlers.openUpgrade}>
+          upgrade
+        </button>
+        <button type="button" data-testid="trigger-logout" onClick={handlers.openLogout}>
+          logout
+        </button>
+      </>
+    ),
+  );
+
+  fireEvent.click(screen.getByTestId("trigger-upgrade"));
+  await waitFor(() =>
+    expect(screen.getByTestId("upgrade-modal")).toHaveAttribute("data-open", "true"),
+  );
+
+  fireEvent.click(screen.getByTestId("upgrade-modal"));
+  await waitFor(() =>
+    expect(screen.getByTestId("upgrade-modal")).toHaveAttribute("data-open", "false"),
+  );
+
+  fireEvent.click(screen.getByTestId("trigger-logout"));
+  await waitFor(() =>
+    expect(screen.getByTestId("logout-modal")).toHaveAttribute("data-open", "true"),
+  );
+
+  fireEvent.click(screen.getByText("confirm"));
+
+  expect(clearHistory).toHaveBeenCalledTimes(1);
+  expect(clearUser).toHaveBeenCalledTimes(1);
+  await waitFor(() =>
+    expect(screen.getByTestId("logout-modal")).toHaveAttribute("data-open", "false"),
+  );
+};
+
 describe("UserMenuModals", () => {
-  const renderModals = (props = {}, renderChildren = () => null) => {
-    const clearUser = jest.fn();
-    const clearHistory = jest.fn();
-    const result = render(
-      <UserMenuModals
-        isPro={false}
-        user={{ email: "user@example.com" }}
-        clearUser={clearUser}
-        clearHistory={clearHistory}
-        {...props}
-      >
-        {(handlers) => renderChildren(handlers, { clearUser, clearHistory })}
-      </UserMenuModals>,
-    );
+  beforeEach(resetModalMocks);
 
-    return { ...result, clearUser, clearHistory };
-  };
-
-  beforeEach(() => {
-    upgradeModalMock.mockClear();
-    settingsModalMock.mockClear();
-    logoutModalMock.mockClear();
-  });
-
-  /**
-   * 测试目标：验证全局快捷键事件可打开快捷键分区。
-   * 前置条件：渲染组件并监听 document 上的 open-shortcuts 事件。
-   * 步骤：
-   *  1) 触发 open-shortcuts 事件。
-   * 断言：
-   *  - SettingsModal 收到 open=true 且 initialSection 为 keyboard。
-   */
-  test("Given_shortcut_event_When_dispatched_Then_opens_keyboard_section", async () => {
-    renderModals();
-
-    expect(screen.getByTestId("settings-modal")).toHaveAttribute("data-open", "false");
-
-    await act(async () => {
-      document.dispatchEvent(new Event("open-shortcuts"));
+  describe("shortcut events", () => {
+    /**
+     * 测试目标：验证全局快捷键事件可打开快捷键分区。
+     * 前置条件：渲染组件并监听 document 上的 open-shortcuts 事件。
+     * 步骤：
+     *  1) 触发 open-shortcuts 事件。
+     * 断言：
+     *  - SettingsModal 收到 open=true 且 initialSection 为 keyboard。
+     */
+    test("Given_shortcut_event_When_dispatched_Then_opens_keyboard_section", async () => {
+      await triggerShortcutTest();
     });
-
-    await waitFor(() =>
-      expect(screen.getByTestId("settings-modal")).toHaveAttribute("data-open", "true"),
-    );
-    expect(screen.getByTestId("settings-modal")).toHaveAttribute(
-      "data-section",
-      "keyboard",
-    );
   });
 
-  /**
-   * 测试目标：验证儿童函数提供的 handlers 可控制升级和退出模态。
-   * 前置条件：通过 children 渲染触发按钮。
-   * 步骤：
-   *  1) 点击升级按钮并关闭模态。
-   *  2) 点击退出按钮并确认。
-   * 断言：
-   *  - 升级模态 open 状态切换为 true -> false。
-   *  - 登出模态确认时调用 clearHistory 与 clearUser。
-   */
-  test("Given_handlers_When_invoked_Then_toggle_modals_and_confirm_logout", async () => {
-    const { clearHistory, clearUser } = renderModals(
-      {},
-      (handlers) => (
-        <>
-          <button
-            type="button"
-            data-testid="trigger-upgrade"
-            onClick={handlers.openUpgrade}
-          >
-            upgrade
-          </button>
-          <button
-            type="button"
-            data-testid="trigger-logout"
-            onClick={handlers.openLogout}
-          >
-            logout
-          </button>
-        </>
-      ),
-    );
-
-    fireEvent.click(screen.getByTestId("trigger-upgrade"));
-    await waitFor(() =>
-      expect(screen.getByTestId("upgrade-modal")).toHaveAttribute("data-open", "true"),
-    );
-
-    fireEvent.click(screen.getByTestId("upgrade-modal"));
-    await waitFor(() =>
-      expect(screen.getByTestId("upgrade-modal")).toHaveAttribute("data-open", "false"),
-    );
-
-    fireEvent.click(screen.getByTestId("trigger-logout"));
-    await waitFor(() =>
-      expect(screen.getByTestId("logout-modal")).toHaveAttribute("data-open", "true"),
-    );
-
-    fireEvent.click(screen.getByText("confirm"));
-
-    expect(clearHistory).toHaveBeenCalledTimes(1);
-    expect(clearUser).toHaveBeenCalledTimes(1);
-    await waitFor(() =>
-      expect(screen.getByTestId("logout-modal")).toHaveAttribute("data-open", "false"),
-    );
+  describe("children handlers", () => {
+    /**
+     * 测试目标：验证儿童函数提供的 handlers 可控制升级和退出模态。
+     * 前置条件：通过 children 渲染触发按钮。
+     * 步骤：
+     *  1) 点击升级按钮并关闭模态。
+     *  2) 点击退出按钮并确认。
+     * 断言：
+     *  - 升级模态 open 状态切换为 true -> false。
+     *  - 登出模态确认时调用 clearHistory 与 clearUser。
+     */
+    test("Given_handlers_When_invoked_Then_toggle_modals_and_confirm_logout", async () => {
+      await triggerHandlersTest();
+    });
   });
 });

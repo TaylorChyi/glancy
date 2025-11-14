@@ -3,6 +3,26 @@ import UserMenuButton from "./UserMenuButton.jsx";
 import AuthenticatedUserMenuContent from "./AuthenticatedUserMenuContent.jsx";
 import { resolvePlanDetails } from "./userPlan.js";
 
+const buildTriggerProps = ({ size, showName }, { username, isPro, planLabel }) => ({
+  size,
+  showName: Boolean(showName),
+  isPro,
+  username,
+  planLabel,
+});
+
+const buildDropdownProps = ({ t }, { isPro }) => ({
+  t,
+  isPro,
+});
+
+const buildModalProps = ({ user, clearUser, clearHistory }, { isPro }) => ({
+  isPro,
+  user,
+  clearUser,
+  clearHistory,
+});
+
 function AuthenticatedUserMenu({
   user,
   clearUser,
@@ -18,23 +38,9 @@ function AuthenticatedUserMenu({
   return (
     <AuthenticatedUserMenuContent
       Trigger={Trigger}
-      triggerProps={{
-        size,
-        showName: Boolean(showName),
-        isPro,
-        username,
-        planLabel,
-      }}
-      dropdownProps={{
-        t,
-        isPro,
-      }}
-      modalProps={{
-        isPro,
-        user,
-        clearUser,
-        clearHistory,
-      }}
+      triggerProps={buildTriggerProps({ size, showName }, { username, isPro, planLabel })}
+      dropdownProps={buildDropdownProps({ t }, { isPro })}
+      modalProps={buildModalProps({ user, clearUser, clearHistory }, { isPro })}
     />
   );
 }

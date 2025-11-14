@@ -28,23 +28,51 @@ const buildToolbarActionsProps = (deps) => ({
   onReport: deps.onReport,
 });
 
-const useToolbarActionsPropsMemo = (deps) =>
-  useMemo(
-    () => buildToolbarActionsProps(deps),
+const useToolbarActionsPropsMemo = (deps) => {
+  const {
+    translator,
+    user,
+    disabled,
+    canCopy,
+    onCopy,
+    copyFeedbackState,
+    isCopySuccess,
+    canDelete,
+    onDelete,
+    canReport,
+    onReport,
+  } = deps;
+
+  return useMemo(
+    () =>
+      buildToolbarActionsProps({
+        translator,
+        user,
+        disabled,
+        canCopy,
+        onCopy,
+        copyFeedbackState,
+        isCopySuccess,
+        canDelete,
+        onDelete,
+        canReport,
+        onReport,
+      }),
     [
-      deps.translator,
-      deps.user,
-      deps.disabled,
-      deps.canCopy,
-      deps.onCopy,
-      deps.copyFeedbackState,
-      deps.isCopySuccess,
-      deps.canDelete,
-      deps.onDelete,
-      deps.canReport,
-      deps.onReport,
+      translator,
+      user,
+      disabled,
+      canCopy,
+      onCopy,
+      copyFeedbackState,
+      isCopySuccess,
+      canDelete,
+      onDelete,
+      canReport,
+      onReport,
     ],
   );
+};
 
 export const useToolbarActionsProps = (input) =>
   useToolbarActionsPropsMemo(selectToolbarActionsDeps(input));

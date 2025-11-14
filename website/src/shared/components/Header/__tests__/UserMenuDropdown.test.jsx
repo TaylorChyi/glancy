@@ -116,4 +116,21 @@ describe("UserMenuDropdown", () => {
     expect(setOpen).toHaveBeenCalledTimes(1);
     expect(setOpen).toHaveBeenCalledWith(false);
   });
+
+  /**
+   * 测试目标：点击菜单外部应关闭菜单。
+   * 前置条件：渲染 open 状态的菜单并注入自定义 setOpen。
+   * 步骤：
+   *  1) 在 document.body 上触发 pointerdown。
+   * 断言：
+   *  - setOpen(false) 被调用（失败信息：未响应外部点击）。
+   */
+  test("Given_PointerDownOutsideMenu_WhenEventFires_ThenClosesMenu", () => {
+    const setOpen = jest.fn();
+
+    renderDropdown({ setOpen });
+    fireEvent.pointerDown(document.body);
+
+    expect(setOpen).toHaveBeenCalledWith(false);
+  });
 });

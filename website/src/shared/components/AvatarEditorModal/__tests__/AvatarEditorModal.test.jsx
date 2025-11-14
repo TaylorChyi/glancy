@@ -83,6 +83,8 @@ const baseProps = Object.freeze({
   labels: DEFAULT_LABELS,
 });
 
+const AVATAR_ALT_TEXT = "avatar-preview";
+
 function loadImage(element, { width, height }) {
   Object.defineProperty(element, "naturalWidth", {
     value: width,
@@ -94,6 +96,92 @@ function loadImage(element, { width, height }) {
   });
   fireEvent.load(element);
 }
+
+const renderEditor = (props = {}) => {
+  const utils = render(<AvatarEditorModal {...baseProps} {...props} />);
+  const labels = props.labels ?? baseProps.labels;
+  return {
+    ...utils,
+    labels,
+    image: utils.getByAltText(AVATAR_ALT_TEXT),
+    viewport: utils.getByLabelText(labels.title),
+  };
+};
+
+const rerenderEditor = (rerender, getByAltText, props = {}) => {
+  rerender(<AvatarEditorModal {...baseProps} {...props} />);
+  return getByAltText(AVATAR_ALT_TEXT);
+};
+
+const getViewportOffset = (image) => parseTranslate3d(image.style.transform)[0];
+
+const expectViewportCentered = (image) => {
+  const translations = parseTranslate3d(image.style.transform);
+  expect(translations[0]).toEqual({ x: 0, y: 0 });
+  expect(translations[1].x).toBeCloseTo(translations[1].y, 3);
+  expect(translations[1].x).toBeGreaterThan(0);
+  expect(translations[2].x).toBeLessThan(0);
+  expect(translations[2].y).toBeLessThan(0);
+};
+
+const expectScaleMatchesShortestSide = (image, shortestSide) => {
+  const scale = parseScale(image.style.transform);
+  const expectedScale = DEFAULT_VIEWPORT_SIZE / shortestSide;
+  expect(scale).toBeCloseTo(expectedScale, 6);
+};
+
+const waitForRecentering = (image) =>
+  waitFor(() => {
+    expect(getViewportOffset(image)).toEqual({ x: 0, y: 0 });
+  });
+
+const dragViewport = (viewport, { pointerId, start, end }) => {
+  act(() => {
+    fireEvent.pointerDown(viewport, {
+      pointerId,
+      clientX: start.x,
+      clientY: start.y,
+    });
+    fireEvent.pointerMove(viewport, {
+      pointerId,
+      clientX: end.x,
+      clientY: end.y,
+    });
+    fireEvent.pointerUp(viewport, { pointerId });
+  });
+};
+
+const clickZoomIn = (getByRole, labels) =>
+  act(() => {
+    fireEvent.click(getByRole("button", { name: labels.zoomIn }));
+  });
+
+const confirmCropAsync = async (getByText, labels) =>
+  act(async () => {
+    fireEvent.click(getByText(labels.confirm));
+  });
+
+const expectCropRectMatchesViewportState = ({
+  image,
+  cropRect,
+  naturalWidth,
+  naturalHeight,
+}) => {
+  const [offset] = parseTranslate3d(image.style.transform);
+  const scaleFactor = parseScale(image.style.transform);
+  const expectedRect = computeCropSourceRect({
+    naturalWidth,
+    naturalHeight,
+    viewportSize: DEFAULT_VIEWPORT_SIZE,
+    scaleFactor,
+    offset,
+  });
+
+  expect(cropRect.x).toBeCloseTo(expectedRect.x, 3);
+  expect(cropRect.y).toBeCloseTo(expectedRect.y, 3);
+  expect(cropRect.width).toBeCloseTo(expectedRect.width, 3);
+  expect(cropRect.height).toBeCloseTo(expectedRect.height, 3);
+};
 
 describe("AvatarEditorModal viewport interactions", () => {
   /**
@@ -109,21 +197,10 @@ describe("AvatarEditorModal viewport interactions", () => {
    *  - 本用例覆盖首次打开场景，无异常分支。
    */
   it("Given first image When load event fires Then viewport centers instantly", () => {
-    const { getByAltText } = render(<AvatarEditorModal {...baseProps} />);
-    const image = getByAltText("avatar-preview");
-
+    const { image } = renderEditor();
     loadImage(image, { width: 1280, height: 720 });
-
-    const translations = parseTranslate3d(image.style.transform);
-    const scale = parseScale(image.style.transform);
-    const expectedScale = DEFAULT_VIEWPORT_SIZE / 720;
-
-    expect(translations[0]).toEqual({ x: 0, y: 0 });
-    expect(translations[1].x).toBeCloseTo(translations[1].y, 3);
-    expect(translations[1].x).toBeGreaterThan(0);
-    expect(translations[2].x).toBeLessThan(0);
-    expect(translations[2].y).toBeLessThan(0);
-    expect(scale).toBeCloseTo(expectedScale, 6);
+    expectViewportCentered(image);
+    expectScaleMatchesShortestSide(image, 720);
   });
 
   /**
@@ -138,50 +215,23 @@ describe("AvatarEditorModal viewport interactions", () => {
    *  - 覆盖同尺寸图片的切换。
    */
   it("Given new source When image reloads Then viewport recenters", async () => {
-    const { getByAltText, getByLabelText, rerender } = render(
-      <AvatarEditorModal {...baseProps} />,
-    );
-    const viewport = getByLabelText(DEFAULT_LABELS.title);
-    const image = getByAltText("avatar-preview");
-
+    const { image, viewport, rerender, getByAltText } = renderEditor();
     loadImage(image, { width: 1200, height: 800 });
 
-    act(() => {
-      fireEvent.pointerDown(viewport, {
-        pointerId: 2,
-        clientX: 160,
-        clientY: 160,
-      });
-      fireEvent.pointerMove(viewport, {
-        pointerId: 2,
-        clientX: 200,
-        clientY: 160,
-      });
-      fireEvent.pointerUp(viewport, { pointerId: 2 });
+    dragViewport(viewport, {
+      pointerId: 2,
+      start: { x: 160, y: 160 },
+      end: { x: 200, y: 160 },
     });
 
-    expect(parseTranslate3d(image.style.transform)[0]).not.toEqual({
-      x: 0,
-      y: 0,
+    expect(getViewportOffset(image)).not.toEqual({ x: 0, y: 0 });
+
+    const updatedImage = rerenderEditor(rerender, getByAltText, {
+      source: "blob:second",
     });
-
-    rerender(
-      <AvatarEditorModal
-        {...baseProps}
-        source="blob:second"
-        labels={DEFAULT_LABELS}
-      />,
-    );
-    const updatedImage = getByAltText("avatar-preview");
-
     loadImage(updatedImage, { width: 1200, height: 800 });
 
-    await waitFor(() => {
-      expect(parseTranslate3d(updatedImage.style.transform)[0]).toEqual({
-        x: 0,
-        y: 0,
-      });
-    });
+    await waitForRecentering(updatedImage);
   });
 
   /**
@@ -203,58 +253,27 @@ describe("AvatarEditorModal viewport interactions", () => {
       previewUrl: "blob:crop",
     });
 
-    const { getByAltText, getByLabelText, getByRole, getByText } = render(
-      <AvatarEditorModal {...baseProps} />,
-    );
-
-    const viewport = getByLabelText(DEFAULT_LABELS.title);
-    const image = getByAltText("avatar-preview");
-
+    const { image, viewport, getByRole, getByText, labels } = renderEditor();
     loadImage(image, { width: 1200, height: 800 });
 
-    act(() => {
-      fireEvent.pointerDown(viewport, {
-        pointerId: 4,
-        clientX: 160,
-        clientY: 160,
-      });
-      fireEvent.pointerMove(viewport, {
-        pointerId: 4,
-        clientX: 200,
-        clientY: 190,
-      });
-      fireEvent.pointerUp(viewport, { pointerId: 4 });
+    dragViewport(viewport, {
+      pointerId: 4,
+      start: { x: 160, y: 160 },
+      end: { x: 200, y: 190 },
     });
-
-    act(() => {
-      fireEvent.click(getByRole("button", { name: DEFAULT_LABELS.zoomIn }));
-    });
-
-    await act(async () => {
-      fireEvent.click(getByText(DEFAULT_LABELS.confirm));
-    });
+    clickZoomIn(getByRole, labels);
+    await confirmCropAsync(getByText, labels);
 
     expect(renderCroppedAvatar).toHaveBeenCalledTimes(1);
     const [{ cropRect, image: croppedImage }] =
       renderCroppedAvatar.mock.calls[0];
     expect(croppedImage).toBe(image);
 
-    const viewportSize = DEFAULT_VIEWPORT_SIZE;
-    const transforms = parseTranslate3d(image.style.transform);
-    const [offset] = transforms;
-    const scaleFactor = parseScale(image.style.transform);
-
-    const expectedRect = computeCropSourceRect({
+    expectCropRectMatchesViewportState({
+      image,
+      cropRect,
       naturalWidth: 1200,
       naturalHeight: 800,
-      viewportSize,
-      scaleFactor,
-      offset,
     });
-
-    expect(cropRect.x).toBeCloseTo(expectedRect.x, 3);
-    expect(cropRect.y).toBeCloseTo(expectedRect.y, 3);
-    expect(cropRect.width).toBeCloseTo(expectedRect.width, 3);
-    expect(cropRect.height).toBeCloseTo(expectedRect.height, 3);
   });
 });

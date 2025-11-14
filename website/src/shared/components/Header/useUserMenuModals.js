@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-export const useUserMenuModals = ({ isPro, user, clearUser, clearHistory }) => {
+const useUserMenuModalState = () => {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [settingsState, setSettingsState] = useState({ open: false, section: "account" });
@@ -12,20 +12,33 @@ export const useUserMenuModals = ({ isPro, user, clearUser, clearHistory }) => {
   useEffect(() => {
     const handleShortcuts = () => openSettings("keyboard");
     document.addEventListener("open-shortcuts", handleShortcuts);
-    return () => {
-      document.removeEventListener("open-shortcuts", handleShortcuts);
-    };
+    return () => document.removeEventListener("open-shortcuts", handleShortcuts);
   }, [openSettings]);
 
-  const closeUpgrade = useCallback(() => setUpgradeOpen(false), []);
-  const closeLogout = useCallback(() => setLogoutOpen(false), []);
+  return {
+    upgradeOpen,
+    logoutOpen,
+    settingsState,
+    openSettings,
+    setUpgradeOpen,
+    setLogoutOpen,
+    setSettingsState,
+  };
+};
+
+const useUserMenuModalHandlers = (
+  { openSettings, setUpgradeOpen, setLogoutOpen, setSettingsState },
+  { clearHistory, clearUser },
+) => {
+  const closeUpgrade = useCallback(() => setUpgradeOpen(false), [setUpgradeOpen]);
+  const closeLogout = useCallback(() => setLogoutOpen(false), [setLogoutOpen]);
   const closeSettings = useCallback(
     () => setSettingsState((previous) => ({ ...previous, open: false })),
-    [],
+    [setSettingsState],
   );
 
-  const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
-  const openLogout = useCallback(() => setLogoutOpen(true), []);
+  const openUpgrade = useCallback(() => setUpgradeOpen(true), [setUpgradeOpen]);
+  const openLogout = useCallback(() => setLogoutOpen(true), [setLogoutOpen]);
   const openShortcuts = useCallback(() => openSettings("keyboard"), [openSettings]);
 
   const confirmLogout = useCallback(() => {
@@ -33,6 +46,31 @@ export const useUserMenuModals = ({ isPro, user, clearUser, clearHistory }) => {
     clearUser();
     closeLogout();
   }, [clearHistory, clearUser, closeLogout]);
+
+  return {
+    closeUpgrade,
+    closeLogout,
+    closeSettings,
+    openUpgrade,
+    openLogout,
+    openSettings,
+    openShortcuts,
+    confirmLogout,
+  };
+};
+
+const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
+  const { upgradeOpen, logoutOpen, settingsState } = state;
+  const {
+    closeUpgrade,
+    closeLogout,
+    closeSettings,
+    confirmLogout,
+    openSettings,
+    openShortcuts,
+    openUpgrade,
+    openLogout,
+  } = handlerFns;
 
   const handlers = useMemo(
     () => ({ openSettings, openShortcuts, openUpgrade, openLogout }),
@@ -65,4 +103,10 @@ export const useUserMenuModals = ({ isPro, user, clearUser, clearHistory }) => {
   );
 
   return { handlers, modals };
+};
+
+export const useUserMenuModals = ({ isPro, user, clearUser, clearHistory }) => {
+  const state = useUserMenuModalState();
+  const handlerFns = useUserMenuModalHandlers(state, { clearHistory, clearUser });
+  return useUserMenuModalValues({ state, handlerFns, isPro, user });
 };

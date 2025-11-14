@@ -1,55 +1,105 @@
 import { useCallback, useRef } from "react";
+import usePointerCapture from "./usePointerCapture.js";
 
 const INITIAL_POINT = { x: 0, y: 0 };
 
-const usePointerDrag = ({ containerRef, onOffsetChange }) => {
-  const pointerIdRef = useRef(null);
+const usePointerPositionTracker = () => {
   const lastPointRef = useRef(INITIAL_POINT);
 
-  const resetPointerTracking = useCallback(() => {
-    pointerIdRef.current = null;
+  const setLastPoint = useCallback((point) => {
+    lastPointRef.current = point;
+  }, []);
+
+  const resetLastPoint = useCallback(() => {
     lastPointRef.current = INITIAL_POINT;
   }, []);
 
-  const handlePointerDown = useCallback(
+  return { lastPointRef, setLastPoint, resetLastPoint };
+};
+
+const useResetPointerTracking = ({
+  resetPointerCapture,
+  resetLastPoint,
+}) =>
+  useCallback(() => {
+    resetPointerCapture();
+    resetLastPoint();
+  }, [resetLastPoint, resetPointerCapture]);
+
+const usePointerDownHandler = ({ capturePointer, setLastPoint }) =>
+  useCallback(
     (event) => {
-      if (!containerRef.current) return;
       event.preventDefault();
-      containerRef.current.setPointerCapture(event.pointerId);
-      pointerIdRef.current = event.pointerId;
-      lastPointRef.current = { x: event.clientX, y: event.clientY };
+      if (!capturePointer(event.pointerId)) {
+        return;
+      }
+      setLastPoint({ x: event.clientX, y: event.clientY });
     },
-    [containerRef],
+    [capturePointer, setLastPoint],
   );
 
-  const handlePointerMove = useCallback(
+const usePointerMoveHandler = ({
+  pointerIdRef,
+  lastPointRef,
+  setLastPoint,
+  onOffsetChange,
+}) =>
+  useCallback(
     (event) => {
-      if (pointerIdRef.current !== event.pointerId) return;
+      if (pointerIdRef.current !== event.pointerId) {
+        return;
+      }
       const deltaX = event.clientX - lastPointRef.current.x;
       const deltaY = event.clientY - lastPointRef.current.y;
-      if (deltaX === 0 && deltaY === 0) return;
-      lastPointRef.current = { x: event.clientX, y: event.clientY };
+      if (deltaX === 0 && deltaY === 0) {
+        return;
+      }
+      setLastPoint({ x: event.clientX, y: event.clientY });
       onOffsetChange(deltaX, deltaY);
     },
-    [onOffsetChange],
+    [lastPointRef, onOffsetChange, pointerIdRef, setLastPoint],
   );
 
-  const handlePointerUp = useCallback(
+const usePointerUpHandler = ({
+  pointerIdRef,
+  releasePointer,
+  resetLastPoint,
+}) =>
+  useCallback(
     (event) => {
-      if (pointerIdRef.current !== event.pointerId) return;
-      pointerIdRef.current = null;
-      if (containerRef.current) {
-        containerRef.current.releasePointerCapture(event.pointerId);
+      if (pointerIdRef.current !== event.pointerId) {
+        return;
       }
+      releasePointer(event.pointerId);
+      resetLastPoint();
     },
-    [containerRef],
+    [pointerIdRef, releasePointer, resetLastPoint],
   );
+
+const usePointerDrag = ({ containerRef, onOffsetChange }) => {
+  const captureState = usePointerCapture({ containerRef });
+  const pointerPositions = usePointerPositionTracker();
 
   return {
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    resetPointerTracking,
+    handlePointerDown: usePointerDownHandler({
+      capturePointer: captureState.capturePointer,
+      setLastPoint: pointerPositions.setLastPoint,
+    }),
+    handlePointerMove: usePointerMoveHandler({
+      pointerIdRef: captureState.pointerIdRef,
+      lastPointRef: pointerPositions.lastPointRef,
+      setLastPoint: pointerPositions.setLastPoint,
+      onOffsetChange,
+    }),
+    handlePointerUp: usePointerUpHandler({
+      pointerIdRef: captureState.pointerIdRef,
+      releasePointer: captureState.releasePointer,
+      resetLastPoint: pointerPositions.resetLastPoint,
+    }),
+    resetPointerTracking: useResetPointerTracking({
+      resetPointerCapture: captureState.resetPointerCapture,
+      resetLastPoint: pointerPositions.resetLastPoint,
+    }),
   };
 };
 

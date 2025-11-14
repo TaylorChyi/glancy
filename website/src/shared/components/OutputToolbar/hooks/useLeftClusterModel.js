@@ -49,21 +49,44 @@ const buildPropsFromMemoInput = (memoInput) => ({
   reoutputLabel: memoInput.reoutputLabel,
 });
 
-const useLeftClusterPropsMemo = (memoInput) =>
+const useLeftClusterPropsMemo = ({
+  shouldRender,
+  showTts,
+  showReplay,
+  ttsComponent,
+  term,
+  lang,
+  speakableTerm,
+  disabled,
+  onReoutput,
+  reoutputLabel,
+}) =>
   useMemo(
     () =>
-      memoInput.shouldRender ? buildPropsFromMemoInput(memoInput) : null,
+      shouldRender
+        ? buildPropsFromMemoInput({
+            showTts,
+            showReplay,
+            ttsComponent,
+            term,
+            lang,
+            speakableTerm,
+            disabled,
+            onReoutput,
+            reoutputLabel,
+          })
+        : null,
     [
-      memoInput.shouldRender,
-      memoInput.showTts,
-      memoInput.showReplay,
-      memoInput.ttsComponent,
-      memoInput.term,
-      memoInput.lang,
-      memoInput.speakableTerm,
-      memoInput.disabled,
-      memoInput.onReoutput,
-      memoInput.reoutputLabel,
+      shouldRender,
+      showTts,
+      showReplay,
+      ttsComponent,
+      term,
+      lang,
+      speakableTerm,
+      disabled,
+      onReoutput,
+      reoutputLabel,
     ],
   );
 

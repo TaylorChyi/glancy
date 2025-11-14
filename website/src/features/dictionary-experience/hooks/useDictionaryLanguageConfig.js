@@ -7,6 +7,118 @@ import {
 } from "@shared/utils";
 import { useSettingsStore } from "@core/store";
 
+const buildSourceLanguageOptions = (t) => [
+  {
+    value: WORD_LANGUAGE_AUTO,
+    label: t.dictionarySourceLanguageAuto,
+    description: t.dictionarySourceLanguageAutoDescription,
+  },
+  {
+    value: "ENGLISH",
+    label: t.dictionarySourceLanguageEnglish,
+    description: t.dictionarySourceLanguageEnglishDescription,
+  },
+  {
+    value: "CHINESE",
+    label: t.dictionarySourceLanguageChinese,
+    description: t.dictionarySourceLanguageChineseDescription,
+  },
+];
+
+const buildTargetLanguageOptions = (t) => [
+  {
+    value: "CHINESE",
+    label: t.dictionaryTargetLanguageChinese,
+    description: t.dictionaryTargetLanguageChineseDescription,
+  },
+  {
+    value: "ENGLISH",
+    label: t.dictionaryTargetLanguageEnglish,
+    description: t.dictionaryTargetLanguageEnglishDescription,
+  },
+];
+
+const resolveSwapTarget = (normalizedSource, normalizedTarget) => {
+  if (normalizedSource !== WORD_LANGUAGE_AUTO) {
+    return normalizeWordTargetLanguage(normalizedSource);
+  }
+  return normalizedTarget === "CHINESE" ? "ENGLISH" : "CHINESE";
+};
+
+const resolveLanguageSwap = ({
+  dictionarySourceLanguage,
+  dictionaryTargetLanguage,
+}) => {
+  const normalizedSource = normalizeWordSourceLanguage(
+    dictionarySourceLanguage,
+  );
+  const normalizedTarget = normalizeWordTargetLanguage(
+    dictionaryTargetLanguage,
+  );
+
+  return {
+    nextSource: normalizedTarget,
+    nextTarget: resolveSwapTarget(normalizedSource, normalizedTarget),
+  };
+};
+
+const useSourceLanguageOptions = (t) =>
+  useMemo(
+    () => buildSourceLanguageOptions(t),
+    [
+      t.dictionarySourceLanguageAuto,
+      t.dictionarySourceLanguageAutoDescription,
+      t.dictionarySourceLanguageEnglish,
+      t.dictionarySourceLanguageEnglishDescription,
+      t.dictionarySourceLanguageChinese,
+      t.dictionarySourceLanguageChineseDescription,
+    ],
+  );
+
+const useTargetLanguageOptions = (t) =>
+  useMemo(
+    () => buildTargetLanguageOptions(t),
+    [
+      t.dictionaryTargetLanguageChinese,
+      t.dictionaryTargetLanguageChineseDescription,
+      t.dictionaryTargetLanguageEnglish,
+      t.dictionaryTargetLanguageEnglishDescription,
+    ],
+  );
+
+const useDictionaryFlavorValue = (
+  dictionarySourceLanguage,
+  dictionaryTargetLanguage,
+) =>
+  useMemo(
+    () =>
+      resolveDictionaryFlavor({
+        sourceLanguage: dictionarySourceLanguage,
+        targetLanguage: dictionaryTargetLanguage,
+      }),
+    [dictionarySourceLanguage, dictionaryTargetLanguage],
+  );
+
+const useLanguageSwap = ({
+  dictionarySourceLanguage,
+  dictionaryTargetLanguage,
+  setDictionarySourceLanguage,
+  setDictionaryTargetLanguage,
+}) =>
+  useCallback(() => {
+    const { nextSource, nextTarget } = resolveLanguageSwap({
+      dictionarySourceLanguage,
+      dictionaryTargetLanguage,
+    });
+    setDictionarySourceLanguage(nextSource);
+    setDictionaryTargetLanguage(nextTarget);
+  }, [
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
+    setDictionarySourceLanguage,
+    setDictionaryTargetLanguage,
+  ]);
+
 export function useDictionaryLanguageConfig({ t }) {
   const dictionarySourceLanguage = useSettingsStore(
     (state) => state.dictionarySourceLanguage,
@@ -20,89 +132,18 @@ export function useDictionaryLanguageConfig({ t }) {
   const setDictionaryTargetLanguage = useSettingsStore(
     (state) => state.setDictionaryTargetLanguage,
   );
-
-  const sourceLanguageOptions = useMemo(
-    () => [
-      {
-        value: WORD_LANGUAGE_AUTO,
-        label: t.dictionarySourceLanguageAuto,
-        description: t.dictionarySourceLanguageAutoDescription,
-      },
-      {
-        value: "ENGLISH",
-        label: t.dictionarySourceLanguageEnglish,
-        description: t.dictionarySourceLanguageEnglishDescription,
-      },
-      {
-        value: "CHINESE",
-        label: t.dictionarySourceLanguageChinese,
-        description: t.dictionarySourceLanguageChineseDescription,
-      },
-    ],
-    [
-      t.dictionarySourceLanguageAuto,
-      t.dictionarySourceLanguageAutoDescription,
-      t.dictionarySourceLanguageEnglish,
-      t.dictionarySourceLanguageEnglishDescription,
-      t.dictionarySourceLanguageChinese,
-      t.dictionarySourceLanguageChineseDescription,
-    ],
+  const sourceLanguageOptions = useSourceLanguageOptions(t);
+  const targetLanguageOptions = useTargetLanguageOptions(t);
+  const dictionaryFlavor = useDictionaryFlavorValue(
+    dictionarySourceLanguage,
+    dictionaryTargetLanguage,
   );
-
-  const targetLanguageOptions = useMemo(
-    () => [
-      {
-        value: "CHINESE",
-        label: t.dictionaryTargetLanguageChinese,
-        description: t.dictionaryTargetLanguageChineseDescription,
-      },
-      {
-        value: "ENGLISH",
-        label: t.dictionaryTargetLanguageEnglish,
-        description: t.dictionaryTargetLanguageEnglishDescription,
-      },
-    ],
-    [
-      t.dictionaryTargetLanguageChinese,
-      t.dictionaryTargetLanguageChineseDescription,
-      t.dictionaryTargetLanguageEnglish,
-      t.dictionaryTargetLanguageEnglishDescription,
-    ],
-  );
-
-  const dictionaryFlavor = useMemo(
-    () =>
-      resolveDictionaryFlavor({
-        sourceLanguage: dictionarySourceLanguage,
-        targetLanguage: dictionaryTargetLanguage,
-      }),
-    [dictionarySourceLanguage, dictionaryTargetLanguage],
-  );
-
-  const handleSwapLanguages = useCallback(() => {
-    const normalizedSource = normalizeWordSourceLanguage(
-      dictionarySourceLanguage,
-    );
-    const normalizedTarget = normalizeWordTargetLanguage(
-      dictionaryTargetLanguage,
-    );
-
-    const nextSource = normalizedTarget;
-    const nextTarget =
-      normalizedSource === WORD_LANGUAGE_AUTO
-        ? normalizedTarget === "CHINESE"
-          ? "ENGLISH"
-          : "CHINESE"
-        : normalizeWordTargetLanguage(normalizedSource);
-
-    setDictionarySourceLanguage(nextSource);
-    setDictionaryTargetLanguage(nextTarget);
-  }, [
+  const handleSwapLanguages = useLanguageSwap({
     dictionarySourceLanguage,
     dictionaryTargetLanguage,
     setDictionarySourceLanguage,
     setDictionaryTargetLanguage,
-  ]);
+  });
 
   return {
     dictionarySourceLanguage,

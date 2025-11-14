@@ -15,15 +15,7 @@ const selectActionContextInput = (input) => ({
 const useActionContextMemo = (actionContextInput) =>
   useMemo(
     () => buildActionContext(actionContextInput),
-    [
-      actionContextInput.translator,
-      actionContextInput.user,
-      actionContextInput.canDelete,
-      actionContextInput.onDelete,
-      actionContextInput.canReport,
-      actionContextInput.onReport,
-      actionContextInput.disabled,
-    ],
+    [actionContextInput],
   );
 
 const selectBlueprintItemsInput = ({ actionContext, disabled, user }) => ({
@@ -32,22 +24,48 @@ const selectBlueprintItemsInput = ({ actionContext, disabled, user }) => ({
   user,
 });
 
+const useActionContextInputMemo = (input) => {
+  const {
+    translator,
+    user,
+    canDelete,
+    onDelete,
+    canReport,
+    onReport,
+    disabled,
+  } = input;
+
+  return useMemo(
+    () =>
+      selectActionContextInput({
+        translator,
+        user,
+        canDelete,
+        onDelete,
+        canReport,
+        onReport,
+        disabled,
+      }),
+    [translator, user, canDelete, onDelete, canReport, onReport, disabled],
+  );
+};
+
 const useBlueprintItemsMemo = (blueprintItemsInput) =>
   useMemo(
     () => buildBlueprintItems(blueprintItemsInput),
-    [
-      blueprintItemsInput.actionContext,
-      blueprintItemsInput.disabled,
-      blueprintItemsInput.user,
-    ],
+    [blueprintItemsInput],
   );
 
-const buildBlueprintItemsInputFactory = (input) => (actionContext) =>
-  selectBlueprintItemsInput({
-    actionContext,
-    disabled: input.disabled,
-    user: input.user,
-  });
+const useBlueprintItemsInputMemo = ({ actionContext, disabled, user }) =>
+  useMemo(
+    () =>
+      selectBlueprintItemsInput({
+        actionContext,
+        disabled,
+        user,
+      }),
+    [actionContext, disabled, user],
+  );
 
 const selectCopyItemInput = (input) => ({
   translator: input.translator,
@@ -58,35 +76,59 @@ const selectCopyItemInput = (input) => ({
   onCopy: input.onCopy,
 });
 
+const useCopyItemInputMemo = (input) => {
+  const {
+    translator,
+    copyFeedbackState,
+    isCopySuccess,
+    disabled,
+    canCopy,
+    onCopy,
+  } = input;
+
+  return useMemo(
+    () =>
+      selectCopyItemInput({
+        translator,
+        copyFeedbackState,
+        isCopySuccess,
+        disabled,
+        canCopy,
+        onCopy,
+      }),
+    [
+      translator,
+      copyFeedbackState,
+      isCopySuccess,
+      disabled,
+      canCopy,
+      onCopy,
+    ],
+  );
+};
+
 const useCopyItemMemo = (copyItemInput) =>
   useMemo(
     () => createCopyItem(copyItemInput),
-    [
-      copyItemInput.translator,
-      copyItemInput.copyFeedbackState,
-      copyItemInput.isCopySuccess,
-      copyItemInput.disabled,
-      copyItemInput.canCopy,
-      copyItemInput.onCopy,
-    ],
+    [copyItemInput],
   );
 
 const useActionItemsMemo = ({ copyItem, blueprintItems }) =>
   useMemo(() => [copyItem, ...blueprintItems], [copyItem, blueprintItems]);
 
-const selectToolbarActionsMemoSources = (input) => ({
-  actionContextInput: selectActionContextInput(input),
-  blueprintItemsInputFactory: buildBlueprintItemsInputFactory(input),
-  copyItemInput: selectCopyItemInput(input),
-});
-
 export function useToolbarActionsModel(input) {
-  const sources = selectToolbarActionsMemoSources(input);
-  const actionContext = useActionContextMemo(sources.actionContextInput);
-  const blueprintItems = useBlueprintItemsMemo(
-    sources.blueprintItemsInputFactory(actionContext),
-  );
-  const copyItem = useCopyItemMemo(sources.copyItemInput);
+  const actionContextInput = useActionContextInputMemo(input);
+  const actionContext = useActionContextMemo(actionContextInput);
+
+  const blueprintItemsInput = useBlueprintItemsInputMemo({
+    actionContext,
+    disabled: input.disabled,
+    user: input.user,
+  });
+  const blueprintItems = useBlueprintItemsMemo(blueprintItemsInput);
+
+  const copyItemInput = useCopyItemInputMemo(input);
+  const copyItem = useCopyItemMemo(copyItemInput);
   const items = useActionItemsMemo({ copyItem, blueprintItems });
 
   return { items };

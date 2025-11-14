@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { jest } from "@jest/globals";
+import { DEFAULT_WORD_REPORT_CATEGORY } from "../reportCategories.js";
 
 const submitWordReportMock = jest.fn();
 
@@ -13,9 +14,15 @@ jest.unstable_mockModule("@core/context", () => ({
   useUser: () => userState,
 }));
 
-const { useWordIssueReportDialog } = await import(
-  "./useWordIssueReportDialog.js"
-);
+const {
+  useWordIssueReportDialog,
+  buildReportPayload,
+  canSubmitReport,
+  createReportActions,
+  isValidReportContext,
+} = await import("./useWordIssueReportDialog.js");
+
+const { ACTIONS } = await import("./wordIssueReportDialogReducer.js");
 
 beforeEach(() => {
   submitWordReportMock.mockReset();
@@ -45,7 +52,9 @@ test("openDialog activates modal with default form", () => {
   });
 
   expect(result.current.state.open).toBe(true);
-  expect(result.current.state.form.category).toBe("INCORRECT_MEANING");
+  expect(result.current.state.form.category).toBe(
+    DEFAULT_WORD_REPORT_CATEGORY,
+  );
 });
 
 /**
@@ -83,4 +92,78 @@ test("submit persists report and closes dialog", async () => {
     language: "CHINESE",
   });
   expect(result.current.state.open).toBe(false);
+});
+
+test("buildReportPayload merges context and form data", () => {
+  const payload = buildReportPayload({
+    context: {
+      term: "term",
+      language: "ENGLISH",
+      flavor: "BILINGUAL",
+      sourceUrl: "https://example.com",
+    },
+    form: {
+      category: DEFAULT_WORD_REPORT_CATEGORY,
+      description: "desc",
+    },
+  });
+
+  expect(payload).toEqual({
+    term: "term",
+    language: "ENGLISH",
+    flavor: "BILINGUAL",
+    category: DEFAULT_WORD_REPORT_CATEGORY,
+    description: "desc",
+    sourceUrl: "https://example.com",
+  });
+});
+
+test("buildReportPayload falls back to defaults when context is missing", () => {
+  const payload = buildReportPayload({ context: null, form: {} });
+
+  expect(payload.term).toBe("");
+  expect(payload.language).toBeNull();
+  expect(payload.category).toBe(DEFAULT_WORD_REPORT_CATEGORY);
+  expect(payload.description).toBe("");
+});
+
+test("isValidReportContext enforces presence of a term", () => {
+  expect(isValidReportContext({ term: "hello" })).toBe(true);
+  expect(isValidReportContext({ term: "" })).toBe(false);
+  expect(isValidReportContext(null)).toBe(false);
+});
+
+test("canSubmitReport requires open dialog, context and idle state", () => {
+  expect(
+    canSubmitReport({ open: true, submitting: false, context: {} }),
+  ).toBe(true);
+  expect(
+    canSubmitReport({ open: false, submitting: false, context: {} }),
+  ).toBe(false);
+  expect(
+    canSubmitReport({ open: true, submitting: true, context: {} }),
+  ).toBe(false);
+  expect(canSubmitReport({ open: true, submitting: false, context: null })).toBe(
+    false,
+  );
+});
+
+test("createReportActions wires dispatch helpers", () => {
+  const dispatch = jest.fn();
+  const actions = createReportActions(dispatch);
+
+  actions.open({ term: "hi" });
+  expect(dispatch).toHaveBeenCalledWith({
+    type: ACTIONS.OPEN,
+    payload: { term: "hi" },
+  });
+
+  actions.close();
+  expect(dispatch).toHaveBeenCalledWith({ type: ACTIONS.CLOSE });
+
+  actions.submitFailure("error");
+  expect(dispatch).toHaveBeenCalledWith({
+    type: ACTIONS.SUBMIT_FAILURE,
+    payload: "error",
+  });
 });

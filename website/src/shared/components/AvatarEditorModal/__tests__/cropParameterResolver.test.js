@@ -9,288 +9,14 @@ import { computeCropSourceRect } from "@shared/utils/avatarCropBox.js";
 import resolveCropParameters from "../hooks/cropParameterResolver.js";
 import {
   CSS_MATRIX_STRATEGY_ID,
-  clampCornersWithinImage,
   computeCropRectFromMatrix,
-  deriveCssMatrixCropRect,
-  parseMatrixComponents,
-  parseTransformMatrix,
-  resolveCropRectUsingMatrix,
-  validateCssMatrixInputs,
 } from "../hooks/cropStrategies/cssMatrixStrategy.js";
-
+import { GEOMETRY_STRATEGY_ID } from "../hooks/cropStrategies/geometryStrategy.js";
 import {
-  GEOMETRY_STRATEGY_ID,
-  deriveGeometryCropRect,
-  resolveGeometryCropRect,
-  validateGeometryInputs,
-} from "../hooks/cropStrategies/geometryStrategy.js";
-
-const buildMatrix = ({
-  scale,
-  offsetX,
-  offsetY,
-  viewportSize,
-  naturalWidth,
-  naturalHeight,
-}) => {
-  const halfViewport = viewportSize / 2;
-  const halfNaturalWidth = naturalWidth / 2;
-  const halfNaturalHeight = naturalHeight / 2;
-
-  return {
-    a: scale,
-    b: 0,
-    c: 0,
-    d: scale,
-    e: offsetX + halfViewport - scale * halfNaturalWidth,
-    f: offsetY + halfViewport - scale * halfNaturalHeight,
-  };
-};
-
-const toMatrixString = ({ a, b, c, d, e, f }) =>
-  `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
-
-describe("cropParameterResolver matrix helpers", () => {
-  it("Given normalized matrix string When parseMatrixComponents Then extracts affine values", () => {
-    expect(parseMatrixComponents("matrix(1, 0, 0, 1, 5, -3)")).toEqual({
-      a: 1,
-      b: 0,
-      c: 0,
-      d: 1,
-      e: 5,
-      f: -3,
-    });
-    expect(
-      parseMatrixComponents(
-        "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 15, 12, 0, 1)",
-      ),
-    ).toEqual({ a: 1, b: 0, c: 0, d: 1, e: 15, f: 12 });
-    expect(parseMatrixComponents("translate(10px, 20px)")).toBeNull();
-  });
-
-  it("Given CSS matrix string When parseTransformMatrix Then returns affine components", () => {
-    expect(parseTransformMatrix("none")).toBeNull();
-    expect(parseTransformMatrix("matrix(1, 0, 0, 1, 0, 0)")).toEqual({
-      a: 1,
-      b: 0,
-      c: 0,
-      d: 1,
-      e: 0,
-      f: 0,
-    });
-    expect(
-      parseTransformMatrix(
-        "matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 20, -10, 0, 1)",
-      ),
-    ).toEqual({
-      a: 1,
-      b: 0,
-      c: 0,
-      d: 1,
-      e: 20,
-      f: -10,
-    });
-  });
-
-  it("Given centered state When computeCropRectFromMatrix Then matches legacy geometry", () => {
-    const viewportSize = 320;
-    const natural = { width: 1000, height: 1000 };
-    const scale = 0.32;
-    const matrix = buildMatrix({
-      scale,
-      offsetX: 0,
-      offsetY: 0,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    const expected = computeCropSourceRect({
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-      viewportSize,
-      scaleFactor: scale,
-      offset: { x: 0, y: 0 },
-    });
-
-    const actual = computeCropRectFromMatrix({
-      matrix,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    expect(actual).not.toBeNull();
-    expect(actual.x).toBeCloseTo(expected.x);
-    expect(actual.y).toBeCloseTo(expected.y);
-    expect(actual.width).toBeCloseTo(expected.width);
-    expect(actual.height).toBeCloseTo(expected.height);
-  });
-
-  it("Given zoomed with offset When computeCropRectFromMatrix Then aligns with geometry helper", () => {
-    const viewportSize = 320;
-    const natural = { width: 800, height: 600 };
-    const scale = 0.96;
-    const offset = { x: 48, y: -24 };
-    const matrix = buildMatrix({
-      scale,
-      offsetX: offset.x,
-      offsetY: offset.y,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    const expected = computeCropSourceRect({
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-      viewportSize,
-      scaleFactor: scale,
-      offset,
-    });
-
-    const actual = computeCropRectFromMatrix({
-      matrix,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    expect(actual).not.toBeNull();
-    expect(actual.x).toBeCloseTo(expected.x);
-    expect(actual.y).toBeCloseTo(expected.y);
-    expect(actual.width).toBeCloseTo(expected.width);
-    expect(actual.height).toBeCloseTo(expected.height);
-  });
-
-  it("Given oversized corners When clampCornersWithinImage Then clamps within natural bounds", () => {
-    const corners = [
-      { x: -50, y: -20 },
-      { x: 900, y: -10 },
-      { x: -30, y: 1200 },
-      { x: 850, y: 1250 },
-    ];
-    const clamped = clampCornersWithinImage({
-      corners,
-      naturalWidth: 800,
-      naturalHeight: 600,
-    });
-
-    clamped.forEach((corner) => {
-      expect(corner.x).toBeGreaterThanOrEqual(0);
-      expect(corner.x).toBeLessThanOrEqual(800);
-      expect(corner.y).toBeGreaterThanOrEqual(0);
-      expect(corner.y).toBeLessThanOrEqual(600);
-    });
-  });
-
-  it("Given singular matrix When computeCropRectFromMatrix Then returns null", () => {
-    expect(
-      computeCropRectFromMatrix({
-        matrix: { a: 0, b: 0, c: 0, d: 0, e: 0, f: 0 },
-        viewportSize: 320,
-        naturalWidth: 500,
-        naturalHeight: 500,
-      }),
-    ).toBeNull();
-  });
-
-  it("Given invalid inputs When validateCssMatrixInputs Then returns false", () => {
-    expect(
-      validateCssMatrixInputs({
-        image: null,
-        viewportSize: 100,
-        naturalWidth: 200,
-        naturalHeight: 200,
-      }),
-    ).toBe(false);
-
-    expect(
-      validateCssMatrixInputs({
-        image: document.createElement("img"),
-        viewportSize: -10,
-        naturalWidth: 200,
-        naturalHeight: 200,
-      }),
-    ).toBe(false);
-  });
-
-  it("Given valid DOM inputs When deriveCssMatrixCropRect Then mirrors computeCropRectFromMatrix", () => {
-    const viewportSize = 220;
-    const natural = { width: 640, height: 640 };
-    const image = document.createElement("img");
-    document.body.appendChild(image);
-    const matrix = buildMatrix({
-      scale: 0.5,
-      offsetX: 25,
-      offsetY: -15,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    jest.spyOn(window, "getComputedStyle").mockReturnValue({ transform: toMatrixString(matrix) });
-
-    const rect = deriveCssMatrixCropRect({
-      image,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    const expected = computeCropRectFromMatrix({
-      matrix,
-      viewportSize,
-      naturalWidth: natural.width,
-      naturalHeight: natural.height,
-    });
-
-    expect(rect).toEqual(expected);
-
-    window.getComputedStyle.mockRestore();
-    document.body.removeChild(image);
-  });
-
-  it("Given DOM image When resolveCropRectUsingMatrix Then returns computed rectangle", () => {
-    const viewportSize = 200;
-    const naturalWidth = 400;
-    const naturalHeight = 400;
-    const image = document.createElement("img");
-    document.body.appendChild(image);
-    const matrix = buildMatrix({
-      scale: 0.5,
-      offsetX: 0,
-      offsetY: 0,
-      viewportSize,
-      naturalWidth,
-      naturalHeight,
-    });
-    const getComputedStyleSpy = jest
-      .spyOn(window, "getComputedStyle")
-      .mockReturnValue({
-        transform: toMatrixString(matrix),
-      });
-
-    const result = resolveCropRectUsingMatrix({
-      image,
-      viewportSize,
-      naturalWidth,
-      naturalHeight,
-    });
-
-    expect(result).toEqual(
-      computeCropRectFromMatrix({
-        matrix,
-        viewportSize,
-        naturalWidth,
-        naturalHeight,
-      }),
-    );
-
-    getComputedStyleSpy.mockRestore();
-    document.body.removeChild(image);
-  });
-});
+  buildMatrix,
+  createImageRef,
+  toMatrixString,
+} from "../testUtils/cropTestUtils.js";
 
 describe("resolveCropParameters calibration", () => {
   const viewportSize = 320;
@@ -323,7 +49,7 @@ describe("resolveCropParameters calibration", () => {
     const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = resolveCropParameters({
-      imageRef: { current: document.createElement("img") },
+      imageRef: createImageRef(),
       displayMetrics,
       viewportSize,
       naturalSize,
@@ -374,7 +100,7 @@ describe("resolveCropParameters calibration", () => {
       .mockReturnValue({ transform: "none" });
 
     const result = resolveCropParameters({
-      imageRef: { current: document.createElement("img") },
+      imageRef: createImageRef(),
       displayMetrics,
       viewportSize,
       naturalSize,
@@ -426,7 +152,7 @@ describe("resolveCropParameters calibration", () => {
     const consoleSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = resolveCropParameters({
-      imageRef: { current: document.createElement("img") },
+      imageRef: createImageRef(),
       displayMetrics,
       viewportSize,
       naturalSize,
@@ -451,66 +177,5 @@ describe("resolveCropParameters calibration", () => {
     expect(result?.cropRect.height).toBeCloseTo(geometryRect.height, 3);
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
-  });
-});
-
-describe("geometry strategy helpers", () => {
-  it("Given valid metrics When resolveGeometryCropRect Then matches computeCropSourceRect", () => {
-    const params = {
-      naturalWidth: 600,
-      naturalHeight: 400,
-      viewportSize: 200,
-      displayMetrics: { scaleFactor: 0.5 },
-      offset: { x: 20, y: -10 },
-    };
-
-    const expected = computeCropSourceRect({
-      naturalWidth: params.naturalWidth,
-      naturalHeight: params.naturalHeight,
-      viewportSize: params.viewportSize,
-      scaleFactor: params.displayMetrics.scaleFactor,
-      offset: params.offset,
-    });
-
-    expect(resolveGeometryCropRect(params)).toEqual(expected);
-  });
-
-  it("Given invalid scale factor When resolveGeometryCropRect Then returns null", () => {
-    expect(
-      resolveGeometryCropRect({
-        naturalWidth: 100,
-        naturalHeight: 100,
-        viewportSize: 50,
-        displayMetrics: { scaleFactor: 0 },
-        offset: { x: 0, y: 0 },
-      }),
-    ).toBeNull();
-  });
-
-  it("Given invalid geometry inputs When validateGeometryInputs Then returns false", () => {
-    expect(
-      validateGeometryInputs({
-        image: null,
-        viewportSize: 100,
-        naturalWidth: 100,
-        naturalHeight: 100,
-      }),
-    ).toBe(false);
-  });
-
-  it("Given valid inputs When deriveGeometryCropRect Then returns normalized rectangle", () => {
-    const params = {
-      image: document.createElement("img"),
-      naturalWidth: 500,
-      naturalHeight: 500,
-      viewportSize: 200,
-      displayMetrics: { scaleFactor: 0.4 },
-      offset: { x: 10, y: -5 },
-    };
-
-    const rect = deriveGeometryCropRect(params);
-    const expected = resolveGeometryCropRect(params);
-
-    expect(rect).toEqual(expected);
   });
 });

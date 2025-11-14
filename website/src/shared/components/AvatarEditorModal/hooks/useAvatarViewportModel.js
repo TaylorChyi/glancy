@@ -1,66 +1,33 @@
-import { useRef } from "react";
 import useViewportCoreState from "./useViewportCoreState.js";
 import useViewportDerivedState from "./useViewportDerivedState.js";
 import useViewportLifecycle from "./useViewportLifecycle.js";
+import useViewportRefs from "./useViewportRefs.js";
 
 const useAvatarViewportModel = ({ open, source }) => {
-  const imageRef = useRef(null);
-  const containerRef = useRef(null);
-
-  const {
-    shouldRecenterRef,
-    zoom,
-    setZoom,
-    offset,
-    setOffset,
-    naturalSize,
-    setNaturalSize,
-    viewportSize,
-    setViewportSize,
-    resetView,
-    recenterViewport,
-  } = useViewportCoreState();
-
-  const { displayMetrics, bounds, applyOffsetDelta, imageTransform } =
-    useViewportDerivedState({
-      naturalSize,
-      viewportSize,
-      zoom,
-      offset,
-      setOffset,
-    });
+  const refs = useViewportRefs();
+  const coreState = useViewportCoreState();
+  const derivedState = useViewportDerivedState({
+    naturalSize: coreState.naturalSize,
+    viewportSize: coreState.viewportSize,
+    zoom: coreState.zoom,
+    offset: coreState.offset,
+    setOffset: coreState.setOffset,
+  });
 
   useViewportLifecycle({
     open,
     source,
-    resetView,
-    setNaturalSize,
-    shouldRecenterRef,
-    recenterViewport,
-    naturalSize,
-    viewportSize,
-    containerRef,
-    setViewportSize,
+    containerRef: refs.containerRef,
+    resetView: coreState.resetView,
+    setNaturalSize: coreState.setNaturalSize,
+    shouldRecenterRef: coreState.shouldRecenterRef,
+    recenterViewport: coreState.recenterViewport,
+    naturalSize: coreState.naturalSize,
+    viewportSize: coreState.viewportSize,
+    setViewportSize: coreState.setViewportSize,
   });
 
-  return {
-    imageRef,
-    containerRef,
-    shouldRecenterRef,
-    zoom,
-    setZoom,
-    naturalSize,
-    setNaturalSize,
-    viewportSize,
-    setViewportSize,
-    displayMetrics,
-    bounds,
-    imageTransform,
-    offset,
-    resetView,
-    recenterViewport,
-    applyOffsetDelta,
-  };
+  return { ...refs, ...coreState, ...derivedState };
 };
 
 export default useAvatarViewportModel;

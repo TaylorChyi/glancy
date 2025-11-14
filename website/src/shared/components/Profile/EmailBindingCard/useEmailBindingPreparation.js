@@ -11,7 +11,7 @@ const computeSubmitDisabled = (
   isVerifying,
 ) => !isVerificationForDraft || !isAwaitingVerification || isVerifying;
 
-export default function useEmailBindingPreparation(props) {
+const initializeEmailBindingState = (props) => {
   const countdown = useCountdownTimer(COUNTDOWN_SECONDS);
   const state = useEmailBindingState({
     email: props.email,
@@ -22,6 +22,20 @@ export default function useEmailBindingPreparation(props) {
     state.draftEmail,
     props.requestedEmail,
   );
+
+  return { countdown, state, normalized };
+};
+
+const computeSubmitState = (normalized, props) => ({
+  isSubmitDisabled: computeSubmitDisabled(
+    normalized.isVerificationForDraft,
+    props.isAwaitingVerification,
+    props.isVerifying,
+  ),
+});
+
+export default function useEmailBindingPreparation(props) {
+  const { countdown, state, normalized } = initializeEmailBindingState(props);
   const handlers = useEmailBindingHandlers({
     draftEmail: state.draftEmail,
     setDraftEmail: state.setDraftEmail,
@@ -31,19 +45,20 @@ export default function useEmailBindingPreparation(props) {
     onConfirm: props.onConfirm,
     startCountdown: countdown.start,
   });
-  const isSubmitDisabled = computeSubmitDisabled(
-    normalized.isVerificationForDraft,
-    props.isAwaitingVerification,
-    props.isVerifying,
-  );
+  const submitState = computeSubmitState(normalized, props);
 
   return {
     countdown,
     state,
     normalized,
     handlers,
-    isSubmitDisabled,
+    ...submitState,
   };
 }
 
-export { useEmailBindingPreparation, computeSubmitDisabled };
+export {
+  useEmailBindingPreparation,
+  computeSubmitDisabled,
+  initializeEmailBindingState,
+  computeSubmitState,
+};

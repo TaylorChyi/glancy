@@ -13,53 +13,66 @@ const buildUnknownError = (error) => {
   return message ? { message } : { code: "unknown" };
 };
 
-const createValidationHandler = ({ dispatch }) => (draft) => {
-  const { valid, code, normalized } = validateUsername(draft);
-  if (valid) {
-    return normalized;
-  }
-  dispatch({
-    type: UsernameEditorActions.SUBMIT_FAILURE,
-    error: { code },
-  });
-  return null;
-};
+export const useDraftValidator = (dispatch) =>
+  useCallback(
+    (draft) => {
+      const { valid, code, normalized } = validateUsername(draft);
+      if (valid) {
+        return normalized;
+      }
+      dispatch({
+        type: UsernameEditorActions.SUBMIT_FAILURE,
+        error: { code },
+      });
+      return null;
+    },
+    [dispatch],
+  );
 
-const createNoOpSubmissionHandler = ({ dispatch, value, onSubmit }) => {
-  if (typeof onSubmit !== "function") {
+export const useNoOpSubmission = ({ dispatch, value, onSubmit }) =>
+  useMemo(() => {
+    if (typeof onSubmit !== "function") {
+      return (normalized) => {
+        dispatch({
+          type: UsernameEditorActions.SUBMIT_SUCCESS,
+          value: normalized,
+        });
+        return true;
+      };
+    }
+
     return (normalized) => {
+      if (normalized === value) {
+        dispatch({ type: UsernameEditorActions.SUBMIT_SUCCESS, value });
+        return true;
+      }
+      return false;
+    };
+  }, [dispatch, onSubmit, value]);
+
+export const useSubmitSuccessHandler = ({ dispatch, onSuccess }) =>
+  useCallback(
+    (nextValue) => {
       dispatch({
         type: UsernameEditorActions.SUBMIT_SUCCESS,
-        value: normalized,
+        value: nextValue,
       });
-      return true;
-    };
-  }
+      onSuccess?.(nextValue);
+    },
+    [dispatch, onSuccess],
+  );
 
-  return (normalized) => {
-    if (normalized === value) {
-      dispatch({ type: UsernameEditorActions.SUBMIT_SUCCESS, value });
-      return true;
-    }
-    return false;
-  };
-};
-
-const createSuccessHandler = ({ dispatch, onSuccess }) => (nextValue) => {
-  dispatch({
-    type: UsernameEditorActions.SUBMIT_SUCCESS,
-    value: nextValue,
-  });
-  onSuccess?.(nextValue);
-};
-
-const createFailureHandler = ({ dispatch, onFailure }) => (error) => {
-  dispatch({
-    type: UsernameEditorActions.SUBMIT_FAILURE,
-    error: buildUnknownError(error),
-  });
-  onFailure?.(error);
-};
+export const useSubmitFailureHandler = ({ dispatch, onFailure }) =>
+  useCallback(
+    (error) => {
+      dispatch({
+        type: UsernameEditorActions.SUBMIT_FAILURE,
+        error: buildUnknownError(error),
+      });
+      onFailure?.(error);
+    },
+    [dispatch, onFailure],
+  );
 
 const useHandleSubmit = ({
   draft,
@@ -69,27 +82,10 @@ const useHandleSubmit = ({
   onSuccess,
   onFailure,
 }) => {
-  const validateDraft = useMemo(
-    () => createValidationHandler({ dispatch }),
-    [dispatch],
-  );
-  const handleNoOpSubmission = useMemo(
-    () =>
-      createNoOpSubmissionHandler({
-        dispatch,
-        value,
-        onSubmit,
-      }),
-    [dispatch, onSubmit, value],
-  );
-  const handleSuccess = useMemo(
-    () => createSuccessHandler({ dispatch, onSuccess }),
-    [dispatch, onSuccess],
-  );
-  const handleFailure = useMemo(
-    () => createFailureHandler({ dispatch, onFailure }),
-    [dispatch, onFailure],
-  );
+  const validateDraft = useDraftValidator(dispatch);
+  const handleNoOpSubmission = useNoOpSubmission({ dispatch, value, onSubmit });
+  const handleSuccess = useSubmitSuccessHandler({ dispatch, onSuccess });
+  const handleFailure = useSubmitFailureHandler({ dispatch, onFailure });
 
   return useCallback(async () => {
     const normalized = validateDraft(draft);
@@ -120,7 +116,7 @@ const useHandleSubmit = ({
   ]);
 };
 
-const createHandleChange = ({ dispatch }) =>
+export const useHandleChange = (dispatch) =>
   useCallback(
     (event) => {
       dispatch({
@@ -131,7 +127,7 @@ const createHandleChange = ({ dispatch }) =>
     [dispatch],
   );
 
-const createHandleKeyDown = ({ mode, handleSubmit }) =>
+export const useHandleKeyDown = ({ mode, handleSubmit }) =>
   useCallback(
     (event) => {
       if (event.key === "Enter" && mode !== UsernameEditorModes.VIEW) {
@@ -142,7 +138,7 @@ const createHandleKeyDown = ({ mode, handleSubmit }) =>
     [handleSubmit, mode],
   );
 
-const createHandleBlur = ({ mode, draft, value, dispatch }) =>
+export const useHandleBlur = ({ mode, draft, value, dispatch }) =>
   useCallback(() => {
     if (mode !== UsernameEditorModes.EDIT) {
       return;
@@ -152,7 +148,7 @@ const createHandleBlur = ({ mode, draft, value, dispatch }) =>
     }
   }, [dispatch, draft, mode, value]);
 
-const createHandleButtonClick = ({ mode, dispatch, handleSubmit }) =>
+export const useHandleButtonClick = ({ mode, dispatch, handleSubmit }) =>
   useCallback(() => {
     if (mode === UsernameEditorModes.VIEW) {
       dispatch({ type: UsernameEditorActions.START_EDIT });
@@ -179,20 +175,23 @@ export const useUsernameEditingActions = ({
     onFailure,
   });
 
-  const handleChange = createHandleChange({ dispatch });
-  const handleKeyDown = createHandleKeyDown({ mode, handleSubmit });
-  const handleBlur = createHandleBlur({ mode, draft, value, dispatch });
-  const handleButtonClick = createHandleButtonClick({
+  const handleChange = useHandleChange(dispatch);
+  const handleKeyDown = useHandleKeyDown({ mode, handleSubmit });
+  const handleBlur = useHandleBlur({ mode, draft, value, dispatch });
+  const handleButtonClick = useHandleButtonClick({
     mode,
     dispatch,
     handleSubmit,
   });
 
-  return {
-    handleBlur,
-    handleButtonClick,
-    handleChange,
-    handleKeyDown,
-    handleSubmit,
-  };
+  return useMemo(
+    () => ({
+      handleBlur,
+      handleButtonClick,
+      handleChange,
+      handleKeyDown,
+      handleSubmit,
+    }),
+    [handleBlur, handleButtonClick, handleChange, handleKeyDown, handleSubmit],
+  );
 };

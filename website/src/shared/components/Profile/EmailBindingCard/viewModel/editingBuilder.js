@@ -74,9 +74,8 @@ const buildEditingViewModel = ({
   onSubmit: onConfirm,
 });
 
-export default function createEditingViewModel({
+const assembleEditingComponents = ({
   metadata,
-  mode,
   t,
   isAwaitingVerification,
   draftEmail,
@@ -89,8 +88,7 @@ export default function createEditingViewModel({
   isVerifying,
   isSubmitDisabled,
   onCancel,
-  onConfirm,
-}) {
+}) => {
   const flow = buildFlowViewModel(t, isAwaitingVerification);
   const emailField = buildEmailFieldViewModel(
     draftEmail,
@@ -119,16 +117,25 @@ export default function createEditingViewModel({
   });
   const cancelButton = buildCancelButtonViewModel(t, onCancel);
 
-  return buildEditingViewModel({
-    mode,
+  return {
     flow,
     emailField,
     codeField,
     sendCodeButton,
     confirmButton,
     cancelButton,
+  };
+};
+
+export default function createEditingViewModel(options) {
+  const { mode, onConfirm } = options;
+  const components = assembleEditingComponents(options);
+
+  return buildEditingViewModel({
+    mode,
+    ...components,
     onConfirm,
   });
 }
 
-export { createEditingViewModel };
+export { createEditingViewModel, assembleEditingComponents };

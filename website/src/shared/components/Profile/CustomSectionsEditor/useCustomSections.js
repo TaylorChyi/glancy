@@ -12,16 +12,16 @@ const updateSection = (sections, sectionId, updater) =>
 const ensureSectionItems = (items) =>
   items.length > 0 ? items : [createCustomItem()];
 
-export default function useCustomSections({ sections, onChange }) {
-  const applySectionUpdate = useCallback(
+const useApplySectionUpdate = (sections, onChange) =>
+  useCallback(
     (sectionId, updater) => {
-      const nextSections = updateSection(sections, sectionId, updater);
-      onChange(nextSections);
+      onChange(updateSection(sections, sectionId, updater));
     },
     [sections, onChange],
   );
 
-  const handleSectionTitleChange = useCallback(
+const useSectionTitleChangeHandler = (applySectionUpdate) =>
+  useCallback(
     (sectionId, value) => {
       applySectionUpdate(sectionId, (section) => ({
         ...section,
@@ -31,7 +31,8 @@ export default function useCustomSections({ sections, onChange }) {
     [applySectionUpdate],
   );
 
-  const handleItemChange = useCallback(
+const useItemChangeHandler = (applySectionUpdate) =>
+  useCallback(
     (sectionId, itemId, field, value) => {
       applySectionUpdate(sectionId, (section) => ({
         ...section,
@@ -43,18 +44,21 @@ export default function useCustomSections({ sections, onChange }) {
     [applySectionUpdate],
   );
 
-  const handleAddSection = useCallback(() => {
+const useAddSectionHandler = (sections, onChange) =>
+  useCallback(() => {
     onChange([...sections, createCustomSection()]);
   }, [onChange, sections]);
 
-  const handleRemoveSection = useCallback(
+const useRemoveSectionHandler = (sections, onChange) =>
+  useCallback(
     (sectionId) => {
       onChange(sections.filter((section) => section.id !== sectionId));
     },
     [onChange, sections],
   );
 
-  const handleAddItem = useCallback(
+const useAddItemHandler = (applySectionUpdate) =>
+  useCallback(
     (sectionId) => {
       applySectionUpdate(sectionId, (section) => ({
         ...section,
@@ -64,7 +68,8 @@ export default function useCustomSections({ sections, onChange }) {
     [applySectionUpdate],
   );
 
-  const handleRemoveItem = useCallback(
+const useRemoveItemHandler = (applySectionUpdate) =>
+  useCallback(
     (sectionId, itemId) => {
       applySectionUpdate(sectionId, (section) => ({
         ...section,
@@ -76,13 +81,16 @@ export default function useCustomSections({ sections, onChange }) {
     [applySectionUpdate],
   );
 
+export default function useCustomSections({ sections, onChange }) {
+  const applySectionUpdate = useApplySectionUpdate(sections, onChange);
+
   return {
-    handleSectionTitleChange,
-    handleItemChange,
-    handleAddSection,
-    handleRemoveSection,
-    handleAddItem,
-    handleRemoveItem,
+    handleSectionTitleChange: useSectionTitleChangeHandler(applySectionUpdate),
+    handleItemChange: useItemChangeHandler(applySectionUpdate),
+    handleAddSection: useAddSectionHandler(sections, onChange),
+    handleRemoveSection: useRemoveSectionHandler(sections, onChange),
+    handleAddItem: useAddItemHandler(applySectionUpdate),
+    handleRemoveItem: useRemoveItemHandler(applySectionUpdate),
   };
 }
 

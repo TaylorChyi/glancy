@@ -159,33 +159,32 @@ CustomItemsList.propTypes = {
   handlers: handlerShape.isRequired,
 };
 
+function createItemChangeHandler(handlers, sectionId, itemId, field) {
+  return (event) =>
+    handlers.handleItemChange(sectionId, itemId, field, event.target.value);
+}
+
+function renderItemInput({ value, placeholder, onChange }) {
+  return (
+    <input value={value} onChange={onChange} placeholder={placeholder} />
+  );
+}
+
 function CustomItemRow({ sectionId, item, t, styles, handlers }) {
+  const changeHandler = (field) =>
+    createItemChangeHandler(handlers, sectionId, item.id, field);
   return (
     <div className={styles["custom-item-row"]}>
-      <input
-        value={item.label}
-        onChange={(event) =>
-          handlers.handleItemChange(
-            sectionId,
-            item.id,
-            "label",
-            event.target.value,
-          )
-        }
-        placeholder={t.customSectionItemLabelPlaceholder}
-      />
-      <input
-        value={item.value}
-        onChange={(event) =>
-          handlers.handleItemChange(
-            sectionId,
-            item.id,
-            "value",
-            event.target.value,
-          )
-        }
-        placeholder={t.customSectionItemValuePlaceholder}
-      />
+      {renderItemInput({
+        value: item.label,
+        placeholder: t.customSectionItemLabelPlaceholder,
+        onChange: changeHandler("label"),
+      })}
+      {renderItemInput({
+        value: item.value,
+        placeholder: t.customSectionItemValuePlaceholder,
+        onChange: changeHandler("value"),
+      })}
       <button
         type="button"
         className={styles["custom-item-remove"]}

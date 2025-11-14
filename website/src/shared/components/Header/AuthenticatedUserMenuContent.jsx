@@ -1,6 +1,16 @@
+import { createElement } from "react";
 import PropTypes from "prop-types";
 import UserMenuModals from "./UserMenuModals.jsx";
 import UserMenuDropdown from "./UserMenuDropdown.jsx";
+
+const TriggerRenderer = ({ component: Component, componentProps, children }) =>
+  createElement(Component, componentProps, children);
+
+TriggerRenderer.propTypes = {
+  component: PropTypes.elementType.isRequired,
+  componentProps: PropTypes.object.isRequired,
+  children: PropTypes.func.isRequired,
+};
 
 function AuthenticatedUserMenuContent({
   Trigger,
@@ -11,7 +21,7 @@ function AuthenticatedUserMenuContent({
   return (
     <UserMenuModals {...modalProps}>
       {({ openSettings, openUpgrade, openLogout }) => (
-        <Trigger {...triggerProps}>
+        <TriggerRenderer component={Trigger} componentProps={triggerProps}>
           {({ open, setOpen }) => (
             <UserMenuDropdown
               {...dropdownProps}
@@ -22,7 +32,7 @@ function AuthenticatedUserMenuContent({
               onOpenLogout={openLogout}
             />
           )}
-        </Trigger>
+        </TriggerRenderer>
       )}
     </UserMenuModals>
   );

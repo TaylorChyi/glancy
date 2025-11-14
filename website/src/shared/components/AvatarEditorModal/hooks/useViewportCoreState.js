@@ -4,20 +4,24 @@ import { DEFAULT_VIEWPORT_SIZE, MAX_ZOOM, MIN_ZOOM } from "../constants.js";
 
 const INITIAL_POINT = { x: 0, y: 0 };
 
-const useViewportCoreState = () => {
-  const shouldRecenterRef = useRef(true);
-  const [zoom, setZoom] = useState(MIN_ZOOM);
-  const [offset, setOffset] = useState(INITIAL_POINT);
-  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
-  const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
-
-  const resetView = useCallback(() => {
+export const useViewportReset = ({
+  setZoom,
+  setOffset,
+  shouldRecenterRef,
+}) =>
+  useCallback(() => {
     shouldRecenterRef.current = true;
     setZoom(MIN_ZOOM);
     setOffset(INITIAL_POINT);
-  }, []);
+  }, [setOffset, setZoom, shouldRecenterRef]);
 
-  const recenterViewport = useCallback(
+export const useViewportRecenter = ({
+  viewportSize,
+  setZoom,
+  setOffset,
+  shouldRecenterRef,
+}) =>
+  useCallback(
     ({
       naturalWidth,
       naturalHeight,
@@ -41,8 +45,28 @@ const useViewportCoreState = () => {
       shouldRecenterRef.current = false;
       return true;
     },
-    [viewportSize],
+    [setOffset, setZoom, shouldRecenterRef, viewportSize],
   );
+
+const useViewportCoreState = () => {
+  const shouldRecenterRef = useRef(true);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
+  const [offset, setOffset] = useState(INITIAL_POINT);
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
+  const [viewportSize, setViewportSize] = useState(DEFAULT_VIEWPORT_SIZE);
+
+  const resetView = useViewportReset({
+    setZoom,
+    setOffset,
+    shouldRecenterRef,
+  });
+
+  const recenterViewport = useViewportRecenter({
+    viewportSize,
+    setZoom,
+    setOffset,
+    shouldRecenterRef,
+  });
 
   return {
     shouldRecenterRef,
