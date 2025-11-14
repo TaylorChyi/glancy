@@ -81,3 +81,22 @@ test("parseSse preserves embedded newlines without data prefix", async () => {
   }
   expect(events).toEqual([{ event: "message", data: "Example:\n第二行释义" }]);
 });
+
+/**
+ * 断言：当 SSE 流以未闭合的事件结束时，parseSse 仍能输出该事件。
+ */
+test("parseSse flushes unterminated trailing event", async () => {
+  const encoder = new TextEncoder();
+  const sse = "data: dangling"; // 缺少结尾的空行分隔符
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(sse));
+      controller.close();
+    },
+  });
+  const events = [];
+  for await (const evt of parseSse(stream)) {
+    events.push(evt);
+  }
+  expect(events).toEqual([{ event: "message", data: "dangling" }]);
+});
