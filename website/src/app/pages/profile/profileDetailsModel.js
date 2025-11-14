@@ -105,32 +105,49 @@ function sanitizeText(value) {
   return trimmed;
 }
 
-export function mapProfileDetailsToRequest(details) {
+export function normalizeProfileField(value) {
+  return sanitizeText(value);
+}
+
+export function normalizeCoreProfileFields(details = {}) {
+  return {
+    job: normalizeProfileField(details.job),
+    interest: normalizeProfileField(details.interests),
+    goal: normalizeProfileField(details.goal),
+    education: normalizeProfileField(details.education),
+    currentAbility: normalizeProfileField(details.currentAbility),
+    responseStyle: normalizeProfileField(details.responseStyle),
+  };
+}
+
+export function normalizeCustomItem(item = {}) {
+  return {
+    label: normalizeProfileField(item.label),
+    value: normalizeProfileField(item.value),
+  };
+}
+
+export function normalizeCustomSection(section = {}) {
+  const title = normalizeProfileField(section.title);
+  const items = (section.items ?? [])
+    .map((item) => normalizeCustomItem(item))
+    .filter((item) => item.label || item.value);
+  if (!title && items.length === 0) {
+    return null;
+  }
+  return { title, items };
+}
+
+export function normalizeCustomSections(sections = []) {
+  return sections
+    .map((section) => normalizeCustomSection(section))
+    .filter(Boolean);
+}
+
+export function mapProfileDetailsToRequest(details = {}) {
   const normalized = {
-    job: sanitizeText(details.job),
-    interest: sanitizeText(details.interests),
-    goal: sanitizeText(details.goal),
-    education: sanitizeText(details.education),
-    currentAbility: sanitizeText(details.currentAbility),
-    responseStyle: sanitizeText(details.responseStyle),
-    customSections: (details.customSections ?? [])
-      .map((section) => {
-        const title = sanitizeText(section.title);
-        const items = (section.items ?? [])
-          .map((item) => ({
-            label: sanitizeText(item.label),
-            value: sanitizeText(item.value),
-          }))
-          .filter((item) => item.label || item.value);
-        if (!title && items.length === 0) {
-          return null;
-        }
-        return {
-          title,
-          items,
-        };
-      })
-      .filter(Boolean),
+    ...normalizeCoreProfileFields(details),
+    customSections: normalizeCustomSections(details.customSections),
   };
 
   return {

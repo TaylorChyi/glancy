@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { cacheBust } from "@shared/utils";
 import confirmAvatarUpload from "./confirmAvatarUpload.js";
 
-const handleFileInput = (event, { currentUser, dispatch }) => {
+export function openAvatarModal(event, { currentUser, dispatch }) {
   const file = event.target.files?.[0];
   event.target.value = "";
   if (!file || !currentUser) {
@@ -13,21 +13,25 @@ const handleFileInput = (event, { currentUser, dispatch }) => {
     type: "open",
     payload: { source, fileName: file.name, fileType: file.type },
   });
-};
+}
 
-const useAvatarChangeHandler = ({ currentUser, dispatchEditor }) =>
-  useCallback(
-    (event) => handleFileInput(event, { currentUser, dispatch: dispatchEditor }),
+export function useAvatarChange(params) {
+  const { currentUser, dispatchEditor } = params;
+  return useCallback(
+    (event) => openAvatarModal(event, { currentUser, dispatch: dispatchEditor }),
     [currentUser, dispatchEditor],
   );
+}
 
-const useAvatarModalCloseHandler = ({ dispatchEditor, previousAvatarRef }) =>
-  useCallback(() => {
+export function useAvatarModalClose(params) {
+  const { dispatchEditor, previousAvatarRef } = params;
+  return useCallback(() => {
     previousAvatarRef.current = "";
     dispatchEditor({ type: "close" });
   }, [dispatchEditor, previousAvatarRef]);
+}
 
-const useAvatarConfirmHandler = ({
+export function createAvatarConfirmContext({
   api,
   currentUser,
   dispatchEditor,
@@ -37,35 +41,53 @@ const useAvatarConfirmHandler = ({
   setUser,
   previousAvatarRef,
   notifyFailure,
-}) =>
-  useCallback(
+}) {
+  return {
+    api,
+    currentUser,
+    editorState: () => editorStateRef.current,
+    currentAvatar: () => avatarRef.current,
+    setAvatar,
+    setUser,
+    dispatch: dispatchEditor,
+    previousAvatarRef,
+    notifyFailure,
+  };
+}
+
+export function useAvatarConfirm(params) {
+  return useCallback(
     (payload) =>
-      confirmAvatarUpload(payload, {
-        api,
-        currentUser,
-        editorState: () => editorStateRef.current,
-        currentAvatar: () => avatarRef.current,
-        setAvatar,
-        setUser,
-        dispatch: dispatchEditor,
-        previousAvatarRef,
-        notifyFailure,
-      }),
+      confirmAvatarUpload(
+        payload,
+        createAvatarConfirmContext({
+          api: params.api,
+          currentUser: params.currentUser,
+          dispatchEditor: params.dispatchEditor,
+          editorStateRef: params.editorStateRef,
+          avatarRef: params.avatarRef,
+          setAvatar: params.setAvatar,
+          setUser: params.setUser,
+          previousAvatarRef: params.previousAvatarRef,
+          notifyFailure: params.notifyFailure,
+        }),
+      ),
     [
-      api,
-      avatarRef,
-      currentUser,
-      dispatchEditor,
-      editorStateRef,
-      notifyFailure,
-      previousAvatarRef,
-      setAvatar,
-      setUser,
+      params.api,
+      params.avatarRef,
+      params.currentUser,
+      params.dispatchEditor,
+      params.editorStateRef,
+      params.notifyFailure,
+      params.previousAvatarRef,
+      params.setAvatar,
+      params.setUser,
     ],
   );
+}
 
-const useApplyServerAvatar = (setAvatar) =>
-  useCallback(
+export function useApplyServerAvatar(setAvatar) {
+  return useCallback(
     (nextAvatar) => {
       if (!nextAvatar) {
         setAvatar("");
@@ -75,13 +97,15 @@ const useApplyServerAvatar = (setAvatar) =>
     },
     [setAvatar],
   );
+}
 
-const useAvatarModalHandlers = (params) => ({
-  handleAvatarChange: useAvatarChangeHandler(params),
-  handleAvatarModalClose: useAvatarModalCloseHandler(params),
-  handleAvatarConfirm: useAvatarConfirmHandler(params),
-  applyServerAvatar: useApplyServerAvatar(params.setAvatar),
-});
+export function useAvatarModalHandlers(params) {
+  return {
+    handleAvatarChange: useAvatarChange(params),
+    handleAvatarModalClose: useAvatarModalClose(params),
+    handleAvatarConfirm: useAvatarConfirm(params),
+    applyServerAvatar: useApplyServerAvatar(params.setAvatar),
+  };
+}
 
 export default useAvatarModalHandlers;
-export { useAvatarModalHandlers };
