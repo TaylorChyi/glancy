@@ -11,7 +11,7 @@ import {
   WORD_FLAVOR_MONOLINGUAL_CHINESE,
 } from "@shared/utils/language.js";
 
-describe("language utilities", () => {
+function registerDetectWordLanguageTests() {
   test("detectWordLanguage 区分纯英文与中文输入", () => {
     expect(detectWordLanguage("elegance")).toBe("ENGLISH");
     expect(detectWordLanguage("优雅")).toBe("CHINESE");
@@ -24,7 +24,9 @@ describe("language utilities", () => {
   test("detectWordLanguage 捕获扩展汉字符号", () => {
     expect(detectWordLanguage("〇")).toBe("CHINESE");
   });
+}
 
+function registerNormalizationTests() {
   test("normalizeWordLanguage 统一化各种输入", () => {
     expect(normalizeWordLanguage("english")).toBe("ENGLISH");
     expect(normalizeWordLanguage("CHINESE")).toBe("CHINESE");
@@ -41,7 +43,9 @@ describe("language utilities", () => {
     expect(normalizeWordTargetLanguage("AUTO")).toBe("CHINESE");
     expect(normalizeWordTargetLanguage(null)).toBe("CHINESE");
   });
+}
 
+function registerResolutionTests() {
   test("resolveWordLanguage 在自动模式下使用检测结果", () => {
     expect(resolveWordLanguage("晨曦", WORD_LANGUAGE_AUTO)).toBe("CHINESE");
     expect(resolveWordLanguage("dawn", WORD_LANGUAGE_AUTO)).toBe("ENGLISH");
@@ -70,4 +74,12 @@ describe("language utilities", () => {
       }),
     ).toEqual({ language: "CHINESE", flavor: WORD_FLAVOR_BILINGUAL });
   });
+}
+
+describe("language utilities", () => {
+  describe("word language detection", registerDetectWordLanguageTests);
+
+  describe("word normalization", registerNormalizationTests);
+
+  describe("dictionary resolution", registerResolutionTests);
 });
