@@ -19,6 +19,50 @@ export type UseDictionaryReportingPropsArgs = {
 
 type CreateDictionaryReportingPropsArgs = UseDictionaryReportingPropsArgs;
 
+type ReportPanelBuilderArgs = Pick<
+  CreateDictionaryReportingPropsArgs,
+  "reportDialog" | "reportDialogHandlers"
+>;
+
+const buildReportPanelProps = ({
+  reportDialog,
+  reportDialogHandlers,
+}: ReportPanelBuilderArgs) => ({
+  open: reportDialog.open,
+  term: reportDialog.term,
+  language: reportDialog.language,
+  flavor: reportDialog.flavor,
+  sourceLanguage: reportDialog.sourceLanguage,
+  targetLanguage: reportDialog.targetLanguage,
+  category: reportDialog.category,
+  categories: reportDialog.categories ?? [],
+  description: reportDialog.description,
+  submitting: reportDialog.submitting,
+  error: reportDialog.error ?? "",
+  onClose: reportDialogHandlers.close,
+  onCategoryChange: reportDialogHandlers.setCategory,
+  onDescriptionChange: reportDialogHandlers.setDescription,
+  onSubmit: reportDialogHandlers.submit,
+});
+
+type ToastBuilderArgs = Pick<
+  CreateDictionaryReportingPropsArgs,
+  "toast" | "closeToast"
+>;
+
+const buildToastProps = ({ toast, closeToast }: ToastBuilderArgs) =>
+  toast
+    ? {
+        open: toast.open,
+        message: toast.message,
+        duration: toast.duration,
+        backgroundColor: toast.backgroundColor,
+        textColor: toast.textColor,
+        closeLabel: toast.closeLabel,
+        onClose: closeToast,
+      }
+    : undefined;
+
 export const createDictionaryReportingProps = ({
   reportDialog,
   reportDialogHandlers,
@@ -26,36 +70,10 @@ export const createDictionaryReportingProps = ({
   toast,
   closeToast,
 }: CreateDictionaryReportingPropsArgs) => ({
-  reportPanel: {
-    open: reportDialog.open,
-    term: reportDialog.term,
-    language: reportDialog.language,
-    flavor: reportDialog.flavor,
-    sourceLanguage: reportDialog.sourceLanguage,
-    targetLanguage: reportDialog.targetLanguage,
-    category: reportDialog.category,
-    categories: reportDialog.categories ?? [],
-    description: reportDialog.description,
-    submitting: reportDialog.submitting,
-    error: reportDialog.error ?? "",
-    onClose: reportDialogHandlers.close,
-    onCategoryChange: reportDialogHandlers.setCategory,
-    onDescriptionChange: reportDialogHandlers.setDescription,
-    onSubmit: reportDialogHandlers.submit,
-  },
+  reportPanel: buildReportPanelProps({ reportDialog, reportDialogHandlers }),
   feedbackHub: {
     popup: popupConfig,
-    toast: toast
-      ? {
-          open: toast.open,
-          message: toast.message,
-          duration: toast.duration,
-          backgroundColor: toast.backgroundColor,
-          textColor: toast.textColor,
-          closeLabel: toast.closeLabel,
-          onClose: closeToast,
-        }
-      : undefined,
+    toast: buildToastProps({ toast, closeToast }),
   },
 });
 
