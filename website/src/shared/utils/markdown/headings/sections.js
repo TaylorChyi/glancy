@@ -40,6 +40,26 @@ function sliceByNormalizedLength(source, segments, length) {
   return source;
 }
 
+function detectSectionHeadingToken(trimmedBody) {
+  const { normalized, segments } = buildNormalizedIndexSegments(trimmedBody);
+  if (!normalized) {
+    return null;
+  }
+  for (const token of SECTION_HEADING_TOKENS_DESC) {
+    if (!normalized.startsWith(token)) {
+      continue;
+    }
+    const headingPart = sliceByNormalizedLength(
+      trimmedBody,
+      segments,
+      token.length,
+    ).trimEnd();
+    const rest = trimmedBody.slice(headingPart.length);
+    return { headingPart, rest };
+  }
+  return null;
+}
+
 function shouldSplitSectionHeadingRest(rest) {
   if (!rest) {
     return false;
@@ -57,40 +77,36 @@ function shouldSplitSectionHeadingRest(rest) {
   return hasStructuralCue || hasExplicitGap;
 }
 
+function splitHeadingBody(hashes, spacing, body) {
+  const trimmedBody = body.trimEnd();
+  const originalHeading = `${hashes}${spacing}${trimmedBody}`;
+  if (!trimmedBody) {
+    return originalHeading;
+  }
+
+  const detected = detectSectionHeadingToken(trimmedBody);
+  if (!detected) {
+    return originalHeading;
+  }
+
+  const { headingPart, rest } = detected;
+  if (!shouldSplitSectionHeadingRest(rest)) {
+    return originalHeading;
+  }
+
+  const normalizedIdentifier = normalizeHeadingIdentifier(headingPart);
+  if (!SECTION_HEADING_TOKENS.has(normalizedIdentifier)) {
+    return originalHeading;
+  }
+
+  const trailing = rest.trimStart();
+  return `${hashes} ${headingPart}\n${trailing}`;
+}
+
 export function isolateSectionHeadingContent(text) {
   return text.replace(
     /^(#{1,6})(\s*)([^\n]+)$/gm,
-    (match, hashes, spacing, body) => {
-      const trimmedBody = body.trimEnd();
-      if (!trimmedBody) {
-        return `${hashes}${spacing}${trimmedBody}`;
-      }
-      const { normalized, segments } =
-        buildNormalizedIndexSegments(trimmedBody);
-      if (!normalized) {
-        return `${hashes}${spacing}${trimmedBody}`;
-      }
-      for (const token of SECTION_HEADING_TOKENS_DESC) {
-        if (!normalized.startsWith(token)) {
-          continue;
-        }
-        const headingPart = sliceByNormalizedLength(
-          trimmedBody,
-          segments,
-          token.length,
-        ).trimEnd();
-        const rest = trimmedBody.slice(headingPart.length);
-        if (!shouldSplitSectionHeadingRest(rest)) {
-          return `${hashes}${spacing}${trimmedBody}`;
-        }
-        const normalizedIdentifier = normalizeHeadingIdentifier(headingPart);
-        if (!SECTION_HEADING_TOKENS.has(normalizedIdentifier)) {
-          return `${hashes}${spacing}${trimmedBody}`;
-        }
-        const trailing = rest.trimStart();
-        return `${hashes} ${headingPart}\n${trailing}`;
-      }
-      return `${hashes}${spacing}${trimmedBody}`;
-    },
+    (_, hashes, spacing, body) =>
+      splitHeadingBody(hashes, spacing, body),
   );
 }
