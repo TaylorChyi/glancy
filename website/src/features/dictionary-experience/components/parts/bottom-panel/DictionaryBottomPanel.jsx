@@ -4,39 +4,47 @@ import { DockedICP } from "@shared/components/ui/ICP";
 import BottomPanelSearch from "./BottomPanelSearch.jsx";
 import BottomPanelActions from "./BottomPanelActions.jsx";
 
-function DictionaryBottomPanel({
+const renderBottomPanelSwitcher = ({
   bottomPanelMode,
   inputProps,
   actionPanelProps,
   hasDefinition,
   onSearchButtonClick,
   handleInputFocusChange,
-}) {
+}) => (
+  <BottomPanelSwitcher
+    mode={bottomPanelMode}
+    searchContent={
+      <BottomPanelSearch
+        inputProps={inputProps}
+        handleInputFocusChange={handleInputFocusChange}
+      />
+    }
+    actionsContent={
+      <BottomPanelActions
+        actionPanelProps={actionPanelProps}
+        onSearchButtonClick={onSearchButtonClick}
+        searchButtonLabel={inputProps.searchButtonLabel}
+        hasDefinition={hasDefinition}
+      />
+    }
+  />
+);
+
+function DictionaryBottomPanelView(props) {
   return (
     <>
-      <BottomPanelSwitcher
-        mode={bottomPanelMode}
-        searchContent={
-          <BottomPanelSearch
-            inputProps={inputProps}
-            handleInputFocusChange={handleInputFocusChange}
-          />
-        }
-        actionsContent={
-          <BottomPanelActions
-            actionPanelProps={actionPanelProps}
-            onSearchButtonClick={onSearchButtonClick}
-            searchButtonLabel={inputProps.searchButtonLabel}
-            hasDefinition={hasDefinition}
-          />
-        }
-      />
+      {renderBottomPanelSwitcher(props)}
       <DockedICP />
     </>
   );
 }
 
-DictionaryBottomPanel.propTypes = {
+function DictionaryBottomPanel(props) {
+  return <DictionaryBottomPanelView {...props} />;
+}
+
+DictionaryBottomPanelView.propTypes = {
   bottomPanelMode: PropTypes.string.isRequired,
   inputProps: PropTypes.shape({
     searchButtonLabel: PropTypes.string.isRequired,
@@ -47,8 +55,12 @@ DictionaryBottomPanel.propTypes = {
   handleInputFocusChange: PropTypes.func.isRequired,
 };
 
-DictionaryBottomPanel.defaultProps = {
+DictionaryBottomPanelView.defaultProps = {
   actionPanelProps: undefined,
 };
+
+DictionaryBottomPanel.propTypes = DictionaryBottomPanelView.propTypes;
+
+DictionaryBottomPanel.defaultProps = DictionaryBottomPanelView.defaultProps;
 
 export default DictionaryBottomPanel;
