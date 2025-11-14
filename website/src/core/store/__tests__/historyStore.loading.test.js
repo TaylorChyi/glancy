@@ -1,5 +1,4 @@
 import { jest } from "@jest/globals";
-import { act } from "@testing-library/react";
 import { ApiError } from "@shared/api/client.js";
 import { WORD_FLAVOR_BILINGUAL } from "@shared/utils/language.js";
 import {
@@ -11,13 +10,10 @@ import {
   makeRecord,
   resetHistoryTestState,
   mockWordStore,
-} from "./historyStoreTestkit.js";
+  invokeHistoryStore,
+} from "../test-support/historyStore.fixtures.js";
 
-describe("historyStore loading & mutations", () => {
-  beforeEach(() => {
-    resetHistoryTestState();
-  });
-
+const registerAddHistoryTests = () => {
   test("addHistory stores item and calls api", async () => {
     mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce([
       {
@@ -36,9 +32,12 @@ describe("historyStore loading & mutations", () => {
         ],
       },
     ]);
-    await act(async () => {
-      await historyStore.getState().addHistory("test", historyTestUser, "ENGLISH");
-    });
+    await invokeHistoryStore(
+      (state) => state.addHistory,
+      "test",
+      historyTestUser,
+      "ENGLISH",
+    );
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalled();
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledWith({
       token: historyTestUser.token,
@@ -52,14 +51,14 @@ describe("historyStore loading & mutations", () => {
     expect(item.recordId).toBe("rec-1");
     expect(item.versions[0].id).toBe("ver-1");
   });
+};
 
+const registerPaginationTests = () => {
   test("loadHistory fetches first page and updates pagination", async () => {
     const pageItems = Array.from({ length: 20 }, (_, idx) => makeRecord(idx));
     mockApi.searchRecords.fetchSearchRecords.mockResolvedValueOnce(pageItems);
 
-    await act(async () => {
-      await historyStore.getState().loadHistory(historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.loadHistory, historyTestUser);
 
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledWith({
       token: historyTestUser.token,
@@ -82,29 +81,23 @@ describe("historyStore loading & mutations", () => {
       .mockResolvedValueOnce(firstPage)
       .mockResolvedValueOnce(secondPage);
 
-    await act(async () => {
-      await historyStore.getState().loadHistory(historyTestUser);
-    });
-    await act(async () => {
-      await historyStore.getState().loadMoreHistory(historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.loadHistory, historyTestUser);
+    await invokeHistoryStore((state) => state.loadMoreHistory, historyTestUser);
 
     const state = historyStore.getState();
     expect(state.history).toHaveLength(23);
     expect(state.hasMore).toBe(false);
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(2);
 
-    await act(async () => {
-      await historyStore.getState().loadMoreHistory(historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.loadMoreHistory, historyTestUser);
 
     expect(mockApi.searchRecords.fetchSearchRecords).toHaveBeenCalledTimes(2);
   });
+};
 
+const registerInferenceTests = () => {
   test("addHistory infers language when missing", async () => {
-    await act(async () => {
-      await historyStore.getState().addHistory("word", historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.addHistory, "word", historyTestUser);
     expect(mockApi.searchRecords.saveSearchRecord).toHaveBeenCalledWith({
       token: historyTestUser.token,
       term: "word",
@@ -135,21 +128,19 @@ describe("historyStore loading & mutations", () => {
       },
     ]);
 
-    await act(async () => {
-      await historyStore.getState().loadHistory(historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.loadHistory, historyTestUser);
 
     const item = historyStore.getState().history[0];
     expect(item.term).toBe("student");
     expect(item.termKey).toBe("ENGLISH:BILINGUAL:student");
   });
+};
 
+const registerGovernanceGuardTests = () => {
   test("Given capture disabled When adding history Then skip persistence", async () => {
     dataGovernanceStore.setState({ historyCaptureEnabled: false });
 
-    await act(async () => {
-      await historyStore.getState().addHistory("mute", historyTestUser);
-    });
+    await invokeHistoryStore((state) => state.addHistory, "mute", historyTestUser);
 
     expect(historyStore.getState().history).toHaveLength(0);
     expect(mockApi.searchRecords.saveSearchRecord).not.toHaveBeenCalled();
@@ -183,8 +174,9 @@ describe("historyStore loading & mutations", () => {
       new ApiError(401, "Unauthorized", undefined),
     );
 
-    await act(async () => {
-      await historyStore.getState().loadHistory({ id: "u1", token: "t" });
+    await invokeHistoryStore((state) => state.loadHistory, {
+      id: "u1",
+      token: "t",
     });
 
     expect(clearSpy).toHaveBeenCalledTimes(1);
@@ -195,7 +187,9 @@ describe("historyStore loading & mutations", () => {
     expect(state.hasMore).toBe(false);
     clearSpy.mockRestore();
   });
+};
 
+const registerRemovalTests = () => {
   test("removeHistory clears cache versions", async () => {
     const removeSpy = jest.spyOn(mockWordStore.getState(), "removeVersions");
     historyStore.setState({
@@ -221,11 +215,11 @@ describe("historyStore loading & mutations", () => {
       error: null,
     });
 
-    await act(async () => {
-      await historyStore
-        .getState()
-        .removeHistory("ENGLISH:BILINGUAL:hello", historyTestUser);
-    });
+    await invokeHistoryStore(
+      (state) => state.removeHistory,
+      "ENGLISH:BILINGUAL:hello",
+      historyTestUser,
+    );
 
     expect(removeSpy).toHaveBeenCalledWith("ENGLISH:BILINGUAL:hello");
     expect(historyStore.getState().history).toHaveLength(0);
@@ -235,4 +229,16 @@ describe("historyStore loading & mutations", () => {
     });
     removeSpy.mockRestore();
   });
+};
+
+describe("historyStore loading & mutations", () => {
+  beforeEach(() => {
+    resetHistoryTestState();
+  });
+
+  registerAddHistoryTests();
+  registerPaginationTests();
+  registerInferenceTests();
+  registerGovernanceGuardTests();
+  registerRemovalTests();
 });
