@@ -1,12 +1,69 @@
 import { jest } from "@jest/globals";
 
 import { shouldRenderDictionaryEntry } from "../components/helpers/dictionaryLayoutHelpers.ts";
-import { buildBottomPanelModel } from "../components/helpers/dictionaryBottomPanelHelpers.ts";
+import type { BottomPanelAssemblyArgs } from "../components/helpers/dictionaryBottomPanelHelpers.ts";
+import {
+  buildBottomPanelModel,
+  createBottomPanelInputProps,
+  createBottomPanelProps,
+  shouldRenderBottomPanel,
+} from "../components/helpers/dictionaryBottomPanelHelpers.ts";
 
 const createBottomPanelStateMock = () => ({
   mode: "search",
   activateSearchMode: jest.fn(),
 });
+
+const createBottomPanelArgs = ({
+  stateMock,
+  handleInputFocusChange,
+}: {
+  stateMock: ReturnType<typeof createBottomPanelStateMock>;
+  handleInputFocusChange: jest.Mock;
+}): BottomPanelAssemblyArgs => ({
+  isLibraryView: false,
+  bottomPanelState: stateMock as any,
+  dictionaryActionBarViewModel: { foo: "bar" },
+  hasDefinition: true,
+  inputRef: { current: document.createElement("input") },
+  text: "hello",
+  setText: jest.fn(),
+  handleSend: jest.fn(),
+  placeholder: "type",
+  dictionarySourceLanguage: "en",
+  dictionarySourceLanguageLabel: "English",
+  setDictionarySourceLanguage: jest.fn(),
+  dictionaryTargetLanguage: "zh",
+  dictionaryTargetLanguageLabel: "Chinese",
+  setDictionaryTargetLanguage: jest.fn(),
+  sourceLanguageOptions: ["en"],
+  targetLanguageOptions: ["zh"],
+  handleSwapLanguages: jest.fn(),
+  swapLabel: "swap",
+  searchButtonLabel: "search",
+  handleInputFocusChange,
+});
+
+const expectBottomPanelAssembly = (args: BottomPanelAssemblyArgs) => {
+  expect(createBottomPanelInputProps(args)).toMatchObject({
+    text: "hello",
+    sourceLanguageLabel: "English",
+    targetLanguageLabel: "Chinese",
+    searchButtonLabel: "search",
+  });
+
+  const props = createBottomPanelProps(args);
+  expect(props).toMatchObject({
+    bottomPanelMode: "search",
+    actionPanelProps: { foo: "bar" },
+    handleInputFocusChange: args.handleInputFocusChange,
+  });
+
+  expect(buildBottomPanelModel(args)).toEqual({
+    shouldRender: true,
+    props,
+  });
+};
 
 describe("dictionary layout helpers", () => {
   describe("shouldRenderDictionaryEntry", () => {
@@ -50,38 +107,20 @@ describe("dictionary layout helpers", () => {
 });
 
 describe("dictionary bottom panel helpers", () => {
+  it("determines render visibility based on library view", () => {
+    expect(shouldRenderBottomPanel(false)).toBe(true);
+    expect(shouldRenderBottomPanel(true)).toBe(false);
+  });
+
   it("assembles bottom panel props with provided values", () => {
     const stateMock = createBottomPanelStateMock();
     const handleInputFocusChange = jest.fn();
-    const result = buildBottomPanelModel({
-      isLibraryView: false,
-      bottomPanelState: stateMock as any,
-      dictionaryActionBarViewModel: { foo: "bar" },
-      hasDefinition: true,
-      inputRef: { current: document.createElement("input") },
-      text: "hello",
-      setText: jest.fn(),
-      handleSend: jest.fn(),
-      placeholder: "type",
-      dictionarySourceLanguage: "en",
-      dictionarySourceLanguageLabel: "English",
-      setDictionarySourceLanguage: jest.fn(),
-      dictionaryTargetLanguage: "zh",
-      dictionaryTargetLanguageLabel: "Chinese",
-      setDictionaryTargetLanguage: jest.fn(),
-      sourceLanguageOptions: ["en"],
-      targetLanguageOptions: ["zh"],
-      handleSwapLanguages: jest.fn(),
-      swapLabel: "swap",
-      searchButtonLabel: "search",
+    const args = createBottomPanelArgs({
+      stateMock,
       handleInputFocusChange,
     });
 
-    expect(result.shouldRender).toBe(true);
-    expect(result.props.hasDefinition).toBe(true);
-    expect(result.props.inputProps.text).toBe("hello");
-    expect(result.props.inputProps.searchButtonLabel).toBe("search");
-    expect(result.props.handleInputFocusChange).toBe(handleInputFocusChange);
+    expectBottomPanelAssembly(args);
   });
 
   it("marks bottom panel as hidden in library view", () => {

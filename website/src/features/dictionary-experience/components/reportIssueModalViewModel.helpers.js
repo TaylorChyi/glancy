@@ -1,136 +1,7 @@
-const DEFAULT_LANGUAGE_LABELS = {
-  ENGLISH: "English",
-  CHINESE: "Chinese",
-  AUTO: "Auto",
-};
+import { __INTERNALS__ as languageInternals } from "./helpers/reportIssueLanguageUtils";
 
-const FLAVOR_SOURCE_FALLBACKS = {
-  MONOLINGUAL_CHINESE: "CHINESE",
-};
-
-const FLAVOR_TARGET_FALLBACKS = {
-  MONOLINGUAL_ENGLISH: "ENGLISH",
-  MONOLINGUAL_CHINESE: "CHINESE",
-};
-
-const ENGLISH_KEY = "ENGLISH";
-const CHINESE_KEY = "CHINESE";
-const AUTO_KEY = "AUTO";
-
-const normalizeLanguageKey = (value) =>
-  typeof value === "string" ? value.toUpperCase() : "";
-
-const createDictionaryModeLabel = (
-  languageLabels,
-  resolvedSourceKey,
-  resolvedTargetKey,
-) => {
-  const sourceLabel =
-    languageLabels[resolvedSourceKey] ?? resolvedSourceKey ?? "";
-  const targetLabel =
-    languageLabels[resolvedTargetKey] ?? resolvedTargetKey ?? "";
-
-  if (!targetLabel) {
-    return sourceLabel;
-  }
-
-  return `${sourceLabel} → ${targetLabel}`;
-};
-
-export const createLanguageLabels = (translations) => ({
-  ENGLISH:
-    translations.reportLanguageValueEnglish ?? DEFAULT_LANGUAGE_LABELS.ENGLISH,
-  CHINESE:
-    translations.reportLanguageValueChinese ?? DEFAULT_LANGUAGE_LABELS.CHINESE,
-  AUTO:
-    translations.dictionarySourceLanguageAuto ?? DEFAULT_LANGUAGE_LABELS.AUTO,
-});
-
-export const resolveLanguageContext = ({
-  language,
-  flavor,
-  sourceLanguage,
-  targetLanguage,
-  languageLabels,
-}) => {
-  const languageKey = normalizeLanguageKey(language);
-  const flavorKey = normalizeLanguageKey(flavor);
-  const sourcePreferenceKey = normalizeLanguageKey(sourceLanguage);
-  const targetPreferenceKey = normalizeLanguageKey(targetLanguage);
-
-  const resolvedSourceKey = (() => {
-    if (sourcePreferenceKey && sourcePreferenceKey !== AUTO_KEY) {
-      return sourcePreferenceKey;
-    }
-    if (languageKey) {
-      return languageKey;
-    }
-    if (flavorKey in FLAVOR_SOURCE_FALLBACKS) {
-      return FLAVOR_SOURCE_FALLBACKS[flavorKey];
-    }
-    return ENGLISH_KEY;
-  })();
-
-  const resolvedTargetKey = (() => {
-    if (targetPreferenceKey) {
-      return targetPreferenceKey;
-    }
-    if (flavorKey in FLAVOR_TARGET_FALLBACKS) {
-      return FLAVOR_TARGET_FALLBACKS[flavorKey];
-    }
-    if (resolvedSourceKey === ENGLISH_KEY) {
-      return CHINESE_KEY;
-    }
-    return ENGLISH_KEY;
-  })();
-
-  const resolvedLanguageLabel = languageLabels[languageKey] ?? language ?? "";
-
-  return {
-    resolvedSourceKey,
-    resolvedTargetKey,
-    resolvedLanguageLabel,
-    dictionaryModeLabel: createDictionaryModeLabel(
-      languageLabels,
-      resolvedSourceKey,
-      resolvedTargetKey,
-    ),
-  };
-};
-
-export const buildSummaryItems = ({
-  term,
-  language,
-  resolvedLanguageLabel,
-  dictionaryModeLabel,
-  translations,
-}) => {
-  const summaryItems = [
-    {
-      key: "term",
-      label: translations.reportTermLabel ?? "Term",
-      value: term,
-    },
-  ];
-
-  if (language) {
-    summaryItems.push({
-      key: "language",
-      label: translations.reportLanguageLabel ?? "Language",
-      value: resolvedLanguageLabel,
-    });
-  }
-
-  if (dictionaryModeLabel) {
-    summaryItems.push({
-      key: "dictionary-mode",
-      label: translations.reportFlavorLabel ?? "Dictionary",
-      value: dictionaryModeLabel,
-    });
-  }
-
-  return summaryItems;
-};
+export { createLanguageLabels, resolveLanguageContext } from "./helpers/reportIssueLanguageUtils";
+export { buildSummaryItems } from "./helpers/reportIssueSummaryUtils";
 
 export const createCategoryOptions = (categories, translations) =>
   categories.map((option) => ({
@@ -149,43 +20,45 @@ const pickTranslation = (translations, keys, fallback) => {
   return fallback;
 };
 
-export const buildModalStrings = (translations, error) => ({
-  title: pickTranslation(translations, ["reportTitle"], "Report an issue"),
-  categoryLabel: pickTranslation(
-    translations,
-    ["reportCategoryLabel"],
-    "Issue type",
-  ),
-  descriptionLabel: pickTranslation(
-    translations,
-    ["reportDescriptionLabel"],
-    "Details",
-  ),
-  descriptionPlaceholder: pickTranslation(
-    translations,
-    ["reportDescriptionPlaceholder"],
-    "Tell us more (optional)",
-  ),
-  cancelLabel: pickTranslation(
-    translations,
-    ["reportCancel", "cancel"],
-    "Cancel",
-  ),
-  submitLabel: pickTranslation(translations, ["reportSubmit"], "Submit"),
-  submittingLabel: pickTranslation(
-    translations,
-    ["reportSubmitting", "loading"],
-    "Submitting",
-  ),
-  closeLabel: pickTranslation(translations, ["close"], "Close"),
-  errorMessage: error
-    ? pickTranslation(translations, ["reportErrorMessage"], error)
-    : "",
-});
+const MODAL_STRING_FIELDS = {
+  title: { keys: ["reportTitle"], fallback: "Report an issue" },
+  categoryLabel: { keys: ["reportCategoryLabel"], fallback: "Issue type" },
+  descriptionLabel: { keys: ["reportDescriptionLabel"], fallback: "Details" },
+  descriptionPlaceholder: {
+    keys: ["reportDescriptionPlaceholder"],
+    fallback: "Tell us more (optional)",
+  },
+  cancelLabel: { keys: ["reportCancel", "cancel"], fallback: "Cancel" },
+  submitLabel: { keys: ["reportSubmit"], fallback: "Submit" },
+  submittingLabel: {
+    keys: ["reportSubmitting", "loading"],
+    fallback: "Submitting",
+  },
+  closeLabel: { keys: ["close"], fallback: "Close" },
+};
+
+const createModalStringResolver = (translations) => (keys, fallback) =>
+  pickTranslation(translations, keys, fallback);
+
+const resolveModalFieldEntries = (resolve) =>
+  Object.entries(MODAL_STRING_FIELDS).map(([key, { keys, fallback }]) => [
+    key,
+    resolve(keys, fallback),
+  ]);
+
+export const buildModalStrings = (translations, error) => {
+  const resolve = createModalStringResolver(translations);
+  const resolvedFields = Object.fromEntries(resolveModalFieldEntries(resolve));
+  return {
+    ...resolvedFields,
+    errorMessage: error ? resolve(["reportErrorMessage"], error) : "",
+  };
+};
 
 export const __INTERNALS__ = {
-  createDictionaryModeLabel,
-  normalizeLanguageKey,
-  DEFAULT_LANGUAGE_LABELS,
+  ...languageInternals,
   pickTranslation,
+  MODAL_STRING_FIELDS,
+  createModalStringResolver,
+  resolveModalFieldEntries,
 };
