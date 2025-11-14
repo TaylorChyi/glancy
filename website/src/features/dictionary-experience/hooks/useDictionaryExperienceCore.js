@@ -21,32 +21,11 @@ const useLibraryLandingLabel = (t) =>
     return "致用单词";
   }, [t.favorites, t.primaryNavEntriesLabel, t.primaryNavLibraryLabel]);
 
-export function useDictionaryExperienceCore() {
-  const state = useDictionaryExperienceState();
-  const contexts = useDictionaryExperienceContext();
-  const lookupController = useDictionaryLookupController();
-  const wordStoreApi = useWordStore;
-  const wordEntries = useWordEntries();
-  const historyCaptureEnabled = useHistoryCaptureFlag();
-  const { entry, finalText, currentTerm } = state;
+const useDictionaryExperienceReporting = ({ state, contexts }) => {
   const { languageContext, popup, toast, languageConfig } = contexts;
+  const { entry, currentTerm } = state;
 
-  const copyController = useDictionaryCopyController({
-    entry,
-    finalText,
-    currentTerm,
-    t: languageContext.t,
-    showPopup: popup.showPopup,
-  });
-
-  const homeControls = useDictionaryHomeControls({
-    state,
-    contexts,
-    resetCopyFeedback: copyController.resetCopyFeedback,
-    closeToast: toast.closeToast,
-  });
-
-  const reporting = useDictionaryReportDialogManager({
+  return useDictionaryReportDialogManager({
     t: languageContext.t,
     showToast: toast.showToast,
     showPopup: popup.showPopup,
@@ -56,19 +35,60 @@ export function useDictionaryExperienceCore() {
     entry,
     activeTerm: entry?.term || currentTerm,
   });
+};
 
+const useDictionaryExperienceHomeControls = ({
+  state,
+  contexts,
+  resetCopyFeedback,
+}) => {
+  const { toast } = contexts;
+
+  return useDictionaryHomeControls({
+    state,
+    contexts,
+    resetCopyFeedback,
+    closeToast: toast.closeToast,
+  });
+};
+
+const useDictionaryExperienceStores = () => {
+  const lookupController = useDictionaryLookupController();
+  const wordStoreApi = useWordStore;
+  const wordEntries = useWordEntries();
+  const historyCaptureEnabled = useHistoryCaptureFlag();
+  return { lookupController, wordStoreApi, wordEntries, historyCaptureEnabled };
+};
+
+const useDictionaryExperienceControllers = ({ state, contexts }) => {
+  const { entry, finalText, currentTerm } = state;
+  const { languageContext } = contexts;
+  const copyController = useDictionaryCopyController({
+    entry,
+    finalText,
+    currentTerm,
+    t: languageContext.t,
+    showPopup: contexts.popup.showPopup,
+  });
+  const homeControls = useDictionaryExperienceHomeControls({
+    state,
+    contexts,
+    resetCopyFeedback: copyController.resetCopyFeedback,
+  });
+  const reporting = useDictionaryExperienceReporting({ state, contexts });
   const libraryLandingLabel = useLibraryLandingLabel(languageContext.t);
+  return { copyController, homeControls, reporting, libraryLandingLabel };
+};
 
+export function useDictionaryExperienceCore() {
+  const state = useDictionaryExperienceState();
+  const contexts = useDictionaryExperienceContext();
+  const stores = useDictionaryExperienceStores();
+  const controllers = useDictionaryExperienceControllers({ state, contexts });
   return {
     state,
     contexts,
-    lookupController,
-    wordStoreApi,
-    wordEntries,
-    historyCaptureEnabled,
-    copyController,
-    homeControls,
-    reporting,
-    libraryLandingLabel,
+    ...stores,
+    ...controllers,
   };
 }
