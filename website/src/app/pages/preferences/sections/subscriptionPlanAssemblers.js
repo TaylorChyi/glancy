@@ -3,11 +3,17 @@ import { getPlanDefinition } from "@core/config/pricing";
 import {
   FALLBACK_VALUE,
   formatCurrency,
-  formatRenewalDate,
   formatTemplateWithPair,
   formatWithTemplate,
   safeString,
 } from "./subscriptionFormattingToolkit.js";
+import {
+  derivePlanState,
+  deriveSubscriptionExpiryLine,
+  resolveBadge,
+  resolveCtaLabel,
+} from "./subscriptionPlanState.js";
+export { derivePlanState, resolveBadge } from "./subscriptionPlanState.js";
 
 const deriveLabelConfig = (translations) => ({
   badgeCurrent: safeString(
@@ -114,60 +120,6 @@ const derivePriceLines = ({
   }
 
   return lines;
-};
-
-export const derivePlanState = ({ planId, currentPlanId, purchase }) => {
-  const isCurrent = planId === currentPlanId;
-  const isRedeemOnly = purchase === "redeem_only" && !isCurrent;
-  return { isCurrent, isRedeemOnly };
-};
-
-export const resolveBadge = ({
-  isCurrent,
-  isRedeemOnly,
-  badgeCurrent,
-  badgeLocked,
-  badgeSelected,
-}) => {
-  if (isCurrent) {
-    return badgeCurrent;
-  }
-  if (isRedeemOnly) {
-    return badgeLocked;
-  }
-  return badgeSelected;
-};
-
-const resolveCtaLabel = ({
-  isCurrent,
-  isRedeemOnly,
-  badgeCurrent,
-  badgeLocked,
-  cta,
-}) => {
-  if (isCurrent) {
-    return badgeCurrent;
-  }
-  if (isRedeemOnly) {
-    return badgeLocked;
-  }
-  return cta;
-};
-
-const deriveSubscriptionExpiryLine = ({
-  planId,
-  isCurrent,
-  nextRenewalDate,
-  nextRenewalTemplate,
-}) => {
-  if (!isCurrent || planId === "FREE" || !nextRenewalDate) {
-    return undefined;
-  }
-  const formattedRenewalDate = formatRenewalDate(nextRenewalDate);
-  if (!formattedRenewalDate) {
-    return undefined;
-  }
-  return formatWithTemplate(nextRenewalTemplate, formattedRenewalDate);
 };
 
 const resolvePlanContext = ({ planId, planCopy, pricing }) => {

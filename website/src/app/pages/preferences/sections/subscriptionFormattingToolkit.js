@@ -40,13 +40,16 @@ export const normalizeDisplayValue = (value, fallback = FALLBACK_VALUE) => {
  *  - 不抛出异常，任何非法输入均退化为 fallbackValue，保障界面稳定。
  * 复杂度：O(n)，其中 n 为模板长度。
  */
-const normalizeTemplate = (template) =>
+export const normalizeTemplateInput = (template) =>
   typeof template === "string" ? template.trim() : "";
 
-const resolveTemplateFallback = (fallbackValue) =>
-  normalizeDisplayValue(fallbackValue, FALLBACK_VALUE);
+export const resolveInterpolationFallback = (value) =>
+  normalizeDisplayValue(value, FALLBACK_VALUE);
 
-const buildTokenDictionary = (replacements = {}) => {
+const normalizeReplacementToken = (token) =>
+  typeof token === "string" ? token.trim() : "";
+
+export const buildReplacementDictionary = (replacements = {}) => {
   const dictionary = new Map();
   Object.entries(replacements).forEach(([key, value]) => {
     if (!key) {
@@ -59,58 +62,69 @@ const buildTokenDictionary = (replacements = {}) => {
   return dictionary;
 };
 
-const evaluateToken = (token, dictionary, fallback) => {
-  if (dictionary.has(token)) {
-    return normalizeDisplayValue(dictionary.get(token), fallback);
+export const evaluateReplacement = ({ token, dictionary, fallback }) => {
+  const normalizedToken = normalizeReplacementToken(token);
+  if (!normalizedToken) {
+    return fallback;
   }
-  const isValueToken = token === "value" && dictionary.has("amount");
+  if (dictionary.has(normalizedToken)) {
+    return normalizeDisplayValue(dictionary.get(normalizedToken), fallback);
+  }
+
+  const isValueToken =
+    normalizedToken === "value" && dictionary.has("amount");
   if (isValueToken) {
     return normalizeDisplayValue(dictionary.get("amount"), fallback);
   }
-  const isAmountToken = token === "amount" && dictionary.has("value");
+
+  const isAmountToken =
+    normalizedToken === "amount" && dictionary.has("value");
   if (isAmountToken) {
     return normalizeDisplayValue(dictionary.get("value"), fallback);
   }
+
   return fallback;
 };
+
+const createReplacementEvaluator = (dictionary, fallback) =>
+  (_match, token) => evaluateReplacement({ token, dictionary, fallback });
 
 export const interpolateTemplate = (
   template,
   replacements,
   fallbackValue = FALLBACK_VALUE,
 ) => {
-  const normalizedTemplate = normalizeTemplate(template);
+  const normalizedTemplate = normalizeTemplateInput(template);
+  const resolvedFallback = resolveInterpolationFallback(fallbackValue);
   if (!normalizedTemplate) {
-    return resolveTemplateFallback(fallbackValue);
+    return resolvedFallback;
   }
 
-  const resolvedFallback = resolveTemplateFallback(fallbackValue);
-  const tokenDictionary = buildTokenDictionary(replacements);
+  const dictionary = buildReplacementDictionary(replacements);
 
-  return normalizedTemplate.replace(/\{(\w+)\}/g, (_match, token) =>
-    evaluateToken(token, tokenDictionary, resolvedFallback),
+  return normalizedTemplate.replace(
+    /\{(\w+)\}/g,
+    createReplacementEvaluator(dictionary, resolvedFallback),
   );
 };
 
-export const formatWithTemplate = (template, value) => {
-  const fallback = resolveTemplateFallback(value);
+const renderTemplateWithFallback = (template, replacements, fallbackSource) => {
+  const fallback = resolveInterpolationFallback(fallbackSource);
   if (!template) {
     return fallback;
   }
-  return interpolateTemplate(template, { value, amount: value }, fallback);
+  return interpolateTemplate(template, replacements, fallback);
 };
 
-export const formatTemplateWithPair = (template, amount, equivalent) => {
-  const fallback = resolveTemplateFallback(amount);
-  if (!template) {
-    return fallback;
-  }
-  return interpolateTemplate(
+export const formatWithTemplate = (template, value) =>
+  renderTemplateWithFallback(template, { value, amount: value }, value);
+
+export const formatTemplateWithPair = (template, amount, equivalent) =>
+  renderTemplateWithFallback(
     template,
     { amount, value: amount, equivalent },
-    fallback,
+    amount,
   );
-};
 
 /**
  * 意图：在不引入第三方依赖的前提下，将订阅到期日期规范化为稳定可读的格式。
