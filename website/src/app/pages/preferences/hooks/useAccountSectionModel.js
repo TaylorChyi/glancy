@@ -67,7 +67,7 @@ const useAccountSectionComponents = (
   return { fields, identity, bindings };
 };
 
-export const useAccountSectionModel = (props) => {
+const useAccountSectionState = (props) => {
   const accountSnapshot = useAccountSnapshotModel(props);
 
   const emailUnbindState = useEmailUnbindState({
@@ -75,5 +75,14 @@ export const useAccountSectionModel = (props) => {
     emailBinding: props.emailBinding,
   });
 
+  return { accountSnapshot, emailUnbindState };
+};
+
+const useAccountSectionModelValue = (props) => {
+  const { accountSnapshot, emailUnbindState } = useAccountSectionState(props);
+
   return useAccountSectionComponents(props, accountSnapshot, emailUnbindState);
 };
+
+export const useAccountSectionModel = (props) =>
+  useAccountSectionModelValue(props);

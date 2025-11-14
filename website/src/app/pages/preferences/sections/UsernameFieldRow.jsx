@@ -110,23 +110,25 @@ UsernameFieldAction.defaultProps = {
   descriptor: null,
 };
 
-function UsernameFieldRow({ field, labelId, valueId }) {
-  const { descriptor, handleResolveAction } = useUsernameActionDescriptor();
+const UsernameFieldLayout = ({
+  field,
+  labelId,
+  valueId,
+  descriptor,
+  onResolveAction,
+}) => (
+  <div className={styles["detail-row"]}>
+    <UsernameFieldLabel id={labelId}>{field.label}</UsernameFieldLabel>
+    <UsernameFieldValue
+      field={field}
+      valueId={valueId}
+      onResolveAction={onResolveAction}
+    />
+    <UsernameFieldAction descriptor={descriptor} />
+  </div>
+);
 
-  return (
-    <div className={styles["detail-row"]}>
-      <UsernameFieldLabel id={labelId}>{field.label}</UsernameFieldLabel>
-      <UsernameFieldValue
-        field={field}
-        valueId={valueId}
-        onResolveAction={handleResolveAction}
-      />
-      <UsernameFieldAction descriptor={descriptor} />
-    </div>
-  );
-}
-
-UsernameFieldRow.propTypes = {
+UsernameFieldLayout.propTypes = {
   field: PropTypes.shape({
     id: PropTypes.string.isRequired,
     label: PropTypes.string.isRequired,
@@ -142,6 +144,33 @@ UsernameFieldRow.propTypes = {
   }).isRequired,
   labelId: PropTypes.string.isRequired,
   valueId: PropTypes.string.isRequired,
+  descriptor: PropTypes.shape({
+    label: PropTypes.string.isRequired,
+    disabled: PropTypes.bool,
+    mode: PropTypes.string,
+    onClick: PropTypes.func,
+  }),
+  onResolveAction: PropTypes.func.isRequired,
 };
+
+UsernameFieldLayout.defaultProps = {
+  descriptor: null,
+};
+
+function UsernameFieldRow({ field, labelId, valueId }) {
+  const { descriptor, handleResolveAction } = useUsernameActionDescriptor();
+
+  return (
+    <UsernameFieldLayout
+      field={field}
+      labelId={labelId}
+      valueId={valueId}
+      descriptor={descriptor}
+      onResolveAction={handleResolveAction}
+    />
+  );
+}
+
+UsernameFieldRow.propTypes = UsernameFieldLayout.propTypes;
 
 export default UsernameFieldRow;

@@ -127,19 +127,11 @@ const useAccountFieldBuilder = ({
     ],
   );
 
-export const useAccountFieldsModel = (props) => {
-  const {
-    usernameEditorTranslations,
-    handleUsernameSubmit,
-    handleUsernameFailure,
-    emailAction,
-  } = useAccountFieldDependencies(props);
+const useAccountFieldsModelValue = (props) => {
+  const dependencies = useAccountFieldDependencies(props);
 
-  return useAccountFieldBuilder({
-    ...props,
-    usernameEditorTranslations,
-    handleUsernameSubmit,
-    handleUsernameFailure,
-    emailAction,
-  });
+  return useAccountFieldBuilder({ ...props, ...dependencies });
 };
+
+export const useAccountFieldsModel = (props) =>
+  useAccountFieldsModelValue(props);
