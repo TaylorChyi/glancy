@@ -118,90 +118,14 @@ export const useDictionaryReportingPropsSelector = (
 export const useDictionaryExperienceShellModel = (
   props: DictionaryExperienceShellProps,
 ) => {
-  const {
-    t,
-    inputRef,
-    text,
-    setText,
-    dictionarySourceLanguage,
-    setDictionarySourceLanguage,
-    dictionaryTargetLanguage,
-    setDictionaryTargetLanguage,
-    sourceLanguageOptions,
-    targetLanguageOptions,
-    handleSwapLanguages,
-    handleSend,
-    handleShowDictionary,
-    handleShowLibrary,
-    handleSelectHistory,
-    viewState,
-    activeView,
-    focusInput,
-    entry,
-    finalText,
-    loading,
-    dictionaryActionBarProps,
-    displayClassName,
-    popupConfig,
-    toast,
-    closeToast,
-    dictionaryTargetLanguageLabel,
-    dictionarySourceLanguageLabel,
-    dictionarySwapLanguagesLabel,
-    searchEmptyState,
-    chatInputPlaceholder,
-    libraryLandingLabel,
-    reportDialog,
-    reportDialogHandlers,
-  } = props;
-
-  const { bottomPanel, bottomPanelState } = useDictionaryBottomPanel({
-    t,
-    viewState,
-    entry,
-    finalText,
-    text,
-    setText,
-    dictionarySourceLanguage,
-    setDictionarySourceLanguage,
-    dictionaryTargetLanguage,
-    setDictionaryTargetLanguage,
-    sourceLanguageOptions,
-    targetLanguageOptions,
-    handleSwapLanguages,
-    handleSend,
-    dictionaryActionBarProps,
-    inputRef,
-    focusInput,
-    dictionarySourceLanguageLabel,
-    dictionaryTargetLanguageLabel,
-    dictionarySwapLanguagesLabel,
-    chatInputPlaceholder,
-  });
+  const { bottomPanel, bottomPanelState } = useDictionaryBottomPanel(props);
 
   const layoutProps = useDictionaryLayoutProps({
-    viewState,
-    activeView,
-    handleShowDictionary,
-    handleShowLibrary,
-    handleSelectHistory,
+    ...props,
     bottomPanelState,
-    displayClassName,
-    libraryLandingLabel,
-    focusInput,
-    entry,
-    finalText,
-    loading,
-    searchEmptyState,
   });
 
-  const reportingProps = useDictionaryReportingPropsSelector({
-    reportDialog,
-    reportDialogHandlers,
-    popupConfig,
-    toast,
-    closeToast,
-  });
+  const reportingProps = useDictionaryReportingPropsSelector(props);
 
   return {
     viewProps: {
