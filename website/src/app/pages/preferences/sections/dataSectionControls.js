@@ -11,6 +11,12 @@ import {
   useRetentionOptions,
 } from "./dataSectionActions.js";
 
+const createHistoryControlConfig = ({ value, options, onChange }) => ({
+  value,
+  options,
+  onChange,
+});
+
 export const useHistoryToggleControl = ({
   copy,
   historyCaptureEnabled,
@@ -21,12 +27,19 @@ export const useHistoryToggleControl = ({
     (enabled) => setHistoryCaptureEnabled(enabled),
     [setHistoryCaptureEnabled],
   );
-  return {
+  return createHistoryControlConfig({
     value: historyCaptureEnabled,
     options,
     onChange: handleToggleHistory,
-  };
+  });
 };
+
+const createRetentionControlConfig = ({ value, options, onChange }) => ({
+  value,
+  options,
+  onChange,
+  pendingId: ACTION_RETENTION,
+});
 
 export const useRetentionControl = ({
   retentionPolicyId,
@@ -37,19 +50,37 @@ export const useRetentionControl = ({
   translations,
 }) => {
   const options = useRetentionOptions(translations);
-  const handleRetentionSelect = useRetentionHandler({
+  const onChange = useRetentionHandler({
     setRetentionPolicy,
     applyRetentionPolicy,
     runWithPending,
     user,
   });
-  return {
+  return createRetentionControlConfig({
     value: retentionPolicyId,
     options,
-    onChange: handleRetentionSelect,
-    pendingId: ACTION_RETENTION,
-  };
+    onChange,
+  });
 };
+
+const buildLanguageCopy = (copy) => ({
+  ...copy.language,
+  clearLabel: copy.actions.clearLanguageLabel,
+});
+
+const createLanguageControlConfig = ({
+  copy,
+  selection,
+  onClear,
+}) => ({
+  copy,
+  value: selection.selectedLanguage,
+  options: selection.options,
+  onChange: selection.selectLanguage,
+  onClear,
+  canClear: selection.canClear,
+  pendingId: ACTION_CLEAR_LANGUAGE,
+});
 
 export const useLanguageControl = ({
   copy,
@@ -58,25 +89,38 @@ export const useLanguageControl = ({
   runWithPending,
   user,
 }) => {
-  const handleClearLanguage = useClearLanguageHandler({
+  const onClear = useClearLanguageHandler({
     clearHistoryByLanguage,
     language: languageSelection.selectedLanguage,
     runWithPending,
     user,
   });
-  return {
-    copy: {
-      ...copy.language,
-      clearLabel: copy.actions.clearLanguageLabel,
-    },
-    value: languageSelection.selectedLanguage,
-    options: languageSelection.options,
-    onChange: languageSelection.selectLanguage,
-    onClear: handleClearLanguage,
-    canClear: languageSelection.canClear,
-    pendingId: ACTION_CLEAR_LANGUAGE,
-  };
+  return createLanguageControlConfig({
+    copy: buildLanguageCopy(copy),
+    selection: languageSelection,
+    onClear,
+  });
 };
+
+const buildActionsCopy = (copy) => ({
+  label: copy.actions.label,
+  description: copy.actions.exportDescription,
+  clearAllLabel: copy.actions.clearAllLabel,
+  exportLabel: copy.actions.exportLabel,
+});
+
+const createActionsControlConfig = ({
+  copy,
+  onClearAll,
+  onExport,
+  history,
+}) => ({
+  copy,
+  onClearAll,
+  onExport,
+  canClearAll: history.length > 0,
+  pendingId: ACTION_CLEAR_ALL,
+});
 
 export const useActionsControl = ({
   copy,
@@ -86,26 +130,20 @@ export const useActionsControl = ({
   user,
   translations,
 }) => {
-  const handleClearAll = useClearAllHandler({
+  const onClearAll = useClearAllHandler({
     clearHistory,
     runWithPending,
     user,
   });
-  const handleExport = useExportHandler({
+  const onExport = useExportHandler({
     history,
     translations,
     fileName: copy.actions.fileName,
   });
-  return {
-    copy: {
-      label: copy.actions.label,
-      description: copy.actions.exportDescription,
-      clearAllLabel: copy.actions.clearAllLabel,
-      exportLabel: copy.actions.exportLabel,
-    },
-    onClearAll: handleClearAll,
-    onExport: handleExport,
-    canClearAll: history.length > 0,
-    pendingId: ACTION_CLEAR_ALL,
-  };
+  return createActionsControlConfig({
+    copy: buildActionsCopy(copy),
+    onClearAll,
+    onExport,
+    history,
+  });
 };

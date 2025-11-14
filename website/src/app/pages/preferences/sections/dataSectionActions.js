@@ -77,39 +77,60 @@ export const useClearLanguageHandler = ({
     );
   }, [clearHistoryByLanguage, language, runWithPending, user]);
 
+const isBrowserRuntime = () =>
+  typeof window !== "undefined" && typeof document !== "undefined";
+
+const resolveDictionaryEntry = (dictionaryState, item) => {
+  if (!item?.termKey) {
+    return undefined;
+  }
+  return dictionaryState.getEntry(
+    item.termKey,
+    item.latestVersionId ?? undefined,
+  );
+};
+
+const createCsvFromHistory = ({ history, translations }) => {
+  const dictionaryState = useWordStore.getState();
+  return serializeHistoryToCsv({
+    history,
+    translations,
+    resolveEntry: (item) => resolveDictionaryEntry(dictionaryState, item),
+  });
+};
+
+const createCsvBlob = (csv) =>
+  new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
+
+const createDownloadFileName = (fileName) =>
+  `${fileName}-${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
+
+const createDownloadAnchor = (url, fileName) => {
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = createDownloadFileName(fileName);
+  anchor.rel = "noopener";
+  return anchor;
+};
+
+const triggerDownload = (blob, fileName) => {
+  const url = URL.createObjectURL(blob);
+  const anchor = createDownloadAnchor(url, fileName);
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+};
+
 export const useExportHandler = ({ history, translations, fileName }) =>
   useCallback(() => {
-    if (typeof window === "undefined" || typeof document === "undefined") {
+    if (!isBrowserRuntime()) {
       return;
     }
     try {
-      const dictionaryState = useWordStore.getState();
-      const csv = serializeHistoryToCsv({
-        history,
-        translations,
-        resolveEntry: (item) => {
-          if (!item?.termKey) {
-            return undefined;
-          }
-          return dictionaryState.getEntry(
-            item.termKey,
-            item.latestVersionId ?? undefined,
-          );
-        },
-      });
-      const blob = new Blob([`\ufeff${csv}`], {
-        type: "text/csv;charset=utf-8",
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      anchor.href = url;
-      anchor.download = `${fileName}-${timestamp}.csv`;
-      anchor.rel = "noopener";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 0);
+      const csv = createCsvFromHistory({ history, translations });
+      const blob = createCsvBlob(csv);
+      triggerDownload(blob, fileName);
     } catch (error) {
       console.error("[DataSection] export failed", error);
     }

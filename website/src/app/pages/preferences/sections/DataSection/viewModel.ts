@@ -40,62 +40,85 @@ export type DataSectionViewModel = {
   fields: DataFieldModel[];
 };
 
-export const createDataSectionViewModel = ({
-  title,
-  headingId,
-  description,
+type FieldBuilderArgs = Pick<
+  CreateDataSectionViewModelArgs,
+  | "ids"
+  | "copy"
+  | "historyToggle"
+  | "retentionControl"
+  | "languageControl"
+  | "actionsControl"
+  | "isActionPending"
+>;
+
+const buildHistoryField = ({ ids, copy, historyToggle }: FieldBuilderArgs) => ({
+  key: "history",
+  type: "history" as const,
+  props: { fieldId: ids.toggle, copy: copy.toggle, control: historyToggle },
+});
+
+const buildRetentionField = ({
   ids,
   copy,
-  historyToggle,
   retentionControl,
-  languageControl,
-  actionsControl,
   isActionPending,
-}: CreateDataSectionViewModelArgs): DataSectionViewModel => {
-  const fields: DataFieldModel[] = [
-    {
-      key: "history",
-      type: "history",
-      props: { fieldId: ids.toggle, copy: copy.toggle, control: historyToggle },
-    },
-    {
-      key: "retention",
-      type: "retention",
-      props: {
-        fieldId: ids.retention,
-        copy: copy.retention,
-        control: retentionControl,
-        isPending: isActionPending(retentionControl.pendingId),
-      },
-    },
-    {
-      key: "language",
-      type: "language",
-      props: {
-        fieldId: ids.language,
-        copy: languageControl.copy,
-        control: languageControl,
-        isPending: isActionPending(languageControl.pendingId),
-      },
-    },
-    {
-      key: "actions",
-      type: "actions",
-      props: {
-        copy: actionsControl.copy,
-        control: actionsControl,
-        isClearingAll: isActionPending(actionsControl.pendingId),
-      },
-    },
-  ];
+}: FieldBuilderArgs) => ({
+  key: "retention",
+  type: "retention" as const,
+  props: {
+    fieldId: ids.retention,
+    copy: copy.retention,
+    control: retentionControl,
+    isPending: isActionPending(retentionControl.pendingId),
+  },
+});
 
-  return {
-    section: {
-      headingId,
-      title,
-      description: description.section,
-      descriptionId: description.id,
-    },
-    fields,
-  };
-};
+const buildLanguageField = ({
+  ids,
+  languageControl,
+  isActionPending,
+}: FieldBuilderArgs) => ({
+  key: "language",
+  type: "language" as const,
+  props: {
+    fieldId: ids.language,
+    copy: languageControl.copy,
+    control: languageControl,
+    isPending: isActionPending(languageControl.pendingId),
+  },
+});
+
+const buildActionsField = ({ actionsControl, isActionPending }: FieldBuilderArgs) => ({
+  key: "actions",
+  type: "actions" as const,
+  props: {
+    copy: actionsControl.copy,
+    control: actionsControl,
+    isClearingAll: isActionPending(actionsControl.pendingId),
+  },
+});
+
+const buildFields = (args: FieldBuilderArgs): DataFieldModel[] => [
+  buildHistoryField(args),
+  buildRetentionField(args),
+  buildLanguageField(args),
+  buildActionsField(args),
+];
+
+const buildSection = ({
+  headingId,
+  title,
+  description,
+}: Pick<CreateDataSectionViewModelArgs, "headingId" | "title" | "description">) => ({
+  headingId,
+  title,
+  description: description.section,
+  descriptionId: description.id,
+});
+
+export const createDataSectionViewModel = (
+  args: CreateDataSectionViewModelArgs,
+): DataSectionViewModel => ({
+  section: buildSection(args),
+  fields: buildFields(args),
+});
