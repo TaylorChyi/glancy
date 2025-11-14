@@ -1,80 +1,16 @@
+import {
+  createChapterAccumulator,
+  finalizeChapterAccumulator,
+  flushChapter,
+  handleContent,
+  handleHeading,
+  isHeadingLine,
+} from "./markdownChapterState.js";
+
 export const joinChapterContent = (lines = []) =>
   lines
     .filter((line) => typeof line === "string" && line.trim().length > 0)
     .join("\n");
-
-const isMarkdownHeading = (line) =>
-  typeof line === "string" && /^#{1,6}\s+/.test(line.trim());
-
-const stripHeadingMarker = (line) => line.replace(/^#{1,6}\s+/, "").trim();
-
-const createEmptyChapter = (fallbackHeading) => ({
-  heading: fallbackHeading,
-  lines: [],
-});
-
-const cloneState = (state) => ({
-  chapters: [...state.chapters],
-  current: {
-    heading: state.current.heading,
-    lines: [...state.current.lines],
-  },
-});
-
-export const flushChapter = (state, fallbackHeading) => {
-  if (!state) {
-    return state;
-  }
-
-  const { current, chapters } = state;
-  const shouldFlush =
-    current.lines.length > 0 || current.heading !== fallbackHeading;
-
-  if (!shouldFlush) {
-    return cloneState(state);
-  }
-
-  return {
-    chapters: [
-      ...chapters,
-      { heading: current.heading, lines: [...current.lines] },
-    ],
-    current: createEmptyChapter(fallbackHeading),
-  };
-};
-
-export const handleHeading = (line, state, fallbackHeading) => {
-  const headingText = stripHeadingMarker(line) || fallbackHeading;
-  const needsFlush =
-    state.current.lines.length > 0 || state.current.heading !== fallbackHeading;
-  const baseState = needsFlush ? flushChapter(state, fallbackHeading) : cloneState(state);
-
-  return {
-    chapters: baseState.chapters,
-    current: {
-      heading: headingText,
-      lines: [],
-    },
-  };
-};
-
-const sanitizeContentLine = (line) =>
-  typeof line === "string" ? line.trimEnd() : "";
-
-export const handleContent = (line, state) => {
-  const trimmed = sanitizeContentLine(line);
-  if (!trimmed) {
-    return cloneState(state);
-  }
-
-  return {
-    chapters: [...state.chapters],
-    current: {
-      heading: state.current.heading,
-      lines: [...state.current.lines, trimmed],
-    },
-  };
-};
 
 /**
  * 意图：根据 Markdown 一级标题拆解章节。
@@ -92,21 +28,17 @@ export const splitMarkdownLinesIntoChapters = (lines, fallbackHeading) => {
     return [];
   }
 
-  let state = {
-    chapters: [],
-    current: createEmptyChapter(fallbackHeading),
-  };
+  let state = createChapterAccumulator(fallbackHeading);
 
   lines.forEach((line) => {
-    if (isMarkdownHeading(line)) {
-      state = handleHeading(line, state, fallbackHeading);
-      return;
-    }
-
-    state = handleContent(line, state);
+    state = isHeadingLine(line)
+      ? handleHeading(line, state, fallbackHeading)
+      : handleContent(line, state);
   });
 
-  const finalizedState = flushChapter(state, fallbackHeading);
+  const finalizedState = finalizeChapterAccumulator(state, fallbackHeading);
 
   return finalizedState.chapters;
 };
+
+export { flushChapter, handleContent, handleHeading } from "./markdownChapterState.js";
