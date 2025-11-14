@@ -152,58 +152,66 @@ const {
   useDictionaryExperience,
 });
 
-describe("DictionaryExperience focus management", () => {
+function setupFocusTestReset() {
   beforeEach(() => {
     reset();
   });
+}
 
-  describe("focus recovery", () => {
-    /**
-     * 测试目标：验证从操作面板切换回搜索模式时，底部输入框在重新挂载后被聚焦。
-     */
-    it("Given_actionsPanel_When_switchBackToSearch_Then_focusesChatInputAfterRemount", async () => {
-      const { user, initialFocusCalls } = renderExperience();
+describe("DictionaryExperience focus management - focus recovery", () => {
+  setupFocusTestReset();
 
-      await clickButtonByLabel(user, "返回搜索");
+  /**
+   * 测试目标：验证从操作面板切换回搜索模式时，底部输入框在重新挂载后被聚焦。
+   */
+  it("Given_actionsPanel_When_switchBackToSearch_Then_focusesChatInputAfterRemount", async () => {
+    const { user, initialFocusCalls } = renderExperience();
 
-      await expectSearchModeWithFocus(initialFocusCalls);
-    });
+    await clickButtonByLabel(user, "返回搜索");
 
-    /**
-     * 测试目标：验证重试后底部输入框重新获得焦点。
-     */
-    it("Given_actionsPanel_When_retryDefinition_Then_restoresSearchFocus", async () => {
-      const { initialFocusCalls } = await performRetryFromActionsPanel();
-
-      await expectSearchModeWithFocus(initialFocusCalls);
-    });
-  });
-
-  describe("retry behaviour", () => {
-    /**
-     * 测试目标：验证点击“重试释义”按钮会触发重试逻辑。
-     */
-    it("Given_actionsPanel_When_retryDefinition_Then_callsReoutputHandler", async () => {
-      await performRetryFromActionsPanel();
-
-      await expectRetryHandlerCalled();
-    });
+    await expectSearchModeWithFocus(initialFocusCalls);
   });
 
   /**
-   * 测试目标：当搜索模式下输入为空时，发送按钮应保持禁用并维持焦点。
-   * 前置条件：存在释义记录使面板可切换；初始处于动作模式。
-   * 步骤：
-   *  1) 切换到底部搜索模式并聚焦 textarea；
-   *  2) 尝试点击发送按钮；
-   * 断言：
-   *  - actions 面板不再显示（搜索模式未退回）；
-   *  - textarea 保持聚焦；
-   *  - 发送回调未被触发。
-   * 边界/异常：
-   *  - 若未来引入自动补全导致按钮自动启用，需要同步调整断言。
+   * 测试目标：验证重试后底部输入框重新获得焦点。
    */
-  test("Given_searchMode_When_sendDisabled_ThenRetainFocusWithoutSubmit", async () => {
+  it("Given_actionsPanel_When_retryDefinition_Then_restoresSearchFocus", async () => {
+    const { initialFocusCalls } = await performRetryFromActionsPanel();
+
+    await expectSearchModeWithFocus(initialFocusCalls);
+  });
+});
+
+describe("DictionaryExperience focus management - retry behaviour", () => {
+  setupFocusTestReset();
+
+  /**
+   * 测试目标：验证点击“重试释义”按钮会触发重试逻辑。
+   */
+  it("Given_actionsPanel_When_retryDefinition_Then_callsReoutputHandler", async () => {
+    await performRetryFromActionsPanel();
+
+    await expectRetryHandlerCalled();
+  });
+});
+
+/**
+ * 测试目标：当搜索模式下输入为空时，发送按钮应保持禁用并维持焦点。
+ * 前置条件：存在释义记录使面板可切换；初始处于动作模式。
+ * 步骤：
+ *  1) 切换到底部搜索模式并聚焦 textarea；
+ *  2) 尝试点击发送按钮；
+ * 断言：
+ *  - actions 面板不再显示（搜索模式未退回）；
+ *  - textarea 保持聚焦；
+ *  - 发送回调未被触发。
+ * 边界/异常：
+ *  - 若未来引入自动补全导致按钮自动启用，需要同步调整断言。
+ */
+describe("DictionaryExperience focus management - disabled send button", () => {
+  setupFocusTestReset();
+
+  it("Given_searchMode_When_sendDisabled_ThenRetainFocusWithoutSubmit", async () => {
     const handleSend = jest.fn();
     const { user } = renderExperience({ handleSend });
 
@@ -216,22 +224,26 @@ describe("DictionaryExperience focus management", () => {
 
     expect(handleSend).not.toHaveBeenCalled();
   });
+});
 
-  /**
-   * 测试目标：验证在搜索模式下通过 Enter 提交后，底部面板立即切换至释义模式并清空输入值。
-   * 前置条件：词典体验存在释义数据，ChatInput 初始填充非空文本。
-   * 步骤：
-   *  1) 覆盖 useDictionaryExperience 使 text 为非空且 handleSend 清空文本；
-   *  2) 聚焦 textarea；
-   *  3) 通过键入 Enter 触发表单提交；
-   * 断言：
-   *  - ChatInput 被卸载，说明面板进入释义模式；
-   *  - “返回搜索”按钮重新出现；
-   *  - handleSend 与 setText 被调用一次且文本被清空。
-   * 边界/异常：
-   *  - 若未来回车提交逻辑新增组合键，需要同步调整触发输入。
-   */
-  test("Given_searchSubmission_When_pressEnter_Then_showActionsAndResetInput", async () => {
+/**
+ * 测试目标：验证在搜索模式下通过 Enter 提交后，底部面板立即切换至释义模式并清空输入值。
+ * 前置条件：词典体验存在释义数据，ChatInput 初始填充非空文本。
+ * 步骤：
+ *  1) 覆盖 useDictionaryExperience 使 text 为非空且 handleSend 清空文本；
+ *  2) 聚焦 textarea；
+ *  3) 通过键入 Enter 触发表单提交；
+ * 断言：
+ *  - ChatInput 被卸载，说明面板进入释义模式；
+ *  - “返回搜索”按钮重新出现；
+ *  - handleSend 与 setText 被调用一次且文本被清空。
+ * 边界/异常：
+ *  - 若未来回车提交逻辑新增组合键，需要同步调整触发输入。
+ */
+describe("DictionaryExperience focus management - search submission", () => {
+  setupFocusTestReset();
+
+  it("Given_searchSubmission_When_pressEnter_Then_showActionsAndResetInput", async () => {
     const setTextMock = jest.fn();
     const handleSendMock = jest.fn((event) => {
       event.preventDefault();
@@ -266,20 +278,24 @@ describe("DictionaryExperience focus management", () => {
     expect(handleSendMock).toHaveBeenCalledTimes(1);
     expect(setTextMock).toHaveBeenCalledWith("");
   });
+});
 
-  /**
-   * 测试目标：当视图切换至“致用单词”时，底栏应被移除且占位标签居中展示。
-   * 前置条件：useDictionaryExperience 返回 activeView 为 library 的桩数据。
-   * 步骤：
-   *  1) 通过 mockReturnValueOnce 覆盖 Hook 输出；
-   *  2) 渲染 DictionaryExperience；
-   * 断言：
-   *  - Layout 的 data-has-bottom 属性为 "no"；
-   *  - LibraryLandingView 渲染致用单词标签（失败信息：占位文案未呈现）。
-   * 边界/异常：
-   *  - 若未来 LibraryLandingView 支持更多插槽需同步更新断言。
-   */
-  test("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
+/**
+ * 测试目标：当视图切换至“致用单词”时，底栏应被移除且占位标签居中展示。
+ * 前置条件：useDictionaryExperience 返回 activeView 为 library 的桩数据。
+ * 步骤：
+ *  1) 通过 mockReturnValueOnce 覆盖 Hook 输出；
+ *  2) 渲染 DictionaryExperience；
+ * 断言：
+ *  - Layout 的 data-has-bottom 属性为 "no"；
+ *  - LibraryLandingView 渲染致用单词标签（失败信息：占位文案未呈现）。
+ * 边界/异常：
+ *  - 若未来 LibraryLandingView 支持更多插槽需同步更新断言。
+ */
+describe("DictionaryExperience focus management - library view", () => {
+  setupFocusTestReset();
+
+  it("Given_libraryView_When_rendered_Then_hidesBottomPanelAndShowsLibraryLabel", () => {
     useDictionaryExperience.mockReturnValueOnce(
       buildExperienceState({
         t: {},
