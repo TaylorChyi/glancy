@@ -5,6 +5,13 @@ type ResponseStyleState = {
   error?: string | null;
 };
 
+type ResponseStyleStateSnapshot = {
+  status: string;
+  values: Record<string, string>;
+  savingField: string | null;
+  hasLoadedValues: boolean;
+};
+
 type ResponseStyleCopyField = {
   id: string;
   label: string;
@@ -88,15 +95,7 @@ const createDropdownSelectHandler =
     handlers.onFieldCommit(fieldId);
   };
 
-const shouldShowPlaceholder = ({
-  status,
-  hasLoadedValues,
-}: {
-  status: string;
-  hasLoadedValues: boolean;
-}) => (status === "idle" || status === "loading") && !hasLoadedValues;
-
-const resolveStateContext = (state: ResponseStyleState) => {
+const createStateSnapshot = (state: ResponseStyleState): ResponseStyleStateSnapshot => {
   const status = state?.status ?? "idle";
   const values = resolveValues(state);
   const savingField = state?.savingField ?? null;
@@ -104,22 +103,22 @@ const resolveStateContext = (state: ResponseStyleState) => {
   return { status, values, savingField, hasLoadedValues };
 };
 
-const buildDropdownViewModel = ({
-  hasLoadedValues,
-  copy,
-  handlers,
-  values,
-  savingField,
-  status,
-}: {
-  hasLoadedValues: boolean;
+const shouldShowPlaceholder = (snapshot: ResponseStyleStateSnapshot) =>
+  (snapshot.status === "idle" || snapshot.status === "loading") &&
+  !snapshot.hasLoadedValues;
+
+type PresentationContext = {
   copy: ResponseStyleCopy;
   handlers: ResponseStyleHandlers;
-  values: Record<string, string>;
-  savingField: string | null;
-  status: string;
-}) => {
-  if (!hasLoadedValues) {
+  state: ResponseStyleStateSnapshot;
+};
+
+const buildDropdownViewModel = ({
+  copy,
+  handlers,
+  state,
+}: PresentationContext) => {
+  if (!state.hasLoadedValues) {
     return null;
   }
   const fieldId = "responseStyle";
@@ -127,19 +126,26 @@ const buildDropdownViewModel = ({
     selectId: "response-style-select",
     label: copy.dropdownLabel,
     options: copy.options,
-    value: values[fieldId] ?? "",
+    value: state.values[fieldId] ?? "",
     onSelect: createDropdownSelectHandler(handlers, fieldId),
-    isSaving: savingField === fieldId && status === "saving",
+    isSaving:
+      state.savingField === fieldId && state.status === "saving",
   };
 };
 
-const createFieldViewModelFactory =
-  (
-    handlers: ResponseStyleHandlers,
-    values: Record<string, string>,
-    savingField: string | null,
-    status: string,
-  ) =>
+type FieldFactoryContext = {
+  handlers: ResponseStyleHandlers;
+  values: Record<string, string>;
+  savingField: string | null;
+  status: string;
+};
+
+const createFieldViewModelFactory = ({
+  handlers,
+  values,
+  savingField,
+  status,
+}: FieldFactoryContext) =>
   (field: ResponseStyleCopyField) => ({
     inputId: `${field.id}-input`,
     label: field.label,
@@ -153,29 +159,19 @@ const createFieldViewModelFactory =
   });
 
 const buildFieldViewModels = ({
-  hasLoadedValues,
   copy,
   handlers,
-  values,
-  savingField,
-  status,
-}: {
-  hasLoadedValues: boolean;
-  copy: ResponseStyleCopy;
-  handlers: ResponseStyleHandlers;
-  values: Record<string, string>;
-  savingField: string | null;
-  status: string;
-}) => {
-  if (!hasLoadedValues) {
+  state,
+}: PresentationContext) => {
+  if (!state.hasLoadedValues) {
     return [];
   }
-  const factory = createFieldViewModelFactory(
+  const factory = createFieldViewModelFactory({
     handlers,
-    values,
-    savingField,
-    status,
-  );
+    values: state.values,
+    savingField: state.savingField,
+    status: state.status,
+  });
   return (copy.fields ?? []).map(factory);
 };
 
@@ -204,14 +200,12 @@ const buildSectionMetadata = ({
 
 const buildPlaceholderState = ({
   copy,
-  status,
-  hasLoadedValues,
+  state,
 }: {
   copy: ResponseStyleCopy;
-  status: string;
-  hasLoadedValues: boolean;
+  state: ResponseStyleStateSnapshot;
 }) => ({
-  visible: shouldShowPlaceholder({ status, hasLoadedValues }),
+  visible: shouldShowPlaceholder(state),
   label: copy.loadingLabel,
 });
 
@@ -224,28 +218,13 @@ export const createResponseStyleSectionViewModel = ({
   copy,
   handlers,
 }: CreateResponseStyleSectionViewModelArgs): ResponseStyleSectionViewModel => {
-  const { status, values, savingField, hasLoadedValues } =
-    resolveStateContext(state);
-  const dropdown = buildDropdownViewModel({
-    hasLoadedValues,
-    copy,
-    handlers,
-    values,
-    savingField,
-    status,
-  });
-  const fields = buildFieldViewModels({
-    hasLoadedValues,
-    copy,
-    handlers,
-    values,
-    savingField,
-    status,
-  });
+  const snapshot = createStateSnapshot(state);
+  const dropdown = buildDropdownViewModel({ copy, handlers, state: snapshot });
+  const fields = buildFieldViewModels({ copy, handlers, state: snapshot });
 
   return {
     section: buildSectionMetadata({ title, headingId, description, descriptionId }),
-    placeholder: buildPlaceholderState({ copy, status, hasLoadedValues }),
+    placeholder: buildPlaceholderState({ copy, state: snapshot }),
     error: buildErrorState(state, copy, handlers),
     dropdown,
     fields,

@@ -22,20 +22,38 @@ const buildSectionsConfig = ({
   subscriptionSection,
 });
 
-export const useSectionsBlueprint = (params) => {
-  const sectionsConfig = useMemo(
-    () => buildSectionsConfig(params),
+const useSectionsConfig = (params) => {
+  const {
+    accountModel,
+    responseStyleCopy,
+    responseStylePreferences,
+    subscriptionSection,
+    translations,
+  } = params;
+
+  return useMemo(
+    () =>
+      buildSectionsConfig({
+        accountModel,
+        responseStyleCopy,
+        responseStylePreferences,
+        subscriptionSection,
+        translations,
+      }),
     [
-      params.accountModel,
-      params.responseStyleCopy,
-      params.responseStylePreferences.handleFieldChange,
-      params.responseStylePreferences.handleFieldCommit,
-      params.responseStylePreferences.handleRetry,
-      params.responseStylePreferences.state,
-      params.subscriptionSection,
-      params.translations,
+      accountModel,
+      responseStyleCopy,
+      responseStylePreferences.handleFieldChange,
+      responseStylePreferences.handleFieldCommit,
+      responseStylePreferences.handleRetry,
+      responseStylePreferences.state,
+      subscriptionSection,
+      translations,
     ],
   );
+};
 
+export const useSectionsBlueprint = (params) => {
+  const sectionsConfig = useSectionsConfig(params);
   return useMemo(() => createSections(sectionsConfig), [sectionsConfig]);
 };
