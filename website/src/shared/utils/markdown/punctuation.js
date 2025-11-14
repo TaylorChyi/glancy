@@ -11,6 +11,16 @@ import {
   isSpacingCandidate,
 } from "./characters.js";
 
+const WHITESPACE_PATTERN = /\s/,
+  isFenceChar = (char) => char === "`",
+  buildFenceSegment = (fenceSize) => "`".repeat(fenceSize),
+  isFenceActive = (activeFenceSize) => activeFenceSize > 0,
+  isAsciiPunctuationChar = (char) => Boolean(char && ASCII_PUNCTUATION.has(char)),
+  isWhitespaceChar = (char) => Boolean(char && WHITESPACE_PATTERN.test(char)),
+  hasSpacingNeighbors = (prev, next) =>
+    isSpacingCandidate(prev) && isSpacingCandidate(next),
+  isPeriodChar = (char) => char === ".";
+
 function countBackticks(source, startIndex) {
   let length = 0;
   while (source[startIndex + length] === "`") {
@@ -19,90 +29,79 @@ function countBackticks(source, startIndex) {
   return length;
 }
 
+const computeNextFenceState = (activeFenceSize, fenceSize) =>
+  activeFenceSize === 0 ? fenceSize : fenceSize >= activeFenceSize ? 0 : activeFenceSize;
+
+function getFenceTransition({ text, index, activeFenceSize }) {
+  if (!isFenceChar(text[index])) {
+    return null;
+  }
+  const fenceSize = countBackticks(text, index);
+  return {
+    segment: buildFenceSegment(fenceSize),
+    nextIndex: index + fenceSize,
+    activeFenceSize: computeNextFenceState(activeFenceSize, fenceSize),
+  };
+}
+
 const PERIOD_SKIP_CHECKS = [
   ({ prev, next }) => prev === "." || next === ".",
-  ({ prev, next }) =>
-    Boolean(prev && next && isAsciiDigit(prev) && isAsciiDigit(next)),
+  ({ prev, next }) => Boolean(prev && next && isAsciiDigit(prev) && isAsciiDigit(next)),
   ({ prev, next }) =>
     Boolean(prev && next && isAsciiUppercase(prev) && isAsciiUppercase(next)),
 ];
 
-function shouldSkipPeriodSpacing(source, index) {
-  const prev = source[index - 1];
-  const next = source[index + 1];
-  const context = { prev, next };
-  return PERIOD_SKIP_CHECKS.some((check) => check(context));
-}
+const shouldSkipPeriodSpacing = (source, index) =>
+  PERIOD_SKIP_CHECKS.some((check) =>
+    check({ prev: source[index - 1], next: source[index + 1] }),
+  );
 
-function shouldInsertPeriodSpace(prev, next) {
-  if (!isSpacingCandidate(prev)) {
-    return false;
-  }
-  if (isHanChar(next)) {
-    return true;
-  }
-  return isAsciiUppercase(next);
-}
+const shouldInsertPeriodSpace = (prev, next) =>
+  isSpacingCandidate(prev) && (isHanChar(next) || isAsciiUppercase(next));
 
-const handleBacktickFence = ({ text, index, activeFenceSize }) => {
-  if (text[index] !== "`") {
-    return {
-      handled: false,
-      nextIndex: index,
-      activeFenceSize,
-      segment: "",
-    };
-  }
-  const fenceSize = countBackticks(text, index);
-  const nextActiveFence =
-    activeFenceSize === 0
-      ? fenceSize
-      : fenceSize >= activeFenceSize
-        ? 0
-        : activeFenceSize;
-  return {
-    handled: true,
-    nextIndex: index + fenceSize,
-    activeFenceSize: nextActiveFence,
-    segment: "`".repeat(fenceSize),
-  };
-};
+const isBoundaryAdjacentChar = (char) =>
+  Boolean(
+    char &&
+      (isAsciiPunctuationChar(char) ||
+        ASCII_PUNCTUATION_BOUNDARY.has(char) ||
+        isCjkPunctuation(char)),
+  );
 
-const shouldAppendPunctuationSpace = ({
-  char,
-  prev,
-  next,
-  text,
-  index,
-  activeFenceSize,
-}) => {
-  if (activeFenceSize > 0) {
+const shouldPadPeriod = ({ text, index, prev, next }) =>
+  !shouldSkipPeriodSpacing(text, index) && shouldInsertPeriodSpace(prev, next);
+
+const needsPunctuationPadding = ({ char, next }) =>
+  Boolean(
+    isAsciiPunctuationChar(char) &&
+      next &&
+      !isWhitespaceChar(next) &&
+      !isBoundaryAdjacentChar(next),
+  );
+
+const shouldAppendPunctuationSpace = (context) => {
+  if (isFenceActive(context.activeFenceSize)) {
     return false;
   }
-  if (!ASCII_PUNCTUATION.has(char)) {
+  if (!needsPunctuationPadding(context)) {
     return false;
   }
-  if (char === "." && shouldSkipPeriodSpacing(text, index)) {
+  if (!hasSpacingNeighbors(context.prev, context.next)) {
     return false;
   }
-  if (!next || /\s/.test(next)) {
-    return false;
-  }
-  if (
-    ASCII_PUNCTUATION.has(next) ||
-    ASCII_PUNCTUATION_BOUNDARY.has(next) ||
-    isCjkPunctuation(next)
-  ) {
-    return false;
-  }
-  if (!isSpacingCandidate(prev) || !isSpacingCandidate(next)) {
-    return false;
-  }
-  if (char === "." && !shouldInsertPeriodSpace(prev, next)) {
-    return false;
+  if (isPeriodChar(context.char)) {
+    return shouldPadPeriod(context);
   }
   return true;
 };
+
+function appendCharWithSpacing({ text, index, activeFenceSize }) {
+  const char = text[index];
+  const prev = text[index - 1];
+  const next = text[index + 1];
+  const spacingContext = { char, prev, next, text, index, activeFenceSize };
+  const padding = shouldAppendPunctuationSpace(spacingContext) ? " " : "";
+  return { segment: char + padding, nextIndex: index + 1 };
+}
 
 const rewritePunctuationSpacing = (text) => {
   if (!text) {
@@ -110,36 +109,21 @@ const rewritePunctuationSpacing = (text) => {
   }
   let result = "";
   let activeFenceSize = 0;
-  let index = 0;
-  while (index < text.length) {
-    const char = text[index];
-    const fenceState = handleBacktickFence({
+  for (let index = 0; index < text.length; ) {
+    const fenceTransition = getFenceTransition({ text, index, activeFenceSize });
+    if (fenceTransition) {
+      result += fenceTransition.segment;
+      activeFenceSize = fenceTransition.activeFenceSize;
+      index = fenceTransition.nextIndex;
+      continue;
+    }
+    const { segment, nextIndex } = appendCharWithSpacing({
       text,
       index,
       activeFenceSize,
     });
-    if (fenceState.handled) {
-      result += fenceState.segment;
-      activeFenceSize = fenceState.activeFenceSize;
-      index = fenceState.nextIndex;
-      continue;
-    }
-    index += 1;
-    result += char;
-    const prev = text[index - 2];
-    const next = text[index];
-    if (
-      shouldAppendPunctuationSpace({
-        char,
-        prev,
-        next,
-        text,
-        index: index - 1,
-        activeFenceSize,
-      })
-    ) {
-      result += " ";
-    }
+    result += segment;
+    index = nextIndex;
   }
   return result;
 };
