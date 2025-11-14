@@ -66,7 +66,8 @@ export default function useWaitingFrameCycle(frames, options = {}) {
   useEffect(() => {
     if (!allowScheduling) return undefined;
     const timerId = schedulerRef.current(() => advanceFrame(), WAITING_CYCLE_INTERVAL_MS);
-    return () => cancelRef.current(timerId);
+    const cancel = cancelRef.current;
+    return () => cancel(timerId);
   }, [allowScheduling, advanceFrame]);
   return useMemo(
     () => ({

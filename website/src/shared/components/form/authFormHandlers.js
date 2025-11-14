@@ -120,7 +120,17 @@ const useCodeRequestHandler = (props) => {
   } = props;
 
   return useCallback(
-    () => handleCodeRequest(props),
+    () =>
+      handleCodeRequest({
+        account,
+        method,
+        onRequestCode,
+        setAccount,
+        showPopup,
+        showToast,
+        t,
+        validateAccount,
+      }),
     [
       account,
       method,

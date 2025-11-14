@@ -78,7 +78,9 @@ type NormalizedNavItemModelInput = {
   restProps: Record<string, unknown>;
 };
 
-function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {
+function normalizeNavItemModelInput(
+  props: NavItemModelInput,
+): NormalizedNavItemModelInput {
   const {
     active,
     allowMultilineLabel,
@@ -95,7 +97,8 @@ function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {
     variant,
     ...restProps
   } = props;
-  const normalizedProps: NormalizedNavItemModelInput = {
+
+  return {
     icon,
     label,
     description,
@@ -111,6 +114,10 @@ function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {
     variant: variant ?? "accent",
     allowMultilineLabel: allowMultilineLabel ?? false,
   };
+}
+
+function useNavItemViewProps(props: NavItemModelInput): NavItemViewProps {
+  const normalizedProps = normalizeNavItemModelInput(props);
   const variantStyles = getVariantStyles(normalizedProps.variant);
   const classNames = useNavItemClassNames({
     active: normalizedProps.active,
@@ -141,34 +148,61 @@ function buildNavItemViewProps({
   classNames,
   props,
 }: BuildNavItemViewPropsArgs): NavItemViewProps {
-  const {
-    icon,
-    label,
-    description,
-    children,
-    onClick,
-    active,
-    to,
-    href,
-    type,
-    restProps,
-  } = props;
   return {
     componentType,
     classNames: {
       base: classNames.resolvedClassName,
       navLink: classNames.navLinkClassName,
     },
-    handlers: { onClick, ariaCurrent: active ? "page" : undefined },
-    link: { to, href, type },
-    content: {
-      icon,
-      label,
-      description,
+    handlers: buildNavItemHandlers(props.onClick, props.active),
+    link: buildNavItemLink(props.to, props.href, props.type),
+    content: buildNavItemContent({
+      icon: props.icon,
+      label: props.label,
+      description: props.description,
       labelClassName: classNames.labelClassName,
-      children,
-    },
-    restProps,
+      children: props.children,
+    }),
+    restProps: props.restProps,
+  };
+}
+
+function buildNavItemHandlers(
+  onClick?: (event: MouseEvent<HTMLElement>) => void,
+  active?: boolean,
+) {
+  return { onClick, ariaCurrent: active ? "page" : undefined };
+}
+
+function buildNavItemLink(
+  to?: string,
+  href?: string,
+  type?: "button" | "submit" | "reset",
+) {
+  return { to, href, type };
+}
+
+type BuildNavItemContentArgs = {
+  icon?: ReactNode;
+  label: ReactNode;
+  description?: ReactNode;
+  labelClassName: string;
+  children?: ReactNode;
+};
+
+function buildNavItemContent({
+  icon,
+  label,
+  description,
+  labelClassName,
+  children,
+}: BuildNavItemContentArgs) {
+  return {
+    icon,
+    label,
+    description,
+    labelClassName,
+    children,
   };
 }
 

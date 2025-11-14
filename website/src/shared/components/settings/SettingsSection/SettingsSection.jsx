@@ -46,18 +46,48 @@ const buildDescriptionProps = ({ shouldRender, id, className }) => ({
 });
 
 const useSettingsSectionProps = (props) => {
-  const { headingId, title, description, descriptionId, describedBy, showDivider = true, classes = {}, ...sectionProps } = props;
-  const autoDescriptionId = useId(), shouldRenderDescription = isRenderable(description);
-  const resolvedDescriptionId = useResolvedDescriptionId({ shouldRenderDescription, descriptionId, headingId, autoDescriptionId });
+  const {
+    headingId,
+    title,
+    description,
+    descriptionId,
+    describedBy,
+    showDivider = true,
+    classes = {},
+    ...sectionProps
+  } = props;
+  const autoDescriptionId = useId();
+  const shouldRenderDescription = isRenderable(description);
+  const resolvedDescriptionId = useResolvedDescriptionId({
+    shouldRenderDescription,
+    descriptionId,
+    headingId,
+    autoDescriptionId,
+  });
   const sectionClasses = getSectionClasses(classes);
-  const { ariaDescribedByFromProps, restSectionProps } = splitSectionProps(sectionProps);
-  const ariaDescribedBy = resolveAriaDescribedBy({ describedBy, ariaDescribedByFromProps, shouldRenderDescription, resolvedDescriptionId });
+  const { ariaDescribedByFromProps, restSectionProps } =
+    splitSectionProps(sectionProps);
+  const ariaDescribedBy = resolveAriaDescribedBy({
+    describedBy,
+    ariaDescribedByFromProps,
+    shouldRenderDescription,
+    resolvedDescriptionId,
+  });
   return {
     ariaDescribedBy,
     sectionClassName: sectionClasses.sectionClassName,
     restSectionProps,
-    headerProps: buildHeaderProps({ headingId, title, showDivider, classes: sectionClasses }),
-    descriptionProps: buildDescriptionProps({ shouldRender: shouldRenderDescription, id: resolvedDescriptionId, className: sectionClasses.descriptionClassName }),
+    headerProps: buildHeaderProps({
+      headingId,
+      title,
+      showDivider,
+      classes: sectionClasses,
+    }),
+    descriptionProps: buildDescriptionProps({
+      shouldRender: shouldRenderDescription,
+      id: resolvedDescriptionId,
+      className: sectionClasses.descriptionClassName,
+    }),
   };
 };
 

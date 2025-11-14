@@ -87,42 +87,21 @@ const buildUserMenuModalsState = ({
   email: userEmail ?? "",
 });
 
-const useUserMenuModalsMemo = ({
-  closeUpgrade,
-  closeLogout,
-  closeSettings,
-  confirmLogout,
-  isPro,
-  logoutOpen,
-  settingsState,
-  upgradeOpen,
-  userEmail,
-}) =>
-  useMemo(
-    () =>
-      buildUserMenuModalsState({
-        closeUpgrade,
-        closeLogout,
-        closeSettings,
-        confirmLogout,
-        isPro,
-        logoutOpen,
-        settingsState,
-        upgradeOpen,
-        userEmail,
-      }),
-    [
-      closeUpgrade,
-      closeLogout,
-      closeSettings,
-      confirmLogout,
-      isPro,
-      logoutOpen,
-      settingsState,
-      upgradeOpen,
-      userEmail,
-    ],
-  );
+const useUserMenuModalsMemo = (options) => {
+  const dependencies = [
+    options.closeUpgrade,
+    options.closeLogout,
+    options.closeSettings,
+    options.confirmLogout,
+    options.isPro,
+    options.logoutOpen,
+    options.settingsState,
+    options.upgradeOpen,
+    options.userEmail,
+  ];
+
+  return useMemo(() => buildUserMenuModalsState(options), dependencies);
+};
 
 const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
   const { upgradeOpen, logoutOpen, settingsState } = state;

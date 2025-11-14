@@ -25,7 +25,7 @@ const useFocusInput = (inputRef) =>
     focusInputRef(inputRef);
   }, [inputRef]);
 
-const useHomeResetHandler = ({
+const runHomeReset = ({
   resetCopyFeedback,
   setEntry,
   setFinalText,
@@ -35,28 +35,42 @@ const useHomeResetHandler = ({
   setActiveView,
   focusInput,
   closeToast,
-}) =>
-  useCallback(() => {
-    resetCopyFeedback();
-    setEntry(null);
-    setFinalText("");
-    setLoading(false);
-    setCurrentTermKey(null);
-    setCurrentTerm("");
-    setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
-    focusInput();
-    closeToast();
-  }, [
-    resetCopyFeedback,
-    setEntry,
-    setFinalText,
-    setLoading,
-    setCurrentTermKey,
-    setCurrentTerm,
-    setActiveView,
-    focusInput,
-    closeToast,
-  ]);
+}) => {
+  resetCopyFeedback();
+  setEntry(null);
+  setFinalText("");
+  setLoading(false);
+  setCurrentTermKey(null);
+  setCurrentTerm("");
+  setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
+  focusInput();
+  closeToast();
+};
+
+const getHomeResetDependencies = ({
+  resetCopyFeedback,
+  setEntry,
+  setFinalText,
+  setLoading,
+  setCurrentTermKey,
+  setCurrentTerm,
+  setActiveView,
+  focusInput,
+  closeToast,
+}) => [
+  resetCopyFeedback,
+  setEntry,
+  setFinalText,
+  setLoading,
+  setCurrentTermKey,
+  setCurrentTerm,
+  setActiveView,
+  focusInput,
+  closeToast,
+];
+
+const useHomeResetHandler = (params) =>
+  useCallback(() => runHomeReset(params), getHomeResetDependencies(params));
 
 const useShowLibraryHandler = (setActiveView) =>
   useCallback(

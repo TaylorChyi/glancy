@@ -27,8 +27,6 @@ const EmptyStateVisual = ({ illustration, iconName }) => (
   </div>
 );
 
-const renderIf = (condition, element) => (condition ? element : null);
-
 function EmptyState({
   iconName,
   illustration,
@@ -44,25 +42,22 @@ function EmptyState({
   const shouldRenderVisual =
     tone !== "plain" && (illustration || iconName);
 
+  const sectionClassName = [styles.wrapper, sizeClass, toneClass, className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <section
-      className={[styles.wrapper, sizeClass, toneClass, className]
-        .filter(Boolean)
-        .join(" ")}
+      className={sectionClassName}
     >
-      {renderIf(
-        shouldRenderVisual,
+      {shouldRenderVisual && (
         <EmptyStateVisual illustration={illustration} iconName={iconName} />
       )}
-      {renderIf(title, <h2 className={styles.title}>{title}</h2>)}
-      {renderIf(
-        description,
+      {title && <h2 className={styles.title}>{title}</h2>}
+      {description && (
         <p className={styles.description}>{description}</p>
       )}
-      {renderIf(
-        actions,
-        <div className={styles.actions}>{actions}</div>
-      )}
+      {actions && <div className={styles.actions}>{actions}</div>}
     </section>
   );
 }

@@ -45,28 +45,34 @@ function buildUsernameViewModelPayload({
   renderInlineAction,
   errorMessage,
 }) {
+  const layout = buildLayout(className);
+  const inputProps = createInputProps({
+    controlId,
+    messageId,
+    mode,
+    error,
+    value: inputValue,
+    t,
+    inputRef,
+    handlers,
+    inputClassName,
+  });
+  const buttonProps = createButtonProps({
+    buttonClassName,
+    handlers,
+    mode,
+  });
+  const errorProps = createErrorProps(errorMessage, messageId);
+  const actionDescriptor = createActionDescriptor(buttonLabel, handlers, mode);
+
   return {
-    layout: buildLayout(className),
-    inputProps: createInputProps({
-      controlId,
-      messageId,
-      mode,
-      error,
-      value: inputValue,
-      t,
-      inputRef,
-      handlers,
-      inputClassName,
-    }),
-    buttonProps: createButtonProps({
-      buttonClassName,
-      handlers,
-      mode,
-    }),
+    layout,
+    inputProps,
+    buttonProps,
     buttonLabel,
     shouldRenderButton: renderInlineAction,
-    errorProps: createErrorProps(errorMessage, messageId),
-    actionDescriptor: createActionDescriptor(buttonLabel, handlers, mode),
+    errorProps,
+    actionDescriptor,
   };
 }
 

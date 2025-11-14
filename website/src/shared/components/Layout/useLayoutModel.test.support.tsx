@@ -12,6 +12,33 @@ import {
   type SidebarModel,
 } from "./useLayoutModel.test.helpers.tsx";
 
+type ExpectHookUsageArgs = {
+  bottomContent: React.ReactNode;
+  shouldRenderDocker: boolean;
+  isMobile: boolean;
+  containerRef: MutableRefObject<HTMLDivElement | null>;
+  sidebarProps: Record<string, unknown>;
+  children: React.ReactNode;
+  onToggleSidebar: () => void;
+  onMainMiddleScroll?: () => void;
+  dockerModel: DockerModel;
+  sidebarModel: SidebarModel;
+  mocks: {
+    useDockerViewModelMock: jest.Mock;
+    useSidebarViewModelMock: jest.Mock;
+    useMainViewModelMock: jest.Mock;
+    useContainerStyleMock: jest.Mock;
+  };
+};
+
+type CreateComposedScenarioArgs = {
+  children: React.ReactNode;
+  bottomContent: React.ReactNode;
+  sidebarProps: Record<string, unknown>;
+  onMainMiddleScroll: () => void;
+  onToggleSidebar: () => void;
+};
+
 export const expectViewProps = ({
   result,
   containerRef,
@@ -88,58 +115,37 @@ const expectContainerStyleCall = (
   });
 };
 
-export function expectHookUsage({
-  bottomContent,
-  shouldRenderDocker,
-  isMobile,
-  containerRef,
-  sidebarProps,
-  children,
-  onToggleSidebar,
-  onMainMiddleScroll,
-  dockerModel,
-  sidebarModel,
-  mocks,
-}: {
-  bottomContent: React.ReactNode;
-  shouldRenderDocker: boolean;
-  isMobile: boolean;
-  containerRef: MutableRefObject<HTMLDivElement | null>;
-  sidebarProps: Record<string, unknown>;
-  children: React.ReactNode;
-  onToggleSidebar: () => void;
-  onMainMiddleScroll?: () => void;
-  dockerModel: DockerModel;
-  sidebarModel: SidebarModel;
-  mocks: {
-    useDockerViewModelMock: jest.Mock;
-    useSidebarViewModelMock: jest.Mock;
-    useMainViewModelMock: jest.Mock;
-    useContainerStyleMock: jest.Mock;
-  };
-}): void {
-  const { useDockerViewModelMock, useSidebarViewModelMock, useMainViewModelMock, useContainerStyleMock } =
-    mocks;
+export function expectHookUsage(args: ExpectHookUsageArgs): void {
+  const {
+    bottomContent,
+    shouldRenderDocker,
+    isMobile,
+    containerRef,
+    sidebarProps,
+    children,
+    onToggleSidebar,
+    onMainMiddleScroll,
+    dockerModel,
+    sidebarModel,
+    mocks,
+  } = args;
+
+  const {
+    useDockerViewModelMock,
+    useSidebarViewModelMock,
+    useMainViewModelMock,
+    useContainerStyleMock,
+  } = mocks;
 
   expectDockerViewModelCall(useDockerViewModelMock, bottomContent, shouldRenderDocker);
   expectSidebarViewModelCall(useSidebarViewModelMock, isMobile, containerRef, sidebarProps);
   expectMainViewModelCall(useMainViewModelMock, isMobile, children, onToggleSidebar, onMainMiddleScroll);
   expectContainerStyleCall(useContainerStyleMock, shouldRenderDocker, dockerModel, isMobile, sidebarModel);
-};
+}
 
-export function createComposedScenario({
-  children,
-  bottomContent,
-  sidebarProps,
-  onMainMiddleScroll,
-  onToggleSidebar,
-}: {
-  children: React.ReactNode;
-  bottomContent: React.ReactNode;
-  sidebarProps: Record<string, unknown>;
-  onMainMiddleScroll: () => void;
-  onToggleSidebar: () => void;
-}): LayoutScenarioOptions {
+export function createComposedScenario(args: CreateComposedScenarioArgs): LayoutScenarioOptions {
+  const { children, bottomContent, sidebarProps, onMainMiddleScroll, onToggleSidebar } = args;
+
   const dockerModel = createDockerModel({
     shouldRender: true,
     content: bottomContent,

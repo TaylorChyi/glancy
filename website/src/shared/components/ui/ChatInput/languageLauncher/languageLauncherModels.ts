@@ -45,16 +45,27 @@ const useCurrentOptionModel = (
     [normalizedOptions, comparableValue],
   );
 
-const buildVariantModel = (
-  key: LanguageVariantKey,
-  label: VariantInput["label"],
-  normalizedOptions: NormalizedOption[],
-  currentOption: NormalizedOption | null,
-  hasOptions: boolean,
-  onChange?: VariantInput["onChange"],
-  normalizeValue?: VariantInput["normalizeValue"],
-  onOpen?: VariantInput["onOpen"],
-): VariantModel => ({
+type BuildVariantModelArgs = {
+  key: LanguageVariantKey;
+  label: VariantInput["label"];
+  normalizedOptions: NormalizedOption[];
+  currentOption: NormalizedOption | null;
+  hasOptions: boolean;
+  onChange?: VariantInput["onChange"];
+  normalizeValue?: VariantInput["normalizeValue"];
+  onOpen?: VariantInput["onOpen"];
+};
+
+const buildVariantModel = ({
+  key,
+  label,
+  normalizedOptions,
+  currentOption,
+  hasOptions,
+  onChange,
+  normalizeValue,
+  onOpen,
+}: BuildVariantModelArgs): VariantModel => ({
   key,
   label: resolveLabel(key, label),
   normalizedOptions,
@@ -65,7 +76,7 @@ const buildVariantModel = (
   onOpen,
 });
 
-export const useVariantModel = (input: VariantInput): VariantModel => {
+export function useVariantModel(input: VariantInput): VariantModel {
   const normalizedOptions = useNormalizedOptions(
     input.options,
     input.normalizeValue,
@@ -103,7 +114,7 @@ export const useVariantModel = (input: VariantInput): VariantModel => {
       input.onOpen,
     ],
   );
-};
+}
 
 export const useVariants = (
   sourceModel: VariantModel,
