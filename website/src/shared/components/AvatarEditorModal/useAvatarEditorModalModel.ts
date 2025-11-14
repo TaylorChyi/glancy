@@ -50,14 +50,12 @@ export const useAvatarEditorModalModel = ({
         imageRef,
         source,
         imageTransform,
-        interactions: {
-          pointerHandlers: {
-            onPointerDown: handlePointerDown,
-            onPointerMove: handlePointerMove,
-            onPointerUp: handlePointerUp,
-          },
-          label: mergedLabels.title,
+        pointerHandlers: {
+          onPointerDown: handlePointerDown,
+          onPointerMove: handlePointerMove,
+          onPointerUp: handlePointerUp,
         },
+        interactionLabel: mergedLabels.title,
         onImageLoad: handleImageLoad,
       },
       controls: {
