@@ -52,6 +52,53 @@ function normalizeError(err) {
   }
 }
 
+function shouldSkipRequest(payload, hasSession) {
+  return !payload?.text || !payload?.lang || !hasSession;
+}
+
+function logPrepared(scope, lang) {
+  if (DEV) {
+    logger.info("TTS play prepared", { scope, lang });
+  }
+}
+
+function withLoadingState({ setLoading, setError, shouldSkip }, executor) {
+  return async (payload) => {
+    if (shouldSkip?.(payload)) return null;
+    setLoading(true);
+    setError(null);
+    try {
+      return await executor(payload);
+    } catch (err) {
+      setError(normalizeError(err));
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+}
+
+function createRequest({ tts, scope, hasSession, setLoading, setError }) {
+  const executor = async (payload) => {
+    const fn = pickTtsFn(tts, scope);
+    const data = await fetchWithShortcut(fn, scope, {
+      ...defaultPayload,
+      ...payload,
+    });
+    logPrepared(scope, payload.lang);
+    return data;
+  };
+
+  return withLoadingState(
+    {
+      setLoading,
+      setError,
+      shouldSkip: (payload) => shouldSkipRequest(payload, hasSession),
+    },
+    executor,
+  );
+}
+
 export function useTtsQueue(scope = "word") {
   const { tts } = useApi();
   const hasSession = useUserStore((s) => Boolean(s.user?.token));
@@ -59,27 +106,7 @@ export function useTtsQueue(scope = "word") {
   const [error, setError] = useState(null);
 
   const request = useCallback(
-    async (payload) => {
-      if (!payload?.text || !payload.lang || !hasSession) return null;
-      setLoading(true);
-      setError(null);
-      try {
-        const fn = pickTtsFn(tts, scope);
-        const data = await fetchWithShortcut(fn, scope, {
-          ...defaultPayload,
-          ...payload,
-        });
-        if (DEV) {
-          logger.info("TTS play prepared", { scope, lang: payload.lang });
-        }
-        return data;
-      } catch (err) {
-        setError(normalizeError(err));
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
+    createRequest({ tts, scope, hasSession, setLoading, setError }),
     [tts, scope, hasSession],
   );
 
