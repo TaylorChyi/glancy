@@ -42,6 +42,13 @@ const useBlueprintItemsMemo = (blueprintItemsInput) =>
     ],
   );
 
+const buildBlueprintItemsInputFactory = (input) => (actionContext) =>
+  selectBlueprintItemsInput({
+    actionContext,
+    disabled: input.disabled,
+    user: input.user,
+  });
+
 const selectCopyItemInput = (input) => ({
   translator: input.translator,
   copyFeedbackState: input.copyFeedbackState,
@@ -67,16 +74,19 @@ const useCopyItemMemo = (copyItemInput) =>
 const useActionItemsMemo = ({ copyItem, blueprintItems }) =>
   useMemo(() => [copyItem, ...blueprintItems], [copyItem, blueprintItems]);
 
+const selectToolbarActionsMemoSources = (input) => ({
+  actionContextInput: selectActionContextInput(input),
+  blueprintItemsInputFactory: buildBlueprintItemsInputFactory(input),
+  copyItemInput: selectCopyItemInput(input),
+});
+
 export function useToolbarActionsModel(input) {
-  const actionContext = useActionContextMemo(selectActionContextInput(input));
+  const sources = selectToolbarActionsMemoSources(input);
+  const actionContext = useActionContextMemo(sources.actionContextInput);
   const blueprintItems = useBlueprintItemsMemo(
-    selectBlueprintItemsInput({
-      actionContext,
-      disabled: input.disabled,
-      user: input.user,
-    }),
+    sources.blueprintItemsInputFactory(actionContext),
   );
-  const copyItem = useCopyItemMemo(selectCopyItemInput(input));
+  const copyItem = useCopyItemMemo(sources.copyItemInput);
   const items = useActionItemsMemo({ copyItem, blueprintItems });
 
   return { items };

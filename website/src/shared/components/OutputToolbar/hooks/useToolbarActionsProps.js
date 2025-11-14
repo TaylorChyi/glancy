@@ -28,9 +28,8 @@ const buildToolbarActionsProps = (deps) => ({
   onReport: deps.onReport,
 });
 
-export const useToolbarActionsProps = (input) => {
-  const deps = selectToolbarActionsDeps(input);
-  return useMemo(
+const useToolbarActionsPropsMemo = (deps) =>
+  useMemo(
     () => buildToolbarActionsProps(deps),
     [
       deps.translator,
@@ -46,4 +45,6 @@ export const useToolbarActionsProps = (input) => {
       deps.onReport,
     ],
   );
-};
+
+export const useToolbarActionsProps = (input) =>
+  useToolbarActionsPropsMemo(selectToolbarActionsDeps(input));

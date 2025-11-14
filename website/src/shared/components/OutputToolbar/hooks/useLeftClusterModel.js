@@ -67,17 +67,26 @@ const useLeftClusterPropsMemo = (memoInput) =>
     ],
   );
 
-export const useLeftClusterModel = (input) => {
+const buildLeftClusterMemoPlan = (input) => {
   const speakableTerm = deriveSpeakableTerm(input.term);
   const flags = createRenderFlags({
     speakableTerm,
     onReoutput: input.onReoutput,
   });
-  const memoInput = buildMemoInput({
-    ...input,
-    speakableTerm,
+
+  return {
     flags,
-  });
-  const props = useLeftClusterPropsMemo(memoInput);
-  return { shouldRender: flags.shouldRender, props };
+    memoInput: buildMemoInput({
+      ...input,
+      speakableTerm,
+      flags,
+    }),
+  };
+};
+
+export const useLeftClusterModel = (input) => {
+  const plan = buildLeftClusterMemoPlan(input);
+  const props = useLeftClusterPropsMemo(plan.memoInput);
+
+  return { shouldRender: plan.flags.shouldRender, props };
 };

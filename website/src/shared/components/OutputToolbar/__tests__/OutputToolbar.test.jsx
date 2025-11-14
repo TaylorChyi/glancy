@@ -35,7 +35,7 @@ const renderToolbar = (props) => render(<OutputToolbar {...props} />);
 
 const getTtsCallArgs = () => mockTtsButton.mock.calls.at(0)?.[0];
 
-describe("OutputToolbar", () => {
+describe("OutputToolbar", function () {
   beforeEach(() => {
     mockTtsButton.mockClear();
     userState.user = { id: "u" };
