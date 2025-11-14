@@ -3,8 +3,8 @@ import createHeaderViewModel from "./viewModel/headerBuilder.js";
 import createEditingViewModel from "./viewModel/editingBuilder.js";
 import createSummaryViewModel from "./viewModel/summaryBuilder.js";
 
-export default function createEmailBindingViewModel(params) {
-  const metadata = deriveEmailBindingMetadata({
+const buildMetadata = (params) =>
+  deriveEmailBindingMetadata({
     email: params.email,
     t: params.t,
     isAwaitingVerification: params.isAwaitingVerification,
@@ -14,9 +14,11 @@ export default function createEmailBindingViewModel(params) {
     remainingSeconds: params.remainingSeconds,
   });
 
-  const header = createHeaderViewModel({ metadata, t: params.t });
+const buildHeader = (params, metadata) =>
+  createHeaderViewModel({ metadata, t: params.t });
 
-  const editing = createEditingViewModel({
+const buildEditing = (params, metadata) =>
+  createEditingViewModel({
     metadata,
     mode: params.mode,
     t: params.t,
@@ -34,7 +36,8 @@ export default function createEmailBindingViewModel(params) {
     onConfirm: params.onConfirm,
   });
 
-  const summary = createSummaryViewModel({
+const buildSummary = (params, metadata) =>
+  createSummaryViewModel({
     metadata,
     email: params.email,
     t: params.t,
@@ -44,5 +47,12 @@ export default function createEmailBindingViewModel(params) {
     mode: params.mode,
   });
 
-  return { header, editing, summary };
+export default function createEmailBindingViewModel(params) {
+  const metadata = buildMetadata(params);
+
+  return {
+    header: buildHeader(params, metadata),
+    editing: buildEditing(params, metadata),
+    summary: buildSummary(params, metadata),
+  };
 }

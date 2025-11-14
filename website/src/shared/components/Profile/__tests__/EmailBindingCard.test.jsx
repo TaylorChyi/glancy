@@ -57,6 +57,29 @@ describe("EmailBindingCard editing confirmations", () => {
       screen.getByRole("button", { name: "Confirm update" }),
     ).toBeInTheDocument();
   });
+
+  test("GivenVerificationReady_WhenSubmitting_ThenForwardToConfirmHandler", async () => {
+    const onConfirm = jest.fn().mockResolvedValue(undefined);
+    renderEditingState({
+      email: "user@example.com",
+      requestedEmail: "user@example.com",
+      onConfirm,
+    });
+
+    fireEvent.change(screen.getByPlaceholderText("Enter code"), {
+      target: { value: "246810" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Confirm update" }));
+      await Promise.resolve();
+    });
+
+    expect(onConfirm).toHaveBeenCalledWith({
+      email: "user@example.com",
+      code: "246810",
+    });
+  });
 });
 
 describe("EmailBindingCard code request cooldown", () => {
