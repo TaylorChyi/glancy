@@ -98,7 +98,7 @@ type ViewModelArgs = CreateSubscriptionSectionViewModelArgs & {
   featureColumnLabel?: string;
 };
 
-const createSection = ({
+const buildSection = ({
   title,
   headingId,
   descriptionId,
@@ -108,7 +108,7 @@ const createSection = ({
   descriptionId,
 });
 
-const createPlanRail = ({
+const buildPlanRail = ({
   planRailNav,
   planCards,
   selectedPlanId,
@@ -120,7 +120,10 @@ const createPlanRail = ({
   onSelect: handlers.onPlanSelect,
 });
 
-const createFeatureMatrix = ({
+const ensureFeatureColumnLabel = (featureColumnLabel?: string) =>
+  featureColumnLabel ?? "";
+
+const buildFeatureMatrix = ({
   featureMatrix,
   visiblePlanIds,
   planLabels,
@@ -130,11 +133,11 @@ const createFeatureMatrix = ({
   rows: featureMatrix,
   visiblePlanIds,
   planLabels,
-  featureColumnLabel: featureColumnLabel ?? "",
+  featureColumnLabel: ensureFeatureColumnLabel(featureColumnLabel),
   currentPlanId: defaultSelectedPlanId,
 });
 
-const createFootnotes = ({
+const buildFootnotes = ({
   pricingNote,
   taxNote,
 }: ViewModelArgs): SubscriptionSectionViewModel["footnotes"] => ({
@@ -142,7 +145,7 @@ const createFootnotes = ({
   taxNote,
 });
 
-const createRedeemForm = ({
+const buildRedeemForm = ({
   redeemCopy,
   formattedRedeemCode,
   handlers,
@@ -157,12 +160,30 @@ const createRedeemForm = ({
   inputRef: redeemRefs.inputRef,
 });
 
-export const createSubscriptionSectionViewModel = (
+const viewModelBuilders = {
+  section: buildSection,
+  planRail: buildPlanRail,
+  featureMatrix: buildFeatureMatrix,
+  footnotes: buildFootnotes,
+  redeemForm: buildRedeemForm,
+} satisfies {
+  section: (args: ViewModelArgs) => SubscriptionSectionViewModel["section"];
+  planRail: (args: ViewModelArgs) => SubscriptionSectionViewModel["planRail"];
+  featureMatrix: (args: ViewModelArgs) => SubscriptionSectionViewModel["featureMatrix"];
+  footnotes: (args: ViewModelArgs) => SubscriptionSectionViewModel["footnotes"];
+  redeemForm: (args: ViewModelArgs) => SubscriptionSectionViewModel["redeemForm"];
+};
+
+const assembleViewModel = (
   args: ViewModelArgs,
 ): SubscriptionSectionViewModel => ({
-  section: createSection(args),
-  planRail: createPlanRail(args),
-  featureMatrix: createFeatureMatrix(args),
-  footnotes: createFootnotes(args),
-  redeemForm: createRedeemForm(args),
+  section: viewModelBuilders.section(args),
+  planRail: viewModelBuilders.planRail(args),
+  featureMatrix: viewModelBuilders.featureMatrix(args),
+  footnotes: viewModelBuilders.footnotes(args),
+  redeemForm: viewModelBuilders.redeemForm(args),
 });
+
+export const createSubscriptionSectionViewModel = (
+  args: ViewModelArgs,
+): SubscriptionSectionViewModel => assembleViewModel(args);

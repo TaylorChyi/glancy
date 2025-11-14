@@ -4,6 +4,7 @@ import SettingsSection from "@shared/components/settings/SettingsSection";
 import SubscriptionPlanCarousel from "./components/SubscriptionPlanCarousel.jsx";
 import FeatureMatrixTable from "./components/FeatureMatrixTable.jsx";
 import SubscriptionRedeemForm from "./components/SubscriptionRedeemForm.jsx";
+import SubscriptionFootnotes from "./components/SubscriptionFootnotes.jsx";
 import {
   FeatureMatrixPropType,
   FootnotesPropType,
@@ -11,13 +12,6 @@ import {
   RedeemFormPropType,
 } from "./propTypes.js";
 import styles from "../../Preferences.module.css";
-
-const SubscriptionFootnotes = ({ footnotes }) => (
-  <div className={styles["subscription-footnotes"]}>
-    <p>{footnotes.pricingNote}</p>
-    <p>{footnotes.taxNote}</p>
-  </div>
-);
 
 function SubscriptionSectionView({
   section,
@@ -47,10 +41,6 @@ function SubscriptionSectionView({
     </SettingsSection>
   );
 }
-
-SubscriptionFootnotes.propTypes = {
-  footnotes: FootnotesPropType.isRequired,
-};
 
 SubscriptionSectionView.propTypes = {
   section: PropTypes.shape({
