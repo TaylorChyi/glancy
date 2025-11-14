@@ -165,6 +165,9 @@ const createApiContext = (options, { user, unbindEmailMock }) => {
   return { fetchProfileMock, saveProfileMock, redeemMock, updateUsernameMock };
 };
 
+const createConsoleErrorStub = () =>
+  jest.spyOn(console, "error").mockImplementation(() => {});
+
 export const createPreferenceSectionsTestContext = (options = {}) => {
   resetPreferenceSectionMocks();
 
@@ -173,10 +176,7 @@ export const createPreferenceSectionsTestContext = (options = {}) => {
   createThemeContext(options);
   const avatarContext = createAvatarContext(options);
   const apiContext = createApiContext(options, userContext);
-
-  const consoleErrorStub = jest
-    .spyOn(console, "error")
-    .mockImplementation(() => {});
+  const consoleErrorStub = createConsoleErrorStub();
 
   return {
     translations,
