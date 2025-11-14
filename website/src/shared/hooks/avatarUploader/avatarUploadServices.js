@@ -21,6 +21,16 @@ export const normalizeFiles = (files) => {
 export const selectFirstValidFile = (filesLike) =>
   normalizeFiles(filesLike).filter(Boolean)[0] ?? null;
 
+export const prepareAvatarUpload = ({ filesLike, user, usersClient }) => {
+  const file = selectFirstValidFile(filesLike);
+  if (!file) {
+    return null;
+  }
+
+  const context = assertUploadContext({ user, usersClient });
+  return { file, context };
+};
+
 export function assertUploadContext({ user, usersClient }) {
   if (!user || !user.id || !user.token) {
     const missingUserError = new Error(AVATAR_UPLOAD_ERRORS.missingUser);
@@ -42,6 +52,13 @@ export async function uploadAvatar({ usersClient, user, file }) {
     file,
   });
 }
+
+export const beginAvatarUpload = ({ setStatus, setError, statusMap }) => {
+  setStatus(statusMap.uploading);
+  if (typeof setError === "function") {
+    setError(null);
+  }
+};
 
 export const resolveUploadedAvatar = (response) => {
   const avatar = response?.avatar ? cacheBust(response.avatar) : null;
@@ -88,27 +105,25 @@ export const applyAvatarUploadFailure = ({
   return false;
 };
 
-export const performAvatarUpload = async ({
-  filesLike,
-  user,
-  usersClient,
-  setUser,
-  setStatus,
-  setError,
-  onSuccess,
-  onError,
-  statusMap,
-}) => {
-  const file = selectFirstValidFile(filesLike);
-  if (!file) {
-    return false;
-  }
+export const orchestrateAvatarUpload = async (options) => {
+  const {
+    setStatus,
+    setError,
+    setUser,
+    onSuccess,
+    onError,
+    statusMap,
+  } = options;
 
   try {
-    const context = assertUploadContext({ user, usersClient });
+    const prepared = prepareAvatarUpload(options);
+    if (!prepared) {
+      return false;
+    }
 
-    setStatus(statusMap.uploading);
-    setError(null);
+    const { file, context } = prepared;
+
+    beginAvatarUpload({ setStatus, setError, statusMap });
 
     const response = await uploadAvatar({
       ...context,
@@ -133,3 +148,5 @@ export const performAvatarUpload = async ({
     });
   }
 };
+
+export const performAvatarUpload = orchestrateAvatarUpload;
