@@ -81,6 +81,47 @@ const useReportIssueSurfaceDependencies = (props) => {
   });
 };
 
+const useReportIssueTranslations = () => {
+  const { t } = useLanguage();
+  return t;
+};
+
+const useReportIssueIdentifiers = () => ({
+  headingId: useId(),
+  legendId: useId(),
+});
+
+const useReportIssueHandlersState = ({ onSubmit, onClose, submitting }) =>
+  useReportIssueHandlers(onSubmit, onClose, submitting);
+
+const useReportIssueModalInternals = (props) => {
+  const translations = useReportIssueTranslations();
+  const { headingId, legendId } = useReportIssueIdentifiers();
+  const { handleSubmit, handleClose } = useReportIssueHandlersState(props);
+  const surfaceDependencies = useReportIssueSurfaceDependencies({
+    categories: props.categories,
+    category: props.category,
+    error: props.error,
+    legendId,
+    language: props.language,
+    flavor: props.flavor,
+    sourceLanguage: props.sourceLanguage,
+    targetLanguage: props.targetLanguage,
+    term: props.term,
+    onCategoryChange: props.onCategoryChange,
+    submitting: props.submitting,
+    translations,
+  });
+
+  return {
+    headingId,
+    legendId,
+    handleSubmit,
+    handleClose,
+    surfaceDependencies,
+  };
+};
+
 const createReportIssueModalViewModel = ({
   headingId,
   legendId,
@@ -104,53 +145,13 @@ const createReportIssueModalViewModel = ({
   modalClassName: `modal-content ${styles["modal-shell"]}`,
 });
 
-export const useReportIssueModalViewModel = ({
-  categories,
-  category,
-  description,
-  submitting,
-  error,
-  term,
-  language,
-  flavor,
-  sourceLanguage,
-  targetLanguage,
-  onClose,
-  onCategoryChange,
-  onDescriptionChange,
-  onSubmit,
-}) => {
-  const { t } = useLanguage();
-  const headingId = useId();
-  const legendId = useId();
-  const { handleSubmit, handleClose } = useReportIssueHandlers(
-    onSubmit,
-    onClose,
-    submitting,
-  );
-  const surfaceDependencies = useReportIssueSurfaceDependencies({
-    categories,
-    category,
-    error,
-    legendId,
-    language,
-    flavor,
-    sourceLanguage,
-    targetLanguage,
-    term,
-    onCategoryChange,
-    submitting,
-    translations: t,
-  });
+export const useReportIssueModalViewModel = (props) => {
+  const internals = useReportIssueModalInternals(props);
 
   return createReportIssueModalViewModel({
-    headingId,
-    legendId,
-    handleSubmit,
-    handleClose,
-    surfaceDependencies,
-    description,
-    submitting,
-    onDescriptionChange,
+    ...internals,
+    description: props.description,
+    submitting: props.submitting,
+    onDescriptionChange: props.onDescriptionChange,
   });
 };
