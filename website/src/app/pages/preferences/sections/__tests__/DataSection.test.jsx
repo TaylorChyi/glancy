@@ -6,13 +6,13 @@ import userEvent from "@testing-library/user-event";
 // 测试同样直接引用具体 Store，保证与生产实现一致且规避 barrel 带来的循环依赖。
 import { useDataGovernanceStore } from "@core/store/dataGovernanceStore.ts";
 import { useHistoryStore } from "@core/store/historyStore.ts";
-import { useWordStore } from "@core/store/wordStore.js";
 import { installDataGovernanceStoreState } from "./helpers/dataGovernanceStoreTestHelpers.js";
 import {
   createHistoryRecord,
   installHistoryStoreMocks,
 } from "./helpers/historyStoreTestHelpers.js";
 import { installWordStoreFixture } from "./helpers/wordStoreTestHelpers.js";
+import { createDownloadHarness } from "./helpers/downloadHarness.js";
 
 const translations = {
   settingsDataDescription: "Data stewardship",
@@ -112,62 +112,6 @@ const renderDataSection = (props = {}) =>
       {...props}
     />,
   );
-
-const setupDownloadHarness = () => {
-  if (!window.URL.createObjectURL) {
-    Object.defineProperty(window.URL, "createObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => "",
-    });
-  }
-  if (!window.URL.revokeObjectURL) {
-    Object.defineProperty(window.URL, "revokeObjectURL", {
-      configurable: true,
-      writable: true,
-      value: () => undefined,
-    });
-  }
-
-  const createUrl = jest
-    .spyOn(window.URL, "createObjectURL")
-    .mockReturnValue("blob:export");
-  const revokeUrl = jest.spyOn(window.URL, "revokeObjectURL");
-  const appendSpy = jest.spyOn(document.body, "appendChild");
-  const removeSpy = jest.spyOn(Element.prototype, "remove");
-  const OriginalBlob = Blob;
-  const blobCalls = [];
-  const blobSpy = jest
-    .spyOn(globalThis, "Blob")
-    .mockImplementation((parts = [], options) => {
-      blobCalls.push({ parts, options });
-      return Reflect.construct(OriginalBlob, [parts, options]);
-    });
-
-  const restore = () => {
-    createUrl.mockRestore();
-    revokeUrl.mockRestore();
-    appendSpy.mockRestore();
-    removeSpy.mockRestore();
-    blobSpy.mockRestore();
-  };
-
-  const getCsvText = () =>
-    (blobCalls[0]?.parts ?? [])
-      .map((part) => (typeof part === "string" ? part : ""))
-      .join("");
-
-  return {
-    createUrl,
-    revokeUrl,
-    appendSpy,
-    removeSpy,
-    blobSpy,
-    OriginalBlob,
-    getCsvText,
-    restore,
-  };
-};
 
 beforeAll(async () => {
   ({ default: DataSection } = await import("../DataSection.jsx"));
@@ -317,7 +261,7 @@ test("Given language actions When clearing selected language Then scoped command
  */
 test("Given export action When clicking export Then browser download initiated", async () => {
   const user = userEvent.setup();
-  const downloadHarness = setupDownloadHarness();
+  const downloadHarness = createDownloadHarness();
   renderDataSection();
 
   await user.click(screen.getByRole("button", { name: /Export data/i }));
