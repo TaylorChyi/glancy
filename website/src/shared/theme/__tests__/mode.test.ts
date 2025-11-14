@@ -6,6 +6,17 @@ type MutableMediaQueryList = MediaQueryList & {
   dispatch: (matches: boolean) => void;
 };
 
+const createOrchestrator = (
+  overrides: Partial<
+    ConstructorParameters<typeof ThemeModeOrchestrator>[0]
+  > = {},
+) =>
+  new ThemeModeOrchestrator({
+    root: document.documentElement,
+    matchMedia: undefined,
+    ...overrides,
+  });
+
 const createMediaQuery = (initialMatches: boolean): MutableMediaQueryList => {
   let matches = initialMatches;
   let listener: ((event: MediaQueryListEvent) => void) | null = null;
@@ -37,6 +48,32 @@ const createMediaQuery = (initialMatches: boolean): MutableMediaQueryList => {
   return media as MutableMediaQueryList;
 };
 
+const expectThemeState = ({
+  theme,
+  preference,
+  dark,
+}: {
+  theme?: string;
+  preference?: string;
+  dark: boolean;
+}) => {
+  const { dataset, classList } = document.documentElement;
+
+  if (theme !== undefined) {
+    expect(dataset.theme).toBe(theme);
+  }
+
+  if (preference !== undefined) {
+    expect(dataset.themePreference).toBe(preference);
+  }
+
+  expect(classList.contains("dark")).toBe(dark);
+};
+
+const expectNotify = (notify: jest.Mock, value: string) => {
+  expect(notify).toHaveBeenLastCalledWith(value);
+};
+
 describe("ThemeModeOrchestrator", () => {
   beforeEach(() => {
     document.documentElement.classList.remove("dark");
@@ -56,20 +93,15 @@ describe("ThemeModeOrchestrator", () => {
    *  - 回调接收到 "dark"。
    * 边界/异常：
    *  - 无。
-   */
+  */
   test("applies dark strategy", () => {
-    const orchestrator = new ThemeModeOrchestrator({
-      root: document.documentElement,
-      matchMedia: undefined,
-    });
+    const orchestrator = createOrchestrator();
     const notify = jest.fn();
 
     orchestrator.apply("dark", notify);
 
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(document.documentElement.dataset.themePreference).toBe("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(notify).toHaveBeenCalledWith("dark");
+    expectThemeState({ theme: "dark", preference: "dark", dark: true });
+    expectNotify(notify, "dark");
     orchestrator.dispose();
   });
 
@@ -86,21 +118,16 @@ describe("ThemeModeOrchestrator", () => {
    *  - 回调最终收到 "light"。
    * 边界/异常：
    *  - 验证多次调用时监听器正确重置。
-   */
+  */
   test("switches to light strategy and cleans previous listener", () => {
-    const orchestrator = new ThemeModeOrchestrator({
-      root: document.documentElement,
-      matchMedia: undefined,
-    });
+    const orchestrator = createOrchestrator();
     const notify = jest.fn();
 
     orchestrator.apply("dark", notify);
     orchestrator.apply("light", notify);
 
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(document.documentElement.dataset.themePreference).toBe("light");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(notify).toHaveBeenLastCalledWith("light");
+    expectThemeState({ theme: "light", preference: "light", dark: false });
+    expectNotify(notify, "light");
     orchestrator.dispose();
   });
 
@@ -118,27 +145,30 @@ describe("ThemeModeOrchestrator", () => {
    * 边界/异常：
    *  - 确认 dispose 后可安全停止监听（这里通过最终状态验证）。
    */
-  test("reacts to system preference changes", () => {
+  test("applies system preference based on current media query", () => {
     const media = createMediaQuery(true);
-    const orchestrator = new ThemeModeOrchestrator({
-      root: document.documentElement,
-      matchMedia: () => media,
-    });
+    const orchestrator = createOrchestrator({ matchMedia: () => media });
     const notify = jest.fn();
 
     orchestrator.apply("system", notify);
 
-    expect(document.documentElement.dataset.themePreference).toBe("system");
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(notify).toHaveBeenLastCalledWith("dark");
+    expectThemeState({ theme: "dark", preference: "system", dark: true });
+    expectNotify(notify, "dark");
+
+    orchestrator.dispose();
+  });
+
+  test("reacts to system preference changes", () => {
+    const media = createMediaQuery(true);
+    const orchestrator = createOrchestrator({ matchMedia: () => media });
+    const notify = jest.fn();
+
+    orchestrator.apply("system", notify);
 
     media.dispatch(false);
 
-    expect(document.documentElement.dataset.themePreference).toBe("system");
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-    expect(notify).toHaveBeenLastCalledWith("light");
+    expectThemeState({ theme: "light", preference: "system", dark: false });
+    expectNotify(notify, "light");
 
     orchestrator.dispose();
   });
