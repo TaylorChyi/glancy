@@ -54,20 +54,10 @@ export class BrowserFaviconConfigurator {
    * 复杂度：O(1)，仅涉及常量级 DOM 查询与监听绑定。
    */
   start(): void {
-    const targetDocument = this.document;
-    if (!targetDocument) {
+    const element = this.getTargetLink();
+    if (!element) {
       return;
     }
-
-    const element = targetDocument.getElementById(this.linkId);
-    if (!(element instanceof HTMLLinkElement)) {
-      return;
-    }
-
-    const applyScheme = (scheme: BrowserColorScheme) => {
-      element.href = this.registry.resolve(scheme);
-      element.dataset.browserColorScheme = scheme;
-    };
 
     this.stop();
 
@@ -77,19 +67,17 @@ export class BrowserFaviconConfigurator {
     const initialScheme: BrowserColorScheme = mediaQuery?.matches
       ? "dark"
       : "light";
-    applyScheme(initialScheme);
+    this.applyScheme(element, initialScheme);
 
     if (!mediaQuery) {
       return;
     }
 
     const handleChange: MediaChangeListener = (event) => {
-      applyScheme(event.matches ? "dark" : "light");
+      this.applyScheme(element, event.matches ? "dark" : "light");
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    this.mediaQueryList = mediaQuery;
-    this.listener = handleChange;
+    this.attachSchemeListener(mediaQuery, handleChange);
   }
 
   /**
@@ -107,6 +95,32 @@ export class BrowserFaviconConfigurator {
     }
     this.mediaQueryList = null;
     this.listener = null;
+  }
+
+  private getTargetLink(): HTMLLinkElement | null {
+    if (!this.document) {
+      return null;
+    }
+
+    const element = this.document.getElementById(this.linkId);
+    return element instanceof HTMLLinkElement ? element : null;
+  }
+
+  private applyScheme(
+    element: HTMLLinkElement,
+    scheme: BrowserColorScheme,
+  ): void {
+    element.href = this.registry.resolve(scheme);
+    element.dataset.browserColorScheme = scheme;
+  }
+
+  private attachSchemeListener(
+    mediaQuery: MediaQueryList,
+    listener: MediaChangeListener,
+  ): void {
+    mediaQuery.addEventListener("change", listener);
+    this.mediaQueryList = mediaQuery;
+    this.listener = listener;
   }
 }
 
