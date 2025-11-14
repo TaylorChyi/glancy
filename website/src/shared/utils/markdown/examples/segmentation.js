@@ -48,6 +48,41 @@ export function normalizeExampleContent(value) {
   return separated.replace(/\s{2,}/g, " ").trim();
 }
 
+function matchSegmentationLabel(line) {
+  const match = line.match(
+    /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
+  );
+  if (!match) {
+    return null;
+  }
+  const [, prefix, label, rest] = match;
+  return { prefix, label, rest };
+}
+
+function combineMarkerAttachments(rest, markerAttachments) {
+  return markerAttachments.reduce((acc, attachment) => {
+    return `${acc}${attachment.marker}${attachment.trailingText}`;
+  }, rest);
+}
+
+function normalizeSegmentationLine(lines, index, parsed) {
+  if (!shouldNormalizeExampleLine(parsed.label)) {
+    return null;
+  }
+  const { markerAttachments, preservedHeadings, consumed } =
+    collectExampleSegmentationAttachments(lines, index + 1);
+  const combined = combineMarkerAttachments(parsed.rest, markerAttachments);
+  const normalizedContent = normalizeExampleContent(combined);
+  const normalizedLines = [];
+  if (!normalizedContent) {
+    normalizedLines.push(parsed.prefix.trimEnd());
+  } else {
+    normalizedLines.push(`${parsed.prefix}${normalizedContent}`);
+  }
+  normalizedLines.push(...preservedHeadings);
+  return { normalizedLines, consumed };
+}
+
 export function applyExampleSegmentationSpacing(text) {
   if (!text) {
     return text;
@@ -56,33 +91,18 @@ export function applyExampleSegmentationSpacing(text) {
   const normalized = [];
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
-    const match = line.match(
-      /^(\s*(?:[-*+]|\d+[.)])?\s*\*\*([^*]+)\*\*:\s*)(.*)$/,
-    );
-    if (!match) {
+    const parsed = matchSegmentationLabel(line);
+    if (!parsed) {
       normalized.push(line);
       continue;
     }
-    const [, prefix, label, rest] = match;
-    if (!shouldNormalizeExampleLine(label)) {
+    const result = normalizeSegmentationLine(lines, i, parsed);
+    if (!result) {
       normalized.push(line);
       continue;
     }
-    const { markerAttachments, preservedHeadings, consumed } =
-      collectExampleSegmentationAttachments(lines, i + 1);
-    const combined = markerAttachments.reduce((acc, attachment) => {
-      return `${acc}${attachment.marker}${attachment.trailingText}`;
-    }, rest);
-    const normalizedContent = normalizeExampleContent(combined);
-    if (!normalizedContent) {
-      normalized.push(prefix.trimEnd());
-    } else {
-      normalized.push(`${prefix}${normalizedContent}`);
-    }
-    preservedHeadings.forEach((heading) => {
-      normalized.push(heading);
-    });
-    i += consumed;
+    normalized.push(...result.normalizedLines);
+    i += result.consumed;
   }
   return normalized.join("\n").replace(/[ \t]+$/gm, "");
 }
