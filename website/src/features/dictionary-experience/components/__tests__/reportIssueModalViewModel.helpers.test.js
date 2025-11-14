@@ -15,7 +15,7 @@ const baseTranslations = {
   reportFlavorLabel: "Dictionary",
 };
 
-describe("reportIssueModalViewModel.helpers", () => {
+describe("resolveLanguageContext", () => {
   test("Given auto preferences When flavor indicates Chinese Then fallback to Chinese direction", () => {
     /**
      * 测试目标：验证 resolveLanguageContext 在未显式指定语言时依据口味回退；
@@ -41,7 +41,9 @@ describe("reportIssueModalViewModel.helpers", () => {
     expect(context.resolvedTargetKey).toBe("CHINESE");
     expect(context.dictionaryModeLabel).toContain("Chinese");
   });
+});
 
+describe("buildSummaryItems", () => {
   test("Given explicit language When building summary Then include dictionary context", () => {
     /**
      * 测试目标：验证 buildSummaryItems 根据语言与模式生成完整摘要；
@@ -69,7 +71,9 @@ describe("reportIssueModalViewModel.helpers", () => {
       value: "English → Chinese",
     });
   });
+});
 
+describe("createCategoryOptions", () => {
   test("Given categories When creating options Then reuse translation keys", () => {
     /**
      * 测试目标：验证 createCategoryOptions 正确映射翻译键与值；
@@ -97,7 +101,9 @@ describe("reportIssueModalViewModel.helpers", () => {
     expect(options[0]).toEqual({ id: "typo", value: "typo", label: "Typo" });
     expect(options[1]).toEqual({ id: "other", value: "other", label: "other" });
   });
+});
 
+describe("buildModalStrings", () => {
   test("Given translations When building modal strings Then honor fallbacks", () => {
     /**
      * 测试目标：验证 buildModalStrings 能正确读取翻译并在缺失时使用默认值；
