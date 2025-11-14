@@ -95,10 +95,13 @@ const getAriaLabel = (translations: TranslationMap, label: string) => {
   return `Edit shortcut for ${label}`;
 };
 
-const buildHint = (
-  translations: TranslationMap,
-  recordingAction: string | null,
-) => getHint(translations, recordingAction);
+type CreateHintArgs = {
+  translations: TranslationMap;
+  recordingAction: string | null;
+};
+
+const createHint = ({ translations, recordingAction }: CreateHintArgs) =>
+  getHint(translations, recordingAction);
 
 const resolveItemError = (
   errors: Record<string, string | null>,
@@ -235,26 +238,58 @@ const createItemViewModel = ({
   });
 };
 
-type BuildItemsArgs = Omit<CreateItemViewModelArgs, "binding"> & {
+type CreateItemsArgs = {
   bindings: ShortcutBinding[];
+  translations: TranslationMap;
+  recordingAction: string | null;
+  pendingAction: string | null;
+  status: string;
+  errors: Record<string, string | null>;
+  handlers: KeyboardSectionHandlers;
+  labels: ViewModelLabels;
+  isResetting: boolean;
 };
 
-const buildItems = ({ bindings, ...rest }: BuildItemsArgs) =>
-  bindings.map((binding) => createItemViewModel({ binding, ...rest }));
+const createItems = ({
+  bindings,
+  translations,
+  recordingAction,
+  pendingAction,
+  status,
+  errors,
+  handlers,
+  labels,
+  isResetting,
+}: CreateItemsArgs) =>
+  bindings.map((binding) =>
+    createItemViewModel({
+      binding,
+      translations,
+      recordingAction,
+      pendingAction,
+      status,
+      errors,
+      handlers,
+      recordingLabel: labels.recordingLabel,
+      statusLabel: labels.statusLabel,
+      errorLabel: labels.errorLabel,
+      isResetting,
+    }),
+  );
 
-type BuildResetButtonArgs = {
+type CreateResetButtonArgs = {
   translations: TranslationMap;
   handlers: KeyboardSectionHandlers;
   isResetting: boolean;
   status: string;
 };
 
-const buildResetButton = ({
+const createResetButton = ({
   translations,
   handlers,
   isResetting,
   status,
-}: BuildResetButtonArgs) => ({
+}: CreateResetButtonArgs) => ({
   label: getResetLabel(translations),
   disabled: isResetting || status === "loading",
   onClick: handlers.onReset,
@@ -277,26 +312,27 @@ const getViewModelLabels = (translations: TranslationMap) => ({
   errorLabel: getErrorLabel(translations),
 });
 
+type ViewModelLabels = ReturnType<typeof getViewModelLabels>;
+
 const buildViewModelDetails = (args: BuildViewModelDetailsArgs) => {
   const { bindings, translations, recordingAction, pendingAction, status, errors, handlers, resetActionId } = args;
   const labels = getViewModelLabels(translations);
   const isResetting = pendingAction === resetActionId;
-  const itemArgs = {
-    bindings,
-    translations,
-    recordingAction,
-    pendingAction,
-    status,
-    errors,
-    handlers,
-    ...labels,
-    isResetting,
-  };
 
   return {
-    hint: buildHint(translations, recordingAction),
-    items: buildItems(itemArgs),
-    resetButton: buildResetButton({ translations, handlers, isResetting, status }),
+    hint: createHint({ translations, recordingAction }),
+    items: createItems({
+      bindings,
+      translations,
+      recordingAction,
+      pendingAction,
+      status,
+      errors,
+      handlers,
+      labels,
+      isResetting,
+    }),
+    resetButton: createResetButton({ translations, handlers, isResetting, status }),
   };
 };
 

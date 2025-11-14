@@ -118,31 +118,76 @@ const useKeyboardSectionHandlers = ({
 const useKeyboardSectionBindings = (shortcuts) =>
   useMemo(() => mergeShortcutLists(shortcuts), [shortcuts]);
 
-function useKeyboardSectionController({ title, headingId }) {
-  const { t } = useLanguage();
-  const { shortcuts, updateShortcut, resetShortcuts, pendingAction, errors, status } =
-    useKeyboardShortcutContext();
-  const [recordingAction, setRecordingAction] = useState(null);
-  const bindings = useKeyboardSectionBindings(shortcuts);
-  const handlers = useKeyboardSectionHandlers({
-    recordingAction,
-    setRecordingAction,
+const useKeyboardShortcutState = () => {
+  const {
+    shortcuts,
     updateShortcut,
     resetShortcuts,
+    pendingAction,
+    errors,
+    status,
+  } = useKeyboardShortcutContext();
+  const [recordingAction, setRecordingAction] = useState(null);
+
+  return {
+    shortcuts,
+    updateShortcut,
+    resetShortcuts,
+    pendingAction,
+    errors,
+    status,
+    recordingAction,
+    setRecordingAction,
+  };
+};
+
+const createViewModelArgs = ({
+  title,
+  headingId,
+  bindings,
+  translations,
+  recordingAction,
+  pendingAction,
+  status,
+  errors,
+  handlers,
+}) => ({
+  title,
+  headingId,
+  bindings,
+  translations,
+  recordingAction,
+  pendingAction,
+  status,
+  errors,
+  handlers,
+  resetActionId: KEYBOARD_SHORTCUT_RESET_ACTION,
+});
+
+function useKeyboardSectionController({ title, headingId }) {
+  const { t } = useLanguage();
+  const state = useKeyboardShortcutState();
+  const bindings = useKeyboardSectionBindings(state.shortcuts);
+  const handlers = useKeyboardSectionHandlers({
+    recordingAction: state.recordingAction,
+    setRecordingAction: state.setRecordingAction,
+    updateShortcut: state.updateShortcut,
+    resetShortcuts: state.resetShortcuts,
   });
 
-  return buildKeyboardSectionViewModel({
-    title,
-    headingId,
-    bindings,
-    translations: t,
-    recordingAction,
-    pendingAction,
-    status,
-    errors,
-    resetActionId: KEYBOARD_SHORTCUT_RESET_ACTION,
-    handlers,
-  });
+  return buildKeyboardSectionViewModel(
+    createViewModelArgs({
+      title,
+      headingId,
+      bindings,
+      translations: t,
+      recordingAction: state.recordingAction,
+      pendingAction: state.pendingAction,
+      status: state.status,
+      errors: state.errors,
+      handlers,
+    }),
+  );
 }
 
 function KeyboardSectionContainer({ title, headingId }) {
