@@ -40,22 +40,34 @@ function getSwapHandler(hoverGuards, swapAction, handleClose) {
   };
 }
 
-export default function LanguageLauncherMenu({
-  groupLabel,
-  state,
-  hoverGuards,
-  swapAction,
-}) {
+function getLanguageMenuColumnsProps(state, hoverGuards, swapAction) {
   const {
-    menuRef,
     variants,
     activeVariant,
     handleVariantEnter,
     handleSelect,
     handleClose,
   } = state;
-  const swapHandler = getSwapHandler(hoverGuards, swapAction, handleClose);
-  const activeKey = activeVariant?.key;
+
+  return {
+    variants,
+    activeKey: activeVariant?.key,
+    onVariantEnter: handleVariantEnter,
+    swapAction,
+    onSwap: getSwapHandler(hoverGuards, swapAction, handleClose),
+    activeVariant,
+    onSelect: handleSelect,
+  };
+}
+
+export default function LanguageLauncherMenu({
+  groupLabel,
+  state,
+  hoverGuards,
+  swapAction,
+}) {
+  const { menuRef } = state;
+  const columnsProps = getLanguageMenuColumnsProps(state, hoverGuards, swapAction);
 
   return (
     <MenuSurface
@@ -63,15 +75,7 @@ export default function LanguageLauncherMenu({
       menuRef={menuRef}
       hoverGuards={hoverGuards}
     >
-      <LanguageMenuColumns
-        variants={variants}
-        activeKey={activeKey}
-        onVariantEnter={handleVariantEnter}
-        swapAction={swapAction}
-        onSwap={swapHandler}
-        activeVariant={activeVariant}
-        onSelect={handleSelect}
-      />
+      <LanguageMenuColumns {...columnsProps} />
     </MenuSurface>
   );
 }

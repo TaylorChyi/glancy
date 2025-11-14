@@ -9,58 +9,71 @@ const useActionResolutionEffect = (onResolveAction, descriptor) => {
   }, [descriptor, onResolveAction]);
 };
 
+const composeViewModelOptions = ({
+  state: { mode, value, draft, error },
+  emptyDisplayValue,
+  className,
+  inputClassName,
+  buttonClassName,
+  t,
+  inputRef,
+  handlers,
+  controlId,
+  messageId,
+  renderInlineAction,
+}) => ({
+  mode,
+  value,
+  draft,
+  error,
+  emptyDisplayValue,
+  className,
+  inputClassName,
+  buttonClassName,
+  t,
+  inputRef,
+  handlers,
+  controlId,
+  messageId,
+  renderInlineAction,
+});
+
+const viewModelDependencies = ({
+  state: { mode, value, draft, error },
+  emptyDisplayValue,
+  className,
+  inputClassName,
+  buttonClassName,
+  t,
+  inputRef,
+  handlers,
+  controlId,
+  messageId,
+  renderInlineAction,
+}) => [
+  mode,
+  value,
+  draft,
+  error,
+  emptyDisplayValue,
+  className,
+  inputClassName,
+  buttonClassName,
+  t,
+  inputRef,
+  handlers,
+  controlId,
+  messageId,
+  renderInlineAction,
+];
+
 export const useUsernameViewModel = (params) => {
-  const {
-    state,
-    emptyDisplayValue,
-    className,
-    inputClassName,
-    buttonClassName,
-    t,
-    inputRef,
-    handlers,
-    controlId,
-    messageId,
-    renderInlineAction,
-    onResolveAction,
-  } = params;
   const viewModel = useMemo(
-    () =>
-      composeUsernameViewModel({
-        mode: state.mode,
-        value: state.value,
-        draft: state.draft,
-        error: state.error,
-        emptyDisplayValue,
-        className,
-        inputClassName,
-        buttonClassName,
-        t,
-        inputRef,
-        handlers,
-        controlId,
-        messageId,
-        renderInlineAction,
-      }),
-    [
-      state.mode,
-      state.value,
-      state.draft,
-      state.error,
-      emptyDisplayValue,
-      className,
-      inputClassName,
-      buttonClassName,
-      t,
-      inputRef,
-      handlers,
-      controlId,
-      messageId,
-      renderInlineAction,
-    ],
+    () => composeUsernameViewModel(composeViewModelOptions(params)),
+    viewModelDependencies(params),
   );
 
-  useActionResolutionEffect(onResolveAction, viewModel.actionDescriptor);
+  useActionResolutionEffect(params.onResolveAction, viewModel.actionDescriptor);
 
   return viewModel;
 };

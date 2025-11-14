@@ -37,7 +37,7 @@ export const expectViewProps = ({
   });
 };
 
-export const expectHookUsage = ({
+export function expectHookUsage({
   bottomContent,
   shouldRenderDocker,
   isMobile,
@@ -66,7 +66,7 @@ export const expectHookUsage = ({
     useMainViewModelMock: jest.Mock;
     useContainerStyleMock: jest.Mock;
   };
-}) => {
+}): void {
   const { useDockerViewModelMock, useSidebarViewModelMock, useMainViewModelMock, useContainerStyleMock } =
     mocks;
 
@@ -93,7 +93,7 @@ export const expectHookUsage = ({
   });
 };
 
-export const createComposedScenario = ({
+export function createComposedScenario({
   children,
   bottomContent,
   sidebarProps,
@@ -105,30 +105,32 @@ export const createComposedScenario = ({
   sidebarProps: Record<string, unknown>;
   onMainMiddleScroll: () => void;
   onToggleSidebar: () => void;
-}): LayoutScenarioOptions => ({
-  isMobile: true,
-  children,
-  bottomContent,
-  sidebarProps,
-  onMainMiddleScroll,
-  dockerModel: createDockerModel({
-    shouldRender: true,
-    content: bottomContent,
-    dockerHeight: 96,
-  }),
-  sidebarModel: createSidebarModel({
-    props: { role: "complementary" },
-    sidebarWidth: 320,
-    visibleResizer: true,
-    onToggleSidebar,
-  }),
-  mainModel: createMainModel({
+}): LayoutScenarioOptions {
+  return {
     isMobile: true,
     children,
-    onToggleSidebar,
-  }),
-  containerStyle: { "--docker-h": "96px" },
-});
+    bottomContent,
+    sidebarProps,
+    onMainMiddleScroll,
+    dockerModel: createDockerModel({
+      shouldRender: true,
+      content: bottomContent,
+      dockerHeight: 96,
+    }),
+    sidebarModel: createSidebarModel({
+      props: { role: "complementary" },
+      sidebarWidth: 320,
+      visibleResizer: true,
+      onToggleSidebar,
+    }),
+    mainModel: createMainModel({
+      isMobile: true,
+      children,
+      onToggleSidebar,
+    }),
+    containerStyle: { "--docker-h": "96px" },
+  };
+}
 
 export const createFallbackScenario = ({
   children,

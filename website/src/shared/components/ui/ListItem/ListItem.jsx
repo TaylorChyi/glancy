@@ -21,9 +21,6 @@ function ListItem({
   ...props
 }) {
   const itemClassName = [styles.item, className].filter(Boolean).join(" ");
-  const textClass = [styles.text, textClassName].filter(Boolean).join(" ");
-  const label = deriveTitle(title, text);
-
   return (
     <li
       className={itemClassName}
@@ -35,7 +32,10 @@ function ListItem({
       <span className={styles.icon} aria-hidden={icon ? undefined : "true"}>
         {icon || null}
       </span>
-      <span className={textClass} title={label}>
+      <span
+        className={[styles.text, textClassName].filter(Boolean).join(" ")}
+        title={deriveTitle(title, text)}
+      >
         {text}
       </span>
       {actions ? <div className={styles.actions}>{actions}</div> : null}

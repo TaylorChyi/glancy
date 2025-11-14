@@ -26,25 +26,39 @@ export default function usePopoverPositioning(props) {
     setActivePlacement: state.setActivePlacement,
     setVisible: state.setVisible,
   });
-  const { clearFrame, scheduleUpdate } = useFrameController({
+  return usePopoverPositioningLifecycle({
+    state,
+    anchorRef,
+    isOpen,
+    placement,
+    onClose,
+    applyPosition,
+  });
+}
+
+function usePopoverPositioningLifecycle({
+  state,
+  anchorRef,
+  isOpen,
+  placement,
+  onClose,
+  applyPosition,
+}) {
+  const { clearFrame, scheduleUpdate } = usePopoverFrame({
     frameRef: state.frameRef,
     isOpen,
     applyPosition,
   });
-  usePositioningCycle({ isOpen, scheduleUpdate, clearFrame });
-  useGlobalDismissHandlers({
+  usePopoverEventHandlers({
     isOpen,
     anchorRef,
     contentRef: state.contentRef,
     onClose,
     scheduleUpdate,
     setVisible: state.setVisible,
-  });
-  usePlacementReset({
-    isOpen,
     placement,
-    setVisible: state.setVisible,
     setActivePlacement: state.setActivePlacement,
+    clearFrame,
   });
   return {
     setContentNode: state.setContentNode,
@@ -52,4 +66,40 @@ export default function usePopoverPositioning(props) {
     visible: state.visible,
     activePlacement: state.activePlacement,
   };
+}
+
+function usePopoverFrame({ frameRef, isOpen, applyPosition }) {
+  return useFrameController({
+    frameRef,
+    isOpen,
+    applyPosition,
+  });
+}
+
+function usePopoverEventHandlers({
+  isOpen,
+  anchorRef,
+  contentRef,
+  onClose,
+  scheduleUpdate,
+  setVisible,
+  placement,
+  setActivePlacement,
+  clearFrame,
+}) {
+  usePositioningCycle({ isOpen, scheduleUpdate, clearFrame });
+  useGlobalDismissHandlers({
+    isOpen,
+    anchorRef,
+    contentRef,
+    onClose,
+    scheduleUpdate,
+    setVisible,
+  });
+  usePlacementReset({
+    isOpen,
+    placement,
+    setVisible,
+    setActivePlacement,
+  });
 }

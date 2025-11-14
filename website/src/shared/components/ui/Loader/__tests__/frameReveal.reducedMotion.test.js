@@ -3,6 +3,64 @@ import { act, renderHook } from "@testing-library/react";
 import useFrameReveal from "../useFrameReveal";
 import { restoreAnimationEnvironment } from "./frameRevealTestHarness.js";
 
+const createAnimationEnvironment = () => {
+  let storedAnimationFrameCallback;
+  let storedIntervalCallback;
+
+  const raf = jest.fn((callback) => {
+    storedAnimationFrameCallback = callback;
+    return 21;
+  });
+  const cancel = jest.fn();
+  const scheduleInterval = jest.fn((callback) => {
+    storedIntervalCallback = callback;
+    return 31;
+  });
+  const clearScheduledInterval = jest.fn();
+
+  global.requestAnimationFrame = raf;
+  global.cancelAnimationFrame = cancel;
+  global.setInterval = scheduleInterval;
+  global.clearInterval = clearScheduledInterval;
+
+  return {
+    cancel,
+    clearScheduledInterval,
+    scheduleInterval,
+    getAnimationFrameCallback: () => storedAnimationFrameCallback,
+    getIntervalCallback: () => storedIntervalCallback,
+  };
+};
+
+const mockReducedMotionQuery = () => {
+  const changeListeners = new Set();
+  const mediaQuery = {
+    matches: true,
+    addEventListener: (event, listener) => {
+      if (event === "change") {
+        changeListeners.add(listener);
+      }
+    },
+    removeEventListener: (event, listener) => {
+      if (event === "change") {
+        changeListeners.delete(listener);
+      }
+    },
+  };
+  const matchMediaMock = jest.fn(() => mediaQuery);
+  global.matchMedia = matchMediaMock;
+  if (typeof window !== "undefined") {
+    window.matchMedia = matchMediaMock;
+  }
+
+  return { changeListeners, mediaQuery };
+};
+
+const notifyReducedMotionChange = (mediaQuery, changeListeners) => {
+  mediaQuery.matches = false;
+  changeListeners.forEach((listener) => listener({ matches: false }));
+};
+
 describe("frameReveal reduced motion", () => {
   afterEach(() => {
     restoreAnimationEnvironment();
@@ -12,44 +70,8 @@ describe("frameReveal reduced motion", () => {
 
   it("GivenReducedMotion_WhenPreferenceChanges_ThenLocksRevealAndRecoversOscillation", () => {
     jest.useFakeTimers();
-    let storedAnimationFrameCallback;
-    let storedIntervalCallback;
-
-    const raf = jest.fn((callback) => {
-      storedAnimationFrameCallback = callback;
-      return 21;
-    });
-    const cancel = jest.fn();
-    const scheduleInterval = jest.fn((callback) => {
-      storedIntervalCallback = callback;
-      return 31;
-    });
-    const clearScheduledInterval = jest.fn();
-
-    global.requestAnimationFrame = raf;
-    global.cancelAnimationFrame = cancel;
-    global.setInterval = scheduleInterval;
-    global.clearInterval = clearScheduledInterval;
-
-    const changeListeners = new Set();
-    const mediaQuery = {
-      matches: true,
-      addEventListener: (event, listener) => {
-        if (event === "change") {
-          changeListeners.add(listener);
-        }
-      },
-      removeEventListener: (event, listener) => {
-        if (event === "change") {
-          changeListeners.delete(listener);
-        }
-      },
-    };
-    const matchMediaMock = jest.fn(() => mediaQuery);
-    global.matchMedia = matchMediaMock;
-    if (typeof window !== "undefined") {
-      window.matchMedia = matchMediaMock;
-    }
+    const animationEnv = createAnimationEnvironment();
+    const { changeListeners, mediaQuery } = mockReducedMotionQuery();
 
     const { result, rerender, unmount } = renderHook(
       ({ token, interval }) => useFrameReveal(token, { intervalMs: interval }),
@@ -59,31 +81,30 @@ describe("frameReveal reduced motion", () => {
     );
 
     expect(result.current).toBe(true);
-    expect(typeof storedAnimationFrameCallback).toBe("function");
-    expect(scheduleInterval).not.toHaveBeenCalled();
+    expect(typeof animationEnv.getAnimationFrameCallback()).toBe("function");
+    expect(animationEnv.scheduleInterval).not.toHaveBeenCalled();
 
     act(() => {
-      storedAnimationFrameCallback();
+      animationEnv.getAnimationFrameCallback()();
     });
     expect(result.current).toBe(true);
 
     act(() => {
-      mediaQuery.matches = false;
-      changeListeners.forEach((listener) => listener({ matches: false }));
+      notifyReducedMotionChange(mediaQuery, changeListeners);
     });
 
-    expect(scheduleInterval).toHaveBeenCalledTimes(1);
-    expect(typeof storedIntervalCallback).toBe("function");
+    expect(animationEnv.scheduleInterval).toHaveBeenCalledTimes(1);
+    expect(typeof animationEnv.getIntervalCallback()).toBe("function");
 
     act(() => {
-      storedIntervalCallback();
+      animationEnv.getIntervalCallback()();
     });
     expect(result.current).toBe(false);
 
     rerender({ token: "frame-restored", interval: 500 });
 
-    expect(cancel).toHaveBeenCalledWith(21);
-    expect(clearScheduledInterval).toHaveBeenCalledWith(31);
+    expect(animationEnv.cancel).toHaveBeenCalledWith(21);
+    expect(animationEnv.clearScheduledInterval).toHaveBeenCalledWith(31);
 
     unmount();
   });

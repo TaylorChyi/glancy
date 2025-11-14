@@ -3,7 +3,7 @@ import ActiveSectionRenderer from "./ActiveSectionRenderer.jsx";
 import FallbackHeading from "./FallbackHeading.jsx";
 import modalStyles from "../SettingsModal.module.css";
 
-function SettingsModalForm({
+const SettingsModalForm = ({
   ariaHeadingId,
   ariaDescriptionId,
   sectionHeadingId,
@@ -14,28 +14,17 @@ function SettingsModalForm({
   fallbackHeadingText,
   registerFallbackHeading,
   activeSection,
-}) {
-  return (
-    <form
-      aria-labelledby={ariaHeadingId}
-      aria-describedby={ariaDescriptionId}
-      className={modalStyles.form}
-      onSubmit={onSubmit}
-    >
-      <FallbackHeading
-        shouldRender={shouldRenderFallbackHeading}
-        id={fallbackHeadingId}
-        text={fallbackHeadingText}
-        register={registerFallbackHeading}
-      />
-      <ActiveSectionRenderer
-        activeSection={activeSection}
-        headingId={sectionHeadingId}
-        descriptionId={sectionDescriptionId}
-      />
-    </form>
-  );
-}
+}) => (
+  <form
+    aria-labelledby={ariaHeadingId}
+    aria-describedby={ariaDescriptionId}
+    className={modalStyles.form}
+    onSubmit={onSubmit}
+  >
+    <FallbackHeading shouldRender={shouldRenderFallbackHeading} id={fallbackHeadingId} text={fallbackHeadingText} register={registerFallbackHeading} />
+    <ActiveSectionRenderer activeSection={activeSection} headingId={sectionHeadingId} descriptionId={sectionDescriptionId} />
+  </form>
+);
 
 SettingsModalForm.propTypes = {
   ariaHeadingId: PropTypes.string.isRequired,

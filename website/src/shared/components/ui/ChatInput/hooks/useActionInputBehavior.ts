@@ -150,22 +150,22 @@ const useLanguageControlsState = (
   };
 };
 
-export default function useActionInputBehavior(
-  params: UseActionInputBehaviorParams,
-): UseActionInputBehaviorResult {
-  const config = normalizeParams(params);
-  const focusBridge = useTextareaFocusBridge({ inputRef: config.inputRef });
-  const textareaHandlers = useTextareaHandlers({
-    config,
-    focusBridge,
-  });
+type TextareaHandlers = ReturnType<typeof useTextareaHandlers>;
+type SubmissionHandlers = ReturnType<typeof useSubmissionHandlers>;
 
-  const submissionHandlers = useSubmissionHandlers({
-    value: config.value,
-    onSubmit: config.onSubmit,
-    formRef: focusBridge.formRef,
-    releaseFocus: focusBridge.releaseFocus,
-  });
+type UseActionInputBehaviorResultDeps = {
+  config: NormalizedParams;
+  focusBridge: UseTextareaFocusBridgeResult;
+  textareaHandlers: TextareaHandlers;
+  submissionHandlers: SubmissionHandlers;
+};
+
+const useActionInputBehaviorResult = ({
+  config,
+  focusBridge,
+  textareaHandlers,
+  submissionHandlers,
+}: UseActionInputBehaviorResultDeps): UseActionInputBehaviorResult => {
   const textareaProps = useTextareaProps(
     buildTextareaPropsParams(config, {
       setTextareaRef: focusBridge.setTextareaRef,
@@ -190,6 +190,31 @@ export default function useActionInputBehavior(
     actionButtonProps,
     restoreFocus: focusBridge.restoreFocus,
   };
+};
+
+export default function useActionInputBehavior(
+  params: UseActionInputBehaviorParams,
+): UseActionInputBehaviorResult {
+  const config = normalizeParams(params);
+  const focusBridge = useTextareaFocusBridge({ inputRef: config.inputRef });
+  const textareaHandlers = useTextareaHandlers({
+    config,
+    focusBridge,
+  });
+
+  const submissionHandlers = useSubmissionHandlers({
+    value: config.value,
+    onSubmit: config.onSubmit,
+    formRef: focusBridge.formRef,
+    releaseFocus: focusBridge.releaseFocus,
+  });
+
+  return useActionInputBehaviorResult({
+    config,
+    focusBridge,
+    textareaHandlers,
+    submissionHandlers,
+  });
 }
 
 export type {

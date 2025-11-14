@@ -74,48 +74,34 @@ const buildEditingViewModel = ({
   onSubmit: onConfirm,
 });
 
-const assembleEditingComponents = ({
-  metadata,
-  t,
-  isAwaitingVerification,
-  draftEmail,
-  onDraftEmailChange,
-  verificationCode,
-  onVerificationCodeChange,
-  isSendingCode,
-  onRequestCode,
-  remainingSeconds,
-  isVerifying,
-  isSubmitDisabled,
-  onCancel,
-}) => ({
-  flow: buildFlowViewModel(t, isAwaitingVerification),
+const assembleEditingComponents = (options) => ({
+  flow: buildFlowViewModel(options.t, options.isAwaitingVerification),
   emailField: buildEmailFieldViewModel(
-    draftEmail,
-    onDraftEmailChange,
-    t,
+    options.draftEmail,
+    options.onDraftEmailChange,
+    options.t,
   ),
   codeField: buildCodeFieldViewModel({
-    verificationCode,
-    onVerificationCodeChange,
-    verificationMessage: metadata.verificationMessage,
-    isAwaitingVerification,
-    t,
+    verificationCode: options.verificationCode,
+    onVerificationCodeChange: options.onVerificationCodeChange,
+    verificationMessage: options.metadata.verificationMessage,
+    isAwaitingVerification: options.isAwaitingVerification,
+    t: options.t,
   }),
   sendCodeButton: buildSendCodeButtonViewModel({
-    isSendingCode,
-    sendCodeLabel: metadata.sendCodeLabel,
-    onRequestCode,
-    remainingSeconds,
-    t,
+    isSendingCode: options.isSendingCode,
+    sendCodeLabel: options.metadata.sendCodeLabel,
+    onRequestCode: options.onRequestCode,
+    remainingSeconds: options.remainingSeconds,
+    t: options.t,
   }),
   confirmButton: buildConfirmButtonViewModel({
-    isVerifying,
-    confirmButtonLabel: metadata.confirmButtonLabel,
-    isSubmitDisabled,
-    t,
+    isVerifying: options.isVerifying,
+    confirmButtonLabel: options.metadata.confirmButtonLabel,
+    isSubmitDisabled: options.isSubmitDisabled,
+    t: options.t,
   }),
-  cancelButton: buildCancelButtonViewModel(t, onCancel),
+  cancelButton: buildCancelButtonViewModel(options.t, options.onCancel),
 });
 
 export default function createEditingViewModel(options) {

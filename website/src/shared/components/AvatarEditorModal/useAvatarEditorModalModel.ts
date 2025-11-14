@@ -107,44 +107,53 @@ type BuildModelInput = {
   isProcessing: boolean;
 };
 
+const resolveViewportPropsInput = (
+  controller: AvatarEditorController,
+  source: string,
+): BuildViewportPropsInput => ({
+  mergedLabels: controller.mergedLabels,
+  containerRef: controller.containerRef,
+  imageRef: controller.imageRef,
+  source,
+  imageTransform: controller.imageTransform,
+  handlePointerDown: controller.handlePointerDown,
+  handlePointerMove: controller.handlePointerMove,
+  handlePointerUp: controller.handlePointerUp,
+  handleImageLoad: controller.handleImageLoad,
+});
+
+const resolveControlsPropsInput = (
+  controller: AvatarEditorController,
+  onCancel: AvatarEditorModalInput["onCancel"],
+  isProcessing: boolean,
+): BuildControlsPropsInput => ({
+  onCancel,
+  isProcessing,
+  handleConfirm: controller.handleConfirm,
+  handleZoomIn: controller.handleZoomIn,
+  handleZoomOut: controller.handleZoomOut,
+  isZoomInDisabled: controller.isZoomInDisabled,
+  isZoomOutDisabled: controller.isZoomOutDisabled,
+});
+
 const buildModalModel = ({
   controller,
   open,
   source,
   onCancel,
   isProcessing,
-}: BuildModelInput) => {
-  const viewport = buildViewportProps({
-    mergedLabels: controller.mergedLabels,
-    containerRef: controller.containerRef,
-    imageRef: controller.imageRef,
-    source,
-    imageTransform: controller.imageTransform,
-    handlePointerDown: controller.handlePointerDown,
-    handlePointerMove: controller.handlePointerMove,
-    handlePointerUp: controller.handlePointerUp,
-    handleImageLoad: controller.handleImageLoad,
-  });
-
-  const controls = buildControlsProps({
-    onCancel,
-    isProcessing,
-    handleConfirm: controller.handleConfirm,
-    handleZoomIn: controller.handleZoomIn,
-    handleZoomOut: controller.handleZoomOut,
-    isZoomInDisabled: controller.isZoomInDisabled,
-    isZoomOutDisabled: controller.isZoomOutDisabled,
-  });
-
-  return {
-    isOpen: open,
-    viewProps: buildViewProps({
-      labels: controller.mergedLabels,
-      viewport,
-      controls,
-    }),
-  };
-};
+}: BuildModelInput) => ({
+  isOpen: open,
+  viewProps: buildViewProps({
+    labels: controller.mergedLabels,
+    viewport: buildViewportProps(
+      resolveViewportPropsInput(controller, source),
+    ),
+    controls: buildControlsProps(
+      resolveControlsPropsInput(controller, onCancel, isProcessing),
+    ),
+  }),
+});
 
 export const useAvatarEditorModalModel = ({
   open,

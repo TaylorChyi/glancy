@@ -40,12 +40,7 @@ const renderHistoryListView = ({
   return { items, onSelect, onNavigate };
 };
 
-describe("HistoryListView", function describeHistoryListView() {
-  beforeEach(() => {
-    itemSequence = 0;
-    jest.clearAllMocks();
-  });
-
+const describeHistoryListViewRendering = () => {
   describe("rendering", () => {
     test("Given_items_When_rendered_Then_provides_accessible_structure", () => {
       const { items, onNavigate } = renderHistoryListView();
@@ -69,7 +64,9 @@ describe("HistoryListView", function describeHistoryListView() {
       expect(screen.getByRole("button", { name: "student" })).toBeInTheDocument();
     });
   });
+};
 
+const describeHistoryListViewInteractions = () => {
   describe("interactions", () => {
     test("Given_click_When_item_selected_Then_invokes_onSelect_with_payload", () => {
       const handleSelect = jest.fn();
@@ -82,7 +79,9 @@ describe("HistoryListView", function describeHistoryListView() {
       expect(handleSelect).toHaveBeenCalledWith(items[0]);
     });
   });
+};
 
+const describeHistoryListViewNavigationBindings = () => {
   describe("navigation bindings", () => {
     test("Given_key_event_When_navigation_triggered_Then_forwards_to_strategy", () => {
       const onKeyDown = jest.fn();
@@ -97,7 +96,9 @@ describe("HistoryListView", function describeHistoryListView() {
       expect(onKeyDown).toHaveBeenCalledTimes(1);
     });
   });
+};
 
+const describeHistoryListViewPresentation = () => {
   describe("presentation", () => {
     test("Given_long_term_When_history_rendered_Then_enables_multiline_display", () => {
       const longTerm =
@@ -116,4 +117,16 @@ describe("HistoryListView", function describeHistoryListView() {
       expect(label).toHaveClass(navItemStyles["label-multiline"]);
     });
   });
+};
+
+describe("HistoryListView", function describeHistoryListView() {
+  beforeEach(() => {
+    itemSequence = 0;
+    jest.clearAllMocks();
+  });
+
+  describeHistoryListViewRendering();
+  describeHistoryListViewInteractions();
+  describeHistoryListViewNavigationBindings();
+  describeHistoryListViewPresentation();
 });

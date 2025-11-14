@@ -49,18 +49,7 @@ const useFormProps = ({
         registerFallbackHeading,
         activeSection,
       }),
-    [
-      metadata.headingId,
-      metadata.descriptionId,
-      metadata.sectionHeadingId,
-      metadata.sectionDescriptionId,
-      handleSubmit,
-      metadata.shouldRenderFallbackHeading,
-      metadata.fallbackHeadingId,
-      metadata.fallbackHeadingText,
-      registerFallbackHeading,
-      activeSection,
-    ],
+    [metadata, handleSubmit, registerFallbackHeading, activeSection],
   );
 
 export default useFormProps;

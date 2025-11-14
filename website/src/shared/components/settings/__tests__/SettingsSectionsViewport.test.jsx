@@ -51,6 +51,26 @@ const BASE_SECTIONS = [
   },
 ];
 
+const BASIC_NAV_CLASSES = {
+  container: "nav-container",
+  action: "nav-action",
+  nav: "nav-list",
+  button: "nav-button",
+  label: "nav-label",
+  labelText: "nav-label-text",
+  icon: "nav-icon",
+  actionButton: "nav-close",
+};
+
+const DEFAULT_PANEL_PROPS = {
+  panelId: "general-panel",
+  tabId: "general-tab",
+  headingId: "general-heading",
+  className: "panel-base",
+  surfaceClassName: "panel-surface",
+  probeClassName: "panel-probe",
+};
+
 function buildBaseViewportProps() {
   const onSectionSelect = jest.fn();
   const onPanelElementChange = jest.fn();
@@ -80,26 +100,8 @@ function buildBaseViewportProps() {
       renderCloseAction,
       referenceSectionId: "privacy",
       body: { className: "viewport-body" },
-      nav: {
-        classes: {
-          container: "nav-container",
-          action: "nav-action",
-          nav: "nav-list",
-          button: "nav-button",
-          label: "nav-label",
-          labelText: "nav-label-text",
-          icon: "nav-icon",
-          actionButton: "nav-close",
-        },
-      },
-      panel: {
-        panelId: "general-panel",
-        tabId: "general-tab",
-        headingId: "general-heading",
-        className: "panel-base",
-        surfaceClassName: "panel-surface",
-        probeClassName: "panel-probe",
-      },
+      nav: { classes: BASIC_NAV_CLASSES },
+      panel: DEFAULT_PANEL_PROPS,
       onHeadingElementChange,
       onPanelElementChange,
     },

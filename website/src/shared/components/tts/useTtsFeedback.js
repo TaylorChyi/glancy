@@ -9,35 +9,12 @@ const initialFeedbackState = Object.freeze({
 
 function useFeedbackState() {
   const [state, setState] = useState(initialFeedbackState);
-
-  const closePopup = useCallback(() => {
-    setState((prev) => ({ ...prev, popupMessage: "" }));
-  }, []);
-
-  const closeToast = useCallback(() => {
-    setState((prev) => ({ ...prev, toastMessage: "" }));
-  }, []);
-
-  const openUpgrade = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      popupMessage: "",
-      upgradeOpen: true,
-    }));
-  }, []);
-
-  const closeUpgrade = useCallback(() => {
-    setState((prev) => ({ ...prev, upgradeOpen: false }));
-  }, []);
-
-  const setPopupMessage = useCallback((message) => {
-    setState((prev) => ({ ...prev, popupMessage: message }));
-  }, []);
-
-  const setToastMessage = useCallback((message) => {
-    setState((prev) => ({ ...prev, toastMessage: message }));
-  }, []);
-
+  const closePopup = useCallback(() => setState((prev) => ({ ...prev, popupMessage: "" })), []);
+  const closeToast = useCallback(() => setState((prev) => ({ ...prev, toastMessage: "" })), []);
+  const openUpgrade = useCallback(() => setState((prev) => ({ ...prev, popupMessage: "", upgradeOpen: true })), []);
+  const closeUpgrade = useCallback(() => setState((prev) => ({ ...prev, upgradeOpen: false })), []);
+  const setPopupMessage = useCallback((message) => setState((prev) => ({ ...prev, popupMessage: message })), []);
+  const setToastMessage = useCallback((message) => setState((prev) => ({ ...prev, toastMessage: message })), []);
   return {
     state,
     closePopup,
@@ -57,30 +34,16 @@ function useFeedbackErrorEffect(error, loginRedirectPath, navigate, actions) {
       return;
     }
     const message = typeof error.message === "string" ? error.message : "";
-
-    switch (error.code) {
-      case 401: {
-        if (loginRedirectPath) {
-          navigate(loginRedirectPath);
-        }
-        break;
-      }
-      case 403: {
-        setPopupMessage(message);
-        break;
-      }
-      default: {
-        setToastMessage(message);
-        break;
-      }
+    if (error.code === 401 && loginRedirectPath) {
+      navigate(loginRedirectPath);
+      return;
     }
-  }, [
-    error,
-    loginRedirectPath,
-    navigate,
-    setPopupMessage,
-    setToastMessage,
-  ]);
+    if (error.code === 403) {
+      setPopupMessage(message);
+      return;
+    }
+    setToastMessage(message);
+  }, [error, loginRedirectPath, navigate, setPopupMessage, setToastMessage]);
 }
 
 /**
@@ -94,24 +57,13 @@ function useFeedbackErrorEffect(error, loginRedirectPath, navigate, actions) {
  * 错误处理：未知 message 时退化为空字符串，避免渲染 undefined。
  * 复杂度：O(1)。
  */
-export default function useTtsFeedback(
-  error,
-  { loginRedirectPath = "/login" } = {},
-) {
+export default function useTtsFeedback(error, { loginRedirectPath = "/login" } = {}) {
   const navigate = useNavigate();
-  const {
-    state: { popupMessage, toastMessage, upgradeOpen },
-    closePopup,
-    closeToast,
-    openUpgrade,
-    closeUpgrade,
-    setPopupMessage,
-    setToastMessage,
-  } = useFeedbackState();
-  useFeedbackErrorEffect(error, loginRedirectPath, navigate, {
-    setPopupMessage,
-    setToastMessage,
-  });
+  const feedbackState = useFeedbackState();
+  const { popupMessage, toastMessage, upgradeOpen } = feedbackState.state;
+  const { closePopup, closeToast, openUpgrade, closeUpgrade, setPopupMessage, setToastMessage } =
+    feedbackState;
+  useFeedbackErrorEffect(error, loginRedirectPath, navigate, { setPopupMessage, setToastMessage });
   return useMemo(
     () => ({
       popupMessage,

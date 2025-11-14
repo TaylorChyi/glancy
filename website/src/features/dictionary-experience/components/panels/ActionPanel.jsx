@@ -45,6 +45,24 @@ export default function ActionPanel({
   );
 }
 
+function SearchToggleButton({
+  className,
+  onClick,
+  label,
+}) {
+  return (
+    <button
+      type="button"
+      className={className}
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      <ThemeIcon name="search" width={18} height={18} />
+    </button>
+  );
+}
+
 function ActionPanelContent({
   panelClassName,
   searchToggleClassName,
@@ -62,15 +80,11 @@ function ActionPanelContent({
         data-testid="dictionary-action-panel"
         data-output-toolbar="true"
       >
-        <button
-          type="button"
+        <SearchToggleButton
           className={searchToggleClassName}
           onClick={onRequestSearch}
-          aria-label={searchButtonLabel}
-          title={searchButtonLabel}
-        >
-          <ThemeIcon name="search" width={18} height={18} />
-        </button>
+          label={searchButtonLabel}
+        />
         <DictionaryEntryActionBar
           {...restActionBarProps}
           renderRoot={resolvedRenderRoot}

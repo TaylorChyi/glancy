@@ -30,14 +30,15 @@ const useModalProps = ({
   metadata: ModalMetadata;
 }): ModalProps =>
   useMemo(
-    () => createModalProps({ open, onClose, metadata }),
-    [
-      open,
-      onClose,
-      metadata.closeLabel,
-      metadata.headingId,
-      metadata.descriptionId,
-    ],
+  () => createModalProps({ open, onClose, metadata }),
+  [
+    open,
+    onClose,
+    metadata.closeLabel,
+    metadata.headingId,
+    metadata.descriptionId,
+    metadata,
+  ],
   );
 
 export default useModalProps;

@@ -18,20 +18,11 @@ function EditableField({
   const containerCls = combineClasses("field", className);
   const inputCls = combineClasses("input", inputClassName);
   const btnCls = combineClasses("edit-btn", buttonClassName);
-
   return (
     <div className={containerCls}>
-      <input
-        className={inputCls}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={!editing}
-      />
+      <input className={inputCls} value={value} onChange={onChange} placeholder={placeholder} disabled={!editing} />
       {!editing && (
-        <button type="button" className={btnCls} onClick={enableEdit}>
-          {buttonText}
-        </button>
+        <button type="button" className={btnCls} onClick={enableEdit}>{buttonText}</button>
       )}
     </div>
   );

@@ -91,14 +91,7 @@ export const useImageTransformMemo = ({
         offset,
         viewportSize,
       }),
-    [
-      displayMetrics.scaleFactor,
-      naturalSize.height,
-      naturalSize.width,
-      offset.x,
-      offset.y,
-      viewportSize,
-    ],
+    [displayMetrics, naturalSize, offset, viewportSize],
   );
 
 const useViewportDerivedState = ({

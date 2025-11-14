@@ -25,16 +25,44 @@ const useNormalizedLanguageOptions = ({
     [sourceLanguageOptions, targetLanguageOptions],
   );
 
+type LanguageControlsPropsBuilderParams = Pick<
+  UseLanguageControlsConfigParams,
+  | "sourceLanguage"
+  | "sourceLanguageLabel"
+  | "targetLanguage"
+  | "targetLanguageLabel"
+  | "swapLabel"
+  | "normalizeSourceLanguageFn"
+  | "normalizeTargetLanguageFn"
+> & {
+  normalizedSourceOptions: LanguageOption[];
+  normalizedTargetOptions: LanguageOption[];
+};
+
+const buildLanguageControlsProps = ({
+  sourceLanguage,
+  sourceLanguageLabel,
+  targetLanguage,
+  targetLanguageLabel,
+  swapLabel,
+  normalizeSourceLanguageFn,
+  normalizeTargetLanguageFn,
+  normalizedSourceOptions,
+  normalizedTargetOptions,
+}: LanguageControlsPropsBuilderParams) => ({
+  sourceLanguage,
+  sourceLanguageOptions: normalizedSourceOptions,
+  sourceLanguageLabel,
+  targetLanguage,
+  targetLanguageOptions: normalizedTargetOptions,
+  targetLanguageLabel,
+  swapLabel,
+  normalizeSourceLanguage: normalizeSourceLanguageFn,
+  normalizeTargetLanguage: normalizeTargetLanguageFn,
+});
+
 const useLanguageControlsProps = (
-  {
-    sourceLanguage,
-    sourceLanguageLabel,
-    targetLanguage,
-    targetLanguageLabel,
-    swapLabel,
-    normalizeSourceLanguageFn,
-    normalizeTargetLanguageFn,
-  }: Pick<
+  params: Pick<
     UseLanguageControlsConfigParams,
     | "sourceLanguage"
     | "sourceLanguageLabel"
@@ -46,19 +74,30 @@ const useLanguageControlsProps = (
   >,
   normalizedSourceOptions: LanguageOption[],
   normalizedTargetOptions: LanguageOption[],
-) =>
-  useMemo(
-    () => ({
-      sourceLanguage,
-      sourceLanguageOptions: normalizedSourceOptions,
-      sourceLanguageLabel,
-      targetLanguage,
-      targetLanguageOptions: normalizedTargetOptions,
-      targetLanguageLabel,
-      swapLabel,
-      normalizeSourceLanguage: normalizeSourceLanguageFn,
-      normalizeTargetLanguage: normalizeTargetLanguageFn,
-    }),
+) => {
+  const {
+    sourceLanguage,
+    sourceLanguageLabel,
+    targetLanguage,
+    targetLanguageLabel,
+    swapLabel,
+    normalizeSourceLanguageFn,
+    normalizeTargetLanguageFn,
+  } = params;
+
+  return useMemo(
+    () =>
+      buildLanguageControlsProps({
+        sourceLanguage,
+        sourceLanguageLabel,
+        targetLanguage,
+        targetLanguageLabel,
+        swapLabel,
+        normalizeSourceLanguageFn,
+        normalizeTargetLanguageFn,
+        normalizedSourceOptions,
+        normalizedTargetOptions,
+      }),
     [
       normalizedSourceOptions,
       normalizedTargetOptions,
@@ -71,6 +110,7 @@ const useLanguageControlsProps = (
       normalizeTargetLanguageFn,
     ],
   );
+};
 
 export interface UseLanguageControlsConfigParams {
   sourceLanguage?: LanguageValue;

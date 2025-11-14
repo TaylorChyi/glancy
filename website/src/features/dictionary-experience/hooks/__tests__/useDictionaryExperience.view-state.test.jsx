@@ -20,6 +20,90 @@ const runLookup = async (result, term) => {
   });
 };
 
+/**
+ * 测试目标：查询成功后应填充 entry/finalText，且工具栏不再暴露版本列表。
+ */
+const testHydratesEntryWithoutVersionControls = async () => {
+  const entry = { id: "v1", term: "omega", markdown: "definition" };
+  mockGetRecord.mockReturnValue({ entry });
+  mockGetEntry.mockReturnValue(entry);
+  mockFetchWordWithHandling.mockResolvedValueOnce({
+    data: entry,
+    error: null,
+    language: "ENGLISH",
+    flavor: "default",
+  });
+
+  const { result } = renderHook(() => useDictionaryExperience());
+  await runLookup(result, entry.term);
+
+  expect(result.current.entry?.id).toBe("v1");
+  expect(result.current.finalText).toBe("definition");
+  expect(
+    result.current.dictionaryActionBarProps.onSelectVersion,
+  ).toBeUndefined();
+  expect(result.current.dictionaryActionBarProps.versions).toEqual([]);
+};
+
+/**
+ * 测试目标：切换到致用单词视图后再返回，应恢复默认视图并清理词条状态。
+ */
+const testResetsDictionaryStateWhenReturningFromLibrary = async () => {
+  const entry = { id: "only", term: "lyra", markdown: "definition" };
+  mockGetRecord.mockReturnValue({ entry });
+  mockGetEntry.mockReturnValue(entry);
+  mockFetchWordWithHandling.mockResolvedValueOnce({
+    data: entry,
+    error: null,
+    language: "ENGLISH",
+    flavor: "default",
+  });
+
+  const { result } = renderHook(() => useDictionaryExperience());
+  await runLookup(result, entry.term);
+
+  act(() => {
+    result.current.handleShowLibrary();
+  });
+  expect(result.current.activeView).toBe("library");
+
+  act(() => {
+    result.current.handleShowDictionary();
+  });
+
+  expect(result.current.activeView).toBe("dictionary");
+  expect(result.current.entry).toBeNull();
+  expect(result.current.finalText).toBe("");
+};
+
+/**
+ * 测试目标：handleSelectHistory 应重用缓存并维持单一版本输出。
+ */
+const testSelectsHistoryWithoutRestoringVersionState = async () => {
+  const entry = { id: "cached", term: "nova", markdown: "cached" };
+  mockWordStoreState.entries = {
+    "nova-ENGLISH": { entry },
+  };
+  mockGetRecord.mockImplementation((key) => mockWordStoreState.entries[key]);
+  mockGetEntry.mockImplementation(() => entry);
+  mockFetchWordWithHandling.mockResolvedValue({
+    data: entry,
+    error: null,
+    language: "ENGLISH",
+    flavor: "default",
+  });
+
+  const { result } = renderHook(() => useDictionaryExperience());
+  await runLookup(result, "nova");
+
+  act(() => {
+    result.current.handleSelectHistory("nova");
+  });
+
+  expect(result.current.entry?.id).toBe("cached");
+  expect(result.current.dictionaryActionBarProps.versions).toEqual([]);
+};
+
 describe("useDictionaryExperience/view state", function () {
   beforeEach(() => {
     resetDictionaryExperienceTestState();
@@ -29,87 +113,16 @@ describe("useDictionaryExperience/view state", function () {
     restoreDictionaryExperienceTimers();
   });
 
-  /**
-   * 测试目标：查询成功后应填充 entry/finalText，且工具栏不再暴露版本列表。
-   */
-  it("hydrates entry without exposing version controls", async () => {
-    const entry = { id: "v1", term: "omega", markdown: "definition" };
-    mockGetRecord.mockReturnValue({ entry });
-    mockGetEntry.mockReturnValue(entry);
-    mockFetchWordWithHandling.mockResolvedValueOnce({
-      data: entry,
-      error: null,
-      language: "ENGLISH",
-      flavor: "default",
-    });
-
-    const { result } = renderHook(() => useDictionaryExperience());
-    await runLookup(result, entry.term);
-
-    expect(result.current.entry?.id).toBe("v1");
-    expect(result.current.finalText).toBe("definition");
-    expect(
-      result.current.dictionaryActionBarProps.onSelectVersion,
-    ).toBeUndefined();
-    expect(result.current.dictionaryActionBarProps.versions).toEqual([]);
-  });
-
-  /**
-   * 测试目标：切换到致用单词视图后再返回，应恢复默认视图并清理词条状态。
-   */
-  it("resets dictionary state when returning from library", async () => {
-    const entry = { id: "only", term: "lyra", markdown: "definition" };
-    mockGetRecord.mockReturnValue({ entry });
-    mockGetEntry.mockReturnValue(entry);
-    mockFetchWordWithHandling.mockResolvedValueOnce({
-      data: entry,
-      error: null,
-      language: "ENGLISH",
-      flavor: "default",
-    });
-
-    const { result } = renderHook(() => useDictionaryExperience());
-    await runLookup(result, entry.term);
-
-    act(() => {
-      result.current.handleShowLibrary();
-    });
-    expect(result.current.activeView).toBe("library");
-
-    act(() => {
-      result.current.handleShowDictionary();
-    });
-
-    expect(result.current.activeView).toBe("dictionary");
-    expect(result.current.entry).toBeNull();
-    expect(result.current.finalText).toBe("");
-  });
-
-  /**
-   * 测试目标：handleSelectHistory 应重用缓存并维持单一版本输出。
-   */
-  it("selects history without restoring version state", async () => {
-    const entry = { id: "cached", term: "nova", markdown: "cached" };
-    mockWordStoreState.entries = {
-      "nova-ENGLISH": { entry },
-    };
-    mockGetRecord.mockImplementation((key) => mockWordStoreState.entries[key]);
-    mockGetEntry.mockImplementation(() => entry);
-    mockFetchWordWithHandling.mockResolvedValue({
-      data: entry,
-      error: null,
-      language: "ENGLISH",
-      flavor: "default",
-    });
-
-    const { result } = renderHook(() => useDictionaryExperience());
-    await runLookup(result, "nova");
-
-    act(() => {
-      result.current.handleSelectHistory("nova");
-    });
-
-    expect(result.current.entry?.id).toBe("cached");
-    expect(result.current.dictionaryActionBarProps.versions).toEqual([]);
-  });
+  it(
+    "hydrates entry without exposing version controls",
+    testHydratesEntryWithoutVersionControls,
+  );
+  it(
+    "resets dictionary state when returning from library",
+    testResetsDictionaryStateWhenReturningFromLibrary,
+  );
+  it(
+    "selects history without restoring version state",
+    testSelectsHistoryWithoutRestoringVersionState,
+  );
 });

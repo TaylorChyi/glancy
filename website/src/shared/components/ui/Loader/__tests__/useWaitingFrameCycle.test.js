@@ -17,11 +17,11 @@ import useWaitingFrameCycle from "../useWaitingFrameCycle";
 
 const waitingFrames = ["frame-a.svg", "frame-b.svg", "frame-c.svg"];
 
-function registerWaitingFrameCycleTests(frames) {
+describe("useWaitingFrameCycle", () => {
   it("GivenRandomSequence_WhenInitialised_ThenUsesFirstRandomValue", () => {
     const randomValues = [0.6];
     const { result } = renderHook(() =>
-      useWaitingFrameCycle(frames, {
+      useWaitingFrameCycle(waitingFrames, {
         random: () => randomValues.shift() ?? 0,
         autoStart: false,
       }),
@@ -33,7 +33,7 @@ function registerWaitingFrameCycleTests(frames) {
   it("GivenAnimationIteration_WhenRandomRepeatsIndex_ThenFallsBackToNextFrame", () => {
     const randomValues = [0.4, 0.4];
     const { result } = renderHook(() =>
-      useWaitingFrameCycle(frames, {
+      useWaitingFrameCycle(waitingFrames, {
         random: () => randomValues.shift() ?? 0,
         autoStart: false,
       }),
@@ -76,7 +76,7 @@ function registerWaitingFrameCycleTests(frames) {
     const cancel = jest.fn();
 
     const { result } = renderHook(() =>
-      useWaitingFrameCycle(frames, {
+      useWaitingFrameCycle(waitingFrames, {
         random: () => randomValues.shift() ?? 0,
         scheduler,
         cancel,
@@ -102,7 +102,7 @@ function registerWaitingFrameCycleTests(frames) {
      * 前置条件：仅提供一个素材帧，并注入可观察调用次数的 scheduler。
      * 步骤：
      *  1) 通过 renderHook 渲染 useWaitingFrameCycle，传入单帧数组与自定义 scheduler。
-     *  2) 读取 currentFrame 并确认 scheduler 未被调用。
+     *     2) 读取 currentFrame 并确认 scheduler 未被调用。
      * 断言：
      *  - currentFrame 返回唯一素材；
      *  - scheduler 保持零调用次数。
@@ -143,7 +143,7 @@ function registerWaitingFrameCycleTests(frames) {
     const cancel = jest.fn();
 
     const { result } = renderHook(() =>
-      useWaitingFrameCycle(frames, {
+      useWaitingFrameCycle(waitingFrames, {
         random: () => 0.1,
         scheduler,
         cancel,
@@ -166,11 +166,11 @@ function registerWaitingFrameCycleTests(frames) {
      * 断言：
      *  - cycleDurationMs 恰为 1500；
      *  - 行为与等待策略定义保持同步。
-     *  边界/异常：
+     * 边界/异常：
      *  - 若策略值调整，该测试提醒同步更新 Hook 或策略文件。
      */
     const { result } = renderHook(() =>
-      useWaitingFrameCycle(frames, {
+      useWaitingFrameCycle(waitingFrames, {
         random: () => 0.2,
         autoStart: false,
       }),
@@ -178,8 +178,4 @@ function registerWaitingFrameCycleTests(frames) {
 
     expect(result.current.cycleDurationMs).toBe(1500);
   });
-}
-
-describe("useWaitingFrameCycle", () => {
-  registerWaitingFrameCycleTests(waitingFrames);
 });

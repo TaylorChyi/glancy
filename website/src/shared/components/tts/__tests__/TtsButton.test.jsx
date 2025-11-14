@@ -68,15 +68,7 @@ const { default: TtsButton } = await import(
   "@shared/components/tts/TtsButton.jsx"
 );
 
-describe("TtsButton", function () {
-  afterEach(() => {
-    play.mockReset();
-    stop.mockReset();
-    useTtsPlayer.mockClear();
-    mockUseTheme.mockReset();
-    mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
-  });
-
+const definePlaysWithTextLangTest = () => {
   /**
    * Renders button and verifies clicking triggers play with correct params.
    */
@@ -89,7 +81,9 @@ describe("TtsButton", function () {
       voice: undefined,
     });
   });
+};
 
+const defineStopsWhenPlayingTest = () => {
   /**
    * When already playing, clicking triggers stop instead of play.
    */
@@ -106,7 +100,9 @@ describe("TtsButton", function () {
     expect(stop).toHaveBeenCalled();
     expect(play).not.toHaveBeenCalled();
   });
+};
 
+const defineUpgradePopupTest = () => {
   /**
    * Shows upgrade prompt on forbidden errors.
    */
@@ -122,7 +118,9 @@ describe("TtsButton", function () {
     expect(await findByText("Pro only")).toBeInTheDocument();
     expect(await findByText("升级")).toBeInTheDocument();
   });
+};
 
+const defineToastTest = () => {
   /**
    * Displays toast on rate limit errors.
    */
@@ -137,7 +135,9 @@ describe("TtsButton", function () {
     const { findByText } = render(<TtsButton text="hi" lang="en" />);
     expect(await findByText("Too many")).toBeInTheDocument();
   });
+};
 
+const defineTooltipLocalizationTest = () => {
   /**
    * Button derives aria-label from translations for each scope.
    */
@@ -154,7 +154,9 @@ describe("TtsButton", function () {
       "Play sentence audio",
     );
   });
+};
 
+const defineDefaultClassTest = () => {
   /**
    * 测试目标：默认态按钮仅暴露基础类名，符合无背景设计。
    * 前置条件：使用默认主题与属性。
@@ -169,7 +171,9 @@ describe("TtsButton", function () {
     const { getByRole } = render(<TtsButton text="hi" lang="en" />);
     expect(getByRole("button").className.split(" ").sort()).toEqual(["button"]);
   });
+};
 
+const defineDarkThemeClassTest = () => {
   /**
    * 测试目标：暗色主题下同样维持基础类，表明色调不再依赖主题差异。
    * 前置条件：mockUseTheme 返回 resolvedTheme 为 dark。
@@ -177,7 +181,7 @@ describe("TtsButton", function () {
    *  1) 渲染按钮并读取 className。
    * 断言：
    *  - className 仍然仅包含 button。
-   * 边界/异常：
+   *  边界/异常：
    *  - 若未来恢复主题化样式，应更新断言。
    */
   test("GivenDarkTheme_WhenRenderingButton_ThenKeepsBaseClass", () => {
@@ -185,4 +189,22 @@ describe("TtsButton", function () {
     const { getByRole } = render(<TtsButton text="hi" lang="en" />);
     expect(getByRole("button").className.split(" ").sort()).toEqual(["button"]);
   });
+};
+
+describe("TtsButton", function () {
+  afterEach(() => {
+    play.mockReset();
+    stop.mockReset();
+    useTtsPlayer.mockClear();
+    mockUseTheme.mockReset();
+    mockUseTheme.mockReturnValue({ resolvedTheme: "light" });
+  });
+
+  definePlaysWithTextLangTest();
+  defineStopsWhenPlayingTest();
+  defineUpgradePopupTest();
+  defineToastTest();
+  defineTooltipLocalizationTest();
+  defineDefaultClassTest();
+  defineDarkThemeClassTest();
 });

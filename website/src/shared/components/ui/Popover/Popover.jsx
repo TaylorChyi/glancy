@@ -37,27 +37,15 @@ function Popover({
   className,
   style,
 }) {
-  const { setContentNode, position, visible, activePlacement } =
-    usePopoverPositioning({
-      anchorRef,
-      isOpen,
-      placement,
-      fallbackPlacements,
-      align,
-      offset,
-      onClose,
-    });
-
   if (!isOpen || typeof document === "undefined") return null;
-  const classNames = getPopoverClassName(className),
-    inlineStyles = getPopoverInlineStyles(position, style);
-
+  const { setContentNode, position, visible, activePlacement } =
+    usePopoverPositioning({ anchorRef, isOpen, placement, fallbackPlacements, align, offset, onClose });
   return renderPopoverContent({
     setContentNode,
-    className: classNames,
+    className: getPopoverClassName(className),
     visible,
     activePlacement,
-    inlineStyles,
+    inlineStyles: getPopoverInlineStyles(position, style),
     children,
   });
 }

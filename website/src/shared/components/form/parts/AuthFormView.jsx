@@ -27,36 +27,8 @@ function renderAuthFormHeader({ brandText, title }) {
   return <AuthFormHeader brandText={brandText} title={title} />;
 }
 
-function renderAuthMethodForm({
-  account,
-  availableFormMethods,
-  handleSendCode,
-  handleSubmit,
-  method,
-  password,
-  passwordPlaceholder,
-  placeholders,
-  setAccount,
-  setPassword,
-  showCodeButton,
-  t,
-}) {
-  return (
-    <AuthMethodForm
-      account={account}
-      availableFormMethods={availableFormMethods}
-      handleSendCode={handleSendCode}
-      handleSubmit={handleSubmit}
-      method={method}
-      password={password}
-      passwordPlaceholder={passwordPlaceholder}
-      placeholders={placeholders}
-      setAccount={setAccount}
-      setPassword={setPassword}
-      showCodeButton={showCodeButton}
-      t={t}
-    />
-  );
+function renderAuthMethodForm(props) {
+  return <AuthMethodForm {...props} />;
 }
 
 function renderAuthFormSwitch({ switchLink, switchText, t }) {

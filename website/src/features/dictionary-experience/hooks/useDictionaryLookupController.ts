@@ -31,7 +31,7 @@ const useLookupLifecycle = (
       isMountedRef.current = false;
       cancelActiveLookup();
     };
-  }, [cancelActiveLookup]);
+  }, [cancelActiveLookup, isMountedRef]);
 };
 
 const useMountedChecker = (isMountedRef: MutableRefObject<boolean>) =>

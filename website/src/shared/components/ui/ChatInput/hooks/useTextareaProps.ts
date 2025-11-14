@@ -23,19 +23,8 @@ export const useTextareaProps = ({
   onKeyDown,
   onFocus,
   onBlur,
-}: UseTextareaPropsParams) => {
-  const dependencies = [
-    onBlur,
-    onChange,
-    onFocus,
-    onKeyDown,
-    placeholder,
-    rows,
-    setTextareaRef,
-    value,
-  ];
-
-  return useMemo(
+}: UseTextareaPropsParams) =>
+  useMemo(
     () => ({
       ref: setTextareaRef,
       rows,
@@ -46,6 +35,14 @@ export const useTextareaProps = ({
       onFocus: onFocus ?? noop,
       onBlur: onBlur ?? noop,
     }),
-    dependencies,
+    [
+      setTextareaRef,
+      rows,
+      placeholder,
+      value,
+      onChange,
+      onKeyDown,
+      onFocus,
+      onBlur,
+    ],
   );
-};

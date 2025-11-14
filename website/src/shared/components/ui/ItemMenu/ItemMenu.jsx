@@ -19,6 +19,21 @@ const handleMenuTriggerKeyDown = (event, setOpen, menuRef) => {
   requestAnimationFrame(() => focusMenuItem(menuRef, event.key));
 };
 
+function MenuActionItem({ className, icon, label, onClick }) {
+  return (
+    <li role="menuitem">
+      <button
+        type="button"
+        className={className}
+        onClick={withStopPropagation(onClick)}
+      >
+        <ThemeIcon name={icon} width={16} height={16} className={styles.icon} />{" "}
+        {label}
+      </button>
+    </li>
+  );
+}
+
 function ItemMenuContent({
   menuRef,
   onFavorite,
@@ -27,44 +42,94 @@ function ItemMenuContent({
   deleteLabel,
   closeMenu,
 }) {
+  const actions = [
+    {
+      key: "favorite",
+      handler: () => {
+        onFavorite();
+        closeMenu();
+      },
+      icon: "star-solid",
+      label: favoriteLabel,
+    },
+    {
+      key: "delete",
+      handler: () => {
+        onDelete();
+        closeMenu();
+      },
+      icon: "trash",
+      label: deleteLabel,
+      className: styles["delete-btn"],
+    },
+  ];
+
   return (
     <ul className={styles.menu} role="menu" ref={menuRef}>
-      <li role="menuitem">
-        <button
-          type="button"
-          onClick={withStopPropagation(() => {
-            onFavorite();
-            closeMenu();
-          })}
-        >
-          <ThemeIcon
-            name="star-solid"
-            width={16}
-            height={16}
-            className={styles.icon}
-          />{" "}
-          {favoriteLabel}
-        </button>
-      </li>
-      <li role="menuitem">
-        <button
-          type="button"
-          className={styles["delete-btn"]}
-          onClick={withStopPropagation(() => {
-            onDelete();
-            closeMenu();
-          })}
-        >
-          <ThemeIcon
-            name="trash"
-            width={16}
-            height={16}
-            className={styles.icon}
-          />{" "}
-          {deleteLabel}
-        </button>
-      </li>
+      {actions.map((action) => (
+        <MenuActionItem
+          key={action.key}
+          className={action.className}
+          icon={action.icon}
+          label={action.label}
+          onClick={action.handler}
+        />
+      ))}
     </ul>
+  );
+}
+
+function ItemMenuTrigger({
+  open,
+  toggleMenu,
+  handleTriggerKeyDown,
+  triggerRef,
+}) {
+  return (
+    <button
+      type="button"
+      className={styles.action}
+      aria-haspopup="true"
+      aria-expanded={open}
+      onClick={withStopPropagation(toggleMenu)}
+      onKeyDown={handleTriggerKeyDown}
+      ref={triggerRef}
+    >
+      <ThemeIcon name="ellipsis-vertical" width={16} height={16} />
+    </button>
+  );
+}
+
+function ItemMenuPopover({
+  open,
+  triggerRef,
+  menuRef,
+  closeMenu,
+  onFavorite,
+  onDelete,
+  favoriteLabel,
+  deleteLabel,
+}) {
+  return (
+    <Popover
+      isOpen={open}
+      anchorRef={triggerRef}
+      onClose={closeMenu}
+      placement="bottom"
+      align="end"
+      offset={4}
+    >
+      {open && (
+        <ItemMenuContent
+          menuRef={menuRef}
+          onFavorite={onFavorite}
+          onDelete={onDelete}
+          favoriteLabel={favoriteLabel}
+          deleteLabel={deleteLabel}
+          closeMenu={closeMenu}
+        />
+      )}
+    </Popover>
   );
 }
 
@@ -82,36 +147,22 @@ function ItemMenuView({
 }) {
   return (
     <div className={styles.wrapper}>
-      <button
-        type="button"
-        className={styles.action}
-        aria-haspopup="true"
-        aria-expanded={open}
-        onClick={withStopPropagation(toggleMenu)}
-        onKeyDown={handleTriggerKeyDown}
-        ref={triggerRef}
-      >
-        <ThemeIcon name="ellipsis-vertical" width={16} height={16} />
-      </button>
-      <Popover
-        isOpen={open}
-        anchorRef={triggerRef}
-        onClose={closeMenu}
-        placement="bottom"
-        align="end"
-        offset={4}
-      >
-        {open && (
-          <ItemMenuContent
-            menuRef={menuRef}
-            onFavorite={onFavorite}
-            onDelete={onDelete}
-            favoriteLabel={favoriteLabel}
-            deleteLabel={deleteLabel}
-            closeMenu={closeMenu}
-          />
-        )}
-      </Popover>
+      <ItemMenuTrigger
+        open={open}
+        toggleMenu={toggleMenu}
+        handleTriggerKeyDown={handleTriggerKeyDown}
+        triggerRef={triggerRef}
+      />
+      <ItemMenuPopover
+        open={open}
+        triggerRef={triggerRef}
+        menuRef={menuRef}
+        closeMenu={closeMenu}
+        onFavorite={onFavorite}
+        onDelete={onDelete}
+        favoriteLabel={favoriteLabel}
+        deleteLabel={deleteLabel}
+      />
     </div>
   );
 }

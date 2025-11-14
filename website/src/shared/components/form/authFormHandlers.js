@@ -77,6 +77,36 @@ const executeCodeRequest = async ({
   }
 };
 
+const handleCodeRequest = async ({
+  account,
+  method,
+  onRequestCode,
+  setAccount,
+  showPopup,
+  showToast,
+  t,
+  validateAccount,
+}) => {
+  const sanitizedAccount = sanitizeAndSyncAccount(account, setAccount);
+
+  if (!isAccountValid(sanitizedAccount, method, validateAccount)) {
+    return rejectInvalidAccount(showPopup, t);
+  }
+
+  if (typeof onRequestCode !== "function") {
+    return rejectUnavailableMethod(showPopup, t);
+  }
+
+  return executeCodeRequest({
+    method,
+    onRequestCode,
+    sanitizedAccount,
+    showPopup,
+    showToast,
+    t,
+  });
+};
+
 const useCodeRequestHandler = ({
   account,
   method,
@@ -87,24 +117,16 @@ const useCodeRequestHandler = ({
   t,
   validateAccount,
 }) =>
-  useCallback(async () => {
-    const sanitizedAccount = sanitizeAndSyncAccount(account, setAccount);
-
-    if (!isAccountValid(sanitizedAccount, method, validateAccount)) {
-      return rejectInvalidAccount(showPopup, t);
-    }
-
-    if (typeof onRequestCode !== "function") {
-      return rejectUnavailableMethod(showPopup, t);
-    }
-
-    return executeCodeRequest({
+  useCallback(() => {
+    return handleCodeRequest({
+      account,
       method,
       onRequestCode,
-      sanitizedAccount,
+      setAccount,
       showPopup,
       showToast,
       t,
+      validateAccount,
     });
   }, [
     account,

@@ -30,6 +30,60 @@ const splitSectionProps = (sectionProps) => {
   return { ariaDescribedByFromProps, restSectionProps };
 };
 
+const useSettingsSectionProps = ({
+  headingId,
+  title,
+  description,
+  descriptionId,
+  describedBy,
+  showDivider = true,
+  classes = {},
+  ...sectionProps
+}) => {
+  const autoDescriptionId = useId();
+  const shouldRenderDescription = isRenderable(description);
+  const resolvedDescriptionId = useResolvedDescriptionId({
+    shouldRenderDescription,
+    descriptionId,
+    headingId,
+    autoDescriptionId,
+  });
+  const {
+    sectionClassName,
+    headerClassName,
+    titleClassName,
+    dividerClassName,
+    descriptionClassName,
+  } = getSectionClasses(classes);
+  const { ariaDescribedByFromProps, restSectionProps } =
+    splitSectionProps(sectionProps);
+  const ariaDescribedBy = resolveAriaDescribedBy({
+    describedBy,
+    ariaDescribedByFromProps,
+    shouldRenderDescription,
+    resolvedDescriptionId,
+  });
+
+  return {
+    ariaDescribedBy,
+    sectionClassName,
+    restSectionProps,
+    headerProps: {
+      headingId,
+      title,
+      showDivider,
+      headerClassName,
+      titleClassName,
+      dividerClassName,
+    },
+    descriptionProps: {
+      shouldRender: shouldRenderDescription,
+      id: resolvedDescriptionId,
+      className: descriptionClassName,
+    },
+  };
+};
+
 const useResolvedDescriptionId = ({
   shouldRenderDescription,
   descriptionId,
@@ -82,56 +136,19 @@ function SectionDescription({
   );
 }
 
-function SettingsSection({
-  headingId,
-  title,
-  description,
-  descriptionId,
-  describedBy,
-  showDivider = true,
-  classes = {},
-  children,
-  ...sectionProps
-}) {
-  const autoDescriptionId = useId();
-  const shouldRenderDescription = isRenderable(description);
-  const resolvedDescriptionId = useResolvedDescriptionId({
-    shouldRenderDescription,
-    descriptionId,
-    headingId,
-    autoDescriptionId,
-  });
+function SettingsSection(props) {
   const {
+    ariaDescribedBy,
     sectionClassName,
-    headerClassName,
-    titleClassName,
-    dividerClassName,
-    descriptionClassName,
-  } = getSectionClasses(classes);
-  const { ariaDescribedByFromProps, restSectionProps } =
-    splitSectionProps(sectionProps);
-  const ariaDescribedBy = resolveAriaDescribedBy({
-    describedBy,
-    ariaDescribedByFromProps,
-    shouldRenderDescription,
-    resolvedDescriptionId,
-  });
-  const headerProps = {
-    headingId,
-    title,
-    showDivider,
-    headerClassName,
-    titleClassName,
-    dividerClassName,
-  };
-  const descriptionProps = {
-    shouldRender: shouldRenderDescription,
-    id: resolvedDescriptionId,
-    className: descriptionClassName,
-  };
+    headerProps,
+    descriptionProps,
+    restSectionProps,
+  } = useSettingsSectionProps(props);
+  const { description, children } = props;
+
   return (
     <section
-      aria-labelledby={headingId}
+      aria-labelledby={headerProps.headingId}
       {...restSectionProps}
       className={sectionClassName}
       aria-describedby={ariaDescribedBy}

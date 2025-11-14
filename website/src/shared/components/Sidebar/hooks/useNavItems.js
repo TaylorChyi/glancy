@@ -58,13 +58,10 @@ export function useNavItems({ access, labels, handlers, activeView }) {
   return useMemo(
     () => buildNavItems({ access, labels, handlers, activeView }),
     [
-      access.canAccessDictionary,
-      access.canAccessLibrary,
+      access,
+      labels,
+      handlers,
       activeView,
-      handlers.onDictionary,
-      handlers.onLibrary,
-      labels.dictionary,
-      labels.library,
     ],
   );
 }

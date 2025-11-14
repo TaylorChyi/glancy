@@ -46,11 +46,7 @@ const SidebarContent = forwardRef(function SidebarContent(
       ref={ref}
       id="sidebar"
       data-testid="sidebar"
-      className={getSidebarClassName({
-        isMobile,
-        open,
-        containerClass: styles.container,
-      })}
+      className={getSidebarClassName({ isMobile, open, containerClass: styles.container })}
     >
       <SidebarHeader navigation={navigation} />
       <SidebarHistory

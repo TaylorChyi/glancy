@@ -14,6 +14,26 @@ const optionPropType = PropTypes.shape({
 
 const refPropType = PropTypes.shape({ current: PropTypes.instanceOf(Element) });
 
+function LanguageMenuTriggerContent({ badge, label, showTriggerLabel }) {
+  return (
+    <span className={styles["language-trigger-content"]}>
+      <span className={styles["language-trigger-code"]}>{badge}</span>
+      <span
+        className={styles["language-trigger-label"]}
+        data-visible={showTriggerLabel}
+      >
+        {label}
+      </span>
+    </span>
+  );
+}
+
+LanguageMenuTriggerContent.propTypes = {
+  badge: PropTypes.node.isRequired,
+  label: PropTypes.string.isRequired,
+  showTriggerLabel: PropTypes.bool.isRequired,
+};
+
 function LanguageMenuTrigger({
   id,
   open,
@@ -28,6 +48,8 @@ function LanguageMenuTrigger({
   badge,
   label,
 }) {
+  const dataFullWidth = fullWidth ? "true" : undefined;
+
   return (
     <button
       type="button"
@@ -42,17 +64,13 @@ function LanguageMenuTrigger({
       ref={triggerRef}
       data-open={open}
       data-variant={variant}
-      data-fullwidth={fullWidth ? "true" : undefined}
+      data-fullwidth={dataFullWidth}
     >
-      <span className={styles["language-trigger-content"]}>
-        <span className={styles["language-trigger-code"]}>{badge}</span>
-        <span
-          className={styles["language-trigger-label"]}
-          data-visible={showTriggerLabel}
-        >
-          {label}
-        </span>
-      </span>
+      <LanguageMenuTriggerContent
+        badge={badge}
+        label={label}
+        showTriggerLabel={showTriggerLabel}
+      />
     </button>
   );
 }
@@ -113,6 +131,35 @@ LanguageMenuList.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
+function LanguageMenuPopoverContent({ menuRef, open, options, currentValue, onSelect }) {
+  return (
+    <ul
+      className={styles["language-menu"]}
+      role="menu"
+      ref={menuRef}
+      data-open={open}
+    >
+      <LanguageMenuList
+        options={options}
+        currentValue={currentValue}
+        onSelect={onSelect}
+      />
+    </ul>
+  );
+}
+
+LanguageMenuPopoverContent.propTypes = {
+  menuRef: refPropType,
+  open: PropTypes.bool.isRequired,
+  options: PropTypes.arrayOf(optionPropType).isRequired,
+  currentValue: PropTypes.string.isRequired,
+  onSelect: PropTypes.func.isRequired,
+};
+
+LanguageMenuPopoverContent.defaultProps = {
+  menuRef: undefined,
+};
+
 function LanguageMenuPopover({
   open,
   triggerRef,
@@ -134,18 +181,13 @@ function LanguageMenuPopover({
       // 优先将菜单展示在按钮上方；当顶部空间不足时自动回退至下方。
     >
       {open ? (
-        <ul
-          className={styles["language-menu"]}
-          role="menu"
-          ref={menuRef}
-          data-open={open}
-        >
-          <LanguageMenuList
-            options={options}
-            currentValue={currentValue}
-            onSelect={onSelect}
-          />
-        </ul>
+        <LanguageMenuPopoverContent
+          menuRef={menuRef}
+          open={open}
+          options={options}
+          currentValue={currentValue}
+          onSelect={onSelect}
+        />
       ) : null}
     </Popover>
   );

@@ -24,17 +24,5 @@ export function ThemeIcon({
   );
   const altText = decorative ? "" : alt ?? name;
 
-  return renderIcon({
-    name,
-    inline,
-    url,
-    iconRole,
-    className,
-    style,
-    width,
-    height,
-    decorative,
-    altText,
-    title,
-  });
+  return renderIcon({ name, inline, url, iconRole, className, style, width, height, decorative, altText, title });
 }

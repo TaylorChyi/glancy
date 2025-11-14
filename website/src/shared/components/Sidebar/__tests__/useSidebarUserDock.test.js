@@ -65,11 +65,7 @@ const { default: useSidebarUserDock } = await import(
   "../hooks/useSidebarUserDock.js"
 );
 
-describe("useSidebarUserDock", () => {
-  beforeEach(() => {
-    setContextState();
-  });
-
+const describeAnonymousUser = () => {
   describe("anonymous user", () => {
     beforeEach(() => {
       setContextState();
@@ -91,14 +87,16 @@ describe("useSidebarUserDock", () => {
       });
     });
   });
+};
+
+const describeAuthenticatedUser = () => {
+  const arrangeAuthenticatedUser = (userOverrides) => {
+    setContextState({
+      user: buildUserContext({ user: userOverrides }),
+    });
+  };
 
   describe("authenticated user", () => {
-    const arrangeAuthenticatedUser = (userOverrides) => {
-      setContextState({
-        user: buildUserContext({ user: userOverrides }),
-      });
-    };
-
     test("Given pro user When building props Then maps modal controls", () => {
       const openSettings = jest.fn();
       const openLogout = jest.fn();
@@ -133,4 +131,13 @@ describe("useSidebarUserDock", () => {
       });
     });
   });
+};
+
+describe("useSidebarUserDock", () => {
+  beforeEach(() => {
+    setContextState();
+  });
+
+  describeAnonymousUser();
+  describeAuthenticatedUser();
 });

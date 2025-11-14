@@ -43,7 +43,7 @@ const useFormFeedbackData = ({ otherOptionsLabel, t }) => {
   };
 };
 
-const useFormHandlers = ({
+function useFormHandlers({
   account,
   method,
   onRequestCode,
@@ -53,29 +53,31 @@ const useFormHandlers = ({
   feedback,
   setAccount,
   t,
-}) => ({
-  handleSendCode: useCodeRequestHandler({
-    account,
-    method,
-    onRequestCode,
-    setAccount,
-    showPopup: feedback.showPopup,
-    showToast: feedback.showToast,
-    t,
-    validateAccount,
-  }),
-  handleSubmit: useSubmitHandler({
-    account,
-    method,
-    onSubmit,
-    password,
-    showPopup: feedback.showPopup,
-    t,
-    validateAccount,
-  }),
-});
+}) {
+  return {
+    handleSendCode: useCodeRequestHandler({
+      account,
+      method,
+      onRequestCode,
+      setAccount,
+      showPopup: feedback.showPopup,
+      showToast: feedback.showToast,
+      t,
+      validateAccount,
+    }),
+    handleSubmit: useSubmitHandler({
+      account,
+      method,
+      onSubmit,
+      password,
+      showPopup: feedback.showPopup,
+      t,
+      validateAccount,
+    }),
+  };
+}
 
-const useAuthFormController = (props) => {
+function useAuthFormController(props) {
   const {
     account,
     availableFormMethods,
@@ -124,7 +126,7 @@ const useAuthFormController = (props) => {
     showCodeButton: props.showCodeButton,
     toastDismissLabel,
   });
-};
+}
 
 export { useAuthFormController };
 export { resolveInitialMethod, sanitizeAccount } from "./authFormPrimitives.js";

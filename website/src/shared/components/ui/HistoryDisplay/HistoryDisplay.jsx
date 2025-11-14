@@ -6,6 +6,62 @@ import EmptyState from "@shared/components/ui/EmptyState";
 import Button from "@shared/components/ui/Button";
 import styles from "./HistoryDisplay.module.css";
 
+const formatHistoryDate = (formatter, timestamp) => {
+  if (!timestamp || !formatter) return null;
+  try {
+    return formatter.format(new Date(timestamp));
+  } catch {
+    return null;
+  }
+};
+
+const HistoryItem = ({ item, dateFormatter, onSelect }) => {
+  const displayDate = formatHistoryDate(dateFormatter, item.createdAt);
+  const handleClick = () => {
+    if (!onSelect) return;
+    const versionId = item?.latestVersionId ?? undefined;
+    onSelect(item, versionId);
+  };
+
+  return (
+    <li key={item.termKey} className={styles.card}>
+      <button type="button" className={styles.term} onClick={handleClick}>
+        <span className={styles["term-text"]}>{item.term}</span>
+        <span className={styles.trailing}>
+          {displayDate ? (
+            <time
+              dateTime={item.createdAt ?? undefined}
+              className={styles.meta}
+            >
+              {displayDate}
+            </time>
+          ) : null}
+          <ThemeIcon
+            name="arrow-right"
+            width={18}
+            height={18}
+            aria-hidden="true"
+            className={styles.arrow}
+          />
+        </span>
+      </button>
+    </li>
+  );
+};
+
+const HistoryList = ({ items, dateFormatter, onSelect }) => (
+  <ul className={styles.grid}>
+    {items.map((item) => (
+      <HistoryItem
+        key={item.termKey}
+        item={item}
+        dateFormatter={dateFormatter}
+        onSelect={onSelect}
+      />
+    ))}
+  </ul>
+);
+
 function HistoryDisplay({ onEmptyAction, onSelect }) {
   const { history } = useHistory();
   const { t, lang } = useLanguage();
@@ -25,15 +81,6 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     }
   }, [locale]);
 
-  const resolveDisplayDate = (timestamp) => {
-    if (!timestamp || !dateFormatter) return null;
-    try {
-      return dateFormatter.format(new Date(timestamp));
-    } catch {
-      return null;
-    }
-  };
-
   if (!items.length) {
     return (
       <EmptyState
@@ -52,48 +99,13 @@ function HistoryDisplay({ onEmptyAction, onSelect }) {
     );
   }
 
-  const handleSelect = (historyItem) => {
-    if (!onSelect) return;
-    const versionId = historyItem?.latestVersionId ?? undefined;
-    onSelect(historyItem, versionId);
-  };
-
   return (
     <div className={styles.container}>
-      <ul className={styles.grid}>
-        {items.map((item) => {
-          const displayDate = resolveDisplayDate(item.createdAt);
-          const label = item.term;
-          return (
-            <li key={item.termKey} className={styles.card}>
-              <button
-                type="button"
-                className={styles.term}
-                onClick={() => handleSelect(item)}
-              >
-                <span className={styles["term-text"]}>{label}</span>
-                <span className={styles.trailing}>
-                  {displayDate ? (
-                    <time
-                      dateTime={item.createdAt ?? undefined}
-                      className={styles.meta}
-                    >
-                      {displayDate}
-                    </time>
-                  ) : null}
-                  <ThemeIcon
-                    name="arrow-right"
-                    width={18}
-                    height={18}
-                    aria-hidden="true"
-                    className={styles.arrow}
-                  />
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <HistoryList
+        items={items}
+        dateFormatter={dateFormatter}
+        onSelect={onSelect}
+      />
     </div>
   );
 }

@@ -46,17 +46,7 @@ const useHomeResetHandler = ({
     setActiveView(DICTIONARY_EXPERIENCE_VIEWS.DICTIONARY);
     focusInput();
     closeToast();
-  }, [
-    resetCopyFeedback,
-    setEntry,
-    setFinalText,
-    setLoading,
-    setCurrentTermKey,
-    setCurrentTerm,
-    setActiveView,
-    focusInput,
-    closeToast,
-  ]);
+  }, [resetCopyFeedback, setEntry, setFinalText, setLoading, setCurrentTermKey, setCurrentTerm, setActiveView, focusInput, closeToast]);
 
 const useShowLibraryHandler = (setActiveView) =>
   useCallback(

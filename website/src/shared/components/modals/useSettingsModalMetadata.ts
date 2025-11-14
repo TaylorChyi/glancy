@@ -56,16 +56,7 @@ export const useModalMetadata = ({
 }): ModalMetadata =>
   useMemo(
     () => createModalMetadata({ panel, header, copy }),
-    [
-      panel.focusHeadingId,
-      panel.modalHeadingId,
-      panel.descriptionId,
-      header.descriptionId,
-      copy.closeLabel,
-      panel.modalHeadingText,
-      copy.title,
-      panel.headingId,
-    ],
+    [panel, header, copy],
   );
 
 export default useModalMetadata;

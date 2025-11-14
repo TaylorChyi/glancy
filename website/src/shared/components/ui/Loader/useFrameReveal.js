@@ -152,6 +152,13 @@ function useInitialReveal(setIsRevealed, animationFrameRef, frameToken) {
   }, [frameToken, setIsRevealed, animationFrameRef]);
 }
 
+function resetOscillation(intervalRef) {
+  if (intervalRef.current !== null) {
+    cancelOscillation(intervalRef.current);
+    intervalRef.current = null;
+  }
+}
+
 function useOscillatingReveal({
   frameToken,
   intervalMs,
@@ -160,33 +167,22 @@ function useOscillatingReveal({
   setIsRevealed,
 }) {
   useEffect(() => {
-    if (intervalRef.current !== null) {
-      cancelOscillation(intervalRef.current);
-      intervalRef.current = null;
-    }
+    resetOscillation(intervalRef);
 
     if (!isPositiveDuration(intervalMs)) {
       return undefined;
     }
 
-    const strategy = prefersReducedMotion
+    const cleanup = (prefersReducedMotion
       ? STATIC_REVEAL_STRATEGY
-      : OSCILLATING_REVEAL_STRATEGY;
-
-    const cleanup = strategy.apply({
+      : OSCILLATING_REVEAL_STRATEGY
+    ).apply({
       intervalMs,
       intervalRef,
       setIsRevealed,
     });
 
-    return () => {
-      if (typeof cleanup === "function") {
-        cleanup();
-      } else if (intervalRef.current !== null) {
-        cancelOscillation(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
+    return cleanup;
   }, [
     frameToken,
     intervalMs,

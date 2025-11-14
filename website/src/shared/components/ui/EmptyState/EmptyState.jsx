@@ -14,6 +14,19 @@ const TONE_CLASS_MAP = Object.freeze({
   plain: styles["tone-plain"],
 });
 
+const EmptyStateVisual = ({ illustration, iconName }) => (
+  <div className={styles.illustration} aria-hidden="true">
+    {illustration || (
+      <ThemeIcon
+        name={iconName}
+        alt=""
+        className={styles.icon}
+        decorative
+      />
+    )}
+  </div>
+);
+
 function EmptyState({
   iconName,
   illustration,
@@ -26,9 +39,8 @@ function EmptyState({
 }) {
   const sizeClass = SIZE_CLASS_MAP[size] || SIZE_CLASS_MAP.md;
   const toneClass = TONE_CLASS_MAP[tone] || TONE_CLASS_MAP.decorated;
-  const hasVisual = Boolean(illustration || iconName);
-  // plain 语态要求纯信息呈现，因此即便传入图标亦跳过渲染，避免残留装饰元素。
-  const shouldRenderVisual = tone !== "plain" && hasVisual;
+  const shouldRenderVisual =
+    tone !== "plain" && (illustration || iconName);
 
   return (
     <section
@@ -36,21 +48,12 @@ function EmptyState({
         .filter(Boolean)
         .join(" ")}
     >
-      {shouldRenderVisual ? (
-        <div className={styles.illustration} aria-hidden="true">
-          {illustration || (
-            <ThemeIcon
-              name={iconName}
-              alt=""
-              className={styles.icon}
-              decorative
-            />
-          )}
-        </div>
-      ) : null}
-      {title ? <h2 className={styles.title}>{title}</h2> : null}
-      {description ? <p className={styles.description}>{description}</p> : null}
-      {actions ? <div className={styles.actions}>{actions}</div> : null}
+      {shouldRenderVisual && (
+        <EmptyStateVisual illustration={illustration} iconName={iconName} />
+      )}
+      {title && <h2 className={styles.title}>{title}</h2>}
+      {description && <p className={styles.description}>{description}</p>}
+      {actions && <div className={styles.actions}>{actions}</div>}
     </section>
   );
 }

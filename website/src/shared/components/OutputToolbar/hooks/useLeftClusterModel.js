@@ -66,6 +66,7 @@ const useLeftClusterPropsMemo = (memoInput) =>
       memoInput.disabled,
       memoInput.onReoutput,
       memoInput.reoutputLabel,
+      memoInput,
     ],
   );
 

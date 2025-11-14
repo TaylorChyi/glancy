@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import LanguageMenuView from "./parts/LanguageMenuView.jsx";
 import useLanguageMenu from "./useLanguageMenu.js";
 
-function buildLanguageMenuViewProps(
+const buildLanguageMenuViewProps = (
   { id, variant, fullWidth, ariaLabel, showLabel },
   {
     open,
@@ -16,26 +16,23 @@ function buildLanguageMenuViewProps(
     handleTriggerKeyDown,
     closeMenu,
   },
-) {
-  const triggerAriaLabel = ariaLabel || currentOption.label;
-  return {
-    id,
-    open,
-    variant,
-    fullWidth,
-    triggerRef,
-    menuRef,
-    currentOption,
-    options: normalizedOptions,
-    onToggle: handleToggle,
-    onTriggerKeyDown: handleTriggerKeyDown,
-    onSelect: handleSelect,
-    onClose: closeMenu,
-    triggerAriaLabel,
-    triggerTitle: currentOption.label,
-    showTriggerLabel: Boolean(showLabel),
-  };
-}
+) => ({
+  id,
+  open,
+  variant,
+  fullWidth,
+  triggerRef,
+  menuRef,
+  currentOption,
+  options: normalizedOptions,
+  onToggle: handleToggle,
+  onTriggerKeyDown: handleTriggerKeyDown,
+  onSelect: handleSelect,
+  onClose: closeMenu,
+  triggerAriaLabel: ariaLabel || currentOption.label,
+  triggerTitle: currentOption.label,
+  showTriggerLabel: Boolean(showLabel),
+});
 
 export default function LanguageMenu(props) {
   const menuState = useLanguageMenu({

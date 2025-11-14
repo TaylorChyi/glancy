@@ -16,76 +16,82 @@ const PATHS = {
 };
 
 describe("authProtocols", () => {
-  test("buildLoginRequest handles username method", () => {
-    const request = buildLoginRequest({
-      method: AUTH_METHODS.username,
-      account: "user1",
-      password: "secret",
-      paths: PATHS,
-    });
-    expect(request).toEqual({
-      path: PATHS.login,
-      body: { account: "user1", password: "secret", method: "username" },
-    });
-  });
-
-  test("buildLoginRequest handles email method", () => {
-    const request = buildLoginRequest({
-      method: AUTH_METHODS.email,
-      account: "mail@example.com",
-      password: " 123456 ",
-      paths: PATHS,
-    });
-    expect(request).toEqual({
-      path: PATHS.loginWithEmail,
-      body: { email: "mail@example.com", code: "123456" },
-    });
-  });
-
-  test("buildLoginRequest throws on unsupported method", () => {
-    expect(() =>
-      buildLoginRequest({
-        method: "wechat",
-        account: "id",
+  describe("buildLoginRequest", () => {
+    test("handles username method", () => {
+      const request = buildLoginRequest({
+        method: AUTH_METHODS.username,
+        account: "user1",
         password: "secret",
         paths: PATHS,
-        unsupportedMessage: "nope",
-      }),
-    ).toThrow("nope");
-  });
-
-  test("buildRegisterRequest composes payload with dynamic key", () => {
-    const request = buildRegisterRequest({
-      method: AUTH_METHODS.email,
-      account: "mail@example.com",
-      password: " 999 ",
-      paths: PATHS,
+      });
+      expect(request).toEqual({
+        path: PATHS.login,
+        body: { account: "user1", password: "secret", method: "username" },
+      });
     });
-    expect(request).toEqual({
-      path: PATHS.register,
-      body: { email: "mail@example.com", code: "999" },
-    });
-  });
 
-  test("buildCodeRequest enforces email method", () => {
-    expect(() =>
-      buildCodeRequest({
-        method: AUTH_METHODS.username,
-        account: "user",
-        purpose: AUTH_CODE_PURPOSES.LOGIN,
+    test("handles email method", () => {
+      const request = buildLoginRequest({
+        method: AUTH_METHODS.email,
+        account: "mail@example.com",
+        password: " 123456 ",
         paths: PATHS,
-      }),
-    ).toThrow();
-
-    const request = buildCodeRequest({
-      method: AUTH_METHODS.email,
-      account: "mail@example.com",
-      purpose: AUTH_CODE_PURPOSES.REGISTER,
-      paths: PATHS,
+      });
+      expect(request).toEqual({
+        path: PATHS.loginWithEmail,
+        body: { email: "mail@example.com", code: "123456" },
+      });
     });
-    expect(request).toEqual({
-      path: PATHS.emailVerificationCode,
-      body: { email: "mail@example.com", purpose: "REGISTER" },
+
+    test("throws on unsupported method", () => {
+      expect(() =>
+        buildLoginRequest({
+          method: "wechat",
+          account: "id",
+          password: "secret",
+          paths: PATHS,
+          unsupportedMessage: "nope",
+        }),
+      ).toThrow("nope");
+    });
+  });
+
+  describe("buildRegisterRequest", () => {
+    test("composes payload with dynamic key", () => {
+      const request = buildRegisterRequest({
+        method: AUTH_METHODS.email,
+        account: "mail@example.com",
+        password: " 999 ",
+        paths: PATHS,
+      });
+      expect(request).toEqual({
+        path: PATHS.register,
+        body: { email: "mail@example.com", code: "999" },
+      });
+    });
+  });
+
+  describe("buildCodeRequest", () => {
+    test("enforces email method", () => {
+      expect(() =>
+        buildCodeRequest({
+          method: AUTH_METHODS.username,
+          account: "user",
+          purpose: AUTH_CODE_PURPOSES.LOGIN,
+          paths: PATHS,
+        }),
+      ).toThrow();
+
+      const request = buildCodeRequest({
+        method: AUTH_METHODS.email,
+        account: "mail@example.com",
+        purpose: AUTH_CODE_PURPOSES.REGISTER,
+        paths: PATHS,
+      });
+      expect(request).toEqual({
+        path: PATHS.emailVerificationCode,
+        body: { email: "mail@example.com", purpose: "REGISTER" },
+      });
     });
   });
 

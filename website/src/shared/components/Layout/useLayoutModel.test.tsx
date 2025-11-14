@@ -36,7 +36,7 @@ moduleMocks.forEach(([path, exportName, mock]) => {
   }));
 });
 const { useLayoutModel } = await import("./useLayoutModel.ts");
-const renderLayoutModelHook = (options: LayoutScenarioOptions = {}) => {
+function renderLayoutModelHook(options: LayoutScenarioOptions = {}) {
   const {
     isMobile = false,
     children = <div>slot</div>,

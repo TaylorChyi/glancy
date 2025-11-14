@@ -50,11 +50,7 @@ function ActionInputStructure({
           languageVisibility={languageVisibility}
           languageProps={languageProps}
         />
-        <TextSlot
-          textareaProps={textareaProps}
-          onFocus={onFocus}
-          onBlur={onBlur}
-        />
+        <TextSlot textareaProps={textareaProps} onFocus={onFocus} onBlur={onBlur} />
         <ActionSlot actionButtonProps={actionButtonProps} />
       </SearchBox>
     </form>

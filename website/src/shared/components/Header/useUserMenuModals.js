@@ -65,7 +65,7 @@ const useUserMenuHandlersMemo = ({ openSettings, openShortcuts, openUpgrade, ope
     [openLogout, openSettings, openShortcuts, openUpgrade],
   );
 
-const useUserMenuModalsMemo = ({
+const buildUserMenuModalsState = ({
   closeUpgrade,
   closeLogout,
   closeSettings,
@@ -75,52 +75,48 @@ const useUserMenuModalsMemo = ({
   settingsState,
   upgradeOpen,
   userEmail,
-}) =>
-  useMemo(
-    () => ({
-      isPro,
-      upgradeOpen,
-      closeUpgrade,
-      settingsState,
-      closeSettings,
-      logoutOpen,
-      confirmLogout,
-      closeLogout,
-      email: userEmail ?? "",
-    }),
-    [
-      closeLogout,
-      closeSettings,
-      closeUpgrade,
-      confirmLogout,
-      isPro,
-      logoutOpen,
-      settingsState,
-      upgradeOpen,
-      userEmail,
-    ],
-  );
+}) => ({
+  isPro,
+  upgradeOpen,
+  closeUpgrade,
+  settingsState,
+  closeSettings,
+  logoutOpen,
+  confirmLogout,
+  closeLogout,
+  email: userEmail ?? "",
+});
+
+const buildUserMenuModalDeps = ({
+  closeUpgrade,
+  closeLogout,
+  closeSettings,
+  confirmLogout,
+  isPro,
+  logoutOpen,
+  settingsState,
+  upgradeOpen,
+  userEmail,
+}) => [
+  closeLogout,
+  closeSettings,
+  closeUpgrade,
+  confirmLogout,
+  isPro,
+  logoutOpen,
+  settingsState,
+  upgradeOpen,
+  userEmail,
+];
+
+const useUserMenuModalsMemo = (props) =>
+  useMemo(() => buildUserMenuModalsState(props), buildUserMenuModalDeps(props));
 
 const useUserMenuModalValues = ({ state, handlerFns, isPro, user }) => {
   const { upgradeOpen, logoutOpen, settingsState } = state;
-  const {
-    closeUpgrade,
-    closeLogout,
-    closeSettings,
-    confirmLogout,
-    openSettings,
-    openShortcuts,
-    openUpgrade,
-    openLogout,
-  } = handlerFns;
+  const { closeUpgrade, closeLogout, closeSettings, confirmLogout } = handlerFns;
 
-  const handlers = useUserMenuHandlersMemo({
-    openSettings,
-    openShortcuts,
-    openUpgrade,
-    openLogout,
-  });
-
+  const handlers = useUserMenuHandlersMemo(handlerFns);
   const modals = useUserMenuModalsMemo({
     closeUpgrade,
     closeLogout,

@@ -8,6 +8,56 @@ jest.unstable_mockModule("@core/context", () => ({
   useTheme: mockUseTheme,
 }));
 
+const defaultSourceLanguageOptions = [
+  { value: "ZH", label: "中文" },
+  { value: "EN", label: "英文" },
+];
+
+const defaultTargetLanguageOptions = [
+  { value: "EN", label: "英文" },
+  { value: "ZH", label: "中文" },
+];
+
+const createTextareaProps = (overrides = {}) => ({
+  ref: jest.fn(),
+  rows: 2,
+  placeholder: "",
+  value: "",
+  onChange: jest.fn(),
+  onKeyDown: jest.fn(),
+  onFocus: jest.fn(),
+  onBlur: jest.fn(),
+  ...overrides,
+});
+
+const createLanguageControls = ({ isVisible = true, props: overrideProps = {} } = {}) => ({
+  isVisible,
+  props: {
+    sourceLanguage: "ZH",
+    sourceLanguageOptions: defaultSourceLanguageOptions,
+    sourceLanguageLabel: "源语言",
+    onSourceLanguageChange: jest.fn(),
+    targetLanguage: "EN",
+    targetLanguageOptions: defaultTargetLanguageOptions,
+    targetLanguageLabel: "目标语言",
+    onTargetLanguageChange: jest.fn(),
+    onSwapLanguages: jest.fn(),
+    swapLabel: "交换语向",
+    normalizeSourceLanguage: jest.fn((value) => value),
+    normalizeTargetLanguage: jest.fn((value) => value),
+    onMenuOpen: jest.fn(),
+    ...overrideProps,
+  },
+});
+
+const createActionButtonProps = ({ canSubmit = true, overrides = {} } = {}) => ({
+  canSubmit,
+  onSubmit: jest.fn(),
+  sendLabel: "发送",
+  restoreFocus: jest.fn(),
+  ...overrides,
+});
+
 let ActionInputView;
 
 beforeAll(async () => {
@@ -42,46 +92,12 @@ test("GivenStandardProps_WhenRenderingView_ThenMatchSnapshot", () => {
   const { container } = render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit: jest.fn() }}
-      textareaProps={{
-        ref: jest.fn(),
-        rows: 2,
+      textareaProps={createTextareaProps({
         placeholder: "Say something",
         value: "example",
-        onChange: jest.fn(),
-        onKeyDown: jest.fn(),
-        onFocus: jest.fn(),
-        onBlur: jest.fn(),
-      }}
-      languageControls={{
-        isVisible: true,
-        props: {
-          sourceLanguage: "ZH",
-          sourceLanguageOptions: [
-            { value: "ZH", label: "中文" },
-            { value: "EN", label: "英文" },
-          ],
-          sourceLanguageLabel: "源语言",
-          onSourceLanguageChange: jest.fn(),
-          targetLanguage: "EN",
-          targetLanguageOptions: [
-            { value: "EN", label: "英文" },
-            { value: "ZH", label: "中文" },
-          ],
-          targetLanguageLabel: "目标语言",
-          onTargetLanguageChange: jest.fn(),
-          onSwapLanguages: jest.fn(),
-          swapLabel: "交换语向",
-          normalizeSourceLanguage: jest.fn((value) => value),
-          normalizeTargetLanguage: jest.fn((value) => value),
-          onMenuOpen: jest.fn(),
-        },
-      }}
-      actionButtonProps={{
-        canSubmit: true,
-        onSubmit: jest.fn(),
-        sendLabel: "发送",
-        restoreFocus: jest.fn(),
-      }}
+      })}
+      languageControls={createLanguageControls()}
+      actionButtonProps={createActionButtonProps()}
     />,
   );
 
@@ -108,46 +124,12 @@ test("GivenLanguageControlsVisible_WhenRendering_ThenExposeTriadIcon", () => {
   render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit: jest.fn() }}
-      textareaProps={{
-        ref: jest.fn(),
-        rows: 2,
+      textareaProps={createTextareaProps({
         placeholder: "Say something",
         value: "example",
-        onChange: jest.fn(),
-        onKeyDown: jest.fn(),
-        onFocus: jest.fn(),
-        onBlur: jest.fn(),
-      }}
-      languageControls={{
-        isVisible: true,
-        props: {
-          sourceLanguage: "ZH",
-          sourceLanguageOptions: [
-            { value: "ZH", label: "中文" },
-            { value: "EN", label: "英文" },
-          ],
-          sourceLanguageLabel: "源语言",
-          onSourceLanguageChange: jest.fn(),
-          targetLanguage: "EN",
-          targetLanguageOptions: [
-            { value: "EN", label: "英文" },
-            { value: "ZH", label: "中文" },
-          ],
-          targetLanguageLabel: "目标语言",
-          onTargetLanguageChange: jest.fn(),
-          onSwapLanguages: jest.fn(),
-          swapLabel: "交换语向",
-          normalizeSourceLanguage: jest.fn((value) => value),
-          normalizeTargetLanguage: jest.fn((value) => value),
-          onMenuOpen: jest.fn(),
-        },
-      }}
-      actionButtonProps={{
-        canSubmit: true,
-        onSubmit: jest.fn(),
-        sendLabel: "发送",
-        restoreFocus: jest.fn(),
-      }}
+      })}
+      languageControls={createLanguageControls()}
+      actionButtonProps={createActionButtonProps()}
     />,
   );
 
@@ -182,17 +164,8 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
   const { container } = render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit }}
-      textareaProps={{
-        ref: jest.fn(),
-        rows: 2,
-        placeholder: "",
-        value: "",
-        onChange: jest.fn(),
-        onKeyDown: jest.fn(),
-        onFocus: jest.fn(),
-        onBlur: jest.fn(),
-      }}
-      languageControls={{
+      textareaProps={createTextareaProps()}
+      languageControls={createLanguageControls({
         isVisible: false,
         props: {
           sourceLanguage: undefined,
@@ -200,13 +173,8 @@ test("GivenLanguageControlsHidden_WhenRendering_ThenCollapseLanguageSlot", () =>
           targetLanguage: undefined,
           targetLanguageOptions: [],
         },
-      }}
-      actionButtonProps={{
-        canSubmit: false,
-        onSubmit: jest.fn(),
-        sendLabel: "发送",
-        restoreFocus: jest.fn(),
-      }}
+      })}
+      actionButtonProps={createActionButtonProps({ canSubmit: false })}
     />,
   );
 
@@ -247,17 +215,10 @@ test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
   const { container } = render(
     <ActionInputView
       formProps={{ ref: formRef, onSubmit: jest.fn() }}
-      textareaProps={{
-        ref: jest.fn(),
-        rows: 2,
-        placeholder: "",
+      textareaProps={createTextareaProps({
         value: "dark theme message",
-        onChange: jest.fn(),
-        onKeyDown: jest.fn(),
-        onFocus: jest.fn(),
-        onBlur: jest.fn(),
-      }}
-      languageControls={{
+      })}
+      languageControls={createLanguageControls({
         isVisible: false,
         props: {
           sourceLanguage: undefined,
@@ -265,13 +226,8 @@ test("GivenDarkTheme_WhenRenderingSendState_ThenExposeSendButtonIcon", () => {
           targetLanguage: undefined,
           targetLanguageOptions: [],
         },
-      }}
-      actionButtonProps={{
-        canSubmit: true,
-        onSubmit: jest.fn(),
-        sendLabel: "发送",
-        restoreFocus: jest.fn(),
-      }}
+      })}
+      actionButtonProps={createActionButtonProps()}
     />,
   );
 

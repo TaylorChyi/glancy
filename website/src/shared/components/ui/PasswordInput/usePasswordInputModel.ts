@@ -9,7 +9,7 @@ const DEFAULT_LABELS = Object.freeze({
   hide: "Hide password",
 });
 
-const useToggleMetadata = ({
+function useToggleMetadata({
   mask,
   disabled,
   visible,
@@ -46,7 +46,7 @@ const useToggleMetadata = ({
 const useClassName = (base: string, extra?: string) =>
   useMemo(() => [base, extra].filter(Boolean).join(" "), [base, extra]);
 
-export const usePasswordInputModel = (props) => {
+export function usePasswordInputModel(props) {
   const {
     className = "",
     inputClassName = "",

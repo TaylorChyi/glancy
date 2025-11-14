@@ -47,35 +47,47 @@ const useSettingsSurfaceIds = ({
   };
 };
 
-const SettingsSurface = forwardRef(function SettingsSurface(
-  {
-    title,
-    description,
-    actions,
-    children,
-    variant = SETTINGS_SURFACE_VARIANTS.MODAL,
-    onSubmit,
-    headingId: providedHeadingId,
-    descriptionId: providedDescriptionId,
-    as,
-    className = "",
-    renderHeader,
-  },
-  ref,
-) {
+const useSettingsSurfaceData = ({
+  description,
+  variant = SETTINGS_SURFACE_VARIANTS.MODAL,
+  onSubmit,
+  as,
+  className = "",
+  headingId: providedHeadingId,
+  descriptionId: providedDescriptionId,
+  renderHeader,
+  title,
+}) => {
   const { headingId, descriptionId } = useSettingsSurfaceIds({
     description,
     providedHeadingId,
     providedDescriptionId,
   });
   const Component = as ?? (onSubmit ? "form" : "section");
-  const composedClassName = composeSurfaceClassName(variant, className);
-  const headerContent = resolveHeaderContent(renderHeader, {
+
+  return {
+    Component,
+    composedClassName: composeSurfaceClassName(variant, className),
+    headerContent: resolveHeaderContent(renderHeader, {
+      headingId,
+      descriptionId,
+      title,
+      description,
+    }),
     headingId,
     descriptionId,
-    title,
-    description,
-  });
+  };
+};
+
+const SettingsSurface = forwardRef(function SettingsSurface(props, ref) {
+  const { actions, children, onSubmit } = props;
+  const {
+    Component,
+    composedClassName,
+    headerContent,
+    headingId,
+    descriptionId,
+  } = useSettingsSurfaceData(props);
 
   return (
     <Component
