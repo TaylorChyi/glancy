@@ -11,7 +11,7 @@ import {
 } from "./subscriptionPlanAssemblers.js";
 import { resolveCurrentPlanId } from "./subscriptionProfileResolver.js";
 
-const resolvePricingContext = (userProfile = {}) => {
+export const resolvePricingContext = (userProfile = {}) => {
   const subscriptionMeta = userProfile.subscription ?? {};
   const currentPlanId = resolveCurrentPlanId(userProfile, {
     fallbackPlan: "FREE",
@@ -23,7 +23,7 @@ const resolvePricingContext = (userProfile = {}) => {
   return { subscriptionMeta, currentPlanId, pricing, visiblePlanIds };
 };
 
-const buildRedeemCopy = (translations = {}) => ({
+export const buildRedeemCopy = (translations = {}) => ({
   title: safeString(translations.subscriptionRedeemTitle, "兑换专享权益"),
   placeholder: safeString(
     translations.subscriptionRedeemPlaceholder,
@@ -32,7 +32,7 @@ const buildRedeemCopy = (translations = {}) => ({
   buttonLabel: safeString(translations.subscriptionRedeemButton, "立即兑换"),
 });
 
-const assemblePlanCards = ({
+export const assemblePlanCards = ({
   visiblePlanIds,
   planCopy,
   pricing,
@@ -49,13 +49,13 @@ const assemblePlanCards = ({
     subscriptionMeta,
   });
 
-const derivePlanLabels = (planCards) =>
+export const derivePlanLabels = (planCards) =>
   planCards.reduce((accumulator, plan) => {
     accumulator[plan.id] = plan.title;
     return accumulator;
   }, {});
 
-const deriveSectionNotes = (pricing, translations = {}) => ({
+export const deriveSectionNotes = (pricing, translations = {}) => ({
   taxNote: pricing.taxIncluded
     ? safeString(translations.pricingTaxIncluded, "价格已含税")
     : safeString(translations.pricingTaxExcluded, "价格不含税"),
@@ -65,7 +65,7 @@ const deriveSectionNotes = (pricing, translations = {}) => ({
   ),
 });
 
-const composeSectionPayload = ({
+export const composeSectionPayload = ({
   translations,
   planCards,
   featureMatrix,
@@ -92,7 +92,7 @@ const composeSectionPayload = ({
   onRedeem,
 });
 
-const buildFeatureMatrixForPlans = (context, translations) =>
+export const buildFeatureMatrixForPlans = (context, translations) =>
   buildFeatureMatrix({
     blueprint: buildFeatureBlueprint(translations),
     visiblePlanIds: context.visiblePlanIds,
