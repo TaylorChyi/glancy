@@ -1,6 +1,13 @@
 import PropTypes from "prop-types";
 import { LanguageLauncher } from "./parts";
 
+const identity = (value) => value;
+
+export const hasOptions = (list) => Array.isArray(list) && list.length > 0;
+
+export const createNormalizer = (fn) =>
+  typeof fn === "function" ? fn : identity;
+
 export default function LanguageControls({
   sourceLanguage,
   sourceLanguageOptions,
@@ -16,27 +23,13 @@ export default function LanguageControls({
   normalizeTargetLanguage,
   onMenuOpen,
 }) {
-  const hasSource = Array.isArray(sourceLanguageOptions)
-    ? sourceLanguageOptions.length > 0
-    : false;
-  const hasTarget = Array.isArray(targetLanguageOptions)
-    ? targetLanguageOptions.length > 0
-    : false;
-
+  const hasSource = hasOptions(sourceLanguageOptions);
+  const hasTarget = hasOptions(targetLanguageOptions);
   if (!hasSource && !hasTarget) {
     return null;
   }
 
-  const canSwap =
-    hasSource && hasTarget && typeof onSwapLanguages === "function";
-  const normalizeSource =
-    typeof normalizeSourceLanguage === "function"
-      ? normalizeSourceLanguage
-      : (value) => value;
-  const normalizeTarget =
-    typeof normalizeTargetLanguage === "function"
-      ? normalizeTargetLanguage
-      : (value) => value;
+  const canSwap = hasSource && hasTarget && typeof onSwapLanguages === "function";
 
   return (
     <LanguageLauncher
@@ -50,8 +43,8 @@ export default function LanguageControls({
       onTargetLanguageChange={onTargetLanguageChange}
       onSwapLanguages={canSwap ? onSwapLanguages : undefined}
       swapLabel={swapLabel}
-      normalizeSourceLanguage={normalizeSource}
-      normalizeTargetLanguage={normalizeTarget}
+      normalizeSourceLanguage={createNormalizer(normalizeSourceLanguage)}
+      normalizeTargetLanguage={createNormalizer(normalizeTargetLanguage)}
       onMenuOpen={onMenuOpen}
     />
   );
