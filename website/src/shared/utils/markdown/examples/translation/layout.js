@@ -6,54 +6,67 @@ import {
   splitFollowingTranslation,
 } from "./splitters.js";
 
-function resolveTranslationSegments(prefix, rest, nextLine) {
+function resolveInlineTranslation(prefix, rest) {
   const inlineSplit = splitInlineTranslation(prefix, rest);
-  if (inlineSplit) {
-    const lines = [inlineSplit.exampleLine];
-    if (inlineSplit.translationSegment) {
-      const translationIndent = deriveExampleTranslationIndent(prefix);
-      lines.push(
-        `${translationIndent}${inlineSplit.translationSegment}`.replace(
-          /[ \t]+$/u,
-          "",
-        ),
-      );
-    }
-    return { lines, consumed: 0 };
+  if (!inlineSplit) {
+    return null;
   }
+  const lines = [inlineSplit.exampleLine];
+  if (inlineSplit.translationSegment) {
+    const translationIndent = deriveExampleTranslationIndent(prefix);
+    lines.push(
+      `${translationIndent}${inlineSplit.translationSegment}`.replace(
+        /[ \t]+$/u,
+        "",
+      ),
+    );
+  }
+  return { lines, consumed: 0 };
+}
 
-  const trimmedExampleBody = rest.trimEnd();
+function resolveFollowingTranslation(prefix, trimmedExampleBody, nextLine) {
   const followingSplit = splitFollowingTranslation(
     prefix,
     trimmedExampleBody,
     nextLine,
   );
-  if (followingSplit) {
-    const lines = [followingSplit.exampleLine];
-    if (followingSplit.translationLine) {
-      lines.push(followingSplit.translationLine);
-    }
-    return { lines, consumed: 1 };
+  if (!followingSplit) {
+    return null;
   }
+  const lines = [followingSplit.exampleLine];
+  if (followingSplit.translationLine) {
+    lines.push(followingSplit.translationLine);
+  }
+  return { lines, consumed: 1 };
+}
 
+function resolveParentheticalTranslation(prefix, trimmedExampleBody) {
   const fallbackTranslation =
     extractParentheticalTranslation(trimmedExampleBody);
-  if (fallbackTranslation) {
-    const { exampleBody, translation } = fallbackTranslation;
-    const normalizedExample = exampleBody
-      ? `${prefix}${exampleBody}`.trimEnd()
-      : prefix.trimEnd();
-    const translationIndent = deriveExampleTranslationIndent(prefix);
-    return {
-      lines: [
-        normalizedExample.replace(/[ \t]+$/u, ""),
-        `${translationIndent}**翻译**: ${translation}`.replace(/[ \t]+$/u, ""),
-      ],
-      consumed: 0,
-    };
+  if (!fallbackTranslation) {
+    return null;
   }
+  const { exampleBody, translation } = fallbackTranslation;
+  const normalizedExample = exampleBody
+    ? `${prefix}${exampleBody}`.trimEnd()
+    : prefix.trimEnd();
+  const translationIndent = deriveExampleTranslationIndent(prefix);
+  return {
+    lines: [
+      normalizedExample.replace(/[ \t]+$/u, ""),
+      `${translationIndent}**翻译**: ${translation}`.replace(/[ \t]+$/u, ""),
+    ],
+    consumed: 0,
+  };
+}
 
-  return null;
+function resolveTranslationSegments(prefix, rest, nextLine) {
+  const trimmedExampleBody = rest.trimEnd();
+  return (
+    resolveInlineTranslation(prefix, rest) ??
+    resolveFollowingTranslation(prefix, trimmedExampleBody, nextLine) ??
+    resolveParentheticalTranslation(prefix, trimmedExampleBody)
+  );
 }
 
 export function ensureExampleTranslationLayout(text) {
