@@ -2,38 +2,44 @@ import { useEmailRequestCode } from "./useEmailRequestCode.js";
 import { useEmailConfirmChange } from "./useEmailConfirmChange.js";
 import { useEmailUnbind } from "./useEmailUnbind.js";
 
-export function useEmailBindingWorkflow({
-  emailBinding,
-  currentUser,
-  notifySuccess,
-  notifyFailure,
-  t,
-}) {
-  const requestCode = useEmailRequestCode({
+function useRequestCodeBuilder({ emailBinding, notifySuccess, notifyFailure, t }) {
+  return useEmailRequestCode({
     emailBinding,
     notifySuccess,
     notifyFailure,
     t,
   });
+}
 
-  const confirmChange = useEmailConfirmChange({
+function useConfirmChangeBuilder({
+  emailBinding,
+  notifySuccess,
+  notifyFailure,
+  currentUser,
+  t,
+}) {
+  return useEmailConfirmChange({
     emailBinding,
     notifySuccess,
     notifyFailure,
     currentUserEmail: currentUser?.email,
     t,
   });
+}
 
-  const unbind = useEmailUnbind({
+function useUnbindBuilder({ emailBinding, notifySuccess, notifyFailure, t }) {
+  return useEmailUnbind({
     emailBinding,
     notifySuccess,
     notifyFailure,
     t,
   });
+}
 
-  return {
-    requestCode,
-    confirmChange,
-    unbind,
-  };
+export function useEmailBindingWorkflow(dependencies) {
+  const requestCode = useRequestCodeBuilder(dependencies);
+  const confirmChange = useConfirmChangeBuilder(dependencies);
+  const unbind = useUnbindBuilder(dependencies);
+
+  return { requestCode, confirmChange, unbind };
 }
