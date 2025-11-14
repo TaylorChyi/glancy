@@ -9,10 +9,10 @@ import { ensureRedeemPreconditions } from "./ensureRedeemPreconditions.js";
 const createFailureEmitter = (onFailure) =>
   typeof onFailure === "function" ? onFailure : (error) => error;
 
-const executeRedeemRequest = (redeemCodeRequest, token, code) =>
+const redeemSubscriptionCode = ({ redeemCodeRequest, token, code }) =>
   redeemCodeRequest({ token, code });
 
-const applyRedeemResponse = ({ response, user, setUser, onSuccess }) => {
+const applyMembershipUpdates = ({ response, user, setUser }) => {
   if (
     response?.effectType === MEMBERSHIP_EFFECT_TYPE &&
     response?.membership &&
@@ -21,17 +21,22 @@ const applyRedeemResponse = ({ response, user, setUser, onSuccess }) => {
     const nextUser = mergeMembershipRewardIntoUser(user, response.membership);
     setUser(nextUser);
   }
+};
 
+const notifyRedeemSuccess = (onSuccess) => {
   if (typeof onSuccess === "function") {
     onSuccess();
   }
 };
 
-const handleRedeemFailure = (error, onFailure) => {
+const applyRedeemResponse = ({ response, user, setUser, onSuccess }) => {
+  applyMembershipUpdates({ response, user, setUser });
+  notifyRedeemSuccess(onSuccess);
+};
+
+const emitRedeemFailure = (error, emitFailure) => {
   console.error("Failed to redeem subscription code", error);
-  if (typeof onFailure === "function") {
-    onFailure(error);
-  }
+  emitFailure(error);
 };
 
 export const useRedeemExecutor = ({
@@ -52,16 +57,16 @@ export const useRedeemExecutor = ({
       });
 
       try {
-        const response = await executeRedeemRequest(
+        const response = await redeemSubscriptionCode({
           redeemCodeRequest,
-          user.token,
-          normalizedCode,
-        );
+          token: user.token,
+          code: normalizedCode,
+        });
 
         applyRedeemResponse({ response, user, setUser, onSuccess });
         return response;
       } catch (error) {
-        handleRedeemFailure(error, onFailure);
+        emitRedeemFailure(error, emitFailure);
         throw error;
       }
     },

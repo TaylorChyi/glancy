@@ -6,19 +6,16 @@ import {
   REDEEM_TOAST_VARIANTS,
 } from "./redeemFeedback.js";
 
-const createToastConfig = (state, dismissLabel, handleClose) => {
-  const appearance =
-    (state.variant && REDEEM_TOAST_VARIANTS[state.variant]) ||
-    REDEEM_TOAST_VARIANTS.success;
+const resolveToastAppearance = (variant) =>
+  (variant && REDEEM_TOAST_VARIANTS[variant]) || REDEEM_TOAST_VARIANTS.success;
 
-  return {
-    ...appearance,
-    ...state,
-    duration: REDEEM_TOAST_DURATION,
-    closeLabel: dismissLabel,
-    onClose: handleClose,
-  };
-};
+const createToastConfig = (state, dismissLabel, handleClose) => ({
+  ...resolveToastAppearance(state.variant),
+  ...state,
+  duration: REDEEM_TOAST_DURATION,
+  closeLabel: dismissLabel,
+  onClose: handleClose,
+});
 
 const useRedeemToastState = () => {
   const [state, setState] = useState({
