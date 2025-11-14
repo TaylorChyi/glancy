@@ -1,7 +1,6 @@
 import {
   createChapterAccumulator,
   finalizeChapterAccumulator,
-  flushChapter,
   handleContent,
   handleHeading,
   isHeadingLine,
