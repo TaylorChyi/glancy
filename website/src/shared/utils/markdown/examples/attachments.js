@@ -1,47 +1,59 @@
 import { isExampleLabel } from "./labels.js";
 
-export function parseSegmentationMarker(lines, startIndex) {
-  if (startIndex >= lines.length) {
-    return null;
-  }
-  const firstLine = lines[startIndex];
-  const trimmed = firstLine.trimStart();
-  if (!trimmed.startsWith("#")) {
-    return null;
-  }
-  if (/^##/.test(trimmed)) {
-    return null;
-  }
-  const normalized = trimmed.replace(/\s+/g, "");
-  let consumed = 1;
-  if (/^#[^#\s]+#$/.test(normalized)) {
-    return { marker: normalized, trailingText: "", consumed };
-  }
-  if (!/^#[^#\s]+$/.test(normalized)) {
-    return null;
-  }
+const MARKER_WITH_TRAILING_HASH_PATTERN = /^#[^#\s]+#$/;
+const MARKER_PATTERN = /^#[^#\s]+$/;
+
+function isSegmentationHeading(trimmed) {
+  return trimmed.startsWith("#") && !/^##/.test(trimmed);
+}
+
+function normalizeMarker(trimmed) {
+  return trimmed.replace(/\s+/g, "");
+}
+
+function parseTrailingHeading(lines, startIndex) {
   let gapConsumed = 0;
   for (let idx = startIndex + 1; idx < lines.length; idx += 1) {
-    const candidate = lines[idx];
-    const candidateTrimmed = candidate.trimStart();
+    const candidateTrimmed = lines[idx].trimStart();
     if (candidateTrimmed === "") {
       gapConsumed += 1;
       continue;
     }
-    if (!candidateTrimmed.startsWith("#")) {
+    if (!isSegmentationHeading(candidateTrimmed)) {
       return null;
     }
-    if (/^##/.test(candidateTrimmed)) {
-      return null;
-    }
-    const trailingText = candidateTrimmed.replace(/^#\s*/, "");
     return {
-      marker: `${normalized}#`,
-      trailingText,
-      consumed: consumed + gapConsumed + 1,
+      trailingText: candidateTrimmed.replace(/^#\s*/, ""),
+      consumed: gapConsumed + 1,
     };
   }
   return null;
+}
+
+export function parseSegmentationMarker(lines, startIndex) {
+  if (startIndex >= lines.length) {
+    return null;
+  }
+  const trimmed = lines[startIndex].trimStart();
+  if (!isSegmentationHeading(trimmed)) {
+    return null;
+  }
+  const normalized = normalizeMarker(trimmed);
+  if (MARKER_WITH_TRAILING_HASH_PATTERN.test(normalized)) {
+    return { marker: normalized, trailingText: "", consumed: 1 };
+  }
+  if (!MARKER_PATTERN.test(normalized)) {
+    return null;
+  }
+  const trailingHeading = parseTrailingHeading(lines, startIndex);
+  if (!trailingHeading) {
+    return null;
+  }
+  return {
+    marker: `${normalized}#`,
+    trailingText: trailingHeading.trailingText,
+    consumed: 1 + trailingHeading.consumed,
+  };
 }
 
 export function collectExampleSegmentationAttachments(lines, startIndex) {
