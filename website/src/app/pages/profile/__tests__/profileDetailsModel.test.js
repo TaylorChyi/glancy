@@ -16,31 +16,46 @@ import {
  *  - 自定义大项被转换为带有 id 的数组。
  * 边界/异常：无。
  */
-test("mapResponseToProfileDetails populates state", () => {
-  const response = {
-    job: "工程师",
-    education: "硕士",
-    interest: "AI, 辩论",
-    goal: "冲刺 B2",
-    currentAbility: "B1",
-    responseStyle: "沉稳",
-    customSections: [
-      {
-        title: "项目",
-        items: [
-          { label: "近期", value: "智能体" },
-          { label: "计划", value: "知识图谱" },
-        ],
-      },
-    ],
+describe("mapResponseToProfileDetails", () => {
+  let response;
+  let state;
+
+  const expectFieldToMatch = (field, value) => {
+    expect(state[field]).toBe(value);
   };
 
-  const state = mapResponseToProfileDetails(response);
-  expect(state.job).toBe("工程师");
-  expect(state.education).toBe("硕士");
-  expect(state.responseStyle).toBe("沉稳");
-  expect(state.customSections).toHaveLength(1);
-  expect(state.customSections[0].items).toHaveLength(2);
+  beforeEach(() => {
+    response = {
+      job: "工程师",
+      education: "硕士",
+      interest: "AI, 辩论",
+      goal: "冲刺 B2",
+      currentAbility: "B1",
+      responseStyle: "沉稳",
+      customSections: [
+        {
+          title: "项目",
+          items: [
+            { label: "近期", value: "智能体" },
+            { label: "计划", value: "知识图谱" },
+          ],
+        },
+      ],
+    };
+
+    state = mapResponseToProfileDetails(response);
+  });
+
+  it("hydrates core profile fields", () => {
+    expectFieldToMatch("job", "工程师");
+    expectFieldToMatch("education", "硕士");
+    expectFieldToMatch("responseStyle", "沉稳");
+  });
+
+  it("maps custom sections with their items", () => {
+    expect(state.customSections).toHaveLength(1);
+    expect(state.customSections[0].items).toHaveLength(2);
+  });
 });
 
 /**
@@ -53,8 +68,11 @@ test("mapResponseToProfileDetails populates state", () => {
  *  - 空字段被转换为 null。
  * 边界/异常：无。
  */
-test("mapProfileDetailsToRequest normalizes data", () => {
-  const details = {
+describe("mapProfileDetailsToRequest", () => {
+  let details;
+  let payload;
+
+  const createDetails = () => ({
     job: " 工程师 ",
     interests: "",
     goal: " 提升",
@@ -71,17 +89,33 @@ test("mapProfileDetailsToRequest normalizes data", () => {
         ],
       }),
     ],
+  });
+
+  const expectTrimmedField = (field, value) => {
+    expect(payload[field]).toBe(value);
   };
 
-  const payload = mapProfileDetailsToRequest(details);
-  expect(payload.job).toBe("工程师");
-  expect(payload.interest).toBeNull();
-  expect(payload.goal).toBe("提升");
-  expect(payload.education).toBe("本科");
-  expect(payload.currentAbility).toBe("B1");
-  expect(payload.responseStyle).toBe("温和");
-  expect(payload.customSections).toHaveLength(1);
-  expect(payload.customSections[0].items).toHaveLength(1);
+  beforeEach(() => {
+    details = createDetails();
+    payload = mapProfileDetailsToRequest(details);
+  });
+
+  it("trims whitespace from core fields", () => {
+    expectTrimmedField("job", "工程师");
+    expectTrimmedField("goal", "提升");
+    expectTrimmedField("education", "本科");
+    expectTrimmedField("currentAbility", "B1");
+    expectTrimmedField("responseStyle", "温和");
+  });
+
+  it("normalizes empty text fields to null", () => {
+    expect(payload.interest).toBeNull();
+  });
+
+  it("filters out empty custom section items", () => {
+    expect(payload.customSections).toHaveLength(1);
+    expect(payload.customSections[0].items).toHaveLength(1);
+  });
 });
 
 /**
@@ -91,28 +125,50 @@ test("mapProfileDetailsToRequest normalizes data", () => {
  * 断言：字段按预期更新。
  * 边界/异常：未知 action 返回原状态。
  */
-test("profileDetailsReducer hydrates and updates fields", () => {
-  const initial = createEmptyProfileDetails();
-  const hydrated = profileDetailsReducer(initial, {
-    type: "hydrate",
-    payload: { job: "工程师" },
-  });
-  expect(hydrated.job).toBe("工程师");
+describe("profileDetailsReducer", () => {
+  let state;
 
-  const updated = profileDetailsReducer(hydrated, {
-    type: "updateField",
-    field: CORE_FIELDS[1],
-    value: "硕士",
-  });
-  expect(updated.education).toBe("硕士");
+  const dispatch = (action) => {
+    state = profileDetailsReducer(state, action);
+    return state;
+  };
 
-  const toneUpdated = profileDetailsReducer(updated, {
-    type: "updateField",
-    field: "responseStyle",
-    value: "沉稳",
+  beforeEach(() => {
+    state = createEmptyProfileDetails();
   });
-  expect(toneUpdated.responseStyle).toBe("沉稳");
 
-  const untouched = profileDetailsReducer(updated, { type: "unknown" });
-  expect(untouched).toBe(updated);
+  it("hydrates the state with provided payload", () => {
+    const hydrated = dispatch({ type: "hydrate", payload: { job: "工程师" } });
+    expect(hydrated.job).toBe("工程师");
+  });
+
+  describe("after hydrate", () => {
+    beforeEach(() => {
+      dispatch({ type: "hydrate", payload: { job: "工程师" } });
+    });
+
+    it("updates a core field by index", () => {
+      const updated = dispatch({
+        type: "updateField",
+        field: CORE_FIELDS[1],
+        value: "硕士",
+      });
+      expect(updated.education).toBe("硕士");
+    });
+
+    it("updates the tone field directly", () => {
+      const updatedTone = dispatch({
+        type: "updateField",
+        field: "responseStyle",
+        value: "沉稳",
+      });
+      expect(updatedTone.responseStyle).toBe("沉稳");
+    });
+
+    it("returns the same reference for unknown actions", () => {
+      const previous = state;
+      const untouched = dispatch({ type: "unknown" });
+      expect(untouched).toBe(previous);
+    });
+  });
 });

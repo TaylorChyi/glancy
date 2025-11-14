@@ -32,14 +32,25 @@ describe("createProfileFieldGroups", () => {
     currentAbilityHelp: "ability-help",
   };
 
-  it("生成背景与成长两组字段", () => {
-    const groups = createProfileFieldGroups(t);
+  let groups;
+
+  beforeEach(() => {
+    groups = createProfileFieldGroups(t);
+  });
+
+  it("creates two field groups", () => {
     expect(groups).toHaveLength(2);
+  });
+
+  it("groups background fields together", () => {
     expect(groups[0].key).toBe("background");
     expect(groups[0].fields.map((field) => field.key)).toEqual([
       "education",
       "job",
     ]);
+  });
+
+  it("groups growth fields together", () => {
     expect(groups[1].fields.map((field) => field.key)).toEqual([
       "interests",
       "goal",
