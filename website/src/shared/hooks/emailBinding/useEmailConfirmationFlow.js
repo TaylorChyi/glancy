@@ -7,6 +7,79 @@ import {
   normalizeEmail,
 } from "./constants.js";
 
+function createValidationError(code) {
+  const error = new Error(code);
+  error.code = code;
+  return error;
+}
+
+function validateEmailAndCode(email, code) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedCode = code?.trim();
+
+  if (!normalizedEmail) {
+    throw createValidationError(ERROR_EMAIL_REQUIRED);
+  }
+
+  if (!normalizedCode) {
+    throw createValidationError(ERROR_CODE_REQUIRED);
+  }
+
+  return { normalizedEmail, normalizedCode };
+}
+
+function ensureRequestedEmail({ lastRequestedEmailRef, normalizedEmail }) {
+  const requestedEmail = lastRequestedEmailRef.current;
+
+  if (!requestedEmail) {
+    throw createValidationError(ERROR_MISSING_REQUEST);
+  }
+
+  if (normalizeEmail(requestedEmail) !== normalizedEmail) {
+    const error = createValidationError(ERROR_EMAIL_MISMATCH);
+    error.meta = { requestedEmail };
+    throw error;
+  }
+
+  return requestedEmail;
+}
+
+async function withVerificationState(setIsVerifying, action) {
+  setIsVerifying(true);
+  try {
+    return await action();
+  } finally {
+    setIsVerifying(false);
+  }
+}
+
+function confirmEmailChangeRequest({ client, user, normalizedEmail, normalizedCode }) {
+  return client.confirmEmailChange({
+    userId: user.id,
+    email: normalizedEmail,
+    code: normalizedCode,
+    token: user.token,
+  });
+}
+
+function handleSuccessfulConfirmation({
+  response,
+  user,
+  onUserUpdate,
+  resetRequestState,
+  onSuccess,
+}) {
+  const updatedEmail = response?.email ?? null;
+  if (typeof onUserUpdate === "function" && user) {
+    onUserUpdate({ ...user, email: updatedEmail });
+  }
+  resetRequestState();
+  if (typeof onSuccess === "function") {
+    onSuccess(updatedEmail);
+  }
+  return updatedEmail;
+}
+
 export function useEmailConfirmationFlow({
   client,
   ensureClient,
@@ -21,56 +94,25 @@ export function useEmailConfirmationFlow({
   const confirmChange = useCallback(
     async ({ email, code }) => {
       ensureClient();
-      const normalizedEmail = normalizeEmail(email);
-      const normalizedCode = code?.trim();
+      const { normalizedEmail, normalizedCode } = validateEmailAndCode(email, code);
+      ensureRequestedEmail({ lastRequestedEmailRef, normalizedEmail });
 
-      if (!normalizedEmail) {
-        const error = new Error(ERROR_EMAIL_REQUIRED);
-        error.code = ERROR_EMAIL_REQUIRED;
-        throw error;
-      }
-
-      if (!normalizedCode) {
-        const error = new Error(ERROR_CODE_REQUIRED);
-        error.code = ERROR_CODE_REQUIRED;
-        throw error;
-      }
-
-      const requestedEmail = lastRequestedEmailRef.current;
-
-      if (!requestedEmail) {
-        const error = new Error(ERROR_MISSING_REQUEST);
-        error.code = ERROR_MISSING_REQUEST;
-        throw error;
-      }
-
-      if (normalizeEmail(requestedEmail) !== normalizedEmail) {
-        const error = new Error(ERROR_EMAIL_MISMATCH);
-        error.code = ERROR_EMAIL_MISMATCH;
-        error.meta = { requestedEmail };
-        throw error;
-      }
-
-      try {
-        setIsVerifying(true);
-        const response = await client.confirmEmailChange({
-          userId: user.id,
-          email: normalizedEmail,
-          code: normalizedCode,
-          token: user.token,
+      return withVerificationState(setIsVerifying, async () => {
+        const response = await confirmEmailChangeRequest({
+          client,
+          user,
+          normalizedEmail,
+          normalizedCode,
         });
-        const updatedEmail = response?.email ?? null;
-        if (typeof onUserUpdate === "function" && user) {
-          onUserUpdate({ ...user, email: updatedEmail });
-        }
-        resetRequestState();
-        if (typeof onSuccess === "function") {
-          onSuccess(updatedEmail);
-        }
-        return updatedEmail;
-      } finally {
-        setIsVerifying(false);
-      }
+
+        return handleSuccessfulConfirmation({
+          response,
+          user,
+          onUserUpdate,
+          resetRequestState,
+          onSuccess,
+        });
+      });
     },
     [
       client,
