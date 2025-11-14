@@ -1,5 +1,46 @@
 import { useEffect } from "react";
 
+const MENU_ITEM_SELECTOR =
+  '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]';
+
+function collectMenuItems(menuEl) {
+  if (!menuEl) return [];
+  return Array.from(menuEl.querySelectorAll(MENU_ITEM_SELECTOR));
+}
+
+function focusMenuItem(item) {
+  if (!item) return;
+  if (typeof item.matches === "function" && item.matches("button, [href], [tabindex]")) {
+    item.focus();
+    return;
+  }
+
+  const focusable = item.querySelector?.("button, [href], [tabindex]");
+  focusable?.focus();
+}
+
+function handleMenuKeyDown(event, { items, triggerRef, setOpen }) {
+  const currentItem = event.target.closest(MENU_ITEM_SELECTOR);
+  const index = items.indexOf(currentItem);
+
+  switch (event.key) {
+    case "Escape":
+      setOpen(false);
+      triggerRef.current?.focus();
+      break;
+    case "ArrowDown":
+      event.preventDefault();
+      focusMenuItem(items[(index + 1) % items.length]);
+      break;
+    case "ArrowUp":
+      event.preventDefault();
+      focusMenuItem(items[(index - 1 + items.length) % items.length]);
+      break;
+    default:
+      break;
+  }
+}
+
 /**
  * Menu keyboard navigation and accessibility management.
  * Focuses first item on open and supports Arrow/Escape keys.
@@ -13,51 +54,13 @@ export default function useMenuNavigation(open, menuRef, triggerRef, setOpen) {
     if (!open) return undefined;
 
     const menuEl = menuRef.current;
-    if (!menuEl) return undefined;
-
-    const items = Array.from(
-      menuEl.querySelectorAll(
-        '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
-      ),
-    );
+    const items = collectMenuItems(menuEl);
     if (!items.length) return undefined;
 
-    const getFocusable = (item) => {
-      if (!item) return undefined;
-      if (typeof item.matches === "function") {
-        if (item.matches("button, [href], [tabindex]")) {
-          return item;
-        }
-      }
-      return item.querySelector?.("button, [href], [tabindex]");
-    };
+    focusMenuItem(items[0]);
 
-    getFocusable(items[0])?.focus();
-
-    const handleKeyDown = (e) => {
-      const currentItem = e.target.closest(
-        '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
-      );
-      const index = items.indexOf(currentItem);
-      switch (e.key) {
-        case "Escape":
-          setOpen(false);
-          triggerRef.current?.focus();
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          getFocusable(items[(index + 1) % items.length])?.focus();
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          getFocusable(
-            items[(index - 1 + items.length) % items.length],
-          )?.focus();
-          break;
-        default:
-          break;
-      }
-    };
+    const handleKeyDown = (event) =>
+      handleMenuKeyDown(event, { items, triggerRef, setOpen });
 
     menuEl.addEventListener("keydown", handleKeyDown);
     return () => menuEl.removeEventListener("keydown", handleKeyDown);
