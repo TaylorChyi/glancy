@@ -68,12 +68,15 @@ const mapTranslationEntry = (translations, entry) => [
   resolve(translations, entry.primaryKey, entry.fallbackKey, entry.fallback),
 ];
 
-export const createUsernameEditorTranslations = (translations) =>
-  Object.fromEntries(
-    USERNAME_TRANSLATION_ENTRIES.map((entry) =>
-      mapTranslationEntry(translations, entry),
-    ),
+const createTranslationPairs = (translations) =>
+  USERNAME_TRANSLATION_ENTRIES.map((entry) =>
+    mapTranslationEntry(translations, entry),
   );
+
+const buildTranslationDictionary = (entries) => Object.fromEntries(entries);
+
+export const createUsernameEditorTranslations = (translations) =>
+  buildTranslationDictionary(createTranslationPairs(translations));
 
 const COMMAND_INITIAL_STATE = Object.freeze({
   status: "idle",
@@ -186,23 +189,17 @@ const useUsernameCommandHandlers = ({
   return { handleUsernameSubmit, handleUsernameFailure };
 };
 
-export const useUsernameSubmitCommand = ({
-  user,
-  setUser,
-  updateUsernameRequest,
-}) => {
-  const [commandState, dispatch] = useReducer(
-    usernameCommandReducer,
-    COMMAND_INITIAL_STATE,
-  );
+const useUsernameCommandState = () =>
+  useReducer(usernameCommandReducer, COMMAND_INITIAL_STATE);
+
+const useUsernameCommand = ({ dispatch, ...rest }) =>
+  useUsernameCommandHandlers({ dispatch, ...rest });
+
+export const useUsernameSubmitCommand = (options) => {
+  const [commandState, dispatch] = useUsernameCommandState();
 
   const { handleUsernameSubmit, handleUsernameFailure } =
-    useUsernameCommandHandlers({
-      dispatch,
-      user,
-      setUser,
-      updateUsernameRequest,
-    });
+    useUsernameCommand({ dispatch, ...options });
 
   return { handleUsernameSubmit, handleUsernameFailure, commandState };
 };
