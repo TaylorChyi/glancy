@@ -47,3 +47,89 @@ export const resolveUploadedAvatar = (response) => {
   const avatar = response?.avatar ? cacheBust(response.avatar) : null;
   return avatar ?? null;
 };
+
+export const applyAvatarUploadSuccess = ({
+  context,
+  response,
+  setStatus,
+  setUser,
+  onSuccess,
+  statusMap,
+}) => {
+  const nextAvatar = resolveUploadedAvatar(response);
+
+  if (nextAvatar && typeof setUser === "function") {
+    setUser({ ...context.user, avatar: nextAvatar });
+  }
+
+  setStatus(statusMap.succeeded);
+
+  if (typeof onSuccess === "function") {
+    onSuccess({ avatar: nextAvatar, response });
+  }
+
+  return true;
+};
+
+export const applyAvatarUploadFailure = ({
+  error,
+  setStatus,
+  setError,
+  onError,
+  statusMap,
+}) => {
+  setStatus(statusMap.failed);
+  setError(error);
+
+  if (typeof onError === "function") {
+    onError(error);
+  }
+
+  return false;
+};
+
+export const performAvatarUpload = async ({
+  filesLike,
+  user,
+  usersClient,
+  setUser,
+  setStatus,
+  setError,
+  onSuccess,
+  onError,
+  statusMap,
+}) => {
+  const file = selectFirstValidFile(filesLike);
+  if (!file) {
+    return false;
+  }
+
+  try {
+    const context = assertUploadContext({ user, usersClient });
+
+    setStatus(statusMap.uploading);
+    setError(null);
+
+    const response = await uploadAvatar({
+      ...context,
+      file,
+    });
+
+    return applyAvatarUploadSuccess({
+      context,
+      response,
+      setStatus,
+      setUser,
+      onSuccess,
+      statusMap,
+    });
+  } catch (error) {
+    return applyAvatarUploadFailure({
+      error,
+      setStatus,
+      setError,
+      onError,
+      statusMap,
+    });
+  }
+};
