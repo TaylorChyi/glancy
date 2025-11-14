@@ -27,6 +27,53 @@ const ensureHeadingTabIndex = (node) => {
 
 const isFocusable = (node) => Boolean(node && typeof node.focus === "function");
 
+const focusHeadingOrFallback = ({
+  headingRef,
+  headingId,
+  lastFocusOriginRef,
+}) => {
+  const headingElement = headingRef.current;
+  if (headingElement && (!headingId || headingElement.id === headingId)) {
+    ensureHeadingTabIndex(headingElement);
+    try {
+      headingElement.focus();
+      if (typeof headingElement.scrollIntoView === "function") {
+        headingElement.scrollIntoView({ block: "start" });
+      }
+      lastFocusOriginRef.current = null;
+      return;
+    } catch {
+      // ignore and fall back to origin
+    }
+  }
+
+  const fallbackTarget = lastFocusOriginRef.current;
+  if (isFocusable(fallbackTarget)) {
+    fallbackTarget.focus();
+  }
+};
+
+const trackActiveSectionChange = ({
+  activeSectionId,
+  headingRef,
+  lastActiveSectionIdRef,
+  hasInitializedRef,
+}) => {
+  const previousActiveSectionId = lastActiveSectionIdRef.current;
+  lastActiveSectionIdRef.current = activeSectionId;
+
+  if (!hasInitializedRef.current) {
+    hasInitializedRef.current = true;
+    return false;
+  }
+
+  if (previousActiveSectionId === activeSectionId && headingRef.current) {
+    return false;
+  }
+
+  return true;
+};
+
 /**
  * 意图：在分区切换时聚焦指定标题，必要时回退至原始焦点来源。
  * 输入：
@@ -73,39 +120,20 @@ function useSectionFocusManager({ activeSectionId, headingId }) {
       return undefined;
     }
 
-    const previousActiveSectionId = lastActiveSectionIdRef.current;
-    lastActiveSectionIdRef.current = activeSectionId;
-
-    if (!hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      return undefined;
-    }
-
-    if (previousActiveSectionId === activeSectionId && headingRef.current) {
-      return undefined;
-    }
-
-    const frameId = requestFrame(() => {
-      const headingElement = headingRef.current;
-      if (headingElement && (!headingId || headingElement.id === headingId)) {
-        ensureHeadingTabIndex(headingElement);
-        try {
-          headingElement.focus();
-          if (typeof headingElement.scrollIntoView === "function") {
-            headingElement.scrollIntoView({ block: "start" });
-          }
-          lastFocusOriginRef.current = null;
-          return;
-        } catch {
-          // ignore and fall back to origin
-        }
-      }
-
-      const fallbackTarget = lastFocusOriginRef.current;
-      if (isFocusable(fallbackTarget)) {
-        fallbackTarget.focus();
-      }
+    const shouldHandleChange = trackActiveSectionChange({
+      activeSectionId,
+      headingRef,
+      lastActiveSectionIdRef,
+      hasInitializedRef,
     });
+
+    if (!shouldHandleChange) {
+      return undefined;
+    }
+
+    const applyFocus = () =>
+      focusHeadingOrFallback({ headingRef, headingId, lastFocusOriginRef });
+    const frameId = requestFrame(applyFocus);
 
     return () => {
       cancelFrame(frameId);
