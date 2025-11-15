@@ -73,7 +73,7 @@
 | 无痕查询          | 不持久化历史                                | 仍计入配额与限流                                 | 仅保留会话渲染态   |
 | 逻辑删除/物理清理 | 标记删除/实际删除                           | 逻辑删除即时；物理清理默认延迟 7 天              | 设可恢复窗口       |
 | 画像/风格标签     | 学习目标、背景、水平、语域/体裁/语气/主题等 | 多选并可排序，档位限制最大可选数                 | 参与生成控制       |
-| 订阅档位          | Free/Plus/Pro（唯一 SSoT：[第 11 章 订阅、计费与账单](<../第 11 章 订阅、计费与账单.md>)） | 查词上限、例句条数、再生成次数、留存策略等差异化 | 到期自动降级       |
+| 订阅档位          | `FREE_USER`/`PLUS_USER`/`PRO_USER`（唯一 SSoT：[第 11 章 订阅、计费与账单](<../第 11 章 订阅、计费与账单.md>)） | 查词上限、例句条数、再生成次数、留存策略等差异化 | 到期自动降级       |
 
 以上术语与口径与[第 1 章「实现范围」](<../第 1 章 引言.md#14-实现范围>)、[第 1 章「分层功能说明」](<../第 1 章 引言.md#143-分层功能说明>)、[第 1 章「订阅与权益概览」](<../第 1 章 引言.md#144-订阅与权益概览>)保持一致。
 
@@ -164,11 +164,12 @@
 | ---- | ---- | ---- | ------------- |
 | <a id="lookup-request"></a>查词请求 | 面向终端用户的主查询入口，调用 `POST /api/v1/lookup` 以获取结构化释义与关联模块。 | 计入 `lookup` 日配额；首屏响应 P95 ≤2.5 s；命中缓存需返回 `X-Cache: HIT`。 | [第 4 章 UC-01](<../第 4 章 业务流程与用例.md#uc-01-查询词条>)、[第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>)、[第 20 章 AC-UC-01](<../第 20 章 验收标准与测试方案（UC 对齐）.md#ac-uc-01>) |
 | <a id="regenerate-request"></a>再生成请求 | 对既有查询结果进行个性化刷新或难度/风格切换的调用，接口为 `POST /api/v1/lookup/{lookupId}/regenerate`。 | 计入 `regenerate` 日配额；默认绕过 L2 缓存；超限返回 429 并附带 `X-Quota` 头。 | [第 2 章 目标](<../第 2 章 产品范围与目标.md#核心场景>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>), [第 20 章 UC‑02](<../第 20 章 验收标准与测试方案（UC 对齐）.md#uc-02-再生成>) |
-| <a id="module-flags"></a>moduleFlags | 请求体中的模块显隐控制字段，使用布尔 map 表示需返回的内容块。 | key 集合覆盖释义、例句、搭配、同/反义、派生模块；Free 档仅支持开关，Plus/Pro 支持排序与详略调节。 | [第 1 章 1.4.4](<../第 1 章 引言.md#144-订阅与权益概览>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>) |
+| <a id="module-flags"></a>moduleFlags | 请求体中的模块显隐控制字段，使用布尔 map 表示需返回的内容块。 | key 集合覆盖释义、例句、搭配、同/反义、派生模块；`FREE_USER` 档仅支持开关，`PLUS_USER`/`PRO_USER` 支持排序与详略调节。 | [第 1 章 1.4.4](<../第 1 章 引言.md#144-订阅与权益概览>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>) |
 | <a id="detail-level"></a>detailLevel | 控制输出详略的枚举字段，取值 `SHORT/MEDIUM/LONG`。 | 中文 80/150/220 字符、英文 120/220/320 字符预算；超限需裁剪并在响应体标注。 | [第 8 章 8.3](<../第 8 章 接口与数据契约（APISchema）.md#83-领域对象概览json-schema-摘要>), [第 20 章 AC-FR-011](<../第 20 章 验收标准与测试方案（UC 对齐）.md#ac-fr-011>) |
-| <a id="example-count"></a>exampleCount | 请求中指定例句数量的字段，用于控制 `examples` 模块返回条数。 | 整数 ≥0；Free/Plus/Pro 默认 1/3/5 条；超过档位限制需降级到最大允许值并返回提示。 | [第 2 章 权益](<../第 2 章 产品范围与目标.md#产品能力与非功能目标>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>), [第 20 章 UC‑03](<../第 20 章 验收标准与测试方案（UC 对齐）.md#uc-03-难度风格切换>) |
+| <a id="example-count"></a>exampleCount | 请求中指定例句数量的字段，用于控制 `examples` 模块返回条数。 | 整数 ≥0；`FREE_USER`/`PLUS_USER`/`PRO_USER` 默认 1/3/5 条；超过档位限制需降级到最大允许值并返回提示。 | [第 2 章 权益](<../第 2 章 产品范围与目标.md#产品能力与非功能目标>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>), [第 20 章 UC‑03](<../第 20 章 验收标准与测试方案（UC 对齐）.md#uc-03-难度风格切换>) |
+| <a id="device-fingerprint"></a>deviceFingerprint | 由 `ua|widthxheight|lang|tz|platform|uaVersion` 归一化拼接并经 SHA‑256 计算出的哈希，用于识别“同一设备”的游客行为。 | `POST /api/v1/sessions/guest` 必填；缺失默认返回 `DEVICE_FINGERPRINT_REQUIRED`；仅在配额/风控中使用，不落真实原文。 | [第 8 章 8.1.1](<../第 8 章 接口与数据契约（APISchema）.md#811-guest-session>), [第 12 章 12.4.2](<../第 12 章 安全、隐私与合规.md#1242-device-fp>) |
 | <a id="result-flavor"></a>Flavor | 查词结果的呈现风格枚举，用于区分双语、例句强化等展现模式。 | 取值如 `BILINGUAL`、`EXAMPLE_FOCUS`；与用户偏好及档位绑定，写入历史与缓存键。 | [第 3 章 用户画像](<../第 3 章 用户画像与角色.md#32-学习偏好>), [第 8 章 8.0.1](<../第 8 章 接口与数据契约（APISchema）.md#801-当前实现表代码事实源>), [第 9 章 9.2](<../第 9 章 数据模型与数据治理.md#92-数据域与表结构>) |
-| <a id="capture-history-flag"></a>captureHistory | 控制是否记录查询历史的请求参数，适用于匿名或无痕场景。 | 默认 `true`；当 `false` 时不写入 `lookups/results/history` 正文，仅累积 `quota_daily` 计数。 | [第 8 章 8.0.1](<../第 8 章 接口与数据契约（APISchema）.md#801-当前实现表代码事实源>), [第 9 章 9.3](<../第 9 章 数据模型与数据治理.md#93-数据分级与留存策略>) |
+| <a id="capture-history-flag"></a>captureHistory | 控制是否记录查询历史的请求参数，适用于 `GUEST` 或无痕场景。 | 默认 `true`；当 `false` 时不写入 `lookups/results/history` 正文，仅累积 `quota_daily` 计数。 | [第 8 章 8.0.1](<../第 8 章 接口与数据契约（APISchema）.md#801-当前实现表代码事实源>), [第 9 章 9.3](<../第 9 章 数据模型与数据治理.md#93-数据分级与留存策略>) |
 | <a id="persona-summary"></a>personaSummary | 个性化结果中的学习者概况摘要，帮助用户快速理解定制理由。 | 字符数 ≤120；随用户画像更新即时生效；支持 i18n。 | [第 3 章 3.3](<../第 3 章 用户画像与角色.md#33-画像属性>), [第 8 章 8.3.1](<../第 8 章 接口与数据契约（APISchema）.md#831-dictresult查词结果骨架>) |
 | <a id="learning-hooks"></a>learningHooks | 结合用户画像生成的学习提示列表，用于引导下一步练习。 | 数组长度 1–5；每条 ≤80 字符；按档位决定最大条数。 | [第 2 章 核心能力](<../第 2 章 产品范围与目标.md#产品能力与非功能目标>), [第 8 章 8.3.1](<../第 8 章 接口与数据契约（APISchema）.md#831-dictresult查词结果骨架>) |
 | <a id="reflection-prompts"></a>reflectionPrompts | 促使用户复盘学习效果的提示语集合。 | 数组长度 1–3；须与 `personaSummary` 语言一致；过期后自动更新。 | [第 2 章 核心能力](<../第 2 章 产品范围与目标.md#产品能力与非功能目标>), [第 8 章 8.3.1](<../第 8 章 接口与数据契约（APISchema）.md#831-dictresult查词结果骨架>) |
@@ -178,7 +179,7 @@
 | 术语 | 定义 | 计量 | 使用范围/引用 |
 | ---- | ---- | ---- | ------------- |
 | <a id="idempotency-key"></a>Idempotency-Key | 写操作请求幂等校验使用的 SHA-256 哈希，确保重复提交只生效一次。 | 推荐 `hash(subjectId+langPair+entryNorm+configHash+profileEtag)`；有效期 30 s；冲突率需 ≤0.1%。 | [第 8 章 8.1](<../第 8 章 接口与数据契约（APISchema）.md#81-基线规范>), [第 11 章 11.6.4](<../第 11 章 订阅、计费与账单.md#1164-变更与并发>), [第 20 章 20.3](<../第 20 章 验收标准与测试方案（UC 对齐）.md#203-api-契约验证>) |
-| <a id="subject-id"></a>subjectId | 将用户或匿名会话统一抽象为幂等、配额与审计主体的标识。 | 登录用户 `u_<userId>`，匿名 `s_<sessionId>`；贯穿缓存键、quota 与日志。 | [第 8 章 8.1](<../第 8 章 接口与数据契约（APISchema）.md#81-基线规范>), [第 9 章 9.2](<../第 9 章 数据模型与数据治理.md#92-数据域与表结构>) |
+| <a id="subject-id"></a>subjectId | 将用户或 `GUEST` 会话统一抽象为幂等、配额与审计主体的标识。 | 登录用户 `u_<userId>`，`GUEST` `s_<sessionId>`；贯穿缓存键、quota 与日志。 | [第 8 章 8.1](<../第 8 章 接口与数据契约（APISchema）.md#81-基线规范>), [第 9 章 9.2](<../第 9 章 数据模型与数据治理.md#92-数据域与表结构>) |
 | <a id="entry-norm"></a>entryNorm | 词条正规化结果，用于幂等与缓存键的一致性处理。 | 统一小写、去首尾空白、去掉多余空格；写入缓存/数据库使用 `entry_norm` 字段。 | [第 4 章 BR-10](<../第 4 章 业务流程与用例.md#业务规则br>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>) |
 | <a id="config-hash"></a>configHash | 将模块开关、详略级别等配置组合成的哈希，用于缓存与幂等。 | 对请求体中的 `moduleFlags`、`detailLevel`、`exampleCount`、偏好等字段按字母序序列化后 SHA-256。 | [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>), [第 20 章 TC‑API‑003](<../第 20 章 验收标准与测试方案（UC 对齐）.md#tc-api-003-idempotency-生效>) |
 | <a id="profile-etag"></a>profileEtag | 用户画像配置的版本指纹，确保生成结果与最新偏好同步。 | 32 字节十六进制字符串；画像更新后立即刷新；未匹配时强制重新生成。 | [第 3 章 3.3](<../第 3 章 用户画像与角色.md#33-画像属性>), [第 8 章 8.4](<../第 8 章 接口与数据契约（APISchema）.md#84-post-api-v1-lookup>), [附录 C 时序图](<./附录 C 图示（系统上下文、时序、状态机）.md#c3-查词主链路时序图>) |

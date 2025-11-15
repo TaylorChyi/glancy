@@ -26,7 +26,7 @@
 | 能力 / SRS 章节 | 约定 | 当前状态 | Issue |
 | --- | --- | --- | --- |
 | 8.1 基线：`/api/v1` 前缀、`Accept: application/vnd.glancy.dict.v1+json`、统一 `schemaVersion`、`quota` 头/体 | 仍使用 `/api`，未返回 `schemaVersion`、`quota`、`X-RateLimit-*` | 未实现 | ISSUE#T03-API-01 |
-| 8.1.1 匿名会话 `POST /api/v1/sessions/anonymous`、`POST /api/v1/sessions/merge` | 无对应接口；仅凭手动注册/登录 | 未实现 | ISSUE#T03-API-02 |
+| 8.1.1 `GUEST` 会话 `POST /api/v1/sessions/guest`、`POST /api/v1/sessions/merge` | 无对应接口；仅凭手动注册/登录 | 未实现 | ISSUE#T03-API-02 |
 | 8.3 `DictResult` 模块化字段、`tokensIn/out`、`degraded` | 现有 `WordResponse` 无 tokens / modules / degradations | 未实现 | ISSUE#T03-API-03 |
 | 8.4 `POST /api/v1/lookup` / `regenerate` / `GET /lookup/{id}`，含 `moduleFlags`、`detailLevel`、`exampleCount` 校验 | 仅 `GET /api/words`，没有再生成、detailLevel、模块控制；也未区分查词/再生配额 | 与实现完全不符 | ISSUE#T03-API-04 |
 | 8.5–8.7 历史分页 `cursor`、导出任务、删除异步回执 | 历史只支持 page/size；无导出与异步清理；删除立即软删 | 部分实现 | ISSUE#T03-API-05 |
@@ -38,7 +38,7 @@
 ### 8.0.3 Issues（已登记）
 
 - **ISSUE#T03-API-01**：缺少 `/api/v1` 基线能力（内容协商、`schemaVersion`、统一 quota header/body）。需为 `WordController` 等补充响应头与 body 字段，并在 `website` API 层兼容。来源：`WordController`。
-- **ISSUE#T03-API-02**：匿名 session/合并接口未实现，导致 Free/匿名配额无法与 SRS 对齐。来源：`TokenAuthenticationFilter` 仅支持已注册用户。
+- **ISSUE#T03-API-02**：`GUEST` session/合并接口未实现，导致 `FREE_USER`/`GUEST` 配额无法与 SRS 对齐。来源：`TokenAuthenticationFilter` 仅支持已注册用户。
 - **ISSUE#T03-API-03**：`WordResponse` 未输出 `tokensIn/out`、`modules`、`degraded`，也无 `detailLevel`，与 8.3/8.4 要求冲突。来源：`WordResponse`、`WordSearcherImpl`。
 - **ISSUE#T03-API-04**：再生成契约缺失，`WordService` 仅同步查词。需新增 `POST /lookup/{lookupId}/regenerate`。来源：`WordController`。
 - **ISSUE#T03-API-05**：历史导出/清理契约缺失（8.5–8.6）；`SearchRecordService` 仅软删。需定义异步导出与 `cursor` 分页。来源：`SearchRecordController`。
@@ -117,10 +117,12 @@ X-USER-TOKEN: <token>
 
 ## 8.1 基线规范
 
+- 游客身份、配额与设备指纹的根本约束均引用[第 2 章 2.9](<./第 2 章 产品范围与目标.md#29-用户身份与模式定义>)，接口层仅实现对应 SSoT。
+
 - **基地址**：`/api/v1`（内外统一），仅 HTTPS。
 - **内容类型**：`Content-Type: application/json; charset=utf-8`。
   内容协商：`Accept: application/vnd.glancy.dict.v1+json` 优先；缺失或为 `application/json` 时降级为 JSON 并在响应体携带 `schemaVersion` 字段；出现未知 vendor 时返回 `406 Not Acceptable`。
-- **鉴权**：`Authorization: Bearer <token>`，支持用户态 JWT（`user_jwt`）与匿名 JWT（`anon_jwt`）；Webhook 采用 HMAC 签名。
+- **鉴权**：`Authorization: Bearer <token>`，支持用户态 JWT（`user_jwt`）与 `GUEST` JWT（`guest_jwt`）；Webhook 采用 HMAC 签名。
 - **主体 ID**：统一以 `subjectId = u_<userId> | s_<sessionId>` 参与幂等键、缓存键、配额与限速。
 - **幂等**：写操作支持 `Idempotency-Key`（推荐值 `hash(subjectId+langPair+entryNorm+configHash+profileEtag)`）。参见“[附录 A 术语与缩略语](<./Appendix/附录 A 术语与缩略语.md>) - 幂等”。
 - **跟踪**：请求头可携带 `X-Trace-Id`；响应统一回传同名头。
@@ -132,13 +134,31 @@ X-USER-TOKEN: <token>
 - **分页**：列表接口使用游标分页：`?limit=50&cursor=<token>`；响应返回 `nextCursor`。
 - **错误模型**：HTTP 状态码 + 统一错误体（见 9.11）。
 
-### 8.1.1 匿名会话与 Token 获取
+### <a id="811-guest-session"></a>8.1.1 `GUEST` 会话（Guest Session）与 Token 获取
 
-- **端点**：`POST /api/v1/sessions/anonymous`
-- **作用**：签发匿名 JWT（`anon_jwt`），scope 限定在查词、再生成与导出申请。
-- **请求体**：`{ "fingerprint": "hash(ua+platform+tz+ipClassC)" }`
-- **响应**：`201 Created`，返回 `{ "sessionId": "s_xxx", "token": "anon_jwt", "expiresAt": "2025-01-01T00:00:00Z" }`
-- **约束**：TTL 24 h，可续签；匿名主体统一映射为 `subjectId = s_<sessionId>`；匿名配额为 Free 档日配额的 1/3（查词与再生成），阈值由特性开关配置；登录后可调用 `POST /api/v1/sessions/merge` 将匿名配额并入真实用户。
+- **端点**：`POST /api/v1/sessions/guest`
+- **作用**：签发 `GUEST` JWT（`guest_jwt`），scope 限定在查词、再生成与导出申请。
+- **请求体**：
+  ```json
+  {
+    "fingerprint": "hash(ua+platform+tz+ipClassC)",
+    "deviceFingerprint": "sha256(ua|widthxheight|lang|tz|platform|uaVersion)",
+    "locale": "zh-CN",
+    "clientVersion": "web-1.0.0",
+    "clientHints": {
+      "uaFullVersion": "...",
+      "secChUaPlatform": "..."
+    }
+  }
+  ```
+  `deviceFingerprint`：字符串，**必填**。按 12.4.2 中的字段组合与哈希算法生成，缺失时默认返回 `400 DEVICE_FINGERPRINT_REQUIRED`；若特性开关允许临时降级，则使用 IP 维度兜底，同时在响应头写入 `X-Quota-Warning: device_fingerprint_missing` 并记录 `quota_events`。
+  `fingerprint`：保持现有游客会话逻辑，用于兼容历史 SDK；允许服务端在合并游客配额时继续追踪旧实现。
+- **响应**：`201 Created`；响应头 `Set-Cookie: glancy_guest_session=<session_id>; HttpOnly; Secure; SameSite=Lax`。Body 可为空或返回 `{ "sessionId": "s_xxx", "quota": { ... } }` 供前端展示剩余额度。
+- **约束**：TTL 24 h，可续签；`GUEST` 主体统一映射为 `subjectId = s_<sessionId>`；`GUEST` 配额为 `FREE_USER` 档日配额的 1/3（查词与再生成），阈值由特性开关配置；登录后可调用 `POST /api/v1/sessions/merge` 将 `GUEST` 配额并入真实用户。
+- **配额与错误**：
+  - 会话创建会校验“新建游客会话”IP 维度（详见 12.4.1）。超限返回 `429 GUEST_CREATION_LIMIT_EXCEEDED`。
+  - 查词/LLM 请求需同时校验会话/IP/设备指纹 3 个维度，真实可用剩余额度取最小值；任一耗尽即返回 `429 LIMIT_EXCEEDED`，并在响应头 `X-Quota-*` 与体内 `quota` 对象带回 `session_remaining`、`ip_remaining`、`device_remaining`。
+  - 清除 Cookie 仅影响会话维度；IP 和设备指纹维度继续沿用历史计数。
 - **安全**：仅存储指纹哈希，不落真实指纹串；配额统计遵循 9.1 基线的 quota header/体规范。
 
 ------
@@ -212,7 +232,7 @@ X-USER-TOKEN: <token>
 ### API-001 查词/生成
 
 - **方法与路径**：`POST /api/v1/lookup`
-- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
+- **鉴权**：必需，支持 `user_jwt` 或 `guest_jwt`
 - **幂等**：支持。推荐 `Idempotency-Key: hash(subjectId+langPair+entryNorm+configHash+profileEtag)`
 - **限流与配额**：计入“每日查词上限”与速率限制。 
 
@@ -242,8 +262,8 @@ X-USER-TOKEN: <token>
 - 规则与校验：
   - `entry` 仅接受单词或词组；检测疑似整句时返回 400（错误码 `ENTRY_NOT_WORD_OR_PHRASE`），与第 1.4.2 节一致。 
   - `langPair` 必须属于白名单 {L1…L4}。同语模式不输出译文。 
-  - `exampleCount` 上限：档位约束详见[第 11 章 订阅、计费与账单](<./第 11 章 订阅、计费与账单.md>)权益矩阵（Free≤1、Plus≤3、Pro≤5），超限返回 400（`EXAMPLE_COUNT_EXCEEDS_TIER`）。
-  - `style.tags` 上限：档位约束详见[第 11 章 订阅、计费与账单](<./第 11 章 订阅、计费与账单.md>)权益矩阵（Free≤3、Plus≤5、Pro≤8），超限 400。
+  - `exampleCount` 上限：档位约束详见[第 11 章 订阅、计费与账单](<./第 11 章 订阅、计费与账单.md>)权益矩阵（`FREE_USER`≤1、`PLUS_USER`≤3、`PRO_USER`≤5），超限返回 400（`EXAMPLE_COUNT_EXCEEDS_TIER`）。
+  - `style.tags` 上限：档位约束详见[第 11 章 订阅、计费与账单](<./第 11 章 订阅、计费与账单.md>)权益矩阵（`FREE_USER`≤3、`PLUS_USER`≤5、`PRO_USER`≤8），超限 400。
 
 **响应体**（`200 OK`）
 
@@ -252,13 +272,26 @@ X-USER-TOKEN: <token>
 
 **错误码**：见 9.11。
 
+> **游客配额超限响应体**：查词与 LLM 接口在命中 12.4.1 配额时必须返回以下结构，前端据此统一提示：
+
+```json
+{
+  "errorCode": "LIMIT_EXCEEDED",
+  "errorMessage": "Daily quota exceeded for guest user",
+  "limitType": "GUEST_DAILY_LOOKUP"  // 或 GUEST_DAILY_LLM
+}
+```
+
+同时设置 `HTTP 429`，在响应头 `X-Quota-Type`/`X-Quota-Remaining`/`X-Quota-Reset-At` 中回传剩余额度。
+
 ------
 
 ### API-002 再生成
 
 - **方法与路径**：`POST /api/v1/lookup/{lookupId}/regenerate`
-- **鉴权**：必需，支持 `user_jwt` 或 `anon_jwt`
+- **鉴权**：必需，支持 `user_jwt` 或 `guest_jwt`
 - **配额**：计入“再生成次数/日”，与查词配额独立；难度或风格切换视为一次再生成，不计入查词次数。
+  游客超限时返回与 API-001 相同的 `LIMIT_EXCEEDED` 错误体，`limitType = GUEST_DAILY_LLM`。
 
 **请求体**
 
@@ -473,13 +506,16 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
 | 400  | INVALID_LANG_PAIR          | 语言对不在白名单。                  |
 | 400  | EXAMPLE_COUNT_EXCEEDS_TIER | 例句条数超过档位上限。              |
 | 400  | STYLE_TAGS_EXCEEDS_TIER    | 风格标签超过档位上限。              |
+| 400  | DEVICE_FINGERPRINT_REQUIRED | `POST /api/v1/sessions/guest` 缺少必填 `deviceFingerprint`。 |
 | 401  | UNAUTHORIZED               | 未提供或无效的 Bearer Token。       |
 | 403  | FORBIDDEN                  | RBAC 或档位不允许。                 |
 | 404  | NOT_FOUND                  | 资源不存在。                        |
 | 409  | IDEMPOTENCY_KEY_REPLAYED   | 幂等键重放且参数不一致。            |
 | 410  | EXPORT_LINK_EXPIRED        | 导出下载链接超过 600 s TTL。         |
 | 422  | CONTRACT_VALIDATION_FAILED | `schemaVersion` 或字段结构未符合 `glancy.dict.v1`。 |
-| 429  | RATE_LIMITED               | 超出配额或限速；`error.meta.kind` = 'quota'|'ratelimit'，返回剩余额度与重置时间。 |
+| 429  | LIMIT_EXCEEDED             | 游客多维配额任一维度耗尽（会话/IP/设备）；`limitType` = `GUEST_DAILY_LOOKUP` 或 `GUEST_DAILY_LLM`。 |
+| 429  | GUEST_CREATION_LIMIT_EXCEEDED | `POST /api/v1/sessions/guest` 命中“新建游客会话”IP 级配额；返回剩余次数与解封时间。 |
+| 429  | RATE_LIMITED               | 通用限速或订阅档位配额触顶；`error.meta.kind` = 'quota'|'ratelimit'，返回剩余额度与重置时间。 |
 | 500  | UPSTREAM_UNAVAILABLE       | Doubao 或第三方异常；触发降级策略。 |
 | 503  | CIRCUIT_OPEN               | 熔断中，快速失败。                  |
 
@@ -650,7 +686,7 @@ a) 句末标点（英文 .?! 或中文 。！？；）；b) 英文 > 8 个词且
 
 ## 8.14 兼容性与前后端协作要点
 
-- **模块开关与顺序**：Free 档仅“开/关”，Plus/Pro 支持顺序与详略调节；请求体中的 `moduleFlags` 与 `detailLevel` 由前端根据档位控制，响应体 `modules` 返回实际内容容器。
+- **模块开关与顺序**：`FREE_USER` 档仅“开/关”，`PLUS_USER`/`PRO_USER` 支持顺序与详略调节；请求体中的 `moduleFlags` 与 `detailLevel` 由前端根据档位控制，响应体 `modules` 返回实际内容容器。
 - **同语模式**：UI 不展示译文位；服务端同样不返回 `translation`，以防前端误渲染。 
 - **降级提示**：当 `degraded=true` 时，前端在结果页显式展示退化徽标与文案。 
 

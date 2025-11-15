@@ -35,7 +35,7 @@ flowchart LR
     classDef storage fill:#fff9f0,stroke:#f39c12,color:#6b3500
 
     subgraph Clients["终端用户与客户端"]
-        User[最终用户/匿名访客]
+        User[最终用户/游客访客]
         Member[登录/订阅用户]
         Web[Web/H5 客户端]
         Admin[运营/客服后台]
@@ -199,7 +199,7 @@ flowchart LR
 
 ### 4.6 第三方依赖
 
-- 登录：OIDC，token 通过 API 网关验证；失败走匿名模式。
+- 登录：OIDC，token 通过 API 网关验证；失败走游客模式。
 - 支付：Webhook → BFF Webhook 接口 → 订阅/配额域；权益 ≤5 s 生效（第 20 章 20.3）。
 
 ## 5. 数据流与接口一致性
